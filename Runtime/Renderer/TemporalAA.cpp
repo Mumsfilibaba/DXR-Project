@@ -72,10 +72,7 @@ void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameRes
     GPU_TRACE_SCOPE(CommandList, "TemporalAA");
 
     FRHITextureRef CurrentBuffer = TAAHistoryBuffers[CurrentBufferIndex];
-    CommandList.TransitionTexture(
-        CurrentBuffer.Get(),
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(CurrentBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
     CurrentBufferIndex = (CurrentBufferIndex + 1) % 2;
 
@@ -99,10 +96,7 @@ void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameRes
     const uint32 ThreadsY = FMath::DivideByMultiple(CurrentBuffer->GetHeight(), ThreadGroupXYZ.y);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTexture(
-        CurrentBuffer.Get(),
-        EResourceAccess::UnorderedAccess,
-        EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(CurrentBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
     AddDebugTexture(
         MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[0]->GetShaderResourceView()),
@@ -130,13 +124,7 @@ bool FTemporalAA::CreateRenderTarget(FFrameResources& FrameResources)
     const uint32 Height = FrameResources.MainViewport->GetHeight();
 
     // TAA History-Buffer
-    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(
-        FrameResources.FinalTargetFormat, 
-        Width,
-        Height, 
-        1,
-        1, 
-        ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);
+    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);
 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)

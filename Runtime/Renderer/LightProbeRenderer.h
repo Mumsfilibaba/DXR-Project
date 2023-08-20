@@ -7,9 +7,6 @@
 class RENDERER_API FLightProbeRenderer
 {
 public:
-    FLightProbeRenderer()  = default;
-    ~FLightProbeRenderer() = default;
-
     bool Init(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     void Release();

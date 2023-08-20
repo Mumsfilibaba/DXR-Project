@@ -14,6 +14,9 @@ struct FGenericVulkanPlatform
         #if VK_KHR_get_physical_device_properties2
             VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
         #endif
+        #if VK_KHR_device_group_creation
+            VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME,
+        #endif
         };
     }
     
@@ -23,7 +26,7 @@ struct FGenericVulkanPlatform
         {
             // NOTE: This extension must be enabled on platforms that has it available
             "VK_KHR_portability_subset",
-            
+
         #if VK_KHR_get_memory_requirements2
             VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
         #endif
@@ -38,9 +41,6 @@ struct FGenericVulkanPlatform
         #endif
         #if VK_KHR_maintenance4
             VK_KHR_MAINTENANCE_4_EXTENSION_NAME,
-        #endif
-        #if VK_EXT_descriptor_indexing
-            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
         #endif
         #if VK_KHR_buffer_device_address
             VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
@@ -57,12 +57,6 @@ struct FGenericVulkanPlatform
         #if VK_KHR_shader_draw_parameters
             VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,
         #endif
-        #if VK_NV_mesh_shader
-            VK_NV_MESH_SHADER_EXTENSION_NAME,
-        #endif
-        #if VK_EXT_memory_budget
-            VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
-        #endif
         #if VK_KHR_push_descriptor
             VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
         #endif
@@ -75,6 +69,9 @@ struct FGenericVulkanPlatform
         #if VK_KHR_acceleration_structure
             VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
         #endif
+        #if VK_KHR_ray_tracing_maintenance1
+            VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME,
+        #endif
         #if VK_KHR_dedicated_allocation
             VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
         #endif
@@ -83,6 +80,27 @@ struct FGenericVulkanPlatform
         #endif
         #if VK_KHR_shader_float_controls
             VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME,
+        #endif
+        #if VK_KHR_device_group
+            VK_KHR_DEVICE_GROUP_EXTENSION_NAME,
+        #endif
+        #if VK_KHR_synchronization2
+            VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_descriptor_indexing
+            VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_memory_budget
+            VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_mesh_shader
+            VK_EXT_MESH_SHADER_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_descriptor_buffer
+            VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
+        #endif
+        #if VK_NV_ray_tracing_invocation_reorder
+            VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
         #endif
         };
     }

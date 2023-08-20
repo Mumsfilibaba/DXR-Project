@@ -18,7 +18,7 @@ TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
     true,
     EConsoleVariableFlags::Default);
 
-FWindowsApplication* WindowsApplication = nullptr;
+COREAPPLICATION_API FWindowsApplication* WindowsApplication = nullptr;
 
 TSharedPtr<FWindowsApplication> FWindowsApplication::CreateWindowsApplication()
 {

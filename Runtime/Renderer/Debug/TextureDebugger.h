@@ -8,17 +8,11 @@ class FRenderTargetDebugWindow
 {
 public:
 
-    FRenderTargetDebugWindow() = default;
-    
     /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
     void Paint();
 
      /** @brief - Add image for debug drawing */
-    void AddTextureForDebugging(
-        const FRHIShaderResourceViewRef& ImageView,
-        const FRHITextureRef&            Image,
-        EResourceAccess                  BeforeState,
-        EResourceAccess                  AfterState);
+    void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
 
     void ClearImages()
     {

@@ -61,9 +61,6 @@ private:
 
 struct RENDERER_API FFrameResources
 {
-    FFrameResources()  = default;
-    ~FFrameResources() = default;
-
     void Release();
 
     const EFormat DepthBufferFormat  = EFormat::D32_Float;

@@ -7,10 +7,8 @@
 class RENDERER_API FRayTracer
 {
 public:
-    FRayTracer()  = default;
-    ~FRayTracer() = default;
-
     bool Init(FFrameResources& Resources);
+
     void Release();
 
     void PreRender(FRHICommandList& CommandList, FFrameResources& Resources, const FScene& Scene);

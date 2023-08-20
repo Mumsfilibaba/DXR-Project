@@ -66,6 +66,7 @@ class RENDERER_API FRenderer
 
 public:
     static bool Initialize();
+    
     static void Release();
 
     static FRenderer& Get();
@@ -73,7 +74,9 @@ public:
     void Tick(const FScene& Scene);
 
     void PerformFrustumCullingAndSort(const FScene& Scene);
+    
     void PerformFXAA(FRHICommandList& InCmdList);
+    
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
 
     FORCEINLINE TSharedPtr<FRenderTargetDebugWindow> GetTextureDebugger() const
@@ -92,13 +95,10 @@ private:
     bool Create();
     
     bool InitAA();
+    
     bool InitShadingImage();
 
-    NOINLINE void FrustumCullingAndSortingInternal(
-        const FCamera*               Camera,
-        const TPair<uint32, uint32>& DrawCommands,
-        TArray<uint32>&              OutDeferredDrawCommands,
-        TArray<uint32>&              OutForwardDrawCommands);
+    NOINLINE void FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands);
 
     TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
     TSharedPtr<FRendererInfoWindow>      InfoWindow;
@@ -142,11 +142,7 @@ private:
 };
 
 
-inline void AddDebugTexture(
-    const FRHIShaderResourceViewRef& ImageView,
-    const FRHITextureRef&            Image,
-    EResourceAccess                  BeforeState,
-    EResourceAccess                  AfterState)
+inline void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     FRenderer::Get().GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
 }

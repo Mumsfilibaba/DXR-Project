@@ -112,10 +112,7 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
 
     TRACE_SCOPE("ForwardPass");
 
-    CommandList.TransitionTexture(
-        LightSetup.ShadowMapCascades[0].Get(), 
-        EResourceAccess::NonPixelShaderResource, 
-        EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());

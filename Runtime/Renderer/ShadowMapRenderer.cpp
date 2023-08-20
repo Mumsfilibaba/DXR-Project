@@ -30,11 +30,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
 
     // Point Shadow Maps
     {
-        FRHIBufferDesc PerShadowMapBufferDesc(
-            sizeof(FPerShadowMap),
-            sizeof(FPerShadowMap),
-            EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-
+        FRHIBufferDesc PerShadowMapBufferDesc(sizeof(FPerShadowMap), sizeof(FPerShadowMap), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
         PerShadowMapBuffer = RHICreateBuffer(PerShadowMapBufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
         if (!PerShadowMapBuffer)
         {
@@ -134,11 +130,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
 
     // Cascaded shadow map
     {
-        FRHIBufferDesc PerCascadeBufferDesc(
-            sizeof(FPerCascade),
-            sizeof(FPerCascade),
-            EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-
+        FRHIBufferDesc PerCascadeBufferDesc(sizeof(FPerCascade), sizeof(FPerCascade), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
         PerCascadeBuffer = RHICreateBuffer(PerCascadeBufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
         if (!PerCascadeBuffer)
         {
@@ -255,11 +247,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
 
     // Create buffers for cascade matrix generation
     {
-        FRHIBufferDesc CascadeGenerationDataDesc(
-            sizeof(FCascadeGenerationInfo),
-            sizeof(FCascadeGenerationInfo),
-            EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-
+        FRHIBufferDesc CascadeGenerationDataDesc(sizeof(FCascadeGenerationInfo), sizeof(FCascadeGenerationInfo), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
         CascadeGenerationData = RHICreateBuffer(CascadeGenerationDataDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
         if (!CascadeGenerationData)
         {
@@ -271,11 +259,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             CascadeGenerationData->SetName("Cascade GenerationData");
         }
 
-        FRHIBufferDesc CascadeMatrixBufferDesc(
-            sizeof(FCascadeMatrices) * NUM_SHADOW_CASCADES,
-            sizeof(FCascadeMatrices),
-            EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
-
+        FRHIBufferDesc CascadeMatrixBufferDesc(sizeof(FCascadeMatrices) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatrices), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
         LightSetup.CascadeMatrixBuffer = RHICreateBuffer(CascadeMatrixBufferDesc, EResourceAccess::UnorderedAccess, nullptr);
         if (!LightSetup.CascadeMatrixBuffer)
         {
@@ -303,11 +287,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIBufferDesc CascadeSplitsBufferDesc(
-            sizeof(FCascadeSplits) * NUM_SHADOW_CASCADES,
-            sizeof(FCascadeSplits),
-            EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
-
+        FRHIBufferDesc CascadeSplitsBufferDesc(sizeof(FCascadeSplits) * NUM_SHADOW_CASCADES, sizeof(FCascadeSplits), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
         LightSetup.CascadeSplitsBuffer = RHICreateBuffer(CascadeSplitsBufferDesc, EResourceAccess::UnorderedAccess, nullptr);
         if (!LightSetup.CascadeSplitsBuffer)
         {
@@ -452,20 +432,10 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
 
                 const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
                 
-                FRHIViewportRegion ViewportRegion(
-                    static_cast<float>(PointLightShadowSize),
-                    static_cast<float>(PointLightShadowSize),
-                    0.0f,
-                    0.0f,
-                    0.0f,
-                    1.0f);
+                FRHIViewportRegion ViewportRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 0.0f, 0.0f, 1.0f);
                 CommandList.SetViewport(ViewportRegion);
 
-                FRHIScissorRegion ScissorRegion(
-                    static_cast<float>(PointLightShadowSize),
-                    static_cast<float>(PointLightShadowSize),
-                    0,
-                    0);
+                FRHIScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
                 CommandList.SetScissorRect(ScissorRegion);
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[Cube];
@@ -473,20 +443,9 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
 
-                CommandList.TransitionBuffer(
-                    PerShadowMapBuffer.Get(),
-                    EResourceAccess::VertexAndConstantBuffer,
-                    EResourceAccess::CopyDest);
-                
-                CommandList.UpdateBuffer(
-                    PerShadowMapBuffer.Get(),
-                    FBufferRegion(0, sizeof(FPerShadowMap)),
-                    &PerShadowMapData);
-
-                CommandList.TransitionBuffer(
-                    PerShadowMapBuffer.Get(),
-                    EResourceAccess::CopyDest,
-                    EResourceAccess::VertexAndConstantBuffer);
+                CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+                CommandList.UpdateBuffer(PerShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FPerShadowMap)), &PerShadowMapData);
+                CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
                 CommandList.SetConstantBuffer(PointLightVertexShader.Get(), PerShadowMapBuffer.Get(), 0);
                 CommandList.SetConstantBuffer(PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0);
@@ -495,11 +454,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 static IConsoleVariable* GFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
                 if (GFrustumCullEnabled && GFrustumCullEnabled->GetBool())
                 {
-                    const FFrustum CameraFrustum = FFrustum(
-                        Data.FarPlane,
-                        Data.ViewMatrix[Face],
-                        Data.ProjMatrix[Face]);
-                    
+                    const FFrustum CameraFrustum = FFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
                     for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                     {
                         FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
@@ -546,31 +501,17 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render PointLight ShadowMaps");
 
-    CommandList.TransitionTexture(
-        LightSetup.PointLightShadowMaps.Get(),
-        EResourceAccess::DepthWrite,
-        EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
 }
 
-void FShadowMapRenderer::RenderDirectionalLightShadows(
-    FRHICommandList& CommandList,
-    const FLightSetup& LightSetup, 
-    const FFrameResources& FrameResources,
-    const FScene& Scene)
+void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, const FScene& Scene)
 {
     // Generate matrices for directional light
     {
         GPU_TRACE_SCOPE(CommandList, "Generate Cascade Matrices");
 
-        CommandList.TransitionBuffer(
-            LightSetup.CascadeMatrixBuffer.Get(), 
-            EResourceAccess::NonPixelShaderResource, 
-            EResourceAccess::UnorderedAccess);
-        
-        CommandList.TransitionBuffer(
-            LightSetup.CascadeSplitsBuffer.Get(),
-            EResourceAccess::NonPixelShaderResource,
-            EResourceAccess::UnorderedAccess);
+        CommandList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+        CommandList.TransitionBuffer(LightSetup.CascadeSplitsBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
         FCascadeGenerationInfo GenerationInfo;
         GenerationInfo.CascadeSplitLambda = LightSetup.CascadeSplitLambda;
@@ -579,20 +520,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
         GenerationInfo.CascadeResolution  = (float)LightSetup.CascadeSize;
         GenerationInfo.ShadowMatrix       = LightSetup.DirectionalLightData.ShadowMatrix;
 
-        CommandList.TransitionBuffer(
-            CascadeGenerationData.Get(),
-            EResourceAccess::VertexAndConstantBuffer, 
-            EResourceAccess::CopyDest);
-
-        CommandList.UpdateBuffer(
-            CascadeGenerationData.Get(),
-            FBufferRegion(0, sizeof(FCascadeGenerationInfo)),
-            &GenerationInfo);
-        
-        CommandList.TransitionBuffer(
-            CascadeGenerationData.Get(),
-            EResourceAccess::CopyDest,
-            EResourceAccess::VertexAndConstantBuffer);
+        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+        CommandList.UpdateBuffer(CascadeGenerationData.Get(), FBufferRegion(0, sizeof(FCascadeGenerationInfo)), &GenerationInfo);
+        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
         CommandList.SetComputePipelineState(CascadeGen.Get());
 
@@ -606,15 +536,8 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
 
         CommandList.Dispatch(NUM_SHADOW_CASCADES, 1, 1);
 
-        CommandList.TransitionBuffer(
-            LightSetup.CascadeMatrixBuffer.Get(),
-            EResourceAccess::UnorderedAccess,
-            EResourceAccess::PixelShaderResource);
-        
-        CommandList.TransitionBuffer(
-            LightSetup.CascadeSplitsBuffer.Get(),
-            EResourceAccess::UnorderedAccess,
-            EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionBuffer(LightSetup.CascadeSplitsBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
     }
 
     // Render directional shadows
@@ -625,25 +548,10 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
 
         GPU_TRACE_SCOPE(CommandList, "DirectionalLight ShadowMaps");
 
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[0].Get(),
-            EResourceAccess::NonPixelShaderResource, 
-            EResourceAccess::DepthWrite);
-        
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[1].Get(),
-            EResourceAccess::NonPixelShaderResource,
-            EResourceAccess::DepthWrite);
-        
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[2].Get(),
-            EResourceAccess::NonPixelShaderResource, 
-            EResourceAccess::DepthWrite);
-        
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[3].Get(), 
-            EResourceAccess::NonPixelShaderResource,
-            EResourceAccess::DepthWrite);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
 
         CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
         CommandList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
@@ -664,14 +572,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
 
             const uint16 CascadeSize = LightSetup.CascadeSize;
 
-            FRHIViewportRegion ViewportRegion(
-                static_cast<float>(CascadeSize),
-                static_cast<float>(CascadeSize),
-                0.0f,
-                0.0f,
-                0.0f,
-                1.0f);
-
+            FRHIViewportRegion ViewportRegion(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 0.0f, 0.0f, 1.0f);
             CommandList.SetViewport(ViewportRegion);
 
             FRHIScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
@@ -679,20 +580,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
 
             PerCascadeData.CascadeIndex = Index;
 
-            CommandList.TransitionBuffer(
-                PerCascadeBuffer.Get(),
-                EResourceAccess::VertexAndConstantBuffer, 
-                EResourceAccess::CopyDest);
-            
-            CommandList.UpdateBuffer(
-                PerCascadeBuffer.Get(),
-                FBufferRegion(0, sizeof(FPerCascade)),
-                &PerCascadeData);
-
-            CommandList.TransitionBuffer(
-                PerCascadeBuffer.Get(),
-                EResourceAccess::CopyDest, 
-                EResourceAccess::VertexAndConstantBuffer);
+            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+            CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascade)), &PerCascadeData);
+            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
             CommandList.SetConstantBuffer(DirectionalLightShader.Get(), PerCascadeBuffer.Get(), 0);
 
@@ -702,11 +592,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             static IConsoleVariable* GFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
             if (GFrustumCullEnabled && GFrustumCullEnabled->GetBool())
             {
-                const FFrustum CameraFrustum = FFrustum(
-                    LightSetup.DirectionalLightFarPlane,
-                    LightSetup.DirectionalLightViewMatrix,
-                    LightSetup.DirectionalLightProjMatrix);
-
+                const FFrustum CameraFrustum = FFrustum(LightSetup.DirectionalLightFarPlane, LightSetup.DirectionalLightViewMatrix, LightSetup.DirectionalLightProjMatrix);
                 for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                 {
                     FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
@@ -745,30 +631,11 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(
             CommandList.EndRenderPass();
         }
 
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[0].Get(),
-            EResourceAccess::DepthWrite,
-            EResourceAccess::NonPixelShaderResource);
-        
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[1].Get(),
-            EResourceAccess::DepthWrite, 
-            EResourceAccess::NonPixelShaderResource);
-        
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[2].Get(), 
-            EResourceAccess::DepthWrite, 
-            EResourceAccess::NonPixelShaderResource);
-        
-        CommandList.TransitionTexture(
-            LightSetup.ShadowMapCascades[3].Get(),
-            EResourceAccess::DepthWrite,
-            EResourceAccess::NonPixelShaderResource);
-
-        CommandList.TransitionBuffer(
-            LightSetup.CascadeMatrixBuffer.Get(),
-            EResourceAccess::PixelShaderResource, 
-            EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[1].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render DirectionalLight ShadowMaps");
     }
@@ -784,18 +651,12 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
 
         GPU_TRACE_SCOPE(CommandList, "DirectionalLight Shadow Mask");
 
-        CommandList.TransitionTexture(
-            LightSetup.DirectionalShadowMask.Get(),
-            EResourceAccess::NonPixelShaderResource,
-            EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
         FRHIComputeShaderRef CurrentShader;
         if (GCascadeDebug.GetValue())
         {
-            CommandList.TransitionTexture(
-                LightSetup.CascadeIndexBuffer.Get(),
-                EResourceAccess::NonPixelShaderResource,
-                EResourceAccess::UnorderedAccess);
+            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
             CurrentShader = DirectionalShadowMaskShader_Debug;
             CommandList.SetComputePipelineState(DirectionalShadowMaskPSO_Debug.Get());
@@ -833,17 +694,11 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
         const uint32 ThreadsY = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CommandList.TransitionTexture(
-            LightSetup.DirectionalShadowMask.Get(),
-            EResourceAccess::UnorderedAccess, 
-            EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
         if (GCascadeDebug.GetValue())
         {
-            CommandList.TransitionTexture(
-                LightSetup.CascadeIndexBuffer.Get(),
-                EResourceAccess::UnorderedAccess,
-                EResourceAccess::NonPixelShaderResource);
+            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
         }
 
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render ShadowMasks");
@@ -882,14 +737,7 @@ void FShadowMapRenderer::Release()
 
 bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup)
 {
-    FRHITextureDesc ShadowMaskDesc = FRHITextureDesc::CreateTexture2D(
-        LightSetup.ShadowMaskFormat, 
-        Width,
-        Height,
-        1,
-        1,
-        ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
-    
+    FRHITextureDesc ShadowMaskDesc = FRHITextureDesc::CreateTexture2D(LightSetup.ShadowMaskFormat, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
     LightSetup.DirectionalShadowMask = RHICreateTexture(ShadowMaskDesc, EResourceAccess::NonPixelShaderResource);
     if (LightSetup.DirectionalShadowMask)
     {
@@ -900,14 +748,7 @@ bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSet
         return false;
     }
 
-    FRHITextureDesc CascadeIndexBufferDesc = FRHITextureDesc::CreateTexture2D(
-        EFormat::R8_Uint,
-        Width,
-        Height,
-        1,
-        1,
-        ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
-
+    FRHITextureDesc CascadeIndexBufferDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
     LightSetup.CascadeIndexBuffer = RHICreateTexture(CascadeIndexBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (LightSetup.CascadeIndexBuffer)
     {

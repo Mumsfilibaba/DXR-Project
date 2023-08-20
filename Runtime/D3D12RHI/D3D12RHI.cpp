@@ -792,7 +792,15 @@ FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const F
 
 FRHITimestampQuery* FD3D12RHI::RHICreateTimestampQuery()
 {
-    return FD3D12TimestampQuery::Create(GetDevice());
+    FD3D12TimestampQueryRef NewTimestampQuery = new FD3D12TimestampQuery(GetDevice());
+    if (NewTimestampQuery->Initialize())
+    {
+        return NewTimestampQuery.ReleaseOwnership();
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportDesc& InDesc)

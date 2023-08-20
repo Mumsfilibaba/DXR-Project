@@ -10,6 +10,7 @@ class FD3D12Viewport;
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
+
 class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
@@ -24,9 +25,9 @@ public:
     
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
     
@@ -94,7 +95,7 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<GetCurrentBackBufferTexture*>(this)); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
     
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
@@ -138,7 +139,7 @@ FORCEINLINE FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
 
 FORCEINLINE FD3D12Resource* GetD3D12Resource(FRHITexture* Texture)
 {
-    FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture)
+    FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     return D3D12Texture ? D3D12Texture->GetD3D12Resource() : nullptr;
 }
 

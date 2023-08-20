@@ -13,11 +13,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     SkyboxIndexCount  = SkyboxMesh.Indices.Size();
     SkyboxIndexFormat = EIndexFormat::uint32;
 
-    FRHIBufferDesc VBDesc(
-        SkyboxMesh.Vertices.SizeInBytes(),
-        SkyboxMesh.Vertices.Stride(),
-        EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
-
+    FRHIBufferDesc VBDesc(SkyboxMesh.Vertices.SizeInBytes(), SkyboxMesh.Vertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
     SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxMesh.Vertices.Data());
     if (!SkyboxVertexBuffer)
     {
@@ -28,11 +24,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    FRHIBufferDesc IBDesc(
-        SkyboxMesh.Indices.SizeInBytes(),
-        SkyboxMesh.Indices.Stride(),
-        EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
-
+    FRHIBufferDesc IBDesc(SkyboxMesh.Indices.SizeInBytes(), SkyboxMesh.Indices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
     SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxMesh.Indices.Data());
     if (!SkyboxIndexBuffer)
     {
@@ -57,12 +49,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
             Panorama->SetName(PanoramaSourceFilename);
         }
 
-        FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(
-            Panorama->GetRHITexture().Get(),
-            1024,
-            TextureFactoryFlag_GenerateMips,
-            EFormat::R16G16B16A16_Float);
-
+        FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(Panorama->GetRHITexture().Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
         if (!FrameResources.Skybox)
         {
             return false;

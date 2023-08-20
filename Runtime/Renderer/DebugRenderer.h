@@ -7,13 +7,12 @@
 class FDebugRenderer
 {
 public:
-    FDebugRenderer()  = default;
-    ~FDebugRenderer() = default;
-
     bool Init(FFrameResources& Resources);
+    
     void Release();
 
     void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources);
+    
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, const FScene& Scene);
 
 private:

@@ -49,7 +49,7 @@ Texture2D<float> DirectionalShadowMask : register(t8);
 TextureCubeArray<float> PointLightShadowMaps : register(t9);
 
 // SSAOBuffer
-Texture2D<float3> SSAOBuffer : register(t10);
+Texture2D<float> SSAOBuffer : register(t10);
 
 // Shadow Cascade Data - FOR DEBUG
 #if DRAW_SHADOW_CASCADE
@@ -241,7 +241,7 @@ void Main(FComputeShaderInput Input)
     const float3 GBufferMaterial = MaterialTex.Load(int3(Pixel, 0)).rgb;
 
     // Sample with a sampler since the texture is not necessarilly the same size as the screen
-    const float ScreenSpaceAO = SSAOBuffer.SampleLevel(GBufferSampler, PixelFloat, 0);
+    const float ScreenSpaceAO = SSAOBuffer.SampleLevel(GBufferSampler, PixelFloat, 0).r;
     
     const float3 ObjectNormal = UnpackNormal(GBufferNormal);
     const float3 View = normalize(CameraBuffer.Position - WorldPosition);

@@ -1,4 +1,5 @@
 #pragma once
+#include "D3D12RHI/D3D12RHI.h"
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12CommandAllocator.h"
 #include "D3D12RHI/D3D12CommandContext.h"
@@ -12,7 +13,6 @@
 #include "D3D12RHI/D3D12Device.h"
 #include "D3D12RHI/D3D12DeviceChild.h"
 #include "D3D12RHI/D3D12Fence.h"
-#include "D3D12RHI/D3D12Interface.h"
 #include "D3D12RHI/D3D12PipelineState.h"
 #include "D3D12RHI/D3D12RayTracing.h"
 #include "D3D12RHI/D3D12RefCounted.h"

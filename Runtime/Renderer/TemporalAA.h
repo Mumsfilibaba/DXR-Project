@@ -57,7 +57,8 @@ struct FHaltonState
     FHaltonState(const uint32 InMaxNumSamples = 16)
         : MaxNumSamples(InMaxNumSamples)
         , SampleIndex(0)
-    { }
+    {
+    }
 
     FVector2 NextSample()
     {
@@ -75,10 +76,8 @@ struct FHaltonState
 class RENDERER_API FTemporalAA
 {
 public:
-    FTemporalAA()  = default;
-    ~FTemporalAA() = default;
-
     bool Init(FFrameResources& FrameResources);
+
     void Release();
 
     void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);
@@ -92,7 +91,7 @@ private:
     FRHIComputeShaderRef         TemporalAAShader;
 
     // Two buffers to ping-pong between
-    FRHITextureRef             TAAHistoryBuffers[2];
+    FRHITextureRef               TAAHistoryBuffers[2];
     FRHISamplerStateRef          LinearSampler;
 
     uint32                       CurrentBufferIndex = 0;

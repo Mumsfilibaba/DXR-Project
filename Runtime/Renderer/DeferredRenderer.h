@@ -8,15 +8,14 @@
 class RENDERER_API FDeferredRenderer
 {
 public:
-    FDeferredRenderer()  = default;
-    ~FDeferredRenderer() = default;
-
     bool Init(FFrameResources& FrameResources);
 
     void Release();
 
     void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, const FScene& Scene);
+    
     void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources);
+
     void RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
     bool ResizeResources(FFrameResources& FrameResources);

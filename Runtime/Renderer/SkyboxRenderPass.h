@@ -8,9 +8,6 @@
 class RENDERER_API FSkyboxRenderPass final
 {
 public:
-    FSkyboxRenderPass()  = default;
-    ~FSkyboxRenderPass() = default;
-
     bool Init(FFrameResources& FrameResources);
 
     void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FScene& Scene);

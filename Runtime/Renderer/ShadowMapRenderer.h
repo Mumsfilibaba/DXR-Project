@@ -73,37 +73,25 @@ MARK_AS_REALLOCATABLE(FPerCascade);
 class RENDERER_API FShadowMapRenderer
 {
 public:
-    FShadowMapRenderer() = default;
-    ~FShadowMapRenderer() = default;
-
     bool Init(FLightSetup& LightSetup, FFrameResources& Resources);
 
     void Release();
 
      /** @brief - Render Point light shadows */
-    void RenderPointLightShadows(
-        FRHICommandList& CommandList,
-        const FLightSetup& LightSetup, 
-        const FScene& Scene);
+    void RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FScene& Scene);
 
      /** @brief - Render Directional light shadows */
-    void RenderDirectionalLightShadows(
-        FRHICommandList& CommandList,
-        const FLightSetup& LightSetup, 
-        const FFrameResources& FrameResources,
-        const FScene& Scene);
+    void RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, const FScene& Scene);
 
      /** @brief - Render ShadowMasks */
-    void RenderShadowMasks(
-        FRHICommandList& CommandList,
-        const FLightSetup& LightSetup, 
-        const FFrameResources& FrameResources);
+    void RenderShadowMasks(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources);
 
      /** @brief - Resize the resources that are dependent on the viewport */
     bool ResizeResources(uint32 Width, uint32 Height, FLightSetup& LightSetup);
 
 private:
     bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);
+    
     bool CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     FRHIBufferRef                PerShadowMapBuffer;

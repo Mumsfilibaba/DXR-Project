@@ -138,4 +138,4 @@ private:
     mutable FCriticalSection WindowsMessageListenersCS;
 };
 
-extern FWindowsApplication* WindowsApplication;
+extern COREAPPLICATION_API FWindowsApplication* WindowsApplication;

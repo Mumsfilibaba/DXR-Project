@@ -7,10 +7,8 @@
 class RENDERER_API FScreenSpaceOcclusionRenderer
 {
 public:
-    FScreenSpaceOcclusionRenderer() = default;
-    ~FScreenSpaceOcclusionRenderer() = default;
-
     bool Init(FFrameResources& FrameResources);
+
     void Release();
 
     void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);

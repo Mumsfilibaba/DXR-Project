@@ -219,13 +219,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(
-            LUTFormat, 
-            LUTSize,
-            LUTSize,
-            1, 
-            1, 
-            ETextureUsageFlags::UnorderedAccess);
+        FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccess);
 
         FRHITextureRef StagingTexture = RHICreateTexture(LUTDesc, EResourceAccess::Common);
         if (!StagingTexture)
@@ -294,10 +288,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
         }
 
         FRHICommandList CommandList;
-        CommandList.TransitionTexture(
-            StagingTexture.Get(), 
-            EResourceAccess::Common, 
-            EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
         CommandList.SetComputePipelineState(BRDF_PipelineState.Get());
 
@@ -311,21 +302,12 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
 
         CommandList.UnorderedAccessTextureBarrier(StagingTexture.Get());
 
-        CommandList.TransitionTexture(
-            StagingTexture.Get(), 
-            EResourceAccess::UnorderedAccess, 
-            EResourceAccess::CopySource);
-        CommandList.TransitionTexture(
-            FrameResources.IntegrationLUT.Get(), 
-            EResourceAccess::Common, 
-            EResourceAccess::CopyDest);
+        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+        CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
 
         CommandList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
 
-        CommandList.TransitionTexture(
-            FrameResources.IntegrationLUT.Get(), 
-            EResourceAccess::CopyDest, 
-            EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
         CommandList.DestroyResource(CShader.Get());
         CommandList.DestroyResource(BRDF_PipelineState.Get());
@@ -595,18 +577,9 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         ReductionConstants.FarPlane      = Scene.GetCamera()->GetFarPlane();
 
         // Perform the first reduction
-        CommandList.TransitionTexture(
-            FrameResources.GBuffer[GBufferIndex_Depth].Get(), 
-            EResourceAccess::DepthWrite, 
-            EResourceAccess::NonPixelShaderResource);
-        CommandList.TransitionTexture(
-            FrameResources.ReducedDepthBuffer[0].Get(), 
-            EResourceAccess::NonPixelShaderResource, 
-            EResourceAccess::UnorderedAccess);
-        CommandList.TransitionTexture(
-            FrameResources.ReducedDepthBuffer[1].Get(), 
-            EResourceAccess::NonPixelShaderResource, 
-            EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
         CommandList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
@@ -619,14 +592,8 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CommandList.TransitionTexture(
-            FrameResources.ReducedDepthBuffer[0].Get(), 
-            EResourceAccess::UnorderedAccess, 
-            EResourceAccess::NonPixelShaderResource);
-        CommandList.TransitionTexture(
-            FrameResources.GBuffer[GBufferIndex_Depth].Get(), 
-            EResourceAccess::NonPixelShaderResource, 
-            EResourceAccess::DepthWrite);
+        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
 
         // Perform the other reductions
         CommandList.SetComputePipelineState(ReduceDepthPSO.Get());
@@ -638,14 +605,8 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CommandList.TransitionTexture(
-            FrameResources.ReducedDepthBuffer[0].Get(), 
-            EResourceAccess::NonPixelShaderResource,
-            EResourceAccess::UnorderedAccess);
-        CommandList.TransitionTexture(
-            FrameResources.ReducedDepthBuffer[1].Get(), 
-            EResourceAccess::UnorderedAccess, 
-            EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
         CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
         CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
@@ -654,10 +615,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-        CommandList.TransitionTexture(
-            FrameResources.ReducedDepthBuffer[0].Get(), 
-            EResourceAccess::UnorderedAccess, 
-            EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
@@ -681,9 +639,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     RenderPass.RenderTargets[3] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get());
     RenderPass.RenderTargets[4] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
     RenderPass.NumRenderTargets = 5;
-    RenderPass.DepthStencilView = FRHIDepthStencilView(
-        FrameResources.GBuffer[GBufferIndex_Depth].Get(),
-        EAttachmentLoadAction::Load);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPass);
 
@@ -730,9 +686,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
         CommandList.SetConstantBuffers(BasePixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
 
-        const auto PSShaderResourceViews = MakeArrayView(
-            Command.Material->GetShaderResourceViews(),
-            Command.Material->GetNumShaderResourceViews());
+        const auto PSShaderResourceViews = MakeArrayView(Command.Material->GetShaderResourceViews(), Command.Material->GetNumShaderResourceViews());
         CommandList.SetShaderResourceViews(BasePixelShader.Get(), PSShaderResourceViews, 0);
 
         FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
@@ -820,10 +774,10 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     } Settings;
 
     Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
-    Settings.NumPointLights              = LightSetup.PointLightsData.Size();
-    Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
-    Settings.ScreenWidth                 = FrameResources.FinalTarget->GetWidth();
-    Settings.ScreenHeight                = FrameResources.FinalTarget->GetHeight();
+    Settings.NumPointLights  = LightSetup.PointLightsData.Size();
+    Settings.NumSkyLightMips = Skylight.SpecularIrradianceMap->GetNumMipLevels();
+    Settings.ScreenWidth     = FrameResources.FinalTarget->GetWidth();
+    Settings.ScreenHeight    = FrameResources.FinalTarget->GetHeight();
 
     CommandList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
@@ -853,13 +807,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     }
 
     // Albedo
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
-        FrameResources.AlbedoFormat,
-        Width,
-        Height,
-        1,
-        1,
-        Usage);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage);
 
     FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc);
     if (FrameResources.GBuffer[GBufferIndex_Albedo])

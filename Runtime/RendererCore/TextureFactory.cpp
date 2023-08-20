@@ -64,13 +64,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     FTextureResourceData InitalData;
     InitalData.InitMipData(Pixels, RowPitch, RowPitch*Height);
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
-        Format,
-        Width,
-        Height,
-        NumMips,
-        1, 
-        ETextureUsageFlags::ShaderResource);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::ShaderResource);
 
     FRHITextureRef Texture = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
@@ -100,12 +94,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
     const uint32 NumMips = (bGenerateNumMips) ? FMath::Max<uint32>(FMath::Log2(CubeMapSize), 1u) : 1u;
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(
-        Format,
-        CubeMapSize, 
-        NumMips,
-        1,
-        ETextureUsageFlags::UnorderedAccess);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(Format, CubeMapSize, NumMips, 1, ETextureUsageFlags::UnorderedAccess);
 
     FRHITextureRef StagingTexture = RHICreateTexture(TextureDesc, EResourceAccess::Common, nullptr);
     if (!StagingTexture)

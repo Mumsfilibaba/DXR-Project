@@ -189,7 +189,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
 
             FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
             Context->RHIStartContext();
-            Context->TransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            Context->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
 
             // Transfer all the mip-levels
             uint32 Width  = Desc.Extent.x;
@@ -210,7 +210,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             }
 
             // NOTE: Transition into InitialAccess
-            Context->TransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
+            Context->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
             Context->RHIFinishContext();
             return true;
         }
@@ -220,7 +220,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     {
         FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
         Context->RHIStartContext();
-        Context->TransitionTexture(this, EResourceAccess::Common, InInitialAccess);
+        Context->RHITransitionTexture(this, EResourceAccess::Common, InInitialAccess);
         Context->RHIFinishContext();
     }
 

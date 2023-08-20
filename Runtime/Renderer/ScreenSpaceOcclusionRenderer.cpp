@@ -160,12 +160,10 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     {
         FVector2    ScreenSize;
         FVector2    NoiseSize;
-
         FIntVector2 GBufferSize;
-
-        float    Radius;
-        float    Bias;
-        int32    KernelSize;
+        float       Radius;
+        float       Bias;
+        int32       KernelSize;
     } SSAOSettings;
 
     const uint32 Width         = FrameResources.SSAOBuffer->GetWidth();
@@ -234,14 +232,7 @@ bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameRes
     const uint32 Width  = FrameResources.MainViewport->GetWidth() / 2;
     const uint32 Height = FrameResources.MainViewport->GetHeight() / 2;
 
-    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(
-        FrameResources.SSAOBufferFormat,
-        Width, 
-        Height, 
-        1,
-        1,
-        Flags);
-
+    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags);
     FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferDesc);
     if (!FrameResources.SSAOBuffer)
     {

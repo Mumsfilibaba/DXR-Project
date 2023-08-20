@@ -61,9 +61,6 @@ MARK_AS_REALLOCATABLE(FDirectionalLightData);
 
 struct FProxyLightProbe
 {
-    FProxyLightProbe()  = default;
-    ~FProxyLightProbe() = default;
-
     void Release()
     {
         IrradianceMap.Reset();
@@ -105,10 +102,8 @@ struct RENDERER_API FLightSetup
     const uint16 SpecularIrradianceSize = 256;
     const uint16 PointLightShadowSize   = 512;
 
-    FLightSetup()  = default;
-    ~FLightSetup() = default;
-
     bool Init();
+
     void Release();
 
     void BeginFrame(FRHICommandList& CommandList, const FScene& Scene);
@@ -144,9 +139,9 @@ struct RENDERER_API FLightSetup
 
     FRHIBufferRef              DirectionalLightsBuffer;
 
-    FRHITextureRef           ShadowMapCascades[4];
-    FRHITextureRef           DirectionalShadowMask;
-    FRHITextureRef           CascadeIndexBuffer;
+    FRHITextureRef             ShadowMapCascades[4];
+    FRHITextureRef             DirectionalShadowMask;
+    FRHITextureRef             CascadeIndexBuffer;
 
     FRHIBufferRef              CascadeMatrixBuffer;
     FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;

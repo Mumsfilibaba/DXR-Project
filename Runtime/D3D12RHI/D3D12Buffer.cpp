@@ -85,13 +85,13 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
             FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
             Context->RHIStartContext();
 
-            Context->TransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            Context->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             Context->RHIUpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
-                Context->TransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+                Context->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
             Context->RHIFinishContext();
@@ -103,7 +103,7 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
         {
             FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
             Context->RHIStartContext();
-            Context->TransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
+            Context->RHITransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
             Context->RHIFinishContext();
         }
     }

@@ -17,15 +17,15 @@ bool FD3D12TimestampQuery::Initialize()
 {
     ID3D12Device* D3D12Device = GetDevice()->GetD3D12Device();
 
-    D3D12_QUERY_HEAP_DESC QueryHeap;
-    FMemory::Memzero(&QueryHeap);
+    D3D12_QUERY_HEAP_DESC QueryHeapDesc;
+    FMemory::Memzero(&QueryHeapDesc);
 
-    QueryHeap.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-    QueryHeap.Count    = D3D12_DEFAULT_QUERY_COUNT * 2;
-    QueryHeap.NodeMask = 0;
+    QueryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+    QueryHeapDesc.Count    = D3D12_DEFAULT_QUERY_COUNT * 2;
+    QueryHeapDesc.NodeMask = 0;
 
     TComPtr<ID3D12QueryHeap> Heap;
-    HRESULT Result = D3D12Device->CreateQueryHeap(&QueryHeap, IID_PPV_ARGS(&Heap));
+    HRESULT Result = D3D12Device->CreateQueryHeap(&QueryHeapDesc, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12TimestampQuery]: FAILED to create Query Heap");
@@ -47,7 +47,7 @@ bool FD3D12TimestampQuery::Initialize()
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    FD3D12ResourceRef NewWriteResource = new FD3D12Resource(InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT);
+    FD3D12ResourceRef NewWriteResource = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
     if (!NewWriteResource->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
         return false;
@@ -73,7 +73,7 @@ bool FD3D12TimestampQuery::Initialize()
 
 void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
 {
-    if (Index >= (uint32)TimeQueries.Size())
+    if (Index >= static_cast<uint32>(TimeQueries.Size()))
     {
         OutQuery.Begin = 0;
         OutQuery.End   = 0;

@@ -23,12 +23,7 @@ void FRenderTargetDebugWindow::Paint()
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height));
 
-        constexpr ImGuiWindowFlags Flags =
-            ImGuiWindowFlags_NoDecoration |
-            ImGuiWindowFlags_AlwaysAutoResize |
-            ImGuiWindowFlags_NoFocusOnAppearing |
-            ImGuiWindowFlags_NoSavedSettings;
-
+        constexpr ImGuiWindowFlags Flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
         constexpr float MinImageSize = 96.0f;
 
         bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetValue();
@@ -62,9 +57,7 @@ void FRenderTargetDebugWindow::Paint()
                     {
                         const ImVec2 ImageSize     = ImVec2(ImageWidth, ImageHeight);
                         const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
-                        const ImVec2 NewPosition   = ImVec2(
-                            (ContentRegion.x - ImageSize.x) * 0.5f,
-                            (ContentRegion.y - ImageSize.y) * 0.5f);
+                        const ImVec2 NewPosition   = ImVec2((ContentRegion.x - ImageSize.x) * 0.5f, (ContentRegion.y - ImageSize.y) * 0.5f);
                         ImGui::SetCursorPos(NewPosition);
                     }
 
@@ -142,11 +135,7 @@ void FRenderTargetDebugWindow::Paint()
     }
 }
 
-void FRenderTargetDebugWindow::AddTextureForDebugging(
-    const FRHIShaderResourceViewRef& ImageView, 
-    const FRHITextureRef&            Image, 
-    EResourceAccess                  BeforeState, 
-    EResourceAccess                  AfterState)
+void FRenderTargetDebugWindow::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }
