@@ -74,6 +74,8 @@ private:
     static void ErrorCallback(void* Userdata, const CHAR* Error);
 
     bool Initialize();
+    
+    bool Compile(const FString& ShaderSource, const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
     bool ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode);
 
@@ -81,7 +83,6 @@ private:
 
     FString CreateArgString(const TArrayView<LPCWSTR> Args);
 
-private:
     void*                 DXCLib;
     DxcCreateInstanceProc DxcCreateInstanceFunc;
     FString               AssetPath;

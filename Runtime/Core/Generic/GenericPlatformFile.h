@@ -143,7 +143,6 @@ struct CORE_API FGenericPlatformFile
     }
 };
 
-
 class CORE_API FFileHelpers
 {
 public:

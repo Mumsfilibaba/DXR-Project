@@ -653,7 +653,7 @@ public:
         }
 
         SizeType Index = 0;
-        if (Position == INVALID_INDEX && CurrentLength > 0)
+        if (Position != INVALID_INDEX && CurrentLength > 0)
         {
             Index += FMath::Clamp(0, CurrentLength - 1, Position);
         }

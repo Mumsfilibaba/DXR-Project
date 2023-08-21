@@ -241,216 +241,36 @@ FRHIShaderCompiler& FRHIShaderCompiler::Get()
 
 bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
-    OutByteCode.Clear();
-
-    // Use the asset-folder as base for the shader-files
-    const FStringWide WideFilePath = CharToWide(AssetPath + '/' + Filename);
-
-    TComPtr<IDxcCompiler> Compiler;
-    HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
-    if (FAILED(hResult))
+    // Add asset-path to the filename
+    const FString FilePath = AssetPath + '/' + Filename;
+    
+    // Open the file
+    FFileHandleRef File = FPlatformFile::OpenForRead(FilePath);
+    if (!File)
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Compiler");
+        LOG_ERROR("Failed to open file '%s'", Filename.GetCString());
         return false;
     }
 
-    TComPtr<IDxcLibrary> Library;
-    hResult = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
-    if (FAILED(hResult))
+    // Read the full file as a textfile
+    TArray<CHAR> Text;
+    if (!FFileHelpers::ReadTextFile(File.Get(), Text))
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Library");
+        LOG_ERROR("Failed to read file '%s'", Filename.GetCString());
         return false;
     }
 
-    TComPtr<IDxcIncludeHandler> IncludeHandler;
-    hResult = Library->CreateIncludeHandler(&IncludeHandler);
-    if (FAILED(hResult))
-    {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create IncludeHandler");
-        return false;
-    }
-    
-    TComPtr<IDxcBlobEncoding> SourceBlob;
-    hResult = Library->CreateBlobFromFile(WideFilePath.GetCString(), nullptr, &SourceBlob);
-    if (FAILED(hResult))
-    {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Source Data");
-        DEBUG_BREAK();
-        return false;
-    }
-    
-    // Add compile arguments
-    TArray<LPCWSTR> CompileArgs =
-    {
-        L"-HV 2021" // Use HLSL 2021
-    };
-
-    // Optimization level 3
-    if (CompileInfo.bOptimize)
-    {
-        CompileArgs.Emplace(L"-O3");
-        CompileArgs.Emplace(DXC_ARG_ALL_RESOURCES_BOUND);
-        CompileArgs.Emplace(DXC_ARG_AVOID_FLOW_CONTROL);
-        
-        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
-        {
-            CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
-        }
-    }
-
-    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
-    {
-        CompileArgs.Emplace(L"-spirv");
-    }
-
-    if (CVarShaderDebug.GetValue())
-    {
-        CompileArgs.Emplace(L"-Zi");
-        CompileArgs.Emplace(L"-Qembed_debug");
-    }
-
-    // Create a single string for printing all the shader arguments
-    const FString ArgumentsString = CreateArgString(MakeArrayView(CompileArgs));
-    
-    // Convert defines
-    TArray<FStringWide> StrBuff;
-    TArray<DxcDefine>   DxcDefines;
-
-    DxcDefines.Add({ L"SHADER_LANG_HLSL", L"(1)" });
-    DxcDefines.Add({ L"SHADER_LANG_SPIRV", L"(2)" });
-    DxcDefines.Add({ L"SHADER_LANG_MSL", L"(3)" });
-
-    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
-        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_HLSL" });
-    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
-        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_MSL" });
-    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
-        DxcDefines.Add({ L"SHADER_LANG", L"SHADER_LANG_SPIRV" });
-    else
-        DxcDefines.Add({ L"SHADER_LANG", L"(0)" });
-    
-    TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
-    if (!Defines.IsEmpty())
-    {
-        StrBuff.Reserve(Defines.Size() * 2);
-        DxcDefines.Reserve(Defines.Size());
-
-        for (const FShaderDefine& Define : Defines)
-        {
-            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const FStringWide& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
-            DxcDefines.Add({ WideDefine.GetCString(), WideValue.GetCString() });
-        }
-    }
-    
-    // Retrieve the shader target
-    LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
-    LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
-
-    constexpr uint32 BufferLength = sizeof("xxx_x_x");
-    
-    WCHAR TargetProfile[BufferLength];
-    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
-    
-    const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
-
-    TComPtr<IDxcOperationResult> Result;
-    hResult = Compiler->Compile(
-        SourceBlob.Get(),
-        WideFilePath.GetCString(),
-        WideEntrypoint.GetCString(),
-        TargetProfile,
-        CompileArgs.Data(),
-        CompileArgs.Size(),
-        DxcDefines.Data(),
-        DxcDefines.Size(),
-        IncludeHandler.Get(),
-        &Result);
-
-    if (FAILED(hResult))
-    {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    if (FAILED(Result->GetStatus(&hResult)))
-    {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    TComPtr<IDxcBlobEncoding> PrintBlob;
-    TComPtr<IDxcBlobEncoding> PrintBlob8;
-    if (SUCCEEDED(Result->GetErrorBuffer(&PrintBlob)))
-    {
-        Library->GetBlobAsUtf8(PrintBlob.Get(), &PrintBlob8);
-    }
-
-    if (FAILED(hResult))
-    {
-        if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
-        {
-            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
-        }
-        else
-        {
-            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with. Unknown ERROR.");
-        }
-
-        return false;
-    }
-    
-    if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
-    {
-        const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s' and with the following output: %s", Filename.GetCString(), ArgumentsString.GetCString(), Output.GetCString());
-    }
-    else
-    {
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader '%s', with arguments '%s'.", Filename.GetCString(), ArgumentsString.GetCString());
-    }
-
-    TComPtr<IDxcBlob> CompiledBlob;
-    if (FAILED(Result->GetResult(&CompiledBlob)))
-    {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to retrieve result");
-        return false;
-    }
-
-    const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
-    OutByteCode.Resize(BlobSize);
-
-    LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
-
-    FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
-    
-    // Convert SPIRV into MSL
-    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
-    {
-        if (!ConvertSpirvToMetalShader(CompileInfo.EntryPoint, OutByteCode))
-        {
-            return false;
-        }
-        
-        const bool bResult = DumpContentToFile(OutByteCode, AssetPath + '/' + Filename + "_" + ToString(CompileInfo.ShaderStage) + ".metal");
-        if (!bResult)
-        {
-            return false;
-        }
-    }
-    
-    if (OutByteCode.IsEmpty())
-    {
-        LOG_WARNING("Resulting bytecode is empty");
-        DEBUG_BREAK();
-    }
-
-    return true;
+    // Compile the source
+    const FString Source(Text.Data(), Text.Size());
+    return Compile(Source, FilePath, CompileInfo, OutByteCode);
 }
 
 bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+{
+    return Compile(ShaderSource, "", CompileInfo, OutByteCode);
+}
+
+bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -497,11 +317,54 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
         }
     }
 
+    // Entrypoint
+    const FString EntryPoint = CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL ? "Spirv_Main" : CompileInfo.EntryPoint;
+    
+    // Handle language selection
+    FString Source(ShaderSource);
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
+        // When not using HLSL, we want to emit SPIR-V
         CompileArgs.Emplace(L"-spirv");
-    }
 
+        // Find the actual entrypoint, and change it to a specific spirv one. This is done since
+        // the crurrent version of DXC available on macOS does not support the compiler argument
+        // that does this for us, therefor we now replace the entrypoint ourselves.
+        int32 Position = FString::INVALID_INDEX;
+        while (true)
+        {
+            Position = Source.Find(CompileInfo.EntryPoint, Position);
+            if (Position == FString::INVALID_INDEX)
+            {
+                return false;
+            }
+            
+            const int32 BracketPosition = Source.FindChar('(', Position);
+            if (BracketPosition == FString::INVALID_INDEX)
+            {
+                return false;
+            }
+            
+            // Create a view of the entrypoint name to ensure that we found the whole thing
+            // this is done in order to support entrypoints with spaces etc. between bracket
+            // and actual entrypoint name.
+            const int32 EntrypointLength = BracketPosition - Position;
+            FStringView CurrentEntrypoint(Source.Data(), EntrypointLength, Position);
+            CurrentEntrypoint.TrimInline();
+            
+            // If we actually found the entrypoint, we can exit the loop and replace the entrypoint
+            if (CompileInfo.EntryPoint.Equals(CurrentEntrypoint))
+            {
+                Source.Remove(Position, CompileInfo.EntryPoint.Size());
+                Source.Insert(EntryPoint, Position); // TODO: Change the order of position in string class
+                break;
+            }
+            
+            // Search for the next name
+            Position++;
+        }
+    }
+    
     if (CVarShaderDebug.GetValue())
     {
         CompileArgs.Emplace(L"-Zi");
@@ -512,8 +375,8 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
     const FString ArgumentsString = CreateArgString(MakeArrayView(CompileArgs));
 
     // Convert defines
-    TArray<FStringWide> StrBuff;
     TArray<DxcDefine>   DxcDefines;
+    TArray<FStringWide> DefineStrings;
     
     DxcDefines.Add({ L"SHADER_LANG_HLSL", L"(1)" });
     DxcDefines.Add({ L"SHADER_LANG_SPIRV", L"(2)" });
@@ -531,13 +394,13 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
     TArrayView<FShaderDefine> Defines = CompileInfo.Defines;
     if (!Defines.IsEmpty())
     {
-        StrBuff.Reserve(Defines.Size() * 2);
+        DefineStrings.Reserve(Defines.Size() * 2);
         DxcDefines.Reserve(Defines.Size());
 
         for (const FShaderDefine& Define : Defines)
         {
-            const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
-            const FStringWide& WideValue  = StrBuff.Emplace(CharToWide(Define.Value));
+            const FStringWide& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
+            const FStringWide& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
             DxcDefines.Add({ WideDefine.GetCString(), WideValue.GetCString() });
         }
     }
@@ -547,22 +410,25 @@ bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FR
     const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
 
     constexpr uint32 BufferLength = sizeof("xxx_x_x");
-
     WCHAR TargetProfile[BufferLength];
     FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
     
     // Use the asset-folder as base for the shader-files
-    const FStringWide WideEntrypoint = CharToWide(CompileInfo.EntryPoint);
+    const FStringWide WideFilePath   = CharToWide(FilePath);
+    const FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
-    TComPtr<IDxcBlob>            SourceBlob = new FShaderBlob(ShaderSource.Data(), ShaderSource.SizeInBytes());
+    // Convert the source to a ShaderBlob
+    TComPtr<IDxcBlob> SourceBlob = new FShaderBlob(Source.Data(), Source.SizeInBytes());
+    
+    // Actually compile the shader
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile(
         SourceBlob.Get(),
-        nullptr,
-        WideEntrypoint.GetCString(),
-        TargetProfile,
-        CompileArgs.Data(),
-        CompileArgs.Size(),
+        WideFilePath.GetCString(),
+        WideEntrypoint.GetCString(), 
+        TargetProfile, 
+        CompileArgs.Data(), 
+        CompileArgs.Size(), 
         DxcDefines.Data(),
         DxcDefines.Size(),
         IncludeHandler.Get(),
