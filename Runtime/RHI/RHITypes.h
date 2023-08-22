@@ -442,21 +442,19 @@ enum class EResourceAccess : uint32
     VertexAndConstantBuffer         = FLAG(0),
     IndexBuffer                     = FLAG(1),
     RenderTarget                    = FLAG(2),
-    RenderTargetClear               = FLAG(3),
-    UnorderedAccess                 = FLAG(4),
-    DepthClear                      = FLAG(5),
-    DepthWrite                      = FLAG(6),
-    DepthRead                       = FLAG(7),
-    NonPixelShaderResource          = FLAG(8),
-    PixelShaderResource             = FLAG(9),
-    CopyDest                        = FLAG(10),
-    CopySource                      = FLAG(11),
-    ResolveDest                     = FLAG(12),
-    ResolveSource                   = FLAG(13),
-    RayTracingAccelerationStructure = FLAG(14),
-    ShadingRateSource               = FLAG(15),
-    Present                         = FLAG(16),
-    GenericRead                     = FLAG(17),
+    UnorderedAccess                 = FLAG(3),
+    DepthWrite                      = FLAG(4),
+    DepthRead                       = FLAG(5),
+    NonPixelShaderResource          = FLAG(6),
+    PixelShaderResource             = FLAG(7),
+    CopyDest                        = FLAG(8),
+    CopySource                      = FLAG(9),
+    ResolveDest                     = FLAG(10),
+    ResolveSource                   = FLAG(11),
+    RayTracingAccelerationStructure = FLAG(12),
+    ShadingRateSource               = FLAG(13),
+    Present                         = FLAG(14),
+    GenericRead                     = FLAG(15),
 };
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
@@ -469,9 +467,7 @@ constexpr const CHAR* ToString(EResourceAccess ResourceState)
     case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
     case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
     case EResourceAccess::RenderTarget:                    return "RenderTarget";
-    case EResourceAccess::RenderTargetClear:               return "RenderTargetClear";
     case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
-    case EResourceAccess::DepthClear:                      return "DepthClear";
     case EResourceAccess::DepthWrite:                      return "DepthWrite";
     case EResourceAccess::DepthRead:                       return "DepthRead";
     case EResourceAccess::NonPixelShaderResource:          return "NonPixelShaderResource";

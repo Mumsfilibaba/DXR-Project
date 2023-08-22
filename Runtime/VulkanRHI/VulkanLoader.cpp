@@ -126,9 +126,10 @@ VULKAN_FUNCTION_DEFINITION(ResetCommandPool);
 VULKAN_FUNCTION_DEFINITION(DestroyCommandPool);
 
 VULKAN_FUNCTION_DEFINITION(CreateFence);
+VULKAN_FUNCTION_DEFINITION(DestroyFence);
 VULKAN_FUNCTION_DEFINITION(WaitForFences);
 VULKAN_FUNCTION_DEFINITION(ResetFences);
-VULKAN_FUNCTION_DEFINITION(DestroyFence);
+VULKAN_FUNCTION_DEFINITION(GetFenceStatus);
 
 VULKAN_FUNCTION_DEFINITION(CreateSemaphore);
 VULKAN_FUNCTION_DEFINITION(DestroySemaphore);
@@ -138,6 +139,8 @@ VULKAN_FUNCTION_DEFINITION(DestroyImageView);
 
 VULKAN_FUNCTION_DEFINITION(AllocateMemory);
 VULKAN_FUNCTION_DEFINITION(FreeMemory);
+VULKAN_FUNCTION_DEFINITION(MapMemory);
+VULKAN_FUNCTION_DEFINITION(UnmapMemory);
 
 VULKAN_FUNCTION_DEFINITION(CreateBuffer);
 VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements);
@@ -186,6 +189,7 @@ VULKAN_FUNCTION_DEFINITION(CmdClearDepthStencilImage);
 VULKAN_FUNCTION_DEFINITION(CmdBeginRenderPass);
 VULKAN_FUNCTION_DEFINITION(CmdEndRenderPass);
 VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier);
+VULKAN_FUNCTION_DEFINITION(CmdCopyBuffer);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device)
 {
@@ -200,15 +204,18 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyCommandPool);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateFence);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyFence);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, WaitForFences);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, ResetFences);
-    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyFence);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetFenceStatus);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSemaphore);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySemaphore);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AllocateMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FreeMemory);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, MapMemory);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, UnmapMemory);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements);
@@ -269,6 +276,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBuffer);
 
     // Initialize Dedicated Allocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);

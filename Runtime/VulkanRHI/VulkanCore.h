@@ -133,26 +133,92 @@ inline FString GetVersionAsString(uint32 VersionNumber)
     return FString::CreateFormatted("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber), VK_API_VERSION_PATCH(VersionNumber), VK_API_VERSION_VARIANT(VersionNumber));
 }
 
+constexpr VkPipelineStageFlags ConvertResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
+{
+    switch (ResourceState)
+    {
+        case EResourceAccess::Common:
+            return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        case EResourceAccess::CopyDest:
+            return VK_PIPELINE_STAGE_TRANSFER_BIT;
+        case EResourceAccess::CopySource:
+            return VK_PIPELINE_STAGE_TRANSFER_BIT;
+        case EResourceAccess::DepthRead:
+            return VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        case EResourceAccess::DepthWrite:
+            return VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        case EResourceAccess::IndexBuffer:
+            return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+        case EResourceAccess::NonPixelShaderResource:
+            return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        case EResourceAccess::PixelShaderResource:
+            return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        case EResourceAccess::Present:
+            return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        case EResourceAccess::RenderTarget:
+            return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        case EResourceAccess::ResolveDest:
+            return VK_PIPELINE_STAGE_TRANSFER_BIT;
+        case EResourceAccess::ResolveSource:
+            return VK_PIPELINE_STAGE_TRANSFER_BIT;
+        case EResourceAccess::ShadingRateSource:
+            return VK_PIPELINE_STAGE_FRAGMENT_DENSITY_PROCESS_BIT_EXT;
+        case EResourceAccess::UnorderedAccess:
+            return VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        case EResourceAccess::VertexAndConstantBuffer:
+            return VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        case EResourceAccess::GenericRead:
+            return VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        default:
+            return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    }
+}
+
+constexpr VkAccessFlags ConvertResourceStateToAccessFlags(EResourceAccess ResourceState)
+{
+    switch (ResourceState)
+    {
+        case EResourceAccess::Common:                  return VK_ACCESS_NONE;
+        case EResourceAccess::CopyDest:                return VK_ACCESS_TRANSFER_WRITE_BIT;
+        case EResourceAccess::CopySource:              return VK_ACCESS_TRANSFER_READ_BIT;
+        case EResourceAccess::DepthRead:               return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        case EResourceAccess::DepthWrite:              return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        case EResourceAccess::IndexBuffer:             return VK_ACCESS_INDEX_READ_BIT;
+        case EResourceAccess::NonPixelShaderResource:  return VK_ACCESS_SHADER_READ_BIT;
+        case EResourceAccess::PixelShaderResource:     return VK_ACCESS_SHADER_READ_BIT;
+        case EResourceAccess::Present:                 return VK_ACCESS_NONE;
+        case EResourceAccess::RenderTarget:            return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        case EResourceAccess::ResolveDest:             return VK_ACCESS_TRANSFER_WRITE_BIT;
+        case EResourceAccess::ResolveSource:           return VK_ACCESS_TRANSFER_READ_BIT;
+        case EResourceAccess::ShadingRateSource:       return VK_ACCESS_FRAGMENT_DENSITY_MAP_READ_BIT_EXT;
+        case EResourceAccess::UnorderedAccess:         return VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+        case EResourceAccess::VertexAndConstantBuffer: return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_UNIFORM_READ_BIT;
+        case EResourceAccess::GenericRead:             return VK_ACCESS_MEMORY_READ_BIT;
+        default:                                       return VK_ACCESS_NONE;
+    }
+}
+
 constexpr VkImageLayout ConvertResourceStateToImageLayout(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
-        case EResourceAccess::Common:                 return VK_IMAGE_LAYOUT_GENERAL;
-        case EResourceAccess::RenderTarget:           return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case EResourceAccess::RenderTargetClear:      return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case EResourceAccess::UnorderedAccess:        return VK_IMAGE_LAYOUT_GENERAL;
-        case EResourceAccess::DepthClear:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case EResourceAccess::DepthWrite:             return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-        case EResourceAccess::DepthRead:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-        case EResourceAccess::PixelShaderResource:    return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case EResourceAccess::NonPixelShaderResource: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        case EResourceAccess::CopyDest:               return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case EResourceAccess::CopySource:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case EResourceAccess::ResolveDest:            return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case EResourceAccess::ResolveSource:          return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        case EResourceAccess::Present:                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        case EResourceAccess::ShadingRateSource:      return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
-        default:                                      return VK_IMAGE_LAYOUT_UNDEFINED;
+        case EResourceAccess::Common:                  return VK_IMAGE_LAYOUT_GENERAL;
+        case EResourceAccess::CopyDest:                return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case EResourceAccess::CopySource:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::DepthRead:               return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+        case EResourceAccess::DepthWrite:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        case EResourceAccess::IndexBuffer:             return VK_IMAGE_LAYOUT_UNDEFINED;
+        case EResourceAccess::NonPixelShaderResource:  return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case EResourceAccess::PixelShaderResource:     return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        case EResourceAccess::Present:                 return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        case EResourceAccess::RenderTarget:            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        case EResourceAccess::ResolveDest:             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        case EResourceAccess::ResolveSource:           return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::ShadingRateSource:       return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
+        case EResourceAccess::UnorderedAccess:         return VK_IMAGE_LAYOUT_GENERAL;
+        case EResourceAccess::VertexAndConstantBuffer: return VK_IMAGE_LAYOUT_UNDEFINED;
+        case EResourceAccess::GenericRead:             return VK_IMAGE_LAYOUT_UNDEFINED;
+        default:                                       return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }
 

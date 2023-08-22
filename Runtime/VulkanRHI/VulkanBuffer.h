@@ -11,7 +11,7 @@ public:
     FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
     ~FVulkanBuffer();
     
-    bool Initialize(EResourceAccess InInitialState, const void* InInitialData);
+    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
 
     virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
     

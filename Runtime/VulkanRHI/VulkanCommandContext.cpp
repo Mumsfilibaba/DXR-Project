@@ -2,6 +2,8 @@
 #include "VulkanResourceView.h"
 #include "VulkanTexture.h"
 #include "VulkanViewport.h"
+#include "VulkanBuffer.h"
+#include "VulkanDevice.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -31,7 +33,16 @@ void FVulkanCommandContext::ImageLayoutTransitionBarrier(const FVulkanImageTrans
     CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
-void FVulkanCommandContext::FlushCommands()
+void FVulkanCommandContext::ObtainCommandBuffer()
+{
+    VULKAN_ERROR_COND(CommandBuffer.Begin(), "Failed to Begin CommandBuffer");
+
+    // Clear the list of resources that are scheduled to be destroyed
+    DiscardList.Clear();
+    DiscardListVk.Clear();
+}
+
+void FVulkanCommandContext::FlushCommandBuffer()
 {
     if (CommandBuffer.IsRecording())
     {
@@ -47,13 +58,12 @@ void FVulkanCommandContext::RHIStartContext()
     // TODO: Remove lock, the command context itself should only be used from a single thread
     // Lock to the thread that started the context
     CommandContextCS.Lock();
-
-    VULKAN_ERROR_COND(CommandBuffer.Begin(), "Failed to Begin CommandBuffer");
+    ObtainCommandBuffer();
 }
 
 void FVulkanCommandContext::RHIFinishContext()
 {
-    FlushCommands();
+    FlushCommandBuffer();
     
     // TODO: Remove lock, the command context itself should only be used from a single thread
     // Unlock from the thread that started the context
@@ -181,6 +191,24 @@ void FVulkanCommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArray
 
 void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)     
 {
+    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(Dst);
+    if (!VulkanBuffer)
+    {
+        VULKAN_WARNING("Buffer is nullptr");
+        return;
+    }
+    
+    FVulkanUploadAllocation Allocation = GetDevice()->GetUploadHeap().Allocate(BufferRegion.Size, 1);
+    CHECK(Allocation.Memory != nullptr);
+    FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
+    
+    VkBufferCopy BufferCopy;
+    BufferCopy.srcOffset = Allocation.Offset;
+    BufferCopy.dstOffset = BufferRegion.Offset;
+    BufferCopy.size      = BufferRegion.Size;
+    
+    CommandBuffer.CopyBuffer(Allocation.Buffer->GetVkBuffer(), VulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
+    DiscardListVk.Add(Allocation.Buffer);
 }
 
 void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) 
@@ -263,10 +291,10 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         TransitionBarrier.NewLayout                       = NewLayout;
         TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
         TransitionBarrier.DependencyFlags                 = 0;
-        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
-        TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
-        TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        TransitionBarrier.SrcAccessMask                   = ConvertResourceStateToAccessFlags(BeforeState);
+        TransitionBarrier.DstAccessMask                   = ConvertResourceStateToAccessFlags(AfterState);
+        TransitionBarrier.SrcStageMask                    = ConvertResourceStateToPipelineStageFlags(BeforeState);
+        TransitionBarrier.DstStageMask                    = ConvertResourceStateToPipelineStageFlags(AfterState);
         TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
         TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
         TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
@@ -279,6 +307,24 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
 
 void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)   
 {
+    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(Buffer);
+    if (!VulkanBuffer)
+    {
+        VULKAN_WARNING("Buffer is nullptr");
+        return;
+    }
+
+    FVulkanBufferBarrier BufferBarrier;
+    BufferBarrier.SrcStageMask    = ConvertResourceStateToPipelineStageFlags(BeforeState);
+    BufferBarrier.DstStageMask    = ConvertResourceStateToPipelineStageFlags(AfterState);
+    BufferBarrier.DependencyFlags = 0;
+    BufferBarrier.Buffer          = VulkanBuffer->GetVkBuffer();
+    BufferBarrier.SrcAccessMask   = ConvertResourceStateToAccessFlags(BeforeState);
+    BufferBarrier.DstAccessMask   = ConvertResourceStateToAccessFlags(AfterState);
+    BufferBarrier.Offset          = 0;
+    BufferBarrier.Size            = VK_WHOLE_SIZE;
+
+    CommandBuffer.BufferMemoryPipelineBarrier(BufferBarrier);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
@@ -315,7 +361,7 @@ void FVulkanCommandContext::RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRa
 
 void FVulkanCommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
 {
-    FlushCommands();
+    FlushCommandBuffer();
 
     FVulkanViewport* VulkanViewport = static_cast<FVulkanViewport*>(Viewport);
     VulkanViewport->Present(bVerticalSync);
@@ -328,12 +374,9 @@ void FVulkanCommandContext::RHIClearState()
 
 void FVulkanCommandContext::RHIFlush()
 {
-    FlushCommands();
+    FlushCommandBuffer();
 
     Queue->WaitForCompletion();
-
-    // Clear the list of resources that are scheduled to be destroyed
-    DiscardList.Clear();
 }
 
 void FVulkanCommandContext::RHIInsertMarker(const FStringView& Message)

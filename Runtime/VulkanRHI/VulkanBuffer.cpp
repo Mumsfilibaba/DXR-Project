@@ -1,6 +1,8 @@
+#include "VulkanRHI.h"
 #include "VulkanBuffer.h"
 #include "VulkanDevice.h"
 #include "VulkanPhysicalDevice.h"
+#include "VulkanCommandContext.h"
 #include "Core/Math/Math.h"
 
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
@@ -21,11 +23,11 @@ FVulkanBuffer::~FVulkanBuffer()
 
     if (VULKAN_CHECK_HANDLE(DeviceMemory))
     {
-        GetDevice()->FreeMemory(&DeviceMemory);
+        GetDevice()->FreeMemory(DeviceMemory);
     }
 }
 
-bool FVulkanBuffer::Initialize(EResourceAccess InInitialState, const void* InInitialData)
+bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
@@ -40,7 +42,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialState, const void* InIni
     BufferCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
     BufferCreateInfo.size                  = Desc.Size;
 
-    const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();;
+    const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();
     RequiredAlignment = 1u;
     
     // TODO: Look into abstracting these flags
@@ -80,30 +82,29 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialState, const void* InIni
     bool bUseDedicatedAllocation = false;
     
     VkMemoryRequirements MemoryRequirements;
-#if (VK_KHR_get_memory_requirements2) && (VK_KHR_dedicated_allocation)
+#if VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation
     if (FVulkanDedicatedAllocationKHR::IsEnabled())
     {
         VkMemoryDedicatedRequirementsKHR MemoryDedicatedRequirements;
         FMemory::Memzero(&MemoryDedicatedRequirements);
-        
         MemoryDedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
-        MemoryDedicatedRequirements.pNext = nullptr;
-        
-        VkBufferMemoryRequirementsInfo2KHR BufferMemoryRequirementsInfo;
-        BufferMemoryRequirementsInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2_KHR;
-        BufferMemoryRequirementsInfo.pNext  = nullptr;
-        BufferMemoryRequirementsInfo.buffer = Buffer;
         
         VkMemoryRequirements2KHR MemoryRequirements2;
         FMemory::Memzero(&MemoryRequirements2);
-        
         MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR;
-        MemoryRequirements2.pNext = &MemoryDedicatedRequirements;
+
+        // Add the proper pNext values in the structs
+        FVulkanStructureHelper MemoryRequirements2Helper(MemoryRequirements2);
+        MemoryRequirements2Helper.AddNext(MemoryDedicatedRequirements);
+
+        VkBufferMemoryRequirementsInfo2KHR BufferMemoryRequirementsInfo;
+        FMemory::Memzero(&BufferMemoryRequirementsInfo);
+        BufferMemoryRequirementsInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_MEMORY_REQUIREMENTS_INFO_2_KHR;
+        BufferMemoryRequirementsInfo.buffer = Buffer;
 
         vkGetBufferMemoryRequirements2KHR(GetDevice()->GetVkDevice(), &BufferMemoryRequirementsInfo, &MemoryRequirements2);
-        MemoryRequirements = MemoryRequirements2.memoryRequirements;
-        
-        bUseDedicatedAllocation = (MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE) || (MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE);
+        MemoryRequirements      = MemoryRequirements2.memoryRequirements;
+        bUseDedicatedAllocation = MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE || MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE;
     }
     else
 #endif
@@ -159,7 +160,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialState, const void* InIni
     }
 #endif
 
-    const bool bResult = GetDevice()->AllocateMemory(AllocateInfo, &DeviceMemory);
+    const bool bResult = GetDevice()->AllocateMemory(AllocateInfo, DeviceMemory);
     VULKAN_CHECK(bResult, "Failed to allocate memory");
 
     Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), Buffer, DeviceMemory, 0);
@@ -170,7 +171,6 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialState, const void* InIni
     FMemory::Memzero(&DeviceAdressInfo);
 
     DeviceAdressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-    DeviceAdressInfo.pNext  = nullptr;
     DeviceAdressInfo.buffer = Buffer;
 
     if (GetDevice()->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
@@ -180,6 +180,42 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialState, const void* InIni
     }
 #endif
 
+    if (InInitialData)
+    {
+        if (Desc.IsDynamic())
+        {
+            void* BufferData = nullptr;
+            VkResult Result = vkMapMemory(GetDevice()->GetVkDevice(), DeviceMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
+            VULKAN_CHECK_RESULT(Result, "Failed to map buffer-memory");
+            
+            if (!BufferData)
+            {
+                return false;
+            }
+
+            // Copy over relevant data
+            FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
+            vkUnmapMemory(GetDevice()->GetVkDevice(), DeviceMemory);
+        }
+        else
+        {
+            FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
+            Context->RHIStartContext();
+
+            Context->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            
+            Context->RHIUpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
+
+            // NOTE: Transfer to the initial state
+            if (InInitialAccess != EResourceAccess::CopyDest)
+            {
+                Context->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+            }
+
+            Context->RHIFinishContext();
+        }
+    }
+    
     return true;
 }
 

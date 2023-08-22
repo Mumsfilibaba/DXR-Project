@@ -1,6 +1,7 @@
 #pragma once
 #include "VulkanCore.h"
 #include "VulkanLoader.h"
+#include "VulkanAllocators.h"
 #include "VulkanPhysicalDevice.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
@@ -44,9 +45,11 @@ public:
 
     bool Initialize(const FVulkanDeviceDesc& DeviceDesc);
 
-    bool AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory* OutDeviceMemory);
+    FVulkanUploadHeapAllocator& GetUploadHeap() { return UploadHeap; };
 
-    void FreeMemory(VkDeviceMemory* OutDeviceMemory);
+    bool AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory& OutDeviceMemory);
+
+    void FreeMemory(VkDeviceMemory& OutDeviceMemory);
     
     uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
@@ -84,6 +87,8 @@ private:
     FVulkanInstance*       Instance;
     FVulkanPhysicalDevice* PhysicalDevice;
     VkDevice               Device;
+    
+    FVulkanUploadHeapAllocator UploadHeap;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
 

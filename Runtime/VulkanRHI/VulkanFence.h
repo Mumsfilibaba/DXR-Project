@@ -41,15 +41,29 @@ public:
         return true;
     }
 
-    FORCEINLINE bool Wait(uint64 TimeOut) const
+    bool IsSignaled() const 
     {
-        VULKAN_CHECK_RESULT(vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut), "vkWaitForFences Failed");
+        VkResult Result = vkGetFenceStatus(GetDevice()->GetVkDevice(), Fence);
+        if (Result == VK_ERROR_DEVICE_LOST)
+        {
+            VULKAN_ERROR("Device Lost");
+            return false;
+        }
+
+        return Result == VK_SUCCESS;
+    }
+
+    bool Wait(uint64 TimeOut) const
+    {
+        VkResult Result = vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut);
+        VULKAN_CHECK_RESULT(Result, "vkWaitForFences Failed");
         return true;
     }
 
-    FORCEINLINE bool Reset()
+    bool Reset()
     {
-        VULKAN_CHECK_RESULT(vkResetFences(GetDevice()->GetVkDevice(), 1, &Fence), "vkResetFences Failed");
+        VkResult Result = vkResetFences(GetDevice()->GetVkDevice(), 1, &Fence);
+        VULKAN_CHECK_RESULT(Result, "vkResetFences Failed");
         return true;
     }
 

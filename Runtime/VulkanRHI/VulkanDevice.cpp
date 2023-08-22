@@ -7,6 +7,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     : Instance(InInstance)
     , PhysicalDevice(InAdapter)
     , Device(VK_NULL_HANDLE)
+    , UploadHeap(this)
 {
 }
 
@@ -179,13 +180,10 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     return true;
 }
 
-bool FVulkanDevice::AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory* OutDeviceMemory)
+bool FVulkanDevice::AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory& OutDeviceMemory)
 {
-    VULKAN_ERROR_COND(OutDeviceMemory != nullptr, "DeviceMemory cannot be nullptr");
-    
-    VkResult Result = vkAllocateMemory(Device, &MemoryAllocationInfo, nullptr, OutDeviceMemory);
+    VkResult Result = vkAllocateMemory(Device, &MemoryAllocationInfo, nullptr, &OutDeviceMemory);
     VULKAN_CHECK_RESULT(Result, "vkAllocateMemory failed");
-    
     NumAllocations++;
     
     const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();
@@ -198,12 +196,10 @@ bool FVulkanDevice::AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationI
     return true;
 }
 
-void FVulkanDevice::FreeMemory(VkDeviceMemory* OutDeviceMemory)
+void FVulkanDevice::FreeMemory(VkDeviceMemory& OutDeviceMemory)
 {
-    VULKAN_ERROR_COND(OutDeviceMemory != nullptr, "DeviceMemory cannot be nullptr");
-    
-    vkFreeMemory(Device, *OutDeviceMemory, nullptr);
-    *OutDeviceMemory = VK_NULL_HANDLE;
+    vkFreeMemory(Device, OutDeviceMemory, nullptr);
+    OutDeviceMemory = VK_NULL_HANDLE;
     NumAllocations--;
     
     const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();

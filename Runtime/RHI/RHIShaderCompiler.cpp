@@ -356,7 +356,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
             if (CompileInfo.EntryPoint.Equals(CurrentEntrypoint))
             {
                 Source.Remove(Position, CompileInfo.EntryPoint.Size());
-                Source.Insert(EntryPoint, Position); // TODO: Change the order of position in string class
+                Source.Insert(EntryPoint, Position);
                 break;
             }
             

@@ -2,18 +2,31 @@
 #include "VulkanCommandPool.h"
 #include "VulkanFence.h"
 
+struct FVulkanBufferBarrier
+{
+    VkPipelineStageFlags SrcStageMask;
+    VkPipelineStageFlags DstStageMask;
+    VkDependencyFlags    DependencyFlags;
+    VkBuffer             Buffer;
+    VkAccessFlags        SrcAccessMask;
+    VkAccessFlags        DstAccessMask;
+    VkDeviceSize         Offset;
+    VkDeviceSize         Size;
+};
+
 struct FVulkanImageTransitionBarrier
 {
-    VkImage                 Image;
-    VkImageLayout           PreviousLayout;
-    VkImageLayout           NewLayout;
     VkPipelineStageFlags    SrcStageMask;
     VkPipelineStageFlags    DstStageMask;
-    VkAccessFlagBits        SrcAccessMask;
-    VkAccessFlagBits        DstAccessMask;
     VkDependencyFlags       DependencyFlags;
+    VkImage                 Image;
+    VkAccessFlags           SrcAccessMask;
+    VkAccessFlags           DstAccessMask;
+    VkImageLayout           PreviousLayout;
+    VkImageLayout           NewLayout;
     VkImageSubresourceRange SubresourceRange;
 };
+
 
 class FVulkanCommandBuffer : public FVulkanDeviceObject
 {
@@ -46,10 +59,8 @@ public:
         VkCommandBufferBeginInfo BeginInfo;
         FMemory::Memzero(&BeginInfo);
 
-        BeginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        BeginInfo.pNext            = nullptr;
-        BeginInfo.flags            = Flags;
-        BeginInfo.pInheritanceInfo = nullptr;
+        BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        BeginInfo.flags = Flags;
 
         VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
         VULKAN_CHECK_RESULT(Result, "vkBeginCommandBuffer Failed");
@@ -84,6 +95,33 @@ public:
     {
         vkCmdEndRenderPass(CommandBuffer);
     }
+    
+    FORCEINLINE void CopyBuffer(VkBuffer SrcBuffer, VkBuffer DstBuffer, uint32 RegionCount, const VkBufferCopy* Regions)
+    {
+        vkCmdCopyBuffer(CommandBuffer, SrcBuffer, DstBuffer, RegionCount, Regions);
+    }
+
+    FORCEINLINE void BufferMemoryPipelineBarrier(const FVulkanBufferBarrier& BufferBarrier)
+    {
+        VkBufferMemoryBarrier BufferMemoryBarrier;
+        FMemory::Memzero(&BufferMemoryBarrier);
+        
+        BufferMemoryBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+        BufferMemoryBarrier.srcAccessMask       = BufferBarrier.SrcAccessMask;
+        BufferMemoryBarrier.dstAccessMask       = BufferBarrier.DstAccessMask;
+        BufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        BufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        BufferMemoryBarrier.buffer              = BufferBarrier.Buffer;
+        BufferMemoryBarrier.offset              = BufferBarrier.Offset;
+        BufferMemoryBarrier.size                = BufferBarrier.Size;
+        
+        BufferMemoryPipelineBarrier(BufferBarrier.SrcStageMask, BufferBarrier.DstStageMask, BufferBarrier.DependencyFlags, 1, &BufferMemoryBarrier);
+    }
+    
+    FORCEINLINE void BufferMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 BufferMemoryBarrierCount, const VkBufferMemoryBarrier* BufferMemoryBarriers)
+    {
+        vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, BufferMemoryBarrierCount, BufferMemoryBarriers, 0, nullptr);
+    }
 
     FORCEINLINE void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier)
     {
@@ -91,7 +129,6 @@ public:
         FMemory::Memzero(&ImageMemoryBarrier);
 
         ImageMemoryBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        ImageMemoryBarrier.pNext               = nullptr;
         ImageMemoryBarrier.srcAccessMask       = TransitionBarrier.SrcAccessMask;
         ImageMemoryBarrier.dstAccessMask       = TransitionBarrier.DstAccessMask;
         ImageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
@@ -108,6 +145,7 @@ public:
     {
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }
+    
 
     FORCEINLINE bool WaitForFence(uint64 TimeOut = UINT64_MAX)
     {

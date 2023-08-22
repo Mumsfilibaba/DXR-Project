@@ -146,7 +146,9 @@ public:
 
     void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier);
 
-    void FlushCommands();
+    void ObtainCommandBuffer();
+    
+    void FlushCommandBuffer();
 
     FORCEINLINE FVulkanQueue* GetCommandQueue() const
     {
@@ -171,5 +173,6 @@ private:
     FCriticalSection     CommandContextCS;
 
     // These resources should be destroyed, most likely there is no reference left in the higher level
-    TArray<TSharedRef<IRefCounted>> DiscardList;
+    TArray<TSharedRef<IRefCounted>>       DiscardList;
+    TArray<TSharedRef<FVulkanRefCounted>> DiscardListVk;
 };

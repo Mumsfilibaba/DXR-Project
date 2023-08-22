@@ -18,6 +18,11 @@ FVulkanTexture::~FVulkanTexture()
         vkDestroyImage(GetDevice()->GetVkDevice(), Image, nullptr);
         Image = VK_NULL_HANDLE;
     }
+
+    if (VULKAN_CHECK_HANDLE(DeviceMemory))
+    {
+        GetDevice()->FreeMemory(DeviceMemory);
+    }
 }
 
 bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
@@ -120,13 +125,13 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         MemoryRequirements2Helper.AddNext(MemoryDedicatedRequirements);
 
         VkImageMemoryRequirementsInfo2KHR ImageMemoryRequirementsInfo;
-        ImageMemoryRequirementsInfo.sType  = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2_KHR;
-        ImageMemoryRequirementsInfo.pNext  = nullptr;
-        ImageMemoryRequirementsInfo.image  = Image;
+        FMemory::Memzero(&ImageMemoryRequirementsInfo);
+        ImageMemoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2_KHR;
+        ImageMemoryRequirementsInfo.image = Image;
         
         vkGetImageMemoryRequirements2KHR(GetDevice()->GetVkDevice(), &ImageMemoryRequirementsInfo, &MemoryRequirements2);
         MemoryRequirements      = MemoryRequirements2.memoryRequirements;
-        bUseDedicatedAllocation = (MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE) || (MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE);
+        bUseDedicatedAllocation = MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE || MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE;
     }
     else
 #endif
@@ -159,7 +164,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     }
 #endif
 
-    const bool bResult = GetDevice()->AllocateMemory(AllocateInfo, &DeviceMemory);
+    const bool bResult = GetDevice()->AllocateMemory(AllocateInfo, DeviceMemory);
     VULKAN_CHECK(bResult, "Failed to allocate memory");
 
     Result = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, DeviceMemory, 0);
