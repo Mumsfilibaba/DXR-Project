@@ -282,6 +282,7 @@ void FVulkanBackBuffer::AquireNextImage()
     RenderTargetView->SetImageView(MakeSharedRef<FVulkanImageView>(ImageView));
 }
 
+
 uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {
     const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
