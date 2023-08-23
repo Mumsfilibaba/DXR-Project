@@ -180,43 +180,38 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         }
     }
 
-    if (bIsTexture2D)
+    const IRHITextureData* InitialData = InInitialData;
+    if (InitialData && bIsTexture2D)
     {
-        const IRHITextureData* InitialData = InInitialData;
-        if (InitialData)
+        // TODO: Support other types than texture 2D
+
+        FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
+        Context->RHIStartContext();
+        Context->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+
+        // Transfer all the mip-levels
+        uint32 Width  = Desc.Extent.x;
+        uint32 Height = Desc.Extent.y;
+        for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
         {
-            // TODO: Support other types than texture 2D
-
-            FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
-            Context->RHIStartContext();
-            Context->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
-
-            // Transfer all the mip-levels
-            uint32 Width  = Desc.Extent.x;
-            uint32 Height = Desc.Extent.y;
-            for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
+            // TODO: This does not feel optimal
+            if (IsBlockCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
             {
-                // TODO: This does not feel optimal
-                if (IsBlockCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
-                {
-                    break;
-                }
-
-                FTextureRegion2D TextureRegion(Width, Height);
-                Context->RHIUpdateTexture2D(this, TextureRegion, Index, InitialData->GetMipData(Index), static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
-
-                Width  = Width / 2;
-                Height = Height / 2;
+                break;
             }
 
-            // NOTE: Transition into InitialAccess
-            Context->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
-            Context->RHIFinishContext();
-            return true;
-        }
-    }
+            FTextureRegion2D TextureRegion(Width, Height);
+            Context->RHIUpdateTexture2D(this, TextureRegion, Index, InitialData->GetMipData(Index), static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
 
-    if (InInitialAccess != EResourceAccess::Common)
+            Width  = Width / 2;
+            Height = Height / 2;
+        }
+
+        // NOTE: Transition into InitialAccess
+        Context->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
+        Context->RHIFinishContext();
+    }
+    else if (InInitialAccess != EResourceAccess::Common)
     {
         FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
         Context->RHIStartContext();

@@ -203,8 +203,8 @@ constexpr VkImageLayout ConvertResourceStateToImageLayout(EResourceAccess Resour
     switch (ResourceState)
     {
         case EResourceAccess::Common:                  return VK_IMAGE_LAYOUT_GENERAL;
-        case EResourceAccess::CopyDest:                return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case EResourceAccess::CopySource:              return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::CopyDest:                return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::CopySource:              return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         case EResourceAccess::DepthRead:               return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
         case EResourceAccess::DepthWrite:              return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
         case EResourceAccess::IndexBuffer:             return VK_IMAGE_LAYOUT_UNDEFINED;
@@ -212,8 +212,8 @@ constexpr VkImageLayout ConvertResourceStateToImageLayout(EResourceAccess Resour
         case EResourceAccess::PixelShaderResource:     return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         case EResourceAccess::Present:                 return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         case EResourceAccess::RenderTarget:            return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-        case EResourceAccess::ResolveDest:             return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-        case EResourceAccess::ResolveSource:           return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::ResolveDest:             return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        case EResourceAccess::ResolveSource:           return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
         case EResourceAccess::ShadingRateSource:       return VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV;
         case EResourceAccess::UnorderedAccess:         return VK_IMAGE_LAYOUT_GENERAL;
         case EResourceAccess::VertexAndConstantBuffer: return VK_IMAGE_LAYOUT_UNDEFINED;
@@ -336,6 +336,126 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::BC7_UNorm_SRGB:        return VK_FORMAT_BC7_SRGB_BLOCK;
 
         default:                             return VK_FORMAT_UNDEFINED;
+    }
+}
+
+constexpr bool VkFormatIsBlockCompressed(VkFormat Format)
+{
+    switch (Format)
+    {
+        case VK_FORMAT_BC1_RGBA_UNORM_BLOCK:
+        case VK_FORMAT_BC1_RGBA_SRGB_BLOCK:
+        case VK_FORMAT_BC2_UNORM_BLOCK:
+        case VK_FORMAT_BC2_SRGB_BLOCK:
+        case VK_FORMAT_BC3_UNORM_BLOCK:
+        case VK_FORMAT_BC3_SRGB_BLOCK:
+        case VK_FORMAT_BC4_UNORM_BLOCK:
+        case VK_FORMAT_BC4_SNORM_BLOCK:
+        case VK_FORMAT_BC5_UNORM_BLOCK:
+        case VK_FORMAT_BC5_SNORM_BLOCK:
+        case VK_FORMAT_BC6H_UFLOAT_BLOCK:
+        case VK_FORMAT_BC6H_SFLOAT_BLOCK:
+        case VK_FORMAT_BC7_UNORM_BLOCK:
+        case VK_FORMAT_BC7_SRGB_BLOCK:
+            return true;
+            
+        default:
+            return false;
+    }
+}
+
+constexpr uint32 GetVkFormatBlockSize(VkFormat Format)
+{
+    switch (Format)
+    {
+        case VK_FORMAT_BC1_RGBA_UNORM_BLOCK:
+        case VK_FORMAT_BC1_RGBA_SRGB_BLOCK:
+        case VK_FORMAT_BC4_UNORM_BLOCK:
+        case VK_FORMAT_BC4_SNORM_BLOCK:
+            return 8;
+            
+        case VK_FORMAT_BC2_UNORM_BLOCK:
+        case VK_FORMAT_BC2_SRGB_BLOCK:
+        case VK_FORMAT_BC3_UNORM_BLOCK:
+        case VK_FORMAT_BC3_SRGB_BLOCK:
+        case VK_FORMAT_BC5_UNORM_BLOCK:
+        case VK_FORMAT_BC5_SNORM_BLOCK:
+        case VK_FORMAT_BC6H_UFLOAT_BLOCK:
+        case VK_FORMAT_BC6H_SFLOAT_BLOCK:
+        case VK_FORMAT_BC7_UNORM_BLOCK:
+        case VK_FORMAT_BC7_SRGB_BLOCK:
+            return 16;
+            
+        default:
+            return 0;
+    }
+}
+
+constexpr uint32 GetVkFormatByteStride(VkFormat Format)
+{
+    switch (Format)
+    {
+        case VK_FORMAT_R32G32B32A32_SFLOAT:
+        case VK_FORMAT_R32G32B32A32_UINT:
+        case VK_FORMAT_R32G32B32A32_SINT:
+            return 16;
+            
+        case VK_FORMAT_R32G32B32_SFLOAT:
+        case VK_FORMAT_R32G32B32_UINT:
+        case VK_FORMAT_R32G32B32_SINT:
+            return 12;
+            
+        case VK_FORMAT_R16G16B16A16_SFLOAT:
+        case VK_FORMAT_R16G16B16A16_UNORM:
+        case VK_FORMAT_R16G16B16A16_UINT:
+        case VK_FORMAT_R16G16B16A16_SNORM:
+        case VK_FORMAT_R16G16B16A16_SINT:
+        case VK_FORMAT_R32G32_SFLOAT:
+        case VK_FORMAT_R32G32_UINT:
+        case VK_FORMAT_R32G32_SINT:
+            return 8;
+            
+        case VK_FORMAT_R16G16_SFLOAT:
+        case VK_FORMAT_R16G16_UNORM:
+        case VK_FORMAT_R16G16_UINT:
+        case VK_FORMAT_R16G16_SNORM:
+        case VK_FORMAT_R16G16_SINT:
+        case VK_FORMAT_R8G8B8A8_UNORM:
+        case VK_FORMAT_R8G8B8A8_SRGB:
+        case VK_FORMAT_R8G8B8A8_UINT:
+        case VK_FORMAT_R8G8B8A8_SNORM:
+        case VK_FORMAT_R8G8B8A8_SINT:
+        case VK_FORMAT_D32_SFLOAT:
+        case VK_FORMAT_R32_SFLOAT:
+        case VK_FORMAT_R32_UINT:
+        case VK_FORMAT_R32_SINT:
+        case VK_FORMAT_A2B10G10R10_UNORM_PACK32:
+        case VK_FORMAT_A2B10G10R10_UINT_PACK32:
+        case VK_FORMAT_B10G11R11_UFLOAT_PACK32:
+        case VK_FORMAT_D24_UNORM_S8_UINT:
+        case VK_FORMAT_X8_D24_UNORM_PACK32:
+            return 4;
+            
+        case VK_FORMAT_R8G8_UNORM:
+        case VK_FORMAT_R8G8_UINT:
+        case VK_FORMAT_R8G8_SNORM:
+        case VK_FORMAT_R8G8_SINT:
+        case VK_FORMAT_R16_SFLOAT:
+        case VK_FORMAT_D16_UNORM:
+        case VK_FORMAT_R16_UNORM:
+        case VK_FORMAT_R16_UINT:
+        case VK_FORMAT_R16_SNORM:
+        case VK_FORMAT_R16_SINT:
+            return 2;
+            
+        case VK_FORMAT_R8_UNORM:
+        case VK_FORMAT_R8_UINT:
+        case VK_FORMAT_R8_SNORM:
+        case VK_FORMAT_R8_SINT:
+            return 1;
+            
+        default:
+            return 0;
     }
 }
 

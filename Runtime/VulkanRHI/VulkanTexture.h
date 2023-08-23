@@ -116,3 +116,12 @@ FORCEINLINE VkImage GetVkImage(FRHITexture* Texture)
     FVulkanTexture* VulkanTexture = GetVulkanTexture(Texture);
     return VulkanTexture ? VulkanTexture->GetVkImage() : VK_NULL_HANDLE;
 }
+
+struct FVulkanTextureHelper
+{
+    static uint32 CalculateTextureRowPitch(VkFormat Format, uint32 Width);
+    
+    static uint32 CalculateTextureNumRows(VkFormat Format, uint32 Height);
+    
+    static uint64 CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height);
+};

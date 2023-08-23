@@ -170,33 +170,77 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     Result = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, DeviceMemory, 0);
     VULKAN_CHECK_RESULT(Result, "Failed to bind Image-DeviceMemory");
 
-
     if (InInitialData)
     {
-        // TODO: Upload initial data
+        // TODO: Support other types than texture 2D
+        FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
+        Context->RHIStartContext();
+        
+        FVulkanImageTransitionBarrier TransitionBarrier;
+        TransitionBarrier.Image                           = Image;
+        TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
+        TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        TransitionBarrier.DependencyFlags                 = 0;
+        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
+        TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+        TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+        TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+        TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+        Context->ImageLayoutTransitionBarrier(TransitionBarrier);
+
+        // Transfer all the mip-levels
+        uint32 Width  = Desc.Extent.x;
+        uint32 Height = Desc.Extent.y;
+        for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
+        {
+            // TODO: This does not feel optimal
+            if (IsBlockCompressed(Desc.Format) && (Width % 4 != 0 || Height % 4 != 0))
+            {
+                break;
+            }
+
+            FTextureRegion2D TextureRegion(Width, Height);
+            Context->RHIUpdateTexture2D(this, TextureRegion, Index, InInitialData->GetMipData(Index), static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
+
+            Width  = Width / 2;
+            Height = Height / 2;
+        }
+
+        // NOTE: Transition into InitialAccess
+        Context->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
+        Context->RHIFinishContext();
     }
+    else
+    {
+        // NOTE: Transition the texture into the expected ImageLayout
+        FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
+        Context->RHIStartContext();
 
-    // NOTE: Transition the texture into the expected ImageLayout
-    FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
-    Context->RHIStartContext();
+        FVulkanImageTransitionBarrier TransitionBarrier;
+        TransitionBarrier.Image                           = Image;
+        TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
+        TransitionBarrier.NewLayout                       = ConvertResourceStateToImageLayout(InInitialAccess);
+        TransitionBarrier.DependencyFlags                 = 0;
+        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
+        TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
+        TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
+        TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+        TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-    FVulkanImageTransitionBarrier TransitionBarrier;
-    TransitionBarrier.Image                           = Image;
-    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
-    TransitionBarrier.NewLayout                       = ConvertResourceStateToImageLayout(InInitialAccess);
-    TransitionBarrier.DependencyFlags                 = 0;
-    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
-    TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
-    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
-    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
-    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
-    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-
-    Context->ImageLayoutTransitionBarrier(TransitionBarrier);
-    Context->RHIFinishContext();
+        Context->ImageLayoutTransitionBarrier(TransitionBarrier);
+        
+        Context->RHIFinishContext();
+    }
+    
     return true;
 }
 
@@ -236,4 +280,51 @@ void FVulkanBackBuffer::AquireNextImage()
     FVulkanRenderTargetViewRef RenderTargetView = RenderTargetViews[0];
     CHECK(RenderTargetView != nullptr);
     RenderTargetView->SetImageView(MakeSharedRef<FVulkanImageView>(ImageView));
+}
+
+uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
+{
+    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    if (bIsBlockCompressed)
+    {
+        const uint32 BlockSize = GetVkFormatBlockSize(Format);
+        CHECK(BlockSize != 0);
+        
+        Width = FMath::Max<uint32>(1, (Width + 3) / 4);
+        
+        return Width * BlockSize;
+    }
+    else
+    {
+        const uint32 PixelSize = GetVkFormatByteStride(Format);
+        CHECK(PixelSize != 0);
+        return Width * PixelSize;
+    }
+}
+
+uint32 FVulkanTextureHelper::CalculateTextureNumRows(VkFormat Format, uint32 Height)
+{
+    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    return bIsBlockCompressed ? FMath::AlignUp<uint32>(1, (Height + 3) / 4) : Height;
+}
+
+uint64 FVulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
+{
+    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    if (bIsBlockCompressed)
+    {
+        const uint32 BlockSize = GetVkFormatBlockSize(Format);
+        CHECK(BlockSize != 0);
+        
+        Width  = FMath::Max<uint32>(1, (Width + 3) / 4);
+        Height = FMath::Max<uint32>(1, (Height + 3) / 4);
+        
+        return Width * Height * BlockSize;
+    }
+    else
+    {
+        const uint32 PixelSize = GetVkFormatByteStride(Format);
+        CHECK(PixelSize != 0);
+        return Width * Height * PixelSize;
+    }
 }

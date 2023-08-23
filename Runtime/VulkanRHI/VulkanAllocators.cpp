@@ -148,8 +148,8 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
         return Allocation;
     }
 
-    Allocation.Memory = Buffer->GetMappedMemory();
     Allocation.Buffer = Buffer;
     Allocation.Offset = 0;
+    Allocation.Memory = reinterpret_cast<uint8*>(Buffer->GetMappedMemory());
     return Allocation;
 }

@@ -165,6 +165,7 @@ VULKAN_FUNCTION_DECLARATION(CmdBeginRenderPass);
 VULKAN_FUNCTION_DECLARATION(CmdEndRenderPass);
 VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DECLARATION(CmdCopyBuffer);
+VULKAN_FUNCTION_DECLARATION(CmdCopyBufferToImage);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device);
 

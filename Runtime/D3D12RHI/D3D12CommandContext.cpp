@@ -907,9 +907,10 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT PlacedSubresourceFootprint;
     GetDevice()->GetD3D12Device()->GetCopyableFootprints(&Desc, MipLevel, 1, 0, &PlacedSubresourceFootprint, &NumRows, &RowPitch, &RequiredSize);
 
-    const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+    const uint64 Alignment   = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
+    const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, Alignment);
 
-    FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(AlignedSize, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
+    FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(AlignedSize, Alignment);
     CHECK(Allocation.Memory   != nullptr);
     CHECK(Allocation.Resource != nullptr);
 

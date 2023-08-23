@@ -213,6 +213,49 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
 
 void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) 
 {
+    FVulkanTexture* VulkanTexture = GetVulkanTexture(Dst);
+    if (!VulkanTexture)
+    {
+        VULKAN_WARNING("Texture is nullptr");
+        return;
+    }
+    
+    const VkFormat Format = VulkanTexture->GetVkFormat();
+    const uint64 RequiredSize = FVulkanTextureHelper::CalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
+    
+    // TODO: Check if there exists a Vulkan macro for this
+    const uint64 Alignment   = 256;
+    const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, Alignment);
+
+    FVulkanUploadAllocation Allocation = GetDevice()->GetUploadHeap().Allocate(AlignedSize, Alignment);
+    CHECK(Allocation.Memory != nullptr);
+
+    const uint8* Source = reinterpret_cast<const uint8*>(SrcData);
+    CHECK(Source != nullptr);
+    
+    const uint32 RowPitch = FVulkanTextureHelper::CalculateTextureRowPitch(Format, TextureRegion.Width);
+    const uint32 NumRows  = FVulkanTextureHelper::CalculateTextureNumRows(Format, TextureRegion.Height);
+    for (uint64 y = 0; y < NumRows; y++)
+    {
+        FMemory::Memcpy(Allocation.Memory, Source, SrcRowPitch);
+
+        Source            += SrcRowPitch;
+        Allocation.Memory += RowPitch;
+    }
+    
+    VkBufferImageCopy BufferImageCopy;
+    BufferImageCopy.bufferOffset                    = Allocation.Offset;
+    BufferImageCopy.bufferRowLength                 = 0;
+    BufferImageCopy.bufferImageHeight               = 0;
+    BufferImageCopy.imageSubresource.aspectMask     = GetImageAspectFlagsFromFormat(Format);
+    BufferImageCopy.imageSubresource.mipLevel       = MipLevel;
+    BufferImageCopy.imageSubresource.baseArrayLayer = 0;
+    BufferImageCopy.imageSubresource.layerCount     = 1;
+    BufferImageCopy.imageOffset                     = { 0, 0, 0 };
+    BufferImageCopy.imageExtent                     = { TextureRegion.Width, TextureRegion.Height, 1 };
+
+    CommandBuffer.CopyBufferToImage(Allocation.Buffer->GetVkBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+    DiscardListVk.Add(Allocation.Buffer);
 }
 
 void FVulkanCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
