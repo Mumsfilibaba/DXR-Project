@@ -1289,7 +1289,7 @@ public:
 
     const FRHISamplerStateDesc& GetDesc() const { return Desc; }
 
-private:
+protected:
     FRHISamplerStateDesc Desc;
 };
 

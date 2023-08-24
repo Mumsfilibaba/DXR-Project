@@ -122,21 +122,20 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     DeviceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
     DeviceCreateInfo.queueCreateInfoCount    = QueueCreateInfos.Size();
     DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
-
-    FVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
-
+    
     VkPhysicalDeviceFeatures2 DeviceFeatures2;
     FMemory::Memzero(&DeviceFeatures2);
-
     DeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     DeviceFeatures2.features = DeviceDesc.RequiredFeatures;
+
+    // Construct the pNext chain 
+    FVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
     DeviceCreateHelper.AddNext(DeviceFeatures2);
 
     // TODO: Check for the availability of these features when the device is created
 #if VK_KHR_shader_draw_parameters
     VkPhysicalDeviceShaderDrawParametersFeatures ShaderDrawParametersFeatures;
     FMemory::Memzero(&ShaderDrawParametersFeatures);
-
     ShaderDrawParametersFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
     
     if (IsExtensionEnabled(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME))
@@ -150,7 +149,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
 #if VK_KHR_buffer_device_address
     VkPhysicalDeviceBufferDeviceAddressFeaturesKHR BufferDeviceAddressFeatures;
     FMemory::Memzero(&BufferDeviceAddressFeatures);
-
     BufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR;
 
     if (IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
@@ -164,7 +162,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
 #if VK_KHR_timeline_semaphore
     VkPhysicalDeviceTimelineSemaphoreFeaturesKHR TimelineSemaphoreFeatures;
     FMemory::Memzero(&TimelineSemaphoreFeatures);
-
     TimelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
 
     if (IsExtensionEnabled(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME))

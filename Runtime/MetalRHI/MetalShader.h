@@ -6,6 +6,20 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+typedef TSharedRef<class FMetalShader>              FMetalShaderRef;
+
+typedef TSharedRef<class FMetalVertexShader>        FMetalVertexShaderRef;
+typedef TSharedRef<class FMetalPixelShader>         FMetalPixelShaderRef;
+
+typedef TSharedRef<class FMetalComputeShader>       FMetalComputeShaderRef;
+
+typedef TSharedRef<class FMetalRayTracingShader>    FMetalRayTracingShaderRef;
+typedef TSharedRef<class FMetalRayGenShader>        FMetalRayGenShaderRef;
+typedef TSharedRef<class FMetalRayAnyHitShader>     FMetalRayAnyHitShaderRef;
+typedef TSharedRef<class FMetalRayClosestHitShader> FMetalRayClosestHitShaderRef;
+typedef TSharedRef<class FMetalRayMissShader>       FMetalRayMissShaderRef;
+
+
 enum EShaderVisibility : uint8
 {
     ShaderVisibility_Compute  = 0,
@@ -18,8 +32,10 @@ enum EShaderVisibility : uint8
 class FMetalShader : public FMetalObject
 {
 public:
-    FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode);
+    FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility);
     ~FMetalShader();
+    
+    bool Initialize(const TArray<uint8>& InCode);
 
     id<MTLLibrary> GetMTLLibrary()  const
     {
@@ -48,9 +64,9 @@ protected:
 class FMetalVertexShader : public FRHIVertexShader, public FMetalShader
 {
 public:
-    FMetalVertexShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+    FMetalVertexShader(FMetalDeviceContext* InDevice)
         : FRHIVertexShader()
-        , FMetalShader(InDevice, ShaderVisibility_Vertex, InCode)
+        , FMetalShader(InDevice, ShaderVisibility_Vertex)
     {
     }
 
@@ -63,9 +79,9 @@ public:
 class FMetalPixelShader : public FRHIPixelShader, public FMetalShader
 {
 public:
-    FMetalPixelShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+    FMetalPixelShader(FMetalDeviceContext* InDevice)
         : FRHIPixelShader()
-        , FMetalShader(InDevice, ShaderVisibility_Pixel, InCode)
+        , FMetalShader(InDevice, ShaderVisibility_Pixel)
     {
     }
 
@@ -78,8 +94,8 @@ public:
 class FMetalRayTracingShader : public FMetalShader
 {
 public:
-    FMetalRayTracingShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
-        : FMetalShader(InDevice, ShaderVisibility_Compute, InCode)
+    FMetalRayTracingShader(FMetalDeviceContext* InDevice)
+        : FMetalShader(InDevice, ShaderVisibility_Compute)
     {
     }
 
@@ -95,9 +111,9 @@ protected:
 class FMetalRayGenShader : public FRHIRayGenShader, public FMetalRayTracingShader
 {
 public:
-    FMetalRayGenShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+    FMetalRayGenShader(FMetalDeviceContext* InDevice)
         : FRHIRayGenShader()
-        , FMetalRayTracingShader(InDevice, InCode)
+        , FMetalRayTracingShader(InDevice)
     {
     }
 
@@ -110,9 +126,9 @@ public:
 class FMetalRayAnyHitShader : public FRHIRayAnyHitShader, public FMetalRayTracingShader
 {
 public:
-    FMetalRayAnyHitShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+    FMetalRayAnyHitShader(FMetalDeviceContext* InDevice)
         : FRHIRayAnyHitShader()
-        , FMetalRayTracingShader(InDevice, InCode)
+        , FMetalRayTracingShader(InDevice)
     {
     }
 
@@ -126,9 +142,9 @@ class FMetalRayClosestHitShader : public FRHIRayClosestHitShader, public FMetalR
 {
 public:
     
-    FMetalRayClosestHitShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+    FMetalRayClosestHitShader(FMetalDeviceContext* InDevice)
         : FRHIRayClosestHitShader()
-        , FMetalRayTracingShader(InDevice, InCode)
+        , FMetalRayTracingShader(InDevice)
     {
     }
 
@@ -141,9 +157,9 @@ public:
 class FMetalRayMissShader : public FRHIRayMissShader, public FMetalRayTracingShader
 {
 public:
-    FMetalRayMissShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+    FMetalRayMissShader(FMetalDeviceContext* InDevice)
         : FRHIRayMissShader()
-        , FMetalRayTracingShader(InDevice, InCode)
+        , FMetalRayTracingShader(InDevice)
     {
     }
 
@@ -156,9 +172,9 @@ public:
 class FMetalComputeShader : public FRHIComputeShader, public FMetalShader
 {
 public:
-    FMetalComputeShader(FMetalDeviceContext* InDevice, const TArray<uint8>& InCode)
+    FMetalComputeShader(FMetalDeviceContext* InDevice)
         : FRHIComputeShader()
-        , FMetalShader(InDevice, ShaderVisibility_Compute, InCode)
+        , FMetalShader(InDevice, ShaderVisibility_Compute)
         , ThreadGroupXYZ(1, 1, 1)
     {
     }

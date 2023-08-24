@@ -41,6 +41,7 @@ protected:
     VkDeviceSize    RequiredAlignment;
 };
 
+
 inline FVulkanBuffer* GetVulkanBuffer(FRHIBuffer* Buffer)
 {
     return static_cast<FVulkanBuffer*>(Buffer);

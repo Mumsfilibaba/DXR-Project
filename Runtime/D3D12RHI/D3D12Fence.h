@@ -4,9 +4,7 @@
 
 typedef TSharedRef<class FD3D12Fence> FD3D12FenceRef;
 
-class FD3D12Fence 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12Fence : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12Fence(FD3D12Device* InDevice);
@@ -35,20 +33,21 @@ struct FD3D12FenceSyncPoint
     FD3D12FenceSyncPoint()
         : Fence(nullptr)
         , FenceValue(0)
-    { }
+    {
+    }
 
     FD3D12FenceSyncPoint(FD3D12Fence* InFence, uint64 InFenceValue)
         : Fence(InFence)
         , FenceValue(InFenceValue)
-    { }
+    {
+    }
 
     FD3D12Fence* Fence;
     uint64       FenceValue;
 };
 
 
-class FD3D12FenceManager
-    : public FD3D12DeviceChild
+class FD3D12FenceManager : public FD3D12DeviceChild
 {
 public:
     FD3D12FenceManager(FD3D12Device* InDevice);

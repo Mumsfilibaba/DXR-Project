@@ -30,6 +30,7 @@ public:
     ~FD3D12GPUResourceUploader() = default;
 
     bool Reserve(uint64 InSizeInBytes);
+
     void Reset();
 
     FD3D12UploadAllocation Allocate(uint64 SizeInBytes, uint64 Alignment);
@@ -137,6 +138,7 @@ public:
     }
 
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
 
     void FlushBarriers(FD3D12CommandList& CommandList)
@@ -148,9 +150,15 @@ public:
         }
     }
 
-    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const { return Barriers.Data(); }
+    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const
+    {
+        return Barriers.Data();
+    }
 
-    FORCEINLINE uint32 GetNumBarriers() const { return Barriers.Size(); }
+    FORCEINLINE uint32 GetNumBarriers() const
+    {
+        return Barriers.Size();
+    }
 
 private:
     TArray<D3D12_RESOURCE_BARRIER> Barriers;

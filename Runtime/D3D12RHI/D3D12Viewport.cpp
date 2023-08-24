@@ -41,7 +41,7 @@ FD3D12Viewport::~FD3D12Viewport()
 bool FD3D12Viewport::Initialize()
 {
     // Save the flags
-    Flags = GetDevice()->GetAdapter()->SupportsTearing() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    Flags = GetDevice()->GetAdapter()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     const uint32      NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;

@@ -19,11 +19,11 @@ public:
 
     bool Initialize();
 
-	bool Present(bool bVerticalSync);
-
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
     
     virtual FRHITexture* GetBackBuffer() const override final;
+	
+    bool Present(bool bVerticalSync);
 
     void SetName(const FString& InName);
     

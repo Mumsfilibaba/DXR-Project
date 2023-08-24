@@ -203,7 +203,7 @@ private:
     MTLViewport                 CurrentViewport;
     
     // PipelineState
-    TSharedRef<FMetalBuffer>                CurrentIndexBuffer;
+    FMetalBufferRef                         CurrentIndexBuffer;
     TSharedRef<FMetalGraphicsPipelineState> CurrentGraphicsPipeline;
     MTLPrimitiveType                        CurrentPrimitiveType;
 
@@ -221,10 +221,10 @@ private:
         kMaxSamplerStates   = 16,
     };
     
-    TStaticArray<TSharedRef<FMetalSamplerState>, kMaxSamplerStates> CurrentSamplerStates[ShaderVisibility_Count];
-    TStaticArray<TSharedRef<FMetalShaderResourceView>, kMaxSRVs>    CurrentSRVs[ShaderVisibility_Count];
-    TStaticArray<TSharedRef<FMetalUnorderedAccessView>, kMaxUAVs>   CurrentUAVs[ShaderVisibility_Count];
-    TStaticArray<TSharedRef<FMetalBuffer>, kMaxConstantBuffers>     CurrentConstantBuffers[ShaderVisibility_Count];
+    TStaticArray<FMetalSamplerStateRef, kMaxSamplerStates>        CurrentSamplerStates[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<FMetalShaderResourceView>, kMaxSRVs>  CurrentSRVs[ShaderVisibility_Count];
+    TStaticArray<TSharedRef<FMetalUnorderedAccessView>, kMaxUAVs> CurrentUAVs[ShaderVisibility_Count];
+    TStaticArray<FMetalBufferRef, kMaxConstantBuffers>            CurrentConstantBuffers[ShaderVisibility_Count];
     
     TStaticArray<id<MTLBuffer> , kMaxBuffers>  CurrentBuffers[ShaderVisibility_Count];
     TStaticArray<id<MTLTexture>, kMaxTextures> CurrentTextures[ShaderVisibility_Count];

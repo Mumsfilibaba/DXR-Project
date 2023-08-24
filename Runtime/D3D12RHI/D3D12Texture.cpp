@@ -437,6 +437,17 @@ FString FD3D12Texture::GetName() const
     return "";
 }
 
+FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureDesc& InDesc)
+    : FD3D12Texture(InDevice, InDesc)
+    , Viewport(InViewport)
+{
+}
+
+FD3D12BackBufferTexture::~FD3D12BackBufferTexture()
+{
+    Viewport = nullptr;
+}
+
 FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture()
 {
     return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;

@@ -29,14 +29,36 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     , FMetalObject(InDeviceContext)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
-    , Drawable(nil)
+    , MetalLayer(nullptr)
+    , Drawable(nullptr)
+    , MainThreadEvent(nullptr)
 {
+}
+
+FMetalViewport::~FMetalViewport()
+{
+    // The view is a UI object and needs to be released on the main-thread
+    ExecuteOnMainThread(^
+    {
+        NSSafeRelease(MetalView);
+        NSSafeRelease(MetalLayer);
+    }, NSDefaultRunLoopMode, true);
+}
+
+bool FMetalViewport::Initialize()
+{
+    if (!Desc.WindowHandle)
+    {
+        LOG_ERROR("WindowHandle cannot be null");
+        return false;
+    }
+
+    __block bool bResult = false;
+    __block CAMetalLayer* NewMetalLayer = nullptr;
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
 
-        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
-        
         NSRect Frame;
         Frame.size.width  = Desc.Width;
         Frame.size.height = Desc.Height;
@@ -47,53 +69,53 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
         [MetalView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [MetalView setWantsLayer:YES];
         
-        const CGFloat BackgroundColor[] = { 0.0, 0.0, 0.0, 0.0 };
-        
-        CAMetalLayer* MetalLayer = [CAMetalLayer new];
-        MetalLayer.edgeAntialiasingMask    = 0;
-        MetalLayer.masksToBounds           = YES;
-        MetalLayer.backgroundColor         = CGColorCreate(CGColorSpaceCreateDeviceRGB(), BackgroundColor);
-        MetalLayer.presentsWithTransaction = NO;
-        MetalLayer.anchorPoint             = CGPointMake(0.5, 0.5);
-        MetalLayer.frame                   = Frame;
-        MetalLayer.magnificationFilter     = kCAFilterNearest;
-        MetalLayer.minificationFilter      = kCAFilterNearest;
+        const CGFloat BackgroundColor[] = { 0.0, 0.0, 0.0, 0.0 }; 
+        NewMetalLayer = [CAMetalLayer new];
+        NewMetalLayer.edgeAntialiasingMask    = 0;
+        NewMetalLayer.masksToBounds           = YES;
+        NewMetalLayer.backgroundColor         = CGColorCreate(CGColorSpaceCreateDeviceRGB(), BackgroundColor);
+        NewMetalLayer.presentsWithTransaction = NO;
+        NewMetalLayer.anchorPoint             = CGPointMake(0.5, 0.5);
+        NewMetalLayer.frame                   = Frame;
+        NewMetalLayer.magnificationFilter     = kCAFilterNearest;
+        NewMetalLayer.minificationFilter      = kCAFilterNearest;
 
-        [MetalLayer setDevice:InDeviceContext->GetMTLDevice()];
-        
-        [MetalLayer setFramebufferOnly:NO];
-        [MetalLayer removeAllAnimations];
+        [NewMetalLayer setDevice:GetDeviceContext()->GetMTLDevice()];
+        [NewMetalLayer setFramebufferOnly:NO];
+        [NewMetalLayer removeAllAnimations];
 
-        [MetalView setLayer:MetalLayer];
+        [MetalView setLayer:NewMetalLayer];
         [MetalView retain];
         
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
         [CocoaWindow setContentView:MetalView];
         [CocoaWindow makeFirstResponder:MetalView];
+
+        bResult = true;
     }, NSDefaultRunLoopMode, true);
     
+    if (!bResult)
+    {
+        return false;
+    }
+
+    // Set the metallayer
+    MetalLayer = NewMetalLayer;
+
     // Create Event
     MainThreadEvent = static_cast<FMacEvent*>(FMacThreadMisc::CreateEvent(false));
+    if (!MainThreadEvent)
+    {
+        return false;
+    }
 
     // Create BackBuffer
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
-        GetColorFormat(),
-        Desc.Width,
-        Desc.Height,
-        1,
-        1,
-        ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
-    
-    BackBuffer = new FMetalTexture(InDeviceContext, BackBufferDesc);
-    BackBuffer->SetViewport(this);
-}
+    const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
 
-FMetalViewport::~FMetalViewport()
-{
-    // The view is a UI object and needs to be released on the main-thread
-    ExecuteOnMainThread(^
-    {
-        NSSafeRelease(MetalView);
-    }, NSDefaultRunLoopMode, true);
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), Desc.Width, Desc.Height, 1, 1, Flags);
+    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferDesc);
+    BackBuffer->SetViewport(this);
+    return true;
 }
 
 bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
@@ -104,8 +126,11 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
     {
         ExecuteOnMainThread(^
         {
-            CAMetalLayer* MetalLayer = (CAMetalLayer*)MetalView.layer;
-            MetalLayer.drawableSize = CGSizeMake(InWidth, InHeight);
+            CAMetalLayer* MetalLayer = GetMetalLayer();
+            if (MetalLayer)
+            {
+                MetalLayer.drawableSize = CGSizeMake(InWidth, InHeight);
+            }
         }, NSDefaultRunLoopMode, true);
         
         Desc.Width  = uint16(InWidth);
@@ -117,23 +142,22 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 
 bool FMetalViewport::Present(bool bVerticalSync)
 {
-    ExecuteOnMainThread(^
+    SCOPED_AUTORELEASE_POOL();
+
+    CAMetalLayer* MetalLayer = GetMetalLayer();
+    if (MetalLayer)
     {
-        SCOPED_AUTORELEASE_POOL();
+        MetalLayer.displaySyncEnabled = bVerticalSync;
+    }
     
-        CAMetalLayer* MetalLayer = GetMetalLayer();
-        if (MetalLayer)
-        {
-            MetalLayer.displaySyncEnabled = bVerticalSync;
-        }
+    id<MTLDrawable> CurrentDrawable = GetDrawable();
+    if (CurrentDrawable)
+    {
+        [CurrentDrawable present];
+        [Drawable release];
+        Drawable = nullptr;
+    }
         
-        id<MTLDrawable> CurrentDrawable = GetDrawable();
-        if (CurrentDrawable)
-        {
-            [CurrentDrawable present];
-        }
-    }, NSDefaultRunLoopMode, false);
-    
     return true;
 }
 
@@ -142,8 +166,6 @@ id<CAMetalDrawable> FMetalViewport::GetDrawable()
     SCOPED_AUTORELEASE_POOL();
     
     // This can only be called on the mainthread
-    // Check(FPlatformThreadMisc::IsMainThread());
-
     if (!Drawable)
     {
         CAMetalLayer* MetalLayer = GetMetalLayer();

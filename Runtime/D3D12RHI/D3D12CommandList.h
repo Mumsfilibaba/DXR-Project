@@ -14,7 +14,6 @@ class FD3D12CommandList : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12CommandList(FD3D12Device* InDevice);
-    ~FD3D12CommandList() = default;
 
     bool Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline);
 
@@ -185,8 +184,8 @@ public:
 
     FORCEINLINE void OMSetRenderTargets(
         const D3D12_CPU_DESCRIPTOR_HANDLE* RenderTargetDescriptors,
-        uint32 NumRenderTargetDescriptors,
-        bool bRTsSingleHandleToDescriptorRange,
+        uint32                             NumRenderTargetDescriptors,
+        bool                               bRTsSingleHandleToDescriptorRange,
         const D3D12_CPU_DESCRIPTOR_HANDLE* DepthStencilDescriptor)
     {
         CmdList->OMSetRenderTargets(NumRenderTargetDescriptors, RenderTargetDescriptors, bRTsSingleHandleToDescriptorRange, DepthStencilDescriptor);
@@ -255,6 +254,5 @@ private:
     TComPtr<ID3D12GraphicsCommandList4> CmdList4;
     TComPtr<ID3D12GraphicsCommandList5> CmdList5;
     TComPtr<ID3D12GraphicsCommandList6> CmdList6;
-
     bool bIsReady = false;
 };

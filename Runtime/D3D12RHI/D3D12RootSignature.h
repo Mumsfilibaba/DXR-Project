@@ -32,19 +32,28 @@ class FD3D12RootSignatureDescHelper
 {
 public:
     FD3D12RootSignatureDescHelper(const FD3D12RootSignatureResourceCount& RootSignatureInfo);
-    ~FD3D12RootSignatureDescHelper() = default;
 
-    const uint32 GetRootSignatureCost() const { return RootSignatureCost; }
+    const uint32 GetRootSignatureCost() const 
+    { 
+        return RootSignatureCost; 
+    }
 
-    const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const { return Desc; }
+    const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
+    { 
+        return Desc;
+    }
 
 private:
     static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace);
 
     void InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
+    
     void Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace);
+    
     void InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
+    
     void InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
+    
     void InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
 
     D3D12_ROOT_SIGNATURE_DESC Desc;
@@ -62,12 +71,13 @@ class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12RootSignature(FD3D12Device* InDevice);
-    ~FD3D12RootSignature() = default;
     
     static bool Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob);
     
     bool Initialize(const FD3D12RootSignatureResourceCount& RootSignatureInfo);
+    
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
+
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     // Returns -1 if root parameter is not valid

@@ -11,23 +11,20 @@ class FMaterial;
 struct alignas(D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) FD3D12ShaderBindingTableEntry
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
-    D3D12_GPU_DESCRIPTOR_HANDLE    RootDescriptorTables[4] = { 0, 0, 0, 0 };
+    D3D12_GPU_DESCRIPTOR_HANDLE RootDescriptorTables[4] = { 0, 0, 0, 0 };
 };
 
-
-class FD3D12ShaderBindingTableBuilder 
-    : public FD3D12DeviceChild
+class FD3D12ShaderBindingTableBuilder : public FD3D12DeviceChild
 {
 public:
     FD3D12ShaderBindingTableBuilder(FD3D12Device* InDevice);
-    ~FD3D12ShaderBindingTableBuilder() = default;
 
     void PopulateEntry(
-        FD3D12RayTracingPipelineState* PipelineState,
-        FD3D12RootSignature* RootSignature,
-        FD3D12OnlineDescriptorHeap* ResourceHeap,
-        FD3D12OnlineDescriptorHeap* SamplerHeap,
-        FD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
+        FD3D12RayTracingPipelineState*    PipelineState,
+        FD3D12RootSignature*              RootSignature,
+        FD3D12OnlineDescriptorHeap*       ResourceHeap,
+        FD3D12OnlineDescriptorHeap*       SamplerHeap,
+        FD3D12ShaderBindingTableEntry&    OutShaderBindingEntry,
         const FRayTracingShaderResources& Resources);
 
     void CopyDescriptors();
@@ -53,21 +50,27 @@ private:
 };
 
 
-class FD3D12AccelerationStructure 
-    : public FD3D12DeviceChild
+class FD3D12AccelerationStructure : public FD3D12DeviceChild
 {
 public:
     FD3D12AccelerationStructure(FD3D12Device* InDevice);
-    ~FD3D12AccelerationStructure() = default;
-    
+    virtual ~FD3D12AccelerationStructure() = default;
+
     D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
     {
         CHECK(ResultBuffer != nullptr);
         return ResultBuffer->GetGPUVirtualAddress();
     }
 
-    FD3D12Resource* GetD3D12ScratchBuffer() const { return ScratchBuffer.Get(); }
-    FD3D12Resource* GetD3D12Resource()      const { return ResultBuffer.Get(); }
+    FD3D12Resource* GetD3D12Resource() const
+    {
+        return ResultBuffer.Get();
+    }
+
+    FD3D12Resource* GetD3D12ScratchBuffer() const
+    {
+        return ScratchBuffer.Get();
+    }
 
 protected:
     FD3D12ResourceRef ResultBuffer;
@@ -75,24 +78,16 @@ protected:
 };
 
 
-class FD3D12RayTracingGeometry 
-    : public FRHIRayTracingGeometry
-    , public FD3D12AccelerationStructure
+class FD3D12RayTracingGeometry : public FRHIRayTracingGeometry, public FD3D12AccelerationStructure
 {
 public:
     FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryDesc& Initializer);
-    ~FD3D12RayTracingGeometry() = default;
+    virtual ~FD3D12RayTracingGeometry() = default;
 
-    bool Build(
-        FD3D12CommandContext& CmdContext,
-        FD3D12Buffer* InVertexBuffer,
-        uint32 InNumVertices,
-        FD3D12Buffer* InIndexBuffer,
-        uint32 InNumIndices,
-        EIndexFormat InIndexFormat,
-        bool bUpdate);
+    bool Build(FD3D12CommandContext& CmdContext, FD3D12Buffer* InVertexBuffer, uint32 InNumVertices, FD3D12Buffer* InIndexBuffer, uint32 InNumIndices, EIndexFormat InIndexFormat, bool bUpdate);
 
-    virtual void* GetRHIBaseBVHBuffer()             override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
     virtual void SetName(const FString& InName) override final
@@ -104,40 +99,47 @@ public:
         }
     }
 
-    FD3D12Buffer* GetVertexBuffer() const { return VertexBuffer.Get(); }
-    FD3D12Buffer* GetIndexBuffer()  const { return IndexBuffer.Get(); }
+    FD3D12Buffer* GetVertexBuffer() const
+    { 
+        return VertexBuffer.Get();
+    }
+
+    FD3D12Buffer* GetIndexBuffer() const
+    {
+        return IndexBuffer.Get();
+    }
 
 private:
-    TSharedRef<FD3D12Buffer>  VertexBuffer;
-    TSharedRef<FD3D12Buffer>  IndexBuffer;
+    TSharedRef<FD3D12Buffer> VertexBuffer;
+    TSharedRef<FD3D12Buffer> IndexBuffer;
 };
 
 
-class FD3D12RayTracingScene 
-    : public FRHIRayTracingScene
-    , public FD3D12AccelerationStructure
+class FD3D12RayTracingScene : public FRHIRayTracingScene , public FD3D12AccelerationStructure
 {
 public:
     FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer);
-    ~FD3D12RayTracingScene() = default;
+    virtual ~FD3D12RayTracingScene() = default;
 
     bool Build(class FD3D12CommandContext& CmdContext, const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, bool bUpdate);
 
     bool BuildBindingTable(
-        class FD3D12CommandContext& CmdContext,
-        FD3D12RayTracingPipelineState* PipelineState,
-        FD3D12OnlineDescriptorHeap* ResourceHeap,
-        FD3D12OnlineDescriptorHeap* SamplerHeap,
+        class FD3D12CommandContext&       CmdContext,
+        FD3D12RayTracingPipelineState*    PipelineState,
+        FD3D12OnlineDescriptorHeap*       ResourceHeap,
+        FD3D12OnlineDescriptorHeap*       SamplerHeap,
         const FRayTracingShaderResources* RayGenLocalResources,
         const FRayTracingShaderResources* MissLocalResources,
         const FRayTracingShaderResources* HitGroupResources,
-        uint32 NumHitGroupResources);
+        uint32                            NumHitGroupResources);
 
-    virtual void* GetRHIBaseBVHBuffer()             override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-    virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final { return FRHIDescriptorHandle(); }
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const FString& InName) override final
     {
@@ -148,20 +150,28 @@ public:
         }
     }
 
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable()    const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable()      const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE GetRayGenShaderRecord() const;
 
-    FD3D12Resource* GetInstanceuffer() const { return InstanceBuffer.Get(); }
-    FD3D12Resource* GetBindingTable()  const { return BindingTable.Get(); }
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable() const;
+    
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable() const;
+
+    FD3D12Resource* GetInstanceuffer() const
+    {
+        return InstanceBuffer.Get();
+    }
+
+    FD3D12Resource* GetBindingTable() const
+    {
+        return BindingTable.Get();
+    }
 
 private:
     TArray<FRHIRayTracingGeometryInstance> Instances;
 
-    FD3D12ShaderResourceViewRef            View;
-
-    FD3D12ResourceRef                      InstanceBuffer;
-    FD3D12ResourceRef                      BindingTable;
+    FD3D12ShaderResourceViewRef View;
+    FD3D12ResourceRef           InstanceBuffer;
+    FD3D12ResourceRef           BindingTable;
 
     uint32 BindingTableStride = 0;
     uint32 NumHitGroups       = 0;

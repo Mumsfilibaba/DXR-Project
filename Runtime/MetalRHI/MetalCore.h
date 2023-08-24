@@ -89,6 +89,155 @@ constexpr MTLStoreAction ConvertAttachmentStoreAction(EAttachmentStoreAction Sto
     }
 }
 
+constexpr MTLSamplerMinMagFilter ConvertSamplerFilterToMinFilter(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::MinMagMipPoint:
+        case ESamplerFilter::MinMagPoint_MipLinear:
+        case ESamplerFilter::MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::MinPoint_MagMipLinear:
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+            return MTLSamplerMinMagFilterNearest;
+            
+        case ESamplerFilter::MinLinear_MagMipPoint:
+        case ESamplerFilter::MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::MinMagLinear_MipPoint:
+        case ESamplerFilter::MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+            return MTLSamplerMinMagFilterLinear;
+            
+        default:
+            return MTLSamplerMinMagFilterNearest;
+    }
+}
+
+constexpr MTLSamplerMinMagFilter ConvertSamplerFilterToMagFilter(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::MinMagMipPoint:
+        case ESamplerFilter::MinMagPoint_MipLinear:
+        case ESamplerFilter::MinLinear_MagMipPoint:
+        case ESamplerFilter::MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+            return MTLSamplerMinMagFilterNearest;
+            
+        case ESamplerFilter::MinPoint_MagMipLinear:
+        case ESamplerFilter::MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::MinMagLinear_MipPoint:
+        case ESamplerFilter::MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+            return MTLSamplerMinMagFilterLinear;
+            
+        default:
+            return MTLSamplerMinMagFilterNearest;
+    }
+}
+
+constexpr MTLSamplerMipFilter ConvertSamplerFilterToMipmapMode(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::MinMagMipPoint:
+        case ESamplerFilter::MinLinear_MagMipPoint:
+        case ESamplerFilter::MinMagLinear_MipPoint:
+        case ESamplerFilter::MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+            return MTLSamplerMipFilterNearest;
+            
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::MinMagPoint_MipLinear:
+        case ESamplerFilter::MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::MinPoint_MagMipLinear:
+        case ESamplerFilter::MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+            return MTLSamplerMipFilterLinear;
+            
+        default:
+            return MTLSamplerMipFilterNotMipmapped;
+    }
+}
+
+constexpr MTLSamplerAddressMode ConvertSamplerMode(ESamplerMode SamplerMode)
+{
+    switch (SamplerMode)
+    {
+        case ESamplerMode::Wrap:       return MTLSamplerAddressModeRepeat;
+        case ESamplerMode::Mirror:     return MTLSamplerAddressModeMirrorRepeat;
+        case ESamplerMode::Clamp:      return MTLSamplerAddressModeClampToEdge;
+        case ESamplerMode::Border:     return MTLSamplerAddressModeClampToBorderColor;
+        case ESamplerMode::MirrorOnce: return MTLSamplerAddressModeMirrorClampToEdge;
+        default:                       return MTLSamplerAddressModeRepeat;
+    }
+}
+
+constexpr bool IsAnisotropySampler(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anistrotopic:
+            return true;
+            
+        default:
+            return false;
+    }
+}
+
+constexpr bool IsComparissonSampler(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Comparison_Anistrotopic:
+            return true;
+            
+        default:
+            return false;
+    }
+}
+
+constexpr MTLCompareFunction ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
+{
+    switch (ComparisonFunc)
+    {
+    case EComparisonFunc::Never:        return MTLCompareFunctionNever;
+    case EComparisonFunc::Less:         return MTLCompareFunctionLess;
+    case EComparisonFunc::Equal:        return MTLCompareFunctionEqual;
+    case EComparisonFunc::LessEqual:    return MTLCompareFunctionLessEqual;
+    case EComparisonFunc::Greater:      return MTLCompareFunctionGreater;
+    case EComparisonFunc::NotEqual:     return MTLCompareFunctionNotEqual;
+    case EComparisonFunc::GreaterEqual: return MTLCompareFunctionGreaterEqual;
+    case EComparisonFunc::Always:       return MTLCompareFunctionAlways;
+    default:                            return MTLCompareFunctionNever;
+    }
+}
+
 constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, bool bIsMultisampled)
 {
     switch(TextureDimension)

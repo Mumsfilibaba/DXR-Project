@@ -13,7 +13,8 @@ class TD3D12ViewCache
 {
 public:
     static constexpr D3D12_DESCRIPTOR_HEAP_TYPE GetDescriptorHeapType() { return HeapType; }
-    static constexpr uint32                     GetDescriptorTableSize() { return kDescriptorTableSize; }
+
+    static constexpr uint32 GetDescriptorTableSize() { return kDescriptorTableSize; }
 
 public:
     TD3D12ViewCache()
@@ -22,7 +23,8 @@ public:
         , GPUDescriptorTables()
         , CopyDescriptors()
         , bDirty()
-    { }
+    {
+    }
 
     void BindView(EShaderVisibility Visibility, ViewType* DescriptorView, uint32 ShaderRegister)
     {
@@ -126,7 +128,8 @@ struct FD3D12PipelineStageMask
         , DomainStage(0)
         , GeometryStage(0)
         , PixelStage(0)
-    { }
+    {
+    }
 
     constexpr FD3D12PipelineStageMask(
         uint8 InComputeStage,
@@ -141,7 +144,8 @@ struct FD3D12PipelineStageMask
         , DomainStage(InDomainStage)
         , GeometryStage(InGeometryStage)
         , PixelStage(InPixelStage)
-    { }
+    {
+    }
 
     constexpr bool CheckShaderVisibility(EShaderVisibility ShaderVisibility) const
     {
@@ -246,8 +250,7 @@ struct FD3D12RenderTargetViewCache
 };
 
 
-class FD3D12DescriptorCache 
-    : public FD3D12DeviceChild
+class FD3D12DescriptorCache : public FD3D12DeviceChild
 {
 public:
     FD3D12DescriptorCache(FD3D12Device* Device);
@@ -256,6 +259,7 @@ public:
     bool Initialize();
 
     void PrepareGraphicsDescriptors(FD3D12CommandBatch* CommandBatch, FD3D12RootSignature* RootSignature, FD3D12PipelineStageMask PipelineMask);
+    
     void PrepareComputeDescriptors(FD3D12CommandBatch* CommandBatch, FD3D12RootSignature* RootSignature);
     
     void SetCurrentCommandList(FD3D12CommandList* InCommandList)
@@ -266,6 +270,7 @@ public:
     void SetRenderTargets(FD3D12RenderTargetViewCache& RenderTargets, FD3D12DepthStencilView* DepthStencil);
 
     void SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers);
+
     void SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer);
 
     void Clear();
@@ -312,17 +317,17 @@ public:
 
 private:
     void AllocateDescriptorsAndSetHeaps(
-        ID3D12GraphicsCommandList* CommandList,
+        ID3D12GraphicsCommandList*     CommandList,
         FD3D12OnlineDescriptorManager* ResourceDescriptors,
         FD3D12OnlineDescriptorManager* SamplerDescriptors,
-        FD3D12PipelineStageMask PipelineMask);
+        FD3D12PipelineStageMask        PipelineMask);
 
     template<typename TResourveViewCache>
     void CopyAndBindComputeDescriptors(
-        ID3D12Device* DxDevice,
+        ID3D12Device*              DxDevice,
         ID3D12GraphicsCommandList* CommandList,
-        TResourveViewCache& ResourceViewCache,
-        int32 ParameterIndex)
+        TResourveViewCache&        ResourceViewCache,
+        int32                      ParameterIndex)
     {
         if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility_All])
         {
@@ -344,11 +349,11 @@ private:
 
     template<typename TResourveViewCache>
     void CopyAndBindGraphicsDescriptors(
-        ID3D12Device* DxDevice,
+        ID3D12Device*              DxDevice,
         ID3D12GraphicsCommandList* CommandList,
-        TResourveViewCache& ResourceViewCache,
-        int32 ParameterIndex,
-        EShaderVisibility ShaderVisibility)
+        TResourveViewCache&        ResourceViewCache,
+        int32                      ParameterIndex,
+        EShaderVisibility          ShaderVisibility)
     {
         if (ParameterIndex >= 0 && ResourceViewCache.bDirty[ShaderVisibility])
         {
@@ -447,6 +452,5 @@ public:
 private:
     uint32 Constants[D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT];
     uint32 NumConstants;
-
     bool   bIsDirty;
 };

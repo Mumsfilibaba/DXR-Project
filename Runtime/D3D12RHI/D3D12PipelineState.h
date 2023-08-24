@@ -17,9 +17,7 @@ enum class ED3D12PipelineType
     RayTracing = 3,
 };
 
-class FD3D12VertexInputLayout 
-    : public FRHIVertexInputLayout
-    , public FD3D12DeviceChild
+class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12DeviceChild
 {
 public:
     FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutDesc& Initializer)
@@ -51,7 +49,10 @@ public:
 
     uint32 GetElementCount() const { return ElementDesc.Size(); }
 
-    FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const { return Desc; }
+    FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
+    {
+        return Desc;
+    }
 
 private:
     D3D12_INPUT_LAYOUT_DESC          Desc;
@@ -60,82 +61,88 @@ private:
 };
 
 
-class FD3D12DepthStencilState 
-    : public FRHIDepthStencilState
-    , public FD3D12DeviceChild
+class FD3D12DepthStencilState : public FRHIDepthStencilState, public FD3D12DeviceChild
 {
 public:
     FD3D12DepthStencilState(FD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
         : FRHIDepthStencilState()
         , FD3D12DeviceChild(InDevice)
         , Desc(InDesc)
-    { }
+    {
+    }
 
     virtual FRHIDepthStencilStateDesc GetDesc() const override final
     {
         return FRHIDepthStencilStateDesc();
     }
 
-    FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const { return Desc; }
+    FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
+    {
+        return Desc;
+    }
 
 private:
     D3D12_DEPTH_STENCIL_DESC Desc;
 };
 
 
-class FD3D12RasterizerState 
-    : public FRHIRasterizerState
-    , public FD3D12DeviceChild
+class FD3D12RasterizerState : public FRHIRasterizerState, public FD3D12DeviceChild
 {
 public:
     FD3D12RasterizerState(FD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
         : FRHIRasterizerState()
         , FD3D12DeviceChild(InDevice)
         , Desc(InDesc)
-    { }
+    {
+    }
 
     virtual FRHIRasterizerStateDesc GetDesc() const override final
     {
         return FRHIRasterizerStateDesc();
     }
 
-    FORCEINLINE const D3D12_RASTERIZER_DESC& GetD3D12Desc() const { return Desc; }
+    FORCEINLINE const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
+    {
+        return Desc;
+    }
 
 private:
     D3D12_RASTERIZER_DESC Desc;
 };
 
 
-class FD3D12BlendState 
-    : public FRHIBlendState
-    , public FD3D12DeviceChild
+class FD3D12BlendState : public FRHIBlendState, public FD3D12DeviceChild
 {
 public:
     FD3D12BlendState(FD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
         : FRHIBlendState()
         , FD3D12DeviceChild(InDevice)
         , Desc(InDesc)
-    { }
+    {
+    }
     
     virtual FRHIBlendStateDesc GetDesc() const override final
     {
         return FRHIBlendStateDesc();
     }
 
-    FORCEINLINE const D3D12_BLEND_DESC& GetD3D12Desc() const { return Desc; }
+    FORCEINLINE const D3D12_BLEND_DESC& GetD3D12Desc() const
+    {
+        return Desc;
+    }
 
 private:
     D3D12_BLEND_DESC Desc;
 };
 
 
-class FD3D12PipelineState 
-    : public FD3D12DeviceChild
+class FD3D12PipelineState : public FD3D12DeviceChild
 {
 public:
     FD3D12PipelineState(FD3D12Device* InDevice)
         : FD3D12DeviceChild(InDevice)
-    { }
+    {
+    }
 
     void SetDebugName(const FString& InName)
     {
@@ -143,8 +150,15 @@ public:
         PipelineState->SetName(WideName.GetCString());
     }
 
-    FORCEINLINE ID3D12PipelineState* GetD3D12PipelineState() const { return PipelineState.Get(); }
-    FORCEINLINE FD3D12RootSignature* GetRootSignature()      const { return RootSignature.Get(); }
+    FORCEINLINE ID3D12PipelineState* GetD3D12PipelineState() const
+    {
+        return PipelineState.Get();
+    }
+
+    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
+    {
+        return RootSignature.Get();
+    }
 
 protected:
     TComPtr<ID3D12PipelineState> PipelineState;
@@ -152,13 +166,11 @@ protected:
 };
 
 
-class FD3D12GraphicsPipelineState
-    : public FRHIGraphicsPipelineState
-    , public FD3D12PipelineState
+class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineState
 {
 public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
-    ~FD3D12GraphicsPipelineState() = default;
+    virtual ~FD3D12GraphicsPipelineState() = default;
 
     bool Initialize(const FRHIGraphicsPipelineStateDesc& Initializer);
 
@@ -166,13 +178,11 @@ public:
 };
 
 
-class FD3D12ComputePipelineState 
-    : public FRHIComputePipelineState
-    , public FD3D12PipelineState
+class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineState
 {
 public:
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
-    ~FD3D12ComputePipelineState() = default;
+    virtual ~FD3D12ComputePipelineState() = default;
 
     bool Initialize();
 
@@ -189,13 +199,11 @@ struct FRayTracingShaderIdentifer
 };
 
 
-class FD3D12RayTracingPipelineState 
-    : public FRHIRayTracingPipelineState
-    , public FD3D12DeviceChild
+class FD3D12RayTracingPipelineState : public FRHIRayTracingPipelineState, public FD3D12DeviceChild
 {
 public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
-    ~FD3D12RayTracingPipelineState() = default;
+    virtual ~FD3D12RayTracingPipelineState() = default;
 
     bool Initialize(const FRHIRayTracingPipelineStateDesc& Initializer);
 
@@ -207,8 +215,15 @@ public:
 
     void* GetShaderIdentifer(const FString& ExportName);
 
-    FORCEINLINE ID3D12StateObject*           GetD3D12StateObject() const           { return StateObject.Get(); }
-    FORCEINLINE ID3D12StateObjectProperties* GetD3D12StateObjectProperties() const { return StateObjectProperties.Get(); }
+    FORCEINLINE ID3D12StateObject* GetD3D12StateObject() const 
+    {
+        return StateObject.Get();
+    }
+
+    FORCEINLINE ID3D12StateObjectProperties* GetD3D12StateObjectProperties() const
+    {
+        return StateObjectProperties.Get();
+    }
 
     FORCEINLINE FD3D12RootSignature* GetGlobalRootSignature()      const { return GlobalRootSignature.Get(); }
     FORCEINLINE FD3D12RootSignature* GetRayGenLocalRootSignature() const { return RayGenLocalRootSignature.Get(); }

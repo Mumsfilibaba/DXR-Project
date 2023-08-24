@@ -12,31 +12,34 @@ class FD3D12OnlineDescriptorManager;
 typedef TSharedRef<FD3D12DescriptorHeap>          FD3D12DescriptorHeapRef;
 typedef TSharedRef<FD3D12OnlineDescriptorManager> FD3D12OnlineDescriptorManagerRef;
 
-class FD3D12DescriptorHeap 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12DescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE Type, uint32 NumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS Flags);
-    ~FD3D12DescriptorHeap() = default;
 
     bool Initialize();
     
-    FORCEINLINE ID3D12DescriptorHeap*       GetD3D12Heap() const { return Heap.Get(); }
-
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const { return CPUStart; }
-    FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const { return GPUStart; }
-    
-    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE  GetType() const { return Type; }
-
-    FORCEINLINE uint32                      GetNumDescriptors()                const { return uint32(NumDescriptors); }
-    FORCEINLINE uint32                      GetDescriptorHandleIncrementSize() const { return DescriptorHandleIncrementSize; }
-
-    FORCEINLINE void SetName(const FString& Name)
+    void SetName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
         Heap->SetName(WideName.GetCString());
     }
+
+    FORCEINLINE ID3D12DescriptorHeap* GetD3D12Heap() const
+    {
+        return Heap.Get();
+    }
+
+    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
+    {
+        return Type;
+    }
+
+    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleForHeapStart() const { return CPUStart; }
+    FORCEINLINE D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandleForHeapStart() const { return GPUStart; }
+
+    FORCEINLINE uint32 GetNumDescriptors()                const { return uint32(NumDescriptors); }
+    FORCEINLINE uint32 GetDescriptorHandleIncrementSize() const { return DescriptorHandleIncrementSize; }
 
 private:
     TComPtr<ID3D12DescriptorHeap> Heap;
@@ -52,21 +55,17 @@ private:
 };
 
 
-class FD3D12OfflineDescriptorHeap 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12OfflineDescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
 {
     struct FDescriptorRange
     {
-        FORCEINLINE FDescriptorRange()
-            : Begin({ 0 })
-            , End({ 0 })
-        { }
+        FDescriptorRange() = default;
 
-        FORCEINLINE FDescriptorRange(D3D12_CPU_DESCRIPTOR_HANDLE InBegin, D3D12_CPU_DESCRIPTOR_HANDLE InEnd)
+        FDescriptorRange(D3D12_CPU_DESCRIPTOR_HANDLE InBegin, D3D12_CPU_DESCRIPTOR_HANDLE InEnd)
             : Begin(InBegin)
             , End(InEnd)
-        { }
+        {
+        }
 
         FORCEINLINE bool IsValid() const
         {
@@ -79,7 +78,7 @@ class FD3D12OfflineDescriptorHeap
 
     struct FDescriptorHeap
     {
-        FORCEINLINE FDescriptorHeap(const FD3D12DescriptorHeapRef& InHeap)
+        FDescriptorHeap(const FD3D12DescriptorHeapRef& InHeap)
             : FreeList()
             , Heap(InHeap)
         {
@@ -95,17 +94,24 @@ class FD3D12OfflineDescriptorHeap
 
 public:
     FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
-    ~FD3D12OfflineDescriptorHeap() = default;
 
     bool Initialize();
 
     D3D12_CPU_DESCRIPTOR_HANDLE Allocate(uint32& OutHeapIndex);
+
     void Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex);
 
     void SetName(const FString& InName);
 
-    FORCEINLINE uint32                     GetDescriptorSize() const { return DescriptorSize; }
-    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType()           const { return Type; }
+    FORCEINLINE uint32 GetDescriptorSize() const
+    {
+        return DescriptorSize;
+    }
+
+    FORCEINLINE D3D12_DESCRIPTOR_HEAP_TYPE GetType() const
+    {
+        return Type;
+    }
 
 private:
     bool AllocateHeap();
@@ -121,18 +127,16 @@ private:
 };
 
 
-class FD3D12OnlineDescriptorHeap 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12OnlineDescriptorHeap : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType);
-    ~FD3D12OnlineDescriptorHeap() = default;
 
     bool Initialize();
 
     uint32 AllocateHandles(uint32 NumHandles);
-    bool   AllocateFreshHeap();
+    
+    bool AllocateFreshHeap();
 
     bool HasSpace(uint32 NumHandles) const;
 
@@ -160,18 +164,24 @@ public:
         return Heap->GetDescriptorHandleIncrementSize();
     }
 
-    FORCEINLINE ID3D12DescriptorHeap* GetD3D12Heap() const { return Heap->GetD3D12Heap(); }
-    FORCEINLINE FD3D12DescriptorHeap* GetHeap()      const { return Heap.Get(); }
+    FORCEINLINE ID3D12DescriptorHeap* GetD3D12Heap() const
+    { 
+        return Heap->GetD3D12Heap();
+    }
+
+    FORCEINLINE FD3D12DescriptorHeap* GetHeap() const
+    {
+        return Heap.Get();
+    }
 
 private:
-    FD3D12DescriptorHeapRef Heap;
-    uint32                  CurrentHandle   = 0;
-    uint32                  DescriptorCount = 0;
+    FD3D12DescriptorHeapRef    Heap;
+    uint32                     CurrentHandle   = 0;
+    uint32                     DescriptorCount = 0;
+    D3D12_DESCRIPTOR_HEAP_TYPE Type;
     
     TArray<FD3D12DescriptorHeapRef> HeapPool;
     TArray<FD3D12DescriptorHeapRef> DiscardedHeaps;
-
-    D3D12_DESCRIPTOR_HEAP_TYPE      Type;
 };
 
 
@@ -180,25 +190,24 @@ struct FD3D12DescriptorBlock
     FD3D12DescriptorBlock()
         : StartDescriptor(0)
         , NumDescriptors(0)
-    { }
+    {
+    }
 
     FD3D12DescriptorBlock(uint32 InStartDescriptor, uint32 InNumDescriptors)
         : StartDescriptor(InStartDescriptor)
         , NumDescriptors(InNumDescriptors)
-    { }
+    {
+    }
 
     uint32 StartDescriptor;
     uint32 NumDescriptors;
 };
 
 
-class FD3D12OnlineDescriptorManager 
-    : public FD3D12DeviceChild
-    , public FD3D12RefCounted
+class FD3D12OnlineDescriptorManager : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
     FD3D12OnlineDescriptorManager(FD3D12Device* InDevice, FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount);
-    ~FD3D12OnlineDescriptorManager() = default;
 
     uint32 AllocateHandles(uint32 NumHandles)
     {
@@ -209,9 +218,9 @@ public:
         return NewHandle;
     }
 
-    FORCEINLINE bool HasSpace(uint32 NumHandles) const { return ((CurrentHandle + NumHandles) < DescriptorCount); }
+    bool HasSpace(uint32 NumHandles) const { return ((CurrentHandle + NumHandles) < DescriptorCount); }
 
-    FORCEINLINE void Reset() { CurrentHandle = 0; }
+    void Reset() { CurrentHandle = 0; }
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt(uint32 Index) const
     {

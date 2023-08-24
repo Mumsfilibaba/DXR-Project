@@ -88,7 +88,8 @@ bool FVulkanRHI::Initialize()
     FVulkanDeviceDesc DeviceDesc;
     DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
     DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
-
+    DeviceDesc.RequiredFeatures       = AdapterDesc.RequiredFeatures;
+    
     Device = new FVulkanDevice(GetInstance(), GetAdapter());
     if (!Device->Initialize(DeviceDesc))
     {
@@ -128,8 +129,10 @@ FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureDesc& InDesc, EResour
     {
         return nullptr;
     }
-    
-    return NewTexture.ReleaseOwnership();
+    else
+    {
+        return NewTexture.ReleaseOwnership();
+    }
 }
 
 FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)
@@ -139,19 +142,23 @@ FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceA
     {
         return nullptr;
     }
-    
-    return NewBuffer.ReleaseOwnership();
+    else
+    {
+        return NewBuffer.ReleaseOwnership();
+    }
 }
 
 FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)
 {
-    FVulkanSamplerStateRef NewSamplerState = new FVulkanSamplerState(InDesc);
+    FVulkanSamplerStateRef NewSamplerState = new FVulkanSamplerState(GetDevice(), InDesc);
     if (!NewSamplerState->Initialize())
     {
         return nullptr;
     }
-    
-    return NewSamplerState.ReleaseOwnership();
+    else
+    {
+        return NewSamplerState.ReleaseOwnership();
+    }
 }
 
 
@@ -162,8 +169,10 @@ FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
     {
         return nullptr;
     }
-    
-    return NewViewport.ReleaseOwnership();
+    else
+    {
+        return NewViewport.ReleaseOwnership();
+    }
 }
 
 FRHITimestampQuery* FVulkanRHI::RHICreateTimestampQuery()
@@ -173,8 +182,10 @@ FRHITimestampQuery* FVulkanRHI::RHICreateTimestampQuery()
     {
         return nullptr;
     }
-    
-    return NewTimestampQuery.ReleaseOwnership();
+    else
+    {
+        return NewTimestampQuery.ReleaseOwnership();
+    }
 }
 
 FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
@@ -201,8 +212,10 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextur
     {
         return nullptr;
     }
-
-    return NewShaderResourceView.ReleaseOwnership();
+    else
+    {
+        return NewShaderResourceView.ReleaseOwnership();
+    }
 }
 
 FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc)
@@ -219,8 +232,10 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHIBuffer
     {
         return nullptr;
     }
-
-    return NewShaderResourceView.ReleaseOwnership();
+    else
+    {
+        return NewShaderResourceView.ReleaseOwnership();
+    }
 }
 
 FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc)
@@ -237,8 +252,10 @@ FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIText
     {
         return nullptr;
     }
-
-    return NewUnorderedAccessView.ReleaseOwnership();
+    else
+    {
+        return NewUnorderedAccessView.ReleaseOwnership();
+    }
 }
 
 FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc)
@@ -255,8 +272,10 @@ FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIBuff
     {
         return nullptr;
     }
-
-    return NewUnorderedAccessView.ReleaseOwnership();
+    else
+    {
+        return NewUnorderedAccessView.ReleaseOwnership();
+    }
 }
 
 FRHIComputeShader* FVulkanRHI::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
@@ -266,8 +285,10 @@ FRHIComputeShader* FVulkanRHI::RHICreateComputeShader(const TArray<uint8>& Shade
     {
         return nullptr;
     }
-
-    return NewShader.ReleaseOwnership();
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIVertexShader* FVulkanRHI::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
@@ -277,8 +298,10 @@ FRHIVertexShader* FVulkanRHI::RHICreateVertexShader(const TArray<uint8>& ShaderC
     {
         return nullptr;
     }
-
-    return NewShader.ReleaseOwnership();
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIHullShader* FVulkanRHI::RHICreateHullShader(const TArray<uint8>& ShaderCode)
@@ -313,8 +336,10 @@ FRHIPixelShader* FVulkanRHI::RHICreatePixelShader(const TArray<uint8>& ShaderCod
     {
         return nullptr;
     }
-
-    return NewShader.ReleaseOwnership();
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayGenShader* FVulkanRHI::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
@@ -324,8 +349,10 @@ FRHIRayGenShader* FVulkanRHI::RHICreateRayGenShader(const TArray<uint8>& ShaderC
     {
         return nullptr;
     }
-
-    return NewShader.ReleaseOwnership();
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayAnyHitShader* FVulkanRHI::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
@@ -335,8 +362,10 @@ FRHIRayAnyHitShader* FVulkanRHI::RHICreateRayAnyHitShader(const TArray<uint8>& S
     {
         return nullptr;
     }
-
-    return NewShader.ReleaseOwnership();
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayClosestHitShader* FVulkanRHI::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
@@ -346,8 +375,10 @@ FRHIRayClosestHitShader* FVulkanRHI::RHICreateRayClosestHitShader(const TArray<u
     {
         return nullptr;
     }
-
-    return NewShader.ReleaseOwnership();
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayMissShader* FVulkanRHI::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
@@ -357,8 +388,10 @@ FRHIRayMissShader* FVulkanRHI::RHICreateRayMissShader(const TArray<uint8>& Shade
     {
         return nullptr;
     }
-
-    return NewShader.ReleaseOwnership();
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIDepthStencilState* FVulkanRHI::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)

@@ -8,7 +8,7 @@ class FD3D12TimestampQuery : public FRHITimestampQuery, public FD3D12DeviceChild
 {
 public:
     FD3D12TimestampQuery(FD3D12Device* InDevice);
-    ~FD3D12TimestampQuery() = default;
+    virtual ~FD3D12TimestampQuery() = default;
 
     bool Initialize();
 

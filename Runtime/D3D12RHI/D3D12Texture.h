@@ -89,11 +89,8 @@ protected:
 class FD3D12BackBufferTexture : public FD3D12Texture
 {
 public:
-    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureDesc& InDesc)
-        : FD3D12Texture(InDevice, InDesc)
-        , Viewport(InViewport)
-    {
-    }
+    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureDesc& InDesc);
+    virtual ~FD3D12BackBufferTexture();
 
     virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
     

@@ -10,6 +10,8 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
+typedef TSharedRef<class FMetalViewport> FMetalViewportRef;
+
 @interface FMetalWindowView : FCocoaWindowView
 @end
 
@@ -18,6 +20,8 @@ class FMetalViewport : public FRHIViewport, public FMetalObject
 public:
     FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportDesc& Desc);
     ~FMetalViewport();
+
+    bool Initialize();
 
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
 
@@ -33,8 +37,7 @@ public:
     
     CAMetalLayer* GetMetalLayer() const
     {
-        // Check(FPlatformThreadMisc::IsMainThread());
-        return MetalView ? (CAMetalLayer*)MetalView.layer : nil;
+        return MetalLayer;
     }
 
     FMetalWindowView* GetMetalView() const
@@ -45,6 +48,7 @@ public:
 private:
     FMetalTextureRef      BackBuffer;
     FMetalWindowView*     MetalView;
+    CAMetalLayer*         MetalLayer;
     id<CAMetalDrawable>   Drawable;
     TSharedRef<FMacEvent> MainThreadEvent;
 };

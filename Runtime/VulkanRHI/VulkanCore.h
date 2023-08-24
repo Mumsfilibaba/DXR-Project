@@ -235,6 +235,155 @@ constexpr VkImageType ConvertTextureDimension(ETextureDimension TextureDimension
     }
 }
 
+constexpr VkFilter ConvertSamplerFilterToMinFilter(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::MinMagMipPoint:
+        case ESamplerFilter::MinMagPoint_MipLinear:
+        case ESamplerFilter::MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::MinPoint_MagMipLinear:
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+            return VK_FILTER_NEAREST;
+            
+        case ESamplerFilter::MinLinear_MagMipPoint:
+        case ESamplerFilter::MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::MinMagLinear_MipPoint:
+        case ESamplerFilter::MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+            return VK_FILTER_LINEAR;
+            
+        default:
+            return VK_FILTER_NEAREST;
+    }
+}
+
+constexpr VkFilter ConvertSamplerFilterToMagFilter(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::MinMagMipPoint:
+        case ESamplerFilter::MinMagPoint_MipLinear:
+        case ESamplerFilter::MinLinear_MagMipPoint:
+        case ESamplerFilter::MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+            return VK_FILTER_NEAREST;
+            
+        case ESamplerFilter::MinPoint_MagMipLinear:
+        case ESamplerFilter::MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::MinMagLinear_MipPoint:
+        case ESamplerFilter::MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+            return VK_FILTER_LINEAR;
+            
+        default:
+            return VK_FILTER_NEAREST;
+    }
+}
+
+constexpr VkSamplerMipmapMode ConvertSamplerFilterToMipmapMode(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::MinMagMipPoint:
+        case ESamplerFilter::MinLinear_MagMipPoint:
+        case ESamplerFilter::MinMagLinear_MipPoint:
+        case ESamplerFilter::MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+            return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::MinMagPoint_MipLinear:
+        case ESamplerFilter::MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::MinPoint_MagMipLinear:
+        case ESamplerFilter::MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+            return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            
+        default:
+            return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    }
+}
+
+constexpr VkSamplerAddressMode ConvertSamplerMode(ESamplerMode SamplerMode)
+{
+    switch (SamplerMode)
+    {
+        case ESamplerMode::Wrap:       return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        case ESamplerMode::Mirror:     return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        case ESamplerMode::Clamp:      return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        case ESamplerMode::Border:     return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        case ESamplerMode::MirrorOnce: return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+        default:                       return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    }
+}
+
+constexpr VkBool32 IsAnisotropySampler(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::Anistrotopic:
+        case ESamplerFilter::Comparison_Anistrotopic:
+            return VK_TRUE;
+            
+        default:
+            return VK_FALSE;
+    }
+}
+
+constexpr VkBool32 IsComparissonSampler(ESamplerFilter SamplerFilter)
+{
+    switch (SamplerFilter)
+    {
+        case ESamplerFilter::Comparison_MinMagMipPoint:
+        case ESamplerFilter::Comparison_MinMagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Comparison_MinLinear_MagMipPoint:
+        case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
+        case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
+        case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Comparison_Anistrotopic:
+            return VK_TRUE;
+            
+        default:
+            return VK_FALSE;
+    }
+}
+
+constexpr VkCompareOp ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
+{
+    switch (ComparisonFunc)
+    {
+    case EComparisonFunc::Never:        return VK_COMPARE_OP_NEVER;
+    case EComparisonFunc::Less:         return VK_COMPARE_OP_LESS;
+    case EComparisonFunc::Equal:        return VK_COMPARE_OP_EQUAL;
+    case EComparisonFunc::LessEqual:    return VK_COMPARE_OP_LESS_OR_EQUAL;
+    case EComparisonFunc::Greater:      return VK_COMPARE_OP_GREATER;
+    case EComparisonFunc::NotEqual:     return VK_COMPARE_OP_NOT_EQUAL;
+    case EComparisonFunc::GreaterEqual: return VK_COMPARE_OP_GREATER_OR_EQUAL;
+    case EComparisonFunc::Always:       return VK_COMPARE_OP_ALWAYS;
+    default:                            return VK_COMPARE_OP_NEVER;
+    }
+}
+
 constexpr VkFormat ConvertFormat(EFormat Format)
 {
     switch (Format)

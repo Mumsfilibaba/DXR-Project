@@ -1,19 +1,32 @@
 #pragma once
+#include "VulkanLoader.h"
+#include "VulkanDeviceObject.h"
+#include "VulkanRefCounted.h"
 #include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FVulkanSamplerState> FVulkanSamplerStateRef;
 
-class FVulkanSamplerState : public FRHISamplerState
+class FVulkanSamplerState : public FRHISamplerState, public FVulkanDeviceObject, public FVulkanRefCounted
 {
 public:
-    FVulkanSamplerState(const FRHISamplerStateDesc& InDesc)
-        : FRHISamplerState(InDesc)
-    {
-    }
+    FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InDesc);
+    virtual ~FVulkanSamplerState();
 
-    virtual ~FVulkanSamplerState() = default;
+    bool Initialize();
 
-    bool Initialize() { return true; }
-
+    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
+    
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+    
+    VkSampler GetVkSampler() const
+    {
+        return Sampler;
+    }
+    
+private:
+    VkSampler Sampler;
 };

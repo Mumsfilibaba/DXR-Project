@@ -23,9 +23,15 @@ public:
 
     void InvalidateAndFreeHandle();
 
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
+    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
+    {
+        return OfflineHandle;
+    }
 
-    FORCEINLINE const FD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
+    FORCEINLINE const FD3D12Resource* GetD3D12Resource() const 
+    { 
+        return Resource.Get(); 
+    }
 
 protected:
     FD3D12ResourceRef            Resource;
@@ -41,7 +47,6 @@ class FD3D12ConstantBufferView : public FD3D12View
 {
 public:
     FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
-    ~FD3D12ConstantBufferView() = default;
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 

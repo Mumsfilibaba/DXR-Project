@@ -13,7 +13,7 @@ class FD3D12Viewport : public FRHIViewport, public FD3D12DeviceChild
 {
 public:
     FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
-    ~FD3D12Viewport();
+    virtual ~FD3D12Viewport();
 
     bool Initialize();
 
@@ -23,7 +23,10 @@ public:
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
-    FD3D12Texture* GetCurrentBackBuffer() const { return BackBuffers[BackBufferIndex].Get(); }
+    FD3D12Texture* GetCurrentBackBuffer() const 
+    { 
+        return BackBuffers[BackBufferIndex].Get();
+    }
 
 private:
     bool RetriveBackBuffers();

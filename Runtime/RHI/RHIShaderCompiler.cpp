@@ -564,15 +564,14 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& Entrypoint, TA
         return false;
     }
 
-    // Start by adding the entrypoint to the shader, which is needed when we create native shader objects
-    const FString Comment = "// " + Entrypoint + "\n\n";
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(Comment.Data()), Comment.Length() * sizeof(const CHAR));
-
+    // Create a new array
     const uint32 SourceLength = FCString::Strlen(MSLSource);
-    NewShader.Append(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const CHAR));
-
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const CHAR));
+    
+    // Now we can destroy the context
     spvc_context_destroy(Context);
 
+    // Output the code
     OutByteCode = ::Move(NewShader);
     return true;
 }

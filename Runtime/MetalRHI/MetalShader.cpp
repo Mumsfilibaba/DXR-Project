@@ -1,11 +1,22 @@
 #include "MetalShader.h"
 
-FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility, const TArray<uint8>& InCode)
+FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility)
     : FMetalObject(InDevice)
     , Library(nil)
     , FunctionName(nil)
     , Visibility(InVisibility)
     , Function(nil)
+{
+}
+
+FMetalShader::~FMetalShader()
+{
+    NSSafeRelease(Library);
+    NSSafeRelease(FunctionName);
+    NSSafeRelease(Function);
+}
+
+bool FMetalShader::Initialize(const TArray<uint8>& InCode)
 {
     @autoreleasepool
     {
@@ -28,22 +39,21 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
         {
             const FString ErrorString([Error localizedDescription]);
             LOG_ERROR("Failed to compile shader. Error: %s", ErrorString.GetCString());
-            DEBUG_BREAK();
+            return false;
         }
         
-        // Retrieve the entrypoint
-        const auto Length = FMath::Max(SourceString.FindChar('\n') - 3, 0);
-        NSString* EntryPoint = FString(SourceString.GetCString() + 3, Length).GetNSString();
+        // Retrieve the entrypoint (All SPIR-V shaders have a static entrypoint)
+        NSString* EntryPoint = FString("Spirv_Main").GetNSString();
         FunctionName = [EntryPoint retain];
         
+        // Retrieve the function
         Function = [Library newFunctionWithName:EntryPoint];
-        CHECK(Function != nil);
+        if (!Function)
+        {
+            LOG_ERROR("Failed to retrieve function from Library");
+            return false;
+        }
     }
-}
-
-FMetalShader::~FMetalShader()
-{
-    NSSafeRelease(Library);
-    NSSafeRelease(FunctionName);
-    NSSafeRelease(Function);
+    
+    return true;
 }

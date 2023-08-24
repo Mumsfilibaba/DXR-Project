@@ -61,24 +61,36 @@ FRHITexture* FMetalRHI::RHICreateTexture(const FRHITextureDesc& InDesc, EResourc
     {
         return nullptr;
     }
-
-    return NewTexture.ReleaseOwnership();
-}
-
-FRHISamplerState* FMetalRHI::RHICreateSamplerState(const FRHISamplerStateDesc& Desc)
-{
-    return new FMetalSamplerState(Desc);
+    else
+    {
+        return NewTexture.ReleaseOwnership();
+    }
 }
 
 FRHIBuffer* FMetalRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)
 {
-    TSharedRef<FMetalBuffer> NewBuffer = new FMetalBuffer(GetDeviceContext(), InDesc);
+    FMetalBufferRef NewBuffer = new FMetalBuffer(GetDeviceContext(), InDesc);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
     }
+    else
+    {
+        return NewBuffer.ReleaseOwnership();
+    }
+}
 
-    return NewBuffer.ReleaseOwnership();
+FRHISamplerState* FMetalRHI::RHICreateSamplerState(const FRHISamplerStateDesc& Desc)
+{
+    FMetalSamplerStateRef NewSamplerState = new FMetalSamplerState(GetDeviceContext(), Desc);
+    if (!NewSamplerState->Initialize())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewSamplerState.ReleaseOwnership();
+    }
 }
 
 FRHIRayTracingScene* FMetalRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Desc)
@@ -113,12 +125,28 @@ FRHIUnorderedAccessView* FMetalRHI::RHICreateUnorderedAccessView(const FRHIBuffe
 
 FRHIComputeShader* FMetalRHI::RHICreateComputeShader(const TArray<uint8>& ShaderCode)
 {
-    return new FMetalComputeShader(GetDeviceContext(), ShaderCode);
+    FMetalComputeShaderRef NewShader = new FMetalComputeShader(GetDeviceContext());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIVertexShader* FMetalRHI::RHICreateVertexShader(const TArray<uint8>& ShaderCode)
 {
-    return new FMetalVertexShader(GetDeviceContext(), ShaderCode);
+    FMetalVertexShaderRef NewShader = new FMetalVertexShader(GetDeviceContext());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIHullShader* FMetalRHI::RHICreateHullShader(const TArray<uint8>& ShaderCode)
@@ -148,27 +176,67 @@ FRHIAmplificationShader* FMetalRHI::RHICreateAmplificationShader(const TArray<ui
 
 FRHIPixelShader* FMetalRHI::RHICreatePixelShader(const TArray<uint8>& ShaderCode)
 {
-    return new FMetalPixelShader(GetDeviceContext(), ShaderCode);
+    FMetalPixelShaderRef NewShader = new FMetalPixelShader(GetDeviceContext());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayGenShader* FMetalRHI::RHICreateRayGenShader(const TArray<uint8>& ShaderCode)
 {
-    return new FMetalRayGenShader(GetDeviceContext(), ShaderCode);
+    FMetalRayGenShaderRef NewShader = new FMetalRayGenShader(GetDeviceContext());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayAnyHitShader* FMetalRHI::RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode)
 {
-    return new FMetalRayAnyHitShader(GetDeviceContext(), ShaderCode);
+    FMetalRayAnyHitShaderRef NewShader = new FMetalRayAnyHitShader(GetDeviceContext());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayClosestHitShader* FMetalRHI::RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode)
 {
-    return new FMetalRayClosestHitShader(GetDeviceContext(), ShaderCode);
+    FMetalRayClosestHitShaderRef NewShader = new FMetalRayClosestHitShader(GetDeviceContext());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIRayMissShader* FMetalRHI::RHICreateRayMissShader(const TArray<uint8>& ShaderCode)
 {
-    return new FMetalRayMissShader(GetDeviceContext(), ShaderCode);
+    FMetalRayMissShaderRef NewShader = new FMetalRayMissShader(GetDeviceContext());
+    if (!NewShader->Initialize(ShaderCode))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIDepthStencilState* FMetalRHI::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Desc)
@@ -214,20 +282,35 @@ FRHITimestampQuery* FMetalRHI::RHICreateTimestampQuery()
 FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportDesc& Desc)
 {
     FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
-    
-    __block NSRect Frame;
-    __block NSRect ContentRect;
-    ExecuteOnMainThread(^
+    if (!Window)
     {
-        Frame       = Window.frame;
-        ContentRect = [Window contentRectForFrameRect:Window.frame];
-    }, NSDefaultRunLoopMode, true);
-    
+        return nullptr;
+    }
+
     FRHIViewportDesc NewDesc(Desc);
-    NewDesc.Width  = ContentRect.size.width;
-    NewDesc.Height = ContentRect.size.height;
+    if (Desc.Width == 0 || Desc.Height == 0)
+    {
+        __block NSRect Frame;
+        __block NSRect ContentRect;
+        ExecuteOnMainThread(^
+        {
+            Frame       = Window.frame;
+            ContentRect = [Window contentRectForFrameRect:Window.frame];
+        }, NSDefaultRunLoopMode, true);
+        
+        NewDesc.Width  = ContentRect.size.width;
+        NewDesc.Height = ContentRect.size.height;
+    }
     
-    return new FMetalViewport(GetDeviceContext(), NewDesc);
+    FMetalViewportRef NewViewport = new FMetalViewport(GetDeviceContext(), NewDesc);
+    if (!NewViewport->Initialize())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewViewport.ReleaseOwnership();
+    }
 }
 
 void FMetalRHI::RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const
