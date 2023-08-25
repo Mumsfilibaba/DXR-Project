@@ -60,7 +60,7 @@ public:
     
     virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
-    virtual FRHIDepthStencilStateInitializer GetDesc() const override final
+    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
     {
         return Initializer;
     }
@@ -71,7 +71,7 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateInitializer             Initializer;
+    FRHIDepthStencilStateInitializer      Initializer;
     VkPipelineDepthStencilStateCreateInfo CreateInfo;
 };
 

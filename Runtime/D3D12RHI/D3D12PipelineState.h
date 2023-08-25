@@ -67,7 +67,7 @@ public:
     
     virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
-    virtual FRHIDepthStencilStateInitializer GetDesc() const override final
+    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
     {
         return Initializer;
     }

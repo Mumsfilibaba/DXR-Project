@@ -1550,7 +1550,7 @@ protected:
     virtual ~FRHIDepthStencilState() = default;
 
 public:
-    virtual FRHIDepthStencilStateInitializer GetDesc() const = 0; 
+    virtual FRHIDepthStencilStateInitializer GetInitializer() const = 0; 
 };
 
 
