@@ -201,7 +201,7 @@ bool FRenderer::Create()
     }
 
     // Initialize standard input layout
-    FRHIVertexInputLayoutDesc InputLayout =
+    FRHIVertexInputLayoutInitializer InputLayout =
     {
         { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
         { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 12, EVertexInputClass::Vertex, 0 },
@@ -978,10 +978,10 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIDepthStencilStateDesc DepthStencilInitializer;
-    DepthStencilInitializer.DepthFunc      = EComparisonFunc::Always;
-    DepthStencilInitializer.bDepthEnable   = false;
-    DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
+    DepthStencilInitializer.DepthFunc         = EComparisonFunc::Always;
+    DepthStencilInitializer.bDepthEnable      = false;
+    DepthStencilInitializer.bDepthWriteEnable = false;
 
     FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)

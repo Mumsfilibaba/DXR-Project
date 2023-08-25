@@ -141,7 +141,7 @@ public:
         return new TNullRHIShader<FRHIRayMissShader>();
     }
 
-    virtual class FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final
+    virtual class FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InDesc) override final
     {
         return new FNullRHIDepthStencilState(InDesc);
     }
@@ -156,7 +156,7 @@ public:
         return new FNullRHIBlendState(InDesc);
     }
 
-    virtual class FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) override final
+    virtual class FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InDesc) override final
     {
         return new FNullRHIInputLayoutState();
     }

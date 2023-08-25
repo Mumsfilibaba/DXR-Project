@@ -45,10 +45,10 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIDepthStencilStateDesc DepthStencilInitializer;
-    DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilInitializer.bDepthEnable   = true;
-    DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
+    DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilInitializer.bDepthEnable      = true;
+    DepthStencilInitializer.bDepthWriteEnable = true;
 
     FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)

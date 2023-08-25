@@ -159,19 +159,19 @@ struct FNullRHIInputLayoutState : public FRHIVertexInputLayout
 class FNullRHIDepthStencilState : public FRHIDepthStencilState
 {
 public:
-    FNullRHIDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
+    FNullRHIDepthStencilState(const FRHIDepthStencilStateInitializer& InDesc)
         : FRHIDepthStencilState()
         , Desc(InDesc)
     {
     }
 
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final
+    virtual FRHIDepthStencilStateInitializer GetDesc() const override final
     {
         return Desc;
     }
 
 private:
-    FRHIDepthStencilStateDesc Desc;
+    FRHIDepthStencilStateInitializer Desc;
 };
 
 

@@ -1390,23 +1390,6 @@ public:
 };
 
 
-enum class EDepthWriteMask : uint8
-{
-    Zero = 0,
-    All  = 1
-};
-
-constexpr const CHAR* ToString(EDepthWriteMask DepthWriteMask)
-{
-    switch (DepthWriteMask)
-    {
-        case EDepthWriteMask::Zero: return "Zero";
-        case EDepthWriteMask::All:  return "All";
-        default:                    return "Unknown";
-    }
-}
-
-
 enum class EStencilOp : uint8
 {
     Keep    = 1,
@@ -1436,9 +1419,9 @@ constexpr const CHAR* ToString(EStencilOp StencilOp)
 }
 
 
-struct FDepthStencilStateFace
+struct FStencilState
 {
-    FDepthStencilStateFace()
+    FStencilState()
         : StencilFailOp(EStencilOp::Keep)
         , StencilDepthFailOp(EStencilOp::Keep)
         , StencilDepthPassOp(EStencilOp::Keep)
@@ -1446,7 +1429,7 @@ struct FDepthStencilStateFace
     {
     }
 
-    FDepthStencilStateFace(EStencilOp InStencilFailOp, EStencilOp InStencilDepthFailOp, EStencilOp InStencilPassOp, EComparisonFunc InStencilFunc)
+    FStencilState(EStencilOp InStencilFailOp, EStencilOp InStencilDepthFailOp, EStencilOp InStencilPassOp, EComparisonFunc InStencilFunc)
         : StencilFailOp(InStencilFailOp)
         , StencilDepthFailOp(InStencilDepthFailOp)
         , StencilDepthPassOp(InStencilPassOp)
@@ -1463,7 +1446,7 @@ struct FDepthStencilStateFace
         return Hash;
     }
 
-    bool operator==(const FDepthStencilStateFace& Other) const
+    bool operator==(const FStencilState& Other) const
     {
         return StencilFailOp      == Other.StencilFailOp 
             && StencilDepthFailOp == Other.StencilDepthFailOp
@@ -1471,7 +1454,7 @@ struct FDepthStencilStateFace
             && StencilFunc        == Other.StencilFunc;
     }
 
-    bool operator!=(const FDepthStencilStateFace& Other) const
+    bool operator!=(const FStencilState& Other) const
     {
         return !(*this == Other);
     }
@@ -1483,31 +1466,33 @@ struct FDepthStencilStateFace
 };
 
 
-struct FRHIDepthStencilStateDesc
+struct FRHIDepthStencilStateInitializer
 {
-    FRHIDepthStencilStateDesc()
-        : DepthWriteMask(EDepthWriteMask::All)
-        , DepthFunc(EComparisonFunc::Less)
+    inline static constexpr uint32 DefaultMask = 0xffffffff;
+    
+    FRHIDepthStencilStateInitializer()
+        : DepthFunc(EComparisonFunc::Less)
+        , bDepthWriteEnable(true)
         , bDepthEnable(true)
-        , StencilReadMask(0xff)
-        , StencilWriteMask(0xff)
+        , StencilReadMask(DefaultMask)
+        , StencilWriteMask(DefaultMask)
         , bStencilEnable(false)
         , FrontFace()
         , BackFace()
     {
     }
 
-    FRHIDepthStencilStateDesc(
-        EComparisonFunc               InDepthFunc,
-        bool                          bInDepthEnable,
-        EDepthWriteMask               InDepthWriteMask   = EDepthWriteMask::All,
-        bool                          bInStencilEnable   = false,
-        uint8                         InStencilReadMask  = 0xff,
-        uint8                         InStencilWriteMask = 0xff,
-        const FDepthStencilStateFace& InFrontFace        = FDepthStencilStateFace(),
-        const FDepthStencilStateFace& InBackFace         = FDepthStencilStateFace())
-        : DepthWriteMask(InDepthWriteMask)
-        , DepthFunc(InDepthFunc)
+    FRHIDepthStencilStateInitializer(
+        EComparisonFunc      InDepthFunc,
+        bool                 bInDepthEnable,
+        bool                 bInDepthWriteEnable = true,
+        bool                 bInStencilEnable    = false,
+        uint32               InStencilReadMask   = DefaultMask,
+        uint32               InStencilWriteMask  = DefaultMask,
+        const FStencilState& InFrontFace         = FStencilState(),
+        const FStencilState& InBackFace          = FStencilState())
+        : DepthFunc(InDepthFunc)
+        , bDepthWriteEnable(bInDepthWriteEnable)
         , bDepthEnable(bInDepthEnable)
         , StencilReadMask(InStencilReadMask)
         , StencilWriteMask(InStencilWriteMask)
@@ -1519,7 +1504,7 @@ struct FRHIDepthStencilStateDesc
 
     uint64 GetHash() const
     {
-        uint64 Hash = ToUnderlying(DepthWriteMask);
+        uint64 Hash = static_cast<uint64>(bDepthWriteEnable);
         HashCombine(Hash, ToUnderlying(DepthFunc));
         HashCombine(Hash, bDepthEnable);
         HashCombine(Hash, StencilReadMask);
@@ -1530,31 +1515,31 @@ struct FRHIDepthStencilStateDesc
         return Hash;
     }
 
-    bool operator==(const FRHIDepthStencilStateDesc& Other) const
+    bool operator==(const FRHIDepthStencilStateInitializer& Other) const
     {
-        return DepthWriteMask   == Other.DepthWriteMask
-            && DepthFunc        == Other.DepthFunc
-            && bDepthEnable     == Other.bDepthEnable
-            && StencilReadMask  == Other.StencilReadMask
-            && StencilWriteMask == Other.StencilWriteMask
-            && bStencilEnable   == Other.bStencilEnable
-            && FrontFace        == Other.FrontFace
-            && BackFace         == Other.BackFace;
+        return DepthFunc         == Other.DepthFunc
+            && bDepthWriteEnable == Other.bDepthWriteEnable
+            && bDepthEnable      == Other.bDepthEnable
+            && StencilReadMask   == Other.StencilReadMask
+            && StencilWriteMask  == Other.StencilWriteMask
+            && bStencilEnable    == Other.bStencilEnable
+            && FrontFace         == Other.FrontFace
+            && BackFace          == Other.BackFace;
     }
 
-    bool operator!=(const FRHIDepthStencilStateDesc& Other) const
+    bool operator!=(const FRHIDepthStencilStateInitializer& Other) const
     {
         return !(*this == Other);
     }
 
-    EDepthWriteMask        DepthWriteMask;
-    EComparisonFunc        DepthFunc;
-    bool                   bDepthEnable;
-    uint8                  StencilReadMask;
-    uint8                  StencilWriteMask;
-    bool                   bStencilEnable;
-    FDepthStencilStateFace FrontFace;
-    FDepthStencilStateFace BackFace;
+    EComparisonFunc DepthFunc;
+    bool            bDepthWriteEnable;
+    bool            bDepthEnable;
+    uint32          StencilReadMask;
+    uint32          StencilWriteMask;
+    bool            bStencilEnable;
+    FStencilState   FrontFace;
+    FStencilState   BackFace;
 };
 
 
@@ -1565,7 +1550,7 @@ protected:
     virtual ~FRHIDepthStencilState() = default;
 
 public:
-    virtual FRHIDepthStencilStateDesc GetDesc() const = 0; 
+    virtual FRHIDepthStencilStateInitializer GetDesc() const = 0; 
 };
 
 
@@ -2119,26 +2104,26 @@ struct FVertexInputElement
 };
 
 
-struct FRHIVertexInputLayoutDesc
+struct FRHIVertexInputLayoutInitializer
 {
-    FRHIVertexInputLayoutDesc() = default;
+    FRHIVertexInputLayoutInitializer() = default;
 
-    FRHIVertexInputLayoutDesc(const TArray<FVertexInputElement>& InElements)
+    FRHIVertexInputLayoutInitializer(const TArray<FVertexInputElement>& InElements)
         : Elements(InElements)
     {
     }
 
-    FRHIVertexInputLayoutDesc(std::initializer_list<FVertexInputElement> InList)
+    FRHIVertexInputLayoutInitializer(std::initializer_list<FVertexInputElement> InList)
         : Elements(InList)
     {
     }
 
-    bool operator==(const FRHIVertexInputLayoutDesc& Other) const
+    bool operator==(const FRHIVertexInputLayoutInitializer& Other) const
     {
         return Elements == Other.Elements;
     }
 
-    bool operator!=(const FRHIVertexInputLayoutDesc& Other) const
+    bool operator!=(const FRHIVertexInputLayoutInitializer& Other) const
     {
         return !(*this == Other);
     }

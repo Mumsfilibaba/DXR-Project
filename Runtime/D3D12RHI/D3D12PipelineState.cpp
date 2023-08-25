@@ -2,6 +2,51 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12Device.h"
 
+FD3D12VertexInputLayout::FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
+    : FRHIVertexInputLayout()
+    , FD3D12RefCounted()
+    , SemanticNames()
+    , ElementDesc()
+    , Desc()
+{
+    const int32 NumElements = Initializer.Elements.Size();
+    ElementDesc.Reserve(NumElements);
+    SemanticNames.Reserve(NumElements);
+
+    for (const FVertexInputElement& Element : Initializer.Elements)
+    {
+        D3D12_INPUT_ELEMENT_DESC D3D12Element;
+        D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).GetCString();
+        D3D12Element.SemanticIndex        = Element.SemanticIndex;
+        D3D12Element.Format               = ConvertFormat(Element.Format);
+        D3D12Element.InputSlot            = Element.InputSlot;
+        D3D12Element.AlignedByteOffset    = Element.ByteOffset;
+        D3D12Element.InputSlotClass       = ConvertVertexInputClass(Element.InputClass);
+        D3D12Element.InstanceDataStepRate = Element.InputClass == EVertexInputClass::Vertex ? 0 : Element.InstanceStepRate;
+        ElementDesc.Emplace(D3D12Element);
+    }
+
+    Desc.NumElements        = GetElementCount();
+    Desc.pInputElementDescs = GetElementData();
+}
+
+
+FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
+    : FRHIDepthStencilState()
+    , FD3D12RefCounted()
+    , Initializer(InInitializer)
+{
+    Desc.DepthFunc        = ConvertComparisonFunc(InInitializer.DepthFunc);
+    Desc.DepthEnable      = InInitializer.bDepthEnable;
+    Desc.DepthWriteMask   = InInitializer.bDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+    Desc.StencilEnable    = InInitializer.bStencilEnable;
+    Desc.StencilReadMask  = InInitializer.StencilReadMask;
+    Desc.StencilWriteMask = InInitializer.StencilWriteMask;
+    Desc.FrontFace        = ConvertStencilState(InInitializer.FrontFace);
+    Desc.BackFace         = ConvertStencilState(InInitializer.BackFace);
+}
+
+
 FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)

@@ -46,7 +46,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexInputLayoutDesc InputLayout =
+        FRHIVertexInputLayoutInitializer InputLayout =
         {
             { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
         };
@@ -58,10 +58,10 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilInitializer;
-        DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilInitializer.bDepthEnable   = false;
-        DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::Zero;
+        FRHIDepthStencilStateInitializer DepthStencilInitializer;
+        DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilInitializer.bDepthEnable      = false;
+        DepthStencilInitializer.bDepthWriteEnable = false;
 
         FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
         if (!DepthStencilState)
@@ -202,10 +202,10 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable   = true;
-        DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::Zero;
+        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateInitializer.bDepthEnable      = true;
+        DepthStencilStateInitializer.bDepthWriteEnable = false;
 
         FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)

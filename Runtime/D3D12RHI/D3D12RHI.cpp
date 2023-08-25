@@ -691,21 +691,9 @@ FRHIRayMissShader* FD3D12RHI::RHICreateRayMissShader(const TArray<uint8>& Shader
     }
 }
 
-FRHIDepthStencilState* FD3D12RHI::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
+FRHIDepthStencilState* FD3D12RHI::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
 {
-    D3D12_DEPTH_STENCIL_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.DepthEnable      = InDesc.bDepthEnable;
-    Desc.DepthFunc        = ConvertComparisonFunc(InDesc.DepthFunc);
-    Desc.DepthWriteMask   = ConvertDepthWriteMask(InDesc.DepthWriteMask);
-    Desc.StencilEnable    = InDesc.bStencilEnable;
-    Desc.StencilReadMask  = InDesc.StencilReadMask;
-    Desc.StencilWriteMask = InDesc.StencilWriteMask;
-    Desc.FrontFace        = ConvertDepthStencilOp(InDesc.FrontFace);
-    Desc.BackFace         = ConvertDepthStencilOp(InDesc.BackFace);
-
-    return new FD3D12DepthStencilState(GetDevice(), Desc);
+    return new FD3D12DepthStencilState(InInitializer);
 }
 
 FRHIRasterizerState* FD3D12RHI::RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
@@ -752,9 +740,9 @@ FRHIBlendState* FD3D12RHI::RHICreateBlendState(const FRHIBlendStateDesc& InDesc)
     return new FD3D12BlendState(GetDevice(), Desc);
 }
 
-FRHIVertexInputLayout* FD3D12RHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer)
+FRHIVertexInputLayout* FD3D12RHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
 {
-    return new FD3D12VertexInputLayout(GetDevice(), Initializer);
+    return new FD3D12VertexInputLayout(InInitializer);
 }
 
 FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)

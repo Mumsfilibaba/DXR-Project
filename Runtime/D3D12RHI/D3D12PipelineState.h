@@ -2,9 +2,12 @@
 #include "D3D12Shader.h"
 #include "D3D12RootSignature.h"
 #include "D3D12DeviceChild.h"
+#include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
 #include "Core/Utilities/StringUtilities.h"
 
+typedef TSharedRef<class FD3D12VertexInputLayout>       FD3D12VertexInputLayoutRef;
+typedef TSharedRef<class FD3D12DepthStencilState>       FD3D12DepthStencilStateRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
 typedef TSharedRef<class FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
 typedef TSharedRef<class FD3D12RayTracingPipelineState> FD3D12RayTracingPipelineStateRef;
@@ -17,37 +20,28 @@ enum class ED3D12PipelineType
     RayTracing = 3,
 };
 
-class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12DeviceChild
+
+class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12RefCounted
 {
 public:
-    FD3D12VertexInputLayout(FD3D12Device* InDevice, const FRHIVertexInputLayoutDesc& Initializer)
-        : FRHIVertexInputLayout()
-        , FD3D12DeviceChild(InDevice)
-        , SemanticNames()
-        , ElementDesc()
-        , Desc()
-    {
-        SemanticNames.Reserve(Initializer.Elements.Size());
-        for (const FVertexInputElement& Element : Initializer.Elements)
-        {
-            D3D12_INPUT_ELEMENT_DESC D3D12Element;
-            D3D12Element.SemanticName         = SemanticNames.Emplace(Element.Semantic).GetCString();
-            D3D12Element.SemanticIndex        = Element.SemanticIndex;
-            D3D12Element.Format               = ConvertFormat(Element.Format);
-            D3D12Element.InputSlot            = Element.InputSlot;
-            D3D12Element.AlignedByteOffset    = Element.ByteOffset;
-            D3D12Element.InputSlotClass       = ConvertVertexInputClass(Element.InputClass);
-            D3D12Element.InstanceDataStepRate = (Element.InputClass == EVertexInputClass::Vertex) ? 0 : Element.InstanceStepRate;
-            ElementDesc.Emplace(D3D12Element);
-        }
+    FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
+    virtual ~FD3D12VertexInputLayout() = default;
 
-        Desc.NumElements        = GetElementCount();
-        Desc.pInputElementDescs = GetElementData();
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
+    
+    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
+    {
+        return ElementDesc.Data();
     }
 
-    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const { return ElementDesc.Data(); }
-
-    uint32 GetElementCount() const { return ElementDesc.Size(); }
+    uint32 GetElementCount() const 
+    {
+        return ElementDesc.Size();
+    }
 
     FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
     {
@@ -61,19 +55,21 @@ private:
 };
 
 
-class FD3D12DepthStencilState : public FRHIDepthStencilState, public FD3D12DeviceChild
+class FD3D12DepthStencilState : public FRHIDepthStencilState, public FD3D12RefCounted
 {
 public:
-    FD3D12DepthStencilState(FD3D12Device* InDevice, const D3D12_DEPTH_STENCIL_DESC& InDesc)
-        : FRHIDepthStencilState()
-        , FD3D12DeviceChild(InDevice)
-        , Desc(InDesc)
-    {
-    }
+    FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
+    virtual ~FD3D12DepthStencilState() = default;
 
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
+
+    virtual FRHIDepthStencilStateInitializer GetDesc() const override final
     {
-        return FRHIDepthStencilStateDesc();
+        return Initializer;
     }
 
     FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
@@ -82,7 +78,8 @@ public:
     }
 
 private:
-    D3D12_DEPTH_STENCIL_DESC Desc;
+    FRHIDepthStencilStateInitializer Initializer
+    D3D12_DEPTH_STENCIL_DESC         Desc;
 };
 
 

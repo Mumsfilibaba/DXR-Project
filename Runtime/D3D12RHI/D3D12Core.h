@@ -367,17 +367,6 @@ constexpr D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass I
     return D3D12_INPUT_CLASSIFICATION(-1);
 }
 
-constexpr D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
-{
-    switch (DepthWriteMask)
-    {
-        case EDepthWriteMask::Zero: return D3D12_DEPTH_WRITE_MASK_ZERO;
-        case EDepthWriteMask::All:  return D3D12_DEPTH_WRITE_MASK_ALL;
-    }
-
-    return D3D12_DEPTH_WRITE_MASK(-1);
-}
-
 constexpr D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
@@ -412,14 +401,14 @@ constexpr D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
     return D3D12_STENCIL_OP(-1);
 }
 
-inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const FDepthStencilStateFace& DepthStencilOp)
+inline D3D12_DEPTH_STENCILOP_DESC ConvertStencilState(const FStencilState& StencilState)
 {
     return
     {
-        ConvertStencilOp(DepthStencilOp.StencilFailOp),
-        ConvertStencilOp(DepthStencilOp.StencilDepthFailOp),
-        ConvertStencilOp(DepthStencilOp.StencilDepthPassOp),
-        ConvertComparisonFunc(DepthStencilOp.StencilFunc)
+        ConvertStencilOp(StencilState.StencilFailOp),
+        ConvertStencilOp(StencilState.StencilDepthFailOp),
+        ConvertStencilOp(StencilState.StencilDepthPassOp),
+        ConvertComparisonFunc(StencilState.StencilFunc)
     };
 }
 

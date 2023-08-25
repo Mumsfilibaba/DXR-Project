@@ -1,34 +1,30 @@
 #pragma once
 #include "MetalDeviceContext.h"
 #include "MetalShader.h"
+#include "MetalRefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalInputLayoutState : public FRHIVertexInputLayout, public FMetalObject
+typedef TSharedRef<class FMetalVertexInputLayout>       FMetalVertexInputLayoutRef;
+typedef TSharedRef<class FMetalDepthStencilState>       FMetalDepthStencilStateRef;
+typedef TSharedRef<class FMetalGraphicsPipelineState>   FMetalGraphicsPipelineStateRef;
+typedef TSharedRef<class FMetalComputePipelineState>    FMetalComputePipelineStateRef;
+typedef TSharedRef<class FMetalRayTracingPipelineState> FMetalRayTracingPipelineStateRef;
+
+
+class FMetalVertexInputLayout : public FRHIVertexInputLayout, public FMetalRefCounted
 {
 public:
-    FMetalInputLayoutState(FMetalDeviceContext* DeviceContext, const FRHIVertexInputLayoutDesc& Initializer)
-        : FRHIVertexInputLayout()
-        , FMetalObject(DeviceContext)
-        , VertexDescriptor(nil)
-    {
-        VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
-        for (int32 Index = 0; Index < Initializer.Elements.Size(); ++Index)
-        {
-            const auto& Element = Initializer.Elements[Index];
-            VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);
-            VertexDescriptor.attributes[Index].offset      = Element.ByteOffset;
-            VertexDescriptor.attributes[Index].bufferIndex = Element.InputSlot;
-            
-            VertexDescriptor.layouts[Element.InputSlot].stride       = Element.VertexStride;
-            VertexDescriptor.layouts[Element.InputSlot].stepFunction = ConvertVertexInputClass(Element.InputClass);
-            VertexDescriptor.layouts[Element.InputSlot].stepRate     = (Element.InputClass == EVertexInputClass::Vertex) ? 1 : Element.InstanceStepRate;
-        }
-    }
+    FMetalVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
+    virtual ~FMetalVertexInputLayout() = default;
+
+    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
     
-    ~FMetalInputLayoutState() = default;
+    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
     MTLVertexDescriptor* GetMTLVertexDescriptor() const 
     { 
@@ -39,60 +35,24 @@ private:
     MTLVertexDescriptor* VertexDescriptor;
 };
 
-class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalObject
+
+class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalObject, public FMetalRefCounted
 {
 public:
-    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateDesc& InDesc)
-        : FRHIDepthStencilState()
-        , FMetalObject(DeviceContext)
-        , DepthStencilState(nil)
-        , Desc(InDesc)
-    {
-        SCOPED_AUTORELEASE_POOL();
-        
-        MTLDepthStencilDescriptor* Descriptor = [[MTLDepthStencilDescriptor new] autorelease];
-        Descriptor.depthWriteEnabled    = InDesc.bDepthEnable;
-        Descriptor.depthCompareFunction = ConvertCompareFunction(InDesc.DepthFunc);
-        
-        if (InDesc.bStencilEnable)
-        {
-            Descriptor.backFaceStencil                            = [[MTLStencilDescriptor new] autorelease];
-            Descriptor.backFaceStencil.stencilCompareFunction     = ConvertCompareFunction(InDesc.BackFace.StencilFunc);
-            Descriptor.backFaceStencil.stencilFailureOperation    = ConvertStencilOp(InDesc.BackFace.StencilFailOp);
-            Descriptor.backFaceStencil.depthFailureOperation      = ConvertStencilOp(InDesc.BackFace.StencilDepthFailOp);
-            Descriptor.backFaceStencil.depthStencilPassOperation  = ConvertStencilOp(InDesc.BackFace.StencilDepthPassOp);
-            Descriptor.backFaceStencil.readMask                   = InDesc.StencilReadMask;
-            Descriptor.backFaceStencil.writeMask                  = InDesc.StencilWriteMask;
-            
-            Descriptor.frontFaceStencil                           = [[MTLStencilDescriptor new] autorelease];
-            Descriptor.frontFaceStencil.stencilCompareFunction    = ConvertCompareFunction(InDesc.FrontFace.StencilFunc);
-            Descriptor.frontFaceStencil.stencilFailureOperation   = ConvertStencilOp(InDesc.FrontFace.StencilFailOp);
-            Descriptor.frontFaceStencil.depthFailureOperation     = ConvertStencilOp(InDesc.FrontFace.StencilDepthFailOp);
-            Descriptor.frontFaceStencil.depthStencilPassOperation = ConvertStencilOp(InDesc.FrontFace.StencilDepthPassOp);
-            Descriptor.frontFaceStencil.readMask                  = InDesc.StencilReadMask;
-            Descriptor.frontFaceStencil.writeMask                 = InDesc.StencilWriteMask;
-        }
-        else
-        {
-            Descriptor.backFaceStencil  = nil;
-            Descriptor.frontFaceStencil = nil;
-        }
+    FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& InInitializer);
+    virtual ~FMetalDepthStencilState();
 
-        id<MTLDevice> Device = DeviceContext->GetMTLDevice();
-        CHECK(Device != nil);
+    bool Initialize();
 
-        DepthStencilState = [Device newDepthStencilStateWithDescriptor:Descriptor];
-        CHECK(DepthStencilState != nil);
-    }
+    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
     
-    ~FMetalDepthStencilState()
-    {
-        NSSafeRelease(DepthStencilState);
-    }
+    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
-    virtual FRHIDepthStencilStateDesc GetDesc() const override final
+    virtual FRHIDepthStencilStateInitializer GetDesc() const override final
     {
-        return Desc;
+        return Initializer;
     }
     
     id<MTLDepthStencilState> GetMTLDepthStencilState() const 
@@ -101,8 +61,8 @@ public:
     }
     
 private:
-    id<MTLDepthStencilState>  DepthStencilState;
-    FRHIDepthStencilStateDesc Desc;
+    id<MTLDepthStencilState>         DepthStencilState;
+    FRHIDepthStencilStateInitializer Initializer;
 };
 
 
@@ -222,7 +182,7 @@ public:
         
         Descriptor.depthAttachmentPixelFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
         
-        FMetalInputLayoutState* InputLayout = static_cast<FMetalInputLayoutState*>(Initializer.VertexInputLayout);
+        FMetalVertexInputLayout* InputLayout = static_cast<FMetalVertexInputLayout*>(Initializer.VertexInputLayout);
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;

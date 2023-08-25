@@ -394,9 +394,9 @@ FRHIRayMissShader* FVulkanRHI::RHICreateRayMissShader(const TArray<uint8>& Shade
     }
 }
 
-FRHIDepthStencilState* FVulkanRHI::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc)
+FRHIDepthStencilState* FVulkanRHI::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
 {
-    return new FVulkanDepthStencilState(InDesc);
+    return new FVulkanDepthStencilState(InInitializer);
 }
 
 FRHIRasterizerState* FVulkanRHI::RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
@@ -409,9 +409,9 @@ FRHIBlendState* FVulkanRHI::RHICreateBlendState(const FRHIBlendStateDesc& InDesc
     return new FVulkanBlendState(InDesc);
 }
 
-FRHIVertexInputLayout* FVulkanRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc)
+FRHIVertexInputLayout* FVulkanRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
 {
-    return new FVulkanInputLayoutState();
+    return new FVulkanVertexInputLayout(InInitializer);
 }
 
 FRHIGraphicsPipelineState* FVulkanRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)

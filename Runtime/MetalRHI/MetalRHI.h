@@ -80,13 +80,13 @@ public:
     
     virtual FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
 
-    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) override final;
+    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final;
     
     virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final;
     
     virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) override final;
     
-    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) override final;
+    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer) override final;
 
     virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) override final;
 

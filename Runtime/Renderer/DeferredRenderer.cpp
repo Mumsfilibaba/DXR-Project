@@ -72,11 +72,11 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilInitializer;
-        DepthStencilInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilInitializer.bDepthEnable   = true;
-        // TODO: We should use zero here, but alpha-masks are not rendered in pre-pass right now
-        DepthStencilInitializer.DepthWriteMask = EDepthWriteMask::All;
+        FRHIDepthStencilStateInitializer DepthStencilInitializer;
+        DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilInitializer.bDepthEnable      = true;
+        // TODO: We should use false here, but alpha-masks are not rendered in pre-pass right now
+        DepthStencilInitializer.bDepthWriteEnable = true;
 
         FRHIDepthStencilStateRef GeometryDepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
         if (!GeometryDepthStencilState)
@@ -161,10 +161,10 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencil;
-        DepthStencil.DepthFunc      = EComparisonFunc::Less;
-        DepthStencil.bDepthEnable   = true;
-        DepthStencil.DepthWriteMask = EDepthWriteMask::All;
+        FRHIDepthStencilStateInitializer DepthStencil;
+        DepthStencil.DepthFunc         = EComparisonFunc::Less;
+        DepthStencil.bDepthEnable      = true;
+        DepthStencil.bDepthWriteEnable = true;
 
         FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencil);
         if (!DepthStencilState)

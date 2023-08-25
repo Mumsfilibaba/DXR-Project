@@ -384,6 +384,37 @@ constexpr VkCompareOp ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
     }
 }
 
+constexpr VkStencilOp ConvertStencilOp(EStencilOp StencilOp)
+{
+    switch (StencilOp)
+    {
+        case EStencilOp::Keep:    return VK_STENCIL_OP_KEEP;
+        case EStencilOp::Zero:    return VK_STENCIL_OP_ZERO;
+        case EStencilOp::Replace: return VK_STENCIL_OP_REPLACE;
+        case EStencilOp::IncrSat: return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+        case EStencilOp::DecrSat: return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+        case EStencilOp::Invert:  return VK_STENCIL_OP_INVERT;
+        case EStencilOp::Incr:    return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+        case EStencilOp::Decr:    return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+    }
+
+    return VkStencilOp(-1);
+}
+
+inline VkStencilOpState ConvertStencilState(const FStencilState& StencilState)
+{
+    return
+    {
+        ConvertStencilOp(StencilState.StencilFailOp),
+        ConvertStencilOp(StencilState.StencilDepthPassOp),
+        ConvertStencilOp(StencilState.StencilDepthFailOp),
+        ConvertComparisonFunc(StencilState.StencilFunc),
+        0,
+        0,
+        0
+    };
+}
+
 constexpr VkFormat ConvertFormat(EFormat Format)
 {
     switch (Format)

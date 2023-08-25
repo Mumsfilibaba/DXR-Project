@@ -70,10 +70,10 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable   = true;
-        DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
+        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateInitializer.bDepthEnable      = true;
+        DepthStencilStateInitializer.bDepthWriteEnable = true;
 
         FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
@@ -156,10 +156,10 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-        DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-        DepthStencilStateInitializer.bDepthEnable   = true;
-        DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
+        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateInitializer.bDepthEnable      = true;
+        DepthStencilStateInitializer.bDepthWriteEnable = true;
 
         FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)

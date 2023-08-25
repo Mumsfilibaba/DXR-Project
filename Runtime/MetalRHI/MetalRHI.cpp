@@ -239,9 +239,17 @@ FRHIRayMissShader* FMetalRHI::RHICreateRayMissShader(const TArray<uint8>& Shader
     }
 }
 
-FRHIDepthStencilState* FMetalRHI::RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Desc)
+FRHIDepthStencilState* FMetalRHI::RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
 {
-    return new FMetalDepthStencilState(GetDeviceContext(), Desc);
+    FMetalDepthStencilStateRef NewDepthStencilState = new FMetalDepthStencilState(GetDeviceContext(), InInitializer);
+    if (!NewDepthStencilState->Initialize())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewDepthStencilState.ReleaseOwnership();
+    }
 }
 
 FRHIRasterizerState* FMetalRHI::RHICreateRasterizerState(const FRHIRasterizerStateDesc& Desc)
@@ -254,9 +262,9 @@ FRHIBlendState* FMetalRHI::RHICreateBlendState(const FRHIBlendStateDesc& Desc)
     return new FMetalBlendState(GetDeviceContext(), Desc);
 }
 
-FRHIVertexInputLayout* FMetalRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Desc)
+FRHIVertexInputLayout* FMetalRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
 {
-    return new FMetalInputLayoutState(GetDeviceContext(), Desc);
+    return new FMetalVertexInputLayout(InInitializer);
 }
 
 FRHIGraphicsPipelineState* FMetalRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Desc)

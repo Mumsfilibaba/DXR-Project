@@ -127,10 +127,10 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIDepthStencilStateDesc DepthStencilStateInitializer;
-    DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilStateInitializer.bDepthEnable   = true;
-    DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
+    FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+    DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilStateInitializer.bDepthEnable      = true;
+    DepthStencilStateInitializer.bDepthWriteEnable = true;
 
     FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
     if (!DepthStencilState)

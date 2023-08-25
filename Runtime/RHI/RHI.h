@@ -333,7 +333,7 @@ public:
      * @param InDesc - Info about a DepthStencilState
      * @return       - Returns the newly created DepthStencilState
      */
-    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& InDesc) = 0;
+    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InDesc) = 0;
 
     /**
      * @brief        - Create a new RasterizerState
@@ -354,7 +354,7 @@ public:
      * @param InDesc - Info about a InputLayoutState
      * @return       - Returns the newly created InputLayoutState
      */
-    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& InDesc) = 0;
+    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InDesc) = 0;
 
     /**
      * @brief        - Create a Graphics PipelineState
@@ -560,12 +560,12 @@ FORCEINLINE FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& Shade
     return GetRHI()->RHICreateRayMissShader(ShaderCode);
 }
 
-FORCEINLINE FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutDesc& Initializer)
+FORCEINLINE FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
 {
     return GetRHI()->RHICreateVertexInputLayout(Initializer);
 }
 
-FORCEINLINE FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateDesc& Initializer)
+FORCEINLINE FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)
 {
     return GetRHI()->RHICreateDepthStencilState(Initializer);
 }

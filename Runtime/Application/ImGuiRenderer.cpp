@@ -208,7 +208,7 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHIVertexInputLayoutDesc InputLayoutInfo =
+    FRHIVertexInputLayoutInitializer InputLayoutInfo =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
         { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
@@ -222,9 +222,9 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHIDepthStencilStateDesc DepthStencilStateInfo;
-    DepthStencilStateInfo.bDepthEnable   = false;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
+    FRHIDepthStencilStateInitializer DepthStencilStateInfo;
+    DepthStencilStateInfo.bDepthEnable      = false;
+    DepthStencilStateInfo.bDepthWriteEnable = false;
 
     FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
     if (!DepthStencilState)
