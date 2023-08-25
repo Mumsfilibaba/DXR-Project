@@ -4,6 +4,7 @@
 #include "VulkanPhysicalDevice.h"
 #include "VulkanCommandContext.h"
 #include "Core/Math/Math.h"
+#include "Core/Templates/NumericLimits.h"
 
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
@@ -123,7 +124,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     }
     
     const int32 MemoryTypeIndex = PhysicalDevice->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, MemoryProperties);
-    VULKAN_CHECK(MemoryTypeIndex != UINT32_MAX, "No suitable memory type");
+    VULKAN_CHECK(MemoryTypeIndex != TNumericLimits<int32>::Max(), "No suitable memory type");
 
     VkMemoryAllocateInfo AllocateInfo;
     FMemory::Memzero(&AllocateInfo);

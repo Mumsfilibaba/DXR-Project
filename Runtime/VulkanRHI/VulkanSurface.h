@@ -30,8 +30,7 @@ public:
     }
     
 private:
+    VkSurfaceKHR    Surface;
+    void*           WindowHandle;
     FVulkanQueueRef Queue;
-
-    VkSurfaceKHR Surface;
-    void*        WindowHandle;
 };

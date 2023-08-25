@@ -21,7 +21,7 @@ public:
     
     virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
-    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     id<MTLSamplerState> GetMTLSamplerState() const
     {

@@ -1,6 +1,7 @@
 #include "VulkanAllocators.h"
 #include "VulkanDevice.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Templates/NumericLimits.h"
 
 TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
     "Vulkan.MaxStagingAllocationSize",
@@ -84,7 +85,7 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
     
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;    
     const int32 MemoryTypeIndex = PhysicalDevice->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, MemoryProperties);
-    VULKAN_CHECK(MemoryTypeIndex != UINT32_MAX, "No suitable memory type");
+    VULKAN_CHECK(MemoryTypeIndex != TNumericLimits<int32>::Max(), "No suitable memory type");
 
     VkMemoryAllocateInfo AllocateInfo;
     FMemory::Memzero(&AllocateInfo);

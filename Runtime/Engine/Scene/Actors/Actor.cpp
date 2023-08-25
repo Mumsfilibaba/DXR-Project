@@ -59,10 +59,10 @@ FActor::FActor(FScene* InSceneOwner)
     : FObject()
     , Name()
     , SceneOwner(InSceneOwner)
-    , Transform()
-    , Components()
     , bIsStartable(true)
     , bIsTickable(true)
+    , Transform()
+    , Components()
 {
     FOBJECT_INIT();
 }

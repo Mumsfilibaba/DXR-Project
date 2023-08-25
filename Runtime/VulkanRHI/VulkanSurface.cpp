@@ -5,9 +5,9 @@
    
 FVulkanSurface::FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue* InQueue, void* InWindowHandle)
     : FVulkanDeviceObject(InDevice)
-    , Queue(MakeSharedRef<FVulkanQueue>(InQueue))
-    , WindowHandle(InWindowHandle)
     , Surface(VK_NULL_HANDLE)
+    , WindowHandle(InWindowHandle)
+    , Queue(MakeSharedRef<FVulkanQueue>(InQueue))
 {
 }
 

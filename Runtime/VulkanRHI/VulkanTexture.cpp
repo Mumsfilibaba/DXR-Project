@@ -2,6 +2,7 @@
 #include "VulkanTexture.h"
 #include "VulkanViewport.h"
 #include "VulkanCommandContext.h"
+#include "Core/Templates/NumericLimits.h"
 
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& InDesc)
     : FRHITexture(InDesc)
@@ -140,7 +141,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     }
 
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    VULKAN_CHECK(MemoryTypeIndex != UINT32_MAX, "No suitable memory type");
+    VULKAN_CHECK(MemoryTypeIndex != TNumericLimits<int32>::Max(), "No suitable memory type");
 
     VkMemoryAllocateInfo AllocateInfo;
     FMemory::Memzero(&AllocateInfo);

@@ -10,62 +10,6 @@
 
 class FVulkanInstance;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper
-
-static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const VkPhysicalDeviceFeatures& Features)
-{
-    static constexpr uint32 NumFeatures = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
-
-    VkPhysicalDeviceProperties AdapterProperties;
-    vkGetPhysicalDeviceProperties(PhysicalDevice, &AdapterProperties);
-
-    VkPhysicalDeviceFeatures AdapterFeatures;
-    vkGetPhysicalDeviceFeatures(PhysicalDevice, &AdapterFeatures);
-
-    const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&Features);
-    const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&AdapterFeatures);
-
-    bool bHasAllFeatures = true;
-    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures; ++FeatureIndex)
-    {
-        const bool bRequiresFeature = RequiredFeatures[FeatureIndex]  == VK_TRUE;
-        const bool bHasFeature      = AvailableFeatures[FeatureIndex] == VK_TRUE;
-        if (bRequiresFeature && !bHasFeature)
-        {
-            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See PhysicalDeviceFeature[%d]", AdapterProperties.deviceName, FeatureIndex);
-            bHasAllFeatures = false;
-            break;
-        }
-    }
-
-    return bHasAllFeatures;
-}
-
-static FString GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
-{
-    FString PropertyString = "QueueCount=" + TTypeToString<int32>::ToString(Properties.queueCount) + ", QueueBits=(";
-    if (Properties.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-    {
-        PropertyString += "GRAPHICS | ";
-    }
-    if (Properties.queueFlags & VK_QUEUE_COMPUTE_BIT)
-    {
-        PropertyString += "COMPUTE | ";
-    }
-    if (Properties.queueFlags & VK_QUEUE_TRANSFER_BIT)
-    {
-        PropertyString += "COPY | ";
-    }
-    
-    PropertyString.Pop();
-    PropertyString.Pop();
-    PropertyString.Pop();
-    PropertyString += ')';
-    return PropertyString;
-}
-
-
 struct FVulkanPhysicalDeviceDesc
 {
     FVulkanPhysicalDeviceDesc()

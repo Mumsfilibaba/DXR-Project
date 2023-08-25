@@ -5,8 +5,9 @@
 
 FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanCommandQueueType InType)
     : FVulkanDeviceObject(InDevice)
-    , Fence(InDevice)
     , CommandPool(InDevice, InType)
+    , Fence(InDevice)
+    , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
     , CommandBuffer(VK_NULL_HANDLE)
     , bIsRecording(false)
 {
@@ -14,8 +15,9 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanComma
 
 FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanCommandBuffer&& Other)
     : FVulkanDeviceObject(GetDevice())
-    , Fence(Move(Other.Fence))
     , CommandPool(Move(Other.CommandPool))
+    , Fence(Move(Other.Fence))
+    , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
     , CommandBuffer(Other.CommandBuffer)
     , bIsRecording(false)
 {
