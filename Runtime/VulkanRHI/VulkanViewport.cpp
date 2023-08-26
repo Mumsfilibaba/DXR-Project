@@ -222,12 +222,12 @@ void FVulkanViewport::DestroySwapChain()
 
 bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    if (((InWidth != Desc.Width) || (InHeight != Desc.Height)) && (InWidth > 0) && (InHeight > 0))
+    if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
     {
         VULKAN_INFO("Swapchain Resize");
 
-        Desc.Width  = InWidth;
-        Desc.Height = InHeight;
+        Desc.Width  = static_cast<uint32>(InWidth);
+        Desc.Height = static_cast<uint32>(InHeight);
 
         Queue->FlushWaitSemaphoresAndWait();
 

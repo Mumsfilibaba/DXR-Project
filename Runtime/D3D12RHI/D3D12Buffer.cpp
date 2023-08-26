@@ -147,7 +147,7 @@ bool FD3D12Buffer::CreateCBV()
     FMemory::Memzero(&ViewDesc);
 
     ViewDesc.BufferLocation = Resource->GetGPUVirtualAddress();
-    ViewDesc.SizeInBytes = static_cast<uint32>(Resource->Size());
+    ViewDesc.SizeInBytes    = static_cast<uint32>(Resource->GetSize());
 
     if (View->GetOfflineHandle() == 0)
     {

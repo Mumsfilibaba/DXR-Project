@@ -1602,7 +1602,7 @@ struct FRHIRasterizerStateInitializer
         , bEnableConservativeRaster(false)
         , bEnableDepthBias(true)
         , ForcedSampleCount(0)
-        , DepthBias(0)
+        , DepthBias(0.0f)
         , DepthBiasClamp(0.0f)
         , SlopeScaledDepthBias(0.0f)
     {
@@ -1612,7 +1612,7 @@ struct FRHIRasterizerStateInitializer
         EFillMode InFillMode,
         ECullMode InCullMode,
         bool      bInFrontCounterClockwise    = false,
-        int32     InDepthBias                 = 0,
+        float     InDepthBias                 = 0.0f,
         float     InDepthBiasClamp            = 0.0f,
         float     InSlopeScaledDepthBias      = 0.0f,
         bool      bInDepthClipEnable          = true,

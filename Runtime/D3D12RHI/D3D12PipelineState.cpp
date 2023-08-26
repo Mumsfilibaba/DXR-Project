@@ -40,8 +40,8 @@ FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInit
     Desc.DepthEnable      = InInitializer.bDepthEnable;
     Desc.DepthWriteMask   = InInitializer.bDepthWriteEnable ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
     Desc.StencilEnable    = InInitializer.bStencilEnable;
-    Desc.StencilReadMask  = InInitializer.StencilReadMask;
-    Desc.StencilWriteMask = InInitializer.StencilWriteMask;
+    Desc.StencilReadMask  = static_cast<uint8>(InInitializer.StencilReadMask);
+    Desc.StencilWriteMask = static_cast<uint8>(InInitializer.StencilWriteMask);
     Desc.FrontFace        = ConvertStencilState(InInitializer.FrontFace);
     Desc.BackFace         = ConvertStencilState(InInitializer.BackFace);
 }

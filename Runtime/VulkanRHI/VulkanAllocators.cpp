@@ -142,15 +142,15 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
 {
     FVulkanUploadAllocation Allocation;
     
-    FVulkanUploadBufferRef Buffer = new FVulkanUploadBuffer(GetDevice());
-    if (!Buffer->Initialize(Size))
+    FVulkanUploadBufferRef NewBuffer = new FVulkanUploadBuffer(GetDevice());
+    if (!NewBuffer->Initialize(Size))
     {
         VULKAN_ERROR("Failed to create staging-buffer");
         return Allocation;
     }
 
-    Allocation.Buffer = Buffer;
+    Allocation.Buffer = NewBuffer;
     Allocation.Offset = 0;
-    Allocation.Memory = reinterpret_cast<uint8*>(Buffer->GetMappedMemory());
+    Allocation.Memory = reinterpret_cast<uint8*>(NewBuffer->GetMappedMemory());
     return Allocation;
 }

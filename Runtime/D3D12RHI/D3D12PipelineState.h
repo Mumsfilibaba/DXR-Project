@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    FRHIDepthStencilStateInitializer Initializer
+    FRHIDepthStencilStateInitializer Initializer;
     D3D12_DEPTH_STENCIL_DESC         Desc;
 };
 

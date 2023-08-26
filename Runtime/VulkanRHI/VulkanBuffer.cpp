@@ -186,7 +186,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         if (Desc.IsDynamic())
         {
             void* BufferData = nullptr;
-            VkResult Result = vkMapMemory(GetDevice()->GetVkDevice(), DeviceMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
+            Result = vkMapMemory(GetDevice()->GetVkDevice(), DeviceMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
             VULKAN_CHECK_RESULT(Result, "Failed to map buffer-memory");
             
             if (!BufferData)
