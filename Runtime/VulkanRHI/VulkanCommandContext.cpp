@@ -224,10 +224,9 @@ void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureR
     const uint64 RequiredSize = FVulkanTextureHelper::CalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
     
     // TODO: Check if there exists a Vulkan macro for this
-    const uint64 Alignment   = 256;
-    const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, Alignment);
+    const uint64 Alignment = 256;
 
-    FVulkanUploadAllocation Allocation = GetDevice()->GetUploadHeap().Allocate(AlignedSize, Alignment);
+    FVulkanUploadAllocation Allocation = GetDevice()->GetUploadHeap().Allocate(RequiredSize, Alignment);
     CHECK(Allocation.Memory != nullptr);
 
     const uint8* Source = reinterpret_cast<const uint8*>(SrcData);

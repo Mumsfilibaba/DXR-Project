@@ -10,7 +10,8 @@ FTexture2D::FTexture2D()
     , Width(0)
     , Height(0)
     , NumMips(0)
-{ }
+{
+}
 
 FTexture2D::FTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32 InNumMips)
     : FTexture()
@@ -20,7 +21,8 @@ FTexture2D::FTexture2D(EFormat InFormat, uint32 InWidth, uint32 InHeight, uint32
     , Width(InWidth)
     , Height(InHeight)
     , NumMips(InNumMips)
-{ }
+{
+}
 
 FTexture2D::~FTexture2D()
 {
@@ -29,14 +31,7 @@ FTexture2D::~FTexture2D()
 
 bool FTexture2D::CreateRHITexture(bool bGenerateMips)
 {
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(
-        Format,
-        Width,
-        Height,
-        NumMips,
-        1,
-        ETextureUsageFlags::ShaderResource);
-
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::ShaderResource);
     TextureRHI = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
     if (!TextureRHI)
     {
@@ -52,7 +47,6 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
         CommandList.TransitionTexture(TextureRHI.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
         CommandList.GenerateMips(TextureRHI.Get());
         CommandList.TransitionTexture(TextureRHI.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-
         GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 

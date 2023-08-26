@@ -114,14 +114,16 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
     Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), Buffer, BufferMemory, 0);
     VULKAN_CHECK_RESULT(Result, "Failed to bind Buffer-DeviceMemory");
 
-    Result = vkMapMemory(GetDevice()->GetVkDevice(), BufferMemory, 0, VK_WHOLE_SIZE, 0, &MappedMemory);
+    void* BufferData = nullptr;
+    Result = vkMapMemory(GetDevice()->GetVkDevice(), BufferMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
     VULKAN_CHECK_RESULT(Result, "Failed to map buffer-memory");
     
-    if (!MappedMemory)
+    if (!BufferData)
     {
         return false;
     }
 
+    MappedMemory = reinterpret_cast<uint8*>(BufferData);
     return true;
 }
 
@@ -129,7 +131,6 @@ FVulkanUploadHeapAllocator::FVulkanUploadHeapAllocator(FVulkanDevice* InDevice)
     : FVulkanDeviceObject(InDevice)
     , BufferSize(0)
     , CurrentOffset(0)
-    , BufferData(nullptr)
     , Buffer(nullptr)
 {
 }
@@ -142,15 +143,58 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
 {
     FVulkanUploadAllocation Allocation;
     
-    FVulkanUploadBufferRef NewBuffer = new FVulkanUploadBuffer(GetDevice());
-    if (!NewBuffer->Initialize(Size))
+    // Make sure the size is properly aligned
+    Size = FMath::AlignUp<uint64>(Size, Alignment);
+
+    // Maximum size for a upload buffer
+    const uint64 MaxUploadSize = static_cast<uint64>(CVarMaxStagingAllocationSize.GetValue()) * 1024 * 1024;
+    if (Size < MaxUploadSize)
     {
-        VULKAN_ERROR("Failed to create staging-buffer");
-        return Allocation;
+        // Lock the buffer and all variable within
+        TScopedLock Lock(CriticalSection);
+
+        uint64 Offset    = FMath::AlignUp<uint64>(CurrentOffset, Alignment);
+        uint64 NewOffset = Offset + Size;
+        if (NewOffset >= BufferSize)
+        {
+            // Allocate a new 
+            FVulkanUploadBufferRef NewBuffer = new FVulkanUploadBuffer(GetDevice());
+            if (!NewBuffer->Initialize(MaxUploadSize))
+            {
+                VULKAN_ERROR("Failed to create staging-buffer");
+                return Allocation;
+            }
+            else
+            {
+                Buffer = NewBuffer;
+            }
+
+            CHECK(Size <= MaxUploadSize);
+
+            BufferSize = MaxUploadSize;
+            Offset     = 0;
+            NewOffset  = Offset + Size;
+        }
+
+        Allocation.Buffer = Buffer;
+        Allocation.Offset = Offset;
+        Allocation.Memory = Buffer->GetMappedMemory() + Offset;
+        CurrentOffset = NewOffset;
+    }
+    else
+    {
+        // Allocate a new 
+        FVulkanUploadBufferRef NewBuffer = new FVulkanUploadBuffer(GetDevice());
+        if (!NewBuffer->Initialize(Size))
+        {
+            VULKAN_ERROR("Failed to create staging-buffer");
+            return Allocation;
+        }
+
+        Allocation.Buffer = NewBuffer;
+        Allocation.Offset = 0;
+        Allocation.Memory = NewBuffer->GetMappedMemory();
     }
 
-    Allocation.Buffer = NewBuffer;
-    Allocation.Offset = 0;
-    Allocation.Memory = reinterpret_cast<uint8*>(NewBuffer->GetMappedMemory());
     return Allocation;
 }

@@ -25,7 +25,7 @@ public:
         return Buffer;
     }
 
-    void* GetMappedMemory() const 
+    uint8* GetMappedMemory() const
     {
         return MappedMemory;
     }
@@ -33,7 +33,7 @@ public:
 private:
     VkBuffer       Buffer;
     VkDeviceMemory BufferMemory;
-    void*          MappedMemory;
+    uint8*         MappedMemory;
 };
 
 class FVulkanUploadHeapAllocator : public FVulkanDeviceObject
@@ -47,6 +47,6 @@ public:
 private:
     VkDeviceSize           BufferSize;
     VkDeviceSize           CurrentOffset;
-    uint8*                 BufferData;
     FVulkanUploadBufferRef Buffer;
+    FCriticalSection       CriticalSection;
 };

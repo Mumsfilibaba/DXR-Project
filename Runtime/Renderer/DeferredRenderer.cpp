@@ -875,7 +875,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     TextureDesc.Format     = FrameResources.FinalTargetFormat;
     TextureDesc.UsageFlags = Usage | ETextureUsageFlags::UnorderedAccess;
 
-    FrameResources.FinalTarget = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.FinalTarget = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetName("Final Target");
@@ -891,7 +891,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
     TextureDesc.UsageFlags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
     TextureDesc.ClearValue = DepthClearValue;
 
-    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Depth])
     {
         FrameResources.GBuffer[GBufferIndex_Depth]->SetName("GBuffer DepthStencil");

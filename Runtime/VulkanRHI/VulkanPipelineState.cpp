@@ -62,18 +62,6 @@ FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateIn
     CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInitializer.StencilWriteMask;
 }
 
-EFillMode FillMode;
-ECullMode CullMode;
-bool      bFrontCounterClockwise;
-bool      bDepthClipEnable;
-bool      bMultisampleEnable;
-bool      bAntialiasedLineEnable;
-bool      bEnableConservativeRaster;
-uint32    ForcedSampleCount;
-int32     DepthBias;
-float     DepthBiasClamp;
-float     SlopeScaledDepthBias;
-
 
 FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer)
     : FRHIRasterizerState()
@@ -97,8 +85,8 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     CreateInfo.depthBiasSlopeFactor    = InInitializer.SlopeScaledDepthBias;
     CreateInfo.lineWidth               = 1.0f;
 
-    // NOTE: we are forced to disable this since there are not really any equivelent in D3D12
-    // The feature descibed in the spec, is always enabled in D3D12, and the only controllable
+    // NOTE: we are forced to disable this since there are not really any equivalent in D3D12
+    // The feature described in the spec, is always enabled in D3D12, and the only controllable
     // aspect in D3D12 is DepthClip, which is disabled when 'depthClampEnable' is set to true.
     CreateInfo.depthClampEnable = VK_FALSE;
     
@@ -111,7 +99,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     if (GetDevice()->IsDepthClipSupported())
     {
         // NOTE: Since this feature is always enabled in D3D12, for now, we do the same in Vulkan
-        // since the Depth-clipping is now controlled by a seperate value as in D3D12
+        // since the Depth-clipping is now controlled by a separate value as in D3D12
         CreateInfo.depthClampEnable = VK_TRUE;
         CreateInfoHelper.AddNext(DepthClipStateCreateInfo);
     }
