@@ -178,19 +178,19 @@ private:
 class FNullRHIRasterizerState : public FRHIRasterizerState
 {
 public:
-    FNullRHIRasterizerState(const FRHIRasterizerStateDesc& InDesc)
+    FNullRHIRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
         : FRHIRasterizerState()
-        , Desc(InDesc)
+        , Initializer(InInitializer)
     {
     }
 
-    virtual FRHIRasterizerStateDesc GetDesc() const override final
+    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
     {
-        return Desc;
+        return Initializer;
     }
 
 private:
-    FRHIRasterizerStateDesc Desc;
+    FRHIRasterizerStateInitializer Initializer;
 };
 
 

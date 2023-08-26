@@ -208,26 +208,39 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &DeviceMemoryProperties);
     
 #if VK_KHR_get_physical_device_properties2
-    if (Instance->IsExtensionEnabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
-    {
-        FMemory::Memzero(&DeviceProperties2);
-        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-        DeviceProperties2.pNext = nullptr;
-        
-        vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
-        
-        FMemory::Memzero(&DeviceFeatures2);
-        DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-        DeviceFeatures2.pNext = nullptr;
-        
-        vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
-        
-        FMemory::Memzero(&DeviceMemoryProperties2);
-        DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
-        DeviceMemoryProperties2.pNext = nullptr;
-        
-        vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
-    }
+    // Get the physical device properties
+    FMemory::Memzero(&DeviceProperties2);
+    DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    
+    // Helper for checking for extensions
+    FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
+    
+#if VK_EXT_conservative_rasterization
+    FMemory::Memzero(&ConservativeRasterizationProperties);
+    ConservativeRasterizationProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
+    DevicePropertiesHelper.AddNext(ConservativeRasterizationProperties);
+#endif
+    
+    vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
+    
+    FMemory::Memzero(&DeviceFeatures2);
+    DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+
+    // Helper for checking for extensions
+    FVulkanStructureHelper DeviceFeaturesHelper(DeviceFeatures2);
+    
+#if VK_EXT_depth_clip_enable
+    FMemory::Memzero(&DepthClipEnableFeatures);
+    DepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
+    DeviceFeaturesHelper.AddNext(DepthClipEnableFeatures);
+#endif
+    
+    // Get the physical device features
+    vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
+    
+    FMemory::Memzero(&DeviceMemoryProperties2);
+    DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+    vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
 #endif
     
     VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, GetVersionAsString(DeviceProperties.apiVersion).GetCString());

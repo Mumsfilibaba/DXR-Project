@@ -70,7 +70,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateDesc RasterizerStateInitializer;
+        FRHIRasterizerStateInitializer RasterizerStateInitializer;
         RasterizerStateInitializer.CullMode = ECullMode::None;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
@@ -214,7 +214,7 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIRasterizerStateDesc RasterizerStateInitializer;
+        FRHIRasterizerStateInitializer RasterizerStateInitializer;
         RasterizerStateInitializer.CullMode = ECullMode::None;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);

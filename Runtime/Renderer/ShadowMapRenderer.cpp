@@ -82,7 +82,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIRasterizerStateDesc RasterizerInitializer;
+        FRHIRasterizerStateInitializer RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -93,7 +93,6 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
 
         FRHIBlendStateDesc BlendStateInitializer;
-
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
@@ -168,7 +167,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIRasterizerStateDesc RasterizerInitializer;
+        FRHIRasterizerStateInitializer RasterizerInitializer;
         RasterizerInitializer.CullMode = ECullMode::Back;
 
         FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -179,7 +178,6 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
 
         FRHIBlendStateDesc BlendStateInitializer;
-        
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {

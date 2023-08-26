@@ -108,7 +108,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerInitializer;
+    FRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -119,7 +119,6 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     }
 
     FRHIBlendStateDesc BlendStateInitializer;
-
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {

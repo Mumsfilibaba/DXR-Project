@@ -146,9 +146,9 @@ public:
         return new FNullRHIDepthStencilState(InInitializer);
     }
 
-    virtual class FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) override final
+    virtual class FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final
     {
-        return new FNullRHIRasterizerState(InDesc);
+        return new FNullRHIRasterizerState(InInitializer);
     }
 
     virtual class FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) override final

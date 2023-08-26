@@ -233,37 +233,37 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerStateInfo;
-    RasterizerStateInfo.CullMode               = ECullMode::None;
-    RasterizerStateInfo.bAntialiasedLineEnable = true;
+    FRHIRasterizerStateInitializer RasterizerStateInitializer;
+    RasterizerStateInitializer.CullMode               = ECullMode::None;
+    RasterizerStateInitializer.bAntialiasedLineEnable = true;
 
-    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
     if (!RasterizerState)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIBlendStateDesc BlendStateInfo;
-    BlendStateInfo.bIndependentBlendEnable        = false;
-    BlendStateInfo.RenderTargets[0].bBlendEnable  = true;
-    BlendStateInfo.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
-    BlendStateInfo.RenderTargets[0].SrcBlendAlpha = EBlendType ::InvSrcAlpha;
-    BlendStateInfo.RenderTargets[0].DstBlend      = EBlendType ::InvSrcAlpha;
-    BlendStateInfo.RenderTargets[0].DstBlendAlpha = EBlendType ::Zero;
-    BlendStateInfo.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
-    BlendStateInfo.RenderTargets[0].BlendOp       = EBlendOp::Add;
+    FRHIBlendStateDesc BlendStateInitializer;
+    BlendStateInitializer.bIndependentBlendEnable        = false;
+    BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
+    BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
+    BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType ::InvSrcAlpha;
+    BlendStateInitializer.RenderTargets[0].DstBlend      = EBlendType ::InvSrcAlpha;
+    BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType ::Zero;
+    BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+    BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
 
-    FRHIBlendStateRef BlendStateBlending = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateBlending = RHICreateBlendState(BlendStateInitializer);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    BlendStateInfo.RenderTargets[0].bBlendEnable = false;
+    BlendStateInitializer.RenderTargets[0].bBlendEnable = false;
 
-    FRHIBlendStateRef BlendStateNoBlending = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendStateNoBlending = RHICreateBlendState(BlendStateInitializer);
     if (!BlendStateBlending)
     {
         DEBUG_BREAK();

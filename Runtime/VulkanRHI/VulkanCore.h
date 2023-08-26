@@ -415,6 +415,27 @@ inline VkStencilOpState ConvertStencilState(const FStencilState& StencilState)
     };
 }
 
+constexpr VkCullModeFlagBits ConvertCullMode(ECullMode CullMode)
+{
+    switch (CullMode)
+    {
+        case ECullMode::Back:  return VK_CULL_MODE_BACK_BIT;
+        case ECullMode::Front: return VK_CULL_MODE_FRONT_BIT;
+        default:               return VkCullModeFlagBits(0);
+    }
+}
+
+constexpr VkPolygonMode ConvertFillMode(EFillMode FillMode)
+{
+    switch (FillMode)
+    {
+        case EFillMode::Solid:     return VK_POLYGON_MODE_FILL;
+        case EFillMode::WireFrame: return VK_POLYGON_MODE_LINE;
+    }
+
+    return VkPolygonMode(0);
+}
+
 constexpr VkFormat ConvertFormat(EFormat Format)
 {
     switch (Format)

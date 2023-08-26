@@ -47,6 +47,27 @@ FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInit
 }
 
 
+FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
+    : FRHIRasterizerState()
+    , FD3D12RefCounted()
+    , Initializer(InInitializer)
+{
+    FMemory::Memzero(&Desc);
+
+    Desc.AntialiasedLineEnable = InInitializer.bAntialiasedLineEnable;
+    Desc.CullMode              = ConvertCullMode(InInitializer.CullMode);
+    Desc.DepthBias             = static_cast<int32>(InInitializer.DepthBias);
+    Desc.DepthBiasClamp        = InInitializer.DepthBiasClamp;
+    Desc.DepthClipEnable       = InInitializer.bDepthClipEnable;
+    Desc.SlopeScaledDepthBias  = InInitializer.SlopeScaledDepthBias;
+    Desc.FillMode              = ConvertFillMode(InInitializer.FillMode);
+    Desc.ForcedSampleCount     = InInitializer.ForcedSampleCount;
+    Desc.FrontCounterClockwise = InInitializer.bFrontCounterClockwise;
+    Desc.MultisampleEnable     = InInitializer.bMultisampleEnable;
+    Desc.ConservativeRaster    = InInitializer.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+}
+
+
 FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)

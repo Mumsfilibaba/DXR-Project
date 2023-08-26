@@ -399,9 +399,9 @@ FRHIDepthStencilState* FVulkanRHI::RHICreateDepthStencilState(const FRHIDepthSte
     return new FVulkanDepthStencilState(InInitializer);
 }
 
-FRHIRasterizerState* FVulkanRHI::RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
+FRHIRasterizerState* FVulkanRHI::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
 {
-    return new FVulkanRasterizerState(InDesc);
+    return new FVulkanRasterizerState(GetDevice(), InInitializer);
 }
 
 FRHIBlendState* FVulkanRHI::RHICreateBlendState(const FRHIBlendStateDesc& InDesc)

@@ -83,19 +83,21 @@ private:
 };
 
 
-class FD3D12RasterizerState : public FRHIRasterizerState, public FD3D12DeviceChild
+class FD3D12RasterizerState : public FRHIRasterizerState, public FD3D12RefCounted
 {
 public:
-    FD3D12RasterizerState(FD3D12Device* InDevice, const D3D12_RASTERIZER_DESC& InDesc)
-        : FRHIRasterizerState()
-        , FD3D12DeviceChild(InDevice)
-        , Desc(InDesc)
-    {
-    }
+    FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
+    virtual ~FD3D12RasterizerState() = default;
 
-    virtual FRHIRasterizerStateDesc GetDesc() const override final
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
+
+    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
     {
-        return FRHIRasterizerStateDesc();
+        return Initializer;
     }
 
     FORCEINLINE const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
@@ -104,7 +106,8 @@ public:
     }
 
 private:
-    D3D12_RASTERIZER_DESC Desc;
+    FRHIRasterizerStateInitializer Initializer;
+    D3D12_RASTERIZER_DESC          Desc;
 };
 
 

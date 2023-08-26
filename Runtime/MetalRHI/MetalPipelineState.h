@@ -66,23 +66,21 @@ private:
 };
 
 
-class FMetalRasterizerState : public FRHIRasterizerState, public FMetalObject
+class FMetalRasterizerState : public FRHIRasterizerState, public FMetalRefCounted
 {
 public:
-    FMetalRasterizerState(FMetalDeviceContext* DeviceContext, const FRHIRasterizerStateDesc& InDesc)
-        : FRHIRasterizerState()
-        , FMetalObject(DeviceContext)
-        , Desc(InDesc)
-        , FillMode(ConvertFillMode(InDesc.FillMode))
-        , FrontFaceWinding(InDesc.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
-    {
-    }
+    FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
+    virtual ~FMetalRasterizerState() = default;
 
-    ~FMetalRasterizerState() = default;
+    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
-    virtual FRHIRasterizerStateDesc GetDesc() const override final
+    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
     {
-        return Desc;
+        return Initializer;
     }
 
     MTLTriangleFillMode GetMTLFillMode() const 
@@ -96,9 +94,10 @@ public:
     }
 
 private:
-    FRHIRasterizerStateDesc Desc;
-    MTLTriangleFillMode     FillMode;
-    MTLWinding              FrontFaceWinding;
+    MTLTriangleFillMode FillMode;
+    MTLWinding          FrontFaceWinding;
+
+    FRHIRasterizerStateInitializer Initializer;
 };
 
 

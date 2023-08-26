@@ -340,7 +340,7 @@ public:
      * @param InDesc - Info about a RasterizerState
      * @return       - Returns the newly created RasterizerState
      */
-    virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc) = 0;
+    virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) = 0;
 
     /**
      * @brief        - Create a new BlendState
@@ -570,7 +570,7 @@ FORCEINLINE FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthSte
     return GetRHI()->RHICreateDepthStencilState(Initializer);
 }
 
-FORCEINLINE FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateDesc& Initializer)
+FORCEINLINE FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& Initializer)
 {
     return GetRHI()->RHICreateRasterizerState(Initializer);
 }

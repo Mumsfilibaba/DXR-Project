@@ -696,24 +696,9 @@ FRHIDepthStencilState* FD3D12RHI::RHICreateDepthStencilState(const FRHIDepthSten
     return new FD3D12DepthStencilState(InInitializer);
 }
 
-FRHIRasterizerState* FD3D12RHI::RHICreateRasterizerState(const FRHIRasterizerStateDesc& InDesc)
+FRHIRasterizerState* FD3D12RHI::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
 {
-    D3D12_RASTERIZER_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.AntialiasedLineEnable = InDesc.bAntialiasedLineEnable;
-    Desc.CullMode              = ConvertCullMode(InDesc.CullMode);
-    Desc.DepthBias             = InDesc.DepthBias;
-    Desc.DepthBiasClamp        = InDesc.DepthBiasClamp;
-    Desc.DepthClipEnable       = InDesc.bDepthClipEnable;
-    Desc.SlopeScaledDepthBias  = InDesc.SlopeScaledDepthBias;
-    Desc.FillMode              = ConvertFillMode(InDesc.FillMode);
-    Desc.ForcedSampleCount     = InDesc.ForcedSampleCount;
-    Desc.FrontCounterClockwise = InDesc.bFrontCounterClockwise;
-    Desc.MultisampleEnable     = InDesc.bMultisampleEnable;
-    Desc.ConservativeRaster    = InDesc.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-
-    return new FD3D12RasterizerState(GetDevice(), Desc);
+    return new FD3D12RasterizerState(InInitializer);
 }
 
 FRHIBlendState* FD3D12RHI::RHICreateBlendState(const FRHIBlendStateDesc& InDesc)
@@ -752,61 +737,61 @@ FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIG
     {
         return nullptr;
     }
-
-    return NewPipelineState.ReleaseOwnership();
+    else
+    {
+        return NewPipelineState.ReleaseOwnership();
+    }
 }
 
 FRHIComputePipelineState* FD3D12RHI::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
 {
-    CHECK(InDesc.Shader != nullptr);
-
-    auto Shader = MakeSharedRef<FD3D12ComputeShader>(InDesc.Shader);
-    
-    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), Shader);
+    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InDesc.Shader));
     if (!NewPipelineState->Initialize())
     {
         return nullptr;
     }
-
-    return NewPipelineState.ReleaseOwnership();
+    else
+    {
+        return NewPipelineState.ReleaseOwnership();
+    }
 }
 
 FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
 {
     FD3D12RayTracingPipelineStateRef NewPipelineState = new FD3D12RayTracingPipelineState(GetDevice());
-    if (NewPipelineState->Initialize(InDesc))
+    if (!NewPipelineState->Initialize(InDesc))
     {
-        return NewPipelineState.ReleaseOwnership();
+        return nullptr;
     }
     else
     {
-        return nullptr;
+        return NewPipelineState.ReleaseOwnership();
     }
 }
 
 FRHITimestampQuery* FD3D12RHI::RHICreateTimestampQuery()
 {
     FD3D12TimestampQueryRef NewTimestampQuery = new FD3D12TimestampQuery(GetDevice());
-    if (NewTimestampQuery->Initialize())
+    if (!NewTimestampQuery->Initialize())
     {
-        return NewTimestampQuery.ReleaseOwnership();
+        return nullptr;
     }
     else
     {
-        return nullptr;
+        return NewTimestampQuery.ReleaseOwnership();
     }
 }
 
 FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
     FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectContext, InDesc);
-    if (Viewport->Initialize())
+    if (!Viewport->Initialize())
     {
-        return Viewport.ReleaseOwnership();
+        return nullptr;
     }
     else
     {
-        return nullptr;
+        return Viewport.ReleaseOwnership();
     }
 }
 

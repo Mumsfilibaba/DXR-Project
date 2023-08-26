@@ -8,6 +8,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , PhysicalDevice(InAdapter)
     , Device(VK_NULL_HANDLE)
     , UploadHeap(this)
+    , bSupportsDepthClip(false)
 {
 }
 
@@ -100,10 +101,10 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     const float DefaultQueuePriority = 0.0f;
     for (uint32 QueueFamiliy : UniqueQueueFamilies)
     {
-        VkDeviceQueueCreateInfo QueueCreateInfo = {};
+        VkDeviceQueueCreateInfo QueueCreateInfo;
+        FMemory::Memzero(&QueueCreateInfo);
+        
         QueueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        QueueCreateInfo.pNext            = nullptr;
-        QueueCreateInfo.flags            = 0;
         QueueCreateInfo.pQueuePriorities = &DefaultQueuePriority;
         QueueCreateInfo.queueFamilyIndex = QueueFamiliy;
         QueueCreateInfo.queueCount       = 1;
@@ -115,7 +116,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     FMemory::Memzero(&DeviceCreateInfo);
 
     DeviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    DeviceCreateInfo.flags                   = 0;
     DeviceCreateInfo.enabledLayerCount       = 0;
     DeviceCreateInfo.ppEnabledLayerNames     = nullptr;
     DeviceCreateInfo.enabledExtensionCount   = EnabledExtensionNames.Size();
@@ -141,9 +141,8 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     if (IsExtensionEnabled(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME))
     {
         ShaderDrawParametersFeatures.shaderDrawParameters = VK_TRUE;
+        DeviceCreateHelper.AddNext(ShaderDrawParametersFeatures);
     }
-
-    DeviceCreateHelper.AddNext(ShaderDrawParametersFeatures);
 #endif
 
 #if VK_KHR_buffer_device_address
@@ -154,9 +153,8 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     if (IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
     {
         BufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
+        DeviceCreateHelper.AddNext(BufferDeviceAddressFeatures);
     }
-
-    DeviceCreateHelper.AddNext(BufferDeviceAddressFeatures);
 #endif
 
 #if VK_KHR_timeline_semaphore
@@ -167,9 +165,28 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     if (IsExtensionEnabled(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME))
     {
         TimelineSemaphoreFeatures.timelineSemaphore = VK_TRUE;
+        DeviceCreateHelper.AddNext(TimelineSemaphoreFeatures);
     }
+#endif
+    
+#if VK_EXT_depth_clip_enable
+    VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
+    FMemory::Memzero(&DepthClipEnableFeatures);
+    DepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
 
-    DeviceCreateHelper.AddNext(TimelineSemaphoreFeatures);
+    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME))
+    {
+        DepthClipEnableFeatures.depthClipEnable = VK_TRUE;
+        DeviceCreateHelper.AddNext(DepthClipEnableFeatures);
+        bSupportsDepthClip = true;
+    }
+#endif
+    
+#if VK_EXT_conservative_rasterization
+    if (IsExtensionEnabled(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME))
+    {
+        bSupportsConservativeRasterization = true;
+    }
 #endif
 
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);

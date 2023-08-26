@@ -11,9 +11,6 @@ struct FGenericVulkanPlatform
     {
         return
         {
-        #if VK_KHR_get_physical_device_properties2
-            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
-        #endif
         #if VK_KHR_device_group_creation
             VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME,
         #endif
@@ -102,10 +99,24 @@ struct FGenericVulkanPlatform
         #if VK_NV_ray_tracing_invocation_reorder
             VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
         #endif
+        #if VK_EXT_depth_clip_enable
+            VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_conservative_rasterization
+            VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME,
+        #endif
         };
     }
     
-    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions() { return TArray<const CHAR*>(); }
+    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions()
+    {
+        return
+        {
+        #if VK_KHR_get_physical_device_properties2
+            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+        #endif
+        };
+    }
 
     static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceLayers() { return TArray<const CHAR*>(); }
 
@@ -113,7 +124,7 @@ struct FGenericVulkanPlatform
     
     static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceLayers() { return TArray<const CHAR*>(); }
 
-    static FORCEINLINE void* LoadVulkanLibrary() { return 0; }
+    static FORCEINLINE void* LoadVulkanLibrary() { return nullptr; }
 
 #if VK_KHR_surface
     static FORCEINLINE VkResult CreateSurface(VkInstance Instance, void* InWindowHandle, VkSurfaceKHR* OutSurface) { return VK_ERROR_UNKNOWN; }

@@ -252,9 +252,9 @@ FRHIDepthStencilState* FMetalRHI::RHICreateDepthStencilState(const FRHIDepthSten
     }
 }
 
-FRHIRasterizerState* FMetalRHI::RHICreateRasterizerState(const FRHIRasterizerStateDesc& Desc)
+FRHIRasterizerState* FMetalRHI::RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
 {
-    return new FMetalRasterizerState(GetDeviceContext(), Desc);
+    return new FMetalRasterizerState(InInitializer);
 }
 
 FRHIBlendState* FMetalRHI::RHICreateBlendState(const FRHIBlendStateDesc& Desc)

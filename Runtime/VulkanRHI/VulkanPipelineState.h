@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanRefCounted.h"
+#include "VulkanDeviceObject.h"
 #include "RHI/RHIResources.h"
 #include "Core/Utilities/StringUtilities.h"
 
@@ -76,22 +77,39 @@ private:
 };
 
 
-class FVulkanRasterizerState : public FRHIRasterizerState
+class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceObject, public FVulkanRefCounted
 {
 public:
-    FVulkanRasterizerState(const FRHIRasterizerStateDesc& InDesc)
-        : FRHIRasterizerState()
-        , Desc(InDesc)
-    {
-    }
-
+    FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer);
     virtual ~FVulkanRasterizerState() = default;
 
-    virtual FRHIRasterizerStateDesc GetDesc() const override final { return Desc; }
+    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
+    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    {
+        return Initializer;
+    }
+
+    const VkPipelineRasterizationStateCreateInfo& GetVkCreateInfo() const
+    {
+        return CreateInfo;
+    }
+    
 private:
-    FRHIRasterizerStateDesc Desc;
+    FRHIRasterizerStateInitializer         Initializer;
+    VkPipelineRasterizationStateCreateInfo CreateInfo;
+#if VK_EXT_depth_clip_enable
+    VkPipelineRasterizationDepthClipStateCreateInfoEXT    DepthClipStateCreateInfo;
+#endif
+#if VK_EXT_conservative_rasterization
+    VkPipelineRasterizationConservativeStateCreateInfoEXT ConservativeStateCreateInfo;
+#endif
 };
+
 
 class FVulkanBlendState : public FRHIBlendState
 {

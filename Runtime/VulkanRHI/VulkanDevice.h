@@ -53,6 +53,10 @@ public:
     
     uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
+    bool IsDepthClipSupported() const { return bSupportsDepthClip; }
+    
+    bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
+    
     FORCEINLINE bool IsLayerEnabled(const FString& LayerName)
     {
         return LayerNames.find(LayerName) != LayerNames.end();
@@ -96,4 +100,8 @@ private:
     
     TSet<FString> ExtensionNames;
     TSet<FString> LayerNames;
+    
+    // One off boolean features
+    bool bSupportsDepthClip                 : 1;
+    bool bSupportsConservativeRasterization : 1;
 };

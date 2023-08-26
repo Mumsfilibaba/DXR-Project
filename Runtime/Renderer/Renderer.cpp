@@ -990,7 +990,7 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerInitializer;
+    FRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
@@ -1000,9 +1000,9 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIBlendStateDesc BlendStateInfo;
+    FRHIBlendStateDesc BlendStateInitializer;
 
-    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
         DEBUG_BREAK();

@@ -57,10 +57,10 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIRasterizerStateDesc RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
+    FRHIRasterizerStateInitializer RasterizerStateInitializer;
+    RasterizerStateInitializer.CullMode = ECullMode::None;
 
-    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
     if (!RasterizerState)
     {
         DEBUG_BREAK();

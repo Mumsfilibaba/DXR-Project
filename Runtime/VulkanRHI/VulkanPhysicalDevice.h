@@ -53,7 +53,7 @@ public:
     bool Initialize(const FVulkanPhysicalDeviceDesc& AdapterDesc);
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
-
+    
     FORCEINLINE FVulkanInstance* GetInstance() const
     {
         return Instance;
@@ -96,6 +96,20 @@ public:
     }
 #endif
 
+#if VK_EXT_depth_clip_enable
+    FORCEINLINE const VkPhysicalDeviceDepthClipEnableFeaturesEXT& GetDepthClipEnableFeatures() const
+    {
+        return DepthClipEnableFeatures;
+    }
+#endif
+    
+#if VK_EXT_conservative_rasterization
+    FORCEINLINE const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const
+    {
+        return ConservativeRasterizationProperties;
+    }
+#endif
+
 private:
     FVulkanInstance* Instance;
     VkPhysicalDevice PhysicalDevice;
@@ -103,10 +117,15 @@ private:
     VkPhysicalDeviceProperties        DeviceProperties;
     VkPhysicalDeviceFeatures          DeviceFeatures;
     VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
-    
 #if VK_KHR_get_physical_device_properties2
     VkPhysicalDeviceProperties2       DeviceProperties2;
     VkPhysicalDeviceFeatures2         DeviceFeatures2;
     VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
+#endif
+#if VK_EXT_depth_clip_enable
+    VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
+#endif
+#if VK_EXT_conservative_rasterization
+    VkPhysicalDeviceConservativeRasterizationPropertiesEXT ConservativeRasterizationProperties;
 #endif
 };

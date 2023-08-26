@@ -1590,9 +1590,9 @@ constexpr const CHAR* ToString(EFillMode FillMode)
 }
 
 
-struct FRHIRasterizerStateDesc
+struct FRHIRasterizerStateInitializer
 {
-    FRHIRasterizerStateDesc()
+    FRHIRasterizerStateInitializer()
         : FillMode(EFillMode::Solid)
         , CullMode(ECullMode::Back)
         , bFrontCounterClockwise(false)
@@ -1600,6 +1600,7 @@ struct FRHIRasterizerStateDesc
         , bMultisampleEnable(false)
         , bAntialiasedLineEnable(false)
         , bEnableConservativeRaster(false)
+        , bEnableDepthBias(true)
         , ForcedSampleCount(0)
         , DepthBias(0)
         , DepthBiasClamp(0.0f)
@@ -1607,7 +1608,7 @@ struct FRHIRasterizerStateDesc
     {
     }
 
-    FRHIRasterizerStateDesc(
+    FRHIRasterizerStateInitializer(
         EFillMode InFillMode,
         ECullMode InCullMode,
         bool      bInFrontCounterClockwise    = false,
@@ -1618,7 +1619,8 @@ struct FRHIRasterizerStateDesc
         bool      bInMultisampleEnable        = false,
         bool      bInAntialiasedLineEnable    = false,
         uint32    InForcedSampleCount         = 1,
-        bool      bInEnableConservativeRaster = false)
+        bool      bInEnableConservativeRaster = false,
+        bool      bInEnableDepthBias          = true)
         : FillMode(InFillMode)
         , CullMode(InCullMode)
         , bFrontCounterClockwise(bInFrontCounterClockwise)
@@ -1626,6 +1628,7 @@ struct FRHIRasterizerStateDesc
         , bMultisampleEnable(bInMultisampleEnable)
         , bAntialiasedLineEnable(bInAntialiasedLineEnable)
         , bEnableConservativeRaster(bInEnableConservativeRaster)
+        , bEnableDepthBias(bInEnableDepthBias)
         , ForcedSampleCount(InForcedSampleCount)
         , DepthBias(InDepthBias)
         , DepthBiasClamp(InDepthBiasClamp)
@@ -1649,7 +1652,7 @@ struct FRHIRasterizerStateDesc
         return Hash;
     }
 
-    bool operator==(const FRHIRasterizerStateDesc& Other) const
+    bool operator==(const FRHIRasterizerStateInitializer& Other) const
     {
         return FillMode                  == Other.FillMode
             && CullMode                  == Other.CullMode
@@ -1664,7 +1667,7 @@ struct FRHIRasterizerStateDesc
             && bEnableConservativeRaster == Other.bEnableConservativeRaster;
     }
 
-    bool operator!=(const FRHIRasterizerStateDesc& Other) const
+    bool operator!=(const FRHIRasterizerStateInitializer& Other) const
     {
         return !(*this == Other);
     }
@@ -1676,8 +1679,9 @@ struct FRHIRasterizerStateDesc
     bool      bMultisampleEnable;
     bool      bAntialiasedLineEnable;
     bool      bEnableConservativeRaster;
+    bool      bEnableDepthBias;
     uint32    ForcedSampleCount;
-    int32     DepthBias;
+    float     DepthBias;
     float     DepthBiasClamp;
     float     SlopeScaledDepthBias;
 };
@@ -1690,7 +1694,7 @@ protected:
     virtual ~FRHIRasterizerState() = default;
 
 public:
-    virtual FRHIRasterizerStateDesc GetDesc() const = 0; 
+    virtual FRHIRasterizerStateInitializer GetInitializer() const = 0; 
 };
 
 

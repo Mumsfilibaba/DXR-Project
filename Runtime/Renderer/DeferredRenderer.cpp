@@ -85,10 +85,10 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIRasterizerStateDesc RasterizerStateInfo;
-        RasterizerStateInfo.CullMode = ECullMode::Back;
+        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        RasterizerStateInitializer.CullMode = ECullMode::Back;
 
-        FRHIRasterizerStateRef GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        FRHIRasterizerStateRef GeometryRasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
         if (!GeometryRasterizerState)
         {
             DEBUG_BREAK();
@@ -161,31 +161,31 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIDepthStencilStateInitializer DepthStencil;
-        DepthStencil.DepthFunc         = EComparisonFunc::Less;
-        DepthStencil.bDepthEnable      = true;
-        DepthStencil.bDepthWriteEnable = true;
+        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::Less;
+        DepthStencilStateInitializer.bDepthEnable      = true;
+        DepthStencilStateInitializer.bDepthWriteEnable = true;
 
-        FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencil);
+        FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
         if (!DepthStencilState)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        FRHIRasterizerStateDesc RasterizerStateInfo;
-        RasterizerStateInfo.CullMode = ECullMode::Back;
+        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        RasterizerStateInitializer.CullMode = ECullMode::Back;
 
-        FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+        FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
         if (!RasterizerState)
         {
             DEBUG_BREAK();
             return false;
         }
 
-        FRHIBlendStateDesc BlendStateInfo;
+        FRHIBlendStateDesc BlendStateInitializer;
 
-        FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInfo);
+        FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
             DEBUG_BREAK();
