@@ -519,8 +519,6 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
     InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
 
-    InCmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-
     InCmdList.SetGraphicsPipelineState(PostPSO.Get());
     InCmdList.DrawInstanced(3, 1, 0, 0);
 
@@ -1010,14 +1008,14 @@ bool FRenderer::InitAA()
         return false;
     }
 
-    FRHIGraphicsPipelineStateDesc PSOInitializer;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
     PSOInitializer.VertexInputLayout                      = nullptr;
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
     PSOInitializer.RasterizerState                        = RasterizerState.Get();
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = PostShader.Get();
-    PSOInitializer.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
     PSOInitializer.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
     PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
     PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;

@@ -267,9 +267,9 @@ FRHIVertexInputLayout* FMetalRHI::RHICreateVertexInputLayout(const FRHIVertexInp
     return new FMetalVertexInputLayout(InInitializer);
 }
 
-FRHIGraphicsPipelineState* FMetalRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Desc)
+FRHIGraphicsPipelineState* FMetalRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
 {
-    return new FMetalGraphicsPipelineState(GetDeviceContext(), Desc);
+    return new FMetalGraphicsPipelineState(GetDeviceContext(), InInitializer);
 }
 
 FRHIComputePipelineState* FMetalRHI::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Desc)

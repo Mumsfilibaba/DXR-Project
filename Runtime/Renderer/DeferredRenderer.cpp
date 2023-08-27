@@ -105,7 +105,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateDesc PSOInitializer;
+        FRHIGraphicsPipelineStateInitializer PSOInitializer;
         PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
         PSOInitializer.BlendState                             = BlendState.Get();
         PSOInitializer.DepthStencilState                      = GeometryDepthStencilState.Get();
@@ -193,7 +193,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIGraphicsPipelineStateDesc PSOInitializer;
+        FRHIGraphicsPipelineStateInitializer PSOInitializer;
         PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
@@ -515,8 +515,6 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
 
         CommandList.BeginRenderPass(RenderPass);
 
-        CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-        
         FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.SetViewport(ViewportRegion);
 
@@ -644,8 +642,6 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
     CommandList.BeginRenderPass(RenderPass);
 
-    CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    
     FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
 

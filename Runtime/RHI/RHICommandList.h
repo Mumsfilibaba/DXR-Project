@@ -292,11 +292,6 @@ public:
         EmplaceCommand<FRHICommandSetIndexBuffer>(IndexBuffer, IndexFormat);
     }
 
-    FORCEINLINE void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) noexcept
-    {
-        EmplaceCommand<FRHICommandSetPrimitiveTopology>(PrimitveTopologyType);
-    }
-
     FORCEINLINE void SetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState) noexcept
     {
         EmplaceCommand<FRHICommandSetGraphicsPipelineState>(PipelineState);

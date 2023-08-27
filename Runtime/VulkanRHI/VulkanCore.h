@@ -526,6 +526,21 @@ constexpr VkColorComponentFlags ConvertColorWriteFlags(EColorWriteFlags ColorWri
 }
 
 
+constexpr VkPrimitiveTopology ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+{
+    switch (PrimitiveTopology)
+    {
+        case EPrimitiveTopology::LineList:      return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case EPrimitiveTopology::LineStrip:     return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        case EPrimitiveTopology::PointList:     return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case EPrimitiveTopology::TriangleList:  return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case EPrimitiveTopology::TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    }
+
+    return VkPrimitiveTopology(-1);
+}
+
+
 constexpr VkFormat ConvertFormat(EFormat Format)
 {
     switch (Format)

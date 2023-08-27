@@ -165,6 +165,12 @@ VULKAN_FUNCTION_DEFINITION(DestroyImage);
 VULKAN_FUNCTION_DEFINITION(CreateShaderModule);
 VULKAN_FUNCTION_DEFINITION(DestroyShaderModule);
 
+VULKAN_FUNCTION_DEFINITION(CreateGraphicsPipelines);
+VULKAN_FUNCTION_DEFINITION(DestroyPipeline);
+
+VULKAN_FUNCTION_DEFINITION(CreatePipelineLayout);
+VULKAN_FUNCTION_DEFINITION(DestroyPipelineLayout);
+
 VULKAN_FUNCTION_DEFINITION(CreateSampler);
 VULKAN_FUNCTION_DEFINITION(DestroySampler);
 
@@ -249,6 +255,12 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateShaderModule);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyShaderModule);
+
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateGraphicsPipelines);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyPipeline);
+
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreatePipelineLayout);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyPipelineLayout);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSampler);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySampler);    

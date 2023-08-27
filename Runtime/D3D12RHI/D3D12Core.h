@@ -528,18 +528,24 @@ constexpr uint8 ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
     return RenderTargetWriteMask;
 }
 
-constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
+constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopology PrimitiveTopology)
 {
-    switch (PrimitiveTopologyType)
+    switch (PrimitiveTopology)
     {
-        case EPrimitiveTopologyType::Line:      return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-        case EPrimitiveTopologyType::Patch:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
-        case EPrimitiveTopologyType::Point:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-        case EPrimitiveTopologyType::Triangle:  return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        case EPrimitiveTopologyType::Undefined: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
-    }
+        case EPrimitiveTopology::LineList:
+        case EPrimitiveTopology::LineStrip:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 
-    return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+        case EPrimitiveTopology::PointList:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+
+        case EPrimitiveTopology::TriangleList:
+        case EPrimitiveTopology::TriangleStrip:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+        default:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+    }
 }
 
 constexpr D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)

@@ -141,7 +141,7 @@ struct FMetalResourceBinding
 class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalObject
 {
 public:
-    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateDesc& Initializer)
+    FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
         : FMetalObject(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)

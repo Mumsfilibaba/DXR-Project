@@ -414,9 +414,17 @@ FRHIVertexInputLayout* FVulkanRHI::RHICreateVertexInputLayout(const FRHIVertexIn
     return new FVulkanVertexInputLayout(InInitializer);
 }
 
-FRHIGraphicsPipelineState* FVulkanRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
+FRHIGraphicsPipelineState* FVulkanRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
 {
-    return new FVulkanGraphicsPipelineState();
+    FVulkanGraphicsPipelineStateRef NewPipeline = new FVulkanGraphicsPipelineState(GetDevice());
+    if (!NewPipeline->Initialize(InInitializer))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewPipeline.ReleaseOwnership();
+    }
 }
 
 FRHIComputePipelineState* FVulkanRHI::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)

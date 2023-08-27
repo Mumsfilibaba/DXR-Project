@@ -711,10 +711,10 @@ FRHIVertexInputLayout* FD3D12RHI::RHICreateVertexInputLayout(const FRHIVertexInp
     return new FD3D12VertexInputLayout(InInitializer);
 }
 
-FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc)
+FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
 {
     FD3D12GraphicsPipelineStateRef NewPipelineState = new FD3D12GraphicsPipelineState(GetDevice());
-    if (!NewPipelineState->Initialize(InDesc))
+    if (!NewPipelineState->Initialize(InInitializer))
     {
         return nullptr;
     }

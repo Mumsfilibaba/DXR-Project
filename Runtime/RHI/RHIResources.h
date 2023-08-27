@@ -2079,25 +2079,6 @@ protected:
 };
 
 
-enum EIndexBufferStripCutValue : uint8
-{
-    IndexBufferStripCutValue_Disabled   = 0,
-    IndexBufferStripCutValue_0xffff     = 1,
-    IndexBufferStripCutValue_0xffffffff = 2
-};
-
-constexpr const CHAR* ToString(EIndexBufferStripCutValue IndexBufferStripCutValue)
-{
-    switch (IndexBufferStripCutValue)
-    {
-        case IndexBufferStripCutValue_Disabled:   return "IndexBufferStripCutValue_Disabled";
-        case IndexBufferStripCutValue_0xffff:     return "IndexBufferStripCutValue_0xffff";
-        case IndexBufferStripCutValue_0xffffffff: return "IndexBufferStripCutValue_0xffffffff";
-        default:                                  return "";
-    }
-}
-
-
 class FRHIPipelineState : public FRHIResource
 {
 protected:
@@ -2113,26 +2094,24 @@ public:
 
 struct FGraphicsPipelineFormats
 {
-    typedef TStaticArray<EFormat, FRHILimits::MaxRenderTargetCount> FRenderTargetFormats;
-
     FGraphicsPipelineFormats()
         : RenderTargetFormats()
         , NumRenderTargets(0)
         , DepthStencilFormat(EFormat::Unknown)
     {
-        RenderTargetFormats.Fill(EFormat::Unknown);
-    }
-
-    FGraphicsPipelineFormats(const FRenderTargetFormats& InRenderTargetFormats, uint32 InNumRenderTargets, EFormat InDepthStencilFormat = EFormat::Unknown)
-        : RenderTargetFormats(InRenderTargetFormats)
-        , NumRenderTargets(InNumRenderTargets)
-        , DepthStencilFormat(InDepthStencilFormat)
-    {
     }
 
     bool operator==(const FGraphicsPipelineFormats& Other) const
     {
-        return RenderTargetFormats == Other.RenderTargetFormats && NumRenderTargets == Other.NumRenderTargets && DepthStencilFormat == Other.DepthStencilFormat;
+        for (uint32 Index = 0; Index < NumRenderTargets; Index++)
+        {
+            if (RenderTargetFormats[Index] == Other.RenderTargetFormats[Index])
+            {
+                return false;
+            }
+        }
+
+        return NumRenderTargets == Other.NumRenderTargets && DepthStencilFormat == Other.DepthStencilFormat;
     }
 
     bool operator!=(const FGraphicsPipelineFormats& Other) const
@@ -2140,15 +2119,19 @@ struct FGraphicsPipelineFormats
         return !(*this == Other);
     }
 
-    FRenderTargetFormats RenderTargetFormats;
-    uint32               NumRenderTargets;
-    EFormat              DepthStencilFormat;
+    EFormat RenderTargetFormats[FRHILimits::MaxRenderTargetCount];
+    uint32  NumRenderTargets;
+    EFormat DepthStencilFormat;
 };
 
 
 struct FGraphicsPipelineShaders
 {
-    FGraphicsPipelineShaders() = default;
+    FGraphicsPipelineShaders()
+        : VertexShader(nullptr)
+        , PixelShader(nullptr)
+    {
+    }
 
     FGraphicsPipelineShaders(FRHIVertexShader* InVertexShader, FRHIPixelShader* InPixelShader)
         : VertexShader(InVertexShader)
@@ -2166,27 +2149,43 @@ struct FGraphicsPipelineShaders
         return !(*this == Other);
     }
 
-    FRHIVertexShader* VertexShader{nullptr};
-    FRHIPixelShader*  PixelShader{nullptr};
+    // Weak reference to the VertexShader being used
+    FRHIVertexShader* VertexShader;
+
+    // Weak reference to the PixelShader being used
+    FRHIPixelShader* PixelShader;
 };
 
 
-struct FRHIGraphicsPipelineStateDesc
+struct FRHIGraphicsPipelineStateInitializer
 {
-    FRHIGraphicsPipelineStateDesc() = default;
+    FRHIGraphicsPipelineStateInitializer()
+        : VertexInputLayout(nullptr)
+        , DepthStencilState(nullptr)
+        , RasterizerState(nullptr)
+        , BlendState(nullptr)
+        , SampleCount(1)
+        , SampleQuality(0)
+        , SampleMask(0xffffffff)
+        , bPrimitiveRestartEnable(false)
+        , PrimitiveTopology(EPrimitiveTopology::TriangleList)
+        , ShaderState()
+        , PipelineFormats()
+    {
+    }
 
-    FRHIGraphicsPipelineStateDesc(
+    FRHIGraphicsPipelineStateInitializer(
         FRHIVertexInputLayout*          InVertexInputLayout,
         FRHIDepthStencilState*          InDepthStencilState,
         FRHIRasterizerState*            InRasterizerState,
         FRHIBlendState*                 InBlendState,
         const FGraphicsPipelineShaders& InShaderState,
         const FGraphicsPipelineFormats& InPipelineFormats,
-        EPrimitiveTopologyType          InPrimitiveTopologyType = EPrimitiveTopologyType::Triangle,
-        uint32                          InSampleCount           = 1,
-        uint32                          InSampleQuality         = 0,
-        uint32                          InSampleMask            = 0xffffffff,
-        EIndexBufferStripCutValue       InIBStripCutValue       = IndexBufferStripCutValue_Disabled)
+        EPrimitiveTopology              InPrimitiveTopology       = EPrimitiveTopology::TriangleList,
+        uint32                          InSampleCount             = 1,
+        uint32                          InSampleQuality           = 0,
+        uint32                          InSampleMask              = 0xffffffff,
+        bool                            bInPrimitiveRestartEnable = false)
         : VertexInputLayout(InVertexInputLayout)
         , DepthStencilState(InDepthStencilState)
         , RasterizerState(InRasterizerState)
@@ -2194,46 +2193,54 @@ struct FRHIGraphicsPipelineStateDesc
         , SampleCount(InSampleCount)
         , SampleQuality(InSampleQuality)
         , SampleMask(InSampleMask)
-        , IBStripCutValue(InIBStripCutValue)
-        , PrimitiveTopologyType(InPrimitiveTopologyType)
+        , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
+        , PrimitiveTopology(InPrimitiveTopology)
         , ShaderState(InShaderState)
         , PipelineFormats(InPipelineFormats)
     {
     }
 
-    bool operator==(const FRHIGraphicsPipelineStateDesc& Other) const
+    bool operator==(const FRHIGraphicsPipelineStateInitializer& Other) const
     {
-        return VertexInputLayout     == Other.VertexInputLayout
-            && DepthStencilState     == Other.DepthStencilState
-            && RasterizerState       == Other.RasterizerState
-            && BlendState            == Other.BlendState
-            && SampleCount           == Other.SampleCount
-            && SampleQuality         == Other.SampleQuality
-            && SampleMask            == Other.SampleMask
-            && IBStripCutValue       == Other.IBStripCutValue
-            && PrimitiveTopologyType == Other.PrimitiveTopologyType
-            && ShaderState           == Other.ShaderState
-            && PipelineFormats       == Other.PipelineFormats;
+        return VertexInputLayout       == Other.VertexInputLayout
+            && DepthStencilState       == Other.DepthStencilState
+            && RasterizerState         == Other.RasterizerState
+            && BlendState              == Other.BlendState
+            && SampleCount             == Other.SampleCount
+            && SampleQuality           == Other.SampleQuality
+            && SampleMask              == Other.SampleMask
+            && bPrimitiveRestartEnable == Other.bPrimitiveRestartEnable
+            && PrimitiveTopology       == Other.PrimitiveTopology
+            && ShaderState             == Other.ShaderState
+            && PipelineFormats         == Other.PipelineFormats;
     }
 
-    bool operator!=(const FRHIGraphicsPipelineStateDesc& Other) const
+    bool operator!=(const FRHIGraphicsPipelineStateInitializer& Other) const
     {
         return !(*this == Other);
     }
 
-    FRHIVertexInputLayout* VertexInputLayout{nullptr};
-    FRHIDepthStencilState* DepthStencilState{nullptr};
-    FRHIRasterizerState*   RasterizerState{nullptr};
-    FRHIBlendState*        BlendState{nullptr};
+    // Weak reference to the VertexInputLayout being used
+    FRHIVertexInputLayout* VertexInputLayout;
 
-    uint32 SampleCount{ 1 };
-    uint32 SampleQuality{ 0 };
-    uint32 SampleMask{ 0xffffffff };
+    // Weak reference to the DepthStencilState being used
+    FRHIDepthStencilState* DepthStencilState;
 
-    EIndexBufferStripCutValue IBStripCutValue{ IndexBufferStripCutValue_Disabled };
-    EPrimitiveTopologyType    PrimitiveTopologyType{ EPrimitiveTopologyType::Triangle };
-    FGraphicsPipelineShaders  ShaderState;
-    FGraphicsPipelineFormats  PipelineFormats;
+    // Weak reference to the RasterizerState being used
+    FRHIRasterizerState* RasterizerState;
+
+    // Weak reference to the BlendState being used
+    FRHIBlendState* BlendState;
+
+    uint32 SampleCount;
+    uint32 SampleQuality;
+    uint32 SampleMask;
+
+    EPrimitiveTopology PrimitiveTopology;
+    bool               bPrimitiveRestartEnable;
+
+    FGraphicsPipelineShaders ShaderState;
+    FGraphicsPipelineFormats PipelineFormats;
 };
 
 
@@ -2247,7 +2254,10 @@ protected:
 
 struct FRHIComputePipelineStateDesc
 {
-    FRHIComputePipelineStateDesc() = default;
+    FRHIComputePipelineStateDesc()
+        : Shader(nullptr)
+    {
+    }
 
     FRHIComputePipelineStateDesc(FRHIComputeShader* InShader)
         : Shader(InShader)
@@ -2264,7 +2274,7 @@ struct FRHIComputePipelineStateDesc
         return !(*this == Other);
     }
 
-    FRHIComputeShader* Shader{nullptr};
+    FRHIComputeShader* Shader;
 };
 
 

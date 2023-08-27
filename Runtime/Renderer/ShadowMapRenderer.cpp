@@ -100,12 +100,12 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIGraphicsPipelineStateDesc PSOInitializer;
+        FRHIGraphicsPipelineStateInitializer PSOInitializer;
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
-        PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
+        PSOInitializer.bPrimitiveRestartEnable            = false;
         PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
-        PSOInitializer.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
+        PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
         PSOInitializer.RasterizerState                    = RasterizerState.Get();
         PSOInitializer.SampleCount                        = 1;
         PSOInitializer.SampleQuality                      = 0;
@@ -185,12 +185,12 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIGraphicsPipelineStateDesc PSOInitializer;
+        FRHIGraphicsPipelineStateInitializer PSOInitializer;
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
-        PSOInitializer.IBStripCutValue                    = IndexBufferStripCutValue_Disabled;
+        PSOInitializer.bPrimitiveRestartEnable            = false;
         PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
-        PSOInitializer.PrimitiveTopologyType              = EPrimitiveTopologyType::Triangle;
+        PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
         PSOInitializer.RasterizerState                    = RasterizerState.Get();
         PSOInitializer.SampleCount                        = 1;
         PSOInitializer.SampleQuality                      = 0;
@@ -393,12 +393,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
     //    PointLightFrame = 0;
     //}
 
-    CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-
-    CommandList.TransitionTexture(
-        LightSetup.PointLightShadowMaps.Get(),
-        EResourceAccess::PixelShaderResource,
-        EResourceAccess::DepthWrite);
+    CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Render PointLight ShadowMaps");
 
@@ -551,7 +546,6 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
         CommandList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
         CommandList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
 
-        CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
         CommandList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
 
         // PerObject Structs

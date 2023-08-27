@@ -271,7 +271,7 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHIGraphicsPipelineStateDesc PSOProperties;
+    FRHIGraphicsPipelineStateInitializer PSOProperties;
     PSOProperties.ShaderState.VertexShader               = VShader.Get();
     PSOProperties.ShaderState.PixelShader                = PShader.Get();
     PSOProperties.VertexInputLayout                      = InputLayout.Get();
@@ -280,7 +280,7 @@ bool FImGuiRenderer::Initialize()
     PSOProperties.RasterizerState                        = RasterizerState.Get();
     PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    PSOProperties.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
     if (!PipelineState)
@@ -593,7 +593,6 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* Draw
     const EIndexFormat IndexFormat = sizeof(ImDrawIdx) == 2 ? EIndexFormat::uint16 : EIndexFormat::uint32;
     CmdList.SetIndexBuffer(Buffers.IndexBuffer.Get(), IndexFormat);
     CmdList.SetVertexBuffers(MakeArrayView(&Buffers.VertexBuffer, 1), 0);
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     
     CmdList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
     CmdList.SetGraphicsPipelineState(PipelineState.Get());

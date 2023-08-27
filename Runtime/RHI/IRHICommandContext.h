@@ -96,12 +96,6 @@ struct IRHICommandContext
     virtual void RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) = 0;
 
     /**
-     * @brief                  - Set the primitive topology 
-     * @param PrimitveTopology - New primitive topology to use
-     */
-    virtual void RHISetPrimitiveTopology(EPrimitiveTopology PrimitveTopology) = 0;
-
-    /**
      * @brief               - Sets the current graphics PipelineState 
      * @param PipelineState - New PipelineState to use
      */

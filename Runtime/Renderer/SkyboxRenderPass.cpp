@@ -140,7 +140,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIGraphicsPipelineStateDesc PSOInitializer;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
     PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
@@ -189,7 +189,6 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
     FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
     CommandList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get(), SkyboxIndexFormat);
     CommandList.SetGraphicsPipelineState(PipelineState.Get());

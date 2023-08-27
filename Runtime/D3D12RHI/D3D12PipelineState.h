@@ -139,26 +139,20 @@ private:
 };
 
 
-class FD3D12PipelineState : public FD3D12DeviceChild
+class FD3D12PipelineState : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
-    FD3D12PipelineState(FD3D12Device* InDevice)
-        : FD3D12DeviceChild(InDevice)
-    {
-    }
+    FD3D12PipelineState(FD3D12Device* InDevice);
+    virtual ~FD3D12PipelineState() = default;
 
-    void SetDebugName(const FString& InName)
-    {
-        FStringWide WideName = CharToWide(InName);
-        PipelineState->SetName(WideName.GetCString());
-    }
+    void SetDebugName(const FString& InName);
 
-    FORCEINLINE ID3D12PipelineState* GetD3D12PipelineState() const
+    ID3D12PipelineState* GetD3D12PipelineState() const
     {
         return PipelineState.Get();
     }
 
-    FORCEINLINE FD3D12RootSignature* GetRootSignature() const
+    FD3D12RootSignature* GetRootSignature() const
     {
         return RootSignature.Get();
     }
@@ -175,9 +169,26 @@ public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12GraphicsPipelineState() = default;
 
-    bool Initialize(const FRHIGraphicsPipelineStateDesc& Initializer);
+    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
-    virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
+
+    virtual void SetName(const FString& InName) override final
+    {
+        FD3D12PipelineState::SetDebugName(InName);
+    }
+
+    D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
+    {
+        return PrimitiveTopology;
+    }
+
+private:
+    D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology;
 };
 
 
@@ -189,7 +200,16 @@ public:
 
     bool Initialize();
 
-    virtual void SetName(const FString& InName) override final { FD3D12PipelineState::SetDebugName(InName); }
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
+
+    virtual void SetName(const FString& InName) override final
+    {
+        FD3D12PipelineState::SetDebugName(InName);
+    }
 
 private:
     TSharedRef<FD3D12ComputeShader> Shader;

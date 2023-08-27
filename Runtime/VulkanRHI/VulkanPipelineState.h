@@ -139,12 +139,37 @@ private:
     VkPipelineColorBlendAttachmentState BlendAttachmentStates[FRHILimits::MaxRenderTargetCount];
 };
 
-
-class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState
+class FVulkanPipeline : public FVulkanDeviceObject, public FVulkanRefCounted
 {
 public:
-    FVulkanGraphicsPipelineState()  = default;
-    ~FVulkanGraphicsPipelineState() = default;
+    FVulkanPipeline(FVulkanDevice* InDevice);
+    ~FVulkanPipeline();
+
+    void SetDebugName(const FString& InName);
+
+    VkPipeline GetVkPipeline() const
+    {
+        return Pipeline;
+    }
+
+protected:
+    VkPipeline       Pipeline;
+    VkPipelineLayout PipelineLayout;
+};
+
+class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline
+{
+public:
+    FVulkanGraphicsPipelineState(FVulkanDevice* InDevice);
+    virtual ~FVulkanGraphicsPipelineState() = default;
+
+    bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
+
+    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
+
+    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
+
+    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 };
 
 class FVulkanComputePipelineState : public FRHIComputePipelineState

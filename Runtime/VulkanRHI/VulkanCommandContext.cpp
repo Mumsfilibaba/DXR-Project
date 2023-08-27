@@ -141,10 +141,6 @@ void FVulkanCommandContext::RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFor
 {
 }
 
-void FVulkanCommandContext::RHISetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType)
-{
-}
-
 void FVulkanCommandContext::RHISetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState)
 {
 }

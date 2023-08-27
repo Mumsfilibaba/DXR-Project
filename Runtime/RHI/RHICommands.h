@@ -267,21 +267,6 @@ DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
     EIndexFormat IndexFormat;
 };
 
-DECLARE_RHICOMMAND(FRHICommandSetPrimitiveTopology)
-{
-    FORCEINLINE FRHICommandSetPrimitiveTopology(EPrimitiveTopology InPrimitiveTopologyType)
-        : PrimitiveTopologyType(InPrimitiveTopologyType)
-    {
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.RHISetPrimitiveTopology(PrimitiveTopologyType);
-    }
-
-    EPrimitiveTopology PrimitiveTopologyType;
-};
-
 DECLARE_RHICOMMAND(FRHICommandSetGraphicsPipelineState)
 {
     FORCEINLINE FRHICommandSetGraphicsPipelineState(FRHIGraphicsPipelineState* InPipelineState)

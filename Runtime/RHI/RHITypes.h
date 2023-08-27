@@ -412,30 +412,6 @@ constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
 }
 
 
-enum class EPrimitiveTopologyType
-{
-    Undefined = 0,
-    Point     = 1,
-    Line      = 2,
-    Triangle  = 3,
-    Patch     = 4
-};
-
-constexpr const CHAR* ToString(EPrimitiveTopologyType PrimitveTopologyType)
-{
-    switch (PrimitveTopologyType)
-    {
-    case EPrimitiveTopologyType::Undefined: return "Undefined";
-    case EPrimitiveTopologyType::Point:     return "Point";
-    case EPrimitiveTopologyType::Line:      return "Line";
-    case EPrimitiveTopologyType::Triangle:  return "Triangle";
-    case EPrimitiveTopologyType::Patch:     return "Patch";
-    default:                                return "Unknown";
-    }
-}
-
-
-// TODO: These should be flags
 enum class EResourceAccess : uint32
 {
     Common                          = 0,

@@ -361,7 +361,7 @@ public:
      * @param InDesc - Info about the Graphics PipelineState
      * @return       - Returns the newly created PipelineState
      */
-    virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& InDesc) = 0;
+    virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) = 0;
     
     /**
      * @brief        - Create a Compute PipelineState
@@ -580,7 +580,7 @@ FORCEINLINE FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer&
     return GetRHI()->RHICreateBlendState(Initializer);
 }
 
-FORCEINLINE FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateDesc& Initializer)
+FORCEINLINE FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
     return GetRHI()->RHICreateGraphicsPipelineState(Initializer);
 }

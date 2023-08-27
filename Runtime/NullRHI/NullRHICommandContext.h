@@ -37,8 +37,6 @@ struct FNullRHICommandContext final : public IRHICommandContext
     
     virtual void RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final { }
 
-    virtual void RHISetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final { }
-
     virtual void RHISetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final { }
     
     virtual void RHISetComputePipelineState(class FRHIComputePipelineState* PipelineState) override final { }

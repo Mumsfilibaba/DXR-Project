@@ -78,7 +78,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIGraphicsPipelineStateDesc PSOInitializer;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = PShader.Get();
     PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
@@ -88,7 +88,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
     PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
     PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
     PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-    PSOInitializer.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
 
     PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
@@ -118,8 +118,6 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
 
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
-
-    CommandList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
 
     FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);

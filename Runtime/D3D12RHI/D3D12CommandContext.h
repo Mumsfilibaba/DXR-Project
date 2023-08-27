@@ -208,8 +208,6 @@ struct FD3D12CommandContextState : public FD3D12DeviceChild, public FNonCopyAndN
         FD3D12IndexBufferCache      IBCache;
         FD3D12VertexBufferCache     VBCache;
 
-        D3D12_PRIMITIVE_TOPOLOGY    PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
-    
         D3D12_VIEWPORT              Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
         uint32                      NumViewports;
 
@@ -220,7 +218,6 @@ struct FD3D12CommandContextState : public FD3D12DeviceChild, public FNonCopyAndN
 
         bool bBindRenderTargets     : 1;
         bool bBindBlendFactor       : 1;
-        bool bBindPrimitiveTopology : 1;
         bool bBindPipeline          : 1;
         bool bBindVertexBuffers     : 1;
         bool bBindIndexBuffer       : 1;
@@ -277,8 +274,6 @@ public:
     virtual void RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final;
     
     virtual void RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;
-
-    virtual void RHISetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
 
     virtual void RHISetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
     

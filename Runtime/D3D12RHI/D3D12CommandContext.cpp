@@ -257,13 +257,6 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
         Graphics.bBindScissorRects = false;
     }
 
-    // Topology
-    if (Graphics.bBindPrimitiveTopology)
-    {
-        CommandList.IASetPrimitiveTopology(Graphics.PrimitiveTopology);
-        Graphics.bBindPrimitiveTopology = false;
-    }
-
     // BlendFactor
     if (Graphics.bBindBlendFactor)
     {
@@ -275,6 +268,7 @@ void FD3D12CommandContextState::ApplyGraphics(FD3D12CommandList& CommandList, FD
     FD3D12RootSignature* CurrentRootSignture = Graphics.PipelineState->GetRootSignature();
     if (Graphics.bBindPipeline)
     {
+        CommandList.IASetPrimitiveTopology(Graphics.PipelineState->GetD3D12PrimitiveTopology());
         CommandList.SetPipelineState(Graphics.PipelineState->GetD3D12PipelineState());
         CommandList.SetGraphicsRootSignature(CurrentRootSignture);
 
@@ -343,7 +337,6 @@ void FD3D12CommandContextState::ClearGraphics()
     Graphics.IBCache.Clear();
 
     Graphics.PipelineState.Reset();
-    Graphics.PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 
     Graphics.ShadingRateTexture.Reset();
     Graphics.RTCache.Clear();
@@ -351,7 +344,6 @@ void FD3D12CommandContextState::ClearGraphics()
 
     Graphics.bBindRenderTargets     = true;
     Graphics.bBindBlendFactor       = true;
-    Graphics.bBindPrimitiveTopology = true;
     Graphics.bBindPipeline          = true;
     Graphics.bBindVertexBuffers     = true;
     Graphics.bBindIndexBuffer       = true;
@@ -677,16 +669,6 @@ void FD3D12CommandContext::RHISetBlendFactor(const FVector4& Color)
 {
     State.Graphics.BlendFactor      = Color;
     State.Graphics.bBindBlendFactor = true;
-}
-
-void FD3D12CommandContext::RHISetPrimitiveTopology(EPrimitiveTopology InPrimitveTopology)
-{
-    const D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = ConvertPrimitiveTopology(InPrimitveTopology);
-    if (State.Graphics.PrimitiveTopology != PrimitiveTopology)
-    {
-        State.Graphics.PrimitiveTopology      = PrimitiveTopology;
-        State.Graphics.bBindPrimitiveTopology = true;
-    }
 }
 
 void FD3D12CommandContext::RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
