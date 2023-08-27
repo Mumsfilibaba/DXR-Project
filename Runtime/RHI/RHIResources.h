@@ -1043,7 +1043,7 @@ struct FRHIDepthStencilView
 
 struct FRHIRenderPassDesc
 {
-    typedef TStaticArray<FRHIRenderTargetView, FRHILimits::MaxRenderTargetCount> FRenderTargetViews;
+    typedef TStaticArray<FRHIRenderTargetView, FRHILimits::MaxRenderTargets> FRenderTargetViews;
     
     FRHIRenderPassDesc()
         : ShadingRateTexture(nullptr)
@@ -1943,7 +1943,7 @@ struct FRHIBlendStateInitializer
         return !(*this == Other);
     }
 
-    FRenderTargetBlendDesc RenderTargets[FRHILimits::MaxRenderTargetCount];
+    FRenderTargetBlendDesc RenderTargets[FRHILimits::MaxRenderTargets];
     uint8                  NumRenderTargets;
     ELogicOp               LogicOp;
 
@@ -2119,7 +2119,7 @@ struct FGraphicsPipelineFormats
         return !(*this == Other);
     }
 
-    EFormat RenderTargetFormats[FRHILimits::MaxRenderTargetCount];
+    EFormat RenderTargetFormats[FRHILimits::MaxRenderTargets];
     uint32  NumRenderTargets;
     EFormat DepthStencilFormat;
 };

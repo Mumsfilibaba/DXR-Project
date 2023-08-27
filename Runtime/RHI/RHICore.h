@@ -12,7 +12,7 @@ enum : uint32
 
 struct FRHILimits
 {
-    inline static constexpr uint32 MaxRenderTargetCount = 8;
+    inline static constexpr uint32 MaxRenderTargets = 8;
     
     inline static constexpr uint32 MaxLocalShaderBindings = 4;
     

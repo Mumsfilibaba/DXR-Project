@@ -28,18 +28,9 @@ FVulkanTexture::~FVulkanTexture()
 
 bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
 {
-    VkSampleCountFlagBits SampleCount;
-    switch (Desc.NumSamples)
+    const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Desc.NumSamples);
+    if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
     {
-    case 1:  SampleCount = VK_SAMPLE_COUNT_1_BIT;  break;
-    case 2:  SampleCount = VK_SAMPLE_COUNT_2_BIT;  break;
-    case 4:  SampleCount = VK_SAMPLE_COUNT_4_BIT;  break;
-    case 8:  SampleCount = VK_SAMPLE_COUNT_8_BIT;  break;
-    case 16: SampleCount = VK_SAMPLE_COUNT_16_BIT; break;
-    case 32: SampleCount = VK_SAMPLE_COUNT_32_BIT; break;
-    case 64: SampleCount = VK_SAMPLE_COUNT_64_BIT; break;
-
-    default:
         VULKAN_ERROR("Invalid SampleCount");
         return false;
     }

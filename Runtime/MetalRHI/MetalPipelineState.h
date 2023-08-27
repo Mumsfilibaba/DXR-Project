@@ -120,7 +120,7 @@ public:
         MTLBlendFactor    SourceColorBlendFactor;
     };
 
-    FBlendAttachment ColorAttachments[FRHILimits::MaxRenderTargetCount];
+    FBlendAttachment ColorAttachments[FRHILimits::MaxRenderTargets];
     const FRHIBlendStateInitializer Initializer;
 };
 

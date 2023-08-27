@@ -200,11 +200,6 @@ void FMetalCommandContext::RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexForm
     CurrentIndexBuffer = MakeSharedRef<FMetalBuffer>(IndexBuffer);
 }
 
-void FMetalCommandContext::RHISetPrimitiveTopology(EPrimitiveTopology PrimitveTopology)
-{
-    CurrentPrimitiveType = ConvertPrimitiveTopology(PrimitveTopology);
-}
-
 void FMetalCommandContext::RHISetGraphicsPipelineState(FRHIGraphicsPipelineState* PipelineState)
 {
     CurrentGraphicsPipeline = MakeSharedRef<FMetalGraphicsPipelineState>(PipelineState);

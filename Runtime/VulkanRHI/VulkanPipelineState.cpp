@@ -347,6 +347,24 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     VULKAN_CHECK_RESULT(Result, "Failed to create PipelineLayout");
 
 
+    // Retrieve a compatible renderpass
+    // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
+    FVulkanRenderPassKey RenderPassKey;
+    RenderPassKey.NumSamples         = Initializer.SampleCount;
+    RenderPassKey.DepthStencilFormat = Initializer.PipelineFormats.DepthStencilFormat;
+    RenderPassKey.NumRenderTargets   = Initializer.PipelineFormats.NumRenderTargets;
+    
+    for (uint8 Index = 0; Index < Initializer.PipelineFormats.NumRenderTargets; Index++)
+    {
+        RenderPassKey.RenderTargetFormats[Index] = Initializer.PipelineFormats.RenderTargetFormats[Index];
+    }
+    
+    VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
+    if (!VULKAN_CHECK_HANDLE(RenderPass))
+    {
+        return false;
+    }
+    
     // Create PipelineState
     VkGraphicsPipelineCreateInfo PipelineCreateInfo;
     FMemory::Memzero(&PipelineCreateInfo);
@@ -363,7 +381,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     PipelineCreateInfo.pColorBlendState    = &BlendStateCreateInfo;
     PipelineCreateInfo.pDynamicState       = &DynamicStateCreateInfo;
     PipelineCreateInfo.layout              = PipelineLayout;
-    PipelineCreateInfo.renderPass          = VK_NULL_HANDLE; // renderPass;
+    PipelineCreateInfo.renderPass          = RenderPass;
     PipelineCreateInfo.subpass             = 0;
     PipelineCreateInfo.basePipelineHandle  = VK_NULL_HANDLE;
     PipelineCreateInfo.basePipelineIndex   = -1;

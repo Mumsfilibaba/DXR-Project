@@ -136,7 +136,7 @@ public:
 private:
     FRHIBlendStateInitializer           Initializer;
     VkPipelineColorBlendStateCreateInfo CreateInfo;
-    VkPipelineColorBlendAttachmentState BlendAttachmentStates[FRHILimits::MaxRenderTargetCount];
+    VkPipelineColorBlendAttachmentState BlendAttachmentStates[FRHILimits::MaxRenderTargets];
 };
 
 class FVulkanPipeline : public FVulkanDeviceObject, public FVulkanRefCounted

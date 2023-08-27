@@ -174,6 +174,9 @@ VULKAN_FUNCTION_DEFINITION(DestroyPipelineLayout);
 VULKAN_FUNCTION_DEFINITION(CreateSampler);
 VULKAN_FUNCTION_DEFINITION(DestroySampler);
 
+VULKAN_FUNCTION_DEFINITION(CreateRenderPass);
+VULKAN_FUNCTION_DEFINITION(DestroyRenderPass);
+
 VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DEFINITION(FreeCommandBuffers);
 
@@ -263,7 +266,10 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyPipelineLayout);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSampler);
-    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySampler);    
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySampler);
+
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateRenderPass);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyRenderPass);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImageView);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImageView);
