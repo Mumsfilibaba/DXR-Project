@@ -83,21 +83,10 @@ public:
         return Initializer;
     }
 
-    MTLTriangleFillMode GetMTLFillMode() const 
-    {
-        return FillMode;
-    }
-    
-    MTLWinding GetMTLFrontFaceWinding() const
-    {
-        return FrontFaceWinding;
-    }
-
-private:
     MTLTriangleFillMode FillMode;
     MTLWinding          FrontFaceWinding;
 
-    FRHIRasterizerStateInitializer Initializer;
+    const FRHIRasterizerStateInitializer Initializer;
 };
 
 
@@ -118,8 +107,21 @@ public:
         return Initializer;
     }
 
-private:
-    FRHIBlendStateInitializer Initializer;
+    struct FBlendAttachment
+    {
+        MTLPixelFormat    PixelFormat;
+        MTLColorWriteMask WriteMask;
+        BOOL              bBlendingEnabled;
+        MTLBlendOperation AlphaBlendOperation;
+        MTLBlendOperation ColorBlendOperation;
+        MTLBlendFactor    DestinationAlphaBlendFactor;
+        MTLBlendFactor    DestinationColorBlendFactor;
+        MTLBlendFactor    SourceAlphaBlendFactor;
+        MTLBlendFactor    SourceColorBlendFactor;
+    };
+
+    FBlendAttachment ColorAttachments[FRHILimits::MaxRenderTargetCount];
+    const FRHIBlendStateInitializer Initializer;
 };
 
 

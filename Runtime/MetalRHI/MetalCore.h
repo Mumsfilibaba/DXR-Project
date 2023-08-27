@@ -238,6 +238,76 @@ constexpr MTLCompareFunction ConvertComparisonFunc(EComparisonFunc ComparisonFun
     }
 }
 
+constexpr MTLBlendOperation ConvertBlendOp(EBlendOp BlendOp)
+{
+    switch (BlendOp)
+    {
+        case EBlendOp::Add:         return MTLBlendOperationAdd;
+        case EBlendOp::Max:         return MTLBlendOperationMax;
+        case EBlendOp::Min:         return MTLBlendOperationMin;
+        case EBlendOp::RevSubtract: return MTLBlendOperationReverseSubtract;
+        case EBlendOp::Subtract:    return MTLBlendOperationSubtract;
+    }
+
+    return MTLBlendOperation(-1);
+}
+
+constexpr MTLBlendFactor ConvertBlend(EBlendType  Blend)
+{
+    switch (Blend)
+    {
+        case EBlendType::Zero:           return MTLBlendFactorZero;
+        case EBlendType::One:            return MTLBlendFactorOne;
+        case EBlendType::SrcColor:       return MTLBlendFactorSourceColor;
+        case EBlendType::InvSrcColor:    return MTLBlendFactorOneMinusSourceColor;
+        case EBlendType::SrcAlpha:       return MTLBlendFactorSourceAlpha;
+        case EBlendType::InvSrcAlpha:    return MTLBlendFactorOneMinusSourceAlpha;
+        case EBlendType::DstAlpha:       return MTLBlendFactorDestinationAlpha;
+        case EBlendType::InvDstAlpha:    return MTLBlendFactorOneMinusDestinationAlpha;
+        case EBlendType::DstColor:       return MTLBlendFactorDestinationColor;
+        case EBlendType::InvDstColor:    return MTLBlendFactorOneMinusDestinationColor;
+        case EBlendType::SrcAlphaSat:    return MTLBlendFactorSourceAlphaSaturated;
+        case EBlendType::Src1Color:      return MTLBlendFactorSource1Color;
+        case EBlendType::InvSrc1Color:   return MTLBlendFactorOneMinusSource1Color;
+        case EBlendType::Src1Alpha:      return MTLBlendFactorSource1Alpha;
+        case EBlendType::InvSrc1Alpha:   return MTLBlendFactorOneMinusSource1Alpha;
+        case EBlendType::BlendFactor:    return MTLBlendFactorBlendColor;
+        case EBlendType::InvBlendFactor: return MTLBlendFactorOneMinusBlendColor;
+    }
+
+    return MTLBlendFactor(-1);
+}
+
+constexpr MTLColorWriteMask ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
+{
+    MTLColorWriteMask ColorWriteMask = MTLColorWriteMaskNone;
+    if (ColorWriteFlags == EColorWriteFlags::All)
+    {
+        ColorWriteMask = MTLColorWriteMaskAll;
+    }
+    else
+    {
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Red))
+        {
+            ColorWriteMask |= MTLColorWriteMaskRed;
+        }
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Green))
+        {
+            ColorWriteMask |= MTLColorWriteMaskGreen;
+        }
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Blue))
+        {
+            ColorWriteMask |= MTLColorWriteMaskBlue;
+        }
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Alpha))
+        {
+            ColorWriteMask |= MTLColorWriteMaskAlpha;
+        }
+    }
+
+    return ColorWriteMask;
+}
+
 constexpr MTLTextureType GetMTLTextureType(ETextureDimension TextureDimension, bool bIsMultisampled)
 {
     switch(TextureDimension)

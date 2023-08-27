@@ -95,4 +95,15 @@ FMetalBlendState::FMetalBlendState(const FRHIBlendStateInitializer& InInitialize
     , FMetalRefCounted()
     , Initializer(InInitializer)
 {
+    for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)
+    {
+        ColorAttachments[Index].bBlendingEnabled            = InInitializer.RenderTargets[Index].bBlendEnable ? YES : NO;
+        ColorAttachments[Index].SourceColorBlendFactor      = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlend);
+        ColorAttachments[Index].DestinationColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlend);
+        ColorAttachments[Index].ColorBlendOperation         = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOp);
+        ColorAttachments[Index].SourceAlphaBlendFactor      = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlendAlpha);
+        ColorAttachments[Index].DestinationAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlendAlpha);
+        ColorAttachments[Index].AlphaBlendOperation         = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
+        ColorAttachments[Index].WriteMask                   = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
+    }
 }
