@@ -453,8 +453,8 @@ void FMetalCommandContext::PrepareForDraw()
         FMetalRasterizerState* RasterizerState = CurrentGraphicsPipeline->GetMetalRasterizerState();
         CHECK(RasterizerState != nullptr);
         
-        [GraphicsEncoder setFrontFacingWinding:RasterizerState->GetMTLFrontFaceWinding()];
-        [GraphicsEncoder setTriangleFillMode:RasterizerState->GetMTLFillMode()];
+        [GraphicsEncoder setFrontFacingWinding:RasterizerState->FrontFaceWinding];
+        [GraphicsEncoder setTriangleFillMode:RasterizerState->FillMode];
         
         // [GraphicsEncoder setRenderPipelineState:CurrentGraphicsPipeline->GetMTLPipelineState()];
         
