@@ -701,28 +701,9 @@ FRHIRasterizerState* FD3D12RHI::RHICreateRasterizerState(const FRHIRasterizerSta
     return new FD3D12RasterizerState(InInitializer);
 }
 
-FRHIBlendState* FD3D12RHI::RHICreateBlendState(const FRHIBlendStateDesc& InDesc)
+FRHIBlendState* FD3D12RHI::RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer)
 {
-    D3D12_BLEND_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.AlphaToCoverageEnable  = InDesc.bAlphaToCoverageEnable;
-    Desc.IndependentBlendEnable = InDesc.bIndependentBlendEnable;
-    for (uint32 i = 0; i < 8; i++)
-    {
-        Desc.RenderTarget[i].BlendEnable           = InDesc.RenderTargets[i].bBlendEnable;
-        Desc.RenderTarget[i].BlendOp               = ConvertBlendOp(InDesc.RenderTargets[i].BlendOp);
-        Desc.RenderTarget[i].BlendOpAlpha          = ConvertBlendOp(InDesc.RenderTargets[i].BlendOpAlpha);
-        Desc.RenderTarget[i].DestBlend             = ConvertBlend(InDesc.RenderTargets[i].DstBlend);
-        Desc.RenderTarget[i].DestBlendAlpha        = ConvertBlend(InDesc.RenderTargets[i].DstBlendAlpha);
-        Desc.RenderTarget[i].SrcBlend              = ConvertBlend(InDesc.RenderTargets[i].SrcBlend);
-        Desc.RenderTarget[i].SrcBlendAlpha         = ConvertBlend(InDesc.RenderTargets[i].SrcBlendAlpha);
-        Desc.RenderTarget[i].LogicOpEnable         = InDesc.RenderTargets[i].bLogicOpEnable;
-        Desc.RenderTarget[i].LogicOp               = ConvertLogicOp(InDesc.RenderTargets[i].LogicOp);
-        Desc.RenderTarget[i].RenderTargetWriteMask = ConvertRenderTargetWriteState(InDesc.RenderTargets[i].RenderTargetWriteMask);
-    }
-
-    return new FD3D12BlendState(GetDevice(), Desc);
+    return new FD3D12BlendState(InInitializer);
 }
 
 FRHIVertexInputLayout* FD3D12RHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)

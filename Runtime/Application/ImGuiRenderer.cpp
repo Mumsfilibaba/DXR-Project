@@ -244,7 +244,7 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHIBlendStateDesc BlendStateInitializer;
+    FRHIBlendStateInitializer BlendStateInitializer;
     BlendStateInitializer.bIndependentBlendEnable        = false;
     BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
     BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
@@ -253,6 +253,7 @@ bool FImGuiRenderer::Initialize()
     BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType ::Zero;
     BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
     BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
+    BlendStateInitializer.NumRenderTargets = 1;
 
     FRHIBlendStateRef BlendStateBlending = RHICreateBlendState(BlendStateInitializer);
     if (!BlendStateBlending)

@@ -101,25 +101,25 @@ private:
 };
 
 
-class FMetalBlendState : public FRHIBlendState, public FMetalObject
+class FMetalBlendState : public FRHIBlendState, public FMetalRefCounted
 {
 public:
-    FMetalBlendState(FMetalDeviceContext* DeviceContext, const FRHIBlendStateDesc& InDesc)
-        : FRHIBlendState()
-        , FMetalObject(DeviceContext)
-        , Desc(InDesc)
-    {
-    }
+    FMetalBlendState(const FRHIBlendStateInitializer& InInitializer);
+    virtual ~FMetalBlendState() = default;
+    
+    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
+    
+    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
-    ~FMetalBlendState() = default;
-
-    virtual FRHIBlendStateDesc GetDesc() const
+    virtual FRHIBlendStateInitializer GetInitializer() const
     {
-        return Desc;
+        return Initializer;
     }
 
 private:
-    FRHIBlendStateDesc Desc;
+    FRHIBlendStateInitializer Initializer;
 };
 
 

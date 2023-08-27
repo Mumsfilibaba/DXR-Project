@@ -116,14 +116,7 @@ public:
         : FRHIViewport(InDesc)
         , BackBuffer(nullptr)
     { 
-        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(
-            Desc.ColorFormat,
-            Desc.Width,
-            Desc.Height,
-            1,
-            1,
-            ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
-
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
         BackBuffer = new FNullRHITexture(BackBufferDesc);
     }
 
@@ -197,19 +190,19 @@ private:
 struct FNullRHIBlendState : public FRHIBlendState
 {
 public:
-    FNullRHIBlendState(const FRHIBlendStateDesc& InDesc)
+    FNullRHIBlendState(const FRHIBlendStateInitializer& InInitializer)
         : FRHIBlendState()
-        , Desc(InDesc)
+        , Initializer(InInitializer)
     {
     }
 
-    virtual FRHIBlendStateDesc GetDesc() const override final
+    virtual FRHIBlendStateInitializer GetInitializer() const override final
     {
-        return Desc;
+        return Initializer;
     }
 
 private:
-    FRHIBlendStateDesc Desc;
+    FRHIBlendStateInitializer Initializer;
 };
 
 

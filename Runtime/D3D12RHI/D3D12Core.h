@@ -481,14 +481,14 @@ constexpr D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
         case ELogicOp::Set:          return D3D12_LOGIC_OP_SET;
         case ELogicOp::Copy:         return D3D12_LOGIC_OP_COPY;
         case ELogicOp::CopyInverted: return D3D12_LOGIC_OP_COPY_INVERTED;
-        case ELogicOp::Noop:         return D3D12_LOGIC_OP_NOOP;
+        case ELogicOp::NoOp:         return D3D12_LOGIC_OP_NOOP;
         case ELogicOp::Invert:       return D3D12_LOGIC_OP_INVERT;
         case ELogicOp::And:          return D3D12_LOGIC_OP_AND;
         case ELogicOp::Nand:         return D3D12_LOGIC_OP_NAND;
         case ELogicOp::Or:           return D3D12_LOGIC_OP_OR;
         case ELogicOp::Nor:          return D3D12_LOGIC_OP_NOR;
         case ELogicOp::Xor:          return D3D12_LOGIC_OP_XOR;
-        case ELogicOp::Equiv:        return D3D12_LOGIC_OP_EQUIV;
+        case ELogicOp::Equivalent:   return D3D12_LOGIC_OP_EQUIV;
         case ELogicOp::AndReverse:   return D3D12_LOGIC_OP_AND_REVERSE;
         case ELogicOp::AndInverted:  return D3D12_LOGIC_OP_AND_INVERTED;
         case ELogicOp::OrReverse:    return D3D12_LOGIC_OP_OR_REVERSE;
@@ -498,28 +498,28 @@ constexpr D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-inline uint8 ConvertRenderTargetWriteState(const FRenderTargetWriteMask& RenderTargetWriteState)
+constexpr uint8 ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
 {
     uint8 RenderTargetWriteMask = 0;
-    if (RenderTargetWriteState.WriteAll())
+    if (ColorWriteFlags == EColorWriteFlags::All)
     {
         RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
     }
     else
     {
-        if (RenderTargetWriteState.WriteRed())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Red))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_RED;
         }
-        if (RenderTargetWriteState.WriteGreen())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Green))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_GREEN;
         }
-        if (RenderTargetWriteState.WriteBlue())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Blue))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_BLUE;
         }
-        if (RenderTargetWriteState.WriteAlpha())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Alpha))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_ALPHA;
         }

@@ -80,7 +80,8 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateDesc BlendStateInitializer;
+        FRHIBlendStateInitializer BlendStateInitializer;
+        BlendStateInitializer.NumRenderTargets = 1;
 
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
@@ -224,7 +225,8 @@ bool FDebugRenderer::Init(FFrameResources& Resources)
             return false;
         }
 
-        FRHIBlendStateDesc BlendStateInitializer;
+        FRHIBlendStateInitializer BlendStateInitializer;
+        BlendStateInitializer.NumRenderTargets = 1;
 
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)

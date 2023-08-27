@@ -151,9 +151,9 @@ public:
         return new FNullRHIRasterizerState(InInitializer);
     }
 
-    virtual class FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) override final
+    virtual class FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final
     {
-        return new FNullRHIBlendState(InDesc);
+        return new FNullRHIBlendState(InInitializer);
     }
 
     virtual class FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer) override final
@@ -188,7 +188,7 @@ public:
 
     virtual FString RHIGetAdapterName() const override final
     {
-        return FString();
+        return FString("NullRHI Adapter");
     }
 
     virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final

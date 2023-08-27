@@ -404,9 +404,9 @@ FRHIRasterizerState* FVulkanRHI::RHICreateRasterizerState(const FRHIRasterizerSt
     return new FVulkanRasterizerState(GetDevice(), InInitializer);
 }
 
-FRHIBlendState* FVulkanRHI::RHICreateBlendState(const FRHIBlendStateDesc& InDesc)
+FRHIBlendState* FVulkanRHI::RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer)
 {
-    return new FVulkanBlendState(InDesc);
+    return new FVulkanBlendState(InInitializer);
 }
 
 FRHIVertexInputLayout* FVulkanRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)

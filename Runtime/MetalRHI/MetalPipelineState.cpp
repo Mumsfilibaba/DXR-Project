@@ -88,3 +88,11 @@ FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInitialize
     , FrontFaceWinding(InInitializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
 {
 }
+
+
+FMetalBlendState::FMetalBlendState(const FRHIBlendStateInitializer& InInitializer)
+    : FRHIBlendState()
+    , FMetalRefCounted()
+    , Initializer(InInitializer)
+{
+}

@@ -111,19 +111,21 @@ private:
 };
 
 
-class FD3D12BlendState : public FRHIBlendState, public FD3D12DeviceChild
+class FD3D12BlendState : public FRHIBlendState, public FD3D12RefCounted
 {
 public:
-    FD3D12BlendState(FD3D12Device* InDevice, const D3D12_BLEND_DESC& InDesc)
-        : FRHIBlendState()
-        , FD3D12DeviceChild(InDevice)
-        , Desc(InDesc)
-    {
-    }
+    FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer);
+    virtual ~FD3D12BlendState() = default;
+
+    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
     
-    virtual FRHIBlendStateDesc GetDesc() const override final
+    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
+    
+    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
+
+    virtual FRHIBlendStateInitializer GetInitializer() const override final
     {
-        return FRHIBlendStateDesc();
+        return Initializer;
     }
 
     FORCEINLINE const D3D12_BLEND_DESC& GetD3D12Desc() const
@@ -132,7 +134,8 @@ public:
     }
 
 private:
-    D3D12_BLEND_DESC Desc;
+    FRHIBlendStateInitializer Initializer;
+    D3D12_BLEND_DESC          Desc;
 };
 
 

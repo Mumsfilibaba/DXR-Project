@@ -126,3 +126,31 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     }
 #endif
 }
+
+
+FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer)
+    : FRHIBlendState()
+    , FVulkanRefCounted()
+    , Initializer(InInitializer)
+{
+    FMemory::Memzero(&CreateInfo);
+
+    CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    CreateInfo.logicOpEnable   = InInitializer.bLogicOpEnable;
+    CreateInfo.logicOp         = ConvertLogicOp(InInitializer.LogicOp);
+    CreateInfo.attachmentCount = InInitializer.NumRenderTargets;
+    CreateInfo.pAttachments    = BlendAttachmentStates;
+    // NOTE: Blend constants are configured as dynamic state
+
+    for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)
+    {
+        BlendAttachmentStates[Index].blendEnable         = InInitializer.RenderTargets[Index].bBlendEnable;
+        BlendAttachmentStates[Index].srcColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlend);
+        BlendAttachmentStates[Index].dstColorBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlend);
+        BlendAttachmentStates[Index].colorBlendOp        = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOp);
+        BlendAttachmentStates[Index].srcAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlendAlpha);
+        BlendAttachmentStates[Index].dstAlphaBlendFactor = ConvertBlend(InInitializer.RenderTargets[Index].DstBlendAlpha);
+        BlendAttachmentStates[Index].alphaBlendOp        = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
+        BlendAttachmentStates[Index].colorWriteMask      = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
+    }
+}

@@ -436,6 +436,96 @@ constexpr VkPolygonMode ConvertFillMode(EFillMode FillMode)
     return VkPolygonMode(0);
 }
 
+constexpr VkBlendOp ConvertBlendOp(EBlendOp BlendOp)
+{
+    switch (BlendOp)
+    {
+        case EBlendOp::Add:         return VK_BLEND_OP_ADD;
+        case EBlendOp::Max:         return VK_BLEND_OP_MAX;
+        case EBlendOp::Min:         return VK_BLEND_OP_MIN;
+        case EBlendOp::RevSubtract: return VK_BLEND_OP_REVERSE_SUBTRACT;
+        case EBlendOp::Subtract:    return VK_BLEND_OP_SUBTRACT;
+    }
+
+    return VkBlendOp(-1);
+}
+
+constexpr VkBlendFactor ConvertBlend(EBlendType  Blend)
+{
+    switch (Blend)
+    {
+        case EBlendType::Zero:           return VK_BLEND_FACTOR_ZERO;
+        case EBlendType::One:            return VK_BLEND_FACTOR_ONE;
+        case EBlendType::SrcColor:       return VK_BLEND_FACTOR_SRC_COLOR;
+        case EBlendType::InvSrcColor:    return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        case EBlendType::SrcAlpha:       return VK_BLEND_FACTOR_SRC_ALPHA;
+        case EBlendType::InvSrcAlpha:    return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        case EBlendType::DstAlpha:       return VK_BLEND_FACTOR_DST_ALPHA;
+        case EBlendType::InvDstAlpha:    return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+        case EBlendType::DstColor:       return VK_BLEND_FACTOR_DST_COLOR;
+        case EBlendType::InvDstColor:    return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+        case EBlendType::SrcAlphaSat:    return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+        case EBlendType::Src1Color:      return VK_BLEND_FACTOR_SRC1_COLOR;
+        case EBlendType::InvSrc1Color:   return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+        case EBlendType::Src1Alpha:      return VK_BLEND_FACTOR_SRC1_ALPHA;
+        case EBlendType::InvSrc1Alpha:   return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+        case EBlendType::BlendFactor:    return VK_BLEND_FACTOR_CONSTANT_COLOR;
+        case EBlendType::InvBlendFactor: return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+    }
+
+    return VkBlendFactor(-1);
+}
+
+constexpr VkLogicOp ConvertLogicOp(ELogicOp LogicOp)
+{
+    switch (LogicOp)
+    {
+        case ELogicOp::Clear:        return VK_LOGIC_OP_CLEAR;
+        case ELogicOp::Set:          return VK_LOGIC_OP_SET;
+        case ELogicOp::Copy:         return VK_LOGIC_OP_COPY;
+        case ELogicOp::CopyInverted: return VK_LOGIC_OP_COPY_INVERTED;
+        case ELogicOp::NoOp:         return VK_LOGIC_OP_NO_OP;
+        case ELogicOp::Invert:       return VK_LOGIC_OP_INVERT;
+        case ELogicOp::And:          return VK_LOGIC_OP_AND;
+        case ELogicOp::Nand:         return VK_LOGIC_OP_NAND;
+        case ELogicOp::Or:           return VK_LOGIC_OP_OR;
+        case ELogicOp::Nor:          return VK_LOGIC_OP_NOR;
+        case ELogicOp::Xor:          return VK_LOGIC_OP_XOR;
+        case ELogicOp::Equivalent:   return VK_LOGIC_OP_EQUIVALENT;
+        case ELogicOp::AndReverse:   return VK_LOGIC_OP_AND_REVERSE;
+        case ELogicOp::AndInverted:  return VK_LOGIC_OP_AND_INVERTED;
+        case ELogicOp::OrReverse:    return VK_LOGIC_OP_OR_REVERSE;
+        case ELogicOp::OrInverted:   return VK_LOGIC_OP_OR_INVERTED;
+    }
+
+    return VkLogicOp(-1);
+}
+
+
+constexpr VkColorComponentFlags ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
+{
+    VkColorComponentFlags ColorComponentFlags = 0;
+    if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Red))
+    {
+        ColorComponentFlags |= VK_COLOR_COMPONENT_R_BIT;
+    }
+    if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Green))
+    {
+        ColorComponentFlags |= VK_COLOR_COMPONENT_G_BIT;
+    }
+    if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Blue))
+    {
+        ColorComponentFlags |= VK_COLOR_COMPONENT_B_BIT;
+    }
+    if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Alpha))
+    {
+        ColorComponentFlags |= VK_COLOR_COMPONENT_A_BIT;
+    }
+
+    return ColorComponentFlags;
+}
+
+
 constexpr VkFormat ConvertFormat(EFormat Format)
 {
     switch (Format)

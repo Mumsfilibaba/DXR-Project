@@ -1043,7 +1043,7 @@ struct FRHIDepthStencilView
 
 struct FRHIRenderPassDesc
 {
-    typedef TStaticArray<FRHIRenderTargetView, kRHIMaxRenderTargetCount> FRenderTargetViews;
+    typedef TStaticArray<FRHIRenderTargetView, FRHILimits::MaxRenderTargetCount> FRenderTargetViews;
     
     FRHIRenderPassDesc()
         : ShadingRateTexture(nullptr)
@@ -1774,14 +1774,14 @@ enum class ELogicOp : uint8
     Set          = 1,
     Copy         = 2,
     CopyInverted = 3,
-    Noop         = 4,
+    NoOp         = 4,
     Invert       = 5,
     And          = 6,
     Nand         = 7,
     Or           = 8,
     Nor          = 9,
     Xor          = 10,
-    Equiv        = 11,
+    Equivalent   = 11,
     AndReverse   = 12,
     AndInverted  = 13,
     OrReverse    = 14,
@@ -1796,14 +1796,14 @@ constexpr const CHAR* ToString(ELogicOp LogicOp)
         case ELogicOp::Set:          return "Set";
         case ELogicOp::Copy:         return "Copy";
         case ELogicOp::CopyInverted: return "CopyInverted";
-        case ELogicOp::Noop:         return "Noop";
+        case ELogicOp::NoOp:         return "NoOp";
         case ELogicOp::Invert:       return "Invert";
         case ELogicOp::And:          return "And";
         case ELogicOp::Nand:         return "Nand";
         case ELogicOp::Or:           return "Or";
         case ELogicOp::Nor:          return "Nor";
         case ELogicOp::Xor:          return "Xor";
-        case ELogicOp::Equiv:        return "Equiv";
+        case ELogicOp::Equivalent:   return "Equivalent";
         case ELogicOp::AndReverse:   return "AndReverse";
         case ELogicOp::AndInverted:  return "AndInverted";
         case ELogicOp::OrReverse:    return "OrReverse";
@@ -1813,7 +1813,7 @@ constexpr const CHAR* ToString(ELogicOp LogicOp)
 }
 
 
-enum class EColorWriteFlag : uint8
+enum class EColorWriteFlags : uint8
 {
     None  = 0,
     Red   = FLAG(0),
@@ -1823,63 +1823,7 @@ enum class EColorWriteFlag : uint8
     All   = Red | Green | Blue | Alpha
 };
 
-ENUM_CLASS_OPERATORS(EColorWriteFlag);
-
-
-struct FRenderTargetWriteMask
-{
-    constexpr FRenderTargetWriteMask()
-        : Mask(EColorWriteFlag::All)
-    {
-    }
-
-    constexpr FRenderTargetWriteMask(EColorWriteFlag InMask)
-        : Mask(InMask)
-    {
-    }
-
-    constexpr bool WriteNone() const
-    {
-        return Mask == EColorWriteFlag::None;
-    }
-
-    constexpr bool WriteRed() const
-    {
-        return IsEnumFlagSet(Mask, EColorWriteFlag::Red);
-    }
-
-    constexpr bool WriteGreen() const
-    {
-        return IsEnumFlagSet(Mask, EColorWriteFlag::Green);
-    }
-
-    constexpr bool WriteBlue() const
-    {
-        return IsEnumFlagSet(Mask, EColorWriteFlag::Blue);
-    }
-
-    constexpr bool WriteAlpha() const
-    {
-        return IsEnumFlagSet(Mask, EColorWriteFlag::Alpha);
-    }
-
-    constexpr bool WriteAll() const
-    {
-        return Mask == EColorWriteFlag::All;
-    }
-
-    constexpr bool operator==(FRenderTargetWriteMask Other) const
-    {
-        return Mask == Other.Mask;
-    }
-
-    constexpr bool operator!=(FRenderTargetWriteMask Other) const
-    {
-        return Mask != Other.Mask;
-    }
-
-    EColorWriteFlag Mask;
-};
+ENUM_CLASS_OPERATORS(EColorWriteFlags);
 
 
 struct FRenderTargetBlendDesc
@@ -1891,69 +1835,54 @@ struct FRenderTargetBlendDesc
         , SrcBlendAlpha(EBlendType::One)
         , DstBlendAlpha(EBlendType::Zero)
         , BlendOpAlpha(EBlendOp::Add)
-        , LogicOp(ELogicOp::Noop)
         , bBlendEnable(false)
-        , bLogicOpEnable(false)
-        , RenderTargetWriteMask()
+        , ColorWriteMask(EColorWriteFlags::All)
     {
     }
 
     FRenderTargetBlendDesc(
-        bool                   bInBlendEnable,
-        EBlendType             InSrcBlend,
-        EBlendType             InDstBlend,
-        EBlendOp               InBlendOp               = EBlendOp::Add,
-        EBlendType             InSrcBlendAlpha         = EBlendType::One,
-        EBlendType             InDstBlendAlpha         = EBlendType::Zero,
-        EBlendOp               InBlendOpAlpha          = EBlendOp::Add,
-        ELogicOp               InLogicOp               = ELogicOp::Noop,
-        bool                   bInLogicOpEnable        = false,
-        FRenderTargetWriteMask InRenderTargetWriteMask = FRenderTargetWriteMask())
+        bool             bInBlendEnable,
+        EBlendType       InSrcBlend,
+        EBlendType       InDstBlend,
+        EBlendOp         InBlendOp        = EBlendOp::Add,
+        EBlendType       InSrcBlendAlpha  = EBlendType::One,
+        EBlendType       InDstBlendAlpha  = EBlendType::Zero,
+        EBlendOp         InBlendOpAlpha   = EBlendOp::Add,
+        EColorWriteFlags InColorWriteMask = EColorWriteFlags::All)
         : SrcBlend(InSrcBlend)
         , DstBlend(InDstBlend)
         , BlendOp(InBlendOp)
         , SrcBlendAlpha(InSrcBlendAlpha)
         , DstBlendAlpha(InDstBlendAlpha)
         , BlendOpAlpha(InBlendOpAlpha)
-        , LogicOp(InLogicOp)
         , bBlendEnable(bInBlendEnable)
-        , bLogicOpEnable(bInLogicOpEnable)
-        , RenderTargetWriteMask(InRenderTargetWriteMask)
+        , ColorWriteMask(InColorWriteMask)
     {
     }
 
     uint64 GetHash() const
     {
-        if (bBlendEnable && bLogicOpEnable)
-        {
-            return 0;
-        }
-
         uint64 Hash = ToUnderlying(SrcBlend);
         HashCombine(Hash, ToUnderlying(DstBlend));
         HashCombine(Hash, ToUnderlying(BlendOp));
         HashCombine(Hash, ToUnderlying(SrcBlendAlpha));
         HashCombine(Hash, ToUnderlying(DstBlendAlpha));
         HashCombine(Hash, ToUnderlying(BlendOpAlpha));
-        HashCombine(Hash, ToUnderlying(LogicOp));
         HashCombine(Hash, bBlendEnable);
-        HashCombine(Hash, bLogicOpEnable);
-        HashCombine(Hash, RenderTargetWriteMask.Mask);
+        HashCombine(Hash, ToUnderlying(ColorWriteMask));
         return Hash;
     }
 
     bool operator==(const FRenderTargetBlendDesc& Other) const
     {
-        return SrcBlend              == Other.SrcBlend
-            && DstBlend              == Other.DstBlend
-            && BlendOp               == Other.BlendOp
-            && SrcBlendAlpha         == Other.SrcBlendAlpha
-            && DstBlendAlpha         == Other.DstBlendAlpha
-            && BlendOpAlpha          == Other.BlendOpAlpha
-            && LogicOp               == Other.LogicOp
-            && bBlendEnable          == Other.bBlendEnable
-            && bLogicOpEnable        == Other.bLogicOpEnable
-            && RenderTargetWriteMask == Other.RenderTargetWriteMask;
+        return SrcBlend       == Other.SrcBlend
+            && DstBlend       == Other.DstBlend
+            && BlendOp        == Other.BlendOp
+            && SrcBlendAlpha  == Other.SrcBlendAlpha
+            && DstBlendAlpha  == Other.DstBlendAlpha
+            && BlendOpAlpha   == Other.BlendOpAlpha
+            && bBlendEnable   == Other.bBlendEnable
+            && ColorWriteMask == Other.ColorWriteMask;
     }
 
     bool operator!=(const FRenderTargetBlendDesc& Other) const
@@ -1961,60 +1890,66 @@ struct FRenderTargetBlendDesc
         return !(*this == Other);
     }
 
-    EBlendType             SrcBlend;
-    EBlendType             DstBlend;
-    EBlendOp               BlendOp;
-    EBlendType             SrcBlendAlpha;
-    EBlendType             DstBlendAlpha;
-    EBlendOp               BlendOpAlpha;
-    ELogicOp               LogicOp;
-    bool                   bBlendEnable;
-    bool                   bLogicOpEnable;
-    FRenderTargetWriteMask RenderTargetWriteMask;
+    EBlendType       SrcBlend;
+    EBlendType       DstBlend;
+    EBlendOp         BlendOp;
+    EBlendType       SrcBlendAlpha;
+    EBlendType       DstBlendAlpha;
+    EBlendOp         BlendOpAlpha;
+    bool             bBlendEnable;
+    EColorWriteFlags ColorWriteMask;
 };
 
 
-struct FRHIBlendStateDesc
+struct FRHIBlendStateInitializer
 {
-    typedef TStaticArray<FRenderTargetBlendDesc, kRHIMaxRenderTargetCount> FRenderTargetArray;
-    
-    FRHIBlendStateDesc() = default;
-
-    FRHIBlendStateDesc(const FRenderTargetArray& InRenderTargets, bool bInAlphaToCoverageEnable, bool bInIndependentBlendEnable)
-        : RenderTargets(InRenderTargets)
-        , bAlphaToCoverageEnable(bInAlphaToCoverageEnable)
-        , bIndependentBlendEnable(bInIndependentBlendEnable)
+    FRHIBlendStateInitializer()
+        : RenderTargets()
+        , NumRenderTargets(0)
+        , LogicOp(ELogicOp::NoOp)
+        , bLogicOpEnable(false)
+        , bAlphaToCoverageEnable(false)
+        , bIndependentBlendEnable(false)
     {
     }
 
     uint64 GetHash() const
     {
-        const uint32 NumRenderTargets = bIndependentBlendEnable ? kRHIMaxRenderTargetCount : 1u;
-
         uint64 Hash = 0;
         for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
         {
             HashCombine(Hash, RenderTargets[Index].GetHash());
         }
 
+        HashCombine(Hash, ToUnderlying(LogicOp));
+        HashCombine(Hash, bLogicOpEnable);
         HashCombine(Hash, bAlphaToCoverageEnable);
         HashCombine(Hash, bIndependentBlendEnable);
         return Hash;
     }
 
-    bool operator==(const FRHIBlendStateDesc& Other) const
+    bool operator==(const FRHIBlendStateInitializer& Other) const
     {
-        return RenderTargets == Other.RenderTargets && bAlphaToCoverageEnable == Other.bAlphaToCoverageEnable && bIndependentBlendEnable == Other.bIndependentBlendEnable;
+        return NumRenderTargets == Other.NumRenderTargets
+            && CompareArrays(RenderTargets, Other.RenderTargets, NumRenderTargets)
+            && LogicOp                 == Other.LogicOp
+            && bLogicOpEnable          == Other.bLogicOpEnable
+            && bAlphaToCoverageEnable  == Other.bAlphaToCoverageEnable 
+            && bIndependentBlendEnable == Other.bIndependentBlendEnable;
     }
 
-    bool operator!=(const FRHIBlendStateDesc& Other) const
+    bool operator!=(const FRHIBlendStateInitializer& Other) const
     {
         return !(*this == Other);
     }
 
-    FRenderTargetArray RenderTargets;
-    bool               bAlphaToCoverageEnable{false};
-    bool               bIndependentBlendEnable{false};
+    FRenderTargetBlendDesc RenderTargets[FRHILimits::MaxRenderTargetCount];
+    uint8                  NumRenderTargets;
+    ELogicOp               LogicOp;
+
+    bool bLogicOpEnable          : 1;
+    bool bAlphaToCoverageEnable  : 1;
+    bool bIndependentBlendEnable : 1;
 };
 
 
@@ -2025,7 +1960,7 @@ protected:
     virtual ~FRHIBlendState() = default;
 
 public:
-    virtual FRHIBlendStateDesc GetDesc() const = 0;
+    virtual FRHIBlendStateInitializer GetInitializer() const = 0;
 };
 
 
@@ -2178,7 +2113,7 @@ public:
 
 struct FGraphicsPipelineFormats
 {
-    typedef TStaticArray<EFormat, kRHIMaxRenderTargetCount> FRenderTargetFormats;
+    typedef TStaticArray<EFormat, FRHILimits::MaxRenderTargetCount> FRenderTargetFormats;
 
     FGraphicsPipelineFormats()
         : RenderTargetFormats()

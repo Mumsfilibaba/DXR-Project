@@ -118,7 +118,9 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIBlendStateDesc BlendStateInitializer;
+    FRHIBlendStateInitializer BlendStateInitializer;
+    BlendStateInitializer.NumRenderTargets = 1;
+
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {

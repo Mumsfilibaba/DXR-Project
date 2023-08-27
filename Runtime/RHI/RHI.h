@@ -347,7 +347,7 @@ public:
      * @param InDesc - Info about a BlendState
      * @return       - Returns the newly created BlendState
      */
-    virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) = 0;
+    virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer) = 0;
 
     /**
      * @brief        - Create a new InputLayoutState
@@ -575,7 +575,7 @@ FORCEINLINE FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerSt
     return GetRHI()->RHICreateRasterizerState(Initializer);
 }
 
-FORCEINLINE FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& Initializer)
+FORCEINLINE FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& Initializer)
 {
     return GetRHI()->RHICreateBlendState(Initializer);
 }

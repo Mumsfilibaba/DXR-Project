@@ -257,9 +257,9 @@ FRHIRasterizerState* FMetalRHI::RHICreateRasterizerState(const FRHIRasterizerSta
     return new FMetalRasterizerState(InInitializer);
 }
 
-FRHIBlendState* FMetalRHI::RHICreateBlendState(const FRHIBlendStateDesc& Desc)
+FRHIBlendState* FMetalRHI::RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer)
 {
-    return new FMetalBlendState(GetDeviceContext(), Desc);
+    return new FMetalBlendState(InInitializer);
 }
 
 FRHIVertexInputLayout* FMetalRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)

@@ -281,3 +281,32 @@ constexpr EnumType EnumSub(EnumType Value, typename TUnderlyingType<EnumType>::T
 {
     return static_cast<EnumType>(::ToUnderlying(Value) - Offset);
 }
+
+
+template<typename T, uint32 NumElements>
+constexpr bool CompareArrays(const T(&LHS)[NumElements], const T(&RHS)[NumElements])
+{
+    for (int32 Index = 0; Index < NumElements; Index++)
+    {
+        if (LHS[Index] != RHS[Index])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+template<typename T>
+FORCEINLINE bool CompareArrays(const T* LHS, const T* RHS, int32 NumElements)
+{
+    for (int32 Index = 0; Index < NumElements; Index++)
+    {
+        if (LHS[Index] != RHS[Index])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}

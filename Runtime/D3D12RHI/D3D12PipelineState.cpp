@@ -68,6 +68,36 @@ FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitialize
 }
 
 
+FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer)
+    : FRHIBlendState()
+    , FD3D12RefCounted()
+    , Initializer(InInitializer)
+{
+    FMemory::Memzero(&Desc);
+    
+    // NOTE: We force only one, to have parity with Vulkan
+    const BOOL LogicOpEnable     = InInitializer.bLogicOpEnable;
+    const D3D12_LOGIC_OP LogicOp = ConvertLogicOp(InInitializer.LogicOp);
+
+    Desc.AlphaToCoverageEnable  = InInitializer.bAlphaToCoverageEnable;
+    Desc.IndependentBlendEnable = InInitializer.bIndependentBlendEnable;
+
+    for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)
+    {
+        Desc.RenderTarget[Index].BlendEnable           = InInitializer.RenderTargets[Index].bBlendEnable;
+        Desc.RenderTarget[Index].BlendOp               = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOp);
+        Desc.RenderTarget[Index].BlendOpAlpha          = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
+        Desc.RenderTarget[Index].DestBlend             = ConvertBlend(InInitializer.RenderTargets[Index].DstBlend);
+        Desc.RenderTarget[Index].DestBlendAlpha        = ConvertBlend(InInitializer.RenderTargets[Index].DstBlendAlpha);
+        Desc.RenderTarget[Index].SrcBlend              = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlend);
+        Desc.RenderTarget[Index].SrcBlendAlpha         = ConvertBlend(InInitializer.RenderTargets[Index].SrcBlendAlpha);
+        Desc.RenderTarget[Index].LogicOpEnable         = LogicOpEnable;
+        Desc.RenderTarget[Index].LogicOp               = LogicOp;
+        Desc.RenderTarget[Index].RenderTargetWriteMask = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
+    }
+}
+
+
 FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
     : FRHIGraphicsPipelineState()
     , FD3D12PipelineState(InDevice)

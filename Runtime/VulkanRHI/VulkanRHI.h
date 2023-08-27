@@ -77,7 +77,7 @@ public:
     
     virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final;
     
-    virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateDesc& InDesc) override final;
+    virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final;
     
     virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer) override final;
 

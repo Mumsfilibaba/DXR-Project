@@ -92,7 +92,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIBlendStateDesc BlendStateInitializer;
+        FRHIBlendStateInitializer BlendStateInitializer;
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {
@@ -177,7 +177,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIBlendStateDesc BlendStateInitializer;
+        FRHIBlendStateInitializer BlendStateInitializer;
         FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!BlendState)
         {

@@ -310,7 +310,7 @@ public:
     FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
     {
         const int32 Size = Num32BitConstants * sizeof(uint32);
-        CHECK(Num32BitConstants <= kRHIMaxShaderConstants);
+        CHECK(Num32BitConstants <= FRHILimits::MaxShaderConstants);
 
         void* SourceData = Allocate(Size, alignof(uint32));
         FMemory::Memcpy(SourceData, Shader32BitConstants, Size);

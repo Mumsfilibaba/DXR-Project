@@ -67,7 +67,9 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIBlendStateDesc BlendStateInitializer( { FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
+    FRHIBlendStateInitializer BlendStateInitializer;
+    BlendStateInitializer.NumRenderTargets = 1;
+    BlendStateInitializer.RenderTargets[0] = FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero);
 
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)

@@ -111,22 +111,34 @@ private:
 };
 
 
-class FVulkanBlendState : public FRHIBlendState
+class FVulkanBlendState : public FRHIBlendState, public FVulkanRefCounted
 {
 public:
-    FVulkanBlendState(const FRHIBlendStateDesc& InDesc)
-        : FRHIBlendState()
-        , Desc(InDesc)
-    {
-    }
-
+    FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer);
     virtual ~FVulkanBlendState() = default;
 
-    virtual FRHIBlendStateDesc GetDesc() const override final { return Desc; }
+    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
+
+    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
+
+    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
+
+    virtual FRHIBlendStateInitializer GetInitializer() const override final 
+    {
+        return Initializer;
+    }
+
+    const VkPipelineColorBlendStateCreateInfo& GetVkCreateInfo() const
+    {
+        return CreateInfo;
+    }
 
 private:
-    FRHIBlendStateDesc Desc;
+    FRHIBlendStateInitializer           Initializer;
+    VkPipelineColorBlendStateCreateInfo CreateInfo;
+    VkPipelineColorBlendAttachmentState BlendAttachmentStates[FRHILimits::MaxRenderTargetCount];
 };
+
 
 class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState
 {
