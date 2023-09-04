@@ -49,7 +49,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHIComputePipelineStateDesc PSOInitializer(SSAOShader.Get());
+        FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
         PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!PipelineState)
         {
@@ -62,11 +62,13 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
         }
     }
 
-    TArray<FShaderDefine> Defines;
-    Defines.Emplace("HORIZONTAL_PASS", "1");
+    TArray<FShaderDefine> Defines = 
+    {
+        { "HORIZONTAL_PASS", "(1)" }
+    };
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -82,7 +84,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHIComputePipelineStateDesc PSOInitializer;
+        FRHIComputePipelineStateInitializer PSOInitializer;
         PSOInitializer.Shader = BlurHorizontalShader.Get();
 
         BlurHorizontalPSO = RHICreateComputePipelineState(PSOInitializer);
@@ -117,7 +119,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHIComputePipelineStateDesc PSOInitializer;
+        FRHIComputePipelineStateInitializer PSOInitializer;
         PSOInitializer.Shader = BlurVerticalShader.Get();
 
         BlurVerticalPSO = RHICreateComputePipelineState(PSOInitializer);

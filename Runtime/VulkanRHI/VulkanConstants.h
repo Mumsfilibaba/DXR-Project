@@ -1,0 +1,7 @@
+#pragma once
+#include "Core/Core.h"
+
+#define VULKAN_MAX_NUM_PUSH_CONSTANTS          (32)
+
+#define VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS (16)
+#define VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS               (8)

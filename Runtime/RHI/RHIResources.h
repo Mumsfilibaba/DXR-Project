@@ -2252,24 +2252,24 @@ protected:
 };
 
 
-struct FRHIComputePipelineStateDesc
+struct FRHIComputePipelineStateInitializer
 {
-    FRHIComputePipelineStateDesc()
+    FRHIComputePipelineStateInitializer()
         : Shader(nullptr)
     {
     }
 
-    FRHIComputePipelineStateDesc(FRHIComputeShader* InShader)
+    FRHIComputePipelineStateInitializer(FRHIComputeShader* InShader)
         : Shader(InShader)
     {
     }
 
-    bool operator==(const FRHIComputePipelineStateDesc& Other) const
+    bool operator==(const FRHIComputePipelineStateInitializer& Other) const
     {
         return Shader == Other.Shader;
     }
 
-    bool operator!=(const FRHIComputePipelineStateDesc& Other) const
+    bool operator!=(const FRHIComputePipelineStateInitializer& Other) const
     {
         return !(*this == Other);
     }

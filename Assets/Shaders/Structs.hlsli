@@ -1,7 +1,7 @@
 #ifndef STRUCTS_HLSLI
 #define STRUCTS_HLSLI
+#include "CoreDefines.hlsli"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Common Structs
 
 #define NUM_SHADOW_CASCADES (4)

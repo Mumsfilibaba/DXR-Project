@@ -2,8 +2,8 @@
 #include "Structs.hlsli"
 #include "RayTracingHelpers.hlsli"
 
-TextureCube<float4> Skybox         : register(t1, space0);
-SamplerState        TextureSampler : register(s0, space0);
+TextureCube<float4> Skybox         : register(t1);
+SamplerState        TextureSampler : register(s0);
 
 [shader("miss")]
 void Miss(inout RayPayload PayLoad)

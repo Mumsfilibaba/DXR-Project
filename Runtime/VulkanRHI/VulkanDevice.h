@@ -30,13 +30,18 @@ struct FVulkanDeviceDesc
         , RequiredFeatures()
     {
         FMemory::Memzero(&RequiredFeatures);
+        FMemory::Memzero(&RequiredFeatures11);
+        FMemory::Memzero(&RequiredFeatures12);
     }
 
-    TArray<const CHAR*>      RequiredExtensionNames;
-    TArray<const CHAR*>      OptionalExtensionNames;
+    TArray<const CHAR*> RequiredExtensionNames;
+    TArray<const CHAR*> OptionalExtensionNames;
 
-    VkPhysicalDeviceFeatures RequiredFeatures;
+    VkPhysicalDeviceFeatures         RequiredFeatures;
+    VkPhysicalDeviceVulkan11Features RequiredFeatures11;
+    VkPhysicalDeviceVulkan12Features RequiredFeatures12;
 };
+
 
 class FVulkanDevice : public FVulkanRefCounted
 {

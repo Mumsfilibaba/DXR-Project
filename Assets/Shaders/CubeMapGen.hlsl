@@ -14,15 +14,15 @@
         "addressW = TEXTURE_ADDRESS_WRAP," \
         "filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
 
-cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+// Shader Constants
+SHADER_CONSTANT_BLOCK_BEGIN
     uint CubeMapSize; // Size of one side of the TextureCube
-}
+SHADER_CONSTANT_BLOCK_END
 
-SamplerState LinearSampler : register(s0, space0);
+SamplerState LinearSampler : register(s0);
 
-Texture2D<float4>        Source  : register(t0, space0);
-RWTexture2DArray<float4> OutCube : register(u0, space0);
+Texture2D<float4>        Source  : register(t0);
+RWTexture2DArray<float4> OutCube : register(u0);
 
 static const float2 INV_ATAN = float2(0.1591f, 0.3183f);
 
@@ -63,7 +63,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
     // Map the UV coords of the cubemap face to a direction
     // [(0, 0), (1, 1)] => [(-0.5, -0.5), (0.5, 0.5)]
-    float3 Direction = float3((TexCoord.xy / float(CubeMapSize)) - 0.5f, 0.5f);
+    float3 Direction = float3((TexCoord.xy / float(Constants.CubeMapSize)) - 0.5f, 0.5f);
 
     // Rotate to cubemap face
     Direction = normalize(mul(ROTATE_UV[TexCoord.z], Direction));

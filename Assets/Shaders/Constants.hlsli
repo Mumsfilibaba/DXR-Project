@@ -1,7 +1,8 @@
 #ifndef CONSTANTS_HLSLI
 #define CONSTANTS_HLSLI
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+#include "CoreDefines.hlsli"
+
 // Common Constants
 
 #define PI     (3.14159265359f)

@@ -1,12 +1,11 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-RWTexture2D<float> Texture : register(u0, space0);
+RWTexture2D<float> Texture : register(u0);
 
-cbuffer Params : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     int2 ScreenSize;
-};
+SHADER_CONSTANT_BLOCK_END
 
 #define NUM_THREADS (16)
 #define KERNEL_SIZE (5)
@@ -28,7 +27,7 @@ static const int OFFSETS[KERNEL_SIZE] =
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(FComputeShaderInput Input)
 {
-    const int2 Pixel = min(Input.DispatchThreadID.xy, int2(ScreenSize));   
+    const int2 Pixel = min(Input.DispatchThreadID.xy, int2(Constants.ScreenSize));   
 
     // Cache texture fetches
     const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
@@ -53,9 +52,9 @@ void Main(FComputeShaderInput Input)
         if (any(CurrentTexCoord >= MAX_SIZE) || any(CurrentTexCoord < int2(0, 0)))
         {
 #ifdef HORIZONTAL_PASS
-        const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), ScreenSize.x), Pixel.y);
+        const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x), Pixel.y);
 #else
-        const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), ScreenSize.y));
+        const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y));
 #endif
             Result += Texture[Pixel] * Weight;
         }

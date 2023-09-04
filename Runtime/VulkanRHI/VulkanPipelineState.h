@@ -139,6 +139,7 @@ private:
     VkPipelineColorBlendAttachmentState BlendAttachmentStates[FRHILimits::MaxRenderTargets];
 };
 
+
 class FVulkanPipeline : public FVulkanDeviceObject, public FVulkanRefCounted
 {
 public:
@@ -153,9 +154,11 @@ public:
     }
 
 protected:
-    VkPipeline       Pipeline;
-    VkPipelineLayout PipelineLayout;
+    VkPipeline            Pipeline;
+    VkPipelineLayout      PipelineLayout;
+    VkDescriptorSetLayout DescriptorSetLayouts[5];
 };
+
 
 class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline
 {
@@ -172,12 +175,22 @@ public:
     virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 };
 
-class FVulkanComputePipelineState : public FRHIComputePipelineState
+
+class FVulkanComputePipelineState : public FRHIComputePipelineState, public FVulkanPipeline
 {
 public:
-    FVulkanComputePipelineState()  = default;
-    ~FVulkanComputePipelineState() = default;
+    FVulkanComputePipelineState(FVulkanDevice* InDevice);
+    virtual ~FVulkanComputePipelineState() = default;
+    
+    bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
+
+    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
+
+    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
+
+    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 };
+
 
 class FVulkanRayTracingPipelineState : public FRHIRayTracingPipelineState
 {

@@ -13,8 +13,8 @@
         "addressW = TEXTURE_ADDRESS_WRAP," \
         "filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
 
-TextureCube<float4> EnvironmentMap     : register(t0, space0);
-SamplerState        EnvironmentSampler : register(s0, space0);
+TextureCube<float4> EnvironmentMap     : register(t0);
+SamplerState        EnvironmentSampler : register(s0);
 
 RWTexture2DArray<float4> IrradianceMap : register(u0);
 

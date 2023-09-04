@@ -1071,11 +1071,11 @@ bool FRenderer::InitAA()
 
     TArray<FShaderDefine> Defines =
     {
-        FShaderDefine("ENABLE_DEBUG", "(1)")
+        { "ENABLE_DEBUG", "(1)" }
     };
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, MakeArrayView(Defines));
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -1145,7 +1145,7 @@ bool FRenderer::InitShadingImage()
         return false;
     }
 
-    FRHIComputePipelineStateDesc PSOInitializer(ShadingRateShader.Get());
+    FRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
     ShadingRatePipeline = RHICreateComputePipelineState(PSOInitializer);
     if (!ShadingRatePipeline)
     {

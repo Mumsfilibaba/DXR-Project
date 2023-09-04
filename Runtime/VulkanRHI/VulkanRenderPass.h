@@ -58,7 +58,7 @@ struct FVulkanRenderPassKey
 
 struct FVulkanRenderPassKeyHasher
 {
-    size_t operator()(const FVulkanRenderPassKey& Key) const
+    uint64 operator()(const FVulkanRenderPassKey& Key) const
     {
         return Key.GetHash();
     }

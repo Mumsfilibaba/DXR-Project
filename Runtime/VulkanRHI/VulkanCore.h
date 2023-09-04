@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Core.h"
+#include "VulkanConstants.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/String.h"
@@ -15,6 +15,10 @@
 
 #define VK_NO_PROTOTYPES (1)
 #include <vulkan/vulkan.h>
+
+#if !defined(VK_VERSION_1_1) && !defined(VK_VERSION_1_2)
+#error Vulkan version must be 1.2 or above
+#endif
 
 #if !PRODUCTION_BUILD
 #define VULKAN_ERROR(...)                      \

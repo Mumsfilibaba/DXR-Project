@@ -133,43 +133,34 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     FVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
     DeviceCreateHelper.AddNext(DeviceFeatures2);
 
-    // TODO: Check for the availability of these features when the device is created
-#if VK_KHR_shader_draw_parameters
-    VkPhysicalDeviceShaderDrawParametersFeatures ShaderDrawParametersFeatures;
-    FMemory::Memzero(&ShaderDrawParametersFeatures);
-    ShaderDrawParametersFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
+    VkPhysicalDeviceVulkan11Features DeviceFeaturesVulkan11 = DeviceDesc.RequiredFeatures11;
+    DeviceFeaturesVulkan11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    DeviceCreateHelper.AddNext(DeviceFeaturesVulkan11);
     
-    if (IsExtensionEnabled(VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME))
-    {
-        ShaderDrawParametersFeatures.shaderDrawParameters = VK_TRUE;
-        DeviceCreateHelper.AddNext(ShaderDrawParametersFeatures);
-    }
-#endif
-
-#if VK_KHR_buffer_device_address
-    VkPhysicalDeviceBufferDeviceAddressFeaturesKHR BufferDeviceAddressFeatures;
-    FMemory::Memzero(&BufferDeviceAddressFeatures);
-    BufferDeviceAddressFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR;
-
-    if (IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
-    {
-        BufferDeviceAddressFeatures.bufferDeviceAddress = VK_TRUE;
-        DeviceCreateHelper.AddNext(BufferDeviceAddressFeatures);
-    }
-#endif
-
-#if VK_KHR_timeline_semaphore
-    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR TimelineSemaphoreFeatures;
-    FMemory::Memzero(&TimelineSemaphoreFeatures);
-    TimelineSemaphoreFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
-
-    if (IsExtensionEnabled(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME))
-    {
-        TimelineSemaphoreFeatures.timelineSemaphore = VK_TRUE;
-        DeviceCreateHelper.AddNext(TimelineSemaphoreFeatures);
-    }
-#endif
+    VkPhysicalDeviceVulkan12Features DeviceFeaturesVulkan12 = DeviceDesc.RequiredFeatures12;
+    DeviceFeaturesVulkan12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     
+    // Enable 'bufferDeviceAddress' if available
+    const VkPhysicalDeviceVulkan12Features& AvailableDeviceFeaturesVulkan12 = GetPhysicalDevice()->GetDeviceFeaturesVulkan12();
+    if (AvailableDeviceFeaturesVulkan12.bufferDeviceAddress)
+    {
+        DeviceFeaturesVulkan12.bufferDeviceAddress = VK_TRUE;
+    }
+    // Enable 'timelineSemaphore' if available
+    if (AvailableDeviceFeaturesVulkan12.timelineSemaphore)
+    {
+        DeviceFeaturesVulkan12.timelineSemaphore = VK_TRUE;
+    }
+    // Enable 'descriptorIndexing' if available
+    if (AvailableDeviceFeaturesVulkan12.descriptorIndexing)
+    {
+        DeviceFeaturesVulkan12.descriptorIndexing = VK_TRUE;
+    }
+    
+    DeviceCreateHelper.AddNext(DeviceFeaturesVulkan12);
+
+    
+    // Check and enable extension features
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
     FMemory::Memzero(&DepthClipEnableFeatures);

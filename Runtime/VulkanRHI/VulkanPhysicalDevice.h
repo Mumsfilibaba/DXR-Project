@@ -17,12 +17,17 @@ struct FVulkanPhysicalDeviceDesc
         , OptionalExtensionNames()
     {
         FMemory::Memzero(&RequiredFeatures);
+        FMemory::Memzero(&RequiredFeatures11);
+        FMemory::Memzero(&RequiredFeatures12);
     }
 
-    TArray<const CHAR*>      RequiredExtensionNames;
-    TArray<const CHAR*>      OptionalExtensionNames; // Used to select most optimal adapter
+    TArray<const CHAR*> RequiredExtensionNames;
+    TArray<const CHAR*> OptionalExtensionNames; // Used to select most optimal adapter
 
-    VkPhysicalDeviceFeatures RequiredFeatures; 
+    VkPhysicalDeviceFeatures         RequiredFeatures;
+    VkPhysicalDeviceVulkan11Features RequiredFeatures11;
+    VkPhysicalDeviceVulkan12Features RequiredFeatures12;
+    
     // TODO: Optional features that can be used so select the best adapter
 };
 
@@ -54,60 +59,34 @@ public:
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
     
-    FORCEINLINE FVulkanInstance* GetInstance() const
+    FVulkanInstance* GetInstance() const
     {
         return Instance;
     }
 
-    FORCEINLINE VkPhysicalDevice GetVkPhysicalDevice() const
+    VkPhysicalDevice GetVkPhysicalDevice() const
     {
         return PhysicalDevice;
     }
 
-    FORCEINLINE const VkPhysicalDeviceProperties& GetDeviceProperties() const
-    {
-        return DeviceProperties;
-    }
-
-    FORCEINLINE const VkPhysicalDeviceFeatures& GetDeviceFeatures() const
-    {
-        return DeviceFeatures;
-    }
-
-    FORCEINLINE const VkPhysicalDeviceMemoryProperties& GetDeviceMemoryProperties() const
-    {
-        return DeviceMemoryProperties;
-    }
+    const VkPhysicalDeviceProperties&       GetDeviceProperties()       const { return DeviceProperties; }
+    const VkPhysicalDeviceFeatures&         GetDeviceFeatures()         const { return DeviceFeatures; }
+    const VkPhysicalDeviceMemoryProperties& GetDeviceMemoryProperties() const { return DeviceMemoryProperties; }
     
-#if VK_KHR_get_physical_device_properties2
-    FORCEINLINE const VkPhysicalDeviceProperties2& GetDeviceProperties2() const
-    {
-        return DeviceProperties2;
-    }
+    // Vulkan 1.1, Vulkan 1.2 features
+    const VkPhysicalDeviceProperties2&       GetDeviceProperties2()       const { return DeviceProperties2; }
+    const VkPhysicalDeviceFeatures2&         GetDeviceFeatures2()         const { return DeviceFeatures2; }
+    const VkPhysicalDeviceMemoryProperties2& GetDeviceMemoryProperties2() const { return DeviceMemoryProperties2; }
+    const VkPhysicalDeviceVulkan11Features&  GetDeviceFeaturesVulkan11()  const { return DeviceFeatures11; }
+    const VkPhysicalDeviceVulkan12Features&  GetDeviceFeaturesVulkan12()  const { return DeviceFeatures12; }
 
-    FORCEINLINE const VkPhysicalDeviceFeatures2& GetDeviceFeatures2() const
-    {
-        return DeviceFeatures2;
-    }
-
-    FORCEINLINE const VkPhysicalDeviceMemoryProperties2& GetDeviceMemoryProperties2() const
-    {
-        return DeviceMemoryProperties2;
-    }
-#endif
-
+    // Extension Information
 #if VK_EXT_depth_clip_enable
-    FORCEINLINE const VkPhysicalDeviceDepthClipEnableFeaturesEXT& GetDepthClipEnableFeatures() const
-    {
-        return DepthClipEnableFeatures;
-    }
+    const VkPhysicalDeviceDepthClipEnableFeaturesEXT& GetDepthClipEnableFeatures() const { return DepthClipEnableFeatures; }
 #endif
     
 #if VK_EXT_conservative_rasterization
-    FORCEINLINE const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const
-    {
-        return ConservativeRasterizationProperties;
-    }
+    const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const { return ConservativeRasterizationProperties; }
 #endif
 
 private:
@@ -117,11 +96,15 @@ private:
     VkPhysicalDeviceProperties        DeviceProperties;
     VkPhysicalDeviceFeatures          DeviceFeatures;
     VkPhysicalDeviceMemoryProperties  DeviceMemoryProperties;
-#if VK_KHR_get_physical_device_properties2
+
+    // Vulkan 1.1, Vulkan 1.2 features
     VkPhysicalDeviceProperties2       DeviceProperties2;
     VkPhysicalDeviceFeatures2         DeviceFeatures2;
     VkPhysicalDeviceMemoryProperties2 DeviceMemoryProperties2;
-#endif
+    VkPhysicalDeviceVulkan11Features  DeviceFeatures11;
+    VkPhysicalDeviceVulkan12Features  DeviceFeatures12;
+
+    // Extension Information
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
 #endif

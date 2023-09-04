@@ -2,13 +2,12 @@
 #include "Constants.hlsli"
 
 // Resources
-cbuffer CameraBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     float4x4 ViewProjection;
-};
+SHADER_CONSTANT_BLOCK_END
 
-TextureCube<float4> Skybox        : register(t0, space0);
-SamplerState        SkyboxSampler : register(s0, space0);
+TextureCube<float4> Skybox        : register(t0);
+SamplerState        SkyboxSampler : register(s0);
 
 // VertexShader
 struct FVSInput
@@ -29,7 +28,7 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
     Output.TexCoord = Input.Position;
-    Output.Position = mul(float4(Input.Position, 1.0f), ViewProjection);
+    Output.Position = mul(float4(Input.Position, 1.0f), Constants.ViewProjection);
     Output.Position = Output.Position.xyww;
     return Output;
 }

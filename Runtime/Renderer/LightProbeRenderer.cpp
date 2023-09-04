@@ -25,7 +25,7 @@ bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRe
         LOG_ERROR("Failed to create IrradianceGen Shader");
     }
 
-    IrradianceGenPSO = RHICreateComputePipelineState(FRHIComputePipelineStateDesc(IrradianceGenShader.Get()));
+    IrradianceGenPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(IrradianceGenShader.Get()));
     if (!IrradianceGenPSO)
     {
         LOG_ERROR("Failed to create IrradianceGen PipelineState");
@@ -49,7 +49,7 @@ bool FLightProbeRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRe
         LOG_ERROR("Failed to create Specular IrradianceGen Shader");
     }
 
-    SpecularIrradianceGenPSO = RHICreateComputePipelineState(FRHIComputePipelineStateDesc(SpecularIrradianceGenShader.Get()));
+    SpecularIrradianceGenPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(SpecularIrradianceGenShader.Get()));
     if (!SpecularIrradianceGenPSO)
     {
         LOG_ERROR("Failed to create Specular IrradianceGen PipelineState");

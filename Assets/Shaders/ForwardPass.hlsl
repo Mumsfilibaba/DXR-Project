@@ -6,38 +6,41 @@
 // Per Frame Buffers
 
 // TODO: Fix this
-//cbuffer Constants : register(b0, space0)
+//cbuffer Constants : register(b0)
 //{
 //    int NumPointLights;
 //    int NumSkyLightMips;
 //};
 
-ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
-cbuffer PointLightsBuffer : register(b1, space0)
+cbuffer PointLightsBuffer : register(b1)
 {
     FPointLight PointLights[32];
 }
 
-cbuffer PointLightsPosRadBuffer : register(b2, space0)
+cbuffer PointLightsPosRadBuffer : register(b2)
 {
     FPositionRadius PointLightsPosRad[32];
 }
 
-cbuffer ShadowCastingPointLightsBuffer : register(b3, space0)
+cbuffer ShadowCastingPointLightsBuffer : register(b3)
 {
     FShadowPointLight ShadowCastingPointLights[8];
 }
 
-cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4, space0)
+cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 {
     FPositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5, space0);
+ConstantBuffer<FDirectionalLight> DirLightBuffer : register(b5);
 
 // Per Object Buffers
-ConstantBuffer<FTransform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+SHADER_CONSTANT_BLOCK_BEGIN
+    FTransform TransformBuffer;
+SHADER_CONSTANT_BLOCK_END
+
 ConstantBuffer<FMaterial> MaterialBuffer : register(b6);
 
 // Per Frame Samplers
@@ -88,10 +91,10 @@ FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output;
     
-    float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformBuffer.Transform).xyz);
+    float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), Constants.TransformBuffer.Transform).xyz);
     Output.Normal = Normal;
     
-    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformBuffer.Transform).xyz);
+    float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), Constants.TransformBuffer.Transform).xyz);
     Tangent        = normalize(Tangent - dot(Tangent, Normal) * Normal);
     Output.Tangent = Tangent;
     
@@ -100,7 +103,7 @@ FVSOutput VSMain(FVSInput Input)
 
     Output.TexCoord = Input.TexCoord;
 
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.TransformBuffer.Transform);
     Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
     Output.WorldPosition = WorldPosition.xyz;
 

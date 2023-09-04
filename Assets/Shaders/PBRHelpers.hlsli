@@ -88,15 +88,7 @@ float GeometrySmithGGX_IBL(float3 N, float3 L, float3 V, float Roughness)
 }
 
 // Radiance
-float3 DirectRadiance(
-    float3 F0,
-    float3 N,
-    float3 V,
-    float3 L,
-    float3 Radiance,
-    float3 Albedo,
-    float Roughness,
-    float Metallic)
+float3 DirectRadiance(float3 F0, float3 N, float3 V, float3 L, float3 Radiance, float3 Albedo, float Roughness, float Metallic)
 {
     // Lambert Diffuse BRDF
     float3 DiffBRDF = Albedo / PI;

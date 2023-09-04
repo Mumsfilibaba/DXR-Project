@@ -5,16 +5,16 @@
 
 #define NUM_THREADS (16)
 
-RWTexture2D<float4> FinalTarget : register(u0, space0);
-RWTexture2D<float4> Output      : register(u1, space0);
+RWTexture2D<float4> FinalTarget : register(u0);
+RWTexture2D<float4> Output      : register(u1);
 
-Texture2D<float>  DepthBuffer    : register(t0, space0);
-Texture2D<float2> VelocityBuffer : register(t1, space0);
-Texture2D<float3> HistoryBuffer  : register(t2, space0);
+Texture2D<float>  DepthBuffer    : register(t0);
+Texture2D<float2> VelocityBuffer : register(t1);
+Texture2D<float3> HistoryBuffer  : register(t2);
 
-ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
-SamplerState LinearSampler : register(s0, space0);
+SamplerState LinearSampler : register(s0);
 
 uint2 ClampToViewport(uint2 TexCoord, int2 Offset)
 {

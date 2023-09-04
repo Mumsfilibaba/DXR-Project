@@ -9,13 +9,11 @@ struct FPerCascade
     int Padding2;
 };
 
-struct FPerObject
-{
-    float4x4 ModelMatrix;
-};
-
 // PerObject
-ConstantBuffer<FPerObject> PerObjectBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
+SHADER_CONSTANT_BLOCK_BEGIN
+    float4x4 ModelMatrix;
+SHADER_CONSTANT_BLOCK_END
+
 
 #if SHADER_LANG == SHADER_LANG_MSL
 ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b1);
@@ -34,7 +32,7 @@ struct FVSInput
     float2 TexCoord : TEXCOORD0;
 };
 
-struct GSOutput
+struct FGSOutput
 {
     float3 Position : POSITION0;
     float3 Normal   : NORMAL0;
@@ -42,32 +40,28 @@ struct GSOutput
     float2 TexCoord : TEXCOORD0;
 };
 
-///////////////////////////////
-// Cascade Shadow Generation //
-///////////////////////////////
+// Cascade Shadow Generation
 
 float4 Cascade_VSMain(FVSInput Input) : SV_POSITION
 {
     const int CascadeIndex = PerCascadeBuffer.CascadeIndex;
     float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
     
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
     return mul(WorldPosition, LightViewProjection);
 }
 
-void Cascade_GSMain(triangle float4 InPosition[3], inout TriangleStream<GSOutput> OutStream)
+void Cascade_GSMain(triangle float4 InPosition[3], inout TriangleStream<FGSOutput> OutStream)
 {
 }
 
-///////////////////////////////////
-// Point Light Shadow Generation //
-///////////////////////////////////
+// Point Light Shadow Generation
 
-cbuffer LightBuffer : register(b0, space0)
+cbuffer LightBuffer : register(b0)
 {
     float4x4 LightProjection;
-    float3 LightPosition;
-    float  LightFarPlane;
+    float3   LightPosition;
+    float    LightFarPlane;
 }
 
 struct FVSOutput
@@ -80,10 +74,9 @@ FVSOutput Point_VSMain(FVSInput Input)
 {
     FVSOutput Output = (FVSOutput)0;
     
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
     Output.WorldPosition = WorldPosition.xyz;
     Output.Position      = mul(WorldPosition, LightProjection);
-    
     return Output;
 }
 
@@ -94,13 +87,11 @@ float Point_PSMain(float3 WorldPosition : POSITION0) : SV_Depth
     return LightDistance;
 }
 
-////////////////////////////////
-// Variance Shadow Generation //
-////////////////////////////////
+// Variance Shadow Generation
 
 float4 VSM_VSMain(FVSInput Input) : SV_Position
 {
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), PerObjectBuffer.ModelMatrix);
+    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
     return mul(WorldPosition, LightProjection);
 }
 

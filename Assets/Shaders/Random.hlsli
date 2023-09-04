@@ -1,5 +1,6 @@
 #ifndef RANDOM_HLSLI
 #define RANDOM_HLSLI
+#include "CoreDefines.hlsli"
 
 // Based on: https://github.com/NVIDIAGameWorks/GettingStartedWithRTXRayTracing/blob/master/11-OneShadowRayPerPixel/Data/Tutorial11/diffusePlus1ShadowUtils.hlsli
 uint InitRandom(uint2 Pixel, uint Width, uint FrameIndex, uint BackOff = 16)

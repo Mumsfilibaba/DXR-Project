@@ -101,6 +101,11 @@
 #endif
 
 
+#ifndef OFFSETOF
+    #define OFFSETOF(Type, Member) reinterpret_cast<uint64>(&reinterpret_cast<Type*>(0)->Member)
+#endif
+
+
 #define BIT(Bit)  (1 << Bit)
 #define FLAG(Bit) BIT(Bit)
 

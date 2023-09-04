@@ -77,7 +77,11 @@ private:
     
     bool Compile(const FString& ShaderSource, const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
-    bool ConvertSpirvToMetalShader(const FString& Entrypoint, TArray<uint8>& OutByteCode);
+    bool PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource);
+    
+    bool RemapBindingsForSpirv(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+    bool ConvertSpirvToMetalShader(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
 

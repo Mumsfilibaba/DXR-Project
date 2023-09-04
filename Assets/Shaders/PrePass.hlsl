@@ -2,21 +2,19 @@
 #include "Constants.hlsli"
 
 // PerObject Constants
-cbuffer TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     float4x4 TransformMat;
-};
+SHADER_CONSTANT_BLOCK_END
 
 // PerFrame
-ConstantBuffer<FCamera>   CameraBuffer   : register(b0, space0);
-ConstantBuffer<FMaterial> MaterialBuffer : register(b1, space0);
+ConstantBuffer<FCamera>   CameraBuffer   : register(b0);
+ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
 
 // PerObject Samplers
 SamplerState MaterialSampler : register(s0);
 
 Texture2D<float4> AlphaMaskTex : register(t0);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // VertexShader
 
 struct FVSInput
@@ -36,12 +34,11 @@ struct FVSOutput
 FVSOutput VSMain(FVSInput Input)
 {
     FVSOutput Output = (FVSOutput)0;
-    Output.Position = mul(float4(Input.Position, 1.0f), TransformMat);
+    Output.Position = mul(float4(Input.Position, 1.0f), Constants.TransformMat);
     Output.Position = mul(Output.Position, CameraBuffer.ViewProjection); 
     return Output;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PixelShader
 
 struct FPSInput

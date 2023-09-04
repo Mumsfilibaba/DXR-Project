@@ -14,15 +14,14 @@
         "addressW = TEXTURE_ADDRESS_WRAP," \
         "filter = FILTER_MIN_MAG_MIP_LINEAR)"
 
-cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     float Roughness;
-};
+SHADER_CONSTANT_BLOCK_END
 
-TextureCube<float4> EnvironmentMap     : register(t0, space0);
-SamplerState        EnvironmentSampler : register(s0, space0);
+TextureCube<float4> EnvironmentMap     : register(t0);
+SamplerState        EnvironmentSampler : register(s0);
 
-RWTexture2DArray<float4> SpecularIrradianceMap : register(u0, space0);
+RWTexture2DArray<float4> SpecularIrradianceMap : register(u0);
 
 // Transform from dispatch ID to cubemap face direction
 static const float3x3 RotateUV[6] =
@@ -75,7 +74,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
     float3 R = Normal;
     float3 V = R;
 
-    float  FinalRoughness   = min(max(Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    float  FinalRoughness   = min(max(Constants.Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     float  TotalWeight      = 0.0f;
     float3 PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
     

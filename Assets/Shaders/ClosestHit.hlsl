@@ -4,14 +4,14 @@
 #include "Constants.hlsli"
 
 // Global RootSignature
-RaytracingAccelerationStructure Scene : register(t0, space0);
+RaytracingAccelerationStructure Scene : register(t0);
 
-ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
-TextureCube<float4> Skybox                : register(t1, space0);
-Texture2D<float4>   MaterialTextures[128] : register(t4, space0);
+TextureCube<float4> Skybox                : register(t1);
+Texture2D<float4>   MaterialTextures[128] : register(t4);
 
-SamplerState TextureSampler : register(s1, space0);
+SamplerState TextureSampler : register(s1);
 
 // Local RootSignature
 StructuredBuffer<FVertex> Vertices  : register(t0, D3D12_SHADER_REGISTER_SPACE_RT_LOCAL);

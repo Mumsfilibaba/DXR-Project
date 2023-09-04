@@ -3,7 +3,6 @@
 
 #include "Constants.hlsli"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Float helpers
 
 float2 Float2(float Scalar)
@@ -21,7 +20,6 @@ float4 Float4(float Scalar)
     return float4(Scalar, Scalar, Scalar, Scalar);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Mapping Helpers
 
 float MinusOneToOne(float v)
@@ -54,7 +52,6 @@ float3 OneToMinusOne(float3 v)
     return v * 2.0f - 1.0f;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Luma
 
 float Luma(float3 Color)
@@ -67,7 +64,6 @@ float Luminance(float3 Color)
     return dot(Color, float3(0.2126f, 0.7152f, 0.0722f));
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Plane helpers
 
 float4 CreatePlane(float3 Q, float3 R)
@@ -92,7 +88,6 @@ float4 PlaneFromPoints(in float3 Point1, in float3 Point2, in float3 Point3)
     return float4(Normal, Offset);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Math Helpers
 
 uint DivideByMultiple(uint Value, uint Alignment)
@@ -122,7 +117,6 @@ float3 Lerp(float3 A, float3 B, float P)
     return (Float3(-P) * B) + ((A * Float3(P)) + B);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Depth position helpers
 
 float Depth_ProjToView(float Depth, float4x4 ProjectionInv)
@@ -153,7 +147,6 @@ float DepthClipToEye(float Near, float Far, float z)
     return Near + (Far - Near) * z;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Gamma Helpers
 
 float3 ApplyGamma(float3 Color)
@@ -166,7 +159,6 @@ float3 ApplyGammaInv(float3 InputColor)
     return pow(InputColor, Float3(1.0f / GAMMA));
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Tonemapping Helpers
 
 float3 SimpleReinhardMapping(float3 Color, float Intensity)
@@ -208,7 +200,6 @@ float3 ApplyGammaCorrectionAndTonemapping(float3 Color)
     return ApplyGammaInv(AcesFitted(Color));
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Normal-Mapping Helpers
 
 float3 ApplyNormalMapping(float3 MappedNormal, float3 Normal, float3 Tangent, float3 Bitangent)
@@ -235,7 +226,6 @@ float3 PackNormal(float3 Normal)
     return (normalize(Normal) + 1.0f) * 0.5f;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ClipAABB
 
 // Modified version from: https://github.com/playdeadgames/temporal/blob/master/Assets/Shaders/TemporalReprojection.shader

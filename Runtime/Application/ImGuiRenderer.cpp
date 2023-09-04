@@ -128,29 +128,36 @@ bool FImGuiRenderer::Initialize()
 
     const CHAR* VSSource =
         R"*(
-        cbuffer VertexBuffer : register(b0, space1)
+        struct FShaderConstants
         {
             float4x4 ProjectionMatrix;
         };
+        
+        #if SHADER_LANG == SHADER_LANG_SPIRV
+            [[vk::push_constant]]
+            FShaderConstants Constants;
+        #else
+            ConstantBuffer<FShaderConstants> Constants : register(b0, space1);
+        #endif
 
-        struct VS_INPUT
+        struct FVSInput
         {
             float2 Position : POSITION;
             float4 Color    : COLOR0;
             float2 TexCoord : TEXCOORD0;
         };
 
-        struct PS_INPUT
+        struct FPSInput
         {
             float4 Position : SV_POSITION;
             float4 Color    : COLOR0;
             float2 TexCoord : TEXCOORD0;
         };
 
-        PS_INPUT Main(VS_INPUT Input)
+        FPSInput Main(FVSInput Input)
         {
-            PS_INPUT Output;
-            Output.Position = mul(ProjectionMatrix, float4(Input.Position.xy, 0.0f, 1.0f));
+            FPSInput Output;
+            Output.Position = mul(Constants.ProjectionMatrix, float4(Input.Position.xy, 0.0f, 1.0f));
             Output.Color    = Input.Color;
             Output.TexCoord = Input.TexCoord;
             return Output;

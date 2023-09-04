@@ -2,11 +2,11 @@
 
 #define RootSig \
     "RootFlags(0), " \
-    "DescriptorTable(UAV(u0, numDescriptors = 1))," \
+    "DescriptorTable(UAV(u0, numDescriptors = 1))" \
 
 #define NUM_THREADS (16)
 
-RWTexture2D<float2> IntegrationMap : register(u0, space0);
+RWTexture2D<float2> IntegrationMap : register(u0);
 
 float2 IntegrateBRDF(float NdotV, float Roughness)
 { 

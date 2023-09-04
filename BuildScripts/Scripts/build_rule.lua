@@ -544,6 +544,7 @@ function FBuildRules(InName)
 
                 -- System includes can be included in a dependency header and therefore necessary in this module aswell
                 self.AddSystemIncludes(CurrentModule.SystemIncludes)
+                self.AddLibraryPaths(CurrentModule.LibraryPaths)
             else
                 LogError("Module \'%s\' has not been included", CurrentModuleName)
             end

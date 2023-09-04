@@ -12,12 +12,11 @@ Texture2D<float2> InputMinMax : register(t0);
 
 RWTexture2D<float2> OutputMinMax : register(u0);
 
-cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     float4x4 CamProjection;
     float    NearPlane;
     float    FarPlane;
-};
+SHADER_CONSTANT_BLOCK_END
 
 groupshared float GroupMinZ[NUM_THREADS_TOTAL];
 groupshared float GroupMaxZ[NUM_THREADS_TOTAL];
@@ -35,7 +34,7 @@ void ReductionMainInital(FComputeShaderInput Input)
     const uint GroupThreadIndex = Input.GroupIndex;
    
     // Start reduction
-    float4x4 Projection = transpose(CamProjection);
+    float4x4 Projection = transpose(Constants.CamProjection);
     
     float MinDepth = 1.0f;
     float MaxDepth = 0.0f;
@@ -45,7 +44,7 @@ void ReductionMainInital(FComputeShaderInput Input)
     if (DepthSample < 1.0f)
     {
         DepthSample = Projection._43 / (DepthSample - Projection._33);
-        DepthSample = saturate((DepthSample - NearPlane) / (FarPlane - NearPlane));
+        DepthSample = saturate((DepthSample - Constants.NearPlane) / (Constants.FarPlane - Constants.NearPlane));
         MinDepth = min(MinDepth, DepthSample);
         MaxDepth = max(MaxDepth, DepthSample);
     }

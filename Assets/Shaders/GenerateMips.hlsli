@@ -46,12 +46,11 @@
 SamplerState LinearSampler : register(s0);
 
 // Properties
-cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     uint   SrcMipLevel;   // Texture level of source mip
     uint   NumMipLevels;  // Number of OutMips to write: [1, 4]
     float2 TexelSize;     // 1.0 / OutMip1.Dimensions
-}
+SHADER_CONSTANT_BLOCK_END
 
 // The reason for separating channels is to reduce bank conflicts in the
 // local data memory controller. A large stride will cause more threads
@@ -135,13 +134,13 @@ void Main(FComputeShaderInput Input)
     // will force this shader to be slower and more complicated as it will
     // have to take more source texture samples.
 #if CUBE_MAP
-    float3 TexCoord = float3((Input.DispatchThreadID.xy * TexelSize) - 0.5f, 0.5f);
+    float3 TexCoord = float3((Input.DispatchThreadID.xy * Constants.TexelSize) - 0.5f, 0.5f);
     TexCoord		= normalize(mul(RotateUV[Input.DispatchThreadID.z], TexCoord));
-    float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
+    float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, Constants.SrcMipLevel);
 #else
     #if POWER_OF_TWO
-        float2 TexCoord = TexelSize * (Input.DispatchThreadID.xy + 0.5f);
-        float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, SrcMipLevel);
+        float2 TexCoord = Constants.TexelSize * (Input.DispatchThreadID.xy + 0.5f);
+        float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, Constants.SrcMipLevel);
     #else
         #error "Not supported yet"
     #endif
@@ -154,7 +153,7 @@ void Main(FComputeShaderInput Input)
 #endif
 
     // A scalar (constant) branch can exit all threads coherently.
-    if (NumMipLevels == 1)
+    if (Constants.NumMipLevels == 1)
     {
         return;
     }

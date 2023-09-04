@@ -1,7 +1,6 @@
 #ifndef HALTON_HLSLI
 #define HALTON_HLSLI
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Halton Sampler functions
 
 // Modifed from this Source: https://pbr-book.org/3ed-2018/Sampling_and_Reconstruction/The_Halton_Sampler

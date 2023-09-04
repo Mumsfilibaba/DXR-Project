@@ -8,8 +8,11 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 // PerObject Samplers
 SamplerState MaterialSampler : register(s0);
 
-ConstantBuffer<FTransform> TransformBuffer : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
-ConstantBuffer<FMaterial> MaterialBuffer  : register(b1);
+SHADER_CONSTANT_BLOCK_BEGIN
+    FTransform Transform;
+SHADER_CONSTANT_BLOCK_END
+
+ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
 
 Texture2D<float4> AlbedoMap    : register(t0);
 Texture2D<float4> NormalTex    : register(t1);
@@ -19,7 +22,6 @@ Texture2D<float4> MetallicTex  : register(t4);
 Texture2D<float4> AOTex        : register(t5);
 Texture2D<float>  AlphaMaskTex : register(t6);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // VertexShader
 
 struct FVSInput
@@ -46,7 +48,7 @@ struct FVSOutput
 
 FVSOutput VSMain(FVSInput Input)
 {
-    const float4x4 TransformInv = TransformBuffer.TransformInv;
+    const float4x4 TransformInv = Constants.Transform.TransformInv;
     
     float3 Normal     = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
     float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
@@ -62,7 +64,7 @@ FVSOutput VSMain(FVSInput Input)
     Output.Tangent    = Tangent;
     Output.Bitangent  = Bitangent;
 
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), TransformBuffer.Transform);
+    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.Transform.Transform);
     Output.Position   = mul(WorldPosition, CameraBuffer.ViewProjection);
 
     // TODO: Handle moving objects (aka PrevTransform)
@@ -77,7 +79,6 @@ FVSOutput VSMain(FVSInput Input)
     return Output;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // PixelShader
 
 struct FPSInput

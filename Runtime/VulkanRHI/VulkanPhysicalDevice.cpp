@@ -9,33 +9,106 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper
 
-static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const VkPhysicalDeviceFeatures& Features)
+static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhysicalDeviceDesc& DeviceDesc)
 {
-    static constexpr uint32 NumFeatures = sizeof(VkPhysicalDeviceFeatures) / sizeof(VkBool32);
-
+    // Get the physical device properties
     VkPhysicalDeviceProperties AdapterProperties;
     vkGetPhysicalDeviceProperties(PhysicalDevice, &AdapterProperties);
 
-    VkPhysicalDeviceFeatures AdapterFeatures;
-    vkGetPhysicalDeviceFeatures(PhysicalDevice, &AdapterFeatures);
 
-    const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&Features);
-    const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&AdapterFeatures);
+    // Get the physical device features
+    VkPhysicalDeviceFeatures2 DeviceFeatures2;
+    FMemory::Memzero(&DeviceFeatures2);
+    DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    
+    // Helper for checking for extensions
+    FVulkanStructureHelper DeviceFeaturesHelper(DeviceFeatures2);
+    
+    // Vulkan 1.1 features
+    VkPhysicalDeviceVulkan11Features DeviceFeatures11;
+    FMemory::Memzero(&DeviceFeatures11);
+    DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    DeviceFeaturesHelper.AddNext(DeviceFeatures11);
 
+    // Vulkan 1.2 features
+    VkPhysicalDeviceVulkan12Features DeviceFeatures12;
+    FMemory::Memzero(&DeviceFeatures12);
+    DeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    DeviceFeaturesHelper.AddNext(DeviceFeatures12);
+    
+    // Get the physical device features
+    vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
+
+
+    // Check Vulkan 1.0 features
+    const uint64 NumFeatures10 = ((OFFSETOF(VkPhysicalDeviceFeatures, inheritedQueries) - OFFSETOF(VkPhysicalDeviceFeatures, robustBufferAccess)) / sizeof(VkBool32)) + 1;
+    
+    const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures);
+    const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures2.features);
+    
     bool bHasAllFeatures = true;
-    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures; ++FeatureIndex)
+    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures10; ++FeatureIndex)
     {
-        const bool bRequiresFeature = RequiredFeatures[FeatureIndex]  == VK_TRUE;
-        const bool bHasFeature      = AvailableFeatures[FeatureIndex] == VK_TRUE;
-        if (bRequiresFeature && !bHasFeature)
+        if (RequiredFeatures[FeatureIndex]  == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
         {
-            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See PhysicalDeviceFeature[%d]", AdapterProperties.deviceName, FeatureIndex);
+            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceFeatures[%d]", AdapterProperties.deviceName, FeatureIndex);
             bHasAllFeatures = false;
             break;
         }
     }
-
-    return bHasAllFeatures;
+    
+    if (!bHasAllFeatures)
+    {
+        return false;
+    }
+    
+    
+    // Check Vulkan 1.1 features
+    const uint64 NumFeatures11 = ((OFFSETOF(VkPhysicalDeviceVulkan11Features, shaderDrawParameters) - OFFSETOF(VkPhysicalDeviceVulkan11Features, storageBuffer16BitAccess)) / sizeof(VkBool32)) + 1;
+    
+    RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures11.storageBuffer16BitAccess);
+    AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures11.storageBuffer16BitAccess);
+    
+    bHasAllFeatures = true;
+    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures11; ++FeatureIndex)
+    {
+        if (RequiredFeatures[FeatureIndex]  == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
+        {
+            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceVulkan11Features[%d]", AdapterProperties.deviceName, FeatureIndex);
+            bHasAllFeatures = false;
+            break;
+        }
+    }
+    
+    if (!bHasAllFeatures)
+    {
+        return false;
+    }
+    
+    
+    // Check Vulkan 1.2 features
+    const uint64 NumFeatures12 = ((OFFSETOF(VkPhysicalDeviceVulkan12Features, subgroupBroadcastDynamicId) - OFFSETOF(VkPhysicalDeviceVulkan12Features, samplerMirrorClampToEdge)) / sizeof(VkBool32)) + 1;
+    
+    RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures12.samplerMirrorClampToEdge);
+    AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures12.samplerMirrorClampToEdge);
+    
+    bHasAllFeatures = true;
+    for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures12; ++FeatureIndex)
+    {
+        if (RequiredFeatures[FeatureIndex]  == VK_TRUE && AvailableFeatures[FeatureIndex] != VK_TRUE)
+        {
+            VULKAN_WARNING("PhysicalDevice '%s' does not support all device-features. See VkPhysicalDeviceVulkan12Features[%d]", AdapterProperties.deviceName, FeatureIndex);
+            bHasAllFeatures = false;
+            break;
+        }
+    }
+    
+    if (!bHasAllFeatures)
+    {
+        return false;
+    }
+    
+    return true;
 }
 
 static FString GetQueuePropertiesAsString(const VkQueueFamilyProperties& Properties)
@@ -116,7 +189,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
         VkPhysicalDeviceProperties AdapterProperties;
         vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
 
-        if (!CheckAvailability(CurrentAdapter, AdapterDesc.RequiredFeatures))
+        if (!CheckAvailability(CurrentAdapter, AdapterDesc))
         {
             continue;
         }
@@ -207,8 +280,8 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     vkGetPhysicalDeviceFeatures(PhysicalDevice, &DeviceFeatures);
     vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &DeviceMemoryProperties);
     
-#if VK_KHR_get_physical_device_properties2
-    // Get the physical device properties
+
+    // Get Get Physical Device Properties
     FMemory::Memzero(&DeviceProperties2);
     DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     
@@ -220,9 +293,11 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     ConservativeRasterizationProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
     DevicePropertiesHelper.AddNext(ConservativeRasterizationProperties);
 #endif
-    
+
     vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
-    
+
+
+    // Get Physical Device Feature (For Vulkan 1.1 and Vulkan 1.2 and extensions)
     FMemory::Memzero(&DeviceFeatures2);
     DeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 
@@ -235,13 +310,24 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     DeviceFeaturesHelper.AddNext(DepthClipEnableFeatures);
 #endif
     
+    // Vulkan 1.1 features
+    FMemory::Memzero(&DeviceFeatures11);
+    DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    DeviceFeaturesHelper.AddNext(DeviceFeatures11);
+
+    // Vulkan 1.2 features
+    FMemory::Memzero(&DeviceFeatures12);
+    DeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    DeviceFeaturesHelper.AddNext(DeviceFeatures12);
+    
     // Get the physical device features
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
-    
+
+
+    // Get Physical Device Memory Properties
     FMemory::Memzero(&DeviceMemoryProperties2);
     DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
-#endif
     
     VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, GetVersionAsString(DeviceProperties.apiVersion).GetCString());
     return true;

@@ -1,5 +1,6 @@
 #ifndef RAY_TRACING_HELPERS
 #define RAY_TRACING_HELPERS
+#include "CoreDefines.hlsli"
 
 struct RayPayload
 {

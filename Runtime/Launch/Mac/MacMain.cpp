@@ -50,7 +50,7 @@ int main(int NumArgs, const CHAR** Args)
     [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
     [NSApplication sharedApplication].presentationOptions = NSApplicationPresentationDefault;
     [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyRegular];
-    
+
     [[NSApplication sharedApplication] run];
     return GEngineMainResult;
 }

@@ -228,7 +228,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIComputePipelineStateDesc CascadePSO;
+        FRHIComputePipelineStateInitializer CascadePSO;
         CascadePSO.Shader = CascadeGenShader.Get();
 
         CascadeGen = RHICreateComputePipelineState(CascadePSO);
@@ -332,7 +332,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIComputePipelineStateDesc MaskPSOInitializer(DirectionalShadowMaskShader.Get());
+        FRHIComputePipelineStateInitializer MaskPSOInitializer(DirectionalShadowMaskShader.Get());
         DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSOInitializer);
         if (!DirectionalShadowMaskPSO)
         {
@@ -353,7 +353,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
                 { "ENABLE_DEBUG", "(1)" },
             };
 
-            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
+            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -368,7 +368,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             return false;
         }
 
-        FRHIComputePipelineStateDesc MaskPSOInitializer(DirectionalShadowMaskShader_Debug.Get());
+        FRHIComputePipelineStateInitializer MaskPSOInitializer(DirectionalShadowMaskShader_Debug.Get());
         DirectionalShadowMaskPSO_Debug = RHICreateComputePipelineState(MaskPSOInitializer);
         if (!DirectionalShadowMaskPSO_Debug)
         {

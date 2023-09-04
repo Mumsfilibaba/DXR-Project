@@ -74,10 +74,13 @@ bool FVulkanRHI::Initialize()
     }
 
     FVulkanPhysicalDeviceDesc AdapterDesc;
-    AdapterDesc.RequiredExtensionNames             = FPlatformVulkan::GetRequiredDeviceExtensions();
-    AdapterDesc.OptionalExtensionNames             = FPlatformVulkan::GetOptionalDeviceExtentions();
-    AdapterDesc.RequiredFeatures.samplerAnisotropy = VK_TRUE;
-
+    AdapterDesc.RequiredExtensionNames                     = FPlatformVulkan::GetRequiredDeviceExtensions();
+    AdapterDesc.OptionalExtensionNames                     = FPlatformVulkan::GetOptionalDeviceExtentions();
+    AdapterDesc.RequiredFeatures.samplerAnisotropy         = VK_TRUE;
+    AdapterDesc.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
+    AdapterDesc.RequiredFeatures.imageCubeArray            = VK_TRUE;
+    AdapterDesc.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
+    
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(AdapterDesc))
     {
@@ -89,6 +92,8 @@ bool FVulkanRHI::Initialize()
     DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
     DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
     DeviceDesc.RequiredFeatures       = AdapterDesc.RequiredFeatures;
+    DeviceDesc.RequiredFeatures11     = AdapterDesc.RequiredFeatures11;
+    DeviceDesc.RequiredFeatures12     = AdapterDesc.RequiredFeatures12;
     
     Device = new FVulkanDevice(GetInstance(), GetAdapter());
     if (!Device->Initialize(DeviceDesc))
@@ -427,9 +432,17 @@ FRHIGraphicsPipelineState* FVulkanRHI::RHICreateGraphicsPipelineState(const FRHI
     }
 }
 
-FRHIComputePipelineState* FVulkanRHI::RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc)
+FRHIComputePipelineState* FVulkanRHI::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
 {
-    return new FVulkanComputePipelineState();
+    FVulkanComputePipelineStateRef NewPipeline = new FVulkanComputePipelineState(GetDevice());
+    if (!NewPipeline->Initialize(InInitializer))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewPipeline.ReleaseOwnership();
+    }
 }
 
 FRHIRayTracingPipelineState* FVulkanRHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)

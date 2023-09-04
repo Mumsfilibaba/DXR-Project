@@ -23,14 +23,13 @@
 #define FXAA_SEARCH_THRESHOLD   (1.0f / 4.0f)
 #define FXAA_SEARCH_STEPS       24
 
-cbuffer CB0 : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     float2 TextureSize;
-}
+SHADER_CONSTANT_BLOCK_END
 
-Texture2D FinalImage : register(t0, space0);
+Texture2D FinalImage : register(t0);
 
-SamplerState Sampler : register(s0, space0);
+SamplerState Sampler : register(s0);
 
 float4 FXAASample(in Texture2D Texture, in SamplerState InSampler, float2 TexCoord)
 {

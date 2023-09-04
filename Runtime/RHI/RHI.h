@@ -368,7 +368,7 @@ public:
      * @param InDesc - Info about the Compute PipelineState
      * @return       - Returns the newly created PipelineState
      */
-    virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& InDesc) = 0;
+    virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) = 0;
     
     /**
      * @brief        - Create a Ray-Tracing PipelineState
@@ -585,7 +585,7 @@ FORCEINLINE FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHI
     return GetRHI()->RHICreateGraphicsPipelineState(Initializer);
 }
 
-FORCEINLINE FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateDesc& Initializer)
+FORCEINLINE FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& Initializer)
 {
     return GetRHI()->RHICreateComputePipelineState(Initializer);
 }

@@ -44,7 +44,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             { "ENABLE_NORMAL_MAPPING",   "(1)" },
         };
 
-        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, MakeArrayView(Defines));
+        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -58,7 +58,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, MakeArrayView(Defines));
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -275,7 +275,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateDesc PSOInitializer(CShader.Get());
+        FRHIComputePipelineStateInitializer PSOInitializer(CShader.Get());
 
         FRHIComputePipelineStateRef BRDF_PipelineState = RHICreateComputePipelineState(PSOInitializer);
         if (!BRDF_PipelineState)
@@ -333,7 +333,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateDesc DeferredLightPassInitializer(TiledLightShader.Get());
+        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader.Get());
         TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO)
         {
@@ -346,10 +346,10 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     {
         TArray<FShaderDefine> Defines =
         {
-            FShaderDefine("DRAW_TILE_DEBUG", "(1)")
+            { "DRAW_TILE_DEBUG", "(1)" }
         };
 
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -363,7 +363,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateDesc DeferredLightPassInitializer(TiledLightShader_TileDebug.Get());
+        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_TileDebug.Get());
         TiledLightPassPSO_TileDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO_TileDebug)
         {
@@ -380,10 +380,10 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
     {
         TArray<FShaderDefine> Defines =
         {
-            FShaderDefine("DRAW_CASCADE_DEBUG", "(1)")
+            { "DRAW_CASCADE_DEBUG", "(1)" }
         };
 
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -397,7 +397,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateDesc DeferredLightPassInitializer(TiledLightShader_CascadeDebug.Get());
+        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_CascadeDebug.Get());
         TiledLightPassPSO_CascadeDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
         if (!TiledLightPassPSO_CascadeDebug)
         {
@@ -426,7 +426,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateDesc PipelineStateInfo(ReduceDepthInitalShader.Get());
+        FRHIComputePipelineStateInitializer PipelineStateInfo(ReduceDepthInitalShader.Get());
         ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
         if (!ReduceDepthInitalPSO)
         {
@@ -451,7 +451,7 @@ bool FDeferredRenderer::Init(FFrameResources& FrameResources)
             return false;
         }
 
-        FRHIComputePipelineStateDesc PSOInitializer(ReduceDepthShader.Get());
+        FRHIComputePipelineStateInitializer PSOInitializer(ReduceDepthShader.Get());
         ReduceDepthPSO = RHICreateComputePipelineState(PSOInitializer);
         if (!ReduceDepthPSO)
         {

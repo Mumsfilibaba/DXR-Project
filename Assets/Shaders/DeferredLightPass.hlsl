@@ -64,40 +64,39 @@ SamplerState GBufferSampler    : register(s2);
 // Point-Lights
 SamplerComparisonState ShadowMapSampler0 : register(s3);
 
-cbuffer Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
-{
+SHADER_CONSTANT_BLOCK_BEGIN
     int NumPointLights;
     int NumShadowCastingPointLights;
     int NumSkyLightMips;
     int ScreenWidth;
     int ScreenHeight;
-};
+SHADER_CONSTANT_BLOCK_END
 
-ConstantBuffer<FCamera> CameraBuffer : register(b0, space0);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
-cbuffer PointLightsBuffer : register(b1, space0)
+cbuffer PointLightsBuffer : register(b1)
 {
     FPointLight PointLights[MAX_LIGHTS_PER_TILE];
 }
 
-cbuffer PointLightsPosRadBuffer : register(b2, space0)
+cbuffer PointLightsPosRadBuffer : register(b2)
 {
     FPositionRadius PointLightsPosRad[MAX_LIGHTS_PER_TILE];
 }
 
-cbuffer ShadowCastingPointLightsBuffer : register(b3, space0)
+cbuffer ShadowCastingPointLightsBuffer : register(b3)
 {
     FShadowPointLight ShadowCastingPointLights[8];
 }
 
-cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4, space0)
+cbuffer ShadowCastingPointLightsPosRadBuffer : register(b4)
 {
     FPositionRadius ShadowCastingPointLightsPosRad[8];
 }
 
-ConstantBuffer<FDirectionalLight> DirectionalLightBuffer : register(b5, space0);
+ConstantBuffer<FDirectionalLight> DirectionalLightBuffer : register(b5);
 
-RWTexture2D<float4> Output : register(u0, space0);
+RWTexture2D<float4> Output : register(u0);
 
 // Tiled Light Culling
 groupshared uint GroupMinZ;
@@ -109,12 +108,17 @@ groupshared uint GroupShadowPointLightIndices[MAX_LIGHTS_PER_TILE];
 
 float GetNumTilesX()
 {
-    return DivideByMultiple(ScreenWidth, NUM_THREADS);
+    return DivideByMultiple(Constants.ScreenWidth, NUM_THREADS);
 }
 
 float GetNumTilesY()
 {
-    return DivideByMultiple(ScreenHeight, NUM_THREADS);
+    return DivideByMultiple(Constants.ScreenHeight, NUM_THREADS);
+}
+
+float2 GetIntegrationConstants(float NDotV, float Roughness)
+{
+    return IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0f).rg;
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
@@ -129,7 +133,7 @@ void Main(FComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
 
-    uint2 Pixel  = Input.DispatchThreadID.xy;
+    uint2 Pixel = Input.DispatchThreadID.xy;
     float Depth     = DepthStencilTex.Load(int3(Pixel, 0));
     float ViewPosZ  = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
     
@@ -187,7 +191,7 @@ void Main(FComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
     
-    for (uint i = ThreadIndex; i < NumPointLights; i += TOTAL_THREAD_COUNT)
+    for (uint i = ThreadIndex; i < Constants.NumPointLights; i += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = PointLightsPosRad[i].Position;
         float3 ViewPos = mul(float4(Pos, 1.0f), CameraBuffer.View).xyz;
@@ -205,7 +209,7 @@ void Main(FComputeShaderInput Input)
         }
     }
     
-    for (uint j = ThreadIndex; j < NumShadowCastingPointLights; j += TOTAL_THREAD_COUNT)
+    for (uint j = ThreadIndex; j < Constants.NumShadowCastingPointLights; j += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = ShadowCastingPointLightsPosRad[j].Position;
         float3 ViewPos = mul(float4(Pos, 1.0f), CameraBuffer.View).xyz;
@@ -233,7 +237,7 @@ void Main(FComputeShaderInput Input)
         return;
     }
 
-    const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5f)) / float2(ScreenWidth, ScreenHeight));
+    const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5f)) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
     const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInv);
     const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInv).xyz;
 
@@ -321,8 +325,8 @@ void Main(FComputeShaderInput Input)
         float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, ObjectNormal, 0.0f).rgb;
         float3 Diffuse    = Irradiance * GBufferAlbedo * Kd;
 
-        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, GBufferRoughness * (NumSkyLightMips - 1.0f)).rgb;
-        float2 BRDFIntegration = IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, GBufferRoughness), 0.0f).rg;
+        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, GBufferRoughness * (Constants.NumSkyLightMips - 1.0f)).rgb;
+        float2 BRDFIntegration = GetIntegrationConstants(NDotV, GBufferRoughness);
         float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
 
         float3 Ambient = (Diffuse + Specular) * GBufferAO;
@@ -355,7 +359,7 @@ void Main(FComputeShaderInput Input)
     }
     else
     {
-        float Color = float(TotalLightCount) / float(NumPointLights + NumShadowCastingPointLights);
+        float Color = float(TotalLightCount) / float(Constants.NumPointLights + Constants.NumShadowCastingPointLights);
         Tint = float4(Color, 0.0f, 0.0f, 1.0f);
     }
     
