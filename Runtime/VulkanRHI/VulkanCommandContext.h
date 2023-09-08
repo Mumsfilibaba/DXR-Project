@@ -2,11 +2,171 @@
 #include "VulkanQueue.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanRefCounted.h"
+#include "VulkanPipelineState.h"
 #include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
 
 class FVulkanDevice;
+class FVulkanBuffer;
+
+
+struct FVulkanVertexBufferCache
+{
+    FVulkanVertexBufferCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        FMemory::Memzero(VertexBuffers      , sizeof(VertexBuffers));
+        FMemory::Memzero(VertexBufferOffsets, sizeof(VertexBufferOffsets));
+        NumVertexBuffers = 0;
+    }
+
+    VkBuffer     VertexBuffers[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
+    VkDeviceSize VertexBufferOffsets[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
+    uint32       NumVertexBuffers;
+};
+
+
+struct FVulkanIndexBufferCache
+{
+    FVulkanIndexBufferCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        IndexType   = VK_INDEX_TYPE_UINT32;
+        Offset      = 0;
+        IndexBuffer = VK_NULL_HANDLE;
+    }
+
+    VkBuffer     IndexBuffer;
+    VkDeviceSize Offset;
+    VkIndexType  IndexType;
+};
+
+
+class FVulkanPushConstantsCache
+{
+public:
+    FVulkanPushConstantsCache()
+    {
+        Reset();
+    }
+
+    void SetPushConstants(const uint32* InConstants, uint32 InNumConstants)
+    {
+        VULKAN_ERROR_COND(
+            InNumConstants <= VULKAN_MAX_NUM_PUSH_CONSTANTS,
+            "Trying to set a number of push-constants (NumConstants=%u) higher than the maximum (MaxShaderConstants=%u)",
+            InNumConstants,
+            VULKAN_MAX_NUM_PUSH_CONSTANTS);
+
+        FMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
+        NumConstants = InNumConstants;
+        bIsDirty     = true;
+    }
+
+    void Commit(FVulkanCommandBuffer& CommandBuffer, VkPipelineLayout PipelineLayout)
+    {
+        if (bIsDirty && NumConstants > 0)
+        {
+            CommandBuffer.PushConstants(PipelineLayout, VK_SHADER_STAGE_ALL, 0, NumConstants * sizeof(uint32), Constants);
+            bIsDirty = false;
+        }
+    }
+
+    void Reset()
+    {
+        // Reset by setting all constants to zero, this ensures that a shader always at least reads from zero constants
+        NumConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
+        bIsDirty     = true;
+        FMemory::Memzero(Constants, sizeof(Constants));
+    }
+
+private:
+    uint32 Constants[VULKAN_MAX_NUM_PUSH_CONSTANTS];
+    uint32 NumConstants;
+    bool   bIsDirty;
+};
+
+
+struct FVulkanCommandContextState : public FVulkanDeviceObject, public FNonCopyAndNonMovable
+{
+    FVulkanCommandContextState(FVulkanDevice* InDevice);
+    ~FVulkanCommandContextState() = default;
+
+    bool Initialize();
+
+    void ApplyGraphics(FVulkanCommandBuffer& CommandBuffer);
+    void ApplyCompute(FVulkanCommandBuffer& CommandBuffer);
+
+    void ClearGraphics();
+    void ClearCompute();
+
+    void SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 Slot);
+    void SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexFormat);
+
+    void ClearAll()
+    {
+        ClearGraphics();
+        ClearCompute();
+
+        // DescriptorCache.Clear();
+        // PushConstantsCache.Reset();
+
+        bIsReady            = false;
+        bIsCapturing        = false;
+        bIsRenderPassActive = false;
+        bBindPipelineLayout = true;
+    }
+
+    struct
+    {
+        FVulkanGraphicsPipelineStateRef PipelineState;
+
+        // FD3D12TextureRef            ShadingRateTexture;
+        // D3D12_SHADING_RATE          ShadingRate = D3D12_SHADING_RATE_1X1;
+
+        FVulkanIndexBufferCache  IBCache;
+        FVulkanVertexBufferCache VBCache;
+
+        VkViewport Viewports[32];
+        uint32     NumViewports;
+
+        VkRect2D   ScissorRects[32];
+        uint32     NumScissor;
+
+        FVector4 BlendFactor;
+
+        bool bBindRenderTargets     : 1;
+        bool bBindBlendFactor       : 1;
+        bool bBindPipeline          : 1;
+        bool bBindVertexBuffers     : 1;
+        bool bBindIndexBuffer       : 1;
+        bool bBindScissorRects      : 1;
+        bool bBindViewports         : 1;
+    } Graphics;
+
+    struct
+    {
+        FVulkanComputePipelineStateRef PipelineState;
+        bool bBindPipeline : 1;
+    } Compute;
+
+    FVulkanPushConstantsCache PushConstantsCache;
+
+    bool bIsReady            : 1;
+    bool bIsCapturing        : 1;
+    bool bIsRenderPassActive : 1;
+    bool bBindPipelineLayout : 1;
+};
+
 
 class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceObject, public FVulkanRefCounted
 {
@@ -148,28 +308,31 @@ public:
     
     void FlushCommandBuffer();
 
-    FORCEINLINE FVulkanQueue* GetCommandQueue() const
+    FVulkanQueue* GetCommandQueue() const
     {
         return Queue.Get();
     }
 
-    FORCEINLINE FVulkanCommandBuffer* GetCommandBuffer()
+    FVulkanCommandBuffer* GetCommandBuffer()
     {
         return &CommandBuffer;
     }
 
-    FORCEINLINE const FVulkanCommandBuffer* GetCommandBuffer() const
+    const FVulkanCommandBuffer* GetCommandBuffer() const
     {
         return &CommandBuffer;
     }
 
 private:
-    FVulkanQueueRef      Queue;
-    FVulkanCommandBuffer CommandBuffer;
+    FVulkanQueueRef            Queue;
+    FVulkanCommandBuffer       CommandBuffer;
+    FVulkanCommandContextState ContextState;
     
     // TODO: The whole commandcontext should only be used from one thread at a time
-    FCriticalSection     CommandContextCS;
+    FCriticalSection CommandContextCS;
 
+    bool bRenderPass = false;
+    
     // These resources should be destroyed, most likely there is no reference left in the higher level
     TArray<TSharedRef<IRefCounted>>       DiscardList;
     TArray<TSharedRef<FVulkanRefCounted>> DiscardListVk;

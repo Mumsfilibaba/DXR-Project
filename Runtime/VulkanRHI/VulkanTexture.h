@@ -7,9 +7,9 @@
 
 class FVulkanViewport;
 
-typedef TSharedRef<FVulkanViewport>         FVulkanViewportRef;
-typedef TSharedRef<class FVulkanTexture>    FVulkanTextureRef;
-typedef TSharedRef<class FVulkanBackBuffer> FVulkanBackBufferRef;
+typedef TSharedRef<FVulkanViewport>                FVulkanViewportRef;
+typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
+typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
 class FVulkanTexture : public FRHITexture, public FVulkanDeviceObject, public FVulkanRefCounted
 {
@@ -25,9 +25,9 @@ public:
     
     virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FVulkanTexture*>(this)); }
+    virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FVulkanTexture*>(this)); }
     
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkImage()); }
+    virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetVkImage()); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     
@@ -41,53 +41,69 @@ public:
     
     virtual FString GetName() const override final;
 
-    FVulkanRenderTargetView* GetOrCreateRTV(const FRHIRenderTargetView& RenderTargetView);
+    FVulkanImageView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
 
-    FVulkanDepthStencilView* GetOrCreateDSV(const FRHIDepthStencilView& DepthStencilView);
+    FVulkanImageView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
 
-    void DestroyRTVs() { RenderTargetViews.Clear(); }
+    void DestroyRenderTargetViews() { RenderTargetViews.Clear(); }
 
-    void DestroyDSVs() { DepthStencilViews.Clear(); }
+    void DestroyDepthStencilViews() { DepthStencilViews.Clear(); }
 
-    FORCEINLINE VkImage GetVkImage() const
+    void SetVkImage(VkImage InImage)
+    {
+        Image = InImage;
+        RenderTargetViews.Clear();
+        DepthStencilViews.Clear();
+    }
+    
+    VkImage GetVkImage() const
     {
         return Image;
     }
 
-    FORCEINLINE VkFormat GetVkFormat() const
+    VkFormat GetVkFormat() const
     {
         return Format;
     }
 
 protected:
     VkImage        Image;
-    bool           bIsImageOwner;
     VkDeviceMemory DeviceMemory;
     VkFormat       Format;
 
-    FVulkanShaderResourceViewRef       ShaderResourceView;
-    FVulkanUnorderedAccessViewRef      UnorderedAccessView;
-
-    TArray<FVulkanRenderTargetViewRef> RenderTargetViews; 
-    TArray<FVulkanDepthStencilViewRef> DepthStencilViews;
+    FVulkanShaderResourceViewRef  ShaderResourceView;
+    FVulkanUnorderedAccessViewRef UnorderedAccessView;
+    TArray<FVulkanImageViewRef>   RenderTargetViews;
+    TArray<FVulkanImageViewRef>   DepthStencilViews;
+    
+    FString DebugName;
 };
 
 
-class FVulkanBackBuffer : public FVulkanTexture
+class FVulkanBackBufferTexture : public FVulkanTexture
 {
 public:
-    FVulkanBackBuffer(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureDesc& InDesc);
-    ~FVulkanBackBuffer() = default;
+    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureDesc& InDesc);
+    virtual ~FVulkanBackBufferTexture();
 
-    void AquireNextImage();
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
     
-    FORCEINLINE FVulkanViewport* GetViewport() const
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkImage()); }
+
+    FVulkanTexture* GetCurrentBackBufferTexture();
+    
+    FVulkanViewport* GetViewport() const
     {
-        return Viewport.Get();
+        return Viewport;
+    }
+    
+    void SetViewport(FVulkanViewport* InViewport)
+    {
+        Viewport = InViewport;
     }
 
 private:
-    FVulkanViewportRef Viewport;
+    FVulkanViewport* Viewport;
 };
 
 
@@ -98,7 +114,8 @@ FORCEINLINE FVulkanTexture* GetVulkanTexture(FRHITexture* Texture)
         FVulkanTexture* VulkanTexture = nullptr;
         if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
         {
-            VulkanTexture = static_cast<FVulkanBackBuffer*>(Texture);
+            FVulkanBackBufferTexture* BackBuffer = static_cast<FVulkanBackBufferTexture*>(Texture);
+            VulkanTexture = BackBuffer->GetCurrentBackBufferTexture();
         }
         else
         {

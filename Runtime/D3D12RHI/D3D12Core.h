@@ -274,6 +274,10 @@ constexpr DXGI_FORMAT ConvertFormat(EFormat Format)
         case EFormat::R8G8B8A8_Uint:         return DXGI_FORMAT_R8G8B8A8_UINT;
         case EFormat::R8G8B8A8_Snorm:        return DXGI_FORMAT_R8G8B8A8_SNORM;
         case EFormat::R8G8B8A8_Sint:         return DXGI_FORMAT_R8G8B8A8_SINT;
+
+        case EFormat::B8G8R8A8_Typeless:     return DXGI_FORMAT_B8G8R8A8_TYPELESS;
+        case EFormat::B8G8R8A8_Unorm:        return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case EFormat::B8G8R8A8_Unorm_SRGB:   return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
     
         case EFormat::R16G16_Typeless:       return DXGI_FORMAT_R16G16_TYPELESS;
         case EFormat::R16G16_Float:          return DXGI_FORMAT_R16G16_FLOAT;

@@ -91,14 +91,7 @@ bool FD3D12Viewport::Initialize()
     CHECK(Factory != nullptr);
 
     TComPtr<IDXGISwapChain1> TempSwapChain;
-
-    HRESULT Result = Factory->CreateSwapChainForHwnd(
-        GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct),
-        Hwnd,
-        &SwapChainDesc,
-        &FullscreenDesc,
-        nullptr,
-        &TempSwapChain);
+    HRESULT Result = Factory->CreateSwapChainForHwnd(GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
     if (SUCCEEDED(Result))
     {
         Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
@@ -223,7 +216,6 @@ bool FD3D12Viewport::RetriveBackBuffers()
     }
 
     BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
-
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
         TComPtr<ID3D12Resource> BackBufferResource;

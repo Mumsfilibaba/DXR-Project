@@ -2,46 +2,34 @@
 #include "VulkanDeviceObject.h"
 #include "Core/Containers/Map.h"
 
+
+struct FVulkanRenderPassActions
+{
+    EAttachmentLoadAction  LoadAction  : 4;
+    EAttachmentStoreAction StoreAction : 4;
+};
+
+
 struct FVulkanRenderPassKey
 {
     FVulkanRenderPassKey()
-        : NumSamples(0)
-        , DepthStencilFormat(EFormat::Unknown)
-        , NumRenderTargets(0)
-        , RenderTargetFormats()
+        : Key0(0)
+        , Key1(0)
+        , Key2(0)
     {
-        FMemory::Memzero(RenderTargetFormats, sizeof(RenderTargetFormats));
     }
 
     uint64 GetHash() const
     {
-        uint64 Hash = NumSamples;
-        HashCombine(Hash, ToUnderlying(DepthStencilFormat));
-        for (uint8 Index = 0; Index < NumRenderTargets; Index++)
-        {
-            HashCombine(Hash, ToUnderlying(RenderTargetFormats[Index]));
-        }
-
+        uint64 Hash = Key0;
+        HashCombine(Hash, Key1);
+        HashCombine(Hash, Key2);
         return Hash;
     }
     
     bool operator==(const FVulkanRenderPassKey& Other) const
     {
-        if (NumRenderTargets != Other.NumRenderTargets || GetHash() != Other.GetHash() ||
-            NumSamples != Other.NumSamples || DepthStencilFormat != Other.DepthStencilFormat)
-        {
-            return false;
-        }
-
-        for (uint8 Index = 0; Index < NumRenderTargets; Index++)
-        {
-            if (RenderTargetFormats[Index] != Other.RenderTargetFormats[Index])
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return Key0 == Other.Key0 && Key1 == Other.Key1 && Key2 == Other.Key2;
     }
 
     bool operator!=(const FVulkanRenderPassKey& Other) const
@@ -49,11 +37,31 @@ struct FVulkanRenderPassKey
         return !(*this == Other);
     }
 
-    uint8   NumSamples;
-    EFormat DepthStencilFormat;
-    uint8   NumRenderTargets;
-    EFormat RenderTargetFormats[FRHILimits::MaxRenderTargets];
+    
+    union
+    {
+        struct
+        {
+            EFormat                  DepthStencilFormat;
+            FVulkanRenderPassActions DepthStencilActions;
+            
+            uint8 NumSamples       : 4;
+            uint8 NumRenderTargets : 4;
+            
+            EFormat                  RenderTargetFormats[FRHILimits::MaxRenderTargets];
+            FVulkanRenderPassActions RenderTargetActions[FRHILimits::MaxRenderTargets];
+        };
+        
+        struct
+        {
+            uint64 Key0;
+            uint64 Key1;
+            uint64 Key2;
+        };
+    };
 };
+
+static_assert(sizeof(FVulkanRenderPassKey) == sizeof(uint64[3]), "Size of FVulkanRenderPassKey is invalid");
 
 
 struct FVulkanRenderPassKeyHasher
@@ -71,8 +79,8 @@ public:
     FVulkanRenderPassCache(FVulkanDevice* InDevice);
     ~FVulkanRenderPassCache();
 
-    VkRenderPass GetRenderPass(const FVulkanRenderPassKey& key);
-    
+    VkRenderPass GetRenderPass(const FVulkanRenderPassKey& Key);
+
     void ReleaseAll();
 
 private:

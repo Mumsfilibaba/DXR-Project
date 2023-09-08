@@ -40,7 +40,9 @@ public:
 
     void RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& ViewportData, bool bClear);
 
-public:
+private:
+    void PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawData);
+
     void RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData);
 
     void SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& ViewportData);

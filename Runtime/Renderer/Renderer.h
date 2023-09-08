@@ -23,6 +23,7 @@
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
 
+
 class FViewport;
 
 struct FCameraBuffer
@@ -59,6 +60,7 @@ struct FCameraBuffer
     float    Padding1 = 0.0f;
 };
 
+
 class RENDERER_API FRenderer
 {
     FRenderer();
@@ -73,25 +75,25 @@ public:
 
     void Tick(const FScene& Scene);
 
+    void OnWindowResize(const FWindowEvent& Event);
+
     void PerformFrustumCullingAndSort(const FScene& Scene);
     
     void PerformFXAA(FRHICommandList& InCmdList);
     
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
 
-    FORCEINLINE TSharedPtr<FRenderTargetDebugWindow> GetTextureDebugger() const
+    TSharedPtr<FRenderTargetDebugWindow> GetTextureDebugger() const
     {
         return TextureDebugger;
     }
 
-    FORCEINLINE const FRHICommandStatistics& GetStatistics() const
+    const FRHICommandStatistics& GetStatistics() const
     {
         return FrameStatistics;
     }
 
 private:
-    void OnWindowResize(const FWindowEvent& Event);
-
     bool Create();
     
     bool InitAA();
@@ -122,17 +124,17 @@ private:
     FDebugRenderer                DebugRenderer;
     FTemporalAA                   TemporalAA;
 
-    FRHITextureRef               ShadingImage;
-    FRHIComputePipelineStateRef  ShadingRatePipeline;
-    FRHIComputeShaderRef         ShadingRateShader;
+    FRHITextureRef                ShadingImage;
+    FRHIComputePipelineStateRef   ShadingRatePipeline;
+    FRHIComputeShaderRef          ShadingRateShader;
 
-    FRHIGraphicsPipelineStateRef PostPSO;
-    FRHIPixelShaderRef           PostShader;
+    FRHIGraphicsPipelineStateRef  PostPSO;
+    FRHIPixelShaderRef            PostShader;
 
-    FRHIGraphicsPipelineStateRef FXAAPSO;
-    FRHIPixelShaderRef           FXAAShader;
-    FRHIGraphicsPipelineStateRef FXAADebugPSO;
-    FRHIPixelShaderRef           FXAADebugShader;
+    FRHIGraphicsPipelineStateRef  FXAAPSO;
+    FRHIPixelShaderRef            FXAAShader;
+    FRHIGraphicsPipelineStateRef  FXAADebugPSO;
+    FRHIPixelShaderRef            FXAADebugShader;
 
     FRHITimestampQueryRef TimestampQueries;
 

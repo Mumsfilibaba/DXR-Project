@@ -1,7 +1,11 @@
 #pragma once
 #include "Core/Core.h"
 
-#define VULKAN_MAX_NUM_PUSH_CONSTANTS          (32)
+#define VULKAN_MAX_NUM_PUSH_CONSTANTS (32)
+
+#define VULKAN_MAX_VERTEX_BUFFER_SLOTS                       (32)
+#define VULKAN_MAX_RENDER_TARGET_COUNT                       (8)
+#define VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT            (16)
 
 #define VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS (16)
 #define VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS               (8)

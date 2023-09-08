@@ -120,5 +120,6 @@ struct RENDERER_API FFrameResources
     TArray<uint32>                         ForwardVisibleCommands;
 
     FRHIViewportRef                        MainViewport;
+    EFormat                                BackBufferFormat;
 };
 

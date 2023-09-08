@@ -71,7 +71,8 @@ public:
 
     FORCEINLINE bool End()
     {
-        VULKAN_CHECK_RESULT(vkEndCommandBuffer(CommandBuffer), "vkEndCommandBuffer Failed");
+        VkResult Result = vkEndCommandBuffer(CommandBuffer);
+        VULKAN_CHECK_RESULT(Result, "vkEndCommandBuffer Failed");
         bIsRecording = false;
         return true;
     }
@@ -85,6 +86,11 @@ public:
     {
         vkCmdClearDepthStencilImage(CommandBuffer, Image, ImageLayout, DepthStencil, RangeCount, Ranges);
     }
+    
+    FORCEINLINE void ResolveImage(VkImage SrcImage, VkImageLayout SrcImageLayout, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkImageResolve* Regions)
+    {
+        vkCmdResolveImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions);
+    }
 
     FORCEINLINE void BeginRenderPass(const VkRenderPassBeginInfo* RenderPassBegin, VkSubpassContents SubpassContents)
     {
@@ -96,6 +102,41 @@ public:
         vkCmdEndRenderPass(CommandBuffer);
     }
     
+    FORCEINLINE void SetViewport(uint32 FirstViewport, uint32 ViewportCount, const VkViewport* Viewports)
+    {
+        vkCmdSetViewport(CommandBuffer, FirstViewport, ViewportCount, Viewports);
+    }
+    
+    FORCEINLINE void SetScissor(uint32 FirstScissor, uint32 ScissorCount, const VkRect2D* Scissors)
+    {
+        vkCmdSetScissor(CommandBuffer, FirstScissor, ScissorCount, Scissors);
+    }
+    
+    FORCEINLINE void BindVertexBuffers(uint32 FirstBinding, uint32 BindingCount, const VkBuffer* Buffers, const VkDeviceSize* Offsets)
+    {
+        vkCmdBindVertexBuffers(CommandBuffer, FirstBinding, BindingCount, Buffers, Offsets);
+    }
+    
+    FORCEINLINE void BindIndexBuffer(VkBuffer Buffer, VkDeviceSize Offset, VkIndexType IndexType)
+    {
+        vkCmdBindIndexBuffer(CommandBuffer, Buffer, Offset, IndexType);
+    }
+    
+    FORCEINLINE void SetBlendConstants(const float BlendConstants[4])
+    {
+        vkCmdSetBlendConstants(CommandBuffer, BlendConstants);
+    }
+    
+    FORCEINLINE void BindPipeline(VkPipelineBindPoint PipelineBindPoint, VkPipeline Pipeline)
+    {
+        vkCmdBindPipeline(CommandBuffer, PipelineBindPoint, Pipeline);
+    }
+    
+    FORCEINLINE void PushConstants(VkPipelineLayout Layout, VkShaderStageFlags StageFlags, uint32 Offset, uint32 Size, const void* Values)
+    {
+        vkCmdPushConstants(CommandBuffer, Layout, StageFlags, Offset, Size, Values);
+    }
+    
     FORCEINLINE void CopyBuffer(VkBuffer SrcBuffer, VkBuffer DstBuffer, uint32 RegionCount, const VkBufferCopy* Regions)
     {
         vkCmdCopyBuffer(CommandBuffer, SrcBuffer, DstBuffer, RegionCount, Regions);
@@ -104,6 +145,11 @@ public:
     FORCEINLINE void CopyBufferToImage(VkBuffer SrcBuffer, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkBufferImageCopy* Regions)
     {
         vkCmdCopyBufferToImage(CommandBuffer, SrcBuffer, DstImage, DstImageLayout, RegionCount, Regions);
+    }
+    
+    FORCEINLINE void CopyImage(VkImage SrcImage, VkImageLayout SrcImageLayout, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkImageCopy* Regions)
+    {
+        vkCmdCopyImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions);
     }
 
     FORCEINLINE void BufferMemoryPipelineBarrier(const FVulkanBufferBarrier& BufferBarrier)

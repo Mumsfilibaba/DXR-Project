@@ -181,9 +181,6 @@ struct FD3D12PipelineStageMask
 struct FD3D12VertexBufferCache
 {
     FD3D12VertexBufferCache()
-        : NumVertexBuffers(0)
-        , VBViews()
-        , VBResources()
     {
         Clear();
     }
@@ -204,8 +201,6 @@ struct FD3D12VertexBufferCache
 struct FD3D12IndexBufferCache
 {
     FD3D12IndexBufferCache()
-        : IBView()
-        , IBResource(nullptr)
     {
         Clear();
     }
@@ -396,14 +391,11 @@ class FD3D12ShaderConstantsCache
 {
 public:
     FD3D12ShaderConstantsCache()
-        : Constants()
-        , NumConstants()
-        , bIsDirty(false)
     {
         Reset();
     }
 
-    FORCEINLINE void Set32BitShaderConstants(const uint32* InConstants, uint32 InNumConstants)
+    void Set32BitShaderConstants(const uint32* InConstants, uint32 InNumConstants)
     {
         D3D12_ERROR_COND(
             InNumConstants <= D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT,
@@ -413,40 +405,38 @@ public:
 
         FMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
         NumConstants = InNumConstants;
-
-        bIsDirty = true;
+        bIsDirty     = true;
     }
 
-    FORCEINLINE void CommitGraphics(FD3D12CommandList& CmdList, FD3D12RootSignature* RootSignature)
+    void CommitGraphics(FD3D12CommandList& CmdList, FD3D12RootSignature* RootSignature)
     {
-        ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+        ID3D12GraphicsCommandList* D3D12CmdList = CmdList.GetGraphicsCommandList();
 
         int32 RootIndex = RootSignature->Get32BitConstantsIndex();
         if ((RootIndex >= 0) && bIsDirty)
         {
-            DxCmdList->SetGraphicsRoot32BitConstants(RootIndex, NumConstants, Constants, 0);
+            D3D12CmdList->SetGraphicsRoot32BitConstants(RootIndex, NumConstants, Constants, 0);
             bIsDirty = false;
         }
     }
 
-    FORCEINLINE void CommitCompute(FD3D12CommandList& CmdList, FD3D12RootSignature* RootSignature)
+    void CommitCompute(FD3D12CommandList& CmdList, FD3D12RootSignature* RootSignature)
     {
-        ID3D12GraphicsCommandList* DxCmdList = CmdList.GetGraphicsCommandList();
+        ID3D12GraphicsCommandList* D3D12CmdList = CmdList.GetGraphicsCommandList();
 
         int32 RootIndex = RootSignature->Get32BitConstantsIndex();
         if ((RootIndex >= 0) && bIsDirty)
         {
-            DxCmdList->SetComputeRoot32BitConstants(RootIndex, NumConstants, Constants, 0);
+            D3D12CmdList->SetComputeRoot32BitConstants(RootIndex, NumConstants, Constants, 0);
             bIsDirty = false;
         }
     }
 
-    FORCEINLINE void Reset()
+    void Reset()
     {
         FMemory::Memzero(Constants, sizeof(Constants));
         NumConstants = 0;
-
-        bIsDirty = true;
+        bIsDirty     = true;
     }
 
 private:

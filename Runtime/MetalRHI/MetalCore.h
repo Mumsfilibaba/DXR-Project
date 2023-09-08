@@ -382,7 +382,7 @@ constexpr MTLPixelFormat ConvertFormat(EFormat Format)
         case EFormat::R8G8B8A8_Uint:         return MTLPixelFormatRGBA8Uint;
         case EFormat::R8G8B8A8_Snorm:        return MTLPixelFormatRGBA8Snorm;
         case EFormat::R8G8B8A8_Sint:         return MTLPixelFormatRGBA8Sint;
-            
+
         case EFormat::B8G8R8A8_Typeless:     return MTLPixelFormatBGRA8Unorm;
         case EFormat::B8G8R8A8_Unorm:        return MTLPixelFormatBGRA8Unorm;
         case EFormat::B8G8R8A8_Unorm_SRGB:   return MTLPixelFormatBGRA8Unorm_sRGB;

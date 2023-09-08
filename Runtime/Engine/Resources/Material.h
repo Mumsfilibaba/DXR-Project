@@ -37,18 +37,22 @@ public:
 
     void BuildBuffer(class FRHICommandList& CommandList);
 
-    FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
+    bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
     void SetAlbedo(const FVector3& Albedo);
+
     void SetAlbedo(float r, float g, float b);
 
     void SetMetallic(float Metallic);
+    
     void SetRoughness(float Roughness);
+    
     void SetAmbientOcclusion(float AO);
 
     void ForceForwardPass(bool bForceForwardRender);
 
     void EnableHeightMap(bool bInEnableHeightMap);
+    
     void EnableAlphaMask(bool bInEnableAlphaMask);
 
     void SetDebugName(const FString& InDebugName);

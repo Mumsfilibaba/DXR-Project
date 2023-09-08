@@ -186,17 +186,21 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         if (Desc.IsDynamic())
         {
             void* BufferData = nullptr;
-            Result = vkMapMemory(GetDevice()->GetVkDevice(), DeviceMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
-            VULKAN_CHECK_RESULT(Result, "Failed to map buffer-memory");
+            VkDevice Device = GetDevice()->GetVkDevice();
             
-            if (!BufferData)
+            // Map buffer
+            Result = vkMapMemory(Device, DeviceMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
+            if (VULKAN_FAILED(Result) || !BufferData)
             {
+                VULKAN_ERROR("Failed to map buffer memory");
                 return false;
             }
 
             // Copy over relevant data
             FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
-            vkUnmapMemory(GetDevice()->GetVkDevice(), DeviceMemory);
+            
+            // Unmap buffer
+            vkUnmapMemory(Device, DeviceMemory);
         }
         else
         {
@@ -223,9 +227,10 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
 void FVulkanBuffer::SetName(const FString& InName)
 {
     FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Buffer, VK_OBJECT_TYPE_BUFFER);
+    DebugName = InName;
 }
 
 FString FVulkanBuffer::GetName() const
 {
-    return FString();
+    return DebugName;
 }

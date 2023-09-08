@@ -159,17 +159,13 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     } TransformPerObject;
 
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
+
     for (const auto CommandIndex : FrameResources.ForwardVisibleCommands)
     {
         const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
         CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
         CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
-
-        if (Command.Material->IsBufferDirty())
-        {
-            Command.Material->BuildBuffer(CommandList);
-        }
 
         FRHIBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
         CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 4);
@@ -186,7 +182,7 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
         FRHISamplerState* SamplerState = Command.Material->GetMaterialSampler();
         CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);
 
-        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
         CommandList.Set32BitShaderConstants(VShader.Get(), &TransformPerObject, 32);
@@ -194,9 +190,9 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
         CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
-    CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-
     CommandList.EndRenderPass();
+
+    CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End ForwardPass");
 }

@@ -34,27 +34,27 @@ public:
     
     bool GetSwapChainImages(VkImage* OutImages);
     
-    FORCEINLINE VkResult GetPresentResult() const 
+    VkResult GetPresentResult() const
     { 
         return PresentResult; 
     }
 
-    FORCEINLINE VkSwapchainKHR GetVkSwapChain() const 
+    VkSwapchainKHR GetVkSwapChain() const
     { 
         return SwapChain; 
     }
     
-    FORCEINLINE VkSurfaceFormatKHR GetVkSurfaceFormat() const
+    VkSurfaceFormatKHR GetVkSurfaceFormat() const
     {
         return Format;
     }
     
-    FORCEINLINE uint32 GetBufferCount() const 
+    uint32 GetBufferCount() const
     { 
         return BufferCount; 
     }
 
-    FORCEINLINE uint32 GetBufferIndex() const 
+    uint32 GetBufferIndex() const 
     { 
         return BufferIndex; 
     }

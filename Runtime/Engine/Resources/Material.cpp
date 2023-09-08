@@ -12,7 +12,8 @@ FMaterial::FMaterial(const FMaterialDesc& InProperties)
     , MetallicMap()
     , Properties(InProperties)
     , MaterialBuffer()
-{ }
+{
+}
 
 void FMaterial::Initialize()
 {

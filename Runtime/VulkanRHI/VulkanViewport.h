@@ -22,42 +22,33 @@ public:
     virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
     
     virtual FRHITexture* GetBackBuffer() const override final;
-	
+    
     bool Present(bool bVerticalSync);
 
     void SetName(const FString& InName);
     
-    FORCEINLINE FVulkanSwapChain* GetSwapChain() const 
+    FVulkanTexture* GetCurrentBackBuffer() const
+    {
+        return BackBuffers[SemaphoreIndex].Get();
+    }
+    
+    FVulkanSwapChain* GetSwapChain() const
     { 
         return SwapChain.Get();
     }
 
-    FORCEINLINE FVulkanQueue* GetQueue() const 
+    FVulkanQueue* GetQueue() const
     { 
         return Queue.Get();
     }
 
-    FORCEINLINE FVulkanSurface* GetSurface() const 
+    FVulkanSurface* GetSurface() const
     { 
         return Surface.Get();
     }
 
-    FORCEINLINE VkImage GetImage(uint32 Index) const
-    {
-        return Images[Index];
-    }
-
-    FORCEINLINE FVulkanImageView* GetImageView(uint32 Index)
-    {
-        return ImageViews[Index].Get();
-    }
-
 private:
     bool CreateSwapChain();
-
-    bool CreateRenderTargets();
-
-    bool RecreateSwapchain();
     
     void DestroySwapChain();
     
@@ -70,17 +61,16 @@ private:
     
     void* WindowHandle;
 
-    FVulkanSurfaceRef    Surface;
-    FVulkanSwapChainRef  SwapChain;
-    FVulkanBackBufferRef BackBuffer;
-    FVulkanQueueRef      Queue;
-
-    TArray<VkImage,             TInlineArrayAllocator<VkImage, NUM_BACK_BUFFERS>>             Images;
-    TArray<FVulkanImageViewRef, TInlineArrayAllocator<FVulkanImageViewRef, NUM_BACK_BUFFERS>> ImageViews;
+    FVulkanSurfaceRef         Surface;
+    FVulkanSwapChainRef       SwapChain;
+    FVulkanQueueRef           Queue;
+    FVulkanBackBufferTextureRef      BackBuffer;
+    TArray<FVulkanTextureRef> BackBuffers;
     
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> ImageSemaphores;
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> RenderSemaphores;
-
-    uint32 SemaphoreIndex = 0;
+    
+    uint32 SemaphoreIndex  = 0;
+    uint32 BackBufferIndex = 0;
 };
 

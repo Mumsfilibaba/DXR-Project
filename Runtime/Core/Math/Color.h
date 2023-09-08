@@ -174,19 +174,9 @@ struct FFloatColor
         return Hash;
     }
 
-    FORCEINLINE float* Data()
-    {
-        return reinterpret_cast<float*>(this);
-    }
-
-    FORCEINLINE const float* Data() const
-    {
-        return reinterpret_cast<const float*>(this);
-    }
-
     bool operator==(const FFloatColor& RHS) const
     {
-        return (R == RHS.R) && (G == RHS.G) && (B == RHS.B) && (A == RHS.A);
+        return R == RHS.R && G == RHS.G && B == RHS.B && A == RHS.A;
     }
 
     bool operator!=(const FFloatColor& RHS) const

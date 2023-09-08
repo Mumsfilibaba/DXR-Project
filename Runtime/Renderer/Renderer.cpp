@@ -185,7 +185,8 @@ bool FRenderer::Create()
     }
     else
     {
-        Resources.MainViewport = GEngine->MainViewport->GetRHIViewport();
+        Resources.MainViewport     = GEngine->MainViewport->GetRHIViewport();
+        Resources.BackBufferFormat = Resources.MainViewport->GetColorFormat();
     }
 
     FRHIBufferDesc CBDesc(sizeof(FCameraBuffer), sizeof(FCameraBuffer), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
@@ -312,6 +313,7 @@ bool FRenderer::Create()
     }
 
     LightProbeRenderer.RenderSkyLightProbe(CommandList, LightSetup, Resources);
+
     GRHICommandExecutor.ExecuteCommandList(CommandList);
 
     // Register EventFunc
@@ -518,8 +520,8 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
     InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
-
     InCmdList.SetGraphicsPipelineState(PostPSO.Get());
+
     InCmdList.DrawInstanced(3, 1, 0, 0);
 
     InCmdList.EndRenderPass();
@@ -576,17 +578,14 @@ void FRenderer::Tick(const FScene& Scene)
 
     // Update camera-buffer
     // TODO: All matrices needs to be in Transposed the same
-    CameraBuffer.PrevViewProjection = CameraBuffer.ViewProjection;
-    
-    CameraBuffer.ViewProjection     = Scene.GetCamera()->GetViewProjectionMatrix();
-    CameraBuffer.ViewProjectionInv  = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-
+    CameraBuffer.PrevViewProjection          = CameraBuffer.ViewProjection;
+    CameraBuffer.ViewProjection              = Scene.GetCamera()->GetViewProjectionMatrix();
+    CameraBuffer.ViewProjectionInv           = Scene.GetCamera()->GetViewProjectionInverseMatrix();
     CameraBuffer.ViewProjectionUnjittered    = CameraBuffer.ViewProjection;
     CameraBuffer.ViewProjectionInvUnjittered = CameraBuffer.ViewProjectionInv;
 
     CameraBuffer.View           = Scene.GetCamera()->GetViewMatrix();
     CameraBuffer.ViewInv        = Scene.GetCamera()->GetViewInverseMatrix();
-
     CameraBuffer.Projection     = Scene.GetCamera()->GetProjectionMatrix();
     CameraBuffer.ProjectionInv  = Scene.GetCamera()->GetProjectionInverseMatrix();
 
@@ -629,6 +628,15 @@ void FRenderer::Tick(const FScene& Scene)
     CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraBuffer)), &CameraBuffer);
     CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
 
+    // TODO: Optimize (Materials should be collected and built once in the beginning of the frame)
+    for (const FMeshDrawCommand& Command : Resources.GlobalMeshDrawCommands)
+    {
+        if (Command.Material->IsBufferDirty())
+        {
+            Command.Material->BuildBuffer(CommandList);
+        }
+    }
+    
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Albedo].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Normal].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Material].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
@@ -1016,7 +1024,7 @@ bool FRenderer::InitAA()
     PSOInitializer.ShaderState.VertexShader               = VShader.Get();
     PSOInitializer.ShaderState.PixelShader                = PostShader.Get();
     PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.BackBufferFormat;
     PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
     PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
 

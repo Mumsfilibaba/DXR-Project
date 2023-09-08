@@ -13,10 +13,8 @@ FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanQueue* InQueue,
     , WindowHandle(InDesc.WindowHandle)
     , Surface(nullptr)
     , SwapChain(nullptr)
-    , BackBuffer(nullptr)
     , Queue(MakeSharedRef<FVulkanQueue>(InQueue))
-    , Images()
-    , ImageViews()
+    , BackBuffer(nullptr)
     , ImageSemaphores()
     , RenderSemaphores()
 {
@@ -42,55 +40,10 @@ bool FVulkanViewport::Initialize()
     }
     
     FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
-    BackBuffer = new FVulkanBackBuffer(GetDevice(), this, BackBufferDesc);
+    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferDesc);
     if (!BackBuffer)
     {
         VULKAN_ERROR("Failed to create BackBuffer");
-        return false;
-    }
-
-    const uint32 BufferCount = SwapChain->GetBufferCount();
-    ImageSemaphores.Reserve(BufferCount);
-    RenderSemaphores.Reserve(BufferCount);
-    ImageViews.Reserve(BufferCount);
-    
-    for (uint32 Index = 0; Index < BufferCount; ++Index)
-    {
-        FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
-        if (NewImageSemaphore->Initialize())
-        {
-            NewImageSemaphore->SetName("ImageSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
-            ImageSemaphores.Add(NewImageSemaphore);
-        }
-        else
-        {
-            return false;
-        }
-
-        FVulkanSemaphoreRef NewRenderSemaphore = new FVulkanSemaphore(GetDevice());
-        if (NewRenderSemaphore->Initialize())
-        {
-            NewRenderSemaphore->SetName("RenderSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
-            RenderSemaphores.Add(NewRenderSemaphore);
-        }
-        else
-        {
-            return false;
-        }
-        
-        FVulkanImageViewRef NewImageView = new FVulkanImageView(GetDevice());
-        if (NewImageView)
-        {
-            ImageViews.Add(NewImageView);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    
-    if (!CreateRenderTargets())
-    {
         return false;
     }
     
@@ -129,6 +82,52 @@ bool FVulkanViewport::CreateSwapChain()
         SwapChain = NewSwapChain;
     }
     
+    
+    // Initialize semaphores and backbuffers
+    const uint32 BufferCount = SwapChain->GetBufferCount();
+    if (BufferCount != static_cast<uint32>(BackBuffers.Size()))
+    {
+        ImageSemaphores.Resize(BufferCount);
+        RenderSemaphores.Resize(BufferCount);
+        BackBuffers.Resize(BufferCount);
+        
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+        for (uint32 Index = 0; Index < BufferCount; ++Index)
+        {
+            FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
+            if (NewImageSemaphore->Initialize())
+            {
+                NewImageSemaphore->SetName("ImageSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
+                ImageSemaphores[Index] = NewImageSemaphore;
+            }
+            else
+            {
+                return false;
+            }
+
+            FVulkanSemaphoreRef NewRenderSemaphore = new FVulkanSemaphore(GetDevice());
+            if (NewRenderSemaphore->Initialize())
+            {
+                NewRenderSemaphore->SetName("RenderSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
+                RenderSemaphores[Index] = NewRenderSemaphore;
+            }
+            else
+            {
+                return false;
+            }
+            
+            if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferDesc))
+            {
+                BackBuffers[Index] = NewTexture;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+    
+    
     // Retrieve the images
     TArray<VkImage> SwapChainImages(SwapChain->GetBufferCount());
     SwapChain->GetSwapChainImages(SwapChainImages.Data());
@@ -141,10 +140,8 @@ bool FVulkanViewport::CreateSwapChain()
 
     // Transition images to the correct layout that is expected by the rendering engine (To be compatible with the other RHI modules)
     CommandBuffer->Begin();
-
-    Images.Reserve(SwapChainImages.Size());
-    Images.Clear();
     
+    int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
         FVulkanImageTransitionBarrier TransitionBarrier;
@@ -163,7 +160,7 @@ bool FVulkanViewport::CreateSwapChain()
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
-        Images.Add(Image);
+        BackBuffers[Index++]->SetVkImage(Image);
     }
 
     CommandBuffer->End();
@@ -174,49 +171,12 @@ bool FVulkanViewport::CreateSwapChain()
     return true;
 }
 
-bool FVulkanViewport::CreateRenderTargets()
-{
-    for (int32 Index = 0; Index < Images.Size(); ++Index)
-    {
-        FVulkanImageViewRef ImageView = ImageViews[Index];
-        ImageView->DestroyView();
-        
-        VkSurfaceFormatKHR SurfaceFormat = SwapChain->GetVkSurfaceFormat();
-        
-        VkImageSubresourceRange SubresourceRange;
-        SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        SubresourceRange.baseArrayLayer = 0;
-        SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-        SubresourceRange.baseMipLevel   = 0;
-        SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-        
-        if (!ImageView->CreateView(Images[Index], VK_IMAGE_VIEW_TYPE_2D, SurfaceFormat.format, 0, SubresourceRange))
-        {
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-bool FVulkanViewport::RecreateSwapchain()
-{
-    if (!CreateSwapChain())
-    {
-        return false;
-    }
-
-    if (!CreateRenderTargets())
-    {
-        return false;
-    }
-
-    return true;
-}
-
 void FVulkanViewport::DestroySwapChain()
 {
+    // Ensure that all work is completed
     Queue->WaitForCompletion();
+    
+    // Destroy the swapchain
     SwapChain.Reset();
 }
 
@@ -231,7 +191,7 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 
         Queue->FlushWaitSemaphoresAndWait();
 
-        if (!RecreateSwapchain())
+        if (!CreateSwapChain())
         {
             VULKAN_WARNING("Resize FAILED");
             return false;
@@ -260,7 +220,7 @@ bool FVulkanViewport::Present(bool bVerticalSync)
 
         Queue->WaitForCompletion();
 
-        if (!RecreateSwapchain())
+        if (!CreateSwapChain())
         {
             return false;
         }
@@ -279,15 +239,18 @@ bool FVulkanViewport::Present(bool bVerticalSync)
 void FVulkanViewport::SetName(const FString& InName)
 {
     // Name the swapchain object
-    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), SwapChain->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
-
-    // Name all the images
-    uint32 Index = 0;
-    FString ImageName;
-    for (VkImage Image : Images)
+    if (SwapChain)
     {
-        ImageName = InName + "BackBuffer Image[" + TTypeToString<int32>::ToString(Index) + "]";
-        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ImageName.GetCString(), Image, VK_OBJECT_TYPE_IMAGE);
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), SwapChain->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
+
+        // Name all the images
+        uint32 Index = 0;
+        FString ImageName;
+        for (FVulkanTextureRef Texture : BackBuffers)
+        {
+            ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", Index);
+            Texture->SetName(ImageName);
+        }
     }
 }
 
@@ -313,6 +276,7 @@ bool FVulkanViewport::AquireNextImage()
     Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
     
-    BackBuffer->AquireNextImage();
+    // Update the backbuffer index
+    BackBufferIndex = SwapChain->GetBufferIndex();
     return true;
 }

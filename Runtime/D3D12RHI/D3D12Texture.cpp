@@ -222,7 +222,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     return true;
 }
 
-FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView& RenderTargetView)
+FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView)
 {
     FD3D12Resource* D3D12Resource = GetD3D12Resource();
     if (!D3D12Resource)
@@ -234,18 +234,12 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, "Texture '%s' does not allow RenderTargetViews", Resource->GetName().GetCString());
 
-    const uint32 Subresource = D3D12CalcSubresource(
-        RenderTargetView.MipLevel,
-        RenderTargetView.ArrayIndex,
-        0,
-        ResourceDesc.MipLevels,
-        ResourceDesc.DepthOrArraySize);
+    const uint32 Subresource = D3D12CalcSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(RenderTargetView.Format);
-    if (Subresource < uint32(RenderTargetViews.Size()))
+    if (Subresource < static_cast<uint32>(RenderTargetViews.Size()))
     {
-        FD3D12RenderTargetView* ExistingView = RenderTargetViews[Subresource].Get();
-        if (ExistingView)
+        if (FD3D12RenderTargetView* ExistingView = RenderTargetViews[Subresource].Get())
         {
             D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = ExistingView->GetDesc();
             D3D12_WARNING_COND(RTVDesc.Format == DXGIFormat, "A RenderTargetView for this subresource already exists with another format");
@@ -325,7 +319,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRTV(const FRHIRenderTargetView
     }
 }
 
-FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView& DepthStencilView)
+FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView)
 {
     FD3D12Resource* D3D12Resource = GetD3D12Resource();
     if (!D3D12Resource)
@@ -337,18 +331,12 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDSV(const FRHIDepthStencilView
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, "Texture '%s' does not allow DepthStencilViews", Resource->GetName().GetCString());
 
-    const uint32 Subresource = D3D12CalcSubresource(
-        DepthStencilView.MipLevel,
-        DepthStencilView.ArrayIndex,
-        0,
-        ResourceDesc.MipLevels,
-        ResourceDesc.DepthOrArraySize);
+    const uint32 Subresource = D3D12CalcSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(DepthStencilView.Format);
-    if (Subresource < uint32(DepthStencilViews.Size()))
+    if (Subresource < static_cast<uint32>(DepthStencilViews.Size()))
     {
-        FD3D12DepthStencilView* ExistingView = DepthStencilViews[Subresource].Get();
-        if (ExistingView)
+        if (FD3D12DepthStencilView* ExistingView = DepthStencilViews[Subresource].Get())
         {
             D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = ExistingView->GetDesc();
             D3D12_WARNING_COND(DSVDesc.Format == DXGIFormat, "A DepthStencilView for this subresource already exists with another format");
@@ -436,6 +424,7 @@ FString FD3D12Texture::GetName() const
 
     return "";
 }
+
 
 FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureDesc& InDesc)
     : FD3D12Texture(InDevice, InDesc)

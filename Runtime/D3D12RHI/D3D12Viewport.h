@@ -17,11 +17,11 @@ public:
 
     bool Initialize();
 
-    bool Present(bool VerticalSync);
-
     virtual bool Resize(uint32 Width, uint32 Height) override final;
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    
+    bool Present(bool VerticalSync);
 
     FD3D12Texture* GetCurrentBackBuffer() const 
     { 

@@ -42,8 +42,8 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
 
         ColorAttachment.format         = ConvertFormat(Key.RenderTargetFormats[Index]);
         ColorAttachment.samples        = SampleCount;
-        ColorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
-        ColorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+        ColorAttachment.loadOp         = ConvertLoadAction(Key.RenderTargetActions[Index].LoadAction);
+        ColorAttachment.storeOp        = ConvertStoreAction(Key.RenderTargetActions[Index].StoreAction);
         ColorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         ColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
         ColorAttachment.initialLayout  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -77,8 +77,8 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
 
         DepthAttachment.format         = ConvertFormat(Key.DepthStencilFormat);
         DepthAttachment.samples        = SampleCount;
-        DepthAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
-        DepthAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+        DepthAttachment.loadOp         = ConvertLoadAction(Key.DepthStencilActions.LoadAction);
+        DepthAttachment.storeOp        = ConvertStoreAction(Key.DepthStencilActions.StoreAction);
         DepthAttachment.stencilLoadOp  = DepthAttachment.loadOp;
         DepthAttachment.stencilStoreOp = DepthAttachment.storeOp;
         DepthAttachment.initialLayout  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -121,7 +121,7 @@ void FVulkanRenderPassCache::ReleaseAll()
     // Destroy all renderpasses
     for (auto& RenderPass : RenderPasses)
     {
-        // TODO: Release framebuffers
+        GetDevice()->GetFramebufferCache().OnReleaseRenderPass(RenderPass.second);
         
         if (VULKAN_CHECK_HANDLE(RenderPass.second))
         {

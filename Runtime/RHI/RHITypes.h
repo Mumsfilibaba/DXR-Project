@@ -4,7 +4,7 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
-enum class EFormat : uint16
+enum class EFormat : uint8
 {
     Unknown               = 0,
     
@@ -42,6 +42,7 @@ enum class EFormat : uint16
     R8G8B8A8_Uint         = 30,
     R8G8B8A8_Snorm        = 31,
     R8G8B8A8_Sint         = 32,
+    
     B8G8R8A8_Typeless     = 33,
     B8G8R8A8_Unorm        = 34,
     B8G8R8A8_Unorm_SRGB   = 35,

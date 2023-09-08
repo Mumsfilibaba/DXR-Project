@@ -41,13 +41,13 @@ public:
     
     virtual FString GetName() const override final;
 
-    FD3D12RenderTargetView* GetOrCreateRTV(const FRHIRenderTargetView& RenderTargetView);
+    FD3D12RenderTargetView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
 
-    FD3D12DepthStencilView* GetOrCreateDSV(const FRHIDepthStencilView& DepthStencilView);
+    FD3D12DepthStencilView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
 
-    void DestroyRTVs() { RenderTargetViews.Clear(); }
+    void DestroyRenderTargetViews() { RenderTargetViews.Clear(); }
 
-    void DestroyDSVs() { DepthStencilViews.Clear(); }
+    void DestroyDepthStencilViews() { DepthStencilViews.Clear(); }
 
     FD3D12Resource* GetD3D12Resource() const 
     { 

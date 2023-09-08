@@ -534,15 +534,10 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
                 CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
                 PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-
                 CommandList.Set32BitShaderConstants(PrePassVertexShader.Get(), &PerObjectBuffer, 16);
 
-                if (Command.Material->IsBufferDirty())
-                {
-                    Command.Material->BuildBuffer(CommandList);
-                }
-
                 CommandList.SetConstantBuffer(BasePixelShader.Get(), Command.Material->GetMaterialBuffer(), 1);
+
                 CommandList.SetShaderResourceView(BasePixelShader.Get(), Command.Material->GetAlphaMaskSRV(), 0);
 
                 FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
@@ -669,11 +664,6 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
         CommandList.Set32BitShaderConstants(BaseVertexShader.Get(), &TransformPerObject, 32);
-
-        if (Command.Material->IsBufferDirty())
-        {
-            Command.Material->BuildBuffer(CommandList);
-        }
 
         FRHIBuffer* PSConstantBuffers[] =
         {

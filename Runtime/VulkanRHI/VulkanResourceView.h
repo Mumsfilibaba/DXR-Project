@@ -7,8 +7,6 @@
 
 typedef TSharedRef<class FVulkanImageView>           FVulkanImageViewRef;
 typedef TSharedRef<class FVulkanShaderResourceView>  FVulkanShaderResourceViewRef;
-typedef TSharedRef<class FVulkanDepthStencilView>    FVulkanDepthStencilViewRef;
-typedef TSharedRef<class FVulkanRenderTargetView>    FVulkanRenderTargetViewRef;
 typedef TSharedRef<class FVulkanUnorderedAccessView> FVulkanUnorderedAccessViewRef;
 
 class FVulkanImageView : public FVulkanDeviceObject, public FVulkanRefCounted
@@ -17,29 +15,35 @@ public:
     FVulkanImageView(FVulkanDevice* InDevice);
     ~FVulkanImageView();
 
-    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat Format, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& InSubresourceRange);
+    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& InSubresourceRange);
     
     void DestroyView();
 
-    FORCEINLINE VkImage GetVkImage() const
+    VkImage GetVkImage() const
     {
         return Image;
     }
     
-    FORCEINLINE VkImageView GetVkImageView() const
+    VkImageView GetVkImageView() const
     {
         return ImageView;
     }
 
-    FORCEINLINE const VkImageSubresourceRange& GetSubresourceRange() const
+    const VkImageSubresourceRange& GetSubresourceRange() const
     {
         return SubresourceRange;
+    }
+    
+    VkFormat GetVkFormat() const
+    {
+        return Format;
     }
     
 private:
     VkImageSubresourceRange SubresourceRange;
     VkImage                 Image;
     VkImageView             ImageView;
+    VkFormat                Format;
 };
 
 class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceObject, public FVulkanRefCounted
@@ -74,31 +78,4 @@ public:
     virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-};
-
-class FVulkanRenderTargetView : public FVulkanRefCounted
-{
-public:
-    FVulkanRenderTargetView() = default;
-    virtual ~FVulkanRenderTargetView() = default;
-    
-    void SetImageView(const FVulkanImageViewRef& NewImageView)
-    {
-        ImageView = NewImageView;
-    }
-    
-    FORCEINLINE FVulkanImageView* GetImageView() const
-    {
-        return ImageView.Get();
-    }
-    
-private:
-    FVulkanImageViewRef ImageView;
-};
-
-class FVulkanDepthStencilView : public FVulkanRefCounted
-{
-public:
-    FVulkanDepthStencilView()  = default;
-    virtual ~FVulkanDepthStencilView() = default;
 };

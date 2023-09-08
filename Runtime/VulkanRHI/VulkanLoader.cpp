@@ -51,7 +51,6 @@ VULKAN_FUNCTION_DEFINITION(GetDeviceProcAddr);
 
 #if VK_KHR_surface
     VULKAN_FUNCTION_DEFINITION(DestroySurfaceKHR);
-    
     VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
     VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceFormatsKHR);
     VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfacePresentModesKHR);
@@ -104,7 +103,6 @@ bool LoadInstanceFunctions(FVulkanInstance* Instance)
     if (Instance->IsExtensionEnabled(VK_KHR_SURFACE_EXTENSION_NAME))
     {
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroySurfaceKHR);
-
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceCapabilitiesKHR);
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceFormatsKHR);
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfacePresentModesKHR);
@@ -141,6 +139,7 @@ VULKAN_FUNCTION_DEFINITION(AllocateMemory);
 VULKAN_FUNCTION_DEFINITION(FreeMemory);
 VULKAN_FUNCTION_DEFINITION(MapMemory);
 VULKAN_FUNCTION_DEFINITION(UnmapMemory);
+VULKAN_FUNCTION_DEFINITION(FlushMappedMemoryRanges);
 
 VULKAN_FUNCTION_DEFINITION(CreateBuffer);
 VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements);
@@ -181,6 +180,9 @@ VULKAN_FUNCTION_DEFINITION(DestroySampler);
 VULKAN_FUNCTION_DEFINITION(CreateRenderPass);
 VULKAN_FUNCTION_DEFINITION(DestroyRenderPass);
 
+VULKAN_FUNCTION_DEFINITION(CreateFramebuffer);
+VULKAN_FUNCTION_DEFINITION(DestroyFramebuffer);
+
 VULKAN_FUNCTION_DEFINITION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DEFINITION(FreeCommandBuffers);
 
@@ -193,20 +195,27 @@ VULKAN_FUNCTION_DEFINITION(QueueSubmit);
 #if VK_KHR_swapchain
     VULKAN_FUNCTION_DEFINITION(CreateSwapchainKHR);
     VULKAN_FUNCTION_DEFINITION(DestroySwapchainKHR);
-
     VULKAN_FUNCTION_DEFINITION(AcquireNextImageKHR);
     VULKAN_FUNCTION_DEFINITION(QueuePresentKHR);
-
     VULKAN_FUNCTION_DEFINITION(GetSwapchainImagesKHR);
 #endif
 
 VULKAN_FUNCTION_DEFINITION(CmdClearColorImage);
 VULKAN_FUNCTION_DEFINITION(CmdClearDepthStencilImage);
+VULKAN_FUNCTION_DEFINITION(CmdResolveImage);
 VULKAN_FUNCTION_DEFINITION(CmdBeginRenderPass);
 VULKAN_FUNCTION_DEFINITION(CmdEndRenderPass);
+VULKAN_FUNCTION_DEFINITION(CmdSetViewport);
+VULKAN_FUNCTION_DEFINITION(CmdSetScissor);
+VULKAN_FUNCTION_DEFINITION(CmdBindVertexBuffers);
+VULKAN_FUNCTION_DEFINITION(CmdBindIndexBuffer);
+VULKAN_FUNCTION_DEFINITION(CmdSetBlendConstants);
+VULKAN_FUNCTION_DEFINITION(CmdBindPipeline);
+VULKAN_FUNCTION_DEFINITION(CmdPushConstants);
 VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBufferToImage);
+VULKAN_FUNCTION_DEFINITION(CmdCopyImage);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device)
 {
@@ -233,6 +242,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FreeMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, MapMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, UnmapMemory);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FlushMappedMemoryRanges);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements);
@@ -279,6 +289,9 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyRenderPass);
 
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateFramebuffer);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyFramebuffer);
+
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImageView);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImageView);
 
@@ -296,21 +309,28 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     {
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSwapchainKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySwapchainKHR);
-
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AcquireNextImageKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, QueuePresentKHR);
-
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetSwapchainImagesKHR);
     }
 #endif
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdClearColorImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdClearDepthStencilImage);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdResolveImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndRenderPass);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetViewport);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetScissor);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindVertexBuffers);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindIndexBuffer);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetBlendConstants);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindPipeline);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPushConstants);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBufferToImage);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImage);
     
     // Initialize Dedicated Allocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);
@@ -324,7 +344,7 @@ void FVulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
 {
     VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
     
-#if (VK_KHR_get_memory_requirements2) && (VK_KHR_dedicated_allocation)
+#if VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation
     if (Device->IsExtensionEnabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
     {
         bIsEnabled = true;

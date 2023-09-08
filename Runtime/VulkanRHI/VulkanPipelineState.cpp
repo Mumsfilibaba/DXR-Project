@@ -442,12 +442,16 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     // Retrieve a compatible renderpass
     // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
     FVulkanRenderPassKey RenderPassKey;
-    RenderPassKey.NumSamples         = Initializer.SampleCount;
-    RenderPassKey.DepthStencilFormat = Initializer.PipelineFormats.DepthStencilFormat;
-    RenderPassKey.NumRenderTargets   = Initializer.PipelineFormats.NumRenderTargets;
+    RenderPassKey.NumSamples                      = Initializer.SampleCount;
+    RenderPassKey.DepthStencilFormat              = Initializer.PipelineFormats.DepthStencilFormat;
+    RenderPassKey.DepthStencilActions.LoadAction  = EAttachmentLoadAction::Load;
+    RenderPassKey.DepthStencilActions.StoreAction = EAttachmentStoreAction::Store;
+    RenderPassKey.NumRenderTargets                = Initializer.PipelineFormats.NumRenderTargets;
     
     for (uint8 Index = 0; Index < Initializer.PipelineFormats.NumRenderTargets; Index++)
     {
+        RenderPassKey.RenderTargetActions[Index].LoadAction  = EAttachmentLoadAction::Load;
+        RenderPassKey.RenderTargetActions[Index].StoreAction = EAttachmentStoreAction::Store;
         RenderPassKey.RenderTargetFormats[Index] = Initializer.PipelineFormats.RenderTargetFormats[Index];
     }
     

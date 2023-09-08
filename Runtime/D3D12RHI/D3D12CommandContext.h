@@ -208,13 +208,13 @@ struct FD3D12CommandContextState : public FD3D12DeviceChild, public FNonCopyAndN
         FD3D12IndexBufferCache      IBCache;
         FD3D12VertexBufferCache     VBCache;
 
-        D3D12_VIEWPORT              Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                      NumViewports;
+        D3D12_VIEWPORT Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32         NumViewports;
 
-        D3D12_RECT                  ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32                      NumScissor;
+        D3D12_RECT     ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32         NumScissor;
 
-        FVector4                    BlendFactor;
+        FVector4       BlendFactor;
 
         bool bBindRenderTargets     : 1;
         bool bBindBlendFactor       : 1;
@@ -228,7 +228,6 @@ struct FD3D12CommandContextState : public FD3D12DeviceChild, public FNonCopyAndN
     struct 
     {
         FD3D12ComputePipelineStateRef PipelineState;
-        
         bool bBindPipeline : 1;
     } Compute;
 
@@ -240,6 +239,7 @@ struct FD3D12CommandContextState : public FD3D12DeviceChild, public FNonCopyAndN
     bool bIsRenderPassActive : 1;
     bool bBindRootSignature  : 1;
 };
+
 
 class FD3D12CommandContext : public IRHICommandContext, public FD3D12DeviceChild
 {
@@ -381,47 +381,47 @@ public:
 
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
-    FORCEINLINE FD3D12CommandList& GetCommandList() 
+    FD3D12CommandList& GetCommandList() 
     {
         CHECK(CommandList != nullptr);
         return *CommandList; 
     }
 
-    FORCEINLINE FD3D12CommandAllocatorManager& GetCommandAllocatorManager()
+    FD3D12CommandAllocatorManager& GetCommandAllocatorManager()
     {
         return CommandAllocatorManager;
     }
 
-    FORCEINLINE FD3D12CommandAllocator& GetCommandAllocator()
+    FD3D12CommandAllocator& GetCommandAllocator()
     {
         CHECK(CommandAllocator != nullptr);
         return *CommandAllocator;
     }
     
-    FORCEINLINE uint32 GetCurrentBachIndex() const
+    uint32 GetCurrentBachIndex() const
     {
         CHECK(int32(NextCmdBatch) < CmdBatches.Size());
         return FMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
     }
 
-    FORCEINLINE void UnorderedAccessBarrier(FD3D12Resource* Resource)
+    void UnorderedAccessBarrier(FD3D12Resource* Resource)
     {
         D3D12_ERROR_COND(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
         BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetD3D12Resource());
     }
 
-    FORCEINLINE void TransitionResource(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+    void TransitionResource(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
     {
         D3D12_ERROR_COND(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
         BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
     }
 
-    FORCEINLINE void DestroyResource(FD3D12Resource* Resource) 
+    void DestroyResource(FD3D12Resource* Resource) 
     { 
         CmdBatch->AddInUseResource(Resource);
     }
 
-    FORCEINLINE void FlushResourceBarriers() 
+    void FlushResourceBarriers() 
     { 
         BarrierBatcher.FlushBarriers(*CommandList);
     }
@@ -432,7 +432,7 @@ private:
     FD3D12CommandListRef            CommandList;
     FD3D12CommandAllocatorRef       CommandAllocator;
     FD3D12CommandAllocatorManager   CommandAllocatorManager;
-    FD3D12CommandContextState       State;
+    FD3D12CommandContextState       ContextState;
 
     // TODO: The whole commandcontext should only be used from one thread at a time
     FCriticalSection                CommandContextCS;

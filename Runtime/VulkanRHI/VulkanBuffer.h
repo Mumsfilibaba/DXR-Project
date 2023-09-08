@@ -34,11 +34,17 @@ public:
         return Buffer;
     }
     
+    FORCEINLINE VkDeviceMemory GetVkDeviceMemory() const
+    {
+        return DeviceMemory;
+    }
+    
 protected:
     VkBuffer        Buffer;
     VkDeviceMemory  DeviceMemory;
     VkDeviceAddress DeviceAddress;
     VkDeviceSize    RequiredAlignment;
+    FString         DebugName;
 };
 
 

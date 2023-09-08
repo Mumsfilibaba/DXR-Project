@@ -931,12 +931,12 @@ struct FRHIRenderTargetView
     }
 
     FRHITexture*           Texture;
-    EFormat                Format;
+    FFloatColor            ClearValue;
     uint16                 ArrayIndex;
+    EFormat                Format;
     uint8                  MipLevel;
     EAttachmentLoadAction  LoadAction;
     EAttachmentStoreAction StoreAction;
-    FFloatColor            ClearValue;
 };
 
 
@@ -1032,12 +1032,12 @@ struct FRHIDepthStencilView
     }
 
     FRHITexture*           Texture;
+    FDepthStencilValue     ClearValue;
     EFormat                Format;
     uint16                 ArrayIndex;
     uint8                  MipLevel;
     EAttachmentLoadAction  LoadAction;
     EAttachmentStoreAction StoreAction;
-    FDepthStencilValue     ClearValue;
 };
 
 

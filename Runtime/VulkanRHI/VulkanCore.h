@@ -137,6 +137,11 @@ inline FString GetVersionAsString(uint32 VersionNumber)
     return FString::CreateFormatted("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber), VK_API_VERSION_PATCH(VersionNumber), VK_API_VERSION_VARIANT(VersionNumber));
 }
 
+constexpr uint32 VkCalcSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
+{
+    return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
+}
+
 constexpr VkPipelineStageFlags ConvertResourceStateToPipelineStageFlags(EResourceAccess ResourceState)
 {
     switch (ResourceState)
@@ -559,6 +564,34 @@ constexpr VkSampleCountFlagBits ConvertSampleCount(uint32 NumSamples)
     }
 }
 
+constexpr VkAttachmentLoadOp ConvertLoadAction(EAttachmentLoadAction LoadAction)
+{
+    switch (LoadAction)
+    {
+        case EAttachmentLoadAction::DontCare: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        case EAttachmentLoadAction::Load:     return VK_ATTACHMENT_LOAD_OP_LOAD;
+        case EAttachmentLoadAction::Clear:    return VK_ATTACHMENT_LOAD_OP_CLEAR;
+    }
+}
+
+constexpr VkAttachmentStoreOp ConvertStoreAction(EAttachmentStoreAction LoadAction)
+{
+    switch (LoadAction)
+    {
+        case EAttachmentStoreAction::DontCare: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        case EAttachmentStoreAction::Store:    return VK_ATTACHMENT_STORE_OP_STORE;
+    }
+}
+
+constexpr VkIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EIndexFormat::uint16: return VK_INDEX_TYPE_UINT16;
+        case EIndexFormat::uint32: return VK_INDEX_TYPE_UINT32;
+    }
+}
+
 constexpr VkFormat ConvertFormat(EFormat Format)
 {
     switch (Format)
@@ -597,6 +630,13 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::R8G8B8A8_Uint:         return VK_FORMAT_R8G8B8A8_UINT;
         case EFormat::R8G8B8A8_Snorm:        return VK_FORMAT_R8G8B8A8_SNORM;
         case EFormat::R8G8B8A8_Sint:         return VK_FORMAT_R8G8B8A8_SINT;
+            
+        case EFormat::B8G8R8A8_Typeless:     return VK_FORMAT_B8G8R8A8_UNORM;
+        case EFormat::B8G8R8A8_Unorm:        return VK_FORMAT_B8G8R8A8_UNORM;
+        case EFormat::B8G8R8A8_Unorm_SRGB:   return VK_FORMAT_B8G8R8A8_SRGB;
+        case EFormat::B8G8R8A8_Uint:         return VK_FORMAT_B8G8R8A8_UINT;
+        case EFormat::B8G8R8A8_Snorm:        return VK_FORMAT_B8G8R8A8_SNORM;
+        case EFormat::B8G8R8A8_Sint:         return VK_FORMAT_B8G8R8A8_SINT;
 
         case EFormat::R16G16_Typeless:       return VK_FORMAT_R16G16_SFLOAT;
         case EFormat::R16G16_Float:          return VK_FORMAT_R16G16_SFLOAT;

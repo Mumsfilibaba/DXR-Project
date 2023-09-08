@@ -69,16 +69,19 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
         {
             FD3D12Resource* D3D12Resource = GetD3D12Resource();
 
-            void* BufferData = D3D12Resource->MapRange(0, 0);
+            // Map buffer memory
+            void* BufferData = D3D12Resource->MapRange(0, nullptr);
             if (!BufferData)
             {
+                D3D12_ERROR("Failed to map buffer data");
                 return false;
             }
 
             // Copy over relevant data
             FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
 
-            D3D12Resource->UnmapRange(0, 0);
+            // Unmap buffer memory
+            D3D12Resource->UnmapRange(0, nullptr);
         }
         else
         {

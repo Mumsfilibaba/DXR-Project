@@ -4,6 +4,7 @@
 #include "VulkanAllocators.h"
 #include "VulkanPhysicalDevice.h"
 #include "VulkanRenderPass.h"
+#include "VulkanFramebuffer.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -51,8 +52,9 @@ public:
 
     bool Initialize(const FVulkanDeviceDesc& DeviceDesc);
 
-    FVulkanRenderPassCache& GetRenderPassCache() { return RenderPassCache; }
-    
+    FVulkanRenderPassCache&  GetRenderPassCache()  { return RenderPassCache; }
+    FVulkanFramebufferCache& GetFramebufferCache() { return FramebufferCache; }
+
     FVulkanUploadHeapAllocator& GetUploadHeap() { return UploadHeap; };
 
     bool AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory& OutDeviceMemory);
@@ -101,6 +103,7 @@ private:
     VkDevice               Device;
     
     FVulkanRenderPassCache     RenderPassCache;
+    FVulkanFramebufferCache    FramebufferCache;
     FVulkanUploadHeapAllocator UploadHeap;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;

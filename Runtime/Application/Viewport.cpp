@@ -28,7 +28,7 @@ bool FViewport::InitializeRHI(const FViewportInitializer& Initializer)
     
     FRHIViewportDesc ViewportDesc;
     ViewportDesc.WindowHandle = Initializer.Window->GetPlatformHandle();
-    ViewportDesc.ColorFormat  = EFormat::R8G8B8A8_Unorm;
+    ViewportDesc.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use rgba for all RHIs except Vulkan?
     ViewportDesc.Width        = static_cast<uint16>(Initializer.Width);
     ViewportDesc.Height       = static_cast<uint16>(Initializer.Height);
     

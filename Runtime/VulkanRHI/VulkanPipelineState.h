@@ -152,6 +152,11 @@ public:
     {
         return Pipeline;
     }
+    
+    VkPipelineLayout GetVkPipelineLayout() const
+    {
+        return PipelineLayout;
+    }
 
 protected:
     VkPipeline            Pipeline;

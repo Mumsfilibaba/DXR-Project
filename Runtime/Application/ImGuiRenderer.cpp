@@ -336,17 +336,22 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
         return;
     }
 
-    // Render ImgGui draw data
+    // Render ImgGui draw datad
     ImGui::Render();
 
     FRHIViewportRef RHIViewport = Viewport->GetRHIViewport();
     CHECK(RHIViewport != nullptr);
 
+    // Prepare data before drawing
+    ImDrawData* DrawData = ImGui::GetDrawData();
+    PrepareDrawData(CmdList, DrawData);
+
     // Render to the main back buffer (Which we should just load)
     FRHIRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(RHIViewport->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
     CmdList.BeginRenderPass(RenderPassDesc);
 
-    RenderDrawData(CmdList, ImGui::GetDrawData());
+    // Draw the ImGui data
+    RenderDrawData(CmdList, DrawData);
 
     CmdList.EndRenderPass();
 
@@ -376,16 +381,21 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawDa
     FRHITexture* BackBuffer = ViewportData.Viewport->GetBackBuffer();
     CmdList.TransitionTexture(BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
 
+    // Prepare data before drawing
+    PrepareDrawData(CmdList, DrawData);
+
+    // Begin renderpass (All transfers has to be done before starting the renderpass)
     FRHIRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
     CmdList.BeginRenderPass(RenderPassDesc);
 
+    // Draw the data
     RenderDrawData(CmdList, DrawData);
 
     CmdList.EndRenderPass();
     CmdList.TransitionTexture(BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
 }
 
-void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
+void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
 {
     // Avoid rendering when minimized
     if (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f)
@@ -410,7 +420,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
         const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
         FRHIBufferDesc VBDesc(sizeof(ImDrawVert) * NewVertexCount, sizeof(ImDrawVert), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
 
-        TSharedRef<FRHIBuffer> NewVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        TSharedRef<FRHIBuffer> NewVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
             NewVertexBuffer->SetName("ImGui VertexBuffer");
@@ -433,7 +443,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
         const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
         FRHIBufferDesc IBDesc(sizeof(ImDrawIdx) * NewIndexCount, sizeof(ImDrawIdx), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
 
-        TSharedRef<FRHIBuffer> NewIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, nullptr);
+        TSharedRef<FRHIBuffer> NewIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
             NewIndexBuffer->SetName("ImGui IndexBuffer");
@@ -465,8 +475,24 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
 
     CmdList.TransitionBuffer(ViewportData->VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
     CmdList.TransitionBuffer(ViewportData->IndexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+}
 
-    // Setup desired DX state
+void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
+{
+    // Avoid rendering when minimized
+    if (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f)
+    {
+        return;
+    }
+
+    // Create and grow vertex/index buffers if needed
+    FViewportData* ViewportData = reinterpret_cast<FViewportData*>(DrawData->OwnerViewport->RendererUserData);
+    if (!ViewportData)
+    {
+        return;
+    }
+
+    // Setup desired render state
     SetupRenderState(CmdList, DrawData, *ViewportData);
 
     // Render command lists
@@ -483,23 +509,23 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
         const ImDrawList* DrawCmdList = DrawData->CmdLists[Index];
         for (int32 CmdIndex = 0; CmdIndex < DrawCmdList->CmdBuffer.Size; ++CmdIndex)
         {
-            const ImDrawCmd* pDrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
-            if (pDrawCommand->UserCallback != nullptr)
+            const ImDrawCmd* DrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
+            if (DrawCommand->UserCallback != nullptr)
             {
                 // User callback, registered via ImDrawList::AddCallback()
                 // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
-                if (bResetRenderState || pDrawCommand->UserCallback == ImDrawCallback_ResetRenderState)
+                if (bResetRenderState || DrawCommand->UserCallback == ImDrawCallback_ResetRenderState)
                 {
                     SetupRenderState(CmdList, DrawData, *ViewportData);
                 }
                 else
                 {
-                    pDrawCommand->UserCallback(DrawCmdList, pDrawCommand);
+                    DrawCommand->UserCallback(DrawCmdList, DrawCommand);
                 }
             }
             else
             {
-                const ImTextureID TextureID = pDrawCommand->GetTexID();
+                const ImTextureID TextureID = DrawCommand->GetTexID();
                 if (TextureID)
                 {
                     // TODO: Change this so that the same code can be used for font texture and images
@@ -547,21 +573,21 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                 }
 
                 // Project Scissor/Clipping rectangles into Framebuffer space
-                ImVec2 ClipMin(pDrawCommand->ClipRect.x - ClipOffset.x, pDrawCommand->ClipRect.y - ClipOffset.y);
-                ImVec2 ClipMax(pDrawCommand->ClipRect.z - ClipOffset.x, pDrawCommand->ClipRect.w - ClipOffset.y);
+                ImVec2 ClipMin(DrawCommand->ClipRect.x - ClipOffset.x, DrawCommand->ClipRect.y - ClipOffset.y);
+                ImVec2 ClipMax(DrawCommand->ClipRect.z - ClipOffset.x, DrawCommand->ClipRect.w - ClipOffset.y);
                 if (ClipMax.x <= ClipMin.x || ClipMax.y <= ClipMin.y)
                 {
                     continue;
                 }
 
                 FRHIScissorRegion ScissorRegion(
-                    pDrawCommand->ClipRect.z - ClipOffset.x,
-                    pDrawCommand->ClipRect.w - ClipOffset.y,
-                    pDrawCommand->ClipRect.x - ClipOffset.x,
-                    pDrawCommand->ClipRect.y - ClipOffset.y);
+                    DrawCommand->ClipRect.z - ClipOffset.x,
+                    DrawCommand->ClipRect.w - ClipOffset.y,
+                    DrawCommand->ClipRect.x - ClipOffset.x,
+                    DrawCommand->ClipRect.y - ClipOffset.y);
                 CmdList.SetScissorRect(ScissorRegion);
 
-                CmdList.DrawIndexedInstanced(pDrawCommand->ElemCount, 1, pDrawCommand->IdxOffset + GlobalIndexOffset, pDrawCommand->VtxOffset + GlobalVertexOffset, 0);
+                CmdList.DrawIndexedInstanced(DrawCommand->ElemCount, 1, DrawCommand->IdxOffset + GlobalIndexOffset, DrawCommand->VtxOffset + GlobalVertexOffset, 0);
             }
         }
 

@@ -8,6 +8,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , PhysicalDevice(InAdapter)
     , Device(VK_NULL_HANDLE)
     , RenderPassCache(this)
+    , FramebufferCache(this)
     , UploadHeap(this)
     , bSupportsDepthClip(false)
 {
