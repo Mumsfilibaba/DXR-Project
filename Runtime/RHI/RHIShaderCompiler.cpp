@@ -839,10 +839,11 @@ bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FR
             return false;
         }
 
-        // Create a new array
+        // Create a new array (1 extra byte of slack for a null-terminator)
         const uint32 SourceLength = FCString::Strlen(NewSource);
-        TArray<uint8> NewShader(reinterpret_cast<const uint8*>(NewSource), SourceLength * sizeof(const CHAR));
-        
+        TArray<uint8> NewShader(reinterpret_cast<const uint8*>(NewSource), SourceLength * sizeof(const uint8), 1);
+        NewShader[SourceLength] = 0;
+
         // Now we can destroy the context
         spvc_context_destroy(Context);
 

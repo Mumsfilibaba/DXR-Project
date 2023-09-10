@@ -53,10 +53,11 @@ public:
      * @brief               - Constructor that creates an array from a raw pointer array 
      * @param InElements    - Pointer to the start of the array to copy from
      * @param InNumElements - Number of elements in 'InputArray', which also is the resulting size of the constructed array
+     * @param InSlack       - Extra number of elements to allocate space for
      */
-    FORCEINLINE TArray(const ElementType* InElements, SizeType InNumElements) noexcept
+    FORCEINLINE TArray(const ElementType* InElements, SizeType InNumElements, SizeType InSlack = 0) noexcept
     {
-        InitializeByCopy(InElements, InNumElements, 0);
+        InitializeByCopy(InElements, InNumElements, InSlack);
     }
 
     /** 

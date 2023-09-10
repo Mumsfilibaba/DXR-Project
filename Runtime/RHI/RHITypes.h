@@ -570,7 +570,7 @@ public:
      */
     constexpr bool IsValid() const
     { 
-        return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle); 
+        return Type != EDescriptorType::Unknown && Index != InvalidHandle; 
     }
 
     /**
@@ -580,7 +580,7 @@ public:
      */
     constexpr bool operator==(const FRHIDescriptorHandle& Other) const
     {
-        return (Data == Other.Data);
+        return Data == Other.Data;
     }
 
     /**
@@ -590,7 +590,7 @@ public:
      */
     constexpr bool operator!=(const FRHIDescriptorHandle& Other) const
     {
-        return (Data != Other.Data);
+        return Data != Other.Data;
     }
 
 private:
@@ -646,7 +646,7 @@ struct FDepthStencilValue
      */
     constexpr bool operator==(const FDepthStencilValue& Other) const
     {
-        return (Depth == Other.Depth) && (Stencil && Other.Stencil);
+        return Depth == Other.Depth && Stencil && Other.Stencil;
     }
 
     /**
@@ -738,7 +738,7 @@ struct FClearValue
      */
     FORCEINLINE bool IsColorValue() const 
     { 
-        return (Type == EType::Color);
+        return Type == EType::Color;
     }
 
     /** 
@@ -746,7 +746,7 @@ struct FClearValue
      */
     FORCEINLINE bool IsDepthStencilValue() const 
     { 
-        return (Type == EType::DepthStencil);
+        return Type == EType::DepthStencil;
     }
 
     /**
@@ -815,18 +815,18 @@ struct FClearValue
      */
     bool operator==(const FClearValue& Other) const
     {
-        if ((Type != Other.Type) || (Format != Other.Format))
+        if (Type != Other.Type || Format != Other.Format)
         {
             return false;
         }
 
         if (IsColorValue())
         {
-            return (ColorValue == Other.ColorValue);
+            return ColorValue == Other.ColorValue;
         }
 
         CHECK(IsDepthStencilValue());
-        return (DepthStencilValue == Other.DepthStencilValue);
+        return DepthStencilValue == Other.DepthStencilValue;
     }
 
     /**

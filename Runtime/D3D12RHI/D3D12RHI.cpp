@@ -229,7 +229,7 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& I
     Desc.MinLOD         = InDesc.MinLOD;
     Desc.MipLODBias     = InDesc.MipLODBias;
 
-    FMemory::Memcpy(Desc.BorderColor, InDesc.BorderColor.Data(), sizeof(Desc.BorderColor));
+    FMemory::Memcpy(Desc.BorderColor, &InDesc.BorderColor.r, sizeof(Desc.BorderColor));
 
     FD3D12SamplerStateRef NewSampler = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InDesc);
     if (!NewSampler->CreateSampler(Desc))
@@ -726,7 +726,7 @@ FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIG
 
 FRHIComputePipelineState* FD3D12RHI::RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer)
 {
-    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InDesc.Shader));
+    FD3D12ComputePipelineStateRef NewPipelineState = new FD3D12ComputePipelineState(GetDevice(), MakeSharedRef<FD3D12ComputeShader>(InInitializer.Shader));
     if (!NewPipelineState->Initialize())
     {
         return nullptr;

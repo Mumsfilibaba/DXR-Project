@@ -492,11 +492,11 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
         if (!BufferData)
         {
             D3D12_ERROR("Failed to map buffer data");
-            return false;
+            return;
         }
 
         // Copy over relevant data
-        FMemory::Memcpy(BufferData + BufferRange.Offset, SrcData, BufferRegion.Size);
+        FMemory::Memcpy(BufferData + BufferRegion.Offset, SrcData, BufferRegion.Size);
 
         // Unmap buffer memory
         Resource->UnmapRange(0, &BufferRange);
@@ -619,7 +619,7 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
             // it is not certain that there will be a call to draw inside of the RenderPass
             if (RenderTargetView.LoadAction == EAttachmentLoadAction::Clear)
             {
-                CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), RenderTargetView.ClearValue.Data(), 0, nullptr);
+                CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), &RenderTargetView.ClearValue.r, 0, nullptr);
             }
             
             ContextState.Graphics.RTCache.SetRenderTarget(D3D12RenderTargetView, Index);

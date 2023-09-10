@@ -292,7 +292,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     VkClearValue ClearValues[FRHILimits::MaxRenderTargets + 1];
     FMemory::Memzero(ClearValues, sizeof(ClearValues));
     
-    // Check for each rendertarget-texture
+    // Check for each render-target-texture
     FVulkanRenderPassKey RenderPassKey;
     RenderPassKey.NumRenderTargets = RenderPassInitializer.NumRenderTargets;
     
@@ -304,14 +304,14 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         {
             Width      = FMath::Max<int32>(VulkanTexture->GetWidth(), Width);
             Height     = FMath::Max<int32>(VulkanTexture->GetHeight(), Height);
-            NumSamples = FMath::Max<int32>(VulkanTexture->GetNumSamples(), NumSamples);
+            NumSamples = FMath::Max<uint8>(VulkanTexture->GetNumSamples(), NumSamples);
 
             RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
             RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
             RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
             
             VkClearValue& ClearValue = ClearValues[NumClearValues++];
-            FMemory::Memcpy(ClearValue.color.float32, &RenderTargetView.ClearValue.R, sizeof(ClearValue.color.float32));
+            FMemory::Memcpy(ClearValue.color.float32, &RenderTargetView.ClearValue.r, sizeof(ClearValue.color.float32));
 
             // Get the image view
             if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
@@ -326,7 +326,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     {
         Width      = FMath::Max<int32>(VulkanTexture->GetWidth(), Width);
         Height     = FMath::Max<int32>(VulkanTexture->GetHeight(), Height);
-        NumSamples = FMath::Max<int32>(VulkanTexture->GetNumSamples(), NumSamples);
+        NumSamples = FMath::Max<uint8>(VulkanTexture->GetNumSamples(), NumSamples);
 
         const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
         RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
@@ -344,7 +344,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         }
     }
 
-    // Retreive or create a RenderPass
+    // Retrieve or create a RenderPass
     RenderPassKey.NumSamples = NumSamples;
 
     VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
@@ -353,7 +353,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         DEBUG_BREAK();
     }
     
-    // Retreive or create a FrameBuffer
+    // Retrieve or create a FrameBuffer
     FramebufferKey.RenderPass = RenderPass;
     FramebufferKey.Width      = Width;
     FramebufferKey.Height     = Height;
@@ -503,7 +503,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
     
     if (IsEnumFlagSet(VulkanBuffer->GetFlags(), EBufferUsageFlags::Dynamic))
     {
-        VkDevice       Device       = GetDevice()->GetVkDevice();
+        VkDevice       NativeDevice = GetDevice()->GetVkDevice();
         VkDeviceMemory DeviceMemory = VulkanBuffer->GetVkDeviceMemory();
         uint8*         BufferData   = nullptr;
         
@@ -512,7 +512,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
         // const VkDeviceSize AlignedSize = FMath::AlignUp<VkDeviceSize>(BufferRegion.Size, 0x100);
 
         // Map buffer memory
-        VkResult Result = vkMapMemory(Device, DeviceMemory, 0, VK_WHOLE_SIZE, 0, reinterpret_cast<void**>(&BufferData));
+        VkResult Result = vkMapMemory(NativeDevice, DeviceMemory, 0, VK_WHOLE_SIZE, 0, reinterpret_cast<void**>(&BufferData));
         if (VULKAN_FAILED(Result) || !BufferData)
         {
             VULKAN_ERROR("Failed to map buffer memory");
@@ -531,7 +531,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
         MappedMemoryRange.offset = 0;
         MappedMemoryRange.size   = VK_WHOLE_SIZE;
         
-        Result = vkFlushMappedMemoryRanges(Device, 1, &MappedMemoryRange);
+        Result = vkFlushMappedMemoryRanges(NativeDevice, 1, &MappedMemoryRange);
         if (VULKAN_FAILED(Result))
         {
             VULKAN_ERROR("Failed to flush buffer memory");
@@ -539,7 +539,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
         }
         
         // Unmap memory
-        vkUnmapMemory(Device, DeviceMemory);
+        vkUnmapMemory(NativeDevice, DeviceMemory);
     }
     else
     {
