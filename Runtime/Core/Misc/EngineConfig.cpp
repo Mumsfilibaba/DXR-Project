@@ -2,7 +2,6 @@
 #include "Parse.h"
 #include "OutputDeviceLogger.h"
 #include "ConsoleManager.h"
-
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 
@@ -136,13 +135,13 @@ bool FConfigFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewVa
 bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
 {
     FConfigValue* Value = nullptr;
-    if (SectionName)
+    if (!SectionName || FCString::Strcmp(SectionName, "") == 0)
     {
-        Value = FindValue(SectionName, Name);
+        Value = FindValue(Name);
     }
     else
     {
-        Value = FindValue(Name);
+        Value = FindValue(SectionName, Name);
     }
 
     if (Value)

@@ -470,7 +470,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     D3D12_ERROR_COND(Resource != nullptr, "Resource cannot be nullptr");
     D3D12_ERROR_COND(SrcData != nullptr, "SourceData cannot be nullptr");
 
-    if (BufferRegion.Size)
+    if (!BufferRegion.Size)
     {
         D3D12_WARNING("Trying to update buffer with zero size");
         return;

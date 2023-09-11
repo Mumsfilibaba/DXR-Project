@@ -16,6 +16,8 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
+#pragma optimize("", off)
+
 TAutoConsoleVariable<bool> CVarEnableGPUValidation(
     "D3D12RHI.EnableGPUValidation",
     "Enables GPU Based Validation if true",

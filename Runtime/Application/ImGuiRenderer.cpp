@@ -23,7 +23,7 @@ static void ImGuiCreateWindow(ImGuiViewport* InViewport)
     {
         FRHIViewportDesc ViewportDesc;
         ViewportDesc.WindowHandle = Window->GetPlatformHandle();
-        ViewportDesc.ColorFormat  = EFormat::R8G8B8A8_Unorm;
+        ViewportDesc.ColorFormat  = EFormat::B8G8R8A8_Unorm;
         ViewportDesc.Width        = static_cast<uint16>(InViewport->Size.x);
         ViewportDesc.Height       = static_cast<uint16>(InViewport->Size.y);
         
@@ -285,7 +285,7 @@ bool FImGuiRenderer::Initialize()
     PSOProperties.DepthStencilState                      = DepthStencilState.Get();
     PSOProperties.BlendState                             = BlendStateBlending.Get();
     PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
+    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::B8G8R8A8_Unorm;
     PSOProperties.PipelineFormats.NumRenderTargets       = 1;
     PSOProperties.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
 
@@ -336,7 +336,7 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
         return;
     }
 
-    // Render ImgGui draw datad
+    // Render ImgGui draw data
     ImGui::Render();
 
     FRHIViewportRef RHIViewport = Viewport->GetRHIViewport();
