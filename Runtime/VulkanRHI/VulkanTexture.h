@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanResourceView.h"
+#include "VulkanResourceViews.h"
 #include "VulkanDeviceObject.h"
 #include "VulkanRefCounted.h"
 #include "RHI/RHIResources.h"

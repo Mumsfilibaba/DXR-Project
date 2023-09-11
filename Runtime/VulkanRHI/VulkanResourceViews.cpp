@@ -1,4 +1,4 @@
-#include "VulkanResourceView.h"
+#include "VulkanResourceViews.h"
 #include "VulkanDevice.h"
 
 FVulkanImageView::FVulkanImageView(FVulkanDevice* InDevice)

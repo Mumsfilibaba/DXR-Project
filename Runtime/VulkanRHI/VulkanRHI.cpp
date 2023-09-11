@@ -5,7 +5,7 @@
 #include "VulkanPipelineState.h"
 #include "VulkanBuffer.h"
 #include "VulkanTexture.h"
-#include "VulkanResourceView.h"
+#include "VulkanResourceViews.h"
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
 #include "Platform/PlatformVulkan.h"
