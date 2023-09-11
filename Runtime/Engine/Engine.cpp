@@ -87,8 +87,8 @@ bool FEngine::CreateMainViewport()
     
     FViewportInitializer ViewportInitializer;
     ViewportInitializer.Window = MainWindow.Get();
-    ViewportInitializer.Width  = 2560;
-    ViewportInitializer.Height = 1440;
+    ViewportInitializer.Width  = MainWindow->GetWidth();
+    ViewportInitializer.Height = MainWindow->GetHeight();
     
     if (!Viewport->InitializeRHI(ViewportInitializer))
     {

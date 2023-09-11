@@ -44,6 +44,11 @@ public:
         return SwapChain; 
     }
     
+    VkExtent2D GetExtent() const
+    {
+        return Extent;
+    }
+
     VkSurfaceFormatKHR GetVkSurfaceFormat() const
     {
         return Format;
@@ -62,6 +67,7 @@ public:
 private:
     VkResult           PresentResult;
     VkSwapchainKHR     SwapChain;
+    VkExtent2D         Extent;
     uint32             BufferIndex;
     uint32             BufferCount;
     VkSurfaceFormatKHR Format;

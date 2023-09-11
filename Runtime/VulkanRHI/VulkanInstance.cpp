@@ -6,9 +6,8 @@
 
 TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
     "Vulkan.VerboseLogging",
-    "Enables more loggin within VulkanRHI",
+    "Enables more logging within VulkanRHI",
     true);
-
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

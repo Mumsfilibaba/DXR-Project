@@ -9,6 +9,12 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& I
     , FVulkanDeviceObject(InDevice)
     , Image(VK_NULL_HANDLE)
     , DeviceMemory(VK_NULL_HANDLE)
+    , Format(VK_FORMAT_UNDEFINED)
+    , ShaderResourceView(nullptr)
+    , UnorderedAccessView(nullptr)
+    , RenderTargetViews()
+    , DepthStencilViews()
+    , DebugName()
 {
 }
 
@@ -324,10 +330,27 @@ FVulkanImageView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepthSte
     return NewImageView.Get();
 }
 
+void FVulkanTexture::SetVkImage(VkImage InImage)
+{
+    Image = InImage;
+    RenderTargetViews.Clear();
+    DepthStencilViews.Clear();
+
+    // NOTE: Use the format in the description to set the native format if it is not set yet
+    // this should only happen for BackBuffers
+    if (Format == VK_FORMAT_UNDEFINED)
+    {
+        Format = ConvertFormat(Desc.Format);
+    }
+}
+
 void FVulkanTexture::SetName(const FString& InName)
 {
-    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Image, VK_OBJECT_TYPE_IMAGE);
-    DebugName = InName;
+    if (VULKAN_CHECK_HANDLE(Image))
+    {
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Image, VK_OBJECT_TYPE_IMAGE);
+        DebugName = InName;
+    }
 }
 
 FString FVulkanTexture::GetName() const

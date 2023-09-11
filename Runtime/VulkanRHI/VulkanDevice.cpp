@@ -159,7 +159,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     }
     
     DeviceCreateHelper.AddNext(DeviceFeaturesVulkan12);
-
     
     // Check and enable extension features
 #if VK_EXT_depth_clip_enable
@@ -167,14 +166,20 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     FMemory::Memzero(&DepthClipEnableFeatures);
     DepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
 
-    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME))
+    const VkPhysicalDeviceDepthClipEnableFeaturesEXT& AvailableDepthClipEnableFeatures = GetPhysicalDevice()->GetDepthClipEnableFeatures();
+    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME) && AvailableDepthClipEnableFeatures.depthClipEnable)
     {
-        DepthClipEnableFeatures.depthClipEnable = VK_TRUE;
-        DeviceCreateHelper.AddNext(DepthClipEnableFeatures);
-        bSupportsDepthClip = true;
+        const VkPhysicalDeviceFeatures& AvailableDeviceFeatures = GetPhysicalDevice()->GetDeviceFeatures();
+        if (AvailableDeviceFeatures.depthClamp)
+        {
+            DeviceFeatures2.features.depthClamp     = VK_TRUE;
+            DepthClipEnableFeatures.depthClipEnable = VK_TRUE;
+            DeviceCreateHelper.AddNext(DepthClipEnableFeatures);
+            bSupportsDepthClip = true;
+        }
     }
 #endif
-    
+
 #if VK_EXT_conservative_rasterization
     if (IsExtensionEnabled(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME))
     {

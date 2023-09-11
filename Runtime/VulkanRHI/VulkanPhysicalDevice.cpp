@@ -23,7 +23,7 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     
     // Helper for checking for extensions
     FVulkanStructureHelper DeviceFeaturesHelper(DeviceFeatures2);
-    
+
     // Vulkan 1.1 features
     VkPhysicalDeviceVulkan11Features DeviceFeatures11;
     FMemory::Memzero(&DeviceFeatures11);
@@ -35,17 +35,17 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     FMemory::Memzero(&DeviceFeatures12);
     DeviceFeatures12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     DeviceFeaturesHelper.AddNext(DeviceFeatures12);
-    
+
     // Get the physical device features
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
 
 
     // Check Vulkan 1.0 features
     const uint64 NumFeatures10 = ((OFFSETOF(VkPhysicalDeviceFeatures, inheritedQueries) - OFFSETOF(VkPhysicalDeviceFeatures, robustBufferAccess)) / sizeof(VkBool32)) + 1;
-    
+
     const VkBool32* RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures);
     const VkBool32* AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures2.features);
-    
+
     bool bHasAllFeatures = true;
     for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures10; ++FeatureIndex)
     {
@@ -56,19 +56,19 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
             break;
         }
     }
-    
+
     if (!bHasAllFeatures)
     {
         return false;
     }
-    
-    
+
+
     // Check Vulkan 1.1 features
     const uint64 NumFeatures11 = ((OFFSETOF(VkPhysicalDeviceVulkan11Features, shaderDrawParameters) - OFFSETOF(VkPhysicalDeviceVulkan11Features, storageBuffer16BitAccess)) / sizeof(VkBool32)) + 1;
-    
+
     RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures11.storageBuffer16BitAccess);
     AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures11.storageBuffer16BitAccess);
-    
+
     bHasAllFeatures = true;
     for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures11; ++FeatureIndex)
     {
@@ -79,19 +79,19 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
             break;
         }
     }
-    
+
     if (!bHasAllFeatures)
     {
         return false;
     }
-    
-    
+
+
     // Check Vulkan 1.2 features
     const uint64 NumFeatures12 = ((OFFSETOF(VkPhysicalDeviceVulkan12Features, subgroupBroadcastDynamicId) - OFFSETOF(VkPhysicalDeviceVulkan12Features, samplerMirrorClampToEdge)) / sizeof(VkBool32)) + 1;
-    
+
     RequiredFeatures  = reinterpret_cast<const VkBool32*>(&DeviceDesc.RequiredFeatures12.samplerMirrorClampToEdge);
     AvailableFeatures = reinterpret_cast<const VkBool32*>(&DeviceFeatures12.samplerMirrorClampToEdge);
-    
+
     bHasAllFeatures = true;
     for (uint32 FeatureIndex = 0; FeatureIndex < NumFeatures12; ++FeatureIndex)
     {
@@ -102,12 +102,12 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
             break;
         }
     }
-    
+
     if (!bHasAllFeatures)
     {
         return false;
     }
-    
+
     return true;
 }
 
@@ -126,7 +126,7 @@ static FString GetQueuePropertiesAsString(const VkQueueFamilyProperties& Propert
     {
         PropertyString += "COPY | ";
     }
-    
+
     PropertyString.Pop();
     PropertyString.Pop();
     PropertyString.Pop();

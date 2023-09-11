@@ -304,7 +304,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         {
             Width      = FMath::Max<int32>(VulkanTexture->GetWidth(), Width);
             Height     = FMath::Max<int32>(VulkanTexture->GetHeight(), Height);
-            NumSamples = FMath::Max<uint8>(VulkanTexture->GetNumSamples(), NumSamples);
+            NumSamples = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
 
             RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
             RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
@@ -326,7 +326,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     {
         Width      = FMath::Max<int32>(VulkanTexture->GetWidth(), Width);
         Height     = FMath::Max<int32>(VulkanTexture->GetHeight(), Height);
-        NumSamples = FMath::Max<uint8>(VulkanTexture->GetNumSamples(), NumSamples);
+        NumSamples = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
 
         const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
         RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
@@ -355,8 +355,8 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     
     // Retrieve or create a FrameBuffer
     FramebufferKey.RenderPass = RenderPass;
-    FramebufferKey.Width      = Width;
-    FramebufferKey.Height     = Height;
+    FramebufferKey.Width      = static_cast<uint16>(Width);
+    FramebufferKey.Height     = static_cast<uint16>(Height);
 
     VkFramebuffer FrameBuffer =  GetDevice()->GetFramebufferCache().GetFramebuffer(FramebufferKey);
     if (!VULKAN_CHECK_HANDLE(FrameBuffer))
