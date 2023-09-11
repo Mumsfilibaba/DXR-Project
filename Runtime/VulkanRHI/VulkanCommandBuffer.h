@@ -197,6 +197,10 @@ public:
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }
     
+    FORCEINLINE void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
+    {
+        vkCmdDispatch(CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
+    }
 
     FORCEINLINE bool WaitForFence(uint64 TimeOut = UINT64_MAX)
     {

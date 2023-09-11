@@ -216,6 +216,7 @@ VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBufferToImage);
 VULKAN_FUNCTION_DEFINITION(CmdCopyImage);
+VULKAN_FUNCTION_DEFINITION(CmdDispatch);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device)
 {
@@ -331,6 +332,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBufferToImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImage);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDispatch);
     
     // Initialize Dedicated Allocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);

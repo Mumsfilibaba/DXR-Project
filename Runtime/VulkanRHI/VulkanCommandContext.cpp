@@ -854,6 +854,7 @@ void FVulkanCommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance
 void FVulkanCommandContext::RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
     ContextState.ApplyCompute(CommandBuffer);
+    // CommandBuffer.Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 }
 
 void FVulkanCommandContext::RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
