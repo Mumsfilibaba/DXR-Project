@@ -184,7 +184,7 @@ void Main(FComputeShaderInput Input)
         StoreColor(Input.GroupIndex, Src1);
     }
 
-    if (NumMipLevels == 2)
+    if (Constants.NumMipLevels == 2)
     {
         return;
     }
@@ -207,7 +207,7 @@ void Main(FComputeShaderInput Input)
         StoreColor(Input.GroupIndex, Src1);
     }
 
-    if (NumMipLevels == 3)
+    if (Constants.NumMipLevels == 3)
     {
         return;
     }

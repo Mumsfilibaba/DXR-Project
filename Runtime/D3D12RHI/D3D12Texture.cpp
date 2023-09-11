@@ -68,7 +68,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         }
         else if (Desc.ClearValue.IsColorValue())
         {
-            FMemory::Memcpy(D3D12ClearValue.Color, Desc.ClearValue.AsColor().Data(), sizeof(float[4]));
+            FMemory::Memcpy(D3D12ClearValue.Color, &Desc.ClearValue.ColorValue.r, sizeof(float[4]));
         }
     }
 

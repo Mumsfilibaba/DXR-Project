@@ -1,26 +1,13 @@
 #include "VulkanSwapChain.h"
-#include "Core/Misc/ConsoleManager.h"
-
-TAutoConsoleVariable<bool> CVarOverrideSwapchainFormat(
-    "Vulkan.OverrideSwapchainFormat",
-    "Enables VulkanRHI to override the specified format with a more suiting format based on the input-format (Example. RGBA -> BGRA)",
-    true);
-
-static VkFormat GetOverrideFormat(VkFormat InFormat)
-{
-    switch(InFormat)
-    {
-        case VK_FORMAT_R8G8B8A8_UNORM: return VK_FORMAT_B8G8R8A8_UNORM;
-        default: return VK_FORMAT_UNDEFINED;
-    }
-}
-
 
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
     : FVulkanDeviceObject(InDevice)
     , PresentResult(VK_SUCCESS)
     , SwapChain(VK_NULL_HANDLE)
+    , Extent{ 0, 0 }
     , BufferIndex(0)
+    , BufferCount(0)
+    , Format{ VK_FORMAT_UNDEFINED, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR }
 {
 }
 
@@ -69,16 +56,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     
     // See if the exact format is available
     VkSurfaceFormatKHR SelectedFormat = MatchFormat(DesiredFormat);
-    if (CVarOverrideSwapchainFormat.GetValue())
-    {
-        // If we did not find the format (And the CVar is true) we try and override the desired format and see if that is available
-        if (SelectedFormat.format == VK_FORMAT_UNDEFINED)
-        {
-            const VkSurfaceFormatKHR OverrideFormat { GetOverrideFormat(DesiredFormat.format), CreateInfo.ColorSpace };
-            SelectedFormat = MatchFormat(OverrideFormat);
-        }
-    }
-    
+
     // Here we need to see if we failed to find any format
     if (SelectedFormat.format == VK_FORMAT_UNDEFINED)
     {
@@ -130,6 +108,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
         return false;
     }
 
+    // Determine the size of the SwapChain
     VkExtent2D CurrentExtent;
     if (Capabilities.currentExtent.width != UINT32_MAX || Capabilities.currentExtent.height != UINT32_MAX || CreateInfo.Extent.width == 0 || CreateInfo.Extent.height == 0)
     {
@@ -137,8 +116,8 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     }
     else
     {
-        CurrentExtent.width  = FMath::Max(Capabilities.minImageExtent.width , FMath::Min(Capabilities.maxImageExtent.width , CreateInfo.Extent.width));
-        CurrentExtent.height = FMath::Max(Capabilities.minImageExtent.height, FMath::Min(Capabilities.maxImageExtent.height, CreateInfo.Extent.height));
+        CurrentExtent.width  = FMath::Clamp(Capabilities.minImageExtent.width , Capabilities.maxImageExtent.width , CreateInfo.Extent.width);
+        CurrentExtent.height = FMath::Clamp(Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height, CreateInfo.Extent.height);
     }
 
     CurrentExtent.width  = FMath::Max(CurrentExtent.width , 1u);
@@ -180,6 +159,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, nullptr);
     VULKAN_CHECK_RESULT(Result, "Failed to retrieve the number of images in SwapChain");
 
+    Extent = CurrentExtent;
     Format = SelectedFormat;
     return true;
 }

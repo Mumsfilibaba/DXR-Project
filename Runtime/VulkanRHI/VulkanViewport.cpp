@@ -15,8 +15,11 @@ FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanQueue* InQueue,
     , SwapChain(nullptr)
     , Queue(MakeSharedRef<FVulkanQueue>(InQueue))
     , BackBuffer(nullptr)
+    , BackBuffers()
     , ImageSemaphores()
     , RenderSemaphores()
+    , SemaphoreIndex(0)
+    , BackBufferIndex(0)
 {
 }
 
@@ -38,7 +41,7 @@ bool FVulkanViewport::Initialize()
     {
         return false;
     }
-    
+
     FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferDesc);
     if (!BackBuffer)
@@ -46,12 +49,12 @@ bool FVulkanViewport::Initialize()
         VULKAN_ERROR("Failed to create BackBuffer");
         return false;
     }
-    
+
     if (!AquireNextImage())
     {
         return false;
     }
-    
+
     return true;
 }
 
@@ -81,8 +84,18 @@ bool FVulkanViewport::CreateSwapChain()
     {
         SwapChain = NewSwapChain;
     }
-    
-    
+
+
+    // Update the description if the requested image size was not supported
+    VkExtent2D SwapChainExtent = SwapChain->GetExtent();
+    if (Desc.Width != SwapChainExtent.width || Desc.Height != SwapChainExtent.height)
+    {
+        VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Desc.Width, Desc.Height, SwapChainExtent.width, SwapChainExtent.height);
+        Desc.Width  = static_cast<uint16>(SwapChainExtent.width);
+        Desc.Height = static_cast<uint16>(SwapChainExtent.height);
+    }
+
+
     // Initialize semaphores and backbuffers
     const uint32 BufferCount = SwapChain->GetBufferCount();
     if (BufferCount != static_cast<uint32>(BackBuffers.Size()))
@@ -90,7 +103,7 @@ bool FVulkanViewport::CreateSwapChain()
         ImageSemaphores.Resize(BufferCount);
         RenderSemaphores.Resize(BufferCount);
         BackBuffers.Resize(BufferCount);
-        
+
         FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
         for (uint32 Index = 0; Index < BufferCount; ++Index)
         {
@@ -115,7 +128,7 @@ bool FVulkanViewport::CreateSwapChain()
             {
                 return false;
             }
-            
+
             if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferDesc))
             {
                 BackBuffers[Index] = NewTexture;
@@ -126,8 +139,8 @@ bool FVulkanViewport::CreateSwapChain()
             }
         }
     }
-    
-    
+
+
     // Retrieve the images
     TArray<VkImage> SwapChainImages(SwapChain->GetBufferCount());
     SwapChain->GetSwapChainImages(SwapChainImages.Data());
@@ -140,7 +153,7 @@ bool FVulkanViewport::CreateSwapChain()
 
     // Transition images to the correct layout that is expected by the rendering engine (To be compatible with the other RHI modules)
     CommandBuffer->Begin();
-    
+
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
@@ -175,7 +188,7 @@ void FVulkanViewport::DestroySwapChain()
 {
     // Ensure that all work is completed
     Queue->WaitForCompletion();
-    
+
     // Destroy the swapchain
     SwapChain.Reset();
 }
@@ -186,8 +199,8 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
     {
         VULKAN_INFO("Swapchain Resize");
 
-        Desc.Width  = static_cast<uint32>(InWidth);
-        Desc.Height = static_cast<uint32>(InHeight);
+        Desc.Width  = static_cast<uint16>(InWidth);
+        Desc.Height = static_cast<uint16>(InHeight);
 
         Queue->FlushWaitSemaphoresAndWait();
 
@@ -225,9 +238,9 @@ bool FVulkanViewport::Present(bool bVerticalSync)
             return false;
         }
     }
-    
+
     AdvanceSemaphoreIndex();
-    
+
     if (!AquireNextImage())
     {
         return false;
@@ -243,10 +256,12 @@ void FVulkanViewport::SetName(const FString& InName)
     {
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), SwapChain->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
 
+        // Name the proxy
+        BackBuffer->SetName("BackBuffer Proxy");
+
         // Name all the images
-        uint32 Index = 0;
         FString ImageName;
-        for (FVulkanTextureRef Texture : BackBuffers)
+        for (uint32 Index = 0; FVulkanTextureRef Texture : BackBuffers)
         {
             ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", Index);
             Texture->SetName(ImageName);
@@ -263,19 +278,19 @@ bool FVulkanViewport::AquireNextImage()
 {
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
-    
-    // NOTE: For now we let suboptimal swapchains pass
+
+    // NOTE: For now we let suboptimal SwapChains pass
     VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
         VULKAN_ERROR("Failed to aquire SwapChain image");
         return false;
     }
-    
+
     // TOOD: Maybe change this, if maybe is not always desirable to always have a wait/signal
     Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
-    
+
     // Update the backbuffer index
     BackBufferIndex = SwapChain->GetBufferIndex();
     return true;

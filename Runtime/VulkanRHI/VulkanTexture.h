@@ -49,12 +49,7 @@ public:
 
     void DestroyDepthStencilViews() { DepthStencilViews.Clear(); }
 
-    void SetVkImage(VkImage InImage)
-    {
-        Image = InImage;
-        RenderTargetViews.Clear();
-        DepthStencilViews.Clear();
-    }
+    void SetVkImage(VkImage InImage);
     
     VkImage GetVkImage() const
     {

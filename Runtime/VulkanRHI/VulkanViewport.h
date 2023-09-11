@@ -61,16 +61,16 @@ private:
     
     void* WindowHandle;
 
-    FVulkanSurfaceRef         Surface;
-    FVulkanSwapChainRef       SwapChain;
-    FVulkanQueueRef           Queue;
-    FVulkanBackBufferTextureRef      BackBuffer;
-    TArray<FVulkanTextureRef> BackBuffers;
+    FVulkanSurfaceRef           Surface;
+    FVulkanSwapChainRef         SwapChain;
+    FVulkanQueueRef             Queue;
+    FVulkanBackBufferTextureRef BackBuffer;
+    TArray<FVulkanTextureRef>   BackBuffers;
     
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> ImageSemaphores;
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> RenderSemaphores;
     
-    uint32 SemaphoreIndex  = 0;
-    uint32 BackBufferIndex = 0;
+    uint32 SemaphoreIndex;
+    uint32 BackBufferIndex;
 };
 

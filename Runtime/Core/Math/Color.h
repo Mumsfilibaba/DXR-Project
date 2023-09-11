@@ -157,26 +157,26 @@ struct FFloatColor
      * @param InA - Alpha channel
      */
     FORCEINLINE FFloatColor(float InR, float InG, float InB, float InA)
-        : R(InR)
-        , G(InG)
-        , B(InB)
-        , A(InA)
+        : r(InR)
+        , g(InG)
+        , b(InB)
+        , a(InA)
     {
     }
 
     uint64 GetHash() const
     {
         uint64 Hash = 0;
-        HashCombine(Hash, R);
-        HashCombine(Hash, G);
-        HashCombine(Hash, B);
-        HashCombine(Hash, A);
+        HashCombine(Hash, r);
+        HashCombine(Hash, g);
+        HashCombine(Hash, b);
+        HashCombine(Hash, a);
         return Hash;
     }
 
     bool operator==(const FFloatColor& RHS) const
     {
-        return R == RHS.R && G == RHS.G && B == RHS.B && A == RHS.A;
+        return r == RHS.r && g == RHS.g && b == RHS.b && a == RHS.a;
     }
 
     bool operator!=(const FFloatColor& RHS) const
@@ -185,16 +185,16 @@ struct FFloatColor
     }
 
     /** @brief - Red channel */
-    float R{0.0f};
+    float r{0.0f};
     
     /** @brief - Green channel */
-    float G{0.0f};
+    float g{0.0f};
     
     /** @brief - Blue channel */
-    float B{0.0f};
+    float b{0.0f};
     
     /** @brief - Alpha channel */
-    float A{0.0f};
+    float a{0.0f};
 };
 
 MARK_AS_REALLOCATABLE(FFloatColor);

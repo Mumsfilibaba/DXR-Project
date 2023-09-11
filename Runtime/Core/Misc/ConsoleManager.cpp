@@ -546,7 +546,6 @@ void FConsoleManager::UnregisterObject(IConsoleObject* ConsoleObject)
         // Delete and erase reference to object
         IConsoleObject* Object = ExistingObject->second;
         delete Object;
-
         ConsoleObjects.erase(ExistingObject);
     }
 }

@@ -186,10 +186,10 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         if (Desc.IsDynamic())
         {
             void* BufferData = nullptr;
-            VkDevice Device = GetDevice()->GetVkDevice();
+            VkDevice NativeDevice = GetDevice()->GetVkDevice();
             
             // Map buffer
-            Result = vkMapMemory(Device, DeviceMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
+            Result = vkMapMemory(NativeDevice, DeviceMemory, 0, VK_WHOLE_SIZE, 0, &BufferData);
             if (VULKAN_FAILED(Result) || !BufferData)
             {
                 VULKAN_ERROR("Failed to map buffer memory");
@@ -200,7 +200,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
             FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
             
             // Unmap buffer
-            vkUnmapMemory(Device, DeviceMemory);
+            vkUnmapMemory(NativeDevice, DeviceMemory);
         }
         else
         {

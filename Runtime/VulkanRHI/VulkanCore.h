@@ -568,10 +568,12 @@ constexpr VkAttachmentLoadOp ConvertLoadAction(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
-        case EAttachmentLoadAction::DontCare: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         case EAttachmentLoadAction::Load:     return VK_ATTACHMENT_LOAD_OP_LOAD;
         case EAttachmentLoadAction::Clear:    return VK_ATTACHMENT_LOAD_OP_CLEAR;
+        case EAttachmentLoadAction::DontCare: return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     }
+
+    return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 }
 
 constexpr VkAttachmentStoreOp ConvertStoreAction(EAttachmentStoreAction LoadAction)
@@ -581,6 +583,8 @@ constexpr VkAttachmentStoreOp ConvertStoreAction(EAttachmentStoreAction LoadActi
         case EAttachmentStoreAction::DontCare: return VK_ATTACHMENT_STORE_OP_DONT_CARE;
         case EAttachmentStoreAction::Store:    return VK_ATTACHMENT_STORE_OP_STORE;
     }
+
+    return VK_ATTACHMENT_STORE_OP_DONT_CARE;
 }
 
 constexpr VkIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
@@ -590,6 +594,8 @@ constexpr VkIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
         case EIndexFormat::uint16: return VK_INDEX_TYPE_UINT16;
         case EIndexFormat::uint32: return VK_INDEX_TYPE_UINT32;
     }
+
+    return VkIndexType(-1);
 }
 
 constexpr VkFormat ConvertFormat(EFormat Format)
