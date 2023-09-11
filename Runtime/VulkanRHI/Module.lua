@@ -46,7 +46,8 @@ local VulkanInclude = VulkanPath .. '/include'
 LogHighlight('Vulkan include path=%s', VulkanInclude)
 
 local VulkanRHI = FModuleBuildRules('VulkanRHI')
-VulkanRHI.bRuntimeLinking = false
+VulkanRHI.bRuntimeLinking        = true
+VulkanRHI.bUsePrecompiledHeaders = true
 
 VulkanRHI.AddModuleDependencies( 
 {
