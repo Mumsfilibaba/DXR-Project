@@ -459,7 +459,7 @@ function FWorkspaceRules(WorkspaceName)
             -- glslang group --
             -------------------
             group "Dependencies/glslang"
-                LogInfo("\n--- glslang projects ---")
+                LogInfo("\n    --- Generating glslang projects ---")
 
                 -- Include directories for build-time generated include files
                 local GLSLANG_GENERATED_INCLUDEDIR = path.join("build/generated/include", "glslang")
@@ -468,7 +468,7 @@ function FWorkspaceRules(WorkspaceName)
                 -- GenericCodeGen --
                 --------------------
                 project "GenericCodeGen"
-                    LogInfo("    Generating dependecy GenericCodeGen")
+                    LogInfo("        Generating dependecy GenericCodeGen")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -517,11 +517,82 @@ function FWorkspaceRules(WorkspaceName)
                         optimize("Full")
                     filter {}
 
+                -----------------
+                -- OSDependent --
+                -----------------
+                project "OSDependent"
+                    LogInfo("        Generating dependecy OSDependent")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/OSDependent/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/OSDependent/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/OSDependent/" .. self.GetOutputPath())
+
+                    -- Include Directories
+                    includedirs
+                    {
+                        (ExternalDependecyPath .. "/glslang/OGLCompilersDLL"),
+                    }
+
+                    -- Files
+                    files 
+                    {
+                        (ExternalDependecyPath .. "/glslang/glslang/OSDependent/osinclude.h"),
+                    }
+
+                    filter "system:Windows"
+                        files 
+                        {
+                            (ExternalDependecyPath .. "/glslang/glslang/OSDependent/Windows/main.cpp"),
+                            (ExternalDependecyPath .. "/glslang/glslang/OSDependent/Windows/ossource.cpp"),
+                        }
+                    filter "system:Mac"
+                        files 
+                        {
+                            (ExternalDependecyPath .. "/glslang/glslang/OSDependent/Unix/ossource.cpp"),
+                        }
+                    filter {}
+
+                    Glslang_SetPlatformProperties()
+
+                    -- Configurations 
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+
                 ------------------------
                 -- MachineIndependent --
                 ------------------------
                 project "MachineIndependent"
-                    LogInfo("    Generating dependecy MachineIndependent")
+                    LogInfo("        Generating dependecy MachineIndependent")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -638,7 +709,7 @@ function FWorkspaceRules(WorkspaceName)
                 -- glslang --
                 -------------
                 project "glslang"
-                    LogInfo("    Generating dependecy glslang")
+                    LogInfo("        Generating dependecy glslang")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -722,7 +793,7 @@ function FWorkspaceRules(WorkspaceName)
                 -- ResourceLimits --
                 --------------------
                 project "glslang-default-resource-limits"
-                    LogInfo("    Generating dependecy glslang-default-resource-limits")
+                    LogInfo("        Generating dependecy glslang-default-resource-limits")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -786,7 +857,7 @@ function FWorkspaceRules(WorkspaceName)
                 -- OGLCompiler --
                 ------------------
                 project "OGLCompiler"
-                    LogInfo("    Generating dependecy OGLCompiler")
+                    LogInfo("        Generating dependecy OGLCompiler")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -839,7 +910,7 @@ function FWorkspaceRules(WorkspaceName)
                 -- SPIR-V --
                 ------------
                 project "SPIRV"
-                    LogInfo("    Generating dependecy SPIRV")
+                    LogInfo("        Generating dependecy SPIRV")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -933,7 +1004,7 @@ function FWorkspaceRules(WorkspaceName)
                 -- SPIR-V Remapper --
                 ---------------------
                 project "SPVRemapper"
-                    LogInfo("    Generating dependecy SPVRemapper")
+                    LogInfo("        Generating dependecy SPVRemapper")
 
                     kind("StaticLib")
                     warnings("Off")
