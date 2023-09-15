@@ -168,18 +168,12 @@ public:
     FVulkanComputeShader(FVulkanDevice* InDevice)
         : FRHIComputeShader()
         , FVulkanShader(InDevice, ShaderVisibility_Compute)
-        , ThreadGroupXYZ(1, 1, 1)
     {
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
     
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
-
-    virtual FIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
-
-protected:
-    FIntVector3 ThreadGroupXYZ;
 };
 
 

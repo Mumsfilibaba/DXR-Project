@@ -14,7 +14,7 @@ typedef TNullRHIShader<class FRHIAmplificationShader>    FNullRHIAmplificationSh
 typedef TNullRHIShader<class FRHIMeshShader>             FNullRHIMeshShader;
 typedef TNullRHIShader<class FRHIPixelShader>            FNullRHIPixelShader;
 
-typedef TNullRHIShader<struct FNullRHIComputeShaderBase> FNullRHIComputeShader;
+typedef TNullRHIShader<class FRHIComputeShader>          FNullRHIComputeShader;
 
 typedef TNullRHIShader<class FRHIRayTracingShader>       FNullRHIRayTracingShader;
 typedef TNullRHIShader<class FRHIRayGenShader>           FNullRHIRayGenShader;
@@ -23,16 +23,6 @@ typedef TNullRHIShader<class FRHIRayClosestHitShader>    FNullRHIRayClosestHitSh
 typedef TNullRHIShader<class FRHIRayAnyHitShader>        FNullRHIRayAnyHitShader;
 typedef TNullRHIShader<class FRHIRayIntersectionShader>  FNullRHIRayIntersectionShader;
 typedef TNullRHIShader<class FRHIRayCallableShader>      FNullRHIRayCallableShader;
-
-struct FNullRHIComputeShaderBase : public FRHIComputeShader
-{
-    FNullRHIComputeShaderBase()
-        : FRHIComputeShader()
-    {
-    }
-
-    virtual FIntVector3 GetThreadGroupXYZ() const override final { return FIntVector3(1, 1, 1); }
-};
 
 template<typename BaseShaderType>
 struct TNullRHIShader final : public BaseShaderType

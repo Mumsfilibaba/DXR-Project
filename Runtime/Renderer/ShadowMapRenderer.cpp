@@ -642,45 +642,45 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
 
         CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
-        FRHIComputeShaderRef CurrentShader;
+        FRHIComputeShaderRef CurrentShadowMaskShader;
         if (GCascadeDebug.GetValue())
         {
             CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
-            CurrentShader = DirectionalShadowMaskShader_Debug;
+            CurrentShadowMaskShader = DirectionalShadowMaskShader_Debug;
             CommandList.SetComputePipelineState(DirectionalShadowMaskPSO_Debug.Get());
         }
         else
         {
-            CurrentShader = DirectionalShadowMaskShader;
+            CurrentShadowMaskShader = DirectionalShadowMaskShader;
             CommandList.SetComputePipelineState(DirectionalShadowMaskPSO.Get());
         }
 
-        CommandList.SetConstantBuffer(CurrentShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-        CommandList.SetConstantBuffer(CurrentShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 1);
+        CommandList.SetConstantBuffer(CurrentShadowMaskShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+        CommandList.SetConstantBuffer(CurrentShadowMaskShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 1);
 
-        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
-        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
 
-        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 2);
-        CommandList.SetShaderResourceView(CurrentShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 3);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 2);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 3);
 
-        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
-        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);
-        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 6);
-        CommandList.SetShaderResourceView(CurrentShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 4);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.ShadowMapCascades[1]->GetShaderResourceView(), 5);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.ShadowMapCascades[2]->GetShaderResourceView(), 6);
+        CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
 
-        CommandList.SetUnorderedAccessView(CurrentShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
+        CommandList.SetUnorderedAccessView(CurrentShadowMaskShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
         if (GCascadeDebug.GetValue())
         {
-            CommandList.SetUnorderedAccessView(CurrentShader.Get(), LightSetup.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
+            CommandList.SetUnorderedAccessView(CurrentShadowMaskShader.Get(), LightSetup.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
         }
 
-        CommandList.SetSamplerState(CurrentShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
+        CommandList.SetSamplerState(CurrentShadowMaskShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 0);
 
-        const FIntVector3 ThreadGroupXYZ = CurrentShader->GetThreadGroupXYZ();
-        const uint32 ThreadsX = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), ThreadGroupXYZ.x);
-        const uint32 ThreadsY = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), ThreadGroupXYZ.y);
+        constexpr uint32 NumThreads = 16;
+        const uint32 ThreadsX = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), NumThreads);
+        const uint32 ThreadsY = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), NumThreads);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);

@@ -644,26 +644,22 @@ void FD3D12CommandContext::RHISetShaderResourceView(FRHIShader* Shader, FRHIShad
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
     FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
-    ContextState.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterInfo.Register);
+    ContextState.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterIndex);
 }
 
 void FD3D12CommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetShaderResourceParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex + InShaderResourceViews.Size() <= D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
 
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
         FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(InShaderResourceViews[Index]);
-        ContextState.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterInfo.Register + Index);
+        ContextState.DescriptorCache.SetShaderResourceView(D3D12Shader->GetShaderVisibility(), D3D12ShaderResourceView, ParameterIndex + Index);
     }
 }
 
@@ -671,26 +667,22 @@ void FD3D12CommandContext::RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUno
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
     FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
-    ContextState.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterInfo.Register);
+    ContextState.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterIndex);
 }
 
 void FD3D12CommandContext::RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetUnorderedAccessParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex + InUnorderedAccessViews.Size() <= D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
 
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
         FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(InUnorderedAccessViews[Index]);
-        ContextState.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterInfo.Register + Index);
+        ContextState.DescriptorCache.SetUnorderedAccessView(D3D12Shader->GetShaderVisibility(), D3D12UnorderedAccessView, ParameterIndex + Index);
     }
 }
 
@@ -698,18 +690,16 @@ void FD3D12CommandContext::RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* 
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
 
     if (ConstantBuffer)
     {
         FD3D12ConstantBufferView* D3D12ConstantBufferView = static_cast<FD3D12Buffer*>(ConstantBuffer)->GetConstantBufferView();
-        ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), D3D12ConstantBufferView, ParameterInfo.Register);
+        ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), D3D12ConstantBufferView, ParameterIndex);
     }
     else
     {
-        ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), nullptr, ParameterInfo.Register);
+        ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), nullptr, ParameterIndex);
     }
 }
 
@@ -717,20 +707,18 @@ void FD3D12CommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArra
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetConstantBufferParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex + InConstantBuffers.Size() <= D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
 
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         if (InConstantBuffers[Index])
         {
             FD3D12ConstantBufferView* D3D12ConstantBufferView = static_cast<FD3D12Buffer*>(InConstantBuffers[Index])->GetConstantBufferView();
-            ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), D3D12ConstantBufferView, ParameterInfo.Register + Index);
+            ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), D3D12ConstantBufferView, ParameterIndex + Index);
         }
         else
         {
-            ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), nullptr, ParameterInfo.Register + Index);
+            ContextState.DescriptorCache.SetConstantBufferView(D3D12Shader->GetShaderVisibility(), nullptr, ParameterIndex + Index);
         }
     }
 }
@@ -739,26 +727,22 @@ void FD3D12CommandContext::RHISetSamplerState(FRHIShader* Shader, FRHISamplerSta
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
 
     FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(SamplerState);
-    ContextState.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register);
+    ContextState.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterIndex);
 }
 
 void FD3D12CommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
     CHECK(D3D12Shader != nullptr);
-
-    FD3D12ShaderParameter ParameterInfo = D3D12Shader->GetSamplerStateParameter(ParameterIndex);
-    D3D12_ERROR_COND(ParameterInfo.Space == 0, "Global variables must be bound to RegisterSpace=0");
+    CHECK(ParameterIndex + InSamplerStates.Size() <= D3D12_DEFAULT_SAMPLER_STATE_COUNT);
 
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
         FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(InSamplerStates[Index]);
-        ContextState.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterInfo.Register + Index);
+        ContextState.DescriptorCache.SetSamplerState(D3D12Shader->GetShaderVisibility(), D3D12SamplerState, ParameterIndex + Index);
     }
 }
 

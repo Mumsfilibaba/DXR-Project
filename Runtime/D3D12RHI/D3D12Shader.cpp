@@ -58,12 +58,8 @@ FD3D12Shader::~FD3D12Shader()
 template<typename TD3D12ReflectionInterface>
 bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, FD3D12Shader* Shader, uint32 NumBoundResources)
 {
-    FShaderResourceCount          ResourceCount;
-    FShaderResourceCount          RTLocalResourceCount;
-    TArray<FD3D12ShaderParameter> ConstantBufferParameters;
-    TArray<FD3D12ShaderParameter> SamplerParameters;
-    TArray<FD3D12ShaderParameter> ShaderResourceParameters;
-    TArray<FD3D12ShaderParameter> UnorderedAccessParameters;
+    FShaderResourceCount ResourceCount;
+    FShaderResourceCount RTLocalResourceCount;
 
     D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
     for (uint32 i = 0; i < NumBoundResources; i++)
@@ -109,7 +105,6 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
             }
             else
             {
-                ConstantBufferParameters.Emplace(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, SizeInBytes);
                 if (ShaderBindDesc.Space == 0)
                 {
                     ResourceCount.Ranges.NumCBVs = FMath::Max(ResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
@@ -122,8 +117,6 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         }
         else if (ShaderBindDesc.Type == D3D_SIT_SAMPLER)
         {
-            SamplerParameters.Emplace(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, 0);
-
             if (ShaderBindDesc.Space == 0)
             {
                 ResourceCount.Ranges.NumSamplers = FMath::Max(ResourceCount.Ranges.NumSamplers, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
@@ -135,10 +128,6 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
-            const uint32 NumDescriptors = ShaderBindDesc.BindCount != 0 ? ShaderBindDesc.BindCount : TNumericLimits<uint32>::Max();
-
-            ShaderResourceParameters.Emplace(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, NumDescriptors, 0);
-
             if (ShaderBindDesc.Space == 0)
             {
                 ResourceCount.Ranges.NumSRVs = FMath::Max(ResourceCount.Ranges.NumSRVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
@@ -150,8 +139,6 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
         {
-            UnorderedAccessParameters.Emplace(ShaderBindDesc.Name, ShaderBindDesc.BindPoint, ShaderBindDesc.Space, ShaderBindDesc.BindCount, 0);
-
             if (ShaderBindDesc.Space == 0)
             {
                 ResourceCount.Ranges.NumUAVs = FMath::Max(ResourceCount.Ranges.NumUAVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
@@ -163,13 +150,8 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         }
     }
 
-    Shader->ConstantBufferParameters  = Move(ConstantBufferParameters);
-    Shader->SamplerParameters         = Move(SamplerParameters);
-    Shader->ShaderResourceParameters  = Move(ShaderResourceParameters);
-    Shader->UnorderedAccessParameters = Move(UnorderedAccessParameters);
-    Shader->ResourceCount             = ResourceCount;
-    Shader->RTLocalResourceCount      = RTLocalResourceCount;
-
+    Shader->ResourceCount        = ResourceCount;
+    Shader->RTLocalResourceCount = RTLocalResourceCount;
     return true;
 }
 
@@ -256,7 +238,7 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
         NameStart++;
     }
 
-    const auto NameEnd = Identifier.Find("@");
+    const int32 NameEnd = Identifier.Find("@");
     Shader->Identifier = Identifier.SubString(NameStart, NameEnd - NameStart);
     return true;
 }
@@ -287,14 +269,6 @@ bool FD3D12ComputeShader::Initialize()
         bContainsRootSignature = true;
     }
 
-    UINT x;
-    UINT y;
-    UINT z;
-    Reflection->GetThreadGroupSize(&x, &y, &z);
-
-    ThreadGroupXYZ.x = x;
-    ThreadGroupXYZ.y = y;
-    ThreadGroupXYZ.z = z;
     return true;
 }
 

@@ -135,9 +135,9 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     // TODO: Fix point-light count in shader
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsBuffer.Get(), 1);
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 2);
-    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 1);
-    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 2);
-    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 3);
+    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
+    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
+    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 5);
 
     const FProxyLightProbe& Skylight = LightSetup.Skylight;
     CommandList.SetShaderResourceView(PShader.Get(), Skylight.IrradianceMap->GetShaderResourceView(), 0);
@@ -145,7 +145,7 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     CommandList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
     //TODO: Fix directional-light shadows
     //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
-    CommandList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 3);
+    CommandList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 4);
 
     CommandList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
     CommandList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
@@ -168,16 +168,16 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
         CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
         FRHIBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
-        CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 4);
+        CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 6);
 
         FRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[0], 4);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[1], 5);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[2], 6);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[3], 7);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[4], 8);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[5], 9);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[6], 10);
+        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[0], 5);
+        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[1], 6);
+        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[2], 7);
+        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[3], 8);
+        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[4], 9);
+        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[5], 10);
+        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[6], 11);
 
         FRHISamplerState* SamplerState = Command.Material->GetMaterialSampler();
         CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);

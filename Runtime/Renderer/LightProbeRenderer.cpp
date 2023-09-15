@@ -97,9 +97,9 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const FL
     CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), Skylight.IrradianceMapUAV.Get(), 0);
 
     {
-        const FIntVector3 ThreadCount = IrradianceGenShader->GetThreadGroupXYZ();
-        const uint32 ThreadWidth  = FMath::DivideByMultiple(IrradianceMapSize, ThreadCount.x);
-        const uint32 ThreadHeight = FMath::DivideByMultiple(IrradianceMapSize, ThreadCount.y);
+        constexpr uint32 NumThreads = 16;
+        const uint32 ThreadWidth  = FMath::DivideByMultiple(IrradianceMapSize, NumThreads);
+        const uint32 ThreadHeight = FMath::DivideByMultiple(IrradianceMapSize, NumThreads);
         CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
     }
 
@@ -122,12 +122,10 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, const FL
         CmdList.Set32BitShaderConstants(SpecularIrradianceGenShader.Get(), &Roughness, 1);
         CmdList.SetUnorderedAccessView(SpecularIrradianceGenShader.Get(), Skylight.SpecularIrradianceMapUAVs[Mip].Get(), 0);
 
-        {
-            const FIntVector3 ThreadCount = SpecularIrradianceGenShader->GetThreadGroupXYZ();
-            const uint32 ThreadWidth  = FMath::DivideByMultiple(Width, ThreadCount.x);
-            const uint32 ThreadHeight = FMath::DivideByMultiple(Width, ThreadCount.y);
-            CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
-        }
+        constexpr uint32 NumThreads = 16;
+        const uint32 ThreadWidth  = FMath::DivideByMultiple(Width, NumThreads);
+        const uint32 ThreadHeight = FMath::DivideByMultiple(Width, NumThreads);
+        CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
 
         CmdList.UnorderedAccessTextureBarrier(Skylight.SpecularIrradianceMap.Get());
 

@@ -105,9 +105,6 @@ protected:
     }
 
     virtual ~FRHIComputeShader() = default;
-
-public:
-    virtual FIntVector3 GetThreadGroupXYZ() const = 0;
 };
 
 class FRHIGraphicsShader : public FRHIShader

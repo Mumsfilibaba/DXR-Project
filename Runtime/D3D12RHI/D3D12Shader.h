@@ -47,27 +47,6 @@ struct FShaderResourceCount
     uint32               Num32BitConstants = 0;
 };
 
-struct FD3D12ShaderParameter
-{
-    FD3D12ShaderParameter() = default;
-
-    FORCEINLINE FD3D12ShaderParameter(const FString& InName, uint32 InRegister, uint32 InSpace, uint32 InNumDescriptors, uint32 InSizeInBytes)
-        : Name(InName)
-        , Register(InRegister)
-        , Space(InSpace)
-        , NumDescriptors(InNumDescriptors)
-        , SizeInBytes(InSizeInBytes)
-    {
-    }
-
-    FString Name;
-    uint32 Register       = 0;
-    uint32 Space          = 0;
-    uint32 NumDescriptors = 0;
-    uint32 SizeInBytes    = 0;
-};
-
-
 class FD3D12Shader : public FD3D12DeviceChild
 {
 public:
@@ -78,7 +57,7 @@ public:
 
     EShaderVisibility GetShaderVisibility() const { return Visibility; }
 
-    const FShaderResourceCount& GetResourceCount()        const { return ResourceCount; }
+    const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
 
     const FShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
 
@@ -90,68 +69,14 @@ public:
 
     FORCEINLINE uint64 GetCodeSize() const { return static_cast<uint64>(ByteCode.BytecodeLength); }
 
-    FORCEINLINE FD3D12ShaderParameter GetConstantBufferParameter(uint32 ParameterIndex)
-    {
-        D3D12_ERROR_COND(
-            ParameterIndex < static_cast<uint32>(ConstantBufferParameters.Size()),
-            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
-            ParameterIndex, 
-            ConstantBufferParameters.Size());
-        return ConstantBufferParameters[ParameterIndex];
-    }
-
-    FORCEINLINE uint32 GetNumConstantBufferParameters() { return ConstantBufferParameters.Size(); }
-
-    FORCEINLINE FD3D12ShaderParameter GetShaderResourceParameter(uint32 ParameterIndex)
-    {
-        D3D12_ERROR_COND(
-            ParameterIndex < static_cast<uint32>(ShaderResourceParameters.Size()),
-            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
-            ParameterIndex, 
-            ShaderResourceParameters.Size());
-        return ShaderResourceParameters[ParameterIndex];
-    }
-
-    FORCEINLINE uint32 GetNumShaderResourceParameters() { return ShaderResourceParameters.Size(); }
-
-    FORCEINLINE FD3D12ShaderParameter GetUnorderedAccessParameter(uint32 ParameterIndex)
-    {
-        D3D12_ERROR_COND(
-            ParameterIndex < static_cast<uint32>(UnorderedAccessParameters.Size()),
-            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
-            ParameterIndex,
-            UnorderedAccessParameters.Size());
-        return UnorderedAccessParameters[ParameterIndex];
-    }
-
-    FORCEINLINE uint32 GetNumUnorderedAccessParameters() { return UnorderedAccessParameters.Size(); }
-
-    FORCEINLINE FD3D12ShaderParameter GetSamplerStateParameter(uint32 ParameterIndex)
-    {
-        D3D12_ERROR_COND(
-            ParameterIndex < static_cast<uint32>(SamplerParameters.Size()),
-            "Trying to access ParameterIndex=%u, but the shader only has %u slots",
-            ParameterIndex,
-            SamplerParameters.Size());
-        return SamplerParameters[ParameterIndex];
-    }
-
-    FORCEINLINE uint32 GetNumSamplerStateParameters() { return SamplerParameters.Size(); }
-
 protected:
     template<typename TD3D12ReflectionInterface>
     static bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, FD3D12Shader* Shader, uint32 NumBoundResources);
 
-    D3D12_SHADER_BYTECODE         ByteCode;
-
-    TArray<FD3D12ShaderParameter> ConstantBufferParameters;
-    TArray<FD3D12ShaderParameter> ShaderResourceParameters;
-    TArray<FD3D12ShaderParameter> UnorderedAccessParameters;
-    TArray<FD3D12ShaderParameter> SamplerParameters;
-
-    EShaderVisibility             Visibility;
-    FShaderResourceCount          ResourceCount;
-    FShaderResourceCount          RTLocalResourceCount;
+    D3D12_SHADER_BYTECODE ByteCode;
+    EShaderVisibility     Visibility;
+    FShaderResourceCount  ResourceCount;
+    FShaderResourceCount  RTLocalResourceCount;
 
     bool bContainsRootSignature = false;
 };
@@ -197,7 +122,10 @@ public:
 
     static bool GetRayTracingShaderReflection(class FD3D12RayTracingShader* Shader);
     
-    FORCEINLINE const FString& GetIdentifier() const { return Identifier; }
+    FORCEINLINE const FString& GetIdentifier() const
+    {
+        return Identifier;
+    }
 
 protected:
     FString Identifier;
@@ -279,8 +207,6 @@ public:
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
-
-    virtual FIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
 
 protected:
     FIntVector3 ThreadGroupXYZ;

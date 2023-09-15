@@ -182,11 +182,6 @@ public:
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
     
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FMetalShader*>(this)); }
-
-    virtual FIntVector3 GetThreadGroupXYZ() const override final { return ThreadGroupXYZ; }
-
-protected:
-    FIntVector3 ThreadGroupXYZ;
 };
 
 
