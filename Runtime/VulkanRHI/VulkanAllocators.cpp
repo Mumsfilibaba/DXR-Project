@@ -4,7 +4,7 @@
 #include "Core/Templates/NumericLimits.h"
 
 TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
-    "Vulkan.MaxStagingAllocationSize",
+    "VulkanRHI.MaxStagingAllocationSize",
     "The maximum size for a resource that uses a shared staging-buffer (MB)",
     8);
 

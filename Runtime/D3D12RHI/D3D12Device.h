@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12RefCounted.h"
+#include "D3D12Allocators.h"
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandListManager.h"
@@ -131,8 +132,8 @@ public:
     }
 
     FORCEINLINE IDXGIFactory2* GetDXGIFactory()  const { return Factory.Get(); }
-    FORCEINLINE IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
 
+    FORCEINLINE IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
 #if WIN10_BUILD_17134
     FORCEINLINE IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
 #endif
@@ -177,6 +178,8 @@ public:
     FD3D12CommandListManager& GetDirectCommandListManager()  { return DirectCommandListManager; }
     FD3D12CommandListManager& GetCopyCommandListManager()    { return CopyCommandListManager; }
     FD3D12CommandListManager& GetComputeCommandListManager() { return ComputeCommandListManager; }
+
+    FD3D12UploadHeapAllocator& GetUploadAllocator() { return UploadAllocator; }
 
     FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager() { return CopyCommandAllocatorManager; }
     FD3D12RootSignatureCache&      GetRootSignatureCache()          { return RootSignatureCache; }
@@ -247,6 +250,7 @@ private:
 
     FD3D12CommandAllocatorManager CopyCommandAllocatorManager;
 
+    FD3D12UploadHeapAllocator     UploadAllocator;
     FD3D12DeferredDeletionQueue   DeferredDeletionQueue;
 
     FD3D12RayTracingDesc          RayTracingDesc;

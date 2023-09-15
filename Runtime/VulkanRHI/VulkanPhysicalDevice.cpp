@@ -164,7 +164,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
         return false;
     }
 
-    IConsoleVariable* CVarVerboseLogging = FConsoleManager::Get().FindConsoleVariable("Vulkan.VerboseLogging");
+    IConsoleVariable* CVarVerboseLogging = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
 
     const bool bVerboseLogging = CVarVerboseLogging && CVarVerboseLogging->GetBool();
     if (bVerboseLogging)
@@ -393,7 +393,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
     TArray<VkQueueFamilyProperties> QueueFamilies(QueueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(PhysicalDevice, &QueueFamilyCount, QueueFamilies.Data());
     
-    IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("Vulkan.VerboseLogging");
+    IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
     if (VerboseVulkan && VerboseVulkan->GetBool())
     {
         uint32 Index = 0;

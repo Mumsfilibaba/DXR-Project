@@ -455,6 +455,7 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , CopyCommandListManager(this, ED3D12CommandQueueType::Copy)
     , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
     , CopyCommandAllocatorManager(this, ED3D12CommandQueueType::Copy)
+    , UploadAllocator(this)
     , DeferredDeletionQueue(this)
 {
 }

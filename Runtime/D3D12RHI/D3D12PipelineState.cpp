@@ -257,7 +257,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
         RenderTargetInfo.NumRenderTargets = Initializer.PipelineFormats.NumRenderTargets;
 
-        for (int32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
+        for (uint32 Index = 0; Index < RenderTargetInfo.NumRenderTargets; Index++)
         {
             RenderTargetInfo.RTFormats[Index] = ConvertFormat(Initializer.PipelineFormats.RenderTargetFormats[Index]);
         }

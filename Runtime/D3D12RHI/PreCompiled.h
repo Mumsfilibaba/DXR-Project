@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12Allocators.h"
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12CommandAllocator.h"
 #include "D3D12RHI/D3D12CommandContext.h"

@@ -5,7 +5,7 @@
 #include "Platform/PlatformVulkan.h"
 
 TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
-    "Vulkan.VerboseLogging",
+    "VulkanRHI.VerboseLogging",
     "Enables more logging within VulkanRHI",
     true);
 

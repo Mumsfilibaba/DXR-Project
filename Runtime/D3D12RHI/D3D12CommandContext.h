@@ -15,43 +15,6 @@
 #include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
 
-struct FD3D12UploadAllocation
-{
-    ID3D12Resource* Resource = nullptr;
-    uint8* Memory            = nullptr;
-    uint64 ResourceOffset    = 0;
-};
-
-
-class FD3D12GPUResourceUploader : public FD3D12DeviceChild
-{
-public:
-    FD3D12GPUResourceUploader(FD3D12Device* InDevice);
-    ~FD3D12GPUResourceUploader() = default;
-
-    bool Reserve(uint64 InSizeInBytes);
-
-    void Reset();
-
-    FD3D12UploadAllocation Allocate(uint64 SizeInBytes, uint64 Alignment);
-
-    FORCEINLINE uint64 GetSizeInBytes() const
-    {
-        return SizeInBytes;
-    }
-
-private:
-    uint8* MappedMemory  = nullptr;
-
-    uint64 SizeInBytes   = 0;
-    uint64 OffsetInBytes = 0;
-
-    TComPtr<ID3D12Resource> Resource;
-
-    TArray<TComPtr<ID3D12Resource>> GarbageResources;
-};
-
-
 class FD3D12CommandBatch
 {
 public:
@@ -66,11 +29,8 @@ public:
         NativeResources.Clear();
         DxResources.Clear();
 
-        GpuResourceUploader.Reset();
-
         OnlineResourceDescriptorHeap->Reset();
         OnlineSamplerDescriptorHeap->Reset();
-
         return true;
     }
 
@@ -98,11 +58,6 @@ public:
         }
     }
 
-    FORCEINLINE FD3D12GPUResourceUploader& GetGpuResourceUploader()
-    {
-        return GpuResourceUploader;
-    }
-
     FORCEINLINE FD3D12OnlineDescriptorManager* GetResourceDescriptorManager() const
     {
         return OnlineResourceDescriptorHeap.Get();
@@ -117,14 +72,11 @@ public:
     
     uint64                           AssignedFenceValue = 0;
 
-    FD3D12GPUResourceUploader        GpuResourceUploader;
-
     FD3D12OnlineDescriptorManagerRef OnlineResourceDescriptorHeap;
     FD3D12OnlineDescriptorManagerRef OnlineSamplerDescriptorHeap;
 
     TArray<FD3D12ResourceRef>        DxResources;
     TArray<TSharedRef<IRefCounted>>  Resources;
-
     TArray<TComPtr<ID3D12Resource>>  NativeResources;
 };
 
@@ -434,7 +386,7 @@ private:
     FD3D12CommandAllocatorManager   CommandAllocatorManager;
     FD3D12CommandContextState       ContextState;
 
-    // TODO: The whole commandcontext should only be used from one thread at a time
+    // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection                CommandContextCS;
 
     TArray<FD3D12TimestampQueryRef> ResolveQueries;

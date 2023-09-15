@@ -83,110 +83,8 @@ void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Res
 }
 
 
-FD3D12GPUResourceUploader::FD3D12GPUResourceUploader(FD3D12Device* InDevice)
-    : FD3D12DeviceChild(InDevice)
-    , MappedMemory(nullptr)
-    , SizeInBytes(0)
-    , OffsetInBytes(0)
-    , Resource(nullptr)
-    , GarbageResources()
-{
-}
-
-bool FD3D12GPUResourceUploader::Reserve(uint64 InSizeInBytes)
-{
-    if (InSizeInBytes == SizeInBytes)
-    {
-        return true;
-    }
-
-    if (Resource)
-    {
-        Resource->Unmap(0, nullptr);
-        GarbageResources.Emplace(Resource);
-        Resource.Reset();
-    }
-
-    D3D12_HEAP_PROPERTIES HeapProperties;
-    FMemory::Memzero(&HeapProperties);
-
-    HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
-    HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-
-    D3D12_RESOURCE_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-    Desc.Format             = DXGI_FORMAT_UNKNOWN;
-    Desc.Width              = InSizeInBytes;
-    Desc.Height             = 1;
-    Desc.DepthOrArraySize   = 1;
-    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.MipLevels          = 1;
-    Desc.SampleDesc.Count   = 1;
-    Desc.SampleDesc.Quality = 0;
-
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
-    if (SUCCEEDED(Result))
-    {
-        Resource->SetName(L"[D3D12GPUResourceUploader] Buffer");
-        Resource->Map(0, nullptr, reinterpret_cast<void**>(&MappedMemory));
-
-        SizeInBytes   = InSizeInBytes;
-        OffsetInBytes = 0;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-void FD3D12GPUResourceUploader::Reset()
-{
-    constexpr uint32 MAX_RESERVED_GARBAGE_RESOURCES = 5;
-    constexpr uint32 NEW_RESERVED_GARBAGE_RESOURCES = 2;
-
-    // Clear garbage resource, and release memory we do not need
-    GarbageResources.Clear();
-    if (GarbageResources.Capacity() >= MAX_RESERVED_GARBAGE_RESOURCES)
-    {
-        GarbageResources.Reserve(NEW_RESERVED_GARBAGE_RESOURCES);
-    }
-
-    // Reset memory offset
-    OffsetInBytes = 0;
-}
-
-FD3D12UploadAllocation FD3D12GPUResourceUploader::Allocate(uint64 InSizeInBytes, uint64 Alignment)
-{
-    // 1 Mega-Byte
-    constexpr uint32 EXTRA_BYTES_ALLOCATED = 1024 * 1024;
-
-    const uint64 AlignedSize   = FMath::AlignUp<uint64>(InSizeInBytes, Alignment);
-    const uint64 AlignedOffset = FMath::AlignUp<uint64>(OffsetInBytes, Alignment);
-    
-    const uint64 NeededSize = AlignedOffset + AlignedSize;
-    if (NeededSize > SizeInBytes)
-    {
-        Reserve(NeededSize + EXTRA_BYTES_ALLOCATED);
-    }
-
-    FD3D12UploadAllocation Allocation;
-    Allocation.Resource       = Resource.Get();
-    Allocation.Memory         = MappedMemory + AlignedOffset;
-    Allocation.ResourceOffset = AlignedOffset;
-
-    OffsetInBytes = AlignedOffset + AlignedSize;
-    return Allocation;
-}
-
-
 FD3D12CommandBatch::FD3D12CommandBatch(FD3D12Device* InDevice)
     : Device(InDevice)
-    , GpuResourceUploader(InDevice)
     , OnlineResourceDescriptorHeap(nullptr)
     , OnlineSamplerDescriptorHeap(nullptr)
     , Resources()
@@ -203,8 +101,6 @@ bool FD3D12CommandBatch::Initialize(uint32 Index)
 
     OnlineSamplerDescriptorHeap = new FD3D12OnlineDescriptorManager(Device, Device->GetGlobalSamplerHeap(), Index * SamplerCount, SamplerCount);
     CHECK(OnlineResourceDescriptorHeap != nullptr);
-
-    GpuResourceUploader.Reserve(1024);
     return true;
 }
 
@@ -503,13 +399,14 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     }
     else
     {
-        FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(BufferRegion.Size, 1);
+        FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(BufferRegion.Size, 1);
         FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
 
-        CommandList->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource, Allocation.ResourceOffset, BufferRegion.Size);
+        CommandList->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource.Get(), Allocation.ResourceOffset, BufferRegion.Size);
 
         // TODO: Deferred Release Queue
         CmdBatch->AddInUseResource(Resource);
+        CmdBatch->AddInUseResource(Allocation.Resource);
     }
 }
 
@@ -916,10 +813,10 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
     D3D12_PLACED_SUBRESOURCE_FOOTPRINT PlacedSubresourceFootprint;
     GetDevice()->GetD3D12Device()->GetCopyableFootprints(&Desc, MipLevel, 1, 0, &PlacedSubresourceFootprint, &NumRows, &RowPitch, &RequiredSize);
 
-    const uint64 Alignment   = D3D12_TEXTURE_DATA_PITCH_ALIGNMENT;
+    const uint64 Alignment   = D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT;
     const uint64 AlignedSize = FMath::AlignUp<uint64>(RequiredSize, Alignment);
 
-    FD3D12UploadAllocation Allocation = CmdBatch->GetGpuResourceUploader().Allocate(AlignedSize, Alignment);
+    FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(AlignedSize, Alignment);
     CHECK(Allocation.Memory   != nullptr);
     CHECK(Allocation.Resource != nullptr);
 
@@ -927,7 +824,6 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
     for (uint64 y = 0; y < NumRows; y++)
     {
         FMemory::Memcpy(Allocation.Memory, Source, SrcRowPitch);
-
         Source            += SrcRowPitch;
         Allocation.Memory += PlacedSubresourceFootprint.Footprint.RowPitch;
     }
@@ -936,7 +832,7 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
     D3D12_TEXTURE_COPY_LOCATION SourceLocation;
     FMemory::Memzero(&SourceLocation);
 
-    SourceLocation.pResource                          = Allocation.Resource;
+    SourceLocation.pResource                          = Allocation.Resource.Get();
     SourceLocation.Type                               = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
     SourceLocation.PlacedFootprint.Offset             = Allocation.ResourceOffset;
     SourceLocation.PlacedFootprint.Footprint.Format   = Desc.Format;
@@ -958,6 +854,7 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
 
     // TODO: DeferredReleaseQueue
     CmdBatch->AddInUseResource(Dst);
+    CmdBatch->AddInUseResource(Allocation.Resource);
 }
 
 void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo)

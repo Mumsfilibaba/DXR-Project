@@ -3,7 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 
 TAutoConsoleVariable<int32> CVarBackbufferCount(
-    "Vulkan.BackbufferCount",
+    "VulkanRHI.BackbufferCount",
     "The preferred number of backbuffers for the SwapChain",
     NUM_BACK_BUFFERS);
 

@@ -69,7 +69,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     }
 
     // Log enabled extensions and layers
-    IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("Vulkan.VerboseLogging");
+    IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
     if (VerboseVulkan && VerboseVulkan->GetBool())
     {
         if (!EnabledExtensionNames.IsEmpty())
