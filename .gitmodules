@@ -13,6 +13,3 @@
 [submodule "Dependencies/tinyddsloader"]
 	path = Dependencies/tinyddsloader
 	url = https://github.com/Mumsfilibaba/tinyddsloader
-[submodule "Dependencies/glslang"]
-	path = Dependencies/glslang
-	url = https://github.com/KhronosGroup/glslang
