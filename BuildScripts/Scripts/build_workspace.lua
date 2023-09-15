@@ -1,6 +1,103 @@
 include "build_module.lua"
 include "build_target.lua"
 
+-- Function to deduce software version
+function Glslang_DeduceSoftwareVersion(Directory)
+    -- Path to the CHANGES.md file
+    local ChangesFile = Directory .. "/CHANGES.md"
+
+    -- Create a pattern to match the version and date line in CHANGES.md
+    local Pattern = "^#*%s*(%d+)%.(%d+)%.(%d+)%s*(-?[%w]*)%s*(%d%d%d%d%-%d%d%-%d%d)%s*"
+
+    -- Read the file line by line
+    for Line in io.lines(ChangesFile) do
+        local Major, Minor, Patch, Flavor, Date = Line:match(Pattern)
+        if Major then
+            Flavor = Flavor:gsub("^%-", "") -- Remove leading hyphen from flavor
+            return 
+            {
+                Major  = Major,
+                Minor  = Minor,
+                Patch  = Patch,
+                Flavor = Flavor,
+                Date   = Date
+            }
+        end
+    end
+
+    LogError("No version number found in %s", ChangesFile)
+end
+
+-- Generate build info headers
+function Glslang_GenerateBuildTimeHeaders()
+    -- NOTE: This requires python to be installed
+    local GlslangPath      = GetEnginePath() .. "/Dependencies/glslang"
+    local ScriptPath       = GlslangPath .. "/build_info.py"
+    local TemplateFilePath = GlslangPath .. "/build_info.h.tmpl"
+    local OutputFilePath   = GlslangPath .. "/glslang/include/glslang/build_info.h"
+
+    -- Local variable to store the template file in
+    local Template
+
+    -- Load the template file
+    local File = io.open(TemplateFilePath, "r")
+    if File then
+        Template = File:read("*a")
+        File:close()
+    else
+        LogError("Failed to open file '%s'", TemplateFilePath)
+        return
+    end
+
+    local SoftwareVersion = Glslang_DeduceSoftwareVersion(GlslangPath)
+
+    local Output = Template;
+    Output = string.gsub(Output, "@major@", SoftwareVersion.Major)
+    Output = string.gsub(Output, "@minor@", SoftwareVersion.Minor)
+    Output = string.gsub(Output, "@patch@", SoftwareVersion.Patch)
+    Output = string.gsub(Output, "@flavor@", SoftwareVersion.Flavor)
+    Output = string.gsub(Output, "@date@", SoftwareVersion.Date)
+
+    local File = io.open(OutputFilePath, "r")
+    if File then
+        local ExistingOutput = File:read("*a")
+        File:close()
+
+        if Output == ExistingOutput then
+            return
+        end
+    end
+
+    File = io.open(OutputFilePath, "w")
+    if File then
+        File:write(Output)
+        File:close()
+    else
+        LogError("Failed to open file '%s'", OutputFilePath)
+        return
+    end
+end
+
+-- Define platform-specific settings
+function Glslang_SetPlatformProperties()
+    if (os.target() == "windows") then
+        buildoptions
+        {
+            "/Zc:threadSafeInit-"
+        }
+
+        defines
+        {
+            "GLSLANG_OSINCLUDE_WIN32"
+        }
+    else
+        defines
+        {
+            "GLSLANG_OSINCLUDE_UNIX" 
+        }
+    end
+end
+
 -- Generate a workspace from an array of target-rules
 function FWorkspaceRules(WorkspaceName)
     
@@ -107,7 +204,9 @@ function FWorkspaceRules(WorkspaceName)
         group "Dependencies"
             LogInfo("\n--- External Dependencies ---")
             
-            -- Imgui
+            -----------
+            -- Imgui --
+            -----------
             project "ImGui"
                 LogInfo("    Generating dependecy ImGui")
 
@@ -133,8 +232,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/ImGui")
 
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/ImGui/" .. self.GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/ImGui/" .. self.GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/ImGui/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/ImGui/" .. self.GetOutputPath())
 
                 -- Files
                 files
@@ -165,7 +264,9 @@ function FWorkspaceRules(WorkspaceName)
                     optimize("Full")
                 filter {}
             
-            -- tinyobjloader Project
+            -------------------
+            -- tinyobjloader --
+            -------------------
             project "tinyobjloader"
                 LogInfo("    Generating dependecy tinyobjloader")
 
@@ -191,8 +292,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/tinyobjloader")
 
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/tinyobjloader/" .. self.GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/tinyobjloader/" .. self.GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/tinyobjloader/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/tinyobjloader/" .. self.GetOutputPath())
 
                 -- Files
                 files 
@@ -214,7 +315,9 @@ function FWorkspaceRules(WorkspaceName)
                     optimize("Full")    
                 filter {}
             
-            -- OpenFBX Project
+            -------------
+            -- OpenFBX --
+            -------------
             project "OpenFBX"
                 LogInfo("    Generating dependecy OpenFBX")
 
@@ -240,8 +343,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/OpenFBX")
             
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/OpenFBX/" .. self.GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/OpenFBX/" .. self.GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/OpenFBX/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/OpenFBX/" .. self.GetOutputPath())
 
                 -- Files
                 files 
@@ -265,7 +368,9 @@ function FWorkspaceRules(WorkspaceName)
                     optimize("Full")
                 filter {}
 
-            -- SPIRV-Cross Project
+            -----------------
+            -- SPIRV-Cross --
+            -----------------
             project "SPIRV-Cross"
                 LogInfo("    Generating dependecy SPIRV-Cross")
 
@@ -291,8 +396,8 @@ function FWorkspaceRules(WorkspaceName)
                 location(SolutionLocation .. "/Dependencies/SPIRV-Cross")
             
                 -- Locations
-                targetdir(ExternalDependecyPath .. "/Build/bin/SPIRV-Cross/" .. self.GetOutputPath())
-                objdir(ExternalDependecyPath .. "/Build/bin-int/SPIRV-Cross/" .. self.GetOutputPath())
+                targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/SPIRV-Cross/" .. self.GetOutputPath())
+                objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/SPIRV-Cross/" .. self.GetOutputPath())
 
                 -- Files
                 files 
@@ -349,6 +454,536 @@ function FWorkspaceRules(WorkspaceName)
                     runtime("Release")
                     optimize("Full")
                 filter {}
+            
+            -------------------
+            -- glslang group --
+            -------------------
+            group "Dependencies/glslang"
+                LogInfo("\n--- glslang projects ---")
+
+                -- Include directories for build-time generated include files
+                local GLSLANG_GENERATED_INCLUDEDIR = path.join("build/generated/include", "glslang")
+
+                --------------------
+                -- GenericCodeGen --
+                --------------------
+                project "GenericCodeGen"
+                    LogInfo("    Generating dependecy GenericCodeGen")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/GenericCodeGen/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/GenericCodeGen/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/GenericCodeGen/" .. self.GetOutputPath())
+
+                    -- Files
+                    files 
+                    {
+                        (ExternalDependecyPath .. "/glslang/glslang/GenericCodeGen/CodeGen.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/GenericCodeGen/Link.cpp"),
+                    }
+
+                    Glslang_SetPlatformProperties()
+
+                    -- Configurations 
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+
+                ------------------------
+                -- MachineIndependent --
+                ------------------------
+                project "MachineIndependent"
+                    LogInfo("    Generating dependecy MachineIndependent")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/MachineIndependent/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/MachineIndependent/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/MachineIndependent/" .. self.GetOutputPath())
+
+                    -- Include Directories
+                    includedirs
+                    {
+                        (ExternalDependecyPath .. "/glslang/glslang/include")
+                    }
+
+                    -- Files
+                    files 
+                    {
+                        -- Cpp files
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/glslang.y"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/glslang_tab.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/attribute.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Constant.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/iomapper.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/InfoSink.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Initialize.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Intermediate.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/ParseHelper.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/RemoveTree.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Scan.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/ShaderLang.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/SymbolTable.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Versions.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/intermOut.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/limits.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/linkValidate.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/parseConst.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/reflection.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
+
+                        -- Header Files
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/attribute.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/gl_types.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Initialize.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/iomapper.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/LiveTraverser.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/localintermediate.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/ParseHelper.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/reflection.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/RemoveTree.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Scan.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/ScanContext.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/SymbolTable.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/Versions.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/parseVersions.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/propagateNoContraction.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
+                    }
+
+                    Glslang_SetPlatformProperties()
+
+                    Glslang_GenerateBuildTimeHeaders()
+
+                    -- Links
+                    links
+                    {
+                        "OGLCompiler",
+                        "OSDependent",
+                        "GenericCodeGen",
+                    }
+
+                    -- Configurations 
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+
+                -------------
+                -- glslang --
+                -------------
+                project "glslang"
+                    LogInfo("    Generating dependecy glslang")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/glslang/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/glslang/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/glslang/" .. self.GetOutputPath())
+
+                    -- Include Directories
+                    includedirs
+                    {
+                        (ExternalDependecyPath .. "/glslang")
+                    }
+
+                    -- Files
+                    files 
+                    {
+                        -- Cpp
+                        (ExternalDependecyPath .. "/glslang/glslang/CInterface/glslang_c_interface.cpp"),
+
+                        -- Header
+                        (ExternalDependecyPath .. "/glslang/glslang/Public/ShaderLang.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/arrays.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/BaseTypes.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/Common.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/ConstantUnion.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/glslang_c_interface.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/glslang_c_shader_types.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/InfoSink.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/InitializeGlobals.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/intermediate.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/PoolAlloc.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/ResourceLimits.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/ShHandle.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/SpirvIntrinsics.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Include/Types.h"),
+                    }
+
+                    -- Links
+                    links
+                    {
+                        "OGLCompiler",
+                        "OSDependent",
+                        "MachineIndependent",
+                    }
+
+                    Glslang_SetPlatformProperties()
+
+                    -- Configurations 
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+
+                --------------------
+                -- ResourceLimits --
+                --------------------
+                project "glslang-default-resource-limits"
+                    LogInfo("    Generating dependecy glslang-default-resource-limits")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/glslang-default-resource-limits/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/glslang-default-resource-limits/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/glslang-default-resource-limits/" .. self.GetOutputPath())
+
+                    -- Include Directories
+                    includedirs
+                    {
+                        (ExternalDependecyPath .. "/glslang")
+                    }
+                    
+                    -- Files
+                    files 
+                    {
+                        -- Cpp
+                        (ExternalDependecyPath .. "/glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
+                        (ExternalDependecyPath .. "/glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
+
+                        -- Header
+                        (ExternalDependecyPath .. "/glslang/glslang/Public/ResourceLimits.h"),
+                        (ExternalDependecyPath .. "/glslang/glslang/Public/resource_limits_c.h"),
+                    }
+
+                    Glslang_SetPlatformProperties()
+
+                    -- Configurations
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+
+                ------------------
+                -- OGLCompiler --
+                ------------------
+                project "OGLCompiler"
+                    LogInfo("    Generating dependecy OGLCompiler")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/OGLCompiler/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/OGLCompiler/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/OGLCompiler/" .. self.GetOutputPath())
+
+                    -- Files
+                    files 
+                    {
+                        (ExternalDependecyPath .. "/glslang/OGLCompilersDLL/InitializeDll.h"),
+                        (ExternalDependecyPath .. "/glslang/OGLCompilersDLL/InitializeDll.cpp"),
+                    }
+
+                    Glslang_SetPlatformProperties()
+
+                    -- Configurations
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+
+                ------------
+                -- SPIR-V --
+                ------------
+                project "SPIRV"
+                    LogInfo("    Generating dependecy SPIRV")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/SPIRV/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/SPIRV/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/SPIRV/" .. self.GetOutputPath())
+
+                    -- Include Directories
+                    includedirs
+                    {
+                        (ExternalDependecyPath .. "/glslang"),
+                        (ExternalDependecyPath .. "/glslang/glslang/include"),
+                    }
+
+                    -- Files
+                    files
+                    {
+                        -- Cpp
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GlslangToSpv.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/InReadableOrder.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/Logger.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/SpvBuilder.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/SpvPostProcess.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/doc.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/SpvTools.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/disassemble.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/CInterface/spirv_c_interface.cpp"),
+
+                        -- Headers
+                        (ExternalDependecyPath .. "/glslang/SPIRV/bitutils.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/spirv.hpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GLSL.std.450.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GLSL.ext.EXT.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GLSL.ext.KHR.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GlslangToSpv.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/hex_float.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/Logger.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/SpvBuilder.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/spvIR.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/doc.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/SpvTools.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/disassemble.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GLSL.ext.AMD.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GLSL.ext.NV.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/GLSL.ext.ARM.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/NonSemanticDebugPrintf.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
+                    }
+
+                    -- Links
+                    links
+                    {
+                        "MachineIndependent",
+                    }
+
+                    Glslang_SetPlatformProperties()
+
+                    -- Configurations
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+
+                ---------------------
+                -- SPIR-V Remapper --
+                ---------------------
+                project "SPVRemapper"
+                    LogInfo("    Generating dependecy SPVRemapper")
+
+                    kind("StaticLib")
+                    warnings("Off")
+                    intrinsics("On")
+                    editandcontinue("Off")
+                    language("C++")
+                    cppdialect("C++20")
+                    systemversion("latest")
+                    architecture("x86_64")
+                    exceptionhandling("On")
+                    rtti("Off")
+                    floatingpoint("Fast")
+                    vectorextensions("SSE2")
+                    characterset("Ascii")
+                    flags(
+                    { 
+                        "MultiProcessorCompile",
+                        "NoIncrementalLink",
+                    })
+                    
+                    location(SolutionLocation .. "/Dependencies/glslang/SPVRemapper/")
+                
+                    -- Locations
+                    targetdir(ExternalDependecyPath .. "/Build/bin/Dependencies/glslang/SPVRemapper/" .. self.GetOutputPath())
+                    objdir(ExternalDependecyPath .. "/Build/bin-int/Dependencies/glslang/SPVRemapper/" .. self.GetOutputPath())
+
+                    -- Files
+                    files 
+                    {
+                        (ExternalDependecyPath .. "/glslang/SPIRV/SPVRemapper.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/doc.cpp"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/SPVRemapper.h"),
+                        (ExternalDependecyPath .. "/glslang/SPIRV/doc.h"),
+                    }
+
+                    Glslang_SetPlatformProperties()
+
+                    -- Configurations
+                    filter "configurations:Debug or Release"
+                        symbols("on")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+                    
+                    filter "configurations:Production"
+                        symbols("off")
+                        runtime("Release")
+                        optimize("Full")
+                    filter {}
+            group "Dependencies"
         group ""
     end
 
@@ -405,6 +1040,7 @@ function FWorkspaceRules(WorkspaceName)
             defines
             {
                 "_DEBUG",
+                "DEBUG",
                 "DEBUG_BUILD=(1)",
             }
         filter {}

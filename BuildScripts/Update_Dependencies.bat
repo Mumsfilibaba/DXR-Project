@@ -10,6 +10,9 @@ git pull origin master
 cd ../SPIRV-Cross
 git pull origin main
 
+cd ../glslang
+git pull origin main
+
 cd ../tinyddsloader
 git pull origin master
 
