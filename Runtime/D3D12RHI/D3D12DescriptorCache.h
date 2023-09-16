@@ -245,6 +245,75 @@ struct FD3D12RenderTargetViewCache
 };
 
 
+#if 0
+class FD3D12ShaderResourceViewCache
+{
+public:
+    FD3D12ShaderResourceViewCache()
+        : ResourceViews()
+        , bDirty()
+    {
+    }
+
+    void SetView(FD3D12ShaderResourceView* ShaderResourceView, EShaderVisibility Visibility, uint32 ShaderRegister)
+    {
+        CHECK(ShaderResourceView != nullptr);
+
+        FD3D12ShaderResourceView* CurrentShaderResourceView = ResourceViews[Visibility][ShaderRegister];
+        if (ShaderResourceView != CurrentShaderResourceView)
+        {
+            ResourceViews[Visibility][ShaderRegister] = ShaderResourceView;
+            bDirty[Visibility] = true;
+        }
+    }
+
+    void Reset()
+    {
+        for (uint32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        {
+            bDirty[Index] = true;
+        }
+    }
+
+    FD3D12ShaderResourceView* ResourceViews[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT][ShaderVisibility_Count];
+    bool bDirty[ShaderVisibility_Count];
+};
+
+
+class FD3D12UnorderedAccessViewCache
+{
+public:
+    FD3D12UnorderedAccessViewCache()
+        : ResourceViews()
+        , bDirty()
+    {
+    }
+
+    void SetView(FD3D12UnorderedAccessView* UnorderedAccessView, EShaderVisibility Visibility, uint32 ShaderRegister)
+    {
+        CHECK(UnorderedAccessView != nullptr);
+
+        FD3D12UnorderedAccessView* CurrentUnorderedAccessView = ResourceViews[Visibility][ShaderRegister];
+        if (UnorderedAccessView != CurrentUnorderedAccessView)
+        {
+            ResourceViews[Visibility][ShaderRegister] = UnorderedAccessView;
+            bDirty[Visibility] = true;
+        }
+    }
+
+    void Reset()
+    {
+        for (uint32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        {
+            bDirty[Index] = true;
+        }
+    }
+
+    FD3D12UnorderedAccessView* ResourceViews[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT][ShaderVisibility_Count];
+    bool bDirty[ShaderVisibility_Count];
+};
+#endif
+
 class FD3D12DescriptorCache : public FD3D12DeviceChild
 {
 public:

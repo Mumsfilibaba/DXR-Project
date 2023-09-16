@@ -69,7 +69,6 @@ public:
     }
 
     FD3D12Device*                    Device = nullptr;
-    
     uint64                           AssignedFenceValue = 0;
 
     FD3D12OnlineDescriptorManagerRef OnlineResourceDescriptorHeap;
