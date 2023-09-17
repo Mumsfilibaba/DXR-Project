@@ -5,6 +5,7 @@ bool FFileHelpers::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
     CHECK(File != nullptr);
 
     const int64 FileSize = File->Size();
+    CHECK(FileSize < TNumericLimits<int32>::Max());
     OutData.Resize(static_cast<int32>(FileSize));
 
     const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutData.Data()), static_cast<uint32>(FileSize));
@@ -21,8 +22,10 @@ bool FFileHelpers::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
 {
     CHECK(File != nullptr);
 
-    // Get the filesize and add an extra character for the null-terminator
     const int64 FileSize = File->Size();
+    CHECK(FileSize < TNumericLimits<int32>::Max());
+
+    // Get the filesize and add an extra character for the null-terminator
     OutText.Resize(static_cast<int32>(FileSize) + 1);
 
     const int32 ReadBytes = File->Read(reinterpret_cast<uint8*>(OutText.Data()), static_cast<uint32>(FileSize));

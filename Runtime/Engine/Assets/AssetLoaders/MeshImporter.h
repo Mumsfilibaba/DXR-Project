@@ -87,6 +87,7 @@ class ENGINE_API FMeshImporter
 
 public:
     static bool Initialize();
+
     static void Release();
 
     static FORCEINLINE FMeshImporter& Get()
@@ -99,6 +100,7 @@ public:
 
 private:
     void LoadCacheFile();
+
     void UpdateCacheFile();
 
     bool AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const FSceneData& Scene);

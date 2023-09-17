@@ -3,8 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Engine/Assets/SceneData.h"
 
-class ENGINE_API FOBJLoader
+struct ENGINE_API FOBJLoader
 {
-public:
     static bool LoadFile(const FString& Filename, FSceneData& OutScene, bool bReverseHandedness = false);
 };

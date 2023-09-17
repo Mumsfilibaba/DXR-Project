@@ -25,7 +25,7 @@ static FString ExtractPath(const FString& FullFilePath)
     }
 }
 
-static FMatrix4 ToFloat4x4(const ofbx::Matrix& Matrix)
+static FMatrix4 ToFloat4x4(const ofbx::DMatrix& Matrix)
 {
     FMatrix4 Result;
     for (uint32 y = 0; y < 4; y++)
@@ -72,192 +72,166 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
 
     // TODO: Utility to read in full file?
     const int32 FileSize = static_cast<int32>(File->Size());
-
     TArray<ofbx::u8> FileContent(FileSize);
-    ofbx::u8* Bytes = FileContent.Data();
 
-    const int32 NumBytesRead = File->Read(Bytes, FileSize);
+    const int32 NumBytesRead = File->Read(FileContent.Data(), FileSize);
     if (NumBytesRead <= 0)
     {
         LOG_ERROR("[FFBXLoader]: Failed to load '%s'", Filename.GetCString());
         return false;
     }
 
-    Bytes = FileContent.Data();
-
-    ofbx::IScene* FBXScene = ofbx::load(Bytes, FileSize, (ofbx::u64)ofbx::LoadFlags::TRIANGULATE);
+    ofbx::IScene* FBXScene = ofbx::load(FileContent.Data(), FileSize, (ofbx::u64)ofbx::LoadFlags::NONE);
     if (!FBXScene)
     {
         const CHAR* ErrorString = ofbx::getError();
-        LOG_ERROR("[FMeshFactory]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
+        LOG_ERROR("[FFBXLoader]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
         return false;
     }
 
-    const ofbx::GlobalSettings* Settings = FBXScene->getGlobalSettings();
-    const float UnitScaleFactorRecip     = Settings->UnitScaleFactor;
-
     // Estimate sizes to avoid to many allocations
-    const uint32 MeshCount = FBXScene->getMeshCount();
-
-    uint32 EstimatedMaterialCount = 0;
-    for (uint32 MeshIndex = 0; MeshIndex < MeshCount; ++MeshIndex)
+    uint32 MaterialCount = 0;
+    for (uint32 MeshIndex = 0; MeshIndex < FBXScene->getMeshCount(); ++MeshIndex)
     {
         const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIndex);
-        EstimatedMaterialCount += CurrentMesh->getMaterialCount();
+        MaterialCount += CurrentMesh->getMaterialCount();
     }
+
+    // Array to store indices in when performing triangulation
+    TArray<int32> TempIndicies;
 
     // Unique tables
     TMap<FVertex, uint32, FVertexHasher> UniqueVertices;
-
     TMap<uint64, uint32> UniqueMaterials;
-    UniqueMaterials.reserve(EstimatedMaterialCount);
+    UniqueMaterials.reserve(MaterialCount);
 
     // Estimate resource count
-    OutScene.Models.Reserve(MeshCount);
-    OutScene.Materials.Reserve(EstimatedMaterialCount);
+    OutScene.Models.Reserve(FBXScene->getMeshCount());
+    OutScene.Materials.Reserve(MaterialCount);
 
     // Convert data
     const FString Path = ExtractPath(Filename);
 
-    FModelData TempModelData;
-    for (uint32 i = 0; i < MeshCount; i++)
-    {
-        const ofbx::Mesh*     CurrentMesh = FBXScene->getMesh(i);
-        const ofbx::Geometry* CurrentGeom = CurrentMesh->getGeometry();
+    // Get the global settings
+    const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
 
-        const uint32 MaterialCount = CurrentMesh->getMaterialCount();
-        for (uint32 j = 0; j < MaterialCount; j++)
+    FModelData TempModelData;
+    for (uint32 MeshIdx = 0; MeshIdx < FBXScene->getMeshCount(); MeshIdx++)
+    {
+        const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIdx);
+        for (uint32 MaterialIdx = 0; MaterialIdx < CurrentMesh->getMaterialCount(); MaterialIdx++)
         {
-            const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(j);
+            const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(MaterialIdx);
             if (UniqueMaterials.count(CurrentMaterial->id) != 0)
             {
                 continue;
             }
 
             FMaterialData MaterialData;
-            MaterialData.DiffuseTexture   = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
-            MaterialData.NormalTexture    = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
-            MaterialData.SpecularTexture  = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
-            MaterialData.EmissiveTexture  = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
-            MaterialData.AOTexture        = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
+            MaterialData.DiffuseTexture  = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
+            MaterialData.NormalTexture   = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
+            MaterialData.SpecularTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
+            MaterialData.EmissiveTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
+            MaterialData.AOTexture       = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
-            MaterialData.Diffuse = FVector3(
-                CurrentMaterial->getDiffuseColor().r,
-                CurrentMaterial->getDiffuseColor().g,
-                CurrentMaterial->getDiffuseColor().b);
-            
+            MaterialData.Diffuse   = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
             MaterialData.AO        = 1.0f; // CurrentMaterial->getSpecularColor().r;
             MaterialData.Roughness = 1.0f; // CurrentMaterial->getSpecularColor().g;
             MaterialData.Metallic  = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
-            //TODO: Other material properties
+            // TODO: Other material properties
             UniqueMaterials[CurrentMaterial->id] = OutScene.Materials.Size();
             OutScene.Materials.Emplace(MaterialData);
         }
 
-        int32 VertexCount = (int32)CurrentGeom->getVertexCount();
-        int32 IndexCount  = (int32)CurrentGeom->getIndexCount();
-        TempModelData.Mesh.Indices.Reserve(IndexCount);
-        TempModelData.Mesh.Vertices.Reserve(VertexCount);
-        UniqueVertices.reserve(VertexCount);
+        const FMatrix4 Matrix          = ToFloat4x4(CurrentMesh->getGlobalTransform());
+        const FMatrix4 GeometricMatrix = ToFloat4x4(CurrentMesh->getGeometricMatrix());
+        const FMatrix4 Transform       = Matrix * GeometricMatrix;
 
-        const auto* Materials = CurrentGeom->getMaterials();
+        const ofbx::GeometryData& GeometryData = CurrentMesh->getGeometryData();
+        ofbx::Vec3Attributes Positions = GeometryData.getPositions();
+        ofbx::Vec3Attributes Normals   = GeometryData.getNormals();
+        ofbx::Vec3Attributes Tangents  = GeometryData.getTangents();
+        ofbx::Vec2Attributes TexCoords = GeometryData.getUVs();
 
-        const ofbx::Vec3* Vertices = CurrentGeom->getVertices();
-        CHECK(Vertices != nullptr);
-
-        const ofbx::Vec3* Normals = CurrentGeom->getNormals();
-        CHECK(Normals != nullptr);
-
-        const ofbx::Vec2* TexCoords = CurrentGeom->getUVs(0);
-        CHECK(TexCoords != nullptr);
-
-        const ofbx::Vec3* Tangents = CurrentGeom->getTangents();
-
-        FMatrix4 Matrix          = ToFloat4x4(CurrentMesh->getGlobalTransform());
-        FMatrix4 GeometricMatrix = ToFloat4x4(CurrentMesh->getGeometricMatrix());
-        FMatrix4 Transform       = Matrix * GeometricMatrix;
-
-        int32 CurrentIndex      = 0;
-        int32 MaterialIndex     = 0;
-        int32 LastMaterialIndex = 0;
-        while (CurrentIndex < IndexCount)
+        TempModelData.Mesh.Indices.Reserve(Positions.count);
+        TempModelData.Mesh.Vertices.Reserve(Positions.values_count);
+        UniqueVertices.reserve(Positions.values_count);
+        
+        // Go through each mesh partition and add it to the scene as a separate mesh
+        for (uint32 PartitionIdx = 0; PartitionIdx < GeometryData.getPartitionCount(); PartitionIdx++)
         {
+            // Clear the mesh data every mesh-partition
             TempModelData.Mesh.Clear();
             UniqueVertices.clear();
 
-            LastMaterialIndex = MaterialIndex;
+            ofbx::GeometryPartition Partition = GeometryData.getPartition(PartitionIdx);
+            TempIndicies.Resize(Partition.max_polygon_triangles * 3);
 
-            // Loop through sub-meshes
-            for (; CurrentIndex < IndexCount; ++CurrentIndex)
+            // Go through each polygon and add it to the mesh
+            for (uint32 PolygonIdx = 0; PolygonIdx < Partition.polygon_count; ++PolygonIdx)
             {
-                // If the current triangle does not share material with the previous one
-                // Break and start a new sub-mesh
-                if (Materials)
-                {
-                    int32 TriangleIndex = (CurrentIndex / 3);
-                    if (MaterialIndex != Materials[TriangleIndex])
-                    {
-                        LastMaterialIndex = MaterialIndex;
-                        MaterialIndex     = Materials[TriangleIndex];
-                        break;
-                    }
-                }
+                // Triangulate this polygon
+                const ofbx::GeometryPartition::Polygon& Polygon = Partition.polygons[PolygonIdx];
+                const int32 NumIndicies = ofbx::triangulate(GeometryData, Polygon, TempIndicies.Data());
 
                 FVertex TempVertex;
-
-                // Position
-                FVector3 Position = FVector3(
-                    static_cast<float>(Vertices[CurrentIndex].x),
-                    static_cast<float>(Vertices[CurrentIndex].y),
-                    static_cast<float>(Vertices[CurrentIndex].z));
-                TempVertex.Position = Transform.Transform(Position);
-
-                // Apply the scene scale
-                if ((Flags & EFBXFlags::ApplyScaleFactor) != EFBXFlags::None)
+                for (uint32 IndexIdx = 0; IndexIdx < NumIndicies; ++IndexIdx)
                 {
-                    TempVertex.Position *= UnitScaleFactorRecip;
+                    const uint32 VertexIdx = TempIndicies[IndexIdx];
+
+                    // Position
+                    const ofbx::Vec3 OfbxPosition = Positions.get(VertexIdx);
+                    const FVector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
+                    TempVertex.Position = Transform.Transform(Position);
+
+                    // Apply the scene scale
+                    if ((Flags & EFBXFlags::ApplyScaleFactor) != EFBXFlags::None)
+                    {
+                        TempVertex.Position *= GlobalSettings->UnitScaleFactor;
+                    }
+
+                    // Normal
+                    if (Normals.values)
+                    {
+                        const ofbx::Vec3 OfbxNormal = Normals.get(VertexIdx);
+                        const FVector3 Normal(OfbxNormal.x, OfbxNormal.y, OfbxNormal.z);
+                        TempVertex.Normal = Transform.TransformNormal(Normal);
+                    }
+
+                    // Tangents
+                    if (Tangents.values)
+                    {
+                        const ofbx::Vec3 OfbxTangent = Tangents.get(VertexIdx);
+                        const FVector3 Tangent(OfbxTangent.x, OfbxTangent.y, OfbxTangent.z);
+                        TempVertex.Tangent = Transform.TransformNormal(Tangent);
+                    }
+
+                    // TexCoords
+                    if (TexCoords.values)
+                    {
+                        const ofbx::Vec2 OfbxTexCoord = TexCoords.get(VertexIdx);
+                        TempVertex.TexCoord = FVector2(OfbxTexCoord.x, OfbxTexCoord.y);
+                    }
+
+                    // Only push unique vertices
+                    uint32 UniqueIndex = 0;
+                    if (UniqueVertices.count(TempVertex) == 0)
+                    {
+                        UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.Size());
+                        UniqueVertices[TempVertex] = UniqueIndex;
+                        TempModelData.Mesh.Vertices.Add(TempVertex);
+                    }
+                    else
+                    {
+                        UniqueIndex = UniqueVertices[TempVertex];
+                    }
+
+                    TempModelData.Mesh.Indices.Emplace(UniqueIndex);
                 }
-
-                // Normal
-                FVector3 Normal = FVector3(
-                    (float)Normals[CurrentIndex].x,
-                    (float)Normals[CurrentIndex].y,
-                    (float)Normals[CurrentIndex].z);
-                TempVertex.Normal = Transform.TransformNormal(Normal);
-
-                // TexCoords
-                TempVertex.TexCoord = FVector2(
-                    (float)TexCoords[CurrentIndex].x,
-                    (float)TexCoords[CurrentIndex].y);
-
-                // Tangents
-                if (Tangents)
-                {
-                    FVector3 Tangent = FVector3(
-                        (float)Tangents[CurrentIndex].x,
-                        (float)Tangents[CurrentIndex].y,
-                        (float)Tangents[CurrentIndex].z);
-                    TempVertex.Tangent = Transform.TransformNormal(Tangent);
-                }
-
-                // Only push unique vertices
-                uint32 UniqueIndex = 0;
-                if (UniqueVertices.count(TempVertex) == 0)
-                {
-                    UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.Size());
-                    UniqueVertices[TempVertex] = UniqueIndex;
-                    TempModelData.Mesh.Vertices.Add(TempVertex);
-                }
-                else
-                {
-                    UniqueIndex = UniqueVertices[TempVertex];
-                }
-
-                TempModelData.Mesh.Indices.Emplace(UniqueIndex);
             }
 
-            if (!Tangents)
+            if (!Tangents.values)
             {
                 FMeshUtilities::CalculateTangents(TempModelData.Mesh);
             }
@@ -265,32 +239,33 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
             // Convert to left-handed
             if ((Flags & EFBXFlags::EnsureLeftHanded) != EFBXFlags::None)
             {
-                if (Settings->CoordAxis == ofbx::CoordSystem_RightHanded)
+                if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
                 {
                     FMeshUtilities::ReverseHandedness(TempModelData.Mesh);
                 }
             }
 
-            // Find the correct unique material and set it to the mesh
-            const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(LastMaterialIndex);
-            if ((LastMaterialIndex != INVALID_MATERIAL_INDEX) && (UniqueMaterials.count(CurrentMaterial->id) != 0))
+            // Add material index to the mesh
+            TempModelData.MaterialIndex = INVALID_MATERIAL_INDEX;
+            if (PartitionIdx < CurrentMesh->getMaterialCount())
             {
-                TempModelData.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
-            }
-            else
-            {
-                TempModelData.MaterialIndex = INVALID_MATERIAL_INDEX;
+                const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(PartitionIdx);
+                if (UniqueMaterials.count(CurrentMaterial->id) != 0)
+                {
+                    TempModelData.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
+                }
             }
 
             if (TempModelData.MaterialIndex == INVALID_MATERIAL_INDEX)
             {
-                LOG_WARNING("Mesh '%s' has no material", TempModelData.Name.GetCString());
+                LOG_WARNING("Mesh '%s' has no material", CurrentMesh->name);
             }
 
+            // Add the mesh to our scene
             if (TempModelData.Mesh.Hasdata())
             {
-                TempModelData.Name = CurrentMesh->name;
                 LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
+                TempModelData.Name = CurrentMesh->name;
                 OutScene.Models.Emplace(TempModelData);
             }
             else

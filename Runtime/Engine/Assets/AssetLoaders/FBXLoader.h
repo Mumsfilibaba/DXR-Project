@@ -15,8 +15,7 @@ enum class EFBXFlags : uint8
 ENUM_CLASS_OPERATORS(EFBXFlags);
 
 // TODO: Extend to save as well? 
-class ENGINE_API FFBXLoader
+struct ENGINE_API FFBXLoader
 {
-public:
     static bool LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFlags Flags = EFBXFlags::Default) noexcept;
 };

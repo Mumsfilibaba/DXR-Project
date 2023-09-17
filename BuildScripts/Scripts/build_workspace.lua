@@ -351,8 +351,8 @@ function FWorkspaceRules(WorkspaceName)
                 {
                     (ExternalDependecyPath .. "/OpenFBX/src/ofbx.h"),
                     (ExternalDependecyPath .. "/OpenFBX/src/ofbx.cpp"),
-                    (ExternalDependecyPath .. "/OpenFBX/src/miniz.h"),
-                    (ExternalDependecyPath .. "/OpenFBX/src/miniz.c"),
+                    (ExternalDependecyPath .. "/OpenFBX/src/libdeflate.h"),
+                    (ExternalDependecyPath .. "/OpenFBX/src/libdeflate.c"),
                 }
 
                 -- Configurations 
