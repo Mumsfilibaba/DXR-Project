@@ -58,14 +58,19 @@ public:
     uint64 SignalGPU(ED3D12CommandQueueType QueueType);
 
     void WaitGPU(ED3D12CommandQueueType QueueType);
+    
     void WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue);
 
     void WaitForFence();
+
     void WaitForFence(uint64 InFenceValue);
 
     uint64 GetCompletedValue() const;
     
-    FORCEINLINE FD3D12Fence* GetFence() const { return Fence.Get(); }
+    FORCEINLINE FD3D12Fence* GetFence() const 
+    {
+        return Fence.Get();
+    }
 
     FORCEINLINE uint64 GetLastSignaledValue() const 
     { 

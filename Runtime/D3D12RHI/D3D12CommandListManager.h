@@ -19,7 +19,10 @@ public:
 
     FD3D12FenceSyncPoint ExecuteCommandList(FD3D12CommandListRef InCommandList, bool bWaitForCompletion);
 
-    FD3D12FenceManager& GetFenceManager() { return FenceManager; }
+    FD3D12FenceManager& GetFenceManager() 
+    {
+        return FenceManager;
+    }
 
     FORCEINLINE ED3D12CommandQueueType  GetQueueType() const
     {

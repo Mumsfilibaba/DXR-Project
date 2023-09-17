@@ -116,7 +116,7 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
     ID3D12GraphicsCommandList* D3D12CommandList = CommandList.GetGraphicsCommandList();
     CHECK(D3D12CommandList != nullptr);
 
-    uint32 ReadIndex = CommandContext.GetCurrentBachIndex();
+    uint32 ReadIndex = CommandContext.GetCurrentBatchIndex();
     if (ReadIndex >= (uint32)ReadResources.Size())
     {
         if (!AllocateReadResource())

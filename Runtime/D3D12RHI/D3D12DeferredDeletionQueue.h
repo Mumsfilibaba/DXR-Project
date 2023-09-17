@@ -5,22 +5,38 @@
 
 class FD3D12DeferredDeletionQueue : public FD3D12DeviceChild
 {
-    enum class EElementType
+    enum class EDeferredObjectType
     {
-        D3D12Resource = 1
+        D3DResource = 1,
+        Resource    = 2,
+        RHIResource = 3,
     };
 
-    struct FQueueElement
+    struct FDeferredObject
     {
-        EElementType Type;
-        TComPtr<ID3D12Resource> D3D12Resource;
+        EDeferredObjectType Type;
+        uint64              FenceValue;
+
+        union
+        {
+            IRefCounted*    RHIResource;
+            FD3D12Resource* Resource;
+            ID3D12Resource* D3DResource;
+        };
     };
 
 public:
     FD3D12DeferredDeletionQueue(FD3D12Device* InDevice);
-    ~FD3D12DeferredDeletionQueue() = default;
+    ~FD3D12DeferredDeletionQueue();
+
+    void Tick();
+
+    void DeferDeletion(IRefCounted* InResource, uint64 FenceValue);
+
+    void DeferDeletion(FD3D12Resource* InResource, uint64 FenceValue);
+
+    void DeferDeletion(ID3D12Resource* InResource, uint64 FenceValue);
 
 private:
-    //TQueue<> DeletionQueue;
-    FCriticalSection DeletionQueueCS;
+    TQueue<FDeferredObject> Queue;
 };

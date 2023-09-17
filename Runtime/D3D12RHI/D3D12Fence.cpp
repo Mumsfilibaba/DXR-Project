@@ -54,8 +54,6 @@ bool FD3D12Fence::WaitForValue(uint64 Value)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12FenceManager
 
 FD3D12FenceManager::FD3D12FenceManager(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)

@@ -218,9 +218,15 @@ public:
         return NewHandle;
     }
 
-    bool HasSpace(uint32 NumHandles) const { return ((CurrentHandle + NumHandles) < DescriptorCount); }
+    bool HasSpace(uint32 NumHandles) const
+    {
+        return (CurrentHandle + NumHandles) < DescriptorCount;
+    }
 
-    void Reset() { CurrentHandle = 0; }
+    void Reset()
+    {
+        CurrentHandle = 0;
+    }
 
     FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandleAt(uint32 Index) const
     {

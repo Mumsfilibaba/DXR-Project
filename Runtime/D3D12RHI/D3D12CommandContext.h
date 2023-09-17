@@ -25,37 +25,9 @@ public:
 
     bool Reset()
     {
-        Resources.Clear();
-        NativeResources.Clear();
-        DxResources.Clear();
-
         OnlineResourceDescriptorHeap->Reset();
         OnlineSamplerDescriptorHeap->Reset();
         return true;
-    }
-
-    FORCEINLINE void AddInUseResource(IRefCounted* InResource)
-    {
-        if (InResource)
-        {
-            Resources.Emplace(MakeSharedRef<IRefCounted>(InResource));
-        }
-    }
-
-    FORCEINLINE void AddInUseResource(FD3D12Resource* InResource)
-    {
-        if (InResource)
-        {
-            DxResources.Emplace(MakeSharedRef<FD3D12Resource>(InResource));
-        }
-    }
-
-    FORCEINLINE void AddInUseResource(const TComPtr<ID3D12Resource>& InResource)
-    {
-        if (InResource)
-        {
-            NativeResources.Emplace(InResource);
-        }
     }
 
     FORCEINLINE FD3D12OnlineDescriptorManager* GetResourceDescriptorManager() const
@@ -73,10 +45,6 @@ public:
 
     FD3D12OnlineDescriptorManagerRef OnlineResourceDescriptorHeap;
     FD3D12OnlineDescriptorManagerRef OnlineSamplerDescriptorHeap;
-
-    TArray<FD3D12ResourceRef>        DxResources;
-    TArray<TSharedRef<IRefCounted>>  Resources;
-    TArray<TComPtr<ID3D12Resource>>  NativeResources;
 };
 
 
@@ -349,7 +317,7 @@ public:
         return *CommandAllocator;
     }
     
-    uint32 GetCurrentBachIndex() const
+    uint32 GetCurrentBatchIndex() const
     {
         CHECK(int32(NextCmdBatch) < CmdBatches.Size());
         return FMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
@@ -365,11 +333,6 @@ public:
     {
         D3D12_ERROR_COND(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
         BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
-    }
-
-    void DestroyResource(FD3D12Resource* Resource) 
-    { 
-        CmdBatch->AddInUseResource(Resource);
     }
 
     void FlushResourceBarriers() 

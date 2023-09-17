@@ -87,7 +87,6 @@ FD3D12CommandBatch::FD3D12CommandBatch(FD3D12Device* InDevice)
     : Device(InDevice)
     , OnlineResourceDescriptorHeap(nullptr)
     , OnlineSamplerDescriptorHeap(nullptr)
-    , Resources()
 {
 }
 
@@ -402,12 +401,15 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
         FD3D12UploadAllocation Allocation = GetDevice()->GetUploadAllocator().Allocate(BufferRegion.Size, 1);
         FMemory::Memcpy(Allocation.Memory, SrcData, BufferRegion.Size);
 
+        // Copy on the GPU
         CommandList->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource.Get(), Allocation.ResourceOffset, BufferRegion.Size);
 
-        // TODO: Deferred Release Queue
-        CmdBatch->AddInUseResource(Resource);
-        CmdBatch->AddInUseResource(Allocation.Resource);
+        // Defer deletion of the upload buffer
+        GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Allocation.Resource.Get(), CmdBatch->AssignedFenceValue);
     }
+
+    // Defer deletion of the destination resource
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Resource, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIStartContext()
@@ -417,6 +419,9 @@ void FD3D12CommandContext::RHIStartContext()
     CommandContextCS.Lock();
 
     ObtainCommandList();
+
+    // TODO: The queue should run in a separate thread
+    GetDevice()->GetDeferredDeletionQueue().Tick();
 }
 
 void FD3D12CommandContext::RHIFinishContext()
@@ -481,7 +486,7 @@ void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
     FlushResourceBarriers();
 
     FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
-    CmdBatch->AddInUseResource(D3D12UnorderedAccessView);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(D3D12UnorderedAccessView, CmdBatch->AssignedFenceValue);
 
     FD3D12OnlineDescriptorManager* OnlineDescriptorHeap = CmdBatch->GetResourceDescriptorManager();
     const uint32 OnlineDescriptorHandleIndex = OnlineDescriptorHeap->AllocateHandles(1);
@@ -762,8 +767,8 @@ void FD3D12CommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 
     CommandList->ResolveSubresource(D3D12Destination->GetD3D12Resource(), D3D12Source->GetD3D12Resource(), DstFormat);
 
-    CmdBatch->AddInUseResource(Dst);
-    CmdBatch->AddInUseResource(Src);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Dst, CmdBatch->AssignedFenceValue);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Src, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
@@ -772,7 +777,6 @@ void FD3D12CommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion&
     {
         FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Dst);
         UpdateBuffer(D3D12Destination->GetD3D12Resource(), BufferRegion, SrcData);
-        CmdBatch->AddInUseResource(Dst);
     }
 }
 
@@ -836,9 +840,8 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
 
     CommandList->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
 
-    // TODO: DeferredReleaseQueue
-    CmdBatch->AddInUseResource(Dst);
-    CmdBatch->AddInUseResource(Allocation.Resource);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Dst, CmdBatch->AssignedFenceValue);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Allocation.Resource.Get(), CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo)
@@ -855,8 +858,8 @@ void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const
 
     CommandList->CopyBufferRegion(D3D12Destination->GetD3D12Resource(), CopyInfo.DstOffset, D3D12Source->GetD3D12Resource(), CopyInfo.SrcOffset, CopyInfo.Size);
 
-    CmdBatch->AddInUseResource(Dst);
-    CmdBatch->AddInUseResource(Src);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Dst, CmdBatch->AssignedFenceValue);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Src, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -873,8 +876,8 @@ void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     
     CommandList->CopyResource(D3D12Destination->GetD3D12Resource(), D3D12Source->GetD3D12Resource());
 
-    CmdBatch->AddInUseResource(Dst);
-    CmdBatch->AddInUseResource(Src);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Dst, CmdBatch->AssignedFenceValue);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Src, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& InCopyDesc)
@@ -917,13 +920,13 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
 
     CommandList->CopyTextureRegion(&DstLocation, InCopyDesc.DstPosition.x, InCopyDesc.DstPosition.y, InCopyDesc.DstPosition.z, &SrcLocation, &SrcBox);
 
-    CmdBatch->AddInUseResource(Dst);
-    CmdBatch->AddInUseResource(Src);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Dst, CmdBatch->AssignedFenceValue);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Src, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIDestroyResource(IRefCounted* Resource)
 {
-    CmdBatch->AddInUseResource(Resource);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Resource, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
@@ -934,7 +937,7 @@ void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
     if (D3D12Resource)
     {
         CommandList->DiscardResource(D3D12Resource->GetD3D12Resource(), nullptr);
-        CmdBatch->AddInUseResource(Texture);
+        GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Texture, CmdBatch->AssignedFenceValue);
     }
 }
 
@@ -958,9 +961,9 @@ void FD3D12CommandContext::RHIBuildRayTracingGeometry(
     FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
     D3D12Geometry->Build(*this, D3D12VertexBuffer, NumVertices, D3D12IndexBuffer, NumIndices, IndexFormat, bUpdate);
 
-    CmdBatch->AddInUseResource(RayTracingGeometry);
-    CmdBatch->AddInUseResource(VertexBuffer);
-    CmdBatch->AddInUseResource(IndexBuffer);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(VertexBuffer, CmdBatch->AssignedFenceValue);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(IndexBuffer, CmdBatch->AssignedFenceValue);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(RayTracingGeometry, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
@@ -971,8 +974,7 @@ void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTraci
 
     FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
     D3D12Scene->Build(*this, Instances, bUpdate);
-
-    CmdBatch->AddInUseResource(RayTracingScene);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(RayTracingScene, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHISetRayTracingBindings(
@@ -1264,7 +1266,7 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
 
     FlushResourceBarriers();
 
-    CmdBatch->AddInUseResource(StagingTexture.Get());
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(StagingTexture.Get(), CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -1274,8 +1276,7 @@ void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceA
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
-
-    CmdBatch->AddInUseResource(Texture);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Texture, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -1287,8 +1288,7 @@ void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcce
     CHECK(D3D12Buffer != nullptr);
 
     TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
-
-    CmdBatch->AddInUseResource(Buffer);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Buffer, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
@@ -1297,8 +1297,7 @@ void FD3D12CommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture
     CHECK(D3D12Texture != nullptr);
 
     UnorderedAccessBarrier(D3D12Texture->GetD3D12Resource());
-
-    CmdBatch->AddInUseResource(Texture);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Texture, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
@@ -1307,8 +1306,7 @@ void FD3D12CommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     CHECK(D3D12Buffer != nullptr);
 
     UnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
-
-    CmdBatch->AddInUseResource(Buffer);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(Buffer, CmdBatch->AssignedFenceValue);
 }
 
 void FD3D12CommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)

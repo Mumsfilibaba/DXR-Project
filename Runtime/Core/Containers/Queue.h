@@ -196,7 +196,7 @@ public:
      */
     FORCEINLINE bool IsEmpty() const
     {
-        return (Tail->NextNode == nullptr);
+        return Tail->NextNode == nullptr;
     }
 
     /**
