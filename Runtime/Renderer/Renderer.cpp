@@ -135,15 +135,15 @@ FRenderer::~FRenderer()
 
     FrameStatistics.Reset();
 
-    if (GEngine && GEngine->MainWindow)
+    if (FApplication::IsInitialized())
     {
-        // GEngine->MainWindow->RemoveOverlayWidget(TextureDebugger);
+        FApplication::Get().RemoveWidget(TextureDebugger);
         TextureDebugger.Reset();
 
-        // GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
+        FApplication::Get().RemoveWidget(InfoWindow);
         InfoWindow.Reset();
 
-        // GEngine->MainWindow->RemoveOverlayWidget(InfoWindow);
+        FApplication::Get().RemoveWidget(GPUProfilerWindow);
         GPUProfilerWindow.Reset();
     }
 }
@@ -319,15 +319,19 @@ bool FRenderer::Create()
     // Register EventFunc
     //GEngine->MainWindow->GetWindowResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
 
-    //// Register Windows
-    TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
-    //GEngine->MainWindow->AddOverlaySlot().AttachWidget(TextureDebugger);
+    // Register Windows
+    if (FApplication::IsInitialized())
+    {
+        TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
+        FApplication::Get().AddWidget(TextureDebugger);
 
-    //InfoWindow = NewWidget(FRendererInfoWindow);
-    //GEngine->MainWindow->AddOverlaySlot().AttachWidget(InfoWindow);
+        InfoWindow = MakeShared<FRendererInfoWindow>();
+        FApplication::Get().AddWidget(InfoWindow);
 
-    //GPUProfilerWindow = NewWidget(FGPUProfilerWindow);
-    //GEngine->MainWindow->AddOverlaySlot().AttachWidget(GPUProfilerWindow);
+        GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
+        FApplication::Get().AddWidget(GPUProfilerWindow);
+    }
+
     return true;
 }
 

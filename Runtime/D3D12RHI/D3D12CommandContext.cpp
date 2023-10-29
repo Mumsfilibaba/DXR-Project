@@ -105,20 +105,6 @@ FD3D12CommandContext::~FD3D12CommandContext()
 
 bool FD3D12CommandContext::Initialize()
 {
-    CommandAllocator = CommandAllocatorManager.ObtainAllocator();
-    if (!CommandAllocator)
-    {
-        D3D12_ERROR("Failed to initialize CommandAllocator");
-        return false;
-    }
-
-    CommandList = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(*CommandAllocator, nullptr);
-    if (!CommandList)
-    {
-        D3D12_ERROR("Failed to initialize CommandList");
-        return false;
-    }
-
     if (!ContextState.Initialize())
     {
         D3D12_ERROR("Failed to initialize ContextState");
@@ -1200,10 +1186,32 @@ void FD3D12CommandContext::ObtainCommandList()
 {
     TRACE_FUNCTION_SCOPE();
 
-    CommandAllocator = CommandAllocatorManager.ObtainAllocator();
-    if (!CommandList->Reset(*CommandAllocator))
+    if (!CommandAllocator)
     {
-        D3D12_ERROR("Failed to reset Commandlist");
+        CommandAllocator = CommandAllocatorManager.ObtainAllocator();
+        if (!CommandAllocator)
+        {
+            D3D12_ERROR("Failed to Obtain CommandAllocator");
+        }
+    }
+
+    if (!CommandList)
+    {
+        CommandList = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(*CommandAllocator, nullptr);
+        if (!CommandList)
+        {
+            D3D12_ERROR("Failed to initialize CommandList");
+        }
+    }
+    else if (AssignedFenceValue == 0)
+    {
+        if (!CommandList->IsReady())
+        {
+            if (!CommandList->Reset(*CommandAllocator))
+            {
+                D3D12_ERROR("Failed to reset Commandlist");
+            }
+        }
     }
 
     if (FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType))
@@ -1230,22 +1238,27 @@ void FD3D12CommandContext::FinishCommandList()
 
     ResolveQueries.Clear();
 
-    // Close CommandList
-    if (!CommandList->Close())
+    // Only execute if we have executed any commands
+    const uint32 NumCommands = CommandList->GetNumCommands();
+    if (NumCommands > 0)
     {
-        D3D12_ERROR("Failed to close CommandList");
-        return;
-    }
-    
-    // Execute and update fence-value
-    FD3D12FenceSyncPoint SyncPoint = GetDevice()->GetCommandListManager(QueueType)->ExecuteCommandList(CommandList, false);
-    CHECK(SyncPoint.FenceValue == AssignedFenceValue);
-    AssignedFenceValue = 0;
+        // Close CommandList
+        if (!CommandList->Close())
+        {
+            D3D12_ERROR("Failed to close CommandList");
+            return;
+        }
 
-    // Release Allocator
-    CommandAllocatorManager.ReleaseAllocator(CommandAllocator);
-    CommandAllocator = nullptr;
+        // Execute and update fence-value
+        FD3D12FenceSyncPoint SyncPoint = GetDevice()->GetCommandListManager(QueueType)->ExecuteCommandList(CommandList, false);
+        CHECK(SyncPoint.FenceValue == AssignedFenceValue);
+
+        // Release Allocator
+        CommandAllocatorManager.ReleaseAllocator(CommandAllocator);
+        CommandAllocator = nullptr;
+    }
 
     // Ensure that the state will rebind the necessary state when we obtain a new CommandList
     ContextState.ResetStateForNewCommandList();
+    AssignedFenceValue = 0;
 }

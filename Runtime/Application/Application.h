@@ -75,7 +75,6 @@ public:
 
     void UpdateMonitorInfo();
   
-public:
     virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
 
     virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
@@ -112,7 +111,6 @@ public:
 
     virtual bool OnMonitorChange() override final;
 
-public:
     TSharedRef<FGenericWindow> CreateWindow(const FGenericWindowInitializer& Initializer);
 
     void SetCursor(ECursor Cursor);

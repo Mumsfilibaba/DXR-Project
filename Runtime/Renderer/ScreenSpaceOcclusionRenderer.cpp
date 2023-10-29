@@ -33,7 +33,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
 
     TArray<uint8> ShaderCode;
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -68,7 +68,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     };
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -103,7 +103,7 @@ bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
     Defines.Emplace("VERTICAL_PASS", "1");
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, MakeArrayView(Defines));
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, MakeArrayView(Defines));
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

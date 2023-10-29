@@ -4,12 +4,12 @@
 #include "Application/Widget.h"
 #include "RHI/RHIResources.h"
 
-class FRenderTargetDebugWindow
+class FRenderTargetDebugWindow : public FWidget
 {
 public:
 
     /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
-    void Paint();
+    virtual void Paint() override final;
 
      /** @brief - Add image for debug drawing */
     void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
@@ -21,5 +21,5 @@ public:
 
 private:
     TArray<FDrawableTexture> DebugTextures;
-    int32                    SelectedTextureIndex = 0;
+    int32 SelectedTextureIndex = 0;
 };

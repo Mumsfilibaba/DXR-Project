@@ -36,14 +36,30 @@ float NextRandom(inout uint Seed)
     return float(Seed) * (1.0f / 4294967296.0f);
 }
 
+min16float NextRandomMin16(inout uint Seed)
+{
+    Seed = XORShift(Seed);
+    return min16float(Seed) * (1.0 / 4294967296.0);
+}
+
 float2 NextRandom2(inout uint Seed)
 {
     return float2(NextRandom(Seed), NextRandom(Seed));
 }
 
+min16float2 NextRandom2Min16(inout uint Seed)
+{
+    return min16float2(NextRandomMin16(Seed), NextRandomMin16(Seed));
+}
+
 float3 NextRandom3(inout uint Seed)
 {
     return float3(NextRandom(Seed), NextRandom(Seed), NextRandom(Seed));
+}
+
+min16float3 NextRandom3Min16(inout uint Seed)
+{
+    return min16float3(NextRandomMin16(Seed), NextRandomMin16(Seed), NextRandomMin16(Seed));
 }
 
 int NextRandomInt(inout uint Seed)

@@ -5,16 +5,16 @@
 
 // Common Constants
 
-#define PI     (3.14159265359f)
-#define PI_2   (3.14159265359f)
-#define INV_PI (1.0f / 3.14159265359f)
-#define GAMMA  (2.2f)
+#define PI     (3.14159265359)
+#define PI_2   (3.14159265359)
+#define INV_PI (1.0 / 3.14159265359)
+#define GAMMA  (2.2)
 
-#define MIN_ROUGHNESS (0.05f)
-#define MAX_ROUGHNESS (1.0f)
-#define MIN_VALUE     (0.0000001f)
-#define EPSILON       (0.0001f)
-#define RAY_OFFSET    (0.02f)
+#define MIN_ROUGHNESS (0.05)
+#define MAX_ROUGHNESS (1.0)
+#define MIN_VALUE     (0.0000001)
+#define EPSILON       (0.0001)
+#define RAY_OFFSET    (0.02)
 
 #define FLT32_MAX (3.402823466e+38f)
 #define FLT32_MIN (1.175494351e-38f)        

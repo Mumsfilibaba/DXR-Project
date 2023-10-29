@@ -208,9 +208,20 @@ float3 ApplyNormalMapping(float3 MappedNormal, float3 Normal, float3 Tangent, fl
     return normalize(mul(MappedNormal, TBN));
 }
 
+min16float3 ApplyNormalMapping(min16float3 MappedNormal, min16float3 Normal, min16float3 Tangent, min16float3 Bitangent)
+{
+    min16float3x3 TBN = min16float3x3(Tangent, Bitangent, Normal);
+    return normalize(mul(MappedNormal, TBN));
+}
+
 float3 UnpackNormal(float3 TextureSample)
 {
     return normalize((TextureSample * 2.0f) - 1.0f);
+}
+
+min16float3 UnpackNormal(min16float3 TextureSample)
+{
+    return normalize((TextureSample * 2.0) - 1.0);
 }
 
 float3 UnpackNormalBC5(float3 TextureSample)
@@ -221,9 +232,22 @@ float3 UnpackNormalBC5(float3 TextureSample)
 	return float3(NormalXY.xy, NormalZ);
 }
 
+min16float3 UnpackNormalBC5(min16float3 TextureSample)
+{
+	min16float2 NormalXY = TextureSample.rg;	
+	NormalXY = (NormalXY * 2.0) - 1.0;
+	min16float NormalZ = sqrt(saturate(1.0 - dot(NormalXY, NormalXY)));
+	return min16float3(NormalXY.xy, NormalZ);
+}
+
 float3 PackNormal(float3 Normal)
 {
     return (normalize(Normal) + 1.0f) * 0.5f;
+}
+
+min16float3 PackNormal(min16float3 Normal)
+{
+    return (normalize(Normal) + 1.0) * 0.5;
 }
 
 // ClipAABB

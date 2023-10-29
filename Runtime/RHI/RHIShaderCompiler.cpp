@@ -370,13 +370,8 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     if (CompileInfo.bOptimize)
     {
         CompileArgs.Emplace(L"-O3");
-        CompileArgs.Emplace(DXC_ARG_ALL_RESOURCES_BOUND);
-        CompileArgs.Emplace(DXC_ARG_AVOID_FLOW_CONTROL);
-        
-        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::HLSL)
-        {
-            CompileArgs.Emplace(DXC_ARG_IEEE_STRICTNESS);
-        }
+        CompileArgs.Emplace(L"-all-resources-bound");
+        CompileArgs.Emplace(L"-Gfa"); // Avoid flow-control
     }
 
     // NOTE: Entrypoint needs to always be main when compiling SPIRV, this is due to the fact that the GLSL code cannot handle any

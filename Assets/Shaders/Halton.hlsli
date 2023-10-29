@@ -42,6 +42,11 @@ float2 Hammersley2(uint i, uint n)
     return float2(float(i) / float(n), RadicalInverse2(i));
 }
 
+min16float2 Hammersley2Min16(uint i, uint n)
+{
+    return min16float2(min16float(i) / min16float(n), min16float(RadicalInverse2(i)));
+}
+
 float2 Halton23(uint i)
 {
     return float2(RadicalInverse2(i), RadicalInverse3(i));
@@ -55,6 +60,16 @@ float3 HemispherePointUniform(float U, float V)
     // TODO: FastSqrt? 
 	float SinTheta = sqrt(1.0f - (CosTheta * CosTheta));
 	return float3(cos(Phi) * SinTheta, sin(Phi) * SinTheta, CosTheta);
+}
+
+min16float3 HemispherePointUniform(min16float U, min16float V) 
+{
+	min16float Phi      = V * 2.0 * PI;
+	min16float CosTheta = 1.0 - U;
+    
+    // TODO: FastSqrt? 
+	min16float SinTheta = sqrt(1.0 - (CosTheta * CosTheta));
+	return min16float3(cos(Phi) * SinTheta, sin(Phi) * SinTheta, CosTheta);
 }
 
 float2 OneToMinusOne_Halton23(uint i)

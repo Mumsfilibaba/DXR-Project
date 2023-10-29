@@ -71,6 +71,11 @@ FD3D12CommandListRef FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAl
         {
             return nullptr;
         }
+
+        if (!CommandList->Reset(CommandAllocator))
+        {
+            return nullptr;
+        }
     }
     else
     {

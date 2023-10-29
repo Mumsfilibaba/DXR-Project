@@ -249,12 +249,16 @@ bool FEngine::Init()
     SceneViewport->SetScene(Scene);
     MainViewport->SetViewportInterface(SceneViewport);
 
-    /* Create Widgets */
-    ProfilerWidget = MakeShared<FFrameProfilerWidget>();
-    FApplication::Get().AddWidget(ProfilerWidget);
+    // Create Widgets
+    if (FApplication::IsInitialized())
+    {
+        ProfilerWidget = MakeShared<FFrameProfilerWidget>();
+        FApplication::Get().AddWidget(ProfilerWidget);
 
-    ConsoleWidget = MakeShared<FConsoleWidget>();
-    FApplication::Get().AddWidget(ConsoleWidget);
+        ConsoleWidget = MakeShared<FConsoleWidget>();
+        FApplication::Get().AddWidget(ConsoleWidget);
+    }
+
     return true;
 }
 
@@ -284,6 +288,15 @@ void FEngine::Tick(FTimespan DeltaTime)
 
 void FEngine::Release()
 {
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().RemoveWidget(ProfilerWidget);
+        ProfilerWidget.Reset();
+
+        FApplication::Get().RemoveWidget(ConsoleWidget);
+        ConsoleWidget.Reset();
+    }
+
     if (Scene)
     {
         SceneViewport->SetScene(nullptr);

@@ -50,9 +50,9 @@ private:
     bool ValidateRayTracingShader(const TComPtr<IDxcBlob>& ShaderBlob, LPCWSTR Entrypoint);
 
 private:
-    TComPtr<IDxcCompiler>       DxCompiler;
-    TComPtr<IDxcLibrary>        DxLibrary;
-    TComPtr<IDxcLinker>         DxLinker;
+    TComPtr<IDxcCompiler>            DxCompiler;
+    TComPtr<IDxcLibrary>             DxLibrary;
+    TComPtr<IDxcLinker>              DxLinker;
     TComPtr<IDxcIncludeHandler>      DxIncludeHandler;
     TComPtr<IDxcContainerReflection> DxReflection;
 
