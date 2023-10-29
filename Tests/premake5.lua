@@ -96,12 +96,12 @@ workspace "EngineTests"
 
     -- Container Tests
     project "Containers-Tests"
-        location     "Containers-Tests"
-        kind         "ConsoleApp"
+        location "Containers-Tests"
+        kind     "ConsoleApp"
 
         -- Targets
-        targetdir     ("Build/bin/" .. outputdir .. "/%{prj.name}")
-        objdir         ("Build/bin-int/" .. outputdir .. "/%{prj.name}")    
+        targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
+        objdir    ("Build/bin-int/" .. outputdir .. "/%{prj.name}")    
     
         -- Files to include
         files 
@@ -145,16 +145,25 @@ workspace "EngineTests"
         {
             "%{prj.name}",
         }
+
+        -- Linking
+        filter "system:Windows"
+            links
+            {
+                "Dbghelp.lib",
+                "shlwapi.lib",
+            }
+        filter {}
     project "*"
     
     -- Math Tests
     project "MathLib-Tests"
-        location     "MathLib-Tests"
-        kind         "ConsoleApp"
+        location "MathLib-Tests"
+        kind     "ConsoleApp"
 
         -- Targets
-        targetdir     ("Build/bin/" .. outputdir .. "/%{prj.name}")
-        objdir         ("Build/bin-int/" .. outputdir .. "/%{prj.name}")    
+        targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
+        objdir    ("Build/bin-int/" .. outputdir .. "/%{prj.name}")    
     
         -- Files to include
         files 
@@ -185,12 +194,12 @@ workspace "EngineTests"
     
     -- Templates Tests
     project "Templates-Tests"
-        location     "Templates-Tests"
-        kind         "ConsoleApp"
+        location "Templates-Tests"
+        kind     "ConsoleApp"
 
         -- Targets
-        targetdir     ("Build/bin/" .. outputdir .. "/%{prj.name}")
-        objdir         ("Build/bin-int/" .. outputdir .. "/%{prj.name}")    
+        targetdir ("Build/bin/" .. outputdir .. "/%{prj.name}")
+        objdir    ("Build/bin-int/" .. outputdir .. "/%{prj.name}")    
     
         -- Files to include
         files 

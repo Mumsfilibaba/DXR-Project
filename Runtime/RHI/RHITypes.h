@@ -323,6 +323,12 @@ constexpr bool IsBlockCompressed(EFormat Format)
     return ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless);
 }
 
+// BlockCompressed images must be aligned to 4 pixels in all dimensions
+constexpr bool IsBlockCompressedAligned(uint32 Extent)
+{
+    return Extent % 4 == 0;
+}
+
 
 enum class EIndexFormat : uint8
 {

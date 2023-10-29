@@ -156,7 +156,7 @@
 #include "Core/Templates/Utility.h"
 
 #include "Core/Threading/AsyncTask.h"
-#include "Core/Threading/AsyncThreadPool.h"
+#include "Core/Threading/TaskManager.h"
 #include "Core/Threading/AtomicInt.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Spinlock.h"

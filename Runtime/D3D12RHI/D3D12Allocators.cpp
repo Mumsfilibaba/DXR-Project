@@ -6,7 +6,6 @@ TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
     "The maximum size for a resource that uses a shared staging-buffer (MB)",
     8);
 
-
 FD3D12UploadHeapAllocator::FD3D12UploadHeapAllocator(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , BufferSize(0)
@@ -18,11 +17,10 @@ FD3D12UploadHeapAllocator::FD3D12UploadHeapAllocator(FD3D12Device* InDevice)
 
 FD3D12UploadHeapAllocator::~FD3D12UploadHeapAllocator()
 {
-    Resource.Reset();
-
     BufferSize    = 0;
     CurrentOffset = 0;
     MappedMemory  = nullptr;
+    Resource      = nullptr;
 }
 
 FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 Alignment)
@@ -37,7 +35,7 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
     if (Size < MaxUploadSize)
     {
         // Lock the buffer and all variable within
-        TScopedLock Lock(CriticalSection);
+        SCOPED_LOCK(CriticalSection);
 
         uint64 Offset    = FMath::AlignUp<uint64>(CurrentOffset, Alignment);
         uint64 NewOffset = Offset + Size;
@@ -65,9 +63,11 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
             Desc.SampleDesc.Count   = 1;
             Desc.SampleDesc.Quality = 0;
 
-            HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&Resource));
+            TComPtr<ID3D12Resource> NewResource;
+            HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&NewResource));
             if (SUCCEEDED(Result))
             {
+                Resource = NewResource;
                 Resource->SetName(L"FD3D12UploadHeapAllocator Buffer");
                 Resource->Map(0, nullptr, reinterpret_cast<void**>(&MappedMemory));
             }

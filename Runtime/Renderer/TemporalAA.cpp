@@ -36,7 +36,7 @@ bool FTemporalAA::Init(FFrameResources& FrameResources)
         }
         else
         {
-            TemporalAAPSO->SetName("CascadeGen PSO");
+            TemporalAAPSO->SetName("TemporalAA PSO");
         }
     }
 

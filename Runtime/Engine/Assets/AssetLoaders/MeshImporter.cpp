@@ -58,7 +58,6 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
         if (FFBXLoader::LoadFile(Filename, OutScene, FBXFlags))
         {
             const auto Count = FMath::Max<int32>(Filename.Size() - 4, 0);
-
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
             return AddCacheEntry(Filename, NewFileName, OutScene);
@@ -70,7 +69,6 @@ bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMes
         if (FOBJLoader::LoadFile(Filename, OutScene, bReverseHandedness))
         {
             const auto Count = FMath::Max<int32>(Filename.Size() - 4, 0);
-
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
             return AddCacheEntry(Filename, NewFileName, OutScene);
@@ -421,6 +419,7 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
         
         const int32 Length = FCString::Strlen(ModelHeaders[Index].Name);
         CHECK(Length < FCustomModel::MaxNameLength);
+
         CurrentModel.Name          = ModelHeaders[Index].Name;
         CurrentModel.MaterialIndex = ModelHeaders[Index].MaterialIndex;
 
@@ -444,21 +443,37 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
     {
         FMaterialData& Material = OutScene.Materials[Index];
         if (Materials[Index].DiffuseTexIndex >= 0)
+        {
             Material.DiffuseTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].DiffuseTexIndex]->GetTexture2D());
+        }
         if (Materials[Index].NormalTexIndex >= 0)
+        {
             Material.NormalTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].NormalTexIndex]->GetTexture2D());
+        }
         if (Materials[Index].SpecularTexIndex >= 0)
+        {
             Material.SpecularTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].SpecularTexIndex]->GetTexture2D());
+        }
         if (Materials[Index].RoughnessTexIndex >= 0)
+        {
             Material.RoughnessTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].RoughnessTexIndex]->GetTexture2D());
+        }
         if (Materials[Index].AOTexIndex >= 0)
+        {
             Material.AOTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].AOTexIndex]->GetTexture2D());
+        }
         if (Materials[Index].MetallicTexIndex >= 0)
+        {
             Material.MetallicTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].MetallicTexIndex]->GetTexture2D());
+        }
         if (Materials[Index].EmissiveTexIndex >= 0)
+        {
             Material.EmissiveTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].EmissiveTexIndex]->GetTexture2D());
+        }
         if (Materials[Index].AlphaMaskTexIndex >= 0)
+        {
             Material.AlphaMaskTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].AlphaMaskTexIndex]->GetTexture2D());
+        }
 
         Material.Diffuse   = Materials[Index].Diffuse;
         Material.Roughness = Materials[Index].Roughness;

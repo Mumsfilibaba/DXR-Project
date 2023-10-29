@@ -92,6 +92,7 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
 
     if (!NewTexture->CreateRHITexture(bGenerateMips))
     {
+        LOG_ERROR("[FAssetManager]: Failed to create RHI texture for image '%s'.", FinalPath.GetCString());
         return nullptr;
     }
 

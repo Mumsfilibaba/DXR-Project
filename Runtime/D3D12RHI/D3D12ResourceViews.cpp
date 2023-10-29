@@ -6,7 +6,7 @@ FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHe
     : FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
     , Heap(InHeap)
-    , OfflineHandle({ 0 })
+    , Descriptor()
 {
     CHECK(Heap != nullptr);
 }
@@ -18,15 +18,13 @@ FD3D12View::~FD3D12View()
 
 bool FD3D12View::AllocateHandle()
 {
-    OfflineHandle = Heap->Allocate(OfflineHeapIndex);
-    return OfflineHandle != 0;
+    Descriptor = Heap->Allocate();
+    return Descriptor;
 }
 
 void FD3D12View::InvalidateAndFreeHandle()
 {
-    Heap->Free(OfflineHandle, OfflineHeapIndex);
-    OfflineHeapIndex = 0;
-    OfflineHandle    = { 0 };
+    Heap->Free(Descriptor);
 }
 
 
@@ -38,11 +36,15 @@ FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D1
 
 bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
 {
-    CHECK(OfflineHandle != 0);
+    if (!Descriptor)
+    {
+        D3D12_ERROR("[FD3D12ConstantBufferView] Invalid Descriptor");
+        return false;
+    }
 
     Resource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
-    GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateConstantBufferView(&Desc, GetOfflineHandle());
     return true;
 }
 
@@ -56,7 +58,11 @@ FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D1
 
 bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
 {
-    CHECK(OfflineHandle != 0);
+    if (!Descriptor)
+    {
+        D3D12_ERROR("[FD3D12ShaderResourceView] Invalid Descriptor");
+        return false;
+    }
 
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
     Desc = InDesc;
@@ -68,7 +74,7 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateShaderResourceView(NativeResource, &Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateShaderResourceView(NativeResource, &Desc, GetOfflineHandle());
     return true;
 }
 
@@ -83,7 +89,11 @@ FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3
 
 bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
 {
-    CHECK(OfflineHandle != 0);
+    if (!Descriptor)
+    {
+        D3D12_ERROR("[FD3D12UnorderedAccessView] Invalid Descriptor");
+        return false;
+    }
 
     Desc            = InDesc;
     CounterResource = InCounterResource;
@@ -102,7 +112,7 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateUnorderedAccessView(NativeResource, NativeCounterResource, &Desc, GetOfflineHandle());
     return true;
 }
 
@@ -115,7 +125,11 @@ FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12Off
 
 bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
 {
-    CHECK(OfflineHandle != 0);
+    if (!Descriptor)
+    {
+        D3D12_ERROR("[FD3D12RenderTargetView] Invalid Descriptor");
+        return false;
+    }
 
     Desc = InDesc;
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
@@ -127,7 +141,7 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateRenderTargetView(NativeResource, &Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateRenderTargetView(NativeResource, &Desc, GetOfflineHandle());
     return true;
 }
 
@@ -140,7 +154,11 @@ FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12Off
 
 bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)
 {
-    CHECK(OfflineHandle != 0);
+    if (!Descriptor)
+    {
+        D3D12_ERROR("[FD3D12DepthStencilView] Invalid Descriptor");
+        return false;
+    }
 
     Desc = InDesc;
     FD3D12View::Resource = MakeSharedRef<FD3D12Resource>(InResource);
@@ -152,6 +170,6 @@ bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_
         NativeResource = FD3D12View::Resource->GetD3D12Resource();
     }
 
-    GetDevice()->GetD3D12Device()->CreateDepthStencilView(NativeResource, &Desc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateDepthStencilView(NativeResource, &Desc, GetOfflineHandle());
     return true;
 }

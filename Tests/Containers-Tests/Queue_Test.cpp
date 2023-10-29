@@ -262,7 +262,6 @@ void TQueue_Test()
     SPSCTest::Test();
     MPSCTest::Test();
     SPMCTest::Test();
-
     UnusedPopulatedQueue::Test();
 }
 #endif

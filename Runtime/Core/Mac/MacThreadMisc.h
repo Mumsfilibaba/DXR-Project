@@ -37,7 +37,7 @@ struct FMacThreadMisc final : public FGenericThreadMisc
         ::usleep(static_cast<useconds_t>(Microseconds));
     }
 
-    static FORCEINLINE void Yeild()
+    static FORCEINLINE void Yield()
     {
         ::sched_yield();
     }

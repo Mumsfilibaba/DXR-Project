@@ -10,14 +10,6 @@
 
 struct FMeshData
 {
-    FMeshData() = default;
-
-    FMeshData(FMeshData&&) = default;
-    FMeshData(const FMeshData&) = default;
-
-    FMeshData& operator=(FMeshData&&) = default;
-    FMeshData& operator=(const FMeshData&) = default;
-
     FORCEINLINE void Clear()
     {
         Vertices.Clear();
@@ -29,18 +21,18 @@ struct FMeshData
         return !Vertices.IsEmpty();
     }
 
-    FORCEINLINE void RefitContainers()
+    FORCEINLINE void ShrinkBuffers()
     {
         Vertices.Shrink();
         Indices.Shrink();
     }
 
-    FORCEINLINE auto GetVertexCount() const
+    FORCEINLINE int32 GetVertexCount() const
     {
         return Vertices.Size();
     }
 
-    FORCEINLINE auto GetIndexCount() const
+    FORCEINLINE int32 GetIndexCount() const
     {
         return Indices.Size();
     }
@@ -52,14 +44,6 @@ struct FMeshData
 
 struct FModelData
 {
-    FModelData() = default;
-
-    FModelData(FModelData&&) = default;
-    FModelData(const FModelData&) = default;
-
-    FModelData& operator=(FModelData&&) = default;
-    FModelData& operator=(const FModelData&) = default;
-
     /** @brief - Name of the mesh specified in the model-file */
     FString Name;
 

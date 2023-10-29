@@ -438,7 +438,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
             FrustumCullingAndSortingInternal(CameraPtr, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
         });
 
-        AsyncTask->Launch();
+        AsyncTask->Launch(EQueuePriority::Normal);
         Tasks[Index] = AsyncTask;
     }
 
@@ -529,29 +529,18 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
-void FRenderer::Tick(const FScene& Scene)
+void FRenderer::Tick()
 {
-    GRHICommandExecutor.Tick();
+    const FScene& Scene = *GEngine->Scene;
 
     Resources.BackBuffer             = Resources.MainViewport->GetBackBuffer();
     Resources.GlobalMeshDrawCommands = TArrayView<const FMeshDrawCommand>(Scene.GetMeshDrawCommands());
-
-    // Prepare Lights
-#if 1
-    CommandList.BeginExternalCapture();
-#endif
-
-    FGPUProfiler::Get().BeginGPUFrame(CommandList);
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
-
-    LightSetup.BeginFrame(CommandList, Scene);
 
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
 
-    // Clear the images that were debug gable last frame 
+    // Clear the images that were debuggable last frame 
     // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
 
@@ -575,6 +564,22 @@ void FRenderer::Tick(const FScene& Scene)
     {
         PerformFrustumCullingAndSort(Scene);
     }
+
+
+    // START FRAME ON THE GPU
+    GRHICommandExecutor.Tick();
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
+
+#if 1
+    CommandList.BeginExternalCapture();
+#endif
+
+    // Begin capture GPU FrameTime
+    FGPUProfiler::Get().BeginGPUFrame(CommandList);
+
+    // Prepare Lights
+    LightSetup.BeginFrame(CommandList, Scene);
 
     // Update camera-buffer
     // TODO: All matrices needs to be in Transposed the same
@@ -832,26 +837,27 @@ void FRenderer::Tick(const FScene& Scene)
         DebugRenderer.RenderObjectAABBs(CommandList, Resources);
     }
 
-    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource);
+    if (GEnableTemporalAA.GetValue())
+    {
+        CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess);
+
+        TemporalAA.Render(CommandList, Resources);
+
+        CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
+    }
+    else
+    {
+        CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource);
+    }
 
     AddDebugTexture(
         MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView()),
         Resources.GBuffer[GBufferIndex_Depth],
         EResourceAccess::PixelShaderResource,
         EResourceAccess::PixelShaderResource);
-
-    if (GEnableTemporalAA.GetValue())
-    {
-        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess);
-
-        TemporalAA.Render(CommandList, Resources);
-
-        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
-    }
-    else
-    {
-        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource);
-    }
 
     if (GEnableFXAA.GetValue())
     {

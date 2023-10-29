@@ -435,8 +435,10 @@ bool FD3D12RayTracingScene::BuildBindingTable(
     CmdContext.TransitionResource(BindingTable.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
     ShaderBindingTableBuilder.Reset();
+#if 0
     BindingTableHeaps[0] = ResourceHeap->GetD3D12Heap();
     BindingTableHeaps[1] = SamplerHeap->GetD3D12Heap();
+#endif
 
     BindingTableStride = sizeof(FD3D12ShaderBindingTableEntry);
     NumHitGroups = NumHitGroupResources;
@@ -491,6 +493,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
     FD3D12ShaderBindingTableEntry& OutShaderBindingEntry,
     const FRayTracingShaderResources& Resources)
 {
+#if 0
     CHECK(PipelineState != nullptr);
     CHECK(RootSignature != nullptr);
     CHECK(ResourceHeap  != nullptr);
@@ -505,9 +508,9 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         uint32 NumDescriptors = Resources.ConstantBuffers.Size();
         uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUHandle(Handle);
 
-        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUHandle(Handle);
         GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
 
         for (FRHIBuffer* ConstantBuffer : Resources.ConstantBuffers)
@@ -523,9 +526,9 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         uint32 NumDescriptors = Resources.ShaderResourceViews.Size();
         uint32 Handle         = ResourceHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUHandle(Handle);
 
-        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandles[GPUResourceIndex]       = ResourceHeap->GetCPUHandle(Handle);
         GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
 
         for (FRHIShaderResourceView* ShaderResourceView : Resources.ShaderResourceViews)
@@ -541,9 +544,9 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         uint32 NumDescriptors = Resources.UnorderedAccessViews.Size();
         uint32 Handle = ResourceHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUDescriptorHandleAt(Handle);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = ResourceHeap->GetGPUHandle(Handle);
 
-        GPUResourceHandles[GPUResourceIndex] = ResourceHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUResourceHandles[GPUResourceIndex] = ResourceHeap->GetCPUHandle(Handle);
         GPUResourceHandleSizes[GPUResourceIndex++] = NumDescriptors;
 
         for (FRHIUnorderedAccessView* UnorderedAccessView : Resources.UnorderedAccessViews)
@@ -559,9 +562,9 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
 
         uint32 NumDescriptors = Resources.SamplerStates.Size();
         uint32 Handle = SamplerHeap->AllocateHandles(NumDescriptors);
-        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = SamplerHeap->GetGPUDescriptorHandleAt(Handle);
+        OutShaderBindingEntry.RootDescriptorTables[RootIndex] = SamplerHeap->GetGPUHandle(Handle);
 
-        GPUSamplerHandles[GPUSamplerIndex] = SamplerHeap->GetCPUDescriptorHandleAt(Handle);
+        GPUSamplerHandles[GPUSamplerIndex] = SamplerHeap->GetCPUHandle(Handle);
         GPUSamplerHandleSizes[GPUSamplerIndex++] = NumDescriptors;
 
         for (FRHISamplerState* Sampler : Resources.SamplerStates)
@@ -570,6 +573,7 @@ void FD3D12ShaderBindingTableBuilder::PopulateEntry(
             SamplerHandles[CPUSamplerIndex++] = DxSampler->GetOfflineHandle();
         }
     }
+#endif
 }
 
 void FD3D12ShaderBindingTableBuilder::CopyDescriptors()

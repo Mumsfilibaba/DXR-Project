@@ -15,6 +15,7 @@
 #include "D3D12TimestampQuery.h"
 #include "DynamicD3D12.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 
 IMPLEMENT_ENGINE_MODULE(FD3D12RHIModule, D3D12RHI);
@@ -51,13 +52,13 @@ FD3D12RHI::~FD3D12RHI()
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
 
-    SAFE_RELEASE(ResourceOfflineDescriptorHeap);
-    SAFE_RELEASE(RenderTargetOfflineDescriptorHeap);
-    SAFE_RELEASE(DepthStencilOfflineDescriptorHeap);
-    SAFE_RELEASE(SamplerOfflineDescriptorHeap);
+    SAFE_DELETE(ResourceOfflineDescriptorHeap);
+    SAFE_DELETE(RenderTargetOfflineDescriptorHeap);
+    SAFE_DELETE(DepthStencilOfflineDescriptorHeap);
+    SAFE_DELETE(SamplerOfflineDescriptorHeap);
 
-    Device.Reset();
-    Adapter.Reset();
+    SAFE_DELETE(Device);
+    SAFE_DELETE(Adapter);
 
     FDynamicD3D12::Release();
 
@@ -84,7 +85,7 @@ bool FD3D12RHI::Initialize()
         return false;
     }
 
-    Device = new FD3D12Device(Adapter.Get());
+    Device = new FD3D12Device(Adapter);
     if (!Device->Initialize())
     {
         return false;
@@ -216,30 +217,42 @@ FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAc
 
 FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)
 {
-    D3D12_SAMPLER_DESC Desc;
-    FMemory::Memzero(&Desc);
+    TScopedLock Lock(SamplerStateMapCS);
 
-    Desc.AddressU       = ConvertSamplerMode(InDesc.AddressU);
-    Desc.AddressV       = ConvertSamplerMode(InDesc.AddressV);
-    Desc.AddressW       = ConvertSamplerMode(InDesc.AddressW);
-    Desc.ComparisonFunc = ConvertComparisonFunc(InDesc.ComparisonFunc);
-    Desc.Filter         = ConvertSamplerFilter(InDesc.Filter);
-    Desc.MaxAnisotropy  = InDesc.MaxAnisotropy;
-    Desc.MaxLOD         = InDesc.MaxLOD;
-    Desc.MinLOD         = InDesc.MinLOD;
-    Desc.MipLODBias     = InDesc.MipLODBias;
+    FD3D12SamplerStateRef Result;
 
-    FMemory::Memcpy(Desc.BorderColor, &InDesc.BorderColor.r, sizeof(Desc.BorderColor));
-
-    FD3D12SamplerStateRef NewSampler = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InDesc);
-    if (!NewSampler->CreateSampler(Desc))
+    // Check if there already is an existing sampler state with this description
+    auto ExistingSamplerState = SamplerStateMap.find(InDesc);
+    if (ExistingSamplerState != SamplerStateMap.end())
     {
-        return nullptr;
+        Result = ExistingSamplerState->second;
     }
     else
     {
-        return NewSampler.ReleaseOwnership();
+        D3D12_SAMPLER_DESC Desc;
+        FMemory::Memzero(&Desc);
+
+        Desc.AddressU       = ConvertSamplerMode(InDesc.AddressU);
+        Desc.AddressV       = ConvertSamplerMode(InDesc.AddressV);
+        Desc.AddressW       = ConvertSamplerMode(InDesc.AddressW);
+        Desc.ComparisonFunc = ConvertComparisonFunc(InDesc.ComparisonFunc);
+        Desc.Filter         = ConvertSamplerFilter(InDesc.Filter);
+        Desc.MaxAnisotropy  = InDesc.MaxAnisotropy;
+        Desc.MaxLOD         = InDesc.MaxLOD;
+        Desc.MinLOD         = InDesc.MinLOD;
+        Desc.MipLODBias     = InDesc.MipLODBias;
+        FMemory::Memcpy(Desc.BorderColor, &InDesc.BorderColor.r, sizeof(Desc.BorderColor));
+
+        Result = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InDesc);
+        if (!Result->CreateSampler(Desc))
+        {
+            return nullptr;
+        }
+
+        SamplerStateMap.insert(std::make_pair(InDesc, Result));
     }
+
+    return Result.ReleaseOwnership();
 }
 
 FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)

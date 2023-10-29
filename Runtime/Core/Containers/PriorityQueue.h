@@ -24,7 +24,7 @@ public:
     /**
      * @brief - Constructor
      */
-    FORCEINLINE TPriorityQueue()
+    TPriorityQueue()
         : PriorityQueues(0)
         , NumElements(0)
         , LowestPopulatedPriorityIndex(0)
@@ -36,7 +36,7 @@ public:
      * @param Element  - New element in the queue
      * @param Priority - Priority of the new element
      */
-    inline void Enqueue(ElementInputType Element, EQueuePriority Priority = EQueuePriority::Normal)
+    void Enqueue(ElementInputType Element, EQueuePriority Priority = EQueuePriority::Normal)
     {
         const int32 QueueIndex = ToUnderlying(Priority);
         if (!PriorityQueues.IsValidIndex(QueueIndex))
@@ -59,7 +59,7 @@ public:
      * @param Element - Element to search for
      * @return        - Returns true if the element was found and removed, false otherwise
      */
-    inline bool Remove(ElementInputType Element)
+    bool Remove(ElementInputType Element)
     {
         for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
@@ -79,7 +79,7 @@ public:
      * @param OutPriority - Optional pointer to a variable that will store the priority of the element
      * @return            - Returns true if an element was popped, false otherwise
      */
-    inline bool Dequeue(ElementType* OutElement, EQueuePriority* OutPriority = nullptr)
+    bool Dequeue(ElementType* OutElement, EQueuePriority* OutPriority = nullptr)
     {
         for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
@@ -112,7 +112,7 @@ public:
      * @param OutPriority - Optional pointer to a variable that will store the priority of the element
      * @return            - Returns a pointer to the first element if the queue is not empty, false otherwise
      */
-    inline ElementType* Peek(EQueuePriority* OutPriority = nullptr)
+    ElementType* Peek(EQueuePriority* OutPriority = nullptr)
     {
         for (int32 Index = LowestPopulatedPriorityIndex; Index < PriorityQueues.Size(); ++Index)
         {
@@ -134,7 +134,7 @@ public:
     /**
      * @brief - Resets the queue
      */
-    inline void Reset()
+    void Reset()
     {
         PriorityQueues.Clear();
         LowestPopulatedPriorityIndex = 0;

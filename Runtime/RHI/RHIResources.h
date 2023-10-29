@@ -179,22 +179,22 @@ public:
 
     virtual FString GetName() const { return ""; }
     
-    FORCEINLINE uint64 GetSize() const
+    uint64 GetSize() const
     {
         return Desc.Size;
     }
     
-    FORCEINLINE uint32 GetStride() const
+    uint32 GetStride() const
     {
         return Desc.Stride;
     }
 
-    FORCEINLINE EBufferUsageFlags GetFlags() const
+    EBufferUsageFlags GetFlags() const
     {
         return Desc.UsageFlags;
     }
 
-    FORCEINLINE const FRHIBufferDesc& GetDesc() const
+    const FRHIBufferDesc& GetDesc() const
     {
         return Desc;
     }
@@ -452,57 +452,57 @@ public:
 
     virtual FString GetName() const { return ""; }
 
-    FORCEINLINE ETextureDimension GetDimension() const
+    ETextureDimension GetDimension() const
     {
         return Desc.Dimension;
     }
     
-    FORCEINLINE EFormat GetFormat() const
+    EFormat GetFormat() const
     {
         return Desc.Format;
     }
 
-    FORCEINLINE ETextureUsageFlags GetFlags() const
+    ETextureUsageFlags GetFlags() const
     {
         return Desc.UsageFlags;
     }
     
-    FORCEINLINE const FIntVector3& GetExtent() const
+    const FIntVector3& GetExtent() const
     {
         return Desc.Extent;
     }
     
-    FORCEINLINE uint32 GetWidth() const
+    uint32 GetWidth() const
     {
         return Desc.Extent.x;
     }
     
-    FORCEINLINE uint32 GetHeight() const
+    uint32 GetHeight() const
     {
         return Desc.Extent.y;
     }
 
-    FORCEINLINE uint32 GetDepth() const
+    uint32 GetDepth() const
     {
         return Desc.Extent.z;
     }
 
-    FORCEINLINE uint32 GetNumArraySlices() const
+    uint32 GetNumArraySlices() const
     {
         return Desc.NumArraySlices;
     }
     
-    FORCEINLINE uint32 GetNumMipLevels() const
+    uint32 GetNumMipLevels() const
     {
         return Desc.NumMipLevels;
     }
     
-    FORCEINLINE uint32 GetNumSamples() const
+    uint32 GetNumSamples() const
     {
         return Desc.NumSamples;
     }
     
-    FORCEINLINE const FRHITextureDesc& GetDesc() const
+    const FRHITextureDesc& GetDesc() const
     {
         return Desc;
     }
@@ -2129,19 +2129,34 @@ struct FGraphicsPipelineShaders
 {
     FGraphicsPipelineShaders()
         : VertexShader(nullptr)
+        , HullShader(nullptr)
+        , DomainShader(nullptr)
+        , GeometryShader(nullptr)
         , PixelShader(nullptr)
     {
     }
 
-    FGraphicsPipelineShaders(FRHIVertexShader* InVertexShader, FRHIPixelShader* InPixelShader)
+    FGraphicsPipelineShaders(
+        FRHIVertexShader*   InVertexShader,
+        FRHIHullShader*     InHullShader,
+        FRHIDomainShader*   InDomainShader,
+        FRHIGeometryShader* InGeometryShader,
+        FRHIPixelShader*    InPixelShader)
         : VertexShader(InVertexShader)
+        , HullShader(InHullShader)
+        , DomainShader(InDomainShader)
+        , GeometryShader(InGeometryShader)
         , PixelShader(InPixelShader)
     {
     }
 
     bool operator==(const FGraphicsPipelineShaders& Other) const
     {
-        return VertexShader == Other.VertexShader && PixelShader  == Other.PixelShader;
+        return VertexShader   == Other.VertexShader 
+            && HullShader     == Other.HullShader
+            && DomainShader   == Other.DomainShader
+            && GeometryShader == Other.GeometryShader
+            && PixelShader    == Other.PixelShader;
     }
 
     bool operator!=(const FGraphicsPipelineShaders& Other) const
@@ -2149,11 +2164,11 @@ struct FGraphicsPipelineShaders
         return !(*this == Other);
     }
 
-    // Weak reference to the VertexShader being used
-    FRHIVertexShader* VertexShader;
-
-    // Weak reference to the PixelShader being used
-    FRHIPixelShader* PixelShader;
+    FRHIVertexShader*   VertexShader;
+    FRHIHullShader*     HullShader;
+    FRHIDomainShader*   DomainShader;
+    FRHIGeometryShader* GeometryShader;
+    FRHIPixelShader*    PixelShader;
 };
 
 

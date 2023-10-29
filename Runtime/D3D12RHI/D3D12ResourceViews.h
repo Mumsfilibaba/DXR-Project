@@ -20,26 +20,22 @@ public:
     virtual ~FD3D12View();
 
     bool AllocateHandle();
-
     void InvalidateAndFreeHandle();
 
-    FORCEINLINE D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
+    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const
     {
-        return OfflineHandle;
+        return Descriptor.Handle;
     }
 
-    FORCEINLINE const FD3D12Resource* GetD3D12Resource() const 
+    const FD3D12Resource* GetD3D12Resource() const 
     { 
         return Resource.Get(); 
     }
 
 protected:
     FD3D12ResourceRef            Resource;
-
-    FD3D12OfflineDescriptorHeap* Heap = nullptr;
-
-    D3D12_CPU_DESCRIPTOR_HANDLE  OfflineHandle;
-    uint32                       OfflineHeapIndex = 0;
+    FD3D12OfflineDescriptorHeap* Heap;
+    FD3D12OfflineDescriptor      Descriptor;
 };
 
 
@@ -50,7 +46,7 @@ public:
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const 
+    const D3D12_CONSTANT_BUFFER_VIEW_DESC& GetDesc() const 
     {
         return Desc;
     }
@@ -76,7 +72,7 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    FORCEINLINE const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
+    const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
     {
         return Desc;
     }
@@ -102,12 +98,12 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    FORCEINLINE const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
+    const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
     { 
         return Desc;
     }
 
-    FORCEINLINE const FD3D12Resource* GetD3D12CounterResource() const
+    const FD3D12Resource* GetD3D12CounterResource() const
     { 
         return CounterResource.Get(); 
     }
@@ -126,7 +122,7 @@ public:
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const 
+    const D3D12_RENDER_TARGET_VIEW_DESC& GetDesc() const 
     {
         return Desc;
     }
@@ -144,7 +140,7 @@ public:
 
     bool CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc);
 
-    FORCEINLINE const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const 
+    const D3D12_DEPTH_STENCIL_VIEW_DESC& GetDesc() const 
     { 
         return Desc;
     }

@@ -31,6 +31,12 @@ FTexture2D::~FTexture2D()
 
 bool FTexture2D::CreateRHITexture(bool bGenerateMips)
 {
+    if (IsBlockCompressed(Format) && (!IsBlockCompressedAligned(Width) || !IsBlockCompressedAligned(Height)))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::ShaderResource);
     TextureRHI = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
     if (!TextureRHI)

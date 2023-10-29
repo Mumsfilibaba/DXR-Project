@@ -93,9 +93,9 @@ void* FMemory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
     return ::memmove(Dst, Src, Size);
 }
 
-bool FMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
+int32 FMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
 {
-    return (::memcmp(LHS, RHS, Size) == 0);
+    return ::memcmp(LHS, RHS, Size);
 }
 
 void FMemory::Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept

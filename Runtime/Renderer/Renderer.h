@@ -60,12 +60,8 @@ struct FCameraBuffer
     float    Padding1 = 0.0f;
 };
 
-
 class RENDERER_API FRenderer
 {
-    FRenderer();
-    ~FRenderer();
-
 public:
     static bool Initialize();
     
@@ -73,7 +69,7 @@ public:
 
     static FRenderer& Get();
 
-    void Tick(const FScene& Scene);
+    void Tick();
 
     void OnWindowResize(const FWindowEvent& Event);
 
@@ -94,13 +90,16 @@ public:
     }
 
 private:
+    FRenderer();
+    ~FRenderer();
+
     bool Create();
     
     bool InitAA();
     
     bool InitShadingImage();
 
-    NOINLINE void FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands);
+    void FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands);
 
     TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
     TSharedPtr<FRendererInfoWindow>      InfoWindow;

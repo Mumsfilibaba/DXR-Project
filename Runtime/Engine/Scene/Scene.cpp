@@ -7,7 +7,9 @@
 
 FScene::FScene()
     : Actors()
+    , RendererScene(nullptr)
 {
+    RendererScene = new FRendererScene(this);
 }
 
 FScene::~FScene()
@@ -24,6 +26,8 @@ FScene::~FScene()
 
     // TODO: Fix crash on exit
     SAFE_DELETE(CurrentCamera);
+
+    SAFE_DELETE(RendererScene);
 }
 
 FActor* FScene::CreateActor()
@@ -123,4 +127,20 @@ void FScene::AddMeshComponent(FMeshComponent* Component)
     Command.Material     = Component->Material.Get();
     Command.Mesh         = Component->Mesh.Get();
     MeshDrawCommands.Add(Command);
+}
+
+FRendererScene::FRendererScene(FScene* InScene)
+    : Scene(InScene)
+{
+    CHECK(Scene != nullptr);
+}
+
+FRendererScene::~FRendererScene()
+{
+    Scene = nullptr;
+}
+
+void FRendererScene::AddPrimitive(FScenePrimitive* InPrimitive)
+{
+    ScenePrimitives.Add(InPrimitive);
 }

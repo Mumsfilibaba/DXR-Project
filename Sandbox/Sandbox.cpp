@@ -55,7 +55,7 @@ bool FSandbox::Init()
             Material.bAlphaDiffuseCombined = true;
         }
         
-        SceneData.AddToScene(CurrentScene.Get());
+        SceneData.AddToScene(CurrentScene);
 
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
 

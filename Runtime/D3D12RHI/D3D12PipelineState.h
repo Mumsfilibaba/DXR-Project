@@ -21,18 +21,12 @@ enum class ED3D12PipelineType
 };
 
 
-class FD3D12VertexInputLayout : public FRHIVertexInputLayout, public FD3D12RefCounted
+class FD3D12VertexInputLayout : public FRHIVertexInputLayout
 {
 public:
     FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
     virtual ~FD3D12VertexInputLayout() = default;
 
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-    
     const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
     {
         return ElementDesc.Data();
@@ -55,17 +49,11 @@ private:
 };
 
 
-class FD3D12DepthStencilState : public FRHIDepthStencilState, public FD3D12RefCounted
+class FD3D12DepthStencilState : public FRHIDepthStencilState
 {
 public:
     FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
     virtual ~FD3D12DepthStencilState() = default;
-
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
     virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
     {
@@ -83,17 +71,11 @@ private:
 };
 
 
-class FD3D12RasterizerState : public FRHIRasterizerState, public FD3D12RefCounted
+class FD3D12RasterizerState : public FRHIRasterizerState
 {
 public:
     FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
     virtual ~FD3D12RasterizerState() = default;
-
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
     virtual FRHIRasterizerStateInitializer GetInitializer() const override final
     {
@@ -111,17 +93,11 @@ private:
 };
 
 
-class FD3D12BlendState : public FRHIBlendState, public FD3D12RefCounted
+class FD3D12BlendState : public FRHIBlendState
 {
 public:
     FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer);
     virtual ~FD3D12BlendState() = default;
-
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
     virtual FRHIBlendStateInitializer GetInitializer() const override final
     {
@@ -139,11 +115,11 @@ private:
 };
 
 
-class FD3D12PipelineState : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12PipelineStateCommon : public FD3D12DeviceChild
 {
 public:
-    FD3D12PipelineState(FD3D12Device* InDevice);
-    virtual ~FD3D12PipelineState() = default;
+    FD3D12PipelineStateCommon(FD3D12Device* InDevice);
+    virtual ~FD3D12PipelineStateCommon() = default;
 
     void SetDebugName(const FString& InName);
 
@@ -160,10 +136,104 @@ public:
 protected:
     TComPtr<ID3D12PipelineState> PipelineState;
     FD3D12RootSignatureRef       RootSignature;
+    FString DebugName;
 };
 
 
-class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineState
+struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStream
+{
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
+        ID3D12RootSignature* RootSignature = nullptr;
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT;
+        D3D12_INPUT_LAYOUT_DESC InputLayout = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type2 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY;
+        D3D12_PRIMITIVE_TOPOLOGY_TYPE PrimitiveTopologyType = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type3 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS;
+        D3D12_SHADER_BYTECODE VertexShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type4 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_HS;
+        D3D12_SHADER_BYTECODE HullShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type5 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DS;
+        D3D12_SHADER_BYTECODE DomainShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type6 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_GS;
+        D3D12_SHADER_BYTECODE GeometryShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type7 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS;
+        D3D12_SHADER_BYTECODE PixelShaderCode = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type8 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS;
+        D3D12_RT_FORMAT_ARRAY RenderTargetInfo = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type9 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT;
+        DXGI_FORMAT DepthBufferFormat = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type10 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER;
+        D3D12_RASTERIZER_DESC RasterizerDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type11 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL;
+        D3D12_DEPTH_STENCIL_DESC DepthStencilDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type12 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND;
+        D3D12_BLEND_DESC BlendStateDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type13 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC;
+        DXGI_SAMPLE_DESC SampleDesc = { };
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type14 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_IB_STRIP_CUT_VALUE;
+        D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IndexBufferStripCutValue = { };
+    };
+};
+
+class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineStateCommon
 {
 public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
@@ -171,15 +241,9 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12PipelineState::SetDebugName(InName);
+        FD3D12PipelineStateCommon::SetDebugName(InName);
     }
 
     D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
@@ -187,12 +251,39 @@ public:
         return PrimitiveTopology;
     }
 
+    FORCEINLINE FD3D12VertexShader*   GetVertexShader()   const { return VertexShader.Get(); }
+    FORCEINLINE FD3D12HullShader*     GetHullShader()     const { return HullShader.Get(); }
+    FORCEINLINE FD3D12DomainShader*   GetDomainShader()   const { return DomainShader.Get(); }
+    FORCEINLINE FD3D12GeometryShader* GetGeometryShader() const { return GeometryShader.Get(); }
+    FORCEINLINE FD3D12PixelShader*    GetPixelShader()    const { return PixelShader.Get(); }
+
 private:
     D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology;
+    
+    TSharedRef<FD3D12VertexShader>   VertexShader;
+    TSharedRef<FD3D12HullShader>     HullShader;
+    TSharedRef<FD3D12DomainShader>   DomainShader;
+    TSharedRef<FD3D12GeometryShader> GeometryShader;
+    TSharedRef<FD3D12PixelShader>    PixelShader;
 };
 
 
-class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineState
+struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12ComputePipelineStream
+{
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type0 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE;
+        ID3D12RootSignature* RootSignature = nullptr;
+    };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS;
+        D3D12_SHADER_BYTECODE ComputeShader = { };
+    };
+};
+
+class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineStateCommon
 {
 public:
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
@@ -200,27 +291,22 @@ public:
 
     bool Initialize();
 
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
     virtual void SetName(const FString& InName) override final
     {
-        FD3D12PipelineState::SetDebugName(InName);
+        FD3D12PipelineStateCommon::SetDebugName(InName);
     }
+
+    FORCEINLINE FD3D12ComputeShader* GetComputeShader() const { return Shader.Get(); }
 
 private:
     TSharedRef<FD3D12ComputeShader> Shader;
 };
 
 
-struct FRayTracingShaderIdentifer
+struct FD3D12RayTracingShaderIdentifer
 {
     CHAR ShaderIdentifier[D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES];
 };
-
 
 class FD3D12RayTracingPipelineState : public FRHIRayTracingPipelineState, public FD3D12DeviceChild
 {
@@ -263,5 +349,5 @@ private:
     FD3D12RootSignatureRef MissLocalRootSignature;
     FD3D12RootSignatureRef HitLocalRootSignature;
 
-    TMap<FString, FRayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
+    TMap<FString, FD3D12RayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
 };

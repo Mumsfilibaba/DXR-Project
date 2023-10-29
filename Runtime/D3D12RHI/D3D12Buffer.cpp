@@ -152,7 +152,7 @@ bool FD3D12Buffer::CreateCBV()
     ViewDesc.BufferLocation = Resource->GetGPUVirtualAddress();
     ViewDesc.SizeInBytes    = static_cast<uint32>(Resource->GetSize());
 
-    if (View->GetOfflineHandle() == 0)
+    if (View->GetOfflineHandle() == FD3D12_CPU_DESCRIPTOR_HANDLE{ 0 })
     {
         if (!View->AllocateHandle())
         {

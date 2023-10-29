@@ -4,7 +4,7 @@
 #endif
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
-#include "Core/Threading/AsyncThreadPool.h"
+#include "Core/Threading/TaskManager.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/OutputDeviceConsole.h"
@@ -165,7 +165,7 @@ bool FEngineLoop::PreInitialize()
     NCoreDelegates::PostApplicationCreateDelegate.Broadcast();
 
     // Initialize the Async-worker threads
-    if (!FAsyncThreadPool::Initialize())
+    if (!FTaskManager::Initialize())
     {
         return false;
     }
@@ -287,7 +287,7 @@ void FEngineLoop::Tick()
     FGPUProfiler::Get().Tick();
 
     // Tick the renderer
-    FRenderer::Get().Tick(*GEngine->Scene);
+    FRenderer::Get().Tick();
 }
 
 
@@ -329,7 +329,7 @@ bool FEngineLoop::Release()
     FRHIShaderCompiler::Destroy();
 
     // Shutdown the Async-task system
-    FAsyncThreadPool::Release();
+    FTaskManager::Release();
 
     FApplication::Destroy();
 

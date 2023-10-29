@@ -17,11 +17,7 @@ FMaterial::FMaterial(const FMaterialDesc& InProperties)
 
 void FMaterial::Initialize()
 {
-    FRHIBufferDesc Desc(
-        sizeof(FMaterialDesc),
-        sizeof(FMaterialDesc),
-        EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-
+    FRHIBufferDesc Desc(sizeof(FMaterialDesc), sizeof(FMaterialDesc), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
     MaterialBuffer = RHICreateBuffer(Desc, EResourceAccess::VertexAndConstantBuffer, nullptr);
     if (MaterialBuffer)
     {

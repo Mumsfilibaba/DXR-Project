@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericThreadMisc.h"
 
 #if PLATFORM_ARCHITECTURE_X86_X64
@@ -15,7 +16,6 @@ struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
     static FORCEINLINE uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;
-        FMemory::Memzero(&SystemInfo);
         ::GetSystemInfo(&SystemInfo);
         return static_cast<uint32>(SystemInfo.dwNumberOfProcessors);
     }
@@ -32,15 +32,15 @@ struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
         ::Sleep(Milliseconds);
     }
 
-    static FORCEINLINE void Yeild()
+    static FORCEINLINE void Yield()
     {
         ::SwitchToThread();
     }
 
     static FORCEINLINE void Pause() 
     {
-#if PLATFORM_ARCHITECTURE_X86_X64
+    #if PLATFORM_ARCHITECTURE_X86_X64
         _mm_pause();
-#endif
+    #endif
     }
 };

@@ -31,20 +31,25 @@ enum EResourceType : int32
 
 struct FShaderResourceRange
 {
-    uint32 NumCBVs     = 0;
-    uint32 NumSRVs     = 0;
-    uint32 NumUAVs     = 0;
-    uint32 NumSamplers = 0;
+    uint8 NumCBVs     = 0;
+    uint8 NumSRVs     = 0;
+    uint8 NumUAVs     = 0;
+    uint8 NumSamplers = 0;
 };
-
 
 struct FShaderResourceCount
 {
+    FShaderResourceCount()
+        : Ranges()
+        , Num32BitConstants(0)
+    {
+    }
+
     void Combine(const FShaderResourceCount& Other);
     bool IsCompatible(const FShaderResourceCount& Other) const;
 
     FShaderResourceRange Ranges;
-    uint32               Num32BitConstants = 0;
+    uint8 Num32BitConstants;
 };
 
 class FD3D12Shader : public FD3D12DeviceChild
@@ -57,8 +62,7 @@ public:
 
     EShaderVisibility GetShaderVisibility() const { return Visibility; }
 
-    const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
-
+    const FShaderResourceCount& GetResourceCount()        const { return ResourceCount; }
     const FShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
 
     D3D12_SHADER_BYTECODE GetByteCode() const { return ByteCode; }
@@ -96,6 +100,47 @@ public:
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
+class FD3D12HullShader : public FRHIHullShader, public FD3D12Shader
+{
+public:
+    FD3D12HullShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
+        : FRHIHullShader()
+        , FD3D12Shader(InDevice, InCode, ShaderVisibility_Hull)
+    {
+    }
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
+};
+
+class FD3D12DomainShader : public FRHIDomainShader, public FD3D12Shader
+{
+public:
+    FD3D12DomainShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
+        : FRHIDomainShader()
+        , FD3D12Shader(InDevice, InCode, ShaderVisibility_Domain)
+    {
+    }
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
+};
+
+class FD3D12GeometryShader : public FRHIGeometryShader, public FD3D12Shader
+{
+public:
+    FD3D12GeometryShader(FD3D12Device* InDevice, const TArray<uint8>& InCode)
+        : FRHIGeometryShader()
+        , FD3D12Shader(InDevice, InCode, ShaderVisibility_Geometry)
+    {
+    }
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
+};
 
 class FD3D12PixelShader : public FRHIPixelShader, public FD3D12Shader
 {

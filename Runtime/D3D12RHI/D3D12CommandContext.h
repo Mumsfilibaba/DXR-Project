@@ -1,52 +1,13 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12Descriptors.h"
-#include "D3D12Fence.h"
-#include "D3D12DescriptorCache.h"
-#include "D3D12Buffer.h"
-#include "D3D12ResourceViews.h"
-#include "D3D12SamplerState.h"
-#include "D3D12PipelineState.h"
 #include "D3D12TimestampQuery.h"
 #include "D3D12Texture.h"
+#include "D3D12CommandContextState.h"
 #include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
-
-class FD3D12CommandBatch
-{
-public:
-    FD3D12CommandBatch(FD3D12Device* InDevice);
-    ~FD3D12CommandBatch() = default;
-
-    bool Initialize(uint32 Index);
-
-    bool Reset()
-    {
-        OnlineResourceDescriptorHeap->Reset();
-        OnlineSamplerDescriptorHeap->Reset();
-        return true;
-    }
-
-    FORCEINLINE FD3D12OnlineDescriptorManager* GetResourceDescriptorManager() const
-    {
-        return OnlineResourceDescriptorHeap.Get();
-    }
-
-    FORCEINLINE FD3D12OnlineDescriptorManager* GetSamplerDescriptorManager() const
-    {
-        return OnlineSamplerDescriptorHeap.Get();
-    }
-
-    FD3D12Device*                    Device = nullptr;
-    uint64                           AssignedFenceValue = 0;
-
-    FD3D12OnlineDescriptorManagerRef OnlineResourceDescriptorHeap;
-    FD3D12OnlineDescriptorManagerRef OnlineSamplerDescriptorHeap;
-};
-
 
 class FD3D12ResourceBarrierBatcher
 {
@@ -69,12 +30,12 @@ public:
         }
     }
 
-    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const
+    const D3D12_RESOURCE_BARRIER* GetBarriers() const
     {
         return Barriers.Data();
     }
 
-    FORCEINLINE uint32 GetNumBarriers() const
+    uint32 GetNumBarriers() const
     {
         return Barriers.Size();
     }
@@ -83,88 +44,19 @@ private:
     TArray<D3D12_RESOURCE_BARRIER> Barriers;
 };
 
-
-struct FD3D12CommandContextState : public FD3D12DeviceChild, public FNonCopyAndNonMovable
-{
-    FD3D12CommandContextState(FD3D12Device* InDevice);
-    ~FD3D12CommandContextState() = default;
-
-    bool Initialize();
-
-    void ApplyGraphics(FD3D12CommandList& CommandList, FD3D12CommandBatch* Batch);
-    void ApplyCompute(FD3D12CommandList& CommandList, FD3D12CommandBatch* Batch);
-
-    void ClearGraphics();
-    void ClearCompute();
-
-    void SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint32 Slot);
-    void SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_FORMAT IndexFormat);
-
-    void ClearAll()
-    {
-        ClearGraphics();
-        ClearCompute();
-
-        DescriptorCache.Clear();
-        ShaderConstantsCache.Reset();
-
-        bIsReady            = false;
-        bIsCapturing        = false;
-        bIsRenderPassActive = false;
-        bBindRootSignature  = true;
-    }
-
-    struct
-    {
-        FD3D12GraphicsPipelineStateRef PipelineState;
-
-        FD3D12TextureRef            ShadingRateTexture;
-        D3D12_SHADING_RATE          ShadingRate = D3D12_SHADING_RATE_1X1;
-
-        FD3D12RenderTargetViewCache RTCache;
-        FD3D12DepthStencilView*     DepthStencil;
-
-        FD3D12IndexBufferCache      IBCache;
-        FD3D12VertexBufferCache     VBCache;
-
-        D3D12_VIEWPORT Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32         NumViewports;
-
-        D3D12_RECT     ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32         NumScissor;
-
-        FVector4       BlendFactor;
-
-        bool bBindRenderTargets     : 1;
-        bool bBindBlendFactor       : 1;
-        bool bBindPipeline          : 1;
-        bool bBindVertexBuffers     : 1;
-        bool bBindIndexBuffer       : 1;
-        bool bBindScissorRects      : 1;
-        bool bBindViewports         : 1;
-    } Graphics;
-
-    struct 
-    {
-        FD3D12ComputePipelineStateRef PipelineState;
-        bool bBindPipeline : 1;
-    } Compute;
-
-    FD3D12ShaderConstantsCache ShaderConstantsCache;
-    FD3D12DescriptorCache      DescriptorCache;
-
-    bool bIsReady            : 1;
-    bool bIsCapturing        : 1;
-    bool bIsRenderPassActive : 1;
-    bool bBindRootSignature  : 1;
-};
-
-
 class FD3D12CommandContext : public IRHICommandContext, public FD3D12DeviceChild
 {
 public:
     FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
     ~FD3D12CommandContext();
+
+    bool Initialize();
+
+    void ObtainCommandList();
+
+    void FinishCommandList();
+
+    void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
     virtual void RHIStartContext() override final;
     
@@ -291,15 +183,6 @@ public:
         return reinterpret_cast<void*>(&CommandList);
     }
 
-public:
-    bool Initialize();
-    
-    void ObtainCommandList();
-
-    void FinishCommandList();
-
-    void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
-
     FD3D12CommandList& GetCommandList() 
     {
         CHECK(CommandList != nullptr);
@@ -319,19 +202,18 @@ public:
     
     uint32 GetCurrentBatchIndex() const
     {
-        CHECK(int32(NextCmdBatch) < CmdBatches.Size());
-        return FMath::Max<int32>(int32(NextCmdBatch) - 1, 0);
+        return 0;
     }
 
     void UnorderedAccessBarrier(FD3D12Resource* Resource)
     {
-        D3D12_ERROR_COND(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
+        CHECK(Resource != nullptr);
         BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetD3D12Resource());
     }
 
     void TransitionResource(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
     {
-        D3D12_ERROR_COND(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
+        CHECK(Resource != nullptr);
         BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
     }
 
@@ -340,24 +222,25 @@ public:
         BarrierBatcher.FlushBarriers(*CommandList);
     }
 
-private:
-    ED3D12CommandQueueType          QueueType;
+    uint64 GetAssignedFenceValue() const
+    {
+        return AssignedFenceValue;
+    }
 
-    FD3D12CommandListRef            CommandList;
-    FD3D12CommandAllocatorRef       CommandAllocator;
-    FD3D12CommandAllocatorManager   CommandAllocatorManager;
-    FD3D12CommandContextState       ContextState;
+private:
+    FD3D12CommandListRef          CommandList;
+    FD3D12CommandAllocatorRef     CommandAllocator;
+    FD3D12CommandAllocatorManager CommandAllocatorManager;
+    FD3D12CommandContextState     ContextState;
+    ED3D12CommandQueueType        QueueType;
+
+    uint64 AssignedFenceValue;
+    
+    bool bIsCapturing : 1;
+
+    FD3D12ResourceBarrierBatcher    BarrierBatcher;
+    TArray<FD3D12TimestampQueryRef> ResolveQueries;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
-    FCriticalSection                CommandContextCS;
-
-    TArray<FD3D12TimestampQueryRef> ResolveQueries;
-    
-    // TODO: Refactor all below
-    FD3D12ResourceBarrierBatcher    BarrierBatcher;
-
-    uint32                          NextCmdBatch = 0;
-
-    TArray<FD3D12CommandBatch>      CmdBatches;
-    FD3D12CommandBatch*             CmdBatch = nullptr;
+    FCriticalSection CommandContextCS;
 };

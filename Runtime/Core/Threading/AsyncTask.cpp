@@ -1,5 +1,5 @@
 #include "AsyncTask.h"
-#include "AsyncThreadPool.h"
+#include "TaskManager.h"
 
 FAsyncTaskBase::FAsyncTaskBase()
     : TaskCompleteEvent(nullptr)
@@ -57,7 +57,7 @@ bool FAsyncTaskBase::Launch(EQueuePriority Priority, bool bAsync)
         TaskCompleteEvent->Reset();
 
         // Submit this task
-        FAsyncThreadPool::Get().SubmitTask(this, Priority);
+        FTaskManager::Get().SubmitTask(this, Priority);
     }
     else
     {
@@ -70,7 +70,7 @@ bool FAsyncTaskBase::Launch(EQueuePriority Priority, bool bAsync)
 
 bool FAsyncTaskBase::Cancel()
 {
-    if (FAsyncThreadPool::Get().AbandonTask(this))
+    if (FTaskManager::Get().AbandonTask(this))
     {
         CHECK(NumInvokations.Load() == 1);
         NumInvokations--;

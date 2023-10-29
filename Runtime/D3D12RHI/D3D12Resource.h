@@ -21,28 +21,28 @@ public:
     
     FString GetName() const;
 
-    FORCEINLINE ID3D12Resource* GetD3D12Resource() const 
+    ID3D12Resource* GetD3D12Resource() const 
     { 
         return Resource.Get(); 
     }
 
-    FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc() const
+    const D3D12_RESOURCE_DESC& GetDesc() const
     {
         return Desc;
     }
 
     // Texture accessors
-    FORCEINLINE uint64 GetWidth()  const { return Desc.Width; }
-    FORCEINLINE uint64 GetHeight() const { return Desc.Height; }
-    FORCEINLINE uint64 GetDepth()  const { return Desc.DepthOrArraySize; }
+    uint64 GetWidth()  const { return Desc.Width; }
+    uint64 GetHeight() const { return Desc.Height; }
+    uint64 GetDepth()  const { return Desc.DepthOrArraySize; }
 
     // Buffer accessors
-    FORCEINLINE uint64 GetSize() const { return Desc.Width; }
+    uint64 GetSize() const { return Desc.Width; }
 
-    FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS  GetGPUVirtualAddress() const { return Address; }
-    FORCEINLINE D3D12_HEAP_TYPE            GetHeapType()          const { return HeapType; }
-    FORCEINLINE D3D12_RESOURCE_STATES      GetState()             const { return ResourceState; }
-    FORCEINLINE D3D12_RESOURCE_DIMENSION   GetDimension()         const { return Desc.Dimension; }
+    D3D12_GPU_VIRTUAL_ADDRESS  GetGPUVirtualAddress() const { return Address; }
+    D3D12_HEAP_TYPE            GetHeapType()          const { return HeapType; }
+    D3D12_RESOURCE_STATES      GetState()             const { return ResourceState; }
+    D3D12_RESOURCE_DIMENSION   GetDimension()         const { return Desc.Dimension; }
 
 private:
     TComPtr<ID3D12Resource>   Resource;

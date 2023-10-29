@@ -43,14 +43,12 @@ FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, 
 {
     ByteCode.BytecodeLength  = InCode.SizeInBytes();
     ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
-
     FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
 }
 
 FD3D12Shader::~FD3D12Shader()
 {
     FMemory::Free(ByteCode.pShaderBytecode);
-
     ByteCode.pShaderBytecode = nullptr;
     ByteCode.BytecodeLength  = 0;
 }
@@ -62,11 +60,10 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
     FShaderResourceCount RTLocalResourceCount;
 
     D3D12_SHADER_INPUT_BIND_DESC ShaderBindDesc;
-    for (uint32 i = 0; i < NumBoundResources; i++)
+    for (uint32 Index = 0; Index < NumBoundResources; Index++)
     {
         FMemory::Memzero(&ShaderBindDesc);
-
-        if (FAILED(Reflection->GetResourceBindingDesc(i, &ShaderBindDesc)))
+        if (FAILED(Reflection->GetResourceBindingDesc(Index, &ShaderBindDesc)))
         {
             continue;
         }
@@ -91,11 +88,10 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
                 }
             }
 
-            uint32 Num32BitConstants = SizeInBytes / 4;
-
             if (ShaderBindDesc.Space == D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS)
             {
                 // NOTE: For now only one binding per shader can be used for constants
+                const uint8 Num32BitConstants = static_cast<uint8>(SizeInBytes / 4);
                 if (ShaderBindDesc.BindCount > 1 || Num32BitConstants > D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT || ResourceCount.Num32BitConstants != 0)
                 {
                     return false;
@@ -107,11 +103,11 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
             {
                 if (ShaderBindDesc.Space == 0)
                 {
-                    ResourceCount.Ranges.NumCBVs = FMath::Max(ResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                    ResourceCount.Ranges.NumCBVs = FMath::Max<uint8>(ResourceCount.Ranges.NumCBVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
                 }
                 else
                 {
-                    RTLocalResourceCount.Ranges.NumCBVs = FMath::Max(RTLocalResourceCount.Ranges.NumCBVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                    RTLocalResourceCount.Ranges.NumCBVs = FMath::Max<uint8>(RTLocalResourceCount.Ranges.NumCBVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
                 }
             }
         }
@@ -119,33 +115,33 @@ bool FD3D12Shader::GetShaderResourceBindings(TD3D12ReflectionInterface* Reflecti
         {
             if (ShaderBindDesc.Space == 0)
             {
-                ResourceCount.Ranges.NumSamplers = FMath::Max(ResourceCount.Ranges.NumSamplers, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                ResourceCount.Ranges.NumSamplers = FMath::Max<uint8>(ResourceCount.Ranges.NumSamplers, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumSamplers = FMath::Max(RTLocalResourceCount.Ranges.NumSamplers, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                RTLocalResourceCount.Ranges.NumSamplers = FMath::Max<uint8>(RTLocalResourceCount.Ranges.NumSamplers, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
         }
         else if (IsShaderResourceView(ShaderBindDesc.Type))
         {
             if (ShaderBindDesc.Space == 0)
             {
-                ResourceCount.Ranges.NumSRVs = FMath::Max(ResourceCount.Ranges.NumSRVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                ResourceCount.Ranges.NumSRVs = FMath::Max<uint8>(ResourceCount.Ranges.NumSRVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumSRVs = FMath::Max(RTLocalResourceCount.Ranges.NumSRVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                RTLocalResourceCount.Ranges.NumSRVs = FMath::Max<uint8>(RTLocalResourceCount.Ranges.NumSRVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
         }
         else if (IsUnorderedAccessView(ShaderBindDesc.Type))
         {
             if (ShaderBindDesc.Space == 0)
             {
-                ResourceCount.Ranges.NumUAVs = FMath::Max(ResourceCount.Ranges.NumUAVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                ResourceCount.Ranges.NumUAVs = FMath::Max<uint8>(ResourceCount.Ranges.NumUAVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
             else
             {
-                RTLocalResourceCount.Ranges.NumUAVs = FMath::Max(RTLocalResourceCount.Ranges.NumUAVs, ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount);
+                RTLocalResourceCount.Ranges.NumUAVs = FMath::Max<uint8>(RTLocalResourceCount.Ranges.NumUAVs, uint8(ShaderBindDesc.BindPoint + ShaderBindDesc.BindCount));
             }
         }
     }
@@ -226,7 +222,7 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
     }
 
     // HACK: Since the Nvidia driver can't handle these names, we have to change the names :(
-    FString Identifier = FuncDesc.Name;
+    const FString Identifier = FuncDesc.Name;
 
     auto NameStart = Identifier.FindLastCharWithPredicate([](CHAR Char) -> bool 
     { 

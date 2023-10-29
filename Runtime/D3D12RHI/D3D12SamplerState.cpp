@@ -1,11 +1,14 @@
 #include "D3D12SamplerState.h"
 
+FAtomicInt32 FD3D12SamplerStateIdentifier::NextIdentifier = 0;
+
 FD3D12SamplerState::FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateDesc& InInitializer)
     : FRHISamplerState(InInitializer)
     , FD3D12DeviceChild(InDevice)
-    , OfflineHeap(InOfflineHeap)
-    , OfflineHandle({ 0 })
     , Desc()
+    , OfflineHeap(InOfflineHeap)
+    , Descriptor()
+    , Identifier(FD3D12SamplerStateIdentifier::EGenerate::New)
 {
     CHECK(InOfflineHeap != nullptr);
 }
@@ -13,19 +16,19 @@ FD3D12SamplerState::FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDesc
 FD3D12SamplerState::~FD3D12SamplerState()
 {
     CHECK(OfflineHeap != nullptr);
-    OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
+    OfflineHeap->Free(Descriptor);
 }
 
 bool FD3D12SamplerState::CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
 {
-    OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
-    if (OfflineHandle == 0)
+    Descriptor = OfflineHeap->Allocate();
+    if (!Descriptor)
     {
         D3D12_ERROR("Failed to allocate DescriptorHandle for SamplerState");
         return false;
     }
 
-    GetDevice()->GetD3D12Device()->CreateSampler(&InDesc, OfflineHandle);
+    GetDevice()->GetD3D12Device()->CreateSampler(&InDesc, GetOfflineHandle());
     Desc = InDesc;
     return true;
 }

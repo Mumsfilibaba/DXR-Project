@@ -16,8 +16,6 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
-#pragma optimize("", off)
-
 TAutoConsoleVariable<bool> CVarEnableGPUValidation(
     "D3D12RHI.EnableGPUValidation",
     "Enables GPU Based Validation if true",
@@ -32,6 +30,24 @@ TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
     "D3D12RHI.PreferDedicatedGPU",
     "When enabled, a dedicated GPU will be selected when creating a the Device", 
     true);
+
+TAutoConsoleVariable<int32> CVarResourceOnlineDescriptorBlockSize(
+    "D3D12RHI.ResourceOnlineDescriptorBlockSize",
+    "Number of descriptors in each Resource OnlineDescriptorHeap", 
+    2048);
+
+TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
+    "D3D12RHI.SamplerOnlineDescriptorBlockSize",
+    "Number of descriptors in each Sampler OnlineDescriptorHeap", 
+    1024);
+
+////////////////////////////////////////////////////
+// Global variables that describe different features
+
+D3D12RHI_API bool GD3D12SupportsShadingRate      = false;
+D3D12RHI_API bool GD3D12SupportsShadingRateImage = false;
+D3D12RHI_API bool GD3D12ForceBinding             = false;
+
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
@@ -155,8 +171,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 
 
 FD3D12Adapter::FD3D12Adapter()
-    : FD3D12RefCounted()
-    , AdapterIndex(0)
+    : AdapterIndex(0)
     , bAllowTearing(false)
     , Factory(nullptr)
 #if WIN10_BUILD_17134
@@ -216,7 +231,7 @@ bool FD3D12Adapter::Initialize()
             }
         }
 
-#if WIN10_BUILD_20348
+    #if WIN10_BUILD_20348
         {
             TComPtr<ID3D12Debug5> DebugInterface5;
             if (FAILED(DebugInterface.GetAs(&DebugInterface5)))
@@ -228,7 +243,7 @@ bool FD3D12Adapter::Initialize()
                 DebugInterface5->SetEnableAutoName(true);
             }
         }
-#endif
+    #endif
 
         TComPtr<IDXGIInfoQueue> InfoQueue;
         if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
@@ -400,7 +415,7 @@ bool FD3D12Adapter::Initialize()
 
     if (!FinalAdapter)
     {
-        D3D12_ERROR("[CD3D12Device]: FAILED to retrieve adapter");
+        D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve adapter");
         return false;
     }
     else
@@ -408,7 +423,7 @@ bool FD3D12Adapter::Initialize()
         Adapter = FinalAdapter;
         if (FAILED(Adapter->GetDesc1(&AdapterDesc)))
         {
-            D3D12_ERROR("[CD3D12Device]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+            D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve DXGI_ADAPTER_DESC1");
             return false;
         }
     }
@@ -418,9 +433,18 @@ bool FD3D12Adapter::Initialize()
 
 
 FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
-    : FD3D12RefCounted()
+    : GlobalResourceHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+    , GlobalSamplerHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+    , RootSignatureManager(this)
+    , DirectCommandListManager(this, ED3D12CommandQueueType::Direct)
+    , CopyCommandListManager(this, ED3D12CommandQueueType::Copy)
+    , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
+    , CopyCommandAllocatorManager(this, ED3D12CommandQueueType::Copy)
+    , UploadAllocator(this)
+    , DeferredDeletionQueue(this)
+    , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
+    , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , Adapter(InAdapter)
-    , RootSignatureCache(this)
     , Device(nullptr)
 #if WIN10_BUILD_14393
     , Device1(nullptr)
@@ -449,14 +473,8 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 #if WIN11_BUILD_22000
     , Device9(nullptr)
 #endif
-    , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
-    , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
-    , DirectCommandListManager(this, ED3D12CommandQueueType::Direct)
-    , CopyCommandListManager(this, ED3D12CommandQueueType::Copy)
-    , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
-    , CopyCommandAllocatorManager(this, ED3D12CommandQueueType::Copy)
-    , UploadAllocator(this)
-    , DeferredDeletionQueue(this)
+    , NodeMask(0)
+    , NodeCount(0)
 {
 }
 
@@ -523,9 +541,9 @@ bool FD3D12Device::Initialize()
     // TODO: Remove feature levels from unsupported SDKs
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
     {
-#if WIN10_BUILD_20348
+    #if WIN10_BUILD_20348
         D3D_FEATURE_LEVEL_12_2,
-#endif
+    #endif
         D3D_FEATURE_LEVEL_12_1,
         D3D_FEATURE_LEVEL_12_0,
         D3D_FEATURE_LEVEL_11_1,
@@ -549,11 +567,30 @@ bool FD3D12Device::Initialize()
         }
     }
 
-    // Create RootSignature cache
-    if (!RootSignatureCache.Initialize())
+    // Create RootSignatureManager
+    if (!RootSignatureManager.Initialize())
     {
         return false;
     } 
+
+    // Create DeferredDeletion-queue
+    if (!DeferredDeletionQueue.Initialize())
+    {
+        return false;
+    }
+
+    // Check for Resource-Binding Tier
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
+        FMemory::Memzero(&Features);
+
+        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+        if (SUCCEEDED(Result))
+        {
+            ResourceBindingTier = Features.ResourceBindingTier;
+            D3D12_INFO("[FD3D12Device] Using ResourceBinding Tier %d", ResourceBindingTier);
+        }
+    }
 
     // Check for Ray-Tracing support
     {
@@ -575,7 +612,16 @@ bool FD3D12Device::Initialize()
         HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
         {
-            VariableRateShadingDesc.Tier                     = Features6.VariableShadingRateTier;
+            VariableRateShadingDesc.Tier = Features6.VariableShadingRateTier;
+            if (VariableRateShadingDesc.Tier == D3D12_VARIABLE_SHADING_RATE_TIER_1)
+            {
+                GD3D12SupportsShadingRate = true;
+            }
+            if (VariableRateShadingDesc.Tier == D3D12_VARIABLE_SHADING_RATE_TIER_2)
+            {
+                GD3D12SupportsShadingRateImage = true;
+            }
+
             VariableRateShadingDesc.ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
         }
     }
@@ -593,27 +639,20 @@ bool FD3D12Device::Initialize()
         }
     }
 
+
     // Create DescriptorHeaps
-    GlobalResourceHeap = new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    if (!GlobalResourceHeap->Initialize())
+    const uint32 ResourceDescriptorBlockSize = CVarResourceOnlineDescriptorBlockSize.GetValue();
+    if (!GlobalResourceHeap.Initialize(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, ResourceDescriptorBlockSize))
     {
         D3D12_ERROR("Failed to create global resource descriptor heap");
         return false;
     }
-    else
-    {
-        GlobalResourceHeap->SetName("Global Resource Descriptor Heap");
-    }
 
-    GlobalSamplerHeap = new FD3D12DescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    if (!GlobalSamplerHeap->Initialize())
+    const uint32 SamplerDescriptorBlockSize = CVarSamplerOnlineDescriptorBlockSize.GetValue();
+    if (!GlobalSamplerHeap.Initialize(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, SamplerDescriptorBlockSize))
     {
         D3D12_ERROR("Failed to create global sampler descriptor heap");
         return false;
-    }
-    else
-    {
-        GlobalSamplerHeap->SetName("Global Sampler Descriptor Heap");
     }
 
     return true;
@@ -780,7 +819,7 @@ FD3D12CommandListManager* FD3D12Device::GetCommandListManager(ED3D12CommandQueue
     }
 }
 
-int32 FD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
+int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
 {
     D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS Data;
     FMemory::Memzero(&Data);
@@ -792,7 +831,7 @@ int32 FD3D12Device::GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount
     HRESULT hr = Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
     if (FAILED(hr))
     {
-        D3D12_ERROR("[CD3D12Device] CheckFeatureSupport failed");
+        D3D12_ERROR("[FD3D12Device] CheckFeatureSupport failed");
         return 0;
     }
 

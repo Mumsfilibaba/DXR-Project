@@ -1622,11 +1622,12 @@ struct TStringHasher
     {
         // TODO: Investigate how good is this for wide chars
 
-        const auto* Key    = String.GetCString();
-        const int32 Length = String.Length();
+        const CHARTYPE* Key = String.GetCString();
 
         int32  Index = 0;
         uint64 Hash  = 0;
+
+        const int32 Length = String.Length();
         while (Index != Length)
         {
             Hash += Key[Index++];

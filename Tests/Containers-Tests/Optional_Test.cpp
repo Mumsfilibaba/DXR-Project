@@ -77,7 +77,7 @@ struct FTest
 
     bool operator==(const FTest& RHS) const
     {
-        return FMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes);
+        return FMemory::Memcmp(Pointer, RHS.Pointer, SizeInBytes) == 0;
     }
 
     bool operator==(int32 RHS) const noexcept

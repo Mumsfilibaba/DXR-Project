@@ -7,6 +7,8 @@
 #include "Core/Containers/Array.h"
 #include "Renderer/MeshDrawCommand.h"
 
+class FRendererScene;
+
 class ENGINE_API FScene
 {
 public:
@@ -68,12 +70,14 @@ public:
      */
     void OnAddedComponent(FComponent* NewComponent);
 
+    void SyncRendering();
+
     /**
      * @brief  - Retrieve all components of a certain type
      * @return - Returns an array of all components of the specified type
      */
     template<typename ComponentType>
-    FORCEINLINE TArray<ComponentType> GetAllComponentsOfType() const
+    TArray<ComponentType> GetAllComponentsOfType() const
     {
         // TODO: Cache this result
 
@@ -90,9 +94,25 @@ public:
     }
 
     /**
+     * @return - Returns a pointer to the Renderers View of the scene
+     */
+    FRendererScene* GetRendererScene()
+    {
+        return RendererScene;
+    }
+
+    /**
+     * @return - Returns a pointer to the Renderers View of the scene
+     */
+    const FRendererScene* GetRendererScene() const
+    {
+        return RendererScene;
+    }
+
+    /**
      * @return - Returns a reference to an array of all actors in the scene
      */
-    FORCEINLINE const TArray<FActor*>& GetActors() const
+    const TArray<FActor*>& GetActors() const
     {
         return Actors;
     }
@@ -100,7 +120,7 @@ public:
     /**
      * @return - Returns a reference to an array of all actors in the scene
      */
-    FORCEINLINE const TArray<FPlayerController*>& GetPlayerControllers() const
+    const TArray<FPlayerController*>& GetPlayerControllers() const
     {
         return PlayerControllers;
     }
@@ -108,7 +128,7 @@ public:
     /**
      * @return - Returns a pointer to the first PlayerController in the scene
      */
-    FORCEINLINE FPlayerController* GetFirstPlayerController() const
+    FPlayerController* GetFirstPlayerController() const
     {
         if (!PlayerControllers.IsEmpty())
         {
@@ -121,7 +141,7 @@ public:
     /**
      * @return - Returns a reference to an array of all lights in the scene
      */
-    FORCEINLINE const TArray<FLight*>& GetLights() const
+    const TArray<FLight*>& GetLights() const
     {
         return Lights;
     }
@@ -129,9 +149,17 @@ public:
     /**
      * @return - Returns a reference to an array of all light-probes in the scene
      */
-    FORCEINLINE const TArray<FLightProbe*>& GetLightProbes() const
+    const TArray<FLightProbe*>& GetLightProbes() const
     {
         return LightProbes;
+    }
+
+    /**
+     * @return - Returns a pointer to the camera of the scene
+     */
+    FCamera* GetCamera() const
+    {
+        return CurrentCamera;
     }
 
     /**
@@ -142,21 +170,41 @@ public:
         return MeshDrawCommands;
     }
 
-    /**
-     * @return - Returns a pointer to the camera of the scene
-     */
-    FORCEINLINE FCamera* GetCamera() const
-    {
-        return CurrentCamera;
-    }
-
 private:
     void AddMeshComponent(class FMeshComponent* Component);
 
-    TArray<FActor*>            Actors;
+    // These actors were added this frame is waiting to be syncronized with the renderer
+    TArray<FActor*> NewActors;
+
+    // These actors are the "permanent" storage of actors
+    TArray<FActor*> Actors;
+
     TArray<FPlayerController*> PlayerControllers;
     TArray<FLight*>            Lights;
     TArray<FLightProbe*>       LightProbes;
     TArray<FMeshDrawCommand>   MeshDrawCommands;
-    FCamera*                   CurrentCamera = nullptr;
+
+    FCamera*        CurrentCamera = nullptr;
+    FRendererScene* RendererScene = nullptr;
+};
+
+
+struct FScenePrimitive
+{
+    FVector3 Translation;
+    FVector3 Scale;
+    FVector3 Rotation;
+};
+
+class ENGINE_API FRendererScene
+{
+public:
+    FRendererScene(FScene* InScene);
+    ~FRendererScene();
+
+    void AddPrimitive(FScenePrimitive* InPrimitive);
+
+private:
+    FScene*                  Scene;
+    TArray<FScenePrimitive*> ScenePrimitives;
 };

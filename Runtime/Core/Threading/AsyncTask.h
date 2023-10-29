@@ -1,5 +1,5 @@
 #pragma once
-#include "AsyncThreadPool.h"
+#include "TaskManager.h"
 
 #include "Core/Core.h"
 #include "Core/Platform/PlatformMisc.h"
@@ -24,13 +24,11 @@ public:
     FAsyncTaskBase();
     virtual ~FAsyncTaskBase();
 
-    virtual void DoAsyncWork() override final;
-    virtual void Abandon()     override final;
-
     /**
-     * @brief        - Launches the task on a new thread.
-     * @param bAsync - True if the task should execute on the calling thread or async
-     * @return       - Returns true if the task was successfully queued up
+     * @brief          - Launches the task on a new thread.
+     * @param Priority - The priority for this task
+     * @param bAsync   - True if the task should execute on the calling thread or async
+     * @return         - Returns true if the task was successfully queued up
      */
     bool Launch(EQueuePriority Priority = EQueuePriority::Normal, bool bAsync = true);
 
@@ -39,6 +37,10 @@ public:
      * @return - Returns true if the task was successfully canceled
      */
     bool Cancel();
+
+    virtual void DoAsyncWork() override final;
+
+    virtual void Abandon() override final;
 
     /**
      * @brief - Waits for the task to finish executing (Blocks the calling thread)
@@ -59,7 +61,7 @@ public:
      */
     bool IsComplete() const
     {
-        return (NumInvokations.Load() == 0);
+        return NumInvokations.Load() == 0;
     }
 
 protected:
@@ -92,7 +94,7 @@ private:
     }
 
     TSharedRef<FGenericEvent> TaskCompleteEvent;
-    FAtomicInt32     NumInvokations;
+    FAtomicInt32              NumInvokations;
 };
 
 struct FAbanbonableTask
@@ -200,7 +202,7 @@ public:
 
         if (bAsync)
         {
-            FAsyncThreadPool::Get().SubmitTask(this, Priority);
+            FTaskManager::Get().SubmitTask(this, Priority);
         }
         else
         {

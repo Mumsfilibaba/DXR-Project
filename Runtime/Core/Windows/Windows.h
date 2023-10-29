@@ -32,12 +32,13 @@
 #undef InterlockedCompareExchange
 #undef InterlockedExchange
 
+#undef MemoryBarrier
+#undef Yield
+
 #undef MessageBox
 
 #undef OutputDebugString
 #undef OutputDebugFormat
-
-#undef MemoryBarrier
 
 #undef GetClassName
 #undef GetModuleHandle

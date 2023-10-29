@@ -7,7 +7,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , Resource(InNativeResource)
     , HeapType(D3D12_HEAP_TYPE_DEFAULT)
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
-    , Desc(InNativeResource ? InNativeResource->GetDesc() : D3D12_RESOURCE_DESC())
+    , Desc(InNativeResource->GetDesc())
     , Address(0)
 {
 }
@@ -32,13 +32,7 @@ bool FD3D12Resource::Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     HeapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(
-        &HeapProperties,
-        D3D12_HEAP_FLAG_NONE,
-        &Desc,
-        InitialState,
-        OptimizedClearValue,
-        IID_PPV_ARGS(&Resource));
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommittedResource(&HeapProperties, D3D12_HEAP_FLAG_NONE, &Desc, InitialState, OptimizedClearValue, IID_PPV_ARGS(&Resource));
     if (SUCCEEDED(Result))
     {
         if (Desc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)

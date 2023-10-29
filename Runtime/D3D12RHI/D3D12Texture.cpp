@@ -45,7 +45,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
 
     if (Desc.NumSamples > 1)
     {
-        const int32 Quality = GetDevice()->GetMultisampleQuality(ResourceDesc.Format, Desc.NumSamples);
+        const int32 Quality = GetDevice()->QueryMultisampleQuality(ResourceDesc.Format, Desc.NumSamples);
         ResourceDesc.SampleDesc.Quality = Quality - 1;
     }
     else

@@ -22,7 +22,7 @@ struct FGenericThreadMisc
 
     static FORCEINLINE void Sleep(FTimespan Time) { }
 
-	static FORCEINLINE void Yeild() { }
+	static FORCEINLINE void Yield() { }
 
     static FORCEINLINE void Pause() { }
 };

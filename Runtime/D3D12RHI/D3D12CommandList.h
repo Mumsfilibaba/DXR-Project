@@ -140,9 +140,9 @@ public:
         CmdList->SetComputeRoot32BitConstants(RootParameterIndex, Num32BitValues, SourceData, DestOffsetIn32BitValues);
     }
 
-    FORCEINLINE void IASetVertexBuffers(uint32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, uint32 VertexBufferViewCount)
+    FORCEINLINE void IASetVertexBuffers(uint32 StartSlot, const D3D12_VERTEX_BUFFER_VIEW* VertexBufferViews, uint32 NumVertexBufferViews)
     {
-        CmdList->IASetVertexBuffers(StartSlot, VertexBufferViewCount, VertexBufferViews);
+        CmdList->IASetVertexBuffers(StartSlot, NumVertexBufferViews, VertexBufferViews);
     }
 
     FORCEINLINE void IASetIndexBuffer(const D3D12_INDEX_BUFFER_VIEW* IndexBufferView)

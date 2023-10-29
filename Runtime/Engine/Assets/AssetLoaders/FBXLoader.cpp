@@ -91,7 +91,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
 
     // Estimate sizes to avoid to many allocations
     uint32 MaterialCount = 0;
-    for (uint32 MeshIndex = 0; MeshIndex < FBXScene->getMeshCount(); ++MeshIndex)
+    for (int32 MeshIndex = 0; MeshIndex < FBXScene->getMeshCount(); ++MeshIndex)
     {
         const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIndex);
         MaterialCount += CurrentMesh->getMaterialCount();
@@ -116,10 +116,10 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
 
     FModelData TempModelData;
-    for (uint32 MeshIdx = 0; MeshIdx < FBXScene->getMeshCount(); MeshIdx++)
+    for (int32 MeshIdx = 0; MeshIdx < FBXScene->getMeshCount(); MeshIdx++)
     {
         const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIdx);
-        for (uint32 MaterialIdx = 0; MaterialIdx < CurrentMesh->getMaterialCount(); MaterialIdx++)
+        for (int32 MaterialIdx = 0; MaterialIdx < CurrentMesh->getMaterialCount(); MaterialIdx++)
         {
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(MaterialIdx);
             if (UniqueMaterials.count(CurrentMaterial->id) != 0)
@@ -159,7 +159,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
         UniqueVertices.reserve(Positions.values_count);
         
         // Go through each mesh partition and add it to the scene as a separate mesh
-        for (uint32 PartitionIdx = 0; PartitionIdx < GeometryData.getPartitionCount(); PartitionIdx++)
+        for (int32 PartitionIdx = 0; PartitionIdx < GeometryData.getPartitionCount(); PartitionIdx++)
         {
             // Clear the mesh data every mesh-partition
             TempModelData.Mesh.Clear();
@@ -169,16 +169,16 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
             TempIndicies.Resize(Partition.max_polygon_triangles * 3);
 
             // Go through each polygon and add it to the mesh
-            for (uint32 PolygonIdx = 0; PolygonIdx < Partition.polygon_count; ++PolygonIdx)
+            for (int32 PolygonIdx = 0; PolygonIdx < Partition.polygon_count; ++PolygonIdx)
             {
                 // Triangulate this polygon
                 const ofbx::GeometryPartition::Polygon& Polygon = Partition.polygons[PolygonIdx];
                 const int32 NumIndicies = ofbx::triangulate(GeometryData, Polygon, TempIndicies.Data());
 
                 FVertex TempVertex;
-                for (uint32 IndexIdx = 0; IndexIdx < NumIndicies; ++IndexIdx)
+                for (int32 IndexIdx = 0; IndexIdx < NumIndicies; ++IndexIdx)
                 {
-                    const uint32 VertexIdx = TempIndicies[IndexIdx];
+                    const int32 VertexIdx = TempIndicies[IndexIdx];
 
                     // Position
                     const ofbx::Vec3 OfbxPosition = Positions.get(VertexIdx);

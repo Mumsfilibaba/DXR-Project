@@ -49,14 +49,13 @@ public:
 
     void ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator);
 
-    FORCEINLINE ED3D12CommandQueueType GetQueueType() const
+    ED3D12CommandQueueType GetQueueType() const
     {
         return QueueType;
     }
 
 private:
-    ED3D12CommandQueueType            QueueType;
-    D3D12_COMMAND_LIST_TYPE           CommandListType;
-    TQueue<FD3D12CommandAllocatorRef> Allocators;
-    FCriticalSection                  AllocatorsCS;
+    ED3D12CommandQueueType  QueueType;
+    D3D12_COMMAND_LIST_TYPE CommandListType;
+    TQueue<FD3D12CommandAllocatorRef, EQueueType::SPMC> Allocators;
 };

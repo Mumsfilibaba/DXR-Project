@@ -29,7 +29,7 @@ public:
     /**
      * @brief - Constructor
      */
-    FORCEINLINE TQueue()
+    TQueue()
     {
         // Create a Node here to more easily handle edge-cases
         Head = new FNode();
@@ -39,18 +39,13 @@ public:
     /**
      * @brief - Destructor
      */
-    FORCEINLINE ~TQueue()
+    ~TQueue()
     {
         while (Tail != nullptr)
         {
             FNode* Node = Tail;
             Tail = Tail->NextNode;
-
-            // Call the destructor of the node since these elements are "constructed"
-            typedef ElementType ElementDestructType;
-            reinterpret_cast<ElementDestructType*>(Node->Item.Data)->~ElementDestructType();
-
-            delete Node;
+            DeleteNode(Node);
         }
     }
 
@@ -59,7 +54,7 @@ public:
      * @param OutElement - Storage for the popped element
      * @return           - Returns true if an element was popped
      */
-    FORCEINLINE bool Dequeue(ElementType& OutElement)
+    bool Dequeue(ElementType& OutElement)
     {
         FNode* NextNode;
         if constexpr(QueueType == EQueueType::SPMC)
@@ -92,7 +87,7 @@ public:
             Tail = NextNode;
         }
 
-        delete PreviousTail;
+        DeleteNode(PreviousTail);
         return true;
     }
 
@@ -100,7 +95,7 @@ public:
      * @brief  - Pop the next element
      * @return - Returns true if an element was popped
      */
-    FORCEINLINE bool Dequeue()
+    bool Dequeue()
     {
         FNode* NextNode;
         if constexpr(QueueType == EQueueType::SPMC)
@@ -129,14 +124,14 @@ public:
             Tail = NextNode;
         }
 
-        delete PreviousTail;
+        DeleteNode(PreviousTail);
         return true;
     }
 
     /**
      * @brief - Clears the queue
      */
-    FORCEINLINE void Clear()
+    void Clear()
     {
         while (Dequeue());
     }
@@ -146,7 +141,7 @@ public:
      * @param Item - The new element to push
      * @return     - Returns true if the element was successfully pushed
      */
-    FORCEINLINE bool Enqueue(const ElementType& Item)
+    bool Enqueue(const ElementType& Item)
     {
         return Emplace(Item);
     }
@@ -156,7 +151,7 @@ public:
      * @param Item - The new element to push
      * @return     - Returns true if the element was successfully pushed
      */
-    FORCEINLINE bool Enqueue(ElementType&& Item)
+    bool Enqueue(ElementType&& Item)
     {
         return Emplace(::Forward<ElementType>(Item));
     }
@@ -167,7 +162,7 @@ public:
      * @return     - Returns true if the element was successfully pushed
      */
     template<typename... ArgTypes>
-    FORCEINLINE bool Emplace(ArgTypes&&... Args) noexcept
+    bool Emplace(ArgTypes&&... Args) noexcept
     {
         FNode* NewNode = CreateNode(::Forward<ArgTypes>(Args)...);
         if (NewNode == nullptr)
@@ -194,7 +189,7 @@ public:
     /**
      * @return - Returns true if the queue is empty
      */
-    FORCEINLINE bool IsEmpty() const
+    bool IsEmpty() const
     {
         return Tail->NextNode == nullptr;
     }
@@ -204,7 +199,7 @@ public:
      * @param OutItem - Storage for the item to peek
      * @return        - Returns true if the element was successfully stored
      */
-    FORCEINLINE bool Peek(ElementType& OutItem) const
+    bool Peek(ElementType& OutItem) const
     {
         if (Tail->NextNode == nullptr)
         {
@@ -218,7 +213,7 @@ public:
     /**
      * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
      */
-    FORCEINLINE ElementType* Peek()
+    ElementType* Peek()
     {
         if (Tail->NextNode == nullptr)
         {
@@ -231,7 +226,7 @@ public:
     /**
     * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
     */
-    FORCEINLINE const ElementType* Peek() const
+    const ElementType* Peek() const
     {
         if (Tail->NextNode == nullptr)
         {
@@ -243,12 +238,20 @@ public:
 
 private:
     template<typename... ArgTypes>
-    FORCEINLINE FNode* CreateNode(ArgTypes&&... Args)
+    FNode* CreateNode(ArgTypes&&... Args)
     {
         // Construct the new Item
         FNode* Result = new FNode();
         new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
         return Result;
+    }
+
+    void DeleteNode(FNode* Node)
+    {
+        // Call the destructor of the node since these elements are "constructed"
+        typedef ElementType ElementDestructType;
+        reinterpret_cast<ElementDestructType*>(Node->Item.Data)->~ElementDestructType();
+        delete Node;
     }
 
     FNode* volatile Head{nullptr};

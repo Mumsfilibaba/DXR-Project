@@ -67,22 +67,22 @@ public:
 
     uint64 GetCompletedValue() const;
     
-    FORCEINLINE FD3D12Fence* GetFence() const 
+    FD3D12Fence* GetFence() const 
     {
         return Fence.Get();
     }
 
-    FORCEINLINE uint64 GetLastSignaledValue() const 
+    uint64 GetLastSignaledValue() const 
     { 
         return LastSignaledValue; 
     }
 
-    FORCEINLINE uint64 GetCurrentValue() const 
+    uint64 GetCurrentValue() const 
     { 
         return CurrentValue; 
     }
 
-    FORCEINLINE uint64 GetCompletedValueFast() const 
+    uint64 GetCompletedValueFast() const 
     { 
         return LastCompletedValue;
     }

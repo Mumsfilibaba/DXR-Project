@@ -31,3 +31,4 @@ packages/
 *.msl
 *.metal
 *.glsl
+*.dxrmesh

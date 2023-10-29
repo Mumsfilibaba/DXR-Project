@@ -171,7 +171,7 @@ bool FD3D12Viewport::Present(bool VerticalSync)
     const uint32 SyncInterval = !!VerticalSync;
 
     uint32 PresentFlags = 0;
-    if (SyncInterval == 0 && (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING))
+    if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
     {
         PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
     }

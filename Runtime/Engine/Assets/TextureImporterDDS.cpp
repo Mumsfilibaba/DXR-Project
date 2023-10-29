@@ -131,7 +131,12 @@ FTexture* FTextureImporterDDS::ImportFromFile(const FStringView& FileName)
     CHECK(File.GetTextureDimension() == tinyddsloader::DDSFile::TextureDimension::Texture2D);
 
     const EFormat Format = ConvertFormat(File.GetFormat());
-    
+    if (IsBlockCompressed(Format) && (!IsBlockCompressedAligned(File.GetWidth()) || !IsBlockCompressedAligned(File.GetHeight())))
+    {
+        LOG_ERROR("[FTextureImporterDDS]: The image '%s' is in an unsupported format", FileName.GetCString());
+        return nullptr;
+    }
+
     FTexture2D* NewTexture = new FTexture2D(Format, File.GetWidth(), File.GetHeight(), File.GetMipCount());
     NewTexture->CreateData();
 

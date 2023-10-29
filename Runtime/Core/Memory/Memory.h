@@ -97,9 +97,9 @@ struct CORE_API FMemory
      * @param LHS  - Memory range 1
      * @param RHS  - Memory range 2
      * @param Size - Size of the memory ranges
-     * @return     - Returns true if the memory ranges are equal
+     * @return     - Returns the position that was not equal
      */
-    static bool Memcmp(const void* LHS, const void* RHS, uint64 Size) noexcept;
+    static int32 Memcmp(const void* LHS, const void* RHS, uint64 Size) noexcept;
 
     /**
      * @brief      - Swaps the contents of two memory ranges

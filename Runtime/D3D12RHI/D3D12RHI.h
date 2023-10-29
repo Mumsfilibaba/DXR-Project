@@ -6,8 +6,10 @@
 #include "D3D12SamplerState.h"
 #include "D3D12Shader.h"
 #include "D3D12RayTracing.h"
-#include "RHI/RHI.h"
+#include "Core/Platform/CriticalSection.h"
+#include "Core/Containers/Map.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
+#include "RHI/RHI.h"
 
 class FD3D12CommandContext;
 
@@ -51,19 +53,19 @@ public:
 
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final;
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc)  override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final;
 
     virtual FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
 
-    virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode)   override final;
+    virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final;
     
-    virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode)     override final;
+    virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final;
     
-    virtual FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode)   override final;
+    virtual FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) override final;
     
     virtual FRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) override final;
     
-    virtual FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode)    override final;
+    virtual FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) override final;
     
     virtual FRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) override final;
 
@@ -135,27 +137,22 @@ public:
         return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
     }
 
-public:
-    FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap() const { return ResourceOfflineDescriptorHeap; }
-    
+    FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
-    
     FD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
-    
-    FD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap() const { return SamplerOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()      const { return SamplerOfflineDescriptorHeap; }
 
-    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D() const { return GenerateMipsTex2D_PSO; }
-
+    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D()   const { return GenerateMipsTex2D_PSO; }
     FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
     
     FD3D12Adapter* GetAdapter() const
     {
-        return Adapter.Get();
+        return Adapter;
     }
 
     FD3D12Device* GetDevice() const
     {
-        return Device.Get();
+        return Device;
     }
 
     FD3D12CommandContext* ObtainCommandContext()
@@ -164,15 +161,17 @@ public:
     }
 
 private:
-    FD3D12AdapterRef              Adapter;
-    FD3D12DeviceRef               Device;
-
-    FD3D12CommandContext*         DirectContext;
+    FD3D12Adapter*        Adapter;
+    FD3D12Device*         Device;
+    FD3D12CommandContext* DirectContext;
 
     FD3D12OfflineDescriptorHeap*  ResourceOfflineDescriptorHeap     = nullptr;
     FD3D12OfflineDescriptorHeap*  RenderTargetOfflineDescriptorHeap = nullptr;
     FD3D12OfflineDescriptorHeap*  DepthStencilOfflineDescriptorHeap = nullptr;
     FD3D12OfflineDescriptorHeap*  SamplerOfflineDescriptorHeap      = nullptr;
+
+    TMap<FRHISamplerStateDesc, FD3D12SamplerStateRef, FD3D12SamplerDescHasher> SamplerStateMap;
+    FCriticalSection SamplerStateMapCS;
 
     FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;
     FD3D12ComputePipelineStateRef GenerateMipsTexCube_PSO;

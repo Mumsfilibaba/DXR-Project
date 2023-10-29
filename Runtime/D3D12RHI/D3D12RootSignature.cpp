@@ -55,9 +55,9 @@ static EResourceType GetResourceType(D3D12_DESCRIPTOR_RANGE_TYPE Type)
 }
 
 
-bool FD3D12RootSignatureResourceCount::IsCompatible(const FD3D12RootSignatureResourceCount& Other) const
+bool FD3D12RootSignatureLayout::IsCompatible(const FD3D12RootSignatureLayout& Other) const
 {
-    if (Type != Other.Type || AllowInputAssembler != Other.AllowInputAssembler)
+    if (Type != Other.Type || bAllowInputAssembler != Other.bAllowInputAssembler)
     {
         return false;
     }
@@ -74,7 +74,7 @@ bool FD3D12RootSignatureResourceCount::IsCompatible(const FD3D12RootSignatureRes
 }
 
 
-FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSignatureResourceCount& RootSignatureInfo)
+FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& RootSignatureInfo)
     : Desc()
     , RootParameters()
     , DescriptorRanges()
@@ -176,7 +176,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     Desc.NumStaticSamplers = 0;
     Desc.pStaticSamplers   = nullptr;
 
-    if (RootSignatureInfo.AllowInputAssembler)
+    if (RootSignatureInfo.bAllowInputAssembler)
     {
         Desc.Flags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
     }
@@ -267,16 +267,17 @@ FD3D12RootSignature::FD3D12RootSignature(FD3D12Device* InDevice)
     , RootParameterMap()
     , ConstantRootParameterIndex(-1)
 {
-    constexpr uint32 NumElements = sizeof(RootParameterMap) / sizeof(uint32);
-
-    int32* Ptr = reinterpret_cast<int32*>(&RootParameterMap);
-    for (uint32 i = 0; i < NumElements; i++)
+    for (int32 CurrentStage = ShaderVisibility_All; CurrentStage < ShaderVisibility_Count; CurrentStage++)
     {
-        *(Ptr++) = -1;
+        for (int32 Index = 0; Index < ResourceType_Count; Index++)
+        {
+            RootParameterMap[CurrentStage].RootParameterIndicies[Index] = -1;
+            RootParameterMap[CurrentStage].ResourceCount[Index]         = 0;
+        }
     }
 }
 
-bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureResourceCount& RootSignatureInfo)
+bool FD3D12RootSignature::Initialize(const FD3D12RootSignatureLayout& RootSignatureInfo)
 {
     FD3D12RootSignatureDescHelper Desc(RootSignatureInfo);
     return Initialize(Desc.GetDesc());
@@ -291,7 +292,7 @@ bool FD3D12RootSignature::Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc)
         return false;
     }
 
-    CreateRootParameterMap(Desc);
+    InternalInitRootParameterMap(Desc);
 
     return InternalInit(SignatureBlob->GetBufferPointer(), SignatureBlob->GetBufferSize());
 }
@@ -309,7 +310,7 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     const D3D12_ROOT_SIGNATURE_DESC* Desc = Deserializer->GetRootSignatureDesc();
     CHECK(Desc != nullptr);
 
-    CreateRootParameterMap(*Desc);
+    InternalInitRootParameterMap(*Desc);
 
     // Force a new serialization with Root Signature 1.0
     TComPtr<ID3DBlob> Blob;
@@ -328,26 +329,26 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
     return InternalInit(BlobWithRootSignature, BlobLengthInBytes);
 }
 
-void FD3D12RootSignature::CreateRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc)
+void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
-    for (uint32 i = 0; i < Desc.NumParameters; i++)
+    for (int32 Index = 0; Index < Desc.NumParameters; Index++)
     {
-        const D3D12_ROOT_PARAMETER& Parameter = Desc.pParameters[i];
+        const D3D12_ROOT_PARAMETER& Parameter = Desc.pParameters[Index];
         if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
         {
-            uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
-
             // NOTE: We may want to support multiple ranges
             CHECK(Parameter.DescriptorTable.NumDescriptorRanges == 1);
-            D3D12_DESCRIPTOR_RANGE Range = Parameter.DescriptorTable.pDescriptorRanges[0];
+            const D3D12_DESCRIPTOR_RANGE& Range = Parameter.DescriptorTable.pDescriptorRanges[0];
 
-            uint32 ResourceType = GetResourceType(Range.RangeType);
-            RootParameterMap[ShaderVisibility][ResourceType] = i;
+            const uint32 ResourceType     = GetResourceType(Range.RangeType);
+            const uint32 ShaderVisibility = GetShaderVisibility(Parameter.ShaderVisibility);
+            RootParameterMap[ShaderVisibility].RootParameterIndicies[ResourceType] = static_cast<int8>(Index);
+            RootParameterMap[ShaderVisibility].ResourceCount[ResourceType]         = static_cast<int8>(Range.NumDescriptors);
         }
         else if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
         {
             CHECK(ConstantRootParameterIndex == -1);
-            ConstantRootParameterIndex = i;
+            ConstantRootParameterIndex = Index;
         }
     }
 }
@@ -379,32 +380,58 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 }
 
 
-FD3D12RootSignatureCache::FD3D12RootSignatureCache(FD3D12Device* InDevice)
+FD3D12RootSignatureManager::FD3D12RootSignatureManager(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , RootSignatures()
-    , ResourceCounts()
+    , ResourceLayouts()
 {
 }
 
-FD3D12RootSignatureCache::~FD3D12RootSignatureCache()
+FD3D12RootSignatureManager::~FD3D12RootSignatureManager()
 {
     ReleaseAll();
 }
 
-bool FD3D12RootSignatureCache::Initialize()
+bool FD3D12RootSignatureManager::Initialize()
 {
-    FD3D12RootSignatureResourceCount GraphicsKey;
+    FD3D12RootSignatureLayout SimpleGraphicsKey;
+    SimpleGraphicsKey.Type                = ERootSignatureType::Graphics;
+    SimpleGraphicsKey.bAllowInputAssembler = true;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
+
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Vertex].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+    SimpleGraphicsKey.ResourceCounts[ShaderVisibility_Pixel].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+
+    FD3D12RootSignature* SimpleGraphicsRootSignature = CreateRootSignature(SimpleGraphicsKey);
+    if (!SimpleGraphicsRootSignature)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        SimpleGraphicsRootSignature->SetName("Default Simple Graphics RootSignature");
+    }
+
+    FD3D12RootSignatureLayout GraphicsKey;
     GraphicsKey.Type                = ERootSignatureType::Graphics;
-    GraphicsKey.AllowInputAssembler = true;
+    GraphicsKey.bAllowInputAssembler = true;
     GraphicsKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
 
     // NOTE: Skips visibility all, however constants are still visible to all stages
-    for (uint32 i = 1; i < ShaderVisibility_Count; i++)
+    for (uint32 Index = ShaderVisibility_Vertex; Index < ShaderVisibility_Count; Index++)
     {
-        GraphicsKey.ResourceCounts[i].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
-        GraphicsKey.ResourceCounts[i].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
+        GraphicsKey.ResourceCounts[Index].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
+        GraphicsKey.ResourceCounts[Index].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
+        GraphicsKey.ResourceCounts[Index].Ranges.NumUAVs     = D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
+        GraphicsKey.ResourceCounts[Index].Ranges.NumSamplers = D3D12_DEFAULT_SAMPLER_STATE_COUNT;
     }
 
     FD3D12RootSignature* GraphicsRootSignature = CreateRootSignature(GraphicsKey);
@@ -418,9 +445,9 @@ bool FD3D12RootSignatureCache::Initialize()
         GraphicsRootSignature->SetName("Default Graphics RootSignature");
     }
 
-    FD3D12RootSignatureResourceCount ComputeKey;
+    FD3D12RootSignatureLayout ComputeKey;
     ComputeKey.Type                = ERootSignatureType::Compute;
-    ComputeKey.AllowInputAssembler = false;
+    ComputeKey.bAllowInputAssembler = false;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
     ComputeKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
@@ -444,9 +471,9 @@ bool FD3D12RootSignatureCache::Initialize()
         return true;
     }
 
-    FD3D12RootSignatureResourceCount RTGlobalKey;
+    FD3D12RootSignatureLayout RTGlobalKey;
     RTGlobalKey.Type                = ERootSignatureType::RayTracingGlobal;
-    RTGlobalKey.AllowInputAssembler = false;
+    RTGlobalKey.bAllowInputAssembler = false;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Num32BitConstants  = D3D12_MAX_32BIT_SHADER_CONSTANTS_COUNT;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_CONSTANT_BUFFER_COUNT;
     RTGlobalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT;
@@ -464,9 +491,9 @@ bool FD3D12RootSignatureCache::Initialize()
         RTGlobalRootSignature->SetName("Default Global RayTracing RootSignature");
     }
 
-    FD3D12RootSignatureResourceCount RTLocalKey;
+    FD3D12RootSignatureLayout RTLocalKey;
     RTLocalKey.Type                = ERootSignatureType::RayTracingLocal;
-    RTLocalKey.AllowInputAssembler = false;
+    RTLocalKey.bAllowInputAssembler = false;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumCBVs     = D3D12_DEFAULT_LOCAL_CONSTANT_BUFFER_COUNT;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumSRVs     = D3D12_DEFAULT_LOCAL_SHADER_RESOURCE_VIEW_COUNT;
     RTLocalKey.ResourceCounts[ShaderVisibility_All].Ranges.NumUAVs     = D3D12_DEFAULT_LOCAL_UNORDERED_ACCESS_VIEW_COUNT;
@@ -486,7 +513,7 @@ bool FD3D12RootSignatureCache::Initialize()
     return true;
 }
 
-void FD3D12RootSignatureCache::ReleaseAll()
+void FD3D12RootSignatureManager::ReleaseAll()
 {
     for (FD3D12RootSignatureRef RootSignature : RootSignatures)
     {
@@ -494,51 +521,51 @@ void FD3D12RootSignatureCache::ReleaseAll()
     }
 
     RootSignatures.Clear();
-    ResourceCounts.Clear();
+    ResourceLayouts.Clear();
 }
 
-FD3D12RootSignature* FD3D12RootSignatureCache::GetOrCreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
+FD3D12RootSignature* FD3D12RootSignatureManager::GetOrCreateRootSignature(const FD3D12RootSignatureLayout& ResourceCount)
 {
-    CHECK(RootSignatures.Size() == ResourceCounts.Size());
+    CHECK(RootSignatures.Size() == ResourceLayouts.Size());
 
-    for (int32 i = 0; i < ResourceCounts.Size(); i++)
+    for (int32 i = 0; i < ResourceLayouts.Size(); i++)
     {
-        if (ResourceCount.IsCompatible(ResourceCounts[i]))
+        if (ResourceCount.IsCompatible(ResourceLayouts[i]))
         {
             return RootSignatures[i].Get();
         }
     }
 
     // Make sure that this root signature can be used by more than one pipeline
-    FD3D12RootSignatureResourceCount NewResourceCount = ResourceCount;
+    FD3D12RootSignatureLayout NewResourceCount = ResourceCount;
     for (uint32 i = 0; i < ShaderVisibility_Count; i++)
     {
         FShaderResourceCount& Count = NewResourceCount.ResourceCounts[i];
         if (Count.Ranges.NumCBVs > 0)
         {
-            Count.Ranges.NumCBVs = FMath::Max<uint32>(Count.Ranges.NumCBVs, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
+            Count.Ranges.NumCBVs = FMath::Max<uint8>(Count.Ranges.NumCBVs, D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
         }
         if (Count.Ranges.NumSRVs > 0)
         {
-            Count.Ranges.NumSRVs = FMath::Max<uint32>(Count.Ranges.NumSRVs, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+            Count.Ranges.NumSRVs = FMath::Max<uint8>(Count.Ranges.NumSRVs, D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
         }
         if (Count.Ranges.NumUAVs > 0)
         {
-            Count.Ranges.NumUAVs = FMath::Max<uint32>(Count.Ranges.NumUAVs, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+            Count.Ranges.NumUAVs = FMath::Max<uint8>(Count.Ranges.NumUAVs, D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
         }
         if (Count.Ranges.NumSamplers > 0)
         {
-            Count.Ranges.NumSamplers = FMath::Max<uint32>(Count.Ranges.NumSamplers, D3D12_DEFAULT_SAMPLER_STATE_COUNT);
+            Count.Ranges.NumSamplers = FMath::Max<uint8>(Count.Ranges.NumSamplers, D3D12_DEFAULT_SAMPLER_STATE_COUNT);
         }
     }
 
     return CreateRootSignature(NewResourceCount);
 }
 
-FD3D12RootSignature* FD3D12RootSignatureCache::CreateRootSignature(const FD3D12RootSignatureResourceCount& ResourceCount)
+FD3D12RootSignature* FD3D12RootSignatureManager::CreateRootSignature(const FD3D12RootSignatureLayout& ResourceLayout)
 {
     FD3D12RootSignatureRef NewRootSignature = new FD3D12RootSignature(GetDevice());
-    if (!NewRootSignature->Initialize(ResourceCount))
+    if (!NewRootSignature->Initialize(ResourceLayout))
     {
         return nullptr;
     }
@@ -546,6 +573,6 @@ FD3D12RootSignature* FD3D12RootSignatureCache::CreateRootSignature(const FD3D12R
     D3D12_INFO("Created new root signature");
 
     RootSignatures.Emplace(NewRootSignature);
-    ResourceCounts.Emplace(ResourceCount);
+    ResourceLayouts.Emplace(ResourceLayout);
     return NewRootSignature.Get();
 }

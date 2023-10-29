@@ -2,54 +2,52 @@
 #include "D3D12Device.h"
 #include "D3D12ResourceViews.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
 
-FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType, uint32 InNumDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags)
+TAutoConsoleVariable<int32> CVarNumOfflineDescriptors(
+    "D3D12RHI.NumOfflineDescriptors",
+    "The number of descriptors in each Offline DescriptorHeap",
+    D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT,
+    EConsoleVariableFlags::Default);
+
+
+FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12Device* InDevice, ID3D12DescriptorHeap* InHeap, D3D12_DESCRIPTOR_HEAP_TYPE InType, D3D12_DESCRIPTOR_HEAP_FLAGS InFlags, uint32 InNumDescriptors)
     : FD3D12DeviceChild(InDevice)
-    , Heap(nullptr)
-    , CPUStart{0}
-    , GPUStart{0}
-    , DescriptorHandleIncrementSize(0)
+    , Heap(MakeComPtr<ID3D12DescriptorHeap>(InHeap))
     , Type(InType)
-    , NumDescriptors(InNumDescriptors)
     , Flags(InFlags)
+    , NumDescriptors(InNumDescriptors)
 {
-}
+    // Get the increment size
+    HandleIncrementSize = GetDevice()->GetD3D12Device()->GetDescriptorHandleIncrementSize(Type);
 
-bool FD3D12DescriptorHeap::Initialize()
-{
-    D3D12_DESCRIPTOR_HEAP_DESC Desc;
-    FMemory::Memzero(&Desc);
-
-    Desc.Type           = Type;
-    Desc.Flags          = Flags;
-    Desc.NumDescriptors = NumDescriptors;
-
-    HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&Heap));
-    if (FAILED(Result))
-    {
-        D3D12_ERROR("[FD3D12DescriptorHeap]: FAILED to Create DescriptorHeap");
-        return false;
-    }
-    else
-    {
-        D3D12_INFO("[FD3D12DescriptorHeap]: Created DescriptorHeap");
-    }
-
-    CPUStart = Heap->GetCPUDescriptorHandleForHeapStart();
+    // Get the start-handles
+    StartHandleCPU = Heap->GetCPUDescriptorHandleForHeapStart();
     if (Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
     {
-        GPUStart = Heap->GetGPUDescriptorHandleForHeapStart();
+        StartHandleGPU = Heap->GetGPUDescriptorHandleForHeapStart();
     }
+}
 
-    DescriptorHandleIncrementSize = GetDevice()->GetD3D12Device()->GetDescriptorHandleIncrementSize(Desc.Type);
-    return true;
+FD3D12DescriptorHeap::FD3D12DescriptorHeap(FD3D12DescriptorHeap* InHeap, uint32 InHandleOffset, uint32 InNumDescriptors)
+    : FD3D12DeviceChild(InHeap->GetDevice())
+    , NumDescriptors(InNumDescriptors)
+{
+    CHECK(InHeap != nullptr);
+    Heap  = InHeap->Heap;
+    Type  = InHeap->Type;
+    Flags = InHeap->Flags;
+    HandleIncrementSize = InHeap->HandleIncrementSize;
+
+    CHECK(InHandleOffset + NumDescriptors <= InHeap->NumDescriptors);
+    StartHandleCPU = InHeap->GetCPUHandle(InHandleOffset);
+    StartHandleGPU = InHeap->GetGPUHandle(InHandleOffset);
 }
 
 
 FD3D12OfflineDescriptorHeap::FD3D12OfflineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : FD3D12DeviceChild(InDevice)
     , Heaps()
-    , Name()
     , Type(InType)
 {
 }
@@ -60,15 +58,15 @@ bool FD3D12OfflineDescriptorHeap::Initialize()
     return AllocateHeap();
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHeapIndex)
+FD3D12OfflineDescriptor FD3D12OfflineDescriptorHeap::Allocate()
 {
-    TScopedLock Lock(CriticalSection);
+    TScopedLock Lock(HeapsCS);
 
-    uint32 HeapIndex = 0;
     bool bFoundHeap = false;
-    for (FDescriptorHeap& Heap : Heaps)
+    int32 HeapIndex = 0;
+    for (FOfflineHeap& OfflineHeap : Heaps)
     {
-        if (!Heap.FreeList.IsEmpty())
+        if (!OfflineHeap.FreeList.IsEmpty())
         {
             bFoundHeap = true;
             break;
@@ -83,205 +81,162 @@ D3D12_CPU_DESCRIPTOR_HANDLE FD3D12OfflineDescriptorHeap::Allocate(uint32& OutHea
     {
         if (!AllocateHeap())
         {
-            return { 0 };
+            return FD3D12OfflineDescriptor();
         }
 
         HeapIndex = static_cast<uint32>(Heaps.Size()) - 1;
     }
 
-    FDescriptorHeap&  Heap  = Heaps[HeapIndex];
-    FDescriptorRange& Range = Heap.FreeList.FirstElement();
+    FOfflineHeap& OfflineHeap = Heaps[HeapIndex];
+    FD3D12DescriptorRange& Range = OfflineHeap.FreeList.FirstElement();
 
-    D3D12_CPU_DESCRIPTOR_HANDLE Handle = Range.Begin;
-    Range.Begin.ptr += DescriptorSize;
+    FD3D12OfflineDescriptor Result(Range.Start, HeapIndex);
+    Range.Start.ptr += DescriptorSize;
 
     if (!Range.IsValid())
     {
-        Heap.FreeList.RemoveAt(0);
+        OfflineHeap.FreeList.RemoveAt(0);
     }
 
-    OutHeapIndex = HeapIndex;
-    return Handle;
+    return Result;
 }
 
-void FD3D12OfflineDescriptorHeap::Free(D3D12_CPU_DESCRIPTOR_HANDLE Handle, uint32 HeapIndex)
+void FD3D12OfflineDescriptorHeap::Free(FD3D12OfflineDescriptor& Descriptor)
 {
-    TScopedLock Lock(CriticalSection);
-    CHECK(HeapIndex < (uint32)Heaps.Size());
+    TScopedLock Lock(HeapsCS);
 
-    FDescriptorHeap& Heap = Heaps[HeapIndex];
+    CHECK(Heaps.IsValidIndex(Descriptor.HeapIndex));
+    FOfflineHeap& Heap = Heaps[Descriptor.HeapIndex];
 
     bool bFoundRange = false;
-    for (FDescriptorRange& Range : Heap.FreeList)
+    for (FD3D12DescriptorRange& Range : Heap.FreeList)
     {
         CHECK(Range.IsValid());
 
-        if (Handle.ptr + DescriptorSize == Range.Begin.ptr)
+        if (Descriptor.Handle.ptr + DescriptorSize == Range.Start.ptr)
         {
-            Range.Begin = Handle;
+            Range.Start = Descriptor.Handle;
             bFoundRange = true;
-
             break;
         }
-        else if (Handle.ptr == Range.End.ptr)
+        else if (Descriptor.Handle.ptr == Range.End.ptr)
         {
             Range.End.ptr += DescriptorSize;
             bFoundRange = true;
-
             break;
         }
     }
 
     if (!bFoundRange)
     {
-        D3D12_CPU_DESCRIPTOR_HANDLE End = { Handle.ptr + DescriptorSize };
-        Heap.FreeList.Emplace(Handle, End);
+        D3D12_CPU_DESCRIPTOR_HANDLE End = { Descriptor.Handle.ptr + DescriptorSize };
+        Heap.FreeList.Emplace(Descriptor.Handle, End);
     }
-}
 
-void FD3D12OfflineDescriptorHeap::SetName(const FString& InName)
-{
-    Name = InName;
-
-    uint32 HeapIndex = 0;
-    for (FDescriptorHeap& Heap : Heaps)
-    {
-        FString DbgName = Name + "[" + TTypeToString<uint32>::ToString(HeapIndex) + "]";
-        Heap.Heap->SetName(DbgName.GetCString());
-    }
+    Descriptor = FD3D12OfflineDescriptor();
 }
 
 bool FD3D12OfflineDescriptorHeap::AllocateHeap()
 {
-    constexpr uint32 DescriptorCount = D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT;
+    D3D12_DESCRIPTOR_HEAP_DESC Desc;
+    FMemory::Memzero(&Desc);
 
-    TSharedRef<FD3D12DescriptorHeap> Heap = new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
-    if (Heap->Initialize())
+    Desc.Type           = Type;
+    Desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    Desc.NumDescriptors = FMath::Min(CVarNumOfflineDescriptors.GetValue(), D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT);
+    Desc.NodeMask       = GetDevice()->GetNodeMask();
+
+    TComPtr<ID3D12DescriptorHeap> NewHeap;
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&NewHeap));
+    if (FAILED(Result))
     {
-        if (!Name.IsEmpty())
-        {
-            FString DbgName = Name + TTypeToString<int32>::ToString(Heaps.Size());
-            Heap->SetName(DbgName.GetCString());
-        }
-
-        Heaps.Emplace(Heap);
-        return true;
+        D3D12_ERROR("[FD3D12OfflineDescriptorHeap]: FAILED to Create DescriptorHeap");
+        return false;
     }
     else
     {
-        return false;
+        D3D12_INFO("[FD3D12OfflineDescriptorHeap]: Created DescriptorHeap");
     }
+
+    FD3D12DescriptorHeapRef Heap = new FD3D12DescriptorHeap(GetDevice(), NewHeap.Get(), Desc.Type, Desc.Flags, Desc.NumDescriptors);
+    Heaps.Emplace(Heap, Desc.NumDescriptors);
+    return true;
 }
 
 
-FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, uint32 InDescriptorCount, D3D12_DESCRIPTOR_HEAP_TYPE InType)
+FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType)
     : FD3D12DeviceChild(InDevice)
     , Heap(nullptr)
-    , DescriptorCount(InDescriptorCount)
+    , DescriptorCount(0)
     , Type(InType)
 {
 }
 
-bool FD3D12OnlineDescriptorHeap::Initialize()
+bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InBlockSize)
 {
-    Heap = new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-    if (Heap->Initialize())
+    D3D12_DESCRIPTOR_HEAP_DESC Desc;
+    FMemory::Memzero(&Desc);
+
+    Desc.Type           = Type;
+    Desc.Flags          = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    Desc.NumDescriptors = DescriptorCount = InDescriptorCount;
+    Desc.NodeMask       = GetDevice()->GetNodeMask();
+
+    TComPtr<ID3D12DescriptorHeap> NewHeap;
+    HRESULT Result = GetDevice()->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_PPV_ARGS(&NewHeap));
+    if (FAILED(Result))
     {
-        return true;
-    }
-    else
-    {
+        D3D12_ERROR("[FD3D12OnlineDescriptorHeap]: FAILED to Create DescriptorHeap");
         return false;
     }
-}
-
-uint32 FD3D12OnlineDescriptorHeap::AllocateHandles(uint32 NumHandles)
-{
-    CHECK(NumHandles <= DescriptorCount);
-
-    if (!HasSpace(NumHandles))
-    {
-        if (!AllocateFreshHeap())
-        {
-            return (uint32)-1;
-        }
-    }
-
-    const uint32 Handle = CurrentHandle;
-    CurrentHandle += NumHandles;
-    return Handle;
-}
-
-bool FD3D12OnlineDescriptorHeap::AllocateFreshHeap()
-{
-    TRACE_FUNCTION_SCOPE();
-
-    DiscardedHeaps.Emplace(Heap);
-
-    if (HeapPool.IsEmpty())
-    {
-        Heap = new FD3D12DescriptorHeap(GetDevice(), Type, DescriptorCount, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
-        if (!Heap->Initialize())
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
     else
     {
-        Heap = HeapPool.LastElement();
-        HeapPool.Pop();
+        D3D12_INFO("[FD3D12OnlineDescriptorHeap]: Created DescriptorHeap");
     }
 
-    CurrentHandle = 0;
+    // Create Heap
+    Heap = new FD3D12DescriptorHeap(GetDevice(), NewHeap.Get(), Desc.Type, Desc.Flags, Desc.NumDescriptors);
+
+    // Divide the heap into blocks
+    const uint32 NumBlocks = InDescriptorCount / InBlockSize;
+    BlockSize = InBlockSize;
+
+    uint32 HandleOffset = 0;
+    for (uint32 Index = 0; Index < NumBlocks; Index++)
+    {
+        FD3D12OnlineDescriptorBlock* NewBlock = new FD3D12OnlineDescriptorBlock(HandleOffset, BlockSize);
+        BlockQueue.Enqueue(NewBlock);
+        HandleOffset += BlockSize;
+    }
+
     return true;
 }
 
-bool FD3D12OnlineDescriptorHeap::HasSpace(uint32 NumHandles) const
+FD3D12OnlineDescriptorBlock* FD3D12OnlineDescriptorHeap::AllocateBlock()
 {
-    const uint32 NewCurrentHandle = CurrentHandle + NumHandles;
-    return NewCurrentHandle < DescriptorCount;
-}
+    TScopedLock Lock(BlockQueueCS);
 
-void FD3D12OnlineDescriptorHeap::Reset()
-{
-    if (!HeapPool.IsEmpty())
+    if (BlockQueue.IsEmpty())
     {
-        for (TSharedRef<FD3D12DescriptorHeap>& CurrentHeap : DiscardedHeaps)
-        {
-            HeapPool.Emplace(CurrentHeap);
-        }
-
-        DiscardedHeaps.Clear();
-    }
-    else
-    {
-        ::Swap(HeapPool, DiscardedHeaps);
+        return nullptr;
     }
 
-    CurrentHandle = 0;
-}
-
-void FD3D12OnlineDescriptorHeap::SetNumPooledHeaps(uint32 NumHeaps)
-{
-    if (NumHeaps > static_cast<uint32>(HeapPool.Size()))
+    FD3D12OnlineDescriptorBlock* Block = nullptr;
+    if (!BlockQueue.Dequeue(Block))
     {
-        HeapPool.Resize(NumHeaps);
+        return nullptr;
     }
+
+    return Block;
 }
 
-
-FD3D12OnlineDescriptorManager::FD3D12OnlineDescriptorManager(FD3D12Device* InDevice, FD3D12DescriptorHeap* InDescriptorHeap, uint32 InDescriptorStartOffset, uint32 InDescriptorCount)
-    : FD3D12DeviceChild(InDevice)
-    , DescriptorHeap(MakeSharedRef<FD3D12DescriptorHeap>(InDescriptorHeap))
-    , CPUStartHandle()
-    , GPUStartHandle()
-    , DescriptorStartOffset(InDescriptorStartOffset)
-    , DescriptorCount(InDescriptorCount)
-    , CurrentHandle(0)
+void FD3D12OnlineDescriptorHeap::RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock)
 {
-    CHECK(DescriptorHeap != nullptr);
-    DescriptorSize = DescriptorHeap->GetDescriptorHandleIncrementSize();
-    CPUStartHandle = FD3D12CPUDescriptorHandle(DescriptorHeap->GetCPUDescriptorHandleForHeapStart(), DescriptorStartOffset, DescriptorSize);
-    GPUStartHandle = FD3D12GPUDescriptorHandle(DescriptorHeap->GetGPUDescriptorHandleForHeapStart(), DescriptorStartOffset, DescriptorSize);
+    TScopedLock Lock(BlockQueueCS);
+    BlockQueue.Enqueue(InBlock);
+}
+
+void FD3D12OnlineDescriptorHeap::FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock, uint64 FenceValue)
+{
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(FenceValue, this, InBlock);
 }

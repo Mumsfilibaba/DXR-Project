@@ -61,47 +61,47 @@ public:
     // This means that one can call BindShaderResourceViews directly with this function
     FRHIShaderResourceView* const* GetShaderResourceViews() const;
 
-    FORCEINLINE bool HasAlphaMask() const
+    bool HasAlphaMask() const
     {
-        return (AlphaMask && Properties.EnableMask) || (Properties.EnableMask == AlphaMaskMode_DiffuseCombined);
+        return AlphaMask && Properties.EnableMask || Properties.EnableMask == AlphaMaskMode_DiffuseCombined;
     }
 
-    FORCEINLINE bool HasHeightMap() const
+    bool HasHeightMap() const
     {
-        return HeightMap && (Properties.EnableHeight == 1);
+        return HeightMap && Properties.EnableHeight == 1;
     }
 
-    FORCEINLINE FRHISamplerState* GetMaterialSampler() const
+    FRHISamplerState* GetMaterialSampler() const
     {
         return Sampler.Get();
     }
 
-    FORCEINLINE FRHIBuffer* GetMaterialBuffer() const
+    FRHIBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
     }
 
-    FORCEINLINE bool ShouldRenderInPrePass()
+    bool ShouldRenderInPrePass()
     {
         return !HasHeightMap() && !bRenderInForwardPass;
     }
 
-    FORCEINLINE bool ShouldRenderInForwardPass()
+    bool ShouldRenderInForwardPass()
     {
         return bRenderInForwardPass;
     }
 
-    FORCEINLINE const FMaterialDesc& GetMaterialProperties() const
+    const FMaterialDesc& GetMaterialProperties() const
     {
         return Properties;
     }
 
-    FORCEINLINE FRHIShaderResourceView* GetAlphaMaskSRV() const
+    FRHIShaderResourceView* GetAlphaMaskSRV() const
     {
-        return (Properties.EnableMask == AlphaMaskMode_DiffuseCombined) ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
+        return Properties.EnableMask == AlphaMaskMode_DiffuseCombined ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
     }
 
-    FORCEINLINE uint32 GetNumShaderResourceViews() const
+    uint32 GetNumShaderResourceViews() const
     {
         return static_cast<uint32>(ShaderResourceViews.Size());
     }

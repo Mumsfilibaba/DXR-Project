@@ -14,7 +14,6 @@ public:
     bool Initialize();
 
     FD3D12CommandListRef ObtainCommandList(FD3D12CommandAllocator& CommandAllocator, ID3D12PipelineState* InitialPipelineState);
-    
     void ReleaseCommandList(FD3D12CommandListRef InCommandList);
 
     FD3D12FenceSyncPoint ExecuteCommandList(FD3D12CommandListRef InCommandList, bool bWaitForCompletion);
@@ -24,17 +23,17 @@ public:
         return FenceManager;
     }
 
-    FORCEINLINE ED3D12CommandQueueType  GetQueueType() const
+    ED3D12CommandQueueType GetQueueType() const
     {
         return QueueType;
     }
 
-    FORCEINLINE D3D12_COMMAND_LIST_TYPE GetCommandListType() const
+    D3D12_COMMAND_LIST_TYPE GetCommandListType() const
     {
         return CommandListType;
     }
     
-    FORCEINLINE ID3D12CommandQueue* GetD3D12CommandQueue() const
+    ID3D12CommandQueue* GetD3D12CommandQueue() const
     {
         return CommandQueue.Get();
     }

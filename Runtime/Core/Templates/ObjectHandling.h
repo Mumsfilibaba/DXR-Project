@@ -335,7 +335,7 @@ FORCEINLINE bool CompareObjects(const ObjectType* LHS, const ObjectType* RHS, Si
 {
     if constexpr (TIsTrivial<ObjectType>::Value)
     {
-        return FMemory::Memcmp(LHS, RHS, sizeof(ObjectType) * Count);
+        return FMemory::Memcmp(LHS, RHS, sizeof(ObjectType) * Count) == 0;
     }
     else
     {

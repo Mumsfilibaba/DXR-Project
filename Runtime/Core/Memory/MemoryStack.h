@@ -1,6 +1,5 @@
 #pragma once
 #include "Memory.h"
-
 #include "Core/Core.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/TypeTraits.h"
@@ -27,7 +26,7 @@ public:
 
     FMemoryStack() = default;
 
-    FORCEINLINE explicit FMemoryStack(int32 Size) noexcept
+    explicit FMemoryStack(int32 Size) noexcept
         : TopPage(nullptr)
         , StackStart(nullptr)
         , StackEnd(nullptr)
@@ -35,30 +34,30 @@ public:
         AllocateNewChunk(Size);
     }
     
-    FORCEINLINE FMemoryStack(FMemoryStack&& Other) noexcept
+    FMemoryStack(FMemoryStack&& Other) noexcept
     {
         *this = Move(Other);
     }
 
-    FORCEINLINE ~FMemoryStack() noexcept
+    ~FMemoryStack() noexcept
     {
         FreeChunks(nullptr);
     }
 
-    FORCEINLINE void* Allocate(int32 Size, int32 Alignment = STANDARD_ALIGNMENT) noexcept
+    void* Allocate(int32 Size, int32 Alignment = STANDARD_ALIGNMENT) noexcept
     {
         CHECK(Size      > 0);
         CHECK(Alignment > 0);
 
         const int32 AlignedSize = FMath::AlignUp(Size, Alignment);
         
-        uint8* AlignedAddress = (uint8*)FMath::AlignUp<uintptr>((uintptr)StackStart, Alignment);
+        uint8* AlignedAddress = reinterpret_cast<uint8*>(FMath::AlignUp<uintptr>(reinterpret_cast<uintptr>(StackStart), Alignment));
         uint8* NewStart       = AlignedAddress + AlignedSize;
         if (NewStart >= StackEnd)
         {
             // In case the new chunk needs to be aligned, pass the alignment as well as the size
             AllocateNewChunk(AlignedSize + Alignment);
-            AlignedAddress = (uint8*)FMath::AlignUp<uintptr>((uintptr)StackStart, Alignment);
+            AlignedAddress = reinterpret_cast<uint8*>(FMath::AlignUp<uintptr>(reinterpret_cast<uintptr>(StackStart), Alignment));
             NewStart       = AlignedAddress + AlignedSize;
         }
 
@@ -66,12 +65,12 @@ public:
         return AlignedAddress;
     }
 
-    FORCEINLINE uint8* PushBytes(int32 Size, int32 Alignment = STANDARD_ALIGNMENT) noexcept
+    uint8* PushBytes(int32 Size, int32 Alignment = STANDARD_ALIGNMENT) noexcept
     {
         return reinterpret_cast<uint8*>(Allocate(Size, Alignment));
     }
 
-    FORCEINLINE void Reset() noexcept
+    void Reset() noexcept
     {
         FreeChunks(nullptr);
     }
@@ -87,12 +86,12 @@ public:
         return Total;
     }
 
-    FORCEINLINE bool IsEmpty() const noexcept
+    bool IsEmpty() const noexcept
     {
-        return (TopPage != nullptr);
+        return TopPage != nullptr;
     }
 
-    FORCEINLINE FMemoryStack& operator=(FMemoryStack&& RHS) noexcept
+    FMemoryStack& operator=(FMemoryStack&& RHS) noexcept
     {
         TopPage    = RHS.TopPage;
         StackStart = RHS.StackStart;
@@ -124,7 +123,6 @@ private:
         StackStart = reinterpret_cast<uint8*>(NewPage->Data());
         StackEnd   = StackStart + PageSize;
         TopPage    = NewPage;
-
         return StackStart;
     }
 
@@ -135,7 +133,6 @@ private:
         {
             FMemoryHeader* PreviousChunk = CurrentChunk;
             CurrentChunk = CurrentChunk->Next;
-            
             FMemory::Free(PreviousChunk);
         }
 
