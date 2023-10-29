@@ -22,18 +22,21 @@ void FRendererInfoWindow::Paint()
 
         const FString AdapterName = RHIGetAdapterName();
         const ImVec2 TextSize   = ImGui::CalcTextSize(AdapterName.GetCString());
+
         const float ColumnWidth = 105.0f * Scale;
-	    const float Width  = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
-	    const float Height = WindowHeight * 0.8f;
+	    const float Width       = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
+	    const float Height      = WindowHeight * 0.8f;
 
         ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 10.0f * Scale), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
+        ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
 
         const ImGuiWindowFlags Flags =
             ImGuiWindowFlags_NoMove |
             ImGuiWindowFlags_NoDecoration |
             ImGuiWindowFlags_NoFocusOnAppearing |
-            ImGuiWindowFlags_NoSavedSettings;
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoDocking;
 
         ImGui::Begin("Renderer Window", nullptr, Flags);
 
@@ -50,7 +53,6 @@ void FRendererInfoWindow::Paint()
         ImGui::NextColumn();
 
         FRHICommandStatistics Statistics = FRenderer::Get().GetStatistics();
-
         ImGui::Text("DrawCalls: ");
         ImGui::NextColumn();
 

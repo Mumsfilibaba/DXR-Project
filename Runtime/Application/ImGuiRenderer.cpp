@@ -545,7 +545,10 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                     if (!DrawableTexture->bAllowBlending)
                     {
                         CmdList.SetGraphicsPipelineState(PipelineStateNoBlending.Get());
-                        bResetRenderState = true;
+                    }
+                    else
+                    {
+                        CmdList.SetGraphicsPipelineState(PipelineState.Get());
                     }
 
                     if (DrawableTexture->bSamplerLinear)
@@ -559,6 +562,12 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                 }
                 else
                 {
+                    if (bResetRenderState)
+                    {
+                        SetupRenderState(CmdList, DrawData, *ViewportData);
+                        bResetRenderState = false;
+                    }
+
                     if (DrawCmdList->Flags & ImDrawListFlags_AntiAliasedLinesUseTex)
                     {
                         CmdList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
@@ -570,6 +579,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
 
                     FRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
                     CmdList.SetShaderResourceView(PShader.Get(), View, 0);
+                    CmdList.SetGraphicsPipelineState(PipelineState.Get());
                 }
 
                 // Project Scissor/Clipping rectangles into Framebuffer space

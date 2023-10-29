@@ -20,10 +20,17 @@ void FRenderTargetDebugWindow::Paint()
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
+        ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
         ImGui::SetNextWindowSize(ImVec2(Width, Height));
 
-        constexpr ImGuiWindowFlags Flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
+        constexpr ImGuiWindowFlags Flags = 
+            ImGuiWindowFlags_NoDecoration | 
+            ImGuiWindowFlags_AlwaysAutoResize | 
+            ImGuiWindowFlags_NoFocusOnAppearing | 
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoDocking;
+
         constexpr float MinImageSize = 96.0f;
 
         bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetValue();
