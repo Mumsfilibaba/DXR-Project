@@ -61,23 +61,23 @@ float SincFilter(float Sample, float FilterRadius)
 
 float MitchelFilter(float Sample)
 {
-    return CubicFilter(Sample, 1 / 3.0f, 1 / 3.0f);
+    return CubicFilter(Sample, 1 / 3.0, 1 / 3.0);
 }
 
 float BlackmanHarrisFilter(float Sample)
 {
-    Sample = 1.0f - Sample;
+    Sample = 1.0 - Sample;
 
-    const float a0 = 0.35875f;
-    const float a1 = 0.48829f;
-    const float a2 = 0.14128f;
-    const float a3 = 0.01168f;
-    return saturate(a0 - a1 * cos(PI * Sample) + a2 * cos(2 * PI * Sample) - a3 * cos(3 * PI * Sample));
+    const float A0 = 0.35875;
+    const float A1 = 0.48829;
+    const float A2 = 0.14128;
+    const float A3 = 0.01168;
+    return saturate(A0 - A1 * cos(PI * Sample) + A2 * cos(2 * PI * Sample) - A3 * cos(3 * PI * Sample));
 }
 
 float SmoothstepFilter(float Sample)
 {
-    return 1.0f - smoothstep(0.0f, 1.0f, Sample);
+    return 1.0 - smoothstep(0.0, 1.0, Sample);
 }
 
 // Modified version of the following code: https://gist.github.com/TheRealMJP/c83b8c0f46b63f3a88a5986f4fa982b1

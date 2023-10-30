@@ -1,7 +1,7 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
-RWTexture2D<float> Texture : register(u0);
+RWTexture2D<min16float> Texture : register(u0);
 
 SHADER_CONSTANT_BLOCK_BEGIN
     int2 ScreenSize;
@@ -10,13 +10,13 @@ SHADER_CONSTANT_BLOCK_END
 #define NUM_THREADS (16)
 #define KERNEL_SIZE (5)
 
-groupshared float GTextureCache[NUM_THREADS][NUM_THREADS];
+groupshared min16float GTextureCache[NUM_THREADS][NUM_THREADS];
 
 static const int2 MAX_SIZE = int2(NUM_THREADS, NUM_THREADS);
 
-static const float KERNEL[KERNEL_SIZE] =
+static const min16float KERNEL[KERNEL_SIZE] =
 {
-    0.06136f, 0.24477f, 0.38774f, 0.24477f, 0.06136f
+    0.06136, 0.24477, 0.38774, 0.24477, 0.06136
 };
 
 static const int OFFSETS[KERNEL_SIZE] =
@@ -36,26 +36,28 @@ void Main(FComputeShaderInput Input)
     GroupMemoryBarrierWithGroupSync();
     
     // Perform blur
-    float Result = 0.0f;
+    min16float Result = 0.0f;
+
     [unroll]
     for (int Index = 0; Index < KERNEL_SIZE; ++Index)
     {
-        const int   Offset = OFFSETS[Index];
-        const float Weight = KERNEL[Index];
+        const int        Offset = OFFSETS[Index];
+        const min16float Weight = KERNEL[Index];
         
-#ifdef HORIZONTAL_PASS
+    #ifdef HORIZONTAL_PASS
         const int2 CurrentTexCoord = int2(GroupThreadID.x + Offset, GroupThreadID.y);
-#else
+    #else
         const int2 CurrentTexCoord = int2(GroupThreadID.x, GroupThreadID.y + Offset);
-#endif
+    #endif
+    
         // Going outside of the cache? 
         if (any(CurrentTexCoord >= MAX_SIZE) || any(CurrentTexCoord < int2(0, 0)))
         {
-#ifdef HORIZONTAL_PASS
+    #ifdef HORIZONTAL_PASS
         const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x), Pixel.y);
-#else
+    #else
         const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y));
-#endif
+    #endif
             Result += Texture[Pixel] * Weight;
         }
         else

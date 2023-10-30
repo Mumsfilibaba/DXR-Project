@@ -16,10 +16,10 @@
 #define EPSILON       (0.0001)
 #define RAY_OFFSET    (0.02)
 
-#define FLT32_MAX (3.402823466e+38f)
-#define FLT32_MIN (1.175494351e-38f)        
+#define FLT32_MAX (3.402823466e+38)
+#define FLT32_MIN (1.175494351e-38)        
 
-#define FLT32_EPSILON (1.192092896e-07f)
+#define FLT32_EPSILON (1.192092896e-07)
 
 #define SHADING_RATE_1x1 (0x0)
 #define SHADING_RATE_1x2 (0x1)

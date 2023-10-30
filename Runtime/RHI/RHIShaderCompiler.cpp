@@ -366,12 +366,14 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
         L"-HV 2021" // Use HLSL 2021
     };
 
+    CompileArgs.Emplace(L"-Gfa"); // Avoid flow-control
+    CompileArgs.Emplace(L"-WX");  // Warnings as errors
+
     // Optimization level 3
     if (CompileInfo.bOptimize)
     {
-        CompileArgs.Emplace(L"-O3");
+        CompileArgs.Emplace(L"-O3"); // Highest optimization level
         CompileArgs.Emplace(L"-all-resources-bound");
-        CompileArgs.Emplace(L"-Gfa"); // Avoid flow-control
     }
 
     // NOTE: Entrypoint needs to always be main when compiling SPIRV, this is due to the fact that the GLSL code cannot handle any
@@ -594,7 +596,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
 bool FRHIShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource)
 {
     // Find the actual entrypoint, and change it to a specific spirv one. This is done since
-    // the crurrent version of DXC available on macOS does not support the compiler argument
+    // the current version of DXC available on macOS does not support the compiler argument
     // that does this for us, therefor we now replace the entrypoint ourselves.
     int32 Position = FString::INVALID_INDEX;
     while (true)
