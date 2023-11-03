@@ -4,17 +4,20 @@
 #include "RHI/RHIShader.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Scene/Scene.h"
+#include "RendererUtilities/GPUBlockCompressor.h"
 
 class RENDERER_API FSkyboxRenderPass final
 {
 public:
-    bool Init(FFrameResources& FrameResources);
+    bool Initialize(FFrameResources& FrameResources);
 
     void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FScene& Scene);
 
     void Release();
 
 private:
+    FGPUBlockCompressor          BlockCompressor;
+
     FMeshData                    SkyboxMesh;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIVertexShaderRef          SkyboxVertexShader;

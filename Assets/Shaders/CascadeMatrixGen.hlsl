@@ -38,8 +38,9 @@ void Main(FComputeShaderInput Input)
     MinDepth = min(MinDepth, MaxDepth);
     MaxDepth = max(Temp, MaxDepth);
 
-    MinDepth = floor(MinDepth * 100.0f) / 100.0f;
-    MaxDepth = ceil(MaxDepth * 100.0f) / 100.0f;
+    const float MaxDist = 60.0f;
+    MinDepth = floor(MinDepth * MaxDist) / MaxDist;
+    MaxDepth = ceil(MaxDepth * MaxDist) / MaxDist;
 
     float Range = MaxDepth - MinDepth;
     float Ratio = MaxDepth / MinDepth;
@@ -119,6 +120,7 @@ void Main(FComputeShaderInput Input)
             Radius = max(Radius, Distance);
         }
     }
+
     Radius = ceil(Radius);
     
     float3 MaxExtents = Float3(Radius);

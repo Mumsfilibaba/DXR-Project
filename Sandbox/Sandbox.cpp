@@ -36,7 +36,7 @@ bool FSandbox::Init()
     }
 
     // Initialize Scene
-    MAYBE_UNUSED FActor* NewActor = nullptr;
+    MAYBE_UNUSED FActor*         NewActor     = nullptr;
     MAYBE_UNUSED FMeshComponent* NewComponent = nullptr;
 
     // Store the Engine's scene pointer 
@@ -45,14 +45,18 @@ bool FSandbox::Init()
     // Load Scene
     {
         FSceneData SceneData;
-#if LOAD_SPONZA
+    #if LOAD_SPONZA
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
         SceneData.Scale = 0.015f;
-#elif LOAD_BISTRO
+    #elif LOAD_BISTRO
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
-            Material.bAlphaDiffuseCombined = true;
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
         }
         
         SceneData.AddToScene(CurrentScene);
@@ -61,21 +65,33 @@ bool FSandbox::Init()
 
         for (auto& Material : SceneData.Materials)
         {
-            Material.bAlphaDiffuseCombined = true;
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
         }
-#elif LOAD_SUN_TEMPLE
+     #elif LOAD_SUN_TEMPLE
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
-            Material.bAlphaDiffuseCombined = true;
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
         }
-#elif LOAD_EMERALD_SQUARE
+     #elif LOAD_EMERALD_SQUARE
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
         {
-            Material.bAlphaDiffuseCombined = true;
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
         }
-#endif
+    #endif
         SceneData.AddToScene(CurrentScene);
     }
 

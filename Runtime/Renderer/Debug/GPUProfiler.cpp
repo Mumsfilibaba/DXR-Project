@@ -13,7 +13,7 @@ FGPUProfiler::FGPUProfiler()
 {
 }
 
-bool FGPUProfiler::Init()
+bool FGPUProfiler::Initialize()
 {
     Instance.Timequeries = RHICreateTimestampQuery();
     if (!Instance.Timequeries)

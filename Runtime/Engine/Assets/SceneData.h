@@ -56,6 +56,9 @@ struct FModelData
 
 struct FMaterialData
 {
+    /** @brief - Name of the material specified in the model-file */
+    FString Name;
+
     /** @brief - Diffuse texture */
     FTextureResource2DRef DiffuseTexture;
 
@@ -94,6 +97,9 @@ struct FMaterialData
 
     /** @brief - Is the diffuse and alpha stored in the same texture? */
     bool bAlphaDiffuseCombined = false;
+
+    /** @brief - Should this material have culling turned off ? */
+    bool bIsDoubleSided = false;
 };
 
 

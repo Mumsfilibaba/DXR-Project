@@ -56,9 +56,10 @@ float3 FresnelSchlick(float3 F0, float3 V, float3 H)
 
 float3 FresnelSchlick_Roughness(float3 F0, float3 V, float3 H, float Roughness)
 {
+    float R     = 1.0f - Roughness;
     float VDotH = max(dot(V, H), 0.0f);
     float Exp   = (-5.55473f * VDotH - 6.98316f) * VDotH;
-    return F0 + (max(Float3(1.0f - Roughness), F0) - F0) * exp2(Exp);
+    return F0 + (max(Float3(R), F0) - F0) * exp2(Exp);
 }
 
 // Geometry Smitch
@@ -94,16 +95,19 @@ float3 DirectRadiance(float3 F0, float3 N, float3 V, float3 L, float3 Radiance, 
     float3 DiffBRDF = Albedo / PI;
     
     // Cook-Torrance Specular BRDF
+    const float NDotL = max(dot(N, L), 0.0f);
+    const float NDotV = max(dot(N, V), 0.0f);
+    const float M     = 1.0f - Metallic;
+
     const float3 H     = normalize(V + L);
     float3 F           = FresnelSchlick(F0, V, H);
     float3 Numerator   = DistributionGGX(N, H, Roughness) * F * GeometrySmithGGX(N, L, V, Roughness);
-    float3 Denominator = 4.0f * max(dot(N, L), 0.0f) * max(dot(N, V), 0.0f);
+    float3 Denominator = 4.0f * NDotL * NDotV;
     float3 SpecBRDF    = Numerator / max(Denominator, 0.0000001f);
     
     float3 Ks = F;
-    float3 Kd = (Float3(1.0f) - Ks) * (1.0f - Metallic);
+    float3 Kd = (Float3(1.0f) - Ks) * M;
     
-    const float NDotL = max(dot(N, L), 0.0f);
     return (Kd * DiffBRDF + Ks * SpecBRDF) * Radiance * NDotL;
 }
 

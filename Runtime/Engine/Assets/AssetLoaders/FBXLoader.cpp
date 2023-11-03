@@ -127,7 +127,11 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
                 continue;
             }
 
+            LOG_INFO("Loading Material '%s'", CurrentMaterial->name);
+
             FMaterialData MaterialData;
+            MaterialData.Name = CurrentMaterial->name;
+
             MaterialData.DiffuseTexture  = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
             MaterialData.NormalTexture   = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
             MaterialData.SpecularTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);

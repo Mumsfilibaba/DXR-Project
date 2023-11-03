@@ -15,16 +15,18 @@ TAutoConsoleVariable<float> GSSAORadius(
     "Renderer.SSAO.Radius",
     "Specifies the radius of the Screen-Space Ray-Trace in SSAO",
     0.2f);
+
 TAutoConsoleVariable<float> GSSAOBias(
     "Renderer.SSAO.Bias", 
     "Specifies the bias when testing the Screen-Space Rays against the depth-buffer",
     0.075f);
+
 TAutoConsoleVariable<int32> GSSAOKernelSize(
     "Renderer.SSAO.KernelSize",
     "Specifies the number of samples for each pixel",
     16);
 
-bool FScreenSpaceOcclusionRenderer::Init(FFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
 {
     if (!CreateRenderTarget(FrameResources))
     {

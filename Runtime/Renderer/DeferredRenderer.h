@@ -8,7 +8,7 @@
 class RENDERER_API FDeferredRenderer
 {
 public:
-    bool Init(FFrameResources& FrameResources);
+    bool Initialize(FFrameResources& FrameResources);
 
     void Release();
 
@@ -23,13 +23,20 @@ public:
 private:
     bool CreateGBuffer(FFrameResources& FrameResources);
 
-    FRHIGraphicsPipelineStateRef PipelineState;
-    FRHIVertexShaderRef          BaseVertexShader;
-    FRHIPixelShaderRef           BasePixelShader;
+    FRHIGraphicsPipelineStateRef BasePassPSO;
+    FRHIGraphicsPipelineStateRef BasePassMaskedPSO;
+    FRHIGraphicsPipelineStateRef BasePassDoubleSidedPSO;
+    FRHIVertexShaderRef          BasePassVS;
+    FRHIVertexShaderRef          BasePassMaskedVS;
+    FRHIPixelShaderRef           BasePassPS;
+    FRHIPixelShaderRef           BasePassMaskedPS;
 
-    FRHIGraphicsPipelineStateRef PrePassPipelineState;
-    FRHIVertexShaderRef          PrePassVertexShader;
-    FRHIPixelShaderRef           PrePassPixelShader;
+    FRHIGraphicsPipelineStateRef PrePassPSO;
+    FRHIGraphicsPipelineStateRef PrePassMaskedPSO;
+    FRHIGraphicsPipelineStateRef PrePassDoubleSidedPSO;
+    FRHIVertexShaderRef          PrePassVS;
+    FRHIVertexShaderRef          PrePassMaskedVS;
+    FRHIPixelShaderRef           PrePassMaskedPS;
 
     FRHIComputePipelineStateRef  TiledLightPassPSO;
     FRHIComputeShaderRef         TiledLightShader;

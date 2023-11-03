@@ -16,7 +16,7 @@ SHADER_CONSTANT_BLOCK_BEGIN
 
     float  Radius;
     float  Bias;
-    int    KernelSize;
+    uint   KernelSize;
 SHADER_CONSTANT_BLOCK_END
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
@@ -27,9 +27,9 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
 void Main(FComputeShaderInput Input)
 {
-    const int   FinalKernelSize = min(max(Constants.KernelSize, 4), MAX_SAMPLES);
-    const float FinalRadius = max(Constants.Radius, 0.01);
-    const float FinalBias   = max(Constants.Bias, 0.0);
+    const uint  FinalKernelSize = min(max(Constants.KernelSize, 4), MAX_SAMPLES);
+    const float FinalRadius     = max(Constants.Radius, 0.01);
+    const float FinalBias       = max(Constants.Bias, 0.0);
 
     // Texture coordinate
     const float2 TexSize   = Constants.ScreenSize;
@@ -62,7 +62,7 @@ void Main(FComputeShaderInput Input)
     float3x3 TBN = float3x3(Tangent, Bitangent, ViewNormal);
 
     float Occlusion = 0.0f;
-    for (int Index = 0; Index < FinalKernelSize; ++Index)
+    for (uint Index = 0; Index < FinalKernelSize; ++Index)
     {
 		const float2 HammerslySample = Hammersley2(Index, FinalKernelSize);
 		const float3 Sample          = HemispherePointUniform(HammerslySample.x, HammerslySample.y);

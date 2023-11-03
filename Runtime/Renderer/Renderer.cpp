@@ -259,62 +259,108 @@ bool FRenderer::Create()
         return false;
     }
 
-    if (!DebugRenderer.Init(Resources))
+    if (!DebugRenderer.Initialize(Resources))
     {
         return false;
     }
 
-    if (!LightSetup.Init())
+    if (!LightSetup.Initialize())
     {
         return false;
     }
 
-    if (!DeferredRenderer.Init(Resources))
+    if (!DeferredRenderer.Initialize(Resources))
     {
         return false;
     }
 
-    if (!ShadowMapRenderer.Init(LightSetup, Resources))
+    if (!ShadowMapRenderer.Initialize(LightSetup, Resources))
     {
         return false;
     }
 
-    if (!SSAORenderer.Init(Resources))
+    if (!SSAORenderer.Initialize(Resources))
     {
         return false;
     }
 
-    if (!LightProbeRenderer.Init(LightSetup, Resources))
+    if (!LightProbeRenderer.Initialize(LightSetup, Resources))
     {
         return false;
     }
 
-    if (!SkyboxRenderPass.Init(Resources))
+    if (!SkyboxRenderPass.Initialize(Resources))
     {
         return false;
     }
 
-    if (!ForwardRenderer.Init(Resources))
+    if (!ForwardRenderer.Initialize(Resources))
     {
         return false;
     }
 
-    if (!TemporalAA.Init(Resources))
+    if (!TemporalAA.Initialize(Resources))
     {
         return false;
     }
 
     if (RHISupportsRayTracing())
     {
-        if (!RayTracer.Init(Resources))
+        if (!RayTracer.Initialize(Resources))
         {
             return false;
         }
     }
 
-    LightProbeRenderer.RenderSkyLightProbe(CommandList, LightSetup, Resources);
+    // Copy over the texture
+    {
+        LightProbeRenderer.RenderSkyLightProbe(CommandList, LightSetup, Resources);
+        
+        FRHITextureDesc IrradianceProbeDesc = LightSetup.Skylight.IrradianceMap->GetDesc();
+        IrradianceProbeDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-    GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FRHITextureDesc SpecularIrradianceProbeDesc = LightSetup.Skylight.SpecularIrradianceMap->GetDesc();
+        SpecularIrradianceProbeDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
+
+        FRHITextureRef IrradianceMap = RHICreateTexture(IrradianceProbeDesc, EResourceAccess::CopyDest);
+        if (!IrradianceMap)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            IrradianceMap->SetName("Irradiance Map");
+        }
+
+        FRHITextureRef SpecularIrradianceMap = RHICreateTexture(SpecularIrradianceProbeDesc, EResourceAccess::CopyDest);
+        if (!SpecularIrradianceMap)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            SpecularIrradianceMap->SetName("Specular Irradiance Map");
+        }
+
+        CommandList.TransitionTexture(LightSetup.Skylight.IrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopySource);
+        CommandList.TransitionTexture(LightSetup.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopySource);
+
+        CommandList.CopyTexture(IrradianceMap.Get(), LightSetup.Skylight.IrradianceMap.Get());
+        CommandList.CopyTexture(SpecularIrradianceMap.Get(), LightSetup.Skylight.SpecularIrradianceMap.Get());
+
+        CommandList.TransitionTexture(IrradianceMap.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(SpecularIrradianceMap.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+
+        CommandList.DestroyResource(LightSetup.Skylight.IrradianceMap.Get());
+        CommandList.DestroyResource(LightSetup.Skylight.SpecularIrradianceMap.Get());
+
+        LightSetup.Skylight.IrradianceMap         = IrradianceMap;
+        LightSetup.Skylight.SpecularIrradianceMap = SpecularIrradianceMap;
+
+        GRHICommandExecutor.ExecuteCommandList(CommandList);
+    }
 
     // Register EventFunc
     //GEngine->MainWindow->GetWindowResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
@@ -515,7 +561,7 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     TRACE_SCOPE("Draw to BackBuffer");
 
     FRHIRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPass.NumRenderTargets            = 1;
 
@@ -659,12 +705,6 @@ void FRenderer::Tick()
         DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
     }
 
-    // Point Lights
-    ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
-
-    // Directional Light
-    ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
-
 #if 0
     if (ShadingImage && GEnableVariableRateShading.GetValue())
     {
@@ -746,6 +786,8 @@ void FRenderer::Tick()
         EResourceAccess::NonPixelShaderResource);
 
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+    
+    // SSAO
     CommandList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
     if (GEnableSSAO.GetValue())
@@ -766,6 +808,13 @@ void FRenderer::Tick()
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
+    // Point Lights
+    ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
+
+    // Directional Light
+    ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
+
+    // ShadowMask and GBuffer
     {
         CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess);
         CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
@@ -781,6 +830,7 @@ void FRenderer::Tick()
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
     CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget);
 
+    // Skybox Pass
     SkyboxRenderPass.Render(CommandList, Resources, Scene);
 
     CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
@@ -825,22 +875,26 @@ void FRenderer::Tick()
         EResourceAccess::PixelShaderResource,
         EResourceAccess::PixelShaderResource);
 
+    // Forward Pass
     if (!Resources.ForwardVisibleCommands.IsEmpty())
     {
         GPU_TRACE_SCOPE(CommandList, "Forward Pass");
         ForwardRenderer.Render(CommandList, Resources, LightSetup);
     }
 
+    // Debug PointLights
     if (GDrawPointLights.GetValue())
     {
         DebugRenderer.RenderPointLights(CommandList, Resources, Scene);
     }
 
+    // Debug AABBs
     if (GDrawAABBs.GetValue())
     {
         DebugRenderer.RenderObjectAABBs(CommandList, Resources);
     }
 
+    // Temporal AA
     if (GEnableTemporalAA.GetValue())
     {
         CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
@@ -863,12 +917,14 @@ void FRenderer::Tick()
         EResourceAccess::PixelShaderResource,
         EResourceAccess::PixelShaderResource);
 
+    // FXAA
     if (GEnableFXAA.GetValue())
     {
         PerformFXAA(CommandList);
     }
     else
     {
+        // Render to the BackBuffer
         PerformBackBufferBlit(CommandList);
     }
 
@@ -902,9 +958,7 @@ void FRenderer::Tick()
 
     FGPUProfiler::Get().EndGPUFrame(CommandList);
 
-#if 1
     CommandList.EndExternalCapture();
-#endif
 
     CommandList.PresentViewport(Resources.MainViewport.Get(), GVSyncEnabled.GetValue());
 
@@ -963,7 +1017,7 @@ bool FRenderer::InitAA()
     TArray<uint8> ShaderCode;
     
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -979,7 +1033,7 @@ bool FRenderer::InitAA()
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -1059,7 +1113,7 @@ bool FRenderer::InitAA()
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -1093,7 +1147,7 @@ bool FRenderer::InitAA()
     };
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -1148,7 +1202,7 @@ bool FRenderer::InitShadingImage()
     TArray<uint8> ShaderCode;
     
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

@@ -632,35 +632,45 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
     FD3D12Texture* D3D12Source = GetD3D12Texture(Src);
     CHECK(D3D12Source != nullptr);
 
+    FlushResourceBarriers();
+
+    const ETextureDimension TextureDimension = Src->GetDimension();
+    const uint32 NumSrcMipLevels   = Src->GetNumMipLevels();
+    const uint32 NumDstMipLevels   = Dst->GetNumMipLevels();
+    const uint32 NumSrcArraySlices = D3D12CalcArraySlices(TextureDimension, Src->GetNumArraySlices());
+    const uint32 NumDstArraySlices = D3D12CalcArraySlices(TextureDimension, Dst->GetNumArraySlices());
+
     // Source
     D3D12_TEXTURE_COPY_LOCATION SrcLocation;
     FMemory::Memzero(&SrcLocation);
 
-    const uint32 SrcSubresourceIndex = D3D12CalcSubresource(InCopyDesc.SrcMipSlice, InCopyDesc.SrcArraySlice, 0, Src->GetNumMipLevels(), Src->GetNumArraySlices());
-    SrcLocation.pResource        = D3D12Source->GetD3D12Resource()->GetD3D12Resource();
-    SrcLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-    SrcLocation.SubresourceIndex = SrcSubresourceIndex;
+    SrcLocation.pResource = D3D12Source->GetD3D12Resource()->GetD3D12Resource();
+    SrcLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 
     D3D12_BOX SrcBox;
     SrcBox.left   = InCopyDesc.SrcPosition.x;
-    SrcBox.right  = InCopyDesc.SrcPosition.x + InCopyDesc.Size.x;
-    SrcBox.bottom = InCopyDesc.SrcPosition.y;
-    SrcBox.top    = InCopyDesc.SrcPosition.y + InCopyDesc.Size.y;
+    SrcBox.right  = FMath::Max(InCopyDesc.SrcPosition.x + InCopyDesc.Size.x, 1);
+    SrcBox.top    = InCopyDesc.SrcPosition.y;
+    SrcBox.bottom = FMath::Max(InCopyDesc.SrcPosition.y + InCopyDesc.Size.y, 1);
     SrcBox.front  = InCopyDesc.SrcPosition.z;
-    SrcBox.back   = InCopyDesc.SrcPosition.z + InCopyDesc.Size.z;
+    SrcBox.back   = FMath::Max(InCopyDesc.SrcPosition.z + InCopyDesc.Size.z, 1);
 
     // Destination
     D3D12_TEXTURE_COPY_LOCATION DstLocation;
     FMemory::Memzero(&DstLocation);
 
-    const uint32 DstSubresourceIndex = D3D12CalcSubresource(InCopyDesc.DstMipSlice, InCopyDesc.DstArraySlice, 0, Dst->GetNumMipLevels(), Dst->GetNumArraySlices());
-    DstLocation.pResource        = D3D12Destination->GetD3D12Resource()->GetD3D12Resource();
-    DstLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-    DstLocation.SubresourceIndex = DstSubresourceIndex;
+    DstLocation.pResource = D3D12Destination->GetD3D12Resource()->GetD3D12Resource();
+    DstLocation.Type      = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 
-    FlushResourceBarriers();
-
-    CommandList->CopyTextureRegion(&DstLocation, InCopyDesc.DstPosition.x, InCopyDesc.DstPosition.y, InCopyDesc.DstPosition.z, &SrcLocation, &SrcBox);
+    const uint32 NumArraySlices = D3D12CalcArraySlices(TextureDimension, InCopyDesc.NumArraySlices);
+    const uint32 SrcArraySlice  = D3D12CalcArraySlices(TextureDimension, InCopyDesc.SrcArraySlice);
+    const uint32 DstArraySlice  = D3D12CalcArraySlices(TextureDimension, InCopyDesc.DstArraySlice);
+    for (int32 ArraySlice = 0; ArraySlice < NumArraySlices; ArraySlice++)
+    {
+        SrcLocation.SubresourceIndex = D3D12CalcSubresource(InCopyDesc.SrcMipSlice, SrcArraySlice + ArraySlice, 0, NumSrcMipLevels, NumSrcArraySlices);
+        DstLocation.SubresourceIndex = D3D12CalcSubresource(InCopyDesc.DstMipSlice, DstArraySlice + ArraySlice, 0, NumDstMipLevels, NumDstArraySlices);
+        CommandList->CopyTextureRegion(&DstLocation, InCopyDesc.DstPosition.x, InCopyDesc.DstPosition.y, InCopyDesc.DstPosition.z, &SrcLocation, &SrcBox);
+    }
 
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Dst);
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Src);

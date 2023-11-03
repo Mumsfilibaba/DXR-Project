@@ -7,7 +7,7 @@
 #include "Engine/Scene/Actors/Actor.h"
 #include "Core/Misc/FrameProfiler.h"
 
-bool FForwardRenderer::Init(FFrameResources& FrameResources)
+bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
 {
     TArray<FShaderDefine> Defines =
     {
@@ -17,7 +17,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
 
     TArray<uint8> ShaderCode;
     
-    FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex, Defines);
+    FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
@@ -31,7 +31,7 @@ bool FForwardRenderer::Init(FFrameResources& FrameResources)
         return false;
     }
 
-    CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel, Defines);
+    CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();

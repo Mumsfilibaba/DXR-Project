@@ -104,6 +104,7 @@
     #define D3D12_INFO(...) do { (void)(0); } while(false)
 #endif
 
+#define D3D12_NUM_CUBE_FACES (6)
 
 void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
 
@@ -1005,4 +1006,16 @@ constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 constexpr uint32 D3D12CalcSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
 {
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
+}
+
+constexpr uint32 D3D12CalcArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
+{
+    if (IsTextureCube(Dimension))
+    {
+        return NumArraySlices * D3D12_NUM_CUBE_FACES;
+    }
+    else
+    {
+        return NumArraySlices;
+    }
 }

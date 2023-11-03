@@ -7,8 +7,13 @@
 #include "Engine/Assets/AssetManager.h"
 #include "RendererCore/TextureFactory.h"
 
-bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
+bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 {
+    if (!BlockCompressor.Initialize())
+    {
+        return false;
+    }
+
     SkyboxMesh = FMeshFactory::CreateSphere(1);
     SkyboxIndexCount  = SkyboxMesh.Indices.Size();
     SkyboxIndexFormat = EIndexFormat::uint32;
@@ -49,14 +54,24 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
             Panorama->SetName(PanoramaSourceFilename);
         }
 
-        FrameResources.Skybox = FTextureFactory::CreateTextureCubeFromPanorma(Panorama->GetRHITexture().Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
-        if (!FrameResources.Skybox)
+        // Compress the Panorama
+        FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
+
+        FRHITextureRef Skybox = FTextureFactory::CreateTextureCubeFromPanorma(PanoramaRHI.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
+        if (!Skybox)
         {
             return false;
         }
         else
         {
-            FrameResources.Skybox->SetName("Skybox");
+            Skybox->SetName("Skybox Uncompressed");
+        }
+
+        // Compress the CubeMap
+        BlockCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
+        if (FrameResources.Skybox)
+        {
+            FrameResources.Skybox->SetName("Skybox Compressed");
         }
     }
 
@@ -77,7 +92,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     
     {
-        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -93,7 +108,7 @@ bool FSkyboxRenderPass::Init(FFrameResources& FrameResources)
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        FRHIShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

@@ -51,6 +51,11 @@ void FSceneData::AddToScene(FScene* Scene)
                 Material->EnableAlphaMask(Material->AlphaMask != GEngine->BaseTexture);
             }
 
+            if (MaterialData.bIsDoubleSided)
+            {
+                Material->EnableDoubleSided(MaterialData.bIsDoubleSided);
+            }
+
             Material->Initialize();
 
             CreatedMaterials.Add(Material);

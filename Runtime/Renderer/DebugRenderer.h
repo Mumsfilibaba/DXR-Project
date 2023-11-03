@@ -7,7 +7,7 @@
 class FDebugRenderer
 {
 public:
-    bool Init(FFrameResources& Resources);
+    bool Initialize(FFrameResources& Resources);
     
     void Release();
 

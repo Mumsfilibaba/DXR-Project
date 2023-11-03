@@ -12,8 +12,8 @@
 
 // Soft shadows settings
 
-#define NUM_PCF_SAMPLES (16)
-#define PCF_RADIUS      (0.04f)
+#define NUM_PCF_SAMPLES (8)
+#define PCF_RADIUS      (0.04)
 #define ROTATE_SAMPLES  (1)
 #define USE_HAMMERSLY   (1)
 
@@ -22,7 +22,7 @@
 #define SELECT_CASCADE_FROM_PROJECTION (1)
 #define USE_RECEIVER_PLANE_DEPTH_BIAS  (0)
 #define BLEND_CASCADES                 (1)
-#define CASCADE_FADE_FACTOR            (0.1f)
+#define CASCADE_FADE_FACTOR            (0.1)
 
 // Camera and Light
 #if SHADER_LANG == SHADER_LANG_MSL
@@ -63,7 +63,7 @@ SamplerState Sampler : register(s0);
 float2 GetPCFSample(uint Index)
 {
 #if USE_HAMMERSLY
-    return (Hammersley2(Index, NUM_PCF_SAMPLES) * 2.0f) - 1.0f;
+    return (Hammersley2(Index, NUM_PCF_SAMPLES) * 2.0) - 1.0;
 #else
 #if (NUM_PCF_SAMPLES == 16)
     return PoissonDisk16[Index];
@@ -134,11 +134,11 @@ float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth
     {
         float2 RandomDirection = GetPCFSample(Sample);        
 #if ROTATE_SAMPLES
-        float    Theta = NextRandom(RandomSeed) * PI_2;
-        float2x2 RandomRotationMatrix = float2x2(
-            float2(cos(Theta), -sin(Theta)),
-            float2(sin(Theta),  cos(Theta)));
+        float Theta    = NextRandom(RandomSeed) * PI_2;
+        float CosTheta = cos(Theta);
+        float SinTheta = sin(Theta);
 
+        const float2x2 RandomRotationMatrix = float2x2(float2(CosTheta, -SinTheta), float2(SinTheta, CosTheta));
         RandomDirection = mul(RandomDirection, RandomRotationMatrix);
 #endif
         RandomDirection *= PenumbraRadius;

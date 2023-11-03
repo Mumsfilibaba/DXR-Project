@@ -7,7 +7,7 @@
 class RENDERER_API FScreenSpaceOcclusionRenderer
 {
 public:
-    bool Init(FFrameResources& FrameResources);
+    bool Initialize(FFrameResources& FrameResources);
 
     void Release();
 

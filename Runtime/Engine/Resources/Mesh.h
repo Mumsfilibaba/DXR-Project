@@ -10,7 +10,7 @@
 class ENGINE_API FMesh
 {
 public:
-    FMesh()  = default;
+    FMesh();
     ~FMesh() = default;
 
     bool Init(const FMeshData& Data);
@@ -23,6 +23,8 @@ public:
     void CreateBoundingBox(const FMeshData& Data);
 
     FRHIBufferRef             VertexBuffer;
+    FRHIBufferRef             PosOnlyVertexBuffer;
+    FRHIBufferRef             MaskedVertexBuffer;
     FRHIShaderResourceViewRef VertexBufferSRV;
 
     FRHIBufferRef             IndexBuffer;
@@ -30,10 +32,10 @@ public:
     
     FRHIRayTracingGeometryRef RTGeometry;
 
-    uint32       VertexCount = 0;
+    uint32       VertexCount;
     
     EIndexFormat IndexFormat;
-    uint32       IndexCount  = 0;
+    uint32       IndexCount;
 
     FAABB        BoundingBox;
 };

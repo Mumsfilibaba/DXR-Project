@@ -55,6 +55,11 @@ public:
     
     void EnableAlphaMask(bool bInEnableAlphaMask);
 
+    void EnableDoubleSided(bool bInIsDoubleSided)
+    {
+        bIsDoubleSided = bInIsDoubleSided;
+    }
+
     void SetDebugName(const FString& InDebugName);
 
     // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
@@ -63,12 +68,17 @@ public:
 
     bool HasAlphaMask() const
     {
-        return AlphaMask && Properties.EnableMask || Properties.EnableMask == AlphaMaskMode_DiffuseCombined;
+        return (AlphaMask && Properties.EnableMask) || (Properties.EnableMask == AlphaMaskMode_DiffuseCombined);
     }
 
     bool HasHeightMap() const
     {
         return HeightMap && Properties.EnableHeight == 1;
+    }
+
+    bool IsDoubleSided() const
+    {
+        return bIsDoubleSided;
     }
 
     FRHISamplerState* GetMaterialSampler() const
@@ -120,9 +130,10 @@ private:
 
     bool bMaterialBufferIsDirty = true;
     bool bRenderInForwardPass   = false;
+    bool bIsDoubleSided         = false;
 
-    FMaterialDesc       Properties;
-    FRHIBufferRef       MaterialBuffer;
+    FMaterialDesc Properties;
+    FRHIBufferRef MaterialBuffer;
 
     FRHISamplerStateRef Sampler;
 

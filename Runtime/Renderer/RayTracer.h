@@ -7,7 +7,7 @@
 class RENDERER_API FRayTracer
 {
 public:
-    bool Init(FFrameResources& Resources);
+    bool Initialize(FFrameResources& Resources);
 
     void Release();
 

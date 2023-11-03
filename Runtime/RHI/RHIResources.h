@@ -227,6 +227,11 @@ enum class ETextureDimension
     Texture3D        = 5,
 };
 
+constexpr bool IsTextureCube(ETextureDimension Dimension)
+{
+    return Dimension == ETextureDimension::TextureCube || Dimension == ETextureDimension::TextureCubeArray;
+}
+
 
 struct IRHITextureData
 {

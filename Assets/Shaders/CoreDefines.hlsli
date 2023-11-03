@@ -1,5 +1,6 @@
 #ifndef CORE_DEFINES_HLSLI
 #define CORE_DEFINES_HLSLI
+#include "Constants.hlsli"
 
 #if SHADER_LANG == SHADER_LANG_SPIRV
     #define SHADER_CONSTANT_BLOCK_BEGIN \

@@ -4,7 +4,7 @@
 #include "RHI/RHIShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
 
-bool FTemporalAA::Init(FFrameResources& FrameResources)
+bool FTemporalAA::Initialize(FFrameResources& FrameResources)
 {
     if (!CreateRenderTarget(FrameResources))
     {
@@ -13,7 +13,7 @@ bool FTemporalAA::Init(FFrameResources& FrameResources)
 
     TArray<uint8> ShaderCode;
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/TemporalAA.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

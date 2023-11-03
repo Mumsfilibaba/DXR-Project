@@ -1,6 +1,10 @@
 #include "Constants.hlsli"
 #include "Structs.hlsli"
 
+#ifndef ENABLE_ALPHA_MASK
+    #define ENABLE_ALPHA_MASK (0)
+#endif
+
 struct FPerCascade
 {
     int CascadeIndex;
@@ -16,43 +20,108 @@ SHADER_CONSTANT_BLOCK_END
 
 
 #if SHADER_LANG == SHADER_LANG_MSL
-ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b1);
+    ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b2);
 #else
-ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b0);
+    ConstantBuffer<FPerCascade> PerCascadeBuffer : register(b0);
 #endif
 
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
-// VS
-struct FVSInput
-{
-    float3 Position : POSITION0;
-    float3 Normal   : NORMAL0;
-    float3 Tangent  : TANGENT0;
-    float2 TexCoord : TEXCOORD0;
-};
-
-struct FGSOutput
-{
-    float3 Position : POSITION0;
-    float3 Normal   : NORMAL0;
-    float3 Tangent  : TANGENT0;
-    float2 TexCoord : TEXCOORD0;
-};
+#if ENABLE_ALPHA_MASK
+    ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
+    
+    SamplerState MaterialSampler : register(s0);
+    
+    Texture2D<float4> AlphaMaskTex : register(t1);
+#endif
 
 // Cascade Shadow Generation
 
-float4 Cascade_VSMain(FVSInput Input) : SV_POSITION
+// VertexShader
+
+struct FVSInput
 {
-    const int CascadeIndex = PerCascadeBuffer.CascadeIndex;
-    float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
-    
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
-    return mul(WorldPosition, LightViewProjection);
+    float3 Position : POSITION0;
+#if ENABLE_ALPHA_MASK
+    float2 TexCoord : TEXCOORD0;
+#endif
+};
+
+struct FVSCascadeOutput
+{
+#if ENABLE_ALPHA_MASK 
+    float2 TexCoord : TEXCOORD0;
+#endif
+    float4 Position : SV_POSITION;
+};
+
+FVSCascadeOutput Cascade_VSMain(FVSInput Input)
+{
+    const int      CascadeIndex        = PerCascadeBuffer.CascadeIndex;
+    const float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
+
+    FVSCascadeOutput Output = (FVSCascadeOutput)0;
+#if ENABLE_ALPHA_MASK 
+    Output.TexCoord = Input.TexCoord;
+#endif
+    Output.Position = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
+    Output.Position = mul(Output.Position, LightViewProjection);
+    return Output;
 }
+
+// GeometryShader
+
+struct FGSOutput
+{
+#if ENABLE_ALPHA_MASK 
+    float2 TexCoord : TEXCOORD0;
+#endif
+    float3 Position : POSITION0;
+};
 
 void Cascade_GSMain(triangle float4 InPosition[3], inout TriangleStream<FGSOutput> OutStream)
 {
+}
+
+// PixelShader
+
+struct FPSInput
+{
+    float2 TexCoord : TEXCOORD0;
+};
+
+#define ALPHA_DISABLED         (0)
+#define ALPHA_ENABLED          (1)
+#define ALPHA_DIFFUSE_COMBINED (2)
+
+void Cascade_PSMain(FPSInput Input)
+{
+#if ENABLE_ALPHA_MASK
+    float2 TexCoords = Input.TexCoord;
+    TexCoords.y = 1.0f - TexCoords.y;
+    
+    [[branch]]
+    if (MaterialBuffer.EnableMask == ALPHA_ENABLED)
+    {
+        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).r;
+        
+        [[branch]]
+        if (AlphaMask < 0.5f)
+        {
+            discard;
+        }
+    }
+    else if (MaterialBuffer.EnableMask == ALPHA_DIFFUSE_COMBINED)
+    {
+        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
+        
+        [[branch]]
+        if (AlphaMask < 0.5f)
+        {
+            discard;
+        }
+    }
+#endif
 }
 
 // Point Light Shadow Generation
@@ -64,19 +133,17 @@ cbuffer LightBuffer : register(b0)
     float    LightFarPlane;
 }
 
-struct FVSOutput
+struct FVSPointOutput
 {
     float3 WorldPosition : POSITION0;
     float4 Position      : SV_POSITION;
 };
 
-FVSOutput Point_VSMain(FVSInput Input)
+FVSPointOutput Point_VSMain(FVSInput Input)
 {
-    FVSOutput Output = (FVSOutput)0;
-    
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
-    Output.WorldPosition = WorldPosition.xyz;
-    Output.Position      = mul(WorldPosition, LightProjection);
+    FVSPointOutput Output = (FVSPointOutput)0;
+    Output.WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix).xyz;
+    Output.Position      = mul(float4(Output.WorldPosition, 1.0f), LightProjection);
     return Output;
 }
 

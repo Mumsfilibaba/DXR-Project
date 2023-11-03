@@ -76,7 +76,7 @@ struct FHaltonState
 class RENDERER_API FTemporalAA
 {
 public:
-    bool Init(FFrameResources& FrameResources);
+    bool Initialize(FFrameResources& FrameResources);
 
     void Release();
 

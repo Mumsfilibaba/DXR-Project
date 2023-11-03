@@ -17,7 +17,7 @@ bool FTextureFactory::Init()
     // Compile and create shader
     TArray<uint8> Code;
 
-    FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+    FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
     if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
     {
         return false;
@@ -106,7 +106,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
         StagingTexture->SetName("TextureCube From Panorama StagingTexture");
     }
 
-    FRHITextureUAVDesc UAVInitializer(StagingTexture.Get(), Format, 0, 0, 6);
+    FRHITextureUAVDesc UAVInitializer(StagingTexture.Get(), Format, 0, 0, 1);
     FRHIUnorderedAccessViewRef StagingTextureUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!StagingTextureUAV)
     {

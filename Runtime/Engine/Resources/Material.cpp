@@ -32,7 +32,6 @@ void FMaterial::BuildBuffer(FRHICommandList& CommandList)
     CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(MaterialBuffer.Get(), FBufferRegion(0, sizeof(FMaterialDesc)), &Properties);
     CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-
     bMaterialBufferIsDirty = false;
 }
 

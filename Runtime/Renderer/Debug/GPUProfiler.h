@@ -79,12 +79,9 @@ using GPUProfileSamplesTable = TMap<FString, FGPUProfileSample, FStringHasher>;
 
 class RENDERER_API FGPUProfiler
 {
-    FGPUProfiler();
-    ~FGPUProfiler() = default;
-
 public:
      /** @brief - Creates the profiler, requires the RHI to be initialized */
-    static bool Init();
+    static bool Initialize();
 
      /** @brief - Release the resources */
     static void Release();
@@ -124,6 +121,7 @@ public:
     }
 
 private:
+    FGPUProfiler();
 
      /** @brief - Queries for GPUTimeStamps */
     FRHITimestampQueryRef Timequeries;

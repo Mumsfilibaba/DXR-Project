@@ -192,7 +192,7 @@ bool FEngineLoop::PreInitialize()
 
     NCoreDelegates::PostInitRHIDelegate.Broadcast();
 
-    if (!FGPUProfiler::Init())
+    if (!FGPUProfiler::Initialize())
     {
         LOG_ERROR("FGPUProfiler failed to be initialized");
     }

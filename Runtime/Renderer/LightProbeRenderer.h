@@ -3,18 +3,21 @@
 #include "LightSetup.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
+#include "RendererUtilities/GPUBlockCompressor.h"
 
 class RENDERER_API FLightProbeRenderer
 {
 public:
-    bool Init(FLightSetup& LightSetup, FFrameResources& FrameResources);
+    bool Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderSkyLightProbe(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CommandList, FLightSetup& LightSetup, const FFrameResources& Resources);
 
 private:
     bool CreateSkyLightResources(FLightSetup& LightSetup);
+
+    FGPUBlockCompressor Compressor;
 
     FRHIComputePipelineStateRef IrradianceGenPSO;
     FRHIComputeShaderRef        IrradianceGenShader;

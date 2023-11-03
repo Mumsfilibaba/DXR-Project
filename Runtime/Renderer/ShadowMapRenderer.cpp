@@ -6,6 +6,7 @@
 #include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Material.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Renderer/Debug/GPUProfiler.h"
@@ -15,7 +16,7 @@ TAutoConsoleVariable<bool> GCascadeDebug(
     "Draws an overlay that shows which pixel uses what shadow cascade",
     false);
 
-bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameResources)
+bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources)
 {
     if (!CreateShadowMaps(LightSetup, FrameResources))
     {
@@ -39,7 +40,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
 
         {
-            FRHIShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+            FRHIShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -55,7 +56,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
 
         {
-            FRHIShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_0, EShaderStage::Pixel);
+            FRHIShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -141,15 +142,75 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
             PerCascadeBuffer->SetName("Per Cascade Buffer");
         }
 
-        FRHIShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        FRHIShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
         }
 
-        DirectionalLightShader = RHICreateVertexShader(ShaderCode);
-        if (!DirectionalLightShader)
+        DirectionalLightVS = RHICreateVertexShader(ShaderCode);
+        if (!DirectionalLightVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        TArray<FShaderDefine> Defines =
+        {
+            { "ENABLE_ALPHA_MASK", "(1)" }
+        };
+
+        CompileInfo = FRHIShaderCompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        DirectionalLightMaskedVS = RHICreateVertexShader(ShaderCode);
+        if (!DirectionalLightMaskedVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        DirectionalLightMaskedPS = RHICreatePixelShader(ShaderCode);
+        if (!DirectionalLightMaskedPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        // Initialize standard input layout
+        FRHIVertexInputLayoutInitializer InputLayoutInitializer =
+        {
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+        };
+
+        FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+        if (!InputLayout)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        // Initialize standard input layout
+        InputLayoutInitializer =
+        {
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexMasked), 0, 0,  EVertexInputClass::Vertex, 0 },
+            { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexMasked), 0, 12, EVertexInputClass::Vertex, 0 }
+        };
+
+        FRHIVertexInputLayoutRef MaskedInputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+        if (!MaskedInputLayout)
         {
             DEBUG_BREAK();
             return false;
@@ -189,13 +250,13 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         PSOInitializer.BlendState                         = BlendState.Get();
         PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
         PSOInitializer.bPrimitiveRestartEnable            = false;
-        PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
+        PSOInitializer.VertexInputLayout                  = InputLayout.Get();
         PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
         PSOInitializer.RasterizerState                    = RasterizerState.Get();
         PSOInitializer.SampleCount                        = 1;
         PSOInitializer.SampleQuality                      = 0;
         PSOInitializer.SampleMask                         = 0xffffffff;
-        PSOInitializer.ShaderState.VertexShader           = DirectionalLightShader.Get();
+        PSOInitializer.ShaderState.VertexShader           = DirectionalLightVS.Get();
         PSOInitializer.ShaderState.PixelShader            = nullptr;
         PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
         PSOInitializer.PipelineFormats.DepthStencilFormat = LightSetup.ShadowMapFormat;
@@ -208,13 +269,28 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
         }
         else
         {
-            DirectionalLightPSO->SetName("ShadowMap PipelineState");
+            DirectionalLightPSO->SetName("CSM PipelineState");
+        }
+
+        PSOInitializer.VertexInputLayout        = MaskedInputLayout.Get();
+        PSOInitializer.ShaderState.VertexShader = DirectionalLightMaskedVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = DirectionalLightMaskedPS.Get();
+
+        DirectionalLightMaskedPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!DirectionalLightMaskedPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            DirectionalLightMaskedPSO->SetName("Masked CSM PipelineState");
         }
     }
 
     // Cascade Matrix Generation
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -317,7 +393,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
     // Directional Light ShadowMask
     {
         {
-            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute);
+            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -353,7 +429,7 @@ bool FShadowMapRenderer::Init(FLightSetup& LightSetup, FFrameResources& FrameRes
                 { "ENABLE_DEBUG", "(1)" },
             };
 
-            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, Defines);
+            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
             if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
@@ -543,8 +619,6 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
         CommandList.TransitionTexture(LightSetup.ShadowMapCascades[2].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
         CommandList.TransitionTexture(LightSetup.ShadowMapCascades[3].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
 
-        CommandList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
-
         // PerObject Structs
         struct FShadowPerObject
         {
@@ -573,9 +647,8 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             FRHIScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            CommandList.SetConstantBuffer(DirectionalLightShader.Get(), PerCascadeBuffer.Get(), 0);
-
-            CommandList.SetShaderResourceView(DirectionalLightShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
+            CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
+            CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
             // Draw all objects to shadow-map
             static IConsoleVariable* GFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
@@ -593,11 +666,25 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
                     const FAABB Box(Top, Bottom);
                     if (CameraFrustum.CheckAABB(Box))
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
+                        if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+                        {
+                            CommandList.SetGraphicsPipelineState(DirectionalLightMaskedPSO.Get());
+                            CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->MaskedVertexBuffer, 1), 0);
+
+                            CommandList.SetSamplerState(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialSampler(), 0);
+                            CommandList.SetConstantBuffer(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialBuffer(), 1);
+                            CommandList.SetShaderResourceView(DirectionalLightMaskedPS.Get(), Command.Material->GetAlphaMaskSRV(), 1);
+                        }
+                        else
+                        {
+                            CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->PosOnlyVertexBuffer, 1), 0);
+                            CommandList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
+                        }
+
                         CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
                         ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-                        CommandList.Set32BitShaderConstants(DirectionalLightShader.Get(), &ShadowPerObjectBuffer, 16);
+                        CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
 
                         CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
                     }
@@ -607,11 +694,25 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             {
                 for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
                 {
-                    CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
+                    if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+                    {
+                        CommandList.SetGraphicsPipelineState(DirectionalLightMaskedPSO.Get());
+                        CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->MaskedVertexBuffer, 1), 0);
+
+                        CommandList.SetSamplerState(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialSampler(), 0);
+                        CommandList.SetConstantBuffer(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialBuffer(), 1);
+                        CommandList.SetShaderResourceView(DirectionalLightMaskedPS.Get(), Command.Material->GetAlphaMaskSRV(), 1);
+                    }
+                    else
+                    {
+                        CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->PosOnlyVertexBuffer, 1), 0);
+                        CommandList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
+                    }
+
                     CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
                     ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-                    CommandList.Set32BitShaderConstants(DirectionalLightShader.Get(), &ShadowPerObjectBuffer, 16);
+                    CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
 
                     CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
                 }
@@ -709,7 +810,7 @@ void FShadowMapRenderer::Release()
     DirectionalShadowMaskShader_Debug.Reset();
     
     DirectionalLightPSO.Reset();
-    DirectionalLightShader.Reset();
+    DirectionalLightVS.Reset();
 
     PointLightPipelineState.Reset();
     PointLightVertexShader.Reset();

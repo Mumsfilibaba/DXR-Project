@@ -40,7 +40,7 @@ Texture2D<float4> DXRReflection : register(t4);
 // Reflection probe
 TextureCube<float4> IrradianceMap         : register(t5);
 TextureCube<float4> SpecularIrradianceMap : register(t6);
-Texture2D<float4>   IntegrationLUT        : register(t7);
+Texture2D<float2>   IntegrationLUT        : register(t7);
 
 // Shadow Cascade
 Texture2D<float> DirectionalShadowMask : register(t8);

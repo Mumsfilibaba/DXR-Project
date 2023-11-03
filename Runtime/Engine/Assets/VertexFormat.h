@@ -11,21 +11,23 @@ struct FVertex
         , Normal()
         , Tangent()
         , TexCoord()
-    { }
+    {
+    }
 
     FVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, const FVector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
         , TexCoord(InTexCoord)
-    { }
+    {
+    }
 
     bool operator==(const FVertex& Other) const
     {
-        return (Position == Other.Position) 
-            && (Normal   == Other.Normal) 
-            && (Tangent  == Other.Tangent) 
-            && (TexCoord == Other.TexCoord);
+        return Position == Other.Position 
+            && Normal   == Other.Normal 
+            && Tangent  == Other.Tangent 
+            && TexCoord == Other.TexCoord;
     }
 
     bool operator!=(const FVertex& Other) const
@@ -38,7 +40,6 @@ struct FVertex
     FVector3 Tangent;
     FVector2 TexCoord;
 };
-
 
 struct FVertexHasher
 {
@@ -53,3 +54,84 @@ struct FVertexHasher
         return Hash;
     }
 };
+
+
+struct FVertexMasked
+{
+    FVertexMasked()
+        : Position()
+        , TexCoord()
+    {
+    }
+
+    FVertexMasked(const FVector3& InPosition, const FVector2& InTexCoord)
+        : Position(InPosition)
+        , TexCoord(InTexCoord)
+    {
+    }
+
+    bool operator==(const FVertexMasked& Other) const
+    {
+        return Position == Other.Position && TexCoord == Other.TexCoord;
+    }
+
+    bool operator!=(const FVertexMasked& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FVector3 Position;
+    FVector2 TexCoord;
+};
+
+struct FVertexMaskedHasher
+{
+    inline size_t operator()(const FVertexMasked& Vertex) const
+    {
+        THash<FVector3> Hasher;
+
+        size_t Hash = Hasher(Vertex.Position);
+        HashCombine<FVector2>(Hash, Vertex.TexCoord);
+        return Hash;
+    }
+};
+
+
+struct FVertexPacked
+{
+    FVertexPacked()
+        : Position()
+        , Normal()
+        , Tangent()
+        , TexCoord()
+    {
+    }
+
+    FVertexPacked(const FVector3& InPosition, const FR10G10B10A2& InNormal, const FR10G10B10A2& InTangent, const FVector2& InTexCoord)
+        : Position(InPosition)
+        , Normal(InNormal)
+        , Tangent(InTangent)
+        , TexCoord(InTexCoord)
+    {
+        sizeof(FVertexPacked);
+    }
+
+    bool operator==(const FVertexPacked& Other) const
+    {
+        return Position == Other.Position
+            && Normal   == Other.Normal
+            && Tangent  == Other.Tangent
+            && TexCoord == Other.TexCoord;
+    }
+
+    bool operator!=(const FVertexPacked& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FVector3     Position;
+    FR10G10B10A2 Normal;
+    FR10G10B10A2 Tangent;
+    FVector2     TexCoord;
+};
+

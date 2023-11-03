@@ -6,7 +6,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
 
-bool FRayTracer::Init(FFrameResources& Resources)
+bool FRayTracer::Initialize(FFrameResources& Resources)
 {
     TArray<uint8> Code;
     

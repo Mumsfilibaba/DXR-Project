@@ -3,9 +3,81 @@
 #include "RHI/RHI.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
+#include "Core/Misc/ConsoleManager.h"
 
-bool FLightSetup::Init()
+TAutoConsoleVariable<int32> GCSMCascadeSize(
+    "Renderer.CSM.CascadeSize",
+    "Specifies the resolution of each Shadow Cascade",
+    2048);
+
+TAutoConsoleVariable<int32> GPointLightShadowMapSize(
+    "Renderer.Shadows.PointLightShadowMapSize",
+    "Specifies the resolution of each Shadow Cascade",
+    512);
+
+TAutoConsoleVariable<int32> GEnvironmentIrradianceProbeSize(
+    "Renderer.Environment.IrradianceProbeSize",
+    "Specifies the resolution of each Irradiance Probe (Cube-Map) size",
+    32);
+
+TAutoConsoleVariable<int32> GEnvironmentSpecularIrradianceProbeSize(
+    "Renderer.Environment.SpecularIrradianceProbeSize",
+    "Specifies the resolution of each Specular Irradiance Probe (Cube-Map) size",
+    256);
+
+// TODO: Move to FMath
+static int32 NextPower2(int32 Value)
 {
+    if ((Value & (Value - 1)) == 0)
+    {
+        return Value;
+    }
+
+    // Find the next power of 2
+    int32 RoundedValue = 1;
+    while (RoundedValue < Value)
+    {
+        RoundedValue <<= 1;
+    }
+
+    return RoundedValue;
+}
+
+static int32 ClosestPowerOf2(int32 Value)
+{
+    if (Value <= 0)
+    {
+        return 0;
+    }
+
+    const int32 NextPow = NextPower2(Value);
+    const int32 PrevPow = NextPow >> 1;
+
+    if (Value - PrevPow <= NextPow - Value)
+    {
+        return PrevPow;
+    }
+    else
+    {
+        return NextPow;
+    }
+}
+
+static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
+{
+    const int32 Result = FMath::Clamp(MinSize, MaxSize, NewSize);
+    return ClosestPowerOf2(Result);
+}
+
+
+bool FLightSetup::Initialize()
+{
+    // Initialize the light-setup from CVars
+    CascadeSize                 = ClampTextureSize(512, 4096, GCSMCascadeSize.GetValue());
+    PointLightShadowSize        = ClampTextureSize(128, 1024, GPointLightShadowMapSize.GetValue());
+    IrradianceProbeSize         = ClampTextureSize(32, 512, GEnvironmentIrradianceProbeSize.GetValue());
+    SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, GEnvironmentSpecularIrradianceProbeSize.GetValue());
+
     {
         FRHIBufferDesc BufferDesc(sizeof(DirectionalLightData), sizeof(DirectionalLightData), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         DirectionalLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);

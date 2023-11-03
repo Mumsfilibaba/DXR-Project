@@ -2,6 +2,22 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 
+#ifndef ENABLE_PARALLAX_MAPPING
+    #define ENABLE_PARALLAX_MAPPING (1)
+#endif
+
+#ifndef ENABLE_NORMAL_MAPPING
+    #define ENABLE_NORMAL_MAPPING (1)
+#endif
+
+#ifndef ENABLE_PACKED_MATERIAL_TEXTURE
+    #define ENABLE_PACKED_MATERIAL_TEXTURE (1)
+#endif
+
+#ifndef ENABLE_ALPHA_MASK
+    #define ENABLE_ALPHA_MASK (0)
+#endif
+
 // PerFrame
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
 
@@ -17,10 +33,14 @@ ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
 Texture2D<float4> AlbedoMap    : register(t0);
 Texture2D<float4> NormalTex    : register(t1);
 Texture2D<float4> RoughnessTex : register(t2);
-Texture2D<float4> HeightTex    : register(t3);
-Texture2D<float4> MetallicTex  : register(t4);
-Texture2D<float4> AOTex        : register(t5);
-Texture2D<float>  AlphaMaskTex : register(t6);
+#if ENABLE_PARALLAX_MAPPING
+    Texture2D<float4> HeightTex : register(t3);
+#endif
+Texture2D<float4> MetallicTex : register(t4);
+Texture2D<float4> AOTex       : register(t5);
+#if ENABLE_ALPHA_MASK
+    Texture2D<float> AlphaMaskTex : register(t6);
+#endif
 
 // VertexShader
 
@@ -48,9 +68,19 @@ struct FVSOutput
 
 FVSOutput VSMain(FVSInput Input)
 {
-    const float4x4 TransformInv = Constants.Transform.TransformInv;
-    
-    float3 Normal     = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
+    // Position
+    const float4x4 Transform     = Constants.Transform.Transform; 
+    const float4   WorldPosition = mul(float4(Input.Position, 1.0f), Transform);
+
+    // Normal
+    const float4x4 TransformInv = Constants.Transform.TransformInv;  
+    float3 Normal = normalize(mul(float4(Input.Normal, 0.0f), TransformInv).xyz);
+
+    // Check if the triangle is back-facing (based on the direction of the normal)
+    // float IsBackFacing = sign(dot(Normal, WorldPosition.xyz - Transform[3].xyz));
+    // Normal = normalize(Normal * IsBackFacing);
+
+    // View-normal
     float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
     
     float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
@@ -63,8 +93,6 @@ FVSOutput VSMain(FVSInput Input)
     Output.ViewNormal = ViewNormal;
     Output.Tangent    = Tangent;
     Output.Bitangent  = Bitangent;
-
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.Transform.Transform);
     Output.Position   = mul(WorldPosition, CameraBuffer.ViewProjection);
 
     // TODO: Handle moving objects (aka PrevTransform)
@@ -83,15 +111,16 @@ FVSOutput VSMain(FVSInput Input)
 
 struct FPSInput
 {
-    float3 Normal          : NORMAL0;
-    float3 ViewNormal      : NORMAL1;
-    float3 Tangent         : TANGENT0;
-    float3 Bitangent       : BITANGENT0;
-    float2 TexCoord        : TEXCOORD0;
-    float3 TangentViewPos  : TANGENTVIEWPOS0;
-    float3 TangentPosition : TANGENTPOSITION0;
+    float3 Normal           : NORMAL0;
+    float3 ViewNormal       : NORMAL1;
+    float3 Tangent          : TANGENT0;
+    float3 Bitangent        : BITANGENT0;
+    float2 TexCoord         : TEXCOORD0;
+    float3 TangentViewPos   : TANGENTVIEWPOS0;
+    float3 TangentPosition  : TANGENTPOSITION0;
     float4 ClipPosition     : POSITION0;
     float4 PrevClipPosition : POSITION1;
+    float4 Position         : SV_Position;
 };
 
 struct FPSOutput
@@ -103,6 +132,9 @@ struct FPSOutput
     float2 Velocity   : SV_Target4;
 };
 
+#if ENABLE_PARALLAX_MAPPING
+
+// TODO: We probably do not want any constants like this, it should be a constantbuffer or something similar
 static const float HEIGHT_SCALE = 0.03f;
 
 float SampleHeightMap(float2 TexCoords)
@@ -128,7 +160,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     while (CurrentLayerDepth < CurrentDepthMapValue)
     {
         CurrentTexCoords     -= DeltaTexCoords;
-        CurrentDepthMapValue =  SampleHeightMap(CurrentTexCoords);
+        CurrentDepthMapValue  = SampleHeightMap(CurrentTexCoords);
         CurrentLayerDepth    += LayerDepth;
     }
 
@@ -141,6 +173,7 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
     float2 FinalTexCoords = PrevTexCoords * Weight + CurrentTexCoords * (1.0f - Weight);
     return FinalTexCoords;
 }
+#endif
 
 #define ALPHA_DISABLED         (0)
 #define ALPHA_ENABLED          (1)
@@ -151,19 +184,22 @@ FPSOutput PSMain(FPSInput Input)
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
     
-    if (MaterialBuffer.EnableHeight == 1)
+#if ENABLE_PARALLAX_MAPPING
+    float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
+    TexCoords      = ParallaxMapping(TexCoords, ViewDir);
+    if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
     {
-        float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
-        TexCoords      = ParallaxMapping(TexCoords, ViewDir);
-        if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
-        {
-            discard;
-        }
+        discard;
     }
+#endif
     
+#if ENABLE_ALPHA_MASK
+    [[branch]]
     if (MaterialBuffer.EnableMask == ALPHA_ENABLED)
     {
         const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
+        
+        [[branch]]
         if (AlphaMask < 0.5f)
         {
             discard;
@@ -171,12 +207,15 @@ FPSOutput PSMain(FPSInput Input)
     }
     else if (MaterialBuffer.EnableMask == ALPHA_DIFFUSE_COMBINED)
     {
-        float AlphaMask = AlbedoMap.Sample(MaterialSampler, TexCoords).a;
+        const float AlphaMask = AlbedoMap.Sample(MaterialSampler, TexCoords).a;
+        
+        [[branch]]
         if (AlphaMask < 0.5f)
         {
             discard;
         }
     }
+#endif
 
     float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
     
@@ -190,23 +229,16 @@ FPSOutput PSMain(FPSInput Input)
     float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
     MappedNormal = PackNormal(MappedNormal);
 
-    // TODO: Should probably be compiled and not dynamic like this
-    float SampledAO;
-    float SampledMetallic;
-    float SampledRoughness;
-    if (MaterialBuffer.EnableHeight == 2)
-    {
-        float3 Specular = AOTex.Sample(MaterialSampler, TexCoords).rgb;
-        SampledAO        = Specular.r * MaterialBuffer.AO;
-        SampledRoughness = Specular.g * MaterialBuffer.Roughness;
-        SampledMetallic  = Specular.b * MaterialBuffer.Metallic;
-    }
-    else
-    {
-        SampledAO        = AOTex.Sample(MaterialSampler, TexCoords).r        * MaterialBuffer.AO;
-        SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords).r  * MaterialBuffer.Metallic;
-        SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
-    }
+#if ENABLE_PACKED_MATERIAL_TEXTURE
+    const float3 Specular         = AOTex.Sample(MaterialSampler, TexCoords).rgb;
+    const float  SampledAO        = Specular.r * MaterialBuffer.AO;
+    const float  SampledRoughness = Specular.g * MaterialBuffer.Roughness;
+    const float  SampledMetallic  = Specular.b * MaterialBuffer.Metallic;
+#else
+    const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords).r        * MaterialBuffer.AO;
+    const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords).r  * MaterialBuffer.Metallic;
+    const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
+#endif
     
     const float FinalRoughness = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     

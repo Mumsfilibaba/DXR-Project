@@ -22,12 +22,7 @@ static const float3 SampleOffsetDirections[OFFSET_SAMPLES] =
     float3(0.0f, 1.0f,  1.0f), float3( 0.0f, -1.0f,  1.0f), float3( 0.0f, -1.0f, -1.0f), float3( 0.0f, 1.0f, -1.0f)
 };
 
-float PointLightShadowFactor(
-    in TextureCube<float> ShadowMap,
-    in SamplerComparisonState Sampler,
-    float3 WorldPosition, 
-    float3 Normal,
-    FShadowPointLight Light, FPositionRadius LightPos)
+float PointLightShadowFactor(in TextureCube<float> ShadowMap, in SamplerComparisonState Sampler, float3 WorldPosition, float3 Normal, FShadowPointLight Light, FPositionRadius LightPos)
 {
     const float3 DirToLight = WorldPosition - LightPos.Position;
     const float3 LightDir   = normalize(LightPos.Position - WorldPosition);
@@ -51,12 +46,7 @@ float PointLightShadowFactor(
 }
 
 // TODO: Reuse code form other func?
-float PointLightShadowFactor(
-    in TextureCubeArray<float> ShadowMap, float Index,
-    in SamplerComparisonState Sampler,
-    float3 WorldPosition,
-    float3 Normal,
-    FShadowPointLight Light, FPositionRadius LightPos)
+float PointLightShadowFactor(in TextureCubeArray<float> ShadowMap, float Index, in SamplerComparisonState Sampler, float3 WorldPosition, float3 Normal, FShadowPointLight Light, FPositionRadius LightPos)
 {
     const float3 DirToLight = WorldPosition - LightPos.Position;
     const float3 LightDir   = normalize(LightPos.Position - WorldPosition);
@@ -130,7 +120,9 @@ float CalculatePoissonShadow(float3 WorldPosition, float2 TexCoord, float Compar
     Shadow = Shadow / POISSON_SAMPLES;
     return min(Shadow, 1.0f);
 }
+
 #elif ENABLE_VSM
+
 float CalculateVSM(float2 TexCoords, float CompareDepth)
 {
     float2 Moments = (float2)0;
@@ -156,11 +148,8 @@ float CalculateVSM(float2 TexCoords, float CompareDepth)
     return min(max(P, PMax), 1.0f);
 }
 #else
-float StandardShadow(
-    in Texture2D<float> ShadowMap,
-    in SamplerComparisonState Sampler,
-    float2 Texcoords,
-    float CompareDepth)
+
+float StandardShadow(in Texture2D<float> ShadowMap, in SamplerComparisonState Sampler, float2 Texcoords, float CompareDepth)
 {
     float Shadow = 0.0f;
     

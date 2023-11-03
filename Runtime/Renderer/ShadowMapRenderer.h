@@ -73,7 +73,7 @@ MARK_AS_REALLOCATABLE(FPerCascade);
 class RENDERER_API FShadowMapRenderer
 {
 public:
-    bool Init(FLightSetup& LightSetup, FFrameResources& Resources);
+    bool Initialize(FLightSetup& LightSetup, FFrameResources& Resources);
 
     void Release();
 
@@ -91,13 +91,15 @@ public:
 
 private:
     bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);
-    
     bool CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     FRHIBufferRef                PerShadowMapBuffer;
 
     FRHIGraphicsPipelineStateRef DirectionalLightPSO;
-    FRHIVertexShaderRef          DirectionalLightShader;
+    FRHIGraphicsPipelineStateRef DirectionalLightMaskedPSO;
+    FRHIVertexShaderRef          DirectionalLightVS;
+    FRHIVertexShaderRef          DirectionalLightMaskedVS;
+    FRHIPixelShaderRef           DirectionalLightMaskedPS;
 
     FRHIComputePipelineStateRef  DirectionalShadowMaskPSO;
     FRHIComputeShaderRef         DirectionalShadowMaskShader;

@@ -166,7 +166,7 @@ bool FImGuiRenderer::Initialize()
     TArray<uint8> ShaderCode;
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Vertex);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
         if (!FRHIShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -200,7 +200,7 @@ bool FImGuiRenderer::Initialize()
         })*";
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Pixel);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
         if (!FRHIShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();

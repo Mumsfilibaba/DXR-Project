@@ -7,6 +7,7 @@ TAutoConsoleVariable<float> GSunSize(
     "Scene.Lightning.Sun.Size",
     "Sets the size of the sun, used to determine the penumbra for soft-shadows", 
     0.05f);
+
 TAutoConsoleVariable<float> GCascadeSplitLambda(
     "Scene.Lightning.CascadeSplitLambda",
     "Determines how the Cascades should be split for the Cascaded Shadow Maps", 

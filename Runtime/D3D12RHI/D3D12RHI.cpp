@@ -126,7 +126,7 @@ bool FD3D12RHI::Initialize()
     // Initialize GenerateMips Shaders and pipeline states 
     TArray<uint8> Code;
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
         {
             D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
@@ -153,7 +153,7 @@ bool FD3D12RHI::Initialize()
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_0, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
         if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
         {
             D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
@@ -353,7 +353,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
         Desc.TextureCubeArray.MostDetailedMip     = InDesc.FirstMipLevel;
         Desc.TextureCubeArray.MipLevels           = InDesc.NumMips;
         Desc.TextureCubeArray.ResourceMinLODClamp = InDesc.MinLODClamp;
-        Desc.TextureCubeArray.First2DArrayFace    = InDesc.FirstArraySlice * kRHINumCubeFaces;
+        Desc.TextureCubeArray.First2DArrayFace    = InDesc.FirstArraySlice * D3D12_NUM_CUBE_FACES;
         Desc.TextureCubeArray.NumCubes            = InDesc.NumSlices;
     }
     else if (TextureDesc.IsTexture3D())
@@ -444,13 +444,13 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
         return nullptr;
     }
 
+    const FRHITextureDesc& TextureDesc = Texture->GetDesc();
+    CHECK(TextureDesc.IsUnorderedAccess() && InDesc.Format != EFormat::Unknown);
+
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
     Desc.Format = ConvertFormat(InDesc.Format);
-    
-    const FRHITextureDesc& TextureDesc = Texture->GetDesc();
-    CHECK(TextureDesc.IsUnorderedAccess() && (InDesc.Format != EFormat::Unknown));
 
     if (TextureDesc.IsTexture2D())
     {
@@ -480,21 +480,13 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
             D3D12_ERROR("MultiSampled Textures is not supported");
         }
     }
-    else if (TextureDesc.IsTextureCube())
+    else if (TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
     {
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
         Desc.Texture2DArray.PlaneSlice      = 0;
-        Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice;
-        Desc.Texture2DArray.ArraySize       = InDesc.NumSlices;
-    }
-    else if (TextureDesc.IsTextureCubeArray())
-    {
-        Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-        Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
-        Desc.Texture2DArray.PlaneSlice      = 0;
-        Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice;
-        Desc.Texture2DArray.ArraySize       = InDesc.NumSlices;
+        Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice * D3D12_NUM_CUBE_FACES;
+        Desc.Texture2DArray.ArraySize       = InDesc.NumSlices * D3D12_NUM_CUBE_FACES;
     }
     else if (TextureDesc.IsTexture3D())
     {

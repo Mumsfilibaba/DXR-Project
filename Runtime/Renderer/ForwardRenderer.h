@@ -7,7 +7,7 @@
 class RENDERER_API FForwardRenderer
 {
 public:
-    bool Init(FFrameResources& FrameResources);
+    bool Initialize(FFrameResources& FrameResources);
 
     void Release();
 
