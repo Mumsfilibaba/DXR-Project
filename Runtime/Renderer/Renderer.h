@@ -11,6 +11,7 @@
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Application/Events.h"
+#include "Application/ApplicationEventHandler.h"
 #include "Engine/Scene/Actors/Actor.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Camera.h"
@@ -22,7 +23,6 @@
 #include "Debug/TextureDebugger.h"
 #include "Debug/RendererInfoWindow.h"
 #include "Debug/GPUProfilerWindow.h"
-
 
 class FViewport;
 
@@ -58,6 +58,11 @@ struct FCameraBuffer
     float    ViewportHeight = 0.0f;
     float    Padding0 = 0.0f;
     float    Padding1 = 0.0f;
+};
+
+struct RENDERER_API FRendererEventHandler : public FApplicationEventHandler
+{
+    virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
 };
 
 class RENDERER_API FRenderer
@@ -138,6 +143,8 @@ private:
     FRHITimestampQueryRef TimestampQueries;
 
     FRHICommandStatistics FrameStatistics;
+
+    TSharedPtr<FRendererEventHandler> EventHandler;
 
     static FRenderer* GInstance;
 };

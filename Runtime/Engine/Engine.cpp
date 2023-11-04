@@ -106,60 +106,6 @@ bool FEngine::CreateMainViewport()
     return true;
 }
 
-struct FDemoWidget final : public FWidget
-{
-    virtual void Paint() override final
-    {
-        static bool ShowDemoWindow = true;
-
-        if (ShowDemoWindow)
-        {
-            ImGui::ShowDemoWindow();
-        }
-
-        static ImVec4 ClearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        static bool ShowAnotherWindow = false;
-        
-        {
-            static float SliderValue = 0.0f;
-            static int32 Counter     = 0;
-
-            ImGui::Begin("Hello, world!");
-
-            ImGui::Text("This is some useful text.");
-            ImGui::Checkbox("Demo Window", &ShowDemoWindow);
-            ImGui::Checkbox("Another Window", &ShowAnotherWindow);
-
-            ImGui::SliderFloat("float", &SliderValue, 0.0f, 1.0f);
-            ImGui::ColorEdit3("clear color", (float*)&ClearColor);
-
-            if (ImGui::Button("Button"))
-            {
-                Counter++;
-            }
-
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", Counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
-        }
-
-        if (ShowAnotherWindow)
-        {
-            ImGui::Begin("Another Window", &ShowAnotherWindow);
-            ImGui::Text("Hello from another window!");
-
-            if (ImGui::Button("Close Me"))
-            {
-                ShowAnotherWindow = false;
-            }
-
-            ImGui::End();
-        }
-    }
-};
-
 bool FEngine::Init()
 {
     CreateMainWindow();
@@ -168,10 +114,6 @@ bool FEngine::Init()
     {
         return false;
     }
-
-    // Demo Window
-    FWidgetRef DemoWindow = MakeShared<FDemoWidget>();
-    FApplication::Get().AddWidget(DemoWindow);
 
     if (!FAssetManager::Initialize())
     {

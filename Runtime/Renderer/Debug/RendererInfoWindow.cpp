@@ -15,21 +15,23 @@ void FRendererInfoWindow::Paint()
 {
     if (GDrawRendererInfo.GetValue())
     {
-        const ImVec2 DisplaySize = FImGui::GetDisplaySize();
+        const FString AdapterName = RHIGetAdapterName();
+
+        const ImVec2 MainViewportPos  = FImGui::GetMainViewportPos();
+        const ImVec2 DisplaySize      = FImGui::GetDisplaySize();
+        const ImVec2 TextSize         = ImGui::CalcTextSize(AdapterName.GetCString());
+        const ImVec2 FrameBufferScale = FImGui::GetDisplayFramebufferScale();
+
         const float WindowWidth  = DisplaySize.x;
         const float WindowHeight = DisplaySize.y;
-        const float Scale        = FImGui::GetDisplayFramebufferScale().x;
+        const float Scale        = FrameBufferScale.x;
+        const float ColumnWidth  = 105.0f * Scale;
+	    const float Width        = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
+	    const float Height       = WindowHeight * 0.8f;
 
-        const FString AdapterName = RHIGetAdapterName();
-        const ImVec2 TextSize   = ImGui::CalcTextSize(AdapterName.GetCString());
-
-        const float ColumnWidth = 105.0f * Scale;
-	    const float Width       = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
-	    const float Height      = WindowHeight * 0.8f;
-
-        ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 10.0f * Scale), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
         ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
+        ImGui::SetNextWindowPos(ImVec2(MainViewportPos.x + WindowWidth, MainViewportPos.y + 10.0f * Scale), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
 
         const ImGuiWindowFlags Flags =
             ImGuiWindowFlags_NoMove |

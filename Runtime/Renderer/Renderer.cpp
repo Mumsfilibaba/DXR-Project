@@ -37,7 +37,6 @@ TAutoConsoleVariable<bool> GEnableVariableRateShading(
     "Enables VRS (Variable Rate Shading)",
     false);
 
-// TODO: Remove this, should always be enabled
 TAutoConsoleVariable<bool> GPrePassEnabled(
     "Renderer.Feature.PrePass",
     "Enables Pre-Pass",
@@ -65,6 +64,23 @@ TAutoConsoleVariable<bool> GRayTracingEnabled(
     "Renderer.Feature.RayTracing",
     "Enables Ray Tracing (Currently broken)",
     false);
+
+
+FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
+{
+    if (!GEngine)
+    {
+        return FResponse::Unhandled();
+    }
+
+    if (WindowEvent.GetWindow() != GEngine->MainWindow)
+    {
+        return FResponse::Unhandled();
+    }
+
+    FRenderer::Get().OnWindowResize(WindowEvent);
+    return FResponse::Handled();
+}
 
 
 FRenderer* FRenderer::GInstance = nullptr;
@@ -145,6 +161,9 @@ FRenderer::~FRenderer()
 
         FApplication::Get().RemoveWidget(GPUProfilerWindow);
         GPUProfilerWindow.Reset();
+
+        FApplication::Get().RemoveEventHandler(EventHandler);
+        EventHandler.Reset();
     }
 }
 
@@ -187,6 +206,17 @@ bool FRenderer::Create()
     {
         Resources.MainViewport     = GEngine->MainViewport->GetRHIViewport();
         Resources.BackBufferFormat = Resources.MainViewport->GetColorFormat();
+    }
+
+    if (FApplication::IsInitialized())
+    {
+        EventHandler = MakeShared<FRendererEventHandler>();
+        FApplication::Get().AddEventHandler(EventHandler);
+    }
+    else
+    {
+        DEBUG_BREAK();
+        return false;
     }
 
     FRHIBufferDesc CBDesc(sizeof(FCameraBuffer), sizeof(FCameraBuffer), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
@@ -621,9 +651,7 @@ void FRenderer::Tick()
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
 
-#if 1
     CommandList.BeginExternalCapture();
-#endif
 
     // Begin capture GPU FrameTime
     FGPUProfiler::Get().BeginGPUFrame(CommandList);

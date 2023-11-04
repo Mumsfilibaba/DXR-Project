@@ -59,10 +59,10 @@ public:
         return CurrentApplication.IsValid();
     }
 
-    static FApplication& Get() 
+    static FApplication& Get()
     {
         CHECK(IsInitialized());
-        return *CurrentApplication; 
+        return *CurrentApplication;
     }
 
     bool InitializeRenderer();

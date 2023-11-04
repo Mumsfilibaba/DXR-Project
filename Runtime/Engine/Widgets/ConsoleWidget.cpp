@@ -44,16 +44,19 @@ void FConsoleWidget::Paint()
         return;
     }
 
-    const float Scale  = FImGui::GetDisplayFramebufferScale().x;
-    const float Width  = FImGui::GetMainViewportSize().x;
+    const ImVec2 MainViewportPos  = FImGui::GetMainViewportPos();
+    const ImVec2 MainViewportSize = FImGui::GetMainViewportSize();
+    const ImVec2 FrameBufferScale = FImGui::GetDisplayFramebufferScale();
+
+    const float Scale  = FrameBufferScale.x;
+    const float Width  = MainViewportSize.x;
     const float Height = 256.0f * Scale;
 
     ImGui::PushStyleColor(ImGuiCol_ResizeGrip, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    const ImVec2 Position = FImGui::GetMainViewportPos();
-    ImGui::SetNextWindowPos(Position, ImGuiCond_Always, ImVec2(0.0f, 0.0f));
+    ImGui::SetNextWindowPos(MainViewportPos, ImGuiCond_Always, ImVec2(0.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_Always);
 
     const ImGuiWindowFlags StyleFlags =
@@ -133,7 +136,7 @@ void FConsoleWidget::Paint()
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
 
                 const CHAR* PostFix = "";
-                const CHAR* SetBy  = "";
+                const CHAR* SetBy   = "";
 
                 // Value
                 static float PostFixSize = 

@@ -337,30 +337,35 @@ void Main(FComputeShaderInput Input)
     const uint TotalLightCount = GroupPointLightCounter + GroupShadowPointLightCounter;
     
     float4 Tint = Float4(1.0f);
-    if (TotalLightCount < 8)
+    
+    [[branch]]
+    if (TotalLightCount > 0)
     {
-        float Color = float(TotalLightCount) / 8.0f;
-        Tint = float4(0.0f, Color, 0.0f, 1.0f);
-    }
-    else if (TotalLightCount < 16)
-    {
-        float Color = float(TotalLightCount) / 16.0f;
-        Tint = float4(0.0f, Color, Color, 1.0f);
-    }
-    else if (TotalLightCount < 32)
-    {
-        float Color = float(TotalLightCount) / 32.0f;
-        Tint = float4(0.0f, 0.0f, Color, 1.0f);
-    }
-    else if (TotalLightCount < 64)
-    {
-        float Color = float(TotalLightCount) / 64.0f;
-        Tint = float4(Color, Color, 0.0f, 1.0f);
-    }
-    else
-    {
-        float Color = float(TotalLightCount) / float(Constants.NumPointLights + Constants.NumShadowCastingPointLights);
-        Tint = float4(Color, 0.0f, 0.0f, 1.0f);
+        if (TotalLightCount < 8)
+        {
+            float Color = float(TotalLightCount) / 8.0f;
+            Tint = float4(0.0f, Color, 0.0f, 1.0f);
+        }
+        else if (TotalLightCount < 16)
+        {
+            float Color = float(TotalLightCount) / 16.0f;
+            Tint = float4(0.0f, Color, Color, 1.0f);
+        }
+        else if (TotalLightCount < 32)
+        {
+            float Color = float(TotalLightCount) / 32.0f;
+            Tint = float4(0.0f, 0.0f, Color, 1.0f);
+        }
+        else if (TotalLightCount < 64)
+        {
+            float Color = float(TotalLightCount) / 64.0f;
+            Tint = float4(Color, Color, 0.0f, 1.0f);
+        }
+        else
+        {
+            float Color = float(TotalLightCount) / float(Constants.NumPointLights + Constants.NumShadowCastingPointLights);
+            Tint = float4(Color, 0.0f, 0.0f, 1.0f);
+        }
     }
     
     FinalColor = FinalColor * Tint.rgb;

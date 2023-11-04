@@ -14,15 +14,14 @@ void FRenderTargetDebugWindow::Paint()
 {
     if (GDrawTextureDebugger.GetValue())
     {
-        const ImVec2 DisplaySize = FImGui::GetDisplaySize();
-        const float Width  = DisplaySize.x;
-		const float Height = DisplaySize.y;
+        const ImVec2 MainViewportPos = FImGui::GetMainViewportPos();
+        const ImVec2 DisplaySize     = FImGui::GetMainViewportSize();
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
         ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
-        ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height));
+        ImGui::SetNextWindowPos(MainViewportPos);
+        ImGui::SetNextWindowSize(DisplaySize);
 
         constexpr ImGuiWindowFlags Flags = 
             ImGuiWindowFlags_NoDecoration | 
@@ -32,6 +31,8 @@ void FRenderTargetDebugWindow::Paint()
             ImGuiWindowFlags_NoDocking;
 
         constexpr float MinImageSize = 96.0f;
+        const float Width  = DisplaySize.x;
+		const float Height = DisplaySize.y;
 
         bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetValue();
         if (ImGui::Begin("RenderTarget Debugger", &bTempDrawTextureDebugger, Flags))
@@ -74,7 +75,7 @@ void FRenderTargetDebugWindow::Paint()
             }
             
             // Draw Image menu on top
-            ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
+            ImGui::SetNextWindowPos(MainViewportPos);
             
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
             ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.05f, 0.05f, 0.05f, 0.95f));
