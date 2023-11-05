@@ -53,6 +53,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
         MaterialData.Metallic  = Mat.ambient[0];
         MaterialData.AO        = 1.0f;
         MaterialData.Roughness = 1.0f;
+        MaterialData.Name      = Mat.name.c_str();
 
         OutScene.Materials.Emplace(MaterialData);
     }

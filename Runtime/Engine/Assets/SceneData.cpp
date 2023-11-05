@@ -36,7 +36,7 @@ void FSceneData::AddToScene(FScene* Scene)
             TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(Desc);
             Material->AlbedoMap    = MaterialData.DiffuseTexture   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
             Material->AOMap        = MaterialData.AOTexture        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
-            Material->SpecularMap  = MaterialData.SpecularTexture  ? MaterialData.SpecularTexture->GetRHITexture()  : GEngine->BaseTexture;
+            Material->SpecularMap  = MaterialData.SpecularTexture  ? MaterialData.SpecularTexture->GetRHITexture()  : nullptr;
             Material->MetallicMap  = MaterialData.MetallicTexture  ? MaterialData.MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
             Material->NormalMap    = MaterialData.NormalTexture    ? MaterialData.NormalTexture->GetRHITexture()    : GEngine->BaseNormal;
             Material->RoughnessMap = MaterialData.RoughnessTexture ? MaterialData.RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
@@ -44,8 +44,8 @@ void FSceneData::AddToScene(FScene* Scene)
 
             if (!MaterialData.bAlphaDiffuseCombined)
             {
-                Material->AlphaMask = (MaterialData.AlphaMaskTexture) ? MaterialData.AlphaMaskTexture->GetRHITexture() : GEngine->BaseTexture;
-                Material->EnableAlphaMask(Material->AlphaMask != GEngine->BaseTexture);
+                Material->AlphaMask = MaterialData.AlphaMaskTexture ? MaterialData.AlphaMaskTexture->GetRHITexture() : nullptr;
+                Material->EnableAlphaMask(Material->AlphaMask != nullptr);
             }
 
             if (MaterialData.bIsDoubleSided)
@@ -54,6 +54,7 @@ void FSceneData::AddToScene(FScene* Scene)
             }
 
             Material->Initialize();
+            Material->SetDebugName(MaterialData.Name);
 
             CreatedMaterials.Add(Material);
         }
