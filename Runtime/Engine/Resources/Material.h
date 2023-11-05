@@ -62,13 +62,9 @@ public:
 
     void SetDebugName(const FString& InDebugName);
 
-    // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
-    // This means that one can call BindShaderResourceViews directly with this function
-    FRHIShaderResourceView* const* GetShaderResourceViews() const;
-
     bool HasAlphaMask() const
     {
-        return (AlphaMask && Properties.EnableMask) || (Properties.EnableMask == AlphaMaskMode_DiffuseCombined);
+        return AlphaMask && Properties.EnableMask || Properties.EnableMask == AlphaMaskMode_DiffuseCombined;
     }
 
     bool HasHeightMap() const
@@ -79,6 +75,11 @@ public:
     bool IsDoubleSided() const
     {
         return bIsDoubleSided;
+    }
+
+    bool IsPackedMaterial() const
+    {
+        return Properties.EnableMask == AlphaMaskMode_DiffuseCombined || SpecularMap != nullptr;
     }
 
     FRHISamplerState* GetMaterialSampler() const
@@ -93,7 +94,7 @@ public:
 
     bool ShouldRenderInPrePass()
     {
-        return !HasHeightMap() && !bRenderInForwardPass;
+        return !bRenderInForwardPass;
     }
 
     bool ShouldRenderInForwardPass()
@@ -111,31 +112,24 @@ public:
         return Properties.EnableMask == AlphaMaskMode_DiffuseCombined ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
     }
 
-    uint32 GetNumShaderResourceViews() const
-    {
-        return static_cast<uint32>(ShaderResourceViews.Size());
-    }
-
 public:
     FRHITextureRef AlbedoMap;
     FRHITextureRef NormalMap;
     FRHITextureRef RoughnessMap;
     FRHITextureRef HeightMap;
     FRHITextureRef AOMap;
+    FRHITextureRef SpecularMap;
     FRHITextureRef MetallicMap;
     FRHITextureRef AlphaMask;
 
 private:
-    FString DebugName;
-
-    bool bMaterialBufferIsDirty = true;
-    bool bRenderInForwardPass   = false;
-    bool bIsDoubleSided         = false;
-
-    FMaterialDesc Properties;
-    FRHIBufferRef MaterialBuffer;
-
+    FMaterialDesc       Properties;
+    FRHIBufferRef       MaterialBuffer;
     FRHISamplerStateRef Sampler;
 
-    mutable TStaticArray<FRHIShaderResourceView*, 7> ShaderResourceViews;
+    bool bRenderInForwardPass   = false;
+    bool bIsDoubleSided         = false;
+    bool bMaterialBufferIsDirty = true;
+
+    FString DebugName;
 };

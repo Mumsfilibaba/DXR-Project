@@ -23,21 +23,48 @@ public:
 private:
     bool CreateGBuffer(FFrameResources& FrameResources);
 
+    // States for materials that use a single texture for each material-property
     FRHIGraphicsPipelineStateRef BasePassPSO;
     FRHIGraphicsPipelineStateRef BasePassMaskedPSO;
     FRHIGraphicsPipelineStateRef BasePassDoubleSidedPSO;
+    FRHIGraphicsPipelineStateRef BasePassHeightPSO;
     FRHIVertexShaderRef          BasePassVS;
     FRHIVertexShaderRef          BasePassMaskedVS;
+    FRHIVertexShaderRef          BasePassHeightVS;
     FRHIPixelShaderRef           BasePassPS;
     FRHIPixelShaderRef           BasePassMaskedPS;
+    FRHIPixelShaderRef           BasePassHeightPS;
 
+    // States for materials that use packed textures
+    FRHIGraphicsPipelineStateRef BasePassPackedPSO;
+    FRHIGraphicsPipelineStateRef BasePassPackedMaskedPSO;
+    FRHIGraphicsPipelineStateRef BasePassPackedDoubleSidedPSO;
+    FRHIGraphicsPipelineStateRef BasePassPackedHeightPSO;
+    FRHIVertexShaderRef          BasePassPackedVS;
+    FRHIVertexShaderRef          BasePassPackedMaskedVS;
+    FRHIVertexShaderRef          BasePassPackedHeightVS;
+    FRHIPixelShaderRef           BasePassPackedPS;
+    FRHIPixelShaderRef           BasePassPackedMaskedPS;
+    FRHIPixelShaderRef           BasePassPackedHeightPS;
+
+    // States for materials that use a single texture for each material-property
     FRHIGraphicsPipelineStateRef PrePassPSO;
+    FRHIGraphicsPipelineStateRef PrePassHeightPSO;
     FRHIGraphicsPipelineStateRef PrePassMaskedPSO;
     FRHIGraphicsPipelineStateRef PrePassDoubleSidedPSO;
     FRHIVertexShaderRef          PrePassVS;
+    FRHIVertexShaderRef          PrePassHeightVS;
+    FRHIPixelShaderRef           PrePassHeightPS;
     FRHIVertexShaderRef          PrePassMaskedVS;
     FRHIPixelShaderRef           PrePassMaskedPS;
 
+    // States for materials that use packed textures
+    FRHIGraphicsPipelineStateRef PrePassPackedMaskedPSO;
+    FRHIGraphicsPipelineStateRef PrePassPackedDoubleSidedPSO;
+    FRHIVertexShaderRef          PrePassPackedMaskedVS;
+    FRHIPixelShaderRef           PrePassPackedMaskedPS;
+
+    // Compute states for Deferred Light stage
     FRHIComputePipelineStateRef  TiledLightPassPSO;
     FRHIComputeShaderRef         TiledLightShader;
     FRHIComputePipelineStateRef  TiledLightPassPSO_TileDebug;

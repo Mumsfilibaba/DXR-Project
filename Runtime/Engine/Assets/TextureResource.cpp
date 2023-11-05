@@ -37,7 +37,14 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
         return false;
     }
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::ShaderResource);
+    // Calculate how many miplevels we need in the RHI texture
+    uint32 NumMipsRHI = NumMips;
+    if (bGenerateMips)
+    {
+        NumMipsRHI = FMath::Max<uint32>(FMath::Log2(FMath::Max(Width, Height)), 1u);
+    }
+
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResource);
     TextureRHI = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
     if (!TextureRHI)
     {

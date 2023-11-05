@@ -392,9 +392,6 @@ bool FRenderer::Create()
         GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 
-    // Register EventFunc
-    //GEngine->MainWindow->GetWindowResizedEvent().AddRaw(this, &FRenderer::OnWindowResize);
-
     // Register Windows
     if (FApplication::IsInitialized())
     {

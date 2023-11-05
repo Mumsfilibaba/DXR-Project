@@ -170,14 +170,13 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
         FRHIBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
         CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 6);
 
-        FRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[0], 5);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[1], 6);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[2], 7);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[3], 8);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[4], 9);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[5], 10);
-        CommandList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[6], 11);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->AlbedoMap->GetShaderResourceView(), 5);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->NormalMap->GetShaderResourceView(), 6);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->RoughnessMap->GetShaderResourceView(), 7);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->MetallicMap->GetShaderResourceView(), 8);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->AOMap->GetShaderResourceView(), 9);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->AlphaMask->GetShaderResourceView(), 10);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->HeightMap->GetShaderResourceView(), 11);
 
         FRHISamplerState* SamplerState = Command.Material->GetMaterialSampler();
         CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);

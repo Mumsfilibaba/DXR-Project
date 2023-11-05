@@ -42,7 +42,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         {
             { "ENABLE_PARALLAX_MAPPING"       , "(0)" },
             { "ENABLE_NORMAL_MAPPING"         , "(1)" },
-            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(0)" },
             { "ENABLE_ALPHA_MASK"             , "(0)" }
         };
 
@@ -78,7 +78,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         {
             { "ENABLE_PARALLAX_MAPPING"       , "(0)" },
             { "ENABLE_NORMAL_MAPPING"         , "(1)" },
-            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(0)" },
             { "ENABLE_ALPHA_MASK"             , "(1)" }
         };
 
@@ -110,6 +110,149 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
+        Defines =
+        {
+            { "ENABLE_PARALLAX_MAPPING"       , "(1)" },
+            { "ENABLE_NORMAL_MAPPING"         , "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(0)" },
+            { "ENABLE_ALPHA_MASK"             , "(0)" }
+        };
+
+        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassHeightVS = RHICreateVertexShader(ShaderCode);
+        if (!BasePassHeightVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassHeightPS = RHICreatePixelShader(ShaderCode);
+        if (!BasePassHeightPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        Defines =
+        {
+            { "ENABLE_PARALLAX_MAPPING"       , "(0)" },
+            { "ENABLE_NORMAL_MAPPING"         , "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(1)" },
+            { "ENABLE_ALPHA_MASK"             , "(0)" }
+        };
+
+        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassPackedVS = RHICreateVertexShader(ShaderCode);
+        if (!BasePassPackedVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassPackedPS = RHICreatePixelShader(ShaderCode);
+        if (!BasePassPackedPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        Defines =
+        {
+            { "ENABLE_PARALLAX_MAPPING"       , "(0)" },
+            { "ENABLE_NORMAL_MAPPING"         , "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(1)" },
+            { "ENABLE_ALPHA_MASK"             , "(1)" }
+        };
+
+        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassPackedMaskedVS = RHICreateVertexShader(ShaderCode);
+        if (!BasePassPackedMaskedVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassPackedMaskedPS = RHICreatePixelShader(ShaderCode);
+        if (!BasePassPackedMaskedPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        Defines =
+        {
+            { "ENABLE_PARALLAX_MAPPING"       , "(1)" },
+            { "ENABLE_NORMAL_MAPPING"         , "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(1)" },
+            { "ENABLE_ALPHA_MASK"             , "(0)" }
+        };
+
+        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassPackedHeightVS = RHICreateVertexShader(ShaderCode);
+        if (!BasePassPackedHeightVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        BasePassPackedHeightPS = RHICreatePixelShader(ShaderCode);
+        if (!BasePassPackedHeightPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
 
         FRHIDepthStencilStateInitializer DepthStencilInitializer;
         DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
@@ -178,6 +321,20 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             BasePassPSO->SetName("GeometryPass PipelineState");
         }
 
+        PSOInitializer.ShaderState.VertexShader = BasePassHeightVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = BasePassHeightPS.Get();
+
+        BasePassHeightPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!BasePassHeightPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            BasePassHeightPSO->SetName("HeightMapped GeometryPass PipelineState");
+        }
+
         PSOInitializer.ShaderState.VertexShader = BasePassMaskedVS.Get();
         PSOInitializer.ShaderState.PixelShader  = BasePassMaskedPS.Get();
 
@@ -204,6 +361,61 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         {
             BasePassDoubleSidedPSO->SetName("DoubleSided GeometryPass PipelineState");
         }
+
+        PSOInitializer.ShaderState.VertexShader = BasePassPackedVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = BasePassPackedPS.Get();
+
+        BasePassPackedPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!BasePassPackedPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            BasePassPackedPSO->SetName("PackedTex GeometryPass PipelineState");
+        }
+
+        PSOInitializer.ShaderState.VertexShader = BasePassPackedHeightVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = BasePassPackedHeightPS.Get();
+
+        BasePassPackedHeightPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!BasePassPackedHeightPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            BasePassPackedHeightPSO->SetName("PackedTex HeightMapped GeometryPass PipelineState");
+        }
+
+        PSOInitializer.ShaderState.VertexShader = BasePassPackedMaskedVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = BasePassPackedMaskedPS.Get();
+
+        BasePassPackedMaskedPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!BasePassPackedMaskedPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            BasePassPackedMaskedPSO->SetName("PackedTex Masked GeometryPass PipelineState");
+        }
+
+        PSOInitializer.RasterizerState = RasterizerStateDoubleSided.Get();
+
+        BasePassPackedDoubleSidedPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!BasePassPackedDoubleSidedPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            BasePassPackedDoubleSidedPSO->SetName("PackedTex DoubleSided GeometryPass PipelineState");
+        }
     }
 
     // PrePass
@@ -224,7 +436,9 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 
         TArray<FShaderDefine> Defines =
         {
-            { "ENABLE_ALPHA_MASK", "(1)" },
+            { "ENABLE_PARALLAX_MAPPING"       , "(0)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(0)" },
+            { "ENABLE_ALPHA_MASK"             , "(1)" }
         };
 
         CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
@@ -250,6 +464,76 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 
         PrePassMaskedPS = RHICreatePixelShader(ShaderCode);
         if (!PrePassMaskedPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        Defines =
+        {
+            { "ENABLE_PARALLAX_MAPPING"       , "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(0)" },
+            { "ENABLE_ALPHA_MASK"             , "(0)" }
+        };
+
+        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        PrePassHeightVS = RHICreateVertexShader(ShaderCode);
+        if (!PrePassHeightVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        PrePassHeightPS = RHICreatePixelShader(ShaderCode);
+        if (!PrePassHeightPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        Defines =
+        {
+            { "ENABLE_PARALLAX_MAPPING"       , "(0)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(1)" },
+            { "ENABLE_ALPHA_MASK"             , "(1)" }
+        };
+
+        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        PrePassPackedMaskedVS = RHICreateVertexShader(ShaderCode);
+        if (!PrePassPackedMaskedVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        PrePassPackedMaskedPS = RHICreatePixelShader(ShaderCode);
+        if (!PrePassPackedMaskedPS)
         {
             DEBUG_BREAK();
             return false;
@@ -341,6 +625,21 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             PrePassPSO->SetName("PrePass PipelineState");
         }
 
+        PSOInitializer.VertexInputLayout        = FrameResources.MeshInputLayout.Get();
+        PSOInitializer.ShaderState.VertexShader = PrePassHeightVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = PrePassHeightPS.Get();
+
+        PrePassHeightPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!PrePassHeightPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            PrePassHeightPSO->SetName("HeightMap PrePass PipelineState");
+        }
+
         PSOInitializer.VertexInputLayout        = PrePassMaskedInputLayout.Get();
         PSOInitializer.ShaderState.VertexShader = PrePassMaskedVS.Get();
         PSOInitializer.ShaderState.PixelShader  = PrePassMaskedPS.Get();
@@ -367,6 +666,33 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         else
         {
             PrePassDoubleSidedPSO->SetName("DoubleSided PrePass PipelineState");
+        }
+
+        PSOInitializer.ShaderState.VertexShader = PrePassPackedMaskedVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = PrePassPackedMaskedPS.Get();
+
+        PrePassPackedMaskedPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!PrePassPackedMaskedPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            PrePassPackedMaskedPSO->SetName("Packed Masked PrePass PipelineState");
+        }
+
+        PSOInitializer.RasterizerState = RasterizerStateDoubleSided.Get();
+
+        PrePassPackedDoubleSidedPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!PrePassPackedDoubleSidedPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            PrePassPackedDoubleSidedPSO->SetName("Packed DoubleSided PrePass PipelineState");
         }
     }
 
@@ -665,11 +991,6 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
 
         GPU_TRACE_SCOPE(CommandList, "Pre Pass");
 
-        struct FPerObject
-        {
-            FMatrix4 Matrix;
-        } PerObjectBuffer;
-
         FRHIRenderPassDesc RenderPass;
         RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get());
 
@@ -681,8 +1002,13 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
         CommandList.SetScissorRect(ScissorRegion);
 
-
         CommandList.SetConstantBuffer(PrePassVS.Get(), FrameResources.CameraBuffer.Get(), 0);
+
+        struct FTransformBuffer
+        {
+            FMatrix4 Transform;
+            FMatrix4 TransformInv;
+        } TransformPerObject;
 
         for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
         {
@@ -691,30 +1017,65 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
             {
                 CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
-                PerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
-                CommandList.Set32BitShaderConstants(PrePassVS.Get(), &PerObjectBuffer, 16);
+                TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
+                TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
+                CommandList.Set32BitShaderConstants(PrePassVS.Get(), &TransformPerObject, 32);
+
 
                 if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
                 {
-                    if (Command.Material->IsDoubleSided())
+                    if (Command.Material->IsPackedMaterial())
                     {
-                        CommandList.SetGraphicsPipelineState(PrePassDoubleSidedPSO.Get());
+                        if (Command.Material->IsDoubleSided())
+                        {
+                            CommandList.SetGraphicsPipelineState(PrePassPackedDoubleSidedPSO.Get());
+                        }
+                        else
+                        {
+                            CommandList.SetGraphicsPipelineState(PrePassPackedMaskedPSO.Get());
+                        }
                     }
                     else
                     {
-                        CommandList.SetGraphicsPipelineState(PrePassMaskedPSO.Get());
+                        if (Command.Material->IsDoubleSided())
+                        {
+                            CommandList.SetGraphicsPipelineState(PrePassDoubleSidedPSO.Get());
+                        }
+                        else
+                        {
+                            CommandList.SetGraphicsPipelineState(PrePassMaskedPSO.Get());
+                        }
                     }
 
                     CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->MaskedVertexBuffer, 1), 0);
 
-                    CommandList.SetSamplerState(BasePassPS.Get(), Command.Material->GetMaterialSampler(), 0);
-                    CommandList.SetConstantBuffer(BasePassPS.Get(), Command.Material->GetMaterialBuffer(), 1);
-                    CommandList.SetShaderResourceView(BasePassPS.Get(), Command.Material->GetAlphaMaskSRV(), 0);
+                    CommandList.SetSamplerState(PrePassMaskedPS.Get(), Command.Material->GetMaterialSampler(), 0);
+                    CommandList.SetConstantBuffer(PrePassMaskedPS.Get(), Command.Material->GetMaterialBuffer(), 1);
+
+                    if (Command.Material->IsPackedMaterial())
+                    {
+                        CommandList.SetShaderResourceView(PrePassPackedMaskedPS.Get(), Command.Material->AlbedoMap->GetShaderResourceView(), 0);
+                    }
+                    else
+                    {
+                        CommandList.SetShaderResourceView(PrePassMaskedPS.Get(), Command.Material->AlphaMask->GetShaderResourceView(), 0);
+                    }
+                }
+                else if (Command.Material->HasHeightMap())
+                {
+                    CommandList.SetGraphicsPipelineState(PrePassHeightPSO.Get());
+
+                    CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->VertexBuffer, 1), 0);
+
+                    CommandList.SetSamplerState(PrePassHeightPS.Get(), Command.Material->GetMaterialSampler(), 0);
+                    CommandList.SetConstantBuffer(PrePassHeightPS.Get(), Command.Material->GetMaterialBuffer(), 1);
+                    CommandList.SetShaderResourceView(PrePassHeightPS.Get(), Command.Material->HeightMap->GetShaderResourceView(), 1);
                 }
                 else
                 {
-                    CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->PosOnlyVertexBuffer, 1), 0);
                     CommandList.SetGraphicsPipelineState(PrePassPSO.Get());
+
+                    CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->PosOnlyVertexBuffer, 1), 0);
                 }
 
                 CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
@@ -801,11 +1162,11 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
 
     FRHIRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
-    RenderPass.RenderTargets[1] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get());
-    RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get());
-    RenderPass.RenderTargets[3] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get());
-    RenderPass.RenderTargets[4] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[1] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[3] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[4] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 5;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
@@ -836,35 +1197,93 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
         CommandList.Set32BitShaderConstants(BasePassVS.Get(), &TransformPerObject, 32);
 
+        FMaterial* CurrentMaterial = Command.Material;
+
         FRHIBuffer* PSConstantBuffers[] =
         {
             FrameResources.CameraBuffer.Get(),
-            Command.Material->GetMaterialBuffer(),
+            CurrentMaterial->GetMaterialBuffer(),
         };
 
         CommandList.SetConstantBuffers(BasePassPS.Get(), MakeArrayView(PSConstantBuffers), 0);
 
-        const auto PSShaderResourceViews = MakeArrayView(Command.Material->GetShaderResourceViews(), Command.Material->GetNumShaderResourceViews());
-        CommandList.SetShaderResourceViews(BasePassPS.Get(), PSShaderResourceViews, 0);
-
-        FRHISamplerState* Sampler = Command.Material->GetMaterialSampler();
+        FRHISamplerState* Sampler = CurrentMaterial->GetMaterialSampler();
         CommandList.SetSamplerState(BasePassPS.Get(), Sampler, 0);
 
-        // Setup Pipeline
-        if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+        // Setup textures
+        if (CurrentMaterial->IsPackedMaterial())
         {
-            if (Command.Material->IsDoubleSided())
+            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->AlbedoMap->GetShaderResourceView(), 0);
+            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->NormalMap->GetShaderResourceView(), 1);
+            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->SpecularMap->GetShaderResourceView(), 2);
+            if (CurrentMaterial->HasHeightMap())
             {
-                CommandList.SetGraphicsPipelineState(BasePassDoubleSidedPSO.Get());
+                CommandList.SetShaderResourceView(BasePassPackedHeightPS.Get(), CurrentMaterial->HeightMap->GetShaderResourceView(), 3);
+            }
+
+            // Setup Pipeline
+            if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+            {
+                if (Command.Material->IsDoubleSided())
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassPackedDoubleSidedPSO.Get());
+                }
+                else
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassPackedMaskedPSO.Get());
+                }
             }
             else
             {
-                CommandList.SetGraphicsPipelineState(BasePassMaskedPSO.Get());
+                if (Command.Material->HasHeightMap())
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassPackedHeightPSO.Get());
+                }
+                else
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassPackedPSO.Get());
+                }
             }
         }
         else
         {
-            CommandList.SetGraphicsPipelineState(BasePassPSO.Get());
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->AlbedoMap->GetShaderResourceView(), 0);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->NormalMap->GetShaderResourceView(), 1);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->RoughnessMap->GetShaderResourceView(), 2);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->MetallicMap->GetShaderResourceView(), 3);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->AOMap->GetShaderResourceView(), 4);
+            if (CurrentMaterial->HasAlphaMask())
+            {
+                CommandList.SetShaderResourceView(BasePassMaskedPS.Get(), CurrentMaterial->AlphaMask->GetShaderResourceView(), 5);
+            }
+            if (CurrentMaterial->HasHeightMap())
+            {
+                CommandList.SetShaderResourceView(BasePassHeightPS.Get(), CurrentMaterial->HeightMap->GetShaderResourceView(), 6);
+            }
+
+            // Setup Pipeline
+            if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+            {
+                if (Command.Material->IsDoubleSided())
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassDoubleSidedPSO.Get());
+                }
+                else
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassMaskedPSO.Get());
+                }
+            }
+            else
+            {
+                if (Command.Material->HasHeightMap())
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassHeightPSO.Get());
+                }
+                else
+                {
+                    CommandList.SetGraphicsPipelineState(BasePassPSO.Get());
+                }
+            }
         }
 
         CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);

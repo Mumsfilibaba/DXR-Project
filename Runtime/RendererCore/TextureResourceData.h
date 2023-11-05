@@ -4,8 +4,7 @@
 // This is based on the max texture-size 32678
 #define MAX_TEXTURE_MIPS (15)
 
-class RENDERERCORE_API FTextureResourceData
-    : public IRHITextureData
+class RENDERERCORE_API FTextureResourceData : public IRHITextureData
 {
 public:
     FTextureResourceData();

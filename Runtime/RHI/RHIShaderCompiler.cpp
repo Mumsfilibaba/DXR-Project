@@ -514,7 +514,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
 
     if (FAILED(hResult))
     {
-        if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
+        if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
         {
             LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
         }
@@ -527,7 +527,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
         return false;
     }
 
-    if (PrintBlob8 && (PrintBlob8->GetBufferSize() > 0))
+    if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
         LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", ArgumentsString.GetCString(), Output.GetCString());

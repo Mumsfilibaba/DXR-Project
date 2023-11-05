@@ -34,15 +34,12 @@ void FSceneData::AddToScene(FScene* Scene)
             }
 
             TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(Desc);
-            Material->AlbedoMap = (MaterialData.DiffuseTexture)   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
-
-            // Specular store AO in r
-            Material->AOMap = (MaterialData.AOTexture)        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
-            Material->AOMap = (MaterialData.SpecularTexture)  ? MaterialData.SpecularTexture->GetRHITexture()  : Material->AOMap;
-            
-            Material->MetallicMap  = (MaterialData.MetallicTexture)  ? MaterialData.MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
-            Material->NormalMap    = (MaterialData.NormalTexture)    ? MaterialData.NormalTexture->GetRHITexture()    : GEngine->BaseNormal;
-            Material->RoughnessMap = (MaterialData.RoughnessTexture) ? MaterialData.RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
+            Material->AlbedoMap    = MaterialData.DiffuseTexture   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
+            Material->AOMap        = MaterialData.AOTexture        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
+            Material->SpecularMap  = MaterialData.SpecularTexture  ? MaterialData.SpecularTexture->GetRHITexture()  : GEngine->BaseTexture;
+            Material->MetallicMap  = MaterialData.MetallicTexture  ? MaterialData.MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
+            Material->NormalMap    = MaterialData.NormalTexture    ? MaterialData.NormalTexture->GetRHITexture()    : GEngine->BaseNormal;
+            Material->RoughnessMap = MaterialData.RoughnessTexture ? MaterialData.RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
             Material->HeightMap    = GEngine->BaseTexture;
 
             if (!MaterialData.bAlphaDiffuseCombined)

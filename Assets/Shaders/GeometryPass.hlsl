@@ -3,15 +3,15 @@
 #include "Constants.hlsli"
 
 #ifndef ENABLE_PARALLAX_MAPPING
-    #define ENABLE_PARALLAX_MAPPING (1)
+    #define ENABLE_PARALLAX_MAPPING (0)
 #endif
 
 #ifndef ENABLE_NORMAL_MAPPING
-    #define ENABLE_NORMAL_MAPPING (1)
+    #define ENABLE_NORMAL_MAPPING (0)
 #endif
 
 #ifndef ENABLE_PACKED_MATERIAL_TEXTURE
-    #define ENABLE_PACKED_MATERIAL_TEXTURE (1)
+    #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
 #endif
 
 #ifndef ENABLE_ALPHA_MASK
@@ -30,16 +30,25 @@ SHADER_CONSTANT_BLOCK_END
 
 ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
 
-Texture2D<float4> AlbedoMap    : register(t0);
-Texture2D<float4> NormalTex    : register(t1);
-Texture2D<float4> RoughnessTex : register(t2);
+#if ENABLE_PACKED_MATERIAL_TEXTURE
+    Texture2D<float4> AlbedoAlphaMap         : register(t0);
+    Texture2D<float3> NormalTex              : register(t1);
+    Texture2D<float3> AO_Roughness_Metal_Tex : register(t2);
 #if ENABLE_PARALLAX_MAPPING
-    Texture2D<float4> HeightTex : register(t3);
+    Texture2D<float> HeightTex : register(t3);
 #endif
-Texture2D<float4> MetallicTex : register(t4);
-Texture2D<float4> AOTex       : register(t5);
+#else
+    Texture2D<float3> AlbedoMap    : register(t0);
+    Texture2D<float3> NormalTex    : register(t1);
+    Texture2D<float>  RoughnessTex : register(t2);
+    Texture2D<float>  MetallicTex  : register(t3);
+    Texture2D<float>  AOTex        : register(t4);
 #if ENABLE_ALPHA_MASK
-    Texture2D<float> AlphaMaskTex : register(t6);
+    Texture2D<float> AlphaMaskTex : register(t5);
+#endif
+#if ENABLE_PARALLAX_MAPPING
+    Texture2D<float> HeightTex : register(t6);
+#endif
 #endif
 
 // VertexShader
@@ -59,8 +68,10 @@ struct FVSOutput
     float3 Tangent          : TANGENT0;
     float3 Bitangent        : BITANGENT0;
     float2 TexCoord	        : TEXCOORD0;
+#if ENABLE_PARALLAX_MAPPING 
     float3 TangentViewPos   : TANGENTVIEWPOS0;
     float3 TangentPosition  : TANGENTPOSITION0;
+#endif
     float4 ClipPosition     : POSITION0;
     float4 PrevClipPosition : POSITION1;
     float4 Position         : SV_Position;
@@ -101,9 +112,11 @@ FVSOutput VSMain(FVSInput Input)
     
     Output.TexCoord = Input.TexCoord;
     
+#if ENABLE_PARALLAX_MAPPING  
     const float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
     Output.TangentViewPos  = mul(TBN, CameraBuffer.Position);
     Output.TangentPosition = mul(TBN, WorldPosition.xyz);
+#endif
     return Output;
 }
 
@@ -116,8 +129,10 @@ struct FPSInput
     float3 Tangent          : TANGENT0;
     float3 Bitangent        : BITANGENT0;
     float2 TexCoord         : TEXCOORD0;
+#if ENABLE_PARALLAX_MAPPING
     float3 TangentViewPos   : TANGENTVIEWPOS0;
     float3 TangentPosition  : TANGENTPOSITION0;
+#endif
     float4 ClipPosition     : POSITION0;
     float4 PrevClipPosition : POSITION1;
     float4 Position         : SV_Position;
@@ -139,7 +154,7 @@ static const float HEIGHT_SCALE = 0.03f;
 
 float SampleHeightMap(float2 TexCoords)
 {
-    return 1.0f - HeightTex.Sample(MaterialSampler, TexCoords).r;
+    return 1.0f - HeightTex.Sample(MaterialSampler, TexCoords);
 }
 
 float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
@@ -175,10 +190,6 @@ float2 ParallaxMapping(float2 TexCoords, float3 ViewDir)
 }
 #endif
 
-#define ALPHA_DISABLED         (0)
-#define ALPHA_ENABLED          (1)
-#define ALPHA_DIFFUSE_COMBINED (2)
-
 FPSOutput PSMain(FPSInput Input)
 {
     float2 TexCoords = Input.TexCoord;
@@ -187,39 +198,41 @@ FPSOutput PSMain(FPSInput Input)
 #if ENABLE_PARALLAX_MAPPING
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
     TexCoords      = ParallaxMapping(TexCoords, ViewDir);
-    if (TexCoords.x > 1.0f || TexCoords.y > 1.0f || TexCoords.x < 0.0f || TexCoords.y < 0.0f)
+    if (TexCoords.x > 1.0 || TexCoords.y > 1.0 || TexCoords.x < 0.0 || TexCoords.y < 0.0)
     {
         discard;
     }
 #endif
     
+#if ENABLE_PACKED_MATERIAL_TEXTURE
+    const float4 AlbedoAlphaMask = AlbedoAlphaMap.Sample(MaterialSampler, TexCoords);
+#endif
+
 #if ENABLE_ALPHA_MASK
-    [[branch]]
-    if (MaterialBuffer.EnableMask == ALPHA_ENABLED)
-    {
+    #if ENABLE_PACKED_MATERIAL_TEXTURE
+        [[branch]]
+        if (AlbedoAlphaMask.a < 0.5)
+        {
+            discard;
+        }
+    #else
         const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
         
         [[branch]]
-        if (AlphaMask < 0.5f)
+        if (AlphaMask < 0.5)
         {
             discard;
         }
-    }
-    else if (MaterialBuffer.EnableMask == ALPHA_DIFFUSE_COMBINED)
-    {
-        const float AlphaMask = AlbedoMap.Sample(MaterialSampler, TexCoords).a;
-        
-        [[branch]]
-        if (AlphaMask < 0.5f)
-        {
-            discard;
-        }
-    }
+    #endif
 #endif
 
-    float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
-    
-    float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords).rgb;
+#if ENABLE_PACKED_MATERIAL_TEXTURE
+    float3 SampledAlbedo = ApplyGamma(AlbedoAlphaMask.rgb) * MaterialBuffer.Albedo;
+#else
+    float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords)) * MaterialBuffer.Albedo;
+#endif
+
+    float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords);
     SampledNormal = UnpackNormalBC5(SampledNormal);
 
     float3 Tangent   = normalize(Input.Tangent);
@@ -230,14 +243,14 @@ FPSOutput PSMain(FPSInput Input)
     MappedNormal = PackNormal(MappedNormal);
 
 #if ENABLE_PACKED_MATERIAL_TEXTURE
-    const float3 Specular         = AOTex.Sample(MaterialSampler, TexCoords).rgb;
-    const float  SampledAO        = Specular.r * MaterialBuffer.AO;
-    const float  SampledRoughness = Specular.g * MaterialBuffer.Roughness;
-    const float  SampledMetallic  = Specular.b * MaterialBuffer.Metallic;
+    const float3 AO_Roughness_Metal = AO_Roughness_Metal_Tex.Sample(MaterialSampler, TexCoords);
+    const float  SampledAO        = AO_Roughness_Metal.r * MaterialBuffer.AO;
+    const float  SampledRoughness = AO_Roughness_Metal.g * MaterialBuffer.Roughness;
+    const float  SampledMetallic  = AO_Roughness_Metal.b * MaterialBuffer.Metallic;
 #else
-    const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords).r        * MaterialBuffer.AO;
-    const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords).r  * MaterialBuffer.Metallic;
-    const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords).r * MaterialBuffer.Roughness;
+    const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords)        * MaterialBuffer.AO;
+    const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords)  * MaterialBuffer.Metallic;
+    const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
 #endif
     
     const float FinalRoughness = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);

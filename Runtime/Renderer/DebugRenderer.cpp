@@ -246,13 +246,13 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
 
         FRHIGraphicsPipelineStateInitializer PSOInitializer;
-        PSOInitializer.BlendState               = BlendState.Get();
-        PSOInitializer.DepthStencilState        = DepthStencilState.Get();
-        PSOInitializer.VertexInputLayout        = Resources.MeshInputLayout.Get();
-        PSOInitializer.RasterizerState          = RasterizerState.Get();
-        PSOInitializer.ShaderState.VertexShader = LightDebugVS.Get();
-        PSOInitializer.ShaderState.PixelShader  = LightDebugPS.Get();
-        PSOInitializer.PrimitiveTopology        = EPrimitiveTopology::LineList;
+        PSOInitializer.BlendState                             = BlendState.Get();
+        PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+        PSOInitializer.VertexInputLayout                      = Resources.MeshInputLayout.Get();
+        PSOInitializer.RasterizerState                        = RasterizerState.Get();
+        PSOInitializer.ShaderState.VertexShader               = LightDebugVS.Get();
+        PSOInitializer.ShaderState.PixelShader                = LightDebugPS.Get();
+        PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
         PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.FinalTargetFormat;
         PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
         PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;

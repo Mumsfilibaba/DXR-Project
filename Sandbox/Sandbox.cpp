@@ -18,9 +18,9 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (0)
+#define LOAD_SPONZA         (1)
 #define LOAD_BISTRO         (0)
-#define LOAD_SUN_TEMPLE     (1)
+#define LOAD_SUN_TEMPLE     (0)
 #define LOAD_EMERALD_SQUARE (0)
 
 #define ENABLE_LIGHT_TEST   (0)
@@ -120,7 +120,7 @@ bool FSandbox::Init()
             NewActor = CurrentScene->CreateActor();
             NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
 
-            NewActor->SetName("Sphere[" + ToString(SphereIndex) + "]");
+            NewActor->SetName("Sphere[" + TTypeToString<uint32>::ToString(SphereIndex) + "]");
             SphereIndex++;
 
             NewComponent = new FMeshComponent(NewActor);
@@ -282,7 +282,7 @@ bool FSandbox::Init()
     MatProperties.EnableMask   = 0;
 
     FSceneData StreetLightData;
-    FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
+    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
 
     TSharedPtr<FMesh>     StreetLight = StreetLightData.HasModelData() ? FMesh::Create(StreetLightData.Models.FirstElement().Mesh) : nullptr;
     TSharedPtr<FMaterial> StreetLightMat = MakeShared<FMaterial>(MatProperties);
@@ -291,9 +291,9 @@ bool FSandbox::Init()
     {
         NewActor = CurrentScene->CreateActor();
 
-        NewActor->SetName("Street Light " + ToString(i));
+        NewActor->SetName("Street Light " + TTypeToString<uint32>::ToString(i));
         NewActor->GetTransform().SetUniformScale(0.25f);
-        NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - ((float)i * 3.0f));
+        NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
         NewComponent                         = new FMeshComponent(NewActor);
         NewComponent->Mesh                   = StreetLight;
@@ -314,7 +314,7 @@ bool FSandbox::Init()
     MatProperties.Albedo       = FVector3(0.4f);
 
     FSceneData PillarData;
-    FOBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
+    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
 
     TSharedPtr<FMesh>     Pillar         = PillarData.HasModelData() ? FMesh::Create(PillarData.Models.FirstElement().Mesh) : nullptr;
     TSharedPtr<FMaterial> PillarMaterial = MakeShared<FMaterial>(MatProperties);
@@ -323,9 +323,9 @@ bool FSandbox::Init()
     {
         NewActor = CurrentScene->CreateActor();
 
-        NewActor->SetName("Pillar " + ToString(i));
+        NewActor->SetName("Pillar " + TTypeToString<uint32>::ToString(i));
         NewActor->GetTransform().SetUniformScale(0.25f);
-        NewActor->GetTransform().SetTranslation(-15.0f + ((float)i * 1.75f), 0.0f, 60.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 0.0f, 60.0f);
 
         NewComponent                         = new FMeshComponent(NewActor);
         NewComponent->Mesh                   = Pillar;

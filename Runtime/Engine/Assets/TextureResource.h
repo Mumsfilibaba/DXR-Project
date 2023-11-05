@@ -15,7 +15,6 @@ typedef TSharedRef<FTexture2D> FTextureResource2DRef;
 class ENGINE_API FTexture : public FRefCounted
 {
 public:
-    FTexture()          = default;
     virtual ~FTexture() = default;
 
     virtual FTexture2D* GetTexture2D() { return nullptr; }

@@ -84,16 +84,3 @@ void FMaterial::SetDebugName(const FString& InDebugName)
 {
     DebugName = InDebugName;
 }
-
-FRHIShaderResourceView* const* FMaterial::GetShaderResourceViews() const
-{
-    ShaderResourceViews[0] = SafeGetDefaultSRV(AlbedoMap);
-    ShaderResourceViews[1] = SafeGetDefaultSRV(NormalMap);
-    ShaderResourceViews[2] = SafeGetDefaultSRV(RoughnessMap);
-    ShaderResourceViews[3] = SafeGetDefaultSRV(HeightMap);
-    ShaderResourceViews[4] = SafeGetDefaultSRV(MetallicMap);
-    ShaderResourceViews[5] = SafeGetDefaultSRV(AOMap);
-    ShaderResourceViews[6] = SafeGetDefaultSRV(AlphaMask);
-
-    return ShaderResourceViews.Data();
-}
