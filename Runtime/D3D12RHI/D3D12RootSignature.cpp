@@ -331,7 +331,7 @@ bool FD3D12RootSignature::Initialize(const void* BlobWithRootSignature, uint64 B
 
 void FD3D12RootSignature::InternalInitRootParameterMap(const D3D12_ROOT_SIGNATURE_DESC& Desc)
 {
-    for (int32 Index = 0; Index < Desc.NumParameters; Index++)
+    for (uint32 Index = 0; Index < Desc.NumParameters; Index++)
     {
         const D3D12_ROOT_PARAMETER& Parameter = Desc.pParameters[Index];
         if (Parameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)

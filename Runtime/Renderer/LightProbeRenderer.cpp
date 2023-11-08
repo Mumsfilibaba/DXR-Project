@@ -138,7 +138,7 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, FLightSe
 
         CmdList.UnorderedAccessTextureBarrier(Skylight.SpecularIrradianceMap.Get());
 
-        Width = FMath::Max<uint32>(Width / 2, 1U);
+        Width      = FMath::Max<uint32>(Width / 2, 1U);
         Roughness += RoughnessDelta;
 
         CmdList.DestroyResource(UnorderedAccessView);

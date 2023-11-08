@@ -917,16 +917,16 @@ struct FRHIBufferCopyDesc
 struct FRHITextureCopyDesc
 {
     FIntVector3 DstPosition;
-    uint32      DstArraySlice = 0;
-    uint32      DstMipSlice   = 0;
+    uint32      DstArraySlice;
+    uint32      DstMipSlice;
 
     FIntVector3 SrcPosition;
-    uint32      SrcArraySlice = 0;
-    uint32      SrcMipSlice   = 0;
+    uint32      SrcArraySlice;
+    uint32      SrcMipSlice;
 
     FIntVector3 Size;
-    uint32      NumArraySlices = 0;
-    uint32      NumMipSlices   = 0;
+    uint32      NumArraySlices;
+    uint32      NumMipLevels;
 };
 
 

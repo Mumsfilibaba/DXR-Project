@@ -99,8 +99,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
             float SaTexel    = 4.0f * PI / (6.0f * Resolution * Resolution);
             float SaSample   = 1.0f / (float(SAMPLE_COUNT) * PDF + 0.0001f);
 
-            const float Miplevel = FinalRoughness == 0.0f ? 0.0f : 0.5f * log2(SaSample / SaTexel);
-            
+            const float Miplevel = FinalRoughness == 0.0f ? 0.0f : 0.5f * log2(SaSample / SaTexel);         
             PrefilteredColor += EnvironmentMap.SampleLevel(EnvironmentSampler, L, Miplevel).rgb * NdotL;
             TotalWeight += NdotL;
         }

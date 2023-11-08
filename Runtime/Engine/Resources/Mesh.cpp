@@ -38,7 +38,7 @@ bool FMesh::Init(const FMeshData& Data)
 
     // Create VertexBuffer with only positions
     TArray<FVector3> ShadowVertices(VertexCount);
-    for (int32 Index = 0; Index < VertexCount; Index++)
+    for (uint32 Index = 0; Index < VertexCount; Index++)
     {
         const FVertex& Vertex = Data.Vertices[Index];
         ShadowVertices[Index] = Vertex.Position;
@@ -57,7 +57,7 @@ bool FMesh::Init(const FMeshData& Data)
 
     // Create VertexBuffer with only positions and texcoords
     TArray<FVertexMasked> MaskedVertices(VertexCount);
-    for (int32 Index = 0; Index < VertexCount; Index++)
+    for (uint32 Index = 0; Index < VertexCount; Index++)
     {
         const FVertex& Vertex = Data.Vertices[Index];
         MaskedVertices[Index].Position = Vertex.Position;

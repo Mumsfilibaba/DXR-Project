@@ -10,7 +10,7 @@
 #define INV_PI (1.0 / 3.14159265359)
 #define GAMMA  (2.2)
 
-#define MIN_ROUGHNESS (0.05)
+#define MIN_ROUGHNESS (0.0)
 #define MAX_ROUGHNESS (1.0)
 #define MIN_VALUE     (0.0000001)
 #define EPSILON       (0.0001)

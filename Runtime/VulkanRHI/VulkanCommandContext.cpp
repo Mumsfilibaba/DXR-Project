@@ -702,7 +702,7 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
     VkImageCopy ImageCopy[MaxCopies];
     FMemory::Memzero(ImageCopy, sizeof(ImageCopy));
     
-    const uint32 NumCopies = CopyDesc.NumMipSlices;
+    const uint32 NumCopies = CopyDesc.NumMipLevels;
     for (uint32 Index = 0; Index < NumCopies; Index++)
     {
         ImageCopy[Index].srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
