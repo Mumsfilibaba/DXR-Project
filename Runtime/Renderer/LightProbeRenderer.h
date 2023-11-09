@@ -17,7 +17,7 @@ public:
 private:
     bool CreateSkyLightResources(FLightSetup& LightSetup);
 
-    FGPUBlockCompressor Compressor;
+    FGPUTextureCompressor Compressor;
 
     FRHIComputePipelineStateRef IrradianceGenPSO;
     FRHIComputeShaderRef        IrradianceGenShader;

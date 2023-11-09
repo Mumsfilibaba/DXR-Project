@@ -13,7 +13,7 @@ struct FCompressionBuffer
 };
 
 
-FGPUBlockCompressor::FGPUBlockCompressor()
+FGPUTextureCompressor::FGPUTextureCompressor()
     : BC6HCompressionShader(nullptr)
     , BC6HCompressionPSO(nullptr)
     , BC6HCompressionCubeShader(nullptr)
@@ -21,7 +21,7 @@ FGPUBlockCompressor::FGPUBlockCompressor()
 {
 }
 
-bool FGPUBlockCompressor::Initialize()
+bool FGPUTextureCompressor::Initialize()
 {
     TArray<uint8> ShaderCode;
     
@@ -95,12 +95,12 @@ bool FGPUBlockCompressor::Initialize()
     return true;
 }
 
-bool FGPUBlockCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextureRef& Output)
+bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextureRef& Output)
 {
     const FRHITextureDesc SourceDesc = Source->GetDesc();
     if (!IsBlockCompressedAligned(SourceDesc.Extent.x) || !IsBlockCompressedAligned(SourceDesc.Extent.y))
     {
-        LOG_ERROR("[FGPUBlockCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
+        LOG_ERROR("[FGPUTextureCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
         return false;
     }
 
@@ -115,7 +115,7 @@ bool FGPUBlockCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextureR
     FRHITextureRef CompressedTex = RHICreateTexture(CompressedTexDesc, EResourceAccess::UnorderedAccess);
     if (!CompressedTex)
     {
-        LOG_ERROR("[FGPUBlockCompressor] Failed to create temporary compressed texture");
+        LOG_ERROR("[FGPUTextureCompressor] Failed to create temporary compressed texture");
         return false;
     }
     else
@@ -132,7 +132,7 @@ bool FGPUBlockCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextureR
     Output = RHICreateTexture(OutputDesc, EResourceAccess::CopyDest);
     if (!Output)
     {
-        LOG_ERROR("[FGPUBlockCompressor] Failed to create compressed texture");
+        LOG_ERROR("[FGPUTextureCompressor] Failed to create compressed texture");
         return false;
     }
     else
@@ -189,12 +189,12 @@ bool FGPUBlockCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextureR
     return true;
 }
 
-bool FGPUBlockCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRHITextureRef& Output)
+bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRHITextureRef& Output)
 {
     const FRHITextureDesc SourceDesc = Source->GetDesc();
     if (!IsBlockCompressedAligned(SourceDesc.Extent.x) || !IsBlockCompressedAligned(SourceDesc.Extent.y))
     {
-        LOG_ERROR("[FGPUBlockCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
+        LOG_ERROR("[FGPUTextureCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
         return false;
     }
 
@@ -215,7 +215,7 @@ bool FGPUBlockCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRHIT
     FRHITextureRef CompressedTex = RHICreateTexture(CompressedTexDesc, EResourceAccess::UnorderedAccess);
     if (!CompressedTex)
     {
-        LOG_ERROR("[FGPUBlockCompressor] Failed to create temporary compressed texture");
+        LOG_ERROR("[FGPUTextureCompressor] Failed to create temporary compressed texture");
         return false;
     }
     else
@@ -238,7 +238,7 @@ bool FGPUBlockCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRHIT
         FRHIUnorderedAccessViewRef CompressedTexUAV = RHICreateUnorderedAccessView(CompressedTexUAVDesc);
         if (!CompressedTexUAV)
         {
-            LOG_ERROR("[FGPUBlockCompressor] Failed to create compressed texture UAV");
+            LOG_ERROR("[FGPUTextureCompressor] Failed to create compressed texture UAV");
             return false;
         }
         else
@@ -257,7 +257,7 @@ bool FGPUBlockCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRHIT
     Output = RHICreateTexture(OutputDesc, EResourceAccess::CopyDest);
     if (!Output)
     {
-        LOG_ERROR("[FGPUBlockCompressor] Failed to create compressed texture");
+        LOG_ERROR("[FGPUTextureCompressor] Failed to create compressed texture");
         return false;
     }
     else

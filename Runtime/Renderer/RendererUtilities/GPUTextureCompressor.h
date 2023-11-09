@@ -2,10 +2,10 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
 
-class RENDERER_API FGPUBlockCompressor
+class RENDERER_API FGPUTextureCompressor
 {
 public:
-    FGPUBlockCompressor();
+    FGPUTextureCompressor();
 
     bool Initialize();
 

@@ -16,7 +16,7 @@ public:
     void Release();
 
 private:
-    FGPUBlockCompressor          BlockCompressor;
+    FGPUTextureCompressor          BlockCompressor;
 
     FMeshData                    SkyboxMesh;
     FRHIGraphicsPipelineStateRef PipelineState;
