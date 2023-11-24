@@ -344,16 +344,30 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
 
         // 1) Header
         File->Write(reinterpret_cast<const uint8*>(&SceneHeader), sizeof(FCustomScene));
+        
         // 2) Model-Headers
+        CHECK(SceneHeader.NumModels > 0);
         File->Write(reinterpret_cast<const uint8*>(Models.Data()), Models.SizeInBytes());
+        
         // 3) All the vertices
+        CHECK(SceneHeader.NumTotalVertices > 0);
         File->Write(reinterpret_cast<const uint8*>(SceneVertices.Data()), SceneVertices.SizeInBytes());
+        
         // 4) All the indices
+        CHECK(SceneHeader.NumTotalIndices > 0);
         File->Write(reinterpret_cast<const uint8*>(SceneIndicies.Data()), SceneIndicies.SizeInBytes());
+        
         // 5) All Textures
-        File->Write(reinterpret_cast<const uint8*>(TextureNames.Data()), TextureNames.SizeInBytes());
+        if (SceneHeader.NumTextures)
+        {
+            File->Write(reinterpret_cast<const uint8*>(TextureNames.Data()), TextureNames.SizeInBytes());
+        }
+        
         // 6) All Materials
-        File->Write(reinterpret_cast<const uint8*>(Materials.Data()), Materials.SizeInBytes());
+        if (SceneHeader.NumMaterials)
+        {
+            File->Write(reinterpret_cast<const uint8*>(Materials.Data()), Materials.SizeInBytes());
+        }
     }
 
     Cache.emplace(std::make_pair(OriginalFile, NewFile));

@@ -10,10 +10,9 @@ function GetVulkanIncludePath()
         'VULKAN_SDK'
     }
 
-    -- TODO: Mac seems to be incompatible with environment variables (Does not seem to set them properly)
-    -- So for now we have to hardcode the path
+    -- Vulkan is installed to the local folder on mac (Latest installed version) so we can just return this global path
     if IsPlatformMac() then
-        return '/Users/dahlle/VulkanSDK/1.3.250.1/macOS'
+        return '/usr/local'
     end
 
     for _, EnvironmentVar in ipairs(VulkanEnvironmentVars) do
@@ -59,7 +58,7 @@ VulkanRHI.AddModuleDependencies(
 if IsPlatformMac() then
     VulkanRHI.AddFrameWorks( 
     {
-        'QuartzCore'
+        'QuartzCore',
     })
 end
 

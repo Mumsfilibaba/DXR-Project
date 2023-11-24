@@ -12,9 +12,7 @@ namespace std
     {
         size_t operator()(const FVector4& Value) const
         {
-            THash<float> Hasher;
-
-            size_t Hash = Hasher(Value.x);
+            uint64 Hash = TTypeHash<float>::Hash(Value.x);
             HashCombine<float>(Hash, Value.y);
             HashCombine<float>(Hash, Value.z);
             HashCombine<float>(Hash, Value.w);
@@ -27,9 +25,7 @@ namespace std
     {
         size_t operator()(const FVector3& Value) const
         {
-            THash<float> Hasher;
-
-            size_t Hash = Hasher(Value.x);
+            uint64 Hash = TTypeHash<float>::Hash(Value.x);
             HashCombine<float>(Hash, Value.y);
             HashCombine<float>(Hash, Value.z);
             return Hash;
@@ -41,9 +37,7 @@ namespace std
     {
         size_t operator()(const FVector2& Value) const
         {
-            THash<float> Hasher;
-
-            size_t Hash = Hasher(Value.x);
+            uint64 Hash = TTypeHash<float>::Hash(Value.x);
             HashCombine<float>(Hash, Value.y);
             return Hash;
         }
@@ -55,8 +49,7 @@ namespace std
     {
         size_t operator()(const FFloat16& Value) const
         {
-            THash<uint16> Hasher;
-            return Hasher(Value.Encoded);
+            return TTypeHash<float>::Hash(Value.Encoded);
         }
     };
 
@@ -65,8 +58,7 @@ namespace std
     {
         size_t operator()(const FFloat32& Value) const
         {
-            THash<uint32> Hasher;
-            return Hasher(Value.Encoded);
+            return TTypeHash<float>::Hash(Value.Encoded);
         }
     };
 
@@ -75,8 +67,7 @@ namespace std
     {
         size_t operator()(const FFloat64& Value) const
         {
-            THash<uint64> Hasher;
-            return Hasher(Value.Encoded);
+            return TTypeHash<float>::Hash(Value.Encoded);
         }
     };
 }

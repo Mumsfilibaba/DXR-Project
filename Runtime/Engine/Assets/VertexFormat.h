@@ -45,9 +45,7 @@ struct FVertexHasher
 {
     inline size_t operator()(const FVertex& Vertex) const
     {
-        THash<FVector3> Hasher;
-
-        size_t Hash = Hasher(Vertex.Position);
+        uint64 Hash = TTypeHash<FVector3>::Hash(Vertex.Position);
         HashCombine<FVector3>(Hash, Vertex.Normal);
         HashCombine<FVector3>(Hash, Vertex.Tangent);
         HashCombine<FVector2>(Hash, Vertex.TexCoord);
@@ -88,9 +86,7 @@ struct FVertexMaskedHasher
 {
     inline size_t operator()(const FVertexMasked& Vertex) const
     {
-        THash<FVector3> Hasher;
-
-        size_t Hash = Hasher(Vertex.Position);
+        uint64 Hash = TTypeHash<FVector3>::Hash(Vertex.Position);
         HashCombine<FVector2>(Hash, Vertex.TexCoord);
         return Hash;
     }

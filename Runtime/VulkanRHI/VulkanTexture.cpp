@@ -202,8 +202,15 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
                 break;
             }
 
+            // If there is no data for this miplevel we break
+            void* Data = InInitialData->GetMipData(Index);
+            if (!Data)
+            {
+                break;
+            }
+            
             FTextureRegion2D TextureRegion(Width, Height);
-            Context->RHIUpdateTexture2D(this, TextureRegion, Index, InInitialData->GetMipData(Index), static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
+            Context->RHIUpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
 
             Width  = Width / 2;
             Height = Height / 2;

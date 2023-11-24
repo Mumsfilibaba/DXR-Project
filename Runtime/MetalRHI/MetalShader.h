@@ -175,7 +175,6 @@ public:
     FMetalComputeShader(FMetalDeviceContext* InDevice)
         : FRHIComputeShader()
         , FMetalShader(InDevice, ShaderVisibility_Compute)
-        , ThreadGroupXYZ(1, 1, 1)
     {
     }
 

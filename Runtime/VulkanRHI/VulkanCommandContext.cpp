@@ -694,37 +694,39 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
     FVulkanTexture* DstVulkanTexture = GetVulkanTexture(Dst);
     CHECK(DstVulkanTexture != nullptr);
     
-    CHECK(SrcVulkanTexture->GetWidth()  == DstVulkanTexture->GetWidth());
-    CHECK(SrcVulkanTexture->GetHeight() == DstVulkanTexture->GetHeight());
-    CHECK(SrcVulkanTexture->GetDepth()  == DstVulkanTexture->GetDepth());
-    
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopy[MaxCopies];
-    FMemory::Memzero(ImageCopy, sizeof(ImageCopy));
     
-    const uint32 NumCopies = CopyDesc.NumMipLevels;
-    for (uint32 Index = 0; Index < NumCopies; Index++)
+    for (uint32 MipLevel = 0; MipLevel < CopyDesc.NumMipLevels; MipLevel++)
     {
-        ImageCopy[Index].srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
-        ImageCopy[Index].srcSubresource.mipLevel       = CopyDesc.SrcMipSlice + Index;
-        ImageCopy[Index].srcSubresource.baseArrayLayer = CopyDesc.SrcArraySlice;
-        ImageCopy[Index].srcSubresource.layerCount     = CopyDesc.NumArraySlices;
-        ImageCopy[Index].srcOffset.x                   = CopyDesc.SrcPosition.x;
-        ImageCopy[Index].srcOffset.y                   = CopyDesc.SrcPosition.y;
-        ImageCopy[Index].srcOffset.z                   = CopyDesc.SrcPosition.z;
-        ImageCopy[Index].dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
-        ImageCopy[Index].dstSubresource.mipLevel       = CopyDesc.DstMipSlice + Index;
-        ImageCopy[Index].dstSubresource.baseArrayLayer = CopyDesc.DstArraySlice;
-        ImageCopy[Index].dstSubresource.layerCount     = CopyDesc.NumArraySlices;
-        ImageCopy[Index].dstOffset.x                   = CopyDesc.DstPosition.x;
-        ImageCopy[Index].dstOffset.y                   = CopyDesc.DstPosition.y;
-        ImageCopy[Index].dstOffset.z                   = CopyDesc.DstPosition.z;
-        ImageCopy[Index].extent.width                  = CopyDesc.Size.x;
-        ImageCopy[Index].extent.height                 = CopyDesc.Size.y;
-        ImageCopy[Index].extent.depth                  = CopyDesc.Size.z;
+        VkImageCopy& CopyInfo = ImageCopy[MipLevel];
+        FMemory::Memzero(&CopyInfo, sizeof(CopyInfo));
+        
+        // Describe the source subresource
+        CopyInfo.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+        CopyInfo.srcSubresource.mipLevel       = CopyDesc.SrcMipSlice + MipLevel;
+        CopyInfo.srcSubresource.baseArrayLayer = CopyDesc.SrcArraySlice;
+        CopyInfo.srcSubresource.layerCount     = CopyDesc.NumArraySlices;
+        CopyInfo.srcOffset.x                   = CopyDesc.SrcPosition.x >> MipLevel;
+        CopyInfo.srcOffset.y                   = CopyDesc.SrcPosition.y >> MipLevel;
+        CopyInfo.srcOffset.z                   = CopyDesc.SrcPosition.z >> MipLevel;
+        
+        // Describe the destination subresource
+        CopyInfo.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
+        CopyInfo.dstSubresource.mipLevel       = CopyDesc.DstMipSlice + MipLevel;
+        CopyInfo.dstSubresource.baseArrayLayer = CopyDesc.DstArraySlice;
+        CopyInfo.dstSubresource.layerCount     = CopyDesc.NumArraySlices;
+        CopyInfo.dstOffset.x                   = CopyDesc.DstPosition.x >> MipLevel;
+        CopyInfo.dstOffset.y                   = CopyDesc.DstPosition.y >> MipLevel;
+        CopyInfo.dstOffset.z                   = CopyDesc.DstPosition.z >> MipLevel;
+        
+        // Size of thie mipslice
+        CopyInfo.extent.width  = FMath::Max(CopyDesc.Size.x >> MipLevel, 1);
+        CopyInfo.extent.height = FMath::Max(CopyDesc.Size.y >> MipLevel, 1);
+        CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.z >> MipLevel, 1);
     }
     
-    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, NumCopies, ImageCopy);
+    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CopyDesc.NumMipLevels, ImageCopy);
 }
 
 void FVulkanCommandContext::RHIDestroyResource(IRefCounted* Resource)  

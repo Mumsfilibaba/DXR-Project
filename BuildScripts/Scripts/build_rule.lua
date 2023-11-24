@@ -462,12 +462,29 @@ function FBuildRules(InName)
             filter { "action:xcode4" }
                 xcodebuildsettings 
                 {
-                    ["PRODUCT_BUNDLE_IDENTIFIER"] = "com.Dxrproject." .. self.Name,
+                    ["PRODUCT_BUNDLE_IDENTIFIER"] = "com.DXREngine." .. self.Name,
                     ["CODE_SIGN_STYLE"]           = "Automatic",
+                    ["ARCHS"]                     = "x86_64",                                      -- Specify the architecture(s) e.g., "x86_64" for Intel
+                    ["ONLY_ACTIVE_ARCH"]          = "YES",                                         -- We only want to build the current architecture
                     ["ENABLE_HARDENED_RUNTIME"]   = "NO",                                          -- hardened runtime is required for notarization
                     ["GENERATE_INFOPLIST_FILE"]   = "YES",                                         -- generate the .plist file for now
                     -- ["CODE_SIGN_IDENTITY"]        = "Apple Development",                        -- sets 'Signing Certificate' to 'Development'. Defaults to 'Sign to Run Locally'. not doing this will crash your app if you upgrade the project when prompted by Xcode
-                    ["LD_RUNPATH_SEARCH_PATHS"]   = "$(inherited) @executable_path/../Frameworks", -- tell the executable where to find the frameworks. Path is relative to executable location inside .app bundle
+                    ["LD_RUNPATH_SEARCH_PATHS"]   = "$(INSTALL_PATH) @executable_path/../Frameworks", -- tell the executable where to find the frameworks. Path is relative to executable location inside .app bundle
+                }
+            filter {}
+
+            -- TODO: Add the ability for modules to copy files 
+            -- Copy dynamic libaries from dependencies folder
+            filter { "system:windows" }
+                postbuildcommands 
+                {
+                    "copy " .. CreateExternalDependencyPath("DXC/bin/dxil.dll") .. " " .. FullObjectFolderPath,
+                    "copy " .. CreateExternalDependencyPath("DXC/bin/dxcompiler.dll") .. " " .. FullObjectFolderPath,
+                }
+            filter { "system:macosx" }
+                postbuildcommands 
+                {
+                    "cp " .. CreateExternalDependencyPath("DXC/bin/libdxcompiler.dylib") .. " " .. FullObjectFolderPath
                 }
             filter {}
         project "*"

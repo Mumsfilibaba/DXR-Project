@@ -560,13 +560,13 @@ function FWorkspaceRules(WorkspaceName)
                         (ExternalDependecyPath .. "/glslang/glslang/OSDependent/osinclude.h"),
                     }
 
-                    filter "system:Windows"
+                    filter "system:windows"
                         files 
                         {
                             (ExternalDependecyPath .. "/glslang/glslang/OSDependent/Windows/main.cpp"),
                             (ExternalDependecyPath .. "/glslang/glslang/OSDependent/Windows/ossource.cpp"),
                         }
-                    filter "system:Mac"
+                    filter "system:macosx"
                         files 
                         {
                             (ExternalDependecyPath .. "/glslang/glslang/OSDependent/Unix/ossource.cpp"),
