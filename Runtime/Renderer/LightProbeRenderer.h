@@ -3,7 +3,7 @@
 #include "LightSetup.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
-#include "RendererUtilities/GPUBlockCompressor.h"
+#include "RendererUtilities/GPUTextureCompressor.h"
 
 class RENDERER_API FLightProbeRenderer
 {
@@ -17,7 +17,7 @@ public:
 private:
     bool CreateSkyLightResources(FLightSetup& LightSetup);
 
-    FGPUTextureCompressor Compressor;
+    FGPUTextureCompressor       Compressor;
 
     FRHIComputePipelineStateRef IrradianceGenPSO;
     FRHIComputeShaderRef        IrradianceGenShader;

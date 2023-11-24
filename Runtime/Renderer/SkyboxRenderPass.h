@@ -4,7 +4,7 @@
 #include "RHI/RHIShader.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Scene/Scene.h"
-#include "RendererUtilities/GPUBlockCompressor.h"
+#include "RendererUtilities/GPUTextureCompressor.h"
 
 class RENDERER_API FSkyboxRenderPass final
 {
@@ -16,7 +16,7 @@ public:
     void Release();
 
 private:
-    FGPUTextureCompressor          BlockCompressor;
+    FGPUTextureCompressor        TextureCompressor;
 
     FMeshData                    SkyboxMesh;
     FRHIGraphicsPipelineStateRef PipelineState;

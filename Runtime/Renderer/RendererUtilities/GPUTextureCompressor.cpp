@@ -1,4 +1,4 @@
-#include "GPUBlockCompressor.h"
+#include "GPUTextureCompressor.h"
 #include "Core/Templates/NumericLimits.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
