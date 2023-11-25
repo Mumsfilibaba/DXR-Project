@@ -137,10 +137,10 @@ function FBuildRules(InName)
         LinkOptions = { }
     }
 
-
     -- @brief - Helper function for retrieving path
+    local _Path = JoinPath(RuntimeFolderPath, self.Name)
     function self.GetPath()
-        return RuntimeFolderPath .. "/" ..  self.Name
+        return _Path
     end
 
     -- @brief - Helper function for adding flags
@@ -219,7 +219,7 @@ function FBuildRules(InName)
     function self.MakeFileNamesRelativeToPath(FileArray)
         for Index = 1, #FileArray do
             if not path.isabsolute(FileArray[Index]) then
-                FileArray[Index] = self.GetPath() .. "/" .. FileArray[Index]
+                FileArray[Index] = JoinPath(self.GetPath(), FileArray[Index])
             end
         end
     end
@@ -291,29 +291,35 @@ function FBuildRules(InName)
             characterset(self.Characterset)
 
             -- Setup Location
+            self.ProjectFilePath = CreateOSPath(self.ProjectFilePath)
             LogInfo("    Project location \'%s\'", self.ProjectFilePath)
             location(self.ProjectFilePath)
 
             -- Setup all targets except the dependencies
-            local FullObjectFolderPath = self.BuildFolderPath .. "/bin/" .. self.OutputPath
+            local FullObjectFolderPath = JoinPath(JoinPath(self.BuildFolderPath, "bin"), self.OutputPath)
             LogInfo("    Target location \'%s\'", FullObjectFolderPath)
             targetdir(FullObjectFolderPath)
 
-            local FullIntermediateFolderPath = self.BuildFolderPath .. "/bin-int/" .. self.OutputPath
+            local FullIntermediateFolderPath = JoinPath(JoinPath(self.BuildFolderPath, "bin-int"), self.OutputPath)
             LogInfo("    Object files location \'%s\'", FullIntermediateFolderPath)
             objdir(FullIntermediateFolderPath)
 
             -- Setup Pre-Compiled Headers
             if self.bUsePrecompiledHeaders then
-                filter "action:vs*"
-                    pchheader("PreCompiled.h")
+                if BuildWithVisualStudio() then
                     -- NOTE: We need to specify the full path for everything to work properly on windows
-                    local PrecompiledSourcePath = self.GetPath() .. "/PreCompiled.cpp"
-                    pchsource(PrecompiledSourcePath)
-                    LogHighlight("    PreCompiled sourcepath \'" .. PrecompiledSourcePath .. "\'")
-                filter "action:not vs*"
-                    pchheader(self.GetPath() .. "/PreCompiled.h")
-                filter{}
+                    local PCHSourcePath     = JoinPath(self.GetPath(), "PreCompiled.cpp"); 
+                    LogHighlight("    PreCompiled sourcepath \'" .. PCHSourcePath .. "\'")
+                    
+                    -- We need to use the unix path (This is probably an internal premake thing)
+                    local UnixPCHSourcePath = path.translate(PCHSourcePath, '/')
+                    pchheader("PreCompiled.h")
+                    pchsource(UnixPCHSourcePath)
+                else
+                    -- NOTE: We need to specify the full path for everything to work properly on non-windows
+                    local PCHPath = JoinPath(self.GetPath(), "PreCompiled.h")
+                    pchheader(PCHPath)
+                end
 
                 LogInfo("    Project is using PreCompiled Headers")
             else
@@ -411,14 +417,17 @@ function FBuildRules(InName)
             end
 
             -- In visual studio show natvis files
-            filter "action:vs*"
+            if BuildWithVisualStudio() then
                 vpaths { ["Natvis"] = "**.natvis" }
+    
+                local _NatvisPath = JoinPath(self.GetPath(), "**.natvis")
+                LogHighlight("NativsPath=\'%s\'", _NatvisPath)
 
                 files 
                 {
-                    (self.GetPath() .. "/**.natvis")
+                    _NatvisPath
                 }
-            filter {}
+            end
 
             -- Remove files
             removefiles(self.ExcludeFiles)
@@ -475,18 +484,27 @@ function FBuildRules(InName)
 
             -- TODO: Add the ability for modules to copy files 
             -- Copy dynamic libaries from dependencies folder
-            filter { "system:windows" }
+            if IsPlatformWindows() then
+                local _DXILDLLCmd = "copy " .. CreateExternalDependencyPath("DXC/bin/dxil.dll") .. " " .. FullObjectFolderPath    
+                LogHighlight("dxil.dll Cmd %s", _DXILDLLCmd)
+                
+                local _DXCompilerDLLCmd = "copy " .. CreateExternalDependencyPath("DXC/bin/dxcompiler.dll") .. " " .. FullObjectFolderPath
+                LogHighlight("dxcompiler.dll Cmd %s", _DXCompilerDLLCmd)
+
+                postbuildcommands
+                {
+                    _DXILDLLCmd,
+                    _DXCompilerDLLCmd
+                }
+            elseif IsPlatformMac() then
+                local _libdxcompilerDLLCmd = "cp " .. CreateExternalDependencyPath("DXC/bin/libdxcompiler.dylib") .. " " .. FullObjectFolderPath    
+                LogHighlight("libdxcompiler.dylib Cmd %s", _libdxcompilerDLLCmd)
+
                 postbuildcommands 
                 {
-                    "copy " .. CreateExternalDependencyPath("DXC/bin/dxil.dll") .. " " .. FullObjectFolderPath,
-                    "copy " .. CreateExternalDependencyPath("DXC/bin/dxcompiler.dll") .. " " .. FullObjectFolderPath,
+                    _libdxcompilerDLLCmd
                 }
-            filter { "system:macosx" }
-                postbuildcommands 
-                {
-                    "cp " .. CreateExternalDependencyPath("DXC/bin/libdxcompiler.dylib") .. " " .. FullObjectFolderPath
-                }
-            filter {}
+            end
         project "*"
 
         LogHighlight("\n--- Finished generating project files for Project \'%s\' ---", self.Name) 
@@ -507,7 +525,7 @@ function FBuildRules(InName)
             if IsModule(CurrentModuleName) then
                 LogHighlightWarning("-Dependency \'%s\' is already included", CurrentModuleName)
             else
-                local DependecyPath = RuntimeFolderPath .. "/" .. CurrentModuleName .. "/Module.lua"
+                local DependecyPath = JoinPath(JoinPath(RuntimeFolderPath, CurrentModuleName), "Module.lua")
                 LogInfo("-Including Dependency \'%s\' Path=\'%s\'", CurrentModuleName, DependecyPath)
                 include(DependecyPath)
 

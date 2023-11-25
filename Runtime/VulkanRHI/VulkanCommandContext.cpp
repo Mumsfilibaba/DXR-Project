@@ -282,88 +282,109 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
 
 void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
 {
-    // TODO: Verify that the samples are all the same
-    uint8  NumSamples = 0;
-    uint32 Width      = 0;
-    uint32 Height     = 0;
-        
-    // Collect ClearValues
-    uint32 NumClearValues = 0;
     VkClearValue ClearValues[FRHILimits::MaxRenderTargets + 1];
     FMemory::Memzero(ClearValues, sizeof(ClearValues));
     
-    // Check for each render-target-texture
-    FVulkanRenderPassKey RenderPassKey;
-    RenderPassKey.NumRenderTargets = RenderPassInitializer.NumRenderTargets;
-    
-    FVulkanFramebufferKey FramebufferKey;
-    for (uint32 Index = 0; Index < RenderPassInitializer.NumRenderTargets; Index++)
+    uint32 Width          = 0;
+    uint32 Height         = 0;
+    uint32 NumClearValues = 0;
+
+    VkRenderPass  RenderPass  = VK_NULL_HANDLE;
+    VkFramebuffer FrameBuffer = VK_NULL_HANDLE;
+
+    if (RenderPassInitializer.DepthStencilView.Texture || RenderPassInitializer.NumRenderTargets)
     {
-        const FRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
-        if (FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderTargetView.Texture))
+        // TODO: Verify that the samples are all the same
+        uint8 NumSamples = 0;
+
+        // Set extent to max so that we can use the min operator when going through the RenderTargets/DepthStencil
+        Width  = TNumericLimits<uint32>::Max();
+        Height = TNumericLimits<uint32>::Max();
+
+        // Check for each render-target-texture
+        FVulkanRenderPassKey RenderPassKey;
+        RenderPassKey.NumRenderTargets = RenderPassInitializer.NumRenderTargets;
+    
+        FVulkanFramebufferKey FramebufferKey;
+        for (uint32 Index = 0; Index < RenderPassInitializer.NumRenderTargets; Index++)
         {
-            Width      = FMath::Max<int32>(VulkanTexture->GetWidth(), Width);
-            Height     = FMath::Max<int32>(VulkanTexture->GetHeight(), Height);
+            const FRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
+            if (FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderTargetView.Texture))
+            {
+                Width      = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
+                Height     = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
+                NumSamples = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
+
+                RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
+                RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
+                RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
+            
+                VkClearValue& ClearValue = ClearValues[NumClearValues++];
+                FMemory::Memcpy(ClearValue.color.float32, &RenderTargetView.ClearValue.r, sizeof(ClearValue.color.float32));
+
+                // Get the image view
+                if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
+                {
+                    FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageView->GetVkImageView();
+                }
+            }
+            else
+            {
+                CHECK(RenderTargetView.Texture == nullptr);
+            }
+        }
+    
+        // Check for depth-texture
+        if (FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderPassInitializer.DepthStencilView.Texture))
+        {
+            Width      = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
+            Height     = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
             NumSamples = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
 
-            RenderPassKey.RenderTargetFormats[Index]             = RenderTargetView.Format;
-            RenderPassKey.RenderTargetActions[Index].LoadAction  = RenderTargetView.LoadAction;
-            RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
-            
+            const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
+            RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
+            RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
+            RenderPassKey.DepthStencilActions.StoreAction = DepthStencilView.StoreAction;
+        
             VkClearValue& ClearValue = ClearValues[NumClearValues++];
-            FMemory::Memcpy(ClearValue.color.float32, &RenderTargetView.ClearValue.r, sizeof(ClearValue.color.float32));
+            ClearValue.depthStencil.depth   = DepthStencilView.ClearValue.Depth;
+            ClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
 
             // Get the image view
-            if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
+            if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
             {
                 FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageView->GetVkImageView();
             }
         }
-    }
-    
-    // Check for depth-texture
-    if (FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderPassInitializer.DepthStencilView.Texture))
-    {
-        Width      = FMath::Max<int32>(VulkanTexture->GetWidth(), Width);
-        Height     = FMath::Max<int32>(VulkanTexture->GetHeight(), Height);
-        NumSamples = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
-
-        const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
-        RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
-        RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
-        RenderPassKey.DepthStencilActions.StoreAction = DepthStencilView.StoreAction;
-        
-        VkClearValue& ClearValue = ClearValues[NumClearValues++];
-        ClearValue.depthStencil.depth   = DepthStencilView.ClearValue.Depth;
-        ClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
-
-        // Get the image view
-        if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
+        else
         {
-            FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageView->GetVkImageView();
+            CHECK(RenderPassInitializer.DepthStencilView.Texture == nullptr);
+        }
+
+        // Retrieve or create a RenderPass
+        RenderPassKey.NumSamples = NumSamples;
+
+        RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
+        if (!VULKAN_CHECK_HANDLE(RenderPass))
+        {
+            DEBUG_BREAK();
+        }
+    
+        // Retrieve or create a FrameBuffer
+        FramebufferKey.RenderPass = RenderPass;
+
+        CHECK(Width != TNumericLimits<uint32>::Max());
+        FramebufferKey.Width = static_cast<uint16>(Width);
+
+        CHECK(Height != TNumericLimits<uint32>::Max());
+        FramebufferKey.Height = static_cast<uint16>(Height);
+
+        FrameBuffer = GetDevice()->GetFramebufferCache().GetFramebuffer(FramebufferKey);
+        if (!VULKAN_CHECK_HANDLE(FrameBuffer))
+        {
+            DEBUG_BREAK();
         }
     }
-
-    // Retrieve or create a RenderPass
-    RenderPassKey.NumSamples = NumSamples;
-
-    VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
-    if (!VULKAN_CHECK_HANDLE(RenderPass))
-    {
-        DEBUG_BREAK();
-    }
-    
-    // Retrieve or create a FrameBuffer
-    FramebufferKey.RenderPass = RenderPass;
-    FramebufferKey.Width      = static_cast<uint16>(Width);
-    FramebufferKey.Height     = static_cast<uint16>(Height);
-
-    VkFramebuffer FrameBuffer =  GetDevice()->GetFramebufferCache().GetFramebuffer(FramebufferKey);
-    if (!VULKAN_CHECK_HANDLE(FrameBuffer))
-    {
-        DEBUG_BREAK();
-    }
-    
     
     // Begin the RenderPass
     VkRenderPassBeginInfo RenderPassBeginInfo;

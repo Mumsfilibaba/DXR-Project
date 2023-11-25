@@ -51,8 +51,10 @@ function FTargetBuildRules(InName, InWorkspace)
 
     -- @brief - Helper function for retrieving path
     self.GetPath = nil
+
+    local PathToTarget = JoinPath(self.Workspace.GetEnginePath(), self.Name)
     function self.GetPath()
-        return self.Workspace.GetEnginePath() .. "/" ..  self.Name
+        return PathToTarget
     end
 
     -- @brief - Inject module into the current module (I.e put the files into the executable)

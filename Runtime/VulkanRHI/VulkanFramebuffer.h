@@ -101,4 +101,5 @@ public:
 
 private:
     TMap<FVulkanFramebufferKey, VkFramebuffer, FVulkanFramebufferKeyHasher> Framebuffers;
+    FCriticalSection FramebuffersCS;
 };

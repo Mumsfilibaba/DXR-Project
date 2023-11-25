@@ -19,7 +19,7 @@ function ProjectModule.Generate()
 
     local TargetName = ProjectModule.Workspace.GetCurrentTargetName()
     ProjectModule.AddDefines({ "PROJECT_NAME=\"" .. TargetName .. "\"" })
-    ProjectModule.AddDefines({ "PROJECT_LOCATION=\"" .. ProjectModule.Workspace.GetEnginePath() .. "/" .. TargetName .. "\"" })
+    ProjectModule.AddDefines({ "PROJECT_LOCATION=\"" .. JoinPath(ProjectModule.Workspace.GetEnginePath(), TargetName) .. "\"" })
 
     BuildRulesGenerate()
 end

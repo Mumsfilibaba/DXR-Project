@@ -49,7 +49,7 @@ namespace std
     {
         size_t operator()(const FFloat16& Value) const
         {
-            return TTypeHash<float>::Hash(Value.Encoded);
+            return TTypeHash<uint16>::Hash(Value.Encoded);
         }
     };
 
@@ -58,7 +58,7 @@ namespace std
     {
         size_t operator()(const FFloat32& Value) const
         {
-            return TTypeHash<float>::Hash(Value.Encoded);
+            return TTypeHash<uint32>::Hash(Value.Encoded);
         }
     };
 
@@ -67,7 +67,7 @@ namespace std
     {
         size_t operator()(const FFloat64& Value) const
         {
-            return TTypeHash<float>::Hash(Value.Encoded);
+            return TTypeHash<uint64>::Hash(Value.Encoded);
         }
     };
 }

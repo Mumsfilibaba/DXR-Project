@@ -96,7 +96,7 @@ bool FVulkanViewport::CreateSwapChain()
     }
 
 
-    // Initialize semaphores and backbuffers
+    // Initialize semaphores and BackBuffers
     const uint32 BufferCount = SwapChain->GetBufferCount();
     if (BufferCount != static_cast<uint32>(BackBuffers.Size()))
     {
@@ -231,7 +231,7 @@ bool FVulkanViewport::Present(bool bVerticalSync)
     {
         VULKAN_INFO("Swapchain OutOfDate");
 
-        Queue->WaitForCompletion();
+        Queue->FlushWaitSemaphoresAndWait();
 
         if (!CreateSwapChain())
         {
@@ -291,7 +291,7 @@ bool FVulkanViewport::AquireNextImage()
     Queue->AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     Queue->AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
 
-    // Update the backbuffer index
+    // Update the BackBuffer index
     BackBufferIndex = SwapChain->GetBufferIndex();
     return true;
 }

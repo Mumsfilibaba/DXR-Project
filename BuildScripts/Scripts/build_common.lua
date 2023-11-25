@@ -125,32 +125,52 @@ function AddModule(ModuleName, Module)
     end
 end
 
+_GSeperatorForOS = ''
+if IsPlatformWindows() then
+    _GSeperatorForOS = '\\'
+else
+    _GSeperatorForOS = '/'
+end
+
+function CreateOSPath(InPath)
+    return path.translate(InPath, _GSeperatorForOS)
+end
+
 -- Mainpath ../BuildScripts/Premake
-GEnginePath = path.getabsolute( "../../", _PREMAKE_DIR)
+GEnginePath = CreateOSPath(path.getabsolute( "../../", _PREMAKE_DIR))
 
 function GetEnginePath()
     return GEnginePath
 end
 
+-- Join two paths
+function JoinPath(Path0, Path1)
+    return CreateOSPath(path.join(Path0, Path1))
+end
+
 -- Retrieve the path to the Runtime folder containing all the engine modules
+_GRuntimeFolderPath = JoinPath(GEnginePath, "Runtime")
 function GetRuntimeFolderPath()
-    return GEnginePath .. "/Runtime"
+    return _GRuntimeFolderPath
 end
 
 -- Retrieve the path to the solutions folder containing solution and project files
+_GSolutionsFolderPath = JoinPath(GEnginePath, "Solutions")
 function GetSolutionsFolderPath()
-    return GEnginePath .. "/Solutions"
+    return _GSolutionsFolderPath
 end
 
 -- Retrieve the path to the dependencies folder containing external dependecy projects
+_GExternalDependenciesFolderPath = JoinPath(GEnginePath, "Dependencies")
 function GetExternalDependenciesFolderPath()
-    return GEnginePath .. "/Dependencies"
+    return _GExternalDependenciesFolderPath
 end
 
 -- Make path relative to dependency folder
 function CreateExternalDependencyPath(Path)
-    return GetExternalDependenciesFolderPath() .. "/" .. Path
+    return JoinPath(GetExternalDependenciesFolderPath(), Path)
 end
+
 
 -- Deep copy a table
 function Copy(Source)

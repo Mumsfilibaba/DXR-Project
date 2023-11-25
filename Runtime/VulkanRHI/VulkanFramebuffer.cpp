@@ -27,6 +27,8 @@ FVulkanFramebufferCache::~FVulkanFramebufferCache()
 
 VkFramebuffer FVulkanFramebufferCache::GetFramebuffer(const FVulkanFramebufferKey& FrameBufferKey)
 {
+    SCOPED_LOCK(FramebuffersCS);
+
     //Check if a Framebuffer exists
     auto FrameBufferIt = Framebuffers.find(FrameBufferKey);
     if (FrameBufferIt != Framebuffers.end())
@@ -64,7 +66,9 @@ VkFramebuffer FVulkanFramebufferCache::GetFramebuffer(const FVulkanFramebufferKe
 
 void FVulkanFramebufferCache::OnReleaseImageView(VkImageView View)
 {
-    //Find all framebuffers containing this texture
+    SCOPED_LOCK(FramebuffersCS);
+
+    //Find all FrameBuffers containing this texture
     for (auto FrameBufferIt = Framebuffers.begin(); FrameBufferIt != Framebuffers.end();)
     {
         if (FrameBufferIt->first.ContainsImageView(View))
@@ -83,6 +87,8 @@ void FVulkanFramebufferCache::OnReleaseImageView(VkImageView View)
 
 void FVulkanFramebufferCache::OnReleaseRenderPass(VkRenderPass renderpass)
 {
+    SCOPED_LOCK(FramebuffersCS);
+
     //Find all framebuffers containing this renderpass
     for (auto FrameBufferIt = Framebuffers.begin(); FrameBufferIt != Framebuffers.end();)
     {
@@ -102,6 +108,8 @@ void FVulkanFramebufferCache::OnReleaseRenderPass(VkRenderPass renderpass)
 
 void FVulkanFramebufferCache::ReleaseAll()
 {
+    SCOPED_LOCK(FramebuffersCS);
+
     //Destroy all framebuffers
     for (auto& Framebuffer : Framebuffers)
     {

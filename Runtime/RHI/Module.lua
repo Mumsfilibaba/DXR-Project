@@ -20,17 +20,12 @@ RHIModule.AddModuleDependencies(
 
 RHIModule.AddLinkLibraries(
 {
-    --"GenericCodeGen",
-    --"SPIRV-Tools",
-    --"HLSL",
     "SPIRV",
     "MachineIndependent",
     "SPVRemapper",
     "OGLCompiler",
     "glslang-default-resource-limits",
-    --"OSDependent",
     "glslang",
-    --"SPIRV-Tools-opt",
 })
 
 RHIModule.AddLinkLibraries( 

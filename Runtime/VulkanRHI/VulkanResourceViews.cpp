@@ -38,6 +38,8 @@ void FVulkanImageView::DestroyView()
 {
     if (VULKAN_CHECK_HANDLE(ImageView))
     {
+        GetDevice()->GetFramebufferCache().OnReleaseImageView(ImageView);
+
         vkDestroyImageView(GetDevice()->GetVkDevice(), ImageView, nullptr);
         
         Image     = VK_NULL_HANDLE;
