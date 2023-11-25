@@ -85,6 +85,14 @@ public:
     
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkImage()); }
 
+    void ResizeBackBuffer(int32 InWidth, int32 InHeight)
+    {
+        FPlatformMisc::MemoryBarrier();
+
+        Desc.Extent.x = InWidth;
+        Desc.Extent.y = InHeight;
+    }
+
     FVulkanTexture* GetCurrentBackBufferTexture();
     
     FVulkanViewport* GetViewport() const

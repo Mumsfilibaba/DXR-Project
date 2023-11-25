@@ -93,6 +93,7 @@ bool FVulkanViewport::CreateSwapChain()
         VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Desc.Width, Desc.Height, SwapChainExtent.width, SwapChainExtent.height);
         Desc.Width  = static_cast<uint16>(SwapChainExtent.width);
         Desc.Height = static_cast<uint16>(SwapChainExtent.height);
+        BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
     }
 
 
@@ -199,10 +200,11 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
     {
         VULKAN_INFO("Swapchain Resize");
 
+        Queue->FlushWaitSemaphoresAndWait();
+
         Desc.Width  = static_cast<uint16>(InWidth);
         Desc.Height = static_cast<uint16>(InHeight);
-
-        Queue->FlushWaitSemaphoresAndWait();
+        BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
 
         if (!CreateSwapChain())
         {
