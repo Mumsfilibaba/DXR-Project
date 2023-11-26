@@ -998,8 +998,6 @@ void FRenderer::Tick()
 
 void FRenderer::OnWindowResize(const FWindowEvent& Event)
 {
-    return;
-
     const uint32 Width  = Event.GetWidth();
     const uint32 Height = Event.GetHeight();
 
