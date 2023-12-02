@@ -556,6 +556,12 @@ void FMetalCommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVert
     MetalViewport->Present(bVerticalSync);
 }
 
+void FMetalCommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
+{
+    FMetalViewport* MetalViewport = static_cast<FMetalViewport*>(Viewport);
+    MetalViewport->Resize(Width, Height);
+}
+
 void FMetalCommandContext::RHIClearState()
 {
     FMemory::Memzero(&CurrentViewport);

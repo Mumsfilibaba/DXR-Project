@@ -23,9 +23,9 @@ public:
 
     bool Initialize();
 
-    virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
-
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
+
+    bool Resize(uint32 InWidth, uint32 InHeight);
     
     // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
     bool Present(bool bVerticalSync);

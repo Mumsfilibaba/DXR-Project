@@ -352,6 +352,8 @@ struct IRHICommandContext
 
     virtual void RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
 
+    virtual void RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) = 0;
+
     /**
      * @brief - Clears the state of the context, clearing all bound references currently bound
      */

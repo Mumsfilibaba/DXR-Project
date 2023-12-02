@@ -377,11 +377,27 @@ FVulkanBackBufferTexture::~FVulkanBackBufferTexture()
     Viewport = nullptr;
 }
 
+void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
+{
+    Desc.Extent.x = InWidth;
+    Desc.Extent.y = InHeight;
+    
+    const uint32 NumBackBuffers = Viewport->GetNumBackBuffers();
+    for (uint32 Index = 0; Index < NumBackBuffers; Index++)
+    {
+        FVulkanTexture* BackBuffer = Viewport->GetBackBufferFromIndex(Index);
+        BackBuffer->Resize(InWidth, InHeight);
+    }
+}
+
 FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture()
 {
     return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;
 }
 
+//////////////////////////
+// FVulkanTextureHelper //
+//////////////////////////
 
 uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {

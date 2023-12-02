@@ -19,6 +19,9 @@ struct FViewportData
         , VertexCount(0)
         , IndexCount(0)
         , Viewport(nullptr)
+        , bDidResize(false)
+        , Width(0)
+        , Height(0)
     {
     }
 
@@ -29,6 +32,10 @@ struct FViewportData
     int32 IndexCount;
 
     FRHIViewportRef Viewport;
+    
+    bool   bDidResize;
+    uint16 Width;
+    uint16 Height;
 };
 
 class APPLICATION_API FImGuiRenderer

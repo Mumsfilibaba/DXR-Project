@@ -2,9 +2,16 @@
 #include "CocoaWindow.h"
 #include "CocoaWindowView.h"
 #include "Core/Mac/Mac.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacRunLoop.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
+static CGFloat CocoaTransformY(CGFloat PosY)
+{
+    const CGRect DisplayBounds = CGDisplayBounds(CGMainDisplayID());
+    return DisplayBounds.size.height - PosY - 1;
+}
 
 static void ConvertNSRect(NSScreen* Screen, NSRect* Rect)
 {
@@ -36,7 +43,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     NSUInteger WindowStyle = 0;
     if (InInitializer.Style != EWindowStyleFlag::None)
     {
-        WindowStyle = NSWindowStyleMaskTitled | NSWindowStyleMaskFullSizeContentView;
+        WindowStyle = NSWindowStyleMaskTitled;
         if (InInitializer.Style.IsClosable())
         {
             WindowStyle |= NSWindowStyleMaskClosable;
@@ -60,13 +67,43 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     {
         SCOPED_AUTORELEASE_POOL();
         
-        const NSRect WindowRect = NSMakeRect(CGFloat(InInitializer.Position.x), CGFloat(InInitializer.Position.y), CGFloat(InInitializer.Width), CGFloat(InInitializer.Height));
-        Window = [[FCocoaWindow alloc] initWithContentRect: WindowRect styleMask: WindowStyle backing: NSBackingStoreBuffered defer: NO];
+        CGFloat Width     = static_cast<CGFloat>(InInitializer.Width);
+        CGFloat Height    = static_cast<CGFloat>(InInitializer.Height);
+        CGFloat PositionX = static_cast<CGFloat>(InInitializer.Position.x);
+        CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.y);
+        
+        // Calculate the max size of the screen, then we clamp the size to this largest size
+        NSScreen* MainScreen = [NSScreen mainScreen];
+        if (MainScreen)
+        {
+            NSRect ScreenRect = [MainScreen visibleFrame];
+            
+            const CGFloat MaxWidth      = ScreenRect.size.width;
+            const CGFloat MaxHeight     = ScreenRect.size.height;
+            const CGFloat ScreenOriginX = ScreenRect.origin.x;
+            const CGFloat ScreenOriginY = ScreenRect.origin.y;
+            
+            Width  = FMath::Min(Width, MaxWidth);
+            Height = FMath::Min(Height, MaxHeight);
+            
+            PositionX = FMath::Clamp(ScreenOriginX, ScreenOriginX + MaxWidth, PositionX);
+            PositionY = FMath::Clamp(ScreenOriginY, ScreenOriginY + MaxHeight, PositionY);
+        }
+        else
+        {
+            PositionY = CocoaTransformY(PositionY + Height - 1);
+        }
+
+        
+        // Create the actual window
+        const NSRect WindowRect = NSMakeRect(PositionX, PositionY, Width, Height);
+        Window = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
         if (!Window)
         {
             LOG_ERROR("[FMacWindow]: Failed to create NSWindow");
             return;
         }
+        
         
         const NSWindowLevel WindowLevel = InInitializer.Style.IsTopMost() ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [Window setLevel:WindowLevel];
@@ -75,17 +112,6 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         {
             Window.title = InInitializer.Title.GetNSString();
         }
-        
-        // Set a default background
-        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
-        
-        // Setting this to no disables any notifications about the window closing. Not documented.
-        [Window setReleasedWhenClosed:NO];
-        [Window setAcceptsMouseMovedEvents:YES];
-        [Window setRestorable:NO];
-        [Window setHasShadow: YES];
-        [Window setDelegate:Window];
-        [Window setBackgroundColor:BackGroundColor];
         
         if (!InInitializer.Style.IsMinimizable())
         {
@@ -110,9 +136,27 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         
         // Create a window-view
         WindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
+        
+        // Set a default background
+        NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
+        
+        // Setting this to no disables any notifications about the window closing. Not documented.
+        [Window setReleasedWhenClosed:NO];
+        [Window setAcceptsMouseMovedEvents:YES];
+        [Window setRestorable:NO];
+        [Window setHasShadow: YES];
+        [Window setDelegate:Window];
+        [Window setBackgroundColor:BackGroundColor];
         [Window setContentView:WindowView];
+        [Window makeFirstResponder:WindowView];
         
         [NSApp addWindowsItem:Window title:InInitializer.Title.GetNSString() filename:NO];
+        
+        // Disable tabbing mode
+        if ([Window respondsToSelector:@selector(setTabbingMode:)])
+        {
+            [Window setTabbingMode:NSWindowTabbingModeDisallowed];
+        }
         
         // Set styleflags
         StyleParams = InInitializer.Style;
@@ -358,7 +402,7 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
         NSScreen* Screen = Window.screen;
         ScreenSize  = Screen.frame.size;
         Frame       = Window.frame;
-        ContentRect = Window.contentLayoutRect;
+        ContentRect = Window.contentView.frame;
     }, NSDefaultRunLoopMode, true);
 
     OutWindowShape.Width      = ContentRect.size.width;
@@ -374,7 +418,8 @@ uint32 FMacWindow::GetWidth() const
     __block NSSize Size;
     ExecuteOnMainThread(^
     {
-        Size = Window.contentLayoutRect.size;
+        const NSRect ContentRect = Window.contentView.frame;
+        Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
 
     return uint32(Size.width);
@@ -387,7 +432,8 @@ uint32 FMacWindow::GetHeight() const
     __block NSSize Size;
     ExecuteOnMainThread(^
     {
-        Size = Window.contentLayoutRect.size;
+        const NSRect ContentRect = Window.contentView.frame;
+        Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
 
     return uint32(Size.height);
@@ -395,6 +441,8 @@ uint32 FMacWindow::GetHeight() const
 
 void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 {
+    SCOPED_AUTORELEASE_POOL();
+    
     __block NSRect Frame;
     ExecuteOnMainThread(^
     {

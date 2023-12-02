@@ -892,6 +892,12 @@ void FVulkanCommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVer
     VulkanViewport->Present(bVerticalSync);
 }
 
+void FVulkanCommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
+{
+    FVulkanViewport* VulkanViewport = static_cast<FVulkanViewport*>(Viewport);
+    VulkanViewport->Resize(Width, Height);
+}
+
 void FVulkanCommandContext::RHIClearState()
 {
     RHIFlush();

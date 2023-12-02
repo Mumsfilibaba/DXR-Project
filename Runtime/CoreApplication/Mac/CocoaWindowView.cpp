@@ -1,12 +1,29 @@
 #include "CocoaWindowView.h"
 #include "MacApplication.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+
+TAutoConsoleVariable<bool> CVarIsRetinaAware(
+    "MacOS.IsRetinaAware",
+    "If set to true the process is set to be using the full retina framebuffer for window surfaces, therwise not",
+    false,
+    EConsoleVariableFlags::Default);
 
 @implementation FCocoaWindowView
 
 - (instancetype)initWithFrame:(NSRect)Frame
 {
     self = [super initWithFrame:Frame];
-    return self;
+    if (self)
+    {
+        ScaleX            = 0.0f;
+        ScaleY            = 0.0f;
+        FrameBufferWidth  = 0.0f;
+        FrameBufferHeight = 0.0f;
+        return self;
+    }
+    
+    return nil;
 }
 
 - (BOOL) canBecomeKeyView
@@ -217,10 +234,37 @@
 {
 }
 
-- (void) viewDidChangeBackingProperties
+- (void)viewDidChangeBackingProperties
 {
-    CGFloat BackingScaleFactor = self.window.backingScaleFactor;
-    self.layer.contentsScale = BackingScaleFactor;
+    const NSRect ContentRect     = self.frame;
+    const NSRect FrameBufferRect = [self convertRectToBacking:ContentRect];
+    
+    // Check the scale of the view
+    const CGFloat NewScaleX = FrameBufferRect.size.width / ContentRect.size.width;
+    const CGFloat NewScaleY = FrameBufferRect.size.height / ContentRect.size.height;
+    if (NewScaleX != ScaleX || NewScaleY != ScaleY)
+    {
+        if (CVarIsRetinaAware.GetValue() && self.layer)
+        {
+            if (!self.window)
+            {
+                CGFloat BackingScaleFactor = self.window.backingScaleFactor;
+                self.layer.contentsScale = BackingScaleFactor;
+            }
+            else
+            {
+                LOG_ERROR("Window is not valid");
+                DEBUG_BREAK();
+            }
+        }
+    }
+
+    if (FrameBufferRect.size.width != FrameBufferWidth || FrameBufferRect.size.height != FrameBufferHeight)
+    {
+        FrameBufferWidth  = FrameBufferRect.size.width;
+        FrameBufferHeight = FrameBufferRect.size.height;
+        LOG_INFO("viewDidChangeBackingProperties FrameBufferSize: w=%.4f, h=%.4f", FrameBufferWidth, FrameBufferHeight);
+    }
 }
 
 - (void) mouseExited:(NSEvent*) Event

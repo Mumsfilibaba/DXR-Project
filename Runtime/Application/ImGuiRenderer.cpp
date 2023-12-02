@@ -54,8 +54,12 @@ static void ImGuiSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
 {
     if (FViewportData* ViewportData = reinterpret_cast<FViewportData*>(Viewport->RendererUserData))
     {
-        GRHICommandExecutor.WaitForGPU();
-        ViewportData->Viewport->Resize(static_cast<uint32>(Size.x), static_cast<uint32>(Size.y));
+        if (ViewportData->Viewport->GetWidth() != Size.x || ViewportData->Viewport->GetHeight() != Size.y)
+        {
+            ViewportData->bDidResize = true;
+            ViewportData->Width  = static_cast<uint16>(Size.x);
+            ViewportData->Height = static_cast<uint16>(Size.y);
+        }
     }
 }
 
@@ -77,6 +81,15 @@ static void ImGuiRenderWindow(ImGuiViewport* Viewport, void* CmdList)
     {
         if (FImGuiRenderer* Renderer = FApplication::Get().GetRenderer())
         {
+            if (ViewportData->bDidResize)
+            {
+                RHICmdList->ResizeViewport(ViewportData->Viewport.Get(), ViewportData->Width, ViewportData->Height);
+
+                ViewportData->bDidResize = false;
+                ViewportData->Width  = 0;
+                ViewportData->Height = 0;
+            }
+            
             const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
             Renderer->RenderViewport(*RHICmdList, Viewport->DrawData, *ViewportData, bClear);
         }

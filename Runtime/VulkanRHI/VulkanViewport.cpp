@@ -20,6 +20,7 @@ FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanQueue* InQueue,
     , RenderSemaphores()
     , SemaphoreIndex(0)
     , BackBufferIndex(0)
+    , bAquireNextImage(false)
 {
 }
 
@@ -47,11 +48,6 @@ bool FVulkanViewport::Initialize()
     if (!BackBuffer)
     {
         VULKAN_ERROR("Failed to create BackBuffer");
-        return false;
-    }
-
-    if (!AquireNextImage())
-    {
         return false;
     }
 
@@ -108,6 +104,9 @@ bool FVulkanViewport::CreateSwapChain()
         ImageSemaphores.Resize(BufferCount);
         RenderSemaphores.Resize(BufferCount);
         BackBuffers.Resize(BufferCount);
+        
+        const uint16 BackBufferWidth  = GetWidth();
+        const uint16 BackBufferheight = GetHeight();
 
         FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
         for (uint32 Index = 0; Index < BufferCount; ++Index)
@@ -156,6 +155,9 @@ bool FVulkanViewport::CreateSwapChain()
         return false;
     }
 
+    // We always needs to aquire the next image after we have created a swapchain
+    bAquireNextImage = true;
+
     // Transition images to the correct layout that is expected by the rendering engine (To be compatible with the other RHI modules)
     CommandBuffer->Begin();
 
@@ -202,13 +204,9 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
     {
-        VULKAN_INFO("Swapchain Resize");
+        VULKAN_INFO("Swapchain Resize w=%d h=%d", InWidth, InHeight);
 
-        Queue->FlushWaitSemaphoresAndWait();
-
-        Desc.Width  = static_cast<uint16>(InWidth);
-        Desc.Height = static_cast<uint16>(InHeight);
-        BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
+        Queue->WaitForCompletion();
 
         if (!CreateSwapChain())
         {
@@ -216,11 +214,9 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
             return false;
         }
 
-        if (!AquireNextImage())
-        {
-            VULKAN_WARNING("Resize FAILED");
-            return false;
-        }
+        Desc.Width  = static_cast<uint16>(InWidth);
+        Desc.Height = static_cast<uint16>(InHeight);
+        BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
     }
 
     return true;
@@ -230,6 +226,14 @@ bool FVulkanViewport::Present(bool bVerticalSync)
 {
     UNREFERENCED_VARIABLE(bVerticalSync);
 
+    if (bAquireNextImage)
+    {
+        if (!AquireNextImage())
+        {
+            return false;
+        }
+    }
+    
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
 
     VkResult Result = SwapChain->Present(Queue.Get(), RenderSemaphore.Get());
@@ -246,12 +250,7 @@ bool FVulkanViewport::Present(bool bVerticalSync)
     }
 
     AdvanceSemaphoreIndex();
-
-    if (!AquireNextImage())
-    {
-        return false;
-    }
-
+    bAquireNextImage = true;
     return true;
 }
 
@@ -273,6 +272,21 @@ void FVulkanViewport::SetName(const FString& InName)
             Texture->SetName(ImageName);
         }
     }
+}
+
+FVulkanTexture* FVulkanViewport::GetCurrentBackBuffer()
+{
+    if (bAquireNextImage)
+    {
+        if (!AquireNextImage())
+        {
+            return nullptr;
+        }
+        
+        bAquireNextImage = false;
+    }
+    
+    return BackBuffers[SemaphoreIndex].Get();
 }
 
 FRHITexture* FVulkanViewport::GetBackBuffer() const

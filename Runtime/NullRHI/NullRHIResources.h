@@ -120,7 +120,7 @@ public:
         BackBuffer = new FNullRHITexture(BackBufferDesc);
     }
 
-    virtual bool Resize(uint32 InWidth, uint32 InHeight) override final
+    bool Resize(uint32 InWidth, uint32 InHeight)
     {
         Desc.Width  = uint16(InWidth);
         Desc.Height = uint16(InHeight);

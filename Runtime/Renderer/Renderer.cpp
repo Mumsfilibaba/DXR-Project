@@ -642,12 +642,62 @@ void FRenderer::Tick()
         PerformFrustumCullingAndSort(Scene);
     }
 
-
     // START FRAME ON THE GPU
     GRHICommandExecutor.Tick();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
+    // Check if we resized and update the Viewport-size on the RHI-Thread
+    if (ResizeEvent)
+    {
+        GRHICommandExecutor.WaitForOutstandingTasks();
 
+        FRHIViewport* Viewport = Resources.MainViewport.Get();
+        
+        // TODO: Remove these
+        static uint32 StaticCurrentWidth  = Viewport->GetWidth();
+        static uint32 StaticCurrentHeight = Viewport->GetHeight();
+
+        uint32 NewWidth  = ResizeEvent->GetWidth();
+        uint32 NewHeight = ResizeEvent->GetHeight();
+        
+        if ((StaticCurrentWidth != NewWidth || StaticCurrentHeight != NewHeight) && NewWidth > 0 && NewHeight > 0)
+        {
+            LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", StaticCurrentWidth, StaticCurrentHeight, NewWidth, NewHeight);
+
+            CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
+
+            if (!DeferredRenderer.ResizeResources(Resources))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (!SSAORenderer.ResizeResources(Resources))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (!ShadowMapRenderer.ResizeResources(NewWidth, NewHeight, LightSetup))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (!TemporalAA.ResizeResources(Resources))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+        }
+        
+        StaticCurrentWidth  = NewWidth;
+        StaticCurrentHeight = NewHeight;
+        
+        ResizeEvent.Reset();
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
+    
     CommandList.BeginExternalCapture();
 
     // Begin capture GPU FrameTime
@@ -998,43 +1048,7 @@ void FRenderer::Tick()
 
 void FRenderer::OnWindowResize(const FWindowEvent& Event)
 {
-    const uint32 Width  = Event.GetWidth();
-    const uint32 Height = Event.GetHeight();
-
-    if (Width > 0 && Height > 0)
-    {
-        GRHICommandExecutor.WaitForOutstandingTasks();
-
-        if (!Resources.MainViewport->Resize(Width, Height))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!DeferredRenderer.ResizeResources(Resources))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!SSAORenderer.ResizeResources(Resources))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-
-        if (!TemporalAA.ResizeResources(Resources))
-        {
-            DEBUG_BREAK();
-            return;
-        }
-    }
+    ResizeEvent.Emplace(Event);
 }
 
 bool FRenderer::InitAA()

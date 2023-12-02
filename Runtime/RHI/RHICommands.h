@@ -1006,3 +1006,22 @@ DECLARE_RHICOMMAND(FRHICommandPresentViewport)
     FRHIViewport* Viewport;
     bool          bVerticalSync;
 };
+
+DECLARE_RHICOMMAND(FRHICommandResizeViewport)
+{
+    FORCEINLINE FRHICommandResizeViewport(FRHIViewport* InViewport, uint32 InWidth, uint32 InHeight)
+        : Viewport(InViewport)
+        , Width(InWidth)
+        , Height(InHeight)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RHIResizeViewport(Viewport, Width, Height);
+    }
+
+    FRHIViewport* Viewport;
+    uint32        Width;
+    uint32        Height;
+};

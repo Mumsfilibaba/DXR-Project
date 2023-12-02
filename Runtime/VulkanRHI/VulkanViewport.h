@@ -19,17 +19,25 @@ public:
 
     bool Initialize();
 
-    virtual bool Resize(uint32 InWidth, uint32 InHeight) override final;
-    
     virtual FRHITexture* GetBackBuffer() const override final;
-    
+
+    bool Resize(uint32 InWidth, uint32 InHeight);
+
     bool Present(bool bVerticalSync);
 
     void SetName(const FString& InName);
     
-    FVulkanTexture* GetCurrentBackBuffer() const
+    FVulkanTexture* GetCurrentBackBuffer();
+    
+    FVulkanTexture* GetBackBufferFromIndex(uint32 Index) const
     {
-        return BackBuffers[SemaphoreIndex].Get();
+        CHECK(BackBuffers.IsValidIndex(Index));
+        return BackBuffers[Index].Get();
+    }
+    
+    uint32 GetNumBackBuffers() const
+    {
+        return BackBuffers.Size();
     }
     
     FVulkanSwapChain* GetSwapChain() const
@@ -72,5 +80,6 @@ private:
     
     uint32 SemaphoreIndex;
     uint32 BackBufferIndex;
+    bool   bAquireNextImage;
 };
 

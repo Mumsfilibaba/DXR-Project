@@ -106,6 +106,8 @@ private:
 
     void FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands);
 
+    TOptional<FWindowEvent> ResizeEvent;
+
     TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
     TSharedPtr<FRendererInfoWindow>      InfoWindow;
     TSharedPtr<FGPUProfilerWindow>       GPUProfilerWindow;

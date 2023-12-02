@@ -1,4 +1,5 @@
 #pragma once
+#include "NullRHIResources.h"
 #include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
 
@@ -121,6 +122,12 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final { }
 
     virtual void RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final { }
+
+    virtual void RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) override final 
+    {
+        FNullRHIViewport* NullViewport = static_cast<FNullRHIViewport*>(Viewport);
+        NullViewport->Resize(Width, Height);
+    }
 
     virtual void RHIClearState() override final { }
 

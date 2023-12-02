@@ -176,6 +176,8 @@ public:
 
     virtual void RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final;
 
+    virtual void RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) override final;
+
     virtual void RHIClearState() override final;
 
     virtual void RHIFlush() override final;

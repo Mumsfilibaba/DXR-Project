@@ -60,6 +60,13 @@ public:
     {
         return Format;
     }
+    
+    // TODO: Solve in a cleaner way and remove this function
+    void Resize(uint32 InWidth, uint32 InHeight)
+    {
+        Desc.Extent.x = InWidth;
+        Desc.Extent.y = InHeight;
+    }
 
 protected:
     VkImage        Image;
@@ -85,13 +92,7 @@ public:
     
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkImage()); }
 
-    void ResizeBackBuffer(int32 InWidth, int32 InHeight)
-    {
-        FPlatformMisc::MemoryBarrier();
-
-        Desc.Extent.x = InWidth;
-        Desc.Extent.y = InHeight;
-    }
+    void ResizeBackBuffer(int32 InWidth, int32 InHeight);
 
     FVulkanTexture* GetCurrentBackBufferTexture();
     

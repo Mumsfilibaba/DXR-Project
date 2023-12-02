@@ -1148,6 +1148,12 @@ void FD3D12CommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVert
     ObtainCommandList();
 }
 
+void FD3D12CommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
+{
+    FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
+    D3D12Viewport->Present(bVerticalSync);
+}
+
 void FD3D12CommandContext::RHIClearState()
 {
     RHIFlush();

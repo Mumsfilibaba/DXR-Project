@@ -1346,8 +1346,6 @@ protected:
     virtual ~FRHIViewport() = default;
 
 public:
-    virtual bool Resize(uint32 InWidth, uint32 InHeight) { return true; }
-
     virtual FRHITexture* GetBackBuffer() const { return nullptr; };
 
     EFormat GetColorFormat() const

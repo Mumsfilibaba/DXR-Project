@@ -68,6 +68,7 @@ void FEngine::CreateMainWindow()
     }
     
     MainWindow = Window;
+    
 }
 
 bool FEngine::CreateMainViewport()
@@ -99,7 +100,7 @@ bool FEngine::CreateMainViewport()
     // Set the main-viewport
     MainViewport = Viewport;
 
-    // Now we show the window
+    // NOTE: We need to show the window before creating the viewport, since we could ask for a bigger window than what we actually can have Now we show the window
     MainWindow->Show();
 
     FApplication::Get().RegisterMainViewport(MainViewport);

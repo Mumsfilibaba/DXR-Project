@@ -528,6 +528,12 @@ public:
         EmplaceCommand<FRHICommandPresentViewport>(Viewport, bVerticalSync);
     }
 
+    FORCEINLINE void ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) noexcept
+    {
+        CHECK(Viewport != nullptr);
+        EmplaceCommand<FRHICommandResizeViewport>(Viewport, Width, Height);
+    }
+
     FORCEINLINE void InsertMarker(const FStringView& Marker) noexcept
     {
         FStringView NewMarker = AllocateString(Marker.GetCString());

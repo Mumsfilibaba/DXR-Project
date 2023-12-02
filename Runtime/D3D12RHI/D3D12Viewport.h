@@ -17,9 +17,9 @@ public:
 
     bool Initialize();
 
-    virtual bool Resize(uint32 Width, uint32 Height) override final;
-
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
+
+    bool Resize(uint32 Width, uint32 Height);
     
     bool Present(bool VerticalSync);
 
