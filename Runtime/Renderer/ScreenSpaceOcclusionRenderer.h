@@ -13,10 +13,10 @@ public:
 
     void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);
 
-    bool ResizeResources(FFrameResources& FrameResources);
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
 private:
-    bool CreateRenderTarget(FFrameResources& FrameResources);
+    bool CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
     FRHIComputePipelineStateRef PipelineState;
     FRHIComputeShaderRef        SSAOShader;

@@ -88,6 +88,14 @@ public:
 
     virtual void Stop() override final;
 
+    void WaitForOutstandingTasks() const
+    {
+        while (!Tasks.IsEmpty())
+        {
+            FPlatformThreadMisc::Pause();
+        }
+    }
+
     template<typename... ArgTypes>
     void DeferDeletion(uint64 InFenceValue, ArgTypes&&... Args)
     {

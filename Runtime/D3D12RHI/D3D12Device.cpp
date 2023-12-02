@@ -480,6 +480,9 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 
 FD3D12Device::~FD3D12Device()
 {
+    DeferredDeletionQueue.WaitForOutstandingTasks();
+    DeferredDeletionQueue.Stop();
+
     if (Adapter->IsDebugLayerEnabled())
     {
         // Disable filter for warnings since this triggers breakpoints when we check for alive object

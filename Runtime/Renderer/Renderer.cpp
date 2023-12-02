@@ -648,8 +648,6 @@ void FRenderer::Tick()
     // Check if we resized and update the Viewport-size on the RHI-Thread
     if (ResizeEvent)
     {
-        GRHICommandExecutor.WaitForOutstandingTasks();
-
         FRHIViewport* Viewport = Resources.MainViewport.Get();
         
         // TODO: Remove these
@@ -665,25 +663,25 @@ void FRenderer::Tick()
 
             CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
 
-            if (!DeferredRenderer.ResizeResources(Resources))
+            if (!DeferredRenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!SSAORenderer.ResizeResources(Resources))
+            if (!SSAORenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!ShadowMapRenderer.ResizeResources(NewWidth, NewHeight, LightSetup))
+            if (!ShadowMapRenderer.ResizeResources(CommandList, NewWidth, NewHeight, LightSetup))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!TemporalAA.ResizeResources(Resources))
+            if (!TemporalAA.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;

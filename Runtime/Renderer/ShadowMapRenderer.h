@@ -87,7 +87,7 @@ public:
     void RenderShadowMasks(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources);
 
      /** @brief - Resize the resources that are dependent on the viewport */
-    bool ResizeResources(uint32 Width, uint32 Height, FLightSetup& LightSetup);
+    bool ResizeResources(FRHICommandList& CommandList, uint32 Width, uint32 Height, FLightSetup& LightSetup);
 
 private:
     bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);

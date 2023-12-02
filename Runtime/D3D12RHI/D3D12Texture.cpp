@@ -444,6 +444,12 @@ FD3D12BackBufferTexture::~FD3D12BackBufferTexture()
     Viewport = nullptr;
 }
 
+void FD3D12BackBufferTexture::Resize(uint32 InWidth, uint32 InHeight)
+{
+    Desc.Extent.x = InWidth;
+    Desc.Extent.y = InHeight;
+}
+
 FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture()
 {
     return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;

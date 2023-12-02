@@ -49,6 +49,8 @@ FD3D12RHI::~FD3D12RHI()
 {
     SAFE_DELETE(DirectContext);
 
+    SamplerStateMap.clear();
+
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
 

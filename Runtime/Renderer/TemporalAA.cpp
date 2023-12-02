@@ -6,7 +6,10 @@
 
 bool FTemporalAA::Initialize(FFrameResources& FrameResources)
 {
-    if (!CreateRenderTarget(FrameResources))
+    const uint32 Width  = FrameResources.MainViewport->GetWidth();
+    const uint32 Height = FrameResources.MainViewport->GetHeight();
+
+    if (!CreateRenderTarget(FrameResources, Width, Height))
     {
         return false;
     }
@@ -113,16 +116,18 @@ void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameRes
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End TemporalAA");
 }
 
-bool FTemporalAA::ResizeResources(FFrameResources& FrameResources)
+bool FTemporalAA::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    return CreateRenderTarget(FrameResources);
+    for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
+    {
+        CommandList.DestroyResource(TAABuffer.Get());
+    }
+
+    return CreateRenderTarget(FrameResources, Width, Height);
 }
 
-bool FTemporalAA::CreateRenderTarget(FFrameResources& FrameResources)
+bool FTemporalAA::CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    const uint32 Width  = FrameResources.MainViewport->GetWidth();
-    const uint32 Height = FrameResources.MainViewport->GetHeight();
-
     // TAA History-Buffer
     FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);
 

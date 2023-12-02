@@ -129,10 +129,8 @@ bool FD3D12Viewport::Initialize()
 
 bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    if ((InWidth != Desc.Width || InHeight != Desc.Height) && (InWidth > 0) && (InHeight > 0))
+    if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
     {
-        GRHICommandExecutor.WaitForOutstandingTasks();
-
         CommandContext->RHIClearState();
 
         for (FD3D12TextureRef& Texture : BackBuffers)
@@ -215,7 +213,15 @@ bool FD3D12Viewport::RetriveBackBuffers()
         }
     }
 
-    BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
+    if (BackBuffer)
+    {
+        BackBuffer->Resize(GetWidth(), GetHeight());
+    }
+    else
+    {
+        BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
+    }
+
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
         TComPtr<ID3D12Resource> BackBufferResource;

@@ -68,7 +68,6 @@ bool FD3D12CommandList::Reset(FD3D12CommandAllocator& Allocator)
         D3D12DeviceRemovedHandlerRHI(GetDevice());
     }
 
-    NumCommands = 0;
     return SUCCEEDED(Result);
 }
 
@@ -82,5 +81,6 @@ bool FD3D12CommandList::Close()
         D3D12DeviceRemovedHandlerRHI(GetDevice());
     }
 
+    NumCommands = 0;
     return SUCCEEDED(Result);
 }

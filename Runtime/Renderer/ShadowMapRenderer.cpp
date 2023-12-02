@@ -794,8 +794,13 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
     }
 }
 
-bool FShadowMapRenderer::ResizeResources(uint32 Width, uint32 Height, FLightSetup& LightSetup)
+bool FShadowMapRenderer::ResizeResources(FRHICommandList& CommandList, uint32 Width, uint32 Height, FLightSetup& LightSetup)
 {
+    // Destroy the old resources 
+    CommandList.DestroyResource(LightSetup.DirectionalShadowMask.Get());
+    CommandList.DestroyResource(LightSetup.CascadeIndexBuffer.Get());
+
+    // Create the new resources
     return CreateShadowMask(Width, Height, LightSetup);
 }
 

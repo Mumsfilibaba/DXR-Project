@@ -96,6 +96,8 @@ public:
     
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
+    void Resize(uint32 InWidth, uint32 InHeight);
+
     FD3D12Texture* GetCurrentBackBufferTexture();
 
     FD3D12Viewport* GetViewport() const

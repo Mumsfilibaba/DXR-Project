@@ -1151,7 +1151,7 @@ void FD3D12CommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVert
 void FD3D12CommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
 {
     FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
-    D3D12Viewport->Present(bVerticalSync);
+    D3D12Viewport->Resize(Width, Height);
 }
 
 void FD3D12CommandContext::RHIClearState()
@@ -1273,7 +1273,6 @@ void FD3D12CommandContext::FinishCommandList()
 
         // Execute and update fence-value
         FD3D12FenceSyncPoint SyncPoint = GetDevice()->GetCommandListManager(QueueType)->ExecuteCommandList(CommandList, false);
-        CHECK(SyncPoint.FenceValue == AssignedFenceValue);
 
         // Release Allocator
         CommandAllocatorManager.ReleaseAllocator(CommandAllocator);
@@ -1282,5 +1281,7 @@ void FD3D12CommandContext::FinishCommandList()
 
     // Ensure that the state will rebind the necessary state when we obtain a new CommandList
     ContextState.ResetStateForNewCommandList();
+
+    // TODO: With multiple contexts this will not be safe
     AssignedFenceValue = 0;
 }

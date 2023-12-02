@@ -15,7 +15,10 @@ TAutoConsoleVariable<bool> GDrawTileDebug(
 
 bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 {
-    if (!CreateGBuffer(FrameResources))
+    const uint32 Width  = FrameResources.MainViewport->GetWidth();
+    const uint32 Height = FrameResources.MainViewport->GetHeight();
+
+    if (!CreateGBuffer(FrameResources, Width, Height))
     {
         return false;
     }
@@ -1383,19 +1386,29 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
 }
 
-bool FDeferredRenderer::ResizeResources(FFrameResources& FrameResources)
+bool FDeferredRenderer::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    return CreateGBuffer(FrameResources);
+    // Destroy the old resources
+    for (FRHITextureRef& Texture : FrameResources.GBuffer)
+    {
+        CommandList.DestroyResource(Texture.Get());
+    }
+
+    for (FRHITextureRef& Texture : FrameResources.ReducedDepthBuffer)
+    {
+        CommandList.DestroyResource(Texture.Get());
+    }
+
+    CommandList.DestroyResource(FrameResources.FinalTarget.Get());
+
+    // Create the new resources
+    return CreateGBuffer(FrameResources, Width, Height);
 }
 
-bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources)
+bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
-
-    const uint32 Width  = FrameResources.MainViewport->GetWidth();
-    const uint32 Height = FrameResources.MainViewport->GetHeight();
-
-    if (!(Width > 0 && Height > 0))
+    if (Width <= 0 && Height <= 0)
     {
         return true;
     }

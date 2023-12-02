@@ -28,7 +28,10 @@ TAutoConsoleVariable<int32> GSSAOKernelSize(
 
 bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
 {
-    if (!CreateRenderTarget(FrameResources))
+    const uint32 Width  = FrameResources.MainViewport->GetWidth();
+    const uint32 Height = FrameResources.MainViewport->GetHeight();
+
+    if (!CreateRenderTarget(FrameResources, Width, Height))
     {
         return false;
     }
@@ -149,9 +152,13 @@ void FScreenSpaceOcclusionRenderer::Release()
     BlurVerticalShader.Reset();
 }
 
-bool FScreenSpaceOcclusionRenderer::ResizeResources(FFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    return CreateRenderTarget(FrameResources);
+    // Destroy the old resource
+    CommandList.DestroyResource(FrameResources.SSAOBuffer.Get());
+
+    // Create the new resources
+    return CreateRenderTarget(FrameResources, Width, Height);
 }
 
 void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameResources& FrameResources)
@@ -229,12 +236,12 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End SSAO");
 }
 
-bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
     
-    const uint32 Width  = FrameResources.MainViewport->GetWidth() / 2;
-    const uint32 Height = FrameResources.MainViewport->GetHeight() / 2;
+    Width  = Width / 2;
+    Height = Height / 2;
 
     FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags);
     FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);

@@ -18,10 +18,10 @@ public:
 
     void RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
-    bool ResizeResources(FFrameResources& FrameResources);
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
 private:
-    bool CreateGBuffer(FFrameResources& FrameResources);
+    bool CreateGBuffer(FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
     // States for materials that use a single texture for each material-property
     FRHIGraphicsPipelineStateRef BasePassPSO;
