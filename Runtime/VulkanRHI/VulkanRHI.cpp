@@ -33,6 +33,13 @@ FVulkanRHI::FVulkanRHI()
 
 FVulkanRHI::~FVulkanRHI()
 {
+    GraphicsCommandContext.Reset();
+    GraphicsQueue.Reset();
+
+    Device.Reset();
+    PhysicalDevice.Reset();
+    Instance.Reset();
+
     if (GVulkanRHI == this)
     {
         GVulkanRHI = nullptr;
