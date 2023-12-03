@@ -41,6 +41,7 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
     
+    // Check if we are creating a fullsize (Retina) backbuffer
     IConsoleVariable* CVarIsRetinaAware = FConsoleManager::Get().FindConsoleVariable("MacOS.IsRetinaAware");
     if (CVarIsRetinaAware && CVarIsRetinaAware->GetBool())
     {
@@ -52,16 +53,16 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
     {
         [MetalLayer setContentsScale:1.0f];
     }
-    
+
     // Create a new MetalWindowView instead of the standard CocoaView (Use the same frame)
     FMetalWindowView* MetalView = [[FMetalWindowView alloc] initWithFrame:CocoaWindow.contentView.frame];
     [MetalView setLayer:MetalLayer];
     [MetalView setWantsLayer:YES];
-    
+
     // Set the MetalView as the new ContentView
     [CocoaWindow setContentView:MetalView];
     [CocoaWindow makeFirstResponder:MetalView];
-    
+
     // Create the vulkan surface
 #if VK_EXT_metal_surface
     VkMetalSurfaceCreateInfoEXT MetalSurfaceCreateInfo;

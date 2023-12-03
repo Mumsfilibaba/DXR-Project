@@ -154,42 +154,6 @@ struct FGenericWindowInitializer
         , ParentWindow(nullptr)
     {
     }
-
-    FGenericWindowInitializer& SetTitle(const FString& InTitle)
-    {
-        Title = InTitle;
-        return *this;
-    }
-
-    FGenericWindowInitializer& SetWidth(uint32 InWidth)
-    {
-        Width = InWidth;
-        return *this;
-    }
-
-    FGenericWindowInitializer& SetHeight(uint32 InHeight)
-    {
-        Height = InHeight;
-        return *this;
-    }
-
-    FGenericWindowInitializer& SetPosition(const FIntVector2& InPosition)
-    {
-        Position = InPosition;
-        return *this;
-    }
-
-    FGenericWindowInitializer& SetStyle(FWindowStyle InStyle)
-    {
-        Style = InStyle;
-        return *this;
-    }
-
-    FGenericWindowInitializer& SetParentWindow(FGenericWindow* InParentWindow)
-    {
-        ParentWindow = InParentWindow;
-        return *this;
-    }
     
     bool operator==(const FGenericWindowInitializer& Other) const
     {

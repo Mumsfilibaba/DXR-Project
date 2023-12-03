@@ -199,15 +199,15 @@ static void ImGuiCreateWindow(ImGuiViewport* Viewport)
         }
     }
 
-    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(
-        FGenericWindowInitializer()
-        .SetTitle("Window")
-        .SetWidth(static_cast<uint32>(Viewport->Size.x))
-        .SetHeight(static_cast<uint32>(Viewport->Size.y))
-        .SetPosition(FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y)))
-        .SetStyle(WindowStyle)
-        .SetParentWindow(ParentWindow));
-
+    FGenericWindowInitializer WindowInitializer;
+    WindowInitializer.Title        = "Window";
+    WindowInitializer.Width        = Viewport->Size.x;
+    WindowInitializer.Height       = Viewport->Size.y;
+    WindowInitializer.Position     = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
+    WindowInitializer.Style        = WindowStyle;
+    WindowInitializer.ParentWindow = ParentWindow;
+    
+    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(WindowInitializer);
     if (Window)
     {
         Viewport->PlatformHandle = Viewport->PlatformHandleRaw = Window->GetPlatformHandle();

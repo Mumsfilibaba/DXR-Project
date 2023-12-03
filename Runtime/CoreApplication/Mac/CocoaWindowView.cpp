@@ -6,7 +6,7 @@
 TAutoConsoleVariable<bool> CVarIsRetinaAware(
     "MacOS.IsRetinaAware",
     "If set to true the process is set to be using the full retina framebuffer for window surfaces, therwise not",
-    false,
+    true,
     EConsoleVariableFlags::Default);
 
 @implementation FCocoaWindowView
@@ -246,7 +246,7 @@ TAutoConsoleVariable<bool> CVarIsRetinaAware(
     {
         if (CVarIsRetinaAware.GetValue() && self.layer)
         {
-            if (!self.window)
+            if (self.window)
             {
                 CGFloat BackingScaleFactor = self.window.backingScaleFactor;
                 self.layer.contentsScale = BackingScaleFactor;

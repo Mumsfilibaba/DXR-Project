@@ -171,6 +171,8 @@ void FMacWindow::Show(bool bFocusOnActivate)
 {
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         if (bFocusOnActivate)
         {
             [Window orderFront:nil];
@@ -190,6 +192,8 @@ void FMacWindow::Minimize()
 {
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         [Window miniaturize:Window];
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -199,6 +203,8 @@ void FMacWindow::Maximize()
 {
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         if (Window.miniaturized)
         {
             [Window deminiaturize:Window];
@@ -214,6 +220,8 @@ void FMacWindow::Destroy()
 {
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         [Window performClose:Window];
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -223,6 +231,8 @@ void FMacWindow::Restore()
 {
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+        
         if (Window.miniaturized)
         {
             [Window deminiaturize:Window];
@@ -242,6 +252,7 @@ void FMacWindow::ToggleFullscreen()
     {
         ExecuteOnMainThread(^
         {
+            SCOPED_AUTORELEASE_POOL();
             [Window toggleFullScreen:Window];
         }, NSDefaultRunLoopMode, true);
     }
@@ -252,6 +263,7 @@ bool FMacWindow::IsActiveWindow() const
     __block bool bIsKeyWindow;
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
         bIsKeyWindow = Window.isKeyWindow;
     }, NSDefaultRunLoopMode, true);
 
@@ -268,6 +280,7 @@ bool FMacWindow::IsMinimized() const
     __block bool bIsMinimized;
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
         bIsMinimized = Window.miniaturized;
     }, NSDefaultRunLoopMode, true);
 
@@ -279,6 +292,7 @@ bool FMacWindow::IsMaximized() const
     __block bool bIsMaximized;
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
         bIsMaximized = Window.zoomed;
     }, NSDefaultRunLoopMode, true);
 
@@ -310,10 +324,9 @@ bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) co
 
 void FMacWindow::SetWindowFocus()
 {
-    SCOPED_AUTORELEASE_POOL();
-
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
         [Window makeKeyAndOrderFront:Window];
     }, NSDefaultRunLoopMode, true);
 }
@@ -344,10 +357,10 @@ void FMacWindow::GetTitle(FString& OutTitle) const
 
 void FMacWindow::SetWindowPos(int32 x, int32 y)
 {
-    SCOPED_AUTORELEASE_POOL();
-    
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+
         NSRect Frame      = Window.frame;
         NSRect WindowRect = NSMakeRect(x, y, Frame.size.width, Frame.size.height);
         ConvertNSRect(Window.screen, &WindowRect);
@@ -359,10 +372,10 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
 
 void FMacWindow::SetWindowOpacity(float Alpha)
 {
-    SCOPED_AUTORELEASE_POOL();
-    
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+
         Window.alphaValue = Alpha;
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -370,10 +383,10 @@ void FMacWindow::SetWindowOpacity(float Alpha)
 
 void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
-    SCOPED_AUTORELEASE_POOL();
-    
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+
         NSRect Frame = Window.frame;
         Frame.size.width  = Shape.Width;
         Frame.size.height = Shape.Height;
@@ -392,32 +405,26 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 
 void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
-    SCOPED_AUTORELEASE_POOL();
-
-    __block NSSize ScreenSize;
-    __block NSRect Frame;
     __block NSRect ContentRect;
     ExecuteOnMainThread(^
     {
-        NSScreen* Screen = Window.screen;
-        ScreenSize  = Screen.frame.size;
-        Frame       = Window.frame;
-        ContentRect = Window.contentView.frame;
+        SCOPED_AUTORELEASE_POOL();
+        ContentRect = [Window contentRectForFrameRect:Window.frame];
     }, NSDefaultRunLoopMode, true);
 
     OutWindowShape.Width      = ContentRect.size.width;
     OutWindowShape.Height     = ContentRect.size.height;
-    OutWindowShape.Position.x = Frame.origin.x;
-    OutWindowShape.Position.y = ScreenSize.height - Frame.origin.y - ContentRect.size.height;
+    OutWindowShape.Position.x = ContentRect.origin.x;
+    OutWindowShape.Position.y = CocoaTransformY(ContentRect.origin.y + ContentRect.size.height - 1);
 }
 
 uint32 FMacWindow::GetWidth() const
 {
-    SCOPED_AUTORELEASE_POOL();
-
     __block NSSize Size;
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+
         const NSRect ContentRect = Window.contentView.frame;
         Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
@@ -427,11 +434,11 @@ uint32 FMacWindow::GetWidth() const
 
 uint32 FMacWindow::GetHeight() const
 {
-    SCOPED_AUTORELEASE_POOL();
-
     __block NSSize Size;
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+
         const NSRect ContentRect = Window.contentView.frame;
         Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
@@ -441,11 +448,11 @@ uint32 FMacWindow::GetHeight() const
 
 void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 {
-    SCOPED_AUTORELEASE_POOL();
-    
     __block NSRect Frame;
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+
         NSScreen* Screen = Window.screen;
         Frame = Screen.frame;
     }, NSDefaultRunLoopMode, true);
@@ -456,12 +463,18 @@ void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 
 float FMacWindow::GetWindowDpiScale() const
 {
-    SCOPED_AUTORELEASE_POOL();
-
     __block CGFloat Scale;
     ExecuteOnMainThread(^
     {
-        Scale = Window.backingScaleFactor;
+        SCOPED_AUTORELEASE_POOL();
+
+        const NSRect Points = WindowView.frame;
+        const NSRect Pixels = [WindowView convertRectToBacking:Points];
+
+        const CGFloat ScaleX = static_cast<CGFloat>(Pixels.size.width / Points.size.width);
+        const CGFloat ScaleY = static_cast<CGFloat>(Pixels.size.height / Points.size.height);
+        CHECK(ScaleX == ScaleY);
+        Scale = ScaleX;
     }, NSDefaultRunLoopMode, true);
 
     return static_cast<float>(Scale);
@@ -471,28 +484,39 @@ void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
 {
     if (InPlatformHandle)
     {
-        // Make sure that the handle sent in is of correct type
-        FCocoaWindow* NewWindow = NSClassCast<FCocoaWindow>(reinterpret_cast<NSObject*>(InPlatformHandle));
-        if (NewWindow)
+        ExecuteOnMainThread(^
         {
-            Window = NewWindow;
-        }
+            SCOPED_AUTORELEASE_POOL();
+            
+            // Make sure that the handle sent in is of correct type
+            if (FCocoaWindow* NewWindow = NSClassCast<FCocoaWindow>(reinterpret_cast<NSObject*>(InPlatformHandle)))
+            {
+                if (FCocoaWindowView* NewWindowView = NSClassCast<FCocoaWindowView>(NewWindow.contentView))
+                {
+                    Window     = NewWindow;
+                    WindowView = NewWindowView;
+                }
+                else
+                {
+                    LOG_ERROR("WindowView is not of the expected type");
+                }
+            }
+            else
+            {
+                LOG_ERROR("WindowView is not of the expected type");
+            }
+        }, NSDefaultRunLoopMode, true);
     }
 }
 
 void FMacWindow::SetStyle(FWindowStyle InStyle)
 {
-    SCOPED_AUTORELEASE_POOL();
-
     ExecuteOnMainThread(^
     {
+        SCOPED_AUTORELEASE_POOL();
+
         const NSWindowLevel WindowLevel = InStyle.IsTopMost() ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [Window setLevel:WindowLevel];
-        
-//        if (InStyle.IsTitled())
-//        {
-//            Window.title = Title;
-//        }
         
         const BOOL bMinimizable = InStyle.IsMinimizable() ? YES : NO;
         [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:bMinimizable];

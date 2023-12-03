@@ -55,12 +55,12 @@ static FAutoConsoleCommand GToggleFullscreen(
 void FEngine::CreateMainWindow()
 {
     // TODO: This should be loaded from a config file
-    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(
-        FGenericWindowInitializer()
-        .SetTitle("Sandbox")
-        .SetWidth(2560)
-        .SetHeight(1440));
-
+    FGenericWindowInitializer WindowInitializer;
+    WindowInitializer.Title  = "Sandbox";
+    WindowInitializer.Width  = 2560;
+    WindowInitializer.Height = 1440;
+    
+    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(WindowInitializer);
     if (!Window)
     {
         DEBUG_BREAK();
@@ -68,7 +68,6 @@ void FEngine::CreateMainWindow()
     }
     
     MainWindow = Window;
-    
 }
 
 bool FEngine::CreateMainViewport()
@@ -102,7 +101,7 @@ bool FEngine::CreateMainViewport()
 
     // NOTE: We need to show the window before creating the viewport, since we could ask for a bigger window than what we actually can have Now we show the window
     MainWindow->Show();
-
+    
     FApplication::Get().RegisterMainViewport(MainViewport);
     return true;
 }
