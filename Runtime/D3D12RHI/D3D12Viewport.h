@@ -15,9 +15,9 @@ public:
     FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
     virtual ~FD3D12Viewport();
 
-    bool Initialize();
-
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
+
+    bool Initialize();
 
     bool Resize(uint32 Width, uint32 Height);
     

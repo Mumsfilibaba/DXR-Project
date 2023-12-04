@@ -29,7 +29,7 @@ struct FVulkanRenderPassKey
     
     bool operator==(const FVulkanRenderPassKey& Other) const
     {
-        return Key0 == Other.Key0 && Key1 == Other.Key1 && Key2 == Other.Key2;
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanRenderPassKey)) == 0;
     }
 
     bool operator!=(const FVulkanRenderPassKey& Other) const

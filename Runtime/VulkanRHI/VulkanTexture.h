@@ -11,19 +11,13 @@ typedef TSharedRef<FVulkanViewport>                FVulkanViewportRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
-class FVulkanTexture : public FRHITexture, public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanTexture : public FRHITexture, public FVulkanDeviceObject
 {
 public:
     FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& InDesc);
     virtual ~FVulkanTexture();
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
-
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
     virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FVulkanTexture*>(this)); }
     

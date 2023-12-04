@@ -15,11 +15,11 @@ class FVulkanViewport final : public FRHIViewport, public FVulkanDeviceObject
 {
 public:
     FVulkanViewport(FVulkanDevice* InDevice, FVulkanQueue* InQueue, const FRHIViewportDesc& InDesc);
-    ~FVulkanViewport();
-
-    bool Initialize();
+    virtual ~FVulkanViewport();
 
     virtual FRHITexture* GetBackBuffer() const override final;
+
+    bool Initialize();
 
     bool Resize(uint32 InWidth, uint32 InHeight);
 

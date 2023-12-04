@@ -9,6 +9,7 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanComma
     , Fence(InDevice)
     , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
     , CommandBuffer(VK_NULL_HANDLE)
+    , NumCommands(0)
     , bIsRecording(false)
 {
 }
@@ -19,9 +20,12 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanCommandBuffer&& Other)
     , Fence(Move(Other.Fence))
     , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
     , CommandBuffer(Other.CommandBuffer)
-    , bIsRecording(false)
+    , NumCommands(Other.NumCommands)
+    , bIsRecording(Other.bIsRecording)
 {
     Other.CommandBuffer = VK_NULL_HANDLE;
+    Other.NumCommands   = 0;
+    Other.bIsRecording  = false;
 }
 
 FVulkanCommandBuffer::~FVulkanCommandBuffer()

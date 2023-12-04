@@ -4,7 +4,6 @@
 FVulkanSamplerState::FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InDesc)
     : FRHISamplerState(InDesc)
     , FVulkanDeviceObject(InDevice)
-    , FVulkanRefCounted()
     , Sampler(VK_NULL_HANDLE)
 {
 }

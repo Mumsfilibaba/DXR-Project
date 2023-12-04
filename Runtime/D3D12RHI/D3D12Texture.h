@@ -10,20 +10,13 @@ class FD3D12Viewport;
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 
-
-class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild
 {
 public:
     FD3D12Texture(FD3D12Device* InDevice, const FRHITextureDesc& InDesc);
     virtual ~FD3D12Texture() = default;
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
-
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
 
     virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     

@@ -5,19 +5,13 @@
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 
-class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceObject
 {
 public:
     FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
     ~FVulkanBuffer();
     
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
-
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
     virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FVulkanBuffer*>(this)); }
     
@@ -29,12 +23,12 @@ public:
 
     virtual FString GetName() const override final;
 
-    FORCEINLINE VkBuffer GetVkBuffer() const
+    VkBuffer GetVkBuffer() const
     {
         return Buffer;
     }
     
-    FORCEINLINE VkDeviceMemory GetVkDeviceMemory() const
+    VkDeviceMemory GetVkDeviceMemory() const
     {
         return DeviceMemory;
     }

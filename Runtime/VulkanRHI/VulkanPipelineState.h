@@ -1,4 +1,5 @@
 #pragma once
+#include "VulkanShader.h"
 #include "VulkanRefCounted.h"
 #include "VulkanDeviceObject.h"
 #include "RHI/RHIResources.h"
@@ -11,17 +12,11 @@ typedef TSharedRef<class FVulkanComputePipelineState>    FVulkanComputePipelineS
 typedef TSharedRef<class FVulkanRayTracingPipelineState> FVulkanRayTracingPipelineStateRef;
 
 
-class FVulkanVertexInputLayout : public FRHIVertexInputLayout, public FVulkanRefCounted
+class FVulkanVertexInputLayout : public FRHIVertexInputLayout
 {
 public:
     FVulkanVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
     virtual ~FVulkanVertexInputLayout() = default;
-
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
     const VkVertexInputBindingDescription* GetVertexInputBindingDescriptions() const
     {
@@ -49,17 +44,11 @@ private:
 };
 
 
-class FVulkanDepthStencilState : public FRHIDepthStencilState, public FVulkanRefCounted
+class FVulkanDepthStencilState : public FRHIDepthStencilState
 {
 public:
     FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
     virtual ~FVulkanDepthStencilState() = default;
-
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
     virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
     {
@@ -77,17 +66,11 @@ private:
 };
 
 
-class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceObject
 {
 public:
     FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer);
     virtual ~FVulkanRasterizerState() = default;
-
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
     virtual FRHIRasterizerStateInitializer GetInitializer() const override final
     {
@@ -103,7 +86,7 @@ private:
     FRHIRasterizerStateInitializer         Initializer;
     VkPipelineRasterizationStateCreateInfo CreateInfo;
 #if VK_EXT_depth_clip_enable
-    VkPipelineRasterizationDepthClipStateCreateInfoEXT    DepthClipStateCreateInfo;
+    VkPipelineRasterizationDepthClipStateCreateInfoEXT DepthClipStateCreateInfo;
 #endif
 #if VK_EXT_conservative_rasterization
     VkPipelineRasterizationConservativeStateCreateInfoEXT ConservativeStateCreateInfo;
@@ -111,17 +94,11 @@ private:
 };
 
 
-class FVulkanBlendState : public FRHIBlendState, public FVulkanRefCounted
+class FVulkanBlendState : public FRHIBlendState
 {
 public:
     FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer);
     virtual ~FVulkanBlendState() = default;
-
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
 
     virtual FRHIBlendStateInitializer GetInitializer() const override final 
     {
@@ -140,7 +117,7 @@ private:
 };
 
 
-class FVulkanPipeline : public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanPipeline : public FVulkanDeviceObject
 {
 public:
     FVulkanPipeline(FVulkanDevice* InDevice);
@@ -172,12 +149,24 @@ public:
     virtual ~FVulkanGraphicsPipelineState() = default;
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
+    
+    virtual void SetName(const FString& InName) override final
+    {
+        FVulkanPipeline::SetDebugName(InName);
+    }
 
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
+    FORCEINLINE FVulkanVertexShader*   GetVertexShader()   const { return VertexShader.Get(); }
+    FORCEINLINE FVulkanHullShader*     GetHullShader()     const { return HullShader.Get(); }
+    FORCEINLINE FVulkanDomainShader*   GetDomainShader()   const { return DomainShader.Get(); }
+    FORCEINLINE FVulkanGeometryShader* GetGeometryShader() const { return GeometryShader.Get(); }
+    FORCEINLINE FVulkanPixelShader*    GetPixelShader()    const { return PixelShader.Get(); }
 
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
+private:
+    TSharedRef<FVulkanVertexShader>   VertexShader;
+    TSharedRef<FVulkanHullShader>     HullShader;
+    TSharedRef<FVulkanDomainShader>   DomainShader;
+    TSharedRef<FVulkanGeometryShader> GeometryShader;
+    TSharedRef<FVulkanPixelShader>    PixelShader;
 };
 
 
@@ -189,11 +178,15 @@ public:
     
     bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
 
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
+    virtual void SetName(const FString& InName) override final
+    {
+        FVulkanPipeline::SetDebugName(InName);
+    }
 
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
+    FORCEINLINE FVulkanComputeShader* GetComputeShader() const { return Shader.Get(); }
 
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
+private:
+    TSharedRef<FVulkanComputeShader> Shader;
 };
 
 

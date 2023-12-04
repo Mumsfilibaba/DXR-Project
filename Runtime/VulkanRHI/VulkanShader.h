@@ -68,6 +68,47 @@ public:
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
+class FVulkanHullShader : public FRHIHullShader, public FVulkanShader
+{
+public:
+    FVulkanHullShader(FVulkanDevice* InDevice)
+        : FRHIHullShader()
+        , FVulkanShader(InDevice, ShaderVisibility_Hull)
+    {
+    }
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+};
+
+class FVulkanDomainShader : public FRHIDomainShader, public FVulkanShader
+{
+public:
+    FVulkanDomainShader(FVulkanDevice* InDevice)
+        : FRHIDomainShader()
+        , FVulkanShader(InDevice, ShaderVisibility_Domain)
+    {
+    }
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+};
+
+class FVulkanGeometryShader : public FRHIGeometryShader, public FVulkanShader
+{
+public:
+    FVulkanGeometryShader(FVulkanDevice* InDevice)
+        : FRHIGeometryShader()
+        , FVulkanShader(InDevice, ShaderVisibility_Geometry)
+    {
+    }
+
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
+    
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+};
 
 class FVulkanPixelShader : public FRHIPixelShader, public FVulkanShader
 {

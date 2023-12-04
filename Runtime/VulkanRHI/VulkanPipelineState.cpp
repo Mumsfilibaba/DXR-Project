@@ -4,7 +4,6 @@
 
 FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
     : FRHIVertexInputLayout()
-    , FVulkanRefCounted()
 {
     const int32 NumAttributes = Initializer.Elements.Size();
     VertexInputAttributeDescriptions.Reserve(NumAttributes);
@@ -46,7 +45,6 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
 
 FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
     : FRHIDepthStencilState()
-    , FVulkanRefCounted()
     , Initializer(InInitializer)
 {
     FMemory::Memzero(&CreateInfo);
@@ -70,7 +68,6 @@ FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateIn
 FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer)
     : FRHIRasterizerState()
     , FVulkanDeviceObject(InDevice)
-    , FVulkanRefCounted()
     , Initializer(InInitializer)
 {
     FMemory::Memzero(&CreateInfo);
@@ -134,7 +131,6 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
 
 FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer)
     : FRHIBlendState()
-    , FVulkanRefCounted()
     , Initializer(InInitializer)
 {
     FMemory::Memzero(&CreateInfo);
@@ -162,7 +158,6 @@ FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitiali
 
 FVulkanPipeline::FVulkanPipeline(FVulkanDevice* InDevice)
     : FVulkanDeviceObject(InDevice)
-    , FVulkanRefCounted()
     , Pipeline(VK_NULL_HANDLE)
     , PipelineLayout(VK_NULL_HANDLE)
 {
