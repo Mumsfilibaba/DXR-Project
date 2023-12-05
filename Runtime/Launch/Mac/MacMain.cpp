@@ -1,5 +1,6 @@
 #include "Core/Core.h"
 #include "Core/Mac/Mac.h"
+#include "Core/Containers/String.h"
 
 #include <Appkit/Appkit.h>
 
@@ -7,7 +8,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 extern int32 EngineMain(const CHAR* Args[], int32 NumArgs);
 
-static int32 GEngineMainResult = 0;
+static FString GMacCommandLine;
+static int32   GEngineMainResult = 0;
 
 @interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
 @end
@@ -16,8 +18,14 @@ static int32 GEngineMainResult = 0;
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*) Sender
 {
-    // TODO: Maybe check some state before returning yes, but for now just terminate
-    return NSTerminateNow;
+    if (!IsEngineExitRequested())
+    {
+        return NSTerminateLater;
+    }
+    else
+    {
+        return NSTerminateNow;
+    }
 }
 
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) Sender
@@ -35,9 +43,8 @@ static int32 GEngineMainResult = 0;
     SCOPED_AUTORELEASE_POOL();
     
     // Run the main loop
-    // TODO: Check how we can send the commandline here
-    GEngineMainResult = EngineMain(nullptr, 0);
-    return;
+    const CHAR* CommandLine = GMacCommandLine.GetCString();
+    GEngineMainResult = EngineMain(&CommandLine, 1);
 }
 
 @end
@@ -45,14 +52,37 @@ static int32 GEngineMainResult = 0;
 
 int main(int NumArgs, const CHAR** Args)
 {
-    [NSApplication sharedApplication];
-    [NSApplication sharedApplication].delegate = [FCocoaAppDelegate new];
+    // The first argument is always the path to the application
+    for (int32 Index = 1; Index < NumArgs; Index++)
+    {
+        GMacCommandLine += " ";
+        FString CurrentArg(Args[Index]);
+        if (CurrentArg.Contains(' '))
+        {
+            if (CurrentArg.Contains('='))
+            {
+                int32 Pos       = CurrentArg.FindChar('=');
+                int32 Remaining = CurrentArg.Length() - Pos;
+                
+                FString Arg0(CurrentArg.GetCString(), Pos);
+                FString Arg1(CurrentArg.GetCString() + Pos + 1, Remaining);
+                CurrentArg = FString::CreateFormatted("%s=\"%s\"", Arg0.GetCString(), Arg1.GetCString());
+            }
+            else
+            {
+                CurrentArg = FString::CreateFormatted("\"%s\"", CurrentArg.GetCString());
+            }
+        }
+        
+        GMacCommandLine += CurrentArg;
+    }
     
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    [NSApplication sharedApplication].presentationOptions = NSApplicationPresentationDefault;
-    [[NSApplication sharedApplication] setActivationPolicy:NSApplicationActivationPolicyRegular];
-
-    [[NSApplication sharedApplication] run];
+    [NSApplication sharedApplication];
+    [NSApp setDelegate:[FCocoaAppDelegate new]];
+    [NSApp activateIgnoringOtherApps:YES];
+    [NSApp setPresentationOptions:NSApplicationPresentationDefault];
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [NSApp run];
     return GEngineMainResult;
 }
 

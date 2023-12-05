@@ -13,8 +13,8 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
         return false;
     }
 
-    CHAR* CommandLineIt  = CommandLine;
-    CHAR* CommandLineEnd = CommandLine + MaxCommandLineLength;
+    CHAR* CommandLineIt         = CommandLine;
+    CHAR* CommandLineEnd        = CommandLine + MaxCommandLineLength;
     CHAR* OriginalCommandLineIt = OriginalCommandLine;
 
     for (int32 Index = 0; Index < NumArgs; ++Index)
