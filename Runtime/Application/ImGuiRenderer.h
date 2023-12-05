@@ -41,6 +41,8 @@ struct FViewportData
 class APPLICATION_API FImGuiRenderer
 {
 public:
+    ~FImGuiRenderer();
+    
     bool Initialize();
 
     void Render(FRHICommandList& CmdList);

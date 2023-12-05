@@ -869,9 +869,6 @@ bool FApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& InWindow)
         if (Window == InWindow)
         {
             RequestEngineExit("Normal Exit");
-
-            // TODO: This feels inconsistent, should this be done from engineloop? 
-            RegisterMainViewport(nullptr);
         }
     }
 
@@ -1083,7 +1080,7 @@ void FApplication::RegisterMainViewport(const TSharedPtr<FViewport>& InViewport)
             MainWindow = nullptr;
         }
 
-        FImGui::SetupMainViewport(InViewport.Get());
+        FImGui::SetMainViewport(InViewport.Get());
     }
 }
 

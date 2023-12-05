@@ -113,6 +113,12 @@ static void ImGuiSwapBuffers(ImGuiViewport* Viewport, void* CmdList)
     }
 }
 
+FImGuiRenderer::~FImGuiRenderer()
+{
+    // Release the MainViewport
+    FImGui::SetMainViewport(nullptr);
+}
+
 
 bool FImGuiRenderer::Initialize()
 {

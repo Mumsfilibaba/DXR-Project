@@ -16,6 +16,14 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
 
 FVulkanDevice::~FVulkanDevice()
 {
+    // Ensure that all RenderPasses and FrameBuffers are destroyed
+    RenderPassCache.ReleaseAll();
+    FramebufferCache.ReleaseAll();
+
+    // Ensure that the upload allocator is released before we destroy the device
+    UploadHeap.Release();
+
+    // Destroy the device here
     if (VULKAN_CHECK_HANDLE(Device))
     {
         vkDestroyDevice(Device, nullptr);

@@ -48,6 +48,7 @@ bool FViewport::InitializeRHI(const FViewportInitializer& Initializer)
 
 void FViewport::ReleaseRHI()
 {
+    CHECK(RHIViewport->GetRefCount() == 1);
     RHIViewport.Reset();
 }
 

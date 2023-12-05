@@ -301,15 +301,16 @@ bool FEngineLoop::Release()
     // Release GPU profiler
     FGPUProfiler::Release();
 
-    // Release the renderer
-    FRenderer::Release();
-
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
     if (FApplication::IsInitialized())
     {
+        FApplication::Get().RegisterMainViewport(nullptr);
         FApplication::Get().ReleaseRenderer();
     }
 
+    // Release the renderer
+    FRenderer::Release();
+    
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
     if (GEngine)
     {

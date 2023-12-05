@@ -381,6 +381,17 @@ void FImGui::CreateContext()
     Context = ImGui::CreateContext();
     CHECK(Context != nullptr);
 
+    // Make sure that the Viewport is zeroed
+    if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+    {
+        Viewport->PlatformWindowCreated = false;
+        Viewport->PlatformRequestMove   = false;
+        Viewport->PlatformRequestResize = false;
+        Viewport->PlatformUserData      = nullptr;
+        Viewport->PlatformHandle        = Viewport->PlatformHandleRaw = nullptr;
+        Viewport->RendererUserData      = nullptr;
+    }
+    
     // Application Flags
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;              // Platform supports Gamepad and currently has one connected.
@@ -562,7 +573,7 @@ void FImGui::InitializeStyle()
     Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 }
 
-void FImGui::SetupMainViewport(FViewport* InViewport)
+void FImGui::SetMainViewport(FViewport* InViewport)
 {
     if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
@@ -576,19 +587,28 @@ void FImGui::SetupMainViewport(FViewport* InViewport)
             // Set native handles
             TSharedRef<FGenericWindow> MainWindow = InViewport->GetWindow();
             Viewport->PlatformUserData = MainWindow.Get();
-            Viewport->PlatformHandle = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
+            Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
 
             FViewportData* ViewportData = new FViewportData();
-            ViewportData->Viewport = InViewport->GetRHIViewport();
-            Viewport->RendererUserData = ViewportData;
+            ViewportData->Viewport      = InViewport->GetRHIViewport();
+            Viewport->RendererUserData  = ViewportData;
         }
         else
         {
+            // Delete any exisiting viewport
+            if (Viewport->RendererUserData)
+            {
+                FViewportData* ViewportData = reinterpret_cast<FViewportData*>(Viewport->RendererUserData);
+                delete ViewportData;
+            }
+            
+            Viewport->RendererUserData = nullptr;
+
+            // Release platform information
             Viewport->PlatformWindowCreated = false;
             Viewport->PlatformRequestMove   = false;
             Viewport->PlatformRequestResize = false;
             Viewport->PlatformUserData      = nullptr;
-            Viewport->RendererUserData      = nullptr;
             Viewport->PlatformHandle        = Viewport->PlatformHandleRaw = nullptr;
         }
     }

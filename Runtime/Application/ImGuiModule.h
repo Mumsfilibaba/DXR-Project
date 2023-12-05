@@ -23,7 +23,7 @@ public:
 
     static void InitializeStyle();
 
-    static void SetupMainViewport(FViewport* InViewport);
+    static void SetMainViewport(FViewport* InViewport);
 
     static FResponse OnGamepadButtonEvent(FKey Key, bool bIsDown);
 
@@ -51,6 +51,16 @@ public:
 
     static FResponse OnWindowClose(void* PlatformHandle);
 
+    static FORCEINLINE FViewportData* GetMainViewportData()
+    {
+        if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+        {
+            return reinterpret_cast<FViewportData*>(Viewport->RendererUserData);
+        }
+        
+        return nullptr;
+    }
+    
     static FORCEINLINE ImVec2 GetDisplaySize()
     {
         return ImGui::GetIO().DisplaySize;

@@ -35,8 +35,9 @@ static int32 GEngineMainResult = 0;
     SCOPED_AUTORELEASE_POOL();
     
     // Run the main loop
-    // TODO: Check how we can send the commanline here
+    // TODO: Check how we can send the commandline here
     GEngineMainResult = EngineMain(nullptr, 0);
+    return;
 }
 
 @end
