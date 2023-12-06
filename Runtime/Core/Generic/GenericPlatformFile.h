@@ -160,6 +160,9 @@ public:
         return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
     }
 
+    static FString ExtractFilename(const FString& Filepath);
+    static FString ExtractFilenameWithoutExtension(const FString& Filepath);
+
 private:
     static bool WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Size);
 };

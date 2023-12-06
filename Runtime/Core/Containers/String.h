@@ -302,12 +302,21 @@ public:
      */
     FORCEINLINE void CopyToBuffer(CHARTYPE* Buffer, SizeType BufferSize, SizeType Position = INVALID_INDEX) const noexcept
     {
-        CHECK(Position < Length() || Position == 0);
-        if (Buffer && BufferSize > 0)
+        const SizeType CurrentLength = Length();
+        CHECK(Position < CurrentLength || Position == 0);
+        
+        if (!Buffer || BufferSize == 0)
         {
-            const SizeType CopySize = FMath::Min(BufferSize, Length() - Position);
-            FCStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
+            return;
         }
+
+        if (Position == INVALID_INDEX)
+        {
+            Position = 0;
+        }
+        
+        const SizeType CopySize = FMath::Min(BufferSize, CurrentLength - Position);
+        FCStringType::Strncpy(Buffer, CharData.Data() + Position, CopySize);
     }
 
     /**
@@ -1102,6 +1111,34 @@ public:
     {
         CHECK(Offset < Length() && (Offset + Count < Length()));
         return TString(CharData.Data() + Offset, Count);
+    }
+    
+    /**
+     * @brief            - Splits the string into two parts at a certain character if it is found
+     * @param Char       - Character to look for
+     * @param LeftValue  - String to store the left value in
+     * @param RightValue - String to store the right value in
+     */
+    FORCEINLINE void Split(CHARTYPE Char, TString& LeftValue, TString& RightValue) const noexcept
+    {
+        SizeType SplitPos = FindChar(Char);
+        if (SplitPos == INVALID_INDEX)
+        {
+            SplitPos = 0;
+        }
+        
+        const SizeType LeftLength = SplitPos;
+        if (LeftLength > 0)
+        {
+            LeftValue = TString(CharData.Data(), LeftLength);
+        }
+        
+        const SizeType RightStart  = LeftLength > 0 ? LeftLength + 1 : LeftLength;
+        const SizeType RightLength = Length() - RightStart;
+        if (RightLength > 0)
+        {
+            RightValue = TString(CharData.Data() + RightStart, RightLength);
+        }
     }
 
     /**

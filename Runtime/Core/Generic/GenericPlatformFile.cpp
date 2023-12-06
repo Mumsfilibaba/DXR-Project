@@ -51,3 +51,41 @@ bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Siz
 
     return true;
 }
+
+FString FFileHelpers::ExtractFilename(const FString& Filepath)
+{
+    int32 LastSlash = Filepath.FindLastChar('/');
+    if (LastSlash == FString::INVALID_INDEX)
+    {
+        LastSlash = 0;
+    }
+    else
+    {
+        LastSlash++;
+    }
+    
+    int32 NewLength = Filepath.Length() - LastSlash;
+    return FString(Filepath.GetCString() + LastSlash, NewLength);
+}
+    
+FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
+{
+    int32 LastSlash = Filepath.FindLastChar('/');
+    if (LastSlash == FString::INVALID_INDEX)
+    {
+        LastSlash = 0;
+    }
+    else
+    {
+        LastSlash++;
+    }
+    
+    int32 ExtensionPos = Filepath.FindLastChar('.');
+    if (ExtensionPos == FString::INVALID_INDEX)
+    {
+        ExtensionPos = FCString::Strlen(Filepath.GetCString() + LastSlash);
+    }
+    
+    int32 NewLength = ExtensionPos - LastSlash;
+    return FString(Filepath.GetCString() + LastSlash, NewLength);
+}

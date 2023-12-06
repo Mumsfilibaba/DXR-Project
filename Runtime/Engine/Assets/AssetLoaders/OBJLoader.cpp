@@ -3,6 +3,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Threading/AsyncTask.h"
+#include "Core/Generic/GenericPlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/Assets/MeshUtilities.h"
 #include "Engine/Assets/AssetManager.h"
@@ -22,7 +23,11 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     std::vector<tinyobj::material_t> Materials;
     tinyobj::attrib_t                Attributes;
 
-    FString MTLFiledir = FString(Filename.GetCString(), Filename.FindLastChar('/'));
+    // Extract just the name of the file
+    FString MTLFiledir          = FFileHelpers::ExtractFilename(Filename);
+    FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(MTLFiledir);
+    
+    // Load the OBJ file
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
     {
         LOG_WARNING("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
@@ -34,33 +39,40 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     }
 
     // Create All Materials in scene
+    int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
     {
         // Create new material with default properties
         FMaterialData MaterialData;
-        MaterialData.MetallicTexture = StaticCastSharedRef<FTexture2D>(
-            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
-        MaterialData.DiffuseTexture = StaticCastSharedRef<FTexture2D>(
-            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
-        MaterialData.RoughnessTexture = StaticCastSharedRef<FTexture2D>(
-            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
-        MaterialData.NormalTexture = StaticCastSharedRef<FTexture2D>(
-            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
-        MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTexture2D>(
-            FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
+        MaterialData.MetallicTexture  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
+        MaterialData.DiffuseTexture   = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
+        MaterialData.RoughnessTexture = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
+        MaterialData.NormalTexture    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
+        MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
 
         MaterialData.Diffuse   = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
         MaterialData.Metallic  = Mat.ambient[0];
         MaterialData.AO        = 1.0f;
         MaterialData.Roughness = 1.0f;
-        MaterialData.Name      = Mat.name.c_str();
-
+        
+        if (Mat.name.empty())
+        {
+            MaterialData.Name = FString::CreateFormatted("%s_material_%d", FilenameWithoutPath.GetCString(), SceneMaterialIndex);
+        }
+        else
+        {
+            MaterialData.Name = Mat.name.c_str();
+        }
+        
         OutScene.Materials.Emplace(MaterialData);
+        SceneMaterialIndex++;
     }
 
     // Construct Scene
     FModelData Data;
     TMap<FVertex, uint32, FVertexHasher> UniqueVertices;
+    
+    int32 ShapeIndex = 0;
     for (const tinyobj::shape_t& Shape : Shapes)
     {
         // Start at index zero for each mesh and loop until all indices are processed
@@ -94,27 +106,19 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
                 CHECK(Index.vertex_index >= 0);
 
                 auto PositionIndex = 3 * Index.vertex_index;
-                TempVertex.Position = FVector3(
-                    Attributes.vertices[PositionIndex + 0],
-                    Attributes.vertices[PositionIndex + 1],
-                    Attributes.vertices[PositionIndex + 2]);
+                TempVertex.Position = FVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
 
                 if (Index.normal_index >= 0)
                 {
                     auto NormalIndex = 3 * Index.normal_index;
-                    TempVertex.Normal = FVector3(
-                        Attributes.normals[NormalIndex + 0],
-                        Attributes.normals[NormalIndex + 1],
-                        Attributes.normals[NormalIndex + 2]);
+                    TempVertex.Normal = FVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
                     TempVertex.Normal.Normalize();
                 }
 
                 if (Index.texcoord_index >= 0)
                 {
                     auto TexCoordIndex = 2 * Index.texcoord_index;
-                    TempVertex.TexCoord = FVector2(
-                        Attributes.texcoords[TexCoordIndex + 0],
-                        Attributes.texcoords[TexCoordIndex + 1]);
+                    TempVertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
                 if (UniqueVertices.count(TempVertex) == 0)
@@ -140,8 +144,17 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
                 Data.MaterialIndex = MaterialID;
             }
 
-            Data.Name = Shape.name.c_str();
+            if (Shape.name.empty())
+            {
+                Data.Name = FString::CreateFormatted("%s_%d", FilenameWithoutPath.GetCString(), ShapeIndex);
+            }
+            else
+            {
+                Data.Name = Shape.name.c_str();
+            }
+            
             OutScene.Models.Emplace(Data);
+            ShapeIndex++;
         }
     }
 

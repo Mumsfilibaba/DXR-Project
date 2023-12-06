@@ -61,12 +61,10 @@ int main(int NumArgs, const CHAR** Args)
         {
             if (CurrentArg.Contains('='))
             {
-                int32 Pos       = CurrentArg.FindChar('=');
-                int32 Remaining = CurrentArg.Length() - Pos;
-                
-                FString Arg0(CurrentArg.GetCString(), Pos);
-                FString Arg1(CurrentArg.GetCString() + Pos + 1, Remaining);
-                CurrentArg = FString::CreateFormatted("%s=\"%s\"", Arg0.GetCString(), Arg1.GetCString());
+                FString Argument;
+                FString ArgumentValue;
+                CurrentArg.Split('=', Argument, ArgumentValue);
+                CurrentArg = FString::CreateFormatted("%s=\"%s\"", Argument.GetCString(), ArgumentValue.GetCString());
             }
             else
             {

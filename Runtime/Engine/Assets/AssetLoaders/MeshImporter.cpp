@@ -184,15 +184,23 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
     int64 NumTotalIndices  = 0;
     for (int32 ModelIndex = 0; ModelIndex < SceneHeader.NumModels; ++ModelIndex)
     {
-        FMemory::Memzero(Models[ModelIndex].Name, FCustomModel::MaxNameLength);
-        Scene.Models[ModelIndex].Name.CopyToBuffer(Models[ModelIndex].Name, FCustomModel::MaxNameLength);
+        FCustomModel& CurrentModel = Models[ModelIndex];
+        FMemory::Memzero(CurrentModel.Name, FCustomModel::MaxNameLength);
         
-        Models[ModelIndex].MaterialIndex = Scene.Models[ModelIndex].MaterialIndex;
-        Models[ModelIndex].NumVertices   = Scene.Models[ModelIndex].Mesh.GetVertexCount();
-        Models[ModelIndex].NumIndices    = Scene.Models[ModelIndex].Mesh.GetIndexCount();
+        const FModelData& SceneModel = Scene.Models[ModelIndex];
+        SceneModel.Name.CopyToBuffer(CurrentModel.Name, FCustomModel::MaxNameLength);
+        
+        if (FCString::Strlen(CurrentModel.Name) == 0)
+        {
+            LOG_WARNING("Model has no name");
+        }
+        
+        CurrentModel.MaterialIndex = SceneModel.MaterialIndex;
+        CurrentModel.NumVertices   = SceneModel.Mesh.GetVertexCount();
+        CurrentModel.NumIndices    = SceneModel.Mesh.GetIndexCount();
 
-        NumTotalVertices += Models[ModelIndex].NumVertices;
-        NumTotalIndices  += Models[ModelIndex].NumIndices;
+        NumTotalVertices += CurrentModel.NumVertices;
+        NumTotalIndices  += CurrentModel.NumIndices;
     }
 
     SceneHeader.NumTotalVertices = NumTotalVertices;
