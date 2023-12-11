@@ -37,7 +37,7 @@ bool FThreadManager::Initialize()
         return false;
     }
 
-    return FPlatformThreadMisc::Initialize();
+    return true;
 }
 
 bool FThreadManager::Release()

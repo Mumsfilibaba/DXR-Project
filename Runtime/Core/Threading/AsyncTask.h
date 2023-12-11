@@ -1,6 +1,5 @@
 #pragma once
 #include "TaskManager.h"
-
 #include "Core/Core.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformThreadMisc.h"

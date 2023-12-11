@@ -2,6 +2,7 @@
 #include "MacApplication.h"
 #include "MacOutputDeviceConsole.h"
 #include "Core/Mac/Mac.h"
+#include "Core/Mac/MacRunLoop.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Generic/InputCodes.h"
 
@@ -35,24 +36,13 @@ void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Messag
 
 void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    CHECK(NSApp != nil);
-    
-    do
+    PumpMessagesApplicationThread(bUntilEmpty);
+
+    ExecuteOnMainThread(^
     {
-        NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
-        if (!Event)
-        {
-            break;
-        }
-        
-        // Prevent to send event from invalid windows
-        if ([Event windowNumber] == 0 || [Event window] != nil)
-        {
-            [NSApp sendEvent:Event];
-        }
-    } while (bUntilEmpty);
+        NSMenu* MainMenu = [NSApp mainMenu];
+        [MainMenu update];
+    }, NSDefaultRunLoopMode, false);
 }
 
 FModifierKeyState FMacApplicationMisc::GetModifierKeyState()

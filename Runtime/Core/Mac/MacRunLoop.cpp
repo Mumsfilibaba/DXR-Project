@@ -15,10 +15,11 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-class FRunLoopSourceContext;
+#define LOGIC_THREAD_STACK_SIZE (128 * 1024 * 1024)
 
-// Main-thread runloop source
-FRunLoopSourceContext* GMainThread = nullptr;
+static NSThread* GApplicationThread = nil;
+
+class FRunLoopSourceContext;
 
 @interface FRunLoopSource : NSObject
 {
@@ -61,9 +62,37 @@ struct FRunLoopTask
 };
 
 
-class FRunLoopSourceContext : public  FRefCounted
+/** @brief - Manager for a RunLoop for a certain Thread */
+class FRunLoopSourceContext : public FRefCounted
 {
 public:
+    static FRunLoopSourceContext& GetMainThreadContext()
+    {
+        CHECK(MainThreadContext != nullptr);
+        return *MainThreadContext;
+    }
+    
+    static FRunLoopSourceContext& GetApplicationThreadContext()
+    {
+        CHECK(ApplicationThreadContext != nullptr);
+        return *ApplicationThreadContext;
+    }
+    
+    static bool RegisterMainThreadRunLoop()
+    {
+        CHECK(FPlatformThreadMisc::IsMainThread());
+        CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+        MainThreadContext = new FRunLoopSourceContext(RunLoop);
+        return true;
+    }
+    
+    static bool RegisterApplicationThreadRunLoop()
+    {
+        CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+        ApplicationThreadContext = new FRunLoopSourceContext(RunLoop);
+        return true;
+    }
+    
     FRunLoopSourceContext(CFRunLoopRef InRunLoop)
         : RunLoop(InRunLoop)
         , SourceAndModeDictionary(CFDictionaryCreateMutable(nullptr, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks))
@@ -73,13 +102,19 @@ public:
 
         // Register for the default mode
         RegisterForMode(kCFRunLoopDefaultMode);
+        RegisterForMode((CFStringRef)NSModalPanelRunLoopMode);
     }
     
     ~FRunLoopSourceContext()
     {
-        if (this == GMainThread)
+        if (this == MainThreadContext)
         {
-            GMainThread = nullptr;
+            MainThreadContext = nullptr;
+        }
+        
+        if (this == ApplicationThreadContext)
+        {
+            ApplicationThreadContext = nullptr;
         }
         
         // This dictionary is created so that keys and values are automatically retained and released when added or removed
@@ -116,8 +151,8 @@ public:
 
             // This dictionary is created so that keys and values are automatically retained and released when added or removed
             CFDictionaryAddValue(SourceAndModeDictionary, InRunLoopMode, Source);
-
             CFRunLoopAddSource(RunLoop, Source, InRunLoopMode);
+
             CFRelease(Source);
         }
     }
@@ -129,34 +164,37 @@ public:
             RegisterForMode((CFStringRef)Mode);
         }
 
+        // Enqueue a new task
         Tasks.Emplace(new FRunLoopTask(InModes, Block));
-        NumTasks++;
         
+        // Signal the source
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Signal, nullptr);
     }
     
     void Execute(CFStringRef InRunLoopMode)
     {
+        // Take all the tasks that currently exists
+        TArray<FRunLoopTask*> NewTasks;
+        Tasks.DequeueAll(NewTasks);
+        
         bool bDone = false;
         while (!bDone)
         {
+            // Ensure we exit if we do not process any tasks
             bDone = true;
             
-            // No more tasks to execute
-            if (!Tasks.Peek())
-            {
-                break;
-            }
-            
             // Execute the task
-            FRunLoopTask* Task = *Tasks.Peek();
-            if (Task && [Task->RunLoopModes containsObject:(NSString*)InRunLoopMode])
+            for (int32 Index = 0; Index < NewTasks.Size(); Index++)
             {
-                Task->Block();
-                Tasks.Dequeue();
-                NumTasks--;
-                bDone = false;
-                break;
+                FRunLoopTask* Task = NewTasks[Index];
+                if (Task && [Task->RunLoopModes containsObject:(NSString*)InRunLoopMode])
+                {
+                    NewTasks.RemoveAt(Index);
+                    Task->Block();
+                    delete Task;
+                    bDone = false;
+                    break;
+                }
             }
         }
     }
@@ -222,12 +260,17 @@ private:
 private:
     CFRunLoopRef           RunLoop;
     CFMutableDictionaryRef SourceAndModeDictionary;
-    
     TQueue<FRunLoopTask*, EQueueType::MPSC> Tasks;
-    FAtomicInt32 NumTasks;
+    
+    static FRunLoopSourceContext* MainThreadContext;
+    static FRunLoopSourceContext* ApplicationThreadContext;
 };
 
+FRunLoopSourceContext* FRunLoopSourceContext::MainThreadContext;
+FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
+
+/** @brief - Interface for the RunLoopSource */
 @implementation FRunLoopSource
 
 - (id)initWithContext:(FRunLoopSourceContext*)InContext
@@ -284,14 +327,164 @@ private:
 
 @end
 
-bool RegisterMainRunLoop()
+
+/** @brief - Extend NSThread in order to check for the ApplicationThread in a similar way as the MainThread */
+@implementation NSThread (FApplicationThread)
+
++(NSThread*) applicationThread
 {
-    CFRunLoopRef MainLoop = CFRunLoopGetMain();
-    GMainThread = new FRunLoopSourceContext(MainLoop);
+    if (!GApplicationThread)
+    {
+        return [NSThread mainThread];
+    }
+    
+    return GApplicationThread;
+}
+
++(BOOL) isApplicationThread
+{
+    const BOOL bIsAppThread = [[NSThread currentThread] isApplicationThread];
+    return bIsAppThread;
+}
+
+-(BOOL) isApplicationThread
+{
+    const BOOL bIsAppThread = self == GApplicationThread;
+    return bIsAppThread;
+}
+
+@end
+
+
+/** @brief - Create a subclass for the ApplicationThread */
+@implementation FApplicationThread
+
+-(id) init
+{
+    self = [super init];
+    if (self)
+    {
+        GApplicationThread = self;
+    }
+    
+    return self;
+}
+
+-(id) initWithTarget:(id)Target selector:(SEL)Selector object:(id)Argument
+{
+    self = [super initWithTarget:Target selector:Selector object:Argument];
+    if (self)
+    {
+        GApplicationThread = self;
+    }
+    
+    return self;
+}
+
+-(void) main
+{
+    struct sched_param SchedParams;
+    FMemory::Memzero(&SchedParams, sizeof(SchedParams));
+    
+    int32 Policy = SCHED_RR;
+    pthread_getschedparam(pthread_self(), &Policy, &SchedParams);
+
+    SchedParams.sched_priority = sched_get_priority_max(2);
+    pthread_setschedparam(pthread_self(), Policy, &SchedParams);
+    
+    // Register the runloop for this current thread
+    FRunLoopSourceContext::RegisterApplicationThreadRunLoop();
+    
+    // Set our name
+    [self setName:@"ApplicationThread"];
+    
+    // Run the thread
+    [super main];
+    
+    // Restore the sudden termination state
+    if (IsEngineExitRequested())
+    {
+        ExecuteOnMainThread(^{
+            [NSApp replyToApplicationShouldTerminate:YES];
+            [[NSProcessInfo processInfo] enableSuddenTermination];
+        }, NSDefaultRunLoopMode, false);
+    }
+    else
+    {
+        ExecuteOnMainThread(^{
+            [[NSProcessInfo processInfo] enableSuddenTermination];
+        }, NSDefaultRunLoopMode, false);
+    }
+}
+
+-(void) dealloc
+{
+    GApplicationThread = nullptr;
+    [super dealloc];
+}
+
+@end
+
+
+/** @brief - Interface for starting up the ApplicationThread */
+bool SetupApplicationThread(id Delegate, SEL ApplicationThreadEntry)
+{
+    [[NSProcessInfo processInfo] disableSuddenTermination];
+    
+    FRunLoopSourceContext::RegisterMainThreadRunLoop();
+
+#if APPLICATION_THREAD_ENABLED
+    FApplicationThread* ApplicationThread = [[FApplicationThread alloc] initWithTarget:Delegate selector:ApplicationThreadEntry object:nil];
+    [ApplicationThread setStackSize:LOGIC_THREAD_STACK_SIZE];
+    [ApplicationThread start];
+#else
+    [Delegate performSelector:ApplicationThreadEntry withObject:nil];
+    if (IsEngineExitRequested())
+    {
+        [NSApp replyToApplicationShouldTerminate:YES];
+    }
+#endif
     return true;
 }
 
-void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+
+/** @brief - Interface for closing down the ApplicationThread */
+void ShutdownApplicationThread()
+{
+    [GApplicationThread release];
+}
+
+
+/** @brief - Interface for running the current thread's runloop */
+void PumpMessagesApplicationThread(bool bUntilEmpty)
+{
+    SCOPED_AUTORELEASE_POOL();
+    
+#if APPLICATION_THREAD_ENABLED
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
+#else
+    CHECK(NSApp != nil);
+    
+    do
+    {
+        NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
+        if (!Event)
+        {
+            break;
+        }
+        
+        // Prevent to send event from invalid windows
+        if ([Event windowNumber] == 0 || [Event window] != nil)
+        {
+            [NSApp sendEvent:Event];
+        }
+    } while (bUntilEmpty);
+#endif
+}
+
+
+/** @brief - Interface for executing a block on either Main- or ApplicationThread */
+void ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     dispatch_block_t CopiedBlock = Block_copy(Block);
     
@@ -306,8 +499,6 @@ void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitU
         SCOPED_AUTORELEASE_POOL();
         
         NSArray* ScheduleModes = @[NSDefaultRunLoopMode, NSModalPanelRunLoopMode, NSEventTrackingRunLoopMode];
-        CHECK(GMainThread != nullptr);
-
         if (bWaitUntilFinished)
         {
             __block dispatch_semaphore_t WaitSemaphore = dispatch_semaphore_create(0);
@@ -317,25 +508,38 @@ void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitU
                 dispatch_semaphore_signal(WaitSemaphore);
             });
             
-            GMainThread->ScheduleBlock(WaitableBlock, ScheduleModes);
+            SourceContext.ScheduleBlock(WaitableBlock, ScheduleModes);
             
             do
             {
-                GMainThread->WakeUp();
-                GMainThread->RunInMode((CFStringRef)WaitMode);
-            } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 10000ull)));
+                CFStringRef CurrentMode = (CFStringRef)WaitMode;
+                SourceContext.WakeUp();
+                SourceContext.RunInMode(CurrentMode);
+            } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 100000ull)));
             
             Block_release(WaitableBlock);
             dispatch_release(WaitSemaphore);
         }
         else
         {
-            GMainThread->ScheduleBlock(CopiedBlock, ScheduleModes);
-            GMainThread->WakeUp();
+            SourceContext.ScheduleBlock(CopiedBlock, ScheduleModes);
+            SourceContext.WakeUp();
         }
     }
     
     Block_release(CopiedBlock);
+}
+
+void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+{
+    FRunLoopSourceContext& SourceContext = FRunLoopSourceContext::GetMainThreadContext();
+    ExecuteOnThread(SourceContext, Block, WaitMode, bWaitUntilFinished);
+}
+
+void ExecuteOnAppThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+{
+    FRunLoopSourceContext& SourceContext = FRunLoopSourceContext::GetApplicationThreadContext();
+    ExecuteOnThread(SourceContext, Block, WaitMode, bWaitUntilFinished);
 }
 
 #pragma clang diagnostic pop

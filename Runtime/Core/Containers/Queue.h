@@ -1,5 +1,8 @@
 #pragma once
+#include "Array.h"
 #include "Core/Templates/Utility.h"
+#include "Core/Threading/AtomicInt.h"
+#include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformInterlocked.h"
 
 enum class EQueueType
@@ -88,6 +91,7 @@ public:
         }
 
         DeleteNode(PreviousTail);
+        NumElements--;
         return true;
     }
 
@@ -125,15 +129,55 @@ public:
         }
 
         DeleteNode(PreviousTail);
+        NumElements--;
         return true;
     }
 
+    /**
+     * @brief          - Pops all the elements in the queue and puts them into the array
+     * @param OutArray - Array to store all the elements in
+     */
+    void DequeueAll(TArray<ElementType>& OutArray)
+    {
+        FNode* TailToDequeue;
+        if constexpr (QueueType != EQueueType::SPSC)
+        {
+            FPlatformMisc::MemoryBarrier();
+            
+            FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), Tail);
+            TailToDequeue = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
+        }
+        else
+        {
+            Head           = Tail;
+            TailToDequeue  = Tail->NextNode;
+            Tail->NextNode = nullptr;
+        }
+        
+        // Count all the nodes
+        int32 LocalNumElements = NumElements.Load();
+        NumElements = 0;
+        OutArray.Reserve(LocalNumElements);
+        
+        // Insert all the elements in the array
+        FNode* CurrentTail  = TailToDequeue;
+        FNode* PreviousTail = nullptr;
+        while (CurrentTail)
+        {
+            OutArray.Add(::Move(*reinterpret_cast<ElementType*>(CurrentTail->Item.Data)));
+            PreviousTail = CurrentTail;
+            CurrentTail  = CurrentTail->NextNode;
+            DeleteNode(PreviousTail);
+        }
+    }
+    
     /**
      * @brief - Clears the queue
      */
     void Clear()
     {
         while (Dequeue());
+        NumElements = 0;
     }
 
     /**
@@ -183,6 +227,7 @@ public:
             PreviousHead->NextNode = NewNode;
         }
 
+        NumElements++;
         return true;
     }
 
@@ -191,7 +236,15 @@ public:
      */
     bool IsEmpty() const
     {
-        return Tail->NextNode == nullptr;
+        return NumElements.Load() == 0;;
+    }
+    
+    /**
+     * @return - Returns the number of elements in the queue
+     */
+    int32 Size() const
+    {
+        return NumElements.Load();
     }
 
     /**
@@ -256,4 +309,5 @@ private:
 
     FNode* volatile Head{nullptr};
     FNode* volatile Tail{nullptr};
+    FAtomicInt32    NumElements{0};
 };

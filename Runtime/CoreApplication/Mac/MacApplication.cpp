@@ -174,87 +174,73 @@ FMacApplication::FMacApplication()
     , DeferredEvents()
     , DeferredEventsCS()
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    // This should only be initialized from the main thread, but assert just to be sure.
-    CHECK(FPlatformThreadMisc::IsMainThread());
+    ExecuteOnMainThread(^
+    {
+        SCOPED_AUTORELEASE_POOL();
+        
+        // This should only be initialized from the main thread, but assert just to be sure.
+        CHECK(FPlatformThreadMisc::IsMainThread());
 
-    FPlatformInputMapper::Initialize();
-    
-    // Init the default macOS menu
-    NSMenu* MenuBar = [NSMenu new];
-    NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
-    
-    NSMenu* AppMenu = [NSMenu new];
-    AppMenuItem.submenu = AppMenu;
-    
-    [AppMenu addItemWithTitle:@"DXR-Engine" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
-    [AppMenu addItem: [NSMenuItem separatorItem]];
-    
-    // Engine menu item
-    NSMenu* ServiceMenu = [NSMenu new];
-    [AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""].submenu = ServiceMenu;
-    [AppMenu addItem:[NSMenuItem separatorItem]];
-    [AppMenu addItemWithTitle:@"Hide DXR-Engine" action:@selector(hide:) keyEquivalent:@"h"];
-    [AppMenu addItemWithTitle:@"Hide Other" action:@selector(hideOtherApplications:) keyEquivalent:@""].keyEquivalentModifierMask = NSEventModifierFlagOption | NSEventModifierFlagCommand;
-    [AppMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
-    [AppMenu addItem:[NSMenuItem separatorItem]];
-    [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
-    
-    // Window menu
-    NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
-    
-    NSMenu* WindowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
-    WindowMenuItem.submenu = WindowMenu;
-    
-    [WindowMenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
-    [WindowMenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
-    [WindowMenu addItem:[NSMenuItem separatorItem]];
-    
-    [WindowMenu addItemWithTitle:@"Bring All to Front" action:@selector(arrangeInFront:) keyEquivalent:@""];
-    [WindowMenu addItem:[NSMenuItem separatorItem]];
-    
-    [WindowMenu addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"].keyEquivalentModifierMask = NSEventModifierFlagControl | NSEventModifierFlagCommand;
-    
-    SEL SetAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
-    [NSApp performSelector:SetAppleMenuSelector withObject:AppMenu];
-    
-    NSApp.mainMenu     = MenuBar;
-    NSApp.windowsMenu  = WindowMenu;
-    NSApp.servicesMenu = ServiceMenu;
+        FPlatformInputMapper::Initialize();
+        
+        // Init the default macOS menu
+        NSMenu*     MenuBar     = [NSMenu new];
+        NSMenuItem* AppMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
+        
+        NSMenu* AppMenu = [NSMenu new];
+        AppMenuItem.submenu = AppMenu;
+        
+        [AppMenu addItemWithTitle:@"DXR-Engine" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
+        [AppMenu addItem: [NSMenuItem separatorItem]];
+        
+        // Engine menu item
+        NSMenu* ServiceMenu = [NSMenu new];
+        [AppMenu addItemWithTitle:@"Services" action:nil keyEquivalent:@""].submenu = ServiceMenu;
+        [AppMenu addItem:[NSMenuItem separatorItem]];
+        [AppMenu addItemWithTitle:@"Hide DXR-Engine" action:@selector(hide:) keyEquivalent:@"h"];
+        [AppMenu addItemWithTitle:@"Hide Other" action:@selector(hideOtherApplications:) keyEquivalent:@""].keyEquivalentModifierMask = NSEventModifierFlagOption | NSEventModifierFlagCommand;
+        [AppMenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
+        [AppMenu addItem:[NSMenuItem separatorItem]];
+        [AppMenu addItemWithTitle:@"Quit DXR-Engine" action:@selector(terminate:) keyEquivalent:@"q"];
+        
+        // Window menu
+        NSMenuItem* WindowMenuItem = [MenuBar addItemWithTitle:@"" action:nil keyEquivalent:@""];
+        
+        NSMenu* WindowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
+        WindowMenuItem.submenu = WindowMenu;
+        
+        [WindowMenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@"m"];
+        [WindowMenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
+        [WindowMenu addItem:[NSMenuItem separatorItem]];
+        
+        [WindowMenu addItemWithTitle:@"Bring All to Front" action:@selector(arrangeInFront:) keyEquivalent:@""];
+        [WindowMenu addItem:[NSMenuItem separatorItem]];
+        
+        [WindowMenu addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"].keyEquivalentModifierMask = NSEventModifierFlagControl | NSEventModifierFlagCommand;
+        
+        SEL SetAppleMenuSelector = NSSelectorFromString(@"setAppleMenu:");
+        [NSApp performSelector:SetAppleMenuSelector withObject:AppMenu];
+        
+        NSApp.mainMenu     = MenuBar;
+        NSApp.windowsMenu  = WindowMenu;
+        NSApp.servicesMenu = ServiceMenu;
 
-    Observer = [FMacApplicationObserver new];    
-    [[NSNotificationCenter defaultCenter] addObserver:Observer
-                                             selector:@selector(onApplicationBecomeActive:)
-                                                 name:NSApplicationDidBecomeActiveNotification
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:Observer
-                                             selector:@selector(onApplicationBecomeInactive:)
-                                                 name:NSApplicationDidResignActiveNotification
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:Observer
-                                             selector:@selector(displaysDidChange:)
-                                                 name:NSApplicationDidChangeScreenParametersNotification
-                                               object:nil];
+        Observer = [FMacApplicationObserver new];
+        [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(onApplicationBecomeActive:) name:NSApplicationDidBecomeActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(onApplicationBecomeInactive:) name:NSApplicationDidResignActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(displaysDidChange:) name:NSApplicationDidChangeScreenParametersNotification object:nil];
+        
+        FPlatformApplicationMisc::PumpMessages(true);
+    }, NSDefaultRunLoopMode, true);
 }
 
 FMacApplication::~FMacApplication()
 {
     @autoreleasepool
     {
-        [[NSNotificationCenter defaultCenter] removeObserver:Observer
-                                                        name:NSApplicationDidBecomeActiveNotification
-                                                      object:nil];
-
-        [[NSNotificationCenter defaultCenter] removeObserver:Observer
-                                                        name:NSApplicationDidResignActiveNotification
-                                                      object:nil];
-
-        [[NSNotificationCenter defaultCenter] removeObserver:Observer
-                                                        name:NSApplicationDidChangeScreenParametersNotification
-                                                      object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidBecomeActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidResignActiveNotification object:nil];
+        [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidChangeScreenParametersNotification object:nil];
 
         // Release the observer
         NSSafeRelease(Observer);
@@ -352,20 +338,25 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 
 TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
 {
-    @autoreleasepool
+    NSWindow* KeyWindow = ExecuteOnMainThreadAndReturn(^
     {
-        NSWindow* KeyWindow = NSApp.keyWindow;
-        return GetWindowFromNSWindow(KeyWindow);
-    }
+        SCOPED_AUTORELEASE_POOL();
+        return [NSApp keyWindow];
+    }, NSDefaultRunLoopMode);
+    
+    return GetWindowFromNSWindow(KeyWindow);
 }
 
 TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
 {
-    @autoreleasepool
+    NSWindow* WindowUnderCursor = ExecuteOnMainThreadAndReturn(^
     {
+        SCOPED_AUTORELEASE_POOL();
         const NSInteger WindowNumber = [NSWindow windowNumberAtPoint:[NSEvent mouseLocation] belowWindowWithWindowNumber:0];
-        return GetWindowFromNSWindow([NSApp windowWithWindowNumber:WindowNumber]);
-    }
+        return [NSApp windowWithWindowNumber:WindowNumber];
+    }, NSDefaultRunLoopMode);
+    
+    return GetWindowFromNSWindow(WindowUnderCursor);
 }
 
 void FMacApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const

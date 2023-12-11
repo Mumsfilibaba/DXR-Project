@@ -12,12 +12,6 @@ struct FMacThreadMisc final : public FGenericThreadMisc
     static FGenericEvent* CreateEvent(bool bManualReset);
 
     static FGenericThread* CreateThread(FThreadInterface* InRunnable, bool bSuspended = true);
-    
-    static FORCEINLINE bool Initialize() 
-    { 
-        CHECK(IsMainThread());
-        return RegisterMainRunLoop();
-    }
 
     static uint32 GetNumProcessors()
     {

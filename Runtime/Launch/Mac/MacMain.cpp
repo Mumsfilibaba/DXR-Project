@@ -1,8 +1,10 @@
 #include "Core/Core.h"
 #include "Core/Mac/Mac.h"
+#include "Core/Mac/MacRunLoop.h"
 #include "Core/Containers/String.h"
 
 #include <Appkit/Appkit.h>
+#include <pthread.h>
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -12,6 +14,7 @@ static FString GMacCommandLine;
 static int32   GEngineMainResult = 0;
 
 @interface FCocoaAppDelegate : NSObject<NSApplicationDelegate>
+- (void)runApplicationThread;
 @end
 
 @implementation FCocoaAppDelegate
@@ -28,23 +31,34 @@ static int32   GEngineMainResult = 0;
     }
 }
 
-- (BOOL) applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) Sender
+- (void)runApplicationThread
+{
+    // Startup the mainloop
+    auto CommandLine = GMacCommandLine.GetCString();
+    GEngineMainResult = EngineMain(&CommandLine, 1);
+    
+    if (GEngineMainResult == 0)
+    {
+        ExecuteOnMainThread(^
+        {
+            [NSApp terminate:nil];
+        }, NSDefaultRunLoopMode, true);
+    }
+}
+
+- (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*) Sender
 {
     return YES;
 }
 
-- (void) applicationWillTerminate:(NSNotification*) Notification
+- (void)applicationWillTerminate:(NSNotification*) Notification
 {
     NSLog(@"applicationWillTerminate");
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)Notification
 {
-    SCOPED_AUTORELEASE_POOL();
-    
-    // Run the main loop
-    const CHAR* CommandLine = GMacCommandLine.GetCString();
-    GEngineMainResult = EngineMain(&CommandLine, 1);
+    SetupApplicationThread(self, @selector(runApplicationThread));
 }
 
 @end
@@ -81,6 +95,8 @@ int main(int NumArgs, const CHAR** Args)
     [NSApp setPresentationOptions:NSApplicationPresentationDefault];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     [NSApp run];
+    
+    ShutdownApplicationThread();
     return GEngineMainResult;
 }
 
