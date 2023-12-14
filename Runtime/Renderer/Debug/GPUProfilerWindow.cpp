@@ -6,7 +6,7 @@
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawGPUProfiler(
+static TAutoConsoleVariable<bool> GDrawGPUProfiler(
     "Renderer.DrawGPUProfiler",
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);

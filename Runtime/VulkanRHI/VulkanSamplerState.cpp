@@ -40,6 +40,11 @@ bool FVulkanSamplerState::Initialize()
     SamplerCreateInfo.unnormalizedCoordinates = false;
 
     VkResult Result = vkCreateSampler(GetDevice()->GetVkDevice(), &SamplerCreateInfo, nullptr, &Sampler);
-    VULKAN_CHECK_RESULT(Result, "Failed to create sampler");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create sampler");
+        return false;
+    }
+
     return true;
 }

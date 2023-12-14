@@ -11,7 +11,7 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
-TAutoConsoleVariable<bool> GCascadeDebug(
+static TAutoConsoleVariable<bool> GCascadeDebug(
     "Renderer.Debug.DrawCascades",
     "Draws an overlay that shows which pixel uses what shadow cascade",
     false);

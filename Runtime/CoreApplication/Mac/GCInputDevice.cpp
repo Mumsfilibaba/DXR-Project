@@ -6,7 +6,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
-TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
+static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
     "GameController.ButtonRepeatDelay",
     "Number of repeated messages that gets ignored before sending repeat events",
     60,

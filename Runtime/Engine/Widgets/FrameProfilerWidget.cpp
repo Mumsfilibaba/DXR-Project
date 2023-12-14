@@ -4,12 +4,12 @@
 #include "Application/WidgetUtilities.h"
 #include "Application/Application.h"
 
-TAutoConsoleVariable<bool> GDrawFps(
+static TAutoConsoleVariable<bool> GDrawFps(
     "Renderer.DrawFps",
     "Enable FPS counter in the top right corner",
     true);
 
-TAutoConsoleVariable<bool> GDrawFrameProfiler(
+static TAutoConsoleVariable<bool> GDrawFrameProfiler(
     "Renderer.DrawFrameProfiler",
     "Enables the FrameProfiler and displays the profiler window",
     false);

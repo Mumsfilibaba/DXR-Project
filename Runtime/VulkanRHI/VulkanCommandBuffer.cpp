@@ -50,7 +50,11 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
     CommandBufferAllocateInfo.commandBufferCount = 1;
 
     VkResult Result = vkAllocateCommandBuffers(GetDevice()->GetVkDevice(), &CommandBufferAllocateInfo, &CommandBuffer);
-    VULKAN_CHECK_RESULT(Result, "Failed to allocate CommandBuffer");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to allocate CommandBuffer");
+        return false;
+    }
 
     if (!Fence.Initialize())
     {

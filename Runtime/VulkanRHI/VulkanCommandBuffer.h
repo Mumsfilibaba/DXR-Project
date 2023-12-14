@@ -63,7 +63,11 @@ public:
         BeginInfo.flags = Flags;
 
         VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
-        VULKAN_CHECK_RESULT(Result, "vkBeginCommandBuffer Failed");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("vkBeginCommandBuffer Failed");
+            return false;
+        }
 
         bIsRecording = true;
         return true;
@@ -72,7 +76,11 @@ public:
     FORCEINLINE bool End()
     {
         VkResult Result = vkEndCommandBuffer(CommandBuffer);
-        VULKAN_CHECK_RESULT(Result, "vkEndCommandBuffer Failed");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("vkEndCommandBuffer Failed");
+            return false;
+        }
 
         NumCommands  = 0;
         bIsRecording = false;

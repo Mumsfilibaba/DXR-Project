@@ -5,22 +5,22 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Core/Misc/ConsoleManager.h"
 
-TAutoConsoleVariable<int32> GCSMCascadeSize(
+static TAutoConsoleVariable<int32> GCSMCascadeSize(
     "Renderer.CSM.CascadeSize",
     "Specifies the resolution of each Shadow Cascade",
     2048);
 
-TAutoConsoleVariable<int32> GPointLightShadowMapSize(
+static TAutoConsoleVariable<int32> GPointLightShadowMapSize(
     "Renderer.Shadows.PointLightShadowMapSize",
     "Specifies the resolution of each Shadow Cascade",
     512);
 
-TAutoConsoleVariable<int32> GEnvironmentIrradianceProbeSize(
+static TAutoConsoleVariable<int32> GEnvironmentIrradianceProbeSize(
     "Renderer.Environment.IrradianceProbeSize",
     "Specifies the resolution of each Irradiance Probe (Cube-Map) size",
     32);
 
-TAutoConsoleVariable<int32> GEnvironmentSpecularIrradianceProbeSize(
+static TAutoConsoleVariable<int32> GEnvironmentSpecularIrradianceProbeSize(
     "Renderer.Environment.SpecularIrradianceProbeSize",
     "Specifies the resolution of each Specular Irradiance Probe (Cube-Map) size",
     256);

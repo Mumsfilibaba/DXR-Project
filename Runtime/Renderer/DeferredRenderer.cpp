@@ -8,7 +8,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
-TAutoConsoleVariable<bool> GDrawTileDebug(
+static TAutoConsoleVariable<bool> GDrawTileDebug(
     "Renderer.Debug.DrawTiledLightning", 
     "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
     false);

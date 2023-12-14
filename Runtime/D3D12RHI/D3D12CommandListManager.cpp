@@ -4,7 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
 
-TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
+static TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
     "D3D12RHI.EnableGPUTimeout",
     "Enables or disables the GPU timeout on all ID3D12CommandQueues",
     true);

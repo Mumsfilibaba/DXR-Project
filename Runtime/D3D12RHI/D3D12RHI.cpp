@@ -20,7 +20,7 @@
 
 IMPLEMENT_ENGINE_MODULE(FD3D12RHIModule, D3D12RHI);
 
-TAutoConsoleVariable<bool> CVarEnablePix(
+static TAutoConsoleVariable<bool> CVarEnablePix(
     "D3D12RHI.EnablePIX",
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);

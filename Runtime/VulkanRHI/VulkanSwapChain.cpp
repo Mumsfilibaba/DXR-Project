@@ -156,10 +156,18 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     SwapChainCreateInfo.clipped               = VK_TRUE;
 
     VkResult Result = vkCreateSwapchainKHR(GetDevice()->GetVkDevice(), &SwapChainCreateInfo, nullptr, &SwapChain);
-    VULKAN_CHECK_RESULT(Result, "Failed to create SwapChain");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create SwapChain");
+        return false;
+    }
 
     Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the number of images in SwapChain");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve the number of images in SwapChain");
+        return false;
+    }
 
     Extent = CurrentExtent;
     Format = SelectedFormat;
@@ -169,7 +177,12 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 bool FVulkanSwapChain::GetSwapChainImages(VkImage* OutImages)
 {
     VkResult Result = vkGetSwapchainImagesKHR(GetDevice()->GetVkDevice(), SwapChain, &BufferCount, OutImages);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the images of the SwapChain");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve the images of the SwapChain");
+        return false;
+    }
+
     return true;
 }
 

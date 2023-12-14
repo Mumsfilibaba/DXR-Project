@@ -6,7 +6,7 @@
 
 RHI_API FRHICommandListExecutor GRHICommandExecutor;
 
-TAutoConsoleVariable<bool> CVarEnableRHIThread(
+static TAutoConsoleVariable<bool> CVarEnableRHIThread(
     "RHI.EnableRHIThread",
     "Enables the use of a separate Thread for executing RHI Commands",
     true);

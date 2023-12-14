@@ -1,7 +1,7 @@
 #include "D3D12Allocators.h"
 #include "Core/Misc/ConsoleManager.h"
 
-TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
+static TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
     "D3D12RHI.MaxStagingAllocationSize",
     "The maximum size for a resource that uses a shared staging-buffer (MB)",
     8);

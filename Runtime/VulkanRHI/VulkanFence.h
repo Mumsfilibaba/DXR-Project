@@ -37,7 +37,12 @@ public:
         FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         VkResult Result = vkCreateFence(GetDevice()->GetVkDevice(), &FenceCreateInfo, nullptr, &Fence);
-        VULKAN_CHECK_RESULT(Result, "Failed to create Fence");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("Failed to create Fence");
+            return false;
+        }
+
         return true;
     }
 
@@ -56,14 +61,24 @@ public:
     bool Wait(uint64 TimeOut) const
     {
         VkResult Result = vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut);
-        VULKAN_CHECK_RESULT(Result, "vkWaitForFences Failed");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("vkWaitForFences Failed");
+            return false;
+        }
+
         return true;
     }
 
     bool Reset()
     {
         VkResult Result = vkResetFences(GetDevice()->GetVkDevice(), 1, &Fence);
-        VULKAN_CHECK_RESULT(Result, "vkResetFences Failed");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("vkResetFences Failed");
+            return false;
+        }
+
         return true;
     }
 

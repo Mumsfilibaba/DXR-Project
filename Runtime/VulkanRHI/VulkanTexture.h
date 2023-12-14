@@ -1,7 +1,6 @@
 #pragma once
 #include "VulkanResourceViews.h"
-#include "VulkanDeviceObject.h"
-#include "VulkanRefCounted.h"
+#include "VulkanMemory.h"
 #include "RHI/RHIResources.h"
 #include "Core/Containers/SharedRef.h"
 
@@ -63,10 +62,10 @@ public:
     }
 
 protected:
-    VkImage        Image;
-    VkDeviceMemory DeviceMemory;
-    VkFormat       Format;
-
+    VkImage                 Image;
+    VkFormat                Format;
+    FVulkanMemoryAllocation MemoryAllocation;
+    
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
     TArray<FVulkanImageViewRef>   RenderTargetViews;

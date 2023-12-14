@@ -34,6 +34,11 @@ bool FVulkanShader::Initialize(const TArray<uint8>& InCode)
     ShaderModuleCreateInfo.codeSize = InCode.Size();
 
     VkResult Result = vkCreateShaderModule(GetDevice()->GetVkDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule);
-    VULKAN_CHECK_RESULT(Result, "Failed to create ShaderModule");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create ShaderModule");
+        return false;
+    }
+
     return true;
 }

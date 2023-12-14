@@ -236,4 +236,18 @@ public:
 private:
     static bool bIsEnabled;
 };
+
+class FVulkanBufferDeviceAddressKHR
+{
+public:
+    static void Initialize(FVulkanDevice* Device);
+    
+    static FORCEINLINE bool IsEnabled()
+    {
+        return bIsEnabled;
+    }
+    
+private:
+    static bool bIsEnabled;
+};
     

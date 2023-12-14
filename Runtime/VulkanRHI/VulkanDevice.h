@@ -5,6 +5,7 @@
 #include "VulkanPhysicalDevice.h"
 #include "VulkanRenderPass.h"
 #include "VulkanFramebuffer.h"
+#include "VulkanMemory.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -52,19 +53,15 @@ public:
 
     bool Initialize(const FVulkanDeviceDesc& DeviceDesc);
 
+    uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
+    
     FVulkanRenderPassCache&  GetRenderPassCache()  { return RenderPassCache; }
     FVulkanFramebufferCache& GetFramebufferCache() { return FramebufferCache; }
 
-    FVulkanUploadHeapAllocator& GetUploadHeap() { return UploadHeap; };
+    FVulkanMemoryManager&       GetMemoryManager() { return MemoryManager; }
+    FVulkanUploadHeapAllocator& GetUploadHeap()    { return UploadHeap; };
 
-    bool AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory& OutDeviceMemory);
-
-    void FreeMemory(VkDeviceMemory& OutDeviceMemory);
-    
-    uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
-
-    bool IsDepthClipSupported() const { return bSupportsDepthClip; }
-    
+    bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
     bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
     
     FORCEINLINE bool IsLayerEnabled(const FString& LayerName)
@@ -105,10 +102,9 @@ private:
     FVulkanRenderPassCache     RenderPassCache;
     FVulkanFramebufferCache    FramebufferCache;
     FVulkanUploadHeapAllocator UploadHeap;
+    FVulkanMemoryManager       MemoryManager;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
-
-    FAtomicInt32  NumAllocations = 0;
     
     TSet<FString> ExtensionNames;
     TSet<FString> LayerNames;

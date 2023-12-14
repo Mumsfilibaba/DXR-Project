@@ -30,7 +30,12 @@ bool FVulkanImageView::CreateView(VkImage InImage, VkImageViewType ViewType, VkF
     ImageViewCreateInfo.subresourceRange = SubresourceRange = InSubresourceRange;
 
     VkResult Result = vkCreateImageView(GetDevice()->GetVkDevice(), &ImageViewCreateInfo, nullptr, &ImageView);
-    VULKAN_CHECK_RESULT(Result, "vkCreateImageView failed");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("vkCreateImageView failed");
+        return false;
+    }
+
     return true;
 }
 

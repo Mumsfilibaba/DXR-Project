@@ -5,7 +5,7 @@
 
 #include <imgui.h>
 
-TAutoConsoleVariable<bool> GDrawTextureDebugger(
+static TAutoConsoleVariable<bool> GDrawTextureDebugger(
     "Renderer.Debug.ViewRenderTargets",
     "Enables the Debug RenderTarget-viewer",
     false);

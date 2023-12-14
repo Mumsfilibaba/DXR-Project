@@ -3,7 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
-TAutoConsoleVariable<bool> CVarIsRetinaAware(
+static TAutoConsoleVariable<bool> CVarIsRetinaAware(
     "MacOS.IsRetinaAware",
     "If set to true the process is set to be using the full retina framebuffer for window surfaces, therwise not",
     true,

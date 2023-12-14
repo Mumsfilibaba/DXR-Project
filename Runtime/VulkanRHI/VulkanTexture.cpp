@@ -8,8 +8,8 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& I
     : FRHITexture(InDesc)
     , FVulkanDeviceObject(InDevice)
     , Image(VK_NULL_HANDLE)
-    , DeviceMemory(VK_NULL_HANDLE)
     , Format(VK_FORMAT_UNDEFINED)
+    , MemoryAllocation()
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
     , RenderTargetViews()
@@ -20,7 +20,8 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& I
 
 FVulkanTexture::~FVulkanTexture()
 {
-    if (VULKAN_CHECK_HANDLE(DeviceMemory) && VULKAN_CHECK_HANDLE(Image))
+    // Check allocation in order to determine if this is a BackBuffer
+    if (MemoryAllocation.IsValid() && VULKAN_CHECK_HANDLE(Image))
     {
         FVulkanDevice* VulkanDevice = GetDevice();
         
@@ -29,7 +30,8 @@ FVulkanTexture::~FVulkanTexture()
         Image = VK_NULL_HANDLE;
 
         // Free the memory
-        VulkanDevice->FreeMemory(DeviceMemory);
+        FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
+        MemoryManager.Free(MemoryAllocation);
     }
 }
 
@@ -102,71 +104,21 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     }
 
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
-    VULKAN_CHECK_RESULT(Result, "Failed to create image");
-    
-    // Check if the image should be allocated using a dedicated allocation
-    bool bUseDedicatedAllocation = false;
-    VkMemoryRequirements MemoryRequirements;
-#if VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation
-    if (FVulkanDedicatedAllocationKHR::IsEnabled())
+    if (VULKAN_FAILED(Result))
     {
-        VkMemoryRequirements2KHR MemoryRequirements2;
-        FMemory::Memzero(&MemoryRequirements2);
-        MemoryRequirements2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR;
-
-        VkMemoryDedicatedRequirementsKHR MemoryDedicatedRequirements;
-        FMemory::Memzero(&MemoryDedicatedRequirements);
-        MemoryDedicatedRequirements.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS_KHR;
-
-        // Add the proper pNext values in the structs
-        FVulkanStructureHelper MemoryRequirements2Helper(MemoryRequirements2);
-        MemoryRequirements2Helper.AddNext(MemoryDedicatedRequirements);
-
-        VkImageMemoryRequirementsInfo2KHR ImageMemoryRequirementsInfo;
-        FMemory::Memzero(&ImageMemoryRequirementsInfo);
-        ImageMemoryRequirementsInfo.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2_KHR;
-        ImageMemoryRequirementsInfo.image = Image;
-        
-        vkGetImageMemoryRequirements2KHR(GetDevice()->GetVkDevice(), &ImageMemoryRequirementsInfo, &MemoryRequirements2);
-        MemoryRequirements      = MemoryRequirements2.memoryRequirements;
-        bUseDedicatedAllocation = MemoryDedicatedRequirements.requiresDedicatedAllocation != VK_FALSE || MemoryDedicatedRequirements.prefersDedicatedAllocation != VK_FALSE;
-    }
-    else
-#endif
-    {
-        vkGetImageMemoryRequirements(GetDevice()->GetVkDevice(), Image, &MemoryRequirements);
+        VULKAN_ERROR("Failed to create image");
+        return false;
     }
 
-    const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    VULKAN_CHECK(MemoryTypeIndex != TNumericLimits<int32>::Max(), "No suitable memory type");
+    // NOTE: All textures are allocated as device local, maybe we want to move this into the AllocateImageMemory function
+    VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 
-    VkMemoryAllocateInfo AllocateInfo;
-    FMemory::Memzero(&AllocateInfo);
-
-    FVulkanStructureHelper AllocationInfoHelper(AllocateInfo);
-    AllocateInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    AllocateInfo.memoryTypeIndex = MemoryTypeIndex;
-    AllocateInfo.allocationSize  = MemoryRequirements.size;
-
-#if VK_KHR_dedicated_allocation
-    VkMemoryDedicatedAllocateInfoKHR DedicatedAllocateInfo;
-    FMemory::Memzero(&DedicatedAllocateInfo);
-
-    DedicatedAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR;
-    DedicatedAllocateInfo.image = Image;
-
-    if (bUseDedicatedAllocation && FVulkanDedicatedAllocationKHR::IsEnabled())
+    FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
+    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, false, MemoryAllocation))
     {
-        VULKAN_INFO("Using dedicated allocation for Image");
-        AllocationInfoHelper.AddNext(DedicatedAllocateInfo);
+        VULKAN_ERROR("Failed to allocate ImageMemory");
+        return false;
     }
-#endif
-
-    const bool bResult = GetDevice()->AllocateMemory(AllocateInfo, DeviceMemory);
-    VULKAN_CHECK(bResult, "Failed to allocate memory");
-
-    Result = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, DeviceMemory, 0);
-    VULKAN_CHECK_RESULT(Result, "Failed to bind Image-DeviceMemory");
 
     if (InInitialData)
     {

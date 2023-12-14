@@ -12,7 +12,7 @@
 #define WINDOWS_KEY_REPEAT_MASK  (0x40000000)
 #define WINDOWS_BACK_BUTTON_MASK (0x0001)
 
-TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
+static TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
     "Windows.IsProcessDPIAware", 
     "If set to true the process is set to be DPI aware, otherwise not", 
     true,

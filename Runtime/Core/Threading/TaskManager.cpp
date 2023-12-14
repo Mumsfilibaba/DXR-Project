@@ -5,7 +5,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
 
-TAutoConsoleVariable<int32> CVarNumTaskThreads(
+static TAutoConsoleVariable<int32> CVarNumTaskThreads(
     "Core.NumTaskThreads",
     "Sets the number of worker threads available to perform Async tasks",
     TNumericLimits<int32>::Max());

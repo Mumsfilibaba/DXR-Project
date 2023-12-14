@@ -12,7 +12,7 @@
 #include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
 
-TAutoConsoleVariable<bool> CVarShaderDebug(
+static TAutoConsoleVariable<bool> CVarShaderDebug(
     "RHI.ShaderCompiler.Debug",
     "Enable debug information in the Shaders",
     true);

@@ -26,13 +26,23 @@ bool FVulkanSemaphore::Initialize()
     SemaphoreCreateInfo.flags = 0;
 
     VkResult Result = vkCreateSemaphore(GetDevice()->GetVkDevice(), &SemaphoreCreateInfo, nullptr, &Semaphore);
-    VULKAN_CHECK_RESULT(Result, "Failed to create Semaphore");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create Semaphore");
+        return false;
+    }
+
     return true;
 }
 
 bool FVulkanSemaphore::SetName(const FString& Name)
 {
     VkResult Result = FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), Name.GetCString(), Semaphore, VK_OBJECT_TYPE_SEMAPHORE);
-    VULKAN_CHECK_RESULT(Result, "vkSetDebugUtilsObjectNameEXT failed");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("vkSetDebugUtilsObjectNameEXT failed");
+        return false;
+    }
+
     return true;
 }

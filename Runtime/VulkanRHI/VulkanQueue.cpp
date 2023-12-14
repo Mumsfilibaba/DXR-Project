@@ -84,7 +84,11 @@ bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuff
     VkFence SignalFence = Fence ? Fence->GetVkFence() : VK_NULL_HANDLE;
 
     VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, SignalFence);
-    VULKAN_CHECK_RESULT(Result, "vkQueueSubmit failed");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("vkQueueSubmit failed");
+        return false;
+    }
 
     WaitSemaphores.Clear();
     WaitStages.Clear();
@@ -138,7 +142,11 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
     }
 
     VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, VK_NULL_HANDLE);
-    VULKAN_CHECK_RESULT(Result, "vkQueueSubmit failed");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("vkQueueSubmit failed");
+        return false;
+    }
 
     WaitSemaphores.Clear();
     WaitStages.Clear();

@@ -353,3 +353,18 @@ void FVulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
     }
 #endif
 }
+
+
+bool FVulkanBufferDeviceAddressKHR::bIsEnabled = false;
+
+void FVulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
+{
+    VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
+    
+#if VK_KHR_buffer_device_address
+    if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+    {
+        bIsEnabled = true;
+    }
+#endif
+}

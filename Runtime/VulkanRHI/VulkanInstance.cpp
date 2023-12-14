@@ -4,7 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Platform/PlatformVulkan.h"
 
-TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
+static TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
     "VulkanRHI.VerboseLogging",
     "Enables more logging within VulkanRHI",
     true);
@@ -86,20 +86,36 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
     // Instance Layers
     uint32 LayerPropertiesCount = 0;
     Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance LayerProperties Count");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve Instance LayerProperties Count");
+        return false;
+    }
 
     TArray<VkLayerProperties> LayerProperties(LayerPropertiesCount);
     Result = vkEnumerateInstanceLayerProperties(&LayerPropertiesCount, LayerProperties.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance LayerProperties");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve Instance LayerProperties");
+        return false;
+    }
 
     // Instance Extensions
     uint32 ExtensionPropertiesCount = 0;
     Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance ExtensionProperties Count");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve Instance ExtensionProperties Count");
+        return false;
+    }
 
     TArray<VkExtensionProperties> ExtensionProperties(ExtensionPropertiesCount);
     Result = vkEnumerateInstanceExtensionProperties(nullptr, &ExtensionPropertiesCount, ExtensionProperties.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve Instance ExtensionProperties");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve Instance ExtensionProperties");
+        return false;
+    }
 
     const bool bVerboseLogging = CVarVulkanVerboseLogging.GetValue();
     if (bVerboseLogging)
@@ -270,7 +286,11 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
 #endif
 
     Result = vkCreateInstance(&InstanceCreateInfo, nullptr, &Instance);
-    VULKAN_CHECK_RESULT(Result, "Failed to create Instance");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create Instance");
+        return false;
+    }
 
     /*///////////////////////////////////////////////////////////////////////////////////////////*/
     // Load functions that require the instance to be created
@@ -288,7 +308,11 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
     if (bEnableDebugLayer)
     {
         Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &DebugMessenger);
-        VULKAN_CHECK_RESULT(Result, "Failed to create DebugMessenger");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("Failed to create DebugMessenger");
+            return false;
+        }
     }
 #endif
 

@@ -1,6 +1,5 @@
 #pragma once
-#include "VulkanDeviceObject.h"
-#include "VulkanRefCounted.h"
+#include "VulkanMemory.h"
 #include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
@@ -30,15 +29,14 @@ public:
     
     VkDeviceMemory GetVkDeviceMemory() const
     {
-        return DeviceMemory;
+        return MemoryAllocation.Memory;
     }
     
 protected:
-    VkBuffer        Buffer;
-    VkDeviceMemory  DeviceMemory;
-    VkDeviceAddress DeviceAddress;
-    VkDeviceSize    RequiredAlignment;
-    FString         DebugName;
+    VkBuffer                Buffer;
+    FVulkanMemoryAllocation MemoryAllocation;
+    VkDeviceSize            RequiredAlignment;
+    FString                 DebugName;
 };
 
 

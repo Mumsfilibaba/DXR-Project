@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanMemory.h"
 #include "VulkanRefCounted.h"
 #include "Core/Containers/SharedRef.h"
 
@@ -31,9 +31,9 @@ public:
     }
 
 private:
-    VkBuffer       Buffer;
-    VkDeviceMemory BufferMemory;
-    uint8*         MappedMemory;
+    VkBuffer                Buffer;
+    FVulkanMemoryAllocation MemoryAllocation;
+    uint8*                  MappedMemory;
 };
 
 class FVulkanUploadHeapAllocator : public FVulkanDeviceObject

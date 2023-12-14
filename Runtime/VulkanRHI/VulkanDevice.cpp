@@ -10,7 +10,9 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , RenderPassCache(this)
     , FramebufferCache(this)
     , UploadHeap(this)
+    , MemoryManager(this)
     , bSupportsDepthClip(false)
+    , bSupportsConservativeRasterization(false)
 {
 }
 
@@ -41,11 +43,19 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     // Verify Extensions
     uint32 DeviceExtensionCount = 0;
     Result = vkEnumerateDeviceExtensionProperties(PhysicalDevice->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, nullptr);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extension count");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve the device extension count");
+        return false;
+    }
 
     TArray<VkExtensionProperties> AvailableDeviceExtensions(DeviceExtensionCount);
     Result = vkEnumerateDeviceExtensionProperties(PhysicalDevice->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, AvailableDeviceExtensions.Data());
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve the device extensions");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve the device extensions");
+        return false;
+    }
 
     TArray<const CHAR*> EnabledExtensionNames;
     for (const VkExtensionProperties& ExtensionProperty : AvailableDeviceExtensions)
@@ -196,34 +206,13 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
 #endif
 
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
-    VULKAN_CHECK_RESULT(Result, "Failed to create Device");
-    return true;
-}
-
-bool FVulkanDevice::AllocateMemory(const VkMemoryAllocateInfo& MemoryAllocationInfo, VkDeviceMemory& OutDeviceMemory)
-{
-    VkResult Result = vkAllocateMemory(Device, &MemoryAllocationInfo, nullptr, &OutDeviceMemory);
-    VULKAN_CHECK_RESULT(Result, "vkAllocateMemory failed");
-    NumAllocations++;
-    
-    const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();
-    VULKAN_INFO("[AllocateMemory] Allocated=%d Bytes, NumAllocations = %d/%d", MemoryAllocationInfo.allocationSize, NumAllocations.Load(), DeviceProperties.limits.maxMemoryAllocationCount);
-    if (static_cast<uint32>(NumAllocations.Load()) > DeviceProperties.limits.maxMemoryAllocationCount)
+    if (VULKAN_FAILED(Result))
     {
-        VULKAN_WARNING("Too many allocations");
+        VULKAN_ERROR("Failed to create Device");
+        return false;
     }
 
     return true;
-}
-
-void FVulkanDevice::FreeMemory(VkDeviceMemory& OutDeviceMemory)
-{
-    vkFreeMemory(Device, OutDeviceMemory, nullptr);
-    OutDeviceMemory = VK_NULL_HANDLE;
-    NumAllocations--;
-    
-    const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();
-    VULKAN_INFO("[FreeMemory] NumAllocations = %d/%d", NumAllocations.Load(), DeviceProperties.limits.maxMemoryAllocationCount);
 }
 
 uint32 FVulkanDevice::GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const

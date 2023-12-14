@@ -76,33 +76,10 @@
     #define VULKAN_FAILED(Result) (Result != VK_SUCCESS)
 #endif
 
-#ifndef VULKAN_CHECK
-    #define VULKAN_CHECK(bCondition, ...)  \
-        do                                 \
-        {                                  \
-            if (!(bCondition))             \
-            {                              \
-                VULKAN_ERROR(__VA_ARGS__); \
-                return false;              \
-            }                              \
-        } while(false)
-#endif
-
-#ifndef VULKAN_CHECK_RESULT
-    #define VULKAN_CHECK_RESULT(Result, ...) \
-        do                                   \
-        {                                    \
-            if (VULKAN_FAILED(Result))       \
-            {                                \
-                VULKAN_ERROR(__VA_ARGS__);   \
-                return false;                \
-            }                                \
-        } while(false)
-#endif
-
 #ifndef VULKAN_CHECK_HANDLE
     #define VULKAN_CHECK_HANDLE(Handle) (Handle != VK_NULL_HANDLE)
 #endif
+
 
 class FVulkanStructureHelper
 {

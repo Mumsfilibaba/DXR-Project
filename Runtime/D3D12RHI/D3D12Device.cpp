@@ -16,27 +16,27 @@
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")
 
-TAutoConsoleVariable<bool> CVarEnableGPUValidation(
+static TAutoConsoleVariable<bool> CVarEnableGPUValidation(
     "D3D12RHI.EnableGPUValidation",
     "Enables GPU Based Validation if true",
     false);
 
-TAutoConsoleVariable<bool> CVarEnableDRED(
+static TAutoConsoleVariable<bool> CVarEnableDRED(
     "D3D12RHI.EnableDRED",
     "Enables Device Removed Extended Data (DRED) if the Device gets removed",
     false);
 
-TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
+static TAutoConsoleVariable<bool> CVarPreferDedicatedGPU(
     "D3D12RHI.PreferDedicatedGPU",
     "When enabled, a dedicated GPU will be selected when creating a the Device", 
     true);
 
-TAutoConsoleVariable<int32> CVarResourceOnlineDescriptorBlockSize(
+static TAutoConsoleVariable<int32> CVarResourceOnlineDescriptorBlockSize(
     "D3D12RHI.ResourceOnlineDescriptorBlockSize",
     "Number of descriptors in each Resource OnlineDescriptorHeap", 
     2048);
 
-TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
+static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
     "D3D12RHI.SamplerOnlineDescriptorBlockSize",
     "Number of descriptors in each Sampler OnlineDescriptorHeap", 
     1024);

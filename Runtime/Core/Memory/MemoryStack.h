@@ -105,11 +105,11 @@ public:
 private:
     void* AllocateNewChunk(int32 MinSize)
     {
-        const int32 PageSize  = FMath::Max(MEMORY_STACK_PAGE_SIZE, MinSize);
-        const int32 AllocSize = PageSize + sizeof(FMemoryHeader);
+        const int32 HeapSize  = FMath::Max(MEMORY_STACK_PAGE_SIZE, MinSize);
+        const int32 AllocSize = HeapSize + sizeof(FMemoryHeader);
         
         FMemoryHeader* NewPage = reinterpret_cast<FMemoryHeader*>(FMemory::Malloc(AllocSize));
-        NewPage->Size = PageSize;
+        NewPage->Size = HeapSize;
         
         if (TopPage)
         {
@@ -121,7 +121,7 @@ private:
         }
 
         StackStart = reinterpret_cast<uint8*>(NewPage->Data());
-        StackEnd   = StackStart + PageSize;
+        StackEnd   = StackStart + HeapSize;
         TopPage    = NewPage;
         return StackStart;
     }

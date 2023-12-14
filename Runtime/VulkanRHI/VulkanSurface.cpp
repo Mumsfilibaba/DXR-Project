@@ -26,14 +26,22 @@ bool FVulkanSurface::Initialize()
     FVulkanInstance* Instance = GetDevice()->GetInstance();
     
     VkResult Result = FPlatformVulkan::CreateSurface(Instance->GetVkInstance(), WindowHandle, &Surface);
-    VULKAN_CHECK_RESULT(Result, "Failed to create Platform Surface");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create Platform Surface");
+        return false;
+    }
 
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
     VkBool32 PresentSupport = false;
     Result = vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice->GetVkPhysicalDevice(), Queue->GetQueueFamilyIndex(), Surface, &PresentSupport);
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve presentation support for surface");
-    
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve presentation support for surface");
+        return false;
+    }
+
     if (!PresentSupport)
     {
         VULKAN_ERROR("Queue does not support presentation");
@@ -54,7 +62,11 @@ bool FVulkanSurface::GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupporte
         return false;
     }
 
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface formats");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve supported surface formats");
+        return false;
+    }
 
     OutSupportedFormats.Resize(FormatCount);
     if (OutSupportedFormats.IsEmpty())
@@ -69,7 +81,12 @@ bool FVulkanSurface::GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupporte
         return false;
     }
 
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface formats");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve supported surface formats");
+        return false;
+    }
+
     return true;
 }
 
@@ -84,7 +101,11 @@ bool FVulkanSurface::GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) 
         return false;
     }
     
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface presentation modes");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve supported surface presentation modes");
+        return false;
+    }
 
     OutPresentModes.Resize(PresentModeCount);
     if (OutPresentModes.IsEmpty())
@@ -99,7 +120,12 @@ bool FVulkanSurface::GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) 
         return false;
     }
 
-    VULKAN_CHECK_RESULT(Result, "Failed to retrieve supported surface presentation modes");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to retrieve supported surface presentation modes");
+        return false;
+    }
+
     return true;
 }
 
@@ -113,6 +139,11 @@ bool FVulkanSurface::GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) 
         return false;
     }
 
-    VULKAN_CHECK_RESULT(Result, "Failed to get surface capabilities");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to get surface capabilities");
+        return false;
+    }
+
     return true;
 }

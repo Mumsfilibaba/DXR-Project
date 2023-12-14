@@ -4,12 +4,12 @@
 #include "Core/Misc/CommandLine.h"
 #include "Core/Platform/PlatformMisc.h"
 
-FAutoConsoleCommand GClearHistory(
+static FAutoConsoleCommand CCmdHistory(
     "ClearHistory",
     "Clears the history of the Console",
     FConsoleCommandDelegate::CreateRaw(&FConsoleManager::Get(), &FConsoleManager::ClearHistory));
 
-TAutoConsoleVariable<FString> GEcho(
+static TAutoConsoleVariable<FString> CVarEcho(
     "Echo", 
     "Prints the entered text to the console",
     "",

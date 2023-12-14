@@ -4,7 +4,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 
-TAutoConsoleVariable<int32> CVarNumOfflineDescriptors(
+static TAutoConsoleVariable<int32> CVarNumOfflineDescriptors(
     "D3D12RHI.NumOfflineDescriptors",
     "The number of descriptors in each Offline DescriptorHeap",
     D3D12_MAX_OFFLINE_DESCRIPTOR_COUNT,

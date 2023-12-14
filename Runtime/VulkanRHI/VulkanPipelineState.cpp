@@ -411,7 +411,11 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         DescriptorSetLayoutCreateInfo.pBindings    = LayoutBindings.Data();
         
         VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayouts[ShaderVisibilityIndex]);
-        VULKAN_CHECK_RESULT(Result, "Failed to create DescriptorSetLayout");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("Failed to create DescriptorSetLayout");
+            return false;
+        }
     }
 
     // Create ConstantRange
@@ -431,8 +435,11 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     PipelineLayoutCreateInfo.pPushConstantRanges    = &ConstantRange;
     
     VkResult Result = vkCreatePipelineLayout(GetDevice()->GetVkDevice(), &PipelineLayoutCreateInfo, nullptr, &PipelineLayout);
-    VULKAN_CHECK_RESULT(Result, "Failed to create PipelineLayout");
-
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create PipelineLayout");
+        return false;
+    }
 
     // Retrieve a compatible renderpass
     // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
@@ -479,7 +486,12 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     PipelineCreateInfo.basePipelineIndex   = -1;
 
     Result = vkCreateGraphicsPipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
-    VULKAN_CHECK_RESULT(Result, "Failed to create GraphicsPipeline");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create GraphicsPipeline");
+        return false;
+    }
+
     return true;
 }
 
@@ -562,7 +574,11 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     DescriptorSetLayoutCreateInfo.pBindings    = LayoutBindings.Data();
     
     VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayouts[0]);
-    VULKAN_CHECK_RESULT(Result, "Failed to create DescriptorSetLayout");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create DescriptorSetLayout");
+        return false;
+    }
 
     // Create ConstantRange
     VkPushConstantRange ConstantRange;
@@ -582,8 +598,11 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     PipelineLayoutCreateInfo.pPushConstantRanges    = &ConstantRange;
     
     Result = vkCreatePipelineLayout(GetDevice()->GetVkDevice(), &PipelineLayoutCreateInfo, nullptr, &PipelineLayout);
-    VULKAN_CHECK_RESULT(Result, "Failed to create PipelineLayout");
-    
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create PipelineLayout");
+        return false;
+    }
     
     // Create the ComputePipeline
     VkComputePipelineCreateInfo PipelineCreateInfo;
@@ -594,6 +613,11 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     PipelineCreateInfo.stage  = ShaderStageCreateInfo;
 
     Result = vkCreateComputePipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
-    VULKAN_CHECK_RESULT(Result, "Failed to create ComputePipeline");
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create ComputePipeline");
+        return false;
+    }
+
     return true;
 }

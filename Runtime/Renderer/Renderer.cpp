@@ -13,54 +13,57 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "RendererCore/TextureFactory.h"
 
-TAutoConsoleVariable<bool> GEnableSSAO(
+static TAutoConsoleVariable<bool> GEnableSSAO(
     "Renderer.Feature.SSAO",
     "Enables Screen-Space Ambient Occlusion",
     true);
 
-TAutoConsoleVariable<bool> GEnableFXAA(
+static TAutoConsoleVariable<bool> GEnableFXAA(
     "Renderer.Feature.FXAA",
     "Enables FXAA for Anti-Aliasing",
     false);
-TAutoConsoleVariable<bool> GFXAADebug(
+
+static TAutoConsoleVariable<bool> GFXAADebug(
     "Renderer.Debug.FXAADebug",
     "Enables FXAA (Anti-Aliasing) Debugging mode",
     false);
 
-TAutoConsoleVariable<bool> GEnableTemporalAA(
+static TAutoConsoleVariable<bool> GEnableTemporalAA(
     "Renderer.Feature.TemporalAA",
     "Enables Temporal Anti-Aliasing",
     true);
 
-TAutoConsoleVariable<bool> GEnableVariableRateShading(
+static TAutoConsoleVariable<bool> GEnableVariableRateShading(
     "Renderer.Feature.VariableRateShading",
     "Enables VRS (Variable Rate Shading)",
     false);
 
-TAutoConsoleVariable<bool> GPrePassEnabled(
+static TAutoConsoleVariable<bool> GPrePassEnabled(
     "Renderer.Feature.PrePass",
     "Enables Pre-Pass",
     true);
 
-TAutoConsoleVariable<bool> GDrawAABBs(
+static TAutoConsoleVariable<bool> GDrawAABBs(
     "Renderer.Debug.DrawAABBs",
     "Draws all the objects bounding boxes (AABB)",
     false);
-TAutoConsoleVariable<bool> GDrawPointLights(
+
+static TAutoConsoleVariable<bool> GDrawPointLights(
     "Renderer.Debug.DrawPointLights", 
     "Draws all the PointLights as spheres with the light-color",
     false);
 
-TAutoConsoleVariable<bool> GVSyncEnabled(
+static TAutoConsoleVariable<bool> GVSyncEnabled(
     "Renderer.Feature.VerticalSync",
     "Enables Vertical-Sync", 
     false);
-TAutoConsoleVariable<bool> GFrustumCullEnabled(
+
+static TAutoConsoleVariable<bool> GFrustumCullEnabled(
     "Renderer.Feature.FrustumCulling",
     "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
     true);
 
-TAutoConsoleVariable<bool> GRayTracingEnabled(
+static TAutoConsoleVariable<bool> GRayTracingEnabled(
     "Renderer.Feature.RayTracing",
     "Enables Ray Tracing (Currently broken)",
     false);

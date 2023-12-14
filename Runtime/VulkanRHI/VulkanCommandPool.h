@@ -42,13 +42,24 @@ public:
         CommandPoolCreateInfo.queueFamilyIndex = GetDevice()->GetCommandQueueIndexFromType(Type);
 
         VkResult Result = vkCreateCommandPool(GetDevice()->GetVkDevice(), &CommandPoolCreateInfo, nullptr, &CommandPool);
-        VULKAN_CHECK_RESULT(Result, "Failed to create CommandPool");
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("Failed to create CommandPool");
+            return false;
+        }
+
         return true;
     }
 
     FORCEINLINE bool Reset(VkCommandPoolResetFlags Flags = 0)
     {
-        VULKAN_CHECK_RESULT(vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, Flags), "vkResetCommandPool Failed");
+        VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, Flags);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("vkResetCommandPool Failed");
+            return false;
+        }
+
         return true;
     }
 
