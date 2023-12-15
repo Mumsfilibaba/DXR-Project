@@ -122,20 +122,18 @@ VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements);
 VULKAN_FUNCTION_DECLARATION(BindBufferMemory);
 VULKAN_FUNCTION_DECLARATION(DestroyBuffer);
 
-#if VK_KHR_buffer_device_address
-    VULKAN_FUNCTION_DECLARATION(GetBufferDeviceAddressKHR);
-#endif
+// VK_KHR_buffer_device_address (Core in 1.2)
+VULKAN_FUNCTION_DECLARATION(GetBufferDeviceAddressKHR);
 
 VULKAN_FUNCTION_DECLARATION(CreateImage);
 VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements);
 VULKAN_FUNCTION_DECLARATION(BindImageMemory);
 VULKAN_FUNCTION_DECLARATION(DestroyImage);
 
-#if VK_KHR_get_memory_requirements2
-    VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2KHR);
-    VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2KHR);
-    VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2KHR);
-#endif
+// VK_KHR_get_memory_requirements2 (Core in 1.1)
+VULKAN_FUNCTION_DECLARATION(GetImageMemoryRequirements2KHR);
+VULKAN_FUNCTION_DECLARATION(GetBufferMemoryRequirements2KHR);
+VULKAN_FUNCTION_DECLARATION(GetImageSparseMemoryRequirements2KHR);
 
 VULKAN_FUNCTION_DECLARATION(CreateShaderModule);
 VULKAN_FUNCTION_DECLARATION(DestroyShaderModule);
@@ -250,4 +248,18 @@ public:
 private:
     static bool bIsEnabled;
 };
+
+class FVulkanRobustness2EXT
+{
+public:
+    static void Initialize(FVulkanDevice* Device);
     
+    static FORCEINLINE bool IsEnabled()
+    {
+        return bIsEnabled;
+    }
+    
+private:
+    static bool bIsEnabled;
+};
+

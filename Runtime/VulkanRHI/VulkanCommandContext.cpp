@@ -7,186 +7,29 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
-    , bIsReady(false)
-    , bIsCapturing(false)
-    , bIsRenderPassActive(false)
-{
-}
-
-bool FVulkanCommandContextState::Initialize()
-{
-    // if (!DescriptorCache.Initialize())
-    // {
-    //    D3D12_ERROR("Failed to initialize DescriptorCache");
-    //    return false;
-    // }
-
-    return true;
-}
-
-void FVulkanCommandContextState::ApplyGraphics(FVulkanCommandBuffer& CommandBuffer)
-{
-    // VertexBuffer and IndexBuffer
-    if (Graphics.bBindVertexBuffers)
-    {
-        // DescriptorCache.SetVertexBuffers(Graphics.VBCache);
-        CommandBuffer.BindVertexBuffers(0, Graphics.VBCache.NumVertexBuffers, Graphics.VBCache.VertexBuffers, Graphics.VBCache.VertexBufferOffsets);
-        Graphics.bBindVertexBuffers = false;
-    }
-
-    if (Graphics.bBindIndexBuffer)
-    {
-        // DescriptorCache.SetIndexBuffer(Graphics.IBCache);
-        CommandBuffer.BindIndexBuffer(Graphics.IBCache.IndexBuffer, Graphics.IBCache.Offset, Graphics.IBCache.IndexType);
-        Graphics.bBindIndexBuffer = false;
-    }
-
-    // Scissor and Viewport
-    if (Graphics.bBindViewports)
-    {
-        CommandBuffer.SetViewport(0, Graphics.NumViewports, Graphics.Viewports);
-        Graphics.bBindViewports = false;
-    }
-
-    if (Graphics.bBindScissorRects)
-    {
-        CommandBuffer.SetScissor(0, Graphics.NumScissor, Graphics.ScissorRects);
-        Graphics.bBindScissorRects = false;
-    }
-
-    // BlendFactor
-    if (Graphics.bBindBlendFactor)
-    {
-        CommandBuffer.SetBlendConstants(Graphics.BlendFactor.Data());
-        Graphics.bBindBlendFactor = false;
-    }
-
-    // Descriptors
-    //DescriptorCache.PrepareGraphicsDescriptors(Batch, CurrentRootSignture, FD3D12PipelineStageMask::BasicGraphicsMask());
-
-    // Constants
-    if (Graphics.PipelineState)
-    {
-        // Pipeline
-        if (Graphics.bBindPipeline)
-        {
-            VkPipeline Pipeline = Graphics.PipelineState->GetVkPipeline();
-            CommandBuffer.BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
-            Graphics.bBindPipeline = false;
-        }
-
-        VkPipelineLayout PipelineLayout = Graphics.PipelineState->GetVkPipelineLayout();
-        PushConstantsCache.Commit(CommandBuffer, PipelineLayout);
-    }
-}
-
-void FVulkanCommandContextState::ApplyCompute(FVulkanCommandBuffer& CommandBuffer)
-{
-
-    // Descriptors
-    // DescriptorCache.PrepareComputeDescriptors(Batch, CurrentRootSignture);
-
-    // Constants
-    if (Compute.PipelineState)
-    {
-        // Pipeline
-        if (Compute.bBindPipeline)
-        {
-            VkPipeline Pipeline = Compute.PipelineState->GetVkPipeline();
-            CommandBuffer.BindPipeline(VK_PIPELINE_BIND_POINT_COMPUTE, Pipeline);
-            Compute.bBindPipeline = false;
-        }
-        
-        VkPipelineLayout PipelineLayout = Compute.PipelineState->GetVkPipelineLayout();
-        PushConstantsCache.Commit(CommandBuffer, PipelineLayout);
-    }
-}
-
-void FVulkanCommandContextState::ClearGraphics()
-{
-    Graphics.VBCache.Clear();
-    Graphics.IBCache.Clear();
-
-    Graphics.PipelineState.Reset();
-
-    //Graphics.ShadingRateTexture.Reset();
-
-    Graphics.bBindRenderTargets = true;
-    Graphics.bBindBlendFactor   = true;
-    Graphics.bBindPipeline      = true;
-    Graphics.bBindVertexBuffers = true;
-    Graphics.bBindIndexBuffer   = true;
-    Graphics.bBindScissorRects  = true;
-    Graphics.bBindViewports     = true;
-}
-
-void FVulkanCommandContextState::ClearCompute()
-{
-    Compute.PipelineState.Reset();
-    Compute.bBindPipeline = true;
-}
-
-void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 Slot)
-{
-    VkBuffer CurrentBuffer = Graphics.VBCache.VertexBuffers[Slot];
-    VkBuffer NewBuffer = VertexBuffer ? VertexBuffer->GetVkBuffer() : VK_NULL_HANDLE;
-    if (VertexBuffer)
-    {
-        Graphics.VBCache.VertexBuffers[Slot]       = NewBuffer;
-        Graphics.VBCache.VertexBufferOffsets[Slot] = 0;
-    }
-    else
-    {
-        Graphics.VBCache.VertexBuffers[Slot]       = VK_NULL_HANDLE;
-        Graphics.VBCache.VertexBufferOffsets[Slot] = 0;
-    }
-
-    if (NewBuffer != CurrentBuffer)
-    {
-        Graphics.bBindVertexBuffers = true;
-    }
-}
-
-void FVulkanCommandContextState::SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexFormat)
-{
-    VkBuffer CurrentBuffer = Graphics.IBCache.IndexBuffer;
-    VkBuffer NewBuffer = IndexBuffer ? IndexBuffer->GetVkBuffer() : VK_NULL_HANDLE;
-    if (IndexBuffer)
-    {
-        Graphics.IBCache.IndexType   = IndexFormat;
-        Graphics.IBCache.IndexBuffer = NewBuffer;
-        Graphics.IBCache.Offset      = 0;
-    }
-    else
-    {
-        Graphics.IBCache.Clear();
-    }
-
-    if (NewBuffer != CurrentBuffer)
-    {
-        Graphics.bBindIndexBuffer = true;
-    }
-}
-
-
 FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue* InCommandQueue)
     : FVulkanDeviceObject(InDevice)
     , Queue(MakeSharedRef<FVulkanQueue>(InCommandQueue))
     , CommandBuffer(InDevice, InCommandQueue->GetType())
-    , ContextState(InDevice)
+    , ContextState(InDevice, *this)
 {
 }
 
 FVulkanCommandContext::~FVulkanCommandContext()
 {
+    RHIFlush();
 }
 
 bool FVulkanCommandContext::Initialize()
 {
     if (!CommandBuffer.Initialize(VK_COMMAND_BUFFER_LEVEL_PRIMARY))
     {
+        return false;
+    }
+
+    if (!ContextState.Initialize())
+    {
+        VULKAN_ERROR("Failed to initialize ContextState");
         return false;
     }
 
@@ -213,11 +56,11 @@ void FVulkanCommandContext::FlushCommandBuffer()
     {
         VULKAN_ERROR_COND(CommandBuffer.End(), "Failed to End CommandBuffer");
 
-        FVulkanCommandBuffer* SubmitCommandBuffer = GetCommandBuffer();
+        FVulkanCommandBuffer* SubmitCommandBuffer = &CommandBuffer;
         Queue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
     }
     
-    ContextState.ClearAll();
+    ContextState.ResetStateForNewCommandBuffer();
 }
 
 void FVulkanCommandContext::RHIStartContext()
@@ -225,11 +68,17 @@ void FVulkanCommandContext::RHIStartContext()
     // TODO: Remove lock, the command context itself should only be used from a single thread
     // Lock to the thread that started the context
     CommandContextCS.Lock();
+
+    // Reset the state
+    ContextState.ResetState();
+
+    // Retrieve a new CommandBuffer
     ObtainCommandBuffer();
 }
 
 void FVulkanCommandContext::RHIFinishContext()
 {
+    // Submit the CommandBuffer
     FlushCommandBuffer();
     
     // TODO: Remove lock, the command context itself should only be used from a single thread
@@ -239,10 +88,12 @@ void FVulkanCommandContext::RHIFinishContext()
 
 void FVulkanCommandContext::RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
 {
+    // TODO: Implement queries
 }
 
 void FVulkanCommandContext::RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)  
 {
+    // TODO: Implement queries
 }
 
 void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
@@ -278,6 +129,7 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
 
 void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
+    // TODO: Implement when UAVs are implemented
 }
 
 void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
@@ -408,7 +260,7 @@ void FVulkanCommandContext::RHIEndRenderPass()
 
 void FVulkanCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegion)
 {
-    VkViewport& Viewport = ContextState.Graphics.Viewports[0];
+    VkViewport Viewport;
     Viewport.width    = ViewportRegion.Width;
     Viewport.height   = ViewportRegion.Height;
     Viewport.maxDepth = ViewportRegion.MaxDepth;
@@ -416,26 +268,23 @@ void FVulkanCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportReg
     Viewport.x        = ViewportRegion.PositionX;
     Viewport.y        = ViewportRegion.PositionY;
     
-    ContextState.Graphics.NumViewports   = 1;
-    ContextState.Graphics.bBindViewports = true;
+    ContextState.SetViewports(&Viewport, 1);
 }
 
 void FVulkanCommandContext::RHISetScissorRect(const FRHIScissorRegion& ScissorRegion)
 {
-    VkRect2D& ScissorRect = ContextState.Graphics.ScissorRects[0];
+    VkRect2D ScissorRect;
     ScissorRect.offset.x      = static_cast<int32_t>(ScissorRegion.PositionX);
     ScissorRect.extent.width  = static_cast<int32_t>(ScissorRegion.Width);
     ScissorRect.offset.y      = static_cast<int32_t>(ScissorRegion.PositionY);
     ScissorRect.extent.height = static_cast<int32_t>(ScissorRegion.Height);
     
-    ContextState.Graphics.NumScissor        = 1;
-    ContextState.Graphics.bBindScissorRects = true;
+    ContextState.SetScissorRects(&ScissorRect, 1);
 }
 
 void FVulkanCommandContext::RHISetBlendFactor(const FVector4& Color)
 {
-    ContextState.Graphics.BlendFactor      = Color;
-    ContextState.Graphics.bBindBlendFactor = true;
+    ContextState.SetBlendFactor(Color.Data());
 }
 
 void FVulkanCommandContext::RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
@@ -445,8 +294,6 @@ void FVulkanCommandContext::RHISetVertexBuffers(const TArrayView<FRHIBuffer* con
         FVulkanBuffer* VulkanVertexBuffer = static_cast<FVulkanBuffer*>(InVertexBuffers[Index]);
         ContextState.SetVertexBuffer(VulkanVertexBuffer, BufferSlot + Index);
     }
-
-    ContextState.Graphics.VBCache.NumVertexBuffers = FMath::Max(ContextState.Graphics.VBCache.NumVertexBuffers, BufferSlot + InVertexBuffers.Size());
 }
 
 void FVulkanCommandContext::RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat)
@@ -458,35 +305,44 @@ void FVulkanCommandContext::RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFor
 void FVulkanCommandContext::RHISetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState)
 {
     FVulkanGraphicsPipelineState* VulkanPipelineState = static_cast<FVulkanGraphicsPipelineState*>(PipelineState);
-    if (ContextState.Graphics.PipelineState != VulkanPipelineState)
-    {
-        ContextState.Graphics.PipelineState = MakeSharedRef<FVulkanGraphicsPipelineState>(VulkanPipelineState);
-        ContextState.Graphics.bBindPipeline = true;
-    }
+    ContextState.SetGraphicsPipelineState(VulkanPipelineState);
 }
 
 void FVulkanCommandContext::RHISetComputePipelineState(class FRHIComputePipelineState* PipelineState)  
 {
     FVulkanComputePipelineState* VulkanPipelineState = static_cast<FVulkanComputePipelineState*>(PipelineState);
-    if (ContextState.Compute.PipelineState != VulkanPipelineState)
-    {
-        ContextState.Compute.PipelineState = MakeSharedRef<FVulkanComputePipelineState>(VulkanPipelineState);
-        ContextState.Compute.bBindPipeline = true;
-    }
+    ContextState.SetComputePipelineState(VulkanPipelineState);
 }
 
 void FVulkanCommandContext::RHISet32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
 {
-    UNREFERENCED_VARIABLE(Shader);
-    ContextState.PushConstantsCache.SetPushConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+
+    ContextState.SetPushConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
 }
 
 void FVulkanCommandContext::RHISetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+
+    FVulkanShaderResourceView* VulkanShaderResourceView = static_cast<FVulkanShaderResourceView*>(ShaderResourceView);
+    ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), ParameterIndex);
 }
 
-void FVulkanCommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> ShaderResourceViews, uint32 ParameterIndex)
+void FVulkanCommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex + InShaderResourceViews.Size() <= VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+
+    for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
+    {
+        FVulkanShaderResourceView* VulkanShaderResourceView = static_cast<FVulkanShaderResourceView*>(InShaderResourceViews[Index]);
+        ContextState.SetSRV(VulkanShaderResourceView, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+    }
 }
 
 void FVulkanCommandContext::RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
@@ -790,6 +646,7 @@ void FVulkanCommandContext::RHISetRayTracingBindings(
 
 void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
 {
+    // TODO: Implement this
 }
 
 void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -848,35 +705,37 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
 
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
+    // TODO: Check what type of barrier is needed here
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)   
 {
+    // TODO: Check what type of barrier is needed here
 }
 
 void FVulkanCommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)
 {
-    ContextState.ApplyGraphics(CommandBuffer);
+    ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
-    ContextState.ApplyGraphics(CommandBuffer);
+    ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
-    ContextState.ApplyGraphics(CommandBuffer);
+    ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
-    ContextState.ApplyGraphics(CommandBuffer);
+    ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
-    ContextState.ApplyCompute(CommandBuffer);
+    ContextState.BindComputeState();
     // CommandBuffer.Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 }
 

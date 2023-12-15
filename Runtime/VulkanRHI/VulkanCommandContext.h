@@ -1,9 +1,5 @@
 #pragma once
-#include "VulkanQueue.h"
-#include "VulkanCommandBuffer.h"
-#include "VulkanRefCounted.h"
-#include "VulkanPipelineState.h"
-#include "VulkanDescriptorCache.h"
+#include "VulkanCommandContextState.h"
 #include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
@@ -11,83 +7,19 @@
 class FVulkanDevice;
 class FVulkanBuffer;
 
-struct FVulkanCommandContextState : public FVulkanDeviceObject, public FNonCopyAndNonMovable
-{
-    FVulkanCommandContextState(FVulkanDevice* InDevice);
-    ~FVulkanCommandContextState() = default;
-
-    bool Initialize();
-
-    void ApplyGraphics(FVulkanCommandBuffer& CommandBuffer);
-    void ApplyCompute(FVulkanCommandBuffer& CommandBuffer);
-
-    void ClearGraphics();
-    void ClearCompute();
-
-    void SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 Slot);
-    void SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexFormat);
-
-    void ClearAll()
-    {
-        ClearGraphics();
-        ClearCompute();
-
-        // DescriptorCache.Clear();
-        // PushConstantsCache.Reset();
-
-        bIsReady            = false;
-        bIsCapturing        = false;
-        bIsRenderPassActive = false;
-        bBindPipelineLayout = true;
-    }
-
-    struct
-    {
-        FVulkanGraphicsPipelineStateRef PipelineState;
-
-        // FD3D12TextureRef            ShadingRateTexture;
-        // D3D12_SHADING_RATE          ShadingRate = D3D12_SHADING_RATE_1X1;
-
-        FVulkanIndexBufferCache  IBCache;
-        FVulkanVertexBufferCache VBCache;
-
-        VkViewport Viewports[32];
-        uint32     NumViewports;
-
-        VkRect2D   ScissorRects[32];
-        uint32     NumScissor;
-
-        FVector4 BlendFactor;
-
-        bool bBindRenderTargets     : 1;
-        bool bBindBlendFactor       : 1;
-        bool bBindPipeline          : 1;
-        bool bBindVertexBuffers     : 1;
-        bool bBindIndexBuffer       : 1;
-        bool bBindScissorRects      : 1;
-        bool bBindViewports         : 1;
-    } Graphics;
-
-    struct
-    {
-        FVulkanComputePipelineStateRef PipelineState;
-        bool bBindPipeline : 1;
-    } Compute;
-
-    FVulkanPushConstantsCache PushConstantsCache;
-
-    bool bIsReady            : 1;
-    bool bIsCapturing        : 1;
-    bool bIsRenderPassActive : 1;
-    bool bBindPipelineLayout : 1;
-};
-
-
-class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceObject
 {
 public:
     FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue* InCommandQueue);
     ~FVulkanCommandContext();
+
+    bool Initialize();
+
+    void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier);
+
+    void ObtainCommandBuffer();
+    
+    void FlushCommandBuffer();
 
     virtual void RHIStartContext() override final;
     
@@ -216,28 +148,19 @@ public:
         return reinterpret_cast<void*>(&CommandBuffer);
     }
 
-public:
-    bool Initialize();
-
-    void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier);
-
-    void ObtainCommandBuffer();
-    
-    void FlushCommandBuffer();
-
-    FVulkanQueue* GetCommandQueue() const
+    FVulkanQueue& GetCommandQueue() const
     {
-        return Queue.Get();
+        return *Queue;
     }
 
-    FVulkanCommandBuffer* GetCommandBuffer()
+    FVulkanCommandBuffer& GetCommandBuffer()
     {
-        return &CommandBuffer;
+        return CommandBuffer;
     }
 
-    const FVulkanCommandBuffer* GetCommandBuffer() const
+    const FVulkanCommandBuffer& GetCommandBuffer() const
     {
-        return &CommandBuffer;
+        return CommandBuffer;
     }
 
 private:
@@ -245,12 +168,12 @@ private:
     FVulkanCommandBuffer       CommandBuffer;
     FVulkanCommandContextState ContextState;
     
-    // TODO: The whole commandcontext should only be used from one thread at a time
-    FCriticalSection CommandContextCS;
-
     bool bRenderPass = false;
     
     // These resources should be destroyed, most likely there is no reference left in the higher level
     TArray<TSharedRef<IRefCounted>>       DiscardList;
     TArray<TSharedRef<FVulkanRefCounted>> DiscardListVk;
+
+    // TODO: The whole commandcontext should only be used from one thread at a time
+    FCriticalSection CommandContextCS;
 };

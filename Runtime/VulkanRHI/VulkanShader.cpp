@@ -2,10 +2,10 @@
 #include "VulkanDevice.h"
 #include "VulkanLoader.h"
 
-FVulkanShader::FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InVisibility)
+FVulkanShader::FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InShaderVisibility)
     : FVulkanDeviceObject(InDevice)
     , ShaderModule(VK_NULL_HANDLE)
-    , Visibility(InVisibility)
+    , ShaderVisibility(InShaderVisibility)
 {
 }
 

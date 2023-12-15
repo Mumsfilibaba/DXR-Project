@@ -146,20 +146,18 @@ VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements);
 VULKAN_FUNCTION_DEFINITION(BindBufferMemory);
 VULKAN_FUNCTION_DEFINITION(DestroyBuffer);
 
-#if VK_KHR_buffer_device_address
-    VULKAN_FUNCTION_DEFINITION(GetBufferDeviceAddressKHR);
-#endif
+// VK_KHR_buffer_device_address (Core in 1.2)
+VULKAN_FUNCTION_DEFINITION(GetBufferDeviceAddressKHR);
 
 VULKAN_FUNCTION_DEFINITION(CreateImage);
 VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements);
 VULKAN_FUNCTION_DEFINITION(BindImageMemory);
 VULKAN_FUNCTION_DEFINITION(DestroyImage);
 
-#if VK_KHR_get_memory_requirements2
-    VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2KHR);
-    VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2KHR);
-    VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2KHR);
-#endif
+// VK_KHR_get_memory_requirements2 (Core in 1.1)
+VULKAN_FUNCTION_DEFINITION(GetImageMemoryRequirements2KHR);
+VULKAN_FUNCTION_DEFINITION(GetBufferMemoryRequirements2KHR);
+VULKAN_FUNCTION_DEFINITION(GetImageSparseMemoryRequirements2KHR);
 
 VULKAN_FUNCTION_DEFINITION(CreateShaderModule);
 VULKAN_FUNCTION_DEFINITION(DestroyShaderModule);
@@ -250,26 +248,24 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BindBufferMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBuffer);
 
-#if VK_KHR_buffer_device_address
+    // VK_KHR_buffer_device_address (Core in 1.2)
     if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
     {
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferDeviceAddressKHR);
     }
-#endif
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, BindImageMemory);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyImage);
 
-#if VK_KHR_get_memory_requirements2
+    // VK_KHR_get_memory_requirements2 (Core in 1.1)
     if (Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
     {
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageMemoryRequirements2KHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetBufferMemoryRequirements2KHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetImageSparseMemoryRequirements2KHR);
     }
-#endif
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateShaderModule);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyShaderModule);
@@ -334,8 +330,14 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDispatch);
     
-    // Initialize Dedicated Allocation extension helper
+    // Initialize DedicatedAllocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);
+
+    // Initialize BufferDeviceAddress extension helper
+    FVulkanBufferDeviceAddressKHR::Initialize(Device);
+
+    // Initialize Dedicated Allocation extension helper
+    FVulkanRobustness2EXT::Initialize(Device);
     return true;
 }
 
@@ -346,12 +348,11 @@ void FVulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
 {
     VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
     
-#if VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation
+    // VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation (Core in 1.1)
     if (Device->IsExtensionEnabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
     {
         bIsEnabled = true;
     }
-#endif
 }
 
 
@@ -361,8 +362,22 @@ void FVulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
 {
     VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
     
-#if VK_KHR_buffer_device_address
+    // VK_KHR_buffer_device_address (Core in 1.2)
     if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+    {
+        bIsEnabled = true;
+    }
+}
+
+
+bool FVulkanRobustness2EXT::bIsEnabled = false;
+
+void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
+{
+    VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
+    
+#if VK_EXT_robustness2
+    if (Device->IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
     {
         bIsEnabled = true;
     }

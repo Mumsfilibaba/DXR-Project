@@ -114,6 +114,88 @@ bool FD3D12CommandContext::Initialize()
     return true;
 }
 
+void FD3D12CommandContext::ObtainCommandList()
+{
+    TRACE_FUNCTION_SCOPE();
+
+    if (!CommandAllocator)
+    {
+        CommandAllocator = CommandAllocatorManager.ObtainAllocator();
+        if (!CommandAllocator)
+        {
+            D3D12_ERROR("Failed to Obtain CommandAllocator");
+        }
+    }
+
+    if (!CommandList)
+    {
+        CommandList = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(*CommandAllocator, nullptr);
+        if (!CommandList)
+        {
+            D3D12_ERROR("Failed to initialize CommandList");
+        }
+    }
+    else if (AssignedFenceValue == 0)
+    {
+        if (!CommandList->IsReady())
+        {
+            if (!CommandList->Reset(*CommandAllocator))
+            {
+                D3D12_ERROR("Failed to reset Commandlist");
+            }
+        }
+    }
+
+    if (FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType))
+    {
+        AssignedFenceValue = CommandListManager->GetFenceManager().GetCurrentValue() + 1;
+        CHECK(AssignedFenceValue != 0);
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
+}
+
+void FD3D12CommandContext::FinishCommandList()
+{
+    TRACE_FUNCTION_SCOPE();
+
+    FlushResourceBarriers();
+
+    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
+    {
+        ResolveQueries[QueryIndex]->ResolveQueries(*this);
+    }
+
+    ResolveQueries.Clear();
+
+    // Only execute if we have executed any commands
+    const uint32 NumCommands = CommandList->GetNumCommands();
+    if (NumCommands > 0)
+    {
+        // Close CommandList
+        if (!CommandList->Close())
+        {
+            D3D12_ERROR("Failed to close CommandList");
+            return;
+        }
+
+        // Execute and update fence-value
+        FD3D12FenceSyncPoint SyncPoint = GetDevice()->GetCommandListManager(QueueType)->ExecuteCommandList(CommandList, false);
+
+        // Release Allocator
+        CommandAllocatorManager.ReleaseAllocator(CommandAllocator);
+        CommandAllocator = nullptr;
+    }
+
+    // Ensure that the state will rebind the necessary state when we obtain a new CommandList
+    ContextState.ResetStateForNewCommandList();
+
+    // TODO: With multiple contexts this will not be safe
+    AssignedFenceValue = 0;
+}
+
 void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SrcData)
 {
     D3D12_ERROR_COND(Resource != nullptr, "Resource cannot be nullptr");
@@ -324,10 +406,6 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
     ContextState.SetShadingRate(RenderPassInitializer.StaticShadingRate);
 }
 
-void FD3D12CommandContext::RHIEndRenderPass()
-{
-}
-
 void FD3D12CommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegion)
 {
     D3D12_VIEWPORT Viewport;
@@ -361,8 +439,8 @@ void FD3D12CommandContext::RHISetVertexBuffers(const TArrayView<FRHIBuffer* cons
 {
     for (int32 Index = 0; Index < InVertexBuffers.Size(); ++Index)
     {
-        FD3D12Buffer* VertexBuffer = static_cast<FD3D12Buffer*>(InVertexBuffers[Index]);
-        ContextState.SetVertexBuffer(VertexBuffer, BufferSlot + Index);
+        FD3D12Buffer* D3DVertexBuffer = static_cast<FD3D12Buffer*>(InVertexBuffers[Index]);
+        ContextState.SetVertexBuffer(D3DVertexBuffer, BufferSlot + Index);
     }
 }
 
@@ -386,7 +464,9 @@ void FD3D12CommandContext::RHISetComputePipelineState(class FRHIComputePipelineS
 
 void FD3D12CommandContext::RHISet32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
 {
-    UNREFERENCED_VARIABLE(Shader);
+    FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
+    CHECK(D3D12Shader != nullptr);
+
     ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
 }
 
@@ -1072,7 +1152,7 @@ void FD3D12CommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocatio
 {
     FlushResourceBarriers();
 
-    ContextState.BindGraphicsStates(*CommandList);
+    ContextState.BindGraphicsStates();
     CommandList->DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
 
@@ -1080,7 +1160,7 @@ void FD3D12CommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLo
 {
     FlushResourceBarriers();
 
-    ContextState.BindGraphicsStates(*CommandList);
+    ContextState.BindGraphicsStates();
     CommandList->DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
@@ -1088,7 +1168,7 @@ void FD3D12CommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint3
 {
     FlushResourceBarriers();
 
-    ContextState.BindGraphicsStates(*CommandList);
+    ContextState.BindGraphicsStates();
     CommandList->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
@@ -1096,7 +1176,7 @@ void FD3D12CommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance,
 {
     FlushResourceBarriers();
 
-    ContextState.BindGraphicsStates(*CommandList);
+    ContextState.BindGraphicsStates();
     CommandList->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
@@ -1104,7 +1184,7 @@ void FD3D12CommandContext::RHIDispatch(uint32 ThreadGroupCountX, uint32 ThreadGr
 {
     FlushResourceBarriers();
 
-    ContextState.BindComputeState(*CommandList);
+    ContextState.BindComputeState();
     CommandList->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
 }
 
@@ -1202,86 +1282,4 @@ void FD3D12CommandContext::RHIEndExternalCapture()
         GraphicsAnalysis->EndCapture();
         bIsCapturing = false;
     }
-}
-
-void FD3D12CommandContext::ObtainCommandList()
-{
-    TRACE_FUNCTION_SCOPE();
-
-    if (!CommandAllocator)
-    {
-        CommandAllocator = CommandAllocatorManager.ObtainAllocator();
-        if (!CommandAllocator)
-        {
-            D3D12_ERROR("Failed to Obtain CommandAllocator");
-        }
-    }
-
-    if (!CommandList)
-    {
-        CommandList = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(*CommandAllocator, nullptr);
-        if (!CommandList)
-        {
-            D3D12_ERROR("Failed to initialize CommandList");
-        }
-    }
-    else if (AssignedFenceValue == 0)
-    {
-        if (!CommandList->IsReady())
-        {
-            if (!CommandList->Reset(*CommandAllocator))
-            {
-                D3D12_ERROR("Failed to reset Commandlist");
-            }
-        }
-    }
-
-    if (FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType))
-    {
-        AssignedFenceValue = CommandListManager->GetFenceManager().GetCurrentValue() + 1;
-        CHECK(AssignedFenceValue != 0);
-    }
-    else
-    {
-        DEBUG_BREAK();
-    }
-}
-
-void FD3D12CommandContext::FinishCommandList()
-{
-    TRACE_FUNCTION_SCOPE();
-
-    FlushResourceBarriers();
-
-    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
-    {
-        ResolveQueries[QueryIndex]->ResolveQueries(*this);
-    }
-
-    ResolveQueries.Clear();
-
-    // Only execute if we have executed any commands
-    const uint32 NumCommands = CommandList->GetNumCommands();
-    if (NumCommands > 0)
-    {
-        // Close CommandList
-        if (!CommandList->Close())
-        {
-            D3D12_ERROR("Failed to close CommandList");
-            return;
-        }
-
-        // Execute and update fence-value
-        FD3D12FenceSyncPoint SyncPoint = GetDevice()->GetCommandListManager(QueueType)->ExecuteCommandList(CommandList, false);
-
-        // Release Allocator
-        CommandAllocatorManager.ReleaseAllocator(CommandAllocator);
-        CommandAllocator = nullptr;
-    }
-
-    // Ensure that the state will rebind the necessary state when we obtain a new CommandList
-    ContextState.ResetStateForNewCommandList();
-
-    // TODO: With multiple contexts this will not be safe
-    AssignedFenceValue = 0;
 }

@@ -111,10 +111,11 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     }
 
     // NOTE: All textures are allocated as device local, maybe we want to move this into the AllocateImageMemory function
-    VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    const VkMemoryAllocateFlags AllocateFlags    = 0;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, false, MemoryAllocation))
+    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, false, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate ImageMemory");
         return false;

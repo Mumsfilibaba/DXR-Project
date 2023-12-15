@@ -50,12 +50,13 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     // TODO: Look into abstracting these flags
     BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     
-#if VK_KHR_buffer_device_address
-    if (FVulkanBufferDeviceAddressKHR::IsEnabled())
+    // VK_KHR_buffer_device_address (Core in 1.2)
+    VkMemoryAllocateFlags AllocateFlags = 0;
+    if (FVulkanBufferDeviceAddressKHR::IsEnabled() && Desc.IsDefault())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+        AllocateFlags           = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
     }
-#endif
 
     if (Desc.IsVertexBuffer())
     {
@@ -98,7 +99,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     
     // Allocate memory based on the buffer
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, false, MemoryAllocation))
+    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, false, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate buffer memory");
         return false;

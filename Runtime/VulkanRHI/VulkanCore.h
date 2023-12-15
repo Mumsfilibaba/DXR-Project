@@ -17,7 +17,7 @@
 #include <vulkan/vulkan.h>
 
 #if !defined(VK_VERSION_1_1) && !defined(VK_VERSION_1_2)
-#error Vulkan version must be 1.2 or above
+    #error Vulkan version must be 1.2 or above
 #endif
 
 #if !PRODUCTION_BUILD

@@ -12,9 +12,9 @@ public:
 
     bool Initialize();
 
-    void BindGraphicsStates(FD3D12CommandList& CommandList);
+    void BindGraphicsStates();
     
-    void BindComputeState(FD3D12CommandList& CommandList);
+    void BindComputeState();
 
     void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
     
@@ -54,7 +54,7 @@ public:
 
     void SetCBV(FD3D12ConstantBufferView* ConstantBufferView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
 
-    void SetSampler(FD3D12SamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetSampler(FD3D12SamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
 
     void SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
@@ -144,10 +144,17 @@ private:
     {
         FGraphicsState()
             : PipelineState(nullptr)
-            , ShadingRateImage(nullptr)
             , NumViewports(0)
             , NumScissorRects(0)
+            , ShadingRateImage(nullptr)
+            , ShadingRate(D3D12_SHADING_RATE_1X1)
+            , RTCache()
+            , IBCache()
+            , VBCache()
         {
+            FMemory::Memzero(BlendFactor, sizeof(BlendFactor));
+            FMemory::Memzero(Viewports, sizeof(Viewports));
+            FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
         FD3D12GraphicsPipelineStateRef PipelineState;

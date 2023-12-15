@@ -36,10 +36,10 @@ static bool IsLegalRegisterSpace(const D3D12_SHADER_INPUT_BIND_DESC& ShaderBindD
 }
 
 
-FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InVisibility)
+FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InShaderVisibility)
     : FD3D12DeviceChild(InDevice)
     , ByteCode()
-    , Visibility(InVisibility)
+    , ShaderVisibility(InShaderVisibility)
 {
     ByteCode.BytecodeLength  = InCode.SizeInBytes();
     ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);

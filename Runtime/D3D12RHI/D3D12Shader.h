@@ -55,12 +55,12 @@ struct FShaderResourceCount
 class FD3D12Shader : public FD3D12DeviceChild
 {
 public:
-    FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility ShaderVisibility);
+    FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, EShaderVisibility InShaderVisibility);
     ~FD3D12Shader();
 
     static bool GetShaderReflection(class FD3D12Shader* Shader);
 
-    EShaderVisibility GetShaderVisibility() const { return Visibility; }
+    EShaderVisibility GetShaderVisibility() const { return ShaderVisibility; }
 
     const FShaderResourceCount& GetResourceCount()        const { return ResourceCount; }
     const FShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
@@ -78,7 +78,7 @@ protected:
     static bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, FD3D12Shader* Shader, uint32 NumBoundResources);
 
     D3D12_SHADER_BYTECODE ByteCode;
-    EShaderVisibility     Visibility;
+    EShaderVisibility     ShaderVisibility;
     FShaderResourceCount  ResourceCount;
     FShaderResourceCount  RTLocalResourceCount;
 

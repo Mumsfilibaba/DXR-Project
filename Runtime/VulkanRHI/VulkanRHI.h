@@ -87,7 +87,7 @@ public:
     
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final { return GraphicsCommandContext.Get(); }
+    virtual IRHICommandContext* RHIObtainCommandContext() override final { return GraphicsCommandContext; }
 
     virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final;
     
@@ -145,7 +145,7 @@ public:
 
     FVulkanCommandContext* ObtainCommandContext()
     {
-        return GraphicsCommandContext.Get();
+        return GraphicsCommandContext;
     }
 
 private:
@@ -153,8 +153,8 @@ private:
     TSharedRef<FVulkanPhysicalDevice> PhysicalDevice;
     TSharedRef<FVulkanDevice>         Device;
 
-    FVulkanQueueRef                   GraphicsQueue;
-    TSharedRef<FVulkanCommandContext> GraphicsCommandContext;
+    FVulkanQueueRef        GraphicsQueue;
+    FVulkanCommandContext* GraphicsCommandContext;
 
     static FVulkanRHI* GVulkanRHI;
 };

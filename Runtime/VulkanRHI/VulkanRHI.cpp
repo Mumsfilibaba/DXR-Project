@@ -33,7 +33,8 @@ FVulkanRHI::FVulkanRHI()
 
 FVulkanRHI::~FVulkanRHI()
 {
-    GraphicsCommandContext.Reset();
+    SAFE_DELETE(GraphicsCommandContext);
+
     GraphicsQueue.Reset();
 
     Device.Reset();

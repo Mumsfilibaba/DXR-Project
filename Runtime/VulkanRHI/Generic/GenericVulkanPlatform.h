@@ -105,6 +105,9 @@ struct FGenericVulkanPlatform
         #if VK_EXT_conservative_rasterization
             VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME,
         #endif
+        #if VK_EXT_robustness2
+            VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,
+        #endif
         };
     }
     

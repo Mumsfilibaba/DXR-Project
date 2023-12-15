@@ -54,10 +54,11 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
         return false;
     }
     
-    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;    
-
+    const VkMemoryAllocateFlags AllocateFlags    = 0;
+    const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, false, MemoryAllocation))
+    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, false, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate BufferMemory");
         return false;
@@ -78,6 +79,7 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
     MappedMemory = reinterpret_cast<uint8*>(BufferData);
     return true;
 }
+
 
 FVulkanUploadHeapAllocator::FVulkanUploadHeapAllocator(FVulkanDevice* InDevice)
     : FVulkanDeviceObject(InDevice)

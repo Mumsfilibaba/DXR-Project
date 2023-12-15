@@ -33,7 +33,7 @@ enum EShaderVisibility : int32
 class FVulkanShader : public FVulkanDeviceObject
 {
 public:
-    FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InVisibility);
+    FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InShaderVisibility);
     ~FVulkanShader();
 
     bool Initialize(const TArray<uint8>& InCode);
@@ -43,14 +43,14 @@ public:
         return ShaderModule;
     }
 
-    EShaderVisibility GetVisibility() const
+    EShaderVisibility GetShaderVisibility() const
     {
-        return Visibility;
+        return ShaderVisibility;
     }
 
 protected:
     VkShaderModule    ShaderModule;
-    EShaderVisibility Visibility;
+    EShaderVisibility ShaderVisibility;
 };
 
 
@@ -218,7 +218,7 @@ public:
 };
 
 
-inline FVulkanShader* GeVulkanShader(FRHIShader* Shader)
+inline FVulkanShader* GetVulkanShader(FRHIShader* Shader)
 {
     return Shader ? reinterpret_cast<FVulkanShader*>(Shader->GetRHIBaseShader()) : nullptr;
 }

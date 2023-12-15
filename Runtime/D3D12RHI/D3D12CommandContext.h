@@ -74,7 +74,7 @@ public:
 
     virtual void RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) override final;
     
-    virtual void RHIEndRenderPass() override final;
+    virtual void RHIEndRenderPass() override final { }
 
     virtual void RHISetViewport(const FRHIViewportRegion& ViewportRegion) override final;
 

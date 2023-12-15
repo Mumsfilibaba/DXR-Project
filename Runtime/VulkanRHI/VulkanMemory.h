@@ -54,7 +54,7 @@ struct FVulkanMemoryBlock
 class FVulkanMemoryHeap : public FVulkanDeviceObject, private FNonCopyable
 {
 public:
-    FVulkanMemoryHeap(FVulkanDevice* InDevice, const uint32 InHeapIndex, const uint32 InMemoryIndex);
+    FVulkanMemoryHeap(FVulkanDevice* InDevice, VkMemoryAllocateFlags InAllocationFlags, uint32 InHeapIndex, uint32 InMemoryIndex);
     ~FVulkanMemoryHeap();
 
     bool Initialize(uint64 InSizeInBytes);
@@ -81,6 +81,11 @@ public:
     {
         return MemoryIndex;
     }
+    
+    FORCEINLINE VkMemoryAllocateFlags GetAllocationFlags() const
+    {
+        return AllocationFlags;
+    }
 
     FORCEINLINE uint32 GetHeapIndex() const
     {
@@ -94,9 +99,10 @@ private:
     bool ValidateChain()                          const;
     bool ValidateBlock(FVulkanMemoryBlock* Block) const;
 
-    uint64 SizeInBytes;
-    uint32 MemoryIndex;
-    uint32 HeapIndex;
+    uint64                SizeInBytes;
+    VkMemoryAllocateFlags AllocationFlags;
+    uint32                MemoryIndex;
+    uint32                HeapIndex;
 
     FVulkanMemoryBlock* Head;
     uint8*              HostMemory;
@@ -119,12 +125,12 @@ public:
     FVulkanMemoryManager(FVulkanDevice* InDevice);
     ~FVulkanMemoryManager();
     
-    bool AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags MemoryProperties, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
-    bool AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags MemoryProperties, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
+    bool AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
+    bool AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
     
     bool AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemory, const VkMemoryAllocateInfo& AllocateInfo);
-    bool AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemory, uint64 SizeInBytes, uint32 MemoryIndex);
-    bool AllocateMemoryFromHeap(FVulkanMemoryAllocation& OutAllocation, uint64 SizeInBytes, uint64 Alignment, uint32 MemoryIndex);
+    bool AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemory, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint32 MemoryIndex);
+    bool AllocateMemoryFromHeap(FVulkanMemoryAllocation& OutAllocation, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, uint32 MemoryIndex);
 
     bool Free(FVulkanMemoryAllocation& OutAllocation);
     void FreeMemory(VkDeviceMemory& OutDeviceMemory);

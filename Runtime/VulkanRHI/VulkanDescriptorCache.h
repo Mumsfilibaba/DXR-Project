@@ -1,7 +1,10 @@
 #pragma once
 #include "VulkanLoader.h"
+#include "VulkanSamplerState.h"
+#include "VulkanResourceViews.h"
 
 class FVulkanBuffer;
+class FVulkanCommandContext;
 
 struct FVulkanVertexBufferCache
 {
@@ -12,7 +15,7 @@ struct FVulkanVertexBufferCache
 
     void Clear()
     {
-        FMemory::Memzero(VertexBuffers      , sizeof(VertexBuffers));
+        FMemory::Memzero(VertexBuffers, sizeof(VertexBuffers));
         FMemory::Memzero(VertexBufferOffsets, sizeof(VertexBufferOffsets));
         NumVertexBuffers = 0;
     }
@@ -43,46 +46,179 @@ struct FVulkanIndexBufferCache
 };
 
 
-class FVulkanPushConstantsCache
+struct FVulkanResourceCache
 {
-public:
-    FVulkanPushConstantsCache()
+    bool IsDirty(EShaderVisibility ShaderStage) const
     {
-        Reset();
+        return bDirty[ShaderStage];
     }
 
-    void SetPushConstants(const uint32* InConstants, uint32 InNumConstants)
+    void DirtyState(uint32 StartStage, uint32 EndStage)
     {
-        VULKAN_ERROR_COND(
-            InNumConstants <= VULKAN_MAX_NUM_PUSH_CONSTANTS,
-            "Trying to set a number of push-constants (NumConstants=%u) higher than the maximum (MaxShaderConstants=%u)",
-            InNumConstants,
-            VULKAN_MAX_NUM_PUSH_CONSTANTS);
+        CHECK(EndStage < ShaderVisibility_Count);
 
-        FMemory::Memcpy(Constants, InConstants, sizeof(uint32) * InNumConstants);
-        NumConstants = InNumConstants;
-        bIsDirty     = true;
-    }
-
-    void Commit(FVulkanCommandBuffer& CommandBuffer, VkPipelineLayout PipelineLayout)
-    {
-        if (bIsDirty && NumConstants > 0)
+        for (uint32 Index = StartStage; Index < ShaderVisibility_Count; Index++)
         {
-            CommandBuffer.PushConstants(PipelineLayout, VK_SHADER_STAGE_ALL, 0, NumConstants * sizeof(uint32), Constants);
-            bIsDirty = false;
+            bDirty[Index] = true;
         }
     }
 
-    void Reset()
+    void DirtyStateAll()
     {
-        // Reset by setting all constants to zero, this ensures that a shader always at least reads from zero constants
-        NumConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
-        bIsDirty     = true;
+        for (uint32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        {
+            bDirty[Index] = true;
+        }
+    }
+
+    bool bDirty[ShaderVisibility_Count];
+};
+
+
+struct FVulkanConstantBufferCache : public FVulkanResourceCache
+{
+    FVulkanConstantBufferCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+
+        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        {
+            auto& StageConstantBuffers = ConstantBuffers[Index];
+            FMemory::Memzero(&StageConstantBuffers, sizeof(StageConstantBuffers));
+            NumBuffers[Index] = 0;
+        }
+    }
+
+    FVulkanBuffer* ConstantBuffers[ShaderVisibility_Count][VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT];
+    uint8 NumBuffers[ShaderVisibility_Count];
+};
+
+
+struct FVulkanShaderResourceViewCache : public FVulkanResourceCache
+{
+    FVulkanShaderResourceViewCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+
+        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        {
+            auto& StageViews = ResourceViews[Index];
+            FMemory::Memzero(&StageViews, sizeof(StageViews));
+            NumViews[Index] = 0;
+        }
+    }
+
+    FVulkanShaderResourceView* ResourceViews[ShaderVisibility_Count][VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
+    uint8 NumViews[ShaderVisibility_Count];
+};
+
+
+struct FVulkanUnorderedAccessViewCache : public FVulkanResourceCache
+{
+    FVulkanUnorderedAccessViewCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+
+        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        {
+            auto& StageViews = ResourceViews[Index];
+            FMemory::Memzero(&StageViews, sizeof(StageViews));
+            NumViews[Index] = 0;
+        }
+    }
+
+    FVulkanUnorderedAccessView* ResourceViews[ShaderVisibility_Count][VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
+    uint8 NumViews[ShaderVisibility_Count];
+};
+
+struct FVulkanPushConstantsCache
+{
+    FVulkanPushConstantsCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
         FMemory::Memzero(Constants, sizeof(Constants));
+        NumConstants = 0;
+    }
+
+    uint32 Constants[VULKAN_MAX_NUM_PUSH_CONSTANTS];
+    uint32 NumConstants;
+};
+
+
+struct FVulkanSamplerStateCache : public FVulkanResourceCache
+{
+    FVulkanSamplerStateCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+
+        for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
+        {
+            auto& StageSamplers = SamplerStates[Index];
+            NumSamplers[Index] = VULKAN_DEFAULT_SAMPLER_STATE_COUNT;
+            FMemory::Memzero(&StageSamplers, sizeof(StageSamplers));
+        }
+    }
+
+    FVulkanSamplerState* SamplerStates[ShaderVisibility_Count][VULKAN_DEFAULT_SAMPLER_STATE_COUNT];
+    uint8 NumSamplers[ShaderVisibility_Count];
+};
+
+
+class FVulkanDescriptorSetCache : public FVulkanDeviceObject
+{
+public:
+    FVulkanDescriptorSetCache(FVulkanDevice* InDevice, FVulkanCommandContext& InContext);
+    ~FVulkanDescriptorSetCache() = default;
+
+    bool Initialize();
+
+    void DirtyState();
+
+    void DirtyStateSamplers();
+
+    void DirtyStateResources();
+
+    void SetVertexBuffers(FVulkanVertexBufferCache& VertexBuffers);
+    
+    void SetIndexBuffer(FVulkanIndexBufferCache& IndexBuffer);
+
+    void SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs);
+    
+    void SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumUAVs);
+
+    void SetCBVs(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumCBVs);
+    
+    void SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers);
+
+    FORCEINLINE FVulkanCommandContext& GetContext() const
+    {
+        return Context;
     }
 
 private:
-    uint32 Constants[VULKAN_MAX_NUM_PUSH_CONSTANTS];
-    uint32 NumConstants;
-    bool   bIsDirty;
+    FVulkanCommandContext& Context;
 };

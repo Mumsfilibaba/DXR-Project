@@ -166,9 +166,8 @@ struct FD3D12UnorderedAccessViewCache : public FD3D12ResourceCache
     uint8 NumViews[ShaderVisibility_Count];
 };
 
-class FD3D12ShaderConstantsCache
+struct FD3D12ShaderConstantsCache
 {
-public:
     FD3D12ShaderConstantsCache()
     {
         Clear();
@@ -218,9 +217,8 @@ struct TTypeHash<FD3D12UniqueSamplerTable>
     }
 };
 
-class FD3D12SamplerStateCache : public FD3D12ResourceCache
+struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 {
-public:
     FD3D12SamplerStateCache()
     {
         Clear();
@@ -436,12 +434,12 @@ public:
     }
 
 private:
-    FD3D12CommandContext&    Context;
-    FD3D12DefaultDescriptors DefaultDescriptors;
+    FD3D12CommandContext&       Context;
+    FD3D12DefaultDescriptors    DefaultDescriptors;
 
-    ID3D12DescriptorHeap*     CurrentDescriptorHeaps[2] = { nullptr, nullptr };
-    FD3D12LocalDescriptorHeap ResourceHeap;
-    FD3D12LocalDescriptorHeap SamplerHeap;
+    ID3D12DescriptorHeap*       CurrentDescriptorHeaps[2] = { nullptr, nullptr };
+    FD3D12LocalDescriptorHeap   ResourceHeap;
+    FD3D12LocalDescriptorHeap   SamplerHeap;
 
     FD3D12DescriptorHandleCache ConstantBufferCache;
     FD3D12DescriptorHandleCache ShaderResourceViewCache;
