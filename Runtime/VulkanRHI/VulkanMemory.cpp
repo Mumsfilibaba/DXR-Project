@@ -396,16 +396,6 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     HeapSize = CVarMemoryHeapSize.GetValue() * 1024 * 1024;
 }
 
-FVulkanMemoryManager::~FVulkanMemoryManager()
-{
-    for (FVulkanMemoryHeap* MemoryPage : MemoryHeaps)
-    {
-        SAFE_DELETE(MemoryPage);
-    }
-
-    MemoryHeaps.Clear();
-}
-
 bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation)
 {
     // We can force dedicated allocations
@@ -490,10 +480,12 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
 
         // Allocate a dedicated piece of memory
         bResult = AllocateMemoryDedicated(OutAllocation.Memory, MemoryAllocateInfo);
+        OutAllocation.bIsDedicated = true;
     }
     else
     {
         bResult = AllocateMemoryFromHeap(OutAllocation, AllocateFlags, MemoryRequirements.size, MemoryRequirements.alignment, MemoryTypeIndex);
+        OutAllocation.bIsDedicated = false;
     }
 
 
@@ -623,10 +615,12 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
 
         // Allocate a dedicated piece of memory
         bResult = AllocateMemoryDedicated(OutAllocation.Memory, MemoryAllocateInfo);
+        OutAllocation.bIsDedicated = true;
     }
     else
     {
         bResult = AllocateMemoryFromHeap(OutAllocation, AllocateFlags, MemoryRequirements.size, MemoryRequirements.alignment, MemoryTypeIndex);
+        OutAllocation.bIsDedicated = false;
     }
 
     if (!bResult)
@@ -744,28 +738,41 @@ bool FVulkanMemoryManager::Free(FVulkanMemoryAllocation& OutAllocation)
     SCOPED_LOCK(ManagerCS);
 
     FVulkanMemoryBlock* Block = OutAllocation.Block;
-    CHECK(Block != nullptr);
-
-    FVulkanMemoryHeap* Page = Block->Page;
-    CHECK(Page != nullptr);
-    
-    // Remove an empty heap
-    const bool bResult = Page->Free(OutAllocation);
-    if (Page->IsEmpty())
+    if (Block)
     {
-        for (auto it = MemoryHeaps.begin(); it != MemoryHeaps.end(); it++)
+        CHECK(OutAllocation.bIsDedicated == false);
+        
+        FVulkanMemoryHeap* Page = Block->Page;
+        CHECK(Page != nullptr);
+        
+        // Remove an empty heap
+        const bool bResult = Page->Free(OutAllocation);
+        if (Page->IsEmpty())
         {
-            if (*it == Page)
+            for (auto it = MemoryHeaps.begin(); it != MemoryHeaps.end(); it++)
             {
-                MemoryHeaps.RemoveAt(it.GetIndex());
-                break;
+                if (*it == Page)
+                {
+                    MemoryHeaps.RemoveAt(it.GetIndex());
+                    break;
+                }
             }
+
+            SAFE_DELETE(Page);
         }
-
-        SAFE_DELETE(Page);
+        
+        return bResult;
     }
-
-    return bResult;
+    else
+    {
+        CHECK(OutAllocation.bIsDedicated == true);
+        
+        FreeMemory(OutAllocation.Memory);
+        OutAllocation.Reset();
+        return true;
+    }
+    
+    return false;
 }
 
 void FVulkanMemoryManager::FreeMemory(VkDeviceMemory& OutDeviceMemory)
@@ -775,6 +782,16 @@ void FVulkanMemoryManager::FreeMemory(VkDeviceMemory& OutDeviceMemory)
     NumAllocations--;
     
     VULKAN_INFO("[FreeMemory] NumAllocations = %d/%d", NumAllocations.Load(), DeviceProperties.limits.maxMemoryAllocationCount);
+}
+
+void FVulkanMemoryManager::ReleaseMemoryHeaps()
+{
+    for (FVulkanMemoryHeap* MemoryPage : MemoryHeaps)
+    {
+        SAFE_DELETE(MemoryPage);
+    }
+
+    MemoryHeaps.Clear();
 }
 
 void* FVulkanMemoryManager::Map(const FVulkanMemoryAllocation& Allocation)

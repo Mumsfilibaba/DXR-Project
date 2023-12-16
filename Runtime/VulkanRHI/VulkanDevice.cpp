@@ -25,6 +25,9 @@ FVulkanDevice::~FVulkanDevice()
     // Ensure that the upload allocator is released before we destroy the device
     UploadHeap.Release();
 
+    // Release all heaps (Which will check for memory leaks)
+    MemoryManager.ReleaseMemoryHeaps();
+    
     // Destroy the device here
     if (VULKAN_CHECK_HANDLE(Device))
     {

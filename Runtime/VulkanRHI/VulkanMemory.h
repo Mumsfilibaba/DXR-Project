@@ -13,7 +13,8 @@ struct FVulkanMemoryAllocation
     
     bool IsValid() const
     {
-        return Memory != VK_NULL_HANDLE && Block != nullptr;
+        // Block is nullptr in the case of a dedicated allocation
+        return Memory != VK_NULL_HANDLE;
     }
     
     void Reset()
@@ -22,12 +23,14 @@ struct FVulkanMemoryAllocation
         Offset        = 0;
         DeviceAddress = 0;
         Block         = nullptr;
+        bIsDedicated  = false;
     }
     
     VkDeviceMemory      Memory;
     VkDeviceSize        Offset;
     VkDeviceAddress     DeviceAddress;
     FVulkanMemoryBlock* Block;
+    bool                bIsDedicated;
 };
 
 
@@ -123,7 +126,7 @@ class FVulkanMemoryManager : public FVulkanDeviceObject
 {
 public:
     FVulkanMemoryManager(FVulkanDevice* InDevice);
-    ~FVulkanMemoryManager();
+    ~FVulkanMemoryManager() = default;
     
     bool AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
     bool AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
@@ -135,6 +138,8 @@ public:
     bool Free(FVulkanMemoryAllocation& OutAllocation);
     void FreeMemory(VkDeviceMemory& OutDeviceMemory);
 
+    void ReleaseMemoryHeaps();
+    
     void* Map(const FVulkanMemoryAllocation& Allocation);
     void  Unmap(const FVulkanMemoryAllocation& Allocation);
     

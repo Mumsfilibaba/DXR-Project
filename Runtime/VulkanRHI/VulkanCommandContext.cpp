@@ -347,26 +347,71 @@ void FVulkanCommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const 
 
 void FVulkanCommandContext::RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+
+    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
+    ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), ParameterIndex);
 }
 
-void FVulkanCommandContext::RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> UnorderedAccessViews, uint32 ParameterIndex)
+void FVulkanCommandContext::RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex + InUnorderedAccessViews.Size() <= VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+
+    for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
+    {
+        FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(InUnorderedAccessViews[Index]);
+        ContextState.SetUAV(VulkanUnorderedAccessView, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+    }
 }
 
 void FVulkanCommandContext::RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex < VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT);
+
+    FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(ConstantBuffer);
+    ContextState.SetCBV(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex);
 }
 
-void FVulkanCommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> ConstantBuffers, uint32 ParameterIndex)
+void FVulkanCommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex + InConstantBuffers.Size() <= VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT);
+
+    for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
+    {
+        FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(InConstantBuffers[Index]);
+        ContextState.SetCBV(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+    }
 }
 
 void FVulkanCommandContext::RHISetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
+
+    FVulkanSamplerState* VulkanSamplerState = static_cast<FVulkanSamplerState*>(SamplerState);
+    ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), ParameterIndex);
 }
 
-void FVulkanCommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> SamplerStates, uint32 ParameterIndex)
+void FVulkanCommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
 {
+    FVulkanShader* VulkanShader = GetVulkanShader(Shader);
+    CHECK(VulkanShader != nullptr);
+    CHECK(ParameterIndex + InSamplerStates.Size() <= VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
+
+    for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
+    {
+        FVulkanSamplerState* VulkanSamplerState = static_cast<FVulkanSamplerState*>(InSamplerStates[Index]);
+        ContextState.SetSampler(VulkanSamplerState, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+    }
 }
 
 void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)     
