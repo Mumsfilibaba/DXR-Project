@@ -31,6 +31,7 @@ VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceProperties2);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceFeatures2);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceMemoryProperties2);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceQueueFamilyProperties);
+VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceImageFormatProperties);
 
 VULKAN_FUNCTION_DEFINITION(CreateDevice);
 VULKAN_FUNCTION_DEFINITION(DestroyDevice);
@@ -72,6 +73,7 @@ bool LoadInstanceFunctions(FVulkanInstance* Instance)
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFeatures2);
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceMemoryProperties2);
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceQueueFamilyProperties);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceImageFormatProperties);
 
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateDevice);
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDevice);

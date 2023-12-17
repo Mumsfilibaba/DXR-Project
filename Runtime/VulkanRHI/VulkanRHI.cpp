@@ -567,8 +567,26 @@ bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
     VkFormat VulkanFormat = ConvertFormat(Format);
     if (VulkanFormat != VK_FORMAT_UNDEFINED)
     {
-        
-        return false;
+        VkImageFormatProperties ImageFormatProperties;
+        FMemory::Memzero(&ImageFormatProperties);
+
+        // TODO: We want to not just query for Texture2D with optimal tiling etc.
+        VkResult Result = vkGetPhysicalDeviceImageFormatProperties(
+            GetDevice()->GetPhysicalDevice()->GetVkPhysicalDevice(),
+            VulkanFormat,
+            VK_IMAGE_TYPE_2D,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_STORAGE_BIT,
+            0,
+            &ImageFormatProperties);
+        if (Result == VK_ERROR_FORMAT_NOT_SUPPORTED)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
     
     return false;

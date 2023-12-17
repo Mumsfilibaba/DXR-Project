@@ -61,6 +61,7 @@ VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceProperties2);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceFeatures2);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceMemoryProperties2);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceQueueFamilyProperties);
+VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceImageFormatProperties);
 
 VULKAN_FUNCTION_DECLARATION(CreateDevice);
 VULKAN_FUNCTION_DECLARATION(DestroyDevice);
