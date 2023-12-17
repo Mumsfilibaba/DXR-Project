@@ -6,6 +6,9 @@
 typedef TSharedRef<class FVulkanShader>              FVulkanShaderRef;
 
 typedef TSharedRef<class FVulkanVertexShader>        FVulkanVertexShaderRef;
+typedef TSharedRef<class FVulkanHullShader>          FVulkanHullShaderRef;
+typedef TSharedRef<class FVulkanDomainShader>        FVulkanDomainShaderRef;
+typedef TSharedRef<class FVulkanGeometryShader>      FVulkanGeometryShaderRef;
 typedef TSharedRef<class FVulkanPixelShader>         FVulkanPixelShaderRef;
 
 typedef TSharedRef<class FVulkanComputeShader>       FVulkanComputeShaderRef;

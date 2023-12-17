@@ -682,7 +682,7 @@ constexpr VkFormat ConvertFormat(EFormat Format)
         case EFormat::BC7_UNorm:             return VK_FORMAT_BC7_UNORM_BLOCK;
         case EFormat::BC7_UNorm_SRGB:        return VK_FORMAT_BC7_SRGB_BLOCK;
 
-        default:                             return VK_FORMAT_UNDEFINED;
+        default: return VK_FORMAT_UNDEFINED;
     }
 }
 

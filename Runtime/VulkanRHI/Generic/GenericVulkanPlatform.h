@@ -108,6 +108,9 @@ struct FGenericVulkanPlatform
         #if VK_EXT_robustness2
             VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,
         #endif
+        #if VK_KHR_fragment_shading_rate
+            VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, 
+        #endif
         };
     }
     

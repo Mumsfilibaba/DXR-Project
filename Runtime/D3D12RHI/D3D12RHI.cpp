@@ -596,23 +596,41 @@ FRHIVertexShader* FD3D12RHI::RHICreateVertexShader(const TArray<uint8>& ShaderCo
 
 FRHIHullShader* FD3D12RHI::RHICreateHullShader(const TArray<uint8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    TSharedRef<FD3D12HullShader> NewShader = new FD3D12HullShader(GetDevice(), ShaderCode);
+    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIDomainShader* FD3D12RHI::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    TSharedRef<FD3D12DomainShader> NewShader = new FD3D12HullShader(GetDevice(), ShaderCode);
+    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIGeometryShader* FD3D12RHI::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(ShaderCode);
-    return nullptr;
+    TSharedRef<FD3D12GeometryShader> NewShader = new FD3D12HullShader(GetDevice(), ShaderCode);
+    if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewShader.ReleaseOwnership();
+    }
 }
 
 FRHIMeshShader* FD3D12RHI::RHICreateMeshShader(const TArray<uint8>& ShaderCode)

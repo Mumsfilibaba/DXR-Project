@@ -394,6 +394,16 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     
     // Calculate the heapsize in bytes
     HeapSize = CVarMemoryHeapSize.GetValue() * 1024 * 1024;
+    
+    // List all the MemoryHeaps available
+    const VkPhysicalDeviceMemoryProperties& MemoryProperties = GetDevice()->GetPhysicalDevice()->GetDeviceMemoryProperties();
+    VULKAN_INFO("Current Device has the following MemoryHeaps:");
+    
+    for (uint32 Index = 0; Index < MemoryProperties.memoryHeapCount; Index++)
+    {
+        const VkMemoryHeap& MemoryHeap = MemoryProperties.memoryHeaps[Index];
+        VULKAN_INFO("    MemoryHeap[%u] Size = %.2f MB", Index, static_cast<float>(MemoryHeap.size) / (1024.0f * 1024.0f));
+    }
 }
 
 bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation)
