@@ -16,7 +16,6 @@ public:
     ~FVulkanImageView();
 
     bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags InFlags, const VkImageSubresourceRange& InSubresourceRange);
-    
     void DestroyView();
 
     VkImage GetVkImage() const
@@ -47,6 +46,7 @@ private:
     VkImageViewCreateFlags  Flags;
 };
 
+
 class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceObject
 {
 public:
@@ -67,11 +67,21 @@ public:
     {
         return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
     }
+    
+    const VkDescriptorBufferInfo& GetDescriptorBufferInfo() const
+    {
+        return BufferInfo;
+    }
 
 private:
+    
     // Texture ResourceView
     TSharedRef<FVulkanImageView> ImageView;
+    
+    // Buffer ResourceView
+    VkDescriptorBufferInfo BufferInfo;
 };
+
 
 class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceObject
 {
@@ -93,8 +103,17 @@ public:
     {
         return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
     }
+    
+    const VkDescriptorBufferInfo& GetDescriptorBufferInfo() const
+    {
+        return BufferInfo;
+    }
 
 private:
+    
     // Texture ResourceView
     TSharedRef<FVulkanImageView> ImageView;
+    
+    // Buffer ResourceView
+    VkDescriptorBufferInfo BufferInfo;
 };

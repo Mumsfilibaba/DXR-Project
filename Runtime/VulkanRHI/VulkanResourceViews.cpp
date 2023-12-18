@@ -66,8 +66,10 @@ void FVulkanImageView::DestroyView()
         // Ensure that the FrameBuffer gets released if it is using this ImageView
         GetDevice()->GetFramebufferCache().OnReleaseImageView(ImageView);
 
+        // Destroy the actual view
         vkDestroyImageView(GetDevice()->GetVkDevice(), ImageView, nullptr);
         
+        // Reset the view
         Image     = VK_NULL_HANDLE;
         ImageView = VK_NULL_HANDLE;
         Format    = VK_FORMAT_UNDEFINED;
@@ -79,6 +81,7 @@ FVulkanShaderResourceView::FVulkanShaderResourceView(FVulkanDevice* InDevice, FR
     : FRHIShaderResourceView(InResource)
     , FVulkanDeviceObject(InDevice)
     , ImageView(nullptr)
+    , BufferInfo{VK_NULL_HANDLE, 0, 0}
 {
 }
 
@@ -151,6 +154,30 @@ bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDe
 
 bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc)
 {
+    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(InDesc.Buffer);
+    if (!VulkanBuffer)
+    {
+        VULKAN_ERROR("Buffer cannot be nullptr");
+        return false;
+    }
+
+    VkDeviceSize Stride;
+    if (InDesc.Format == EBufferSRVFormat::None)
+    {
+        Stride = VulkanBuffer->GetStride();
+    }
+    else if (InDesc.Format == EBufferSRVFormat::Uint32)
+    {
+        Stride = sizeof(uint32);
+    }
+    else
+    {
+        Stride = 0;
+    }
+
+    BufferInfo.buffer = VulkanBuffer->GetVkBuffer();
+    BufferInfo.offset = Stride * InDesc.FirstElement;
+    BufferInfo.range  = Stride * InDesc.NumElements;
     return true;
 }
 
@@ -159,6 +186,7 @@ FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, 
     : FRHIUnorderedAccessView(InResource)
     , FVulkanDeviceObject(InDevice)
     , ImageView(nullptr)
+    , BufferInfo{VK_NULL_HANDLE, 0, 0}
 {
 }
 
@@ -231,5 +259,29 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
 
 bool FVulkanUnorderedAccessView::CreateBufferView(const FRHIBufferUAVDesc& InDesc)
 {
+    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(InDesc.Buffer);
+    if (!VulkanBuffer)
+    {
+        VULKAN_ERROR("Buffer cannot be nullptr");
+        return false;
+    }
+
+    VkDeviceSize Stride;
+    if (InDesc.Format == EBufferUAVFormat::None)
+    {
+        Stride = VulkanBuffer->GetStride();
+    }
+    else if (InDesc.Format == EBufferUAVFormat::Uint32)
+    {
+        Stride = sizeof(uint32);
+    }
+    else
+    {
+        Stride = 0;
+    }
+
+    BufferInfo.buffer = VulkanBuffer->GetVkBuffer();
+    BufferInfo.offset = Stride * InDesc.FirstElement;
+    BufferInfo.range  = Stride * InDesc.NumElements;
     return true;
 }
