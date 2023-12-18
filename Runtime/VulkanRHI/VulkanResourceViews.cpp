@@ -164,6 +164,68 @@ FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, 
 
 bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InDesc)
 {
+    FVulkanTexture* VulkanTexture = GetVulkanTexture(InDesc.Texture);
+    if (!VulkanTexture)
+    {
+        VULKAN_ERROR("Texture cannot be nullptr");
+        return false;
+    }
+
+    if (IsTypelessFormat(InDesc.Format))
+    {
+        VULKAN_ERROR("Cannot create a view of a typeless format");
+        return false;
+    }
+    
+    const VkFormat VulkanFormat = ConvertFormat(InDesc.Format);
+
+    VkImageSubresourceRange SubresourceRange;
+    SubresourceRange.aspectMask   = GetImageAspectFlagsFromFormat(VulkanFormat);
+    SubresourceRange.baseMipLevel = InDesc.MipLevel;
+    SubresourceRange.levelCount   = InDesc.NumSlices;
+    
+    if (IsTextureCube(VulkanTexture->GetDimension()))
+    {
+        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice * VULKAN_NUM_CUBE_FACES;
+        SubresourceRange.layerCount     = VULKAN_NUM_CUBE_FACES;
+    }
+    else
+    {
+        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice;
+        SubresourceRange.layerCount     = 1u;
+    }
+
+    
+    VkImageViewType VulkanImageType;
+    switch(VulkanTexture->GetDimension())
+    {
+        case ETextureDimension::Texture2D:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
+            break;
+        case ETextureDimension::Texture2DArray:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            break;
+        case ETextureDimension::TextureCube:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE;
+            break;
+        case ETextureDimension::TextureCubeArray:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+            break;
+        case ETextureDimension::Texture3D:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
+            break;
+        default:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+            break;
+    }
+    
+    
+    ImageView = new FVulkanImageView(GetDevice());
+    if (!ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
+    {
+        return false;
+    }
+
     return true;
 }
 
