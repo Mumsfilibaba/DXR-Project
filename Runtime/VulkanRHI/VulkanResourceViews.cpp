@@ -5,6 +5,8 @@ FVulkanImageView::FVulkanImageView(FVulkanDevice* InDevice)
     : FVulkanDeviceObject(InDevice)
     , Image(VK_NULL_HANDLE)
     , ImageView(VK_NULL_HANDLE)
+    , Format(VK_FORMAT_UNDEFINED)
+    , Flags(0)
 {
 }
 
@@ -13,27 +15,45 @@ FVulkanImageView::~FVulkanImageView()
     DestroyView();
 }
 
-bool FVulkanImageView::CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& InSubresourceRange)
+bool FVulkanImageView::CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags InFlags, const VkImageSubresourceRange& InSubresourceRange)
 {
+    if (!VULKAN_CHECK_HANDLE(InImage))
+    {
+        VULKAN_ERROR("Image cannot be a NULL_HANDLE");
+        return false;
+    }
+    if (InFormat == VK_FORMAT_UNDEFINED)
+    {
+        VULKAN_ERROR("Format cannot be a undefined");
+        return false;
+    }
+    
     VkImageViewCreateInfo ImageViewCreateInfo;
     FMemory::Memzero(&ImageViewCreateInfo);
 
     ImageViewCreateInfo.sType            = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    ImageViewCreateInfo.flags            = Flags;
-    ImageViewCreateInfo.format           = Format = InFormat;
-    ImageViewCreateInfo.image            = Image  = InImage;
+    ImageViewCreateInfo.flags            = InFlags;
+    ImageViewCreateInfo.format           = InFormat;
+    ImageViewCreateInfo.image            = InImage;
     ImageViewCreateInfo.viewType         = ViewType;
     ImageViewCreateInfo.components.r     = VK_COMPONENT_SWIZZLE_R;
     ImageViewCreateInfo.components.g     = VK_COMPONENT_SWIZZLE_G;
     ImageViewCreateInfo.components.b     = VK_COMPONENT_SWIZZLE_B;
     ImageViewCreateInfo.components.a     = VK_COMPONENT_SWIZZLE_A;
-    ImageViewCreateInfo.subresourceRange = SubresourceRange = InSubresourceRange;
+    ImageViewCreateInfo.subresourceRange = InSubresourceRange;
 
     VkResult Result = vkCreateImageView(GetDevice()->GetVkDevice(), &ImageViewCreateInfo, nullptr, &ImageView);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("vkCreateImageView failed");
         return false;
+    }
+    else
+    {
+        Image            = InImage;
+        SubresourceRange = InSubresourceRange;
+        Flags            = InFlags;
+        Format           = InFormat;
     }
 
     return true;
@@ -43,6 +63,7 @@ void FVulkanImageView::DestroyView()
 {
     if (VULKAN_CHECK_HANDLE(ImageView))
     {
+        // Ensure that the FrameBuffer gets released if it is using this ImageView
         GetDevice()->GetFramebufferCache().OnReleaseImageView(ImageView);
 
         vkDestroyImageView(GetDevice()->GetVkDevice(), ImageView, nullptr);
@@ -57,12 +78,96 @@ void FVulkanImageView::DestroyView()
 FVulkanShaderResourceView::FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
     , FVulkanDeviceObject(InDevice)
+    , ImageView(nullptr)
 {
+}
+
+bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDesc)
+{
+    FVulkanTexture* VulkanTexture = GetVulkanTexture(InDesc.Texture);
+    if (!VulkanTexture)
+    {
+        VULKAN_ERROR("Texture cannot be nullptr");
+        return false;
+    }
+
+    if (IsTypelessFormat(InDesc.Format))
+    {
+        VULKAN_ERROR("Cannot create a view of a typeless format");
+        return false;
+    }
+    
+    const VkFormat VulkanFormat = ConvertFormat(InDesc.Format);
+
+    VkImageSubresourceRange SubresourceRange;
+    SubresourceRange.aspectMask   = GetImageAspectFlagsFromFormat(VulkanFormat);
+    SubresourceRange.baseMipLevel = InDesc.FirstMipLevel;
+    SubresourceRange.levelCount   = InDesc.NumMips;
+    
+    if (IsTextureCube(VulkanTexture->GetDimension()))
+    {
+        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice * VULKAN_NUM_CUBE_FACES;
+        SubresourceRange.layerCount     = FMath::Max<uint16>(InDesc.NumSlices, 1u) * VULKAN_NUM_CUBE_FACES;
+    }
+    else
+    {
+        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice;
+        SubresourceRange.layerCount     = FMath::Max<uint16>(InDesc.NumSlices, 1u);
+    }
+
+    
+    VkImageViewType VulkanImageType;
+    switch(VulkanTexture->GetDimension())
+    {
+        case ETextureDimension::Texture2D:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
+            break;
+        case ETextureDimension::Texture2DArray:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            break;
+        case ETextureDimension::TextureCube:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE;
+            break;
+        case ETextureDimension::TextureCubeArray:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+            break;
+        case ETextureDimension::Texture3D:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
+            break;
+        default:
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+            break;
+    }
+    
+    
+    ImageView = new FVulkanImageView(GetDevice());
+    if (!ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc)
+{
+    return true;
 }
 
 
 FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
     , FVulkanDeviceObject(InDevice)
+    , ImageView(nullptr)
 {
+}
+
+bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InDesc)
+{
+    return true;
+}
+
+bool FVulkanUnorderedAccessView::CreateBufferView(const FRHIBufferUAVDesc& InDesc)
+{
+    return true;
 }

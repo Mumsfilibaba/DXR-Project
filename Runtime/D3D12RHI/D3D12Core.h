@@ -793,7 +793,7 @@ constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
     }
 }
 
-constexpr DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
+constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -823,23 +823,28 @@ struct FD3D12_CPU_DESCRIPTOR_HANDLE : public D3D12_CPU_DESCRIPTOR_HANDLE
 {
     FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE() noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE{ 0 }
-    { }
+    {
+    }
 
     FORCEINLINE explicit FD3D12_CPU_DESCRIPTOR_HANDLE(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE{ Other }
-    { }
+    {
+    }
 
     FORCEINLINE explicit FD3D12_CPU_DESCRIPTOR_HANDLE(uint64 Handle) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE{ Handle }
-    { }
+    {
+    }
 
     FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) }
-    { }
+    {
+    }
 
     FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_CPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) }
-    { }
+    {
+    }
 
     FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) const noexcept
     {
@@ -909,23 +914,28 @@ struct FD3D12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
 {
     FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE() noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE{ 0 }
-    { }
+    {
+    }
 
     FORCEINLINE explicit FD3D12_GPU_DESCRIPTOR_HANDLE(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE{ Other }
-    { }
+    {
+    }
 
     FORCEINLINE explicit FD3D12_GPU_DESCRIPTOR_HANDLE(uint64 Handle) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE{ Handle }
-    { }
+    {
+    }
 
     FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) }
-    { }
+    {
+    }
 
     FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
         : D3D12_GPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) }
-    { }
+    {
+    }
 
     FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& Offset(int64 OffsetScaledByIncrementSize) noexcept
     {
@@ -1003,12 +1013,12 @@ constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
     }
 }
 
-constexpr uint32 D3D12CalcSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
+constexpr uint32 D3D12CalculateSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
 {
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
 }
 
-constexpr uint32 D3D12CalcArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
+constexpr uint32 D3D12CalculateArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
 {
     if (IsTextureCube(Dimension))
     {

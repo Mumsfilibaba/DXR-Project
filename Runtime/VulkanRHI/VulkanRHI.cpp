@@ -225,7 +225,7 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextur
     }
     
     FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanTexture);
-    if (!NewShaderResourceView->Initialize())
+    if (!NewShaderResourceView->CreateTextureView(InDesc))
     {
         return nullptr;
     }
@@ -245,7 +245,7 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHIBuffer
     }
     
     FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanBuffer);
-    if (!NewShaderResourceView->Initialize())
+    if (!NewShaderResourceView->CreateBufferView(InDesc))
     {
         return nullptr;
     }
@@ -265,7 +265,7 @@ FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIText
     }
     
     FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanTexture);
-    if (!NewUnorderedAccessView->Initialize())
+    if (!NewUnorderedAccessView->CreateTextureView(InDesc))
     {
         return nullptr;
     }
@@ -285,7 +285,7 @@ FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIBuff
     }
     
     FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanBuffer);
-    if (!NewUnorderedAccessView->Initialize())
+    if (!NewUnorderedAccessView->CreateBufferView(InDesc))
     {
         return nullptr;
     }

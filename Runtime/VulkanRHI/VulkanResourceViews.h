@@ -15,7 +15,7 @@ public:
     FVulkanImageView(FVulkanDevice* InDevice);
     ~FVulkanImageView();
 
-    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags Flags, const VkImageSubresourceRange& InSubresourceRange);
+    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags InFlags, const VkImageSubresourceRange& InSubresourceRange);
     
     void DestroyView();
 
@@ -44,38 +44,57 @@ private:
     VkImage                 Image;
     VkImageView             ImageView;
     VkFormat                Format;
+    VkImageViewCreateFlags  Flags;
 };
 
-class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceObject
 {
 public:
     FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanShaderResourceView() = default;
 
-    bool Initialize() { return true; }
-
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
+    bool CreateTextureView(const FRHITextureSRVDesc& InDesc);
+    bool CreateBufferView(const FRHIBufferSRVDesc& InDesc);
+
+    bool HasImageView() const
+    {
+        return ImageView != nullptr;
+    }
+
+    VkImageView GetVkImageView() const
+    {
+        return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
+    }
+
+private:
+    // Texture ResourceView
+    TSharedRef<FVulkanImageView> ImageView;
 };
 
-class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceObject
 {
 public:
     FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanUnorderedAccessView() = default;
 
-    bool Initialize() { return true; }
-    
-    virtual int32 AddRef() override final { return FVulkanRefCounted::AddRef(); }
-
-    virtual int32 Release() override final { return FVulkanRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FVulkanRefCounted::GetRefCount(); }
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
+    bool CreateTextureView(const FRHITextureUAVDesc& InDesc);
+    bool CreateBufferView(const FRHIBufferUAVDesc& InDesc);
+
+    bool HasImageView() const
+    {
+        return ImageView != nullptr;
+    }
+
+    VkImageView GetVkImageView() const
+    {
+        return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
+    }
+
+private:
+    // Texture ResourceView
+    TSharedRef<FVulkanImageView> ImageView;
 };

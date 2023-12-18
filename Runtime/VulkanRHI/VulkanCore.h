@@ -80,6 +80,7 @@
     #define VULKAN_CHECK_HANDLE(Handle) (Handle != VK_NULL_HANDLE)
 #endif
 
+#define VULKAN_NUM_CUBE_FACES (6)
 
 class FVulkanStructureHelper
 {
@@ -114,7 +115,7 @@ inline FString GetVersionAsString(uint32 VersionNumber)
     return FString::CreateFormatted("%d.%d.%d.%d", VK_API_VERSION_MAJOR(VersionNumber), VK_API_VERSION_MINOR(VersionNumber), VK_API_VERSION_PATCH(VersionNumber), VK_API_VERSION_VARIANT(VersionNumber));
 }
 
-constexpr uint32 VkCalcSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
+constexpr uint32 VulkanCalculateSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
 {
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
 }
@@ -521,9 +522,8 @@ constexpr VkPrimitiveTopology ConvertPrimitiveTopology(EPrimitiveTopology Primit
         case EPrimitiveTopology::PointList:     return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
         case EPrimitiveTopology::TriangleList:  return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         case EPrimitiveTopology::TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        default: VkPrimitiveTopology(-1);
     }
-
-    return VkPrimitiveTopology(-1);
 }
 
 constexpr VkSampleCountFlagBits ConvertSampleCount(uint32 NumSamples)
@@ -570,9 +570,8 @@ constexpr VkIndexType ConvertIndexFormat(EIndexFormat IndexFormat)
     {
         case EIndexFormat::uint16: return VK_INDEX_TYPE_UINT16;
         case EIndexFormat::uint32: return VK_INDEX_TYPE_UINT32;
+        default: return VkIndexType(-1);
     }
-
-    return VkIndexType(-1);
 }
 
 constexpr VkFormat ConvertFormat(EFormat Format)
@@ -880,6 +879,28 @@ constexpr VkImageAspectFlags GetImageAspectFlagsFromFormat(VkFormat Format)
             return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 
         default: return 0;
+    }
+}
+
+constexpr EFormat VulkanCastShaderResourceFormat(EFormat Format)
+{
+    switch (Format)
+    {
+        // TODO: Fix formats better
+        case EFormat::R32G32B32A32_Typeless: return EFormat::R32G32B32A32_Float;
+        case EFormat::R32G32B32_Typeless:    return EFormat::R32G32B32_Float;
+        case EFormat::R16G16B16A16_Typeless: return EFormat::R16G16B16A16_Float;
+        case EFormat::R32G32_Typeless:       return EFormat::R32G32_Float;
+        case EFormat::R10G10B10A2_Typeless:  return EFormat::R10G10B10A2_Unorm;
+        case EFormat::R8G8B8A8_Typeless:     return EFormat::R8G8B8A8_Unorm;
+        case EFormat::R16G16_Typeless:       return EFormat::R16G16_Float;
+        case EFormat::R32_Typeless:          return EFormat::R32_Float;
+        case EFormat::R24G8_Typeless:        return EFormat::R24_Unorm_X8_Typeless;
+        case EFormat::R8G8_Typeless:         return EFormat::R8G8_Unorm;
+        case EFormat::R16_Typeless:          return EFormat::R16_Float;
+        case EFormat::R8_Typeless:           return EFormat::R8_Unorm;
+        
+        default: return Format;
     }
 }
 

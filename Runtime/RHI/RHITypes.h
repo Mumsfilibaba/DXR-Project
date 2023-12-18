@@ -329,6 +329,35 @@ constexpr bool IsBlockCompressedAligned(uint32 Extent)
     return Extent % 4 == 0;
 }
 
+constexpr bool IsTypelessFormat(EFormat Format)
+{
+    switch (Format)
+    {
+        case EFormat::R32G32B32A32_Typeless:
+        case EFormat::R32G32B32_Typeless:
+        case EFormat::R16G16B16A16_Typeless:
+        case EFormat::R32G32_Typeless:
+        case EFormat::R10G10B10A2_Typeless:
+        case EFormat::R8G8B8A8_Typeless:
+        case EFormat::R16G16_Typeless:
+        case EFormat::R32_Typeless:
+        case EFormat::R24G8_Typeless:
+        case EFormat::R24_Unorm_X8_Typeless:
+        case EFormat::X24_Typeless_G8_Uint:
+        case EFormat::R8G8_Typeless:
+        case EFormat::R16_Typeless:
+        case EFormat::R8_Typeless:
+        {
+            return true;
+        }
+
+        default:
+        {
+            return false;
+        }
+    }
+}
+
 
 enum class EIndexFormat : uint8
 {

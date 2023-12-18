@@ -86,7 +86,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         D3D12_SHADER_RESOURCE_VIEW_DESC ViewDesc;
         FMemory::Memzero(&ViewDesc);
 
-        ViewDesc.Format                  = CastShaderResourceFormat(ResourceDesc.Format);
+        ViewDesc.Format                  = D3D12CastShaderResourceFormat(ResourceDesc.Format);
         ViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
         if (Desc.IsTexture2D())
@@ -160,7 +160,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             FMemory::Memzero(&ViewDesc);
 
             // TODO: Handle typeless
-            ViewDesc.Format               = CastShaderResourceFormat(ResourceDesc.Format);
+            ViewDesc.Format               = D3D12CastShaderResourceFormat(ResourceDesc.Format);
             ViewDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
             ViewDesc.Texture2D.MipSlice   = 0;
             ViewDesc.Texture2D.PlaneSlice = 0;
@@ -241,7 +241,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, "Texture '%s' does not allow RenderTargetViews", Resource->GetName().GetCString());
 
-    const uint32 Subresource = D3D12CalcSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
+    const uint32 Subresource = D3D12CalculateSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(RenderTargetView.Format);
     if (Subresource < static_cast<uint32>(RenderTargetViews.Size()))
@@ -338,7 +338,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, "Texture '%s' does not allow DepthStencilViews", Resource->GetName().GetCString());
 
-    const uint32 Subresource = D3D12CalcSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
+    const uint32 Subresource = D3D12CalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(DepthStencilView.Format);
     if (Subresource < static_cast<uint32>(DepthStencilViews.Size()))

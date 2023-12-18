@@ -48,8 +48,6 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     FMemory::Memzero(&ImageCreateInfo);
 
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageCreateInfo.pNext                 = nullptr;
-    ImageCreateInfo.flags                 = 0;
     ImageCreateInfo.imageType             = ConvertTextureDimension(Desc.Dimension);;
     ImageCreateInfo.extent.width          = Desc.Extent.x;
     ImageCreateInfo.extent.height         = Desc.Extent.y;
@@ -59,12 +57,15 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     ImageCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
     ImageCreateInfo.samples               = SampleCount;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
-    ImageCreateInfo.usage                 = 0;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
     
     // NOTE: We store the format so that we have easy access to it later
     ImageCreateInfo.format = Format = ConvertFormat(Desc.Format);
-
+    if (IsTypelessFormat(Desc.Format))
+    {
+        ImageCreateInfo.flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
+    }
+    
     if (ImageCreateInfo.imageType == VK_IMAGE_TYPE_3D)
     {
         ImageCreateInfo.extent.depth = Desc.Extent.z;
@@ -80,7 +81,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
     {
         ImageCreateInfo.flags       |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-        ImageCreateInfo.arrayLayers  = Desc.NumArraySlices * kRHINumCubeFaces;
+        ImageCreateInfo.arrayLayers  = Desc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
     }
     
     // TODO: Look into abstracting these flags
@@ -121,6 +122,60 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         return false;
     }
 
+    {
+        FRHITextureSRVDesc ViewDesc;
+        ViewDesc.Texture = this;
+        ViewDesc.Format  = VulkanCastShaderResourceFormat(Desc.Format);
+
+        if (Desc.IsTexture2D())
+        {
+            ViewDesc.NumMips       = Desc.NumMipLevels;
+            ViewDesc.FirstMipLevel = 0;
+            ViewDesc.MinLODClamp   = 0.0f;
+        }
+        else if (Desc.IsTexture2DArray())
+        {
+            ViewDesc.NumMips         = Desc.NumMipLevels;
+            ViewDesc.FirstMipLevel   = 0;
+            ViewDesc.MinLODClamp     = 0.0f;
+            ViewDesc.NumSlices       = Desc.NumArraySlices;
+            ViewDesc.FirstArraySlice = 0;
+        }
+        else if (Desc.IsTextureCube())
+        {
+            ViewDesc.NumMips       = Desc.NumMipLevels;
+            ViewDesc.FirstMipLevel = 0;
+            ViewDesc.MinLODClamp   = 0.0f;
+        }
+        else if (Desc.IsTextureCubeArray())
+        {
+            ViewDesc.NumMips         = Desc.NumMipLevels;
+            ViewDesc.FirstMipLevel   = 0;
+            ViewDesc.MinLODClamp     = 0.0f;
+            ViewDesc.FirstArraySlice = 0;
+            ViewDesc.NumSlices       = Desc.NumArraySlices;
+        }
+        else if (Desc.IsTexture3D())
+        {
+            ViewDesc.NumMips       = Desc.NumMipLevels;
+            ViewDesc.FirstMipLevel = 0;
+            ViewDesc.MinLODClamp   = 0.0f;
+        }
+        else
+        {
+            VULKAN_ERROR("Unsupported resource dimension");
+            return false;
+        }
+
+        FVulkanShaderResourceViewRef DefaultSRV = new FVulkanShaderResourceView(GetDevice(), this);
+        if (!DefaultSRV->CreateTextureView(ViewDesc))
+        {
+            return false;
+        }
+
+        ShaderResourceView = DefaultSRV;
+    }
+    
     if (InInitialData)
     {
         // TODO: Support other types than texture 2D
@@ -211,7 +266,7 @@ FVulkanImageView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRenderTa
     }
     
     // Calculate the subresource for this view
-    const uint32 Subresource = VkCalcSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
+    const uint32 Subresource = VulkanCalculateSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
     
     // Check for existing view and control the format of the view
     const VkFormat VulkanFormat = ConvertFormat(RenderTargetView.Format);
@@ -255,7 +310,7 @@ FVulkanImageView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepthSte
     }
     
     // Calculate the subresource for this view
-    const uint32 Subresource = VkCalcSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
+    const uint32 Subresource = VulkanCalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
     
     // Check for existing view and control the format of the view
     const VkFormat VulkanFormat = ConvertFormat(DepthStencilView.Format);

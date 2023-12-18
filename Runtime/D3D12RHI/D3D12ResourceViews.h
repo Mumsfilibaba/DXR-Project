@@ -13,7 +13,7 @@ typedef TSharedRef<class FD3D12RenderTargetView>    FD3D12RenderTargetViewRef;
 typedef TSharedRef<class FD3D12DepthStencilView>    FD3D12DepthStencilViewRef;
 
 
-class FD3D12View : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12View : public FD3D12DeviceChild
 {
 public:
     FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
@@ -39,7 +39,7 @@ protected:
 };
 
 
-class FD3D12ConstantBufferView : public FD3D12View
+class FD3D12ConstantBufferView : public FD3D12View, public FD3D12RefCounted
 {
 public:
     FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
@@ -62,15 +62,9 @@ public:
     FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
     virtual ~FD3D12ShaderResourceView() = default;
 
-    bool CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
-
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
+    bool CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc);
 
     const D3D12_SHADER_RESOURCE_VIEW_DESC& GetDesc() const
     {
@@ -88,15 +82,9 @@ public:
     FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource);
     virtual ~FD3D12UnorderedAccessView() = default;
 
-    bool CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
-
-    virtual int32 AddRef() override final { return FD3D12RefCounted::AddRef(); }
-
-    virtual int32 Release() override final { return FD3D12RefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FD3D12RefCounted::GetRefCount(); }
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
+    bool CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc);
 
     const D3D12_UNORDERED_ACCESS_VIEW_DESC& GetDesc() const
     { 
