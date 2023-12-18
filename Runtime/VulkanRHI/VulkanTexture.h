@@ -48,6 +48,11 @@ public:
     {
         return Image;
     }
+    
+    const VkImageCreateInfo& GetVkImageCreateInfo() const
+    {
+        return CreateInfo;
+    }
 
     VkFormat GetVkFormat() const
     {
@@ -65,6 +70,7 @@ protected:
     VkImage                 Image;
     VkFormat                Format;
     FVulkanMemoryAllocation MemoryAllocation;
+    VkImageCreateInfo       CreateInfo;
     
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;

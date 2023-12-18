@@ -39,6 +39,9 @@ struct FGenericVulkanPlatform
         #if VK_KHR_maintenance4
             VK_KHR_MAINTENANCE_4_EXTENSION_NAME,
         #endif
+        #if VK_KHR_maintenance5
+            VK_KHR_MAINTENANCE_5_EXTENSION_NAME,
+        #endif
         #if VK_KHR_buffer_device_address
             VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
         #endif

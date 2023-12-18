@@ -59,6 +59,8 @@ public:
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
     
+    VkFormatProperties GetFormatProperties(VkFormat Format) const;
+    
     FVulkanInstance* GetInstance() const
     {
         return Instance;

@@ -24,20 +24,21 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     tinyobj::attrib_t                Attributes;
 
     // Extract just the name of the file
-    FString MTLFiledir          = FFileHelpers::ExtractFilename(Filename);
-    FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(MTLFiledir);
+    FString MTLFiledir          = FFileHelpers::ExtractFilepath(Filename);
+    FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
     {
-        LOG_WARNING("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
+        LOG_ERROR("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
         return false;
     }
-    else
+    
+    if (!Warning.empty())
     {
-        LOG_INFO("[FOBJLoader]: Loaded '%s'", Filename.GetCString());
+        LOG_WARNING("[FOBJLoader]: Loaded '%s' with Warning: %s", Filename.GetCString(), Warning.c_str());
     }
-
+    
     // Create All Materials in scene
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
@@ -160,5 +161,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
 
     OutScene.Models.Shrink();
     OutScene.Materials.Shrink();
+
+    LOG_INFO("[FOBJLoader]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), OutScene.Models.Size(), OutScene.Materials.Size());
     return true;
 }

@@ -31,6 +31,7 @@ VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceProperties2);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceFeatures2);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceMemoryProperties2);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceQueueFamilyProperties);
+VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceFormatProperties);
 VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceImageFormatProperties);
 
 VULKAN_FUNCTION_DEFINITION(CreateDevice);
@@ -73,8 +74,9 @@ bool LoadInstanceFunctions(FVulkanInstance* Instance)
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFeatures2);
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceMemoryProperties2);
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceQueueFamilyProperties);
+    VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceFormatProperties);
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceImageFormatProperties);
-
+    
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateDevice);
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDevice);
 
@@ -216,6 +218,7 @@ VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBufferToImage);
 VULKAN_FUNCTION_DEFINITION(CmdCopyImage);
+VULKAN_FUNCTION_DEFINITION(CmdBlitImage);
 VULKAN_FUNCTION_DEFINITION(CmdDispatch);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device)
@@ -330,6 +333,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBufferToImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImage);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBlitImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDispatch);
     
     // Initialize DedicatedAllocation extension helper

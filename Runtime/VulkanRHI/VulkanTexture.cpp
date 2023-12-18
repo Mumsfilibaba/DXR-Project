@@ -85,7 +85,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     }
     
     // TODO: Look into abstracting these flags
-    ImageCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     
     if (Desc.IsRenderTarget())
     {
@@ -109,6 +109,10 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     {
         VULKAN_ERROR("Failed to create image");
         return false;
+    }
+    else
+    {
+        CreateInfo = ImageCreateInfo;
     }
 
     // NOTE: All textures are allocated as device local, maybe we want to move this into the AllocateImageMemory function

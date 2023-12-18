@@ -88,7 +88,7 @@ bool FVulkanRHI::Initialize()
     AdapterDesc.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
     AdapterDesc.RequiredFeatures.imageCubeArray            = VK_TRUE;
     AdapterDesc.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
-    
+
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(AdapterDesc))
     {
@@ -567,19 +567,8 @@ bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
     VkFormat VulkanFormat = ConvertFormat(Format);
     if (VulkanFormat != VK_FORMAT_UNDEFINED)
     {
-        VkImageFormatProperties ImageFormatProperties;
-        FMemory::Memzero(&ImageFormatProperties);
-
-        // TODO: We want to not just query for Texture2D with optimal tiling etc.
-        VkResult Result = vkGetPhysicalDeviceImageFormatProperties(
-            GetDevice()->GetPhysicalDevice()->GetVkPhysicalDevice(),
-            VulkanFormat,
-            VK_IMAGE_TYPE_2D,
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_IMAGE_USAGE_STORAGE_BIT,
-            0,
-            &ImageFormatProperties);
-        if (Result == VK_ERROR_FORMAT_NOT_SUPPORTED)
+        VkFormatProperties FormatProperties = PhysicalDevice->GetFormatProperties(VulkanFormat);
+        if ((FormatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) == 0)
         {
             return false;
         }

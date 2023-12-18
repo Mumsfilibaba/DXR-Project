@@ -456,3 +456,12 @@ uint32 FVulkanPhysicalDevice::FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPro
 
     return TNumericLimits<int32>::Max();
 }
+
+VkFormatProperties FVulkanPhysicalDevice::GetFormatProperties(VkFormat Format) const
+{
+    VkFormatProperties FormatProperties;
+    FMemory::Memzero(&FormatProperties);
+    
+    vkGetPhysicalDeviceFormatProperties(PhysicalDevice, Format, &FormatProperties);
+    return FormatProperties;
+}

@@ -160,8 +160,13 @@ public:
         return WriteTextFile(File, Text.Data(), Text.SizeInBytes());
     }
 
+    // Returns the Path to the file (Excluding the filename)
+    static FString ExtractFilepath(const FString& Filepath);
+    
+    // Returns the Filename with the extension (Excluding the rest of the path)
     static FString ExtractFilename(const FString& Filepath);
     
+    // Returns the Filename without the extension (Excluding the rest of the path)
     static FString ExtractFilenameWithoutExtension(const FString& Filepath);
 
 private:

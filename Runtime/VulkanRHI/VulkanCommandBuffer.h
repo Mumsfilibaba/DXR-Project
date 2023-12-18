@@ -176,6 +176,12 @@ public:
         vkCmdCopyImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions);
         NumCommands++;
     }
+    
+    FORCEINLINE void BlitImage(VkImage SrcImage, VkImageLayout SrcImageLayout, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkImageBlit* Regions, VkFilter Filter)
+    {
+        vkCmdBlitImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions, Filter);
+        NumCommands++;
+    }
 
     FORCEINLINE void BufferMemoryPipelineBarrier(const FVulkanBufferBarrier& BufferBarrier)
     {

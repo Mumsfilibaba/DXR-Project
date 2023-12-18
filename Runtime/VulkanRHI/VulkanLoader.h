@@ -61,6 +61,7 @@ VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceProperties2);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceFeatures2);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceMemoryProperties2);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceQueueFamilyProperties);
+VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceFormatProperties);
 VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceImageFormatProperties);
 
 VULKAN_FUNCTION_DECLARATION(CreateDevice);
@@ -191,6 +192,7 @@ VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DECLARATION(CmdCopyBuffer);
 VULKAN_FUNCTION_DECLARATION(CmdCopyBufferToImage);
 VULKAN_FUNCTION_DECLARATION(CmdCopyImage);
+VULKAN_FUNCTION_DECLARATION(CmdBlitImage);
 VULKAN_FUNCTION_DECLARATION(CmdDispatch);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device);

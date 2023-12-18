@@ -926,17 +926,27 @@ void FD3D12CommandContext::RHISetRayTracingBindings(
 void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
-    D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr");
+    if (!D3D12Texture)
+    {
+        D3D12_ERROR("Texture cannot be nullptr");
+        return;
+    }
 
     D3D12_RESOURCE_DESC Desc = D3D12Texture->GetD3D12Resource()->GetDesc();
     Desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-    D3D12_ERROR_COND(Desc.MipLevels > 1, "MipLevels must be more than one in order to generate any MipLevels");
+    
+    if (Desc.MipLevels < 2)
+    {
+        D3D12_ERROR("MipLevels must be more than one in order to generate any Mips");
+        return;
+    }
 
-    // TODO: Create this placed from a Heap? See what performance is 
+    // TODO: Create this placed from a Heap? See what performance is
+    // Also if the resource already have the unorderedaccess-flag there is no need to create a staging resource
     FD3D12ResourceRef StagingTexture = new FD3D12Resource(GetDevice(), Desc, D3D12Texture->GetD3D12Resource()->GetHeapType());
     if (!StagingTexture->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
     {
-        LOG_ERROR("[FD3D12CommandContext] Failed to create StagingTexture for GenerateMips");
+        D3D12_ERROR("[FD3D12CommandContext] Failed to create StagingTexture for GenerateMips");
         return;
     }
     else

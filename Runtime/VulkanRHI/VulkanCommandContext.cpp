@@ -691,7 +691,108 @@ void FVulkanCommandContext::RHISetRayTracingBindings(
 
 void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
 {
-    // TODO: Implement this
+    FVulkanTexture* VulkanTexture = static_cast<FVulkanTexture*>(Texture);
+    if (!VulkanTexture)
+    {
+        VULKAN_ERROR("Texture cannot be nullptr");
+        return;
+    }
+    
+    // Only support ColorFormats
+    VkFormat VulkanFormat = VulkanTexture->GetVkFormat();
+    CHECK(GetImageAspectFlagsFromFormat(VulkanFormat) == VK_IMAGE_ASPECT_COLOR_BIT);
+    
+    // TODO: Fix for devices that do NOT support linear filtering
+    constexpr VkImageCreateFlags NecessaryFeatureFlags = VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT | VK_FORMAT_FEATURE_BLIT_DST_BIT;
+    VkFormatProperties FormatProperties = GetDevice()->GetPhysicalDevice()->GetFormatProperties(VulkanFormat);
+    if ((FormatProperties.optimalTilingFeatures & NecessaryFeatureFlags) != NecessaryFeatureFlags)
+    {
+        VULKAN_ERROR("Device does not support generating miplevels at the moment");
+        return;
+    }
+
+    FRHITextureDesc TextureDesc = VulkanTexture->GetDesc();
+    const uint32 MipLevelCount = TextureDesc.NumMipLevels;
+    if (MipLevelCount < 2)
+    {
+        VULKAN_ERROR("MipLevels must be more than one in order to generate any Mips");
+        return;
+    }
+    
+    constexpr VkImageCreateFlags NecessaryUsageFlags = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    VkImageCreateInfo ImageCreateInfo = VulkanTexture->GetVkImageCreateInfo();
+    if ((ImageCreateInfo.usage & NecessaryUsageFlags) != NecessaryUsageFlags)
+    {
+        VULKAN_ERROR("Input texture is missing the VK_IMAGE_USAGE_TRANSFER_SRC_BIT and VK_IMAGE_USAGE_TRANSFER_DST_BIT flags");
+        return;
+    }
+
+    VkImage    VulkanImage       = VulkanTexture->GetVkImage();
+    VkExtent2D SourceExtent      = { static_cast<uint32>(TextureDesc.Extent.x), static_cast<uint32>(TextureDesc.Extent.y) };
+    VkExtent2D DestinationExtent = {};
+    
+    // Setup TransitionBarrier since these parameters will be the same for all MipLevels
+    FVulkanImageTransitionBarrier TransitionBarrier;
+    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    TransitionBarrier.Image                           = VulkanImage;
+    TransitionBarrier.DependencyFlags                 = 0;
+    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+    TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_READ_BIT;
+    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    TransitionBarrier.SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    TransitionBarrier.SubresourceRange.levelCount     = 1;
+
+    const uint32 NumArrayLayers = IsTextureCube(VulkanTexture->GetDimension()) ? TextureDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES : TextureDesc.NumArraySlices;
+    for (uint32 Index = 1; Index < MipLevelCount; Index++)
+    {
+        DestinationExtent = { FMath::Max(SourceExtent.width / 2U, 1u), FMath::Max(SourceExtent.height / 2U, 1U) };
+
+        // Transition this the source MipLevel into correct layout
+        TransitionBarrier.SubresourceRange.baseMipLevel = Index - 1;
+        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+
+        VkImageBlit ImageBlit;
+        FMemory::Memzero(&ImageBlit);
+        
+        ImageBlit.srcOffsets[0]                  = { 0, 0, 0 };
+        ImageBlit.srcOffsets[1]                  = { static_cast<int32>(SourceExtent.width), static_cast<int32>(SourceExtent.height), 1 };
+        ImageBlit.srcSubresource.aspectMask      = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageBlit.srcSubresource.mipLevel        = Index - 1;
+        ImageBlit.srcSubresource.baseArrayLayer  = 0;
+        ImageBlit.srcSubresource.layerCount      = NumArrayLayers;
+        ImageBlit.dstOffsets[0]                  = { 0, 0, 0 };
+        ImageBlit.dstOffsets[1]                  = { static_cast<int32>(DestinationExtent.width), static_cast<int32>(DestinationExtent.height), 1 };
+        ImageBlit.dstSubresource.aspectMask      = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageBlit.dstSubresource.mipLevel        = Index;
+        ImageBlit.dstSubresource.baseArrayLayer  = 0;
+        ImageBlit.dstSubresource.layerCount      = NumArrayLayers;
+
+        CommandBuffer.BlitImage(VulkanImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &ImageBlit, VK_FILTER_LINEAR);
+        SourceExtent = DestinationExtent;
+    }
+
+    TransitionBarrier.SubresourceRange.baseMipLevel = MipLevelCount - 1;
+    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    
+    // Insert a final TransitionBarrier from Source to Destination since the texture is expected to be in CopyDest
+    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    TransitionBarrier.Image                           = VulkanImage;
+    TransitionBarrier.DependencyFlags                 = 0;
+    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_TRANSFER_READ_BIT;
+    TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    TransitionBarrier.SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
 void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)

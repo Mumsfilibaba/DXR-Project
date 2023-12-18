@@ -52,6 +52,17 @@ bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Siz
     return true;
 }
 
+FString FFileHelpers::ExtractFilepath(const FString& Filepath)
+{
+    int32 LastSlash = Filepath.FindLastChar('/');
+    if (LastSlash == FString::INVALID_INDEX)
+    {
+        LastSlash = Filepath.Length();
+    }
+    
+    return FString(Filepath.GetCString(), LastSlash);
+}
+
 FString FFileHelpers::ExtractFilename(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
