@@ -167,6 +167,12 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
         
         MemoryManager.Free(NullImageMemory);
     }
+
+    if (VULKAN_CHECK_HANDLE(NullSampler))
+    {
+        vkDestroySampler(VulkanDevice, NullSampler, nullptr);
+        NullSampler = VK_NULL_HANDLE;
+    }
 }
 
 
