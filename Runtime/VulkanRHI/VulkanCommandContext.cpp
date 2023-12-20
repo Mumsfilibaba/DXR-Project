@@ -163,9 +163,21 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
 
 void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
-    // TODO: Implement when UAVs are implemented
-    UNREFERENCED_VARIABLE(UnorderedAccessView);
-    UNREFERENCED_VARIABLE(ClearColor);
+    FVulkanUnorderedAccessView* VulkanUnorderedAccessView = static_cast<FVulkanUnorderedAccessView*>(UnorderedAccessView);
+    CHECK(VulkanUnorderedAccessView != nullptr);
+    
+    VkClearColorValue VulkanClearColor;
+    FMemory::Memcpy(VulkanClearColor.float32, ClearColor.Data(), sizeof(VulkanClearColor.float32));
+
+    if (VulkanUnorderedAccessView->HasImageView())
+    {
+        VkImageSubresourceRange SubresourceRange = VulkanUnorderedAccessView->GetImageSubresourceRange();
+        CommandBuffer.ClearColorImage(VulkanUnorderedAccessView->GetVkImage(), VK_IMAGE_LAYOUT_GENERAL, &VulkanClearColor, 1, &SubresourceRange);
+    }
+    else
+    {
+        // TODO: Clear UAV-Buffers
+    }
 }
 
 void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
@@ -628,23 +640,34 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     FVulkanTexture* DstVulkanTexture = GetVulkanTexture(Dst);
     CHECK(DstVulkanTexture != nullptr);
     
-    CHECK(SrcVulkanTexture->GetWidth()  == DstVulkanTexture->GetWidth());
-    CHECK(SrcVulkanTexture->GetHeight() == DstVulkanTexture->GetHeight());
-    CHECK(SrcVulkanTexture->GetDepth()  == DstVulkanTexture->GetDepth());
+    CHECK(SrcVulkanTexture->GetWidth()     == DstVulkanTexture->GetWidth());
+    CHECK(SrcVulkanTexture->GetHeight()    == DstVulkanTexture->GetHeight());
+    CHECK(SrcVulkanTexture->GetDepth()     == DstVulkanTexture->GetDepth());
+    CHECK(SrcVulkanTexture->GetDimension() == DstVulkanTexture->GetDimension());
     
     VkImageCopy ImageCopy;
     FMemory::Memzero(&ImageCopy);
     
+    ImageCopy.extent.width                  = DstVulkanTexture->GetWidth();
+    ImageCopy.extent.height                 = DstVulkanTexture->GetHeight();
     ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
     ImageCopy.srcSubresource.mipLevel       = 0;
     ImageCopy.srcSubresource.baseArrayLayer = 0;
-    ImageCopy.srcSubresource.layerCount     = SrcVulkanTexture->GetNumArraySlices();
     ImageCopy.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
     ImageCopy.dstSubresource.mipLevel       = 0;
     ImageCopy.dstSubresource.baseArrayLayer = 0;
-    ImageCopy.dstSubresource.layerCount     = DstVulkanTexture->GetNumArraySlices();
-    ImageCopy.extent.width                  = DstVulkanTexture->GetWidth();
-    ImageCopy.extent.height                 = DstVulkanTexture->GetHeight();
+    
+    // NOTE: We want to copy the full function
+    if (IsTextureCube(DstVulkanTexture->GetDimension()))
+    {
+        ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
+        ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
+    }
+    else
+    {
+        ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices();
+        ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices();
+    }
     
     if (DstVulkanTexture->GetDimension() == ETextureDimension::Texture3D)
     {
@@ -677,22 +700,40 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
         // Describe the source subresource
         CopyInfo.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
         CopyInfo.srcSubresource.mipLevel       = CopyDesc.SrcMipSlice + MipLevel;
-        CopyInfo.srcSubresource.baseArrayLayer = CopyDesc.SrcArraySlice;
-        CopyInfo.srcSubresource.layerCount     = CopyDesc.NumArraySlices;
         CopyInfo.srcOffset.x                   = CopyDesc.SrcPosition.x >> MipLevel;
         CopyInfo.srcOffset.y                   = CopyDesc.SrcPosition.y >> MipLevel;
         CopyInfo.srcOffset.z                   = CopyDesc.SrcPosition.z >> MipLevel;
         
+        if (IsTextureCube(SrcVulkanTexture->GetDimension()))
+        {
+            CopyInfo.srcSubresource.baseArrayLayer = CopyDesc.SrcArraySlice  * VULKAN_NUM_CUBE_FACES;
+            CopyInfo.srcSubresource.layerCount     = CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
+        }
+        else
+        {
+            CopyInfo.srcSubresource.baseArrayLayer = CopyDesc.SrcArraySlice;
+            CopyInfo.srcSubresource.layerCount     = CopyDesc.NumArraySlices;
+        }
+        
         // Describe the destination subresource
         CopyInfo.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
         CopyInfo.dstSubresource.mipLevel       = CopyDesc.DstMipSlice + MipLevel;
-        CopyInfo.dstSubresource.baseArrayLayer = CopyDesc.DstArraySlice;
-        CopyInfo.dstSubresource.layerCount     = CopyDesc.NumArraySlices;
         CopyInfo.dstOffset.x                   = CopyDesc.DstPosition.x >> MipLevel;
         CopyInfo.dstOffset.y                   = CopyDesc.DstPosition.y >> MipLevel;
         CopyInfo.dstOffset.z                   = CopyDesc.DstPosition.z >> MipLevel;
         
-        // Size of thie mipslice
+        if (IsTextureCube(DstVulkanTexture->GetDimension()))
+        {
+            CopyInfo.dstSubresource.baseArrayLayer = CopyDesc.DstArraySlice  * VULKAN_NUM_CUBE_FACES;
+            CopyInfo.dstSubresource.layerCount     = CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
+        }
+        else
+        {
+            CopyInfo.dstSubresource.baseArrayLayer = CopyDesc.DstArraySlice;
+            CopyInfo.dstSubresource.layerCount     = CopyDesc.NumArraySlices;
+        }
+        
+        // Size of this mipslice
         CopyInfo.extent.width  = FMath::Max(CopyDesc.Size.x >> MipLevel, 1);
         CopyInfo.extent.height = FMath::Max(CopyDesc.Size.y >> MipLevel, 1);
         CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.z >> MipLevel, 1);

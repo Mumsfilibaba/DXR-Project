@@ -63,9 +63,19 @@ public:
         return ImageView != nullptr;
     }
 
+    VkImage GetVkImage() const
+    {
+        return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE;
+    }
+    
     VkImageView GetVkImageView() const
     {
         return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
+    }
+    
+    const VkImageSubresourceRange& GetImageSubresourceRange() const
+    {
+        return ImageSubresourceRange;
     }
     
     const VkDescriptorBufferInfo& GetDescriptorBufferInfo() const
@@ -77,6 +87,7 @@ private:
     
     // Texture ResourceView
     TSharedRef<FVulkanImageView> ImageView;
+    VkImageSubresourceRange      ImageSubresourceRange;
     
     // Buffer ResourceView
     VkDescriptorBufferInfo BufferInfo;
@@ -99,9 +110,19 @@ public:
         return ImageView != nullptr;
     }
 
+    VkImage GetVkImage() const
+    {
+        return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE;
+    }
+    
     VkImageView GetVkImageView() const
     {
         return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
+    }
+
+    const VkImageSubresourceRange& GetImageSubresourceRange() const
+    {
+        return ImageSubresourceRange;
     }
     
     const VkDescriptorBufferInfo& GetDescriptorBufferInfo() const
@@ -113,6 +134,7 @@ private:
     
     // Texture ResourceView
     TSharedRef<FVulkanImageView> ImageView;
+    VkImageSubresourceRange      ImageSubresourceRange;
     
     // Buffer ResourceView
     VkDescriptorBufferInfo BufferInfo;

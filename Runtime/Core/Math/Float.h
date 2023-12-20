@@ -183,12 +183,11 @@ struct FFloat16
 
     FORCEINLINE void SetFloat(float Float32)
     {
-        // TODO: Ensure that the fast-path also works on macOS
-#if PLATFORM_ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
+    #if PLATFORM_ARCHITECTURE_X86_X64
         __m128  Reg0 = _mm_set_ss(Float32);
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
-#else
+    #else
         // Convert
         const FFloat32 In(Float32);
         Sign = In.Sign;
@@ -237,27 +236,25 @@ struct FFloat16
 
     FORCEINLINE void SetFloatFast(float Float32)
     {
-        // TODO: Ensure that the fast-path also works on macOS
-#if PLATFORM_ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
+    #if PLATFORM_ARCHITECTURE_X86_X64
         __m128  Reg0 = _mm_set_ss(Float32);
         __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
         Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
-#else
+    #else
         FFloat32 In(Float32);
         Exponent = uint16(int32(In.Exponent) - 127 + 15); // Unbias and bias the exponents
         Mantissa = uint16(In.Mantissa >> 13);               // Bit-Shift difference in number of mantissa bits
         Sign = In.Sign;
-#endif
+    #endif
     }
 
     FORCEINLINE float GetFloat() const
     {
-        // TODO: Ensure that this also works on macOS
-#if PLATFORM_ARCHITECTURE_X86_X64 && !PLATFORM_MACOS
+    #if PLATFORM_ARCHITECTURE_X86_X64
         __m128i Reg0 = _mm_cvtsi32_si128(static_cast<uint32>(Encoded));
         __m128  Reg1 = _mm_cvtph_ps(Reg0);
         return _mm_cvtss_f32(Reg1);
-#else
+    #else
         FFloat32 Ret;
         Ret.Sign = Sign;
 
@@ -294,7 +291,7 @@ struct FFloat16
         }
 
         return Ret.Float32;
-#endif
+    #endif
     }
 
     bool operator==(const FFloat16& RHS) const

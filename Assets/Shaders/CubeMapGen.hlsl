@@ -1,6 +1,6 @@
 #include "Constants.hlsli"
 
-#define NUM_THREADS 16
+#define NUM_THREADS (16)
 
 #define RootSig \
     "RootFlags(0), " \
@@ -21,8 +21,8 @@ SHADER_CONSTANT_BLOCK_END
 
 SamplerState LinearSampler : register(s0);
 
-Texture2D<float4>        Source  : register(t0);
-RWTexture2DArray<float4> OutCube : register(u0);
+Texture2D<float4>             Source  : register(t0);
+RWTexture2DArray<min16float4> OutCube : register(u0);
 
 static const float2 INV_ATAN = float2(0.1591f, 0.3183f);
 
@@ -71,5 +71,5 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
     // Convert the world space direction into U,V texture coordinates in the panoramic texture.
     // Source: http://gl.ict.usc.edu/Data/HighResProbes/
     float2 PanoramaTexCoords = float2(atan2(Direction.x, Direction.z), acos(Direction.y)) * INV_ATAN;
-    OutCube[TexCoord] = Source.SampleLevel(LinearSampler, PanoramaTexCoords, 0);
+    OutCube[TexCoord] = (min16float4)Source.SampleLevel(LinearSampler, PanoramaTexCoords, 0);
 }

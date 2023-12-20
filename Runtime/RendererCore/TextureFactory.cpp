@@ -92,7 +92,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
     const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 
-    const uint32 NumMips = (bGenerateNumMips) ? FMath::Max<uint32>(FMath::Log2(CubeMapSize), 1u) : 1u;
+    const uint32 NumMips = bGenerateNumMips ? FMath::Max<uint32>(FMath::Log2(CubeMapSize), 1u) : 1u;
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTextureCube(Format, CubeMapSize, NumMips, 1, ETextureUsageFlags::UnorderedAccess);
 

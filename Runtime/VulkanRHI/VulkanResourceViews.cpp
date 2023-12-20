@@ -148,7 +148,11 @@ bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDe
     {
         return false;
     }
-
+    else
+    {
+        ImageSubresourceRange = SubresourceRange;
+    }
+    
     return true;
 }
 
@@ -210,7 +214,7 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
     VkImageSubresourceRange SubresourceRange;
     SubresourceRange.aspectMask   = GetImageAspectFlagsFromFormat(VulkanFormat);
     SubresourceRange.baseMipLevel = InDesc.MipLevel;
-    SubresourceRange.levelCount   = InDesc.NumSlices;
+    SubresourceRange.levelCount   = 1u;
     
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
@@ -249,7 +253,11 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
     {
         return false;
     }
-
+    else
+    {
+        ImageSubresourceRange = SubresourceRange;
+    }
+    
     return true;
 }
 

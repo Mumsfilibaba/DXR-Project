@@ -9,7 +9,7 @@
 #if PLATFORM_WINDOWS
     #include <intrin.h>
     #include <smmintrin.h>
-#elif (PLATFORM_MACOS && PLATFORM_ARCHITECTURE_X86_X64)
+#elif PLATFORM_MACOS && PLATFORM_ARCHITECTURE_X86_X64
     #include <immintrin.h>
 #else
     #error No platform defined

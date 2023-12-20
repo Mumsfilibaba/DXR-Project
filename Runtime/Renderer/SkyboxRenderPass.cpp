@@ -66,7 +66,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         {
             Skybox->SetName("Skybox Uncompressed");
         }
-
+    
         // Compress the CubeMap
         TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
         if (FrameResources.Skybox)
