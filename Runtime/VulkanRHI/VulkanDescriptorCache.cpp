@@ -174,11 +174,11 @@ FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice, FV
     : FVulkanDeviceObject(InDevice)
     , Context(InContext)
     , DefaultResources()
-    , DescriptorSet(VK_NULL_HANDLE)
     , DescriptorPool(VK_NULL_HANDLE)
     , PendingDescriptorPools()
     , AvailableDescriptorPools()
 {
+    FMemory::Memzero(DescriptorSets, sizeof(DescriptorSets));
 }
 
 FVulkanDescriptorSetCache::~FVulkanDescriptorSetCache()
@@ -230,7 +230,7 @@ void FVulkanDescriptorSetCache::ResetPendingDescriptorPools()
     PendingDescriptorPools.Clear();
 }
 
-bool FVulkanDescriptorSetCache::AllocateDescriptorSets(VkDescriptorSetLayout Layout)
+bool FVulkanDescriptorSetCache::AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout)
 {
     VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo;
     FMemory::Memzero(&DescriptorSetAllocateInfo);
@@ -240,6 +240,7 @@ bool FVulkanDescriptorSetCache::AllocateDescriptorSets(VkDescriptorSetLayout Lay
     DescriptorSetAllocateInfo.descriptorSetCount = 1;
     DescriptorSetAllocateInfo.pSetLayouts        = &Layout;
     
+    VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
     VkResult Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &DescriptorSetAllocateInfo, &DescriptorSet);
     if (Result == VK_ERROR_OUT_OF_POOL_MEMORY)
     {
@@ -290,7 +291,7 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
         
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        CurrentDescriptorWrite.dstSet          = DescriptorSet;
+        CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
         CurrentDescriptorWrite.dstBinding      = ImageBindingsStartIndex + Index;
         
@@ -332,7 +333,7 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
         
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        CurrentDescriptorWrite.dstSet          = DescriptorSet;
+        CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
         CurrentDescriptorWrite.dstBinding      = BufferBindingsStartIndex + Index;
         
@@ -384,7 +385,7 @@ void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, 
         
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        CurrentDescriptorWrite.dstSet          = DescriptorSet;
+        CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
         CurrentDescriptorWrite.dstBinding      = ImageBindingsStartIndex + Index;
         
@@ -424,7 +425,7 @@ void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, 
         
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        CurrentDescriptorWrite.dstSet          = DescriptorSet;
+        CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
         CurrentDescriptorWrite.dstBinding      = BufferBindingsStartIndex + Index;
         
@@ -473,7 +474,7 @@ void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& C
         
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        CurrentDescriptorWrite.dstSet          = DescriptorSet;
+        CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
         CurrentDescriptorWrite.dstBinding      = BindingsStartIndex + Index;
         
@@ -523,7 +524,7 @@ void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, ESh
         
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
-        CurrentDescriptorWrite.dstSet          = DescriptorSet;
+        CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
         CurrentDescriptorWrite.dstBinding      = BindingsStartIndex + Index;
         
@@ -550,17 +551,21 @@ void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, ESh
 
 void FVulkanDescriptorSetCache::SetDescriptorSet(VkPipelineLayout PipelineLayout, EShaderVisibility ShaderStage)
 {
+    uint32 DescriptorSetBindPoint;
     VkPipelineBindPoint BindPoint;
     if (ShaderStage == ShaderVisibility_Compute)
     {
-        BindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
+        BindPoint              = VK_PIPELINE_BIND_POINT_COMPUTE;
+        DescriptorSetBindPoint = 0;
     }
     else
     {
-        BindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        BindPoint              = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        DescriptorSetBindPoint = ShaderStage;
     }
     
-    Context.GetCommandBuffer().BindDescriptorSets(BindPoint, PipelineLayout, 0, 1, &DescriptorSet, 0, nullptr);
+    VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
+    Context.GetCommandBuffer().BindDescriptorSets(BindPoint, PipelineLayout, DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);
 }
 
 bool FVulkanDescriptorSetCache::AllocateDescriptorPool()

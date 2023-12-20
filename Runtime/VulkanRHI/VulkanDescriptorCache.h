@@ -84,7 +84,7 @@ struct FVulkanConstantBufferCache : public FVulkanResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyState(ShaderVisibility_Vertex, ShaderVisibility_Compute);
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -108,7 +108,7 @@ struct FVulkanShaderResourceViewCache : public FVulkanResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyState(ShaderVisibility_Vertex, ShaderVisibility_Compute);
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -132,7 +132,7 @@ struct FVulkanUnorderedAccessViewCache : public FVulkanResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyState(ShaderVisibility_Vertex, ShaderVisibility_Compute);
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -173,7 +173,7 @@ struct FVulkanSamplerStateCache : public FVulkanResourceCache
 
     void Clear()
     {
-        DirtyState(ShaderVisibility_All, ShaderVisibility_Pixel);
+        DirtyState(ShaderVisibility_Vertex, ShaderVisibility_Compute);
 
         for (int32 Index = 0; Index < ShaderVisibility_Count; Index++)
         {
@@ -241,7 +241,7 @@ public:
     
     void SetIndexBuffer(FVulkanIndexBufferCache& IndexBuffer);
     
-    bool AllocateDescriptorSets(VkDescriptorSetLayout Layout);
+    bool AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout);
 
     void SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs);
     
@@ -271,7 +271,7 @@ private:
     FVulkanCommandContext&  Context;
     FVulkanDefaultResources DefaultResources;
     
-    VkDescriptorSet          DescriptorSet;
+    VkDescriptorSet          DescriptorSets[ShaderVisibility_Count];
     VkDescriptorPool         DescriptorPool;
     TArray<VkDescriptorPool> PendingDescriptorPools;
     TArray<VkDescriptorPool> AvailableDescriptorPools;

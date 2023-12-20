@@ -236,11 +236,31 @@ public:
         NumCommands++;
     }
     
+    void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
+    {
+        vkCmdDraw(CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
+        NumCommands++;
+    }
+    
+    void DrawIndexed(uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
+    {
+        vkCmdDrawIndexed(CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
+        NumCommands++;
+    }
+    
     void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
     {
         vkCmdDispatch(CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
         NumCommands++;
     }
+    
+#if VK_EXT_debug_utils
+    void InsertDebugUtilsLabel(const VkDebugUtilsLabelEXT* LabelInfo)
+    {
+        vkCmdInsertDebugUtilsLabelEXT(CommandBuffer, LabelInfo);
+        NumCommands++;
+    }
+#endif
 
     bool WaitForFence(uint64 TimeOut = UINT64_MAX)
     {

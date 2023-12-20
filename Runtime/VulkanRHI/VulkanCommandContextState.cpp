@@ -30,46 +30,46 @@ void FVulkanCommandContextState::BindGraphicsStates()
     }
     
     VkPipelineLayout PipelineLayout = GraphicsState.PipelineState->GetVkPipelineLayout();
-    if (GraphicsState.bBindPipelineState)
+    if (GraphicsState.bBindPipelineState || GVulkanForceBinding)
     {
         VkPipeline Pipeline = GraphicsState.PipelineState->GetVkPipeline();
         Context.GetCommandBuffer().BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
         GraphicsState.bBindPipelineState = false;
     }
 
-    BindDescriptorSets(PipelineLayout, ShaderVisibility_Vertex, ShaderVisibility_Pixel, false);
+    BindDescriptorSets(PipelineLayout, ShaderVisibility_Vertex, ShaderVisibility_Pixel, GVulkanForceBinding);
 
-    if (GraphicsState.bBindPushConstants)
+    if (GraphicsState.bBindPushConstants || GVulkanForceBinding)
     {
         BindPushConstants(PipelineLayout);
         GraphicsState.bBindPushConstants = false;
     }
 
-    if (GraphicsState.bBindVertexBuffers)
+    if (GraphicsState.bBindVertexBuffers || GVulkanForceBinding)
     {
         CommonState.DescriptorSetCache.SetVertexBuffers(GraphicsState.VBCache);
         GraphicsState.bBindVertexBuffers = false;
     }
 
-    if (GraphicsState.bBindIndexBuffer)
+    if (GraphicsState.bBindIndexBuffer || GVulkanForceBinding)
     {
         CommonState.DescriptorSetCache.SetIndexBuffer(GraphicsState.IBCache);
         GraphicsState.bBindIndexBuffer = false;
     }
 
-    if (GraphicsState.bBindViewports)
+    if (GraphicsState.bBindViewports || GVulkanForceBinding)
     {
         Context.GetCommandBuffer().SetViewport(0, GraphicsState.NumViewports, GraphicsState.Viewports);
         GraphicsState.bBindViewports = false;
     }
 
-    if (GraphicsState.bBindScissorRects)
+    if (GraphicsState.bBindScissorRects || GVulkanForceBinding)
     {
         Context.GetCommandBuffer().SetScissor(0, GraphicsState.NumScissorRects, GraphicsState.ScissorRects);
         GraphicsState.bBindScissorRects = false;
     }
 
-    if (GraphicsState.bBindBlendFactor)
+    if (GraphicsState.bBindBlendFactor || GVulkanForceBinding)
     {
         Context.GetCommandBuffer().SetBlendConstants(GraphicsState.BlendFactor);
         GraphicsState.bBindBlendFactor = false;
@@ -85,16 +85,16 @@ void FVulkanCommandContextState::BindComputeState()
     }
     
     VkPipelineLayout PipelineLayout = ComputeState.PipelineState->GetVkPipelineLayout();
-    if (ComputeState.bBindPipelineState)
+    if (ComputeState.bBindPipelineState || GVulkanForceBinding)
     {
         VkPipeline Pipeline = ComputeState.PipelineState->GetVkPipeline();
         Context.GetCommandBuffer().BindPipeline(VK_PIPELINE_BIND_POINT_COMPUTE, Pipeline);
         ComputeState.bBindPipelineState = false;
     }
 
-    BindDescriptorSets(PipelineLayout, ShaderVisibility_Compute, ShaderVisibility_Compute, false);
+    BindDescriptorSets(PipelineLayout, ShaderVisibility_Compute, ShaderVisibility_Compute, GVulkanForceBinding);
 
-    if (ComputeState.bBindPushConstants)
+    if (ComputeState.bBindPushConstants || GVulkanForceBinding)
     {
         BindPushConstants(PipelineLayout);
         ComputeState.bBindPushConstants = false;
@@ -103,6 +103,8 @@ void FVulkanCommandContextState::BindComputeState()
 
 void FVulkanCommandContextState::BindDescriptorSets(VkPipelineLayout PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
+    UNREFERENCED_VARIABLE(bForceBinding);
+    
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
         VkDescriptorSetLayout DescriptorSetLayout;
@@ -118,7 +120,7 @@ void FVulkanCommandContextState::BindDescriptorSets(VkPipelineLayout PipelineLay
         CHECK(DescriptorSetLayout != VK_NULL_HANDLE);
         
         // TODO: Validate that we actually have all the descriptors in the DescriptorPool that the DescriptorSetLayout wants
-        if (!CommonState.DescriptorSetCache.AllocateDescriptorSets(DescriptorSetLayout))
+        if (!CommonState.DescriptorSetCache.AllocateDescriptorSets(CurrentStage, DescriptorSetLayout))
         {
             VULKAN_ERROR("Failed to Allocate and Update DescriptorSets");
             return;

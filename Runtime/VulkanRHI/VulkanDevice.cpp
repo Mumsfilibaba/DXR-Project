@@ -3,6 +3,12 @@
 #include "VulkanLoader.h"
 #include "Core/Misc/ConsoleManager.h"
 
+////////////////////////////////////////////////////
+// Global variables that describe different features
+
+VULKANRHI_API bool GVulkanForceBinding = true;
+
+
 FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter)
     : Instance(InInstance)
     , PhysicalDevice(InAdapter)

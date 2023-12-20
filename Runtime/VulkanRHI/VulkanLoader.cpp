@@ -113,7 +113,7 @@ bool LoadInstanceFunctions(FVulkanInstance* Instance)
         VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, GetPhysicalDeviceSurfaceSupportKHR);
     }
 #endif
-    
+        
     return true;
 }
 
@@ -229,6 +229,11 @@ VULKAN_FUNCTION_DEFINITION(CmdCopyBufferToImage);
 VULKAN_FUNCTION_DEFINITION(CmdCopyImage);
 VULKAN_FUNCTION_DEFINITION(CmdBlitImage);
 VULKAN_FUNCTION_DEFINITION(CmdDispatch);
+VULKAN_FUNCTION_DEFINITION(CmdDraw);
+VULKAN_FUNCTION_DEFINITION(CmdDrawIndexed);
+#if VK_EXT_debug_utils
+    VULKAN_FUNCTION_DEFINITION(CmdInsertDebugUtilsLabelEXT);
+#endif
 
 bool LoadDeviceFunctions(FVulkanDevice* Device)
 {
@@ -353,6 +358,8 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBlitImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDispatch);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDraw);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDrawIndexed);
     
     // Initialize DedicatedAllocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);
@@ -362,6 +369,28 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
 
     // Initialize Dedicated Allocation extension helper
     FVulkanRobustness2EXT::Initialize(Device);
+    return true;
+}
+
+
+bool FVulkanDebugUtilsEXT::bIsEnabled = false;
+
+bool FVulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
+{
+    VULKAN_ERROR_COND(Instance != nullptr, "Instance cannot be nullptr");
+
+#if VK_EXT_debug_utils
+    if (Instance->IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    {
+        VkInstance InstanceHandle = Instance->GetVkInstance();
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CmdInsertDebugUtilsLabelEXT);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, SetDebugUtilsObjectNameEXT);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, CreateDebugUtilsMessengerEXT);
+        VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, DestroyDebugUtilsMessengerEXT);
+        bIsEnabled = true;
+    }
+#endif
+    
     return true;
 }
 
@@ -412,6 +441,5 @@ void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
             bSupportsNullDescriptors = true;
         }
     }
-    
 #endif
 }

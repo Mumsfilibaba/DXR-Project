@@ -60,13 +60,16 @@ bool FVulkanRHI::Initialize()
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
     
+    // Turn on the debuglayer
     if (bEnableDebugLayer)
     {
         InstanceDesc.RequiredLayerNames.Add("VK_LAYER_KHRONOS_validation");
-#if VK_EXT_debug_utils
-        InstanceDesc.RequiredExtensionNames.Add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#endif
     }
+    
+    // We always want to add debug utils in order to make markers work
+#if VK_EXT_debug_utils
+    InstanceDesc.RequiredExtensionNames.Add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+#endif
 
     Instance = new FVulkanInstance();
     if (!Instance->Initialize(InstanceDesc))
@@ -75,7 +78,7 @@ bool FVulkanRHI::Initialize()
         return false;
     }
     
-    // Load functions that requires an instance here (Order is important)
+    // Load functions that requires an instance here
     if (!LoadInstanceFunctions(Instance.Get()))
     {
         return false;

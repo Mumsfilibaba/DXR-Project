@@ -296,13 +296,27 @@ void FVulkanCommandContext::RHIEndRenderPass()
 
 void FVulkanCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegion)
 {
+    static bool bNegativeViewport = true;
+    
     VkViewport Viewport;
-    Viewport.width    = ViewportRegion.Width;
-    Viewport.height   = ViewportRegion.Height;
-    Viewport.maxDepth = ViewportRegion.MaxDepth;
-    Viewport.minDepth = ViewportRegion.MinDepth;
-    Viewport.x        = ViewportRegion.PositionX;
-    Viewport.y        = ViewportRegion.PositionY;
+    if (bNegativeViewport)
+    {
+        Viewport.width    =  ViewportRegion.Width;
+        Viewport.height   = -ViewportRegion.Height;
+        Viewport.maxDepth =  ViewportRegion.MaxDepth;
+        Viewport.minDepth =  ViewportRegion.MinDepth;
+        Viewport.x        =  ViewportRegion.PositionX;
+        Viewport.y        =  ViewportRegion.Height - ViewportRegion.PositionY;
+    }
+    else
+    {
+        Viewport.width    = ViewportRegion.Width;
+        Viewport.height   = ViewportRegion.Height;
+        Viewport.maxDepth = ViewportRegion.MaxDepth;
+        Viewport.minDepth = ViewportRegion.MinDepth;
+        Viewport.x        = ViewportRegion.PositionX;
+        Viewport.y        = ViewportRegion.PositionY;
+    }
     
     ContextState.SetViewports(&Viewport, 1);
 }
@@ -846,6 +860,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
     TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
     TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
     TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+    
     CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
@@ -917,47 +932,32 @@ void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 
 void FVulkanCommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)
 {
-    UNREFERENCED_VARIABLE(VertexCount);
-    UNREFERENCED_VARIABLE(StartVertexLocation);
-    
-    // ContextState.BindGraphicsStates();
+    ContextState.BindGraphicsStates();
+    CommandBuffer.Draw(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void FVulkanCommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
-    UNREFERENCED_VARIABLE(IndexCount);
-    UNREFERENCED_VARIABLE(StartIndexLocation);
-    UNREFERENCED_VARIABLE(BaseVertexLocation);
-    
-    // ContextState.BindGraphicsStates();
+    ContextState.BindGraphicsStates();
+    CommandBuffer.DrawIndexed(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
 void FVulkanCommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
-    UNREFERENCED_VARIABLE(VertexCountPerInstance);
-    UNREFERENCED_VARIABLE(InstanceCount);
-    UNREFERENCED_VARIABLE(StartVertexLocation);
-    UNREFERENCED_VARIABLE(StartInstanceLocation);
-    
-    // ContextState.BindGraphicsStates();
+    ContextState.BindGraphicsStates();
+    CommandBuffer.Draw(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void FVulkanCommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
-    UNREFERENCED_VARIABLE(IndexCountPerInstance);
-    UNREFERENCED_VARIABLE(InstanceCount);
-    UNREFERENCED_VARIABLE(StartIndexLocation);
-    UNREFERENCED_VARIABLE(BaseVertexLocation);
-    UNREFERENCED_VARIABLE(StartInstanceLocation);
-    
-    // ContextState.BindGraphicsStates();
+    ContextState.BindGraphicsStates();
+    CommandBuffer.DrawIndexed(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
 void FVulkanCommandContext::RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
     ContextState.BindComputeState();
     CommandBuffer.Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
-    return;
 }
 
 void FVulkanCommandContext::RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
@@ -998,7 +998,22 @@ void FVulkanCommandContext::RHIFlush()
 
 void FVulkanCommandContext::RHIInsertMarker(const FStringView& Message)
 {
-    UNREFERENCED_VARIABLE(Message);
+#if VK_EXT_debug_utils
+    if (FVulkanDebugUtilsEXT::IsEnabled())
+    {
+        VkDebugUtilsLabelEXT DebugUtilsLabel;
+        FMemory::Memzero(&DebugUtilsLabel);
+        
+        DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+        DebugUtilsLabel.pLabelName = Message.GetCString();
+        DebugUtilsLabel.color[0]   = 0.0f;
+        DebugUtilsLabel.color[1]   = 0.0f;
+        DebugUtilsLabel.color[2]   = 0.0f;
+        DebugUtilsLabel.color[3]   = 1.0f;
+        
+        CommandBuffer.InsertDebugUtilsLabel(&DebugUtilsLabel);
+    }
+#endif
 }
 
 void FVulkanCommandContext::RHIBeginExternalCapture()

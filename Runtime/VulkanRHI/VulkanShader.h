@@ -22,8 +22,7 @@ typedef TSharedRef<class FVulkanRayMissShader>       FVulkanRayMissShaderRef;
 
 enum EShaderVisibility : int32
 {
-    ShaderVisibility_All = 0,
-    ShaderVisibility_Vertex,
+    ShaderVisibility_Vertex = 0,
     ShaderVisibility_Hull,
     ShaderVisibility_Domain,
     ShaderVisibility_Geometry,

@@ -11,11 +11,7 @@ static TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(
-    VkDebugUtilsMessageSeverityFlagBitsEXT      MessageSeverity, 
-    VkDebugUtilsMessageTypeFlagsEXT             MessageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, 
-    void*                                       UserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType, const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
 {
     if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
@@ -297,15 +293,14 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
 
     VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyInstance);
 
-#if VK_EXT_debug_utils
-    if (IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+    // Initialize DebugUtils extension helper
+    if (!FVulkanDebugUtilsEXT::Initialize(this))
     {
-        VULKAN_LOAD_INSTANCE_FUNCTION(Instance, SetDebugUtilsObjectNameEXT);
-        VULKAN_LOAD_INSTANCE_FUNCTION(Instance, CreateDebugUtilsMessengerEXT);
-        VULKAN_LOAD_INSTANCE_FUNCTION(Instance, DestroyDebugUtilsMessengerEXT);
+        return false;
     }
-
-    if (bEnableDebugLayer)
+    
+#if VK_EXT_debug_utils
+    if (FVulkanDebugUtilsEXT::IsEnabled() && bEnableDebugLayer)
     {
         Result = vkCreateDebugUtilsMessengerEXT(Instance, &DebugMessengerCreateInfo, nullptr, &DebugMessenger);
         if (VULKAN_FAILED(Result))

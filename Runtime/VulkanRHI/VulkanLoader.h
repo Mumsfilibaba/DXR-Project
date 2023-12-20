@@ -203,12 +203,20 @@ VULKAN_FUNCTION_DECLARATION(CmdCopyBufferToImage);
 VULKAN_FUNCTION_DECLARATION(CmdCopyImage);
 VULKAN_FUNCTION_DECLARATION(CmdBlitImage);
 VULKAN_FUNCTION_DECLARATION(CmdDispatch);
+VULKAN_FUNCTION_DECLARATION(CmdDraw);
+VULKAN_FUNCTION_DECLARATION(CmdDrawIndexed);
+#if VK_EXT_debug_utils
+    VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
+#endif
 
 bool LoadDeviceFunctions(FVulkanDevice* Device);
 
 
-struct FVulkanDebugUtilsEXT
+class FVulkanDebugUtilsEXT
 {
+public:
+    static bool Initialize(FVulkanInstance* Instance);
+
     template<typename HandleType>
     static FORCEINLINE VkResult SetObjectName(VkDevice Device, const CHAR* Name, HandleType ObjectHandle, VkObjectType ObjectType)
     {
@@ -217,7 +225,7 @@ struct FVulkanDebugUtilsEXT
 
     static VkResult SetObjectName(VkDevice Device, const CHAR* Name, uint64 ObjectHandle, VkObjectType ObjectType)
     {
-#if VK_EXT_debug_utils
+    #if VK_EXT_debug_utils
         VkDebugUtilsObjectNameInfoEXT DebugUtilsObjectNameInfo;
         FMemory::Memzero(&DebugUtilsObjectNameInfo);
 
@@ -228,10 +236,18 @@ struct FVulkanDebugUtilsEXT
         DebugUtilsObjectNameInfo.objectType   = ObjectType;
 
         return vkSetDebugUtilsObjectNameEXT(Device, &DebugUtilsObjectNameInfo);
-#else
+    #else
         return VK_ERROR_UKNOWN;
-#endif
+    #endif
     }
+
+    static FORCEINLINE bool IsEnabled()
+    {
+        return bIsEnabled;
+    }
+
+private:
+    static bool bIsEnabled;
 };
 
 
