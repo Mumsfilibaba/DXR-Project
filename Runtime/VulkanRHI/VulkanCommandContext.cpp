@@ -640,45 +640,53 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     FVulkanTexture* DstVulkanTexture = GetVulkanTexture(Dst);
     CHECK(DstVulkanTexture != nullptr);
     
-    CHECK(SrcVulkanTexture->GetWidth()     == DstVulkanTexture->GetWidth());
-    CHECK(SrcVulkanTexture->GetHeight()    == DstVulkanTexture->GetHeight());
-    CHECK(SrcVulkanTexture->GetDepth()     == DstVulkanTexture->GetDepth());
-    CHECK(SrcVulkanTexture->GetDimension() == DstVulkanTexture->GetDimension());
+    CHECK(SrcVulkanTexture->GetWidth()        == DstVulkanTexture->GetWidth());
+    CHECK(SrcVulkanTexture->GetHeight()       == DstVulkanTexture->GetHeight());
+    CHECK(SrcVulkanTexture->GetDepth()        == DstVulkanTexture->GetDepth());
+    CHECK(SrcVulkanTexture->GetNumMipLevels() == DstVulkanTexture->GetNumMipLevels());
+    CHECK(SrcVulkanTexture->GetDimension()    == DstVulkanTexture->GetDimension());
     
-    VkImageCopy ImageCopy;
-    FMemory::Memzero(&ImageCopy);
-    
-    ImageCopy.extent.width                  = DstVulkanTexture->GetWidth();
-    ImageCopy.extent.height                 = DstVulkanTexture->GetHeight();
-    ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
-    ImageCopy.srcSubresource.mipLevel       = 0;
-    ImageCopy.srcSubresource.baseArrayLayer = 0;
-    ImageCopy.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
-    ImageCopy.dstSubresource.mipLevel       = 0;
-    ImageCopy.dstSubresource.baseArrayLayer = 0;
-    
-    // NOTE: We want to copy the full function
-    if (IsTextureCube(DstVulkanTexture->GetDimension()))
+    constexpr uint32 MaxCopies = 15;
+    VkImageCopy ImageCopies[MaxCopies];
+
+    const uint32 NumMipLevels = DstVulkanTexture->GetNumMipLevels();
+    for (uint32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel++)
     {
-        ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
-        ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
-    }
-    else
-    {
-        ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices();
-        ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices();
+        VkImageCopy& ImageCopy = ImageCopies[MipLevel];
+        FMemory::Memzero(&ImageCopy, sizeof(ImageCopy));
+    
+        ImageCopy.extent.width                  = DstVulkanTexture->GetWidth();
+        ImageCopy.extent.height                 = DstVulkanTexture->GetHeight();
+        ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+        ImageCopy.srcSubresource.mipLevel       = MipLevel;
+        ImageCopy.srcSubresource.baseArrayLayer = 0;
+        ImageCopy.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
+        ImageCopy.dstSubresource.mipLevel       = MipLevel;
+        ImageCopy.dstSubresource.baseArrayLayer = 0;
+
+        // NOTE: We want to copy the full function
+        if (IsTextureCube(DstVulkanTexture->GetDimension()))
+        {
+            ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
+            ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
+        }
+        else
+        {
+            ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices();
+            ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices();
+        }
+    
+        if (DstVulkanTexture->GetDimension() == ETextureDimension::Texture3D)
+        {
+            ImageCopy.extent.depth = DstVulkanTexture->GetDepth();
+        }
+        else
+        {
+            ImageCopy.extent.depth = 1;
+        }
     }
     
-    if (DstVulkanTexture->GetDimension() == ETextureDimension::Texture3D)
-    {
-        ImageCopy.extent.depth = DstVulkanTexture->GetDepth();
-    }
-    else
-    {
-        ImageCopy.extent.depth = 1;
-    }
-    
-    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &ImageCopy);
+    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, NumMipLevels, ImageCopies);
 }
 
 void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc)
