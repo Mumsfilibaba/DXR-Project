@@ -63,7 +63,8 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
 
     // Map the UV coords of the cubemap face to a direction
     // [(0, 0), (1, 1)] => [(-0.5, -0.5), (0.5, 0.5)]
-    float3 Direction = float3((TexCoord.xy / float(Constants.CubeMapSize)) - 0.5f, 0.5f);
+    float2 UVs = (TexCoord.xy / float(Constants.CubeMapSize));
+    float3 Direction = float3(UVs - 0.5f, 0.5f);
 
     // Rotate to cubemap face
     Direction = normalize(mul(ROTATE_UV[TexCoord.z], Direction));

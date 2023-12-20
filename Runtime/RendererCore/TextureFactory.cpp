@@ -6,6 +6,7 @@
 
 struct TextureFactoryData
 {
+    FRHISamplerStateRef         PanoramaGenSampler;
     FRHIComputePipelineStateRef PanoramaPSO;
     FRHIComputeShaderRef        ComputeShader;
 };
@@ -34,16 +35,32 @@ bool FTextureFactory::Init()
     if (GlobalFactoryData.PanoramaPSO)
     {
         GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
-        return true;
     }
     else
     {
         return false;
     }
+
+    FRHISamplerStateDesc SamplerInitializer;
+    SamplerInitializer.AddressU = ESamplerMode::Wrap;
+    SamplerInitializer.AddressV = ESamplerMode::Wrap;
+    SamplerInitializer.AddressW = ESamplerMode::Wrap;
+    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
+    SamplerInitializer.MinLOD   = 0.0f;
+    SamplerInitializer.MaxLOD   = TNumericLimits<float>::Max();
+
+    GlobalFactoryData.PanoramaGenSampler = RHICreateSamplerState(SamplerInitializer);
+    if (!GlobalFactoryData.PanoramaGenSampler)
+    {
+        return false;
+    }
+
+    return true;
 }
 
 void FTextureFactory::Release()
 {
+    GlobalFactoryData.PanoramaGenSampler.Reset();
     GlobalFactoryData.PanoramaPSO.Reset();
     GlobalFactoryData.ComputeShader.Reset();
 }
@@ -139,6 +156,8 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
         FRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
         CommandList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
+
+        CommandList.SetSamplerState(GlobalFactoryData.ComputeShader.Get(), GlobalFactoryData.PanoramaGenSampler.Get(), 0);
 
         constexpr uint32 LocalWorkGroupCount = 16;
         const uint32 ThreadsX = FMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
