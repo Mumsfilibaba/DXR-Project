@@ -150,6 +150,14 @@ VULKAN_FUNCTION_DECLARATION(DestroyPipelineLayout);
 VULKAN_FUNCTION_DECLARATION(CreateDescriptorSetLayout);
 VULKAN_FUNCTION_DECLARATION(DestroyDescriptorSetLayout);
 
+VULKAN_FUNCTION_DECLARATION(CreateDescriptorPool);
+VULKAN_FUNCTION_DECLARATION(DestroyDescriptorPool);
+VULKAN_FUNCTION_DECLARATION(ResetDescriptorPool);
+
+VULKAN_FUNCTION_DECLARATION(AllocateDescriptorSets);
+VULKAN_FUNCTION_DECLARATION(FreeDescriptorSets);
+VULKAN_FUNCTION_DECLARATION(UpdateDescriptorSets);
+    
 VULKAN_FUNCTION_DECLARATION(CreateRenderPass);
 VULKAN_FUNCTION_DECLARATION(DestroyRenderPass);
 
@@ -183,10 +191,11 @@ VULKAN_FUNCTION_DECLARATION(CmdBeginRenderPass);
 VULKAN_FUNCTION_DECLARATION(CmdEndRenderPass);
 VULKAN_FUNCTION_DECLARATION(CmdSetViewport);
 VULKAN_FUNCTION_DECLARATION(CmdSetScissor);
+VULKAN_FUNCTION_DECLARATION(CmdSetBlendConstants);
 VULKAN_FUNCTION_DECLARATION(CmdBindVertexBuffers);
 VULKAN_FUNCTION_DECLARATION(CmdBindIndexBuffer);
-VULKAN_FUNCTION_DECLARATION(CmdSetBlendConstants);
 VULKAN_FUNCTION_DECLARATION(CmdBindPipeline);
+VULKAN_FUNCTION_DECLARATION(CmdBindDescriptorSets);
 VULKAN_FUNCTION_DECLARATION(CmdPushConstants);
 VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DECLARATION(CmdCopyBuffer);
@@ -196,6 +205,7 @@ VULKAN_FUNCTION_DECLARATION(CmdBlitImage);
 VULKAN_FUNCTION_DECLARATION(CmdDispatch);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device);
+
 
 struct FVulkanDebugUtilsEXT
 {
@@ -224,6 +234,7 @@ struct FVulkanDebugUtilsEXT
     }
 };
 
+
 class FVulkanDedicatedAllocationKHR
 {
 public:
@@ -237,6 +248,7 @@ public:
 private:
     static bool bIsEnabled;
 };
+
 
 class FVulkanBufferDeviceAddressKHR
 {
@@ -252,6 +264,7 @@ private:
     static bool bIsEnabled;
 };
 
+
 class FVulkanRobustness2EXT
 {
 public:
@@ -262,7 +275,13 @@ public:
         return bIsEnabled;
     }
     
+    static FORCEINLINE bool SupportsNullDescriptors()
+    {
+        return bSupportsNullDescriptors;
+    }
+    
 private:
     static bool bIsEnabled;
+    static bool bSupportsNullDescriptors;
 };
 

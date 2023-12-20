@@ -188,11 +188,46 @@ struct FVulkanSamplerStateCache : public FVulkanResourceCache
 };
 
 
+struct FVulkanDefaultResources
+{
+    FVulkanDefaultResources()
+        : NullBuffer(VK_NULL_HANDLE)
+        , NullImage(VK_NULL_HANDLE)
+        , NullImageView(VK_NULL_HANDLE)
+        , NullSampler(VK_NULL_HANDLE)
+    {
+    }
+    
+    ~FVulkanDefaultResources()
+    {
+        CHECK(NullBuffer    == VK_NULL_HANDLE);
+        CHECK(NullImage     == VK_NULL_HANDLE);
+        CHECK(NullImageView == VK_NULL_HANDLE);
+        CHECK(NullSampler   == VK_NULL_HANDLE);
+    }
+    
+    bool Initialize(FVulkanDevice& Device);
+    void Release(FVulkanDevice& Device);
+    
+    // Null-Buffer
+    VkBuffer                NullBuffer;
+    FVulkanMemoryAllocation NullBufferMemory;
+    
+    // Null-Image
+    VkImage                 NullImage;
+    VkImageView             NullImageView;
+    FVulkanMemoryAllocation NullImageMemory;
+    
+    // NullSampler
+    VkSampler               NullSampler;
+};
+
+
 class FVulkanDescriptorSetCache : public FVulkanDeviceObject
 {
 public:
     FVulkanDescriptorSetCache(FVulkanDevice* InDevice, FVulkanCommandContext& InContext);
-    ~FVulkanDescriptorSetCache() = default;
+    ~FVulkanDescriptorSetCache();
 
     bool Initialize();
 
@@ -205,20 +240,39 @@ public:
     void SetVertexBuffers(FVulkanVertexBufferCache& VertexBuffers);
     
     void SetIndexBuffer(FVulkanIndexBufferCache& IndexBuffer);
+    
+    bool AllocateDescriptorSets(VkDescriptorSetLayout Layout);
 
     void SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs);
     
     void SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumUAVs);
 
-    void SetCBVs(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumCBVs);
+    void SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumBuffers);
     
     void SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers);
 
-    FORCEINLINE FVulkanCommandContext& GetContext() const
+    void SetDescriptorSet(VkPipelineLayout PipelineLayout, EShaderVisibility ShaderStage);
+    
+    void ResetPendingDescriptorPools();
+    
+    FORCEINLINE FVulkanCommandContext& GetContext()
     {
         return Context;
     }
+    
+    FORCEINLINE FVulkanDefaultResources& GetDefaultResources()
+    {
+        return DefaultResources;
+    }
 
 private:
-    FVulkanCommandContext& Context;
+    bool AllocateDescriptorPool();
+    
+    FVulkanCommandContext&  Context;
+    FVulkanDefaultResources DefaultResources;
+    
+    VkDescriptorSet          DescriptorSet;
+    VkDescriptorPool         DescriptorPool;
+    TArray<VkDescriptorPool> PendingDescriptorPools;
+    TArray<VkDescriptorPool> AvailableDescriptorPools;
 };

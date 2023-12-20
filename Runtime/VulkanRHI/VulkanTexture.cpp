@@ -48,7 +48,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     FMemory::Memzero(&ImageCreateInfo);
 
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    ImageCreateInfo.imageType             = ConvertTextureDimension(Desc.Dimension);;
+    ImageCreateInfo.imageType             = ConvertTextureDimension(Desc.Dimension);
     ImageCreateInfo.extent.width          = Desc.Extent.x;
     ImageCreateInfo.extent.height         = Desc.Extent.y;
     ImageCreateInfo.mipLevels             = Desc.NumMipLevels;
@@ -197,8 +197,8 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
         TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
-        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
         TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
         Context->ImageLayoutTransitionBarrier(TransitionBarrier);

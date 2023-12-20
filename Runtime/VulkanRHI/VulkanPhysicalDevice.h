@@ -86,7 +86,9 @@ public:
 #if VK_EXT_depth_clip_enable
     const VkPhysicalDeviceDepthClipEnableFeaturesEXT& GetDepthClipEnableFeatures() const { return DepthClipEnableFeatures; }
 #endif
-    
+#if VK_EXT_robustness2
+    const VkPhysicalDeviceRobustness2FeaturesEXT& GetRobustness2Features() const { return Robustness2Features; }
+#endif
 #if VK_EXT_conservative_rasterization
     const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const { return ConservativeRasterizationProperties; }
 #endif
@@ -109,6 +111,9 @@ private:
     // Extension Information
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
+#endif
+#if VK_EXT_robustness2
+    VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
 #endif
 #if VK_EXT_conservative_rasterization
     VkPhysicalDeviceConservativeRasterizationPropertiesEXT ConservativeRasterizationProperties;

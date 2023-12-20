@@ -11,11 +11,11 @@ FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, 
 
 bool FVulkanCommandContextState::Initialize()
 {
-    // if (!DescriptorCache.Initialize())
-    // {
-    //    D3D12_ERROR("Failed to initialize DescriptorCache");
-    //    return false;
-    // }
+    if (!CommonState.DescriptorSetCache.Initialize())
+    {
+       VULKAN_ERROR("Failed to initialize DescriptorSetCache");
+       return false;
+    }
 
     ResetState();
     return true;
@@ -23,6 +23,13 @@ bool FVulkanCommandContextState::Initialize()
 
 void FVulkanCommandContextState::BindGraphicsStates()
 {
+    // If there are no Pipeline, then there is no need to perform anything in here
+    if (!GraphicsState.PipelineState)
+    {
+        return;
+    }
+    
+    VkPipelineLayout PipelineLayout = GraphicsState.PipelineState->GetVkPipelineLayout();
     if (GraphicsState.bBindPipelineState)
     {
         VkPipeline Pipeline = GraphicsState.PipelineState->GetVkPipeline();
@@ -30,11 +37,10 @@ void FVulkanCommandContextState::BindGraphicsStates()
         GraphicsState.bBindPipelineState = false;
     }
 
-    BindDescriptorSets(ShaderVisibility_Vertex, ShaderVisibility_Pixel, false);
+    BindDescriptorSets(PipelineLayout, ShaderVisibility_Vertex, ShaderVisibility_Pixel, false);
 
     if (GraphicsState.bBindPushConstants)
     {
-        VkPipelineLayout PipelineLayout = GraphicsState.PipelineState->GetVkPipelineLayout();
         BindPushConstants(PipelineLayout);
         GraphicsState.bBindPushConstants = false;
     }
@@ -72,6 +78,13 @@ void FVulkanCommandContextState::BindGraphicsStates()
 
 void FVulkanCommandContextState::BindComputeState()
 {
+    // If there are no Pipeline, then there is no need to perform anything in here
+    if (!ComputeState.PipelineState)
+    {
+        return;
+    }
+    
+    VkPipelineLayout PipelineLayout = ComputeState.PipelineState->GetVkPipelineLayout();
     if (ComputeState.bBindPipelineState)
     {
         VkPipeline Pipeline = ComputeState.PipelineState->GetVkPipeline();
@@ -79,18 +92,47 @@ void FVulkanCommandContextState::BindComputeState()
         ComputeState.bBindPipelineState = false;
     }
 
-    BindDescriptorSets(ShaderVisibility_Compute, ShaderVisibility_Compute, false);
+    BindDescriptorSets(PipelineLayout, ShaderVisibility_Compute, ShaderVisibility_Compute, false);
 
     if (ComputeState.bBindPushConstants)
     {
-        VkPipelineLayout PipelineLayout = ComputeState.PipelineState->GetVkPipelineLayout();
         BindPushConstants(PipelineLayout);
         ComputeState.bBindPushConstants = false;
     }
 }
 
-void FVulkanCommandContextState::BindDescriptorSets(EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
+void FVulkanCommandContextState::BindDescriptorSets(VkPipelineLayout PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
+    for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
+    {
+        VkDescriptorSetLayout DescriptorSetLayout;
+        if (CurrentStage == ShaderVisibility_Compute)
+        {
+            DescriptorSetLayout = ComputeState.PipelineState->GetVkDescriptorSetLayout();
+        }
+        else
+        {
+            DescriptorSetLayout = GraphicsState.PipelineState->GetVkDescriptorSetLayout(CurrentStage);
+        }
+        
+        CHECK(DescriptorSetLayout != VK_NULL_HANDLE);
+        
+        // TODO: Validate that we actually have all the descriptors in the DescriptorPool that the DescriptorSetLayout wants
+        if (!CommonState.DescriptorSetCache.AllocateDescriptorSets(DescriptorSetLayout))
+        {
+            VULKAN_ERROR("Failed to Allocate and Update DescriptorSets");
+            return;
+        }
+
+        // Set resources that are going to be written to the DescriptorSet
+        CommonState.DescriptorSetCache.SetSRVs(CommonState.ShaderResourceViewCache, CurrentStage, VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+        CommonState.DescriptorSetCache.SetUAVs(CommonState.UnorderedAccessViewCache, CurrentStage, VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+        CommonState.DescriptorSetCache.SetConstantBuffers(CommonState.ConstantBufferCache, CurrentStage, VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT);
+        CommonState.DescriptorSetCache.SetSamplers(CommonState.SamplerStateCache, CurrentStage, VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
+        
+        // Bind DescriptorSet for this ShaderStage
+        CommonState.DescriptorSetCache.SetDescriptorSet(PipelineLayout, CurrentStage);
+    }
 }
 
 void FVulkanCommandContextState::BindPushConstants(VkPipelineLayout PipelineLayout)

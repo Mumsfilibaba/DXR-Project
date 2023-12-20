@@ -141,6 +141,12 @@ public:
         NumCommands++;
     }
     
+    FORCEINLINE void BindDescriptorSets(VkPipelineBindPoint PipelineBindPoint, VkPipelineLayout Layout, uint32 FirstSet, uint32 DescriptorSetCount, const VkDescriptorSet* DescriptorSets, uint32 DynamicOffsetCount, const uint32* DynamicOffsets)
+    {
+        vkCmdBindDescriptorSets(CommandBuffer, PipelineBindPoint, Layout, FirstSet, DescriptorSetCount, DescriptorSets, DynamicOffsetCount, DynamicOffsets);
+        NumCommands++;
+    }
+    
     FORCEINLINE void SetBlendConstants(const float BlendConstants[4])
     {
         vkCmdSetBlendConstants(CommandBuffer, BlendConstants);

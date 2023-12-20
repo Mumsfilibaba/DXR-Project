@@ -231,13 +231,9 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
             break;
         case ETextureDimension::Texture2DArray:
-            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-            break;
         case ETextureDimension::TextureCube:
-            VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE;
-            break;
         case ETextureDimension::TextureCubeArray:
-            VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+            VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             break;
         case ETextureDimension::Texture3D:
             VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;

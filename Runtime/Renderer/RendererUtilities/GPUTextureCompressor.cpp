@@ -324,6 +324,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     CommandList.TransitionTexture(Source.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
     CommandList.DestroyResource(CompressedTex.Get());
+    CommandList.DestroyResource(Source.Get());
 
     GRHICommandExecutor.ExecuteCommandList(CommandList);
     return true;

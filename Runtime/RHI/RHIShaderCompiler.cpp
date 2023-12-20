@@ -400,10 +400,12 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
         }
     }
     
+    // NOTE: We are forced to embed debug information in order to get all the information we need for Vulkan
+    CompileArgs.Emplace(L"-Qembed_debug");
+    
     if (CVarShaderDebug.GetValue())
     {
         CompileArgs.Emplace(L"-Zi");
-        CompileArgs.Emplace(L"-Qembed_debug");
     }
 
     // Create a single string for printing all the shader arguments
@@ -696,12 +698,14 @@ bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FR
     // We only compile if we perform any changes
     bool bNeedsCompilation = false;
 
-    const uint32 SampledImagesBindingOffset  = 0;
-    const uint32 SamplersBindingOffset       = 16;
-    const uint32 StorageImagesBindingOffset  = 24;
-    const uint32 UniformBuffersBindingOffset = 32;
-    const uint32 StorageBuffersBindingOffset = 40;
-    const uint32 StageDescriptorSetOffset    = GetShaderStageDescriporSetOffset(CompileInfo.ShaderStage);
+    // TODO: Read this from somewhere
+    const uint32 UniformBuffersBindingOffset    = 0;
+    const uint32 StorageBuffersBindingOffsetUAV = 8;
+    const uint32 StorageBuffersBindingOffsetSRV = 16;
+    const uint32 SamplersBindingOffset          = 24;
+    const uint32 StorageImagesBindingOffset     = 32;
+    const uint32 SampledImagesBindingOffset     = 40;
+    const uint32 StageDescriptorSetOffset       = GetShaderStageDescriporSetOffset(CompileInfo.ShaderStage);
     
     // SRV Textures
     {
@@ -720,7 +724,7 @@ bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FR
                 spvc_compiler_set_decoration(Compiler, SampledImages[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
                 bNeedsCompilation = true;
                 
-                LOG_INFO("Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", SampledImages[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
+                LOG_INFO("[SampledImage] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", SampledImages[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
             }
         }
     }
@@ -742,7 +746,7 @@ bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FR
                 spvc_compiler_set_decoration(Compiler, Samplers[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
                 bNeedsCompilation = true;
                 
-                LOG_INFO("Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", Samplers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
+                LOG_INFO("[Sampler] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", Samplers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
             }
         }
     }
@@ -764,7 +768,7 @@ bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FR
                 spvc_compiler_set_decoration(Compiler, StorageImages[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
                 bNeedsCompilation = true;
                 
-                LOG_INFO("Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageImages[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
+                LOG_INFO("[StorageImage] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageImages[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
             }
         }
     }
@@ -787,12 +791,12 @@ bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FR
                 spvc_compiler_set_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
                 bNeedsCompilation = true;
                 
-                LOG_INFO("Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", UniformBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
+                LOG_INFO("[UniformBuffer] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", UniformBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
             }
         }
     }
     
-    // UAV Buffers
+    // SRV + UAV Buffers
     {
         size_t NumStorageBuffers = 0;
         const spvc_reflected_resource* StorageBuffers = nullptr;
@@ -803,13 +807,25 @@ bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FR
                 const uint32 CurrentBinding       = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding);
                 const uint32 CurrentDescriptorSet = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationDescriptorSet);
                 
-                const uint32 NewBinding       = StorageBuffersBindingOffset + CurrentBinding;
+                uint32 NewBinding;
                 const uint32 NewDescriptorSet = StageDescriptorSetOffset + CurrentDescriptorSet;
+
+                const FString BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
+                const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
+                if (bIsUAV)
+                {
+                    NewBinding = StorageBuffersBindingOffsetUAV + CurrentBinding;
+                    LOG_INFO("[UAV StorageBuffer] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
+                }
+                else
+                {
+                    NewBinding = StorageBuffersBindingOffsetSRV + CurrentBinding;
+                    LOG_INFO("[SRV StorageBuffer] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
+                }
+
                 spvc_compiler_set_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding, NewBinding);
                 spvc_compiler_set_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
                 bNeedsCompilation = true;
-                
-                LOG_INFO("Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
             }
         }
     }

@@ -5,8 +5,6 @@
 #include "VulkanBuffer.h"
 #include "VulkanDevice.h"
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
-
 FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue* InCommandQueue)
     : FVulkanDeviceObject(InDevice)
     , Queue(MakeSharedRef<FVulkanQueue>(InCommandQueue))
@@ -33,6 +31,27 @@ bool FVulkanCommandContext::Initialize()
         return false;
     }
 
+    // TODO: Another solution for this but for now Transitinon default images here
+    ObtainCommandBuffer();
+    
+    FVulkanImageTransitionBarrier TransitionBarrier;
+    TransitionBarrier.Image                           = ContextState.GetDescriptorSetCache().GetDefaultResources().NullImage;
+    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
+    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+    TransitionBarrier.DependencyFlags                 = 0;
+    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
+    TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
+    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+    
+    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    
+    FlushCommandBuffer();
     return true;
 }
 
@@ -43,18 +62,29 @@ void FVulkanCommandContext::ImageLayoutTransitionBarrier(const FVulkanImageTrans
 
 void FVulkanCommandContext::ObtainCommandBuffer()
 {
-    VULKAN_ERROR_COND(CommandBuffer.Begin(), "Failed to Begin CommandBuffer");
-
+    if (!CommandBuffer.Begin())
+    {
+        VULKAN_ERROR("Failed to Begin CommandBuffer");
+        DEBUG_BREAK();
+    }
+    
     // Clear the list of resources that are scheduled to be destroyed
     DiscardList.Clear();
     DiscardListVk.Clear();
+    
+    // Clear all the DescriptorPools for reuse
+    ContextState.ResetPendingDescriptorPools();
 }
 
 void FVulkanCommandContext::FlushCommandBuffer()
 {
     if (CommandBuffer.IsRecording())
     {
-        VULKAN_ERROR_COND(CommandBuffer.End(), "Failed to End CommandBuffer");
+        if (!CommandBuffer.End())
+        {
+            VULKAN_ERROR("Failed to End CommandBuffer");
+            DEBUG_BREAK();
+        }
 
         FVulkanCommandBuffer* SubmitCommandBuffer = &CommandBuffer;
         Queue->ExecuteCommandBuffer(&SubmitCommandBuffer, 1, CommandBuffer.GetFence());
@@ -89,11 +119,15 @@ void FVulkanCommandContext::RHIFinishContext()
 void FVulkanCommandContext::RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
 {
     // TODO: Implement queries
+    UNREFERENCED_VARIABLE(TimestampQuery);
+    UNREFERENCED_VARIABLE(Index);
 }
 
 void FVulkanCommandContext::RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)  
 {
     // TODO: Implement queries
+    UNREFERENCED_VARIABLE(TimestampQuery);
+    UNREFERENCED_VARIABLE(Index);
 }
 
 void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
@@ -130,6 +164,8 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
 void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
     // TODO: Implement when UAVs are implemented
+    UNREFERENCED_VARIABLE(UnorderedAccessView);
+    UNREFERENCED_VARIABLE(ClearColor);
 }
 
 void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
@@ -661,6 +697,7 @@ void FVulkanCommandContext::RHIDestroyResource(IRefCounted* Resource)
 
 void FVulkanCommandContext::RHIDiscardContents(FRHITexture* Resource)
 {
+    UNREFERENCED_VARIABLE(Resource);
 }
 
 void FVulkanCommandContext::RHIBuildRayTracingGeometry(
@@ -672,10 +709,20 @@ void FVulkanCommandContext::RHIBuildRayTracingGeometry(
     EIndexFormat            IndexFormat,
     bool                    bUpdate)
 {
+    UNREFERENCED_VARIABLE(RayTracingGeometry);
+    UNREFERENCED_VARIABLE(VertexBuffer);
+    UNREFERENCED_VARIABLE(NumVertices);
+    UNREFERENCED_VARIABLE(IndexBuffer);
+    UNREFERENCED_VARIABLE(NumIndices);
+    UNREFERENCED_VARIABLE(IndexFormat);
+    UNREFERENCED_VARIABLE(bUpdate);
 }
 
 void FVulkanCommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
 {
+    UNREFERENCED_VARIABLE(RayTracingScene);
+    UNREFERENCED_VARIABLE(Instances);
+    UNREFERENCED_VARIABLE(bUpdate);
 }
 
 void FVulkanCommandContext::RHISetRayTracingBindings(
@@ -687,6 +734,13 @@ void FVulkanCommandContext::RHISetRayTracingBindings(
     const FRayTracingShaderResources* HitGroupResources,
     uint32                            NumHitGroupResources)
 {
+    UNREFERENCED_VARIABLE(RayTracingScene);
+    UNREFERENCED_VARIABLE(PipelineState);
+    UNREFERENCED_VARIABLE(GlobalResource);
+    UNREFERENCED_VARIABLE(RayGenLocalResources);
+    UNREFERENCED_VARIABLE(MissLocalResources);
+    UNREFERENCED_VARIABLE(HitGroupResources);
+    UNREFERENCED_VARIABLE(NumHitGroupResources);
 }
 
 void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
@@ -852,41 +906,68 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     // TODO: Check what type of barrier is needed here
+    UNREFERENCED_VARIABLE(Texture);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)   
 {
     // TODO: Check what type of barrier is needed here
+    UNREFERENCED_VARIABLE(Buffer);
 }
 
 void FVulkanCommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)
 {
-    ContextState.BindGraphicsStates();
+    UNREFERENCED_VARIABLE(VertexCount);
+    UNREFERENCED_VARIABLE(StartVertexLocation);
+    
+    // ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
-    ContextState.BindGraphicsStates();
+    UNREFERENCED_VARIABLE(IndexCount);
+    UNREFERENCED_VARIABLE(StartIndexLocation);
+    UNREFERENCED_VARIABLE(BaseVertexLocation);
+    
+    // ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
-    ContextState.BindGraphicsStates();
+    UNREFERENCED_VARIABLE(VertexCountPerInstance);
+    UNREFERENCED_VARIABLE(InstanceCount);
+    UNREFERENCED_VARIABLE(StartVertexLocation);
+    UNREFERENCED_VARIABLE(StartInstanceLocation);
+    
+    // ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
-    ContextState.BindGraphicsStates();
+    UNREFERENCED_VARIABLE(IndexCountPerInstance);
+    UNREFERENCED_VARIABLE(InstanceCount);
+    UNREFERENCED_VARIABLE(StartIndexLocation);
+    UNREFERENCED_VARIABLE(BaseVertexLocation);
+    UNREFERENCED_VARIABLE(StartInstanceLocation);
+    
+    // ContextState.BindGraphicsStates();
 }
 
 void FVulkanCommandContext::RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
     ContextState.BindComputeState();
-    // CommandBuffer.Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
+    CommandBuffer.Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
+    return;
 }
 
 void FVulkanCommandContext::RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
 {
+    // TODO: Implement Vulkan RT
+    UNREFERENCED_VARIABLE(InScene);
+    UNREFERENCED_VARIABLE(InPipelineState);
+    UNREFERENCED_VARIABLE(InWidth);
+    UNREFERENCED_VARIABLE(InHeight);
+    UNREFERENCED_VARIABLE(InDepth);
 }
 
 void FVulkanCommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
@@ -917,6 +998,7 @@ void FVulkanCommandContext::RHIFlush()
 
 void FVulkanCommandContext::RHIInsertMarker(const FStringView& Message)
 {
+    UNREFERENCED_VARIABLE(Message);
 }
 
 void FVulkanCommandContext::RHIBeginExternalCapture()
@@ -928,5 +1010,3 @@ void FVulkanCommandContext::RHIEndExternalCapture()
 {
     // TODO: Investigate the probability of this
 }
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING

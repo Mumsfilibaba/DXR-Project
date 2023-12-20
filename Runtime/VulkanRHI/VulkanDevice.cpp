@@ -181,10 +181,28 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     
     DeviceCreateHelper.AddNext(DeviceFeaturesVulkan12);
     
+    
     // Check and enable extension features
+#if VK_EXT_robustness2
+    VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
+    FMemory::Memzero(&Robustness2Features);
+    
+    Robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+    
+    if (IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
+    {
+        const VkPhysicalDeviceRobustness2FeaturesEXT& AvailableRobustness2Features = GetPhysicalDevice()->GetRobustness2Features();
+        Robustness2Features.robustImageAccess2  = AvailableRobustness2Features.robustImageAccess2;
+        Robustness2Features.robustBufferAccess2 = AvailableRobustness2Features.robustBufferAccess2;
+        Robustness2Features.nullDescriptor      = AvailableRobustness2Features.nullDescriptor;
+        DeviceCreateHelper.AddNext(Robustness2Features);
+    }
+#endif
+    
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
     FMemory::Memzero(&DepthClipEnableFeatures);
+    
     DepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
 
     const VkPhysicalDeviceDepthClipEnableFeaturesEXT& AvailableDepthClipEnableFeatures = GetPhysicalDevice()->GetDepthClipEnableFeatures();

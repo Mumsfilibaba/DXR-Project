@@ -17,7 +17,7 @@ struct FVulkanCommandContextState : public FVulkanDeviceObject, public FNonCopyA
     
     void BindComputeState();
 
-    void BindDescriptorSets(EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
+    void BindDescriptorSets(VkPipelineLayout PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
     
     void BindPushConstants(VkPipelineLayout PipelineLayout);
     
@@ -51,10 +51,20 @@ struct FVulkanCommandContextState : public FVulkanDeviceObject, public FNonCopyA
 
     void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
+    void ResetPendingDescriptorPools()
+    {
+        CommonState.DescriptorSetCache.ResetPendingDescriptorPools();
+    }
+    
 public:
     FORCEINLINE FVulkanCommandContext& GetContext()
     {
         return Context;
+    }
+    
+    FORCEINLINE FVulkanDescriptorSetCache& GetDescriptorSetCache()
+    {
+        return CommonState.DescriptorSetCache;
     }
 
 public:

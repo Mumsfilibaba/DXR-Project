@@ -176,6 +176,14 @@ VULKAN_FUNCTION_DEFINITION(DestroyPipelineLayout);
 VULKAN_FUNCTION_DEFINITION(CreateDescriptorSetLayout);
 VULKAN_FUNCTION_DEFINITION(DestroyDescriptorSetLayout);
 
+VULKAN_FUNCTION_DEFINITION(CreateDescriptorPool);
+VULKAN_FUNCTION_DEFINITION(DestroyDescriptorPool);
+VULKAN_FUNCTION_DEFINITION(ResetDescriptorPool);
+
+VULKAN_FUNCTION_DEFINITION(AllocateDescriptorSets);
+VULKAN_FUNCTION_DEFINITION(FreeDescriptorSets);
+VULKAN_FUNCTION_DEFINITION(UpdateDescriptorSets);
+
 VULKAN_FUNCTION_DEFINITION(CreateSampler);
 VULKAN_FUNCTION_DEFINITION(DestroySampler);
 
@@ -209,10 +217,11 @@ VULKAN_FUNCTION_DEFINITION(CmdBeginRenderPass);
 VULKAN_FUNCTION_DEFINITION(CmdEndRenderPass);
 VULKAN_FUNCTION_DEFINITION(CmdSetViewport);
 VULKAN_FUNCTION_DEFINITION(CmdSetScissor);
+VULKAN_FUNCTION_DEFINITION(CmdSetBlendConstants);
 VULKAN_FUNCTION_DEFINITION(CmdBindVertexBuffers);
 VULKAN_FUNCTION_DEFINITION(CmdBindIndexBuffer);
-VULKAN_FUNCTION_DEFINITION(CmdSetBlendConstants);
 VULKAN_FUNCTION_DEFINITION(CmdBindPipeline);
+VULKAN_FUNCTION_DEFINITION(CmdBindDescriptorSets);
 VULKAN_FUNCTION_DEFINITION(CmdPushConstants);
 VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBuffer);
@@ -285,6 +294,14 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateDescriptorSetLayout);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyDescriptorSetLayout);
 
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateDescriptorPool);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyDescriptorPool);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, ResetDescriptorPool);
+
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AllocateDescriptorSets);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, FreeDescriptorSets);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, UpdateDescriptorSets);
+    
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSampler);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySampler);
 
@@ -324,10 +341,11 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetViewport);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetScissor);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetBlendConstants);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindVertexBuffers);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindIndexBuffer);
-    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdSetBlendConstants);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindPipeline);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindDescriptorSets);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPushConstants);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBuffer);
@@ -376,7 +394,8 @@ void FVulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
 }
 
 
-bool FVulkanRobustness2EXT::bIsEnabled = false;
+bool FVulkanRobustness2EXT::bIsEnabled               = false;
+bool FVulkanRobustness2EXT::bSupportsNullDescriptors = false;
 
 void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
 {
@@ -386,6 +405,13 @@ void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
     if (Device->IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
     {
         bIsEnabled = true;
+        
+        const VkPhysicalDeviceRobustness2FeaturesEXT& AvailableFeatures = Device->GetPhysicalDevice()->GetRobustness2Features();
+        if (AvailableFeatures.nullDescriptor == VK_TRUE)
+        {
+            bSupportsNullDescriptors = true;
+        }
     }
+    
 #endif
 }

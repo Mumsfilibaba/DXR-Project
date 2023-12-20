@@ -318,6 +318,12 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     DeviceFeaturesHelper.AddNext(DepthClipEnableFeatures);
 #endif
     
+#if VK_EXT_robustness2
+    FMemory::Memzero(&Robustness2Features);
+    Robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+    DeviceFeaturesHelper.AddNext(Robustness2Features);
+#endif
+    
     // Vulkan 1.1 features
     FMemory::Memzero(&DeviceFeatures11);
     DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;

@@ -473,12 +473,14 @@ function FBuildRules(InName)
                 {
                     ["PRODUCT_BUNDLE_IDENTIFIER"] = "com.DXREngine." .. self.Name,
                     ["CODE_SIGN_STYLE"]           = "Automatic",
-                    ["ARCHS"]                     = "x86_64",                                      -- Specify the architecture(s) e.g., "x86_64" for Intel
-                    ["ONLY_ACTIVE_ARCH"]          = "YES",                                         -- We only want to build the current architecture
-                    ["ENABLE_HARDENED_RUNTIME"]   = "NO",                                          -- hardened runtime is required for notarization
-                    ["GENERATE_INFOPLIST_FILE"]   = "YES",                                         -- generate the .plist file for now
-                    -- ["CODE_SIGN_IDENTITY"]        = "Apple Development",                        -- sets 'Signing Certificate' to 'Development'. Defaults to 'Sign to Run Locally'. not doing this will crash your app if you upgrade the project when prompted by Xcode
-                    ["LD_RUNPATH_SEARCH_PATHS"]   = "$(INSTALL_PATH) @executable_path/../Frameworks", -- tell the executable where to find the frameworks. Path is relative to executable location inside .app bundle
+                    ["ARCHS"]                     = "x86_64",               -- Specify the architecture(s) e.g., "x86_64" for Intel
+                    ["ONLY_ACTIVE_ARCH"]          = "YES",                  -- We only want to build the current architecture
+                    ["ENABLE_HARDENED_RUNTIME"]   = "NO",                   -- Hardened runtime is required for notarization
+                    ["GENERATE_INFOPLIST_FILE"]   = "YES",                  -- Generate the .plist file for now
+                    -- ["CODE_SIGN_IDENTITY"]        = "Apple Development", -- Sets 'Signing Certificate' to 'Development'. Defaults to 'Sign to Run Locally'. Not doing this will crash your app if you upgrade the project when prompted by Xcode.
+                    
+                    -- Tell the executable where to find the frameworks. Path is relative to executable location inside .app bundle
+                    ["LD_RUNPATH_SEARCH_PATHS"]   = "/usr/local/lib/ $(INSTALL_PATH) @executable_path/../Frameworks",
                 }
             filter {}
 
