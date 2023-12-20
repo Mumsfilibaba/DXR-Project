@@ -525,7 +525,7 @@ void FVulkanRHI::RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) co
             OutSupport.Tier = ERHIRayTracingTier::Tier1;
         }
 
-        OutSupport.MaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
+        OutSupport.MaxRecursionDepth = static_cast<uint8>(RayTracingPipelineProperties.maxRayRecursionDepth);
     }
     else
     {

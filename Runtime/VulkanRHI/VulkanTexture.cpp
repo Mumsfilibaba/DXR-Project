@@ -133,35 +133,35 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
 
         if (Desc.IsTexture2D())
         {
-            ViewDesc.NumMips       = Desc.NumMipLevels;
+            ViewDesc.NumMips       = static_cast<uint8>(Desc.NumMipLevels);
             ViewDesc.FirstMipLevel = 0;
             ViewDesc.MinLODClamp   = 0.0f;
         }
         else if (Desc.IsTexture2DArray())
         {
-            ViewDesc.NumMips         = Desc.NumMipLevels;
+            ViewDesc.NumMips         = static_cast<uint8>(Desc.NumMipLevels);
             ViewDesc.FirstMipLevel   = 0;
             ViewDesc.MinLODClamp     = 0.0f;
-            ViewDesc.NumSlices       = Desc.NumArraySlices;
+            ViewDesc.NumSlices       = static_cast<uint16>(Desc.NumArraySlices);
             ViewDesc.FirstArraySlice = 0;
         }
         else if (Desc.IsTextureCube())
         {
-            ViewDesc.NumMips       = Desc.NumMipLevels;
+            ViewDesc.NumMips       = static_cast<uint8>(Desc.NumMipLevels);
             ViewDesc.FirstMipLevel = 0;
             ViewDesc.MinLODClamp   = 0.0f;
         }
         else if (Desc.IsTextureCubeArray())
         {
-            ViewDesc.NumMips         = Desc.NumMipLevels;
+            ViewDesc.NumMips         = static_cast<uint8>(Desc.NumMipLevels);
             ViewDesc.FirstMipLevel   = 0;
             ViewDesc.MinLODClamp     = 0.0f;
             ViewDesc.FirstArraySlice = 0;
-            ViewDesc.NumSlices       = Desc.NumArraySlices;
+            ViewDesc.NumSlices       = static_cast<uint16>(Desc.NumArraySlices);
         }
         else if (Desc.IsTexture3D())
         {
-            ViewDesc.NumMips       = Desc.NumMipLevels;
+            ViewDesc.NumMips       = static_cast<uint8>(Desc.NumMipLevels);
             ViewDesc.FirstMipLevel = 0;
             ViewDesc.MinLODClamp   = 0.0f;
         }

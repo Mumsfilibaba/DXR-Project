@@ -102,7 +102,7 @@ private:
 };
 
 
-class FD3D12RenderTargetView : public FD3D12View
+class FD3D12RenderTargetView : public FD3D12View, public FD3D12RefCounted
 {
 public:
     FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);
@@ -120,7 +120,7 @@ private:
 };
 
 
-class FD3D12DepthStencilView : public FD3D12View
+class FD3D12DepthStencilView : public FD3D12View, public FD3D12RefCounted
 {
 public:
     FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap);

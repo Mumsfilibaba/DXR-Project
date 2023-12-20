@@ -105,10 +105,10 @@ bool FVulkanViewport::CreateSwapChain()
         RenderSemaphores.Resize(BufferCount);
         BackBuffers.Resize(BufferCount);
         
-        const uint16 BackBufferWidth  = GetWidth();
-        const uint16 BackBufferheight = GetHeight();
+        const uint32 BackBufferWidth  = GetWidth();
+        const uint32 BackBufferheight = GetHeight();
 
-        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), BackBufferWidth, BackBufferheight, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
         for (uint32 Index = 0; Index < BufferCount; ++Index)
         {
             FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());

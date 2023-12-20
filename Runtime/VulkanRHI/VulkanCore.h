@@ -522,7 +522,7 @@ constexpr VkPrimitiveTopology ConvertPrimitiveTopology(EPrimitiveTopology Primit
         case EPrimitiveTopology::PointList:     return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
         case EPrimitiveTopology::TriangleList:  return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         case EPrimitiveTopology::TriangleStrip: return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-        default: VkPrimitiveTopology(-1);
+        default: return VkPrimitiveTopology(-1);
     }
 }
 

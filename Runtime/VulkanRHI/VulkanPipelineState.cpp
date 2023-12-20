@@ -215,11 +215,12 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         ShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         ShaderStageCreateInfo.pName = "main";
 
-        if (FVulkanVertexShader* VertexShader = static_cast<FVulkanVertexShader*>(Initializer.ShaderState.VertexShader))
+        if (FVulkanVertexShader* VulkanVertexShader = static_cast<FVulkanVertexShader*>(Initializer.ShaderState.VertexShader))
         {
-            ShaderStageCreateInfo.module = VertexShader->GetVkShaderModule();
+            ShaderStageCreateInfo.module = VulkanVertexShader->GetVkShaderModule();
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
             ShaderStages.Add(ShaderStageCreateInfo);
+            VertexShader = MakeSharedRef<FVulkanVertexShader>(VulkanVertexShader);
         }
         else
         {
@@ -227,11 +228,36 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
             return false;
         }
 
-        if (FVulkanPixelShader* PixelShader = static_cast<FVulkanPixelShader*>(Initializer.ShaderState.PixelShader))
+        if (FVulkanHullShader* VulkanHullShader = static_cast<FVulkanHullShader*>(Initializer.ShaderState.HullShader))
         {
-            ShaderStageCreateInfo.module = PixelShader->GetVkShaderModule();
+            ShaderStageCreateInfo.module = VulkanHullShader->GetVkShaderModule();
+            ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+            ShaderStages.Add(ShaderStageCreateInfo);
+            HullShader = MakeSharedRef<FVulkanHullShader>(VulkanHullShader);
+        }
+
+        if (FVulkanDomainShader* VulkanDomainShader = static_cast<FVulkanDomainShader*>(Initializer.ShaderState.DomainShader))
+        {
+            ShaderStageCreateInfo.module = VulkanDomainShader->GetVkShaderModule();
+            ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+            ShaderStages.Add(ShaderStageCreateInfo);
+            DomainShader = MakeSharedRef<FVulkanDomainShader>(VulkanDomainShader);
+        }
+
+        if (FVulkanGeometryShader* VulkanGeometryShader = static_cast<FVulkanGeometryShader*>(Initializer.ShaderState.GeometryShader))
+        {
+            ShaderStageCreateInfo.module = VulkanGeometryShader->GetVkShaderModule();
+            ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_GEOMETRY_BIT;
+            ShaderStages.Add(ShaderStageCreateInfo);
+            GeometryShader = MakeSharedRef<FVulkanGeometryShader>(VulkanGeometryShader);
+        }
+
+        if (FVulkanPixelShader* VulkanPixelShader = static_cast<FVulkanPixelShader*>(Initializer.ShaderState.PixelShader))
+        {
+            ShaderStageCreateInfo.module = VulkanPixelShader->GetVkShaderModule();
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
             ShaderStages.Add(ShaderStageCreateInfo);
+            PixelShader = MakeSharedRef<FVulkanPixelShader>(VulkanPixelShader);
         }
     }
 

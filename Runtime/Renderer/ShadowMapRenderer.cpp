@@ -639,7 +639,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
 
             CommandList.BeginRenderPass(RenderPass);
 
-            const uint16 CascadeSize = LightSetup.CascadeSize;
+            const int32 CascadeSize = LightSetup.CascadeSize;
 
             FRHIViewportRegion ViewportRegion(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 0.0f, 0.0f, 1.0f);
             CommandList.SetViewport(ViewportRegion);
@@ -887,7 +887,7 @@ bool FShadowMapRenderer::CreateShadowMaps(FLightSetup& LightSetup, FFrameResourc
         return false;
     }
 
-    const uint16 CascadeSize = LightSetup.CascadeSize;
+    const uint32 CascadeSize = static_cast<uint32>(LightSetup.CascadeSize);
     
     FRHITextureDesc CascadeInitializer = FRHITextureDesc::CreateTexture2D(
         LightSetup.ShadowMapFormat,

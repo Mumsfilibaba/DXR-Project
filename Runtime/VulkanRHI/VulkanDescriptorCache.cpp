@@ -494,13 +494,13 @@ void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& C
             {
                 DescriptorInfo.buffer = VK_NULL_HANDLE;
                 DescriptorInfo.offset = 0;
-                DescriptorInfo.range  = 0;
+                DescriptorInfo.range  = VK_WHOLE_SIZE;
             }
             else
             {
                 DescriptorInfo.buffer = DefaultResources.NullBuffer;
                 DescriptorInfo.offset = 0;
-                DescriptorInfo.range  = 256;
+                DescriptorInfo.range  = VK_WHOLE_SIZE;
             }
         }
     }

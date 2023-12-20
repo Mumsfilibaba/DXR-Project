@@ -302,7 +302,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
     const FRHITextureDesc& TextureDesc = D3D12Texture->GetDesc();
     CHECK(TextureDesc.IsShaderResource());
     CHECK(InDesc.Format != EFormat::Unknown);
-    CHECK(IsTypelessFormat(InDesc.Format));
+    CHECK(IsTypelessFormat(InDesc.Format) == false);
     
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -398,8 +398,6 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHIBufferS
 
     const FRHIBufferDesc& BufferDesc = D3D12Buffer->GetDesc();
     CHECK(BufferDesc.IsShaderResource());
-    CHECK(InDesc.Format != EFormat::Unknown);
-    CHECK(IsTypelessFormat(InDesc.Format));
 
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -453,7 +451,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
     const FRHITextureDesc& TextureDesc = Texture->GetDesc();
     CHECK(TextureDesc.IsUnorderedAccess());
     CHECK(InDesc.Format != EFormat::Unknown);
-    CHECK(IsTypelessFormat(InDesc.Format));
+    CHECK(IsTypelessFormat(InDesc.Format) == false);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -534,8 +532,6 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHIBuffe
 
     const FRHIBufferDesc& BufferDesc = D3D12Buffer->GetDesc();
     CHECK(BufferDesc.IsUnorderedAccess());
-    CHECK(InDesc.Format != EFormat::Unknown);
-    CHECK(IsTypelessFormat(InDesc.Format));
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -617,7 +613,7 @@ FRHIHullShader* FD3D12RHI::RHICreateHullShader(const TArray<uint8>& ShaderCode)
 
 FRHIDomainShader* FD3D12RHI::RHICreateDomainShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12DomainShader> NewShader = new FD3D12HullShader(GetDevice(), ShaderCode);
+    TSharedRef<FD3D12DomainShader> NewShader = new FD3D12DomainShader(GetDevice(), ShaderCode);
     if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
     {
         return nullptr;
@@ -630,7 +626,7 @@ FRHIDomainShader* FD3D12RHI::RHICreateDomainShader(const TArray<uint8>& ShaderCo
 
 FRHIGeometryShader* FD3D12RHI::RHICreateGeometryShader(const TArray<uint8>& ShaderCode)
 {
-    TSharedRef<FD3D12GeometryShader> NewShader = new FD3D12HullShader(GetDevice(), ShaderCode);
+    TSharedRef<FD3D12GeometryShader> NewShader = new FD3D12GeometryShader(GetDevice(), ShaderCode);
     if (!FD3D12Shader::GetShaderReflection(NewShader.Get()))
     {
         return nullptr;

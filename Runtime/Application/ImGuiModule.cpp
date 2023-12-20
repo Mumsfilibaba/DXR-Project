@@ -201,8 +201,8 @@ static void ImGuiCreateWindow(ImGuiViewport* Viewport)
 
     FGenericWindowInitializer WindowInitializer;
     WindowInitializer.Title        = "Window";
-    WindowInitializer.Width        = Viewport->Size.x;
-    WindowInitializer.Height       = Viewport->Size.y;
+    WindowInitializer.Width        = static_cast<uint32>(Viewport->Size.x);
+    WindowInitializer.Height       = static_cast<uint32>(Viewport->Size.y);
     WindowInitializer.Position     = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
     WindowInitializer.Style        = WindowStyle;
     WindowInitializer.ParentWindow = ParentWindow;

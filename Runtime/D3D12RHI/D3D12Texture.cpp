@@ -5,7 +5,6 @@
 FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureDesc& InDesc)
     : FRHITexture(InDesc)
     , FD3D12DeviceChild(InDevice)
-    , FD3D12RefCounted()
     , Resource(nullptr)
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)

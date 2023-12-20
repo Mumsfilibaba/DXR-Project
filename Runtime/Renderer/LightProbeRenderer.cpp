@@ -192,7 +192,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
         Skylight.SpecularIrradianceMap->SetName("Temp Specular Irradiance Map");
     }
 
-    for (uint32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
+    for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
         UAVInitializer = FRHITextureUAVDesc(Skylight.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 1);
         FRHIUnorderedAccessViewRef UAV = RHICreateUnorderedAccessView(UAVInitializer);

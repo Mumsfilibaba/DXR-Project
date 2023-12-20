@@ -392,6 +392,8 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
 void FVulkanCommandContextState::InternalSetShaderStageResourceCount(FVulkanShader* Shader, EShaderVisibility ShaderStage)
 {
     CHECK(Shader != nullptr);
+    UNREFERENCED_VARIABLE(ShaderStage);
+
     //const FShaderResourceCount& ResourceCount = Shader->GetResourceCount();
     //CommonState.ShaderResourceCounts[ShaderStage] = ResourceCount.Ranges;
 }

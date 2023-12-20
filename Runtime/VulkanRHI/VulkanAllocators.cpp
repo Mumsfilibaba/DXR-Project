@@ -33,8 +33,6 @@ FVulkanUploadBuffer::~FVulkanUploadBuffer()
 
 bool FVulkanUploadBuffer::Initialize(uint64 Size)
 {
-    FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
-
     VkBufferCreateInfo BufferCreateInfo;
     FMemory::Memzero(&BufferCreateInfo);
 
