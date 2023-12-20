@@ -179,6 +179,29 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
 
         ShaderResourceView = DefaultSRV;
     }
+
+    // TODO: Fix for other resources than Texture2D
+    const bool bIsTexture2D = Desc.IsTexture2D();
+    if (bIsTexture2D)
+    {
+        if (Desc.IsUnorderedAccess())
+        {
+            FRHITextureUAVDesc ViewDesc;
+            ViewDesc.Texture         = this;
+            ViewDesc.Format          = Desc.Format;
+            ViewDesc.FirstArraySlice = 0;
+            ViewDesc.MipLevel        = 0;
+            ViewDesc.NumSlices       = static_cast<uint16>(Desc.NumArraySlices);
+
+            FVulkanUnorderedAccessViewRef DefaultUAV = new FVulkanUnorderedAccessView(GetDevice(), this);
+            if (!DefaultUAV->CreateTextureView(ViewDesc))
+            {
+                return false;
+            }
+
+            UnorderedAccessView = DefaultUAV;
+        }
+    }
     
     if (InInitialData)
     {
