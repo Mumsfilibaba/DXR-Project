@@ -692,54 +692,65 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopy[MaxCopies];
     
-    for (uint32 MipLevel = 0; MipLevel < CopyDesc.NumMipLevels; MipLevel++)
+    uint32_t NumArrayLayers    = 0;
+    uint32_t DstBaseArrayLayer = 0;
+    uint32_t SrcBaseArrayLayer = 0;
+    if (IsTextureCube(SrcVulkanTexture->GetDimension()))
     {
-        VkImageCopy& CopyInfo = ImageCopy[MipLevel];
-        FMemory::Memzero(&CopyInfo, sizeof(CopyInfo));
-        
-        // Describe the source subresource
-        CopyInfo.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
-        CopyInfo.srcSubresource.mipLevel       = CopyDesc.SrcMipSlice + MipLevel;
-        CopyInfo.srcOffset.x                   = CopyDesc.SrcPosition.x >> MipLevel;
-        CopyInfo.srcOffset.y                   = CopyDesc.SrcPosition.y >> MipLevel;
-        CopyInfo.srcOffset.z                   = CopyDesc.SrcPosition.z >> MipLevel;
-        
-        if (IsTextureCube(SrcVulkanTexture->GetDimension()))
-        {
-            CopyInfo.srcSubresource.baseArrayLayer = CopyDesc.SrcArraySlice  * VULKAN_NUM_CUBE_FACES;
-            CopyInfo.srcSubresource.layerCount     = CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
-        }
-        else
-        {
-            CopyInfo.srcSubresource.baseArrayLayer = CopyDesc.SrcArraySlice;
-            CopyInfo.srcSubresource.layerCount     = CopyDesc.NumArraySlices;
-        }
-        
-        // Describe the destination subresource
-        CopyInfo.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
-        CopyInfo.dstSubresource.mipLevel       = CopyDesc.DstMipSlice + MipLevel;
-        CopyInfo.dstOffset.x                   = CopyDesc.DstPosition.x >> MipLevel;
-        CopyInfo.dstOffset.y                   = CopyDesc.DstPosition.y >> MipLevel;
-        CopyInfo.dstOffset.z                   = CopyDesc.DstPosition.z >> MipLevel;
-        
-        if (IsTextureCube(DstVulkanTexture->GetDimension()))
-        {
-            CopyInfo.dstSubresource.baseArrayLayer = CopyDesc.DstArraySlice  * VULKAN_NUM_CUBE_FACES;
-            CopyInfo.dstSubresource.layerCount     = CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
-        }
-        else
-        {
-            CopyInfo.dstSubresource.baseArrayLayer = CopyDesc.DstArraySlice;
-            CopyInfo.dstSubresource.layerCount     = CopyDesc.NumArraySlices;
-        }
-        
-        // Size of this mipslice
-        CopyInfo.extent.width  = FMath::Max(CopyDesc.Size.x >> MipLevel, 1);
-        CopyInfo.extent.height = FMath::Max(CopyDesc.Size.y >> MipLevel, 1);
-        CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.z >> MipLevel, 1);
+        SrcBaseArrayLayer = CopyDesc.SrcArraySlice  * VULKAN_NUM_CUBE_FACES;
+        NumArrayLayers    = CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
+    }
+    else
+    {
+        SrcBaseArrayLayer = CopyDesc.SrcArraySlice;
+        NumArrayLayers    = CopyDesc.NumArraySlices;
     }
     
-    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CopyDesc.NumMipLevels, ImageCopy);
+    if (IsTextureCube(DstVulkanTexture->GetDimension()))
+    {
+        DstBaseArrayLayer = CopyDesc.DstArraySlice  * VULKAN_NUM_CUBE_FACES;
+        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES, NumArrayLayers);
+    }
+    else
+    {
+        DstBaseArrayLayer = CopyDesc.DstArraySlice;
+        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES, NumArrayLayers);
+    }
+    
+    // We copy each layer seperatly due to MoltenVK seems to be acting weird when doing all layers seperatly
+        for (uint32 ArrayLayer = 0; ArrayLayer < NumArrayLayers; ArrayLayer++)
+    {
+        for (uint32 MipLevel = 0; MipLevel < CopyDesc.NumMipLevels; MipLevel++)
+        {
+            VkImageCopy& CopyInfo = ImageCopy[MipLevel];
+            FMemory::Memzero(&CopyInfo, sizeof(CopyInfo));
+            
+            // Describe the source subresource
+            CopyInfo.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
+            CopyInfo.srcSubresource.mipLevel       = CopyDesc.SrcMipSlice + MipLevel;
+            CopyInfo.srcOffset.x                   = CopyDesc.SrcPosition.x >> MipLevel;
+            CopyInfo.srcOffset.y                   = CopyDesc.SrcPosition.y >> MipLevel;
+            CopyInfo.srcOffset.z                   = CopyDesc.SrcPosition.z >> MipLevel;
+            CopyInfo.srcSubresource.baseArrayLayer = SrcBaseArrayLayer + ArrayLayer;
+            CopyInfo.srcSubresource.layerCount     = 1;
+            
+            // Describe the destination subresource
+            CopyInfo.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
+            CopyInfo.dstSubresource.mipLevel       = CopyDesc.DstMipSlice + MipLevel;
+            CopyInfo.dstOffset.x                   = CopyDesc.DstPosition.x >> MipLevel;
+            CopyInfo.dstOffset.y                   = CopyDesc.DstPosition.y >> MipLevel;
+            CopyInfo.dstOffset.z                   = CopyDesc.DstPosition.z >> MipLevel;
+            CopyInfo.dstSubresource.baseArrayLayer = DstBaseArrayLayer + ArrayLayer;
+            CopyInfo.dstSubresource.layerCount     = 1;
+            
+            // Size of this mipslice
+            CopyInfo.extent.width  = FMath::Max(CopyDesc.Size.x >> MipLevel, 1);
+            CopyInfo.extent.height = FMath::Max(CopyDesc.Size.y >> MipLevel, 1);
+            CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.z >> MipLevel, 1);
+        }
+        
+        CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CopyDesc.NumMipLevels, ImageCopy);
+    }
 }
 
 void FVulkanCommandContext::RHIDestroyResource(IRefCounted* Resource)  
