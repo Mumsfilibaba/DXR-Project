@@ -15,7 +15,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
-#define LOGIC_THREAD_STACK_SIZE (128 * 1024 * 1024)
+#define APPLICATION_THREAD_STACK_SIZE (128 * 1024 * 1024)
 
 static NSThread* GApplicationThread = nil;
 
@@ -165,7 +165,10 @@ public:
         }
 
         // Enqueue a new task
-        Tasks.Emplace(new FRunLoopTask(InModes, Block));
+        {
+            SCOPED_LOCK(TasksCS);
+            Tasks.Emplace(new FRunLoopTask(InModes, Block));
+        }
         
         // Signal the source
         CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Signal, nullptr);
@@ -175,7 +178,11 @@ public:
     {
         // Take all the tasks that currently exists
         TArray<FRunLoopTask*> NewTasks;
-        Tasks.DequeueAll(NewTasks);
+        
+        {
+            SCOPED_LOCK(TasksCS);
+            Tasks.DequeueAll(NewTasks);
+        }
         
         bool bDone = false;
         while (!bDone)
@@ -260,7 +267,9 @@ private:
 private:
     CFRunLoopRef           RunLoop;
     CFMutableDictionaryRef SourceAndModeDictionary;
-    TQueue<FRunLoopTask*, EQueueType::MPSC> Tasks;
+    
+    TQueue<FRunLoopTask*>  Tasks;
+    FCriticalSection       TasksCS;
     
     static FRunLoopSourceContext* MainThreadContext;
     static FRunLoopSourceContext* ApplicationThreadContext;
@@ -435,7 +444,7 @@ bool SetupApplicationThread(id Delegate, SEL ApplicationThreadEntry)
 
 #if APPLICATION_THREAD_ENABLED
     FApplicationThread* ApplicationThread = [[FApplicationThread alloc] initWithTarget:Delegate selector:ApplicationThreadEntry object:nil];
-    [ApplicationThread setStackSize:LOGIC_THREAD_STACK_SIZE];
+    [ApplicationThread setStackSize:APPLICATION_THREAD_STACK_SIZE];
     [ApplicationThread start];
 #else
     [Delegate performSelector:ApplicationThreadEntry withObject:nil];

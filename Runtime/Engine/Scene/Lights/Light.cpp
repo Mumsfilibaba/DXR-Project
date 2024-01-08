@@ -1,13 +1,15 @@
 #include "Light.h"
 
-FLight::FLight()
-    : Color()
+FOBJECT_IMPLEMENT_CLASS(FLight);
+
+FLight::FLight(const FObjectInitializer& ObjectInitializer)
+    : FObject(ObjectInitializer)
+    , Color()
     , ShadowNearPlane(1.0f)
     , ShadowFarPlane(30.0f)
     , ShadowBias(0.005f)
     , MaxShadowBias(0.05f)
 {
-    FOBJECT_INIT();
 }
 
 void FLight::SetColor(const FVector3& InColor)

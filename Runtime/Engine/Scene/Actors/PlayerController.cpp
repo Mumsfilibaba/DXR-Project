@@ -3,12 +3,13 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/Scene/Components/InputComponent.h"
 
-FPlayerController::FPlayerController(FScene* InSceneOwner)
-    : FActor(InSceneOwner)
+FOBJECT_IMPLEMENT_CLASS(FPlayerController);
+
+FPlayerController::FPlayerController(const FObjectInitializer& ObjectInitializer)
+    : FActor(ObjectInitializer)
     , InputComponent(nullptr)
     , PlayerInput(nullptr)
 {
-    FOBJECT_INIT();
     PlayerInput = new FPlayerInput();
 }
 
@@ -21,8 +22,11 @@ void FPlayerController::SetupInputComponent()
 {
     if (!InputComponent)
     {
-        InputComponent = new FInputComponent(this);
-        AddComponent(InputComponent);
+        InputComponent = NewObject<FInputComponent>();
+        if (InputComponent)
+        {
+            AddComponent(InputComponent);
+        }
     }
 
     CHECK(InputComponent != nullptr);

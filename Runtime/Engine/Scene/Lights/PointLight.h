@@ -3,13 +3,12 @@
 #include "Core/Math/Matrix4.h"
 
 
-class ENGINE_API FPointLight 
-    : public FLight
+class ENGINE_API FPointLight : public FLight
 {
-    FOBJECT_BODY(FPointLight, FLight);
-
 public:
-    FPointLight();
+    FOBJECT_DECLARE_CLASS(FPointLight, FLight, ENGINE_API);
+
+    FPointLight(const FObjectInitializer& ObjectInitializer);
     ~FPointLight() = default;
 
     void SetPosition(const FVector3& InPosition);

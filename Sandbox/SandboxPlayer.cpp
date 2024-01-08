@@ -5,14 +5,14 @@
 #include <Engine/Scene/Actors/PlayerInput.h>
 #include <Engine/Scene/Components/InputComponent.h>
 
-FSandboxPlayerController::FSandboxPlayerController(FScene* InScene)
-    : FPlayerController(InScene)
+FOBJECT_IMPLEMENT_CLASS(FSandboxPlayerController);
+
+FSandboxPlayerController::FSandboxPlayerController(const FObjectInitializer& Initializer)
+    : FPlayerController(Initializer)
     , Camera(nullptr)
 {
     Camera = new FCamera();
     Camera->Move(0.0f, 10.0f, -2.0f);
-
-    GetScene()->AddCamera(Camera);
 
     // Bind input mappings
     if (FPlayerInput* Input = GetPlayerInput())

@@ -70,19 +70,21 @@ void FSceneData::AddToScene(FScene* Scene)
             NewActor->SetName(ModelData.Name.GetCString());
             NewActor->GetTransform().SetUniformScale(Scale);
 
-            FMeshComponent* MeshComponent = new FMeshComponent(NewActor);
-            MeshComponent->Mesh = FMesh::Create(ModelData.Mesh);
-
-            if (!CreatedMaterials.IsEmpty() && ModelData.MaterialIndex >= 0)
+            FMeshComponent* MeshComponent = NewObject<FMeshComponent>();
+            if (MeshComponent)
             {
-                MeshComponent->Material = CreatedMaterials[ModelData.MaterialIndex];
+                if (!CreatedMaterials.IsEmpty() && ModelData.MaterialIndex >= 0)
+                {
+                    MeshComponent->Material = CreatedMaterials[ModelData.MaterialIndex];
+                }
+                else
+                {
+                    MeshComponent->Material = GEngine->BaseMaterial;
+                }
+                
+                MeshComponent->Mesh = FMesh::Create(ModelData.Mesh);
+                NewActor->AddComponent(MeshComponent);
             }
-            else
-            {
-                MeshComponent->Material = GEngine->BaseMaterial;
-            }
-
-            NewActor->AddComponent(MeshComponent);
         }
     }
 }

@@ -2,13 +2,12 @@
 #include "Core/Math/Vector3.h"
 #include "Engine/Core/Object.h"
 
-class ENGINE_API FLight 
-    : public FObject
+class ENGINE_API FLight : public FObject
 {
-    FOBJECT_BODY(FLight, FObject);
-
 public:
-    FLight();
+    FOBJECT_DECLARE_CLASS(FLight, FObject, ENGINE_API);
+
+    FLight(const FObjectInitializer& ObjectInitializer);
     virtual ~FLight() = default;
 
     void SetColor(const FVector3& InColor);

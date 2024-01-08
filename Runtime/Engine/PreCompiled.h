@@ -13,7 +13,7 @@
 #include "Engine/Assets/TextureResource.h"
 #include "Engine/Assets/VertexFormat.h"
 
-#include "Engine/Core/Class.h"
+#include "Engine/Core/ObjectClass.h"
 #include "Engine/Core/Object.h"
 
 #include "Engine/Resources/Material.h"

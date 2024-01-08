@@ -1,60 +1,117 @@
 #pragma once
-#include "Class.h"
+#include "ObjectClass.h"
+#include "Core/Containers/Map.h"
 
-#define DECLARE_CLASS_INFO(FObjectType) \
-    static FClassInfo ClassInfo =       \
-    {                                   \
-        #FObjectType,                   \
-        sizeof(FObjectType),            \
-        alignof(FObjectType),           \
+class FObjectInitializer;
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FObject Macro
+
+#define FOBJECT_DECLARE_DEFAULT_CONSTRUCTOR(FObjectType) \
+    static void StaticDefaultConstructor(const FObjectInitializer& ObjectInitializer)
+
+#define FOBJECT_IMPLEMENT_DEFAULT_CONSTRUCTOR(FObjectType) \
+    void FObjectType::StaticDefaultConstructor(const FObjectInitializer& ObjectInitializer) \
+    { \
+        new(ObjectInitializer.GetMemory())FObjectType(ObjectInitializer); \
     }
 
-#define FOBJECT_BODY(FObjectType, FSuperClass)                         \
-private:                                                               \
-    typedef FObjectType This;                                          \
-    typedef FSuperClass Super;                                         \
-                                                                       \
-public:                                                                \
-    static FClass* GetStaticClass()                                    \
-    {                                                                  \
-        DECLARE_CLASS_INFO(FObjectType);                               \
-        static FClass StaticClass(Super::GetStaticClass(), ClassInfo); \
-        return &StaticClass;                                           \
-    }                                                                  \
-private:
+// This macro is used to declare important information to retrieve global information about the class.
+// It should be used in a public segement of the class declaration.
+#define FOBJECT_DECLARE_CLASS(FObjectType, FSuperClassType, MODULE_API) \
+    private: \
+        /* Globals used to retrieve informatino about this class */ \
+        static MODULE_API FGlobalObjectClassInfo GlobalClassInfo; \
+        static MODULE_API FObjectClass* GetStaticClassPrivate(); \
+        /* Declare a static function that can create an object of this class with the help of a ObjectInitializer */ \
+        FOBJECT_DECLARE_DEFAULT_CONSTRUCTOR(FObjectType); \
+    public: \
+        /* Typedefs for This and Super class helper types */ \
+        typedef FObjectType     This; \
+        typedef FSuperClassType Super; \
+        /* Retrieve a static version of the FObjectClass object for this type */ \
+        static FObjectClass* StaticClass() \
+        { \
+            return GetStaticClassPrivate(); \
+        } \
 
-#define FOBJECT_INIT() \
-    this->SetClass(This::GetStaticClass())
+// This macro implements/declares variables and function needed to declare information about
+// the class instance for this class.
+#define FOBJECT_IMPLEMENT_CLASS(FObjectType) \
+    /* Implement the default constructor */ \
+    FOBJECT_IMPLEMENT_DEFAULT_CONSTRUCTOR(FObjectType) \
+    /* Info that contains global information about this class */ \
+    FGlobalObjectClassInfo FObjectType::GlobalClassInfo; \
+    /* Private version of retrieving the FObjectClass instance for this class */ \
+    FObjectClass* FObjectType::GetStaticClassPrivate() \
+    { \
+        if (!GlobalClassInfo.ClassSingleton) \
+        { \
+            FObjectClass::GlobalRegisterClass( \
+                GlobalClassInfo, \
+                #FObjectType, \
+                sizeof(FObjectType), \
+                alignof(FObjectType), \
+                &Super::StaticClass, \
+                &FObjectType::StaticClass, \
+                &FObjectType::StaticDefaultConstructor); \
+        } \
+     \
+        return GlobalClassInfo.ClassSingleton; \
+    } \
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// FObjects
+
+class ENGINE_API FObjectInitializer
+{
+public:
+    FObjectInitializer(void* InMemory, FObjectClass* InClass);
+    ~FObjectInitializer()
+    {
+        Memory = nullptr;
+        Class  = nullptr;
+    }
+
+    void* GetMemory() const
+    {
+        return Memory;
+    }
+    
+    FObjectClass* GetClass() const
+    {
+        return Class;
+    }
+    
+private:
+    void*         Memory;
+    FObjectClass* Class;
+};
 
 
 class ENGINE_API FObject
 {
 public:
+    FOBJECT_DECLARE_CLASS(FObject, FObject, ENGINE_API);
+    
+    FObject(const FObjectInitializer& ObjectInitializer);
     virtual ~FObject() = default;
 
-    static const FClass* GetStaticClass()
-    {
-        DECLARE_CLASS_INFO(FObject);
-        static FClass StaticClass(nullptr, ClassInfo);
-        return &StaticClass;
-    }
-
-    FORCEINLINE const FClass* GetClass() const
+    FObjectClass* GetClass() const
     {
         return Class;
     }
 
-    FORCEINLINE void SetClass(const FClass* InClass)
-    {
-        Class = InClass;
-    }
-
 private:
-    const FClass* Class = nullptr;
+    FObjectClass* Class = nullptr;
 };
 
 
-inline bool IsSubClassOf(FObject* Object, FClass* Class)
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Casting of Objects
+
+inline bool IsSubClassOf(FObject* Object, FObjectClass* Class)
 {
     CHECK(Object != nullptr);
     CHECK(Object->GetClass() != nullptr);
@@ -64,11 +121,34 @@ inline bool IsSubClassOf(FObject* Object, FClass* Class)
 template<typename T>
 inline bool IsSubClassOf(FObject* Object)
 {
-    return IsSubClassOf(Object, T::GetStaticClass());
+    return IsSubClassOf(Object, T::StaticClass());
 }
 
 template<typename T>
 inline T* Cast(FObject* Object)
 {
     return IsSubClassOf<T>(Object) ? static_cast<T*>(Object) : nullptr;
+}
+
+
+/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+// Creation of Objects
+
+ENGINE_API FObject* NewObject(FObjectClass* Class);
+
+template<typename T>
+T* NewObject()
+{
+    // TODO: We might want to allocate via a allocator
+    void* Memory = FMemory::Malloc(sizeof(T));
+    if (!Memory)
+    {
+        return nullptr;
+    }
+
+    FObjectClass* Class = T::StaticClass();
+    FObjectInitializer ObjectInitalizer(Memory, Class);
+    FObjectClass::StaticDefaultConstructorType DefaultConstructorFunc = Class->GetDefaultConstructorFunc();
+    DefaultConstructorFunc(ObjectInitalizer);
+    return reinterpret_cast<T*>(Memory);
 }

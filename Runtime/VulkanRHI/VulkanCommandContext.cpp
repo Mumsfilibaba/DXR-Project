@@ -648,15 +648,16 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopies[MaxCopies];
-
-    const uint32 NumMipLevels = DstVulkanTexture->GetNumMipLevels();
-    for (uint32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel++)
+    
+    const FRHITextureDesc Desc = DstVulkanTexture->GetDesc();
+    for (uint32 MipLevel = 0; MipLevel < Desc.NumMipLevels; MipLevel++)
     {
         VkImageCopy& ImageCopy = ImageCopies[MipLevel];
         FMemory::Memzero(&ImageCopy, sizeof(ImageCopy));
     
-        ImageCopy.extent.width                  = DstVulkanTexture->GetWidth();
-        ImageCopy.extent.height                 = DstVulkanTexture->GetHeight();
+        ImageCopy.extent.width                  = FMath::Max<uint32>(Desc.Extent.x >> MipLevel, 1u);
+        ImageCopy.extent.height                 = FMath::Max<uint32>(Desc.Extent.y >> MipLevel, 1u);
+        ImageCopy.extent.depth                  = FMath::Max<uint32>(Desc.Extent.z >> MipLevel, 1u);
         ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
         ImageCopy.srcSubresource.mipLevel       = MipLevel;
         ImageCopy.srcSubresource.baseArrayLayer = 0;
@@ -675,18 +676,9 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
             ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices();
             ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices();
         }
-    
-        if (DstVulkanTexture->GetDimension() == ETextureDimension::Texture3D)
-        {
-            ImageCopy.extent.depth = DstVulkanTexture->GetDepth();
-        }
-        else
-        {
-            ImageCopy.extent.depth = 1;
-        }
     }
     
-    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, NumMipLevels, ImageCopies);
+    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, Desc.NumMipLevels, ImageCopies);
 }
 
 void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc)

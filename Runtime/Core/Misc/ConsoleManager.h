@@ -209,8 +209,6 @@ struct IConsoleVariable : public IConsoleObject
 
 class CORE_API FConsoleManager
 {
-    ~FConsoleManager();
-
 public:
 
     /**
@@ -219,13 +217,13 @@ public:
      */
     static FORCEINLINE FConsoleManager& Get()
     {
-        if (!GInstance)
+        if (!ConsoleManager)
         {
-            CreateConsoleManager();
-            CHECK(GInstance != nullptr);
+            SafeCreateConsoleManager();
+            CHECK(ConsoleManager != nullptr);
         }
 
-        return *GInstance;
+        return *ConsoleManager;
     }
 
     /**
@@ -333,7 +331,11 @@ public:
     }
 
 private:
-    static void CreateConsoleManager();
+    
+    // Hide destructor
+    ~FConsoleManager();
+
+    static void SafeCreateConsoleManager();
 
     IConsoleObject* RegisterObject(const CHAR* Name, IConsoleObject* Variable);
 
@@ -342,7 +344,7 @@ private:
     TArray<FString> History;
     int32           HistoryLength = 50;
 
-    static FConsoleManager* GInstance;
+    static FConsoleManager* ConsoleManager;
 };
 
 

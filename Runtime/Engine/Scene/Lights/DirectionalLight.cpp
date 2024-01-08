@@ -13,8 +13,10 @@ static TAutoConsoleVariable<float> GCascadeSplitLambda(
     "Determines how the Cascades should be split for the Cascaded Shadow Maps", 
     1.0f);
 
-FDirectionalLight::FDirectionalLight()
-    : FLight()
+FOBJECT_IMPLEMENT_CLASS(FDirectionalLight);
+
+FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer)
+    : FLight(ObjectInitializer)
     , Direction(0.0f, -1.0f, 0.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
@@ -22,8 +24,6 @@ FDirectionalLight::FDirectionalLight()
     , CascadeSplitLambda(GCascadeSplitLambda.GetValue())
     , Size(GSunSize.GetValue())
 {
-    FOBJECT_INIT();
-
     // TODO: Probably move to scene
     GSunSize->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* SunLight)
     {

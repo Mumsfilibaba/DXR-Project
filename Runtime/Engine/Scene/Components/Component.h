@@ -6,14 +6,12 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FActor;
 
-class ENGINE_API FComponent
-    : public FObject
+class ENGINE_API FComponent : public FObject
 {
-    FOBJECT_BODY(FComponent, FObject);
-
 public:
-    FComponent(FActor* InActorOwner);
-    FComponent(FActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
+    FOBJECT_DECLARE_CLASS(FComponent, FObject, ENGINE_API);
+
+    FComponent(const FObjectInitializer& ObjectInitializer);
     virtual ~FComponent() = default;
 
     /**
@@ -31,16 +29,21 @@ public:
      * @brief  - Retrieve the actor that the component belongs to
      * @return - Returns a pointer to the actor that the component belongs to
      */
-    FORCEINLINE FActor* GetActor() const
+    FActor* GetActorOwner() const
     {
         return ActorOwner;
+    }
+
+    void SetActorOwner(FActor* InActorOwner) 
+    {
+        ActorOwner = InActorOwner;
     }
 
     /**
      * @brief  - Check if Start should be called on the component
      * @return - Returns true if the component's Start-method should be called 
      */
-    FORCEINLINE bool IsStartable() const
+    bool IsStartable() const
     {
         return bIsStartable;
     }
@@ -49,16 +52,27 @@ public:
      * @brief  - Check if Tick should be called on the component
      * @return - Returns true if the component's Tick-method should be called
      */
-    FORCEINLINE bool IsTickable() const
+    bool IsTickable() const
     {
         return bIsTickable;
     }
 
-private:
-    FActor* ActorOwner = nullptr;
+    void SetStartable(bool bInIsStartable)
+    {
+        bIsStartable = bInIsStartable;
+    }
 
+    void SetTickable(bool bInIsTickable)
+    {
+        bIsTickable = bInIsTickable;
+    }
+
+protected:
     bool bIsStartable : 1;
     bool bIsTickable  : 1;
+
+private:
+    FActor* ActorOwner = nullptr;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

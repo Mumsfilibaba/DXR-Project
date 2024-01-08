@@ -4,10 +4,10 @@
 
 class SANDBOX_API FSandboxPlayerController : public FPlayerController
 {
-    FOBJECT_BODY(FSandboxPlayerController, FPlayerController);
-
 public:
-    FSandboxPlayerController(FScene* InScene);
+    FOBJECT_DECLARE_CLASS(FSandboxPlayerController, FPlayerController, SANDBOX_API);
+
+    FSandboxPlayerController(const FObjectInitializer& Initializer);
     ~FSandboxPlayerController() = default;
 
     virtual void Tick(FTimespan DeltaTime) override;
@@ -34,6 +34,11 @@ public:
 
     void Jump();
 
+    FCamera* GetCamera() const
+    {
+        return Camera;
+    }
+    
 private:
     FCamera* Camera;
     FVector3 CameraSpeed;

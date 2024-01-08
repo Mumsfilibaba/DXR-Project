@@ -1,13 +1,12 @@
 #pragma once
 #include "Light.h"
 
-class ENGINE_API FSpotLight 
-    : public FLight
+class ENGINE_API FSpotLight : public FLight
 {
-    FOBJECT_BODY(FSpotLight, FLight);
-
 public:
-    FSpotLight();
+    FOBJECT_DECLARE_CLASS(FPointLight, FLight, ENGINE_API);
+
+    FSpotLight(const FObjectInitializer& ObjectInitializer);
     ~FSpotLight() = default;
 
     void SetConeAngle(float InConeAngle);

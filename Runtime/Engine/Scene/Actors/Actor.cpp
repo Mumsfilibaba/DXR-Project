@@ -2,6 +2,8 @@
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Components/Component.h"
 
+FOBJECT_IMPLEMENT_CLASS(FActor);
+
 FActorTransform::FActorTransform()
     : Matrix()
     , Translation(0.0f, 0.0f, 0.0f)
@@ -55,16 +57,15 @@ void FActorTransform::CalculateMatrix()
 }
 
 
-FActor::FActor(FScene* InSceneOwner)
-    : FObject()
+FActor::FActor(const FObjectInitializer& ObjectInitializer)
+    : FObject(ObjectInitializer)
     , Name()
-    , SceneOwner(InSceneOwner)
+    , SceneOwner(nullptr)
     , bIsStartable(true)
     , bIsTickable(true)
     , Transform()
     , Components()
 {
-    FOBJECT_INIT();
 }
 
 FActor::~FActor()
@@ -102,6 +103,10 @@ void FActor::Tick(FTimespan DeltaTime)
 void FActor::AddComponent(FComponent* InComponent)
 {
     CHECK(InComponent != nullptr);
+    CHECK(InComponent->GetActorOwner() == nullptr);
+
+    // Set this actor as the owner
+    InComponent->SetActorOwner(this);
     Components.Emplace(InComponent);
 
     if (SceneOwner)
@@ -115,7 +120,7 @@ void FActor::SetName(const FString& InName)
     Name = InName;
 }
 
-bool FActor::HasComponentOfClass(class FClass* ComponentClass) const
+bool FActor::HasComponentOfClass(class FObjectClass* ComponentClass) const
 {
     for (FComponent* Component : Components)
     {
@@ -128,7 +133,7 @@ bool FActor::HasComponentOfClass(class FClass* ComponentClass) const
     return false;
 }
 
-FComponent* FActor::GetComponentOfClass(class FClass* ComponentClass) const
+FComponent* FActor::GetComponentOfClass(class FObjectClass* ComponentClass) const
 {
     for (FComponent* Component : Components)
     {

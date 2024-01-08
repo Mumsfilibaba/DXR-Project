@@ -1,12 +1,12 @@
 #include "PointLight.h"
 
-FPointLight::FPointLight()
-    : FLight()
+FOBJECT_IMPLEMENT_CLASS(FPointLight);
+
+FPointLight::FPointLight(const FObjectInitializer& ObjectInitializer)
+    : FLight(ObjectInitializer)
     , Matrices()
     , Position(0.0f, 0.0f, 0.0f)
 {
-    FOBJECT_INIT();
-
     CalculateMatrices();
 }
 

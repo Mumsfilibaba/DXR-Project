@@ -1,9 +1,13 @@
 #include "InputComponent.h"
 
-FInputComponent::FInputComponent(FActor* InActorOwner)
-    : FComponent(InActorOwner)
+FOBJECT_IMPLEMENT_CLASS(FInputComponent);
+
+FInputComponent::FInputComponent(const FObjectInitializer& ObjectInitializer)
+    : FComponent(ObjectInitializer)
     , ActionBindings()
 {
+    bIsTickable  = false;
+    bIsStartable = false;
 }
 
 int32 FInputComponent::BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate)

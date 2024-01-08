@@ -6,10 +6,10 @@
 
 class ENGINE_API FDirectionalLight : public FLight
 {
-    FOBJECT_BODY(FDirectionalLight, FLight);
-
 public:
-    FDirectionalLight();
+    FOBJECT_DECLARE_CLASS(FDirectionalLight, FLight, ENGINE_API);
+
+    FDirectionalLight(const FObjectInitializer& ObjectInitializer);
     ~FDirectionalLight() = default;
 
     void Tick(class FCamera& Camera);

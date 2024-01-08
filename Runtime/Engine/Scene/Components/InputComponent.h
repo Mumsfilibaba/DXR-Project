@@ -53,10 +53,10 @@ struct FAxisInputBinding
 
 class ENGINE_API FInputComponent : public FComponent
 {
-    FOBJECT_BODY(FInputComponent, FComponent);
-
 public:
-    FInputComponent(FActor* InActorOwner);
+    FOBJECT_DECLARE_CLASS(FInputComponent, FComponent, ENGINE_API);
+
+    FInputComponent(const FObjectInitializer& ObjectInitializer);
     ~FInputComponent() = default;
 
     int32 BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);

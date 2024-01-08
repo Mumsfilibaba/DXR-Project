@@ -1,11 +1,12 @@
 #include "LightProbe.h"
 
-FLightProbe::FLightProbe()
-    : FObject()
+FOBJECT_IMPLEMENT_CLASS(FLightProbe);
+
+FLightProbe::FLightProbe(const FObjectInitializer& ObjectInitializer)
+    : FObject(ObjectInitializer)
     , Position()
     , Bounds()
 {
-    FOBJECT_INIT();
 }
 
 void FLightProbe::SetPosition(const FVector3& InPosition)

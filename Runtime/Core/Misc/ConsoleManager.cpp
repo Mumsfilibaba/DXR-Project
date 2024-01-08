@@ -461,18 +461,18 @@ FString TConsoleVariable<FString>::GetString() const
 }
 
 
-FConsoleManager* FConsoleManager::GInstance;
+FConsoleManager* FConsoleManager::ConsoleManager;
 
-void FConsoleManager::CreateConsoleManager()
+void FConsoleManager::SafeCreateConsoleManager()
 {
-    CHECK(GInstance == nullptr);
+    CHECK(ConsoleManager == nullptr);
 
-    if (!GInstance)
+    if (!ConsoleManager)
     {
-        GInstance = new FConsoleManager();
+        ConsoleManager = new FConsoleManager();
     }
 
-    CHECK(GInstance != nullptr);
+    CHECK(ConsoleManager != nullptr);
 }
 
 FConsoleManager::~FConsoleManager()

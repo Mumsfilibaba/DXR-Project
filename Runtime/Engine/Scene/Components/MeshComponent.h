@@ -4,19 +4,13 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-class ENGINE_API FMeshComponent 
-    : public FComponent
+class ENGINE_API FMeshComponent : public FComponent
 {
-    FOBJECT_BODY(FMeshComponent, FComponent);
-
 public:
-    FMeshComponent(FActor* InActorOwner)
-        : FComponent(InActorOwner, false, false)
-        , Material(nullptr)
-        , Mesh(nullptr)
-    {
-        FOBJECT_INIT();
-    }
+    FOBJECT_DECLARE_CLASS(FMeshComponent, FComponent, ENGINE_API);
+
+    FMeshComponent(const FObjectInitializer& ObjectInitializer);
+    ~FMeshComponent() = default;
 
     TSharedPtr<FMaterial> Material;
     TSharedPtr<FMesh>     Mesh;

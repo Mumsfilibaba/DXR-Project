@@ -19,7 +19,7 @@ public:
     void SetScale(float x, float y, float z);
     void SetScale(const FVector3& InScale);
 
-    FORCEINLINE void SetUniformScale(float InScale)
+    void SetUniformScale(float InScale)
     {
         SetScale(InScale, InScale, InScale);
     }
@@ -27,33 +27,33 @@ public:
     void SetRotation(float x, float y, float z);
     void SetRotation(const FVector3& InRotation);
 
-    FORCEINLINE const FVector3& GetTranslation() const
+    const FVector3& GetTranslation() const
     {
         return Translation;
     }
 
-    FORCEINLINE const FVector3& GetScale() const
+    const FVector3& GetScale() const
     {
         return Scale;
     }
 
-    FORCEINLINE const FVector3& GetRotation() const
+    const FVector3& GetRotation() const
     {
         return Rotation;
     }
 
-    FORCEINLINE const FMatrix4& GetMatrix() const
+    const FMatrix4& GetMatrix() const
     {
         return Matrix;
     }
 
-    FORCEINLINE FMatrix4 GetMatrixInverse() const
+    FMatrix4 GetMatrixInverse() const
     {
         FMatrix4 MatrixInverse = Matrix.Invert();
         return MatrixInverse.Transpose();
     }
 
-    FORCEINLINE FMatrix3x4 GetTinyMatrix() const
+    FMatrix3x4 GetTinyMatrix() const
     {
         return FMatrix3x4(
             Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
@@ -76,12 +76,12 @@ class FComponent;
 
 class ENGINE_API FActor : public FObject
 {
-    FOBJECT_BODY(FActor, FObject);
-
 public:
-    FActor(FScene* InSceneOwner);
-    ~FActor();
+    FOBJECT_DECLARE_CLASS(FActor, FObject, ENGINE_API);
 
+    FActor(const FObjectInitializer& ObjectInitializer);
+    ~FActor();
+    
     /**
      * @brief - Start actor, called in the beginning of the run, perform initialization here
      */
@@ -110,7 +110,7 @@ public:
      * @param ComponentClass - ClassObject to of the component to retrieve 
      * @return               - Returns true if the actor contains a component of a certain type
      */
-    bool HasComponentOfClass(class FClass* ComponentClass) const;
+    bool HasComponentOfClass(class FObjectClass* ComponentClass) const;
 
     /**
      * @brief  - Check if the actor has a component of the component-class
@@ -127,7 +127,7 @@ public:
      * @param ComponentClass - ClassObject to of the component to retrieve
      * @return               - Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
-    FComponent* GetComponentOfClass(class FClass* ComponentClass) const;
+    FComponent* GetComponentOfClass(class FObjectClass* ComponentClass) const;
 
     /**
      * @brief  - Retrieve a component from the actor of the component-class
@@ -136,14 +136,14 @@ public:
     template <typename ComponentType>
     inline ComponentType* GetComponentOfType() const
     {
-        return static_cast<ComponentType*>(GetComponentOfClass(ComponentType::GetStaticClass()));
+        return static_cast<ComponentType*>(GetComponentOfClass(ComponentType::StaticClass()));
     }
 
     /**
      * @brief             - Set the transform of the actor
      * @param InTransform - New transform of the actor
      */
-    FORCEINLINE void SetTransform(const FActorTransform& InTransform)
+    void SetTransform(const FActorTransform& InTransform)
     {
         Transform = InTransform;
     }
@@ -152,7 +152,7 @@ public:
      * @brief  - Retrieve the name of the actor
      * @return - Returns the name of the actor
      */
-    FORCEINLINE const FString& GetName() const
+    const FString& GetName() const
     {
         return Name;
     }
@@ -161,16 +161,21 @@ public:
      * @brief  - Retrieve the Scene that owns the actor
      * @return - Returns the Scene that owns the actor
      */
-    FORCEINLINE FScene* GetScene() const
+    FScene* GetSceneOwner() const
     {
         return SceneOwner;
+    }
+
+    void SetSceneOwner(FScene* InSceneOwner)
+    {
+        SceneOwner = InSceneOwner;
     }
 
     /**
      * @brief  - Retrieve the transform of the actor
      * @return - Returns the transform of the actor
      */
-    FORCEINLINE FActorTransform& GetTransform()
+    FActorTransform& GetTransform()
     {
         return Transform;
     }
@@ -179,7 +184,7 @@ public:
      * @brief  - Retrieve the transform of the actor
      * @return - Returns the transform of the actor
      */
-    FORCEINLINE const FActorTransform& GetTransform() const
+    const FActorTransform& GetTransform() const
     {
         return Transform;
     }
@@ -188,18 +193,22 @@ public:
      * @brief  - Check if Start should be called on the component
      * @return - Returns true if the component's Start-method should be called
      */
-    FORCEINLINE bool IsStartable() const
-    {
-        return bIsStartable;
-    }
+    bool IsStartable() const { return bIsStartable; }
 
     /**
      * @brief  - Check if Tick should be called on the component
      * @return - Returns true if the component's Tick-method should be called
      */
-    FORCEINLINE bool IsTickable() const
+    bool IsTickable() const { return bIsTickable; }
+
+    void SetStartable(bool bInIsStartable)
     {
-        return bIsTickable;
+        bIsStartable = bInIsStartable;
+    }
+
+    void SetTickable(bool bInIsTickable)
+    {
+        bIsTickable = bInIsTickable;
     }
 
 private:

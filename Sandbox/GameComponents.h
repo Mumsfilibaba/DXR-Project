@@ -2,23 +2,23 @@
 #include <Engine/Scene/Actors/Actor.h>
 #include <Engine/Scene/Components/Component.h>
 
-class FMovingBallComponent 
-    : public FComponent
+class SANDBOX_API FMovingBallComponent : public FComponent
 {
-    FOBJECT_BODY(FMovingBallComponent, FComponent);
-
 public:
-    FMovingBallComponent(FActor* InActorOwner, float InSpeed)
-        : FComponent(InActorOwner, false, true)
-        , Speed(InSpeed)
-        , CurrentSpeed(InSpeed)
-    { }
+    FOBJECT_DECLARE_CLASS(FMovingBallComponent, FComponent, SANDBOX_API);
+
+    FMovingBallComponent(const FObjectInitializer& ObjectInitializer)
+        : FComponent(ObjectInitializer)
+        , Speed(0.0f)
+        , CurrentSpeed(0.0f)
+    {
+    }
 
     virtual void Tick(FTimespan DeltaTime)
     {
         const float fDelta = float(DeltaTime.AsSeconds());
 
-        FActor* Actor = GetActor();
+        FActor* Actor = GetActorOwner();
         
         FActorTransform& ActorTransform = Actor->GetTransform();
         ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
@@ -33,7 +33,6 @@ public:
         }
     }
 
-private:
     float Speed;
     float CurrentSpeed;
 };

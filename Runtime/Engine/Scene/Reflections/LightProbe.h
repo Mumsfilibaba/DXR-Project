@@ -3,15 +3,14 @@
 #include "Core/Math/AABB.h"
 #include "Engine/Core/Object.h"
 
-class ENGINE_API FLightProbe
-    : public FObject
+class ENGINE_API FLightProbe : public FObject
 {
-    FOBJECT_BODY(FLightProbe, FObject);
-
 public:
-    FLightProbe();
-    ~FLightProbe() = default;
+    FOBJECT_DECLARE_CLASS(FLightProbe, FObject, ENGINE_API);
 
+    FLightProbe(const FObjectInitializer& ObjectInitializer);
+    ~FLightProbe() = default;
+    
     void SetPosition(const FVector3& InPosition);
     void SetBounds(const FAABB& InBounds);
 

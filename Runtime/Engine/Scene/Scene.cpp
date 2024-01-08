@@ -26,15 +26,19 @@ FScene::~FScene()
 
     // TODO: Fix crash on exit
     SAFE_DELETE(CurrentCamera);
-
     SAFE_DELETE(RendererScene);
 }
 
 FActor* FScene::CreateActor()
 {
-    FActor* NewActor = new FActor(this);
-    AddActor(NewActor);
-    return NewActor;
+    FActor* NewActor = NewObject<FActor>();
+    if (NewActor)
+    {
+        AddActor(NewActor);
+        return NewActor;
+    }
+    
+    return nullptr;
 }
 
 void FScene::Start()
@@ -79,6 +83,10 @@ void FScene::AddCamera(FCamera* InCamera)
 void FScene::AddActor(FActor* InActor)
 {
     CHECK(InActor != nullptr);
+    CHECK(InActor->GetSceneOwner() == nullptr);
+    
+    // Set this scene to be the owner of the added actor
+    InActor->SetSceneOwner(this);
     Actors.Emplace(InActor);
 
     if (IsSubClassOf<FPlayerController>(InActor))
@@ -117,7 +125,7 @@ void FScene::OnAddedComponent(FComponent* NewComponent)
 void FScene::AddMeshComponent(FMeshComponent* Component)
 {
     FMeshDrawCommand Command;
-    Command.CurrentActor = Component->GetActor();
+    Command.CurrentActor = Component->GetActorOwner();
     Command.Geometry     = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
     Command.NumVertices  = Component->Mesh->VertexCount;

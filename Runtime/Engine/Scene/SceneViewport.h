@@ -55,7 +55,7 @@ public:
         Scene = InScene; 
     }
 
-    FScene* GetScene() const 
+    FScene* GetSceneOwner() const 
     {
         return Scene; 
     }

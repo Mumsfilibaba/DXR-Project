@@ -6,10 +6,10 @@ class FInputComponent;
 
 class ENGINE_API FPlayerController : public FActor
 {
-    FOBJECT_BODY(FPlayerController, FActor);
-
 public:
-    FPlayerController(FScene* InSceneOwner);
+    FOBJECT_DECLARE_CLASS(FPlayerController, FActor, ENGINE_API);
+
+    FPlayerController(const FObjectInitializer& ObjectInitializer);
     ~FPlayerController();
 
     virtual void SetupInputComponent();

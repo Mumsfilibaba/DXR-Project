@@ -194,7 +194,7 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
 void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState)
 {
     FVulkanGraphicsPipelineState* CurrentGraphicsPipelineState = GraphicsState.PipelineState.Get();
-    if (CurrentGraphicsPipelineState != InGraphicsPipelineState)
+    if (CurrentGraphicsPipelineState != InGraphicsPipelineState || GVulkanForceBinding)
     {
         if (InGraphicsPipelineState)
         {
@@ -218,9 +218,10 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             {
                 InternalSetShaderStageResourceCount(PixelShader, ShaderVisibility_Pixel);
             }
+            
+            GraphicsState.PipelineState = MakeSharedRef<FVulkanGraphicsPipelineState>(InGraphicsPipelineState);
         }
 
-        GraphicsState.PipelineState = MakeSharedRef<FVulkanGraphicsPipelineState>(InGraphicsPipelineState);
         GraphicsState.bBindPipelineState = true;
     }
 }
@@ -228,7 +229,7 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
 void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState)
 {
     FVulkanComputePipelineState* CurrentComputePipelineState = ComputeState.PipelineState.Get();
-    if (CurrentComputePipelineState != InComputePipelineState)
+    if (CurrentComputePipelineState != InComputePipelineState || GVulkanForceBinding)
     {
         if (InComputePipelineState)
         {
@@ -236,9 +237,10 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
             {
                 InternalSetShaderStageResourceCount(PixelShader, ShaderVisibility_Compute);
             }
+            
+            ComputeState.PipelineState = MakeSharedRef<FVulkanComputePipelineState>(InComputePipelineState);
         }
 
-        ComputeState.PipelineState = MakeSharedRef<FVulkanComputePipelineState>(InComputePipelineState);
         ComputeState.bBindPipelineState = true;
     }
 }
@@ -248,7 +250,7 @@ void FVulkanCommandContextState::SetViewports(VkViewport* Viewports, uint32 NumV
     CHECK(NumViewports < VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ViewportArraySize = sizeof(VkViewport) * NumViewports;
-    if (GraphicsState.NumViewports != NumViewports || FMemory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0)
+    if (GraphicsState.NumViewports != NumViewports || FMemory::Memcmp(GraphicsState.Viewports, Viewports, ViewportArraySize) != 0 || GVulkanForceBinding)
     {
         FMemory::Memcpy(GraphicsState.Viewports, Viewports, ViewportArraySize);
         GraphicsState.NumViewports   = NumViewports;
@@ -261,7 +263,7 @@ void FVulkanCommandContextState::SetScissorRects(VkRect2D* ScissorRects, uint32 
     CHECK(NumScissorRects < VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT);
 
     const uint32 ScissorRectArraySize = sizeof(VkRect2D) * NumScissorRects;
-    if (GraphicsState.NumScissorRects != NumScissorRects || FMemory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0)
+    if (GraphicsState.NumScissorRects != NumScissorRects || FMemory::Memcmp(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize) != 0 || GVulkanForceBinding)
     {
         FMemory::Memcpy(GraphicsState.ScissorRects, ScissorRects, ScissorRectArraySize);
         GraphicsState.NumScissorRects   = NumScissorRects;
@@ -271,7 +273,7 @@ void FVulkanCommandContextState::SetScissorRects(VkRect2D* ScissorRects, uint32 
 
 void FVulkanCommandContextState::SetBlendFactor(const float BlendFactor[4])
 {
-    if (FMemory::Memcmp(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor)) != 0)
+    if (FMemory::Memcmp(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor)) != 0 || GVulkanForceBinding)
     {
         FMemory::Memcpy(GraphicsState.BlendFactor, BlendFactor, sizeof(GraphicsState.BlendFactor));
         GraphicsState.bBindBlendFactor = true;
@@ -297,7 +299,7 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
 
     VkBuffer     CurrentBuffer = GraphicsState.VBCache.VertexBuffers[VertexBufferSlot];
     VkDeviceSize CurrentOffset = GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot];
-    if (Buffer != CurrentBuffer || Offset != CurrentOffset)
+    if (Buffer != CurrentBuffer || Offset != CurrentOffset || GVulkanForceBinding)
     {
         GraphicsState.VBCache.VertexBuffers[VertexBufferSlot]       = Buffer;
         GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot] = Offset;
@@ -324,7 +326,7 @@ void FVulkanCommandContextState::SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIn
     VkBuffer     CurrentBuffer    = GraphicsState.IBCache.IndexBuffer;
     VkDeviceSize CurrentOffset    = GraphicsState.IBCache.Offset;
     VkIndexType  CurrentIndexType = GraphicsState.IBCache.IndexType;
-    if (Buffer != CurrentBuffer || Offset != CurrentOffset || IndexType != CurrentIndexType)
+    if (Buffer != CurrentBuffer || Offset != CurrentOffset || IndexType != CurrentIndexType || GVulkanForceBinding)
     {
         GraphicsState.IBCache.IndexBuffer = Buffer;
         GraphicsState.IBCache.Offset      = Offset;
@@ -336,7 +338,7 @@ void FVulkanCommandContextState::SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIn
 void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     auto& SRVCache = CommonState.ShaderResourceViewCache.ResourceViews[ShaderStage];
-    if (SRVCache[ResourceIndex] != ShaderResourceView)
+    if (SRVCache[ResourceIndex] != ShaderResourceView || GVulkanForceBinding)
     {
         SRVCache[ResourceIndex] = ShaderResourceView;
         CommonState.ShaderResourceViewCache.NumViews[ShaderStage] = FMath::Max<uint8>(CommonState.ShaderResourceViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
@@ -347,7 +349,7 @@ void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourc
 void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     auto& UAVCache = CommonState.UnorderedAccessViewCache.ResourceViews[ShaderStage];
-    if (UAVCache[ResourceIndex] != UnorderedAccessView)
+    if (UAVCache[ResourceIndex] != UnorderedAccessView || GVulkanForceBinding)
     {
         UAVCache[ResourceIndex] = UnorderedAccessView;
         CommonState.UnorderedAccessViewCache.NumViews[ShaderStage] = FMath::Max<uint8>(CommonState.UnorderedAccessViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
@@ -358,7 +360,7 @@ void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAcc
 void FVulkanCommandContextState::SetCBV(FVulkanBuffer* ConstantBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
 {
     auto& CBVCache = CommonState.ConstantBufferCache.ConstantBuffers[ShaderStage];
-    if (CBVCache[ResourceIndex] != ConstantBuffer)
+    if (CBVCache[ResourceIndex] != ConstantBuffer || GVulkanForceBinding)
     {
         CBVCache[ResourceIndex] = ConstantBuffer;
         CommonState.ConstantBufferCache.NumBuffers[ShaderStage] = FMath::Max<uint8>(CommonState.ConstantBufferCache.NumBuffers[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
@@ -369,7 +371,7 @@ void FVulkanCommandContextState::SetCBV(FVulkanBuffer* ConstantBuffer, EShaderVi
 void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
 {
     auto& SamplerCache = CommonState.SamplerStateCache.SamplerStates[ShaderStage];
-    if (SamplerCache[SamplerIndex] != SamplerState)
+    if (SamplerCache[SamplerIndex] != SamplerState || GVulkanForceBinding)
     {
         SamplerCache[SamplerIndex] = SamplerState;
         CommonState.SamplerStateCache.NumSamplers[ShaderStage] = FMath::Max<uint8>(CommonState.SamplerStateCache.NumSamplers[ShaderStage], static_cast<uint8>(SamplerIndex) + 1);
@@ -380,7 +382,7 @@ void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, E
 void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants)
 {
     FVulkanPushConstantsCache& ConstantCache = CommonState.PushConstantsCache;
-    if (NumShaderConstants != ConstantCache.NumConstants || FMemory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0)
+    if (NumShaderConstants != ConstantCache.NumConstants || FMemory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0 || GVulkanForceBinding)
     {
         FMemory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
         ConstantCache.NumConstants       = NumShaderConstants;
