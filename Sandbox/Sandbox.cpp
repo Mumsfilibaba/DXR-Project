@@ -47,8 +47,8 @@ bool FSandbox::Init()
         FSceneData SceneData;
 
     #if LOAD_SPONZA
-        //FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
-        //SceneData.Scale = 0.015f;
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
+        SceneData.Scale = 0.015f;
     #elif LOAD_BISTRO
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
