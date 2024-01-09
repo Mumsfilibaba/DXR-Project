@@ -14,11 +14,17 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    SkyboxMesh = FMeshFactory::CreateSphere(1);
-    SkyboxIndexCount  = SkyboxMesh.Indices.Size();
-    SkyboxIndexFormat = EIndexFormat::uint32;
+    FMeshData SkyboxMesh = FMeshFactory::CreateSphere(0);
+    SkyboxIndexCount = SkyboxMesh.Indices.Size();
 
-    FRHIBufferDesc VBDesc(SkyboxMesh.Vertices.SizeInBytes(), SkyboxMesh.Vertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
+    TArray<FVector3> NewVertices;
+    NewVertices.Reserve(SkyboxMesh.Vertices.Size());
+    for (const FVertex& Vertex : SkyboxMesh.Vertices)
+    {
+        NewVertices.Emplace(Vertex.Position);
+    }
+    
+    FRHIBufferDesc VBDesc(NewVertices.SizeInBytes(), NewVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
     SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxMesh.Vertices.Data());
     if (!SkyboxVertexBuffer)
     {
@@ -29,8 +35,28 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    FRHIBufferDesc IBDesc(SkyboxMesh.Indices.SizeInBytes(), SkyboxMesh.Indices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
-    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxMesh.Indices.Data());
+    // If we can get away with 16-bit indices, store them in this array
+    TArray<uint16> NewIndicies;
+    const void* InitialIndicies = nullptr;
+
+    SkyboxIndexFormat = SkyboxIndexCount < TNumericLimits<uint16>::Max() ? EIndexFormat::uint16 : EIndexFormat::uint32;
+    if (SkyboxIndexFormat == EIndexFormat::uint16)
+    {
+        NewIndicies.Reserve(SkyboxMesh.Indices.Size());
+        for (uint32 Index : SkyboxMesh.Indices)
+        {
+            NewIndicies.Emplace(uint16(Index));
+        }
+
+        InitialIndicies = NewIndicies.Data();
+    }
+    else
+    {
+        InitialIndicies = SkyboxMesh.Indices.Data();
+    }
+
+    FRHIBufferDesc IBDesc(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
+    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, InitialIndicies);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -122,6 +148,19 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         DEBUG_BREAK();
         return false;
     }
+    
+    // Initialize standard input layout
+    FRHIVertexInputLayoutInitializer InputLayoutInitializer =
+    {
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+    };
+
+    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+    if (!InputLayout)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
 
     FRHIRasterizerStateInitializer RasterizerInitializer;
     RasterizerInitializer.CullMode = ECullMode::None;
@@ -156,7 +195,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
 
     FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
+    PSOInitializer.VertexInputLayout                      = InputLayout.Get();
     PSOInitializer.BlendState                             = BlendState.Get();
     PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
     PSOInitializer.RasterizerState                        = RasterizerState.Get();

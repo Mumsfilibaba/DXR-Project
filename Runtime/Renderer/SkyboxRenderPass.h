@@ -17,8 +17,6 @@ public:
 
 private:
     FGPUTextureCompressor        TextureCompressor;
-
-    FMeshData                    SkyboxMesh;
     FRHIGraphicsPipelineStateRef PipelineState;
     FRHIVertexShaderRef          SkyboxVertexShader;
     FRHIPixelShaderRef           SkyboxPixelShader;

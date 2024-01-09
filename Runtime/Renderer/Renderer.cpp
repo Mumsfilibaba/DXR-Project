@@ -43,6 +43,11 @@ static TAutoConsoleVariable<bool> GPrePassEnabled(
     "Enables Pre-Pass",
     true);
 
+static TAutoConsoleVariable<bool> GBasePassEnabled(
+    "Renderer.Feature.BasePass",
+    "Enables BasePass (Disabling this disables most rendering)",
+    true);
+
 static TAutoConsoleVariable<bool> GDrawAABBs(
     "Renderer.Debug.DrawAABBs",
     "Draws all the objects bounding boxes (AABB)",
@@ -809,6 +814,7 @@ void FRenderer::Tick()
 #endif
 
     // BasePass
+    if (GBasePassEnabled.GetValue())
     {
         DeferredRenderer.RenderBasePass(CommandList, Resources);
     }
