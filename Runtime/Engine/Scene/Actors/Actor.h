@@ -77,7 +77,7 @@ class FComponent;
 class ENGINE_API FActor : public FObject
 {
 public:
-    FOBJECT_DECLARE_CLASS(FActor, FObject, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FActor, FObject);
 
     FActor(const FObjectInitializer& ObjectInitializer);
     ~FActor();

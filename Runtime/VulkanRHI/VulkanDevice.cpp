@@ -6,7 +6,7 @@
 ////////////////////////////////////////////////////
 // Global variables that describe different features
 
-VULKANRHI_API bool GVulkanForceBinding = false;
+VULKANRHI_API bool GVulkanForceBinding = true;
 
 
 FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter)

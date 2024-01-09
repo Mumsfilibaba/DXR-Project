@@ -17,12 +17,12 @@ class FObjectInitializer;
     }
 
 // This macro is used to declare important information to retrieve global information about the class.
-// It should be used in a public segement of the class declaration.
-#define FOBJECT_DECLARE_CLASS(FObjectType, FSuperClassType, MODULE_API) \
+// It should be used in a public segment of the class declaration.
+#define FOBJECT_DECLARE_CLASS(FObjectType, FSuperClassType) \
     private: \
-        /* Globals used to retrieve informatino about this class */ \
-        static MODULE_API FGlobalObjectClassInfo GlobalClassInfo; \
-        static MODULE_API FObjectClass* GetStaticClassPrivate(); \
+        /* Globals used to retrieve information about this class */ \
+        static FGlobalObjectClassInfo GlobalClassInfo; \
+        static FObjectClass* GetStaticClassPrivate(); \
         /* Declare a static function that can create an object of this class with the help of a ObjectInitializer */ \
         FOBJECT_DECLARE_DEFAULT_CONSTRUCTOR(FObjectType); \
     public: \
@@ -93,7 +93,7 @@ private:
 class ENGINE_API FObject
 {
 public:
-    FOBJECT_DECLARE_CLASS(FObject, FObject, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FObject, FObject);
     
     FObject(const FObjectInitializer& ObjectInitializer);
     virtual ~FObject() = default;

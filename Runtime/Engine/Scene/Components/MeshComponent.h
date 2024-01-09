@@ -7,7 +7,7 @@
 class ENGINE_API FMeshComponent : public FComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FMeshComponent, FComponent, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FMeshComponent, FComponent);
 
     FMeshComponent(const FObjectInitializer& ObjectInitializer);
     ~FMeshComponent() = default;

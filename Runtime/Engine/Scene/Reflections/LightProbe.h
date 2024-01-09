@@ -6,7 +6,7 @@
 class ENGINE_API FLightProbe : public FObject
 {
 public:
-    FOBJECT_DECLARE_CLASS(FLightProbe, FObject, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FLightProbe, FObject);
 
     FLightProbe(const FObjectInitializer& ObjectInitializer);
     ~FLightProbe() = default;

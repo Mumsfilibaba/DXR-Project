@@ -144,6 +144,10 @@ bool FImGuiRenderer::Initialize()
     {
         return false;
     }
+    else
+    {
+        FontTexture->SetName("ImGui FontTexture");
+    }
 
     const CHAR* VSSource =
         R"*(
@@ -272,6 +276,7 @@ bool FImGuiRenderer::Initialize()
 
     FRHIBlendStateInitializer BlendStateInitializer;
     BlendStateInitializer.bIndependentBlendEnable        = false;
+    BlendStateInitializer.NumRenderTargets               = 1;
     BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
     BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
     BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType ::InvSrcAlpha;
@@ -279,7 +284,6 @@ bool FImGuiRenderer::Initialize()
     BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType ::Zero;
     BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
     BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
-    BlendStateInitializer.NumRenderTargets = 1;
 
     FRHIBlendStateRef BlendStateBlending = RHICreateBlendState(BlendStateInitializer);
     if (!BlendStateBlending)

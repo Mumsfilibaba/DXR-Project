@@ -9,7 +9,7 @@ class FActor;
 class ENGINE_API FComponent : public FObject
 {
 public:
-    FOBJECT_DECLARE_CLASS(FComponent, FObject, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FComponent, FObject);
 
     FComponent(const FObjectInitializer& ObjectInitializer);
     virtual ~FComponent() = default;

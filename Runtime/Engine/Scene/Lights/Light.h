@@ -5,7 +5,7 @@
 class ENGINE_API FLight : public FObject
 {
 public:
-    FOBJECT_DECLARE_CLASS(FLight, FObject, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FLight, FObject);
 
     FLight(const FObjectInitializer& ObjectInitializer);
     virtual ~FLight() = default;

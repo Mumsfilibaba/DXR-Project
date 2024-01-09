@@ -2,11 +2,10 @@
 #include "Light.h"
 #include "Core/Math/Matrix4.h"
 
-
 class ENGINE_API FPointLight : public FLight
 {
 public:
-    FOBJECT_DECLARE_CLASS(FPointLight, FLight, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FPointLight, FLight);
 
     FPointLight(const FObjectInitializer& ObjectInitializer);
     ~FPointLight() = default;

@@ -54,7 +54,7 @@ struct FAxisInputBinding
 class ENGINE_API FInputComponent : public FComponent
 {
 public:
-    FOBJECT_DECLARE_CLASS(FInputComponent, FComponent, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FInputComponent, FComponent);
 
     FInputComponent(const FObjectInitializer& ObjectInitializer);
     ~FInputComponent() = default;

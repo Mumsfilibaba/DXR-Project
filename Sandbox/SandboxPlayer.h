@@ -5,7 +5,7 @@
 class SANDBOX_API FSandboxPlayerController : public FPlayerController
 {
 public:
-    FOBJECT_DECLARE_CLASS(FSandboxPlayerController, FPlayerController, SANDBOX_API);
+    FOBJECT_DECLARE_CLASS(FSandboxPlayerController, FPlayerController);
 
     FSandboxPlayerController(const FObjectInitializer& Initializer);
     ~FSandboxPlayerController() = default;

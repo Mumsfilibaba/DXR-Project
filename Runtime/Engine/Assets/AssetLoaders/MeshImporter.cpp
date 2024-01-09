@@ -439,7 +439,7 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
     {
         FModelData& CurrentModel = OutScene.Models[Index];
         
-        const int32 Length = FCString::Strlen(ModelHeaders[Index].Name);
+        MAYBE_UNUSED const int32 Length = FCString::Strlen(ModelHeaders[Index].Name);
         CHECK(Length < FCustomModel::MaxNameLength);
 
         CurrentModel.Name          = ModelHeaders[Index].Name;

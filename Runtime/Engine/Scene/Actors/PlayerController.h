@@ -7,7 +7,7 @@ class FInputComponent;
 class ENGINE_API FPlayerController : public FActor
 {
 public:
-    FOBJECT_DECLARE_CLASS(FPlayerController, FActor, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FPlayerController, FActor);
 
     FPlayerController(const FObjectInitializer& ObjectInitializer);
     ~FPlayerController();

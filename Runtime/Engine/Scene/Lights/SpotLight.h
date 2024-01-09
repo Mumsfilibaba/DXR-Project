@@ -4,7 +4,7 @@
 class ENGINE_API FSpotLight : public FLight
 {
 public:
-    FOBJECT_DECLARE_CLASS(FPointLight, FLight, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FPointLight, FLight);
 
     FSpotLight(const FObjectInitializer& ObjectInitializer);
     ~FSpotLight() = default;

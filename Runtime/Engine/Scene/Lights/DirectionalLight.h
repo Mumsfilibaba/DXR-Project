@@ -7,7 +7,7 @@
 class ENGINE_API FDirectionalLight : public FLight
 {
 public:
-    FOBJECT_DECLARE_CLASS(FDirectionalLight, FLight, ENGINE_API);
+    FOBJECT_DECLARE_CLASS(FDirectionalLight, FLight);
 
     FDirectionalLight(const FObjectInitializer& ObjectInitializer);
     ~FDirectionalLight() = default;
