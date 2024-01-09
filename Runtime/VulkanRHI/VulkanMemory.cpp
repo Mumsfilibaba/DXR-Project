@@ -389,16 +389,16 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     , NumAllocations(0)
     , ManagerCS()
 {
-    // Cache the deviceproperties
+    // Cache the DeviceProperties
     DeviceProperties = GetDevice()->GetPhysicalDevice()->GetDeviceProperties();
-    
-    // Calculate the heapsize in bytes
+ 
+    // Calculate the HeapSize in bytes
     HeapSize = CVarMemoryHeapSize.GetValue() * 1024 * 1024;
-    
+
     // List all the MemoryHeaps available
     const VkPhysicalDeviceMemoryProperties& MemoryProperties = GetDevice()->GetPhysicalDevice()->GetDeviceMemoryProperties();
     VULKAN_INFO("Current Device has the following MemoryHeaps:");
-    
+ 
     for (uint32 Index = 0; Index < MemoryProperties.memoryHeapCount; Index++)
     {
         const VkMemoryHeap& MemoryHeap = MemoryProperties.memoryHeaps[Index];
@@ -665,7 +665,6 @@ bool FVulkanMemoryManager::AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemo
     }
 
     VULKAN_INFO("[AllocateMemory] Allocated=%d Bytes, NumAllocations = %d/%d", AllocateInfo.allocationSize, NumAllocations.Load(), DeviceProperties.limits.maxMemoryAllocationCount);
-    
     if (static_cast<uint32>(NumAllocations.Load()) > DeviceProperties.limits.maxMemoryAllocationCount)
     {
         VULKAN_WARNING("Too many allocations");
@@ -690,7 +689,6 @@ bool FVulkanMemoryManager::AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemo
     MemoryAllocateInfoHelper.AddNext(MemoryAllocateFlagsInfo);
     MemoryAllocateFlagsInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO;
     MemoryAllocateFlagsInfo.flags = AllocateFlags;
-
     return AllocateMemoryDedicated(OutDeviceMemory, MemoryAllocateInfo);
 }
 
@@ -808,22 +806,40 @@ void* FVulkanMemoryManager::Map(const FVulkanMemoryAllocation& Allocation)
 {
     SCOPED_LOCK(ManagerCS);
 
-    FVulkanMemoryBlock* Block = Allocation.Block;
-    CHECK(Block != nullptr);
+    if (!Allocation.bIsDedicated)
+    {
+        FVulkanMemoryBlock* Block = Allocation.Block;
+        CHECK(Block != nullptr);
 
-    FVulkanMemoryHeap* Page = Block->Page;
-    CHECK(Page != nullptr);
-    return Page->Map(Allocation);
+        FVulkanMemoryHeap* Page = Block->Page;
+        CHECK(Page != nullptr);
+        return Page->Map(Allocation);
+    }
+    else
+    {
+        // TODO: Mapping dedicated allocations are not ref-counted
+        void* MappedMemory = nullptr;
+        vkMapMemory(GetDevice()->GetVkDevice(), Allocation.Memory, 0, VK_WHOLE_SIZE, 0, reinterpret_cast<void**>(&MappedMemory));
+        return MappedMemory;
+    }
 }
 
 void FVulkanMemoryManager::Unmap(const FVulkanMemoryAllocation& Allocation)
 {
     SCOPED_LOCK(ManagerCS);
 
-    FVulkanMemoryBlock* Block = Allocation.Block;
-    CHECK(Block != nullptr);
+    if (!Allocation.bIsDedicated)
+    {
+        FVulkanMemoryBlock* Block = Allocation.Block;
+        CHECK(Block != nullptr);
 
-    FVulkanMemoryHeap* Page = Block->Page;
-    CHECK(Page != nullptr);
-    return Page->Unmap(Allocation);
+        FVulkanMemoryHeap* Page = Block->Page;
+        CHECK(Page != nullptr);
+        return Page->Unmap(Allocation);
+    }
+    else
+    {
+        // TODO: Mapping dedicated allocations are not ref-counted
+        vkUnmapMemory(GetDevice()->GetVkDevice(), Allocation.Memory);
+    }
 }

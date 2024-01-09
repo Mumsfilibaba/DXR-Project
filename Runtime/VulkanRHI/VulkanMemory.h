@@ -45,12 +45,12 @@ struct FVulkanMemoryBlock
     // Size of the allocation
     uint64 SizeInBytes = 0;
 
-    // Totoal size of the block (TotalSizeInBytes - SizeInBytes = AlignmentOffset)
+    // Total size of the block (TotalSizeInBytes - SizeInBytes = AlignmentOffset)
     uint64 TotalSizeInBytes = 0;
 
     // Offset of the DeviceMemory
-    uint64	Offset = 0;
-    bool	bIsFree = true;
+    uint64 Offset  = 0;
+    bool   bIsFree = true;
 };
 
 

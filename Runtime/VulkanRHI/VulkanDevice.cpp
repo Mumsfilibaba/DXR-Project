@@ -201,6 +201,12 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
         Robustness2Features.robustImageAccess2  = AvailableRobustness2Features.robustImageAccess2;
         Robustness2Features.robustBufferAccess2 = AvailableRobustness2Features.robustBufferAccess2;
         Robustness2Features.nullDescriptor      = AvailableRobustness2Features.nullDescriptor;
+
+        if (Robustness2Features.robustBufferAccess2)
+        {
+            DeviceFeatures2.features.robustBufferAccess = VK_TRUE;
+        }
+
         DeviceCreateHelper.AddNext(Robustness2Features);
     }
 #endif
