@@ -82,7 +82,6 @@ bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuff
     }
 
     VkFence SignalFence = Fence ? Fence->GetVkFence() : VK_NULL_HANDLE;
-
     VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, SignalFence);
     if (VULKAN_FAILED(Result))
     {

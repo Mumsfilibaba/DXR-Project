@@ -66,8 +66,12 @@ bool FVulkanViewport::CreateSwapChain()
     SwapChainCreateInfo.Format            = GetColorFormat();
     SwapChainCreateInfo.bVerticalSync     = false;
 
-    VULKAN_ERROR_COND(Desc.Width  != 0, "Viewport Width of zero is not supported");
-    VULKAN_ERROR_COND(Desc.Height != 0, "Viewport Height of zero is not supported");
+    if (Desc.Width == 0 || Desc.Height == 0)
+    {
+        VULKAN_ERROR("Viewport Width or Height of zero is not supported");
+        return false;
+    }
+
 
     // NOTE: Create a temporary SwapChain, this is done in order to keep the old swapchain alive in case we recreate the swapchain
     FVulkanSwapChainRef NewSwapChain = new FVulkanSwapChain(GetDevice());

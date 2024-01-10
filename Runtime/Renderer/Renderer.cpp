@@ -48,6 +48,11 @@ static TAutoConsoleVariable<bool> GBasePassEnabled(
     "Enables BasePass (Disabling this disables most rendering)",
     true);
 
+static TAutoConsoleVariable<bool> GShadowsEnabled(
+    "Renderer.Feature.Shadows",
+    "Enables Rendering of ShadowMaps",
+    true);
+
 static TAutoConsoleVariable<bool> GDrawAABBs(
     "Renderer.Debug.DrawAABBs",
     "Draws all the objects bounding boxes (AABB)",
@@ -73,6 +78,8 @@ static TAutoConsoleVariable<bool> GRayTracingEnabled(
     "Enables Ray Tracing (Currently broken)",
     false);
 
+
+#define SUPPORT_VARIABLE_RATE_SHADING (0)
 
 FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {
@@ -625,7 +632,7 @@ void FRenderer::Tick()
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
 
-    // Clear the images that were debuggable last frame 
+    // Clear the images that were debug-able last frame 
     // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
 
@@ -671,6 +678,7 @@ void FRenderer::Tick()
 
             CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
 
+            // TODO: Resources should not require a CommandList to be released safely
             if (!DeferredRenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
@@ -786,7 +794,7 @@ void FRenderer::Tick()
         DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
     }
 
-#if 0
+#if SUPPORT_VARIABLE_RATE_SHADING
     if (ShadingImage && GEnableVariableRateShading.GetValue())
     {
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin VRS Image");
@@ -890,11 +898,17 @@ void FRenderer::Tick()
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
-    // Point Lights
-    ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
 
-    // Directional Light
-    ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
+    // Render Shadows
+    if (GShadowsEnabled.GetValue())
+    {
+        // Point Lights
+        ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
+
+        // Directional Light
+        ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
+    }
+
 
     // ShadowMask and GBuffer
     {
@@ -1021,7 +1035,7 @@ void FRenderer::Tick()
     {
         TRACE_SCOPE("Render UI");
 
-#if 0
+#if SUPPORT_VARIABLE_RATE_SHADING
         if (RHISupportsVariableRateShading())
         {
             CommandList.SetShadingRate(EShadingRate::VRS_1x1);

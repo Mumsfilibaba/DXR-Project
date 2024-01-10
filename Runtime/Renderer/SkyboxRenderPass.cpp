@@ -14,18 +14,49 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FMeshData SkyboxMesh = FMeshFactory::CreateSphere(0);
-    SkyboxIndexCount = SkyboxMesh.Indices.Size();
 
-    TArray<FVector3> NewVertices;
-    NewVertices.Reserve(SkyboxMesh.Vertices.Size());
-    for (const FVertex& Vertex : SkyboxMesh.Vertices)
+    // Sphere-Data
+    TArray<FVector3> SkyboxVertices;
+    TArray<uint16>   SkyboxIndicies16;
+    TArray<uint32>   SkyboxIndicies32;
+    void* SkyboxInitalIndicies = nullptr;
+
+
+    // Create a sphere used for the Skybox
     {
-        NewVertices.Emplace(Vertex.Position);
+        FMeshData SkyboxMesh = FMeshFactory::CreateSphere(0);
+        SkyboxIndexCount = SkyboxMesh.Indices.Size();
+
+        // Indices
+        SkyboxIndexFormat = SkyboxIndexCount < TNumericLimits<uint16>::Max() ? EIndexFormat::uint16 : EIndexFormat::uint32;
+        if (SkyboxIndexFormat == EIndexFormat::uint16)
+        {
+            SkyboxIndicies16.Reserve(SkyboxMesh.Indices.Size());
+            for (uint32 Index : SkyboxMesh.Indices)
+            {
+                SkyboxIndicies16.Emplace(uint16(Index));
+            }
+
+            SkyboxInitalIndicies = SkyboxIndicies16.Data();
+        }
+        else
+        {
+            SkyboxIndicies32 = Move(SkyboxMesh.Indices);
+            SkyboxInitalIndicies = SkyboxIndicies32.Data();
+        }
+
+        // Vertices
+        SkyboxVertices.Reserve(SkyboxMesh.Vertices.Size());
+        for (const FVertex& Vertex : SkyboxMesh.Vertices)
+        {
+            SkyboxVertices.Emplace(Vertex.Position);
+        }
     }
-    
-    FRHIBufferDesc VBDesc(NewVertices.SizeInBytes(), NewVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
-    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxMesh.Vertices.Data());
+
+
+    // VertexBuffer
+    FRHIBufferDesc VBDesc(SkyboxVertices.SizeInBytes(), SkyboxVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
+    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -35,28 +66,9 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    // If we can get away with 16-bit indices, store them in this array
-    TArray<uint16> NewIndicies;
-    const void* InitialIndicies = nullptr;
-
-    SkyboxIndexFormat = SkyboxIndexCount < TNumericLimits<uint16>::Max() ? EIndexFormat::uint16 : EIndexFormat::uint32;
-    if (SkyboxIndexFormat == EIndexFormat::uint16)
-    {
-        NewIndicies.Reserve(SkyboxMesh.Indices.Size());
-        for (uint32 Index : SkyboxMesh.Indices)
-        {
-            NewIndicies.Emplace(uint16(Index));
-        }
-
-        InitialIndicies = NewIndicies.Data();
-    }
-    else
-    {
-        InitialIndicies = SkyboxMesh.Indices.Data();
-    }
-
+    // IndexBuffers
     FRHIBufferDesc IBDesc(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
-    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, InitialIndicies);
+    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxInitalIndicies);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -65,6 +77,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     {
         SkyboxIndexBuffer->SetName("Skybox IndexBuffer");
     }
+
 
     // Create Texture Cube
     {

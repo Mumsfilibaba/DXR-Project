@@ -23,10 +23,6 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         return false;
     }
 
-    UNREFERENCED_VARIABLE(bUpdateDirLight);
-    UNREFERENCED_VARIABLE(DirLightFrame);
-    UNREFERENCED_VARIABLE(PointLightFrame);
-
     TArray<uint8> ShaderCode;
 
     // Point Shadow Maps

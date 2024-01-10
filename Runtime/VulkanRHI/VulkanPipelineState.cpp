@@ -13,7 +13,7 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
     int32 CurrentInputSlot = -1;
     for (const FVertexInputElement& Element : Initializer.Elements)
     {
-        // Create a new binding for each inputslot we have
+        // Create a new binding for each InputSlot we have
         if (CurrentInputSlot != static_cast<int32>(Element.InputSlot))
         {
             VkVertexInputBindingDescription BindingDescription;
