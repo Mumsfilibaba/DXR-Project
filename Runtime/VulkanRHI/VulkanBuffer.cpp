@@ -50,6 +50,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     // TODO: Look into abstracting these flags
     BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     
+    
     // VK_KHR_buffer_device_address (Core in 1.2)
     VkMemoryAllocateFlags AllocateFlags = 0;
     if (FVulkanBufferDeviceAddressKHR::IsEnabled() && Desc.IsDefault())
@@ -79,12 +80,14 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
     
+    
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to create Buffer");
         return false;
     }
+    
     
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (Desc.IsDynamic())
@@ -99,7 +102,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     
     // Allocate memory based on the buffer
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, false, MemoryAllocation))
+    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate buffer memory");
         return false;

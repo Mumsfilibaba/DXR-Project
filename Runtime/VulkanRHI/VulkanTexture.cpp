@@ -43,7 +43,8 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         VULKAN_ERROR("Invalid SampleCount");
         return false;
     }
-       
+
+    
     VkImageCreateInfo ImageCreateInfo;
     FMemory::Memzero(&ImageCreateInfo);
 
@@ -58,6 +59,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     ImageCreateInfo.samples               = SampleCount;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
+    
     
     // NOTE: We store the format so that we have easy access to it later
     ImageCreateInfo.format = Format = ConvertFormat(Desc.Format);
@@ -84,6 +86,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         ImageCreateInfo.arrayLayers  = Desc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
     }
     
+    
     // TODO: Look into abstracting these flags
     ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
     
@@ -104,6 +107,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
 
+    
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
     if (VULKAN_FAILED(Result))
     {
@@ -115,12 +119,13 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         CreateInfo = ImageCreateInfo;
     }
 
+    
     // NOTE: All textures are allocated as device local, maybe we want to move this into the AllocateImageMemory function
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     const VkMemoryAllocateFlags AllocateFlags    = 0;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, false, MemoryAllocation))
+    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate ImageMemory");
         return false;

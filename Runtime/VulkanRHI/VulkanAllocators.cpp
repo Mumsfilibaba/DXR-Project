@@ -56,7 +56,7 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, false, MemoryAllocation))
+    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate BufferMemory");
         return false;

@@ -20,6 +20,7 @@ class FVulkanPhysicalDevice;
 // Global variables that describe different features
 
 extern VULKANRHI_API bool GVulkanForceBinding;
+extern VULKANRHI_API bool GVulkanForceDedicatedAllocations;
 
 
 enum class EVulkanCommandQueueType

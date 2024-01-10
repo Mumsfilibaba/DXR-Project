@@ -13,6 +13,11 @@ static TAutoConsoleVariable<bool> GDrawTileDebug(
     "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
     false);
 
+static TAutoConsoleVariable<bool> GBasePassClearAllTargets(
+    "Renderer.BasePass.ClearAllTargets",
+    "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
+    true);
+
 bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 {
     const uint32 Width  = FrameResources.MainViewport->GetWidth();
@@ -1164,12 +1169,14 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     const float RenderWidth  = float(FrameResources.MainViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
 
+    const EAttachmentLoadAction LoadAction = GBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    
     FRHIRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
     RenderPass.RenderTargets[1] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), EAttachmentLoadAction::Load);
-    RenderPass.RenderTargets[3] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get(), EAttachmentLoadAction::Load);
-    RenderPass.RenderTargets[4] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), LoadAction);
+    RenderPass.RenderTargets[3] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get(), LoadAction);
+    RenderPass.RenderTargets[4] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), LoadAction);
     RenderPass.NumRenderTargets = 5;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
