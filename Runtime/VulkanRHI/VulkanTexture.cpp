@@ -229,7 +229,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-        Context->ImageLayoutTransitionBarrier(TransitionBarrier);
+        Context->GetCommandBuffer().ImageLayoutTransitionBarrier(TransitionBarrier);
 
         // Transfer all the mip-levels
         uint32 Width  = Desc.Extent.x;
@@ -280,8 +280,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
         TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-
-        Context->ImageLayoutTransitionBarrier(TransitionBarrier);
+        Context->GetCommandBuffer().ImageLayoutTransitionBarrier(TransitionBarrier);
         
         Context->RHIFinishContext();
     }

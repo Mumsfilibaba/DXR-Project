@@ -14,9 +14,7 @@ public:
     ~FVulkanCommandContext();
 
     bool Initialize();
-
-    void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier);
-
+    
     void ObtainCommandBuffer();
     
     void FlushCommandBuffer();

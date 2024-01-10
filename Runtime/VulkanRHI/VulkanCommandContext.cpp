@@ -55,11 +55,6 @@ bool FVulkanCommandContext::Initialize()
     return true;
 }
 
-void FVulkanCommandContext::ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier)
-{
-    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
-}
-
 void FVulkanCommandContext::ObtainCommandBuffer()
 {
     if (!CommandBuffer.Begin())
@@ -133,31 +128,91 @@ void FVulkanCommandContext::RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, 
 void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
 {
     FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderTargetView.Texture);
-    VULKAN_ERROR_COND(VulkanTexture, "Trying to clear an RenderTargetView that is nullptr");
+    if (!VulkanTexture)
+    {
+        VULKAN_ERROR("Trying to clear an RenderTargetView that is nullptr");
+        return;
+    }
     
     if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
     {
+        // NOTE: Here the image is expected to be in a "RenderTargetState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
+        FVulkanImageTransitionBarrier TransitionBarrier;
+        TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
+        TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        TransitionBarrier.DependencyFlags                 = 0;
+        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+        TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageView->GetVkFormat());
+        TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+        TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+
         VkClearColorValue VulkanClearColor;
         FMemory::Memcpy(VulkanClearColor.float32, ClearColor.Data(), sizeof(VulkanClearColor.float32));
 
         VkImageSubresourceRange SubresourceRange = ImageView->GetSubresourceRange();
         CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1, &SubresourceRange);
+        
+        // .. And transition back into "RenderTargetState"
+        TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        TransitionBarrier.NewLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        TransitionBarrier.SrcAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
+        TransitionBarrier.DstAccessMask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
     }
 }
 
 void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
 {
     FVulkanTexture* VulkanTexture = GetVulkanTexture(DepthStencilView.Texture);
-    VULKAN_ERROR_COND(VulkanTexture, "Trying to clear an DepthStencilView that is nullptr");
+    if (!VulkanTexture)
+    {
+        VULKAN_ERROR("Trying to clear an DepthStencilView that is nullptr");
+        return;
+    }
 
     if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
     {
+        // NOTE: Here the image is expected to be in a "DepthStencilState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
+        FVulkanImageTransitionBarrier TransitionBarrier;
+        TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
+        TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        TransitionBarrier.DependencyFlags                 = 0;
+        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+        TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageView->GetVkFormat());
+        TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+        TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        
         VkClearDepthStencilValue DepthStenciLValue;
         DepthStenciLValue.depth   = Depth;
         DepthStenciLValue.stencil = Stencil;
         
         VkImageSubresourceRange SubresourceRange = ImageView->GetSubresourceRange();
         CommandBuffer.ClearDepthStencilImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &DepthStenciLValue, 1, &SubresourceRange);
+        
+        // .. And transition back into "DepthStencilState"
+        TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        TransitionBarrier.NewLayout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        TransitionBarrier.SrcAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
+        TransitionBarrier.DstAccessMask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
     }
 }
 
@@ -944,7 +999,7 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
     
-        ImageLayoutTransitionBarrier(TransitionBarrier);
+        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
     }
 }
 

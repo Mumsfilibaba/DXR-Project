@@ -1,11 +1,17 @@
 #include "SkyboxRenderPass.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Renderer/Debug/GPUProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
 #include "RendererCore/TextureFactory.h"
+
+static TAutoConsoleVariable<bool> GClearBeforeSkyboxEnabled(
+    "Renderer.Skybox.ClearBeforeSkybox",
+    "Clear the final target before rendering the Skybox (Used for debugging)",
+    false);
 
 bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 {
@@ -198,7 +204,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
     DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
     DepthStencilStateInitializer.bDepthEnable      = true;
-    DepthStencilStateInitializer.bDepthWriteEnable = true;
+    DepthStencilStateInitializer.bDepthWriteEnable = false;
 
     FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
     if (!DepthStencilState)
@@ -243,8 +249,11 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
     const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
     const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
 
+    const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    
     FRHIRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 

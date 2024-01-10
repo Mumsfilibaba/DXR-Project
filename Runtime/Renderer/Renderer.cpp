@@ -53,6 +53,11 @@ static TAutoConsoleVariable<bool> GShadowsEnabled(
     "Enables Rendering of ShadowMaps",
     true);
 
+static TAutoConsoleVariable<bool> GSkyboxEnabled(
+    "Renderer.Feature.Skybox",
+    "Enables Rendering of the Skybox",
+    true);
+
 static TAutoConsoleVariable<bool> GDrawAABBs(
     "Renderer.Debug.DrawAABBs",
     "Draws all the objects bounding boxes (AABB)",
@@ -793,6 +798,11 @@ void FRenderer::Tick()
     {
         DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
     }
+    else
+    {
+        FRHIDepthStencilView DepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get());
+        CommandList.ClearDepthStencilView(DepthStencilView, 1.0f, 0);
+    }
 
 #if SUPPORT_VARIABLE_RATE_SHADING
     if (ShadingImage && GEnableVariableRateShading.GetValue())
@@ -927,7 +937,10 @@ void FRenderer::Tick()
     CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget);
 
     // Skybox Pass
-    SkyboxRenderPass.Render(CommandList, Resources, Scene);
+    if (GSkyboxEnabled.GetValue())
+    {
+        SkyboxRenderPass.Render(CommandList, Resources, Scene);
+    }
 
     CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
