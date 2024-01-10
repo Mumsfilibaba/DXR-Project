@@ -4,24 +4,24 @@
 #include "Application/WidgetUtilities.h"
 #include "Application/Application.h"
 
-static TAutoConsoleVariable<bool> GDrawFps(
+static TAutoConsoleVariable<bool> CVarDrawFps(
     "Renderer.DrawFps",
     "Enable FPS counter in the top right corner",
     true);
 
-static TAutoConsoleVariable<bool> GDrawFrameProfiler(
+static TAutoConsoleVariable<bool> CVarDrawFrameProfiler(
     "Renderer.DrawFrameProfiler",
     "Enables the FrameProfiler and displays the profiler window",
     false);
 
 void FFrameProfilerWidget::Paint()
 {
-    if (GDrawFps.GetValue())
+    if (CVarDrawFps.GetValue())
     {
         DrawFPS();
     }
 
-    if (GDrawFrameProfiler.GetValue())
+    if (CVarDrawFrameProfiler.GetValue())
     {
         DrawWindow();
     }
@@ -219,7 +219,7 @@ void FFrameProfilerWidget::DrawWindow()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool bTempDrawProfiler = GDrawFrameProfiler.GetValue();
+    bool bTempDrawProfiler = CVarDrawFrameProfiler.GetValue();
     if (ImGui::Begin("Profiler", &bTempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
@@ -252,5 +252,5 @@ void FFrameProfilerWidget::DrawWindow()
 
     ImGui::End();
 
-    GDrawFrameProfiler->SetAsBool(bTempDrawProfiler, EConsoleVariableFlags::SetByCode);
+    CVarDrawFrameProfiler->SetAsBool(bTempDrawProfiler, EConsoleVariableFlags::SetByCode);
 }

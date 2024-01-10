@@ -156,7 +156,7 @@ struct FVulkanPushConstantsCache
     void Clear()
     {
         FMemory::Memzero(Constants, sizeof(Constants));
-        NumConstants = 0;
+        NumConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
     }
 
     uint32 Constants[VULKAN_MAX_NUM_PUSH_CONSTANTS];

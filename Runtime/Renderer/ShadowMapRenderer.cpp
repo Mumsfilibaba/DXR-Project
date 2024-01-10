@@ -11,10 +11,16 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
-static TAutoConsoleVariable<bool> GCascadeDebug(
+static TAutoConsoleVariable<bool> CVarCascadeDebug(
     "Renderer.Debug.DrawCascades",
     "Draws an overlay that shows which pixel uses what shadow cascade",
     false);
+
+static TAutoConsoleVariable<bool> CVarGPUGeneratedCascades(
+    "Renderer.Feature.GPUGeneratedCascades",
+    "Draws an overlay that shows which pixel uses what shadow cascade",
+    true);
+
 
 bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources)
 {
@@ -515,8 +521,8 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 CommandList.SetConstantBuffer(PointLightPixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                 // Draw all objects to depth buffer
-                static IConsoleVariable* GFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
-                if (GFrustumCullEnabled && GFrustumCullEnabled->GetBool())
+                static IConsoleVariable* CVarFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
+                if (CVarFrustumCullEnabled && CVarFrustumCullEnabled->GetBool())
                 {
                     const FFrustum CameraFrustum = FFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
                     for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
@@ -569,6 +575,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
 void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, const FScene& Scene)
 {
     // Generate matrices for directional light
+    if (CVarGPUGeneratedCascades.GetValue())
     {
         GPU_TRACE_SCOPE(CommandList, "Generate Cascade Matrices");
 
@@ -579,7 +586,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
         GenerationInfo.CascadeSplitLambda = LightSetup.CascadeSplitLambda;
         GenerationInfo.LightUp            = LightSetup.DirectionalLightData.UpVector;
         GenerationInfo.LightDirection     = LightSetup.DirectionalLightData.Direction;
-        GenerationInfo.CascadeResolution  = (float)LightSetup.CascadeSize;
+        GenerationInfo.CascadeResolution  = static_cast<float>(LightSetup.CascadeSize);
         GenerationInfo.ShadowMatrix       = LightSetup.DirectionalLightData.ShadowMatrix;
 
         CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
@@ -647,8 +654,8 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
             // Draw all objects to shadow-map
-            static IConsoleVariable* GFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
-            if (GFrustumCullEnabled && GFrustumCullEnabled->GetBool())
+            static IConsoleVariable* CVarFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
+            if (CVarFrustumCullEnabled && CVarFrustumCullEnabled->GetBool())
             {
                 const FFrustum CameraFrustum = FFrustum(LightSetup.DirectionalLightFarPlane, LightSetup.DirectionalLightViewMatrix, LightSetup.DirectionalLightProjMatrix);
                 for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
@@ -739,7 +746,7 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
         CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
         FRHIComputeShaderRef CurrentShadowMaskShader;
-        if (GCascadeDebug.GetValue())
+        if (CVarCascadeDebug.GetValue())
         {
             CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
@@ -767,7 +774,7 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
         CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.ShadowMapCascades[3]->GetShaderResourceView(), 7);
 
         CommandList.SetUnorderedAccessView(CurrentShadowMaskShader.Get(), LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), 0);
-        if (GCascadeDebug.GetValue())
+        if (CVarCascadeDebug.GetValue())
         {
             CommandList.SetUnorderedAccessView(CurrentShadowMaskShader.Get(), LightSetup.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
         }
@@ -778,10 +785,10 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
         const uint32 ThreadsX = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetWidth(), NumThreads);
         const uint32 ThreadsY = FMath::DivideByMultiple(LightSetup.DirectionalShadowMask->GetHeight(), NumThreads);
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
-
+        
         CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
-        if (GCascadeDebug.GetValue())
+        if (CVarCascadeDebug.GetValue())
         {
             CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
         }

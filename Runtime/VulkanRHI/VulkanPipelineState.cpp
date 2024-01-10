@@ -457,7 +457,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 
     // Create ConstantRange
     VkPushConstantRange ConstantRange;
-    ConstantRange.size       = VULKAN_MAX_NUM_PUSH_CONSTANTS * 4;
+    ConstantRange.size       = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
     ConstantRange.offset     = 0;
     ConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
 
@@ -636,7 +636,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
 
     // Create ConstantRange
     VkPushConstantRange ConstantRange;
-    ConstantRange.size       = VULKAN_MAX_NUM_PUSH_CONSTANTS * 4;
+    ConstantRange.size       = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
     ConstantRange.offset     = 0;
     ConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
 

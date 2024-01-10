@@ -3,12 +3,12 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Engine/Scene/Camera.h"
 
-static TAutoConsoleVariable<float> GSunSize(
+static TAutoConsoleVariable<float> CVarSunSize(
     "Scene.Lightning.Sun.Size",
     "Sets the size of the sun, used to determine the penumbra for soft-shadows", 
     0.05f);
 
-static TAutoConsoleVariable<float> GCascadeSplitLambda(
+static TAutoConsoleVariable<float> CVarCascadeSplitLambda(
     "Scene.Lightning.CascadeSplitLambda",
     "Determines how the Cascades should be split for the Cascaded Shadow Maps", 
     1.0f);
@@ -21,11 +21,11 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
     , Position(0.0f, 0.0f, 0.0f)
-    , CascadeSplitLambda(GCascadeSplitLambda.GetValue())
-    , Size(GSunSize.GetValue())
+    , CascadeSplitLambda(CVarCascadeSplitLambda.GetValue())
+    , Size(CVarSunSize.GetValue())
 {
     // TODO: Probably move to scene
-    GSunSize->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* SunLight)
+    CVarSunSize->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* SunLight)
     {
         if (SunLight && SunLight->IsVariableFloat())
         {
@@ -34,7 +34,7 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
         }
     }));
 
-    GCascadeSplitLambda->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* CascadeSplitLambda)
+    CVarCascadeSplitLambda->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* CascadeSplitLambda)
     {
         if (CascadeSplitLambda && CascadeSplitLambda->IsVariableFloat())
         {
@@ -136,10 +136,10 @@ void FDirectionalLight::SetRotation(const FVector3& InRotation)
 
 void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
-    GCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda, EConsoleVariableFlags::SetByCode);
+    CVarCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda, EConsoleVariableFlags::SetByCode);
 }
 
 void FDirectionalLight::SetSize(float InSize)
 {
-    GSunSize->SetAsFloat(InSize, EConsoleVariableFlags::SetByCode);
+    CVarSunSize->SetAsFloat(InSize, EConsoleVariableFlags::SetByCode);
 }

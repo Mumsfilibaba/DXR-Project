@@ -13,72 +13,87 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "RendererCore/TextureFactory.h"
 
-static TAutoConsoleVariable<bool> GEnableSSAO(
+static TAutoConsoleVariable<bool> CVarEnableSSAO(
     "Renderer.Feature.SSAO",
     "Enables Screen-Space Ambient Occlusion",
     true);
 
-static TAutoConsoleVariable<bool> GEnableFXAA(
+static TAutoConsoleVariable<bool> CVarEnableFXAA(
     "Renderer.Feature.FXAA",
     "Enables FXAA for Anti-Aliasing",
     false);
 
-static TAutoConsoleVariable<bool> GFXAADebug(
+static TAutoConsoleVariable<bool> CVarFXAADebug(
     "Renderer.Debug.FXAADebug",
     "Enables FXAA (Anti-Aliasing) Debugging mode",
     false);
 
-static TAutoConsoleVariable<bool> GEnableTemporalAA(
+static TAutoConsoleVariable<bool> CVarEnableTemporalAA(
     "Renderer.Feature.TemporalAA",
     "Enables Temporal Anti-Aliasing",
     true);
 
-static TAutoConsoleVariable<bool> GEnableVariableRateShading(
+static TAutoConsoleVariable<bool> CVarEnableVariableRateShading(
     "Renderer.Feature.VariableRateShading",
     "Enables VRS (Variable Rate Shading)",
     false);
 
-static TAutoConsoleVariable<bool> GPrePassEnabled(
+static TAutoConsoleVariable<bool> CVarPrePassEnabled(
     "Renderer.Feature.PrePass",
     "Enables Pre-Pass",
     true);
 
-static TAutoConsoleVariable<bool> GBasePassEnabled(
+static TAutoConsoleVariable<bool> CVarBasePassEnabled(
     "Renderer.Feature.BasePass",
     "Enables BasePass (Disabling this disables most rendering)",
     true);
 
-static TAutoConsoleVariable<bool> GShadowsEnabled(
+static TAutoConsoleVariable<bool> CVarShadowsEnabled(
     "Renderer.Feature.Shadows",
     "Enables Rendering of ShadowMaps",
     true);
 
-static TAutoConsoleVariable<bool> GSkyboxEnabled(
+static TAutoConsoleVariable<bool> CVarShadowMaskEnabled(
+    "Renderer.Feature.ShadowMask",
+    "Enables Rendering of ShadowMask for SunShadows",
+    true);
+
+static TAutoConsoleVariable<bool> CVarPointLightShadowsEnabled(
+    "Renderer.Feature.PointLightShadows",
+    "Enables Rendering of PointLight ShadowMaps",
+    true);
+
+static TAutoConsoleVariable<bool> CVarSunShadowsEnabled(
+    "Renderer.Feature.SunShadows",
+    "Enables Rendering of SunLight/DirectionalLight ShadowMaps",
+    true);
+
+static TAutoConsoleVariable<bool> CVarSkyboxEnabled(
     "Renderer.Feature.Skybox",
     "Enables Rendering of the Skybox",
     true);
 
-static TAutoConsoleVariable<bool> GDrawAABBs(
+static TAutoConsoleVariable<bool> CVarDrawAABBs(
     "Renderer.Debug.DrawAABBs",
     "Draws all the objects bounding boxes (AABB)",
     false);
 
-static TAutoConsoleVariable<bool> GDrawPointLights(
+static TAutoConsoleVariable<bool> CVarDrawPointLights(
     "Renderer.Debug.DrawPointLights", 
     "Draws all the PointLights as spheres with the light-color",
     false);
 
-static TAutoConsoleVariable<bool> GVSyncEnabled(
+static TAutoConsoleVariable<bool> CVarVSyncEnabled(
     "Renderer.Feature.VerticalSync",
     "Enables Vertical-Sync", 
     false);
 
-static TAutoConsoleVariable<bool> GFrustumCullEnabled(
+static TAutoConsoleVariable<bool> CVarFrustumCullEnabled(
     "Renderer.Feature.FrustumCulling",
     "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
     true);
 
-static TAutoConsoleVariable<bool> GRayTracingEnabled(
+static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
     "Renderer.Feature.RayTracing",
     "Enables Ray Tracing (Currently broken)",
     false);
@@ -579,7 +594,7 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
     InCommandList.BeginRenderPass(RenderPass);
 
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    if (GFXAADebug.GetValue())
+    if (CVarFXAADebug.GetValue())
     {
         InCommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         InCommandList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
@@ -642,7 +657,7 @@ void FRenderer::Tick()
     TextureDebugger->ClearImages();
 
     // FrustumCulling
-    if (!GFrustumCullEnabled.GetValue())
+    if (!CVarFrustumCullEnabled.GetValue())
     {
         for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
         {
@@ -747,7 +762,7 @@ void FRenderer::Tick()
     CameraBuffer.ViewportWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
     CameraBuffer.ViewportHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    if (GEnableTemporalAA.GetValue())
+    if (CVarEnableTemporalAA.GetValue())
     {
         const FVector2 CameraJitter    = HaltonState.NextSample();
         const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
@@ -794,7 +809,7 @@ void FRenderer::Tick()
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
 
     // PrePass
-    if (GPrePassEnabled.GetValue())
+    if (CVarPrePassEnabled.GetValue())
     {
         DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
     }
@@ -805,7 +820,7 @@ void FRenderer::Tick()
     }
 
 #if SUPPORT_VARIABLE_RATE_SHADING
-    if (ShadingImage && GEnableVariableRateShading.GetValue())
+    if (ShadingImage && CVarEnableVariableRateShading.GetValue())
     {
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin VRS Image");
         CommandList.SetShadingRate(EShadingRate::VRS_1x1);
@@ -832,7 +847,7 @@ void FRenderer::Tick()
 #endif
 
     // BasePass
-    if (GBasePassEnabled.GetValue())
+    if (CVarBasePassEnabled.GetValue())
     {
         DeferredRenderer.RenderBasePass(CommandList, Resources);
     }
@@ -890,7 +905,7 @@ void FRenderer::Tick()
     // SSAO
     CommandList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
-    if (GEnableSSAO.GetValue())
+    if (CVarEnableSSAO.GetValue())
     {
         GPU_TRACE_SCOPE(CommandList, "SSAO");
         SSAORenderer.Render(CommandList, Resources);
@@ -910,13 +925,19 @@ void FRenderer::Tick()
 
 
     // Render Shadows
-    if (GShadowsEnabled.GetValue())
+    if (CVarShadowsEnabled.GetValue())
     {
         // Point Lights
-        ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
+        if (CVarPointLightShadowsEnabled.GetValue())
+        {
+            ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
+        }
 
         // Directional Light
-        ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
+        if (CVarSunShadowsEnabled.GetValue())
+        {
+            ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
+        }
     }
 
 
@@ -928,7 +949,24 @@ void FRenderer::Tick()
         CommandList.TransitionTexture(LightSetup.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
         CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
-        ShadowMapRenderer.RenderShadowMasks(CommandList, LightSetup, Resources);
+        if (CVarShadowMaskEnabled.GetValue())
+        {
+            ShadowMapRenderer.RenderShadowMasks(CommandList, LightSetup, Resources);
+        }
+        else
+        {
+            CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+
+            const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
+            
+            const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), DebugClearColor);
+            
+            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+            CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+        }
 
         DeferredRenderer.RenderDeferredTiledLightPass(CommandList, Resources, LightSetup);
     }
@@ -937,7 +975,7 @@ void FRenderer::Tick()
     CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget);
 
     // Skybox Pass
-    if (GSkyboxEnabled.GetValue())
+    if (CVarSkyboxEnabled.GetValue())
     {
         SkyboxRenderPass.Render(CommandList, Resources, Scene);
     }
@@ -992,19 +1030,19 @@ void FRenderer::Tick()
     }
 
     // Debug PointLights
-    if (GDrawPointLights.GetValue())
+    if (CVarDrawPointLights.GetValue())
     {
         DebugRenderer.RenderPointLights(CommandList, Resources, Scene);
     }
 
     // Debug AABBs
-    if (GDrawAABBs.GetValue())
+    if (CVarDrawAABBs.GetValue())
     {
         DebugRenderer.RenderObjectAABBs(CommandList, Resources);
     }
 
     // Temporal AA
-    if (GEnableTemporalAA.GetValue())
+    if (CVarEnableTemporalAA.GetValue())
     {
         CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
         CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess);
@@ -1027,7 +1065,7 @@ void FRenderer::Tick()
         EResourceAccess::PixelShaderResource);
 
     // FXAA
-    if (GEnableFXAA.GetValue())
+    if (CVarEnableFXAA.GetValue())
     {
         PerformFXAA(CommandList);
     }
@@ -1069,7 +1107,7 @@ void FRenderer::Tick()
 
     CommandList.EndExternalCapture();
 
-    CommandList.PresentViewport(Resources.MainViewport.Get(), GVSyncEnabled.GetValue());
+    CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
 
     {
         TRACE_SCOPE("ExecuteCommandList");

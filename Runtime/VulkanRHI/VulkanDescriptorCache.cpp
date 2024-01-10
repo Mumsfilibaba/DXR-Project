@@ -247,6 +247,8 @@ bool FVulkanDescriptorSetCache::AllocateDescriptorSets(EShaderVisibility ShaderS
     DescriptorSetAllocateInfo.pSetLayouts        = &Layout;
     
     VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
+    DescriptorSet = VK_NULL_HANDLE;
+    
     VkResult Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &DescriptorSetAllocateInfo, &DescriptorSet);
     if (Result == VK_ERROR_OUT_OF_POOL_MEMORY)
     {
@@ -557,8 +559,9 @@ void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, ESh
 
 void FVulkanDescriptorSetCache::SetDescriptorSet(VkPipelineLayout PipelineLayout, EShaderVisibility ShaderStage)
 {
-    uint32 DescriptorSetBindPoint;
     VkPipelineBindPoint BindPoint;
+    uint32              DescriptorSetBindPoint;
+
     if (ShaderStage == ShaderVisibility_Compute)
     {
         BindPoint              = VK_PIPELINE_BIND_POINT_COMPUTE;
@@ -571,6 +574,7 @@ void FVulkanDescriptorSetCache::SetDescriptorSet(VkPipelineLayout PipelineLayout
     }
     
     VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
+    CHECK(DescriptorSet != VK_NULL_HANDLE);
     Context.GetCommandBuffer().BindDescriptorSets(BindPoint, PipelineLayout, DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);
 }
 

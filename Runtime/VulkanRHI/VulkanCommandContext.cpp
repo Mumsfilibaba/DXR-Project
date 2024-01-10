@@ -139,10 +139,10 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         // NOTE: Here the image is expected to be in a "RenderTargetState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
         FVulkanImageTransitionBarrier TransitionBarrier;
         TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
-        TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        TransitionBarrier.PreviousLayout                  = ConvertResourceStateToImageLayout(EResourceAccess::RenderTarget);
         TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         TransitionBarrier.DependencyFlags                 = 0;
-        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        TransitionBarrier.SrcAccessMask                   = ConvertResourceStateToAccessFlags(EResourceAccess::RenderTarget);
         TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
         TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -161,9 +161,9 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         
         // .. And transition back into "RenderTargetState"
         TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        TransitionBarrier.NewLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        TransitionBarrier.NewLayout      = ConvertResourceStateToImageLayout(EResourceAccess::RenderTarget);
         TransitionBarrier.SrcAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
-        TransitionBarrier.DstAccessMask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        TransitionBarrier.DstAccessMask  = ConvertResourceStateToAccessFlags(EResourceAccess::RenderTarget);
         TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
         TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
@@ -1027,14 +1027,51 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
 
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
-    // TODO: Check what type of barrier is needed here
-    UNREFERENCED_VARIABLE(Texture);
+    FVulkanTexture* VulkanTexture = GetVulkanTexture(Texture);
+    if (!VulkanTexture)
+    {
+        VULKAN_WARNING("Texture is nullptr");
+        return;
+    }
+
+    FVulkanImageTransitionBarrier TransitionBarrier;
+    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_GENERAL;
+    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+    TransitionBarrier.Image                           = VulkanTexture->GetVkImage();
+    TransitionBarrier.DependencyFlags                 = 0;
+    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    TransitionBarrier.DstAccessMask                   = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
+    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
+    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
+    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)   
 {
-    // TODO: Check what type of barrier is needed here
-    UNREFERENCED_VARIABLE(Buffer);
+    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(Buffer);
+    if (!VulkanBuffer)
+    {
+        VULKAN_WARNING("Buffer is nullptr");
+        return;
+    }
+    
+    FVulkanBufferBarrier BufferBarrier;
+    BufferBarrier.SrcStageMask    = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    BufferBarrier.DstStageMask    = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+    BufferBarrier.DependencyFlags = 0;
+    BufferBarrier.Buffer          = VulkanBuffer->GetVkBuffer();
+    BufferBarrier.SrcAccessMask   = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    BufferBarrier.DstAccessMask   = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+    BufferBarrier.Offset          = 0;
+    BufferBarrier.Size            = VK_WHOLE_SIZE;
+
+    CommandBuffer.BufferMemoryPipelineBarrier(BufferBarrier);
 }
 
 void FVulkanCommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)

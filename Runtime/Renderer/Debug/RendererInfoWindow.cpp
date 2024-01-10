@@ -6,14 +6,15 @@
 
 #include <imgui.h>
 
-static TAutoConsoleVariable<bool> GDrawRendererInfo(
+static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
     "Renderer.DrawRendererInfo",
     "Enables the drawing of the Renderer Info Window", 
     true);
 
+
 void FRendererInfoWindow::Paint()
 {
-    if (GDrawRendererInfo.GetValue())
+    if (CVarDrawRendererInfo.GetValue())
     {
         const FString AdapterName = RHIGetAdapterName();
 

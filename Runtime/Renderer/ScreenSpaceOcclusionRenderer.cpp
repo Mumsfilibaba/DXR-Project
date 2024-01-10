@@ -11,17 +11,17 @@
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>
 
-static TAutoConsoleVariable<float> GSSAORadius(
+static TAutoConsoleVariable<float> CVarSSAORadius(
     "Renderer.SSAO.Radius",
     "Specifies the radius of the Screen-Space Ray-Trace in SSAO",
     0.2f);
 
-static TAutoConsoleVariable<float> GSSAOBias(
+static TAutoConsoleVariable<float> CVarSSAOBias(
     "Renderer.SSAO.Bias", 
     "Specifies the bias when testing the Screen-Space Rays against the depth-buffer",
     0.075f);
 
-static TAutoConsoleVariable<int32> GSSAOKernelSize(
+static TAutoConsoleVariable<int32> CVarSSAOKernelSize(
     "Renderer.SSAO.KernelSize",
     "Specifies the number of samples for each pixel",
     16);
@@ -185,9 +185,9 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
     SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
     SSAOSettings.GBufferSize = FIntVector2(GBufferWidth, GBufferHeight);
-    SSAOSettings.Radius      = GSSAORadius.GetValue();
-    SSAOSettings.KernelSize  = GSSAOKernelSize.GetValue();
-    SSAOSettings.Bias        = GSSAOBias.GetValue();
+    SSAOSettings.Radius      = CVarSSAORadius.GetValue();
+    SSAOSettings.KernelSize  = CVarSSAOKernelSize.GetValue();
+    SSAOSettings.Bias        = CVarSSAOBias.GetValue();
 
     CommandList.SetComputePipelineState(PipelineState.Get());
     CommandList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);

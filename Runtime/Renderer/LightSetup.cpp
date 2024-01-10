@@ -5,22 +5,22 @@
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Core/Misc/ConsoleManager.h"
 
-static TAutoConsoleVariable<int32> GCSMCascadeSize(
+static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Renderer.CSM.CascadeSize",
     "Specifies the resolution of each Shadow Cascade",
     2048);
 
-static TAutoConsoleVariable<int32> GPointLightShadowMapSize(
+static TAutoConsoleVariable<int32> CVarPointLightShadowMapSize(
     "Renderer.Shadows.PointLightShadowMapSize",
     "Specifies the resolution of each Shadow Cascade",
     512);
 
-static TAutoConsoleVariable<int32> GEnvironmentIrradianceProbeSize(
+static TAutoConsoleVariable<int32> CVarEnvironmentIrradianceProbeSize(
     "Renderer.Environment.IrradianceProbeSize",
     "Specifies the resolution of each Irradiance Probe (Cube-Map) size",
     32);
 
-static TAutoConsoleVariable<int32> GEnvironmentSpecularIrradianceProbeSize(
+static TAutoConsoleVariable<int32> CVarEnvironmentSpecularIrradianceProbeSize(
     "Renderer.Environment.SpecularIrradianceProbeSize",
     "Specifies the resolution of each Specular Irradiance Probe (Cube-Map) size",
     256);
@@ -73,10 +73,10 @@ static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
 bool FLightSetup::Initialize()
 {
     // Initialize the light-setup from CVars
-    CascadeSize                 = ClampTextureSize(512, 4096, GCSMCascadeSize.GetValue());
-    PointLightShadowSize        = ClampTextureSize(128, 1024, GPointLightShadowMapSize.GetValue());
-    IrradianceProbeSize         = ClampTextureSize(32, 512, GEnvironmentIrradianceProbeSize.GetValue());
-    SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, GEnvironmentSpecularIrradianceProbeSize.GetValue());
+    CascadeSize                 = ClampTextureSize(512, 4096, CVarCSMCascadeSize.GetValue());
+    PointLightShadowSize        = ClampTextureSize(128, 1024, CVarPointLightShadowMapSize.GetValue());
+    IrradianceProbeSize         = ClampTextureSize(32, 512, CVarEnvironmentIrradianceProbeSize.GetValue());
+    SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, CVarEnvironmentSpecularIrradianceProbeSize.GetValue());
 
     {
         FRHIBufferDesc BufferDesc(sizeof(DirectionalLightData), sizeof(DirectionalLightData), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);

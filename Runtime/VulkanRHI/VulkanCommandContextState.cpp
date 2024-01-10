@@ -103,8 +103,6 @@ void FVulkanCommandContextState::BindComputeState()
 
 void FVulkanCommandContextState::BindDescriptorSets(VkPipelineLayout PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
-    UNREFERENCED_VARIABLE(bForceBinding);
-    
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
         VkDescriptorSetLayout DescriptorSetLayout;
@@ -149,6 +147,11 @@ void FVulkanCommandContextState::ResetState()
 {
     CommonState.PushConstantsCache.Clear();
 
+    CommonState.ConstantBufferCache.Clear();
+    CommonState.SamplerStateCache.Clear();
+    CommonState.ShaderResourceViewCache.Clear();
+    CommonState.UnorderedAccessViewCache.Clear();
+
     GraphicsState.VBCache.Clear();
     GraphicsState.IBCache.Clear();
 
@@ -175,10 +178,18 @@ void FVulkanCommandContextState::ResetState()
 
 void FVulkanCommandContextState::ResetStateResources()
 {
+    CommonState.ConstantBufferCache.DirtyStateAll();
+    CommonState.ShaderResourceViewCache.DirtyStateAll();
+    CommonState.UnorderedAccessViewCache.DirtyStateAll();
 }
 
 void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
 {
+    CommonState.ConstantBufferCache.DirtyStateAll();
+    CommonState.ShaderResourceViewCache.DirtyStateAll();
+    CommonState.UnorderedAccessViewCache.DirtyStateAll();
+    CommonState.SamplerStateCache.DirtyStateAll();
+    
     GraphicsState.bBindIndexBuffer   = true;
     GraphicsState.bBindBlendFactor   = true;
     GraphicsState.bBindPipelineState = true;
@@ -304,7 +315,7 @@ void FVulkanCommandContextState::SetVertexBuffer(FVulkanBuffer* VertexBuffer, ui
         GraphicsState.VBCache.VertexBuffers[VertexBufferSlot]       = Buffer;
         GraphicsState.VBCache.VertexBufferOffsets[VertexBufferSlot] = Offset;
         GraphicsState.VBCache.NumVertexBuffers = FMath::Max(GraphicsState.VBCache.NumVertexBuffers, VertexBufferSlot + 1);
-        GraphicsState.bBindVertexBuffers = true;
+        GraphicsState.bBindVertexBuffers       = true;
     }
 }
 

@@ -6,14 +6,15 @@
 
 #include <imgui.h>
 
-static TAutoConsoleVariable<bool> GDrawGPUProfiler(
+static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Renderer.DrawGPUProfiler",
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
+
 void FGPUProfilerWindow::Paint()
 {
-    if (GDrawGPUProfiler.GetValue())
+    if (CVarDrawGPUProfiler.GetValue())
     {
         DrawWindow();
     }
@@ -176,7 +177,7 @@ void FGPUProfilerWindow::DrawWindow()
         ImGuiWindowFlags_NoFocusOnAppearing |
         ImGuiWindowFlags_NoSavedSettings;
 
-    bool bTempDrawProfiler = GDrawGPUProfiler.GetValue();
+    bool bTempDrawProfiler = CVarDrawGPUProfiler.GetValue();
     if (ImGui::Begin("Profiler", &bTempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
@@ -209,5 +210,5 @@ void FGPUProfilerWindow::DrawWindow()
 
     ImGui::End();
 
-    GDrawGPUProfiler->SetAsBool(bTempDrawProfiler, EConsoleVariableFlags::SetByCode);
+    CVarDrawGPUProfiler->SetAsBool(bTempDrawProfiler, EConsoleVariableFlags::SetByCode);
 }

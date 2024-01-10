@@ -8,12 +8,12 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
-static TAutoConsoleVariable<bool> GDrawTileDebug(
+static TAutoConsoleVariable<bool> CVarDrawTileDebug(
     "Renderer.Debug.DrawTiledLightning", 
     "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
     false);
 
-static TAutoConsoleVariable<bool> GBasePassClearAllTargets(
+static TAutoConsoleVariable<bool> CVarBasePassClearAllTargets(
     "Renderer.BasePass.ClearAllTargets",
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
     true);
@@ -1169,7 +1169,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     const float RenderWidth  = float(FrameResources.MainViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
 
-    const EAttachmentLoadAction LoadAction = GBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
     FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
@@ -1319,7 +1319,7 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     }
 
     FRHIComputeShader* LightPassShader = nullptr;
-    if (GDrawTileDebug.GetValue())
+    if (CVarDrawTileDebug.GetValue())
     {
         LightPassShader = TiledLightShader_TileDebug.Get();
         CommandList.SetComputePipelineState(TiledLightPassPSO_TileDebug.Get());

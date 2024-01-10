@@ -5,14 +5,14 @@
 
 #include <imgui.h>
 
-static TAutoConsoleVariable<bool> GDrawTextureDebugger(
+static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
     "Renderer.Debug.ViewRenderTargets",
     "Enables the Debug RenderTarget-viewer",
     false);
 
 void FRenderTargetDebugWindow::Paint()
 {
-    if (GDrawTextureDebugger.GetValue())
+    if (CVarDrawTextureDebugger.GetValue())
     {
         const ImVec2 MainViewportPos = FImGui::GetMainViewportPos();
         const ImVec2 DisplaySize     = FImGui::GetMainViewportSize();
@@ -34,7 +34,7 @@ void FRenderTargetDebugWindow::Paint()
         const float Width  = DisplaySize.x;
 		const float Height = DisplaySize.y;
 
-        bool bTempDrawTextureDebugger = GDrawTextureDebugger.GetValue();
+        bool bTempDrawTextureDebugger = CVarDrawTextureDebugger.GetValue();
         if (ImGui::Begin("RenderTarget Debugger", &bTempDrawTextureDebugger, Flags))
         {
             const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
@@ -86,7 +86,7 @@ void FRenderTargetDebugWindow::Paint()
 
                 if (ButtonCenteredOnLine("Close"))
                 {
-                    GDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
+                    CVarDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }
 
                 ImGui::Separator();
