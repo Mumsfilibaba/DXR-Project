@@ -351,7 +351,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         {
             DEBUG_BREAK();
         }
-    
+
         // Retrieve or create a FrameBuffer
         FramebufferKey.RenderPass = RenderPass;
 
@@ -367,11 +367,11 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
             DEBUG_BREAK();
         }
     }
-    
+
     // Begin the RenderPass
     VkRenderPassBeginInfo RenderPassBeginInfo;
     FMemory::Memzero(&RenderPassBeginInfo);
-    
+
     RenderPassBeginInfo.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     RenderPassBeginInfo.renderPass               = RenderPass;
     RenderPassBeginInfo.framebuffer              = FrameBuffer;
@@ -379,7 +379,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     RenderPassBeginInfo.renderArea.extent.height = Height;
     RenderPassBeginInfo.clearValueCount          = NumClearValues;
     RenderPassBeginInfo.pClearValues             = ClearValues;
-    
+
     CommandBuffer.BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 

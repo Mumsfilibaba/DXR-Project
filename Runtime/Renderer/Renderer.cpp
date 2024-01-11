@@ -241,6 +241,8 @@ bool FRenderer::Create()
     {
         Resources.MainViewport     = GEngine->MainViewport->GetRHIViewport();
         Resources.BackBufferFormat = Resources.MainViewport->GetColorFormat();
+        Resources.CurrentWidth     = Resources.MainViewport->GetWidth();
+        Resources.CurrentHeight    = Resources.MainViewport->GetHeight();
     }
 
     if (FApplication::IsInitialized())
@@ -583,8 +585,17 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
         float Height;
     } Settings;
 
-    Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
-    Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
+    const float RenderWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
+    const float RenderHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
+
+    Settings.Width  = RenderWidth;
+    Settings.Height = RenderHeight;
+
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    InCommandList.SetViewport(ViewportRegion);
+
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    InCommandList.SetScissorRect(ScissorRegion);
 
     FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
@@ -621,6 +632,15 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Draw BackBuffer");
 
     TRACE_SCOPE("Draw to BackBuffer");
+
+    const float RenderWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
+    const float RenderHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
+
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    InCmdList.SetViewport(ViewportRegion);
+
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    InCmdList.SetScissorRect(ScissorRegion);
 
     FRHIRenderPassDesc RenderPass;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
@@ -680,23 +700,19 @@ void FRenderer::Tick()
     // START FRAME ON THE GPU
     GRHICommandExecutor.Tick();
 
-    // Check if we resized and update the Viewport-size on the RHI-Thread
     if (ResizeEvent)
     {
+        // Check if we resized and update the Viewport-size on the RHI-Thread
         FRHIViewport* Viewport = Resources.MainViewport.Get();
-        
-        // TODO: Remove these
-        static uint32 StaticCurrentWidth  = Viewport->GetWidth();
-        static uint32 StaticCurrentHeight = Viewport->GetHeight();
 
+        // TODO: Remove these
         uint32 NewWidth  = ResizeEvent->GetWidth();
         uint32 NewHeight = ResizeEvent->GetHeight();
-        
-        if ((StaticCurrentWidth != NewWidth || StaticCurrentHeight != NewHeight) && NewWidth > 0 && NewHeight > 0)
-        {
-            LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", StaticCurrentWidth, StaticCurrentHeight, NewWidth, NewHeight);
 
+        if ((Resources.CurrentWidth != NewWidth || Resources.CurrentHeight != NewHeight) && NewWidth > 0 && NewHeight > 0)
+        {
             CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
+            LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, NewWidth, NewHeight);
 
             // TODO: Resources should not require a CommandList to be released safely
             if (!DeferredRenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
@@ -723,10 +739,9 @@ void FRenderer::Tick()
                 return;
             }
         }
-        
-        StaticCurrentWidth  = NewWidth;
-        StaticCurrentHeight = NewHeight;
-        
+
+        Resources.CurrentWidth  = NewWidth;
+        Resources.CurrentHeight = NewHeight;
         ResizeEvent.Reset();
     }
 

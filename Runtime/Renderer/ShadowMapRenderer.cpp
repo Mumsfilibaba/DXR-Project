@@ -654,9 +654,8 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
 
             CommandList.BeginRenderPass(RenderPass);
 
-            const int32 CascadeSize = LightSetup.CascadeSize;
-
-            FRHIViewportRegion ViewportRegion(static_cast<float>(CascadeSize), static_cast<float>(CascadeSize), 0.0f, 0.0f, 0.0f, 1.0f);
+            const float CascadeSize = static_cast<float>(LightSetup.CascadeSize);
+            FRHIViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
             CommandList.SetViewport(ViewportRegion);
 
             FRHIScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);

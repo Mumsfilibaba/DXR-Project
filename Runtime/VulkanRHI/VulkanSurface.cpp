@@ -33,7 +33,6 @@ bool FVulkanSurface::Initialize()
     }
 
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
-
     VkBool32 PresentSupport = false;
     Result = vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice->GetVkPhysicalDevice(), Queue->GetQueueFamilyIndex(), Surface, &PresentSupport);
     if (VULKAN_FAILED(Result))
@@ -113,7 +112,7 @@ bool FVulkanSurface::GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) 
         VULKAN_ERROR("Surface does not support any present-mode");
         return false;
     }
-    
+
     Result = vkGetPhysicalDeviceSurfacePresentModesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &PresentModeCount, OutPresentModes.Data());
     if (Result == VK_ERROR_SURFACE_LOST_KHR)
     {
@@ -132,7 +131,6 @@ bool FVulkanSurface::GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) 
 bool FVulkanSurface::GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) const
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
-
     VkResult Result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(PhysicalDevice->GetVkPhysicalDevice(), Surface, &OutCapabilities);
     if (Result == VK_ERROR_SURFACE_LOST_KHR)
     {

@@ -45,11 +45,11 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
 {
     if (CVarIsProcessDPIAware.GetValue())
     {
-#if PLATFORM_WINDOWS_10
-        ::SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-#elif PLATFORM_WINDOWS_VISTA
+    #if PLATFORM_WINDOWS_10
+        ::SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    #elif PLATFORM_WINDOWS_VISTA
         ::SetProcessDPIAware();
-#endif
+    #endif
     }
 
     const bool bResult = RegisterWindowClass();

@@ -116,8 +116,8 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
 
     CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
-    const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
-    const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
+    const float RenderWidth  = float(FrameResources.CurrentWidth);
+    const float RenderHeight = float(FrameResources.CurrentHeight);
 
     FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);

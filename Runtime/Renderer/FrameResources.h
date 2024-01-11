@@ -119,7 +119,10 @@ struct RENDERER_API FFrameResources
     TArray<uint32>                         DeferredVisibleCommands;
     TArray<uint32>                         ForwardVisibleCommands;
 
-    FRHIViewportRef                        MainViewport;
-    EFormat                                BackBufferFormat;
+    // BackBuffer
+    FRHIViewportRef MainViewport;
+    EFormat         BackBufferFormat;
+    uint32          CurrentWidth;
+    uint32          CurrentHeight;
 };
 

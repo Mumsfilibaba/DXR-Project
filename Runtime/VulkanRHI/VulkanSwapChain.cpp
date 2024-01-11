@@ -122,7 +122,6 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
 
     CurrentExtent.width  = FMath::Max(CurrentExtent.width , 1u);
     CurrentExtent.height = FMath::Max(CurrentExtent.height, 1u);
-    
     VULKAN_INFO("SwapChain - CurrentExtent: w=%d h=%d, MinExtent: w=%d h=%d, MaxExtent: w=%d h=%d", Capabilities.currentExtent.width, Capabilities.currentExtent.height, Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height);
 
     // Get the number of swapchain image that we can have based on the BackBuffer CVar

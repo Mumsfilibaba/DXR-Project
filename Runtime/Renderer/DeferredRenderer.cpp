@@ -995,8 +995,8 @@ void FDeferredRenderer::Release()
 
 void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, const FScene& Scene)
 {
-    const float RenderWidth  = float(FrameResources.MainViewport->GetWidth());
-    const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
+    const float RenderWidth  = float(FrameResources.CurrentWidth);
+    const float RenderHeight = float(FrameResources.CurrentHeight);
 
     {
         INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PrePass");
@@ -1173,8 +1173,8 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
     GPU_TRACE_SCOPE(CommandList, "Base Pass");
 
-    const float RenderWidth  = float(FrameResources.MainViewport->GetWidth());
-    const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
+    const float RenderWidth  = float(FrameResources.CurrentWidth);
+    const float RenderHeight = float(FrameResources.CurrentHeight);
 
     const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
@@ -1384,12 +1384,14 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
         int32 ScreenHeight;
     } Settings;
 
+    const int32 RenderWidth  = FrameResources.CurrentWidth;
+    const int32 RenderHeight = FrameResources.CurrentHeight;
+
     Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
     Settings.NumPointLights  = LightSetup.PointLightsData.Size();
     Settings.NumSkyLightMips = Skylight.SpecularIrradianceMap->GetNumMipLevels();
-    Settings.ScreenWidth     = FrameResources.FinalTarget->GetWidth();
-    Settings.ScreenHeight    = FrameResources.FinalTarget->GetHeight();
-
+    Settings.ScreenWidth     = static_cast<int32>(RenderWidth);
+    Settings.ScreenHeight    = static_cast<int32>(RenderHeight);
     CommandList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
     constexpr uint32 NumThreads = 16;
