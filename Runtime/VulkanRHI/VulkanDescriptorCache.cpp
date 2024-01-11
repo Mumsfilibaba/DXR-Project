@@ -15,11 +15,12 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     BufferCreateInfo.size                  = VULKAN_DEFAULT_BUFFER_NUM_BYTES;
     BufferCreateInfo.usage                 = 
         VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT | 
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | 
         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | 
         VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    
+
     VkResult Result = vkCreateBuffer(Device.GetVkDevice(), &BufferCreateInfo, nullptr, &NullBuffer);
     if (VULKAN_FAILED(Result))
     {
@@ -41,14 +42,14 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 
 
     // Create a NullImage
-    constexpr VkExtent3D NullExtent = { 4, 4, 1 };
+    constexpr VkExtent3D NullExtent = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
 
     VkImageCreateInfo ImageCreateInfo;
     FMemory::Memzero(&ImageCreateInfo);
 
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageCreateInfo.imageType             = VK_IMAGE_TYPE_2D;
-    ImageCreateInfo.usage                 = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+    ImageCreateInfo.usage                 = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
     ImageCreateInfo.format                = VK_FORMAT_R8G8B8A8_UNORM;
     ImageCreateInfo.extent                = NullExtent;
     ImageCreateInfo.mipLevels             = 1;

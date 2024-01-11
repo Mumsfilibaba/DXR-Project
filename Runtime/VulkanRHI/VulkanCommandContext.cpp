@@ -34,11 +34,16 @@ bool FVulkanCommandContext::Initialize()
     // TODO: Another solution for this but for now Transition default images here
     ObtainCommandBuffer();
 
+    VkBuffer DefaultBuffer = ContextState.GetDescriptorSetCache().GetDefaultResources().NullBuffer;
+    CommandBuffer.FillBuffer(DefaultBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
+
+    VkImage DefaultImage = ContextState.GetDescriptorSetCache().GetDefaultResources().NullImage;
+
     FVulkanImageTransitionBarrier TransitionBarrier;
-    TransitionBarrier.Image                           = ContextState.GetDescriptorSetCache().GetDefaultResources().NullImage;
-    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
-    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+    TransitionBarrier.Image                           = DefaultImage;
     TransitionBarrier.DependencyFlags                 = 0;
+    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
+    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
     TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
     TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
@@ -51,8 +56,27 @@ bool FVulkanCommandContext::Initialize()
 
     CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 
-    VkBuffer DefaultBuffer = ContextState.GetDescriptorSetCache().GetDefaultResources().NullBuffer;
-    CommandBuffer.FillBuffer(DefaultBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
+    VkBufferImageCopy BufferImageCopy;
+    BufferImageCopy.bufferOffset                    = 0;
+    BufferImageCopy.bufferRowLength                 = 0;
+    BufferImageCopy.bufferImageHeight               = 0;
+    BufferImageCopy.imageSubresource.aspectMask     = TransitionBarrier.SubresourceRange.aspectMask;
+    BufferImageCopy.imageSubresource.mipLevel       = 0;
+    BufferImageCopy.imageSubresource.baseArrayLayer = 0;
+    BufferImageCopy.imageSubresource.layerCount     = 1;
+    BufferImageCopy.imageOffset                     = { 0, 0, 0 };
+    BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
+
+    CommandBuffer.CopyBufferToImage(DefaultBuffer, DefaultImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+
+    TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    TransitionBarrier.NewLayout      = VK_IMAGE_LAYOUT_GENERAL;
+    TransitionBarrier.SrcAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
+    TransitionBarrier.DstAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
+    TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
 
     FlushCommandBuffer();
     return true;
@@ -628,7 +652,7 @@ void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureR
         Source            += SrcRowPitch;
         Allocation.Memory += RowPitch;
     }
-    
+
     VkBufferImageCopy BufferImageCopy;
     BufferImageCopy.bufferOffset                    = Allocation.Offset;
     BufferImageCopy.bufferRowLength                 = 0;
