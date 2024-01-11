@@ -224,6 +224,7 @@ VULKAN_FUNCTION_DEFINITION(CmdBindPipeline);
 VULKAN_FUNCTION_DEFINITION(CmdBindDescriptorSets);
 VULKAN_FUNCTION_DEFINITION(CmdPushConstants);
 VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier);
+VULKAN_FUNCTION_DEFINITION(CmdFillBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBuffer);
 VULKAN_FUNCTION_DEFINITION(CmdCopyBufferToImage);
 VULKAN_FUNCTION_DEFINITION(CmdCopyImage);
@@ -353,6 +354,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBindDescriptorSets);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPushConstants);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdFillBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBuffer);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyBufferToImage);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdCopyImage);
