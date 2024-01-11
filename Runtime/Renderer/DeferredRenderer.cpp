@@ -13,10 +13,16 @@ static TAutoConsoleVariable<bool> CVarDrawTileDebug(
     "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
     false);
 
+static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
+    "Renderer.PrePass.DepthReduce",
+    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer",
+    true);
+
 static TAutoConsoleVariable<bool> CVarBasePassClearAllTargets(
     "Renderer.BasePass.ClearAllTargets",
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
     true);
+
 
 bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 {
@@ -992,9 +998,9 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
     const float RenderWidth  = float(FrameResources.MainViewport->GetWidth());
     const float RenderHeight = float(FrameResources.MainViewport->GetHeight());
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PrePass");
-
     {
+        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PrePass");
+    
         TRACE_SCOPE("PrePass");
 
         GPU_TRACE_SCOPE(CommandList, "Pre Pass");
@@ -1091,13 +1097,14 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         }
 
         CommandList.EndRenderPass();
+    
+        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End PrePass");
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End PrePass");
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Reduction");
-
+    if (CVarPrePassDepthReduce.GetValue())
     {
+        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Reduction");
+
         TRACE_SCOPE("Depth Reduction");
 
         GPU_TRACE_SCOPE(CommandList, "Depth Reduction");
@@ -1153,9 +1160,9 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
         CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+    
+        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
     }
-
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
 }
 
 void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources)

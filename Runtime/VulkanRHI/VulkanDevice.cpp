@@ -178,7 +178,13 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     DeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     DeviceFeatures2.features = DeviceDesc.RequiredFeatures;
 
-    // Construct the pNext chain 
+    const VkPhysicalDeviceFeatures& AvailableDeviceFeatures = GetPhysicalDevice()->GetDeviceFeatures();
+    if (AvailableDeviceFeatures.robustBufferAccess)
+    {
+        DeviceFeatures2.features.robustBufferAccess = VK_TRUE;
+    }
+    
+    // Construct the pNext chain
     FVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
     DeviceCreateHelper.AddNext(DeviceFeatures2);
 
@@ -222,12 +228,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
         Robustness2Features.robustImageAccess2  = AvailableRobustness2Features.robustImageAccess2;
         Robustness2Features.robustBufferAccess2 = AvailableRobustness2Features.robustBufferAccess2;
         Robustness2Features.nullDescriptor      = AvailableRobustness2Features.nullDescriptor;
-
-        if (Robustness2Features.robustBufferAccess2)
-        {
-            DeviceFeatures2.features.robustBufferAccess = VK_TRUE;
-        }
-
         DeviceCreateHelper.AddNext(Robustness2Features);
     }
 #endif

@@ -6,6 +6,8 @@
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
 
+#define MAX_LIGHTS_PER_TILE (1024)
+
 struct FPointLightData
 {
     FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);

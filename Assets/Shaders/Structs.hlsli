@@ -5,6 +5,7 @@
 // Common Structs
 
 #define NUM_SHADOW_CASCADES (4)
+#define NUM_FRUSTUM_PLANES (6)
 
 struct FComputeShaderInput
 {
@@ -78,32 +79,37 @@ struct FCascadeMatrices
 
 struct FCascadeSplit
 {
-    float3 MinExtent;
-    float  Split;
-    
-    float3 MaxExtent;
-    float  NearPlane;
-
-    float  FarPlane;
-    float  Padding0;
-    float  Padding1;
-    float  Padding2;
-
-    float4 FrustumPlanes[6];
+    float4 FrustumPlanes[NUM_FRUSTUM_PLANES];
 
     float4 Offsets;
     float4 Scale;
+
+    float3 MinExtent;
+    float  Split;
+
+    float3 MaxExtent;
+    float  NearPlane;
+    
+    float  FarPlane;
+    float  MinDepth;
+    float  MaxDepth;
+    float  PreviousSplit;
 };
 
 struct FCascadeGenerationInfo
 {
+    float4x4 ShadowMatrix;
+
     float3 LightDirection;
     float  CascadeSplitLambda;
     
     float3 LightUp;
     float  CascadeResolution;
 
-    float4x4 ShadowMatrix;
+    int    bDepthReductionEnabled;
+    int    MaxCascadeIndex;
+    int    Padding0;
+    int    Padding1;
 };
 
 struct FDirectionalLight

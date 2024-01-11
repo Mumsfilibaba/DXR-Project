@@ -208,6 +208,7 @@ void Main(FComputeShaderInput Input)
         float3 CascadePosition = ProjectionPosition + Offsets.xyz;
         CascadePosition *= Scale.xyz;
         CascadePosition  = abs(CascadePosition - 0.5f);
+        
         // TODO: Fix this
         if(all(CascadePosition < 0.45f))
         {

@@ -8,24 +8,23 @@
 ConstantBuffer<FCamera>                CameraBuffer   : register(b0);
 ConstantBuffer<FCascadeGenerationInfo> GenerationInfo : register(b1);
 
-#if SHADER_LANG == SHADER_LANG_MSL
-RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u2);
-RWStructuredBuffer<FCascadeSplit>    SplitBuffer  : register(u3);
-#else
 RWStructuredBuffer<FCascadeMatrices> MatrixBuffer : register(u0);
 RWStructuredBuffer<FCascadeSplit>    SplitBuffer  : register(u1);
-#endif
 
 Texture2D<float2> MinMaxDepthTex : register(t0);
 
 [numthreads(NUM_THREADS, 1, 1)]
 void Main(FComputeShaderInput Input)
 {
-    const int CascadeIndex = int(Input.DispatchThreadID.x);
+    const int CascadeIndex = min(int(Input.DispatchThreadID.x), GenerationInfo.MaxCascadeIndex);
     
     // Get the min and max depth of the scene
-    const float2 MinMaxDepth = MinMaxDepthTex[uint2(0, 0)];
-    
+    float2 MinMaxDepth = float2(0.0f, 1.0f);
+    if (GenerationInfo.bDepthReductionEnabled)
+    {
+        MinMaxDepth = MinMaxDepthTex[uint2(0, 0)];
+    }
+
     float4x4 InvCamera = CameraBuffer.ViewProjectionInvUnjittered;
     float NearPlane = CameraBuffer.NearPlane;
     float FarPlane  = CameraBuffer.FarPlane;
@@ -213,7 +212,7 @@ void Main(FComputeShaderInput Input)
         }
     }
 
-    float4 FrustumPlanes[6];
+    float4 FrustumPlanes[NUM_FRUSTUM_PLANES];
     FrustumPlanes[0] = PlaneFromPoints(Corners[0], Corners[4], Corners[2]);
     FrustumPlanes[1] = PlaneFromPoints(Corners[1], Corners[3], Corners[5]);
     FrustumPlanes[2] = PlaneFromPoints(Corners[3], Corners[2], Corners[7]);
@@ -242,20 +241,19 @@ void Main(FComputeShaderInput Input)
     // Store Split-Data
     {
         FCascadeSplit Split;
-        Split.MinExtent = MinExtents;
-        Split.MaxExtent = MaxExtents;
-        Split.Split     = NearPlane + SplitDist * ClipRange;
-        Split.NearPlane = NewNearPlane;
-        Split.FarPlane  = NewFarPlane;
-    
-        Split.Padding0  = MinDepth;
-        Split.Padding1  = MaxDepth;
-        Split.Padding2  = NearPlane + PrevSplitDist * ClipRange;
+        Split.MinExtent     = MinExtents;
+        Split.MaxExtent     = MaxExtents;
+        Split.Split         = NearPlane + SplitDist * ClipRange;
+        Split.NearPlane     = NewNearPlane;
+        Split.FarPlane      = NewFarPlane;
+        Split.MinDepth      = MinDepth;
+        Split.MaxDepth      = MaxDepth;
+        Split.PreviousSplit = NearPlane + PrevSplitDist * ClipRange;
 
         [unroll]
-        for(int Index = 0; Index < 6; ++Index)
+        for(int Index = 0; Index < NUM_FRUSTUM_PLANES; ++Index)
         {
-            Split.FrustumPlanes[Index + CascadeIndex * 6] = FrustumPlanes[Index];
+            Split.FrustumPlanes[Index] = FrustumPlanes[Index];
         }
 
         float3 CascadeScale = 1.0f / (OtherCorner - CascadeCorner);

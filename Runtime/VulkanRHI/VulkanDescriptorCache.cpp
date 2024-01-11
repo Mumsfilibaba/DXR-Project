@@ -495,7 +495,7 @@ void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& C
         {
             DescriptorInfo.buffer = ConstantBuffer->GetVkBuffer();
             DescriptorInfo.offset = 0;
-            DescriptorInfo.range  = ConstantBuffer->GetSize();
+            DescriptorInfo.range  = FMath::AlignUp<VkDeviceSize>(ConstantBuffer->GetSize(), ConstantBuffer->GetRequiredAlignment());
         }
         else
         {

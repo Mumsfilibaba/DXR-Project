@@ -94,7 +94,7 @@ bool FLightSetup::Initialize()
 
 
     {
-        PointLightsData.Reserve(256);
+        PointLightsData.Reserve(MAX_LIGHTS_PER_TILE);
         
         FRHIBufferDesc BufferDesc(PointLightsData.CapacityInBytes(), PointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         PointLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
@@ -110,7 +110,7 @@ bool FLightSetup::Initialize()
     }
 
     {
-        PointLightsPosRad.Reserve(256);
+        PointLightsPosRad.Reserve(MAX_LIGHTS_PER_TILE);
 
         FRHIBufferDesc BufferDesc(PointLightsPosRad.CapacityInBytes(), PointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         PointLightsPosRadBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);

@@ -80,7 +80,9 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
     }
     
-    
+    // Setup the proper size
+    BufferCreateInfo.size = FMath::AlignUp(BufferCreateInfo.size, RequiredAlignment);
+
     VkResult Result = vkCreateBuffer(GetDevice()->GetVkDevice(), &BufferCreateInfo, nullptr, &Buffer);
     if (VULKAN_FAILED(Result))
     {

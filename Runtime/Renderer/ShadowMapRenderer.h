@@ -7,13 +7,18 @@
 
 struct FCascadeGenerationInfo
 {
+    FMatrix4 ShadowMatrix;
+
     FVector3 LightDirection;
     float    CascadeSplitLambda;
     
     FVector3 LightUp;
     float    CascadeResolution;
 
-    FMatrix4 ShadowMatrix;
+    int32    bDepthReductionEnabled;
+    int32    MaxCascadeIndex;
+    int32    Padding1;
+    int32    Padding2;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfo);
@@ -28,25 +33,28 @@ struct FCascadeMatrices
 MARK_AS_REALLOCATABLE(FCascadeMatrices);
 
 
-struct FCascadeSplits
+#define NUM_FRUSTUM_PLANES (6)
+
+struct FCascadeSplit
 {
-    FVector3 MinExtent;
-    float    Split;
-    FVector3 MaxExtent;
-    float    NearPlane;
-
-    float    FarPlane;
-    float    Padding0;
-    float    Padding1;
-    float    Padding2;
-
-    FVector4 FrustumPlanes[6];
+    FVector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
 
     FVector4 Offsets;
     FVector4 Scale;
+
+    FVector3 MinExtent;
+    float    Split;
+    
+    FVector3 MaxExtent;
+    float    NearPlane;
+
+    float FarPlane;
+    float MinDepth;
+    float MaxDepth;
+    float PreviousSplit;
 };
 
-MARK_AS_REALLOCATABLE(FCascadeSplits);
+MARK_AS_REALLOCATABLE(FCascadeSplit);
 
 
 struct FPerShadowMap

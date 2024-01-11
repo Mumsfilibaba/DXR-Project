@@ -1086,13 +1086,13 @@ void FRenderer::Tick()
     {
         TRACE_SCOPE("Render UI");
 
-#if SUPPORT_VARIABLE_RATE_SHADING
+    #if SUPPORT_VARIABLE_RATE_SHADING
         if (RHISupportsVariableRateShading())
         {
             CommandList.SetShadingRate(EShadingRate::VRS_1x1);
             CommandList.SetShadingRateImage(nullptr);
         }
-#endif
+    #endif
 
         FApplication::Get().DrawWindows(CommandList);
     }

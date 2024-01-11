@@ -165,7 +165,7 @@ bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc
         return false;
     }
 
-    VkDeviceSize Stride;
+    VkDeviceSize Stride = 0;
     if (InDesc.Format == EBufferSRVFormat::None)
     {
         Stride = VulkanBuffer->GetStride();
@@ -173,10 +173,6 @@ bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc
     else if (InDesc.Format == EBufferSRVFormat::Uint32)
     {
         Stride = sizeof(uint32);
-    }
-    else
-    {
-        Stride = 0;
     }
 
     BufferInfo.buffer = VulkanBuffer->GetVkBuffer();
@@ -270,7 +266,7 @@ bool FVulkanUnorderedAccessView::CreateBufferView(const FRHIBufferUAVDesc& InDes
         return false;
     }
 
-    VkDeviceSize Stride;
+    VkDeviceSize Stride = 0;
     if (InDesc.Format == EBufferUAVFormat::None)
     {
         Stride = VulkanBuffer->GetStride();
@@ -278,10 +274,6 @@ bool FVulkanUnorderedAccessView::CreateBufferView(const FRHIBufferUAVDesc& InDes
     else if (InDesc.Format == EBufferUAVFormat::Uint32)
     {
         Stride = sizeof(uint32);
-    }
-    else
-    {
-        Stride = 0;
     }
 
     BufferInfo.buffer = VulkanBuffer->GetVkBuffer();

@@ -32,6 +32,11 @@ public:
         return MemoryAllocation.Memory;
     }
     
+    VkDeviceSize GetRequiredAlignment() const
+    {
+        return RequiredAlignment;
+    }
+    
 protected:
     VkBuffer                Buffer;
     FVulkanMemoryAllocation MemoryAllocation;
