@@ -241,8 +241,8 @@ bool FImGuiRenderer::Initialize()
     FRHIVertexInputLayoutInitializer InputLayoutInfo =
     {
         { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
         { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
     };
 
     FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
@@ -278,10 +278,10 @@ bool FImGuiRenderer::Initialize()
     BlendStateInitializer.bIndependentBlendEnable        = false;
     BlendStateInitializer.NumRenderTargets               = 1;
     BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
-    BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType ::SrcAlpha;
-    BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType ::InvSrcAlpha;
-    BlendStateInitializer.RenderTargets[0].DstBlend      = EBlendType ::InvSrcAlpha;
-    BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType ::Zero;
+    BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
+    BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+    BlendStateInitializer.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
+    BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
     BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
     BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
 

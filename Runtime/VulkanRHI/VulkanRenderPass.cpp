@@ -14,14 +14,14 @@ FVulkanRenderPassCache::~FVulkanRenderPassCache()
 
 VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& Key)
 {
-    // Check if the renderpass exists
+    // Check if the RenderPass exists
     auto ExistingPass = RenderPasses.find(Key);
     if (ExistingPass != RenderPasses.end())
     {
         return ExistingPass->second;
     }
 
-    // Setup color attachments
+    // Setup ColorAttachments
     TArray<VkAttachmentReference>   ColorAttachents;
     TArray<VkAttachmentDescription> Attachments;
 
@@ -33,7 +33,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         return VK_NULL_HANDLE;
     }
 
-    // Setup Colorattachments
+    // Setup ColorAttachments
     for (uint8 Index = 0; Index < Key.NumRenderTargets; Index++)
     {
         // Setup Attachments

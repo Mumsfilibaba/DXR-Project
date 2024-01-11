@@ -241,7 +241,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     const VkPhysicalDeviceDepthClipEnableFeaturesEXT& AvailableDepthClipEnableFeatures = GetPhysicalDevice()->GetDepthClipEnableFeatures();
     if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME) && AvailableDepthClipEnableFeatures.depthClipEnable)
     {
-        const VkPhysicalDeviceFeatures& AvailableDeviceFeatures = GetPhysicalDevice()->GetDeviceFeatures();
         if (AvailableDeviceFeatures.depthClamp)
         {
             DeviceFeatures2.features.depthClamp     = VK_TRUE;
