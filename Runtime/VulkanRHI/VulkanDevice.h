@@ -21,6 +21,7 @@ class FVulkanPhysicalDevice;
 
 extern VULKANRHI_API bool GVulkanForceBinding;
 extern VULKANRHI_API bool GVulkanForceDedicatedAllocations;
+extern VULKANRHI_API bool GVulkanAllowNullDescriptors;
 
 
 enum class EVulkanCommandQueueType
@@ -71,32 +72,32 @@ public:
     bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
     bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
     
-    FORCEINLINE bool IsLayerEnabled(const FString& LayerName)
+    bool IsLayerEnabled(const FString& LayerName)
     {
         return LayerNames.find(LayerName) != LayerNames.end();
     }
 
-    FORCEINLINE bool IsExtensionEnabled(const FString& ExtensionName)
+    bool IsExtensionEnabled(const FString& ExtensionName)
     {
         return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
     }
 
-    FORCEINLINE FVulkanInstance* GetInstance() const
+    FVulkanInstance* GetInstance() const
     {
         return Instance;
     }
     
-    FORCEINLINE FVulkanPhysicalDevice* GetPhysicalDevice() const
+    FVulkanPhysicalDevice* GetPhysicalDevice() const
     {
         return PhysicalDevice;
     }
 
-    FORCEINLINE VkDevice GetVkDevice() const
+    VkDevice GetVkDevice() const
     {
         return Device;
     }
 
-    FORCEINLINE TOptional<FVulkanQueueFamilyIndices> GetQueueIndicies() const
+    TOptional<FVulkanQueueFamilyIndices> GetQueueIndicies() const
     {
         return QueueIndicies;
     }

@@ -8,6 +8,19 @@
 
 VULKANRHI_API bool GVulkanForceBinding              = true;
 VULKANRHI_API bool GVulkanForceDedicatedAllocations = false;
+VULKANRHI_API bool GVulkanAllowNullDescriptors      = false;
+
+static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
+{
+    if (!GVulkanAllowNullDescriptors && FCString::Strcmp(ExtensionProperty.extensionName, VK_EXT_ROBUSTNESS_2_EXTENSION_NAME) == 0)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
 
 
 FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter)
@@ -75,6 +88,12 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
             return FCString::Strcmp(ExtensionProperty.extensionName, Other) == 0;
         };
 
+        // Filter out some extensions based on CVars etc. (If an extension is available but we want to disable it for debugging or similar)
+        if (!FilterExtensions(ExtensionProperty))
+        {
+            continue;
+        }
+
         if (DeviceDesc.RequiredExtensionNames.ContainsWithPredicate(CompareExtension) || DeviceDesc.OptionalExtensionNames.ContainsWithPredicate(CompareExtension))
         {
             EnabledExtensionNames.Add(ExtensionProperty.extensionName);
@@ -95,6 +114,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
             return false;
         }
     }
+
 
     // Log enabled extensions and layers
     IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
@@ -141,7 +161,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
 
         QueueCreateInfos.Add(QueueCreateInfo);
     }
-    
+
     VkDeviceCreateInfo DeviceCreateInfo;
     FMemory::Memzero(&DeviceCreateInfo);
 
@@ -187,8 +207,8 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
     }
     
     DeviceCreateHelper.AddNext(DeviceFeaturesVulkan12);
-    
-    
+
+
     // Check and enable extension features
 #if VK_EXT_robustness2
     VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;

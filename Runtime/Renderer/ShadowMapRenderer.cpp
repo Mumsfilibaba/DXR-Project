@@ -34,7 +34,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
     // Point Shadow Maps
     {
         FRHIBufferDesc PerShadowMapBufferDesc(sizeof(FPerShadowMap), sizeof(FPerShadowMap), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-        PerShadowMapBuffer = RHICreateBuffer(PerShadowMapBufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        PerShadowMapBuffer = RHICreateBuffer(PerShadowMapBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!PerShadowMapBuffer)
         {
             DEBUG_BREAK();
@@ -133,7 +133,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
     // Cascaded shadow map
     {
         FRHIBufferDesc PerCascadeBufferDesc(sizeof(FPerCascade), sizeof(FPerCascade), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-        PerCascadeBuffer = RHICreateBuffer(PerCascadeBufferDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        PerCascadeBuffer = RHICreateBuffer(PerCascadeBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!PerCascadeBuffer)
         {
             DEBUG_BREAK();
@@ -324,7 +324,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
     // Create buffers for cascade matrix generation
     {
         FRHIBufferDesc CascadeGenerationDataDesc(sizeof(FCascadeGenerationInfo), sizeof(FCascadeGenerationInfo), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-        CascadeGenerationData = RHICreateBuffer(CascadeGenerationDataDesc, EResourceAccess::VertexAndConstantBuffer, nullptr);
+        CascadeGenerationData = RHICreateBuffer(CascadeGenerationDataDesc, EResourceAccess::ConstantBuffer, nullptr);
         if (!CascadeGenerationData)
         {
             DEBUG_BREAK();
@@ -501,9 +501,9 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
 
-                CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+                CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
                 CommandList.UpdateBuffer(PerShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FPerShadowMap)), &PerShadowMapData);
-                CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+                CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
                 FRHIRenderPassDesc RenderPass;
                 RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
@@ -589,9 +589,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
         GenerationInfo.CascadeResolution  = static_cast<float>(LightSetup.CascadeSize);
         GenerationInfo.ShadowMatrix       = LightSetup.DirectionalLightData.ShadowMatrix;
 
-        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
         CommandList.UpdateBuffer(CascadeGenerationData.Get(), FBufferRegion(0, sizeof(FCascadeGenerationInfo)), &GenerationInfo);
-        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
         CommandList.SetComputePipelineState(CascadeGen.Get());
 
@@ -633,9 +633,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
         {
             PerCascadeData.CascadeIndex = Index;
 
-            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
             CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascade)), &PerCascadeData);
-            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
             FRHIRenderPassDesc RenderPass;
             RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.ShadowMapCascades[Index].Get());

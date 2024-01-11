@@ -62,7 +62,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 
     // VertexBuffer
     FRHIBufferDesc VBDesc(SkyboxVertices.SizeInBytes(), SkyboxVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
-    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, SkyboxVertices.Data());
+    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;

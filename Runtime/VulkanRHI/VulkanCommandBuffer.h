@@ -164,6 +164,12 @@ public:
         vkCmdPushConstants(CommandBuffer, Layout, StageFlags, Offset, Size, Values);
         NumCommands++;
     }
+
+    FORCEINLINE void FillBuffer(VkBuffer DstBuffer, VkDeviceSize DstOffset, VkDeviceSize Size, uint32 Data)
+    {
+        vkCmdFillBuffer(CommandBuffer, DstBuffer, DstOffset, Size, Data);
+        NumCommands++;
+    }
     
     FORCEINLINE void CopyBuffer(VkBuffer SrcBuffer, VkBuffer DstBuffer, uint32 RegionCount, const VkBufferCopy* Regions)
     {

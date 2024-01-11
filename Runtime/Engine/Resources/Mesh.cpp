@@ -26,7 +26,7 @@ bool FMesh::Init(const FMeshData& Data)
     const EBufferUsageFlags BufferFlags = bRTOn ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
 
     FRHIBufferDesc VBDesc(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, Data.Vertices.Data());
+    VertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, Data.Vertices.Data());
     if (!VertexBuffer)
     {
         return false;
@@ -45,7 +45,7 @@ bool FMesh::Init(const FMeshData& Data)
     }
 
     VBDesc = FRHIBufferDesc(VertexCount * sizeof(FVector3), sizeof(FVector3), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    PosOnlyVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, ShadowVertices.Data());
+    PosOnlyVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, ShadowVertices.Data());
     if (!PosOnlyVertexBuffer)
     {
         return false;
@@ -65,7 +65,7 @@ bool FMesh::Init(const FMeshData& Data)
     }
 
     VBDesc = FRHIBufferDesc(VertexCount * sizeof(FVertexMasked), sizeof(FVertexMasked), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    MaskedVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexAndConstantBuffer, MaskedVertices.Data());
+    MaskedVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, MaskedVertices.Data());
     if (!MaskedVertexBuffer)
     {
         return false;

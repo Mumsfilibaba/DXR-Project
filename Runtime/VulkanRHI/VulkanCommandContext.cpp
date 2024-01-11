@@ -31,9 +31,9 @@ bool FVulkanCommandContext::Initialize()
         return false;
     }
 
-    // TODO: Another solution for this but for now Transitinon default images here
+    // TODO: Another solution for this but for now Transition default images here
     ObtainCommandBuffer();
-    
+
     FVulkanImageTransitionBarrier TransitionBarrier;
     TransitionBarrier.Image                           = ContextState.GetDescriptorSetCache().GetDefaultResources().NullImage;
     TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -48,9 +48,12 @@ bool FVulkanCommandContext::Initialize()
     TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
     TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
     TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-    
+
     CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
-    
+
+    VkBuffer DefaultBuffer = ContextState.GetDescriptorSetCache().GetDefaultResources().NullBuffer;
+    CommandBuffer.FillBuffer(DefaultBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
+
     FlushCommandBuffer();
     return true;
 }

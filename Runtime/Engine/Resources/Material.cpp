@@ -18,7 +18,7 @@ FMaterial::FMaterial(const FMaterialDesc& InProperties)
 void FMaterial::Initialize()
 {
     FRHIBufferDesc Desc(sizeof(FMaterialDesc), sizeof(FMaterialDesc), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    MaterialBuffer = RHICreateBuffer(Desc, EResourceAccess::VertexAndConstantBuffer, nullptr);
+    MaterialBuffer = RHICreateBuffer(Desc, EResourceAccess::ConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetName("MaterialBuffer");
@@ -29,9 +29,9 @@ void FMaterial::Initialize()
 
 void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 {
-    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(MaterialBuffer.Get(), FBufferRegion(0, sizeof(FMaterialDesc)), &Properties);
-    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     bMaterialBufferIsDirty = false;
 }
 

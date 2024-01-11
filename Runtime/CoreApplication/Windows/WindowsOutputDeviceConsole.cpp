@@ -82,14 +82,14 @@ void FWindowsOutputDeviceConsole::Flush()
     {
         TScopedLock Lock(ConsoleHandleCS);
 
-        CONSOLE_SCREEN_BUFFER_INFO CSBI;
-        FMemory::Memzero(&CSBI);
+        CONSOLE_SCREEN_BUFFER_INFO ConsoleScreenInfo;
+        FMemory::Memzero(&ConsoleScreenInfo);
 
-        if (GetConsoleScreenBufferInfo(ConsoleHandle, &CSBI))
+        if (GetConsoleScreenBufferInfo(ConsoleHandle, &ConsoleScreenInfo))
         {
-            COORD     Dest     = { 0, -CSBI.dwSize.Y };
+            COORD     Dest     = { 0, -ConsoleScreenInfo.dwSize.Y };
             CHAR_INFO FillInfo = { '\0', FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE };
-            ScrollConsoleScreenBufferA(ConsoleHandle, &CSBI.srWindow, nullptr, Dest, &FillInfo);
+            ScrollConsoleScreenBufferA(ConsoleHandle, &ConsoleScreenInfo.srWindow, nullptr, Dest, &FillInfo);
 
             COORD CursorPos = { 0, 0 };
             SetConsoleCursorPosition(ConsoleHandle, CursorPos);

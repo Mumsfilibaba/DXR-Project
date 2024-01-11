@@ -788,9 +788,9 @@ void FRenderer::Tick()
         CameraBuffer.Jitter     = FVector2(0.0f);
     }
 
-    CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraBuffer)), &CameraBuffer);
-    CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
+    CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
     // TODO: Optimize (Materials should be collected and built once in the beginning of the frame)
     for (const FMeshDrawCommand& Command : Resources.GlobalMeshDrawCommands)

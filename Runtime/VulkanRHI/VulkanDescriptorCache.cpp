@@ -3,8 +3,6 @@
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 {
     // Create NullBuffer
-    constexpr VkDeviceSize NullBufferSize = 256;
-    
     VkBufferCreateInfo BufferCreateInfo;
     FMemory::Memzero(&BufferCreateInfo);
 
@@ -14,8 +12,13 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     BufferCreateInfo.pQueueFamilyIndices   = nullptr;
     BufferCreateInfo.queueFamilyIndexCount = 0;
     BufferCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
-    BufferCreateInfo.size                  = NullBufferSize;
-    BufferCreateInfo.usage                 = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    BufferCreateInfo.size                  = VULKAN_DEFAULT_BUFFER_NUM_BYTES;
+    BufferCreateInfo.usage                 = 
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | 
+        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | 
+        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | 
+        VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     
     VkResult Result = vkCreateBuffer(Device.GetVkDevice(), &BufferCreateInfo, nullptr, &NullBuffer);
     if (VULKAN_FAILED(Result))
@@ -27,7 +30,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     {
         FVulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullBuffer", NullBuffer, VK_OBJECT_TYPE_BUFFER);
     }
-    
+
     // Allocate memory based on the buffer
     FVulkanMemoryManager& MemoryManager = Device.GetMemoryManager();
     if (!MemoryManager.AllocateBufferMemory(NullBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 0, false, NullBufferMemory))
@@ -35,8 +38,8 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
         VULKAN_ERROR("Failed to allocate buffer memory");
         return false;
     }
-    
-    
+
+
     // Create a NullImage
     constexpr VkExtent3D NullExtent = { 4, 4, 1 };
 
@@ -56,7 +59,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageCreateInfo.arrayLayers           = 1;
-    
+
     Result = vkCreateImage(Device.GetVkDevice(), &ImageCreateInfo, nullptr, &NullImage);
     if (VULKAN_FAILED(Result))
     {
@@ -73,7 +76,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
         VULKAN_ERROR("Failed to allocate ImageMemory");
         return false;
     }
-    
+
 
     // Create NullImageView
     VkImageViewCreateInfo ImageViewCreateInfo;
@@ -104,8 +107,8 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     {
         FVulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullImageView", NullImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
     }
-    
-    
+
+
     // Create a NullSampler
     VkSamplerCreateInfo SamplerCreateInfo;
     FMemory::Memzero(&SamplerCreateInfo);
@@ -137,7 +140,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     {
         FVulkanDebugUtilsEXT::SetObjectName(Device.GetVkDevice(), "NullSampler", NullSampler, VK_OBJECT_TYPE_SAMPLER);
     }
-    
+
     return true;
 }
 
@@ -150,21 +153,19 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
     {
         vkDestroyBuffer(VulkanDevice, NullBuffer, nullptr);
         NullBuffer = VK_NULL_HANDLE;
-        
         MemoryManager.Free(NullBufferMemory);
     }
-    
+
     if (VULKAN_CHECK_HANDLE(NullImageView))
     {
         vkDestroyImageView(VulkanDevice, NullImageView, nullptr);
         NullImageView = VK_NULL_HANDLE;
     }
-    
+
     if (VULKAN_CHECK_HANDLE(NullImage))
     {
         vkDestroyImage(VulkanDevice, NullImage, nullptr);
         NullImage = VK_NULL_HANDLE;
-        
         MemoryManager.Free(NullImageMemory);
     }
 
@@ -280,10 +281,10 @@ void FVulkanDescriptorSetCache::SetIndexBuffer(FVulkanIndexBufferCache& IndexBuf
 
 void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs)
 {
-    constexpr uint32 NumBufferSRVs       = 8; // Limit due to MoltenVK
+    constexpr uint32 NumBufferSRVs       = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS; // Limit due to MoltenVK
     constexpr uint32 NumDescriptorWrites = VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT + NumBufferSRVs;
 
-    // TODO: We want to store this together with the pipelinelayout
+    // TODO: We want to store this together with the PipelineLayout
     constexpr uint32 ImageBindingsStartIndex  = 40;
     constexpr uint32 BufferBindingsStartIndex = 16;
 
@@ -315,7 +316,7 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
         }
         else
         {
-            // If we have the NullDescriptors feature enable we don't create nullresources, so we just use the VK_NULL_HANDLE
+            // If we have the NullDescriptors feature enable we don't create DefaultResources, so we just use the VK_NULL_HANDLE
             if (FVulkanRobustness2EXT::SupportsNullDescriptors())
             {
                 DescriptorInfo.imageView   = VK_NULL_HANDLE;
@@ -330,8 +331,8 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
             }
         }
     }
-    
-    
+
+
     // Limit NumSRVs since we have limited the amount of buffers allowed
     NumSRVs = FMath::Min(NumSRVs, NumBufferSRVs);
     for (uint32 Index = 0; Index < NumSRVs; Index++)
@@ -355,7 +356,7 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
         }
         else
         {
-            // If we have the NullDescriptors feature enable we don't create nullresources, so we just use the VK_NULL_HANDLE
+            // If we have the NullDescriptors feature enable we don't create DefaultResources, so we just use the VK_NULL_HANDLE
             if (FVulkanRobustness2EXT::SupportsNullDescriptors())
             {
                 DescriptorInfo.buffer = VK_NULL_HANDLE;
@@ -376,7 +377,7 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
 
 void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumUAVs)
 {
-    // TODO: We want to store this together with the pipelinelayout
+    // TODO: We want to store this together with the PipelineLayout
     constexpr uint32 ImageBindingsStartIndex  = 32;
     constexpr uint32 BufferBindingsStartIndex = 8;
     constexpr uint32 NumDescriptorWrites      = VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT + VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
@@ -409,7 +410,7 @@ void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, 
         }
         else
         {
-            // If we have the NullDescriptors feature enable we don't create nullresources, so we just use the VK_NULL_HANDLE
+            // If we have the NullDescriptors feature enable we don't create DefaultResources, so we just use the VK_NULL_HANDLE
             if (FVulkanRobustness2EXT::SupportsNullDescriptors())
             {
                 DescriptorInfo.imageView   = VK_NULL_HANDLE;
@@ -447,7 +448,7 @@ void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, 
         }
         else
         {
-            // If we have the NullDescriptors feature enable we don't create nullresources, so we just use the VK_NULL_HANDLE
+            // If we have the NullDescriptors feature enable we don't create DefaultResources, so we just use the VK_NULL_HANDLE
             if (FVulkanRobustness2EXT::SupportsNullDescriptors())
             {
                 DescriptorInfo.buffer = VK_NULL_HANDLE;
@@ -468,7 +469,7 @@ void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, 
 
 void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumBuffers)
 {
-    // TODO: We want to store this together with the pipelinelayout
+    // TODO: We want to store this together with the PipelineLayout
     constexpr uint32 BindingsStartIndex = 0;
     
     VkDescriptorBufferInfo BufferInfos[VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT];
@@ -497,7 +498,7 @@ void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& C
         }
         else
         {
-            // If we have the NullDescriptors feature enable we don't create nullresources, so we just use the VK_NULL_HANDLE
+            // If we have the NullDescriptors feature enable we don't create DefaultResources, so we just use the VK_NULL_HANDLE
             if (FVulkanRobustness2EXT::SupportsNullDescriptors())
             {
                 DescriptorInfo.buffer = VK_NULL_HANDLE;
@@ -518,7 +519,7 @@ void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& C
 
 void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers)
 {
-    // TODO: We want to store this together with the pipelinelayout
+    // TODO: We want to store this together with the PipelineLayout
     constexpr uint32 BindingsStartIndex = 24;
     
     VkDescriptorImageInfo ImageInfos[VULKAN_DEFAULT_SAMPLER_STATE_COUNT];

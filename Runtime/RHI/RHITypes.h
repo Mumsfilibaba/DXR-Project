@@ -451,33 +451,36 @@ constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
 enum class EResourceAccess : uint32
 {
     Common                          = 0,
-    VertexAndConstantBuffer         = FLAG(0),
+    ConstantBuffer                  = FLAG(0),
     IndexBuffer                     = FLAG(1),
-    RenderTarget                    = FLAG(2),
-    UnorderedAccess                 = FLAG(3),
-    DepthWrite                      = FLAG(4),
-    DepthRead                       = FLAG(5),
-    NonPixelShaderResource          = FLAG(6),
-    PixelShaderResource             = FLAG(7),
-    CopyDest                        = FLAG(8),
-    CopySource                      = FLAG(9),
-    ResolveDest                     = FLAG(10),
-    ResolveSource                   = FLAG(11),
-    RayTracingAccelerationStructure = FLAG(12),
-    ShadingRateSource               = FLAG(13),
-    Present                         = FLAG(14),
-    GenericRead                     = FLAG(15),
+    VertexBuffer                    = FLAG(2),
+    RenderTarget                    = FLAG(3),
+    UnorderedAccess                 = FLAG(4),
+    DepthWrite                      = FLAG(5),
+    DepthRead                       = FLAG(6),
+    NonPixelShaderResource          = FLAG(7),
+    PixelShaderResource             = FLAG(8),
+    CopyDest                        = FLAG(9),
+    CopySource                      = FLAG(10),
+    ResolveDest                     = FLAG(11),
+    ResolveSource                   = FLAG(12),
+    RayTracingAccelerationStructure = FLAG(13),
+    ShadingRateSource               = FLAG(14),
+    Present                         = FLAG(15),
+    GenericRead                     = FLAG(16),
 };
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
+
 
 constexpr const CHAR* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
     case EResourceAccess::Common:                          return "Common";
-    case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+    case EResourceAccess::ConstantBuffer:                  return "ConstantBuffer";
     case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
+    case EResourceAccess::VertexBuffer:                    return "VertexBuffer";
     case EResourceAccess::RenderTarget:                    return "RenderTarget";
     case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
     case EResourceAccess::DepthWrite:                      return "DepthWrite";
