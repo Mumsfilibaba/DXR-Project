@@ -1,0 +1,20 @@
+#include "CoreDelegates.h"
+
+namespace NCoreDelegates
+{
+    CORE_API FPostInitRHIDelegate PostInitRHIDelegate;
+
+    CORE_API FPostApplicationCreateDelegate PostApplicationCreateDelegate;
+
+    CORE_API FPreInitFinishedDelegate PreInitFinishedDelegate;
+
+    CORE_API FPreEngineInitDelegate PreEngineInitDelegate;
+
+    CORE_API FPostEngineInitDelegate PostEngineInitDelegate;
+
+    CORE_API FPreApplicationLoadedDelegate PreApplicationLoadedDelegate;
+
+    CORE_API FPostApplicationLoadedDelegate PostGameModuleLoadedDelegate;
+
+    CORE_API FDeviceRemovedDelegate DeviceRemovedDelegate;
+}

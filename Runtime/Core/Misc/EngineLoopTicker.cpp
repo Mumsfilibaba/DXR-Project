@@ -1,28 +1,30 @@
 #include "EngineLoopTicker.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EngineLoopTicker
-
-CEngineLoopTicker& CEngineLoopTicker::Get()
+FEngineLoopTicker::FEngineLoopTicker()
+    : TickDelegates()
 {
-    static CEngineLoopTicker Instance;
+}
+
+FEngineLoopTicker& FEngineLoopTicker::Get()
+{
+    static FEngineLoopTicker Instance;
     return Instance;
 }
 
-void CEngineLoopTicker::Tick(CTimestamp Deltatime)
+void FEngineLoopTicker::Tick(FTimespan Deltatime)
 {
-    for (CTickDelegate TickDelegate : TickDelegates)
+    for (FTickDelegate TickDelegate : TickDelegates)
     {
         TickDelegate.ExecuteIfBound(Deltatime);
     }
 }
 
-void CEngineLoopTicker::AddElement(const CTickDelegate& NewElement)
+void FEngineLoopTicker::AddDelegate(const FTickDelegate& NewElement)
 {
-    TickDelegates.Push(NewElement);
+    TickDelegates.Add(NewElement);
 }
 
-void CEngineLoopTicker::RemoveElement(CDelegateHandle RemoveHandle)
+void FEngineLoopTicker::RemoveDelegate(FDelegateHandle RemoveHandle)
 {
     uint32 NumElements = TickDelegates.Size();
     for (uint32 Index = 0; Index < NumElements; Index++)

@@ -1,16 +1,7 @@
 #include "GenericApplicationMisc.h"
 #include "GenericApplication.h"
-#include "GenericConsoleWindow.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplicationMisc
-
-class CGenericApplication* CGenericApplicationMisc::CreateApplication()
+TSharedPtr<class FGenericApplication> FGenericApplicationMisc::CreateApplication()
 {
-    return dbg_new CGenericApplication(TSharedPtr<ICursor>(nullptr));
-}
-
-class CGenericConsoleWindow* CGenericApplicationMisc::CreateConsoleWindow()
-{
-    return dbg_new CGenericConsoleWindow();
+    return MakeShared<FGenericApplication>(TSharedPtr<ICursor>(nullptr));
 }

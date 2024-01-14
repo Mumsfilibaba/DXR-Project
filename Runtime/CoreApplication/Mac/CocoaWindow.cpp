@@ -1,31 +1,22 @@
 #include "CocoaWindow.h"
 #include "MacApplication.h"
-#include "ScopedAutoreleasePool.h"
+#include "MacWindow.h"
+#include "Core/Mac/Mac.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaWindow
+@implementation FCocoaWindow
 
-@implementation CCocoaWindow
-
-- (id) init:(CMacApplication*) InApplication ContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
+- (instancetype) initWithContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
 {
-    Check(InApplication != nullptr);
-
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
-        Application = InApplication;
-
-        [self setDelegate:self];
-        [self setOpaque:YES];
+        // NOTE: Setting self.delegate = self does not work in here
+        [super setOpaque:YES];
+        [super setRestorable:NO];
+        [super disableSnapshotRestoration];
     }
     
     return self;
-}
-
-- (void) dealloc
-{
-    [super dealloc];
 }
 
 - (BOOL) canBecomeKeyWindow
@@ -48,49 +39,114 @@
     return YES;
 }
 
-- (void) windowWillClose:(NSNotification*) InNotification
+- (void)performZoom:(id)Sender
 {
-    Application->DeferEvent(InNotification);
 }
 
-- (void) windowDidResize:(NSNotification*) InNotification
+- (void)zoom:(id)Sender
 {
-    Application->DeferEvent(InNotification);
+    SCOPED_AUTORELEASE_POOL();
+    [super zoom:Sender];
 }
 
-- (void) windowDidMove:(NSNotification*) InNotification
+- (void)keyDown:(NSEvent*)Event
 {
-    Application->DeferEvent(InNotification);
 }
 
-- (void) windowDidMiniaturize:(NSNotification*) InNotification
+- (void)keyUp:(NSEvent*)Event
 {
-    Application->DeferEvent(InNotification);
 }
 
-- (void) windowDidDeminiaturize:(NSNotification*) InNotification
+- (void) performClose:(id)sender
 {
-    Application->DeferEvent(InNotification);
 }
 
-- (void) windowDidEnterFullScreen:(NSNotification*) InNotification
+- (void) windowWillClose:(NSNotification*) Notification
 {
-    Application->DeferEvent(InNotification);
+    @autoreleasepool
+    {
+        [self setDelegate:nil];
+        
+        if (MacApplication)
+        {
+            TSharedRef<FMacWindow> Window = MacApplication->GetWindowFromNSWindow(self);
+            MacApplication->CloseWindow(Window);
+        }
+    }
 }
 
-- (void) windowDidExitFullScreen:(NSNotification*) InNotification
+- (void) windowDidResize:(NSNotification*) Notification
 {
-    Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Notification);
+    }
 }
 
-- (void) windowDidBecomeKey:(NSNotification*) InNotification
+- (void) windowDidMove:(NSNotification*) Notification
 {
-    Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Notification);
+    }
 }
 
-- (void) windowDidResignKey:(NSNotification*) InNotification
+- (void) windowDidMiniaturize:(NSNotification*) Notification
 {
-    Application->DeferEvent(InNotification);
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Notification);
+    }
+}
+
+- (void) windowDidDeminiaturize:(NSNotification*) Notification
+{
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Notification);
+    }
+}
+
+- (void) windowDidEnterFullScreen:(NSNotification*) Notification
+{
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Notification);
+    }
+}
+
+- (void) windowDidExitFullScreen:(NSNotification*) Notification
+{
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Notification);
+    }
+}
+
+- (void)windowDidBecomeMain:(NSNotification*) Notification
+{
+    @autoreleasepool
+    {
+        if ([NSApp isHidden] == NO)
+        {
+            [self orderFront:nil];
+        }
+     
+        // TODO: Do we want to handle key as well?
+        if (MacApplication)
+        {
+            MacApplication->DeferEvent(Notification);
+        }
+    }
+}
+
+- (void)windowDidResignMain:(NSNotification*)Notification
+{
+    @autoreleasepool
+    {
+        [self setMovable: YES];
+        [self setMovableByWindowBackground: NO];
+    }
 }
 
 @end

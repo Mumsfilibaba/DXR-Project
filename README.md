@@ -6,30 +6,44 @@ Feel free to make a pull request but please ensure that code follow the code-sta
 
 # Features
 **Current:**
-* FXAA
 * Tiled Deferred Rendering
 * Normal mapping
 * Parallax Occlusion Mapping
 * Physically Based Rendering with Image-Based Lightning
 * Shadow Mapping
-* Dynamic lights (Point-Lights, Directional-Lights, both with shadow support)
+    * Cascaded Shadow-Maps for Directional-Lights
+    * Omni-Directional shadows for Point-Lights 
+* Dynamic lights (Point-Lights, Directional-Lights)
 * SSAO
+* TAA
+* FXAA
+* Custom containers
+    * TArray
+    * TString
+    * TBitArray
 
 **Planed:**
 * Vulkan backend
 * Screen Space Reflections
-* Cascade Shadow-maps
 * Ray-Traced reflections
-* TAA
 * Spotlights
 * Local Environment Probes
 
 # Screenshots
-RayTracing **Off**
-![Screen3](Screenshots/screen3.png? "Screen3")
-RayTracing **Off**
-![Screen0](Screenshots/screen0.png? "Screen0")
-RayTracing **Off**
-![Screen1](Screenshots/screen1.png? "Screen1")
-RayTracing **Off**
+**(Master - Branch)** **RT Off**
 ![Screen2](Screenshots/screen2.png? "Screen2")
+**(Master - Branch)** **RT Off**
+![Screen1](Screenshots/screen1.png? "Screen1")
+**(Cascaded Shadow Maps - Branch)** Cascaded Shadow Maps **RT Off**
+![Screen0](Screenshots/screen0.png? "Screen0")
+**(Ray Traced Reflections - Branch)** Ray Traced Reflections **RT On**
+![ReflectionsScreen](Screenshots/ReflectionsScreen.png? "ReflectionsScreen") 
+**(Master - Branch)** Profiler **RT Off**
+![Profiler](Screenshots/Profiler.png? "Profiler") 
+**(Master - Branch)** Texture Debugger **RT Off**
+![TextureDebugger](Screenshots/TextureDebugger.png? "TextureDebugger") 
+**(Master - Branch)** In-Game Console **RT Off**
+![Console](Screenshots/Console.png? "Console") 
+
+
+

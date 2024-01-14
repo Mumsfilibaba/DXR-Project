@@ -1,68 +1,69 @@
-include 'build_rule.lua'
+include "build_rule.lua"
 
 -- Module build rules
-function CModuleBuildRules(InName)
-    printf('Creating Module \'%s\'', InName)
+function FModuleBuildRules(InName)
+    LogHighlight("Creating Module \'%s\'", InName)
 
     -- Init parent class
-    local self = CBuildRules(InName)
+    local self = FBuildRules(InName)
     if self == nil then
-        printf('Module Error: Failed to create BuildRule')
+        LogError("Failed to create BuildRule")
         return nil
     end
 
     -- Ensure that module does not already exist
     if IsModule(NewModuleName) then
-        printf('Module is already created')
+        LogWarning("Module is already created")
         return GetModule(NewModuleName)
     end
-       
-    -- Folder path for engine-modules
-    local RuntimeFolderPath = GetRuntimeFolderPath()
     
-    -- Should the module be dynamic or static, this is overridden by monolithic build, which forces all modules to be linked statically
+    -- @brief - Determines of the module should be dynamic otherwise static, this is overridden by monolithic build, which forces all modules to be linked statically
     self.bIsDynamic = true
-    -- Should perform linking at compile time (Ignored if bIsDynamic is false). Set to true if hot-reloading
-    self.bRuntimeLinking = true
+	
+    -- @brief - Determines if linking should be performed at compile time (Ignored if bIsDynamic is false). Set to true to enable hot-reloading.
+    self.bRuntimeLinking = false
     
     -- Generate the module
-    local BaseGenerate = self.Generate 
+    local BuildRulesGenerate = self.Generate 
     function self.Generate()
-        printf('    Generating Module %s\n', self.Name)
+        if self.Workspace == nil then
+            LogError("Workspace cannot be nil when generating Module")
+            return
+        end
+
+        LogInfo("\n--- Generating Module \'%s\' ---", self.Name)
   
-        -- Is the build monolithic
-        local bIsMonolithic = IsMonolithic()
-        if bIsMonolithic then
-            printf('    Build is monolithic\n')
+        -- Handle Monolithic build
+        self.bIsMonolithic = IsMonolithic()
+        if self.bIsMonolithic then
+            LogInfo("    Build is monolithic")
             
             self.bIsDynamic      = false
-            self.bRuntimeLinking = true
+            self.bRuntimeLinking = false
         else
-            printf('    Build is NOT monolithic\n')
+            LogInfo("    Build is NOT monolithic")
         end
-        
-        -- Dynamic or static
-        if self.bIsDynamic then
-            local UpperCaseName  = self.Name:upper()
-            local ModuleImplName = UpperCaseName .. '_IMPL=(1)'
-            self.AddDefines(
-            {
-                ModuleImplName
-            })
 
-            self.Kind = 'SharedLib'
+        -- Dynamic or static
+        local ModuleApiName = self.Name:upper() .. "_API"
+        if self.bIsDynamic then           
+            self.Kind = "SharedLib"
+            
+            -- Add define to control the module implementation (For export/import)
+            ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
         else
-            self.Kind = 'StaticLib'
+            self.Kind = "StaticLib"
+
+            -- When a module is not dynamic we treat is as monolithic
+            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
         end
         
         -- Always add module name as a define
-        self.AddDefines(
-        {
-            ('MODULE_NAME=' .. '\"' .. self.Name .. '\"')
-        })
+        self.AddDefines({ "MODULE_NAME=" .. "\"" .. self.Name .. "\"" })
+        self.AddDefines({ ModuleApiName })
 
         -- Generate the project
-        BaseGenerate()
+        BuildRulesGenerate()
     end
 
     -- Add module among global list

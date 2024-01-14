@@ -1,220 +1,145 @@
 #include "DirectionalLight.h"
-
 #include "Core/Math/Math.h"
-#include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Debug/Console/ConsoleVariable.h"
-
+#include "Core/Misc/ConsoleManager.h"
 #include "Engine/Scene/Camera.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variable
+static TAutoConsoleVariable<float> CVarSunSize(
+    "Scene.Lightning.Sun.Size",
+    "Sets the size of the sun, used to determine the penumbra for soft-shadows", 
+    0.05f);
 
-TAutoConsoleVariable<float> GSunSize("Scene.SunSize", 0.5f);
+static TAutoConsoleVariable<float> CVarCascadeSplitLambda(
+    "Scene.Lightning.CascadeSplitLambda",
+    "Determines how the Cascades should be split for the Cascaded Shadow Maps", 
+    1.0f);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// DirectionalLight
+FOBJECT_IMPLEMENT_CLASS(FDirectionalLight);
 
-CDirectionalLight::CDirectionalLight()
-    : CLight()
+FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer)
+    : FLight(ObjectInitializer)
     , Direction(0.0f, -1.0f, 0.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
     , LookAt(0.0f, 0.0f, 0.0f)
     , Position(0.0f, 0.0f, 0.0f)
-    , Matrices()
+    , CascadeSplitLambda(CVarCascadeSplitLambda.GetValue())
+    , Size(CVarSunSize.GetValue())
 {
-    CORE_OBJECT_INIT();
-
     // TODO: Probably move to scene
-    GSunSize.GetChangedDelegate().AddLambda([this](IConsoleVariable* SunLight)
+    CVarSunSize->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* SunLight)
     {
-        if (SunLight && SunLight->IsFloat())
+        if (SunLight && SunLight->IsVariableFloat())
         {
-            const float NewSize = NMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
-            this->SetSize(NewSize);
+            const float NewSize = FMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
+            this->Size = NewSize;
         }
-    });
+    }));
 
-    for (uint32 i = 0; i < NUM_SHADOW_CASCADES; i++)
+    CVarCascadeSplitLambda->SetOnChangedDelegate(FConsoleVariableDelegate::CreateLambda([this](IConsoleVariable* CascadeSplitLambda)
     {
-        Matrices[i].SetIdentity();
-        ViewMatrices[i].SetIdentity();
-        ProjectionMatrices[i].SetIdentity();
-    }
+        if (CascadeSplitLambda && CascadeSplitLambda->IsVariableFloat())
+        {
+            const float NewLambda = FMath::Clamp(0.0f, 1.0f, CascadeSplitLambda->GetFloat());
+            this->CascadeSplitLambda = NewLambda;
+        }
+    }));
+
+    ShadowMatrix.SetIdentity();
+    ViewMatrix.SetIdentity();
+    ProjectionMatrix.SetIdentity();
 }
 
-CDirectionalLight::~CDirectionalLight()
+void FDirectionalLight::Tick(FCamera& Camera)
 {
-    // Empty for now
-}
-
-void CDirectionalLight::UpdateCascades(CCamera& Camera)
-{
-    //XMVECTOR XmDirection = XMVectorSet( 0.0, -1.0f, 0.0f, 0.0f );
-    //XMMATRIX XmRotation = XMMatrixRotationRollPitchYaw( Rotation.x, Rotation.y, Rotation.z );
-    //XMVECTOR XmOffset = XMVector3Transform( XmDirection, XmRotation );
-    //XmDirection = XMVector3Normalize( XmOffset );
-    //XMStoreFloat3( &Direction, XmDirection );
-
-    CMatrix4 RotationMatrix = CMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
-
-    CVector3 StartDirection(0.0f, -1.0f, 0.0f);
-    StartDirection = RotationMatrix.TransformDirection(StartDirection);
-    StartDirection.Normalize();
-    Direction = StartDirection;
-
-    CVector3 StartUp(0.0, 0.0f, 1.0f);
-    StartUp = RotationMatrix.TransformDirection(StartUp);
-    StartUp.Normalize();
-    Up = StartUp;
-
-    CMatrix4 InvCamera = Camera.GetViewProjectionInverseMatrix();
-    InvCamera = InvCamera.Transpose();
-
-    float NearPlane = Camera.GetNearPlane();
-    float FarPlane = NMath::Min<float>(Camera.GetFarPlane(), 100.0f); // TODO: Should be a setting
-    float ClipRange = FarPlane - NearPlane;
-
-    ShadowNearPlane = NearPlane;
-    ShadowFarPlane = FarPlane;
-
-    float MinZ = NearPlane;
-    float MaxZ = FarPlane;
-
-    float Range = ClipRange;
-    float Ratio = MaxZ / MinZ;
-
-    float LocalCascadeSplits[NUM_SHADOW_CASCADES];
-
-    // Calculate split depths based on view camera frustum
-    // Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-    for (uint32 i = 0; i < 4; i++)
+    // Update direction based on rotation
     {
-        float p = (i + 1) / static_cast<float>(NUM_SHADOW_CASCADES);
-        float Log = MinZ * std::pow(Ratio, p);
-        float Uniform = MinZ + Range * p;
-        float d = CascadeSplitLambda * (Log - Uniform) + Uniform;
-        LocalCascadeSplits[i] = (d - NearPlane) / ClipRange;
+        FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
+
+        FVector3 StartDirection(0.0f, -1.0f, 0.0f);
+        StartDirection = RotationMatrix.TransformNormal(StartDirection);
+        Direction      = StartDirection.GetNormalized();
     }
 
-    // TODO: This has to be moved so we do not duplicate it
-    const float CascadeSizes[NUM_SHADOW_CASCADES] =
+    // Update ShadowMatrix
+    FVector3 FrustumCorners[8] =
     {
-        2048.0f, 2048.0f, 2048.0f, 4096.0f
+        FVector3(-1.0f,  1.0f, 0.0f),
+        FVector3( 1.0f,  1.0f, 0.0f),
+        FVector3( 1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f, -1.0f, 0.0f),
+        FVector3(-1.0f,  1.0f, 1.0f),
+        FVector3( 1.0f,  1.0f, 1.0f),
+        FVector3( 1.0f, -1.0f, 1.0f),
+        FVector3(-1.0f, -1.0f, 1.0f),
     };
 
-    UNREFERENCED_VARIABLE(CascadeSizes);
+    // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
+    FMatrix4 InverseViewProjection = Camera.GetViewProjectionInverseMatrix();
+    InverseViewProjection = InverseViewProjection.Transpose();
 
-    float LastSplitDist = 0.0f;
-    for (uint32 i = 0; i < 4; i++)
+    // Calculate the center of frustum
+    FVector3 FrustumCenter = FVector3(0.0f);
+    for (int32 Corner = 0; Corner < 8; ++Corner)
     {
-        float SplitDist = LocalCascadeSplits[i];
+        FrustumCorners[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
+        FrustumCenter += FrustumCorners[Corner];
+    }
+    FrustumCenter /= 8.0f;
 
-        CVector4 FrustumCorners[8] =
-        {
-            CVector4(-1.0f,  1.0f, 0.0f, 1.0f),
-            CVector4(1.0f,  1.0f, 0.0f, 1.0f),
-            CVector4(1.0f, -1.0f, 0.0f, 1.0f),
-            CVector4(-1.0f, -1.0f, 0.0f, 1.0f),
-            CVector4(-1.0f,  1.0f, 1.0f, 1.0f),
-            CVector4(1.0f,  1.0f, 1.0f, 1.0f),
-            CVector4(1.0f, -1.0f, 1.0f, 1.0f),
-            CVector4(-1.0f, -1.0f, 1.0f, 1.0f),
-        };
+    // Calculate a Shadow-matrix
+    UpVector = FVector3(0.0f, 1.0f, 0.0f);
 
-        // Calculate position of light frustum
-        for (uint32 j = 0; j < 8; j++)
-        {
-            CVector4 Corner = InvCamera * FrustumCorners[j];
-            FrustumCorners[j] = Corner / Corner.w;
-        }
+    {
+        FVector3 ShadowLookAt   = FrustumCenter - Direction;
+        FVector3 ShadowPosition = FrustumCenter + (Direction * -0.5f);
 
-        for (uint32 j = 0; j < 4; j++)
-        {
-            const CVector4 Distance = FrustumCorners[j + 4] - FrustumCorners[j];
-            FrustumCorners[j + 4] = FrustumCorners[j] + (Distance * SplitDist);
-            FrustumCorners[j] = FrustumCorners[j] + (Distance * LastSplitDist);
-        }
+        FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
+        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrtographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
 
-        // Calc frustum center
-        CVector4 Center = CVector4(0.0f);
-        for (uint32 j = 0; j < 8; j++)
-        {
-            Center = Center + FrustumCorners[j];
-        }
-        Center = Center * (1.0f / 8.0f);
-
-        float Radius = 0.0f;
-        for (uint32 j = 0; j < 8; j++)
-        {
-            float Distance = ceil((FrustumCorners[j] - Center).Length());
-            Radius = NMath::Min(NMath::Max(Radius, Distance), 80.0f); // This should be dynamic
-        }
-
-        // Make sure we only move cascades with whole pixels
-        //float TexelsPerUnit = CascadeSizes[i] / (Radius * 2.0f);
-        //XMMATRIX Scale = XMMatrixScaling(TexelsPerUnit, TexelsPerUnit, TexelsPerUnit);
-
-        //XMVECTOR EyePosition  = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-        //XMVECTOR LookPosition = XMVectorSet(-Direction.x, -Direction.y, -Direction.z, 0.0f);
-        //
-        //XMMATRIX LookAtMat = XMMatrixLookAtLH(EyePosition, LookPosition, XmUp);
-        //LookAtMat = XMMatrixMultiply(Scale, LookAtMat);
-
-        //XMMATRIX LookAtMatInverse = XMMatrixInverse(nullptr, LookAtMat);
-
-        //XMVECTOR XmCenter = XMLoadFloat4(&Center);
-        //XMVector3Transform(XmCenter, LookAtMat);
-        //XMStoreFloat4(&Center, XmCenter);
-
-        //Center.x = floor(Center.x);
-        //Center.y = floor(Center.y);
-        //Center.z = floor(Center.z);
-
-        //XmCenter = XMLoadFloat4(&Center);
-        //XMVector3Transform(XmCenter, LookAtMatInverse);
-        //XMStoreFloat4(&Center, XmCenter);
-
-        CVector3 CascadePosition = CVector3(Center.x, Center.y, Center.z) - (Direction * Radius * 6.0f);
-        CVector3 EyePosition = CascadePosition;
-        CVector3 LookPosition = CVector3(Center.x, Center.y, Center.z);
-
-        CMatrix4 View = CMatrix4::LookAt(EyePosition, LookPosition, Up);
-        CMatrix4 Projection = CMatrix4::OrtographicProjection(-Radius, Radius, -Radius, Radius, 0.01f, Radius * 12.0f);
-        ViewMatrices[i] = View.Transpose();
-        ProjectionMatrices[i] = Projection.Transpose();
-        Matrices[i] = (View * Projection).Transpose();
-
-        LastSplitDist = SplitDist;
-
-        CascadeSplits[i] = (NearPlane + SplitDist * ClipRange);
-        CascadeRadius[i] = Radius;
-
-        if (i == 0)
-        {
-            LookAt = CVector3(Center.x, Center.y, Center.z);
-            Position = CascadePosition;
-        }
+        ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
+        ShadowMatrix = ShadowMatrix.Transpose();
     }
 
-    return;
+    // Generate a bounds matrix
+    {
+        float Radius = 0.0f;
+        for (int32 Index = 0; Index < 8; ++Index)
+        {
+            const float Distance = (FrustumCorners[Index] - FrustumCenter).Length();
+            Radius = FMath::Max(Radius, Distance);
+        }
+
+        Radius = FMath::Ceil(Radius * 16.0f) / 16.0f;
+
+        FVector3 MaxExtents = FVector3(Radius);
+        FVector3 MinExtents = -MaxExtents;
+
+        // Setup ShadowView
+        FVector3 Extents        = MaxExtents - MinExtents;
+        FVector3 LightDirection = Direction.GetNormalized();
+        Position = FrustumCenter - LightDirection * MaxExtents.z;
+
+        ShadowNearPlane = -Extents.z;
+        ShadowFarPlane  =  Extents.z;
+
+        ViewMatrix = FMatrix4::LookAt(Position, LightDirection, UpVector);
+        ViewMatrix = ViewMatrix.Transpose();
+
+        ProjectionMatrix = FMatrix4::OrtographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, ShadowNearPlane, ShadowFarPlane);
+        // ProjectionMatrix = ProjectionMatrix.Transpose();
+    }
 }
 
-void CDirectionalLight::SetRotation(const CVector3& InRotation)
+void FDirectionalLight::SetRotation(const FVector3& InRotation)
 {
     Rotation = InRotation;
 }
 
-void CDirectionalLight::SetRotation(float x, float y, float z)
+void FDirectionalLight::SetCascadeSplitLambda(float InCascadeSplitLambda)
 {
-    SetRotation(CVector3(x, y, z));
+    CVarCascadeSplitLambda->SetAsFloat(InCascadeSplitLambda, EConsoleVariableFlags::SetByCode);
 }
 
-void CDirectionalLight::SetLookAt(const CVector3& InLookAt)
+void FDirectionalLight::SetSize(float InSize)
 {
-    LookAt = InLookAt;
-}
-
-void CDirectionalLight::SetLookAt(float x, float y, float z)
-{
-    SetLookAt(CVector3(x, y, z));
+    CVarSunSize->SetAsFloat(InSize, EConsoleVariableFlags::SetByCode);
 }

@@ -1,8 +1,20 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- Core Module
 
-local CoreModule = CModuleBuildRules('Core')
+local CoreModule = FModuleBuildRules("Core")
 CoreModule.bUsePrecompiledHeaders = true
-CoreModule.Generate()
+
+if IsPlatformMac() then
+    CoreModule.AddFrameWorks( 
+    {
+        "AppKit",
+    })
+elseif IsPlatformWindows() then
+    CoreModule.AddLinkLibraries(
+    {
+        "Dbghelp.lib",
+        "shlwapi.lib"
+    })
+end

@@ -1,9 +1,6 @@
 #pragma once
 #include "MulticastDelegate.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Macros for declaring event types
-
 #define DECLARE_EVENT(NewEvent, OwnerType, ...)         \
     class NewEvent : public TEvent<__VA_ARGS__>         \
     {                                                   \
@@ -18,9 +15,6 @@
     public:                                             \
         NewEvent() = default;                           \
     };
-
-/*////////////////////////////////////////////////////////////////////////////////////////////////*/
-// TEvent
 
 template<typename... ArgTypes>
 class TEvent : public TMulticastDelegate<ArgTypes...>

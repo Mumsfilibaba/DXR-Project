@@ -1,62 +1,104 @@
 #pragma once
-#include "D3D12DescriptorHeap.h"
+#include "D3D12Descriptors.h"
 #include "D3D12Device.h"
-
+#include "D3D12RefCounted.h"
+#include "Core/Containers/SharedRef.h"
+#include "Core/Threading/AtomicInt.h"
 #include "RHI/RHIResources.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12SamplerState
+typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
 
-class CD3D12SamplerState : public CRHISamplerState, public CD3D12DeviceChild
+struct FD3D12SamplerDescHasher
 {
-public:
-
-    CD3D12SamplerState(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap)
-        : CRHISamplerState()
-        , CD3D12DeviceChild(InDevice)
-        , OfflineHeap(InOfflineHeap)
-        , OfflineHandle({ 0 })
-        , Desc()
+    SIZE_T operator()(const FRHISamplerStateDesc& InDesc) const
     {
-        Check(InOfflineHeap != nullptr);
+        return InDesc.GetHash();
     }
+};
 
-    ~CD3D12SamplerState()
-    {
-        OfflineHeap->Free(OfflineHandle, OfflineHeapIndex);
-    }
+
+struct FD3D12SamplerStateIdentifier
+{
+    static constexpr uint16 InvalidIdentifier = 0xffff;
 
 public:
-
-    bool CreateSampler(const D3D12_SAMPLER_DESC& InDesc)
+    enum class EGenerate
     {
-        OfflineHandle = OfflineHeap->Allocate(OfflineHeapIndex);
-        if (OfflineHandle != 0)
-        {
-            Desc = InDesc;
-            GetDevice()->CreateSampler(&Desc, OfflineHandle);
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        New
+    };
+
+    FD3D12SamplerStateIdentifier()
+        : Identifer(InvalidIdentifier)
+    {
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const { return OfflineHandle; }
+    FD3D12SamplerStateIdentifier(EGenerate Type)
+        : Identifer(GenerateIdentifier())
+    {
+    }
 
-    FORCEINLINE const D3D12_SAMPLER_DESC& GetDesc() const { return Desc; }
+    operator bool() const
+    {
+        return Identifer != InvalidIdentifier;
+    }
 
-public:
+    uint16 operator*() const
+    {
+        return Identifer;
+    }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHISamplerState Interface
+    bool operator==(const FD3D12SamplerStateIdentifier& Other) const
+    {
+        return Identifer == Other.Identifer;
+    }
 
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+    bool operator!=(const FD3D12SamplerStateIdentifier& Other) const
+    {
+        return Identifer != Other.Identifer;
+    }
+
+    uint16 Identifer;
 
 private:
-    CD3D12OfflineDescriptorHeap* OfflineHeap = nullptr;
-    uint32                       OfflineHeapIndex = 0;
-    D3D12_CPU_DESCRIPTOR_HANDLE  OfflineHandle;
+    static uint16 GenerateIdentifier()
+    {
+        const int32 Identifier = ++NextIdentifier;
+        CHECK(Identifier < InvalidIdentifier);
+        return static_cast<uint16>(Identifier);
+    }
+
+    static D3D12RHI_API FAtomicInt32 NextIdentifier;
+};
+
+
+class FD3D12SamplerState : public FRHISamplerState, public FD3D12DeviceChild
+{
+public:
+    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateDesc& InInitializer);
+    virtual ~FD3D12SamplerState();
+
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
+    bool CreateSampler(const D3D12_SAMPLER_DESC& InDesc);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetOfflineHandle() const 
+    {
+        return Descriptor.Handle;
+    }
+
+    const D3D12_SAMPLER_DESC& GetDesc() const 
+    { 
+        return Desc;
+    }
+
+    FD3D12SamplerStateIdentifier GetUniqueID() const
+    {
+        return Identifier;
+    }
+
+private:
     D3D12_SAMPLER_DESC           Desc;
+    FD3D12OfflineDescriptorHeap* OfflineHeap;
+    FD3D12OfflineDescriptor      Descriptor;
+    FD3D12SamplerStateIdentifier Identifier;
 };

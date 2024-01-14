@@ -1,201 +1,197 @@
 #include "ForwardRenderer.h"
 #include "MeshDrawCommand.h"
-
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
-
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Scene/Actor.h"
+#include "Engine/Scene/Actors/Actor.h"
+#include "Core/Misc/FrameProfiler.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CForwardRenderer
-
-bool CForwardRenderer::Init(SFrameResources& FrameResources)
+bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
 {
-    TArray<SShaderDefine> Defines =
+    TArray<FShaderDefine> Defines =
     {
         { "ENABLE_PARALLAX_MAPPING", "1" },
         { "ENABLE_NORMAL_MAPPING",   "1" },
     };
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "VSMain", &Defines, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    
+    FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ForwardPass.hlsl", "PSMain", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
+    CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     PShader = RHICreatePixelShader(ShaderCode);
     if (!PShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable   = true;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::All;
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
+    DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilInitializer.bDepthEnable      = true;
+    DepthStencilInitializer.bDepthWriteEnable = true;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
+    FRHIRasterizerStateInitializer RasterizerStateInitializer;
+    RasterizerStateInitializer.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo( { SRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero) }, false , false);
+    FRHIBlendStateInitializer BlendStateInitializer;
+    BlendStateInitializer.NumRenderTargets = 1;
+    BlendStateInitializer.RenderTargets[0] = FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero);
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PSOProperties;
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PShader.Get();
-    PSOProperties.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
+    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
+    PSOInitializer.ShaderState.PixelShader                = PShader.Get();
+    PSOInitializer.VertexInputLayout                      = FrameResources.MeshInputLayout.Get();
+    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+    PSOInitializer.BlendState                             = BlendState.Get();
+    PSOInitializer.RasterizerState                        = RasterizerState.Get();
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
 
-    PipelineState = RHICreateGraphicsPipelineState(PSOProperties);
+    PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     return true;
 }
 
-void CForwardRenderer::Release()
+void FForwardRenderer::Release()
 {
     PipelineState.Reset();
     VShader.Reset();
     PShader.Reset();
 }
 
-void CForwardRenderer::Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup)
+void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)
 {
     // Forward Pass
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin ForwardPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ForwardPass");
 
     TRACE_SCOPE("ForwardPass");
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
-    const float RenderWidth = float(FrameResources.FinalTarget->GetWidth());
-    const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
+    const float RenderWidth  = float(FrameResources.CurrentWidth);
+    const float RenderHeight = float(FrameResources.CurrentHeight);
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
 
-    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetScissorRect(ScissorRegion);
 
-    CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    FRHIRenderPassDesc RenderPass;
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
-    CmdList.BeginRenderPass(RenderPass);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    CommandList.BeginRenderPass(RenderPass);
 
-    CmdList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
     // TODO: Fix point-light count in shader
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsBuffer.Get(), 1);
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 2);
-    CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 1);
-    CmdList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 2);
-    CmdList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 3);
+    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
+    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
+    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 5);
 
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.IrradianceMap->GetShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.SpecularIrradianceMap->GetShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
+    const FProxyLightProbe& Skylight = LightSetup.Skylight;
+    CommandList.SetShaderResourceView(PShader.Get(), Skylight.IrradianceMap->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(PShader.Get(), Skylight.SpecularIrradianceMap->GetShaderResourceView(), 1);
+    CommandList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
     //TODO: Fix directional-light shadows
     //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
-    CmdList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 3);
+    CommandList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 4);
 
-    CmdList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
-    CmdList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
-    CmdList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
+    CommandList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
+    CommandList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
+    CommandList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
     //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
     struct STransformBuffer
     {
-        CMatrix4 Transform;
-        CMatrix4 TransformInv;
+        FMatrix4 Transform;
+        FMatrix4 TransformInv;
     } TransformPerObject;
 
-    CmdList.SetGraphicsPipelineState(PipelineState.Get());
+    CommandList.SetGraphicsPipelineState(PipelineState.Get());
+
     for (const auto CommandIndex : FrameResources.ForwardVisibleCommands)
     {
-        const SMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+        const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
-        CmdList.SetVertexBuffers(&Command.VertexBuffer, 1, 0);
-        CmdList.SetIndexBuffer(Command.IndexBuffer);
+        CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
+        CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
-        if (Command.Material->IsBufferDirty())
-        {
-            Command.Material->BuildBuffer(CmdList);
-        }
+        FRHIBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
+        CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 6);
 
-        CRHIConstantBuffer* ConstantBuffer = Command.Material->GetMaterialBuffer();
-        CmdList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 4);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->AlbedoMap->GetShaderResourceView(), 5);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->NormalMap->GetShaderResourceView(), 6);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->RoughnessMap->GetShaderResourceView(), 7);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->MetallicMap->GetShaderResourceView(), 8);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->AOMap->GetShaderResourceView(), 9);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->AlphaMask->GetShaderResourceView(), 10);
+        CommandList.SetShaderResourceView(PShader.Get(), Command.Material->HeightMap->GetShaderResourceView(), 11);
 
-        CRHIShaderResourceView* const* ShaderResourceViews = Command.Material->GetShaderResourceViews();
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[0], 4);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[1], 5);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[2], 6);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[3], 7);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[4], 8);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[5], 9);
-        CmdList.SetShaderResourceView(PShader.Get(), ShaderResourceViews[6], 10);
+        FRHISamplerState* SamplerState = Command.Material->GetMaterialSampler();
+        CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);
 
-        CRHISamplerState* SamplerState = Command.Material->GetMaterialSampler();
-        CmdList.SetSamplerState(PShader.Get(), SamplerState, 0);
-
-        TransformPerObject.Transform = Command.CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
 
-        CmdList.Set32BitShaderConstants(VShader.Get(), &TransformPerObject, 32);
+        CommandList.Set32BitShaderConstants(VShader.Get(), &TransformPerObject, 32);
 
-        CmdList.DrawIndexedInstanced(Command.IndexBuffer->GetNumIndicies(), 1, 0, 0, 0);
+        CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }
 
-    CmdList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CommandList.EndRenderPass();
 
-    CmdList.EndRenderPass();
+    CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End ForwardPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End ForwardPass");
 }

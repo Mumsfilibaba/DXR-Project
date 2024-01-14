@@ -1,104 +1,68 @@
 #pragma once
-#include "Core/CoreTypes.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/ObjectHandling.h"
-#include "Core/Templates/AlignedStorage.h"
+#include "Core/Templates/TypeTraits.h"
 
-#if defined(COMPILER_MSVC)
-	#pragma warning(push)
-	#pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-	#pragma clang diagnostic push
-	#pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Allocator interface 
-
-template<typename T>
+template<typename ElementType>
 class TArrayAllocatorInterface
 {
 public:
-    using ElementType = T;
-    using SizeType    = int32;
+    using SizeType = int32;
 
-    TArrayAllocatorInterface() noexcept = default;
+    TArrayAllocatorInterface() = default;
     ~TArrayAllocatorInterface() = default;
 
     /**
-     * @brief: Reallocates the allocation
-     * 
-     * @param CurrentCount: Current number of elements that are allocated 
-     * @param NewCount: The new number of elements to allocate
+     * @brief              - Reallocates the allocation
+     * @param CurrentCount - Current number of elements that are allocated 
+     * @param NewCount     - The new number of elements to allocate
      */
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept { return nullptr; }
 
     /**
-     * @brief: Free the allocation
+     * @brief - Free the allocation
      */
     FORCEINLINE void Free() noexcept { }
 
     /**
-     * @brief: Move allocation from another allocator-instance
-     * 
-     * @param Other: Other allocator instance
+     * @brief       - Move allocation from another allocator-instance
+     * @param Other - Other allocator instance
      */
     FORCEINLINE void MoveFrom(TArrayAllocatorInterface&& Other) { }
 
     /**
-     * @brief: Retrieve the allocation
-     * 
-     * @return: Returns the allocation
+     * @brief  - Retrieve the allocation
+     * @return - Returns the allocation
      */
-    FORCEINLINE ElementType* GetAllocation() noexcept { return nullptr; }
+    NODISCARD FORCEINLINE ElementType* GetAllocation() const noexcept { return nullptr; }
 
     /**
-     * @brief: Retrieve the allocation
-     *
-     * @return: Returns the allocation
+     * @brief  - Returns the current state of the allocation
+     * @return - Returns true or false if there is an allocation
      */
-    FORCEINLINE const ElementType* GetAllocation() const noexcept { return nullptr; }
+    NODISCARD FORCEINLINE bool HasAllocation() const noexcept { return false; }
 
     /**
-     * @brief: Returns the current state of the allocation
-     *
-     * @return: Returns true or false if there is an allocation
+     * @brief  - Returns the current state of the allocation
+     * @return - Returns true or false if the allocation is allocated on the heap
      */
-    FORCEINLINE bool HasAllocation() const noexcept { return false; }
-
-    /**
-     * @brief: Returns the current state of the allocation
-     *
-     * @return: Returns true or false if the allocation is allocated on the heap
-     */
-    FORCEINLINE bool IsHeapAllocated() const noexcept { return false; }
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept { return false; }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDefaultArrayAllocator - Default allocator that allocates from malloc
 
-template<typename T>
+template<typename ElementType>
 class TDefaultArrayAllocator
 {
 public:
-
-    using ElementType = T;
     using SizeType = int32;
 
-    FORCEINLINE TDefaultArrayAllocator() noexcept
-        : Allocation(nullptr)
-    { }
-
-    FORCEINLINE ~TDefaultArrayAllocator()
-    {
-        Free();
-    }
+    TDefaultArrayAllocator() = default;
 
     FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept
     {
-        UNREFERENCED_VARIABLE(CurrentCount);
-
-        Allocation = CMemory::Realloc<ElementType>(Allocation, NewCount);
+        Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewCount * sizeof(ElementType)));
         return Allocation;
     }
 
@@ -106,93 +70,66 @@ public:
     {
         if (Allocation)
         {
-            CMemory::Free(Allocation);
+            FMemory::Free(Allocation);
             Allocation = nullptr;
         }
     }
 
     FORCEINLINE void MoveFrom(TDefaultArrayAllocator&& Other)
     {
-        Check(this != &Other);
-
+        CHECK(this != &Other);
         Free();
-
         Allocation = Other.Allocation;
         Other.Allocation = nullptr;
     }
 
-    FORCEINLINE ElementType* GetAllocation() noexcept
+    NODISCARD FORCEINLINE ElementType* GetAllocation() const noexcept
     {
         return Allocation;
     }
 
-    FORCEINLINE const ElementType* GetAllocation() const noexcept
-    {
-        return Allocation;
-    }
-
-    FORCEINLINE bool HasAllocation() const noexcept
+    NODISCARD FORCEINLINE bool HasAllocation() const noexcept
     {
         return (Allocation != nullptr);
     }
 
-    FORCEINLINE bool IsHeapAllocated() const noexcept
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
     {
         return true;
     }
 
 private:
-    ElementType* Allocation;
+    ElementType* Allocation = nullptr;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TInlineAllocation - Wrapper class for inline allocated bytes
 
-template<typename InlineType, int32 NumElements>
-class TInlineAllocation
-{
-public:
-
-    using SizeType = int32;
-
-    TInlineAllocation() = default;
-    ~TInlineAllocation() = default;
-
-    FORCEINLINE InlineType* GetElements() noexcept
-    {
-        return reinterpret_cast<InlineType*>(InlineAllocation);
-    }
-
-    FORCEINLINE const InlineType* GetElements() const noexcept
-    {
-        return reinterpret_cast<const InlineType*>(InlineAllocation);
-    }
-
-public:
-    constexpr SizeType GetSize() const noexcept
-    {
-        return sizeof(InlineAllocation);
-    }
-
-private:
-    TAlignedStorage<sizeof(InlineType), AlignmentOf<InlineType>> InlineAllocation[NumElements];
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TInlineArrayAllocator - InlineAllocator allocator that has a small fixed size memory, then allocates from TDefaultArrayAllocator
-
-template<typename T, int32 NumInlineElements>
+template<typename ElementType, int32 NumInlineElements>
 class TInlineArrayAllocator
 {
-public:
+    template<int32 NumElements>
+    class FInlineStorage
+    {
+    public:
+        using SizeType = int32;
 
-    using ElementType = T;
+        NODISCARD constexpr ElementType* GetElements() const noexcept
+        {
+            return reinterpret_cast<ElementType*>(InlineAllocation);
+        }
+
+        NODISCARD constexpr SizeType Size() const noexcept
+        {
+            return sizeof(InlineAllocation);
+        }
+
+    private:
+        mutable TAlignedBytes<sizeof(ElementType), AlignmentOf<ElementType>> InlineAllocation[NumElements];
+    };
+
+public:
     using SizeType = int32;
 
-    FORCEINLINE TInlineArrayAllocator() noexcept
-        : InlineAllocation()
-        , DynamicAllocation()
-    { }
+    TInlineArrayAllocator() = default;
 
     FORCEINLINE ~TInlineArrayAllocator()
     {
@@ -205,10 +142,9 @@ public:
         {
             if (!DynamicAllocation.HasAllocation())
             {
-                Check(CurrentCount <= NumInlineElements);
-
+                CHECK(CurrentCount <= NumInlineElements);
                 DynamicAllocation.Realloc(CurrentCount, NewElementCount);
-                RelocateRange<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
+                ::RelocateObjects<ElementType>(reinterpret_cast<void*>(DynamicAllocation.GetAllocation()), InlineAllocation.GetElements(), CurrentCount);
             }
             else
             {
@@ -222,8 +158,7 @@ public:
             if (DynamicAllocation.HasAllocation())
             {
                 CurrentCount = (CurrentCount <= NumInlineElements) ? CurrentCount : NumInlineElements;
-
-                RelocateRange<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
+                ::RelocateObjects<ElementType>(reinterpret_cast<void*>(InlineAllocation.GetElements()), DynamicAllocation.GetAllocation(), CurrentCount);
                 Free();
             }
 
@@ -233,48 +168,48 @@ public:
 
     FORCEINLINE void Free() noexcept
     {
-        DynamicAllocation.Free();
+        if (!DynamicAllocation.HasAllocation())
+        {
+            FMemory::Memzero(reinterpret_cast<void*>(InlineAllocation.GetElements()), InlineAllocation.Size());
+        }
+        else
+        {
+            DynamicAllocation.Free();
+        }
     }
 
     FORCEINLINE void MoveFrom(TInlineArrayAllocator&& Other)
     {
-        Check(this != &Other);
+        CHECK(this != &Other);
 
         if (!Other.DynamicAllocation.HasAllocation())
         {
-            RelocateRange<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
+            ::RelocateObjects<ElementType>(InlineAllocation.GetElements(), Other.InlineAllocation.GetElements(), NumInlineElements);
+            FMemory::Memzero(reinterpret_cast<void*>(Other.InlineAllocation.GetElements()), Other.InlineAllocation.Size());
         }
 
-        DynamicAllocation.MoveFrom(Move(Other.DynamicAllocation));
+        // This call Free's any potential dynamic allocation we own
+        DynamicAllocation.MoveFrom(::Move(Other.DynamicAllocation));
     }
 
-    FORCEINLINE ElementType* GetAllocation() noexcept
+    NODISCARD FORCEINLINE ElementType* GetAllocation() const noexcept
     {
         return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
     }
 
-    FORCEINLINE const ElementType* GetAllocation() const noexcept
-    {
-        return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
-    }
-
-    FORCEINLINE bool HasAllocation() const noexcept
+    NODISCARD FORCEINLINE bool HasAllocation() const noexcept
     {
         return DynamicAllocation.HasAllocation();
     }
 
-    FORCEINLINE bool IsHeapAllocated() const noexcept
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
     {
         return DynamicAllocation.HasAllocation();
     }
 
 private:
-    TInlineAllocation<ElementType, NumInlineElements> InlineAllocation;
-    TDefaultArrayAllocator<ElementType>               DynamicAllocation;
+    FInlineStorage<NumInlineElements>   InlineAllocation;
+    TDefaultArrayAllocator<ElementType> DynamicAllocation;
 };
 
-#if defined(COMPILER_MSVC)
-	#pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-	#pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

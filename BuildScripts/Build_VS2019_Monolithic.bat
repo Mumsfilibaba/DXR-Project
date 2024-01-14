@@ -1,2 +1,2 @@
-premake5.exe vs2019 --file=../build.lua --monolithic
+.\Premake\\premake5.exe vs2019 --file=../build.lua --platform=Win32 --monolithic
 pause

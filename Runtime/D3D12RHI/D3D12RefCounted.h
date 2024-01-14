@@ -1,34 +1,32 @@
 #pragma once
-#include "ID3D12RefCounted.h"
-
+#include "D3D12Core.h"
 #include "Core/Threading/AtomicInt.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12RefCounted
-
-class D3D12_RHI_API CD3D12RefCounted : public ID3D12RefCounted
+class D3D12RHI_API FD3D12RefCounted
 {
 protected:
-
-    CD3D12RefCounted()
+    FD3D12RefCounted()
         : StrongReferences(1)
-    { }
+    {
+    }
 
-    virtual ~CD3D12RefCounted() = default;
+    virtual ~FD3D12RefCounted()
+    {
+        CHECK(StrongReferences.Load() == 0);
+    }
 
 public:
-
-    virtual int32 AddRef() override final
+    int32 AddRef()
     {
-        Check(StrongReferences.Load() > 0);
+        CHECK(StrongReferences.Load() > 0);
         ++StrongReferences;
         return StrongReferences.Load();
     }
 
-    virtual int32 Release() override final
+    int32 Release()
     {
         const int32 RefCount = --StrongReferences;
-        Check(RefCount >= 0);
+        CHECK(RefCount >= 0);
 
         if (RefCount < 1)
         {
@@ -38,6 +36,11 @@ public:
         return RefCount;
     }
 
+    int32 GetRefCount() const
+    {
+        return StrongReferences.Load();
+    }
+
 protected:
-    mutable AtomicInt32 StrongReferences;
+    mutable FAtomicInt32 StrongReferences;
 };

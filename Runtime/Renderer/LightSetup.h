@@ -1,132 +1,159 @@
 #pragma once
 #include "RendererModule.h"
-
+#include "Core/Math/Vector4.h"
 #include "RHI/RHIResources.h"
-#include "RHI/RHIResourceViews.h"
 #include "RHI/RHICommandList.h"
-
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
 
-#include "Core/Math/Vector4.h"
+#define MAX_LIGHTS_PER_TILE (1024)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPointLightData
-
-struct SPointLightData
+struct FPointLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
-    float Padding0;
+    FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);
+    float    Padding0;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SShadowCastingPointLightData
+MARK_AS_REALLOCATABLE(FPointLightData);
 
-struct SShadowCastingPointLightData
+
+struct FShadowCastingPointLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
-    float ShadowBias = 0.005f;
+    FVector3 Color      = FVector3(1.0f, 1.0f, 1.0f);
+    float    ShadowBias = 0.005f;
 
-    float FarPlane = 10.0f;
-    float MaxShadowBias = 0.05f;
-    float Padding0;
-    float Padding1;
+    float    FarPlane      = 10.0f;
+    float    MaxShadowBias = 0.05f;
+    float    Padding0;
+    float    Padding1;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SPointLightShadowMapGenerationData
+MARK_AS_REALLOCATABLE(FShadowCastingPointLightData);
 
-struct SPointLightShadowMapGenerationData
+
+struct FPointLightShadowMapGenerationData
 {
-    TStaticArray<CMatrix4, 6> Matrix;
-    TStaticArray<CMatrix4, 6> ViewMatrix;
-    TStaticArray<CMatrix4, 6> ProjMatrix;
+    TStaticArray<FMatrix4, 6> Matrix;
+    TStaticArray<FMatrix4, 6> ViewMatrix;
+    TStaticArray<FMatrix4, 6> ProjMatrix;
 
     float    FarPlane;
-    CVector3 Position;
+    FVector3 Position;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SDirectionalLightData
+MARK_AS_REALLOCATABLE(FPointLightShadowMapGenerationData);
 
-struct SDirectionalLightData
+
+struct FDirectionalLightData
 {
-    CVector3 Color = CVector3(1.0f, 1.0f, 1.0f);
-    float ShadowBias = 0.005f;
+    FVector3 Color      = FVector3(1.0f, 1.0f, 1.0f);
+    float    ShadowBias = 0.005f;
 
-    CVector3 Direction = CVector3(0.0f, -1.0f, 0.0f);
-    float MaxShadowBias = 0.05f;
+    FVector3 Direction     = FVector3(0.0f, -1.0f, 0.0f);
+    float    MaxShadowBias = 0.05f;
 
-    CVector3 Up = CVector3(0.0f, 0.0f, -1.0f);
-    float LightSize;
+    FVector3 UpVector = FVector3(0.0f, 0.0f, -1.0f);
+    float    LightSize = 0.0f;
+
+    FMatrix4 ShadowMatrix;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SLightSetup
+MARK_AS_REALLOCATABLE(FDirectionalLightData);
 
-struct RENDERER_API SLightSetup
+
+struct FProxyLightProbe
+{
+    void Release()
+    {
+        IrradianceMap.Reset();
+        SpecularIrradianceMap.Reset();
+
+        IrradianceMapUAV.Reset();
+        for (FRHIUnorderedAccessViewRef& UAV : SpecularIrradianceMapUAVs)
+        {
+            UAV.Reset();
+        }
+
+        SpecularIrradianceMapUAVs.Clear();
+        WeakSpecularIrradianceMapUAVs.Clear();
+    }
+
+    FRHITextureRef IrradianceMap;
+    FRHITextureRef SpecularIrradianceMap;
+
+    // TODO: We should be able to do this without the UAVs saved
+    FRHIUnorderedAccessViewRef         IrradianceMapUAV;
+    TArray<FRHIUnorderedAccessViewRef> SpecularIrradianceMapUAVs;
+    TArray<FRHIUnorderedAccessView*>   WeakSpecularIrradianceMapUAVs;
+};
+
+
+struct RENDERER_API FLightSetup
 {
     const EFormat ShadowMaskFormat = EFormat::R8_Unorm;
-    const EFormat ShadowMapFormat = EFormat::D32_Float;
+    const EFormat ShadowMapFormat  = EFormat::D16_Unorm;
     const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
 
-    const uint32 MaxPointLights = 256;
-    const uint32 MaxDirectionalLights = 256;
-    const uint32 MaxPointLightShadows = 8;
+    const uint32 MaxPointLights         = 256;
+    const uint32 MaxDirectionalLights   = 256;
+    const uint32 MaxPointLightShadows   = 8;
 
-    const uint16 CascadeSize = 4096;
 
-    const uint16 IrradianceSize = 32;
-    const uint16 SpecularIrradianceSize = 256;
-    const uint16 PointLightShadowSize = 512;
+    int32 CascadeSize                 = 0;
+    int32 PointLightShadowSize        = 512;
+    int32 IrradianceProbeSize         = 0;
+    int32 SpecularIrradianceProbeSize = 0;
 
-    SLightSetup() = default;
-    ~SLightSetup() = default;
+    bool Initialize();
 
-    bool Init();
-
-    void BeginFrame(CRHICommandList& CmdList, const CScene& Scene);
     void Release();
 
-    TArray<CVector4>        PointLightsPosRad;
-    TArray<SPointLightData> PointLightsData;
+    void BeginFrame(FRHICommandList& CommandList, const FScene& Scene);
 
-    TSharedRef<CRHIConstantBuffer> PointLightsBuffer;
-    TSharedRef<CRHIConstantBuffer> PointLightsPosRadBuffer;
+    // PointLights
+    TArray<FVector4>        PointLightsPosRad;
+    TArray<FPointLightData> PointLightsData;
 
-    TArray<SPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
+    FRHIBufferRef           PointLightsBuffer;
+    FRHIBufferRef           PointLightsPosRadBuffer;
 
-    TArray<CVector4>                     ShadowCastingPointLightsPosRad;
-    TArray<SShadowCastingPointLightData> ShadowCastingPointLightsData;
+    TArray<FPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
 
-    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsBuffer;
-    TSharedRef<CRHIConstantBuffer> ShadowCastingPointLightsPosRadBuffer;
+    TArray<FVector4>                     ShadowCastingPointLightsPosRad;
+    TArray<FShadowCastingPointLightData> ShadowCastingPointLightsData;
 
-    TSharedRef<CRHITextureCubeArray> PointLightShadowMaps;
+    FRHIBufferRef                        ShadowCastingPointLightsBuffer;
+    FRHIBufferRef                        ShadowCastingPointLightsPosRadBuffer;
 
-    // NOTE: Only one directional light
-    SDirectionalLightData DirectionalLightData;
-    bool DirectionalLightDataDirty = true;
+    FRHITextureRef                       PointLightShadowMaps;
 
-    float CascadeSplitLambda;
+    // DirectionalLight
+    // NOTE: Only one directional light (TODO: This is ugly)
+    FDirectionalLightData      DirectionalLightData;
 
-    TSharedRef<CRHIConstantBuffer> DirectionalLightsBuffer;
+    FMatrix4                   DirectionalLightViewMatrix;
+    FMatrix4                   DirectionalLightProjMatrix;
 
-    TSharedRef<CRHITexture2D> ShadowMapCascades[4];
-    TSharedRef<CRHITexture2D> DirectionalShadowMask;
+    float                      DirectionalLightFarPlane = 0.0f;
+    float                      CascadeSplitLambda       = 0.0f;
+    
+    bool                       DirectionalLightDataDirty = true;
 
-    TSharedRef<CRHIGenericBuffer>       CascadeMatrixBuffer;
-    TSharedRef<CRHIShaderResourceView>  CascadeMatrixBufferSRV;
-    TSharedRef<CRHIUnorderedAccessView> CascadeMatrixBufferUAV;
+    FRHIBufferRef              DirectionalLightsBuffer;
 
-    TSharedRef<CRHIGenericBuffer>       CascadeSplitsBuffer;
-    TSharedRef<CRHIShaderResourceView>  CascadeSplitsBufferSRV;
-    TSharedRef<CRHIUnorderedAccessView> CascadeSplitsBufferUAV;
+    FRHITextureRef             ShadowMapCascades[4];
+    FRHITextureRef             DirectionalShadowMask;
+    FRHITextureRef             CascadeIndexBuffer;
 
-    TSharedRef<CRHITextureCube>         IrradianceMap;
-    TSharedRef<CRHIUnorderedAccessView> IrradianceMapUAV;
+    FRHIBufferRef              CascadeMatrixBuffer;
+    FRHIShaderResourceViewRef  CascadeMatrixBufferSRV;
+    FRHIUnorderedAccessViewRef CascadeMatrixBufferUAV;
 
-    TSharedRef<CRHITextureCube>                 SpecularIrradianceMap;
-    TArray<TSharedRef<CRHIUnorderedAccessView>> SpecularIrradianceMapUAVs;
-    TArray<CRHIUnorderedAccessView*>            WeakSpecularIrradianceMapUAVs;
+    FRHIBufferRef              CascadeSplitsBuffer;
+    FRHIShaderResourceViewRef  CascadeSplitsBufferSRV;
+    FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
+
+    // SkyLight
+    FProxyLightProbe Skylight;
+    FProxyLightProbe LocalProbe;
 };

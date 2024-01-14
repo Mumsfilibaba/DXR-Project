@@ -1,19 +1,16 @@
 #include "CocoaConsoleWindow.h"
-#include "MacConsoleWindow.h"
-#include "ScopedAutoreleasePool.h"
+#include "MacOutputDeviceConsole.h"
+#include "Core/Mac/Mac.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaConsoleWindow
+@implementation FCocoaConsoleWindow
 
-@implementation CCocoaConsoleWindow
-
-- (id) init:(CMacConsoleWindow*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
+- (instancetype) init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
 {
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:NSBackingStoreBuffered defer:NO];
     if (self)
     {
-		ConsoleWindow = InConsoleWindow;
-		[self setDelegate:self];
+        ConsoleWindow = InConsoleWindow;
+        self.delegate = self;
     }
     
     return self;
@@ -34,12 +31,14 @@
 
 - (void) windowWillClose:(NSNotification*) Notification
 {
-	ConsoleWindow->OnWindowDidClose();
+    ConsoleWindow->OnWindowDidClose();
 }
 
-+ (NSString*) convertStringWithArgs:(const char*) Format Args:(va_list)Args
++ (NSString*) convertStringWithArgs:(const CHAR*) Format Args:(va_list)Args
 {
-    NSString* TempFormat = [NSString stringWithUTF8String:Format];
+    SCOPED_AUTORELEASE_POOL();
+    
+    NSString* TempFormat = @(Format);
     return [[NSString alloc] initWithFormat:TempFormat arguments:Args];
 }
 

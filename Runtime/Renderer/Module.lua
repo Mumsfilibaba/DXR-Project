@@ -1,35 +1,25 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- Renderer Module
 
-local RendererModule = CModuleBuildRules('Renderer')
+local RendererModule = FModuleBuildRules("Renderer")
 RendererModule.AddSystemIncludes( 
 {
-    MakeExternalDependencyPath('imgui'),
+    CreateExternalDependencyPath("imgui"),
 })
 
 RendererModule.AddModuleDependencies( 
 {
-    'Core',
-    'CoreApplication',
-    'Canvas',
-    'RHI',
-    'Engine',
+    "Core",
+    "CoreApplication",
+    "Application",
+    "RHI",
+    "Engine",
+    "RendererCore",
 })
 
 RendererModule.AddLinkLibraries( 
 {
-    'ImGui',
+    "ImGui",
 })
-
-if BuildWithXcode() then
-    RendererModule.AddFrameWorks( 
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    })
-end
-
-RendererModule.Generate()

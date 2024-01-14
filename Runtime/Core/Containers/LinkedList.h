@@ -13,47 +13,36 @@ using TDoubleLinkedList = std::list<T>;
 #else
 #include "Core/Templates/Move.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Linked list which can go in forward
-
 template<typename T>
 struct TLinkedListNode
 {
-    FORCEINLINE TLinkedListNode() noexcept
-        : Next(nullptr)
-        , Item()
-    { }
+    TLinkedListNode() noexcept = default;
 
     template<typename... ArgTypes>
     FORCEINLINE TLinkedListNode(ArgTypes&&... Args) noexcept
         : Next(nullptr)
         , Item(Forward<ArgTypes>(Args)...)
-    { }
+    {
+    }
 
-    TLinkedListNode* Next;
+    TLinkedListNode* Next{nullptr};
     T Item;
 };
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Double-Linked list which can go in forward and backwards
 
 template<typename T>
 struct TDoubleLinkedListNode
 {
-    FORCEINLINE TDoubleLinkedListNode() noexcept
-        : Next(nullptr)
-        , Previous(nullptr)
-        , Item()
-    { }
+    TDoubleLinkedListNode() noexcept = default;
 
     template<typename... ArgTypes>
     FORCEINLINE TDoubleLinkedListNode(ArgTypes&&... Args) noexcept
         : Next(nullptr)
         , Item(Forward<ArgTypes>(Args)...)
-    { }
+    {
+    }
 
-    TDoubleLinkedListNode* Next;
-    TDoubleLinkedListNode* Previous;
+    TDoubleLinkedListNode* Next{nullptr};
+    TDoubleLinkedListNode* Previous{nullptr};
     T Item;
 };
 

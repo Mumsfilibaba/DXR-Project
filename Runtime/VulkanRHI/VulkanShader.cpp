@@ -1,0 +1,44 @@
+#include "VulkanShader.h"
+#include "VulkanDevice.h"
+#include "VulkanLoader.h"
+
+FVulkanShader::FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InShaderVisibility)
+    : FVulkanDeviceObject(InDevice)
+    , ShaderModule(VK_NULL_HANDLE)
+    , ShaderVisibility(InShaderVisibility)
+{
+}
+
+FVulkanShader::~FVulkanShader()
+{
+    if (VULKAN_CHECK_HANDLE(ShaderModule))
+    {
+        vkDestroyShaderModule(GetDevice()->GetVkDevice(), ShaderModule, nullptr);
+        ShaderModule = VK_NULL_HANDLE;
+    }
+}
+
+bool FVulkanShader::Initialize(const TArray<uint8>& InCode)
+{
+    if (InCode.Size() % 4 != 0)
+    {
+        VULKAN_ERROR("Size of code must be a multiple of 4, ensure that the code is valid SPIR-V");
+        return false;
+    }
+    
+    VkShaderModuleCreateInfo ShaderModuleCreateInfo;
+    FMemory::Memzero(&ShaderModuleCreateInfo);
+
+    ShaderModuleCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    ShaderModuleCreateInfo.pCode    = reinterpret_cast<const uint32_t*>(InCode.Data());
+    ShaderModuleCreateInfo.codeSize = InCode.Size();
+
+    VkResult Result = vkCreateShaderModule(GetDevice()->GetVkDevice(), &ShaderModuleCreateInfo, nullptr, &ShaderModule);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create ShaderModule");
+        return false;
+    }
+
+    return true;
+}

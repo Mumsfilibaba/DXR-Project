@@ -1,15 +1,11 @@
 #pragma once
-#include "Core/Core.h"
+#include "Core/Modules/ModuleManager.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine API
+class ENGINE_API FEngineModule : public FModuleInterface
+{
+public:
+    virtual bool Load() override final;
 
-#if MONOLITHIC_BUILD
-#define ENGINE_API
-#else
-#if ENGINE_IMPL
-#define ENGINE_API MODULE_EXPORT
-#else
-#define ENGINE_API MODULE_IMPORT
-#endif
-#endif
+private:
+    FDelegateHandle PostApplicationCreateHandle;
+};

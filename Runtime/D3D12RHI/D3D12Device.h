@@ -1,193 +1,309 @@
 #pragma once
 #include "D3D12RefCounted.h"
-
+#include "D3D12Allocators.h"
+#include "D3D12Descriptors.h"
+#include "D3D12RootSignature.h"
+#include "D3D12CommandListManager.h"
+#include "D3D12CommandAllocator.h"
+#include "D3D12DeferredDeletionQueue.h"
 #include "Core/Containers/SharedRef.h"
 
-#include <dxgi1_6.h>
+#if WIN10_BUILD_17134
+    #include <dxgi1_6.h>
+#endif
 
 #include <DXProgrammableCapture.h>
 
-class CD3D12OfflineDescriptorHeap;
-class CD3D12OnlineDescriptorHeap;
-class CD3D12ComputePipelineState;
-class CD3D12RootSignature;
-class CD3D12CoreInterface;
+class FD3D12Device;
+class FD3D12Adapter;
+class FD3D12RHI;
+class FD3D12RootSignature;
+class FD3D12ComputePipelineState;
+class FD3D12OnlineDescriptorHeap;
+class FD3D12OfflineDescriptorHeap;
 
-#define D3D12_PIPELINE_STATE_STREAM_ALIGNMENT (sizeof(void*))
-#define D3D12_ENABLE_PIX_MARKERS              (1)
+typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
+typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedef
+////////////////////////////////////////////////////
+// Global variables that describe different features
 
-typedef TSharedRef<class CD3D12Device> D3D12DeviceRef;
+extern D3D12RHI_API bool GD3D12SupportsShadingRate;
+extern D3D12RHI_API bool GD3D12SupportsShadingRateImage;
+extern D3D12RHI_API bool GD3D12ForceBinding;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12DeviceRemovedHandlerRHI
 
-void D3D12DeviceRemovedHandlerRHI(class CD3D12Device* Device);
+struct FD3D12RayTracingDesc
+{
+    FD3D12RayTracingDesc()
+        : Tier(D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+    {
+    }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Device
+    bool IsSupported() const
+    {
+        return Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+    }
 
-class CD3D12Device : public CD3D12RefCounted
+    D3D12_RAYTRACING_TIER Tier;
+};
+
+
+struct FD3D12VariableRateShadingDesc
+{
+    FD3D12VariableRateShadingDesc()
+        : Tier(D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)
+        , ShadingRateImageTileSize(0)
+    {
+    }
+
+    bool IsSupported() const 
+    {
+        return Tier != D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+    }
+
+    bool IsTier1() const
+    {
+        return Tier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
+    }
+
+    bool IsTier2() const
+    {
+        return Tier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
+    }
+
+    D3D12_VARIABLE_SHADING_RATE_TIER Tier;
+    uint32 ShadingRateImageTileSize;
+};
+
+
+struct FD3D12MeshShadingDesc
+{
+    FD3D12MeshShadingDesc()
+        : Tier(D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
+    {
+    }
+
+    bool IsSupported() const
+    {
+        return Tier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+    }
+
+    D3D12_MESH_SHADER_TIER Tier;
+};
+
+
+struct FD3D12SamplerFeedbackDesc
+{
+    FD3D12SamplerFeedbackDesc()
+        : Tier(D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
+    {
+    }
+
+    bool IsSupported() const
+    {
+        return Tier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+    }
+
+    D3D12_SAMPLER_FEEDBACK_TIER Tier;
+};
+
+
+class FD3D12Adapter
 {
 public:
-    CD3D12Device(CD3D12CoreInterface* InCoreInterface, bool bInEnableDebugLayer, bool bInEnableGPUValidation, bool bInEnableDRED);
-    ~CD3D12Device();
+    FD3D12Adapter();
 
     bool Initialize();
 
-    int32 GetMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
+    bool IsDebugLayerEnabled() const { return bEnableDebugLayer; }
+    bool IsTearingSupported()  const { return bAllowTearing; }
 
-    String GetAdapterName() const;
+    FString GetDescription() const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
 
-    FORCEINLINE CD3D12CoreInterface* GetCoreInterface() const { return CoreInterface; }
-
-    FORCEINLINE ID3D12Device* GetD3D12Device() const { return Device.Get(); }
-
-    FORCEINLINE ID3D12Device5* GeD3D12Device5() const { return DXRDevice.Get(); }
-
-public:
-
-    FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysisInterface() const
+    FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const
     {
-        return GraphicsAnalysisInterface.Get();
+        return DXGraphicsAnalysis.Get();
     }
 
-    FORCEINLINE IDXGIFactory2* GetFactory() const
-    {
-        return Factory.Get();
-    }
-
-    FORCEINLINE IDXGIAdapter1* GetAdapter() const
+    FORCEINLINE IDXGIAdapter1* GetDXGIAdapter() const 
     {
         return Adapter.Get();
     }
 
-    FORCEINLINE bool CanAllowTearing() const
-    {
-        return bAllowTearing;
+    FORCEINLINE uint32 GetAdapterIndex() const
+    { 
+        return AdapterIndex;
     }
 
-    FORCEINLINE D3D12_RAYTRACING_TIER GetRayTracingTier() const
-    {
-        return RayTracingTier;
-    }
+    FORCEINLINE IDXGIFactory2* GetDXGIFactory()  const { return Factory.Get(); }
 
-    FORCEINLINE D3D12_SAMPLER_FEEDBACK_TIER GetSamplerFeedbackTier() const
-    {
-        return SamplerFeedBackTier;
-    }
-
-    FORCEINLINE D3D12_VARIABLE_SHADING_RATE_TIER GetVariableRateShadingTier() const
-    {
-        return VariableShadingRateTier;
-    }
-
-    FORCEINLINE D3D12_MESH_SHADER_TIER GetMeshShaderTier() const
-    {
-        return MeshShaderTier;
-    }
-
-    FORCEINLINE uint32 GetVariableRateShadingTileSize() const
-    {
-        return VariableShadingRateTileSize;
-    }
-
-public:
-
-    FORCEINLINE HRESULT CreateRootSignature(uint32 NodeMask, const void* BlobWithRootSignature, SIZE_T BlobLengthInBytes, REFIID Riid, void** RootSignature)
-    {
-        return Device->CreateRootSignature(NodeMask, BlobWithRootSignature, BlobLengthInBytes, Riid, RootSignature);
-    }
-
-    FORCEINLINE HRESULT CreateCommitedResource(const D3D12_HEAP_PROPERTIES* HeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* Desc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* OptimizedClearValue, REFIID RiidResource, void** Resource)
-    {
-        return Device->CreateCommittedResource(HeapProperties, HeapFlags, Desc, InitialResourceState, OptimizedClearValue, RiidResource, Resource);
-    }
-
-    FORCEINLINE HRESULT CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC* Desc, REFIID Riid, void** PipelineState)
-    {
-        return DXRDevice->CreatePipelineState(Desc, Riid, PipelineState);
-    }
-
-    FORCEINLINE void CreateConstantBufferView(const D3D12_CONSTANT_BUFFER_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
-    {
-        Device->CreateConstantBufferView(Desc, DestDescriptor);
-    }
-
-    FORCEINLINE void CreateRenderTargetView(ID3D12Resource* Resource, const D3D12_RENDER_TARGET_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
-    {
-        Device->CreateRenderTargetView(Resource, Desc, DestDescriptor);
-    }
-
-    FORCEINLINE void CreateDepthStencilView(ID3D12Resource* Resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
-    {
-        Device->CreateDepthStencilView(Resource, Desc, DestDescriptor);
-    }
-
-    FORCEINLINE void CreateShaderResourceView(ID3D12Resource* Resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
-    {
-        Device->CreateShaderResourceView(Resource, Desc, DestDescriptor);
-    }
-
-    FORCEINLINE void CreateUnorderedAccessView(ID3D12Resource* Resource, ID3D12Resource* CounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
-    {
-        Device->CreateUnorderedAccessView(Resource, CounterResource, Desc, DestDescriptor);
-    }
-
-    FORCEINLINE void CreateSampler(const D3D12_SAMPLER_DESC* Desc, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor)
-    {
-        Device->CreateSampler(Desc, DestDescriptor);
-    }
-
-    FORCEINLINE void CopyDescriptors(uint32 NumDestDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* DestDescriptorRangeStarts, const uint32* DestDescriptorRangeSizes, uint32 NumSrcDescriptorRanges, const D3D12_CPU_DESCRIPTOR_HANDLE* SrcDescriptorRangeStarts, const uint32* SrcDescriptorRangeSizes, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
-    {
-        Device->CopyDescriptors(NumDestDescriptorRanges, DestDescriptorRangeStarts, DestDescriptorRangeSizes, NumSrcDescriptorRanges, SrcDescriptorRangeStarts, SrcDescriptorRangeSizes, DescriptorHeapsType);
-    }
-
-    FORCEINLINE void CopyDescriptorsSimple(uint32 NumDescriptors, D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptorRangeStart, D3D12_CPU_DESCRIPTOR_HANDLE SrcDescriptorRangeStart, D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapsType)
-    {
-        Device->CopyDescriptorsSimple(NumDescriptors, DestDescriptorRangeStart, SrcDescriptorRangeStart, DescriptorHeapsType);
-    }
-
-    FORCEINLINE void GetRaytracingAccelerationStructurePrebuildInfo(const D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS* Desc, D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO* Info)
-    {
-        DXRDevice->GetRaytracingAccelerationStructurePrebuildInfo(Desc, Info);
-    }
-
-    FORCEINLINE uint32 GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE DescriptorHeapType)
-    {
-        return Device->GetDescriptorHandleIncrementSize(DescriptorHeapType);
-    }
+    FORCEINLINE IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
+#if WIN10_BUILD_17134
+    FORCEINLINE IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
+#endif
 
 private:
-    class CD3D12CoreInterface*   CoreInterface;
+    uint32 AdapterIndex;
+    
+    bool bAllowTearing;
+    bool bEnableDebugLayer;
 
-    TComPtr<IDXGIFactory2>       Factory;
-    TComPtr<IDXGIAdapter1>       Adapter;
+    TComPtr<IDXGIAdapter1> Adapter;
+    DXGI_ADAPTER_DESC1     AdapterDesc;
+    
+    TComPtr<IDXGIFactory2> Factory;
+    TComPtr<IDXGIFactory5> Factory5;
+#if WIN10_BUILD_17134
+    TComPtr<IDXGIFactory6> Factory6;
+#endif
 
-    TComPtr<ID3D12Device>        Device;
-    TComPtr<ID3D12Device5>       DXRDevice;
-    TComPtr<IDXGraphicsAnalysis> GraphicsAnalysisInterface;
+    TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
+};
 
-    D3D_FEATURE_LEVEL MinFeatureLevel    = D3D_FEATURE_LEVEL_12_0;
-    D3D_FEATURE_LEVEL ActiveFeatureLevel = D3D_FEATURE_LEVEL_11_0;
 
-    D3D12_RAYTRACING_TIER            RayTracingTier              = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-    D3D12_SAMPLER_FEEDBACK_TIER      SamplerFeedBackTier         = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    D3D12_MESH_SHADER_TIER           MeshShaderTier              = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier     = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-    uint32                           VariableShadingRateTileSize = 0;
+class FD3D12Device
+{
+public:
+    FD3D12Device(FD3D12Adapter* InAdapter);
+    ~FD3D12Device();
 
-    HMODULE DXGILib  = 0;
-    HMODULE D3D12Lib = 0;
-    HMODULE PIXLib   = 0;
+    bool Initialize();
 
-    uint32 AdapterID = 0;
+    int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    bool bAllowTearing        = false;
-    bool bEnableDebugLayer    = false;
-    bool bEnableGPUValidation = false;
-    bool bEnableDRED          = false;
+    FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
+
+    ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
+    {
+        FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
+        CHECK(CommandListManager != nullptr);
+        return CommandListManager->GetD3D12CommandQueue();
+    }
+
+    FD3D12CommandListManager& GetDirectCommandListManager()  { return DirectCommandListManager; }
+    FD3D12CommandListManager& GetCopyCommandListManager()    { return CopyCommandListManager; }
+    FD3D12CommandListManager& GetComputeCommandListManager() { return ComputeCommandListManager; }
+
+    FD3D12UploadHeapAllocator& GetUploadAllocator() { return UploadAllocator; }
+
+    FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager() { return CopyCommandAllocatorManager; }
+    FD3D12RootSignatureManager&    GetRootSignatureManager()        { return RootSignatureManager; }
+    FD3D12DeferredDeletionQueue&   GetDeferredDeletionQueue()       { return DeferredDeletionQueue; }
+    
+    FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return GlobalResourceHeap; }
+    FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap()  { return GlobalSamplerHeap; }
+    
+    const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
+    const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
+    const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }  
+    const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
+    
+    D3D_FEATURE_LEVEL                GetFeatureLevel()            const { return ActiveFeatureLevel; }
+    D3D12_VARIABLE_SHADING_RATE_TIER GetVariableShadingRateTier() const { return VariableShadingRateTier; }
+    D3D12_RESOURCE_BINDING_TIER      GetResourceBindingTier()     const { return ResourceBindingTier; }
+
+    uint32 GetNodeMask()  const { return NodeMask; }
+    uint32 GetNodeCount() const { return NodeCount; }
+
+    FORCEINLINE FD3D12Adapter* GetAdapter() const
+    {
+        return Adapter;
+    }
+    
+    FORCEINLINE ID3D12Device* GetD3D12Device() const
+    {
+        return Device.Get();
+    }
+
+#if WIN10_BUILD_14393
+    FORCEINLINE ID3D12Device1* GetD3D12Device1() const { return Device1.Get(); }
+#endif
+#if WIN10_BUILD_15063
+    FORCEINLINE ID3D12Device2* GetD3D12Device2() const { return Device2.Get(); }
+#endif
+#if WIN10_BUILD_16299
+    FORCEINLINE ID3D12Device3* GetD3D12Device3() const { return Device3.Get(); }
+#endif
+#if WIN10_BUILD_17134
+    FORCEINLINE ID3D12Device4* GetD3D12Device4() const { return Device4.Get(); }
+#endif
+#if WIN10_BUILD_17763
+    FORCEINLINE ID3D12Device5* GetD3D12Device5() const { return Device5.Get(); }
+#endif
+#if WIN10_BUILD_18362
+    FORCEINLINE ID3D12Device6* GetD3D12Device6() const { return Device6.Get(); }
+#endif
+#if WIN10_BUILD_19041
+    FORCEINLINE ID3D12Device7* GetD3D12Device7() const { return Device7.Get(); }
+#endif
+#if WIN10_BUILD_20348
+    FORCEINLINE ID3D12Device8* GetD3D12Device8() const { return Device8.Get(); }
+#endif
+#if WIN11_BUILD_22000
+    FORCEINLINE ID3D12Device9* GetD3D12Device9() const { return Device9.Get(); }
+#endif
+
+private:
+    bool CreateDevice();
+    bool CreateQueues();
+
+    FD3D12OnlineDescriptorHeap    GlobalResourceHeap;
+    FD3D12OnlineDescriptorHeap    GlobalSamplerHeap;
+
+    FD3D12RootSignatureManager    RootSignatureManager;
+
+    FD3D12CommandListManager      DirectCommandListManager;
+    FD3D12CommandListManager      CopyCommandListManager;
+    FD3D12CommandListManager      ComputeCommandListManager;
+
+    FD3D12CommandAllocatorManager CopyCommandAllocatorManager;
+
+    FD3D12UploadHeapAllocator     UploadAllocator;
+    FD3D12DeferredDeletionQueue   DeferredDeletionQueue;
+
+    FD3D12RayTracingDesc          RayTracingDesc;
+    FD3D12MeshShadingDesc         MeshShadingDesc;
+    FD3D12SamplerFeedbackDesc     SamplerFeedbackDesc;
+    FD3D12VariableRateShadingDesc VariableRateShadingDesc;
+    
+    D3D_FEATURE_LEVEL MinFeatureLevel;
+    D3D_FEATURE_LEVEL ActiveFeatureLevel;
+
+    D3D12_RESOURCE_BINDING_TIER      ResourceBindingTier;
+    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier;
+    
+    FD3D12Adapter* Adapter;
+
+    TComPtr<ID3D12Device>  Device;
+#if WIN10_BUILD_14393
+    TComPtr<ID3D12Device1> Device1;
+#endif
+#if WIN10_BUILD_15063
+    TComPtr<ID3D12Device2> Device2;
+#endif
+#if WIN10_BUILD_16299
+    TComPtr<ID3D12Device3> Device3;
+#endif
+#if WIN10_BUILD_17134
+    TComPtr<ID3D12Device4> Device4;
+#endif
+#if WIN10_BUILD_17763
+    TComPtr<ID3D12Device5> Device5;
+#endif
+#if WIN10_BUILD_18362
+    TComPtr<ID3D12Device6> Device6;
+#endif
+#if WIN10_BUILD_19041
+    TComPtr<ID3D12Device7> Device7;
+#endif
+#if WIN10_BUILD_20348
+    TComPtr<ID3D12Device8> Device8;
+#endif
+#if WIN11_BUILD_22000
+    TComPtr<ID3D12Device9> Device9;
+#endif
+
+    uint32 NodeMask;
+    uint32 NodeCount;
 };

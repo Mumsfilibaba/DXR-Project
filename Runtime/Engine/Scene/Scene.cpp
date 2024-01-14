@@ -1,49 +1,56 @@
 #include "Scene.h"
-
 #include "Components/MeshComponent.h"
-
 #include "Engine/Assets/MeshFactory.h"
-#include "Engine/Resources/TextureFactory.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
-
 #include "RHI/RHIResources.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Scene
-
-CScene::CScene()
+FScene::FScene()
     : Actors()
+    , RendererScene(nullptr)
 {
+    RendererScene = new FRendererScene(this);
 }
 
-CScene::~CScene()
+FScene::~FScene()
 {
-    for (CActor* CurrentActor : Actors)
+    for (FActor* CurrentActor : Actors)
     {
-        SafeDelete(CurrentActor);
+        SAFE_DELETE(CurrentActor);
     }
-    Actors.Clear();
-
-    for (CLight* CurrentLight : Lights)
+    
+    for (FLight* CurrentLight : Lights)
     {
-        SafeDelete(CurrentLight);
+        SAFE_DELETE(CurrentLight);
     }
-    Lights.Clear();
 
-    SafeDelete(CurrentCamera);
+    // TODO: Fix crash on exit
+    SAFE_DELETE(CurrentCamera);
+    SAFE_DELETE(RendererScene);
 }
 
-CActor* CScene::MakeActor()
+FActor* FScene::CreateActor()
 {
-    CActor* NewActor = dbg_new CActor(this);
-    AddActor(NewActor);
-    return NewActor;
+    FActor* NewActor = NewObject<FActor>();
+    if (NewActor)
+    {
+        AddActor(NewActor);
+        return NewActor;
+    }
+    
+    return nullptr;
 }
 
-void CScene::Start()
+void FScene::Start()
 {
-    for (CActor* Actor : Actors)
+    // Setup the input components for the PlayerControllers
+    for (FPlayerController* PlayerController : PlayerControllers)
+    {
+        PlayerController->SetupInputComponent();
+    }
+
+    // Start all the actors
+    for (FActor* Actor : Actors)
     {
         if (Actor->IsStartable())
         {
@@ -52,9 +59,9 @@ void CScene::Start()
     }
 }
 
-void CScene::Tick(CTimestamp DeltaTime)
+void FScene::Tick(FTimespan DeltaTime)
 {
-    for (CActor* Actor : Actors)
+    for (FActor* Actor : Actors)
     {
         if (Actor->IsTickable())
         {
@@ -63,51 +70,85 @@ void CScene::Tick(CTimestamp DeltaTime)
     }
 }
 
-void CScene::AddCamera(CCamera* InCamera)
+void FScene::AddCamera(FCamera* InCamera)
 {
     if (CurrentCamera)
     {
-        SafeDelete(CurrentCamera);
+        SAFE_DELETE(CurrentCamera);
     }
 
     CurrentCamera = InCamera;
 }
 
-void CScene::AddActor(CActor* InActor)
+void FScene::AddActor(FActor* InActor)
 {
-    Check(InActor != nullptr);
+    CHECK(InActor != nullptr);
+    CHECK(InActor->GetSceneOwner() == nullptr);
+    
+    // Set this scene to be the owner of the added actor
+    InActor->SetSceneOwner(this);
     Actors.Emplace(InActor);
 
-    CMeshComponent* Component = InActor->GetComponentOfType<CMeshComponent>();
+    if (IsSubClassOf<FPlayerController>(InActor))
+    {
+        PlayerControllers.Emplace(Cast<FPlayerController>(InActor));
+    }
+
+    FMeshComponent* Component = InActor->GetComponentOfType<FMeshComponent>();
     if (Component)
     {
         AddMeshComponent(Component);
     }
 }
 
-void CScene::AddLight(CLight* InLight)
+void FScene::AddLight(FLight* InLight)
 {
-    Check(InLight != nullptr);
+    CHECK(InLight != nullptr);
     Lights.Emplace(InLight);
 }
 
-void CScene::OnAddedComponent(CComponent* NewComponent)
+void FScene::AddLightProbe(FLightProbe* InLightProbe)
 {
-    CMeshComponent* Component = Cast<CMeshComponent>(NewComponent);
+    CHECK(InLightProbe != nullptr);
+    LightProbes.Emplace(InLightProbe);
+}
+
+void FScene::OnAddedComponent(FComponent* NewComponent)
+{
+    FMeshComponent* Component = Cast<FMeshComponent>(NewComponent);
     if (Component && Component->Mesh)
     {
         AddMeshComponent(Component);
     }
 }
 
-void CScene::AddMeshComponent(CMeshComponent* Component)
+void FScene::AddMeshComponent(FMeshComponent* Component)
 {
-    SMeshDrawCommand Command;
-    Command.CurrentActor = Component->GetActor();
-    Command.Geometry = Component->Mesh->RTGeometry.Get();
+    FMeshDrawCommand Command;
+    Command.CurrentActor = Component->GetActorOwner();
+    Command.Geometry     = Component->Mesh->RTGeometry.Get();
     Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
-    Command.IndexBuffer = Component->Mesh->IndexBuffer.Get();
-    Command.Material = Component->Material.Get();
-    Command.Mesh = Component->Mesh.Get();
-    MeshDrawCommands.Push(Command);
+    Command.NumVertices  = Component->Mesh->VertexCount;
+    Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();
+    Command.NumIndices   = Component->Mesh->IndexCount;
+    Command.IndexFormat  = Component->Mesh->IndexFormat;
+    Command.Material     = Component->Material.Get();
+    Command.Mesh         = Component->Mesh.Get();
+    MeshDrawCommands.Add(Command);
+}
+
+FRendererScene::FRendererScene(FScene* InScene)
+    : Scene(InScene)
+{
+    CHECK(Scene != nullptr);
+}
+
+FRendererScene::~FRendererScene()
+{
+    Scene = nullptr;
+}
+
+void FRendererScene::AddPrimitive(FScenePrimitive* InPrimitive)
+{
+    ScenePrimitives.Add(InPrimitive);
 }

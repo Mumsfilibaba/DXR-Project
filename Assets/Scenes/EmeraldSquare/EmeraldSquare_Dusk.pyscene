@@ -1,0 +1,9 @@
+# Load scene
+sceneBuilder.importScene("EmeraldSquare_Dusk.fbx")
+
+# Set environment map
+sceneBuilder.envMap = EnvMap("night_sky.hdr")\
+
+# Manually adjust emissives to get well exposed image
+for m in sceneBuilder.materials:
+    m.emissiveFactor *= 5

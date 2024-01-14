@@ -1,36 +1,36 @@
 #include "RefCounted.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RefCounted
-
-CRefCounted::CRefCounted()
-    : StrongReferences(0)
+FRefCounted::FRefCounted()
+    : NumRefs(1)
 {
-    AddRef();
 }
 
-CRefCounted::~CRefCounted()
+FRefCounted::~FRefCounted()
 {
-    Check(StrongReferences.Load() == 0);
+    CHECK(NumRefs.Load() == 0);
 }
 
-int32 CRefCounted::AddRef()
+int32 FRefCounted::AddRef()
 {
-    return ++StrongReferences;
+    CHECK(NumRefs.Load() > 0);
+    ++NumRefs;
+    return NumRefs.Load();
 }
 
-int32 CRefCounted::Release()
+int32 FRefCounted::Release()
 {
-    int32 NewRefCount = --StrongReferences;
-    if (StrongReferences.Load() <= 0)
+    const int32 RefCount = --NumRefs;
+    CHECK(RefCount >= 0);
+
+    if (RefCount < 1)
     {
         delete this;
     }
 
-    return NewRefCount;
+    return RefCount;
 }
 
-int32 CRefCounted::GetRefCount() const
+int32 FRefCounted::GetRefCount() const
 {
-    return StrongReferences.Load();
+    return NumRefs.Load();
 }

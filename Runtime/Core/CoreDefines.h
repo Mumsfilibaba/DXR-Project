@@ -1,68 +1,67 @@
 #pragma once
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Detect compiler
-
 #ifdef _MSC_VER
-    #ifndef COMPILER_MSVC
-        #define COMPILER_MSVC (1)
+    #ifndef PLATFORM_COMPILER_MSVC
+        #define PLATFORM_COMPILER_MSVC (1)
     #endif
 #endif
 
 #ifdef __clang__
-    #ifndef COMPILER_CLANG
-        #define COMPILER_CLANG (1)
+    #ifndef PLATFORM_COMPILER_CLANG
+        #define PLATFORM_COMPILER_CLANG (1)
     #endif
 #endif
 
 #ifdef __GNUC__
-    #ifndef COMPILER_GCC
-        #define COMPILER_GCC (1)
+    #ifndef PLATFORM_COMPILER_GCC
+        #define PLATFORM_COMPILER_GCC (1)
     #endif
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Undefined compiler
 
-#if (!COMPILER_MSVC) || (!COMPILER_CLANG) || (!COMPILER_GCC)
-    #ifndef COMPILER_UNDEFINED
-        #define COMPILER_UNDEFINED
+#if (!PLATFORM_COMPILER_MSVC) || (!PLATFORM_COMPILER_CLANG) || (!PLATFORM_COMPILER_GCC)
+    #ifndef PLATFORM_COMPILER_UNDEFINED
+        #define PLATFORM_COMPILER_UNDEFINED
     #endif
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Check that a platform is defined
 
+// Works only on macOS and Windows right now
 #if (!PLATFORM_WINDOWS) && (!PLATFORM_MACOS)
     #error No platform defined
 #endif
 
 // TODO: Move asserts to separate module/header
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Asserts
-
-#ifdef DEBUG_BUILD
+#if !defined(PRODUCTION_BUILD)
     #ifndef ENABLE_ASSERTS 
-        #define ENABLE_ASSERTS 1
+        #define ENABLE_ASSERTS (1)
     #endif
 #endif
 
-#ifndef Check
+#ifndef CHECK
+    #ifdef NDEBUG
+        // We should redefine this later
+        #define REDEFINE_NDEBUG (1)
+        // But un-define now so we can have asserts in release
+        #undef NDEBUG
+    #endif
+
     #include <cassert>
     
     #if ENABLE_ASSERTS
-        #define Check(Condition) assert(Condition)
+        #define CHECK(Condition) assert(Condition)
     #else
-        #define Check(Condition) (void)(Condition)
+        #define CHECK(Condition) (void)(Condition)
+    #endif
+
+    #ifdef REDEFINE_NDEBUG
+        #define NDEBUG (1)
     #endif
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Macro for deleting objects safely
 
-#ifndef SafeDelete
-    #define SafeDelete(OutObject)      \
+#ifndef SAFE_DELETE
+    #define SAFE_DELETE(OutObject)     \
         do                             \
         {                              \
             if ((OutObject))           \
@@ -73,8 +72,8 @@
         } while (false)
 #endif
 
-#ifndef SafeRelease
-    #define SafeRelease(OutObject)      \
+#ifndef SAFE_RELEASE
+    #define SAFE_RELEASE(OutObject)     \
         do                              \
         {                               \
             if ((OutObject))            \
@@ -85,8 +84,8 @@
         } while (false)
 #endif
 
-#ifndef SafeAddRef
-    #define SafeAddRef(OutObject)      \
+#ifndef SAFE_ADD_REF
+    #define SAFE_ADD_REF(OutObject)    \
         do                             \
         {                              \
             if ((OutObject))           \
@@ -96,56 +95,83 @@
         } while (false);
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helper Macros
 
-#ifndef ArrayCount
-    #define ArrayCount(Array) (sizeof(Array) / sizeof(Array[0]))
+#ifndef ARRAY_COUNT
+    #define ARRAY_COUNT(Array) (sizeof(Array) / sizeof(Array[0]))
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Bit-Mask helpers
+
+#ifndef OFFSETOF
+    #define OFFSETOF(Type, Member) reinterpret_cast<uint64>(&reinterpret_cast<Type*>(0)->Member)
+#endif
+
 
 #define BIT(Bit)  (1 << Bit)
 #define FLAG(Bit) BIT(Bit)
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Unused params
 
 #ifndef UNREFERENCED_VARIABLE
     #define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////
-* String preprocessor handling. There are two versions of PREPROCESS_CONCAT, this is so that
-* you can use __LINE__, __FILE__ etc. within the macro, therefore always use PREPROCESS_CONCAT
-*/
+/**
+ * String preprocessor handling. There are two versions of STRING_CONCAT, this is so that
+ * you can use __LINE__, __FILE__ etc. within the macro, therefore always use STRING_CONCAT
+ */
 
-#ifndef _PREPROCESS_CONCAT
-    #define _PREPROCESS_CONCAT(x, y) x##y
+#ifndef _STRING_CONCAT
+    #define _STRING_CONCAT(x, y) x##y
 #endif
 
-#ifndef PREPROCESS_CONCAT
-    #define PREPROCESS_CONCAT(x, y) _PREPROCESS_CONCAT(x, y)
+#ifndef STRING_CONCAT
+    #define STRING_CONCAT(x, y) _STRING_CONCAT(x, y)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Makes multiline strings
 
 #ifndef MULTILINE_STRING
     #define MULTILINE_STRING(...) #__VA_ARGS__
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Compiler Specific
 
-#if COMPILER_MSVC
-    #include "Core/CompilerSpecific/CompilerMSVC.h"
-#elif COMPILER_CLANG
-    #include "Core/CompilerSpecific/CompilerClang.h" 
-#elif COMPILER_GCC 
-    #include "Core/CompilerSpecific/CompilerGCC.h"
-#elif COMPILER_UNDEFINED 
-    #include "Core/CompilerSpecific/CompilerDefault.h"
+#define ENABLE_NODISCARD (1)
+#if ENABLE_NODISCARD
+    #define NODISCARD [[nodiscard]]
+#else
+    #define NODISCARD
+#endif
+
+
+#define ENABLE_MAYBE_UNUSED (1)
+#if ENABLE_MAYBE_UNUSED
+    #define MAYBE_UNUSED [[maybe_unused]]
+#else
+    #define MAYBE_UNUSED
+#endif
+
+
+#define ENABLE_DEPRECATED (1)
+#if ENABLE_DEPRECATED
+    #define DEPRECATED(Message) [[deprecated(Message)]]
+#else
+    #define DEPRECATED(Message)
+#endif
+
+
+#define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
+
+#if PLATFORM_COMPILER_MSVC
+    #include "Core/CoreDefines/CoreDefinesMSVC.h"
+#elif PLATFORM_COMPILER_CLANG
+    #include "Core/CoreDefines/CoreDefinesClang.h" 
+#elif PLATFORM_COMPILER_GCC 
+    #include "Core/CoreDefines/CoreDefinesGCC.h"
+#elif PLATFORM_COMPILER_UNDEFINED 
+    #include "Core/CoreDefines/CoreDefinesDefault.h"
     #error "Unknown Compiler"
+#endif
+
+#if PLATFORM_ARCHITECTURE_X86_X64
+    #define PLATFORM_64BIT (1)
+#else
+    #define PLATFORM_64BIT (0)
 #endif

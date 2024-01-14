@@ -1,132 +1,145 @@
 #pragma once
+#include "NullRHIResources.h"
 #include "RHI/IRHICommandContext.h"
-
 #include "Core/Containers/SharedRef.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHICommandContext
-
-class CNullRHICommandContext final : public IRHICommandContext
+struct FNullRHICommandContext final : public IRHICommandContext
 {
-private:
+    FNullRHICommandContext()  = default;
+    ~FNullRHICommandContext() = default;
 
-    friend class CNullRHICoreInterface;
+    virtual void RHIStartContext() override final { }
+    
+    virtual void RHIFinishContext() override final { }
 
-    CNullRHICommandContext()  = default;
-    ~CNullRHICommandContext() = default;
+    virtual void RHIBeginTimeStamp(FRHITimestampQuery* Profiler, uint32 Index) override final { }
+    
+    virtual void RHIEndTimeStamp(FRHITimestampQuery* Profiler, uint32 Index) override final { }
 
-public:
+    virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final { }
+    
+    virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final { }
+    
+    virtual void RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final { }
 
-    static CNullRHICommandContext* CreateNullRHIContext() { return dbg_new CNullRHICommandContext(); }
+    virtual void RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassDesc) override final { }
+    
+    virtual void RHIEndRenderPass() override final { }
 
-public:
+    virtual void RHISetViewport(const FRHIViewportRegion& ViewportRegion) override final { }
+    
+    virtual void RHISetScissorRect(const FRHIScissorRegion& ScissorRegion) override final { }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRHICommandContext Interface
+    virtual void RHISetBlendFactor(const FVector4& Color) override final { }
 
-    virtual void StartContext()  override final { }
-    virtual void FinishContext() override final { }
+    virtual void RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final { }
+    
+    virtual void RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final { }
 
-    virtual void BeginTimeStamp(CRHITimestampQuery* Profiler, uint32 Index) override final { }
-    virtual void EndTimeStamp(CRHITimestampQuery* Profiler, uint32 Index)   override final { }
+    virtual void RHISetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final { }
+    
+    virtual void RHISetComputePipelineState(class FRHIComputePipelineState* PipelineState) override final { }
 
-    virtual void ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final { }
-    virtual void ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final { }
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final { }
+    virtual void RHISet32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final { }
 
-    virtual void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer) override final { }
-    virtual void EndRenderPass() override final { }
+    virtual void RHISetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final { }
+    
+    virtual void RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) override final { }
 
-    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final { }
-    virtual void SetScissorRect(float Width, float Height, float x, float y) override final { }
+    virtual void RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final { }
+    
+    virtual void RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) override final { }
 
-    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final { }
+    virtual void RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex) override final { }
+    
+    virtual void RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex) override final { }
 
-    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final { }
-    virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) override final { }
+    virtual void RHISetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) override final { }
+    
+    virtual void RHISetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final { }
 
-    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final { }
+    virtual void RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData) override final { }
+    
+    virtual void RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& BufferRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) override final { }
 
-    virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final { }
-    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState)   override final { }
+    virtual void RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final { }
 
-    virtual void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final { }
+    virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo) override final { }
+    
+    virtual void RHICopyTexture(FRHITexture* Dst, FRHITexture* Src) override final { }
+    
+    virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyTextureInfo) override final { }
 
-    virtual void SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final { }
-    virtual void SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex) override final { }
+    virtual void RHIDestroyResource(class IRefCounted* Resource) override final { }
 
-    virtual void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final { }
-    virtual void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) override final { }
+    virtual void RHIDiscardContents(class FRHITexture* Texture) override final { }
 
-    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) override final { }
-    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final { }
+    virtual void RHIBuildRayTracingGeometry(
+        FRHIRayTracingGeometry* RayTracingGeometry,
+        FRHIBuffer*             VertexBuffer,
+        uint32                  NumVertices,
+        FRHIBuffer*             IndexBuffer,
+        uint32                  NumIndices,
+        EIndexFormat            IndexFormat,
+        bool                    bUpdate) override final { }
 
-    virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) override final { }
-    virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final { }
+    virtual void RHIBuildRayTracingScene(
+        FRHIRayTracingScene*                                    RayTracingScene,
+        const TArrayView<const FRHIRayTracingGeometryInstance>& Instances,
+        bool                                                    bUpdate) override final { }
 
-    virtual void UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final { }
-    virtual void UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final { }
+    virtual void RHISetRayTracingBindings(
+        FRHIRayTracingScene*              RayTracingScene,
+        FRHIRayTracingPipelineState*      PipelineState,
+        const FRayTracingShaderResources* GlobalResource,
+        const FRayTracingShaderResources* RayGenLocalResources,
+        const FRayTracingShaderResources* MissLocalResources,
+        const FRayTracingShaderResources* HitGroupResources,
+        uint32                            NumHitGroupResources) override final { }
 
-    virtual void ResolveTexture(CRHITexture* Destination, CRHITexture* Source) override final { }
+    virtual void RHIGenerateMips(FRHITexture* Texture) override final { }
 
-    virtual void CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo) override final { }
-    virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final { }
-    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final { }
+    virtual void RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
+    
+    virtual void RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
 
-    virtual void DestroyResource(class IRHIResource* Resource) override final { }
+    virtual void RHIUnorderedAccessTextureBarrier(FRHITexture* Texture) override final { }
+    
+    virtual void RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final { }
 
-    virtual void DiscardContents(class CRHITexture* Texture) override final { }
+    virtual void RHIDraw(uint32 VertexCount, uint32 StartVertexLocation) override final { }
 
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final { }
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final { }
+    virtual void RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final { }
+    
+    virtual void RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final { }
+    
+    virtual void RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final { }
 
-    virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
-                                      , CRHIRayTracingPipelineState* PipelineState
-                                      , const SRayTracingShaderResources* GlobalResource
-                                      , const SRayTracingShaderResources* RayGenLocalResources
-                                      , const SRayTracingShaderResources* MissLocalResources
-                                      , const SRayTracingShaderResources* HitGroupResources
-                                      , uint32 NumHitGroupResources) override final { }
+    virtual void RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final { }
 
-    virtual void GenerateMips(CRHITexture* Texture) override final { }
+    virtual void RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final { }
 
-    virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final { }
+    virtual void RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final { }
 
-    virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final { }
-    virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer) override final { }
+    virtual void RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) override final 
+    {
+        FNullRHIViewport* NullViewport = static_cast<FNullRHIViewport*>(Viewport);
+        NullViewport->Resize(Width, Height);
+    }
 
-    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final { }
-    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final { }
-    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final { }
-    virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final { }
+    virtual void RHIClearState() override final { }
 
-    virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final { }
+    virtual void RHIFlush() override final { }
 
-    virtual void DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final { }
+    virtual void RHIInsertMarker(const FStringView& Message) override final { }
 
-    virtual void ClearState() override final { }
+    virtual void RHIBeginExternalCapture() override final { }
+    
+    virtual void RHIEndExternalCapture() override final { }
 
-    virtual void Flush() override final { }
-
-    virtual void InsertMarker(const String& Message) override final { }
-
-    virtual void BeginExternalCapture() override final { }
-    virtual void EndExternalCapture()   override final { }
-
-    virtual void* GetRHIBaseCommandList() override final { return nullptr; }
+    virtual void* RHIGetNativeCommandList() override final { return nullptr; }
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

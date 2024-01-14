@@ -1,16 +1,7 @@
 #pragma once
 #include <AppKit/AppKit.h>
 
-class CMacApplication;
+class FMacApplication;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CCocoaWindow
-
-@interface CCocoaWindow : NSWindow<NSWindowDelegate>
-{
-    CMacApplication* Application;
-}
-
-- (id)init: (CMacApplication*)InApplication ContentRect: (NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
-
+@interface FCocoaWindow : NSWindow<NSWindowDelegate>
 @end

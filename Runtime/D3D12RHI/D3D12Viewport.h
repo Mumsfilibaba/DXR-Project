@@ -1,52 +1,46 @@
 #pragma once
-#include "Core/Containers/ArrayView.h"
-
-#include "RHI/RHIViewport.h"
-
-#include "Core/Windows/Windows.h"
-
 #include "D3D12Core.h"
 #include "D3D12Texture.h"
-#include "D3D12Views.h"
+#include "D3D12ResourceViews.h"
 #include "D3D12CommandContext.h"
+#include "RHI/RHIResources.h"
+#include "Core/Windows/Windows.h"
+#include "Core/Containers/ArrayView.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Viewport
+typedef TSharedRef<class FD3D12Viewport> FD3D12ViewportRef;
 
-class CD3D12Viewport : public CRHIViewport, public CD3D12DeviceChild
+class FD3D12Viewport : public FRHIViewport, public FD3D12DeviceChild
 {
 public:
+    FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
+    virtual ~FD3D12Viewport();
 
-    CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, const CRHIViewportInitializer& Initializer);
-    ~CD3D12Viewport();
+    virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
-    bool Init();
+    bool Initialize();
 
-public:
+    bool Resize(uint32 Width, uint32 Height);
+    
+    bool Present(bool VerticalSync);
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIViewport Interface
-
-    virtual bool Resize(uint32 Width, uint32 Height) override final;
-
-    virtual bool Present(bool VerticalSync) override final;
-
-    virtual CRHITexture2D* GetBackBuffer() const override final { return BackBuffers[BackBufferIndex].Get(); }
+    FD3D12Texture* GetCurrentBackBuffer() const 
+    { 
+        return BackBuffers[BackBufferIndex].Get();
+    }
 
 private:
     bool RetriveBackBuffers();
 
-    TComPtr<IDXGISwapChain3> SwapChain;
+    TComPtr<IDXGISwapChain3>   SwapChain;
+    FD3D12CommandContext*      CommandContext;
 
-    CD3D12CommandContext*    CmdContext;
+    FD3D12BackBufferTextureRef BackBuffer;
+    TArray<FD3D12TextureRef>   BackBuffers;
 
-    HWND                     Hwnd = 0;
+    HWND   Hwnd = 0;
+    HANDLE SwapChainWaitableObject = 0;
 
-    uint32                   Flags           = 0;
-    uint32                   NumBackBuffers  = 0;
-    uint32                   BackBufferIndex = 0;
-
-    HANDLE                   SwapChainWaitableObject = 0;
-
-    TArray<TSharedRef<CD3D12Texture2D>> BackBuffers;
+    uint32 Flags           = 0;
+    uint32 NumBackBuffers  = 0;
+    uint32 BackBufferIndex = 0;
 };

@@ -2,12 +2,9 @@
 #include "D3D12CommandContext.h"
 #include "D3D12TimestampQuery.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12RHITimestampQuery
-
-CD3D12TimestampQuery::CD3D12TimestampQuery(CD3D12Device* InDevice)
-    : CD3D12DeviceChild(InDevice)
-    , CRHITimestampQuery()
+FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
+    : FD3D12DeviceChild(InDevice)
+    , FRHITimestampQuery()
     , QueryHeap(nullptr)
     , WriteResource(nullptr)
     , ReadResources()
@@ -16,12 +13,70 @@ CD3D12TimestampQuery::CD3D12TimestampQuery(CD3D12Device* InDevice)
 {
 }
 
-void CD3D12TimestampQuery::GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32 Index) const
+bool FD3D12TimestampQuery::Initialize()
 {
-    if (Index >= (uint32)TimeQueries.Size())
+    ID3D12Device* D3D12Device = GetDevice()->GetD3D12Device();
+
+    D3D12_QUERY_HEAP_DESC QueryHeapDesc;
+    FMemory::Memzero(&QueryHeapDesc);
+
+    QueryHeapDesc.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+    QueryHeapDesc.Count    = D3D12_DEFAULT_QUERY_COUNT * 2;
+    QueryHeapDesc.NodeMask = 0;
+
+    TComPtr<ID3D12QueryHeap> Heap;
+    HRESULT Result = D3D12Device->CreateQueryHeap(&QueryHeapDesc, IID_PPV_ARGS(&Heap));
+    if (FAILED(Result))
+    {
+        D3D12_ERROR("[FD3D12TimestampQuery]: FAILED to create Query Heap");
+        return false;
+    }
+
+    D3D12_RESOURCE_DESC Desc;
+    FMemory::Memzero(&Desc);
+
+    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
+    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
+    Desc.Format             = DXGI_FORMAT_UNKNOWN;
+    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
+    Desc.Height             = 1;
+    Desc.DepthOrArraySize   = 1;
+    Desc.MipLevels          = 1;
+    Desc.Alignment          = 0;
+    Desc.SampleDesc.Count   = 1;
+    Desc.SampleDesc.Quality = 0;
+
+    FD3D12ResourceRef NewWriteResource = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_DEFAULT);
+    if (!NewWriteResource->Initialize(D3D12_RESOURCE_STATE_COMMON, nullptr))
+    {
+        return false;
+    }
+    else
+    {
+        NewWriteResource->SetName("Query Write Resource");
+    }
+
+    // Start with three
+    for (uint32 Index = 0; Index < D3D12_NUM_BACK_BUFFERS; ++Index)
+    {
+        if (!AllocateReadResource())
+        {
+            return false;
+        }
+    }
+
+    QueryHeap     = Heap;
+    WriteResource = NewWriteResource;
+    return true;
+}
+
+void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
+{
+    if (Index >= static_cast<uint32>(TimeQueries.Size()))
     {
         OutQuery.Begin = 0;
-        OutQuery.End = 0;
+        OutQuery.End   = 0;
     }
     else
     {
@@ -29,10 +84,10 @@ void CD3D12TimestampQuery::GetTimestampFromIndex(SRHITimestamp& OutQuery, uint32
     }
 }
 
-void CD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void FD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
-    Check(Index < D3D12_DEFAULT_QUERY_COUNT);
-    Check(CmdList != nullptr);
+    CHECK(Index < D3D12_DEFAULT_QUERY_COUNT);
+    CHECK(CmdList != nullptr);
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2));
 
@@ -43,87 +98,67 @@ void CD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32
     }
 }
 
-void CD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void FD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
-    Check(CmdList != nullptr);
-    Check(Index < (uint32)TimeQueries.Size());
+    CHECK(CmdList != nullptr);
+    CHECK(Index < (uint32)TimeQueries.Size());
 
     CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
 }
 
-void CD3D12TimestampQuery::ResolveQueries(class CD3D12CommandContext& CmdContext)
+void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandContext)
 {
-    CD3D12CommandList          CmdList    = CmdContext.GetCommandList();
-    ID3D12CommandQueue*        CmdQueue   = CmdContext.GetQueue().GetQueue();
-    ID3D12GraphicsCommandList* GfxCmdList = CmdList.GetGraphicsCommandList();
+    FD3D12CommandList CommandList = CommandContext.GetCommandList();
+    
+    ID3D12CommandQueue* D3D12Queue = GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct);
+    CHECK(D3D12Queue != nullptr);
 
-    Check(CmdQueue != nullptr);
-    Check(GfxCmdList != nullptr);
+    ID3D12GraphicsCommandList* D3D12CommandList = CommandList.GetGraphicsCommandList();
+    CHECK(D3D12CommandList != nullptr);
 
-    uint32 ReadIndex = CmdContext.GetCurrentEpochValue();
+    uint32 ReadIndex = CommandContext.GetCurrentBatchIndex();
     if (ReadIndex >= (uint32)ReadResources.Size())
     {
         if (!AllocateReadResource())
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return;
         }
     }
 
     // NOTE: Read the current, the first frames the result will be zero, however this would be expected
-    CD3D12Resource* CurrentReadResource = ReadResources[ReadIndex].Get();
-    void* Data = CurrentReadResource->Map(0, nullptr);
-    if (Data)
+    FD3D12Resource* CurrentReadResource = ReadResources[ReadIndex].Get();
+    if (void* Data = CurrentReadResource->MapRange(0, nullptr))
     {
         const uint32 SizeInBytes = TimeQueries.SizeInBytes();
-
-        CMemory::Memcpy(TimeQueries.Data(), Data, SizeInBytes);
-        CurrentReadResource->Unmap(0, nullptr);
+        FMemory::Memcpy(TimeQueries.Data(), Data, SizeInBytes);
+        CurrentReadResource->UnmapRange(0, nullptr);
     }
 
     // Make use of RESOURCE_STATE promotion during the first call
-    GfxCmdList->ResolveQueryData(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, D3D12_DEFAULT_QUERY_COUNT, WriteResource->GetResource(), 0);
+    D3D12CommandList->ResolveQueryData(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, D3D12_DEFAULT_QUERY_COUNT, WriteResource->GetD3D12Resource(), 0);
 
-    CmdList.TransitionBarrier(WriteResource->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-    GfxCmdList->CopyResource(CurrentReadResource->GetResource(), WriteResource->GetResource());
-    CmdList.TransitionBarrier(WriteResource->GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    CommandList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    D3D12CommandList->CopyResource(CurrentReadResource->GetD3D12Resource(), WriteResource->GetD3D12Resource());
+    CommandList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
 
-    HRESULT Result = CmdQueue->GetTimestampFrequency(&Frequency);
+    HRESULT Result = D3D12Queue->GetTimestampFrequency(&Frequency);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[CD3D12TimestampQuery] FAILED to query ClockCalibration");
+        D3D12_ERROR("[FD3D12TimestampQuery] FAILED to query ClockCalibration");
     }
 }
 
-CD3D12TimestampQuery* CD3D12TimestampQuery::Create(CD3D12Device* InDevice)
+bool FD3D12TimestampQuery::AllocateReadResource()
 {
-    TSharedRef<CD3D12TimestampQuery> NewProfiler = dbg_new CD3D12TimestampQuery(InDevice);
-
-    ID3D12Device* DxDevice = InDevice->GetD3D12Device();
-
-    D3D12_QUERY_HEAP_DESC QueryHeap;
-    CMemory::Memzero(&QueryHeap);
-
-    QueryHeap.Type     = D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
-    QueryHeap.Count    = D3D12_DEFAULT_QUERY_COUNT * 2;
-    QueryHeap.NodeMask = 0;
-
-    TComPtr<ID3D12QueryHeap> Heap;
-    HRESULT Result = DxDevice->CreateQueryHeap(&QueryHeap, IID_PPV_ARGS(&Heap));
-    if (FAILED(Result))
-    {
-        D3D12_ERROR("[D3D12GPUProfiler]: FAILED to create Query Heap");
-        return nullptr;
-    }
-
     D3D12_RESOURCE_DESC Desc;
-    CMemory::Memzero(&Desc);
+    FMemory::Memzero(&Desc);
 
     Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;
@@ -131,49 +166,8 @@ CD3D12TimestampQuery* CD3D12TimestampQuery::Create(CD3D12Device* InDevice)
     Desc.SampleDesc.Count   = 1;
     Desc.SampleDesc.Quality = 0;
 
-    TSharedRef<CD3D12Resource> WriteResource = dbg_new CD3D12Resource(InDevice, Desc, D3D12_HEAP_TYPE_DEFAULT);
-    if (!WriteResource->Init(D3D12_RESOURCE_STATE_COMMON, nullptr))
-    {
-        return nullptr;
-    }
-    else
-    {
-        WriteResource->SetName("Query Write Resource");
-    }
-
-    // Start with three
-    for (uint32 i = 0; i < D3D12_NUM_BACK_BUFFERS; i++)
-    {
-        if (!NewProfiler->AllocateReadResource())
-        {
-            return nullptr;
-        }
-    }
-
-    NewProfiler->QueryHeap     = Heap;
-    NewProfiler->WriteResource = WriteResource;
-    return NewProfiler.ReleaseOwnership();
-}
-
-bool CD3D12TimestampQuery::AllocateReadResource()
-{
-    D3D12_RESOURCE_DESC Desc;
-    CMemory::Memzero(&Desc);
-
-    Desc.Dimension          = D3D12_RESOURCE_DIMENSION_BUFFER;
-    Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
-    Desc.Format             = DXGI_FORMAT_UNKNOWN;
-    Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(SRHITimestamp);
-    Desc.Height             = 1;
-    Desc.DepthOrArraySize   = 1;
-    Desc.MipLevels          = 1;
-    Desc.Alignment          = 0;
-    Desc.SampleDesc.Count   = 1;
-    Desc.SampleDesc.Quality = 0;
-
-    TSharedRef<CD3D12Resource> ReadResource = dbg_new CD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);
-    if (ReadResource->Init(D3D12_RESOURCE_STATE_COPY_DEST, nullptr))
+    FD3D12ResourceRef ReadResource = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);
+    if (ReadResource->Initialize(D3D12_RESOURCE_STATE_COPY_DEST, nullptr))
     {
         ReadResource->SetName("Query Readback Resource");
         ReadResources.Emplace(ReadResource);

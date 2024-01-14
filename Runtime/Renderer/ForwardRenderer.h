@@ -1,25 +1,20 @@
 #pragma once
 #include "FrameResources.h"
 #include "LightSetup.h"
-
+#include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDeferredRenderer
-
-class RENDERER_API CForwardRenderer
+class RENDERER_API FForwardRenderer
 {
 public:
-    CForwardRenderer() = default;
-    ~CForwardRenderer() = default;
+    bool Initialize(FFrameResources& FrameResources);
 
-    bool Init(SFrameResources& FrameResources);
     void Release();
 
-    void Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
+    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
 private:
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIVertexShader>          VShader;
-    TSharedRef<CRHIPixelShader>           PShader;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIVertexShaderRef          VShader;
+    FRHIPixelShaderRef           PShader;
 };

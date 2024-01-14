@@ -1,24 +1,13 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- NullRHI Module
 
-local NullRHIModule = CModuleBuildRules('NullRHI')
-NullRHIModule.bRuntimeLinking = false
+local NullRHIModule = FModuleBuildRules("NullRHI")
+NullRHIModule.bRuntimeLinking = true
 
 NullRHIModule.AddModuleDependencies( 
 {
-    'Core',
-    'RHI',
+    "Core",
+    "RHI",
 })
-
-if BuildWithXcode() then
-    NullRHIModule.AddFrameWorks( 
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    })
-end
-
-NullRHIModule.Generate()

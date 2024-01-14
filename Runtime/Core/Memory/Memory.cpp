@@ -1,76 +1,115 @@
 #include "Memory.h"
+#include "Malloc.h"
+#include "Core/Platform/PlatformStackTrace.h"
 
 #include <cstdlib>
 #include <cstring>
 
-#ifdef PLATFORM_WINDOWS
-#include <crtdbg.h>
+// TODO: Add CVar for these
+#if DEBUG_BUILD
+    #define USE_DEBUG_MALLOC (0)
+#else
+    #define USE_DEBUG_MALLOC (0)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Memory
+#if DEBUG_BUILD
+    #define TRACK_MALLOC_CALLSTACK (0)
+#elif RELEASE_BUILD
+    #define TRACK_MALLOC_CALLSTACK (0)
+#elif PRODUCTION_BUILD
+    #define TRACK_MALLOC_CALLSTACK (0)
+#endif
 
-void* CMemory::Malloc(uint64 Size) noexcept
+static void CreateMalloc()
 {
-    // Since malloc is not guaranteed to return nullptr, we check for it here
-    // Src: https://www.cplusplus.com/reference/cstdlib/malloc/
-    if (Size)
+    CHECK(GMalloc == nullptr);
+
+    if (!GMalloc)
     {
-        return malloc(Size);
+        GMalloc = new FMallocANSI();
+        if constexpr(USE_DEBUG_MALLOC)
+        {
+            GMalloc = new FMallocLeakTracker(GMalloc);
+        }
+        else if constexpr(TRACK_MALLOC_CALLSTACK)
+        {
+            GMalloc = new FMallocStackTraceTracker(GMalloc);
+        }
     }
-    else
+
+    CHECK(GMalloc != nullptr);
+}
+
+void* FMemory::Malloc(uint64 Size) noexcept
+{
+    if (!GMalloc)
     {
-        return nullptr;
+        CreateMalloc();
+        CHECK(GMalloc != nullptr);
     }
+
+    return GMalloc->Malloc(Size);
 }
 
-void* CMemory::Realloc(void* Ptr, uint64 Size) noexcept
+void* FMemory::Realloc(void* Block, uint64 Size) noexcept
 {
-    return realloc(Ptr, Size);
+    if (!GMalloc)
+    {
+        CreateMalloc();
+        CHECK(GMalloc != nullptr);
+    }
+
+    return GMalloc->Realloc(Block, Size);
 }
 
-void CMemory::Free(void* Ptr) noexcept
+void FMemory::Free(void* Block) noexcept
 {
-    free(Ptr);
+    if (!GMalloc)
+    {
+        CreateMalloc();
+        CHECK(GMalloc != nullptr);
+    }
+
+    return GMalloc->Free(Block);
 }
 
-void* CMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept
+void* FMemory::Memset(void* Dst, uint8 Value, uint64 Size) noexcept
 {
-    return memset(Dst, static_cast<int>(Value), Size);
+    return ::memset(Dst, static_cast<int>(Value), Size);
 }
 
-void* CMemory::Memzero(void* Dst, uint64 Size) noexcept
+void* FMemory::Memzero(void* Dst, uint64 Size) noexcept
 {
-    return memset(Dst, 0, Size);
+    return ::memset(Dst, 0, Size);
 }
 
-void* CMemory::Memcpy(void* restrict_ptr Dst, const void* restrict_ptr Src, uint64 Size) noexcept
+void* FMemory::Memcpy(void* RESTRICT Dst, const void* RESTRICT Src, uint64 Size) noexcept
 {
-    return memcpy(Dst, Src, Size);
+    return ::memcpy(Dst, Src, Size);
 }
 
-void* CMemory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
+void* FMemory::Memmove(void* Dst, const void* Src, uint64 Size) noexcept
 {
-    return memmove(Dst, Src, Size);
+    return ::memmove(Dst, Src, Size);
 }
 
-bool CMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
+int32 FMemory::Memcmp(const void* LHS, const void* RHS, uint64 Size)  noexcept
 {
-    return (memcmp(LHS, RHS, Size) == 0);
+    return ::memcmp(LHS, RHS, Size);
 }
 
-void CMemory::Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Size) noexcept
+void FMemory::Memswap(void* RESTRICT LHS, void* RESTRICT RHS, uint64 Size) noexcept
 {
-    Check(LHS != nullptr && RHS != nullptr);
+    CHECK(LHS != nullptr && RHS != nullptr);
 
     // Move 8 bytes at a time 
-    uint64* Left = reinterpret_cast<uint64*>(LHS);
+    uint64* Left  = reinterpret_cast<uint64*>(LHS);
     uint64* Right = reinterpret_cast<uint64*>(RHS);
 
     while (Size >= 8)
     {
         uint64 Temp = *Left;
-        *Left = *Right;
+        *Left  = *Right;
         *Right = Temp;
 
         Left++;
@@ -80,13 +119,13 @@ void CMemory::Memswap(void* restrict_ptr LHS, void* restrict_ptr RHS, uint64 Siz
     }
 
     // Move remaining bytes
-    uint8* LeftBytes = reinterpret_cast<uint8*>(LHS);
+    uint8* LeftBytes  = reinterpret_cast<uint8*>(LHS);
     uint8* RightBytes = reinterpret_cast<uint8*>(RHS);
 
     while (Size)
     {
-        uint8 Temp = *LeftBytes;
-        *LeftBytes = *RightBytes;
+        uint8 Temp  = *LeftBytes;
+        *LeftBytes  = *RightBytes;
         *RightBytes = Temp;
 
         LeftBytes++;

@@ -1,18 +1,9 @@
 #include "WindowsCursor.h"
 #include "WindowsWindow.h"
-#include "Windows.h"
-
+#include "Core/Windows/Windows.h"
 #include "Core/Containers/SharedRef.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsCursor
-
-CWindowsCursor* CWindowsCursor::CreateWindowsCursor()
-{
-    return dbg_new CWindowsCursor();
-}
-
-void CWindowsCursor::SetCursor(ECursor Cursor)
+void FWindowsCursor::SetCursor(ECursor Cursor)
 {
     LPSTR CursorName = NULL;
     switch (Cursor)
@@ -58,47 +49,19 @@ void CWindowsCursor::SetCursor(ECursor Cursor)
     // TODO: Log error
 }
 
-void CWindowsCursor::SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const
+void FWindowsCursor::SetPosition(int32 x, int32 y) const
 {
-    POINT CursorPos = { x, y };
-    if (RelativeWindow)
-    {
-        TSharedRef<CWindowsWindow> WinWindow = MakeSharedRef<CWindowsWindow>(RelativeWindow);
-
-        HWND hRelative = WinWindow->GetHandle();
-        if (!ClientToScreen(hRelative, &CursorPos))
-        {
-            return;
-        }
-    }
-
-    ::SetCursorPos(CursorPos.x, CursorPos.y);
+    ::SetCursorPos(x, y);
 }
 
-void CWindowsCursor::GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const
+FIntVector2 FWindowsCursor::GetPosition() const
 {
-    POINT CursorPos = { };
-    if (!GetCursorPos(&CursorPos))
-    {
-        return;
-    }
-
-    if (RelativeWindow)
-    {
-        TSharedRef<CWindowsWindow> WinRelative = MakeSharedRef<CWindowsWindow>(RelativeWindow);
-
-        HWND Relative = WinRelative->GetHandle();
-        if (!ScreenToClient(Relative, &CursorPos))
-        {
-            return;
-        }
-    }
-
-    OutX = CursorPos.x;
-    OutY = CursorPos.y;
+    POINT CursorPos = { 0, 0 };
+    CHECK(::GetCursorPos(&CursorPos) == TRUE);
+    return FIntVector2{ CursorPos.x, CursorPos.y };
 }
 
-void CWindowsCursor::SetVisibility(bool bVisible)
+void FWindowsCursor::SetVisibility(bool bVisible)
 {
     // TODO: Investigate if we need to do more in order to keep track of the ShowCursor calls
     if (bVisible)

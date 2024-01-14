@@ -1,10 +1,6 @@
 #pragma once
 #include "DelegateBase.h"
-
-#include "Core/Templates/FunctionType.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Macros for declaring delegate types
+#include "Core/Templates/TypeTraits.h"
 
 #define DECLARE_DELEGATE(DelegateName, ...) \
     typedef TDelegate<void(__VA_ARGS__)> DelegateName;
@@ -12,16 +8,13 @@
 #define DECLARE_RETURN_DELEGATE(DelegateName, ReturnType, ...) \
     typedef TDelegate<ReturnType(__VA_ARGS__)> DelegateName;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TDelegate
-
 template<typename InvokableType>
 class TDelegate;
 
 template<typename ReturnType, typename... ArgTypes>
-class TDelegate<ReturnType(ArgTypes...)> : public CDelegateBase
+class TDelegate<ReturnType(ArgTypes...)> : public FDelegateBase
 {
-    using Super = CDelegateBase;
+    using Super = FDelegateBase;
 
     using DelegateInstance = TDelegateInstance<ReturnType, ArgTypes...>;
 
@@ -44,7 +37,6 @@ public:
     using Super::GetHandle;
 
 private:
-    using Super::Release;
     using Super::CopyFrom;
     using Super::GetDelegate;
     using Super::GetStorage;
@@ -52,11 +44,10 @@ private:
 public:
 
     /**
-     * @brief: Create a static delegate from a function
-     * 
-     * @param Function: Function to bind to a delegate
-     * @param Payload: Arguments to bind to a delegate
-     * @return: Returns a delegate bound with the function and payload 
+     * @brief          - Create a static delegate from a function
+     * @param Function - Function to bind to a delegate
+     * @param Payload  - Arguments to bind to a delegate
+     * @return         - Returns a delegate bound with the function and payload 
      */
     template<typename... PayloadTypes>
     static FORCEINLINE TDelegate CreateStatic(FunctionType<PayloadTypes...> Function, PayloadTypes... Payload)
@@ -67,12 +58,11 @@ public:
     }
 
     /**
-     * @brief: Create a member-function delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to a delegate
-     * @param Payload: Arguments to bind to a delegate
-     * @return: Returns a delegate bound with the instance, function and payload
+     * @brief          - Create a member-function delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to a delegate
+     * @param Payload  - Arguments to bind to a delegate
+     * @return         - Returns a delegate bound with the instance, function and payload
      */
     template<typename InstanceType, typename... PayloadTypes>
     static FORCEINLINE TDelegate CreateRaw(InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -85,12 +75,11 @@ public:
     }
 
     /**
-     * @brief: Create a member-function delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to a delegate
-     * @param Payload: Arguments to bind to a delegate
-     * @return: Returns a delegate bound with the instance, function and payload
+     * @brief          - Create a member-function delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to a delegate
+     * @param Payload  - Arguments to bind to a delegate
+     * @return         - Returns a delegate bound with the instance, function and payload
      */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     static FORCEINLINE TDelegate CreateRaw(InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -103,12 +92,11 @@ public:
     }
 
     /**
-     * @brief: Create a const member-function delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to a delegate
-     * @param Payload: Arguments to bind to a delegate
-     * @return: Returns a delegate bound with the instance, function and payload
+     * @brief          - Create a const member-function delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to a delegate
+     * @param Payload  - Arguments to bind to a delegate
+     * @return         - Returns a delegate bound with the instance, function and payload
      */
     template<typename InstanceType, typename... PayloadTypes>
     static FORCEINLINE TDelegate CreateRaw(InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -119,12 +107,11 @@ public:
     }
 
     /**
-     * @brief: Create a const member-function delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to a delegate
-     * @param Payload: Arguments to bind to a delegate
-     * @return: Returns a delegate bound with the instance, function and payload
+     * @brief          - Create a const member-function delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to a delegate
+     * @param Payload  - Arguments to bind to a delegate
+     * @return         - Returns a delegate bound with the instance, function and payload
      */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     static FORCEINLINE TDelegate CreateRaw(InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -135,11 +122,10 @@ public:
     }
 
     /**
-     * @brief: Create a lambda delegate
-     *
-     * @param Functor: Functor to bind to a delegate
-     * @param Payload: Arguments to bind to a delegate
-     * @return: Returns a delegate bound with the functor and payload
+     * @brief         - Create a lambda delegate
+     * @param Functor - Functor to bind to a delegate
+     * @param Payload - Arguments to bind to a delegate
+     * @return        - Returns a delegate bound with the functor and payload
      */
     template<typename FunctorType, typename... PayloadTypes>
     static FORCEINLINE TDelegate CreateLambda(FunctorType Functor, PayloadTypes... Payload)
@@ -152,17 +138,17 @@ public:
 public:
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE explicit TDelegate()
         : Super()
-    { }
+    {
+    }
 
     /**
-     * @brief: Bind a function to the delegate
-     *
-     * @param Function: Function to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Bind a function to the delegate
+     * @param Function - Function to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename... PayloadTypes>
     FORCEINLINE void BindStatic(FunctionType<PayloadTypes...> Function, PayloadTypes... Payload)
@@ -171,11 +157,10 @@ public:
     }
 
     /**
-     * @brief: Bind a member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Bind a member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename... PayloadTypes>
     FORCEINLINE void BindRaw(InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -185,11 +170,10 @@ public:
     }
 
     /**
-     * @brief: Bind a member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Bind a member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     FORCEINLINE void BindRaw(InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -199,11 +183,10 @@ public:
     }
 
     /**
-     * @brief: Bind a const member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Bind a const member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename... PayloadTypes>
     FORCEINLINE void BindRaw(InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -212,11 +195,10 @@ public:
     }
 
     /**
-     * @brief: Bind a const member-function to the delegate
-     *
-     * @param This: Pointer to an instance to bind to the delegate
-     * @param Function: MemberFunction to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief          - Bind a const member-function to the delegate
+     * @param This     - Pointer to an instance to bind to the delegate
+     * @param Function - MemberFunction to bind to the delegate
+     * @param Payload  - Arguments to bind to the delegate
      */
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     FORCEINLINE void BindRaw(InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
@@ -225,10 +207,9 @@ public:
     }
 
     /**
-     * @brief: Bind a lambda to the delegate
-     *
-     * @param Functor: Functor to bind to the delegate
-     * @param Payload: Arguments to bind to the delegate
+     * @brief         - Bind a lambda to the delegate
+     * @param Functor - Functor to bind to the delegate
+     * @param Payload - Arguments to bind to the delegate
      */
     template<typename FunctorType, typename... PayloadTypes>
     FORCEINLINE void BindLambda(FunctorType Functor, PayloadTypes... Payload)
@@ -237,24 +218,22 @@ public:
     }
 
     /**
-     * @brief: Executes the delegate 
-     * 
-     * @param Args: Arguments to pass to the call
-     * @return: The return value for the call
+     * @brief      - Executes the delegate 
+     * @param Args - Arguments to pass to the call
+     * @return     - The return value for the call
      */ 
-    FORCEINLINE ReturnType Execute(ArgTypes... Args)
+    FORCEINLINE ReturnType Execute(ArgTypes... Args) const
     {
-        Check(IsBound());
+        CHECK(IsBound());
         return GetDelegateInstance()->Execute(Forward<ArgTypes>(Args)...);
     }
 
     /**
-     * @brief: Executes the delegate if there is a delegate bound
-     *
-     * @param Args: Arguments to pass to the call
-     * @return: Returns true if the call was perform, otherwise false
+     * @brief      - Executes the delegate if there is a delegate bound
+     * @param Args - Arguments to pass to the call
+     * @return     - Returns true if the call was perform, otherwise false
      */
-    FORCEINLINE bool ExecuteIfBound(ArgTypes... Args)
+    FORCEINLINE bool ExecuteIfBound(ArgTypes... Args) const
     {
         if (IsBound())
         {
@@ -268,14 +247,12 @@ public:
     }
 
 private:
-
     template<typename DelegateType, typename... ConstructorArgs>
     FORCEINLINE void Bind(ConstructorArgs&&... Args)
     {
-        Release();
-
+        Unbind();
         void* Memory = AllocateStorage(sizeof(DelegateType));
-        new (Memory) DelegateType(Forward<ConstructorArgs>(Args)...);
+        new (Memory) DelegateType(::Forward<ConstructorArgs>(Args)...);
     }
 
     FORCEINLINE DelegateInstance* GetDelegateInstance() noexcept

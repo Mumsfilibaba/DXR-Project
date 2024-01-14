@@ -1,84 +1,90 @@
 #include "SceneData.h"
-
 #include "Engine/Engine.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Components/MeshComponent.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/TextureFactory.h"
 
-void SSceneData::AddToScene(CScene* Scene)
+void FSceneData::AddToScene(FScene* Scene)
 {
     if (!HasModelData())
     {
         return;
     }
 
-    LOG_INFO("AddToScene");
-
-    TArray<TSharedPtr<CMaterial>> CreatedMaterials;
+    TArray<TSharedPtr<FMaterial>> CreatedMaterials;
     if (!Materials.IsEmpty())
     {
-        for (const SMaterialData& MaterialData : Materials)
+        for (const FMaterialData& MaterialData : Materials)
         {
-            SMaterialDesc Desc;
+            FMaterialDesc Desc;
             Desc.Albedo    = MaterialData.Diffuse;
             Desc.AO        = MaterialData.AO;
             Desc.Metallic  = MaterialData.Metallic;
             Desc.Roughness = MaterialData.Roughness;
 
-            // TODO: Should probably have a better connection between RHITexture and a Texture
+            if (MaterialData.bAlphaDiffuseCombined)
+            {
+                Desc.EnableMask = AlphaMaskMode_DiffuseCombined;
+            }
 
-            TSharedPtr<CMaterial> Material = MakeShared<CMaterial>(Desc);
-            Material->AlbedoMap = CTextureFactory::LoadFromImage2D(MaterialData.DiffuseTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->AlbedoMap = Material->AlbedoMap ? Material->AlbedoMap : GEngine->BaseTexture;
+            if (MaterialData.SpecularTexture)
+            {
+                Desc.EnableHeight = 2;
+            }
 
-            Material->AlphaMask = CTextureFactory::LoadFromImage2D(MaterialData.AlphaMaskTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->AlphaMask = Material->AlphaMask ? Material->AlphaMask : GEngine->BaseTexture;
+            TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(Desc);
+            Material->AlbedoMap    = MaterialData.DiffuseTexture   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
+            Material->AOMap        = MaterialData.AOTexture        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
+            Material->SpecularMap  = MaterialData.SpecularTexture  ? MaterialData.SpecularTexture->GetRHITexture()  : nullptr;
+            Material->MetallicMap  = MaterialData.MetallicTexture  ? MaterialData.MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
+            Material->NormalMap    = MaterialData.NormalTexture    ? MaterialData.NormalTexture->GetRHITexture()    : GEngine->BaseNormal;
+            Material->RoughnessMap = MaterialData.RoughnessTexture ? MaterialData.RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
+            Material->HeightMap    = GEngine->BaseTexture;
 
-            Material->AOMap = CTextureFactory::LoadFromImage2D(MaterialData.AOTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->AOMap = Material->AOMap ? Material->AOMap : GEngine->BaseTexture;
+            if (!MaterialData.bAlphaDiffuseCombined)
+            {
+                Material->AlphaMask = MaterialData.AlphaMaskTexture ? MaterialData.AlphaMaskTexture->GetRHITexture() : nullptr;
+                Material->EnableAlphaMask(Material->AlphaMask != nullptr);
+            }
 
-            Material->MetallicMap = CTextureFactory::LoadFromImage2D(MaterialData.MetallicTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->MetallicMap = Material->MetallicMap ? Material->MetallicMap : GEngine->BaseTexture;
+            if (MaterialData.bIsDoubleSided)
+            {
+                Material->EnableDoubleSided(MaterialData.bIsDoubleSided);
+            }
 
-            Material->NormalMap = CTextureFactory::LoadFromImage2D(MaterialData.NormalTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->NormalMap = Material->NormalMap ? Material->NormalMap : GEngine->BaseNormal;
+            Material->Initialize();
+            Material->SetDebugName(MaterialData.Name);
 
-            Material->RoughnessMap = CTextureFactory::LoadFromImage2D(MaterialData.RoughnessTexture.Get(), TextureFactoryFlag_GenerateMips);
-            Material->RoughnessMap = Material->RoughnessMap ? Material->RoughnessMap : GEngine->BaseTexture;
-
-            Material->HeightMap = GEngine->BaseTexture;
-
-            Material->Init();
-
-            CreatedMaterials.Push(Material);
+            CreatedMaterials.Add(Material);
         }
     }
 
-    Check(Materials.Size() == CreatedMaterials.Size());
+    CHECK(Materials.Size() == CreatedMaterials.Size());
 
-    for (const SModelData& ModelData : Models)
+    for (const FModelData& ModelData : Models)
     {
         if (ModelData.Mesh.Hasdata())
         {
-            CActor* NewActor = Scene->MakeActor();
-            NewActor->SetName(ModelData.Name.CStr());
+            FActor* NewActor = Scene->CreateActor();
+            NewActor->SetName(ModelData.Name.GetCString());
             NewActor->GetTransform().SetUniformScale(Scale);
 
-            CMeshComponent* MeshComponent = dbg_new CMeshComponent(NewActor);
-            MeshComponent->Mesh = CMesh::Make(ModelData.Mesh);
-
-            if (ModelData.MaterialIndex >= 0)
+            FMeshComponent* MeshComponent = NewObject<FMeshComponent>();
+            if (MeshComponent)
             {
-                MeshComponent->Material = CreatedMaterials[ModelData.MaterialIndex];
+                if (!CreatedMaterials.IsEmpty() && ModelData.MaterialIndex >= 0)
+                {
+                    MeshComponent->Material = CreatedMaterials[ModelData.MaterialIndex];
+                }
+                else
+                {
+                    MeshComponent->Material = GEngine->BaseMaterial;
+                }
+                
+                MeshComponent->Mesh = FMesh::Create(ModelData.Mesh);
+                NewActor->AddComponent(MeshComponent);
             }
-            else
-            {
-                MeshComponent->Material = GEngine->BaseMaterial;
-            }
-
-            NewActor->AddComponent(MeshComponent);
         }
     }
 }

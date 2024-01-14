@@ -1,123 +1,126 @@
 #pragma once
 #include "MacCursor.h"
-#include "ScopedAutoreleasePool.h"
-
+#include "GCInputDevice.h"
+#include "Core/Mac/Mac.h"
 #include "Core/Containers/Array.h"
-#include "Core/Threading/Platform/CriticalSection.h"
-
+#include "Core/Platform/CriticalSection.h"
+#include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericApplication.h"
 
 #include <AppKit/AppKit.h>
-#include <Foundation/Foundation.h>
 
-@class CCocoaAppDelegate;
-@class CCocoaWindow;
+@class FCocoaWindow;
+@class FMacApplicationObserver;
 
-class CMacWindow;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMacApplicationEvent
-
-// TODO: Finish
-struct SMacApplicationEvent
+struct FDeferredMacEvent
 {
-    FORCEINLINE SMacApplicationEvent()
-        : NotificationName(nullptr)
-        , Event(nullptr)
-        , Window(nullptr)
-		, Size()
-		, Position()
-		, Character(uint32(-1))
-    { }
-
-    FORCEINLINE SMacApplicationEvent(const SMacApplicationEvent& Other)
-        : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nullptr)
-        , Event(Other.Event ? [Other.Event retain] : nullptr)
-        , Window(Other.Window ? [Other.Window retain] : nullptr)
-		, Size(Other.Size)
-		, Position(Other.Position)
-		, Character(Other.Character)
-    { }
-
-    FORCEINLINE ~SMacApplicationEvent()
+    FORCEINLINE FDeferredMacEvent()
+        : NotificationName(nil)
+        , Event(nil)
+        , Window(nil)
+        , Size()
+        , Position()
+        , Character(uint32(-1))
     {
-		SCOPED_AUTORELEASE_POOL();
-		
-        if (NotificationName)
-        {
-            [NotificationName release];
-        }
+    }
 
-        if (Event)
-        {
-            [Event release];
-        }
+    FORCEINLINE FDeferredMacEvent(const FDeferredMacEvent& Other)
+        : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
+        , Event(Other.Event ? [Other.Event retain] : nil)
+        , Window(Other.Window ? [Other.Window retain] : nil)
+        , Size(Other.Size)
+        , Position(Other.Position)
+        , Character(Other.Character)
+    {
+    }
 
-        if (Window)
+    FORCEINLINE ~FDeferredMacEvent()
+    {
+        @autoreleasepool
         {
-            [Window release];
+            NSSafeRelease(NotificationName);
+            NSSafeRelease(Event);
+            NSSafeRelease(Window);
         }
     }
 
-	NSNotificationName NotificationName;
+    NSNotificationName NotificationName;
     NSEvent*           Event;
-	
-	CCocoaWindow*      Window;
-	CGSize             Size;
-	CGPoint            Position;
+    
+    FCocoaWindow*      Window;
+    CGSize             Size;
+    CGPoint            Position;
 
-	uint32             Character;
+    uint32             Character;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacApplication
+class FGenericWindow;
+class FMacWindow;
 
-class CMacApplication final : public CGenericApplication
+class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
-private:
-
-    CMacApplication();
-    ~CMacApplication();
-
 public:
+    FMacApplication();
+    virtual ~FMacApplication();
 
-	static CMacApplication* CreateMacApplication();
-    
-    TSharedRef<CMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
+    static TSharedPtr<FMacApplication> CreateMacApplication();
 
-    void DeferEvent(NSObject* EventOrNotificationObject);
-	
-    FORCEINLINE CCocoaAppDelegate* GetAppDelegate() const { return AppDelegate; }
+    virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplication Interface
-
-    virtual TSharedRef<CGenericWindow> MakeWindow() override final;
-
-    virtual bool Initialize()      override final;
-    
     virtual void Tick(float Delta) override final;
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) override final;
+    virtual void UpdateGamepadDevices() override final;
 
-    virtual TSharedRef<CGenericWindow> GetActiveWindow()      const override final;
+    virtual FInputDevice* GetInputDeviceInterface() override final;
 
-	virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const override final;
+    virtual bool SupportsHighPrecisionMouse() const override final;
+
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
+
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
+
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
+
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
+
+    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
+
+    virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
+
+public:
+    TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
+    
+    void CloseWindow(const TSharedRef<FMacWindow>& Window);
+    
+    void DeferEvent(NSObject* EventOrNotificationObject);
+
+    FMacApplicationObserver* GetApplicationObserver() const
+    {
+        return Observer;
+    }
 
 private:
-    bool InitializeAppMenu();
+    void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
+    
+    mutable FDisplayInfo DisplayInfo;
+    
+    // Observer that checks for monitor changes
+    FMacApplicationObserver* Observer;
+    
+    // InputDevice handling gamepads
+    TSharedPtr<FGCInputDevice> InputDevice;
+    
+    EMouseButtonName::Type LastPressedButton;
+    mutable bool           bHasDisplayInfoChanged;
+    
+    TArray<TSharedRef<FMacWindow>> Windows;
+    mutable FCriticalSection WindowsCS;
+    
+    TArray<TSharedRef<FMacWindow>> ClosedWindows;
+    FCriticalSection ClosedWindowsCS;
 
-    void HandleEvent(const SMacApplicationEvent& Notification);
-
-    CCocoaAppDelegate*             AppDelegate = nullptr;
-
-    TArray<TSharedRef<CMacWindow>> Windows;
-    mutable CCriticalSection       WindowsMutex;
-
-    TArray<SMacApplicationEvent>   DeferredEvents;
-    CCriticalSection               DeferredEventsMutex;
-
-    bool                           bIsTerminating = false;
+    TArray<FDeferredMacEvent> DeferredEvents;
+    FCriticalSection DeferredEventsCS;
 };
+
+extern FMacApplication* MacApplication;

@@ -1,12 +1,16 @@
 #pragma once
+#include "Core/Utilities/HashUtilities.h"
+
+// TODO: Custom set implementation
 
 #if 1
+#include <unordered_set>
+
+template<typename T, typename HashType = THash<T>>
+using TSet = std::unordered_set<T, HashType>;
 
 #else
 #include "Iterator.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSet - Contains unique elements which are stored in a tree structure
 
 template<typename T, typename CompareType>
 class TSet
@@ -64,7 +68,7 @@ public:
     using ConstIteratorType = TTreeIterator<const STreeNode, const ElementType>;
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
     FORCEINLINE TSet()
         : RootNode(nullptr)
@@ -74,11 +78,11 @@ public:
     }
 
     /**
-     * @brief: Destructor 
+     * @brief - Destructor 
      */
     FORCEINLINE ~TSet()
     {
-        Check(NullNode != nullptr);
+        CHECK(NullNode != nullptr);
 
         FreeRoot();
 
@@ -99,7 +103,7 @@ private:
 
     FORCEINLINE void InititalizeRoot()
     {
-        Check(RootNode == nullptr);
+        CHECK(RootNode == nullptr);
 
         RootNode = new STreeNode();
         RootNode->Parent = NullNode;
@@ -119,8 +123,8 @@ private:
 
     FORCEINLINE void RotateLeft(STreeNode* Node)
     {
-        Check(Node != nullptr);
-        Check(Node != NullNode);
+        CHECK(Node != nullptr);
+        CHECK(Node != NullNode);
 
         STreeNode* Right = Node->Right;
         Node->Right = Right->Left;
@@ -146,8 +150,8 @@ private:
 
     FORCEINLINE void RotateRight(STreeNode* Node)
     {
-        Check(Node != nullptr);
-        Check(Node != NullNode);
+        CHECK(Node != nullptr);
+        CHECK(Node != NullNode);
 
         STreeNode* Left = Node->Left;
         Node->Left = Left->Right;

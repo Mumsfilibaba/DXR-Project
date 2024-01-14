@@ -1,26 +1,68 @@
 #include "SkyboxRenderPass.h"
-
-#include "Core/Debug/Debug.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
-
+#include "Core/Misc/Debug.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Renderer/Debug/GPUProfiler.h"
-
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
+#include "Engine/Assets/AssetManager.h"
+#include "RendererCore/TextureFactory.h"
 
-#include "Engine/Resources/TextureFactory.h"
+static TAutoConsoleVariable<bool> GClearBeforeSkyboxEnabled(
+    "Renderer.Skybox.ClearBeforeSkybox",
+    "Clear the final target before rendering the Skybox (Used for debugging)",
+    false);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShadowMapRenderer
-
-bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
+bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 {
-    SkyboxMesh = CMeshFactory::CreateSphere(1);
+    if (!TextureCompressor.Initialize())
+    {
+        return false;
+    }
 
-    CRHIBufferDataInitializer VertexData(SkyboxMesh.Vertices.Data(), SkyboxMesh.Vertices.SizeInBytes());
 
-    CRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, SkyboxMesh.Vertices.Size(), sizeof(SVertex), EResourceAccess::VertexAndConstantBuffer, &VertexData);
-    SkyboxVertexBuffer = RHICreateVertexBuffer(VBInitializer);
+    // Sphere-Data
+    TArray<FVector3> SkyboxVertices;
+    TArray<uint16>   SkyboxIndicies16;
+    TArray<uint32>   SkyboxIndicies32;
+    void* SkyboxInitalIndicies = nullptr;
+
+
+    // Create a sphere used for the Skybox
+    {
+        FMeshData SkyboxMesh = FMeshFactory::CreateSphere(0);
+        SkyboxIndexCount = SkyboxMesh.Indices.Size();
+
+        // Indices
+        SkyboxIndexFormat = SkyboxIndexCount < TNumericLimits<uint16>::Max() ? EIndexFormat::uint16 : EIndexFormat::uint32;
+        if (SkyboxIndexFormat == EIndexFormat::uint16)
+        {
+            SkyboxIndicies16.Reserve(SkyboxMesh.Indices.Size());
+            for (uint32 Index : SkyboxMesh.Indices)
+            {
+                SkyboxIndicies16.Emplace(uint16(Index));
+            }
+
+            SkyboxInitalIndicies = SkyboxIndicies16.Data();
+        }
+        else
+        {
+            SkyboxIndicies32 = Move(SkyboxMesh.Indices);
+            SkyboxInitalIndicies = SkyboxIndicies32.Data();
+        }
+
+        // Vertices
+        SkyboxVertices.Reserve(SkyboxMesh.Vertices.Size());
+        for (const FVertex& Vertex : SkyboxMesh.Vertices)
+        {
+            SkyboxVertices.Emplace(Vertex.Position);
+        }
+    }
+
+
+    // VertexBuffer
+    FRHIBufferDesc VBDesc(SkyboxVertices.SizeInBytes(), SkyboxVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
+    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -30,10 +72,9 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
     }
 
-    CRHIBufferDataInitializer IndexData(SkyboxMesh.Indices.Data(), SkyboxMesh.Indices.SizeInBytes());
-
-    CRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint32, SkyboxMesh.Indices.Size(), EResourceAccess::IndexBuffer, &IndexData);
-    SkyboxIndexBuffer = RHICreateIndexBuffer(IBInitializer);
+    // IndexBuffers
+    FRHIBufferDesc IBDesc(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
+    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxInitalIndicies);
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -43,30 +84,43 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
         SkyboxIndexBuffer->SetName("Skybox IndexBuffer");
     }
 
+
     // Create Texture Cube
-    const String PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-    TSharedRef<CRHITexture2D> Panorama = CTextureFactory::LoadFromFile(PanoramaSourceFilename, 0, EFormat::R32G32B32A32_Float);
-    if (!Panorama)
     {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        Panorama->SetName(PanoramaSourceFilename);
+        const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
+        FTextureResource2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
+        if (!Panorama)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            Panorama->SetName(PanoramaSourceFilename);
+        }
+
+        // Compress the Panorama
+        FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
+
+        FRHITextureRef Skybox = FTextureFactory::CreateTextureCubeFromPanorma(PanoramaRHI.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
+        if (!Skybox)
+        {
+            return false;
+        }
+        else
+        {
+            Skybox->SetName("Skybox Uncompressed");
+        }
+
+        // Compress the CubeMap
+        TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
+        if (FrameResources.Skybox)
+        {
+            FrameResources.Skybox->SetName("Skybox Compressed");
+        }
     }
 
-    FrameResources.Skybox = CTextureFactory::CreateTextureCubeFromPanorma(Panorama.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
-    if (!FrameResources.Skybox)
-    {
-        return false;
-    }
-    else
-    {
-        FrameResources.Skybox->SetName("Skybox");
-    }
-
-    CRHISamplerStateInitializer Initializer;
+    FRHISamplerStateDesc Initializer;
     Initializer.AddressU = ESamplerMode::Wrap;
     Initializer.AddressV = ESamplerMode::Wrap;
     Initializer.AddressW = ESamplerMode::Wrap;
@@ -81,78 +135,99 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
+    
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     SkyboxVertexShader = RHICreateVertexShader(ShaderCode);
     if (!SkyboxVertexShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Skybox.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     SkyboxPixelShader = RHICreatePixelShader(ShaderCode);
     if (!SkyboxPixelShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
+        return false;
+    }
+    
+    // Initialize standard input layout
+    FRHIVertexInputLayoutInitializer InputLayoutInitializer =
+    {
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+    };
+
+    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+    if (!InputLayout)
+    {
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
+    FRHIRasterizerStateInitializer RasterizerInitializer;
+    RasterizerInitializer.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInitializer;
+    FRHIBlendStateInitializer BlendStateInitializer;
+    BlendStateInitializer.NumRenderTargets = 1;
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInitializer);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInitializer;
-    DepthStencilStateInitializer.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilStateInitializer.bDepthEnable   = true;
-    DepthStencilStateInitializer.DepthWriteMask = EDepthWriteMask::All;
+    FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+    DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilStateInitializer.bDepthEnable      = true;
+    DepthStencilStateInitializer.bDepthWriteEnable = false;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PipelineStateInitializer;
-    PipelineStateInitializer.VertexInputLayout                      = FrameResources.StdInputLayout.Get();
-    PipelineStateInitializer.BlendState                             = BlendState.Get();
-    PipelineStateInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PipelineStateInitializer.RasterizerState                        = RasterizerState.Get();
-    PipelineStateInitializer.ShaderState.VertexShader               = SkyboxVertexShader.Get();
-    PipelineStateInitializer.ShaderState.PixelShader                = SkyboxPixelShader.Get();
-    PipelineStateInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
-    PipelineStateInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PipelineStateInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
+    PSOInitializer.VertexInputLayout                      = InputLayout.Get();
+    PSOInitializer.BlendState                             = BlendState.Get();
+    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+    PSOInitializer.RasterizerState                        = RasterizerState.Get();
+    PSOInitializer.ShaderState.VertexShader               = SkyboxVertexShader.Get();
+    PSOInitializer.ShaderState.PixelShader                = SkyboxPixelShader.Get();
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.FinalTargetFormat;
+    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
-    PipelineState = RHICreateGraphicsPipelineState(PipelineStateInitializer);
+    PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PipelineState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -163,54 +238,59 @@ bool CSkyboxRenderPass::Init(SFrameResources& FrameResources)
     return true;
 }
 
-void CSkyboxRenderPass::Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene)
+void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FScene& Scene)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin Skybox");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Skybox");
 
-    GPU_TRACE_SCOPE(CmdList, "Skybox");
+    GPU_TRACE_SCOPE(CommandList, "Skybox");
 
     TRACE_SCOPE("Render Skybox");
 
-    const float RenderWidth  = float(FrameResources.FinalTarget->GetWidth());
-    const float RenderHeight = float(FrameResources.FinalTarget->GetHeight());
+    const float RenderWidth  = float(FrameResources.CurrentWidth);
+    const float RenderHeight = float(FrameResources.CurrentHeight);
 
-    CmdList.SetViewport(RenderWidth, RenderHeight, 0.0f, 1.0f, 0.0f, 0.0f);
-    CmdList.SetScissorRect(RenderWidth, RenderHeight, 0, 0);
-
-    CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0] = CRHIRenderTargetView(FrameResources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    
+    FRHIRenderPassDesc RenderPass;
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);
     RenderPass.NumRenderTargets = 1;
-    RenderPass.DepthStencilView = CRHIDepthStencilView(FrameResources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EAttachmentLoadAction::Load);
+    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
-    CmdList.BeginRenderPass(RenderPass);
+    CommandList.BeginRenderPass(RenderPass);
 
-    CmdList.SetPrimitiveTopology(EPrimitiveTopology::TriangleList);
-    CmdList.SetVertexBuffers(&SkyboxVertexBuffer, 1, 0);
-    CmdList.SetIndexBuffer(SkyboxIndexBuffer.Get());
-    CmdList.SetGraphicsPipelineState(PipelineState.Get());
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
 
-    struct SSimpleCameraBuffer
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetScissorRect(ScissorRegion);
+
+    CommandList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);
+    CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get(), SkyboxIndexFormat);
+    CommandList.SetGraphicsPipelineState(PipelineState.Get());
+
+    struct FSimpleCameraBuffer
     {
-        CMatrix4 Matrix;
+        FMatrix4 Matrix;
     } SimpleCamera;
 
     SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
 
-    CmdList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
+    CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
 
-    CRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
-    CmdList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
+    FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
+    CommandList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
 
-    CmdList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
+    CommandList.SetSamplerState(SkyboxPixelShader.Get(), SkyboxSampler.Get(), 0);
 
-    CmdList.DrawIndexedInstanced(static_cast<uint32>(SkyboxMesh.Indices.Size()), 1, 0, 0, 0);
+    CommandList.DrawIndexedInstanced(SkyboxIndexCount, 1, 0, 0, 0);
 
-    CmdList.EndRenderPass();
+    CommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End Skybox");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Skybox");
 }
 
-void CSkyboxRenderPass::Release()
+void FSkyboxRenderPass::Release()
 {
     PipelineState.Reset();
     SkyboxVertexBuffer.Reset();

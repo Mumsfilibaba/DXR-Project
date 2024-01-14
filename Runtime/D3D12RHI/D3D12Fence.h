@@ -1,83 +1,96 @@
 #pragma once
-#include "D3D12Device.h"
 #include "D3D12DeviceChild.h"
+#include "D3D12RefCounted.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Fence
+typedef TSharedRef<class FD3D12Fence> FD3D12FenceRef;
 
-class CD3D12Fence : public CD3D12DeviceChild
+class FD3D12Fence : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
-    FORCEINLINE CD3D12Fence(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
-        , Fence(nullptr)
-        , Event(0)
-    { }
+    FD3D12Fence(FD3D12Device* InDevice);
+    ~FD3D12Fence();
 
-    FORCEINLINE ~CD3D12Fence()
+    bool Initialize(uint64 InitalValue);
+
+    bool WaitForValue(uint64 Value);
+
+    FORCEINLINE ID3D12Fence* GetD3D12Fence() const { return Fence.Get(); }
+
+    FORCEINLINE void SetName(const FString& Name)
     {
-        if (Event)
-        {
-            CloseHandle(Event);
-        }
-    }
-
-    bool Initialize(uint64 InitalValue)
-    {
-        HRESULT Result = GetDevice()->GetD3D12Device()->CreateFence(InitalValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&Fence));
-        if (FAILED(Result))
-        {
-            D3D12_ERROR("FAILED to create Fence");
-            return false;
-        }
-
-        Event = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        if (Event == 0)
-        {
-            D3D12_ERROR("FAILED to create Event for Fence");
-            return false;
-        }
-
-        return true;
-    }
-
-    bool WaitForValue(uint64 Value)
-    {
-        HRESULT Result = Fence->SetEventOnCompletion(Value, Event);
-        if (SUCCEEDED(Result))
-        {
-            WaitForSingleObject(Event, INFINITE);
-            return true;
-        }
-        else
-        {
-            D3D12_ERROR("Failed to wait for fencevalue");
-            return false;
-        }
-    }
-
-    FORCEINLINE uint64 GetCompletedValue() const
-    {
-        return Fence->GetCompletedValue();
-    }
-
-    FORCEINLINE bool Signal(uint64 Value)
-    {
-        HRESULT Result = Fence->Signal(Value);
-        return SUCCEEDED(Result);
-    }
-
-    FORCEINLINE void SetName(const String& Name)
-    {
-        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.CStr());
-    }
-
-    FORCEINLINE ID3D12Fence* GetFence() const
-    {
-        return Fence.Get();
+        CHECK(Fence != nullptr);
+        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.GetCString());
     }
 
 private:
     TComPtr<ID3D12Fence> Fence;
     HANDLE               Event;
+};
+
+
+struct FD3D12FenceSyncPoint
+{
+    FD3D12FenceSyncPoint()
+        : Fence(nullptr)
+        , FenceValue(0)
+    {
+    }
+
+    FD3D12FenceSyncPoint(FD3D12Fence* InFence, uint64 InFenceValue)
+        : Fence(InFence)
+        , FenceValue(InFenceValue)
+    {
+    }
+
+    FD3D12Fence* Fence;
+    uint64       FenceValue;
+};
+
+
+class FD3D12FenceManager : public FD3D12DeviceChild
+{
+public:
+    FD3D12FenceManager(FD3D12Device* InDevice);
+    ~FD3D12FenceManager() = default;
+
+    bool Initialize();
+
+    uint64 SignalGPU(ED3D12CommandQueueType QueueType);
+
+    void WaitGPU(ED3D12CommandQueueType QueueType);
+    
+    void WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue);
+
+    void WaitForFence();
+
+    void WaitForFence(uint64 InFenceValue);
+
+    uint64 GetCompletedValue() const;
+    
+    FD3D12Fence* GetFence() const 
+    {
+        return Fence.Get();
+    }
+
+    uint64 GetLastSignaledValue() const 
+    { 
+        return LastSignaledValue; 
+    }
+
+    uint64 GetCurrentValue() const 
+    { 
+        return CurrentValue; 
+    }
+
+    uint64 GetCompletedValueFast() const 
+    { 
+        return LastCompletedValue;
+    }
+
+private:
+    FD3D12FenceRef Fence;
+
+    uint64         CurrentValue;
+    uint64         LastSignaledValue;
+    mutable uint64 LastCompletedValue;
 };

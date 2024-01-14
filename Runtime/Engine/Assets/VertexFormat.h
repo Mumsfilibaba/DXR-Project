@@ -4,57 +4,130 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Math/FormatStructs.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVertex
-
-struct SVertex
+struct FVertex
 {
-    SVertex()
+    FVertex()
         : Position()
         , Normal()
         , Tangent()
         , TexCoord()
-    { }
+    {
+    }
 
-    SVertex(const CVector3& InPosition, const CVector3& InNormal, const CVector3& InTangent, const CVector2& InTexCoord)
+    FVertex(const FVector3& InPosition, const FVector3& InNormal, const FVector3& InTangent, const FVector2& InTexCoord)
         : Position(InPosition)
         , Normal(InNormal)
         , Tangent(InTangent)
         , TexCoord(InTexCoord)
-    { }
-
-    bool operator==(const SVertex& Other) const
     {
-        return (Position == Other.Position) 
-            && (Normal   == Other.Normal) 
-            && (Tangent  == Other.Tangent) 
-            && (TexCoord == Other.TexCoord);
     }
 
-    bool operator!=(const SVertex& Other) const
+    bool operator==(const FVertex& Other) const
+    {
+        return Position == Other.Position 
+            && Normal   == Other.Normal 
+            && Tangent  == Other.Tangent 
+            && TexCoord == Other.TexCoord;
+    }
+
+    bool operator!=(const FVertex& Other) const
     {
         return !(*this == Other);
     }
 
-    CVector3 Position;
-    CVector3 Normal;
-    CVector3 Tangent;
-    CVector2 TexCoord;
+    FVector3 Position;
+    FVector3 Normal;
+    FVector3 Tangent;
+    FVector2 TexCoord;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SVertexHasher
-
-struct SVertexHasher
+struct FVertexHasher
 {
-    inline size_t operator()(const SVertex& Vertex) const
+    inline size_t operator()(const FVertex& Vertex) const
     {
-        THash<CVector3> Hasher;
-
-        size_t Hash = Hasher(Vertex.Position);
-        HashCombine<CVector3>(Hash, Vertex.Normal);
-        HashCombine<CVector3>(Hash, Vertex.Tangent);
-        HashCombine<CVector2>(Hash, Vertex.TexCoord);
+        uint64 Hash = TTypeHash<FVector3>::Hash(Vertex.Position);
+        HashCombine<FVector3>(Hash, Vertex.Normal);
+        HashCombine<FVector3>(Hash, Vertex.Tangent);
+        HashCombine<FVector2>(Hash, Vertex.TexCoord);
         return Hash;
     }
 };
+
+
+struct FVertexMasked
+{
+    FVertexMasked()
+        : Position()
+        , TexCoord()
+    {
+    }
+
+    FVertexMasked(const FVector3& InPosition, const FVector2& InTexCoord)
+        : Position(InPosition)
+        , TexCoord(InTexCoord)
+    {
+    }
+
+    bool operator==(const FVertexMasked& Other) const
+    {
+        return Position == Other.Position && TexCoord == Other.TexCoord;
+    }
+
+    bool operator!=(const FVertexMasked& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FVector3 Position;
+    FVector2 TexCoord;
+};
+
+struct FVertexMaskedHasher
+{
+    inline size_t operator()(const FVertexMasked& Vertex) const
+    {
+        uint64 Hash = TTypeHash<FVector3>::Hash(Vertex.Position);
+        HashCombine<FVector2>(Hash, Vertex.TexCoord);
+        return Hash;
+    }
+};
+
+
+struct FVertexPacked
+{
+    FVertexPacked()
+        : Position()
+        , Normal()
+        , Tangent()
+        , TexCoord()
+    {
+    }
+
+    FVertexPacked(const FVector3& InPosition, const FR10G10B10A2& InNormal, const FR10G10B10A2& InTangent, const FVector2& InTexCoord)
+        : Position(InPosition)
+        , Normal(InNormal)
+        , Tangent(InTangent)
+        , TexCoord(InTexCoord)
+    {
+        sizeof(FVertexPacked);
+    }
+
+    bool operator==(const FVertexPacked& Other) const
+    {
+        return Position == Other.Position
+            && Normal   == Other.Normal
+            && Tangent  == Other.Tangent
+            && TexCoord == Other.TexCoord;
+    }
+
+    bool operator!=(const FVertexPacked& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FVector3     Position;
+    FR10G10B10A2 Normal;
+    FR10G10B10A2 Tangent;
+    FVector2     TexCoord;
+};
+

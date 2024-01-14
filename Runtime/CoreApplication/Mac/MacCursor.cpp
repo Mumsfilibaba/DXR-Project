@@ -1,7 +1,6 @@
 #include "MacCursor.h"
 #include "MacWindow.h"
 #include "CocoaWindow.h"
-
 #include "Core/Memory/Memory.h"
 
 #include <AppKit/AppKit.h>
@@ -17,15 +16,8 @@
 + (id)_windowResizeEastWestCursor;
 @end
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacCursor
 
-CMacCursor* CMacCursor::CreateMacCursor()
-{
-	return dbg_new CMacCursor();
-}
-
-void CMacCursor::SetCursor(ECursor Cursor)
+void FMacCursor::SetCursor(ECursor Cursor)
 {
     NSCursor* SelectedCursor = nullptr;
     switch(Cursor)
@@ -76,22 +68,9 @@ void CMacCursor::SetCursor(ECursor Cursor)
     [SelectedCursor set];
 }
 
-void CMacCursor::SetPosition(CGenericWindow* InRelativeWindow, int32 x, int32 y) const
+void FMacCursor::SetPosition(int32 x, int32 y) const
 {
-    CGPoint NewPosition;
-    if (InRelativeWindow)
-    {
-		CCocoaWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
-        const NSRect ContentRect = [RelativeWindow frame];
-        const NSRect LocalRect   = NSMakeRect(x, ContentRect.size.height - y - 1, 0, 0);
-        const NSRect GlobalRect  = [RelativeWindow convertRectToScreen:LocalRect];
-        NewPosition = CGPointMake(GlobalRect.origin.x, GlobalRect.origin.y);
-    }
-    else
-    {
-        NewPosition = CGPointMake(x, y);
-    }
-    
+    CGPoint NewPosition = CGPointMake(x, y);
     CGWarpMouseCursorPosition(CGPointMake(NewPosition.x, CGDisplayBounds(CGMainDisplayID()).size.height - NewPosition.y - 1));
     
     if (bIsVisible)
@@ -100,31 +79,20 @@ void CMacCursor::SetPosition(CGenericWindow* InRelativeWindow, int32 x, int32 y)
     }
 }
 
-void CMacCursor::GetPosition(CGenericWindow* InRelativeWindow, int32& OutX, int32& OutY) const
+FIntVector2 FMacCursor::GetPosition() const
 {
-    NSPoint CursorPosition;
-    if (InRelativeWindow)
-    {
-        NSWindow* RelativeWindow = reinterpret_cast<CCocoaWindow*>(InRelativeWindow->GetPlatformHandle());
-        CursorPosition = [RelativeWindow mouseLocationOutsideOfEventStream];
-    }
-    else
-    {
-        CursorPosition = [NSEvent mouseLocation];
-    }
-    
-    OutX = CursorPosition.x;
-    OutY = CursorPosition.y;
+    NSPoint CursorPosition = [NSEvent mouseLocation];
+    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
 
-void CMacCursor::SetVisibility(bool bVisible)
+void FMacCursor::SetVisibility(bool bVisible)
 {
     if (bVisible)
     {
         if (! bIsVisible)
         {
             [NSCursor unhide];
-			bIsVisible = true;
+            bIsVisible = true;
         }
     }
     else
@@ -132,7 +100,7 @@ void CMacCursor::SetVisibility(bool bVisible)
         if (bIsVisible)
         {
             [NSCursor hide];
-			bIsVisible = false;
+            bIsVisible = false;
         }
     }
 }

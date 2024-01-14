@@ -1,18 +1,22 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- MetalRHI Module
 
-if BuildWithXcode() then
-    local MetalRHI = CModuleBuildRules('MetalRHI')
-    MetalRHI.bRuntimeLinking = false
+if IsPlatformMac() then
+    local MetalRHI = FModuleBuildRules("MetalRHI")
+    MetalRHI.bRuntimeLinking = true
     
     MetalRHI.AddModuleDependencies( 
     {
-        'Core',
-        'CoreApplication',
-        'RHI',
+        "Core",
+        "CoreApplication",
+        "RHI",
     })
 
-    MetalRHI.Generate()
+    MetalRHI.AddFrameWorks(
+    {
+        "Metal",
+        "QuartzCore"
+    })
 end

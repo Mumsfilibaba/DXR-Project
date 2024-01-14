@@ -1,253 +1,52 @@
 #pragma once
 #include "D3D12Resource.h"
-#include "D3D12Views.h"
-
+#include "D3D12ResourceViews.h"
+#include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Buffer
-
-class CD3D12Buffer : public CD3D12DeviceChild
+class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild
 {
 public:
+    FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferDesc& InDesc);
+    ~FD3D12Buffer();
 
-    CD3D12Buffer(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
-        , Resource(nullptr)
-    { }
+    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
 
-    virtual void SetResource(CD3D12Resource* InResource) { Resource = InResource; }
-
-    uint64 GetSizeInBytes() const { return Resource ? static_cast<uint64>(Resource->GetDesc().Width) : 0u; }
-
-    CD3D12Resource* GetD3D12Resource() const { return Resource.Get(); }
-
-protected:
-    TSharedRef<CD3D12Resource> Resource;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12VertexBuffer
-
-class CD3D12VertexBuffer : public CRHIVertexBuffer, public CD3D12Buffer
-{
-public:
-
-    CD3D12VertexBuffer(CD3D12Device* InDevice, const CRHIVertexBufferInitializer& Initializer)
-        : CRHIVertexBuffer(Initializer)
-        , CD3D12Buffer(InDevice)
-        , View()
-    { }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIVertexBuffer Interface
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CD3D12Buffer*>(this)); }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
-
-    virtual void SetName(const String& InName) override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
-    }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CD3D12Buffer Interface
-
-    virtual void SetResource(CD3D12Resource* InResource) override final
-    {
-        CD3D12Buffer::SetResource(InResource);
-
-        CMemory::Memzero(&View);
-        View.StrideInBytes  = GetStride();
-        View.SizeInBytes    = GetNumVertices() * View.StrideInBytes;
-        View.BufferLocation = CD3D12Buffer::Resource->GetGPUVirtualAddress();
-    }
-
-public:
-
-    FORCEINLINE const D3D12_VERTEX_BUFFER_VIEW& GetView() const { return View; }
-
-private:
-    D3D12_VERTEX_BUFFER_VIEW View;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12IndexBuffer
-
-class CD3D12IndexBuffer : public CRHIIndexBuffer, public CD3D12Buffer
-{
-public:
-
-    CD3D12IndexBuffer(CD3D12Device* InDevice, const CRHIIndexBufferInitializer& Initializer)
-        : CRHIIndexBuffer(Initializer)
-        , CD3D12Buffer(InDevice)
-        , View()
-    { }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIIndexBuffer Interface
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CD3D12Buffer*>(this)); }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
-
-    virtual void SetName(const String& InName) override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
-    }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CD3D12Buffer Interface
-
-    virtual void SetResource(CD3D12Resource* InResource) override final
-    {
-        CD3D12Buffer::SetResource(InResource);
-
-        CMemory::Memzero(&View);
-
-        EIndexFormat IndexFormat = GetFormat();
-        if (IndexFormat != EIndexFormat::Unknown)
-        {
-            View.Format         = (IndexFormat == EIndexFormat::uint16) ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT;
-            View.SizeInBytes    = GetNumIndicies() * GetStrideFromIndexFormat(IndexFormat);
-            View.BufferLocation = CD3D12Buffer::Resource->GetGPUVirtualAddress();
-        }
-    }
-
-public:
-
-    FORCEINLINE const D3D12_INDEX_BUFFER_VIEW& GetView() const { return View; }
-
-private:
-    D3D12_INDEX_BUFFER_VIEW View;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12ConstantBuffer
-
-class CD3D12ConstantBuffer : public CRHIConstantBuffer, public CD3D12Buffer
-{
-public:
-
-    CD3D12ConstantBuffer(CD3D12Device* InDevice, CD3D12OfflineDescriptorHeap* InOfflineHeap, const CRHIConstantBufferInitializer& Initializer)
-        : CRHIConstantBuffer(Initializer)
-        , CD3D12Buffer(InDevice)
-        , View(InDevice, InOfflineHeap)
-    { }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIConstantBuffer Interface
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CD3D12Buffer*>(this)); }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
-
-    virtual CRHIDescriptorHandle GetBindlessHandle() const override final { return CRHIDescriptorHandle(); }
-
-    virtual void SetName(const String& InName) override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
-    }
-
-public:
+    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
     
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CD3D12Buffer Interface
+    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetResource(CD3D12Resource* InResource) override final
+    virtual void SetName(const FString& InName) override final;
+
+    virtual FString GetName() const override final;
+
+    void SetResource(FD3D12Resource* InResource);
+    
+    FD3D12ConstantBufferView* GetConstantBufferView() const
     {
-        CD3D12Buffer::SetResource(InResource);
-
-        D3D12_CONSTANT_BUFFER_VIEW_DESC ViewDesc;
-        CMemory::Memzero(&ViewDesc);
-
-        ViewDesc.BufferLocation = CD3D12Buffer::Resource->GetGPUVirtualAddress();
-        ViewDesc.SizeInBytes    = (uint32)CD3D12Buffer::GetSizeInBytes();
-
-        if (View.GetOfflineHandle() == 0)
-        {
-            if (!View.AllocateHandle())
-            {
-                return;
-            }
-        }
-
-        View.CreateView(CD3D12Buffer::Resource.Get(), ViewDesc);
+        return View.Get();
     }
 
-public:
-
-    CD3D12ConstantBufferView& GetView() { return View; }
-
-    const CD3D12ConstantBufferView& GetView() const { return View; }
+    FD3D12Resource* GetD3D12Resource() const 
+    {
+        return Resource.Get();
+    }
 
 private:
-    CD3D12ConstantBufferView View;
+    bool CreateCBV();
+
+    FD3D12ResourceRef           Resource;
+    FD3D12ConstantBufferViewRef View;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12GenericBuffer
-
-class CD3D12GenericBuffer : public CRHIGenericBuffer, public CD3D12Buffer
+inline FD3D12Buffer* GetD3D12Buffer(FRHIBuffer* Buffer)
 {
-public:
-    
-    CD3D12GenericBuffer(CD3D12Device* InDevice, const CRHIGenericBufferInitializer& Initializer)
-        : CRHIGenericBuffer(Initializer)
-        , CD3D12Buffer(InDevice)
-    { }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIGenericBuffer Interface
-
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<CD3D12Buffer*>(this)); }
-
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
-
-    virtual void SetName(const String& InName) override final
-    {
-        CD3D12Resource* D3D12Resource = GetD3D12Resource();
-        if (D3D12Resource)
-        {
-            D3D12Resource->SetName(InName);
-        }
-    }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GetD3D12Buffer
-
-inline CD3D12Buffer* GetD3D12Buffer(CRHIBuffer* Buffer)
-{
-    return Buffer ? reinterpret_cast<CD3D12Buffer*>(Buffer->GetRHIBaseBuffer()) : nullptr;
+    return static_cast<FD3D12Buffer*>(Buffer);
 }
 
-inline CD3D12Resource* GetD3D12Resource(CRHIBuffer* Buffer)
+inline FD3D12Resource* GetD3D12Resource(FRHIBuffer* Buffer)
 {
-    return Buffer ? reinterpret_cast<CD3D12Resource*>(Buffer->GetRHIBaseResource()) : nullptr;
+    return Buffer ? static_cast<FD3D12Buffer*>(Buffer)->GetD3D12Resource() : nullptr;
 }

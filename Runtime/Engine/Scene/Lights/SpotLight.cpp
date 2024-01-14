@@ -1,20 +1,14 @@
 #include "SpotLight.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CSpotLight
+FOBJECT_IMPLEMENT_CLASS(FSpotLight);
 
-CSpotLight::CSpotLight()
-    : CLight()
+FSpotLight::FSpotLight(const FObjectInitializer& ObjectInitializer)
+    : FLight(ObjectInitializer)
     , ConeAngle(45.0f)
 {
-    CORE_OBJECT_INIT();
 }
 
-CSpotLight::~CSpotLight()
-{
-}
-
-void CSpotLight::SetConeAngle(float InConeAngle)
+void FSpotLight::SetConeAngle(float InConeAngle)
 {
     ConeAngle = InConeAngle;
 }

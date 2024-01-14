@@ -1,143 +1,210 @@
 #pragma once
-#include "Actor.h"
 #include "Camera.h"
-
+#include "Actors/PlayerController.h"
 #include "Lights/Light.h"
-
+#include "Reflections/LightProbe.h"
+#include "Core/Time/Timespan.h"
+#include "Core/Containers/Array.h"
 #include "Renderer/MeshDrawCommand.h"
 
-#include "Core/Time/Timestamp.h"
-#include "Core/Containers/Array.h"
+class FRendererScene;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Scene
-
-class ENGINE_API CScene
+class ENGINE_API FScene
 {
 public:
 
     /**
-     * @brief: Default constructor
+     * @brief - Default constructor
      */
-    CScene();
+    FScene();
 
     /**
-     * @brief: Destructor
+     * @brief - Destructor
      */
-    ~CScene();
+    ~FScene();
 
     /**
-     * @brief: Create a new actor and add it to the scene 
-     * 
-     * @return: Returns the newly created actor
+     * @brief  - Create a new actor and add it to the scene 
+     * @return - Returns the newly created actor
      */
-    class CActor* MakeActor();
+    FActor* CreateActor();
 
     /**
-     * @brief: Start game 
+     * @brief - Start game 
      */
     void Start();
 
-     /** @brief: Ticks all actors in the scene, should be called once per frame */
-    void Tick(CTimestamp DeltaTime);
+     /**
+      * @brief          - Ticks all actors in the scene, should be called once per frame
+      * @param DeltaTime - The time between this and the last tick
+      */
+    void Tick(FTimespan DeltaTime);
 
     /**
-     * @brief: Adds a camera into the scene 
-     * 
-     * @param InCamera: Camera to add to the scene
+     * @brief          - Adds a camera into the scene 
+     * @param InCamera - Camera to add to the scene
      */
-    void AddCamera(CCamera* InCamera);
+    void AddCamera(FCamera* InCamera);
 
     /**
-     * @brief: Adds an actor into the scene 
-     * 
-     * @param InActor: Actor to add to the scene
+     * @brief         - Adds an actor into the scene 
+     * @param InActor - Actor to add to the scene
      */
-    void AddActor(CActor* InActor);
+    void AddActor(FActor* InActor);
 
     /**
-     * @brief: Adds an light into the scene
-     *
-     * @param InLight: Light to add to the scene
+     * @brief         - Adds an light into the scene
+     * @param InLight - Light to add to the scene
      */
-    void AddLight(CLight* InLight);
+    void AddLight(FLight* InLight);
 
     /**
-     * @brief: Function called when adding a component
-     * 
-     * @param NewComponent: New component just added to the scene
+     * @brief              - Adds a light-probe into the scene
+     * @param InLightProbe - LightProbe to add to the scene
      */
-    void OnAddedComponent(CComponent* NewComponent);
+    void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
-     * @brief: Retrieve all components of a certain type
-     * 
-     * @return: Returns an array of all components of the specified type
+     * @brief              - Function called when adding a component
+     * @param NewComponent - New component just added to the scene
+     */
+    void OnAddedComponent(FComponent* NewComponent);
+
+    void SyncRendering();
+
+    /**
+     * @brief  - Retrieve all components of a certain type
+     * @return - Returns an array of all components of the specified type
      */
     template<typename ComponentType>
-    FORCEINLINE TArray<ComponentType> GetAllComponentsOfType() const
+    TArray<ComponentType> GetAllComponentsOfType() const
     {
         // TODO: Cache this result
 
         TArray<ComponentType> Components;
-        for (CActor* Actor : Actors)
+        for (FActor* Actor : Actors)
         {
-            ComponentType* Component = Actor->GetComponentOfType<ComponentType>();
-            if (Component)
+            if (ComponentType* Component = Actor->GetComponentOfType<ComponentType>())
             {
                 Components.Emplace(*Component);
             }
         }
 
-        return Move(Components);
+        return ::Move(Components);
     }
 
     /**
-     * @brief: Retrieve all actors of the scene
-     * 
-     * @return: Returns a reference to an array of all actors in the scene
+     * @return - Returns a pointer to the Renderers View of the scene
      */
-    FORCEINLINE const TArray<CActor*>& GetActors() const
+    FRendererScene* GetRendererScene()
+    {
+        return RendererScene;
+    }
+
+    /**
+     * @return - Returns a pointer to the Renderers View of the scene
+     */
+    const FRendererScene* GetRendererScene() const
+    {
+        return RendererScene;
+    }
+
+    /**
+     * @return - Returns a reference to an array of all actors in the scene
+     */
+    const TArray<FActor*>& GetActors() const
     {
         return Actors;
     }
 
     /**
-     * @brief: Retrieve all lights of the scene
-     *
-     * @return: Returns a reference to an array of all lights in the scene
+     * @return - Returns a reference to an array of all actors in the scene
      */
-    FORCEINLINE const TArray<CLight*>& GetLights() const
+    const TArray<FPlayerController*>& GetPlayerControllers() const
+    {
+        return PlayerControllers;
+    }
+
+    /**
+     * @return - Returns a pointer to the first PlayerController in the scene
+     */
+    FPlayerController* GetFirstPlayerController() const
+    {
+        if (!PlayerControllers.IsEmpty())
+        {
+            return PlayerControllers.FirstElement();
+        }
+
+        return nullptr;
+    }
+
+    /**
+     * @return - Returns a reference to an array of all lights in the scene
+     */
+    const TArray<FLight*>& GetLights() const
     {
         return Lights;
     }
 
     /**
-     * @brief: Retrieve all MeshDrawCommands of the scene
-     *
-     * @return: Returns a reference to an array of all MeshDrawCommands in the scene
+     * @return - Returns a reference to an array of all light-probes in the scene
      */
-    FORCEINLINE const TArray<SMeshDrawCommand>& GetMeshDrawCommands() const
+    const TArray<FLightProbe*>& GetLightProbes() const
     {
-        return MeshDrawCommands;
+        return LightProbes;
     }
 
     /**
-     * @brief: Retrieve the camera of the scene
-     * 
-     * @return: Returns a pointer to the camera of the scene
+     * @return - Returns a pointer to the camera of the scene
      */
-    FORCEINLINE CCamera* GetCamera() const
+    FCamera* GetCamera() const
     {
         return CurrentCamera;
     }
 
+    /**
+     * @return - Returns a reference to an array of all MeshDrawCommands in the scene
+     */
+    FORCEINLINE const TArray<FMeshDrawCommand>& GetMeshDrawCommands() const
+    {
+        return MeshDrawCommands;
+    }
+
 private:
-    void AddMeshComponent(class CMeshComponent* Component);
+    void AddMeshComponent(class FMeshComponent* Component);
 
-    TArray<CActor*> Actors;
-    TArray<CLight*> Lights;
-    TArray<SMeshDrawCommand> MeshDrawCommands;
+    // These actors were added this frame is waiting to be syncronized with the renderer
+    TArray<FActor*> NewActors;
 
-    CCamera* CurrentCamera = nullptr;
+    // These actors are the "permanent" storage of actors
+    TArray<FActor*> Actors;
+
+    TArray<FPlayerController*> PlayerControllers;
+    TArray<FLight*>            Lights;
+    TArray<FLightProbe*>       LightProbes;
+    TArray<FMeshDrawCommand>   MeshDrawCommands;
+
+    FCamera*        CurrentCamera = nullptr;
+    FRendererScene* RendererScene = nullptr;
+};
+
+
+struct FScenePrimitive
+{
+    FVector3 Translation;
+    FVector3 Scale;
+    FVector3 Rotation;
+};
+
+class ENGINE_API FRendererScene
+{
+public:
+    FRendererScene(FScene* InScene);
+    ~FRendererScene();
+
+    void AddPrimitive(FScenePrimitive* InPrimitive);
+
+private:
+    FScene*                  Scene;
+    TArray<FScenePrimitive*> ScenePrimitives;
 };

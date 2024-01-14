@@ -1,44 +1,29 @@
 #pragma once
-#ifndef DISABLE_SIMD
 #include "MathCommon.h"
 
-/* Windows Specific */
-#if PLATFORM_WINDOWS
-#include <xmmintrin.h>
-#include <immintrin.h>
-
-/* MacOS Specific */
-#elif PLATFORM_MACOS
-#include <immintrin.h>
-
-/* No platform defined */
-#else
-#error No valid platform
-#endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Alignment for vector instructions
-
 #ifndef VECTOR_ALIGN
-#define VECTOR_ALIGN ALIGN_AS(16)
+    #define VECTOR_ALIGN ALIGN_AS(16)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// NVectorOp - SIMD Helper library
+#if (!defined(DISABLE_SIMD) && PLATFORM_ARCHITECTURE_X86_X64)
+    #define USE_VECTOR_OP (1)
+
+#if PLATFORM_WINDOWS
+    #include <xmmintrin.h>
+    #include <immintrin.h>
+#elif PLATFORM_MACOS
+    #include <immintrin.h>
+#else
+    #error No valid platform
+#endif
 
 namespace NVectorOp
 {
     /* TODO: Add fallback when we have no SSE intrinsics */
 
 #if ENABLE_SEE_INTRIN
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Types
-
     typedef __m128  Float128;
     typedef __m128i Int128;
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Float "Constructors"
 
     FORCEINLINE Float128 VECTORCALL LoadAligned(const float* Array) noexcept
     {
@@ -70,8 +55,6 @@ namespace NVectorOp
         return _mm_setzero_ps();
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Int "Constructors"
 
     FORCEINLINE Int128 VECTORCALL LoadAligned(const int* Array) noexcept
     {
@@ -88,8 +71,6 @@ namespace NVectorOp
         return _mm_set1_epi32(Scalar);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Casting
 
     FORCEINLINE Float128 VECTORCALL CastIntToFloat(Int128 A) noexcept
     {
@@ -101,16 +82,12 @@ namespace NVectorOp
         return _mm_castps_si128(A);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Store
 
     FORCEINLINE void VECTORCALL StoreAligned(Float128 Register, float* Array) noexcept
     {
         return _mm_store_ps(Array, Register);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Returns (A[x], A[y], A[z], A[w])
 
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle(Float128 A) noexcept
@@ -142,8 +119,6 @@ namespace NVectorOp
         return _mm_unpackhi_ps(A, A);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Returns (A[x], A[y], B[z], B[w])
     
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0011(Float128 A, Float128 B) noexcept
@@ -163,8 +138,6 @@ namespace NVectorOp
         return _mm_movehl_ps(B, A);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Returns (A[x], B[y], A[z], B[w])
     
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0101(Float128 A, Float128 B) noexcept
@@ -185,16 +158,12 @@ namespace NVectorOp
         return _mm_unpackhi_ps(A, B);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Get component
 
     FORCEINLINE float VECTORCALL GetX(Float128 Register) noexcept
     {
         return _mm_cvtss_f32(Register);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Mathematical operations
 
     FORCEINLINE Float128 VECTORCALL Mul(Float128 A, Float128 B) noexcept
     {
@@ -242,8 +211,6 @@ namespace NVectorOp
         return _mm_rcp_ps(A);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Bit operations
 
     FORCEINLINE Float128 VECTORCALL And(Float128 A, Float128 B) noexcept
     {
@@ -255,41 +222,37 @@ namespace NVectorOp
         return _mm_or_ps(A, B);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Comparison operations
 
     FORCEINLINE bool VECTORCALL Equal(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmpeq_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmpeq_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL GreaterThan(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmpgt_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmpgt_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL GreaterThanOrEqual(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmpge_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmpge_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL LessThan(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmplt_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmplt_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
     FORCEINLINE bool VECTORCALL LessThanOrEqual(Float128 A, Float128 B) noexcept
     {
-        int Mask = _mm_movemask_ps(_mm_cmple_ps(A, B));
+        const auto Mask = _mm_movemask_ps(_mm_cmple_ps(A, B));
         return 0xf == (Mask & 0xf);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Min/Max
 
     FORCEINLINE Float128 VECTORCALL Min(Float128 A, Float128 B) noexcept
     {
@@ -302,8 +265,6 @@ namespace NVectorOp
     }
 #endif
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Abstracted Load
 
     template<typename T>
     FORCEINLINE Float128 VECTORCALL LoadAligned(const T* Object) noexcept
@@ -311,8 +272,6 @@ namespace NVectorOp
         return LoadAligned(reinterpret_cast<const float*>(Object));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Abstracted Store
 
     template<typename T>
     FORCEINLINE void VECTORCALL StoreAligned(Float128 Register, T* Object) noexcept
@@ -320,8 +279,6 @@ namespace NVectorOp
         StoreAligned(Register, reinterpret_cast<float*>(Object));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Sets all the components of a register to the value of index 'i' taken from the register A
     
     template<uint8 i>
     FORCEINLINE Float128 VECTORCALL Broadcast(Float128 Register) noexcept
@@ -329,8 +286,6 @@ namespace NVectorOp
         return Shuffle<i, i, i, i>(Register);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Mul - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Mul(const float* A, Float128 B) noexcept
     {
@@ -369,8 +324,6 @@ namespace NVectorOp
         return Mul(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Div - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Div(const float* A, Float128 B) noexcept
     {
@@ -409,8 +362,6 @@ namespace NVectorOp
         return Div(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Add - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Add(const float* A, Float128 B) noexcept
     {
@@ -449,8 +400,6 @@ namespace NVectorOp
         return Add(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Sub - Direct memory
 
     FORCEINLINE Float128 VECTORCALL Sub(const float* A, Float128 B) noexcept
     {
@@ -489,8 +438,6 @@ namespace NVectorOp
         return Sub(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Abstracted Get
 
     FORCEINLINE float VECTORCALL GetY(Float128 Register) noexcept
     {
@@ -510,8 +457,6 @@ namespace NVectorOp
         return GetX(Temp);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Abstracted mathematical operations
 
     FORCEINLINE Float128 VECTORCALL Abs(Float128 A) noexcept
     {
@@ -607,8 +552,6 @@ namespace NVectorOp
         return Broadcast<0>(Sum);
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    /* Multiply two 2x2 matrices */
 
     FORCEINLINE Float128 VECTORCALL Mat2Mul(Float128 A, Float128 B)
     {
@@ -641,5 +584,7 @@ namespace NVectorOp
         return Sub(Temp1, Temp2);
     }
 }
-
+#else
+    #define USE_VECTOR_OP (0)
+    #error No SIMD
 #endif

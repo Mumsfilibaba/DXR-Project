@@ -1,46 +1,40 @@
 #include "EditorEngine.h"
-
+#include "Core/Math/Math.h"
+#include "Core/Modules/ApplicationModule.h"
+#include "Core/Debug/Console/ConsoleManager.h"
 #include "Renderer/Renderer.h"
-
-#include "InterfaceRenderer/InterfaceRenderer.h"
-
+#include "ViewportRenderer/ViewportRenderer.h"
 #include "Engine/Engine.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Components/MeshComponent.h"
 
-#include "Core/Math/Math.h"
-#include "Core/Modules/ApplicationModule.h"
-#include "Core/Debug/Console/ConsoleManager.h"
-
-#include "Interface/InterfaceApplication.h"
-
-CEditorEngine* CEditorEngine::Make()
+FEditorEngine* FEditorEngine::Make()
 {
-    return dbg_new CEditorEngine();
+    return dbg_new FEditorEngine();
 }
 
-bool CEditorEngine::Init()
+bool FEditorEngine::Init()
 {
-    if ( !CEngine::Init() )
+    if (!FEngine::Init())
     {
         return false;
     }
 
     /* Create Editor windows */
-    CCanvasApplication& Application = CCanvasApplication::Get();
+    FApplication& Application = FApplication::Get();
 
     TSharedRef<CInspectorWindow> InspectorWindow = CInspectorWindow::Make();
-    Application.AddWindow( InspectorWindow );
+    Application.AddWindow(InspectorWindow);
 
     TSharedRef<CEditorMenuWidget> MenuBar = dbg_new CEditorMenuWidget();
-    Application.AddWindow( MenuBar );
+    Application.AddWindow(MenuBar);
 
     return true;
 }
 
-void CEditorEngine::Tick( CTimestamp Deltatime )
+void FEditorEngine::Tick( FTimespan Deltatime )
 {
-    CEngine::Tick( Deltatime );
+    FEngine::Tick(Deltatime);
 }

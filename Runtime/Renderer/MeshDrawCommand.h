@@ -1,26 +1,20 @@
 #pragma once
 #include "Core/Core.h"
+#include "RHI/RHITypes.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMeshDrawCommand
-
-struct SMeshDrawCommand
+struct FMeshDrawCommand
 {
-    class CMaterial*              Material     = nullptr;
-    class CMesh*                  Mesh         = nullptr;
-    class CActor*                 CurrentActor = nullptr;
+    class FMaterial*  Material     = nullptr;
+    class FMesh*      Mesh         = nullptr;
+    class FActor*     CurrentActor = nullptr;
 
-    class CRHIVertexBuffer*       VertexBuffer = nullptr;
-    class CRHIIndexBuffer*        IndexBuffer  = nullptr;
+    class FRHIBuffer* VertexBuffer = nullptr;
+    uint32            NumVertices  = 0;
+    class FRHIBuffer* IndexBuffer  = nullptr;
+    uint32            NumIndices   = 0;
+    EIndexFormat      IndexFormat  = EIndexFormat::Unknown;
 
-    class CRHIRayTracingGeometry* Geometry     = nullptr;
+    class FRHIRayTracingGeometry* Geometry = nullptr;
 };
 
-template<>
-struct TIsReallocatable<SMeshDrawCommand>
-{
-    enum
-    {
-        Value = true
-    };
-};
+MARK_AS_REALLOCATABLE(FMeshDrawCommand);

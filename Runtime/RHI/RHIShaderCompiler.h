@@ -1,67 +1,131 @@
 #pragma once
-#include "RHIModule.h"
 #include "RHIShader.h"
+#include "Core/Containers/Optional.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShaderModel
+// TODO: Check if this could be avoided
+#if PLATFORM_WINDOWS
+    #include <Unknwn.h>
+#endif
 
-enum class EShaderModel
+#include <dxc/dxcapi.h>
+
+enum class EShaderModel : uint8
 {
     Unknown = 0,
-    SM_5_0 = 1,
-    SM_5_1 = 2,
-    SM_6_0 = 3,
-    SM_6_1 = 4,
-    SM_6_2 = 5,
-    SM_6_3 = 6,
-    SM_6_4 = 7,
-    SM_6_5 = 8,
+    SM_6_0  = 3,
+    SM_6_1  = 4,
+    SM_6_2  = 5,
+    SM_6_3  = 6,
+    SM_6_4  = 7,
+    SM_6_5  = 8,
+    SM_6_6  = 9,
+    SM_6_7  = 10,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SShaderDefine
-
-struct SShaderDefine
+enum class EShaderOutputLanguage : uint8
 {
-    FORCEINLINE SShaderDefine(const String& InDefine)
+    Unknown = 0,
+    HLSL    = 1, // DXIL for D3D12RHI
+    MSL     = 2, // Metal Shading Language for MetalRHI
+    SPIRV   = 3, // SPIR-V for VulkanRHI
+};
+
+
+struct FShaderDefine
+{
+    FShaderDefine(const FString& InDefine)
         : Define(InDefine)
         , Value()
-    { }
+    {
+    }
 
-    FORCEINLINE SShaderDefine(const String& InDefine, const String& InValue)
+    FShaderDefine(const FString& InDefine, const FString& InValue)
         : Define(InDefine)
         , Value(InValue)
-    { }
-
-    String Define;
-    String Value;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// IRHIShaderCompiler
-
-class IRHIShaderCompiler
-{
-public:
-    virtual ~IRHIShaderCompiler() = default;
-
-    virtual bool CompileFromFile(const String& FilePath, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
-    virtual bool CompileShader(const String& ShaderSource, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code) = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIShaderCompiler
-
-class CRHIShaderCompiler
-{
-public:
-    static FORCEINLINE bool CompileFromFile(const String& FilePath, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
     {
-        return GShaderCompiler->CompileFromFile(FilePath, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
 
-    static FORCEINLINE bool CompileShader(const String& ShaderSource, const String& EntryPoint, const TArray<SShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
+    FString Define;
+    FString Value;
+};
+
+
+struct FRHIShaderCompileInfo;
+
+class RHI_API FRHIShaderCompiler
+{
+    FRHIShaderCompiler(FStringView InAssetPath);
+    ~FRHIShaderCompiler();
+
+public:
+    static bool Create(FStringView AssetFolderPath);
+    
+    static void Destroy();
+    
+    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
+
+    static FRHIShaderCompiler& Get();
+
+    bool CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+    bool CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+private:
+    static void ErrorCallback(void* Userdata, const CHAR* Error);
+
+    bool Initialize();
+    
+    bool Compile(const FString& ShaderSource, const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+    bool PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource);
+    
+    bool RemapBindingsForSpirv(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+    bool ConvertSpirvToMetalShader(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+
+    bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
+
+    FString CreateArgString(const TArrayView<LPCWSTR> Args);
+
+    void*                 DXCLib;
+    DxcCreateInstanceProc DxcCreateInstanceFunc;
+    FString               AssetPath;
+
+    static FRHIShaderCompiler* GInstance;
+};
+
+
+struct FRHIShaderCompileInfo
+{
+    FRHIShaderCompileInfo()
+        : ShaderModel(EShaderModel::Unknown)
+        , ShaderStage(EShaderStage::Unknown)
+        , OutputLanguage(EShaderOutputLanguage::Unknown)
+        , bOptimize(true)
+        , Defines()
+        , EntryPoint()
     {
-        return GShaderCompiler->CompileShader(ShaderSource, EntryPoint, Defines, ShaderStage, ShaderModel, Code);
     }
+    
+    FRHIShaderCompileInfo(
+        const FString&                   InEntryPoint,
+        EShaderModel                     InShaderModel,
+        EShaderStage                     InShaderStage,
+        const TArrayView<FShaderDefine>& InDefines        = TArrayView<FShaderDefine>(),
+        EShaderOutputLanguage            InOutputLanguage = FRHIShaderCompiler::GetOutputLanguageBasedOnRHI())
+        : ShaderModel(InShaderModel)
+        , ShaderStage(InShaderStage)
+        , OutputLanguage(InOutputLanguage)
+        , bOptimize(true)
+        , Defines(InDefines)
+        , EntryPoint(InEntryPoint)
+    {
+    }
+    
+    EShaderModel              ShaderModel;
+    EShaderStage              ShaderStage;
+    EShaderOutputLanguage     OutputLanguage;
+    bool                      bOptimize;
+    TArrayView<FShaderDefine> Defines;
+    FString                   EntryPoint;
 };

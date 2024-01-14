@@ -1,55 +1,19 @@
 #pragma once
-#include "Core.h"
-
+#include "IRefCounted.h"
 #include "Core/Threading/AtomicInt.h"
-#include "Core/Templates/IsBaseOf.h"
-#include "Core/Templates/EnableIf.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRefCounted
-
-class CORE_API CRefCounted
+class CORE_API FRefCounted : public IRefCounted
 {
+protected:
+    FRefCounted();
+    virtual ~FRefCounted();
+
 public:
-
-    CRefCounted();
-    virtual ~CRefCounted();
-
-    /**
-     * @brief: Adds a reference
-     * 
-     * @return: Returns the new reference count
-     */
-    int32 AddRef();
-    
-    /**
-     * @brief: Removes a reference
-     *
-     * @return: Returns the new reference count
-     */
-    int32 Release();
-
-    /**
-     * @brief: Retrieve the reference count
-     *
-     * @return: Returns the current reference count
-     */
-    int32 GetRefCount() const;
+    virtual int32 AddRef()            override;
+    virtual int32 Release()           override;
+    virtual int32 GetRefCount() const override;
 
 private:
-    mutable AtomicInt32 StrongReferences;
+    FAtomicInt32 NumRefs;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Add a reference to a RefCounted object safely
-
-template<typename T>
-FORCEINLINE typename TEnableIf<TIsBaseOf<CRefCounted, T>::Value, T*>::Type AddRef(T* InRefCounted)
-{
-    if (InRefCounted)
-    {
-        InRefCounted->AddRef();
-    }
-
-    return InRefCounted;
-}

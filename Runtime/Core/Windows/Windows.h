@@ -1,5 +1,4 @@
 #pragma once
-
 #ifndef NOMINMAX
     #define NOMINMAX
 #endif
@@ -11,60 +10,50 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <sdkddkver.h>
+#include <shlwapi.h>
+#include <Dbt.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Remove Windows.h defines
+// TODO: Wrap in define for Win 8.1 and above
+#include <shellscalingapi.h>
 
-#ifdef CreateWindow
-    #undef CreateWindow
-#endif
+// NOTE: Undefine these as we have functions with these names 
+#undef CreateWindow
+#undef CreateFile
+#undef CreateThread
+#undef CreateEvent
 
-#ifdef OutputDebugString
-    #undef OutputDebugString
-#endif
+#undef InterlockedAdd
+#undef InterlockedSub
+#undef InterlockedAnd
+#undef InterlockedOr
+#undef InterlockedXor
+#undef InterlockedIncrement
+#undef InterlockedDecrement
+#undef InterlockedCompareExchange
+#undef InterlockedExchange
 
-#if defined(InterlockedAdd)
-    #undef InterlockedAdd
-#endif
+#undef MemoryBarrier
+#undef Yield
 
-#if defined(InterlockedSub)
-    #undef InterlockedSub
-#endif
+#undef MessageBox
 
-#if defined(InterlockedAnd)
-    #undef InterlockedAnd
-#endif
+#undef OutputDebugString
+#undef OutputDebugFormat
 
-#if defined(InterlockedOr)
-    #undef InterlockedOr
-#endif
+#undef GetClassName
+#undef GetModuleHandle
+#undef GetCurrentDirectory
 
-#if defined(InterlockedXor)
-    #undef InterlockedXor
-#endif
+#undef IsMinimized
+#undef IsMaximized
 
-#if defined(InterlockedIncrement)
-    #undef InterlockedIncrement
-#endif
-
-#if defined(InterlockedDecrement)
-    #undef InterlockedDecrement
-#endif
-
-#if defined(InterlockedCompareExchange)
-    #undef InterlockedCompareExchange
-#endif
-
-#if defined(InterlockedExchange)
-    #undef InterlockedExchange
-#endif
-
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Windows-version helper defines
-
+// Windows version define
 #ifdef NTDDI_VISTA
     #define PLATFORM_WINDOWS_VISTA (1)
+#endif
+
+#ifdef NTDDI_WIN10
+    #define PLATFORM_WINDOWS_10 (1)
 #endif
 
 #ifdef NTDDI_WIN10_RS1

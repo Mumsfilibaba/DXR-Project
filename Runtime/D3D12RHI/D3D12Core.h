@@ -1,35 +1,68 @@
 #pragma once
 #include "D3D12Constants.h"
-
-#include "RHI/RHIResources.h"
-
-#include "Core/Debug/Debug.h"
-#include "Core/Logging/Log.h"
+#include "Core/Misc/Debug.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ComPtr.h"
-
-#include <dxcapi.h>
+#include "RHI/RHIResources.h"
+#include "RHI/RHIRayTracing.h"
 
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 
-#if MONOLITHIC_BUILD
-    #define D3D12_RHI_API
-#else
-    #if D3D12RHI_IMPL
-        #define D3D12_RHI_API MODULE_EXPORT
-    #else
-        #define D3D12_RHI_API MODULE_IMPORT
-    #endif
+// Windows 10 1507 
+#if (NTDDI_WIN10 && (WDK_NTDDI_VERSION >= NTDDI_WIN10))
+    #define WIN10_BUILD_10240 (1)
 #endif
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Log Macros
+// Windows 10 1511 (November Update)
+#if (NTDDI_WIN10_TH2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_TH2))
+    #define WIN10_BUILD_10586 (1)
+#endif
+// Windows 10 1607 (Anniversary Update)
+#if (NTDDI_WIN10_RS1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS1))
+    #define WIN10_BUILD_14393 (1)
+#endif
+// Windows 10 1703 (Creators Update)
+#if (NTDDI_WIN10_RS2 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS2))
+    #define WIN10_BUILD_15063 (1)
+#endif
+// Windows 10 1709 (Fall Creators Update)
+#if (NTDDI_WIN10_RS3 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS3))
+    #define WIN10_BUILD_16299 (1)
+#endif
+// Windows 10 1803 (April 2018 Update)
+#if (NTDDI_WIN10_RS4 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS4))
+    #define WIN10_BUILD_17134 (1)
+#endif
+// Windows 10 1809 (October 2018 Update)
+#if (NTDDI_WIN10_RS5 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_RS5))
+    #define WIN10_BUILD_17763 (1)
+#endif
+// Windows 10 1903 (May 2019 Update)
+#if (NTDDI_WIN10_19H1 && (WDK_NTDDI_VERSION >= NTDDI_WIN10_19H1))
+    #define WIN10_BUILD_18362 (1)
+#endif
+// Windows 10 2004 (May 2020 Update)
+#if (NTDDI_WIN10_VB && (WDK_NTDDI_VERSION >= NTDDI_WIN10_VB))
+    #define WIN10_BUILD_19041 (1)
+#endif
+// Windows 10 2104
+#if (NTDDI_WIN10_FE && (WDK_NTDDI_VERSION >= NTDDI_WIN10_FE))
+    #define WIN10_BUILD_20348 (1)
+#endif
+// Windows 11 21H2
+#if (NTDDI_WIN10_CO && (WDK_NTDDI_VERSION >= NTDDI_WIN10_CO))
+    #define WIN11_BUILD_22000 (1)
+#endif
+// Windows 11 22H2
+#if (NTDDI_WIN10_NI && (WDK_NTDDI_VERSION >= NTDDI_WIN10_NI))
+    #define WIN11_BUILD_22621 (1)
+#endif
 
 #if !PRODUCTION_BUILD
     #define D3D12_ERROR(...)                     \
         do                                       \
         {                                        \
             LOG_ERROR("[D3D12RHI] "__VA_ARGS__); \
-            CDebug::DebugBreak();                \
+            DEBUG_BREAK();                       \
         } while (false)
     
     #define D3D12_ERROR_COND(bCondition, ...) \
@@ -62,120 +95,24 @@
             LOG_INFO("[D3D12RHI] "__VA_ARGS__); \
         } while (false)
 #else
-    #define D3D12_ERROR_COND(bCondition, ...) \
-        do                                    \
-        {                                     \
-            (void)(bCondition);               \
-        } while(false)
+    #define D3D12_ERROR_COND(bCondition, ...) do { (void)(bCondition); } while(false)
+    #define D3D12_ERROR(...)  do { (void)(0); } while(false)
 
-    #define D3D12_ERROR(...)   do { (void)(0); } while(false)
-
-    #define D3D12_WARNING_COND(bCondition, ...) \
-        do                                      \
-        {                                       \
-            (void)(bCondition);                 \
-        } while(false)
-
+    #define D3D12_WARNING_COND(bCondition, ...) do { (void)(bCondition); } while(false)
     #define D3D12_WARNING(...) do { (void)(0); } while(false)
 
-    #define D3D12_INFO(...)    do { (void)(0); } while(false)
+    #define D3D12_INFO(...) do { (void)(0); } while(false)
 #endif
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Texture Helpers
+#define D3D12_NUM_CUBE_FACES (6)
 
-template<typename D3D12TextureType>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension();
+void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
 
-template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2D>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture2DArray>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCube>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12TextureCubeArray>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-}
-
-template<>
-constexpr D3D12_RESOURCE_DIMENSION GetD3D12TextureResourceDimension<class CD3D12Texture3D>()
-{
-    return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-}
-
-template<typename D3D12TextureType>
-constexpr bool IsTextureCube()
-{
-    return false;
-}
-
-template<>
-constexpr bool IsTextureCube<class CD3D12TextureCube>()
-{
-    return true;
-}
-
-template<>
-constexpr bool IsTextureCube<class CD3D12TextureCubeArray>()
-{
-    return true;
-}
-
-template<typename D3D12TextureType>
-constexpr uint16 GetDepthOrArraySize(uint32 DepthOrArraySize)
-{
-    if constexpr (IsTextureCube<D3D12TextureType>())
-    {
-        return static_cast<uint16>(DepthOrArraySize * kRHINumCubeFaces);
-    }
-    else
-    {
-        return static_cast<uint16>(DepthOrArraySize);
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Buffer Helpers
-
-template<typename D3D12BufferType>
-constexpr uint32 GetBufferAlignedSize(uint32 Size)
-{
-    return Size;
-}
-
-template<>
-constexpr uint32 GetBufferAlignedSize<class CD3D12ConstantBuffer>(uint32 Size)
-{
-    return NMath::AlignUp<uint32>(Size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-}
-
-template<>
-constexpr uint32 GetBufferAlignedSize<class CD3D12IndexBuffer>(uint32 Size)
-{
-    return NMath::AlignUp<uint32>(Size, sizeof(uint32));
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Heap helpers
 
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    FMemory::Memzero(&HeapProperties);
 
     HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -189,7 +126,7 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
-    CMemory::Memzero(&HeapProperties);
+    FMemory::Memzero(&HeapProperties);
 
     HeapProperties.Type                 = D3D12_HEAP_TYPE_UPLOAD;
     HeapProperties.CPUPageProperty      = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -200,44 +137,107 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
     return HeapProperties;
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RHI conversion functions 
 
-inline D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
+enum class ED3D12CommandQueueType
 {
-    D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if ((Flags & EBufferUsageFlags::AllowUAV) != EBufferUsageFlags::None)
+    Direct  = 0,
+    Compute = 1,
+    Copy    = 2,
+
+    Count
+};
+
+constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
+{
+    switch (QueueType)
     {
-        Result |= D3D12_RESOURCE_FLAGS::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        case ED3D12CommandQueueType::Direct:  return "Default";
+        case ED3D12CommandQueueType::Compute: return "Compute";
+        case ED3D12CommandQueueType::Copy:    return "Copy";
     }
 
-    return Result;
+    return "CommandQueueType::Unknown";
 }
 
-inline D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
+constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
+{
+    switch (QueueType)
+    {
+        case ED3D12CommandQueueType::Direct:  return D3D12_COMMAND_LIST_TYPE_DIRECT;
+        case ED3D12CommandQueueType::Compute: return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+        case ED3D12CommandQueueType::Copy:    return D3D12_COMMAND_LIST_TYPE_COPY;
+    }
+
+    return D3D12_COMMAND_LIST_TYPE(-1);
+}
+
+
+constexpr uint32 GetBufferAlignment(EBufferUsageFlags BufferFlags)
+{
+    // Constant buffers require special alignment
+    if (IsEnumFlagSet(BufferFlags, EBufferUsageFlags::ConstantBuffer))
+    {
+        return D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+    }
+    else
+    {
+        // Otherwise, return a default of 16
+        return 16;
+    }
+}
+
+constexpr D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
-    if ((Flag & ETextureUsageFlags::AllowUAV) != ETextureUsageFlags::None)
+    if (IsEnumFlagSet(Flags, EBufferUsageFlags::UnorderedAccess))
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
     }
-    if ((Flag & ETextureUsageFlags::AllowRTV) != ETextureUsageFlags::None)
+
+    return Result;
+}
+
+constexpr D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
+{
+    D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccess))
+    {
+        Result |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+    }
+    if (IsEnumFlagSet(Flag, ETextureUsageFlags::RenderTarget))
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
     }
-    if ((Flag & ETextureUsageFlags::AllowDSV) != ETextureUsageFlags::None)
+
+    const bool bAllowDSV = IsEnumFlagSet(Flag, ETextureUsageFlags::DepthStencil);
+    if (bAllowDSV)
     {
         Result |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-        if ((Flag & ETextureUsageFlags::AllowSRV) == ETextureUsageFlags::None)
-        {
-            Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
-        }
+    }
+
+    const bool bAllowSRV = IsEnumFlagSet(Flag, ETextureUsageFlags::ShaderResource);
+    if (bAllowDSV && !bAllowSRV)
+    {
+        Result |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
     }
 
     return Result;
 }
 
-inline DXGI_FORMAT ConvertFormat(EFormat Format)
+constexpr D3D12_RESOURCE_DIMENSION ConvertTextureDimension(ETextureDimension TextureDimension)
+{
+    switch (TextureDimension)
+    {
+        case ETextureDimension::Texture2D:
+        case ETextureDimension::Texture2DArray:
+        case ETextureDimension::TextureCube:
+        case ETextureDimension::TextureCubeArray: return D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+        case ETextureDimension::Texture3D:        return D3D12_RESOURCE_DIMENSION_TEXTURE3D;
+        default:                                  return D3D12_RESOURCE_DIMENSION_UNKNOWN;
+    }
+}
+
+constexpr DXGI_FORMAT ConvertFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -275,6 +275,10 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
         case EFormat::R8G8B8A8_Uint:         return DXGI_FORMAT_R8G8B8A8_UINT;
         case EFormat::R8G8B8A8_Snorm:        return DXGI_FORMAT_R8G8B8A8_SNORM;
         case EFormat::R8G8B8A8_Sint:         return DXGI_FORMAT_R8G8B8A8_SINT;
+
+        case EFormat::B8G8R8A8_Typeless:     return DXGI_FORMAT_B8G8R8A8_TYPELESS;
+        case EFormat::B8G8R8A8_Unorm:        return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case EFormat::B8G8R8A8_Unorm_SRGB:   return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
     
         case EFormat::R16G16_Typeless:       return DXGI_FORMAT_R16G16_TYPELESS;
         case EFormat::R16G16_Float:          return DXGI_FORMAT_R16G16_FLOAT;
@@ -314,11 +318,50 @@ inline DXGI_FORMAT ConvertFormat(EFormat Format)
         case EFormat::R8_Uint:               return DXGI_FORMAT_R8_UINT;
         case EFormat::R8_Snorm:              return DXGI_FORMAT_R8_SNORM;
         case EFormat::R8_Sint:               return DXGI_FORMAT_R8_SINT;
+        
+        case EFormat::BC1_Typeless:          return DXGI_FORMAT_BC1_TYPELESS;
+        case EFormat::BC1_UNorm:             return DXGI_FORMAT_BC1_UNORM;
+        case EFormat::BC1_UNorm_SRGB:        return DXGI_FORMAT_BC1_UNORM_SRGB;
+        case EFormat::BC2_Typeless:          return DXGI_FORMAT_BC2_TYPELESS;
+        case EFormat::BC2_UNorm:             return DXGI_FORMAT_BC2_UNORM;
+        case EFormat::BC2_UNorm_SRGB:        return DXGI_FORMAT_BC2_UNORM_SRGB;
+        case EFormat::BC3_Typeless:          return DXGI_FORMAT_BC3_TYPELESS;
+        case EFormat::BC3_UNorm:             return DXGI_FORMAT_BC3_UNORM;
+        case EFormat::BC3_UNorm_SRGB:        return DXGI_FORMAT_BC3_UNORM_SRGB;
+        case EFormat::BC4_Typeless:          return DXGI_FORMAT_BC4_TYPELESS;
+        case EFormat::BC4_UNorm:             return DXGI_FORMAT_BC4_UNORM;
+        case EFormat::BC4_SNorm:             return DXGI_FORMAT_BC4_SNORM;
+        case EFormat::BC5_Typeless:          return DXGI_FORMAT_BC5_TYPELESS;
+        case EFormat::BC5_UNorm:             return DXGI_FORMAT_BC5_UNORM;
+        case EFormat::BC5_SNorm:             return DXGI_FORMAT_BC5_SNORM;
+        case EFormat::BC6H_Typeless:         return DXGI_FORMAT_BC6H_TYPELESS;
+        case EFormat::BC6H_UF16:             return DXGI_FORMAT_BC6H_UF16;
+        case EFormat::BC6H_SF16:             return DXGI_FORMAT_BC6H_SF16;
+        case EFormat::BC7_Typeless:          return DXGI_FORMAT_BC7_TYPELESS;
+        case EFormat::BC7_UNorm:             return DXGI_FORMAT_BC7_UNORM;
+        case EFormat::BC7_UNorm_SRGB:        return DXGI_FORMAT_BC7_UNORM_SRGB;
+
         default:                             return DXGI_FORMAT_UNKNOWN;
     }
 }
 
-inline D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass InputClassification)
+constexpr DXGI_FORMAT ConvertIndexFormat(EIndexFormat IndexFormat)
+{
+    if (IndexFormat == EIndexFormat::uint32)
+    {
+        return DXGI_FORMAT_R32_UINT;
+    }
+    else if (IndexFormat == EIndexFormat::uint16)
+    {
+        return DXGI_FORMAT_R16_UINT;
+    }
+    else
+    {
+        return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
+constexpr D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass InputClassification)
 {
     switch (InputClassification)
     {
@@ -326,21 +369,10 @@ inline D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass Inpu
         case EVertexInputClass::Vertex:   return D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
     }
 
-    return D3D12_INPUT_CLASSIFICATION();
+    return D3D12_INPUT_CLASSIFICATION(-1);
 }
 
-inline D3D12_DEPTH_WRITE_MASK ConvertDepthWriteMask(EDepthWriteMask DepthWriteMask)
-{
-    switch (DepthWriteMask)
-    {
-        case EDepthWriteMask::Zero: return D3D12_DEPTH_WRITE_MASK_ZERO;
-        case EDepthWriteMask::All:  return D3D12_DEPTH_WRITE_MASK_ALL;
-    }
-
-    return D3D12_DEPTH_WRITE_MASK();
-}
-
-inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
+constexpr D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -354,10 +386,10 @@ inline D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFun
         case EComparisonFunc::Always:       return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 
-    return D3D12_COMPARISON_FUNC();
+    return D3D12_COMPARISON_FUNC(-1);
 }
 
-inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
+constexpr D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -371,21 +403,21 @@ inline D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
         case EStencilOp::Decr:    return D3D12_STENCIL_OP_DECR;
     }
 
-    return D3D12_STENCIL_OP();
+    return D3D12_STENCIL_OP(-1);
 }
 
-inline D3D12_DEPTH_STENCILOP_DESC ConvertDepthStencilOp(const SDepthStencilStateFace& DepthStencilOp)
+inline D3D12_DEPTH_STENCILOP_DESC ConvertStencilState(const FStencilState& StencilState)
 {
     return
     {
-        ConvertStencilOp(DepthStencilOp.StencilFailOp),
-        ConvertStencilOp(DepthStencilOp.StencilDepthFailOp),
-        ConvertStencilOp(DepthStencilOp.StencilPassOp),
-        ConvertComparisonFunc(DepthStencilOp.StencilFunc)
+        ConvertStencilOp(StencilState.StencilFailOp),
+        ConvertStencilOp(StencilState.StencilDepthFailOp),
+        ConvertStencilOp(StencilState.StencilDepthPassOp),
+        ConvertComparisonFunc(StencilState.StencilFunc)
     };
 }
 
-inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
+constexpr D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
 {
     switch (CullMode)
     {
@@ -395,7 +427,7 @@ inline D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
     }
 }
 
-inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
+constexpr D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
     {
@@ -406,7 +438,7 @@ inline D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
     return D3D12_FILL_MODE();
 }
 
-inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
+constexpr D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
@@ -420,7 +452,7 @@ inline D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
     return D3D12_BLEND_OP();
 }
 
-inline D3D12_BLEND ConvertBlend(EBlendType  Blend)
+constexpr D3D12_BLEND ConvertBlend(EBlendType  Blend)
 {
     switch (Blend)
     {
@@ -446,7 +478,7 @@ inline D3D12_BLEND ConvertBlend(EBlendType  Blend)
     return D3D12_BLEND();
 }
 
-inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
+constexpr D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
@@ -454,14 +486,14 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
         case ELogicOp::Set:          return D3D12_LOGIC_OP_SET;
         case ELogicOp::Copy:         return D3D12_LOGIC_OP_COPY;
         case ELogicOp::CopyInverted: return D3D12_LOGIC_OP_COPY_INVERTED;
-        case ELogicOp::Noop:         return D3D12_LOGIC_OP_NOOP;
+        case ELogicOp::NoOp:         return D3D12_LOGIC_OP_NOOP;
         case ELogicOp::Invert:       return D3D12_LOGIC_OP_INVERT;
         case ELogicOp::And:          return D3D12_LOGIC_OP_AND;
         case ELogicOp::Nand:         return D3D12_LOGIC_OP_NAND;
         case ELogicOp::Or:           return D3D12_LOGIC_OP_OR;
         case ELogicOp::Nor:          return D3D12_LOGIC_OP_NOR;
         case ELogicOp::Xor:          return D3D12_LOGIC_OP_XOR;
-        case ELogicOp::Equiv:        return D3D12_LOGIC_OP_EQUIV;
+        case ELogicOp::Equivalent:   return D3D12_LOGIC_OP_EQUIV;
         case ELogicOp::AndReverse:   return D3D12_LOGIC_OP_AND_REVERSE;
         case ELogicOp::AndInverted:  return D3D12_LOGIC_OP_AND_INVERTED;
         case ELogicOp::OrReverse:    return D3D12_LOGIC_OP_OR_REVERSE;
@@ -471,28 +503,28 @@ inline D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& RenderTargetWriteState)
+constexpr uint8 ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
 {
     uint8 RenderTargetWriteMask = 0;
-    if (RenderTargetWriteState.WriteAll())
+    if (ColorWriteFlags == EColorWriteFlags::All)
     {
         RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
     }
     else
     {
-        if (RenderTargetWriteState.WriteRed())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Red))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_RED;
         }
-        if (RenderTargetWriteState.WriteGreen())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Green))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_GREEN;
         }
-        if (RenderTargetWriteState.WriteBlue())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Blue))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_BLUE;
         }
-        if (RenderTargetWriteState.WriteAlpha())
+        if (IsEnumFlagSet(ColorWriteFlags, EColorWriteFlags::Alpha))
         {
             RenderTargetWriteMask |= D3D12_COLOR_WRITE_ENABLE_ALPHA;
         }
@@ -501,21 +533,27 @@ inline uint8 ConvertRenderTargetWriteState(const SRenderTargetWriteState& Render
     return RenderTargetWriteMask;
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopologyType PrimitiveTopologyType)
+constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopology PrimitiveTopology)
 {
-    switch (PrimitiveTopologyType)
+    switch (PrimitiveTopology)
     {
-        case EPrimitiveTopologyType::Line:      return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-        case EPrimitiveTopologyType::Patch:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
-        case EPrimitiveTopologyType::Point:     return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-        case EPrimitiveTopologyType::Triangle:  return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        case EPrimitiveTopologyType::Undefined: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
-    }
+        case EPrimitiveTopology::LineList:
+        case EPrimitiveTopology::LineStrip:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
 
-    return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+        case EPrimitiveTopology::PointList:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+
+        case EPrimitiveTopology::TriangleList:
+        case EPrimitiveTopology::TriangleStrip:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+        default:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+    }
 }
 
-inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+constexpr D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
     {
@@ -530,32 +568,33 @@ inline D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology Prim
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
-inline D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
+constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
-        case EResourceAccess::Common:                  return D3D12_RESOURCE_STATE_COMMON;
-        case EResourceAccess::CopyDest:                return D3D12_RESOURCE_STATE_COPY_DEST;
-        case EResourceAccess::CopySource:              return D3D12_RESOURCE_STATE_COPY_SOURCE;
-        case EResourceAccess::DepthRead:               return D3D12_RESOURCE_STATE_DEPTH_READ;
-        case EResourceAccess::DepthWrite:              return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-        case EResourceAccess::IndexBuffer:             return D3D12_RESOURCE_STATE_INDEX_BUFFER;
-        case EResourceAccess::NonPixelShaderResource:  return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
-        case EResourceAccess::PixelShaderResource:     return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-        case EResourceAccess::Present:                 return D3D12_RESOURCE_STATE_PRESENT;
-        case EResourceAccess::RenderTarget:            return D3D12_RESOURCE_STATE_RENDER_TARGET;
-        case EResourceAccess::ResolveDest:             return D3D12_RESOURCE_STATE_RESOLVE_DEST;
-        case EResourceAccess::ResolveSource:           return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-        case EResourceAccess::ShadingRateSource:       return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-        case EResourceAccess::UnorderedAccess:         return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
-        case EResourceAccess::VertexAndConstantBuffer: return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
-        case EResourceAccess::GenericRead:             return D3D12_RESOURCE_STATE_GENERIC_READ;
+        case EResourceAccess::Common:                 return D3D12_RESOURCE_STATE_COMMON;
+        case EResourceAccess::CopyDest:               return D3D12_RESOURCE_STATE_COPY_DEST;
+        case EResourceAccess::CopySource:             return D3D12_RESOURCE_STATE_COPY_SOURCE;
+        case EResourceAccess::DepthRead:              return D3D12_RESOURCE_STATE_DEPTH_READ;
+        case EResourceAccess::DepthWrite:             return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        case EResourceAccess::IndexBuffer:            return D3D12_RESOURCE_STATE_INDEX_BUFFER;
+        case EResourceAccess::VertexBuffer:           return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+        case EResourceAccess::NonPixelShaderResource: return D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE;
+        case EResourceAccess::PixelShaderResource:    return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+        case EResourceAccess::Present:                return D3D12_RESOURCE_STATE_PRESENT;
+        case EResourceAccess::RenderTarget:           return D3D12_RESOURCE_STATE_RENDER_TARGET;
+        case EResourceAccess::ResolveDest:            return D3D12_RESOURCE_STATE_RESOLVE_DEST;
+        case EResourceAccess::ResolveSource:          return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+        case EResourceAccess::ShadingRateSource:      return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
+        case EResourceAccess::UnorderedAccess:        return D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+        case EResourceAccess::ConstantBuffer:         return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
+        case EResourceAccess::GenericRead:            return D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
     return D3D12_RESOURCE_STATES();
 }
 
-inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
+constexpr D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -569,7 +608,7 @@ inline D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
     return D3D12_TEXTURE_ADDRESS_MODE();
 }
 
-inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
+constexpr D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -596,7 +635,7 @@ inline D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
-inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
+constexpr D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -612,7 +651,7 @@ inline D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
     return D3D12_SHADING_RATE();
 }
 
-inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
+constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
 {
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
     if ((InFlags & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)
@@ -631,7 +670,7 @@ inline D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationSt
     return Flags;
 }
 
-inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags InFlags)
+constexpr D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags InFlags)
 {
     D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
     if ((InFlags & ERayTracingInstanceFlags::CullDisable) != ERayTracingInstanceFlags::None)
@@ -654,9 +693,6 @@ inline D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracin
     return Flags;
 }
 
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Helpers
 
 constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
 {
@@ -758,7 +794,7 @@ constexpr uint32 GetFormatStride(DXGI_FORMAT Format)
     }
 }
 
-constexpr DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
+constexpr DXGI_FORMAT D3D12CastShaderResourceFormat(DXGI_FORMAT Format)
 {
     switch (Format)
     {
@@ -783,80 +819,51 @@ constexpr DXGI_FORMAT CastShaderResourceFormat(DXGI_FORMAT Format)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Operators for D3D12_CPU_DESCRIPTOR_HANDLE
 
-inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
+struct FD3D12_CPU_DESCRIPTOR_HANDLE : public D3D12_CPU_DESCRIPTOR_HANDLE
 {
-    return DescriptorHandle.ptr == Value;
-}
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE() noexcept
+        : D3D12_CPU_DESCRIPTOR_HANDLE{ 0 }
+    {
+    }
 
-inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
-{
-    return !(DescriptorHandle == Value);
-}
+    FORCEINLINE explicit FD3D12_CPU_DESCRIPTOR_HANDLE(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
+        : D3D12_CPU_DESCRIPTOR_HANDLE{ Other }
+    {
+    }
 
-inline bool operator==(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
-{
-    return Left.ptr == Right.ptr;
-}
+    FORCEINLINE explicit FD3D12_CPU_DESCRIPTOR_HANDLE(uint64 Handle) noexcept
+        : D3D12_CPU_DESCRIPTOR_HANDLE{ Handle }
+    {
+    }
 
-inline bool operator!=(D3D12_CPU_DESCRIPTOR_HANDLE Left, D3D12_CPU_DESCRIPTOR_HANDLE Right)
-{
-    return !(Left == Right);
-}
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
+        : D3D12_CPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) }
+    {
+    }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Operators for D3D12_GPU_DESCRIPTOR_HANDLE
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+        : D3D12_CPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) }
+    {
+    }
 
-inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
-{
-    return DescriptorHandle.ptr == Value;
-}
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) const noexcept
+    {
+        return FD3D12_CPU_DESCRIPTOR_HANDLE(*this, OffsetInDescriptors, DescriptorIncrementSize);
+    }
 
-inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE DescriptorHandle, uint64 Value)
-{
-    return !(DescriptorHandle == Value);
-}
-
-inline bool operator==(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
-{
-    return Left.ptr == Right.ptr;
-}
-
-inline bool operator!=(D3D12_GPU_DESCRIPTOR_HANDLE Left, D3D12_GPU_DESCRIPTOR_HANDLE Right)
-{
-    return !(Left == Right);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12CpuDescriptorHandle
-
-struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
-{
-    FORCEINLINE SD3D12CpuDescriptorHandle() noexcept
-        : D3D12_CPU_DESCRIPTOR_HANDLE({ 0 })
-    { }
-
-    FORCEINLINE explicit SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
-        : D3D12_CPU_DESCRIPTOR_HANDLE(Other)
-    { }
-
-    FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
-        : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
-    { }
-
-    FORCEINLINE SD3D12CpuDescriptorHandle(const D3D12_CPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
-        : D3D12_CPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
-    { }
-
-    FORCEINLINE SD3D12CpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize));
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE Offset(int64 OffsetScaledByIncrementSize) const noexcept
+    {
+        return FD3D12_CPU_DESCRIPTOR_HANDLE(*this, OffsetScaledByIncrementSize);
+    }
+
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE& Offset(int64 OffsetScaledByIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + OffsetScaledByIncrementSize);
         return *this;
@@ -864,76 +871,93 @@ struct SD3D12CpuDescriptorHandle : public D3D12_CPU_DESCRIPTOR_HANDLE
 
     FORCEINLINE bool operator==(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) const noexcept
     {
-        return (ptr == RHS.ptr);
+        return ptr == RHS.ptr;
     }
 
     FORCEINLINE bool operator!=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) const noexcept
     {
-        return (ptr != RHS.ptr);
+        return ptr != RHS.ptr;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE& operator-=(int64 RHS) noexcept
     {
         ptr -= RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr -= RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE& operator+=(int64 RHS) noexcept
     {
         ptr += RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr += RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12CpuDescriptorHandle& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12_CPU_DESCRIPTOR_HANDLE& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr = RHS.ptr;
         return *this;
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12GpuDescriptorHandle
 
-struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
+struct FD3D12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
 {
-    FORCEINLINE SD3D12GpuDescriptorHandle() noexcept
-        : D3D12_GPU_DESCRIPTOR_HANDLE({ 0 })
-    { }
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE() noexcept
+        : D3D12_GPU_DESCRIPTOR_HANDLE{ 0 }
+    {
+    }
 
-    FORCEINLINE explicit SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
-        : D3D12_GPU_DESCRIPTOR_HANDLE(Other)
-    { }
+    FORCEINLINE explicit FD3D12_GPU_DESCRIPTOR_HANDLE(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
+        : D3D12_GPU_DESCRIPTOR_HANDLE{ Other }
+    {
+    }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
-        : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) })
-    { }
+    FORCEINLINE explicit FD3D12_GPU_DESCRIPTOR_HANDLE(uint64 Handle) noexcept
+        : D3D12_GPU_DESCRIPTOR_HANDLE{ Handle }
+    {
+    }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
-        : D3D12_GPU_DESCRIPTOR_HANDLE({ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) })
-    { }
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int64 OffsetScaledByIncrementSize) noexcept
+        : D3D12_GPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + OffsetScaledByIncrementSize) }
+    {
+    }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE(const D3D12_GPU_DESCRIPTOR_HANDLE& Other, int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
+        : D3D12_GPU_DESCRIPTOR_HANDLE{ static_cast<uint64>(static_cast<int64>(Other.ptr) + (static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize))) }
+    {
+    }
+
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& Offset(int64 OffsetScaledByIncrementSize) noexcept
+    {
+        ptr = static_cast<uint64>(static_cast<int64>(ptr) + OffsetScaledByIncrementSize);
+        return *this;
+    }
+
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE Offset(int64 OffsetScaledByIncrementSize) const noexcept
+    {
+        return FD3D12_GPU_DESCRIPTOR_HANDLE(*this, OffsetScaledByIncrementSize);
+    }
+
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) noexcept
     {
         ptr = static_cast<uint64>(static_cast<int64>(ptr) + static_cast<int64>(OffsetInDescriptors) * static_cast<int64>(DescriptorIncrementSize));
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& Offset(int64 OffsetScaledByIncrementSize) noexcept
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE Offset(int32 OffsetInDescriptors, uint32 DescriptorIncrementSize) const noexcept
     {
-        ptr = static_cast<uint64>(static_cast<int64>(ptr) + OffsetScaledByIncrementSize);
-        return *this;
+        return FD3D12_GPU_DESCRIPTOR_HANDLE(*this, OffsetInDescriptors, DescriptorIncrementSize);
     }
 
     FORCEINLINE bool operator==(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) const noexcept
@@ -946,41 +970,39 @@ struct SD3D12GpuDescriptorHandle : public D3D12_GPU_DESCRIPTOR_HANDLE
         return (ptr != RHS.ptr);
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(int64 RHS) noexcept
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& operator-=(int64 RHS) noexcept
     {
         ptr -= RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr -= RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(int64 RHS) noexcept
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& operator+=(int64 RHS) noexcept
     {
         ptr += RHS;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr += RHS.ptr;
         return *this;
     }
 
-    FORCEINLINE SD3D12GpuDescriptorHandle& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FORCEINLINE FD3D12_GPU_DESCRIPTOR_HANDLE& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
     {
         ptr = RHS.ptr;
         return *this;
     }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12 Helper Functions
 
-constexpr const char* ToString(D3D12_RESOURCE_DIMENSION Dimension)
+constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 {
     switch(Dimension)
     {
@@ -992,7 +1014,19 @@ constexpr const char* ToString(D3D12_RESOURCE_DIMENSION Dimension)
     }
 }
 
-constexpr uint32 D3D12CalcSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
+constexpr uint32 D3D12CalculateSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
 {
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
+}
+
+constexpr uint32 D3D12CalculateArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
+{
+    if (IsTextureCube(Dimension))
+    {
+        return NumArraySlices * D3D12_NUM_CUBE_FACES;
+    }
+    else
+    {
+        return NumArraySlices;
+    }
 }

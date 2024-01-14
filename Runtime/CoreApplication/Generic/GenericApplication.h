@@ -1,72 +1,136 @@
 #pragma once
-#include "GenericApplicationMessageHandler.h"
-
-#include "CoreApplication/ICursor.h"
-
-#include "Core/Containers/SharedPtr.h"
+#include "GenericWindow.h"
+#include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/SharedPtr.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplication
+struct ICursor;
+struct FGenericApplicationMessageHandler;
+class FInputDevice;
 
-class COREAPPLICATION_API CGenericApplication
+struct FMonitorInfo
 {
-    friend class CGenericApplicationMisc;
+    FMonitorInfo()
+        : DisplayDPI(0)
+        , DisplayScaling(1.0f)
+        , bIsPrimary(false)
+    {
+    }
+
+    bool operator==(const FMonitorInfo& Other) const
+    {
+        return DeviceName     == Other.DeviceName
+            && MainPosition   == Other.MainPosition
+            && MainSize       == Other.MainSize
+            && WorkPosition   == Other.WorkPosition
+            && WorkSize       == Other.WorkSize
+            && DisplayDPI     == Other.DisplayDPI
+            && DisplayScaling == Other.DisplayScaling
+            && bIsPrimary     == Other.bIsPrimary;
+    }
+
+    bool operator!=(const FMonitorInfo& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    FString     DeviceName;
+
+    FIntVector2 MainPosition;
+    FIntVector2 MainSize;
     
-    friend struct TDefaultDelete<CGenericApplication>;
+    FIntVector2 WorkPosition;
+    FIntVector2 WorkSize;
+    
+    int32       DisplayDPI;
+    int32       DisplayScaleFactor;
 
-protected:
+    float       DisplayScaling;
 
-    CGenericApplication(const TSharedPtr<ICursor>& InCursor)
-        : Cursor(InCursor)
-        , MessageListener(nullptr)
-    { }
+    bool        bIsPrimary;
+};
 
-    virtual ~CGenericApplication() = default;
+struct FDisplayInfo
+{
+    FDisplayInfo()
+        : PrimaryDisplayWidth(0)
+        , PrimaryDisplayHeight(0)
+        , MonitorInfos()
+    {
+    }
 
+    bool operator==(const FDisplayInfo& Other) const
+    {
+        return PrimaryDisplayWidth  == Other.PrimaryDisplayWidth
+            && PrimaryDisplayHeight == Other.PrimaryDisplayHeight
+            && MonitorInfos         == Other.MonitorInfos;
+    }
+
+    bool operator!=(const FDisplayInfo& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    int32 PrimaryDisplayWidth;
+    int32 PrimaryDisplayHeight;
+
+    TArray<FMonitorInfo> MonitorInfos;
+};
+
+class COREAPPLICATION_API FGenericApplication
+{
 public:
+    FGenericApplication(const TSharedPtr<ICursor>& InCursor)
+        : Cursor(InCursor)
+        , MessageHandler(nullptr)
+    {
+    }
 
-    virtual TSharedRef<CGenericWindow> MakeWindow() { return nullptr; }
+    virtual ~FGenericApplication() = default;
 
-    virtual bool Initialize() { return true; }
+    virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
 
     virtual void Tick(float Delta) { }
 
+    virtual void UpdateGamepadDevices() { }
+
+    virtual FInputDevice* GetInputDeviceInterface() { return nullptr; }
+
     virtual bool SupportsHighPrecisionMouse() const { return false; }
 
-    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<CGenericWindow>& Window) { return true; }
+    virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
 
-    virtual void SetActiveWindow(const TSharedRef<CGenericWindow>& Window) { }
+    virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
+    
+    virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
 
-    virtual TSharedRef<CGenericWindow> GetActiveWindow() const { return nullptr; }
+    virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
+    
+    virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
+    
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
 
-    virtual void SetCapture(const TSharedRef<CGenericWindow>& Window) { }
+    virtual TSharedRef<FGenericWindow> GetForegroundWindow() const { return nullptr; }
 
-    virtual TSharedRef<CGenericWindow> GetCapture() const { return nullptr; }
+    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
 
-    virtual TSharedRef<CGenericWindow> GetWindowUnderCursor() const { return nullptr; }
+    virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
+    { 
+        MessageHandler = InMessageHandler;
+    }
 
-    virtual void SetMessageListener(const TSharedPtr<CGenericApplicationMessageHandler>& InMessageHandler) { MessageListener = InMessageHandler; }
+    TSharedPtr<FGenericApplicationMessageHandler> GetMessageHandler() const 
+    { 
+        return MessageHandler; 
+    }
 
-    TSharedPtr<CGenericApplicationMessageHandler> GetMessageListener() const { return MessageListener; }
-
-    TSharedPtr<ICursor> GetCursor() const { return Cursor; }
+public:
+    const TSharedPtr<ICursor> Cursor;
 
 protected:
-    TSharedPtr<ICursor>                           Cursor;
-    TSharedPtr<CGenericApplicationMessageHandler> MessageListener;
+    TSharedPtr<FGenericApplicationMessageHandler> MessageHandler;
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

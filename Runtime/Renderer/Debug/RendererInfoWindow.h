@@ -1,25 +1,9 @@
 #pragma once
-#include "Canvas/CanvasWindow.h"
-
+#include "Application/Widget.h"
 #include "Core/Containers/SharedRef.h"
 
-#include <imgui.h>
-
-class CRendererInfoWindow : public CCanvasWindow
+struct FRendererInfoWindow : public FWidget
 {
-    INTERFACE_GENERATE_BODY();
-
-public:
-
-    static TSharedRef<CRendererInfoWindow> Make();
-
-     /** @brief: Update the panel, for ImGui this is where the ImGui-Commands should be called */
-    virtual void Tick() override final;
-
-     /** @brief: Returns true if the panel should be updated this frame */
-    virtual bool IsTickable() override final;
-
-private:
-
-    CRendererInfoWindow() = default;
+     /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
+    virtual void Paint() override final;
 };

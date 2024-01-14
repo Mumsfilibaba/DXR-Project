@@ -1,38 +1,33 @@
 #pragma once
-#include "RHIResourceBase.h"
-
+#include "RHIResources.h"
 #include "Core/Math/IntVector3.h"
 #include "Core/Containers/String.h"
-#include "Core/Containers/SharedRef.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
+typedef TSharedRef<class FRHIShader>                FRHIShaderRef;
 
-typedef TSharedRef<class CRHIShader>                RHIShaderRef;
+typedef TSharedRef<class FRHIVertexShader>          FRHIVertexShaderRef;
+typedef TSharedRef<class FRHIHullShader>            FRHIHullShaderRef;
+typedef TSharedRef<class FRHIDomainShader>          FRHIDomainShaderRef;
+typedef TSharedRef<class FRHIGeometryShader>        FRHIGeometryShaderRef;
+typedef TSharedRef<class FRHIMeshShader>            FRHIMeshShaderRef;
+typedef TSharedRef<class FRHIAmplificationShader>   FRHIAmplificationShaderRef;
+typedef TSharedRef<class FRHIPixelShader>           FRHIPixelShaderRef;
 
-typedef TSharedRef<class CRHIVertexShader>          RHIVertexShaderRef;
-typedef TSharedRef<class CRHIHullShader>            RHIHullShaderRef;
-typedef TSharedRef<class CRHIDomainShader>          RHIDomainShaderRef;
-typedef TSharedRef<class CRHIGeometryShader>        RHIGeometryShaderRef;
-typedef TSharedRef<class CRHIMeshShader>            RHIMeshShaderRef;
-typedef TSharedRef<class CRHIAmplificationShader>   RHIAmplificationShaderRef;
-typedef TSharedRef<class CRHIPixelShader>           RHIPixelShaderRef;
+typedef TSharedRef<class FRHIComputeShader>         FRHIComputeShaderRef;
 
-typedef TSharedRef<class CRHIComputeShader>         RHIComputeShaderRef;
+typedef TSharedRef<class FRHIRayTracingShader>      FRHIRayTracingShaderRef;
+typedef TSharedRef<class FRHIRayGenShader>          FRHIRayGenShaderRef;
+typedef TSharedRef<class FRHIRayMissShader>         FRHIRayMissShaderRef;
+typedef TSharedRef<class FRHIRayClosestHitShader>   FRHIRayClosestHitShaderRef;
+typedef TSharedRef<class FRHIRayAnyHitShader>       FRHIRayAnyHitShaderRef;
+typedef TSharedRef<class FRHIRayIntersectionShader> FRHIRayIntersectionShaderRef;
+typedef TSharedRef<class FRHIRayCallableShader>     FRHIRayCallableShaderRef;
 
-typedef TSharedRef<class CRHIRayTracingShader>      RHIRayTracingShaderRef;
-typedef TSharedRef<class CRHIRayGenShader>          RHIRayGenShaderRef;
-typedef TSharedRef<class CRHIRayMissShader>         RHIRayMissShaderRef;
-typedef TSharedRef<class CRHIRayClosestHitShader>   RHIRayClosestHitShaderRef;
-typedef TSharedRef<class CRHIRayAnyHitShader>       RHIRayAnyHitShaderRef;
-typedef TSharedRef<class CRHIRayIntersectionShader> RHIRayIntersectionShaderRef;
-typedef TSharedRef<class CRHIRayCallableShader>     RHIRayCallableShaderRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShaderStage
 
 enum class EShaderStage : uint8
 {
+    Unknown         = 0,
+    
     // Graphics
     Vertex          = 1,
     Hull            = 2,
@@ -51,10 +46,10 @@ enum class EShaderStage : uint8
     RayClosestHit   = 11,
     RayMiss         = 12,
     RayIntersection = 13,
-    RayCallable     = 14
+    RayCallable     = 14,
 };
 
-inline const char* ToString(EShaderStage ShaderStage)
+constexpr const CHAR* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
@@ -70,284 +65,226 @@ inline const char* ToString(EShaderStage ShaderStage)
         case EShaderStage::RayAnyHit:       return "RayAnyHit";
         case EShaderStage::RayClosestHit:   return "RayClosestHit";
         case EShaderStage::RayMiss:         return "RayMiss";
-		case EShaderStage::RayIntersection: return "RayIntersection";
-		case EShaderStage::RayCallable:     return "RayCallable";
-		default:                            return "Unknown";
+        case EShaderStage::RayIntersection: return "RayIntersection";
+        case EShaderStage::RayCallable:     return "RayCallable";
+        default:                            return "Unknown";
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIShader
 
-class CRHIShader : public CRHIResource
+class FRHIShader : public FRHIResource
 {
 protected:
-
-    explicit CRHIShader(EShaderStage InShaderStage)
+    explicit FRHIShader(EShaderStage InShaderStage)
         : ShaderStage(InShaderStage)
-    { }
+    {
+    }
 
-    ~CRHIShader() = default;
+    virtual ~FRHIShader() = default;
 
 public:
-
-    /** @return: Returns the native handle of the Shader */
     virtual void* GetRHIBaseResource() { return nullptr; }
 
-    /** @return: Returns the RHI-backend Shader interface */
     virtual void* GetRHIBaseShader() { return nullptr; }
-
-    /** @return: Returns ShaderStage that the shader can be bound to */
-    EShaderStage GetShaderStage() const { return ShaderStage; }
+    
+    EShaderStage GetShaderStage() const
+    { 
+        return ShaderStage;
+    }
 
 private:
     EShaderStage ShaderStage;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIComputeShader
-
-class CRHIComputeShader : public CRHIShader
+class FRHIComputeShader : public FRHIShader
 {
 protected:
+    FRHIComputeShader()
+        : FRHIShader(EShaderStage::Compute)
+    {
+    }
 
-    CRHIComputeShader()
-        : CRHIShader(EShaderStage::Compute)
-    { }
-
-    ~CRHIComputeShader() = default;
-
-public:
-
-    /** @return: Returns a vector with the number of threads in each dimension */
-    virtual CIntVector3 GetThreadGroupXYZ() const = 0;
+    virtual ~FRHIComputeShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIGraphicsShader
-
-class CRHIGraphicsShader : public CRHIShader
+class FRHIGraphicsShader : public FRHIShader
 {
 protected:
+    explicit FRHIGraphicsShader(EShaderStage InShaderStage)
+        : FRHIShader(InShaderStage)
+    {
+    }
 
-    explicit CRHIGraphicsShader(EShaderStage InShaderStage)
-        : CRHIShader(InShaderStage)
-    { }
-
-    ~CRHIGraphicsShader() = default;
+    virtual ~FRHIGraphicsShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIVertexShader
-
-class CRHIVertexShader : public CRHIGraphicsShader
+class FRHIVertexShader : public FRHIGraphicsShader
 {
 protected:
+    FRHIVertexShader()
+        : FRHIGraphicsShader(EShaderStage::Vertex)
+    {
+    }
 
-    CRHIVertexShader()
-        : CRHIGraphicsShader(EShaderStage::Vertex)
-    { }
-
-    ~CRHIVertexShader() = default;
+    virtual ~FRHIVertexShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIHullShader
-
-class CRHIHullShader : public CRHIGraphicsShader
+class FRHIHullShader : public FRHIGraphicsShader
 {
 protected:
+    FRHIHullShader()
+        : FRHIGraphicsShader(EShaderStage::Hull)
+    {
+    }
 
-    CRHIHullShader()
-        : CRHIGraphicsShader(EShaderStage::Hull)
-    { }
-
-    ~CRHIHullShader() = default;
+    virtual ~FRHIHullShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIDomainShader
-
-class CRHIDomainShader : public CRHIGraphicsShader
+class FRHIDomainShader : public FRHIGraphicsShader
 {
 protected:
+    FRHIDomainShader()
+        : FRHIGraphicsShader(EShaderStage::Domain)
+    {
+    }
 
-    CRHIDomainShader()
-        : CRHIGraphicsShader(EShaderStage::Domain)
-    { }
-
-    ~CRHIDomainShader() = default;
+    virtual ~FRHIDomainShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIGeometryShader
-
-class CRHIGeometryShader : public CRHIGraphicsShader
+class FRHIGeometryShader : public FRHIGraphicsShader
 {
 protected:
+    FRHIGeometryShader()
+        : FRHIGraphicsShader(EShaderStage::Geometry)
+    {
+    }
 
-    CRHIGeometryShader()
-        : CRHIGraphicsShader(EShaderStage::Geometry)
-    { }
-
-    ~CRHIGeometryShader() = default;
+    virtual ~FRHIGeometryShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIMeshShader
-
-class CRHIMeshShader : public CRHIGraphicsShader
+class FRHIMeshShader : public FRHIGraphicsShader
 {
 protected:
+    FRHIMeshShader()
+        : FRHIGraphicsShader(EShaderStage::Mesh)
+    {
+    }
 
-    CRHIMeshShader()
-        : CRHIGraphicsShader(EShaderStage::Mesh)
-    { }
-
-    ~CRHIMeshShader() = default;
+    virtual ~FRHIMeshShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIAmplificationShader
-
-class CRHIAmplificationShader : public CRHIGraphicsShader
+class FRHIAmplificationShader : public FRHIGraphicsShader
 {
 protected:
+    FRHIAmplificationShader()
+        : FRHIGraphicsShader(EShaderStage::Amplification)
+    {
+    }
 
-    CRHIAmplificationShader()
-        : CRHIGraphicsShader(EShaderStage::Amplification)
-    { }
-
-    ~CRHIAmplificationShader() = default;
+    virtual ~FRHIAmplificationShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIPixelShader
-
-class CRHIPixelShader : public CRHIGraphicsShader
+class FRHIPixelShader : public FRHIGraphicsShader
 {
 protected:
+    FRHIPixelShader()
+        : FRHIGraphicsShader(EShaderStage::Pixel)
+    {
+    }
 
-    CRHIPixelShader()
-        : CRHIGraphicsShader(EShaderStage::Pixel)
-    { }
-
-    ~CRHIPixelShader() = default;
+    virtual ~FRHIPixelShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingShader
-
-class CRHIRayTracingShader : public CRHIShader
+class FRHIRayTracingShader : public FRHIShader
 {
 protected:
+    explicit FRHIRayTracingShader(EShaderStage InShaderStage)
+        : FRHIShader(InShaderStage)
+    {
+    }
 
-    explicit CRHIRayTracingShader(EShaderStage InShaderStage)
-        : CRHIShader(InShaderStage)
-    { }
-
-    ~CRHIRayTracingShader() = default;
+    virtual ~FRHIRayTracingShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayGenShader
-
-class CRHIRayGenShader : public CRHIRayTracingShader
+class FRHIRayGenShader : public FRHIRayTracingShader
 {
 protected:
+    FRHIRayGenShader()
+        : FRHIRayTracingShader(EShaderStage::RayGen)
+    {
+    }
 
-    CRHIRayGenShader()
-        : CRHIRayTracingShader(EShaderStage::RayGen)
-    { }
-
-    ~CRHIRayGenShader() = default;
+    virtual ~FRHIRayGenShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayAnyHitShader
-
-class CRHIRayAnyHitShader : public CRHIRayTracingShader
+class FRHIRayAnyHitShader : public FRHIRayTracingShader
 {
 protected:
+    FRHIRayAnyHitShader()
+        : FRHIRayTracingShader(EShaderStage::RayAnyHit)
+    {
+    }
 
-    CRHIRayAnyHitShader()
-        : CRHIRayTracingShader(EShaderStage::RayAnyHit)
-    { }
-
-    ~CRHIRayAnyHitShader() = default;
+    virtual ~FRHIRayAnyHitShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayClosestHitShader
-
-class CRHIRayClosestHitShader : public CRHIRayTracingShader
+class FRHIRayClosestHitShader : public FRHIRayTracingShader
 {
 protected:
+    FRHIRayClosestHitShader()
+        : FRHIRayTracingShader(EShaderStage::RayClosestHit)
+    {
+    }
 
-    CRHIRayClosestHitShader()
-        : CRHIRayTracingShader(EShaderStage::RayClosestHit)
-    { }
-
-    ~CRHIRayClosestHitShader() = default;
+    virtual ~FRHIRayClosestHitShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayMissShader
-
-class CRHIRayMissShader : public CRHIRayTracingShader
+class FRHIRayMissShader : public FRHIRayTracingShader
 {
 protected:
+    FRHIRayMissShader()
+        : FRHIRayTracingShader(EShaderStage::RayMiss)
+    {
+    }
 
-    CRHIRayMissShader()
-        : CRHIRayTracingShader(EShaderStage::RayMiss)
-    { }
-
-    ~CRHIRayMissShader() = default;
+    virtual ~FRHIRayMissShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayIntersectionShader
-
-class CRHIRayIntersectionShader : public CRHIRayTracingShader
+class FRHIRayIntersectionShader : public FRHIRayTracingShader
 {
 protected:
+    FRHIRayIntersectionShader()
+        : FRHIRayTracingShader(EShaderStage::RayIntersection)
+    {
+    }
 
-    CRHIRayIntersectionShader()
-        : CRHIRayTracingShader(EShaderStage::RayIntersection)
-    { }
-
-    ~CRHIRayIntersectionShader() = default;
+    virtual ~FRHIRayIntersectionShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayCallableShader
-
-class CRHIRayCallableShader : public CRHIRayTracingShader
+class FRHIRayCallableShader : public FRHIRayTracingShader
 {
 protected:
+    FRHIRayCallableShader()
+        : FRHIRayTracingShader(EShaderStage::RayCallable)
+    {
+    }
 
-    CRHIRayCallableShader()
-        : CRHIRayTracingShader(EShaderStage::RayCallable)
-    { }
-
-    ~CRHIRayCallableShader() = default;
+    virtual ~FRHIRayCallableShader() = default;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers
 
-inline bool ShaderStageIsGraphics(EShaderStage ShaderStage)
+constexpr bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
 }
 
-/** @brief: Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures) */
-inline bool ShaderStageIsCompute(EShaderStage ShaderStage)
+/** @brief - Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures) */
+constexpr bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::Compute) ? true : false;
 }
 
-inline bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
+constexpr bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::RayGen) ? true : false;
 }

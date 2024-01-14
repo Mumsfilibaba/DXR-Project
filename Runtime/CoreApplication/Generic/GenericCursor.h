@@ -1,23 +1,18 @@
 #pragma once
-#include "CoreApplication/CoreApplication.h"
-#include "CoreApplication/ICursor.h"
+#include "CoreApplication/Generic/ICursor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericCursor
-
-class COREAPPLICATION_API CGenericCursor : public ICursor
+class COREAPPLICATION_API FGenericCursor : public ICursor
 {
-protected:
-
-    CGenericCursor()
-        : bIsVisible(true)
-    { }
-
-    ~CGenericCursor() = default;
-
 public:
+    FGenericCursor()
+        : bIsVisible(true)
+    {
+    }
 
-    virtual bool IsVisible() const override final { return bIsVisible; }
+    virtual bool IsVisible() const override final 
+    { 
+        return bIsVisible; 
+    }
 
 protected:
     bool bIsVisible;

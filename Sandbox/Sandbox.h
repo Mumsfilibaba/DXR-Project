@@ -1,23 +1,15 @@
+#pragma once
 #include <Core/Core.h>
-#include <Core/Modules/ApplicationModule.h>
-
+#include <Core/Modules/ModuleManager.h>
 #include <Engine/Scene/Camera.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CSandbox
-
-class CSandbox : public CApplicationModule
+class SANDBOX_API FSandbox : public FGameModule
 {
 public:
-
-    CSandbox()  = default;
-    ~CSandbox() = default;
+    FSandbox()  = default;
+    ~FSandbox() = default;
 
     virtual bool Init() override;
 
-    virtual void Tick(CTimestamp DeltaTime) override;
-
-private:
-    CCamera* CurrentCamera = nullptr;
-    CVector3 CameraSpeed;
+    virtual void Tick(FTimespan DeltaTime) override;
 };

@@ -1,48 +1,33 @@
 #pragma once
-#include "RHIResourceBase.h"
-#include "RHIResourceViews.h"
-
+#include "RHIResources.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix3x4.h"
 #include "Core/Containers/SharedRef.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CRHIRayTracingGeometry;
+class FRHIRayTracingGeometry;
+class FRHIShaderResourceView;
+class FRHIUnorderedAccessView;
+class FRHIBuffer;
+class FRHISamplerState;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedefs
+typedef TSharedRef<class FRHIAccelerationStructure>  FRHIAccelerationStructureRef;
+typedef TSharedRef<class FRHIRayTracingGeometry>     FRHIRayTracingGeometryRef;
+typedef TSharedRef<class FRHIRayTracingScene>        FRHIRayTracingSceneRef;
 
-typedef TSharedRef<class CRHIAccelerationStructure>  RHIAccelerationStructureRef;
-typedef TSharedRef<class CRHIRayTracingGeometry>     RHIRayTracingGeometryRef;
-typedef TSharedRef<class CRHIRayTracingScene>        RHIRayTracingSceneRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayPayload
-
-struct SRayPayload
+struct FRayPayload
 {
-    CVector3 Color;
+    FVector3 Color;
     uint32   CurrentDepth;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayIntersectionAttributes
-
-struct SRayIntersectionAttributes
+struct FRayIntersectionAttributes
 {
     float Attrib0;
     float Attrib1;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERayTracingStructureBuildFlag
 
 enum class EAccelerationStructureBuildFlags : uint8
 {
@@ -54,8 +39,6 @@ enum class EAccelerationStructureBuildFlags : uint8
 
 ENUM_CLASS_OPERATORS(EAccelerationStructureBuildFlags);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ERayTracingInstanceFlags
 
 enum class ERayTracingInstanceFlags : uint8
 {
@@ -68,268 +51,240 @@ enum class ERayTracingInstanceFlags : uint8
 
 ENUM_CLASS_OPERATORS(ERayTracingInstanceFlags);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingGeometryInstance
 
-class CRHIRayTracingGeometryInstance
+struct FRHIRayTracingGeometryInstance
 {
-public:
+    FRHIRayTracingGeometryInstance() = default;
 
-    CRHIRayTracingGeometryInstance()
-        : Geometry(nullptr)
-        , InstanceIndex(0)
-        , HitGroupIndex(0)
-        , Flags(ERayTracingInstanceFlags::None)
-        , Mask(0xff)
-        , Transform()
-    { }
-
-    CRHIRayTracingGeometryInstance( CRHIRayTracingGeometry* InGeometry
-                                  , uint32 InInstanceIndex
-                                  , uint32 InHitGroupIndex
-                                  , ERayTracingInstanceFlags InFlags
-                                  , uint32 InMask
-                                  , const CMatrix3x4& InTransform)
+    FRHIRayTracingGeometryInstance(
+        FRHIRayTracingGeometry*  InGeometry,
+        uint32                   InInstanceIndex,
+        uint32                   InHitGroupIndex,
+        ERayTracingInstanceFlags InFlags,
+        uint32                   InMask,
+        const FMatrix3x4&        InTransform)
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
         , Flags(InFlags)
         , Mask(InMask)
         , Transform(InTransform)
-    { }
-
-    bool operator==(const CRHIRayTracingGeometryInstance& RHS) const
     {
-        return (Geometry      == RHS.Geometry)
-            && (InstanceIndex == RHS.InstanceIndex)
-            && (HitGroupIndex == RHS.HitGroupIndex)
-            && (Flags         == RHS.Flags)
-            && (Mask          == RHS.Mask)
-            && (Transform     == RHS.Transform);
     }
 
-    bool operator!=(const CRHIRayTracingGeometryInstance& RHS) const
+    bool operator==(const FRHIRayTracingGeometryInstance& RHS) const
+    {
+        return Geometry      == RHS.Geometry
+            && InstanceIndex == RHS.InstanceIndex
+            && HitGroupIndex == RHS.HitGroupIndex
+            && Flags         == RHS.Flags
+            && Mask          == RHS.Mask
+            && Transform     == RHS.Transform;
+    }
+
+    bool operator!=(const FRHIRayTracingGeometryInstance& RHS) const
     {
         return !(*this == RHS);
     }
 
-    CRHIRayTracingGeometry*  Geometry;
-
-    uint32                   InstanceIndex;
-    uint32                   HitGroupIndex;
-
-    ERayTracingInstanceFlags Flags;
-
-    uint32                   Mask;
-
-    CMatrix3x4               Transform;
+    FRHIRayTracingGeometry*  Geometry{nullptr};
+    uint32                   InstanceIndex{0};
+    uint32                   HitGroupIndex{0};
+    ERayTracingInstanceFlags Flags{ERayTracingInstanceFlags::None};
+    uint32                   Mask{0xff};
+    FMatrix3x4               Transform;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIAccelerationStructureInitializer
 
-class CRHIAccelerationStructureInitializer
+struct FRHIAccelerationStructureInitializer
 {
-public:
+    FRHIAccelerationStructureInitializer() = default;
 
-    CRHIAccelerationStructureInitializer()
-        : Flags(EAccelerationStructureBuildFlags::None)
-    { }
-
-    CRHIAccelerationStructureInitializer(EAccelerationStructureBuildFlags InFlags)
+    FRHIAccelerationStructureInitializer(EAccelerationStructureBuildFlags InFlags)
         : Flags(InFlags)
-    { }
-
-    bool AllowUpdate() const { return ((Flags & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None); }
-
-    bool PreferFastTrace() const { return ((Flags & EAccelerationStructureBuildFlags::PreferFastTrace) != EAccelerationStructureBuildFlags::None); }
-
-    bool PreferFastBuild() const { return ((Flags & EAccelerationStructureBuildFlags::PreferFastBuild) != EAccelerationStructureBuildFlags::None); }
-
-    bool operator==(const CRHIAccelerationStructureInitializer& RHS) const
     {
-        return (Flags == RHS.Flags);
     }
 
-    bool operator!=(const CRHIAccelerationStructureInitializer& RHS) const
+    bool AllowUpdate() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
+
+    bool PreferFastTrace() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
+    bool PreferFastBuild() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
+
+    bool operator==(const FRHIAccelerationStructureInitializer& RHS) const
+    {
+        return Flags == RHS.Flags;
+    }
+
+    bool operator!=(const FRHIAccelerationStructureInitializer& RHS) const
     {
         return !(*this == RHS);
     }
 
-    EAccelerationStructureBuildFlags Flags;
+    EAccelerationStructureBuildFlags Flags{ EAccelerationStructureBuildFlags::None };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingGeometryInitializer
 
-class CRHIRayTracingGeometryInitializer : public CRHIAccelerationStructureInitializer
+struct FRHIRayTracingGeometryDesc : public FRHIAccelerationStructureInitializer
 {
-public:
-
-    CRHIRayTracingGeometryInitializer()
-        : CRHIAccelerationStructureInitializer()
+    FRHIRayTracingGeometryDesc()
+        : FRHIAccelerationStructureInitializer()
         , VertexBuffer(nullptr)
+        , NumVertices(0)
         , IndexBuffer(nullptr)
-    { }
+        , NumIndices(0)
+        , IndexFormat(EIndexFormat::Unknown)
+    {
+    }
 
-    CRHIRayTracingGeometryInitializer(CRHIVertexBuffer* InVertexBuffer, CRHIIndexBuffer* InIndexBuffer, EAccelerationStructureBuildFlags InFlags)
-        : CRHIAccelerationStructureInitializer(InFlags)
+    FRHIRayTracingGeometryDesc(
+        FRHIBuffer*                      InVertexBuffer,
+        uint32                           InNumVerticies,
+        FRHIBuffer*                      InIndexBuffer,
+        uint32                           InNumIndices,
+        EIndexFormat                     InIndexFormat,
+        EAccelerationStructureBuildFlags InFlags)
+        : FRHIAccelerationStructureInitializer(InFlags)
         , VertexBuffer(InVertexBuffer)
+        , NumVertices(InNumVerticies)
         , IndexBuffer(InIndexBuffer)
-    { }
-
-    bool operator==(const CRHIRayTracingGeometryInitializer& RHS) const
+        , NumIndices(InNumIndices)
+        , IndexFormat(InIndexFormat)
     {
-        return CRHIAccelerationStructureInitializer::operator==(RHS)
-            && (VertexBuffer == RHS.VertexBuffer) 
-            && (IndexBuffer  == RHS.IndexBuffer);
     }
 
-    bool operator!=(const CRHIRayTracingGeometryInitializer& RHS) const
+    bool operator==(const FRHIRayTracingGeometryDesc& RHS) const
+    {
+        return FRHIAccelerationStructureInitializer::operator==(RHS)
+            && VertexBuffer == RHS.VertexBuffer 
+            && NumVertices  == RHS.NumVertices
+            && IndexBuffer  == RHS.IndexBuffer
+            && NumIndices   == RHS.NumIndices
+            && IndexFormat  == RHS.IndexFormat;
+    }
+
+    bool operator!=(const FRHIRayTracingGeometryDesc& RHS) const
     {
         return !(*this == RHS);
     }
 
-    CRHIVertexBuffer* VertexBuffer;
-    CRHIIndexBuffer*  IndexBuffer;
+    FRHIBuffer*  VertexBuffer{nullptr};
+    uint32       NumVertices{0};
+    FRHIBuffer*  IndexBuffer{nullptr};
+    uint32       NumIndices{0};
+    EIndexFormat IndexFormat{EIndexFormat::Unknown};
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingSceneInitializer
 
-class CRHIRayTracingSceneInitializer : public CRHIAccelerationStructureInitializer
+struct FRHIRayTracingSceneDesc : public FRHIAccelerationStructureInitializer
 {
-public:
+    FRHIRayTracingSceneDesc() = default;
 
-    CRHIRayTracingSceneInitializer()
-        : CRHIAccelerationStructureInitializer()
-        , Instances()
-    { }
-
-    CRHIRayTracingSceneInitializer(const TArrayView<const CRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags)
-        : CRHIAccelerationStructureInitializer(InFlags)
+    FRHIRayTracingSceneDesc(const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags)
+        : FRHIAccelerationStructureInitializer(InFlags)
         , Instances(InInstances)
-    { }
-
-    bool operator==(const CRHIRayTracingSceneInitializer& RHS) const
     {
-        return CRHIAccelerationStructureInitializer::operator==(RHS) && (Instances == RHS.Instances);
     }
 
-    bool operator!=(const CRHIRayTracingSceneInitializer& RHS) const
+    bool operator==(const FRHIRayTracingSceneDesc& RHS) const
+    {
+        return FRHIAccelerationStructureInitializer::operator==(RHS) && Instances == RHS.Instances;
+    }
+
+    bool operator!=(const FRHIRayTracingSceneDesc& RHS) const
     {
         return !(*this == RHS);
     }
 
-    TArray<CRHIRayTracingGeometryInstance> Instances;
+    TArray<FRHIRayTracingGeometryInstance> Instances;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIAccelerationStructure
 
-class CRHIAccelerationStructure : public CRHIResource
+class FRHIAccelerationStructure : public FRHIResource
 {
 protected:
-
-    explicit CRHIAccelerationStructure(const CRHIAccelerationStructureInitializer& Initializer)
-        : CRHIResource()
+    explicit FRHIAccelerationStructure(const FRHIAccelerationStructureInitializer& Initializer)
+        : FRHIResource()
         , Flags(Initializer.Flags)
-    { }
+    {
+    }
+
+    virtual ~FRHIAccelerationStructure() = default;
 
 public:
+    virtual class FRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
 
-    /** @return: Returns the CRHIRayTracingScene interface if implemented otherwise nullptr */
-    virtual class CRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
+    virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
 
-    /** @return: Returns the CRHIRayTracingGeometry interface if implemented otherwise nullptr */
-    virtual class CRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
-
-    /** @return: Returns the native handle of the resource */
     virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
 
-    /** @return: Returns the native handle of the resource */
     virtual void* GetRHIBaseAccelerationStructure() { return nullptr; }
 
-    /** @brief: Set the name of the AccelerationStructure */
-    virtual void SetName(const String& InName) { }
+    virtual FString GetName() const { return ""; }
 
-    /** @return: Returns the name of the Texture */
-    virtual String GetName() const { return ""; }
+    virtual void SetName(const FString& InName) { }
 
-    /** @return: Returns the Flags of the RayTracingScene */
-    EAccelerationStructureBuildFlags GetFlags() const { return Flags; }
+    FORCEINLINE EAccelerationStructureBuildFlags GetFlags() const 
+    {
+        return Flags;
+    }
 
 protected:
     EAccelerationStructureBuildFlags Flags;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingGeometry
 
-class CRHIRayTracingGeometry : public CRHIAccelerationStructure
+class FRHIRayTracingGeometry : public FRHIAccelerationStructure
 {
 protected: 
+    explicit FRHIRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
+        : FRHIAccelerationStructure(Initializer)
+    {
+    }
 
-    explicit CRHIRayTracingGeometry(const CRHIRayTracingGeometryInitializer& Initializer)
-        : CRHIAccelerationStructure(Initializer)
-    { }
+    virtual ~FRHIRayTracingGeometry() = default;
 
 public:
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIAccelerationStructure Interface
-
-    virtual class CRHIRayTracingGeometry* GetRayTracingGeometry() override final { return this; }
+    virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() override final { return this; }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIRayTracingScene
 
-class CRHIRayTracingScene : public CRHIAccelerationStructure
+class FRHIRayTracingScene : public FRHIAccelerationStructure
 {
 protected:
+    explicit FRHIRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)
+        : FRHIAccelerationStructure(Initializer)
+    {
+    }
 
-    explicit CRHIRayTracingScene(const CRHIRayTracingSceneInitializer& Initializer)
-        : CRHIAccelerationStructure(Initializer)
-    { }
-
-public:
-
-    /** @return: Returns the ShaderResourceView for the RayTracingScene */
-    virtual CRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-
-    /** @return: Returns a Bindless descriptor-handle if the RHI supports it */
-    virtual CRHIDescriptorHandle GetBindlessHandle() const { return CRHIDescriptorHandle(); }
+    virtual ~FRHIRayTracingScene() = default;
 
 public:
+    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIAccelerationStructure Interface
+    virtual FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
 
-    virtual class CRHIRayTracingScene* GetRayTracingScene() override final { return this; }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRayTracingShaderResources
 
-struct SRayTracingShaderResources
+struct FRayTracingShaderResources
 {
-    void AddConstantBuffer(CRHIConstantBuffer* Buffer)
+    void AddConstantBuffer(FRHIBuffer* Buffer)
     {
         ConstantBuffers.Emplace(Buffer);
     }
 
-    void AddShaderResourceView(CRHIShaderResourceView* View)
+    void AddShaderResourceView(FRHIShaderResourceView* View)
     {
         ShaderResourceViews.Emplace(View);
     }
 
-    void AddUnorderedAccessView(CRHIUnorderedAccessView* View)
+    void AddUnorderedAccessView(FRHIUnorderedAccessView* View)
     {
         UnorderedAccessViews.Emplace(View);
     }
 
-    void AddSamplerState(CRHISamplerState* State)
+    void AddSamplerState(FRHISamplerState* State)
     {
         SamplerStates.Emplace(State);
     }
@@ -352,16 +307,12 @@ struct SRayTracingShaderResources
         SamplerStates.Clear();
     }
 
-    String Identifier;
+    FString Identifier;
 
-    TArray<CRHIConstantBuffer*>      ConstantBuffers;
-    TArray<CRHIShaderResourceView*>  ShaderResourceViews;
-    TArray<CRHIUnorderedAccessView*> UnorderedAccessViews;
-    TArray<CRHISamplerState*>        SamplerStates;
+    TArray<FRHIBuffer*>              ConstantBuffers;
+    TArray<FRHIShaderResourceView*>  ShaderResourceViews;
+    TArray<FRHIUnorderedAccessView*> UnorderedAccessViews;
+    TArray<FRHISamplerState*>        SamplerStates;
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

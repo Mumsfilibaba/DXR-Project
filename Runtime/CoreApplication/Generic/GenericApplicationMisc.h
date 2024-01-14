@@ -1,45 +1,67 @@
 #pragma once 
-#include "Core/Input/ModifierKeyState.h"
 #include "Core/Containers/String.h"
-
-#include "CoreApplication/CoreApplication.h"
+#include "Core/Containers/SharedPtr.h"
 
 #ifdef MessageBox
     #undef MessageBox
 #endif
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-
-// TODO: Enable other types of Modal windows for supported platforms
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplicationMisc
-
-class COREAPPLICATION_API CGenericApplicationMisc
+enum EModifierFlag : uint8
 {
-public:
+    ModifierFlag_None     = 0,
+    ModifierFlag_Ctrl     = FLAG(1),
+    ModifierFlag_Alt      = FLAG(2),
+    ModifierFlag_Shift    = FLAG(3),
+    ModifierFlag_CapsLock = FLAG(4),
+    ModifierFlag_Super    = FLAG(5),
+    ModifierFlag_NumLock  = FLAG(6),
+};
 
-    static class CGenericApplication* CreateApplication();
+struct FModifierKeyState
+{
+    FModifierKeyState() = default;
 
-    static class CGenericConsoleWindow* CreateConsoleWindow();
+    FModifierKeyState(uint8 InModifierMask)
+        : ModifierMask(InModifierMask)
+    {
+    }
 
-    static FORCEINLINE void MessageBox(const String& Title, const String& Message) { }
+    union
+    {
+         /** @brief - Flags */
+        struct
+        {
+            uint8 bIsCtrlDown     : 1;
+            uint8 bIsAltDown      : 1;
+            uint8 bIsShiftDown    : 1;
+            uint8 bIsCapsLockDown : 1;
+            uint8 bIsSuperDown    : 1;
+            uint8 bIsNumPadDown   : 1;
+        };
+
+         /** @brief - Mask */
+        uint8 ModifierMask = 0;
+    };
+};
+
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+class FGenericApplication;
+struct FOutputDeviceConsole;
+
+struct COREAPPLICATION_API FGenericApplicationMisc
+{
+    static TSharedPtr<FGenericApplication> CreateApplication();
+
+    static FOutputDeviceConsole* CreateOutputDeviceConsole() { return nullptr; }
+
+    static FORCEINLINE void MessageBox(const FString& Title, const FString& Message) { }
 
     static FORCEINLINE void RequestExit(int32 ExitCode) { }
 
     static FORCEINLINE void PumpMessages(bool bUntilEmpty) { }
 
-    static FORCEINLINE SModifierKeyState GetModifierKeyState() { return SModifierKeyState(); }
+    static FORCEINLINE FModifierKeyState GetModifierKeyState() { return FModifierKeyState(); }
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

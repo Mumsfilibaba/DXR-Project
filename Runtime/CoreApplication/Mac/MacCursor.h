@@ -1,35 +1,20 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
-
 #include "CoreApplication/Generic/GenericCursor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacCursor
-
-class CMacCursor final : public CGenericCursor
+class COREAPPLICATION_API FMacCursor final : public FGenericCursor
 {
-private:
-
-    CMacCursor()
-        : CGenericCursor()
-    { }
-
-	~CMacCursor() = default;
-
 public:
+    FMacCursor()
+        : FGenericCursor()
+    {
+    }
 
-	static CMacCursor* CreateMacCursor();
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericCursor Interface
-	
     virtual void SetCursor(ECursor Cursor) override final;
 
-    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
+    virtual void SetPosition(int32 x, int32 y) const override final;
 
-    virtual void GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
+    virtual FIntVector2 GetPosition() const override final;
 
     virtual void SetVisibility(bool bVisible) override final;
 };

@@ -1,86 +1,134 @@
 #include "Engine.h"
-
-#include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
-
-#include "Canvas/CanvasApplication.h"
-
+#include "Project/ProjectManager.h"
+#include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-
+#include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/TextureFactory.h"
-#include "Engine/InterfaceWindows/GameConsoleWindow.h"
-#include "Engine/InterfaceWindows/FrameProfilerWindow.h"
-#include "Engine/Project/ProjectManager.h"
+#include "Engine/Widgets/ConsoleWidget.h"
+#include "Engine/Widgets/FrameProfilerWidget.h"
+#include "RHI/RHI.h"
+#include "RendererCore/TextureFactory.h"
 
-#include "RHI/RHICoreInterface.h"
+ENGINE_API FEngine* GEngine = nullptr;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-
-ENGINE_API CEngine* GEngine;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ConsoleCommands
-
-CAutoConsoleCommand GExit("Engine.Exit");
-CAutoConsoleCommand GToggleFullscreen("MainViewport.ToggleFullscreen");
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine
-
-CEngine* CEngine::Make()
+static void ExitEngineFunc()
 {
-    return dbg_new CEngine();
-}
-
-CEngine::CEngine()
-{
-	GExit.GetExecutedDelgate().AddRaw(this, &CEngine::Exit);
-}
-
-bool CEngine::Initialize()
-{
-    const uint32 Style =
-        WindowStyleFlag_Titled |
-        WindowStyleFlag_Closable |
-        WindowStyleFlag_Minimizable |
-        WindowStyleFlag_Maximizable |
-        WindowStyleFlag_Resizeable;
-
-    CCanvasApplication& Application = CCanvasApplication::Get();
-
-    const uint32 WindowWidth  = 1920;
-    const uint32 WindowHeight = 1080;
-
-    MainWindow = Application.MakeWindow();
-    if (MainWindow && MainWindow->Initialize(CProjectManager::GetProjectName(), WindowWidth, WindowHeight, 0, 0, Style))
+    if (GEngine)
     {
-        MainWindow->Show(false);
-
-        GToggleFullscreen.GetExecutedDelgate().AddRaw(MainWindow.Get(), &CGenericWindow::ToggleFullscreen);
+        GEngine->Exit();
     }
-    else
+}
+ 
+static void ToggleFullScreenFunc()
+{
+    if (GEngine && GEngine->MainWindow)
     {
-        PlatformApplicationMisc::MessageBox("ERROR", "Failed to create Main Window");
+        EWindowMode WindowMode;// = GEngine->MainWindow->GetStyle();
+        if (WindowMode == EWindowMode::Fullscreen)
+        {
+            WindowMode = EWindowMode::Windowed;
+        }
+        else
+        {
+            WindowMode = EWindowMode::Fullscreen;
+        }
+
+        //GEngine->MainWindow->SetWindowMode(WindowMode);
+    }
+}
+
+static FAutoConsoleCommand GExit(
+    "Engine.Exit",
+    "Exits the engine",
+    FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
+
+static FAutoConsoleCommand GToggleFullscreen(
+    "MainViewport.ToggleFullscreen",
+    "Toggles fullscreen on the main Viewport",
+    FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
+
+
+void FEngine::CreateMainWindow()
+{
+    // TODO: This should be loaded from a config file
+    FGenericWindowInitializer WindowInitializer;
+    WindowInitializer.Title  = "Sandbox";
+    WindowInitializer.Width  = 2560;
+    WindowInitializer.Height = 1440;
+    
+    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(WindowInitializer);
+    if (!Window)
+    {
+        DEBUG_BREAK();
+        return;
+    }
+    
+    MainWindow = Window;
+}
+
+bool FEngine::CreateMainViewport()
+{
+    if (!MainWindow)
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "MainWindow is not initialized");
         return false;
     }
 
-    Application.RegisterMainViewport(MainWindow);
+    TSharedPtr<FViewport> Viewport = MakeShared<FViewport>();
+    if (!Viewport)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    
+    FViewportInitializer ViewportInitializer;
+    ViewportInitializer.Window = MainWindow.Get();
+    ViewportInitializer.Width  = MainWindow->GetWidth();
+    ViewportInitializer.Height = MainWindow->GetHeight();
+    
+    if (!Viewport->InitializeRHI(ViewportInitializer))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
 
-    TSharedPtr<ICursor> CursorDevice = Application.GetCursor();
-    User = CCanvasUser::Make(0, CursorDevice);
-    if (!User)
+    // Set the main-viewport
+    MainViewport = Viewport;
+
+    // NOTE: We need to show the window before creating the viewport, since we could ask for a bigger window than what we actually can have Now we show the window
+    MainWindow->Show();
+    
+    FApplication::Get().RegisterMainViewport(MainViewport);
+    return true;
+}
+
+bool FEngine::Init()
+{
+    CreateMainWindow();
+
+    if (!CreateMainViewport())
     {
         return false;
     }
 
-    Application.RegisterUser(User);
+    if (!FAssetManager::Initialize())
+    {
+        return false;
+    }
+
+    if (!FMeshImporter::Initialize())
+    {
+        return false;
+    }
 
     // Create standard textures
-    uint8 Pixels[] = { 255, 255, 255, 255 };
+    uint8 Pixels[4] = { 255, 255, 255, 255 };
 
-    BaseTexture = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseTexture = FTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
     {
         LOG_WARNING("Failed to create BaseTexture");
@@ -94,7 +142,7 @@ bool CEngine::Initialize()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    BaseNormal = CTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseNormal = FTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
     if (!BaseNormal)
     {
         LOG_WARNING("Failed to create BaseNormal-Texture");
@@ -105,55 +153,72 @@ bool CEngine::Initialize()
     }
 
     /* Create material sampler (Used for now by all materials) */
-    CRHISamplerStateInitializer SamplerCreateInfo;
-    SamplerCreateInfo.AddressU = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressV = ESamplerMode::Wrap;
-    SamplerCreateInfo.AddressW = ESamplerMode::Wrap;
+    FRHISamplerStateDesc SamplerCreateInfo;
+    SamplerCreateInfo.AddressU       = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressV       = ESamplerMode::Wrap;
+    SamplerCreateInfo.AddressW       = ESamplerMode::Wrap;
     SamplerCreateInfo.ComparisonFunc = EComparisonFunc::Never;
-    SamplerCreateInfo.Filter = ESamplerFilter::Anistrotopic;
-    SamplerCreateInfo.MaxAnisotropy = 16;
-    SamplerCreateInfo.MaxLOD = FLT_MAX;
-    SamplerCreateInfo.MinLOD = -FLT_MAX;
-    SamplerCreateInfo.MipLODBias = 0.0f;
+    SamplerCreateInfo.Filter         = ESamplerFilter::Anistrotopic;
+    SamplerCreateInfo.MaxAnisotropy  = 16;
+    SamplerCreateInfo.MaxLOD         = TNumericLimits<float>::Max();
+    SamplerCreateInfo.MinLOD         = TNumericLimits<float>::Lowest();
+    SamplerCreateInfo.MipLODBias     = 0.0f;
 
     BaseMaterialSampler = RHICreateSamplerState(SamplerCreateInfo);
 
     /* Base material */
-    SMaterialDesc MaterialDesc;
-    MaterialDesc.AO = 1.0f;
-    MaterialDesc.Metallic = 0.0f;
-    MaterialDesc.Roughness = 1.0f;
+    FMaterialDesc MaterialDesc;
+    MaterialDesc.AO           = 1.0f;
+    MaterialDesc.Metallic     = 0.0f;
+    MaterialDesc.Roughness    = 1.0f;
     MaterialDesc.EnableHeight = 0;
-    MaterialDesc.Albedo = CVector3(1.0f);
+    MaterialDesc.Albedo       = FVector3(1.0f);
 
-    BaseMaterial = MakeShared<CMaterial>(MaterialDesc);
-    BaseMaterial->AlbedoMap = GEngine->BaseTexture;
-    BaseMaterial->NormalMap = GEngine->BaseNormal;
+    BaseMaterial = MakeShared<FMaterial>(MaterialDesc);
+    BaseMaterial->AlbedoMap    = GEngine->BaseTexture;
+    BaseMaterial->NormalMap    = GEngine->BaseNormal;
     BaseMaterial->RoughnessMap = GEngine->BaseTexture;
-    BaseMaterial->AOMap = GEngine->BaseTexture;
-    BaseMaterial->MetallicMap = GEngine->BaseTexture;
-    BaseMaterial->Init();
+    BaseMaterial->AOMap        = GEngine->BaseTexture;
+    BaseMaterial->MetallicMap  = GEngine->BaseTexture;
+    BaseMaterial->AlphaMask    = GEngine->BaseTexture;
+    BaseMaterial->Initialize();
 
-    /* Create the start scene */
-    Scene = MakeShared<CScene>();
+    // Create a new scene
+    Scene = new FScene();
 
-    /* Create windows */
-    TSharedRef<CFrameProfilerWindow> ProfilerWindow = CFrameProfilerWindow::Make();
-    Application.AddWindow(ProfilerWindow);
+    // Create a SceneViewport
+    SceneViewport = MakeShared<FSceneViewport>(MainViewport);
+    SceneViewport->SetScene(Scene);
+    MainViewport->SetViewportInterface(SceneViewport);
 
-    TSharedRef<CGameConsoleWindow> ConsoleWindow = CGameConsoleWindow::Make();
-    Application.AddWindow(ConsoleWindow);
+    // Create Widgets
+    if (FApplication::IsInitialized())
+    {
+        ProfilerWidget = MakeShared<FFrameProfilerWidget>();
+        FApplication::Get().AddWidget(ProfilerWidget);
+
+        ConsoleWidget = MakeShared<FConsoleWidget>();
+        FApplication::Get().AddWidget(ConsoleWidget);
+    }
 
     return true;
 }
 
-bool CEngine::Start()
+bool FEngine::Start()
 {
-    Scene->Start();
+    if (Scene)
+    {
+        Scene->Start();
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
+
     return true;
 }
 
-void CEngine::Tick(CTimestamp DeltaTime)
+void FEngine::Tick(FTimespan DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -163,17 +228,31 @@ void CEngine::Tick(CTimestamp DeltaTime)
     }
 }
 
-bool CEngine::Release()
+void FEngine::Release()
 {
-    return true;
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().RemoveWidget(ProfilerWidget);
+        ProfilerWidget.Reset();
+
+        FApplication::Get().RemoveWidget(ConsoleWidget);
+        ConsoleWidget.Reset();
+    }
+
+    if (Scene)
+    {
+        SceneViewport->SetScene(nullptr);
+        delete Scene;
+    }
+
+    FAssetManager::Release();
+
+    FMeshImporter::Release();
+
+    MainViewport->ReleaseRHI();
 }
 
-void CEngine::Exit()
+void FEngine::Exit()
 {
-    PlatformApplicationMisc::RequestExit(0);
-}
-
-void CEngine::Destroy()
-{
-    delete this;
+    RequestEngineExit("Normal Exit");
 }

@@ -1,11 +1,10 @@
 #pragma once
-#include "Core/Core.h"
 #include "AtomicInt.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// A simple lock that does not use OS functions to lock a thread. Good for short locking periods in high contingency areas
+#include "Core/Core.h"
+#include "Core/Platform/PlatformThreadMisc.h"
 
-class CSpinLock
+class FSpinLock
 {
     enum
     {
@@ -14,22 +13,22 @@ class CSpinLock
     };
 
 public:
+    FSpinLock(const FSpinLock&) = delete;
+    FSpinLock& operator=(const FSpinLock&) = delete;
 
-    CSpinLock(const CSpinLock&) = delete;
-    CSpinLock& operator=(const CSpinLock&) = delete;
+    ~FSpinLock() = default;
 
-    ~CSpinLock() = default;
-
-    /** @brief: Default constructor */
-    FORCEINLINE CSpinLock() noexcept
+    /** @brief - Default constructor */
+    FORCEINLINE FSpinLock() noexcept
         : State(State_Unlocked)
-    { }
+    {
+    }
 
-    /** @brief: Lock SpinLock for other threads */
+    /** @brief - Lock SpinLock for other threads */
     FORCEINLINE void Lock() noexcept
     {
         // Try locking until success
-        for (;; )
+        for (;;)
         {
             // When the previous value is unlocked => success
             if (State.Exchange(State_Locked) == State_Unlocked)
@@ -39,24 +38,24 @@ public:
 
             while (State.RelaxedLoad() == State_Locked)
             {
-                PauseInstruction();
+                FPlatformThreadMisc::Pause();
             }
         }
     }
 
-    /** @return: Tries to lock CriticalSection for other threads and, returns true if the lock is successful */
+    /** @return - Tries to lock CriticalSection for other threads and, returns true if the lock is successful */
     FORCEINLINE bool TryLock() noexcept
     {
         // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
         return (State.RelaxedLoad() == State_Unlocked) && (State.Exchange(State_Locked) == State_Unlocked);
     }
 
-    /** @brief: Unlock CriticalSection for other threads */
+    /** @brief - Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
         State.Store(State_Unlocked);
     }
 
 private:
-    AtomicInt32 State;
+    FAtomicInt32 State;
 };

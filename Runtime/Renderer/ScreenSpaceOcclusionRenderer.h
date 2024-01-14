@@ -1,36 +1,29 @@
 #pragma once
 #include "FrameResources.h"
-
 #include "RHI/RHICommandList.h"
-
+#include "RHI/RHIShader.h"
 #include "Engine/Scene/Scene.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CScreenSpaceOcclusionRenderer
-
-class RENDERER_API CScreenSpaceOcclusionRenderer
+class RENDERER_API FScreenSpaceOcclusionRenderer
 {
 public:
-    CScreenSpaceOcclusionRenderer() = default;
-    ~CScreenSpaceOcclusionRenderer() = default;
+    bool Initialize(FFrameResources& FrameResources);
 
-    bool Init(SFrameResources& FrameResources);
     void Release();
 
-    void Render(CRHICommandList& CmdList, SFrameResources& FrameResources);
+    void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);
 
-    bool ResizeResources(SFrameResources& FrameResources);
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
 private:
-    bool CreateRenderTarget(SFrameResources& FrameResources);
+    bool CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
-    TSharedRef<CRHIComputePipelineState> PipelineState;
-    TSharedRef<CRHIComputeShader>        SSAOShader;
-    TSharedRef<CRHIComputePipelineState> BlurHorizontalPSO;
-    TSharedRef<CRHIComputeShader>        BlurHorizontalShader;
-    TSharedRef<CRHIComputePipelineState> BlurVerticalPSO;
-    TSharedRef<CRHIComputeShader>        BlurVerticalShader;
-    TSharedRef<CRHIGenericBuffer>     SSAOSamples;
-    TSharedRef<CRHIShaderResourceView>   SSAOSamplesSRV;
-    TSharedRef<CRHITexture2D>            SSAONoiseTex;
+    FRHIComputePipelineStateRef PipelineState;
+    FRHIComputeShaderRef        SSAOShader;
+    
+    FRHIComputePipelineStateRef BlurHorizontalPSO;
+    FRHIComputeShaderRef        BlurHorizontalShader;
+    
+    FRHIComputePipelineStateRef BlurVerticalPSO;
+    FRHIComputeShaderRef        BlurVerticalShader;
 };

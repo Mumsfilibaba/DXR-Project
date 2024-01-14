@@ -1,86 +1,140 @@
 #pragma once
 #include "Core/RefCounted.h"
+#include "Core/Math/IntVector2.h"
 #include "Core/Containers/String.h"
-#include "Core/Templates/EnumUtilities.h"
+#include "Core/Containers/SharedRef.h"
+#include "Core/Templates/TypeTraits.h"
 
-#include "CoreApplication/CoreApplication.h"
+#undef IsMinimized
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EWindowStyleFlag - Window style flags
+class FGenericWindow;
 
-enum EWindowStyleFlag : uint32
+enum class EWindowStyleFlag : uint16
 {
-    WindowStyleFlag_None        = 0x0,
-    WindowStyleFlag_Titled      = FLAG(1),
-    WindowStyleFlag_Closable    = FLAG(2),
-    WindowStyleFlag_Minimizable = FLAG(3),
-    WindowStyleFlag_Maximizable = FLAG(4),
-    WindowStyleFlag_Resizeable  = FLAG(5),
+    None          = 0,
+    Titled        = FLAG(1),
+    Closable      = FLAG(2),
+    Minimizable   = FLAG(3),
+    Maximizable   = FLAG(4),
+    Resizeable    = FLAG(5),
+    NoTaskBarIcon = FLAG(6),
+    TopMost       = FLAG(7)
 };
 
 ENUM_CLASS_OPERATORS(EWindowStyleFlag);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SWindowStyle
-
-struct SWindowStyle
+// TODO: Change to use WindowMode instead of specifying styles separately
+enum class EWindowMode : uint8
 {
-    SWindowStyle() = default;
-
-    FORCEINLINE SWindowStyle(uint32 InStyle)
-        : Style(InStyle)
-    { }
-
-    FORCEINLINE bool IsTitled() const
-    {
-        return Style & WindowStyleFlag_Titled;
-    }
-
-    FORCEINLINE bool IsClosable() const
-    {
-        return Style & WindowStyleFlag_Closable;
-    }
-
-    FORCEINLINE bool IsMinimizable() const
-    {
-        return Style & WindowStyleFlag_Minimizable;
-    }
-
-    FORCEINLINE bool IsMaximizable() const
-    {
-        return Style & WindowStyleFlag_Maximizable;
-    }
-
-    FORCEINLINE bool IsResizeable() const
-    {
-        return Style & WindowStyleFlag_Resizeable;
-    }
-
-    uint32 Style = 0;
+    None       = 0,
+    Windowed   = 1,
+    Borderless = 2,
+    Fullscreen = 3,
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SWindowShape
-
-struct SWindowShape
+struct FWindowStyle
 {
-    SWindowShape() = default;
+    static FWindowStyle Default()
+    {
+        return FWindowStyle(EWindowStyleFlag::Titled | EWindowStyleFlag::Maximizable | EWindowStyleFlag::Minimizable | EWindowStyleFlag::Resizeable | EWindowStyleFlag::Closable);
+    }
 
-    FORCEINLINE SWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
+    constexpr FWindowStyle() = default;
+
+    constexpr FWindowStyle(EWindowStyleFlag InStyle)
+        : Style(InStyle)
+    {
+    }
+
+    constexpr bool IsTitled() const
+    {
+        return (Style & EWindowStyleFlag::Titled) != EWindowStyleFlag::None;
+    }
+
+    constexpr bool IsClosable() const
+    {
+        return (Style & EWindowStyleFlag::Closable) != EWindowStyleFlag::None;
+    }
+
+    constexpr bool IsMinimizable() const
+    {
+        return (Style & EWindowStyleFlag::Minimizable) != EWindowStyleFlag::None;
+    }
+
+    constexpr bool IsMaximizable() const
+    {
+        return (Style & EWindowStyleFlag::Maximizable) != EWindowStyleFlag::None;
+    }
+
+    constexpr bool IsResizeable() const
+    {
+        return (Style & EWindowStyleFlag::Resizeable) != EWindowStyleFlag::None;
+    }
+
+    constexpr bool HasTaskBarIcon() const
+    {
+        return (Style & EWindowStyleFlag::NoTaskBarIcon) == EWindowStyleFlag::None;
+    }
+
+    constexpr bool IsTopMost() const
+    {
+        return (Style & EWindowStyleFlag::TopMost) != EWindowStyleFlag::None;
+    }
+
+    constexpr bool operator==(FWindowStyle Other) const
+    {
+        return Style == Other.Style;
+    }
+
+    constexpr bool operator!=(FWindowStyle Other) const
+    {
+        return Style != Other.Style;
+    }
+    
+    constexpr bool operator==(EWindowStyleFlag Other) const
+    {
+        return Style == Other;
+    }
+
+    constexpr bool operator!=(EWindowStyleFlag Other) const
+    {
+        return Style != Other;
+    }
+
+    EWindowStyleFlag Style = EWindowStyleFlag::None;
+};
+
+struct FWindowShape
+{
+    FWindowShape() = default;
+
+    FWindowShape(uint32 InWidth, uint32 InHeight)
+        : Width(InWidth)
+        , Height(InHeight)
+        , Position({ 0, 0 })
+    {
+    }
+
+    FWindowShape(uint32 InWidth, uint32 InHeight, int32 x, int32 y)
         : Width(InWidth)
         , Height(InHeight)
         , Position({ x, y })
-    { }
+    {
+    }
 
-    uint32 Width = 0;
+    bool operator==(FWindowShape Other) const
+    {
+        return Width == Other.Width && Height == Other.Height && Position.x == Other.Position.x && Position.y == Other.Position.y;
+    }
+
+    bool operator!=(FWindowShape Other) const
+    {
+        return !(*this == Other);
+    }
+
+    uint32 Width  = 0;
     uint32 Height = 0;
     struct
     {
@@ -89,64 +143,106 @@ struct SWindowShape
     } Position;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericWindow
-
-class CGenericWindow : public CRefCounted
+struct FGenericWindowInitializer
 {
-protected:
+    FGenericWindowInitializer()
+        : Title()
+        , Width(1280)
+        , Height(720)
+        , Position(0, 0)
+        , Style(FWindowStyle::Default())
+        , ParentWindow(nullptr)
+    {
+    }
+    
+    bool operator==(const FGenericWindowInitializer& Other) const
+    {
+        return Title        == Other.Title 
+            && Width        == Other.Width 
+            && Height       == Other.Height 
+            && Position     == Other.Position 
+            && Style        == Other.Style
+            && ParentWindow == Other.ParentWindow;
+    }
 
-    CGenericWindow()  = default;
-    ~CGenericWindow() = default;
+    bool operator!=(const FGenericWindowInitializer& Other) const
+    {
+        return !(*this == Other);
+    }
 
+    FString         Title;
+    uint32          Width;
+    uint32          Height;
+    FIntVector2     Position;
+    FWindowStyle    Style;
+    FGenericWindow* ParentWindow;
+};
+
+
+class FGenericWindow : public FRefCounted
+{
 public:
+    virtual ~FGenericWindow() = default;
 
-    virtual bool Initialize(const String& Title, uint32 InWidth, uint32 InHeight, int32 x, int32 y, SWindowStyle Style) { return true; }
+    virtual bool Initialize(const FGenericWindowInitializer& InInitializer) { return true; }
 
-    virtual void Show(bool bMaximized) { }
+    virtual void Show(bool bFocusOnActivate = true) { }
 
     virtual void Minimize() { }
 
     virtual void Maximize() { }
 
-    virtual void Close() { }
+    virtual void Destroy() { }
 
     virtual void Restore() { }
 
     virtual void ToggleFullscreen() { }
 
+    virtual bool IsActiveWindow() const { return false; }
+    
+    virtual void SetWindowPos(int32 x, int32 y) { }
+    
     virtual bool IsValid() const { return false; }
 
-    virtual bool IsActiveWindow() const { return false; }
+    virtual bool IsMinimized() const { return false; }
 
-    virtual void SetTitle(const String& Title) { }
+    virtual bool IsMaximized() const { return false; }
 
-    virtual void GetTitle(String& OutTitle) { }
+    virtual bool IsChildWindow(const TSharedRef<FGenericWindow>& ParentWindow) const { return false; }
 
-    virtual void MoveTo(int32 x, int32 y) { }
+    virtual void SetWindowFocus() { }
 
-    virtual void SetWindowShape(const SWindowShape& Shape, bool bMove) { }
+    virtual void SetTitle(const FString& Title) { }
+    
+    virtual void GetTitle(FString& OutTitle) const { }
 
-    virtual void GetWindowShape(SWindowShape& OutWindowShape) const { }
+    virtual void SetWindowOpacity(float Alpha) { }
+
+    virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) { }
+
+    virtual void GetWindowShape(FWindowShape& OutWindowShape) const { }
 
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
+
+    virtual float GetWindowDpiScale() const { return 0.0f; }
 
     virtual uint32 GetWidth() const { return 0; }
 
     virtual uint32 GetHeight() const { return 0; }
 
     virtual void SetPlatformHandle(void* InPlatformHandle) { }
-
+    
     virtual void* GetPlatformHandle() const { return nullptr; }
 
-    FORCEINLINE SWindowStyle GetStyle() const { return StyleParams; }
+    virtual void SetStyle(FWindowStyle Style) { }
+
+    FWindowStyle GetStyle() const 
+    { 
+        return StyleParams;
+    }
 
 protected:
-    SWindowStyle StyleParams;
+    FWindowStyle StyleParams;
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

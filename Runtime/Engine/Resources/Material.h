@@ -1,113 +1,135 @@
 #pragma once
 #include "Engine/EngineModule.h"
-
-#include "RHI/RHIResources.h"
-
 #include "Core/Math/Vector3.h"
 #include "Core/Containers/StaticArray.h"
+#include "RHI/RHIResources.h"
 
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMaterialDesc
-
-struct SMaterialDesc
+// TODO: This should be refactored into using different shaders
+enum EAlphaMaskMode
 {
-    CVector3 Albedo = CVector3(1.0f);
-    float Roughness = 0.0f;
-
-    float Metallic     = 0.0f;
-    float AO           = 0.5f;
-    int32 EnableHeight = 0;
-    int32 EnableMask   = 0;
+    AlphaMaskMode_Disabled        = 0, // Disabled completely
+    AlphaMaskMode_Enabled         = 1, // Stored in separate texture
+    AlphaMaskMode_DiffuseCombined = 2, // Stored in Alpha channel of diffuse texture
 };
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMaterial
 
-class ENGINE_API CMaterial
+struct FMaterialDesc
+{
+    FVector3 Albedo       = FVector3(1.0f);
+    float    Roughness    = 0.0f;
+
+    float    Metallic     = 0.0f;
+    float    AO           = 0.5f;
+    int32    EnableHeight = 0;
+    int32    EnableMask   = AlphaMaskMode_Disabled;
+};
+
+
+class ENGINE_API FMaterial
 {
 public:
-    CMaterial(const SMaterialDesc& InProperties);
-    ~CMaterial() = default;
+    FMaterial(const FMaterialDesc& InProperties);
+    ~FMaterial() = default;
 
-    void Init();
+    void Initialize();
 
-    void BuildBuffer(class CRHICommandList& CmdList);
+    void BuildBuffer(class FRHICommandList& CommandList);
 
-    FORCEINLINE bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
+    bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
-    void SetAlbedo(const CVector3& Albedo);
+    void SetAlbedo(const FVector3& Albedo);
+
     void SetAlbedo(float r, float g, float b);
 
     void SetMetallic(float Metallic);
+    
     void SetRoughness(float Roughness);
+    
     void SetAmbientOcclusion(float AO);
 
     void ForceForwardPass(bool bForceForwardRender);
 
     void EnableHeightMap(bool bInEnableHeightMap);
+    
     void EnableAlphaMask(bool bInEnableAlphaMask);
 
-    void SetDebugName(const String& InDebugName);
+    void EnableDoubleSided(bool bInIsDoubleSided)
+    {
+        bIsDoubleSided = bInIsDoubleSided;
+    }
 
-    // ShaderResourceView are sorted in the way that the deferred rendering pass wants them
-    // This means that one can call BindShaderResourceViews directly with this function
-    CRHIShaderResourceView* const* GetShaderResourceViews() const;
+    void SetDebugName(const FString& InDebugName);
 
-    FORCEINLINE CRHISamplerState* GetMaterialSampler() const
+    bool HasAlphaMask() const
+    {
+        return AlphaMask && Properties.EnableMask || Properties.EnableMask == AlphaMaskMode_DiffuseCombined;
+    }
+
+    bool HasHeightMap() const
+    {
+        return HeightMap && Properties.EnableHeight == 1;
+    }
+
+    bool IsDoubleSided() const
+    {
+        return bIsDoubleSided;
+    }
+
+    bool IsPackedMaterial() const
+    {
+        return Properties.EnableMask == AlphaMaskMode_DiffuseCombined || SpecularMap != nullptr;
+    }
+
+    FRHISamplerState* GetMaterialSampler() const
     {
         return Sampler.Get();
     }
 
-    FORCEINLINE CRHIConstantBuffer* GetMaterialBuffer() const
+    FRHIBuffer* GetMaterialBuffer() const
     {
         return MaterialBuffer.Get();
     }
 
-    FORCEINLINE bool ShouldRenderInPrePass()
+    bool ShouldRenderInPrePass()
     {
-        return !HasAlphaMask() && !HasHeightMap() && !bRenderInForwardPass;
+        return !bRenderInForwardPass;
     }
 
-    FORCEINLINE bool ShouldRenderInForwardPass()
+    bool ShouldRenderInForwardPass()
     {
         return bRenderInForwardPass;
     }
 
-    FORCEINLINE bool HasAlphaMask() const
-    {
-        return AlphaMask;
-    }
-
-    FORCEINLINE bool HasHeightMap() const
-    {
-        return HeightMap;
-    }
-
-    FORCEINLINE const SMaterialDesc& GetMaterialProperties() const
+    const FMaterialDesc& GetMaterialProperties() const
     {
         return Properties;
     }
 
+    FRHIShaderResourceView* GetAlphaMaskSRV() const
+    {
+        return Properties.EnableMask == AlphaMaskMode_DiffuseCombined ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
+    }
+
 public:
-    TSharedRef<CRHITexture2D> AlbedoMap;
-    TSharedRef<CRHITexture2D> NormalMap;
-    TSharedRef<CRHITexture2D> RoughnessMap;
-    TSharedRef<CRHITexture2D> HeightMap;
-    TSharedRef<CRHITexture2D> AOMap;
-    TSharedRef<CRHITexture2D> MetallicMap;
-    TSharedRef<CRHITexture2D> AlphaMask;
+    FRHITextureRef AlbedoMap;
+    FRHITextureRef NormalMap;
+    FRHITextureRef RoughnessMap;
+    FRHITextureRef HeightMap;
+    FRHITextureRef AOMap;
+    FRHITextureRef SpecularMap;
+    FRHITextureRef MetallicMap;
+    FRHITextureRef AlphaMask;
 
 private:
-    String DebugName;
+    FMaterialDesc       Properties;
+    FRHIBufferRef       MaterialBuffer;
+    FRHISamplerStateRef Sampler;
 
-    bool bMaterialBufferIsDirty = true;
     bool bRenderInForwardPass   = false;
+    bool bIsDoubleSided         = false;
+    bool bMaterialBufferIsDirty = true;
 
-    SMaterialDesc        	       Properties;
-    TSharedRef<CRHIConstantBuffer> MaterialBuffer;
-    TSharedRef<CRHISamplerState>   Sampler;
-
-    mutable TStaticArray<CRHIShaderResourceView*, 7> ShaderResourceViews;
+    FString DebugName;
 };

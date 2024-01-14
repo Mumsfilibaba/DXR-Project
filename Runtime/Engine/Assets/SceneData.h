@@ -1,146 +1,111 @@
 #pragma once
 #include "VertexFormat.h"
-
+#include "TextureResource.h"
 #include "Engine/EngineModule.h"
-
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
-
 #include "RHI/RHITypes.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMeshData
-
-struct SMeshData
+struct FMeshData
 {
-    // C++ Being retarded?
-    SMeshData() = default;
-
-    SMeshData(SMeshData&&) = default;
-    SMeshData(const SMeshData&) = default;
-
-    SMeshData& operator=(SMeshData&&) = default;
-    SMeshData& operator=(const SMeshData&) = default;
-
-    inline void Clear()
+    FORCEINLINE void Clear()
     {
         Vertices.Clear();
         Indices.Clear();
     }
 
-    inline bool Hasdata() const
+    FORCEINLINE bool Hasdata() const
     {
         return !Vertices.IsEmpty();
     }
 
-    TArray<SVertex> Vertices;
+    FORCEINLINE void ShrinkBuffers()
+    {
+        Vertices.Shrink();
+        Indices.Shrink();
+    }
+
+    FORCEINLINE int32 GetVertexCount() const
+    {
+        return Vertices.Size();
+    }
+
+    FORCEINLINE int32 GetIndexCount() const
+    {
+        return Indices.Size();
+    }
+
+    TArray<FVertex> Vertices;
     TArray<uint32>  Indices;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SModelData
 
-struct SModelData
+struct FModelData
 {
-    SModelData() = default;
+    /** @brief - Name of the mesh specified in the model-file */
+    FString Name;
 
-    SModelData(SModelData&&) = default;
-    SModelData(const SModelData&) = default;
+    /** @brief - Model mesh data */
+    FMeshData Mesh;
 
-    SModelData& operator=(SModelData&&) = default;
-    SModelData& operator=(const SModelData&) = default;
-
-     /** @brief: Name of the mesh specified in the model-file */
-    String Name;
-
-     /** @brief: Model mesh data */
-    SMeshData Mesh;
-
-     /** @brief: The Material index in the SSceneData Materials Array */
+    /** @brief - The Material index in the FSceneData Materials Array */
     int32 MaterialIndex = -1;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SImage2D - Image for when loading materials
-
-struct SImage2D
+struct FMaterialData
 {
-    SImage2D() = default;
+    /** @brief - Name of the material specified in the model-file */
+    FString Name;
 
-    SImage2D(const String& InPath, uint16 InWidth, uint16 InHeight, EFormat InFormat)
-        : Path(InPath)
-        , Image()
-        , Width(InWidth)
-        , Height(InHeight)
-        , Format(InFormat)
-    { }
+    /** @brief - Diffuse texture */
+    FTextureResource2DRef DiffuseTexture;
 
-     /** @brief: Relative path to the image specified in the model-file */
-    String Path;
+    /** @brief - Normal texture */
+    FTextureResource2DRef NormalTexture;
 
-     /** @brief: Pointer to image data */
-    TUniquePtr<uint8[]> Image;
+    /** @brief - Specular texture - Stores AO, Metallic, and Roughness in the same textures */
+    FTextureResource2DRef SpecularTexture;
 
-     /** @brief: Size of the image */
-    uint16 Width = 0;
-    uint16 Height = 0;
+    /** @brief - Emissive texture */
+    FTextureResource2DRef EmissiveTexture;
 
-     /** @brief: The format that the image was loaded as */
-    EFormat Format = EFormat::Unknown;
+    /** @brief - AO texture - Ambient Occlusion */
+    FTextureResource2DRef AOTexture;
 
-    bool bIsLoaded = false;
-};
+    /** @brief - Roughness texture*/
+    FTextureResource2DRef RoughnessTexture;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SMaterialData
+    /** @brief - Metallic Texture*/
+    FTextureResource2DRef MetallicTexture;
 
-struct SMaterialData
-{
-     /** @brief: Diffuse texture */
-    TSharedPtr<SImage2D> DiffuseTexture;
+    /** @brief - Metallic Texture*/
+    FTextureResource2DRef AlphaMaskTexture;
 
-     /** @brief: Normal texture */
-    TSharedPtr<SImage2D> NormalTexture;
+    /** @brief - Diffuse Parameter */
+    FVector3 Diffuse;
 
-     /** @brief: Specular texture - Stores AO, Metallic, and Roughness in the same textures */
-    TSharedPtr<SImage2D> SpecularTexture;
-
-     /** @brief: Emissive texture */
-    TSharedPtr<SImage2D> EmissiveTexture;
-
-     /** @brief: AO texture - Ambient Occlusion */
-    TSharedPtr<SImage2D> AOTexture;
-
-     /** @brief: Roughness texture*/
-    TSharedPtr<SImage2D> RoughnessTexture;
-
-     /** @brief: Metallic Texture*/
-    TSharedPtr<SImage2D> MetallicTexture;
-
-     /** @brief: Metallic Texture*/
-    TSharedPtr<SImage2D> AlphaMaskTexture;
-
-     /** @brief: Diffuse Parameter */
-    CVector3 Diffuse;
-
-     /** @brief: AO Parameter */
+    /** @brief - AO Parameter */
     float AO = 1.0f;
 
-     /** @brief: Roughness Parameter */
+    /** @brief - Roughness Parameter */
     float Roughness = 1.0f;
 
-     /** @brief: Metallic Parameter */
+    /** @brief - Metallic Parameter */
     float Metallic = 1.0f;
+
+    /** @brief - Is the diffuse and alpha stored in the same texture? */
+    bool bAlphaDiffuseCombined = false;
+
+    /** @brief - Should this material have culling turned off ? */
+    bool bIsDoubleSided = false;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SSceneData
 
-struct ENGINE_API SSceneData
+struct ENGINE_API FSceneData
 {
-    void AddToScene(class CScene* Scene);
+    void AddToScene(class FScene* Scene);
 
     FORCEINLINE bool HasData() const
     {
@@ -157,9 +122,9 @@ struct ENGINE_API SSceneData
         return !Materials.IsEmpty();
     }
 
-    TArray<SModelData>    Models;
-    TArray<SMaterialData> Materials;
+    TArray<FModelData>    Models;
+    TArray<FMaterialData> Materials;
 
-     /** @brief: A scale used to scale each actor when using add to scene */
+     /** @brief - A scale used to scale each actor when using add to scene */
     float Scale = 1.0f;
 };

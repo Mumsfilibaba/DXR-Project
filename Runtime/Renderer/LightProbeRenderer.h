@@ -1,29 +1,26 @@
 #pragma once
 #include "FrameResources.h"
 #include "LightSetup.h"
-
+#include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
+#include "RendererUtilities/GPUTextureCompressor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CLightProbeRenderer
-
-class RENDERER_API CLightProbeRenderer
+class RENDERER_API FLightProbeRenderer
 {
 public:
-    CLightProbeRenderer() = default;
-    ~CLightProbeRenderer() = default;
-
-    bool Init(SLightSetup& LightSetup, SFrameResources& FrameResources);
+    bool Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderSkyLightProbe(CRHICommandList& CmdList, const SLightSetup& LightSetup, const SFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CommandList, FLightSetup& LightSetup, const FFrameResources& Resources);
 
 private:
-    bool CreateSkyLightResources(SLightSetup& LightSetup);
+    bool CreateSkyLightResources(FLightSetup& LightSetup);
 
-    TSharedRef<CRHIComputePipelineState> IrradianceGenPSO;
-    TSharedRef<CRHIComputeShader>        IrradianceGenShader;
-    TSharedRef<CRHIComputePipelineState> SpecularIrradianceGenPSO;
-    TSharedRef<CRHIComputeShader>        SpecularIrradianceGenShader;
+    FGPUTextureCompressor       Compressor;
+
+    FRHIComputePipelineStateRef IrradianceGenPSO;
+    FRHIComputeShaderRef        IrradianceGenShader;
+    FRHIComputePipelineStateRef SpecularIrradianceGenPSO;
+    FRHIComputeShaderRef        SpecularIrradianceGenShader;
 };

@@ -1,94 +1,66 @@
 #pragma once
-#include "Core/Core.h"
-#include "Core/Input/InputCodes.h"
-#include "Core/Delegates/Event.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneViewport.h"
+#include "Resources/Material.h"
+#include "Core/Containers/SharedPtr.h"
+#include "Application/Events.h"
+#include "Application/Application.h"
+#include "RHI/RHIResources.h"
 
-#include "Canvas/Events.h"
-#include "Canvas/CanvasUser.h"
-#include "Canvas/WindowMessageHandler.h"
-
-#include "RHI/RHIViewport.h"
-
-#include "Engine/Scene/Scene.h"
-#include "Engine/Resources/Material.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Engine - Class representing the engine
-
-class ENGINE_API CEngine
+struct ENGINE_API FEngine
 {
-public:
+    virtual ~FEngine() = default;
 
-    /**
-     * @brief: Create a new engine instance 
-     * 
-     * @return: Returns a new engine instance
-     */
-    static CEngine* Make();
+    /** @brief - Creates the main window */
+    void CreateMainWindow();
 
-    /**
-     * @brief: Initialize the engine 
-     * 
-     * @return: Returns true if the initialization was successful
-     */
-    virtual bool Initialize();
+    /** @return - Returns true the main viewport could be initialized */
+    bool CreateMainViewport();
 
-    /**
-     * @brief: Start the engine
-     * 
-     * @return: Returns true if the startup was successful
-     */
+    /** @return - Returns true if Engine initialization was successful */
+    virtual bool Init();
+
+    /** @brief - Releases engine resource */
+    virtual void Release();
+
+    /** @return - Returns true if Starting the Engine was successful */
     virtual bool Start();
 
-    /**
-     * @brief: Tick should be called once per frame 
-     * 
-     * @param DeltaTime: Time since the last tick
-     */
-    virtual void Tick(CTimestamp DeltaTime);
+    /** @brief - Tick the engine */
+    virtual void Tick(FTimespan DeltaTime);
+    
+    /** @brief - Exit the engine */
+    virtual void Exit();
 
-    /** 
-     * Release engine resources
-     * 
-     * @return: Returns true if the release was successful
-     */
-    virtual bool Release();
+    /** @brief - The main Window */
+    TSharedRef<FGenericWindow> MainWindow; 
 
-    /** Request exit from the engine */
-    void Exit();
+    /** @brief - The main viewport */
+    TSharedPtr<FViewport> MainViewport;
 
-    /** Destroy the engine */
-    void Destroy();
+    /** @brief - SceneViewport */
+    TSharedPtr<FSceneViewport> SceneViewport;
 
-    /** The main window of the app */
-    TSharedRef<CGenericWindow> MainWindow;
+    /** @brief - In-game Console Widget */
+    TSharedPtr<class FConsoleWidget> ConsoleWidget;
 
-    /** The main viewport */
-    TSharedRef<CRHIViewport> MainViewport;
+    /** @brief - Profiler Widget */
+    TSharedPtr<class FFrameProfilerWidget> ProfilerWidget;
 
-    /** User */
-    TSharedPtr<CCanvasUser> User;
+    /** @brief - The current scene */
+    FScene* Scene;
 
-    /** The current scene */
-    TSharedPtr<CScene> Scene;
+    /** @brief - A completely white texture */
+    FRHITextureRef BaseTexture;
 
-    /** A completely white texture */
-    TSharedRef<CRHITexture2D> BaseTexture;
+    /** @brief - A completely flat normal map */
+    FRHITextureRef BaseNormal;
 
-    /** A completely flat normal map*/
-    TSharedRef<CRHITexture2D> BaseNormal;
+    /** @brief - Base sampler used by all materials */
+    FRHISamplerStateRef BaseMaterialSampler;
 
-    /** Base sampler used by all materials */
-    TSharedRef<CRHISamplerState> BaseMaterialSampler;
-
-    /** Base material */
-    TSharedPtr<CMaterial> BaseMaterial;
-
-protected:
-
-    CEngine();
-    virtual ~CEngine() = default;
+    /** @brief - Base material */
+    TSharedPtr<FMaterial> BaseMaterial;
 };
 
-/** Global Engine Pointer */
-extern ENGINE_API CEngine* GEngine;
+extern ENGINE_API FEngine* GEngine;

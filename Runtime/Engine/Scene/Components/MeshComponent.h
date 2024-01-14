@@ -1,28 +1,17 @@
 #pragma once
 #include "Component.h"
-
 #include "Core/Containers/SharedPtr.h"
-
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMeshComponent
-
-class ENGINE_API CMeshComponent : public CComponent
+class ENGINE_API FMeshComponent : public FComponent
 {
-    CORE_OBJECT(CMeshComponent, CComponent);
-
 public:
+    FOBJECT_DECLARE_CLASS(FMeshComponent, FComponent);
 
-    CMeshComponent(CActor* InActorOwner)
-        : CComponent(InActorOwner, false, false)
-        , Material(nullptr)
-        , Mesh(nullptr)
-    {
-        CORE_OBJECT_INIT();
-    }
+    FMeshComponent(const FObjectInitializer& ObjectInitializer);
+    ~FMeshComponent() = default;
 
-    TSharedPtr<CMaterial> Material;
-    TSharedPtr<CMesh>     Mesh;
+    TSharedPtr<FMaterial> Material;
+    TSharedPtr<FMesh>     Mesh;
 };

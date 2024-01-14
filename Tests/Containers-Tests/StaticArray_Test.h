@@ -1,6 +1,6 @@
 #pragma once
 #include "Config.h"
 
-#if RUN_TFIXEDARRAY_TEST
-void TStaticArray_Test();
+#if RUN_TSTATICARRAY_TEST
+bool TStaticArray_Test();
 #endif

@@ -16,7 +16,7 @@ static void DrawRenderSettings()
 {
     ImGui::BeginChild( "RendererInfo" );
 
-    SWindowShape WindowShape;
+    FWindowShape WindowShape;
     GEngine->MainWindow->GetWindowShape( WindowShape );
 
     ImGui::Spacing();
@@ -31,7 +31,7 @@ static void DrawRenderSettings()
     //ImGui::Checkbox("Enable Frustum Culling", &GlobalFrustumCullEnabled);
     //ImGui::Checkbox("Draw AABBs", &GlobalDrawAABBs);
 
-    static const char* AAItems[] =
+    static const CHAR* AAItems[] =
     {
         "OFF",
         "FXAA",
@@ -63,7 +63,7 @@ static void DrawRenderSettings()
     ImGui::Text( "Shadow Settings:" );
     ImGui::Separator();
 
-    static const char* Items[] =
+    static const CHAR* Items[] =
     {
         "8192x8192",
         "4096x4096",

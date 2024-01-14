@@ -1,39 +1,33 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- Engine Module
 
-local EngineModule = CModuleBuildRules('Engine')
+local EngineModule = FModuleBuildRules("Engine")
+EngineModule.bUsePrecompiledHeaders = true
+
 EngineModule.AddSystemIncludes( 
 {
-    MakeExternalDependencyPath('imgui'),
-    MakeExternalDependencyPath('stb_image'),
-    MakeExternalDependencyPath('tinyobjloader'),
-    MakeExternalDependencyPath('OpenFBX/src'),
+    CreateExternalDependencyPath("imgui"),
+    CreateExternalDependencyPath("stb_image"),
+    CreateExternalDependencyPath("tinyobjloader"),
+    CreateExternalDependencyPath("tinyddsloader"),
+    CreateExternalDependencyPath("OpenFBX/src"),
 })
 
-EngineModule.ModuleDependencies = 
+EngineModule.AddModuleDependencies( 
 {
-    'Core',
-    'CoreApplication',
-    'Canvas',
-    'RHI',
-}
+    "Core",
+    "CoreApplication",
+    "Application",
+    "RHI",
+    "RendererCore",
+    "Project",
+})
 
-EngineModule.LinkLibraries = 
+EngineModule.AddLinkLibraries( 
 {
-    'ImGui',
-    'tinyobjloader',
-    'OpenFBX',
-}
-
-if BuildWithXcode() then
-    EngineModule.FrameWorks = 
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    }
-end
-
-EngineModule.Generate()
+    "ImGui",
+    "tinyobjloader",
+    "OpenFBX",
+})

@@ -1,16 +1,13 @@
 #pragma once
 #include "Light.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CSpotLight
-
-class ENGINE_API CSpotLight : public CLight
+class ENGINE_API FSpotLight : public FLight
 {
-    CORE_OBJECT(CSpotLight, CLight);
-
 public:
-    CSpotLight();
-    ~CSpotLight();
+    FOBJECT_DECLARE_CLASS(FPointLight, FLight);
+
+    FSpotLight(const FObjectInitializer& ObjectInitializer);
+    ~FSpotLight() = default;
 
     void SetConeAngle(float InConeAngle);
 

@@ -1,96 +1,81 @@
 #pragma once
 #include "Core/RefCounted.h"
-#include "Core/Templates/EnableIf.h"
-#include "Core/Templates/IsConvertible.h"
-#include "Core/Templates/IsNullptr.h"
-#include "Core/Templates/Move.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSharedRef - Helper class when using objects with CRefCounted as a base
-
-template<typename T>
+template<typename ElementType>
 class TSharedRef
 {
 public:
-    using ElementType = T;
-
     template<typename OtherType>
     friend class TSharedRef;
 
-    /**
-     * @brief:  Default constructor that set the pointer to nullptr
-     */
-    FORCEINLINE TSharedRef() noexcept
-        : Ptr(nullptr)
-    { }
+    /** @brief - Default constructor that set the pointer to nullptr */
+    TSharedRef() = default;
 
     /**
-     * @brief: Copy-constructor
-     *
-     * @param Other: SharedRef to copy from
+     * @brief       - Copy-constructor
+     * @param Other - SharedRef to copy from
      */
     FORCEINLINE TSharedRef(const TSharedRef& Other) noexcept
-        : Ptr(Other.Ptr)
+        : Object(Other.Object)
     {
         AddRef();
     }
 
     /**
-     * @brief: Copy-constructor from a SharedRef of a convertible type
-     *
-     * @param Other: SharedRef to copy from
+     * @brief       - Copy-constructor from a SharedRef of a convertible type
+     * @param Other - SharedRef to copy from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) noexcept
-        : Ptr(Other.Ptr)
+    template<typename OtherType>
+    FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
+        : Object(Other.Object)
     {
         AddRef();
     }
 
     /**
-     * @brief: Move-constructor
-     *
-     * @param Other: SharedRef to move from
+     * @brief       - Move-constructor
+     * @param Other - SharedRef to move from
      */
     FORCEINLINE TSharedRef(TSharedRef&& Other) noexcept
-        : Ptr(Other.Ptr)
+        : Object(Other.Object)
     {
-        Other.Ptr = nullptr;
+        Other.Object = nullptr;
     }
 
     /**
-     * @brief: Move-constructor from a SharedRef of a convertible type
-     *
-     * @param Other: SharedRef to move from
+     * @brief       - Move-constructor from a SharedRef of a convertible type
+     * @param Other - SharedRef to move from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) noexcept
-        : Ptr(Other.Ptr)
+    template<typename OtherType>
+    FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
+        : Object(Other.Object)
     {
-        Other.Ptr = nullptr;
+        Other.Object = nullptr;
     }
 
     /**
-     * @brief: Construct a SharedRef from a raw pointer. The container takes ownership.
-     *
-     * @param InPointer: Pointer to reference
+     * @brief           - Construct a SharedRef from a raw pointer. The container takes ownership.
+     * @param InPointer - Pointer to reference
      */
     FORCEINLINE TSharedRef(ElementType* InPointer) noexcept
-        : Ptr(InPointer)
-    { }
+        : Object(InPointer)
+    {
+    }
 
     /**
-     * @brief: Construct a SharedRef from a raw pointer of a convertible type. The container takes ownership.
-     *
-     * @param InPointer: Pointer to reference
+     * @brief           - Construct a SharedRef from a raw pointer of a convertible type. The container takes ownership.
+     * @param InPointer - Pointer to reference
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type>
-    FORCEINLINE TSharedRef(OtherType* InPtr) noexcept
-        : Ptr(InPtr)
-    { }
+    template<typename OtherType>
+    FORCEINLINE TSharedRef(OtherType* InPtr) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
+        : Object(InPtr)
+    {
+    }
 
     /**
-     * @brief: Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TSharedRef()
     {
@@ -98,9 +83,8 @@ public:
     }
 
     /**
-     * @brief: Resets the container and sets to a potential new raw pointer
-     *
-     * @param NewPtr: New pointer to reference
+     * @brief        - Resets the container and sets to a potential new raw pointer
+     * @param NewPtr - New pointer to reference
      */
     FORCEINLINE void Reset(ElementType* NewPtr = nullptr) noexcept
     {
@@ -108,417 +92,375 @@ public:
     }
 
     /**
-     * @brief: Resets the container and sets to a potential new raw pointer of a convertible type
-     *
-     * @param NewPtr: New pointer to reference
+     * @brief        - Resets the container and sets to a potential new raw pointer of a convertible type
+     * @param NewPtr - New pointer to reference
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value>::Type Reset(OtherType* NewPtr) noexcept
+    FORCEINLINE void Reset(OtherType* NewPtr) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
         Reset(static_cast<ElementType*>(NewPtr));
     }
 
     /**
-     * @brief: Swaps the pointers in the two containers
-     *
-     * @param Other: SharedPtr to swap with
+     * @brief       - Swaps the pointers in the two containers
+     * @param Other - SharedPtr to swap with
      */
     FORCEINLINE void Swap(TSharedRef& Other)
     {
-        ::Swap(Ptr, Other.Ptr);
+        ::Swap(Object, Other.Object);
     }
 
     /**
-     * @brief: Releases the ownership of the pointer and returns the pointer
-     *
-     * @return: Returns the pointer that was previously held by the container
+     * @brief  - Releases the ownership of the pointer and returns the pointer
+     * @return - Returns the pointer that was previously held by the container
      */
-    FORCEINLINE ElementType* ReleaseOwnership() noexcept
+    NODISCARD FORCEINLINE ElementType* ReleaseOwnership() noexcept
     {
-        ElementType* OldPtr = Ptr;
-        Ptr = nullptr;
+        ElementType* OldPtr = Object;
+        Object = nullptr;
         return OldPtr;
     }
 
     /**
-     * @brief: Adds a reference to the stored pointer
+     * @brief - Adds a reference to the stored pointer
      */
     FORCEINLINE void AddRef() noexcept
     {
-        if (Ptr)
+        if (Object)
         {
-            Ptr->AddRef();
+            Object->AddRef();
         }
     }
 
     /**
-     * @brief: Retrieve the raw pointer
-     *
-     * @return: Returns the raw pointer
+     * @brief  - Retrieve the raw pointer
+     * @return - Returns the raw pointer
      */
-    FORCEINLINE ElementType* Get() const noexcept
+    NODISCARD FORCEINLINE ElementType* Get() const noexcept
     {
-        return Ptr;
+        return Object;
     }
 
     /**
-     * @brief: Retrieve the current reference count of the object. The object needs to be valid.
-     *
-     * @return: The current reference count of the stored pointer
+     * @brief  - Releases the objects and returns the address of the stored pointer
+     * @return - Pointer to the stored pointer
      */
-    FORCEINLINE uint64 GetRefCount() const noexcept
+    NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
     {
-        Check(IsValid());
-        return Ptr->GetRefCount();
+        CHECK(IsValid());
+        Object->Release();
+        return &Object;
     }
 
     /**
-     * @brief: Releases the objects and returns the address of the stored pointer
-     *
-     * @return: Pointer to the stored pointer
+     * @brief  - Retrieve the raw pointer and add a reference
+     * @return - Returns the raw pointer
      */
-    FORCEINLINE ElementType** ReleaseAndGetAddressOf() noexcept
-    {
-        Ptr->Release();
-        return &Ptr;
-    }
-
-    /**
-     * @brief: Retrieve the raw pointer and add a reference
-     *
-     * @return: Returns the raw pointer
-     */
-    FORCEINLINE ElementType* GetAndAddRef() noexcept
+    NODISCARD FORCEINLINE ElementType* GetAndAddRef() noexcept
     {
         AddRef();
-        return Ptr;
+        return Object;
     }
 
     /**
-     * @brief: Retrieve the pointer as another type that is convertible
-     *
-     * @return: A pointer of the casted type
+     * @brief  - Retrieve the pointer as another type that is convertible
+     * @return - A pointer of the casted type
      */
     template<typename CastType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<CastType*, ElementType*>::Value, CastType*>::Type GetAs() const noexcept
+    NODISCARD FORCEINLINE CastType* GetAs() const noexcept requires(TIsConvertible<typename TAddPointer<CastType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
-        return static_cast<CastType*>(Ptr);
+        return static_cast<CastType*>(Object);
     }
 
     /**
-     * @brief: Get the address of the raw pointer
-     *
-     * @return: The address of the raw pointer
+     * @brief  - Get the address of the raw pointer
+     * @return - The address of the raw pointer
      */
-    FORCEINLINE ElementType** GetAddressOf() noexcept
+    NODISCARD FORCEINLINE ElementType** GetAddressOf() noexcept
     {
-        return &Ptr;
+        return &Object;
     }
 
     /**
-     * @brief: Get the address of the raw pointer
-     *
-     * @return: The address of the raw pointer
+     * @brief  - Get the address of the raw pointer
+     * @return - The address of the raw pointer
      */
-    FORCEINLINE ElementType* const* GetAddressOf() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const noexcept
     {
-        return &Ptr;
+        return &Object;
     }
 
     /**
-     * @brief: Dereference the stored pointer
-     *
-     * @return: A reference to the object pointed to by the pointer
+     * @brief  - Dereference the stored pointer
+     * @return - A reference to the object pointed to by the pointer
      */
-    FORCEINLINE ElementType& Dereference() const noexcept
+    NODISCARD FORCEINLINE ElementType& Dereference() const noexcept
     {
-        return *Ptr;
+        CHECK(IsValid());
+        return *Object;
     }
 
     /**
-     * @brief: Checks weather the pointer is valid or not
-     *
-     * @return: True if the pointer is not nullptr otherwise false
+     * @brief  - Checks weather the pointer is valid or not
+     * @return - True if the pointer is not nullptr otherwise false
      */
-    FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Ptr != nullptr);
+        return (Object != nullptr);
     }
 
 public:
 
     /**
-     * @brief: Retrieve the raw pointer
-     *
-     * @return: Returns the raw pointer
+     * @brief  - Retrieve the raw pointer
+     * @return - Returns the raw pointer
      */
-    FORCEINLINE ElementType* operator->() const noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
         return Get();
     }
 
     /**
-     * @brief: Retrieve the address of the raw pointer
-     *
-     * @return: The address of the raw pointer
+     * @brief  - Retrieve the address of the raw pointer
+     * @return - The address of the raw pointer
      */
-    FORCEINLINE ElementType** operator&() noexcept
+    NODISCARD FORCEINLINE ElementType** operator&() noexcept
     {
         return GetAddressOf();
     }
 
     /**
-     * @brief: Retrieve the address of the raw pointer
-     *
-     * @return: The address of the raw pointer
+     * @brief  - Retrieve the address of the raw pointer
+     * @return - The address of the raw pointer
      */
-    FORCEINLINE ElementType* const* operator&() const noexcept
+    NODISCARD FORCEINLINE ElementType* const* operator&() const noexcept
     {
         return GetAddressOf();
     }
 
     /**
-     * @brief: Dereference the stored pointer
-     *
-     * @return: A reference to the object pointed to by the pointer
+     * @brief  - Dereference the stored pointer
+     * @return - A reference to the object pointed to by the pointer
      */
-    FORCEINLINE ElementType& operator*() const noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
         return Dereference();
     }
 
     /**
-     * @brief: Checks weather the pointer is valid or not
-     *
-     * @return: True if the pointer is not nullptr otherwise false
+     * @brief  - Checks weather the pointer is valid or not
+     * @return - True if the pointer is not nullptr otherwise false
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return IsValid();
     }
 
     /**
-     * @brief: Copy-assignment operator
-     * 
-     * @param RHS: SharedRef to copy from
-     * @return: A reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - SharedRef to copy from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE TSharedRef& operator=(const TSharedRef& RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(const TSharedRef& Other) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Copy-assignment operator that takes a convertible type
-     *
-     * @param RHS: SharedRef to copy from
-     * @return: A reference to this instance
+     * @brief       - Copy-assignment operator that takes a convertible type
+     * @param Other - SharedRef to copy from
+     * @return      - A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(const TSharedRef<OtherType>& RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(const TSharedRef<OtherType>& Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: SharedRef to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - SharedRef to move from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE TSharedRef& operator=(TSharedRef&& RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(TSharedRef&& Other) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(::Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator that takes a convertible type
-     *
-     * @param RHS: SharedRef to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator that takes a convertible type
+     * @param Other - SharedRef to move from
+     * @return      - A reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(TSharedRef<OtherType>&& RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(TSharedRef<OtherType>&& Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(::Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Assignment operator that takes a raw pointer
-     *
-     * @param RHS: Pointer to store
-     * @return: A reference to this object
+     * @brief       - Assignment operator that takes a raw pointer
+     * @param Other - Pointer to store
+     * @return      - A reference to this object
      */
-    FORCEINLINE TSharedRef& operator=(ElementType* RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(ElementType* Other) noexcept
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Assignment operator that takes a raw pointer of a convertible type
-     *
-     * @param RHS: Pointer to store
-     * @return: A reference to this object
+     * @brief       - Assignment operator that takes a raw pointer of a convertible type
+     * @param Other - Pointer to store
+     * @return      - A reference to this object
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConvertible<OtherType*, ElementType*>::Value, TSharedRef&>::Type operator=(OtherType* RHS) noexcept
+    FORCEINLINE TSharedRef& operator=(OtherType* Other) noexcept requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
     {
-        TSharedRef(RHS).Swap(*this);
+        TSharedRef(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Set the pointer to nullptr
-     *
-     * @return: A reference to this object
+     * @brief  - Set the pointer to nullptr
+     * @return - A reference to this object
      */
-    FORCEINLINE TSharedRef& operator=(NullptrType) noexcept
+    FORCEINLINE TSharedRef& operator=(nullptr_type) noexcept
     {
         TSharedRef().Swap(*this);
         return *this;
     }
 
 private:
-
     FORCEINLINE void Release() noexcept
     {
-        if (Ptr)
+        if (Object)
         {
-            Ptr->Release();
-            Ptr = nullptr;
+            Object->Release();
+            Object = nullptr;
         }
     }
 
-    ElementType* Ptr = nullptr;
+    ElementType* Object{nullptr};
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSharedRef operators
 
-template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, U* RHS) noexcept
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() == RHS);
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator==(T* LHS, const TSharedRef<U>& RHS) noexcept
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE bool operator==(ElementType* LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS == RHS.Get());
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, U* RHS) noexcept
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, U* RHS) noexcept
 {
     return (LHS.Get() != RHS);
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator!=(T* LHS, const TSharedRef<U>& RHS) noexcept
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE bool operator!=(ElementType* LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS != RHS.Get());
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS.Get() == RHS.Get());
 }
 
-template<typename T, typename U>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, const TSharedRef<U>& RHS) noexcept
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, const TSharedRef<U>& RHS) noexcept
 {
     return (LHS.Get() != RHS.Get());
 }
 
-template<typename T>
-FORCEINLINE bool operator==(const TSharedRef<T>& LHS, NullptrType) noexcept
+template<typename ElementType>
+NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() == nullptr);
 }
 
-template<typename T>
-FORCEINLINE bool operator==(NullptrType, const TSharedRef<T>& RHS) noexcept
+template<typename ElementType>
+NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedRef<ElementType>& RHS) noexcept
 {
     return (nullptr == RHS.Get());
 }
 
-template<typename T>
-FORCEINLINE bool operator!=(const TSharedRef<T>& LHS, NullptrType) noexcept
+template<typename ElementType>
+NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, nullptr_type) noexcept
 {
     return (LHS.Get() != nullptr);
 }
 
-template<typename T>
-FORCEINLINE bool operator!=(NullptrType, const TSharedRef<T>& RHS) noexcept
+template<typename ElementType>
+NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedRef<ElementType>& RHS) noexcept
 {
     return (nullptr != RHS.Get());
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TSharedRef casting functions
 
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCast(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = static_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> StaticCast(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = static_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCast(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = const_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ConstCast(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = const_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCast(const TSharedRef<U>& Pointer)
-{
-    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
-    RawPointer->AddRef();
-    return TSharedRef<T>(RawPointer);
-}
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> ReinterpretCast(TSharedRef<U>&& Pointer)
-{
-    T* RawPointer = reinterpret_cast<T*>(Pointer.Get());
-    return TSharedRef<T>(RawPointer);
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Converts a raw pointer into a TSharedRef
-
-template<typename T, typename U>
-FORCEINLINE TSharedRef<T> MakeSharedRef(U* InRefCountedObject)
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE TSharedRef<ElementType> MakeSharedRef(U* InRefCountedObject)
 {
     if (InRefCountedObject)
     {
         InRefCountedObject->AddRef();
-        return TSharedRef<T>(static_cast<T*>(InRefCountedObject));
+        return TSharedRef<ElementType>(static_cast<ElementType*>(InRefCountedObject));
     }
 
     return nullptr;
+}
+
+
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE TSharedRef<ElementType> StaticCastSharedRef(const TSharedRef<U>& Pointer)
+{
+    ElementType* RawPointer = static_cast<ElementType*>(Pointer.Get());
+    return MakeSharedRef<ElementType>(RawPointer);
+}
+
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE TSharedRef<ElementType> StaticCastSharedRef(TSharedRef<U>&& Pointer)
+{
+    ElementType* RawPointer = static_cast<ElementType*>(Pointer.ReleaseOwnership());
+    return TSharedRef<ElementType>(RawPointer);
+}
+
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE TSharedRef<ElementType> ConstCastSharedRef(const TSharedRef<U>& Pointer)
+{
+    ElementType* RawPointer = const_cast<ElementType*>(Pointer.Get());
+    return MakeSharedRef<ElementType>(RawPointer);
+}
+
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE TSharedRef<ElementType> ConstCastSharedRef(TSharedRef<U>&& Pointer)
+{
+    ElementType* RawPointer = const_cast<ElementType*>(Pointer.ReleaseOwnership());
+    return TSharedRef<ElementType>(RawPointer);
+}
+
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE TSharedRef<ElementType> ReinterpretCastSharedRef(const TSharedRef<U>& Pointer)
+{
+    ElementType* RawPointer = reinterpret_cast<ElementType*>(Pointer.Get());
+    return MakeSharedRef<ElementType>(RawPointer);
+}
+
+template<typename ElementType, typename U>
+NODISCARD FORCEINLINE TSharedRef<ElementType> ReinterpretCastSharedRef(TSharedRef<U>&& Pointer)
+{
+    ElementType* RawPointer = reinterpret_cast<ElementType*>(Pointer.ReleaseOwnership());
+    return TSharedRef<ElementType>(RawPointer);
 }

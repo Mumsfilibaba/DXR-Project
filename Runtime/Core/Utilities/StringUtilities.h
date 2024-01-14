@@ -1,15 +1,13 @@
 #pragma once
 #include "Core/Containers/String.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Convert from back-slashes to forward-slashes
-
-inline void ConvertBackslashes(String& OutString)
+inline void ConvertBackslashes(FString& OutString)
 {
-    auto Position = OutString.Find('\\');
-    while (Position != String::NPos)
+    auto Position = OutString.FindChar('\\');
+    while (Position != FString::INVALID_INDEX)
     {
         OutString.Replace('/', Position);
-        Position = OutString.Find('\\', Position + 1);
+        Position = OutString.FindChar('\\', Position + 1);
     }
 }
+

@@ -1,68 +1,78 @@
 #pragma once
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
+#include "Engine/Core/Object.h"
 
-#include "Engine/CoreObject/CoreObject.h"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CActor;
+class FActor;
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CComponent
-
-class ENGINE_API CComponent : public CCoreObject
+class ENGINE_API FComponent : public FObject
 {
-    CORE_OBJECT(CComponent, CCoreObject);
-
 public:
+    FOBJECT_DECLARE_CLASS(FComponent, FObject);
 
-    CComponent(CActor* InActorOwner);
-    CComponent(CActor* InActorOwner, bool bInIsStartable, bool bInIsTickable);
-    virtual ~CComponent() = default;
-
-    /**
-     * @brief: Start component, called in the beginning of the run, perform initialization here
-     */
-    virtual void Start();
+    FComponent(const FObjectInitializer& ObjectInitializer);
+    virtual ~FComponent() = default;
 
     /**
-     * @brief: Tick component, should be called once every frame 
-     * 
-     * @param DeltaTime: Time since the last call to tick
+     * @brief - Start component, called in the beginning of the run, perform initialization here
      */
-    virtual void Tick(CTimestamp DeltaTime);
+    virtual void Start() { }
 
     /**
-     * @brief: Retrieve the actor that the component belongs to
-     * 
-     * @return: Returns a pointer to the actor that the component belongs to
+     * @brief           - Tick component, should be called once every frame 
+     * @param DeltaTime - Time since the last call to tick
      */
-    FORCEINLINE CActor* GetActor() const
+    virtual void Tick(FTimespan DeltaTime) { }
+
+    /**
+     * @brief  - Retrieve the actor that the component belongs to
+     * @return - Returns a pointer to the actor that the component belongs to
+     */
+    FActor* GetActorOwner() const
     {
         return ActorOwner;
     }
 
+    void SetActorOwner(FActor* InActorOwner) 
+    {
+        ActorOwner = InActorOwner;
+    }
+
     /**
-     * @brief: Check if Start should be called on the component
-     * 
-     * @return: Returns true if the component's Start-method should be called 
+     * @brief  - Check if Start should be called on the component
+     * @return - Returns true if the component's Start-method should be called 
      */
-    FORCEINLINE bool IsStartable() const
+    bool IsStartable() const
     {
         return bIsStartable;
     }
 
     /**
-     * @brief: Check if Tick should be called on the component
-     *
-     * @return: Returns true if the component's Tick-method should be called
+     * @brief  - Check if Tick should be called on the component
+     * @return - Returns true if the component's Tick-method should be called
      */
-    FORCEINLINE bool IsTickable() const
+    bool IsTickable() const
     {
         return bIsTickable;
     }
 
-private:
-    CActor* ActorOwner = nullptr;
+    void SetStartable(bool bInIsStartable)
+    {
+        bIsStartable = bInIsStartable;
+    }
 
+    void SetTickable(bool bInIsTickable)
+    {
+        bIsTickable = bInIsTickable;
+    }
+
+protected:
     bool bIsStartable : 1;
     bool bIsTickable  : 1;
+
+private:
+    FActor* ActorOwner = nullptr;
 };
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

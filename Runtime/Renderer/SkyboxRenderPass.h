@@ -1,33 +1,28 @@
 #pragma once
 #include "FrameResources.h"
-
 #include "RHI/RHICommandList.h"
-
+#include "RHI/RHIShader.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Scene/Scene.h"
+#include "RendererUtilities/GPUTextureCompressor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CShadowMapRenderer
-
-class RENDERER_API CSkyboxRenderPass final
+class RENDERER_API FSkyboxRenderPass final
 {
 public:
-    CSkyboxRenderPass() = default;
-    ~CSkyboxRenderPass() = default;
+    bool Initialize(FFrameResources& FrameResources);
 
-    bool Init(SFrameResources& FrameResources);
-
-    void Render(CRHICommandList& CmdList, const SFrameResources& FrameResources, const CScene& Scene);
+    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FScene& Scene);
 
     void Release();
 
 private:
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIVertexShader> SkyboxVertexShader;
-    TSharedRef<CRHIPixelShader>  SkyboxPixelShader;
-    TSharedRef<CRHIVertexBuffer> SkyboxVertexBuffer;
-    TSharedRef<CRHIIndexBuffer>  SkyboxIndexBuffer;
-    TSharedRef<CRHISamplerState> SkyboxSampler;
-
-    SMeshData SkyboxMesh;
+    FGPUTextureCompressor        TextureCompressor;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIVertexShaderRef          SkyboxVertexShader;
+    FRHIPixelShaderRef           SkyboxPixelShader;
+    FRHIBufferRef                SkyboxVertexBuffer;
+    FRHIBufferRef                SkyboxIndexBuffer;
+    uint32                       SkyboxIndexCount  = 0;
+    EIndexFormat                 SkyboxIndexFormat = EIndexFormat::Unknown;
+    FRHISamplerStateRef          SkyboxSampler;
 };

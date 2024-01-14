@@ -1,27 +1,30 @@
 #include "MacApplicationMisc.h"
 #include "MacApplication.h"
-#include "MacConsoleWindow.h"
-#include "ScopedAutoreleasePool.h"
-
-#include "Core/Input/InputCodes.h"
+#include "MacOutputDeviceConsole.h"
+#include "Core/Mac/Mac.h"
+#include "Core/Mac/MacRunLoop.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "CoreApplication/Generic/InputCodes.h"
 
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-CGenericApplication* CMacApplicationMisc::CreateApplication()
+TSharedPtr<FGenericApplication> FMacApplicationMisc::CreateApplication()
 {
-    return CMacApplication::CreateMacApplication();
+    return FMacApplication::CreateMacApplication();
 }
 
-CGenericConsoleWindow* CMacApplicationMisc::CreateConsoleWindow()
+FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
 {
-    return CMacConsoleWindow::CreateMacConsole();
+    return new FMacOutputDeviceConsole();
 }
 
-void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
+void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Message)
 {
-    CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.CStr(),   static_cast<CFStringEncoding>(Title.Length()));
-    CFStringRef TextRef    = CFStringCreateWithCString(0, Message.CStr(), static_cast<CFStringEncoding>(Message.Length()));
+    SCOPED_AUTORELEASE_POOL();
+    
+    CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.GetCString(),   static_cast<CFStringEncoding>(Title.Length()));
+    CFStringRef TextRef    = CFStringCreateWithCString(0, Message.GetCString(), static_cast<CFStringEncoding>(Message.Length()));
         
     CFOptionFlags Result = 0;
     CFOptionFlags Flags  = kCFUserNotificationStopAlertLevel;
@@ -31,54 +34,48 @@ void CMacApplicationMisc::MessageBox(const String& Title, const String& Message)
     CFRelease(TextRef);
 }
 
-void CMacApplicationMisc::PumpMessages(bool bUntilEmpty)
+void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
+{
+    PumpMessagesApplicationThread(bUntilEmpty);
+
+    ExecuteOnMainThread(^
+    {
+        NSMenu* MainMenu = [NSApp mainMenu];
+        [MainMenu update];
+    }, NSDefaultRunLoopMode, false);
+}
+
+FModifierKeyState FMacApplicationMisc::GetModifierKeyState()
 {
     SCOPED_AUTORELEASE_POOL();
     
-    Check(NSApp != nullptr);
-	
-    NSEvent* Event = nullptr;
-    do
-    {
-        Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
-        if (!Event)
-        {
-            break;
-        }
-        
-        [NSApp sendEvent:Event];
-    } while (bUntilEmpty);
-}
-
-SModifierKeyState CMacApplicationMisc::GetModifierKeyState()
-{
-	NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
+    NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
 
     uint32 Mask = 0;
     if (CurrentModifiers & NSEventModifierFlagControl)
     {
         Mask |= EModifierFlag::ModifierFlag_Ctrl;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagShift)
     {
         Mask |= EModifierFlag::ModifierFlag_Shift;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagOption)
     {
         Mask |= EModifierFlag::ModifierFlag_Alt;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagCommand)
     {
         Mask |= EModifierFlag::ModifierFlag_Super;
     }
-	
+    
     if (CurrentModifiers & NSEventModifierFlagCapsLock)
     {
         Mask |= EModifierFlag::ModifierFlag_CapsLock;
     }
         
-    return SModifierKeyState(Mask);
+    return FModifierKeyState(Mask);
 }

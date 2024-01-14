@@ -1,38 +1,22 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
-
-#include "CoreApplication/CoreApplication.h"
 #include "CoreApplication/Generic/GenericCursor.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CWindowsCursor
-
-class COREAPPLICATION_API CWindowsCursor final : public CGenericCursor
+class COREAPPLICATION_API FWindowsCursor final : public FGenericCursor
 {
-private:
-
-    friend struct TDefaultDelete<CWindowsCursor>;
-
-    CWindowsCursor()
-        : CGenericCursor()
-    { }
-
-    ~CWindowsCursor() = default;
-
 public:
+    FWindowsCursor()
+        : FGenericCursor()
+    {
+    }
 
-    static CWindowsCursor* CreateWindowsCursor();
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericCursor Interface
+    virtual ~FWindowsCursor() = default;
 
     virtual void SetCursor(ECursor Cursor) override final;
 
     virtual void SetVisibility(bool bIsVisible) override final;
 
-    virtual void SetPosition(CGenericWindow* RelativeWindow, int32 x, int32 y) const override final;
-    
-    virtual void GetPosition(CGenericWindow* RelativeWindow, int32& OutX, int32& OutY) const override final;
+    virtual void SetPosition(int32 x, int32 y) const override final;
+
+    virtual FIntVector2 GetPosition() const override final;
 };

@@ -3,25 +3,16 @@
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Float.h"
-
 #include "Core/Utilities/HashUtilities.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// THash
 
 namespace std
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Vectors
-
     template<>
-    struct hash<CVector4>
+    struct hash<FVector4>
     {
-        size_t operator()(const CVector4& Value) const
+        size_t operator()(const FVector4& Value) const
         {
-            THash<float> Hasher;
-
-            size_t Hash = Hasher(Value.x);
+            uint64 Hash = TTypeHash<float>::Hash(Value.x);
             HashCombine<float>(Hash, Value.y);
             HashCombine<float>(Hash, Value.z);
             HashCombine<float>(Hash, Value.w);
@@ -30,13 +21,11 @@ namespace std
     };
 
     template<>
-    struct hash<CVector3>
+    struct hash<FVector3>
     {
-        size_t operator()(const CVector3& Value) const
+        size_t operator()(const FVector3& Value) const
         {
-            THash<float> Hasher;
-
-            size_t Hash = Hasher(Value.x);
+            uint64 Hash = TTypeHash<float>::Hash(Value.x);
             HashCombine<float>(Hash, Value.y);
             HashCombine<float>(Hash, Value.z);
             return Hash;
@@ -44,48 +33,41 @@ namespace std
     };
 
     template<>
-    struct hash<CVector2>
+    struct hash<FVector2>
     {
-        size_t operator()(const CVector2& Value) const
+        size_t operator()(const FVector2& Value) const
         {
-            THash<float> Hasher;
-
-            size_t Hash = Hasher(Value.x);
+            uint64 Hash = TTypeHash<float>::Hash(Value.x);
             HashCombine<float>(Hash, Value.y);
             return Hash;
         }
     };
-    
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // Floats
+
     
     template<>
-    struct hash<SFloat16>
+    struct hash<FFloat16>
     {
-        size_t operator()(const SFloat16& Value) const
+        size_t operator()(const FFloat16& Value) const
         {
-            THash<uint16> Hasher;
-            return Hasher(Value.Encoded);
+            return TTypeHash<uint16>::Hash(Value.Encoded);
         }
     };
 
     template<>
-    struct hash<SFloat32>
+    struct hash<FFloat32>
     {
-        size_t operator()(const SFloat32& Value) const
+        size_t operator()(const FFloat32& Value) const
         {
-            THash<uint32> Hasher;
-            return Hasher(Value.Encoded);
+            return TTypeHash<uint32>::Hash(Value.Encoded);
         }
     };
 
     template<>
-    struct hash<SFloat64>
+    struct hash<FFloat64>
     {
-        size_t operator()(const SFloat64& Value) const
+        size_t operator()(const FFloat64& Value) const
         {
-            THash<uint64> Hasher;
-            return Hasher(Value.Encoded);
+            return TTypeHash<uint64>::Hash(Value.Encoded);
         }
     };
 }

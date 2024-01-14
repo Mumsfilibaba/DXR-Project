@@ -1,12 +1,8 @@
 #pragma once
 #include "DelegateInstance.h"
-
 #include "Core/Containers/Allocators.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDelegateBase
-
-class CDelegateBase
+class FDelegateBase
 {
     enum
     {
@@ -17,11 +13,10 @@ class CDelegateBase
 public:
 
     /**
-     * @brief: Copy constructor 
-     * 
-     * @param Other: Delegate to copy from
+     * @brief       - Copy constructor 
+     * @param Other - Delegate to copy from
      */
-    FORCEINLINE CDelegateBase(const CDelegateBase& Other)
+    FORCEINLINE FDelegateBase(const FDelegateBase& Other)
         : Storage()
         , Size()
     {
@@ -29,11 +24,10 @@ public:
     }
 
     /**
-     * @brief: Move constructor
-     *
-     * @param Other: Delegate to move from
+     * @brief       - Move constructor
+     * @param Other - Delegate to move from
      */
-    FORCEINLINE CDelegateBase(CDelegateBase&& Other) noexcept
+    FORCEINLINE FDelegateBase(FDelegateBase&& Other) noexcept
         : Storage()
         , Size(Other.Size)
     {
@@ -42,40 +36,42 @@ public:
     }
 
     /**
-     * @brief: Destructor 
+     * @brief - Destructor 
      */
-    FORCEINLINE ~CDelegateBase()
+    FORCEINLINE ~FDelegateBase()
     {
         Unbind();
     }
 
     /**
-     * @brief: Unbinds any bound delegate 
+     * @brief - Unbinds any bound delegate 
      */
     FORCEINLINE void Unbind()
     {
-        Release();
+        if (IsBound())
+        {
+            GetDelegate()->~IDelegateInstance();
+            Size = 0;
+            Storage.Free();
+        }
     }
 
     /**
-     * @brief: Swaps two delegates 
-     * 
-     * @param Other: Delegate to swap with
+     * @brief       - Swaps two delegates 
+     * @param Other - Delegate to swap with
      */
-    FORCEINLINE void Swap(CDelegateBase& Other)
+    FORCEINLINE void Swap(FDelegateBase& Other)
     {
         AllocatorType TempStorage;
         TempStorage.MoveFrom(Move(Storage));
         Storage.MoveFrom(Move(Other.Storage));
         Other.Storage.MoveFrom(Move(TempStorage));
-
         ::Swap<int32>(Size, Other.Size);
     }
 
     /**
-     * @brief: Checks weather or not there exist any delegate bound 
-     * 
-     * @return: Returns true if there is a delegate bound
+     * @brief  - Checks weather or not there exist any delegate bound 
+     * @return - Returns true if there is a delegate bound
      */
     FORCEINLINE bool IsBound() const
     {
@@ -83,10 +79,9 @@ public:
     }
 
     /**
-     * @brief: Check if an object is bound to this delegate
-     * 
-     * @param Object: Pointer to object to check for
-     * @return: Returns true if this Object is bound to the delegate
+     * @brief        - Check if an object is bound to this delegate
+     * @param Object - Pointer to object to check for
+     * @return       - Returns true if this Object is bound to the delegate
      */
     FORCEINLINE bool IsObjectBound(const void* Object) const
     {
@@ -101,10 +96,9 @@ public:
     }
 
     /**
-     * @brief: Check if object is bound to this delegate
-     *
-     * @param Object: Pointer to object to check for
-     * @return: Returns true if the Object was unbound from the delegate
+     * @brief        - Check if object is bound to this delegate
+     * @param Object - Pointer to object to check for
+     * @return       - Returns true if the Object was unbound from the delegate
      */
     FORCEINLINE bool UnbindIfBound(const void* Object)
     {
@@ -120,9 +114,8 @@ public:
     }
 
     /**
-     * @brief: Retrieve the bound object, returns nullptr for non-member delegates 
-     * 
-     * @return: Returns the pointer to the object bound to the delegate
+     * @brief  - Retrieve the bound object, returns nullptr for non-member delegates 
+     * @return - Returns the pointer to the object bound to the delegate
      */
     FORCEINLINE const void* GetBoundObject() const
     {
@@ -137,11 +130,10 @@ public:
     }
 
     /**
-     * @brief: Retrieve the delegate handle for this delegate
-     * 
-     * @return: Returns the delegate handle to this delegate
+     * @brief  - Retrieve the delegate handle for this delegate
+     * @return - Returns the delegate handle to this delegate
      */
-    FORCEINLINE CDelegateHandle GetHandle() const
+    FORCEINLINE FDelegateHandle GetHandle() const
     {
         if (IsBound())
         {
@@ -149,31 +141,29 @@ public:
         }
         else
         {
-            return CDelegateHandle();
+            return FDelegateHandle();
         }
     }
 
     /**
-     * @brief: Move-assignment operator
-     * 
-     * @param RHS: Instance to move from
-     * @return: A reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - Instance to move from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(CDelegateBase&& RHS) noexcept
+    FORCEINLINE FDelegateBase& operator=(FDelegateBase&& Other) noexcept
     {
-        CDelegateBase(Move(RHS)).Swap(*this);
+        FDelegateBase(Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Copy-assignment operator
-     *
-     * @param RHS: Instance to copy from
-     * @return: A reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - Instance to copy from
+     * @return      - A reference to this instance
      */
-    FORCEINLINE CDelegateBase& operator=(const CDelegateBase& RHS)
+    FORCEINLINE FDelegateBase& operator=(const FDelegateBase& Other)
     {
-        CDelegateBase(RHS).Swap(*this);
+        FDelegateBase(Other).Swap(*this);
         return *this;
     }
 
@@ -182,27 +172,19 @@ protected:
     // TODO: Should allocator use the element type at all? 
     using AllocatorType = TInlineArrayAllocator<int8, InlineBytes>;
 
-    FORCEINLINE explicit CDelegateBase()
+    FORCEINLINE explicit FDelegateBase()
         : Storage()
         , Size(0)
-    { }
-
-    FORCEINLINE void Release()
     {
-        if (IsBound())
-        {
-            GetDelegate()->~IDelegateInstance();
-        }
     }
 
-    FORCEINLINE void CopyFrom(const CDelegateBase& Other) noexcept
+    FORCEINLINE void CopyFrom(const FDelegateBase& Other) noexcept
     {
         if (Other.IsBound())
         {
             int32 CurrentSize = Size;
             Storage.Realloc(CurrentSize, Other.Size);
             Other.GetDelegate()->Clone(Storage.GetAllocation());
-
             Size = Other.Size;
         }
         else
@@ -240,5 +222,5 @@ protected:
     }
 
     AllocatorType Storage;
-    int32 Size;
+    int32         Size;
 };

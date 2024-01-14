@@ -1,86 +1,80 @@
 #include "RendererInfoWindow.h"
-
-#include "Core/Debug/Console/ConsoleManager.h"
-
-#include "RHI/RHICoreInterface.h"
-
+#include "Core/Misc/ConsoleManager.h"
+#include "RHI/RHI.h"
 #include "Renderer/Renderer.h"
-
-#include "Canvas/CanvasApplication.h"
+#include "Application/Application.h"
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variable 
+static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
+    "Renderer.DrawRendererInfo",
+    "Enables the drawing of the Renderer Info Window", 
+    true);
 
-TAutoConsoleVariable<bool> GDrawRendererInfo("Renderer.DrawRendererInfo", false);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// RendererInfoWindow
-
-TSharedRef<CRendererInfoWindow> CRendererInfoWindow::Make()
+void FRendererInfoWindow::Paint()
 {
-    return dbg_new CRendererInfoWindow();
-}
+    if (CVarDrawRendererInfo.GetValue())
+    {
+        const FString AdapterName = RHIGetAdapterName();
 
-void CRendererInfoWindow::Tick()
-{
-    TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+        const ImVec2 MainViewportPos  = FImGui::GetMainViewportPos();
+        const ImVec2 DisplaySize      = FImGui::GetDisplaySize();
+        const ImVec2 TextSize         = ImGui::CalcTextSize(AdapterName.GetCString());
+        const ImVec2 FrameBufferScale = FImGui::GetDisplayFramebufferScale();
 
-    const uint32 WindowWidth = MainViewport->GetWidth();
-    const uint32 WindowHeight = MainViewport->GetHeight();
-    const float Width = 300.0f;
-    const float Height = WindowHeight * 0.8f;
+        const float WindowWidth  = DisplaySize.x;
+        const float WindowHeight = DisplaySize.y;
+        const float Scale        = FrameBufferScale.x;
+        const float ColumnWidth  = 105.0f * Scale;
+	    const float Width        = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
+	    const float Height       = WindowHeight * 0.8f;
 
-    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth), 10.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
+        ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
+        ImGui::SetNextWindowPos(ImVec2(MainViewportPos.x + WindowWidth, MainViewportPos.y + 10.0f * Scale), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
 
-    const ImGuiWindowFlags Flags =
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoDecoration |
-        ImGuiWindowFlags_NoFocusOnAppearing |
-        ImGuiWindowFlags_NoSavedSettings;
+        const ImGuiWindowFlags Flags =
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoDecoration |
+            ImGuiWindowFlags_NoFocusOnAppearing |
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoDocking;
 
-    ImGui::Begin("Renderer Window", nullptr, Flags);
+        ImGui::Begin("Renderer Window", nullptr, Flags);
 
-    ImGui::Text("Renderer Status:");
-    ImGui::Separator();
+        ImGui::Text("Renderer Status:");
+        ImGui::Separator();
 
-    ImGui::Columns(2, nullptr, false);
-    ImGui::SetColumnWidth(0, 100.0f);
+        ImGui::Columns(2, nullptr, false);
+        ImGui::SetColumnWidth(0, ColumnWidth);
 
-    const String AdapterName = RHIGetAdapterName();
-    ImGui::Text("Adapter: ");
-    ImGui::NextColumn();
+        ImGui::Text("Adapter: ");
+        ImGui::NextColumn();
 
-    ImGui::Text("%s", AdapterName.CStr());
-    ImGui::NextColumn();
+        ImGui::Text("%s", AdapterName.GetCString());
+        ImGui::NextColumn();
 
-    SRendererStatistics Statistics = GRenderer.GetStatistics();
+        FRHICommandStatistics Statistics = FRenderer::Get().GetStatistics();
+        ImGui::Text("DrawCalls: ");
+        ImGui::NextColumn();
 
-    ImGui::Text("DrawCalls: ");
-    ImGui::NextColumn();
+        ImGui::Text("%d", Statistics.NumDrawCalls);
+        ImGui::NextColumn();
 
-    ImGui::Text("%d", Statistics.NumDrawCalls);
-    ImGui::NextColumn();
+        ImGui::Text("DispatchCalls: ");
+        ImGui::NextColumn();
 
-    ImGui::Text("DispatchCalls: ");
-    ImGui::NextColumn();
+        ImGui::Text("%d", Statistics.NumDispatchCalls);
+        ImGui::NextColumn();
 
-    ImGui::Text("%d", Statistics.NumDispatchCalls);
-    ImGui::NextColumn();
+        ImGui::Text("Command Count: ");
+        ImGui::NextColumn();
 
-    ImGui::Text("Command Count: ");
-    ImGui::NextColumn();
+        ImGui::Text("%d", Statistics.NumCommands);
 
-    ImGui::Text("%d", Statistics.NumRenderCommands);
+        ImGui::Columns(1);
 
-    ImGui::Columns(1);
-
-    ImGui::End();
-}
-
-bool CRendererInfoWindow::IsTickable()
-{
-    return GDrawRendererInfo.GetBool();
+        ImGui::End();
+    }
 }

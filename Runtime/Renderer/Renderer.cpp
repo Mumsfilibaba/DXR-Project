@@ -1,91 +1,263 @@
 #include "Renderer.h"
-
-#include "Canvas/CanvasApplication.h"
-
-#include "InterfaceRenderer/InterfaceRenderer.h"
-
-#include "RHI/RHICoreInterface.h"
+#include "Debug/GPUProfiler.h"
+#include "Core/Math/Frustum.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Platform/PlatformThreadMisc.h"
+#include "Application/Application.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIShaderCompiler.h"
-
-#include "Engine/Resources/TextureFactory.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
+#include "RendererCore/TextureFactory.h"
 
-#include "Core/Math/Frustum.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
-#include "Core/Threading/Platform/PlatformThreadMisc.h"
+static TAutoConsoleVariable<bool> CVarEnableSSAO(
+    "Renderer.Feature.SSAO",
+    "Enables Screen-Space Ambient Occlusion",
+    true);
 
-#include "Renderer/Debug/GPUProfiler.h"
+static TAutoConsoleVariable<bool> CVarEnableFXAA(
+    "Renderer.Feature.FXAA",
+    "Enables FXAA for Anti-Aliasing",
+    false);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variables
+static TAutoConsoleVariable<bool> CVarFXAADebug(
+    "Renderer.Debug.FXAADebug",
+    "Enables FXAA (Anti-Aliasing) Debugging mode",
+    false);
 
-TAutoConsoleVariable<bool> GEnableSSAO("Renderer.EnableSSAO", true);
+static TAutoConsoleVariable<bool> CVarEnableTemporalAA(
+    "Renderer.Feature.TemporalAA",
+    "Enables Temporal Anti-Aliasing",
+    true);
 
-TAutoConsoleVariable<bool> GEnableFXAA("Renderer.EnableFXAA", true);
-TAutoConsoleVariable<bool> GFXAADebug("Renderer.FXAADebug", false);
+static TAutoConsoleVariable<bool> CVarEnableVariableRateShading(
+    "Renderer.Feature.VariableRateShading",
+    "Enables VRS (Variable Rate Shading)",
+    false);
 
-TAutoConsoleVariable<bool> GEnableVariableRateShading("Renderer.EnableVariableRateShading", false);
+static TAutoConsoleVariable<bool> CVarPrePassEnabled(
+    "Renderer.Feature.PrePass",
+    "Enables Pre-Pass",
+    true);
 
-TAutoConsoleVariable<bool> GPrePassEnabled("Renderer.EnablePrePass", true);
-TAutoConsoleVariable<bool> GDrawAABBs("Renderer.EnableDrawAABBs", false);
-TAutoConsoleVariable<bool> GVSyncEnabled("Renderer.EnableVerticalSync", false);
-TAutoConsoleVariable<bool> GFrustumCullEnabled("Renderer.EnableFrustumCulling", true);
-TAutoConsoleVariable<bool> GRayTracingEnabled("Renderer.EnableRayTracing", true);
+static TAutoConsoleVariable<bool> CVarBasePassEnabled(
+    "Renderer.Feature.BasePass",
+    "Enables BasePass (Disabling this disables most rendering)",
+    true);
 
-//static const uint32 ShadowMapSampleCount = 2;
+static TAutoConsoleVariable<bool> CVarShadowsEnabled(
+    "Renderer.Feature.Shadows",
+    "Enables Rendering of ShadowMaps",
+    true);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SCameraBufferDesc
+static TAutoConsoleVariable<bool> CVarShadowMaskEnabled(
+    "Renderer.Feature.ShadowMask",
+    "Enables Rendering of ShadowMask for SunShadows",
+    true);
 
-struct SCameraBufferDesc
+static TAutoConsoleVariable<bool> CVarPointLightShadowsEnabled(
+    "Renderer.Feature.PointLightShadows",
+    "Enables Rendering of PointLight ShadowMaps",
+    true);
+
+static TAutoConsoleVariable<bool> CVarSunShadowsEnabled(
+    "Renderer.Feature.SunShadows",
+    "Enables Rendering of SunLight/DirectionalLight ShadowMaps",
+    true);
+
+static TAutoConsoleVariable<bool> CVarSkyboxEnabled(
+    "Renderer.Feature.Skybox",
+    "Enables Rendering of the Skybox",
+    true);
+
+static TAutoConsoleVariable<bool> CVarDrawAABBs(
+    "Renderer.Debug.DrawAABBs",
+    "Draws all the objects bounding boxes (AABB)",
+    false);
+
+static TAutoConsoleVariable<bool> CVarDrawPointLights(
+    "Renderer.Debug.DrawPointLights", 
+    "Draws all the PointLights as spheres with the light-color",
+    false);
+
+static TAutoConsoleVariable<bool> CVarVSyncEnabled(
+    "Renderer.Feature.VerticalSync",
+    "Enables Vertical-Sync", 
+    false);
+
+static TAutoConsoleVariable<bool> CVarFrustumCullEnabled(
+    "Renderer.Feature.FrustumCulling",
+    "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
+    true);
+
+static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
+    "Renderer.Feature.RayTracing",
+    "Enables Ray Tracing (Currently broken)",
+    false);
+
+
+#define SUPPORT_VARIABLE_RATE_SHADING (0)
+
+FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {
-    CMatrix4 ViewProjection;
-    CMatrix4 View;
-    CMatrix4 ViewInv;
-    CMatrix4 Projection;
-    CMatrix4 ProjectionInv;
-    CMatrix4 ViewProjectionInv;
-
-    CVector3 Position;
-    float    NearPlane;
-
-    CVector3 Forward;
-    float    FarPlane;
-
-    CVector3 Right;
-    float    AspectRatio;
-};
-
-RENDERER_API CRenderer GRenderer;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRenderer
-
-CRenderer::CRenderer()
-    : WindowHandler(MakeShared<CRendererWindowHandler>())
-{ }
-
-bool CRenderer::Init()
-{
-    CRHIViewportInitializer ViewportInitializer(GEngine->MainWindow->GetPlatformHandle(), EFormat::R8G8B8A8_Unorm, EFormat::Unknown, 0, 0);
-
-    Resources.MainWindowViewport = RHICreateViewport(ViewportInitializer);
-    if (!Resources.MainWindowViewport)
+    if (!GEngine)
     {
-        CDebug::DebugBreak();
+        return FResponse::Unhandled();
+    }
+
+    if (WindowEvent.GetWindow() != GEngine->MainWindow)
+    {
+        return FResponse::Unhandled();
+    }
+
+    FRenderer::Get().OnWindowResize(WindowEvent);
+    return FResponse::Handled();
+}
+
+
+FRenderer* FRenderer::GInstance = nullptr;
+
+FRenderer::FRenderer()
+    : TextureDebugger(nullptr)
+    , InfoWindow(nullptr)
+    , GPUProfilerWindow(nullptr)
+    , CommandList()
+    , Resources()
+    , LightSetup()
+    , CameraBuffer()
+    , HaltonState()
+    , DeferredRenderer()
+    , ShadowMapRenderer()
+    , SSAORenderer()
+    , LightProbeRenderer()
+    , SkyboxRenderPass()
+    , ForwardRenderer()
+    , RayTracer()
+    , DebugRenderer()
+    , TemporalAA()
+    , ShadingImage(nullptr)
+    , ShadingRatePipeline(nullptr)
+    , ShadingRateShader(nullptr)
+    , PostPSO(nullptr)
+    , PostShader(nullptr)
+    , FXAAPSO(nullptr)
+    , FXAAShader(nullptr)
+    , FXAADebugPSO(nullptr)
+    , FXAADebugShader(nullptr)
+    , TimestampQueries(nullptr)
+    , FrameStatistics()
+{
+}
+
+FRenderer::~FRenderer()
+{
+    GRHICommandExecutor.WaitForGPU();
+
+    CommandList.Reset();
+
+    DeferredRenderer.Release();
+    ShadowMapRenderer.Release();
+    SSAORenderer.Release();
+    LightProbeRenderer.Release();
+    SkyboxRenderPass.Release();
+    ForwardRenderer.Release();
+    RayTracer.Release();
+    DebugRenderer.Release();
+    TemporalAA.Release();
+
+    Resources.Release();
+    LightSetup.Release();
+
+    PostPSO.Reset();
+    PostShader.Reset();
+    FXAAPSO.Reset();
+    FXAAShader.Reset();
+    FXAADebugPSO.Reset();
+    FXAADebugShader.Reset();
+
+    ShadingImage.Reset();
+    ShadingRatePipeline.Reset();
+    ShadingRateShader.Reset();
+
+    TimestampQueries.Reset();
+
+    FrameStatistics.Reset();
+
+    if (FApplication::IsInitialized())
+    {
+        FApplication::Get().RemoveWidget(TextureDebugger);
+        TextureDebugger.Reset();
+
+        FApplication::Get().RemoveWidget(InfoWindow);
+        InfoWindow.Reset();
+
+        FApplication::Get().RemoveWidget(GPUProfilerWindow);
+        GPUProfilerWindow.Reset();
+
+        FApplication::Get().RemoveEventHandler(EventHandler);
+        EventHandler.Reset();
+    }
+}
+
+bool FRenderer::Initialize()
+{
+    CHECK(GInstance == nullptr);
+
+    GInstance = new FRenderer();
+    if (!GInstance->Create())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void FRenderer::Release()
+{
+    if (GInstance)
+    {
+        delete GInstance;
+        GInstance = nullptr;
+    }
+}
+
+FRenderer& FRenderer::Get()
+{
+    CHECK(GInstance != nullptr);
+    return *GInstance;
+}
+
+bool FRenderer::Create()
+{
+    if (!GEngine->MainViewport)
+    {
+        DEBUG_BREAK();
         return false;
     }
     else
     {
-        // Resources.MainWindowViewport->SetName("Main Window Viewport");
+        Resources.MainViewport     = GEngine->MainViewport->GetRHIViewport();
+        Resources.BackBufferFormat = Resources.MainViewport->GetColorFormat();
+        Resources.CurrentWidth     = Resources.MainViewport->GetWidth();
+        Resources.CurrentHeight    = Resources.MainViewport->GetHeight();
     }
 
-    CRHIConstantBufferInitializer CBInitializer(EBufferUsageFlags::Default, sizeof(SCameraBufferDesc), EResourceAccess::Common);
-    Resources.CameraBuffer = RHICreateConstantBuffer(CBInitializer);
+    if (FApplication::IsInitialized())
+    {
+        EventHandler = MakeShared<FRendererEventHandler>();
+        FApplication::Get().AddEventHandler(EventHandler);
+    }
+    else
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIBufferDesc CBDesc(sizeof(FCameraBuffer), sizeof(FCameraBuffer), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    Resources.CameraBuffer = RHICreateBuffer(CBDesc, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");
@@ -96,40 +268,40 @@ bool CRenderer::Init()
         Resources.CameraBuffer->SetName("CameraBuffer");
     }
 
-    // Init standard input layout
-    CRHIVertexInputLayoutInitializer InputLayout =
+    // Initialize standard input layout
+    FRHIVertexInputLayoutInitializer InputLayout =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0,  EVertexInputClass::Vertex, 0 },
-        { "NORMAL",   0, EFormat::R32G32B32_Float, 0, 12, EVertexInputClass::Vertex, 0 },
-        { "TANGENT",  0, EFormat::R32G32B32_Float, 0, 24, EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,    0, 36, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 0,  EVertexInputClass::Vertex, 0 },
+        { "NORMAL",   0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 12, EVertexInputClass::Vertex, 0 },
+        { "TANGENT",  0, EFormat::R32G32B32_Float, sizeof(FVertex), 0, 24, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertex), 0, 36, EVertexInputClass::Vertex, 0 },
     };
 
-    Resources.StdInputLayout = RHICreateVertexInputLayout(InputLayout);
-    if (!Resources.StdInputLayout)
+    Resources.MeshInputLayout = RHICreateVertexInputLayout(InputLayout);
+    if (!Resources.MeshInputLayout)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     {
-        CRHISamplerStateInitializer Initializer;
+        FRHISamplerStateDesc Initializer;
         Initializer.AddressU    = ESamplerMode::Border;
         Initializer.AddressV    = ESamplerMode::Border;
         Initializer.AddressW    = ESamplerMode::Border;
         Initializer.Filter      = ESamplerFilter::MinMagMipPoint;
-        Initializer.BorderColor = CFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
+        Initializer.BorderColor = FFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         Resources.DirectionalLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.DirectionalLightShadowSampler)
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
 
     {
-        CRHISamplerStateInitializer Initializer;
+        FRHISamplerStateDesc Initializer;
         Initializer.AddressU       = ESamplerMode::Wrap;
         Initializer.AddressV       = ESamplerMode::Wrap;
         Initializer.AddressW       = ESamplerMode::Wrap;
@@ -139,7 +311,7 @@ bool CRenderer::Init()
         Resources.PointLightShadowSampler = RHICreateSamplerState(Initializer);
         if (!Resources.PointLightShadowSampler)
         {
-            CDebug::DebugBreak();
+            DEBUG_BREAK();
             return false;
         }
     }
@@ -149,101 +321,141 @@ bool CRenderer::Init()
         return false;
     }
 
-    if (!InitBoundingBoxDebugPass())
-    {
-        return false;
-    }
-
     if (!InitShadingImage())
     {
         return false;
     }
 
-    if (!LightSetup.Init())
+    if (!DebugRenderer.Initialize(Resources))
     {
         return false;
     }
 
-    if (!DeferredRenderer.Init(Resources))
+    if (!LightSetup.Initialize())
     {
         return false;
     }
 
-    if (!ShadowMapRenderer.Init(LightSetup, Resources))
+    if (!DeferredRenderer.Initialize(Resources))
     {
         return false;
     }
 
-    if (!SSAORenderer.Init(Resources))
+    if (!ShadowMapRenderer.Initialize(LightSetup, Resources))
     {
         return false;
     }
 
-    if (!LightProbeRenderer.Init(LightSetup, Resources))
+    if (!SSAORenderer.Initialize(Resources))
     {
         return false;
     }
 
-    if (!SkyboxRenderPass.Init(Resources))
+    if (!LightProbeRenderer.Initialize(LightSetup, Resources))
     {
         return false;
     }
 
-    if (!ForwardRenderer.Init(Resources))
+    if (!SkyboxRenderPass.Initialize(Resources))
+    {
+        return false;
+    }
+
+    if (!ForwardRenderer.Initialize(Resources))
+    {
+        return false;
+    }
+
+    if (!TemporalAA.Initialize(Resources))
     {
         return false;
     }
 
     if (RHISupportsRayTracing())
     {
-        if (!RayTracer.Init(Resources))
+        if (!RayTracer.Initialize(Resources))
         {
             return false;
         }
     }
 
-    LightProbeRenderer.RenderSkyLightProbe(MainCmdList, LightSetup, Resources);
+    // Copy over the texture
+    {
+        LightProbeRenderer.RenderSkyLightProbe(CommandList, LightSetup, Resources);
+        
+        FRHITextureDesc IrradianceProbeDesc = LightSetup.Skylight.IrradianceMap->GetDesc();
+        IrradianceProbeDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-    CRHICommandQueue::Get().ExecuteCommandList(MainCmdList);
+        FRHITextureDesc SpecularIrradianceProbeDesc = LightSetup.Skylight.SpecularIrradianceMap->GetDesc();
+        SpecularIrradianceProbeDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-    CCanvasApplication& Application = CCanvasApplication::Get();
+        FRHITextureRef IrradianceMap = RHICreateTexture(IrradianceProbeDesc, EResourceAccess::CopyDest);
+        if (!IrradianceMap)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            IrradianceMap->SetName("Irradiance Map");
+        }
 
-    // Register EventFunc
-    WindowHandler->WindowResizedDelegate.BindRaw(this, &CRenderer::OnWindowResize);
-    Application.AddWindowMessageHandler(WindowHandler, uint32(-1));
+        FRHITextureRef SpecularIrradianceMap = RHICreateTexture(SpecularIrradianceProbeDesc, EResourceAccess::CopyDest);
+        if (!SpecularIrradianceMap)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            SpecularIrradianceMap->SetName("Specular Irradiance Map");
+        }
+
+        CommandList.TransitionTexture(LightSetup.Skylight.IrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopySource);
+        CommandList.TransitionTexture(LightSetup.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopySource);
+
+        CommandList.CopyTexture(IrradianceMap.Get(), LightSetup.Skylight.IrradianceMap.Get());
+        CommandList.CopyTexture(SpecularIrradianceMap.Get(), LightSetup.Skylight.SpecularIrradianceMap.Get());
+
+        CommandList.TransitionTexture(IrradianceMap.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(SpecularIrradianceMap.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+
+        CommandList.DestroyResource(LightSetup.Skylight.IrradianceMap.Get());
+        CommandList.DestroyResource(LightSetup.Skylight.SpecularIrradianceMap.Get());
+
+        LightSetup.Skylight.IrradianceMap         = IrradianceMap;
+        LightSetup.Skylight.SpecularIrradianceMap = SpecularIrradianceMap;
+
+        GRHICommandExecutor.ExecuteCommandList(CommandList);
+    }
 
     // Register Windows
-    TextureDebugger = CTextureDebugWindow::Make();
-    Application.AddWindow(TextureDebugger);
+    if (FApplication::IsInitialized())
+    {
+        TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
+        FApplication::Get().AddWidget(TextureDebugger);
 
-    InfoWindow = CRendererInfoWindow::Make();
-    Application.AddWindow(InfoWindow);
+        InfoWindow = MakeShared<FRendererInfoWindow>();
+        FApplication::Get().AddWidget(InfoWindow);
 
-    GPUProfilerWindow = CGPUProfilerWindow::Make();
-    Application.AddWindow(GPUProfilerWindow);
+        GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
+        FApplication::Get().AddWidget(GPUProfilerWindow);
+    }
 
     return true;
 }
 
-void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
-                                                , const TPair<uint32, uint32>& DrawCommands
-                                                , TArray<uint32>& OutDeferredDrawCommands
-                                                , TArray<uint32>& OutForwardDrawCommands)
+void FRenderer::FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands)
 {
-
     TRACE_SCOPE("Frustum Culling And Sorting Inner");
 
     // Inserts a mesh based on distance
-    const auto InsertSorted = []( int32 CommandIndex
-                                , const CCamera* Camera
-                                , const CVector3& WorldPosition
-                                , TArray<float>& OutDistances
-                                , TArray<uint32>& OutCommands) -> void
+    const auto InsertSorted = [](int32 CommandIndex, const FCamera* Camera, const FVector3& WorldPosition, TArray<float>& OutDistances, TArray<uint32>& OutCommands) -> void
     {
-        Check(OutDistances.Size() == OutCommands.Size());
+        CHECK(OutDistances.Size() == OutCommands.Size());
 
-        CVector3 CameraPosition = Camera->GetPosition();
-        CVector3 DistanceVector = WorldPosition - CameraPosition;
+        FVector3 CameraPosition = Camera->GetPosition();
+        FVector3 DistanceVector = WorldPosition - CameraPosition;
 
         const float NewDistance = DistanceVector.LengthSquared();
 
@@ -261,7 +473,6 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
         OutDistances.Insert(Index, NewDistance);
     };
 
-
     // Perform frustum culling and insert based on distance to the camera
     TArray<float> DeferredDistances;
     
@@ -271,23 +482,20 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
     DeferredDistances.Reserve(NumCommands);
     OutDeferredDrawCommands.Reserve(NumCommands);
 
-    CFrustum CameraFrustum = CFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
+    const FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
     for (uint32 Index = 0; Index < NumCommands; ++Index)
     {
         const uint32 CommandIndex = StartCommand + Index;
 
-        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+        const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
 
-        CMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+        FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
 
-        CVector3 Top = CVector3(Command.Mesh->BoundingBox.Top);
-        Top = TransformMatrix.TransformPosition(Top);
+        const FVector3 Top    = TransformMatrix.Transform(Command.Mesh->BoundingBox.Top);
+        const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
 
-        CVector3 Bottom = CVector3(Command.Mesh->BoundingBox.Bottom);
-        Bottom = TransformMatrix.TransformPosition(Bottom);
-
-        SAABB Box(Top, Bottom);
+        FAABB Box(Top, Bottom);
         if (CameraFrustum.CheckAABB(Box))
         {
             if (Command.Material->ShouldRenderInForwardPass())
@@ -296,18 +504,18 @@ void CRenderer::FrustumCullingAndSortingInternal( const CCamera* Camera
             }
             else
             {
-                CVector3 WorldPosition = Box.GetCenter();
+                FVector3 WorldPosition = Box.GetCenter();
                 InsertSorted(CommandIndex, Camera, WorldPosition, DeferredDistances, OutDeferredDrawCommands);
             }
         }
     }
 }
 
-void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
+void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
 {
     TRACE_SCOPE("FrustumCulling And Sorting");
 
-    const auto NumThreads = 1;// PlatformThreadMisc::GetNumProcessors();
+    const auto NumThreads = 1;// FPlatformThreadMisc::GetNumProcessors();
     
     TArray<TArray<uint32>> WriteableDeferredMeshCommands;
     WriteableDeferredMeshCommands.Reserve(NumThreads);
@@ -325,36 +533,36 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
     int32 RemainingCommands = NumMeshCommands;
     int32 StartCommand      = 0;
 
-    TArray<DispatchID> Tasks(NumThreads);
+    TArray<FAsyncTaskBase*> Tasks(NumThreads);
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
         // Allocate Array for commands to fill
         TArray<uint32>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands.Emplace();
         TArray<uint32>& WriteForwardMeshCommands  = WriteableForwardMeshCommands.Emplace();
         
-        const int32 NumCommands = NMath::Min<int32>(RemainingCommands, NumCommandsPerThread);
+        const int32 NumCommands = FMath::Min<int32>(RemainingCommands, NumCommandsPerThread);
         RemainingCommands -= NumCommands;
 
         // Allocate ArrayView for reading
         TPair<uint32, uint32>& ReadMeshCommands = ReadableMeshCommands.Emplace(StartCommand, NumCommands);
         StartCommand += NumCommands;
 
-        const auto CullAndSort = [&]() -> void
+        FAsyncTaskBase* AsyncTask = new TAsyncLambdaTask([&]() -> void
         {
             FrustumCullingAndSortingInternal(CameraPtr, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
-        };
+        });
 
-        SAsyncTask AsyncTask;
-        AsyncTask.Delegate.BindLambda(CullAndSort);
-
-        Tasks[Index] = CAsyncTaskManager::Get().Dispatch(AsyncTask);
+        AsyncTask->Launch(EQueuePriority::Normal);
+        Tasks[Index] = AsyncTask;
     }
 
     // Sync and insert
     for (uint32 Index = 0; Index < NumThreads; ++Index)
     {
-        CAsyncTaskManager::Get().WaitFor(Tasks[Index], true);
-        
+        FAsyncTaskBase* AsyncTask = Tasks[Index];
+        AsyncTask->WaitForCompletion();
+        delete AsyncTask;
+
         const TArray<uint32>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
         Resources.ForwardVisibleCommands.Append(WriteForwardMeshCommands);
 
@@ -363,69 +571,89 @@ void CRenderer::PerformFrustumCullingAndSort(const CScene& Scene)
     }
 }
 
-void CRenderer::PerformFXAA(CRHICommandList& InCmdList)
+void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin FXAA");
+    INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "Begin FXAA");
 
     TRACE_SCOPE("FXAA");
 
-    GPU_TRACE_SCOPE(InCmdList, "FXAA");
+    GPU_TRACE_SCOPE(InCommandList, "FXAA");
 
-    struct SFXAASettings
+    struct FFXAASettings
     {
         float Width;
         float Height;
     } Settings;
 
-    Settings.Width  = static_cast<float>(Resources.BackBuffer->GetWidth());
-    Settings.Height = static_cast<float>(Resources.BackBuffer->GetHeight());
+    const float RenderWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
+    const float RenderHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0] = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
+    Settings.Width  = RenderWidth;
+    Settings.Height = RenderHeight;
 
-    InCmdList.BeginRenderPass(RenderPass);
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    InCommandList.SetViewport(ViewportRegion);
 
-    CRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    if (GFXAADebug.GetBool())
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    InCommandList.SetScissorRect(ScissorRegion);
+
+    FRHIRenderPassDesc RenderPass;
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPass.NumRenderTargets            = 1;
+
+    InCommandList.BeginRenderPass(RenderPass);
+
+    FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
+    if (CVarFXAADebug.GetValue())
     {
-        InCmdList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
-        InCmdList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
-        InCmdList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
-        InCmdList.SetGraphicsPipelineState(FXAADebugPSO.Get());
+        InCommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
+        InCommandList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCommandList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
+        InCommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
     }
     else
     {
-        InCmdList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
-        InCmdList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
-        InCmdList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
-        InCmdList.SetGraphicsPipelineState(FXAAPSO.Get());
+        InCommandList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
+        InCommandList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
+        InCommandList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
+        InCommandList.SetGraphicsPipelineState(FXAAPSO.Get());
     }
 
-    InCmdList.DrawInstanced(3, 1, 0, 0);
+    InCommandList.DrawInstanced(3, 1, 0, 0);
 
-    InCmdList.EndRenderPass();
+    InCommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End FXAA");
+    INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "End FXAA");
 }
 
-void CRenderer::PerformBackBufferBlit(CRHICommandList& InCmdList)
+void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Draw BackBuffer");
 
     TRACE_SCOPE("Draw to BackBuffer");
 
-    CRHIRenderPassInitializer RenderPass;
-    RenderPass.RenderTargets[0] = CRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
-    RenderPass.NumRenderTargets = 1;
+    const float RenderWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
+    const float RenderHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
+
+    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    InCmdList.SetViewport(ViewportRegion);
+
+    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    InCmdList.SetScissorRect(ScissorRegion);
+
+    FRHIRenderPassDesc RenderPass;
+    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
+    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
 
-    CRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
+    FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
     InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
-
     InCmdList.SetGraphicsPipelineState(PostPSO.Get());
+
     InCmdList.DrawInstanced(3, 1, 0, 0);
 
     InCmdList.EndRenderPass();
@@ -433,97 +661,28 @@ void CRenderer::PerformBackBufferBlit(CRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
-void CRenderer::PerformAABBDebugPass(CRHICommandList& InCmdList)
+void FRenderer::Tick()
 {
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin DebugPass");
+    const FScene& Scene = *GEngine->Scene;
 
-    TRACE_SCOPE("DebugPass");
-
-    InCmdList.SetGraphicsPipelineState(AABBDebugPipelineState.Get());
-
-    InCmdList.SetPrimitiveTopology(EPrimitiveTopology::LineList);
-
-    InCmdList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
-
-    InCmdList.SetVertexBuffers(&AABBVertexBuffer, 1, 0);
-    InCmdList.SetIndexBuffer(AABBIndexBuffer.Get());
-
-    for (const auto CommandIndex : Resources.DeferredVisibleCommands)
-    {
-        const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
-
-        SAABB& Box = Command.Mesh->BoundingBox;
-
-        CVector3 Scale    = CVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
-        CVector3 Position = Box.GetCenter();
-
-        CMatrix4 TranslationMatrix = CMatrix4::Translation(Position.x, Position.y, Position.z);
-        CMatrix4 ScaleMatrix       = CMatrix4::Scale(Scale.x, Scale.y, Scale.z);
-        CMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
-        TransformMatrix = TransformMatrix.Transpose();
-        TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
-        TransformMatrix.Transpose();
-
-        InCmdList.Set32BitShaderConstants(AABBVertexShader.Get(), &TranslationMatrix, 16);
-
-        InCmdList.DrawIndexedInstanced(24, 1, 0, 0, 0);
-    }
-
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End DebugPass");
-}
-
-void CRenderer::Tick(const CScene& Scene)
-{
-    Resources.BackBuffer             = Resources.MainWindowViewport->GetBackBuffer();
-    Resources.GlobalMeshDrawCommands = TArrayView<const SMeshDrawCommand>(Scene.GetMeshDrawCommands());
-
-    // Prepare Lights
-#if 1
-    PreShadowsCmdList.BeginExternalCapture();
-#endif
-
-    CGPUProfiler::Get().BeginGPUFrame(PreShadowsCmdList);
-
-    INSERT_DEBUG_CMDLIST_MARKER(PreShadowsCmdList, "--BEGIN FRAME--");
-
-    LightSetup.BeginFrame(PreShadowsCmdList, Scene);
-
-    // Init point light task
-    const auto RenderPointShadows = [&]()
-    {
-        CRenderer::ShadowMapRenderer.RenderPointLightShadows(PointShadowCmdList, LightSetup, Scene);
-    };
-
-    if (!PointShadowTask.Delegate.IsBound())
-    {
-        PointShadowTask.Delegate.BindLambda(RenderPointShadows);
-    }
-
-    CAsyncTaskManager::Get().Dispatch(PointShadowTask);
-
-    // Init directional light task
-    const auto RenderDirShadows = [&]()
-    {
-        CRenderer::ShadowMapRenderer.RenderDirectionalLightShadows(DirShadowCmdList, LightSetup, Resources, Scene);
-    };
-
-    DirShadowTask.Delegate.BindLambda(RenderDirShadows);
-    CAsyncTaskManager::Get().Dispatch(DirShadowTask);
+    Resources.BackBuffer             = Resources.MainViewport->GetBackBuffer();
+    Resources.GlobalMeshDrawCommands = TArrayView<const FMeshDrawCommand>(Scene.GetMeshDrawCommands());
 
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
     Resources.ForwardVisibleCommands.Clear();
 
-    // Clear the images that were debug gable last frame 
+    // Clear the images that were debug-able last frame 
     // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
 
-    if (!GFrustumCullEnabled.GetBool())
+    // FrustumCulling
+    if (!CVarFrustumCullEnabled.GetValue())
     {
         for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
         {
-            const SMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
-            if (Command.Material->HasAlphaMask())
+            const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+            if (Command.Material->ShouldRenderInForwardPass())
             {
                 Resources.ForwardVisibleCommands.Emplace(CommandIndex);
             }
@@ -538,642 +697,569 @@ void CRenderer::Tick(const CScene& Scene)
         PerformFrustumCullingAndSort(Scene);
     }
 
+    // START FRAME ON THE GPU
+    GRHICommandExecutor.Tick();
+
+    if (ResizeEvent)
+    {
+        // Check if we resized and update the Viewport-size on the RHI-Thread
+        FRHIViewport* Viewport = Resources.MainViewport.Get();
+
+        // TODO: Remove these
+        uint32 NewWidth  = ResizeEvent->GetWidth();
+        uint32 NewHeight = ResizeEvent->GetHeight();
+
+        if ((Resources.CurrentWidth != NewWidth || Resources.CurrentHeight != NewHeight) && NewWidth > 0 && NewHeight > 0)
+        {
+            CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
+            LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, NewWidth, NewHeight);
+
+            // TODO: Resources should not require a CommandList to be released safely
+            if (!DeferredRenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (!SSAORenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (!ShadowMapRenderer.ResizeResources(CommandList, NewWidth, NewHeight, LightSetup))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (!TemporalAA.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+        }
+
+        Resources.CurrentWidth  = NewWidth;
+        Resources.CurrentHeight = NewHeight;
+        ResizeEvent.Reset();
+    }
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
+    
+    CommandList.BeginExternalCapture();
+
+    // Begin capture GPU FrameTime
+    FGPUProfiler::Get().BeginGPUFrame(CommandList);
+
+    // Prepare Lights
+    LightSetup.BeginFrame(CommandList, Scene);
+
     // Update camera-buffer
-    SCameraBufferDesc CamBuffer;
-    CamBuffer.ViewProjection    = Scene.GetCamera()->GetViewProjectionMatrix();
-    CamBuffer.View              = Scene.GetCamera()->GetViewMatrix();
-    CamBuffer.ViewInv           = Scene.GetCamera()->GetViewInverseMatrix();
-    CamBuffer.Projection        = Scene.GetCamera()->GetProjectionMatrix();
-    CamBuffer.ProjectionInv     = Scene.GetCamera()->GetProjectionInverseMatrix();
-    CamBuffer.ViewProjectionInv = Scene.GetCamera()->GetViewProjectionInverseMatrix();
-    CamBuffer.Position          = Scene.GetCamera()->GetPosition();
-    CamBuffer.Forward           = Scene.GetCamera()->GetForward();
-    CamBuffer.Right             = Scene.GetCamera()->GetRight();
-    CamBuffer.NearPlane         = Scene.GetCamera()->GetNearPlane();
-    CamBuffer.FarPlane          = Scene.GetCamera()->GetFarPlane();
-    CamBuffer.AspectRatio       = Scene.GetCamera()->GetAspectRatio();
+    // TODO: All matrices needs to be in Transposed the same
+    CameraBuffer.PrevViewProjection          = CameraBuffer.ViewProjection;
+    CameraBuffer.ViewProjection              = Scene.GetCamera()->GetViewProjectionMatrix();
+    CameraBuffer.ViewProjectionInv           = Scene.GetCamera()->GetViewProjectionInverseMatrix();
+    CameraBuffer.ViewProjectionUnjittered    = CameraBuffer.ViewProjection;
+    CameraBuffer.ViewProjectionInvUnjittered = CameraBuffer.ViewProjectionInv;
 
-    PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
+    CameraBuffer.View           = Scene.GetCamera()->GetViewMatrix();
+    CameraBuffer.ViewInv        = Scene.GetCamera()->GetViewInverseMatrix();
+    CameraBuffer.Projection     = Scene.GetCamera()->GetProjectionMatrix();
+    CameraBuffer.ProjectionInv  = Scene.GetCamera()->GetProjectionInverseMatrix();
 
-    PrepareGBufferCmdList.UpdateBuffer(Resources.CameraBuffer.Get(), 0, sizeof(SCameraBufferDesc), &CamBuffer);
+    CameraBuffer.Position       = Scene.GetCamera()->GetPosition();
+    CameraBuffer.Forward        = Scene.GetCamera()->GetForward();
+    CameraBuffer.Right          = Scene.GetCamera()->GetRight();
+    CameraBuffer.NearPlane      = Scene.GetCamera()->GetNearPlane();
+    CameraBuffer.FarPlane       = Scene.GetCamera()->GetFarPlane();
+    CameraBuffer.AspectRatio    = Scene.GetCamera()->GetAspectRatio();
+    CameraBuffer.ViewportWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
+    CameraBuffer.ViewportHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    PrepareGBufferCmdList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
-    PrepareGBufferCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
-
-    if (GPrePassEnabled.GetBool())
+    if (CVarEnableTemporalAA.GetValue())
     {
-        const auto RenderPrePass = [&]()
-        {
-            CRenderer::DeferredRenderer.RenderPrePass(PrePassCmdList, Resources, Scene);
-        };
+        const FVector2 CameraJitter    = HaltonState.NextSample();
+        const FVector2 ClipSpaceJitter = CameraJitter / FVector2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
 
-        PrePassTask.Delegate.BindLambda(RenderPrePass);
-        CAsyncTaskManager::Get().Dispatch(PrePassTask);
-    }
+        // Add Jitter to projection matrix
+        FMatrix4 JitterOffset = FMatrix4::Translation(FVector3(ClipSpaceJitter.x, ClipSpaceJitter.y, 0.0f));
+        CameraBuffer.Projection    = CameraBuffer.Projection * JitterOffset;
+        CameraBuffer.ProjectionInv = CameraBuffer.Projection.Invert();
+        CameraBuffer.ProjectionInv = CameraBuffer.ProjectionInv.Transpose();
 
-#if 0
-    if (ShadingImage && GEnableVariableRateShading.GetBool())
-    {
-        INSERT_DEBUG_CMDLIST_MARKER(ShadingRateCmdList, "Begin VRS Image");
-        ShadingRateCmdList.SetShadingRate(EShadingRate::VRS_1x1);
+        // Calculate new ViewProjection
+        CameraBuffer.ViewProjection    = CameraBuffer.View.Transpose() * CameraBuffer.Projection;
+        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.Invert();
+        CameraBuffer.ViewProjection    = CameraBuffer.ViewProjection.Transpose();
+        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjectionInv.Transpose();
 
-        ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), EResourceAccess::ShadingRateSource, EResourceAccess::UnorderedAccess);
-
-        ShadingRateCmdList.SetComputePipelineState(ShadingRatePipeline.Get());
-
-        CRHIUnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
-        ShadingRateCmdList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
-
-        ShadingRateCmdList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
-
-        ShadingRateCmdList.TransitionTexture(ShadingImage.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::ShadingRateSource);
-
-        ShadingRateCmdList.SetShadingRateImage(ShadingImage.Get());
-
-        INSERT_DEBUG_CMDLIST_MARKER(ShadingRateCmdList, "End VRS Image");
-    }
-    else if (RHISupportsVariableRateShading())
-    {
-        ShadingRateCmdList.SetShadingRate(EShadingRate::VRS_1x1);
-    }
-#endif
-
-    if (RHISupportsRayTracing())
-    {
-        const auto RenderRayTracing = [&]()
-        {
-            GPU_TRACE_SCOPE(RayTracingCmdList, "Ray Tracing");
-            CRenderer::RayTracer.PreRender(RayTracingCmdList, Resources, Scene);
-        };
-
-        RayTracingTask.Delegate.BindLambda(RenderRayTracing);
-        CAsyncTaskManager::Get().Dispatch(RayTracingTask);
-    }
-
-    {
-        const auto RenderBasePass = [&]()
-        {
-            CRenderer::DeferredRenderer.RenderBasePass(BasePassCmdList, Resources);
-        };
-
-        BasePassTask.Delegate.BindLambda(RenderBasePass);
-        CAsyncTaskManager::Get().Dispatch(BasePassTask);
-    }
-
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_ALBEDO_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_ALBEDO_INDEX]->GetShaderResourceView())
-                   , Resources.GBuffer[GBUFFER_ALBEDO_INDEX]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_NORMAL_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_NORMAL_INDEX]->GetShaderResourceView())
-                   , Resources.GBuffer[GBUFFER_NORMAL_INDEX]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView())
-                   , Resources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_MATERIAL_INDEX].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_MATERIAL_INDEX]->GetShaderResourceView())
-                   , Resources.GBuffer[GBUFFER_MATERIAL_INDEX]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
-    MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-
-    MainCmdList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), { 1.0f, 1.0f, 1.0f, 1.0f });
-
-    if (GEnableSSAO.GetBool())
-    {
-        GPU_TRACE_SCOPE(MainCmdList, "SSAO");
-        SSAORenderer.Render(MainCmdList, Resources);
-    }
-
-    MainCmdList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView())
-                   , Resources.SSAOBuffer
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    {
-        MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess);
-        MainCmdList.TransitionTexture(Resources.BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
-        MainCmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-        MainCmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-        MainCmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-
-        ShadowMapRenderer.RenderShadowMasks(MainCmdList, LightSetup, Resources);
-
-        DeferredRenderer.RenderDeferredTiledLightPass(MainCmdList, Resources, LightSetup);
-    }
-
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
-    MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget);
-
-    SkyboxRenderPass.Render(MainCmdList, Resources, Scene);
-
-    MainCmdList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.DirectionalShadowMask->GetShaderResourceView())
-                   , LightSetup.DirectionalShadowMask
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView())
-                   , LightSetup.ShadowMapCascades[0]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[1]->GetShaderResourceView())
-                   , LightSetup.ShadowMapCascades[1]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[2]->GetShaderResourceView())
-                   , LightSetup.ShadowMapCascades[2]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(LightSetup.ShadowMapCascades[3]->GetShaderResourceView())
-                   , LightSetup.ShadowMapCascades[3]
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
-
-    MainCmdList.TransitionTexture(LightSetup.IrradianceMap.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-    MainCmdList.TransitionTexture(LightSetup.SpecularIrradianceMap.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-    MainCmdList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.IntegrationLUT->GetShaderResourceView())
-                   , Resources.IntegrationLUT
-                   , EResourceAccess::PixelShaderResource
-                   , EResourceAccess::PixelShaderResource);
-
-    if (!Resources.ForwardVisibleCommands.IsEmpty())
-    {
-        GPU_TRACE_SCOPE(MainCmdList, "Forward Pass");
-        ForwardRenderer.Render(MainCmdList, Resources, LightSetup);
-    }
-
-    MainCmdList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView())
-                   , Resources.FinalTarget
-                   , EResourceAccess::PixelShaderResource
-                   , EResourceAccess::PixelShaderResource);
-
-    MainCmdList.TransitionTexture(Resources.GBuffer[GBUFFER_DEPTH_INDEX].Get(), EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource);
-
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(Resources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView())
-                   , Resources.GBuffer[GBUFFER_DEPTH_INDEX]
-                   , EResourceAccess::PixelShaderResource
-                   , EResourceAccess::PixelShaderResource);
-
-    if (GEnableFXAA.GetBool())
-    {
-        PerformFXAA(MainCmdList);
+        CameraBuffer.PrevJitter = CameraBuffer.Jitter;
+        CameraBuffer.Jitter     = ClipSpaceJitter;
     }
     else
     {
-        PerformBackBufferBlit(MainCmdList);
+        CameraBuffer.PrevJitter = FVector2(0.0f);
+        CameraBuffer.Jitter     = FVector2(0.0f);
     }
 
-    if (GDrawAABBs.GetBool())
+    CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraBuffer)), &CameraBuffer);
+    CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+
+    // TODO: Optimize (Materials should be collected and built once in the beginning of the frame)
+    for (const FMeshDrawCommand& Command : Resources.GlobalMeshDrawCommands)
     {
-        PerformAABBDebugPass(MainCmdList);
+        if (Command.Material->IsBufferDirty())
+        {
+            Command.Material->BuildBuffer(CommandList);
+        }
+    }
+    
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Albedo].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Normal].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Material].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_ViewNormal].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Velocity].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
+
+    // PrePass
+    if (CVarPrePassEnabled.GetValue())
+    {
+        DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
+    }
+    else
+    {
+        FRHIDepthStencilView DepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get());
+        CommandList.ClearDepthStencilView(DepthStencilView, 1.0f, 0);
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "Begin UI Render");
+#if SUPPORT_VARIABLE_RATE_SHADING
+    if (ShadingImage && CVarEnableVariableRateShading.GetValue())
+    {
+        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin VRS Image");
+        CommandList.SetShadingRate(EShadingRate::VRS_1x1);
+
+        CommandList.TransitionTexture(ShadingImage.Get(), EResourceAccess::ShadingRateSource, EResourceAccess::UnorderedAccess);
+
+        CommandList.SetComputePipelineState(ShadingRatePipeline.Get());
+
+        FRHIUnorderedAccessView* ShadingImageUAV = ShadingImage->GetUnorderedAccessView();
+        CommandList.SetUnorderedAccessView(ShadingRateShader.Get(), ShadingImageUAV, 0);
+
+        CommandList.Dispatch(ShadingImage->GetWidth(), ShadingImage->GetHeight(), 1);
+
+        CommandList.TransitionTexture(ShadingImage.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::ShadingRateSource);
+
+        CommandList.SetShadingRateImage(ShadingImage.Get());
+
+        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End VRS Image");
+    }
+    else if (RHISupportsVariableRateShading())
+    {
+        CommandList.SetShadingRate(EShadingRate::VRS_1x1);
+    }
+#endif
+
+    // BasePass
+    if (CVarBasePassEnabled.GetValue())
+    {
+        DeferredRenderer.RenderBasePass(CommandList, Resources);
+    }
+
+    // RayTracing PrePass
+    if (RHISupportsRayTracing())
+    {
+        GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
+        RayTracer.PreRender(CommandList, Resources, Scene);
+    }
+
+    // Start recording the main CommandList
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Albedo].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Albedo],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Normal].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Normal],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_ViewNormal].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_ViewNormal]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_ViewNormal],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Velocity].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Velocity]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Velocity],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Material].Get(), EResourceAccess::RenderTarget, EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Material]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Material],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+    
+    // SSAO
+    CommandList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+
+    if (CVarEnableSSAO.GetValue())
+    {
+        GPU_TRACE_SCOPE(CommandList, "SSAO");
+        SSAORenderer.Render(CommandList, Resources);
+    }
+    else
+    {
+        CommandList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+
+    CommandList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.SSAOBuffer->GetShaderResourceView()),
+        Resources.SSAOBuffer,
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+
+    // Render Shadows
+    if (CVarShadowsEnabled.GetValue())
+    {
+        // Point Lights
+        if (CVarPointLightShadowsEnabled.GetValue())
+        {
+            ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
+        }
+
+        // Directional Light
+        if (CVarSunShadowsEnabled.GetValue())
+        {
+            ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
+        }
+    }
+
+
+    // ShadowMask and GBuffer
+    {
+        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
+        CommandList.TransitionTexture(LightSetup.Skylight.IrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(LightSetup.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+
+        if (CVarShadowMaskEnabled.GetValue())
+        {
+            ShadowMapRenderer.RenderShadowMasks(CommandList, LightSetup, Resources);
+        }
+        else
+        {
+            CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+
+            const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
+            
+            const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), DebugClearColor);
+            
+            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+            CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+        }
+
+        DeferredRenderer.RenderDeferredTiledLightPass(CommandList, Resources, LightSetup);
+    }
+
+    CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
+    CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget);
+
+    // Skybox Pass
+    if (CVarSkyboxEnabled.GetValue())
+    {
+        SkyboxRenderPass.Render(CommandList, Resources, Scene);
+    }
+
+    CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(LightSetup.DirectionalShadowMask->GetShaderResourceView()),
+        LightSetup.DirectionalShadowMask,
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[0]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[0],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[1]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[1],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[2]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[2],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(LightSetup.ShadowMapCascades[3]->GetShaderResourceView()),
+        LightSetup.ShadowMapCascades[3],
+        EResourceAccess::NonPixelShaderResource,
+        EResourceAccess::NonPixelShaderResource);
+
+    CommandList.TransitionTexture(LightSetup.Skylight.IrradianceMap.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(LightSetup.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.IntegrationLUT->GetShaderResourceView()),
+        Resources.IntegrationLUT,
+        EResourceAccess::PixelShaderResource,
+        EResourceAccess::PixelShaderResource);
+
+    // Forward Pass
+    if (!Resources.ForwardVisibleCommands.IsEmpty())
+    {
+        GPU_TRACE_SCOPE(CommandList, "Forward Pass");
+        ForwardRenderer.Render(CommandList, Resources, LightSetup);
+    }
+
+    // Debug PointLights
+    if (CVarDrawPointLights.GetValue())
+    {
+        DebugRenderer.RenderPointLights(CommandList, Resources, Scene);
+    }
+
+    // Debug AABBs
+    if (CVarDrawAABBs.GetValue())
+    {
+        DebugRenderer.RenderObjectAABBs(CommandList, Resources);
+    }
+
+    // Temporal AA
+    if (CVarEnableTemporalAA.GetValue())
+    {
+        CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess);
+
+        TemporalAA.Render(CommandList, Resources);
+
+        CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
+    }
+    else
+    {
+        CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::PixelShaderResource);
+    }
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView()),
+        Resources.GBuffer[GBufferIndex_Depth],
+        EResourceAccess::PixelShaderResource,
+        EResourceAccess::PixelShaderResource);
+
+    // FXAA
+    if (CVarEnableFXAA.GetValue())
+    {
+        PerformFXAA(CommandList);
+    }
+    else
+    {
+        // Render to the BackBuffer
+        PerformBackBufferBlit(CommandList);
+    }
+
+    AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
+        Resources.FinalTarget,
+        EResourceAccess::PixelShaderResource,
+        EResourceAccess::PixelShaderResource);
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin UI Render");
 
     {
         TRACE_SCOPE("Render UI");
 
-#if 0
+    #if SUPPORT_VARIABLE_RATE_SHADING
         if (RHISupportsVariableRateShading())
         {
-            MainCmdList.SetShadingRate(EShadingRate::VRS_1x1);
-            MainCmdList.SetShadingRateImage(nullptr);
+            CommandList.SetShadingRate(EShadingRate::VRS_1x1);
+            CommandList.SetShadingRateImage(nullptr);
         }
-#endif
+    #endif
 
-        CCanvasApplication::Get().DrawWindows(MainCmdList);
+        FApplication::Get().DrawWindows(CommandList);
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "End UI Render");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End UI Render");
 
-    MainCmdList.TransitionTexture(Resources.BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
+    CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
 
-    INSERT_DEBUG_CMDLIST_MARKER(MainCmdList, "--END FRAME--");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
 
-    CGPUProfiler::Get().EndGPUFrame(MainCmdList);
+    FGPUProfiler::Get().EndGPUFrame(CommandList);
 
-#if 1
-    MainCmdList.EndExternalCapture();
-#endif
+    CommandList.EndExternalCapture();
 
-    CAsyncTaskManager::Get().WaitForAll();
+    CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
 
     {
         TRACE_SCOPE("ExecuteCommandList");
 
-        CRHICommandList* CmdLists[9] =
+        GRHICommandExecutor.WaitForOutstandingTasks();
+        GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FrameStatistics = GRHICommandExecutor.GetStatistics();
+    }
+}
+
+void FRenderer::OnWindowResize(const FWindowEvent& Event)
+{
+    ResizeEvent.Emplace(Event);
+}
+
+bool FRenderer::InitAA()
+{
+    TArray<uint8> ShaderCode;
+    
+    {
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
         {
-            &PreShadowsCmdList,
-            &PointShadowCmdList,
-            &DirShadowCmdList,
-            &PrepareGBufferCmdList,
-            &PrePassCmdList,
-            &ShadingRateCmdList,
-            &RayTracingCmdList,
-            &BasePassCmdList,
-            &MainCmdList
-        };
-
-        CRHICommandQueue::Get().ExecuteCommandLists(CmdLists, ArrayCount(CmdLists));
-
-        FrameStatistics.NumDrawCalls      = CRHICommandQueue::Get().GetNumDrawCalls();
-        FrameStatistics.NumDispatchCalls  = CRHICommandQueue::Get().GetNumDispatchCalls();
-        FrameStatistics.NumRenderCommands = CRHICommandQueue::Get().GetNumCommands();
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
-    {
-        TRACE_SCOPE("Present");
-        Resources.MainWindowViewport->Present(GVSyncEnabled.GetBool());
-    }
-}
-
-void CRenderer::Release()
-{
-    CRHICommandQueue::Get().WaitForGPU();
-
-    PreShadowsCmdList.Reset();
-    PointShadowCmdList.Reset();
-    DirShadowCmdList.Reset();
-    PrepareGBufferCmdList.Reset();
-    PrePassCmdList.Reset();
-    ShadingRateCmdList.Reset();
-    RayTracingCmdList.Reset();
-    BasePassCmdList.Reset();
-    MainCmdList.Reset();
-
-    DeferredRenderer.Release();
-    ShadowMapRenderer.Release();
-    SSAORenderer.Release();
-    LightProbeRenderer.Release();
-    SkyboxRenderPass.Release();
-    ForwardRenderer.Release();
-    RayTracer.Release();
-
-    Resources.Release();
-    LightSetup.Release();
-
-    AABBVertexBuffer.Reset();
-    AABBIndexBuffer.Reset();
-    AABBDebugPipelineState.Reset();
-    AABBVertexShader.Reset();
-    AABBPixelShader.Reset();
-
-    PostPSO.Reset();
-    PostShader.Reset();
-    FXAAPSO.Reset();
-    FXAAShader.Reset();
-    FXAADebugPSO.Reset();
-    FXAADebugShader.Reset();
-
-    ShadingImage.Reset();
-    ShadingRatePipeline.Reset();
-    ShadingRateShader.Reset();
-
-    TimestampQueries.Reset();
-
-    FrameStatistics.Reset();
-
-    if (CCanvasApplication::IsInitialized())
-    {
-        CCanvasApplication& Application = CCanvasApplication::Get();
-        Application.RemoveWindow(TextureDebugger);
-        TextureDebugger.Reset();
-
-        Application.RemoveWindow(InfoWindow);
-        InfoWindow.Reset();
-
-        Application.RemoveWindow(GPUProfilerWindow);
-        GPUProfilerWindow.Reset();
-    }
-}
-
-void CRenderer::OnWindowResize(const SWindowResizeEvent& Event)
-{
-    const uint32 Width = Event.Width;
-    const uint32 Height = Event.Height;
-
-    if (!Resources.MainWindowViewport->Resize(Width, Height))
-    {
-        CDebug::DebugBreak();
-        return;
-    }
-
-    if (!DeferredRenderer.ResizeResources(Resources))
-    {
-        CDebug::DebugBreak();
-        return;
-    }
-
-    if (!SSAORenderer.ResizeResources(Resources))
-    {
-        CDebug::DebugBreak();
-        return;
-    }
-
-    if (!ShadowMapRenderer.ResizeResources(Width, Height, LightSetup))
-    {
-        CDebug::DebugBreak();
-        return;
-    }
-}
-
-bool CRenderer::InitBoundingBoxDebugPass()
-{
-    TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "VSMain", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    AABBVertexShader = RHICreateVertexShader(ShaderCode);
-    if (!AABBVertexShader)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Debug.hlsl", "PSMain", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    AABBPixelShader = RHICreatePixelShader(ShaderCode);
-    if (!AABBPixelShader)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    CRHIVertexInputLayoutInitializer InputLayout =
-    {
-        { "POSITION", 0, EFormat::R32G32B32_Float, 0, 0, EVertexInputClass::Vertex, 0 },
-    };
-
-    TSharedRef<CRHIVertexInputLayout> InputLayoutState = RHICreateVertexInputLayout(InputLayout);
-    if (!InputLayoutState)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::LessEqual;
-    DepthStencilStateInfo.bDepthEnable   = false;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
-
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
-    if (!DepthStencilState)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
-
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
-    if (!RasterizerState)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    CRHIBlendStateInitializer BlendStateInfo;
-
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
-    if (!BlendState)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    CRHIGraphicsPipelineStateInitializer PSOProperties;
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.VertexInputLayout                      = InputLayoutState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader               = AABBVertexShader.Get();
-    PSOProperties.ShaderState.PixelShader                = AABBPixelShader.Get();
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Line;
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = Resources.RenderTargetFormat;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
-
-    AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOProperties);
-    if (!AABBDebugPipelineState)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        AABBDebugPipelineState->SetName("Debug PipelineState");
-    }
-
-    TStaticArray<CVector3, 8> Vertices =
-    {
-        CVector3(-0.5f, -0.5f,  0.5f),
-        CVector3( 0.5f, -0.5f,  0.5f),
-        CVector3(-0.5f,  0.5f,  0.5f),
-        CVector3( 0.5f,  0.5f,  0.5f),
-
-        CVector3( 0.5f, -0.5f, -0.5f),
-        CVector3(-0.5f, -0.5f, -0.5f),
-        CVector3( 0.5f,  0.5f, -0.5f),
-        CVector3(-0.5f,  0.5f, -0.5f)
-    };
-
-    CRHIBufferDataInitializer VertexData(Vertices.Data(), Vertices.SizeInBytes());
-
-    CRHIVertexBufferInitializer VBInitializer(EBufferUsageFlags::Default, Vertices.Size(), sizeof(CVector3), EResourceAccess::Common, &VertexData);
-    AABBVertexBuffer = RHICreateVertexBuffer(VBInitializer);
-    if (!AABBVertexBuffer)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        AABBVertexBuffer->SetName("AABB VertexBuffer");
-    }
-
-    // Create IndexBuffer
-    TStaticArray<uint16, 24> Indices =
-    {
-        0, 1,
-        1, 3,
-        3, 2,
-        2, 0,
-        1, 4,
-        3, 6,
-        6, 4,
-        4, 5,
-        5, 7,
-        7, 6,
-        0, 5,
-        2, 7,
-    };
-
-    CRHIBufferDataInitializer IndexData(Indices.Data(), Indices.SizeInBytes());
-
-    CRHIIndexBufferInitializer IBInitializer(EBufferUsageFlags::Default, EIndexFormat::uint16, Indices.Size(), EResourceAccess::Common, &IndexData);
-    AABBIndexBuffer = RHICreateIndexBuffer(IBInitializer);
-    if (!AABBIndexBuffer)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        AABBIndexBuffer->SetName("AABB IndexBuffer");
-    }
-
-    return true;
-}
-
-bool CRenderer::InitAA()
-{
-    TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FullscreenVS.hlsl", "Main", nullptr, EShaderStage::Vertex, EShaderModel::SM_6_0, ShaderCode))
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    TSharedRef<CRHIVertexShader> VShader = RHICreateVertexShader(ShaderCode);
+    FRHIVertexShaderRef VShader = RHICreateVertexShader(ShaderCode);
     if (!VShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/PostProcessPS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     PostShader = RHICreatePixelShader(ShaderCode);
     if (!PostShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIDepthStencilStateInitializer DepthStencilStateInfo;
-    DepthStencilStateInfo.DepthFunc      = EComparisonFunc::Always;
-    DepthStencilStateInfo.bDepthEnable   = false;
-    DepthStencilStateInfo.DepthWriteMask = EDepthWriteMask::Zero;
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
+    DepthStencilInitializer.DepthFunc         = EComparisonFunc::Always;
+    DepthStencilInitializer.bDepthEnable      = false;
+    DepthStencilInitializer.bDepthWriteEnable = false;
 
-    TSharedRef<CRHIDepthStencilState> DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInfo);
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
     if (!DepthStencilState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIRasterizerStateInitializer RasterizerStateInfo;
-    RasterizerStateInfo.CullMode = ECullMode::None;
+    FRHIRasterizerStateInitializer RasterizerInitializer;
+    RasterizerInitializer.CullMode = ECullMode::None;
 
-    TSharedRef<CRHIRasterizerState> RasterizerState = RHICreateRasterizerState(RasterizerStateInfo);
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
     if (!RasterizerState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIBlendStateInitializer BlendStateInfo;
+    FRHIBlendStateInitializer BlendStateInitializer;
+    BlendStateInitializer.NumRenderTargets = 1;
 
-    TSharedRef<CRHIBlendState> BlendState = RHICreateBlendState(BlendStateInfo);
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIGraphicsPipelineStateInitializer PSOProperties;
-    PSOProperties.VertexInputLayout                      = nullptr;
-    PSOProperties.BlendState                             = BlendState.Get();
-    PSOProperties.DepthStencilState                      = DepthStencilState.Get();
-    PSOProperties.RasterizerState                        = RasterizerState.Get();
-    PSOProperties.ShaderState.VertexShader               = VShader.Get();
-    PSOProperties.ShaderState.PixelShader                = PostShader.Get();
-    PSOProperties.PrimitiveTopologyType                  = EPrimitiveTopologyType::Triangle;
-    PSOProperties.PipelineFormats.RenderTargetFormats[0] = EFormat::R8G8B8A8_Unorm;
-    PSOProperties.PipelineFormats.NumRenderTargets       = 1;
-    PSOProperties.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
+    PSOInitializer.VertexInputLayout                      = nullptr;
+    PSOInitializer.BlendState                             = BlendState.Get();
+    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+    PSOInitializer.RasterizerState                        = RasterizerState.Get();
+    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
+    PSOInitializer.ShaderState.PixelShader                = PostShader.Get();
+    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
+    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.BackBufferFormat;
+    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
+    PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
 
-    PostPSO = RHICreateGraphicsPipelineState(PSOProperties);
+    PostPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!PostPSO)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     // FXAA
-    CRHISamplerStateInitializer CreateInfo;
-    CreateInfo.AddressU = ESamplerMode::Clamp;
-    CreateInfo.AddressV = ESamplerMode::Clamp;
-    CreateInfo.AddressW = ESamplerMode::Clamp;
-    CreateInfo.Filter   = ESamplerFilter::MinMagMipLinear;
+    FRHISamplerStateDesc SamplerInitializer;
+    SamplerInitializer.AddressU = ESamplerMode::Clamp;
+    SamplerInitializer.AddressV = ESamplerMode::Clamp;
+    SamplerInitializer.AddressW = ESamplerMode::Clamp;
+    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    Resources.FXAASampler = RHICreateSamplerState(CreateInfo);
+    Resources.FXAASampler = RHICreateSamplerState(SamplerInitializer);
     if (!Resources.FXAASampler)
     {
         return false;
     }
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", nullptr, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     FXAAShader = RHICreatePixelShader(ShaderCode);
     if (!FXAAShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    PSOProperties.ShaderState.PixelShader = FXAAShader.Get();
+    PSOInitializer.ShaderState.PixelShader = FXAAShader.Get();
 
-    FXAAPSO = RHICreateGraphicsPipelineState(PSOProperties);
+    FXAAPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!FXAAPSO)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -1181,39 +1267,42 @@ bool CRenderer::InitAA()
         FXAAPSO->SetName("FXAA PipelineState");
     }
 
-    TArray<SShaderDefine> Defines =
+    TArray<FShaderDefine> Defines =
     {
-        SShaderDefine("ENABLE_DEBUG", "1")
+        { "ENABLE_DEBUG", "(1)" }
     };
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/FXAA_PS.hlsl", "Main", &Defines, EShaderStage::Pixel, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     FXAADebugShader = RHICreatePixelShader(ShaderCode);
     if (!FXAADebugShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    PSOProperties.ShaderState.PixelShader = FXAADebugShader.Get();
+    PSOInitializer.ShaderState.PixelShader = FXAADebugShader.Get();
 
-    FXAADebugPSO = RHICreateGraphicsPipelineState(PSOProperties);
+    FXAADebugPSO = RHICreateGraphicsPipelineState(PSOInitializer);
     if (!FXAADebugPSO)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
     return true;
 }
 
-bool CRenderer::InitShadingImage()
+bool FRenderer::InitShadingImage()
 {
-    SShadingRateSupport Support;
+    FRHIShadingRateSupport Support;
     RHIQueryShadingRateSupport(Support);
 
     if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
@@ -1221,14 +1310,14 @@ bool CRenderer::InitShadingImage()
         return true;
     }
 
-    const uint32 Width  = Resources.MainWindowViewport->GetWidth() / Support.ShadingRateImageTileSize;
-    const uint32 Height = Resources.MainWindowViewport->GetHeight() / Support.ShadingRateImageTileSize;
+    const uint32 Width  = Resources.MainViewport->GetWidth() / Support.ShadingRateImageTileSize;
+    const uint32 Height = Resources.MainViewport->GetHeight() / Support.ShadingRateImageTileSize;
 
-    CRHITexture2DInitializer Initializer(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::RWTexture, EResourceAccess::ShadingRateSource);
-    ShadingImage = RHICreateTexture2D(Initializer);
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    ShadingImage = RHICreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
     if (!ShadingImage)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else
@@ -1237,24 +1326,28 @@ bool CRenderer::InitShadingImage()
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/ShadingImage.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
+    
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     ShadingRateShader = RHICreateComputeShader(ShaderCode);
     if (!ShadingRateShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
+    FRHIComputePipelineStateInitializer PSOInitializer(ShadingRateShader.Get());
     ShadingRatePipeline = RHICreateComputePipelineState(PSOInitializer);
     if (!ShadingRatePipeline)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 

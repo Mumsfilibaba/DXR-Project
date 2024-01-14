@@ -1,11 +1,10 @@
 #pragma once
 #include "Core/Math/Color.h"
-#include "Core/Templates/EnumUtilities.h"
+#include "Core/Math/IntVector3.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EFormat
-
-enum class EFormat : uint16
+enum class EFormat : uint8
 {
     Unknown               = 0,
     
@@ -43,6 +42,7 @@ enum class EFormat : uint16
     R8G8B8A8_Uint         = 30,
     R8G8B8A8_Snorm        = 31,
     R8G8B8A8_Sint         = 32,
+    
     B8G8R8A8_Typeless     = 33,
     B8G8R8A8_Unorm        = 34,
     B8G8R8A8_Unorm_SRGB   = 35,
@@ -64,6 +64,7 @@ enum class EFormat : uint16
     R32_Sint              = 49,
     
     R24G8_Typeless        = 50,
+    
     D24_Unorm_S8_Uint     = 51,
     R24_Unorm_X8_Typeless = 52,
     X24_Typeless_G8_Uint  = 53,
@@ -87,9 +88,31 @@ enum class EFormat : uint16
     R8_Uint               = 68,
     R8_Snorm              = 69,
     R8_Sint               = 70,
+
+    BC1_Typeless          = 71,
+    BC1_UNorm             = 72,
+    BC1_UNorm_SRGB        = 73,
+    BC2_Typeless          = 74,
+    BC2_UNorm             = 75,
+    BC2_UNorm_SRGB        = 76,
+    BC3_Typeless          = 77,
+    BC3_UNorm             = 78,
+    BC3_UNorm_SRGB        = 79,
+    BC4_Typeless          = 80,
+    BC4_UNorm             = 81,
+    BC4_SNorm             = 82,
+    BC5_Typeless          = 83,
+    BC5_UNorm             = 84,
+    BC5_SNorm             = 85,
+    BC6H_Typeless         = 86,
+    BC6H_UF16             = 87,
+    BC6H_SF16             = 88,
+    BC7_Typeless          = 89,
+    BC7_UNorm             = 90,
+    BC7_UNorm_SRGB        = 91,
 };
 
-constexpr const char* ToString(EFormat Format)
+constexpr const CHAR* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -164,12 +187,33 @@ constexpr const char* ToString(EFormat Format)
         case EFormat::R8_Uint:                  return "R8_Uint";
         case EFormat::R8_Snorm:                 return "R8_Snorm";
         case EFormat::R8_Sint:                  return "R8_Sint";
+
+        case EFormat::BC1_Typeless:             return "BC1_Typeless";
+        case EFormat::BC1_UNorm:                return "BC1_UNorm";
+        case EFormat::BC1_UNorm_SRGB:           return "BC1_UNorm_SRGB";
+        case EFormat::BC2_Typeless:             return "BC2_Typeless";
+        case EFormat::BC2_UNorm:                return "BC2_UNorm";
+        case EFormat::BC2_UNorm_SRGB:           return "BC2_UNorm_SRGB";
+        case EFormat::BC3_Typeless:             return "BC3_Typeless";
+        case EFormat::BC3_UNorm:                return "BC3_UNorm";
+        case EFormat::BC3_UNorm_SRGB:           return "BC3_UNorm_SRGB";
+        case EFormat::BC4_Typeless:             return "BC4_Typeless";
+        case EFormat::BC4_UNorm:                return "BC4_UNorm";
+        case EFormat::BC4_SNorm:                return "BC4_SNorm";
+        case EFormat::BC5_Typeless:             return "BC5_Typeless";
+        case EFormat::BC5_UNorm:                return "BC5_UNorm";
+        case EFormat::BC5_SNorm:                return "BC5_SNorm";
+        case EFormat::BC6H_Typeless:            return "BC6H_Typeless";
+        case EFormat::BC6H_UF16:                return "BC6H_UF16";
+        case EFormat::BC6H_SF16:                return "BC6H_SF16";
+        case EFormat::BC7_Typeless:             return "BC7_Typeless";
+        case EFormat::BC7_UNorm:                return "BC7_UNorm";
+        case EFormat::BC7_UNorm_SRGB:           return "BC7_UNorm_SRGB";
+
         default:                                return "Unknown";
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Helpers
 
 constexpr uint32 GetByteStrideFromFormat(EFormat Format)
 {
@@ -197,6 +241,7 @@ constexpr uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R16G16B16A16_Uint:
         case EFormat::R16G16B16A16_Snorm:
         case EFormat::R16G16B16A16_Sint:
+        
         case EFormat::R32G32_Typeless:
         case EFormat::R32G32_Float:
         case EFormat::R32G32_Uint:
@@ -208,25 +253,31 @@ constexpr uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R10G10B10A2_Typeless:
         case EFormat::R10G10B10A2_Unorm:
         case EFormat::R10G10B10A2_Uint:
+        
         case EFormat::R11G11B10_Float:
+        
         case EFormat::R8G8B8A8_Typeless:
         case EFormat::R8G8B8A8_Unorm:
         case EFormat::R8G8B8A8_Unorm_SRGB:
         case EFormat::R8G8B8A8_Uint:
         case EFormat::R8G8B8A8_Snorm:
         case EFormat::R8G8B8A8_Sint:
+
         case EFormat::R16G16_Typeless:
         case EFormat::R16G16_Float:
         case EFormat::R16G16_Unorm:
         case EFormat::R16G16_Uint:
         case EFormat::R16G16_Snorm:
         case EFormat::R16G16_Sint:
+        
         case EFormat::R32_Typeless:
         case EFormat::D32_Float:
         case EFormat::R32_Float:
         case EFormat::R32_Uint:
         case EFormat::R32_Sint:
+        
         case EFormat::R24G8_Typeless:
+        
         case EFormat::D24_Unorm_S8_Uint:
         case EFormat::R24_Unorm_X8_Typeless:
         case EFormat::X24_Typeless_G8_Uint:
@@ -239,6 +290,7 @@ constexpr uint32 GetByteStrideFromFormat(EFormat Format)
         case EFormat::R8G8_Uint:
         case EFormat::R8G8_Snorm:
         case EFormat::R8G8_Sint:
+        
         case EFormat::R16_Typeless:
         case EFormat::R16_Float:
         case EFormat::D16_Unorm:
@@ -266,10 +318,86 @@ constexpr uint32 GetByteStrideFromFormat(EFormat Format)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// ECubeFace
+constexpr bool IsBlockCompressed(EFormat Format)
+{
+    return ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless);
+}
 
-enum class ECubeFace
+// BlockCompressed images must be aligned to 4 pixels in all dimensions
+constexpr bool IsBlockCompressedAligned(uint32 Extent)
+{
+    return Extent % 4 == 0;
+}
+
+constexpr bool IsTypelessFormat(EFormat Format)
+{
+    switch (Format)
+    {
+        case EFormat::R32G32B32A32_Typeless:
+        case EFormat::R32G32B32_Typeless:
+        case EFormat::R16G16B16A16_Typeless:
+        case EFormat::R32G32_Typeless:
+        case EFormat::R10G10B10A2_Typeless:
+        case EFormat::R8G8B8A8_Typeless:
+        case EFormat::R16G16_Typeless:
+        case EFormat::R32_Typeless:
+        case EFormat::R24G8_Typeless:
+        case EFormat::R24_Unorm_X8_Typeless:
+        case EFormat::X24_Typeless_G8_Uint:
+        case EFormat::R8G8_Typeless:
+        case EFormat::R16_Typeless:
+        case EFormat::R8_Typeless:
+        {
+            return true;
+        }
+
+        default:
+        {
+            return false;
+        }
+    }
+}
+
+
+enum class EIndexFormat : uint8
+{
+    Unknown = 0,
+    uint16  = 1,
+    uint32  = 2,
+};
+
+constexpr const CHAR* ToString(EIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EIndexFormat::uint16: return "uint16";
+        case EIndexFormat::uint32: return "uint32";
+        default:                   return "Unknown";
+    }
+}
+
+constexpr EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
+{
+    switch (StrideInBytes)
+    {
+        case 2:  return EIndexFormat::uint16;
+        case 4:  return EIndexFormat::uint32;
+        default: return EIndexFormat::Unknown;
+    }
+}
+
+constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
+{
+    switch (IndexFormat)
+    {
+        case EIndexFormat::uint16: return 2;
+        case EIndexFormat::uint32: return 4;
+        default:                   return 0;
+    }
+}
+
+
+enum class ECubeFace : uint8
 {
     PosX = 0,
     NegX = 1,
@@ -281,23 +409,14 @@ enum class ECubeFace
 
 constexpr uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
-    return static_cast<uint32>(CubeFace);
+    return ToUnderlying(CubeFace);
 }
 
 constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
-    if (Index > GetCubeFaceIndex(ECubeFace::NegZ))
-    {
-        return static_cast<ECubeFace>(-1);
-    }
-    else
-    {
-        return static_cast<ECubeFace>(Index);
-    }
+    return Index > ToUnderlying(ECubeFace::NegZ) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EComparisonFunc
 
 enum class EComparisonFunc
 {
@@ -312,7 +431,7 @@ enum class EComparisonFunc
     Always       = 8
 };
 
-constexpr const char* ToString(EComparisonFunc ComparisonFunc)
+constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -328,66 +447,40 @@ constexpr const char* ToString(EComparisonFunc ComparisonFunc)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EPrimitiveTopologyType
 
-enum class EPrimitiveTopologyType
-{
-    Undefined = 0,
-    Point     = 1,
-    Line      = 2,
-    Triangle  = 3,
-    Patch     = 4
-};
-
-constexpr const char* ToString(EPrimitiveTopologyType PrimitveTopologyType)
-{
-    switch (PrimitveTopologyType)
-    {
-    case EPrimitiveTopologyType::Undefined: return "Undefined";
-    case EPrimitiveTopologyType::Point:     return "Point";
-    case EPrimitiveTopologyType::Line:      return "Line";
-    case EPrimitiveTopologyType::Triangle:  return "Triangle";
-    case EPrimitiveTopologyType::Patch:     return "Patch";
-    default:                                return "Unknown";
-    }
-}
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EResourceAccess
-
-// TODO: These should be flags
-
-enum class EResourceAccess
+enum class EResourceAccess : uint32
 {
     Common                          = 0,
-    VertexAndConstantBuffer         = 1,
-    IndexBuffer                     = 2,
-    RenderTarget                    = 3,
-    UnorderedAccess                 = 4,
-    DepthWrite                      = 5,
-    DepthRead                       = 6,
-    NonPixelShaderResource          = 7,
-    PixelShaderResource             = 8,
-    CopyDest                        = 9,
-    CopySource                      = 10,
-    ResolveDest                     = 11,
-    ResolveSource                   = 12,
-    RayTracingAccelerationStructure = 13,
-    ShadingRateSource               = 14,
-    Present                         = 15,
-    GenericRead                     = 16,
+    ConstantBuffer                  = FLAG(0),
+    IndexBuffer                     = FLAG(1),
+    VertexBuffer                    = FLAG(2),
+    RenderTarget                    = FLAG(3),
+    UnorderedAccess                 = FLAG(4),
+    DepthWrite                      = FLAG(5),
+    DepthRead                       = FLAG(6),
+    NonPixelShaderResource          = FLAG(7),
+    PixelShaderResource             = FLAG(8),
+    CopyDest                        = FLAG(9),
+    CopySource                      = FLAG(10),
+    ResolveDest                     = FLAG(11),
+    ResolveSource                   = FLAG(12),
+    RayTracingAccelerationStructure = FLAG(13),
+    ShadingRateSource               = FLAG(14),
+    Present                         = FLAG(15),
+    GenericRead                     = FLAG(16),
 };
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
 
-constexpr const char* ToString(EResourceAccess ResourceState)
+
+constexpr const CHAR* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
     case EResourceAccess::Common:                          return "Common";
-    case EResourceAccess::VertexAndConstantBuffer:         return "VertexAndConstantBuffer";
+    case EResourceAccess::ConstantBuffer:                  return "ConstantBuffer";
     case EResourceAccess::IndexBuffer:                     return "IndexBuffer";
+    case EResourceAccess::VertexBuffer:                    return "VertexBuffer";
     case EResourceAccess::RenderTarget:                    return "RenderTarget";
     case EResourceAccess::UnorderedAccess:                 return "UnorderedAccess";
     case EResourceAccess::DepthWrite:                      return "DepthWrite";
@@ -401,12 +494,11 @@ constexpr const char* ToString(EResourceAccess ResourceState)
     case EResourceAccess::RayTracingAccelerationStructure: return "RayTracingAccelerationStructure";
     case EResourceAccess::ShadingRateSource:               return "ShadingRateSource";
     case EResourceAccess::Present:                         return "Present";
+    case EResourceAccess::GenericRead:                     return "GenericRead";
     default:                                               return "Unknown";
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EPrimitiveTopology
 
 enum class EPrimitiveTopology
 {
@@ -418,7 +510,7 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-constexpr const char* ToString(EPrimitiveTopology ResourceState)
+constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -432,8 +524,6 @@ constexpr const char* ToString(EPrimitiveTopology ResourceState)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EShadingRate
 
 enum class EShadingRate
 {
@@ -446,7 +536,7 @@ enum class EShadingRate
     VRS_4x4 = 0xa,
 };
 
-constexpr const char* ToString(EShadingRate ShadingRate)
+constexpr const CHAR* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -461,8 +551,6 @@ constexpr const char* ToString(EShadingRate ShadingRate)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// EDescriptorType
 
 enum class EDescriptorType : uint32
 {
@@ -473,7 +561,7 @@ enum class EDescriptorType : uint32
     Sampler         = 4
 };
 
-constexpr const char* ToString(EDescriptorType DescriptorType)
+constexpr const CHAR* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {
@@ -485,59 +573,62 @@ constexpr const char* ToString(EDescriptorType DescriptorType)
     }
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CRHIDescriptorHandle
 
-class CRHIDescriptorHandle
+class FRHIDescriptorHandle
 {
     enum : uint32
     {
-		// Be specific in order to cancel warnings about truncation
+        // Be specific in order to cancel warnings about truncation
         InvalidHandle = ((1 << 24) - 1)
     };
 
 public:
 
     /**
-     * @brief: Default Constructor
+     * @brief - Default Constructor
      */
-    CRHIDescriptorHandle()
-        : Index(InvalidHandle)
-	    , Type(EDescriptorType::Unknown)
-    { }
-
-    /**
-     * @brief: Constructor that creates a descriptor-handle
-     *
-     * @param InType: Type of descriptor
-     * @param InIndex: Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
-     */
-    CRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
-        : Index(InIndex)
-	    , Type(InType)
-    { }
-
-    /** @return: Returns true if the handle is valid */
-    bool IsValid() const { return (Type != EDescriptorType::Unknown) && (Index != InvalidHandle); }
-
-    /**
-     * @brief: Compare two descriptor-handles to see if the reference the same resource
-     *
-     * @return: Returns true if the handles are equal
-     */
-    bool operator==(const CRHIDescriptorHandle& RHS) const
+    constexpr FRHIDescriptorHandle()
+        : Data(0)
     {
-        return (Type == RHS.Type) && (Index == RHS.Index);
     }
 
     /**
-     * @brief: Compare two descriptor-handles to see if the reference the same resource
-     *
-     * @return: Returns false if the handles are equal
+     * @brief         - Constructor that creates a descriptor-handle
+     * @param InType  - Type of descriptor
+     * @param InIndex - Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
      */
-    bool operator!=(const CRHIDescriptorHandle& RHS) const
+    constexpr FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+        : Index(InIndex)
+        , Type(InType)
     {
-        return !(*this == RHS);
+    }
+
+    /** 
+     * @return - Returns true if the handle is valid
+     */
+    constexpr bool IsValid() const
+    { 
+        return Type != EDescriptorType::Unknown && Index != InvalidHandle; 
+    }
+
+    /**
+     * @brief       - Compare two descriptor-handles to see if the reference the same resource
+     * @param Other - Other instance to compare with
+     * @return      - Returns true if the handles are equal
+     */
+    constexpr bool operator==(const FRHIDescriptorHandle& Other) const
+    {
+        return Data == Other.Data;
+    }
+
+    /**
+     * @brief       - Compare two descriptor-handles to see if the reference the same resource
+     * @param Other - Other instance to compare with
+     * @return      - Returns false if the handles are equal
+     */
+    constexpr bool operator!=(const FRHIDescriptorHandle& Other) const
+    {
+        return Data != Other.Data;
     }
 
 private:
@@ -553,34 +644,33 @@ private:
     };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTextureDepthStencilValue
 
-class CTextureDepthStencilValue
+struct FDepthStencilValue
 {
-public:
-
     /**
-     * @brief: Default Constructor
+     * @brief - Default Constructor
      */
-    CTextureDepthStencilValue()
+    constexpr FDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
-    { }
+    {
+    }
 
     /**
-     * @brief: Constructor taking depth and stencil value
-     *
-     * @param InDepth: Depth-value
-     * @param InStencil: Stencil-value
+     * @brief           - Constructor taking depth and stencil value
+     * @param InDepth   - Depth-value
+     * @param InStencil - Stencil-value
      */
-    CTextureDepthStencilValue(float InDepth, uint8 InStencil)
+    constexpr FDepthStencilValue(float InDepth, uint8 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
-    { }
+    {
+    }
 
-    /** @return: Returns and calculates the hash for this type */
-    uint64 GetHash() const
+    /** 
+     * @return - Returns and calculates the hash for this type
+     */
+    constexpr uint64 GetHash() const
     {
         uint64 Hash = Stencil;
         HashCombine(Hash, Depth);
@@ -588,90 +678,84 @@ public:
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns true if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Other instance to compare with
+     * @return      - Returns true if the instances are equal
      */
-    bool operator==(const CTextureDepthStencilValue& RHS) const
+    constexpr bool operator==(const FDepthStencilValue& Other) const
     {
-        return (Depth == RHS.Depth) && (Stencil && RHS.Stencil);
+        return Depth == Other.Depth && Stencil && Other.Stencil;
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Other instance to compare with
-     * @return: Returns false if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Other instance to compare with
+     * @return      - Returns false if the instances are equal
      */
-    bool operator!=(const CTextureDepthStencilValue& RHS) const
+    constexpr bool operator!=(const FDepthStencilValue& Other) const
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
-    /** @brief: Value to clear the depth portion of a texture with */
+    /** @brief - Value to clear the depth portion of a texture with */
     float Depth;
 
-    /** @brief: Value to clear the stencil portion of a texture with */
+    /** @brief - Value to clear the stencil portion of a texture with */
     uint8 Stencil;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CTextureClearValue
 
-class CTextureClearValue
+struct FClearValue
 {
-public:
-
     enum class EType : uint8
     {
-        Color = 1,
-        DepthStencil = 2
+        Color        = 1,
+        DepthStencil = 2,
     };
 
     /**
-     * @brief: Default Constructor that creates a black clear color
+     * @brief - Default Constructor that creates a black clear color
      */
-    CTextureClearValue()
+    FClearValue()
         : Type(EType::Color)
         , Format(EFormat::Unknown)
         , ColorValue(0.0f, 0.0f, 0.0f, 1.0f)
-    { }
+    {
+    }
 
     /**
-     * @brief: Constructor that creates a DepthStencil-ClearValue
-     *
-     * @param InFormat: Format to clear
-     * @param InDepth: Depth-value
-     * @param InStencil: Stencil-value
+     * @brief           - Constructor that creates a DepthStencil-ClearValue
+     * @param InFormat  - Format to clear
+     * @param InDepth   - Depth-value
+     * @param InStencil - Stencil-value
      */
-    CTextureClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
+    FClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencilValue(InDepth, InStencil)
-    { }
+    {
+    }
 
     /**
-     * @brief: Constructor that creates Color-ClearValue
-     *
-     * @param InFormat: Format to clear
-     * @param InR: Red-Channel value
-     * @param InG: Green-Channel value
-     * @param InB: Blue-Channel value
-     * @param InA: Alpha-Channel value
+     * @brief          - Constructor that creates Color-ClearValue
+     * @param InFormat - Format to clear
+     * @param InR      - Red-Channel value
+     * @param InG      - Green-Channel value
+     * @param InB      - Blue-Channel value
+     * @param InA      - Alpha-Channel value
      */
-    CTextureClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
+    FClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
         , Format(InFormat)
         , ColorValue(InR, InG, InB, InA)
-    { }
+    {
+    }
 
     /**
-     * @brief: Copy-constructor
-     *
-     * @param Other: Instance to copy
+     * @brief       - Copy-constructor
+     * @param Other - Instance to copy
      */
-    CTextureClearValue(const CTextureClearValue& Other)
+    FClearValue(const FClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
         , ColorValue()
@@ -682,164 +766,239 @@ public:
         }
         else
         {
-            Check(Other.IsDepthStencilValue());
+            CHECK(Other.IsDepthStencilValue());
             DepthStencilValue = Other.DepthStencilValue;
         }
     }
 
-    /** @return: Returns a true if the value is a FloatColor */
-    bool IsColorValue() const { return (Type == EType::Color); }
+    /** 
+     * @return - Returns a true if the value is a FloatColor
+     */
+    FORCEINLINE bool IsColorValue() const 
+    { 
+        return Type == EType::Color;
+    }
 
-    /** @return: Returns a true if the value is a DepthStencilClearValue */
-    bool IsDepthStencilValue() const { return (Type == EType::DepthStencil); }
+    /** 
+     * @return - Returns a true if the value is a DepthStencilClearValue 
+     */
+    FORCEINLINE bool IsDepthStencilValue() const 
+    { 
+        return Type == EType::DepthStencil;
+    }
 
-    /** @return: Returns a FloatColor */
-    CFloatColor& AsColor()
+    /**
+     * @return - Returns a FloatColor
+     */
+    FORCEINLINE FFloatColor& AsColor()
     {
-        Check(IsColorValue());
+        CHECK(IsColorValue());
         return ColorValue;
     }
 
-    /** @return: Returns a FloatColor */
-    const CFloatColor& AsColor() const
+    /**
+     * @return - Returns a FloatColor
+     */
+    FORCEINLINE const FFloatColor& AsColor() const
     {
-        Check(IsColorValue());
+        CHECK(IsColorValue());
         return ColorValue;
     }
 
-    /** @return: Returns a DepthStencilClearValue */
-    CTextureDepthStencilValue& AsDepthStencil()
+    /** 
+     * @return - Returns a DepthStencilClearValue 
+     */
+    FORCEINLINE FDepthStencilValue& AsDepthStencil()
     {
-        Check(IsDepthStencilValue());
+        CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
-    /** @return: Returns a DepthStencilClearValue */
-    const CTextureDepthStencilValue& AsDepthStencil() const
+    /** 
+     * @return - Returns a DepthStencilClearValue 
+     */
+    FORCEINLINE const FDepthStencilValue& AsDepthStencil() const
     {
-        Check(IsDepthStencilValue());
+        CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
     /**
-     * @brief: Copy-assignment operator
-     *
-     * @param RHS: Instance to copy
-     * @return: Returns a reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - Instance to copy
+     * @return      - Returns a reference to this instance
      */
-    CTextureClearValue& operator=(const CTextureClearValue& RHS)
+    FClearValue& operator=(const FClearValue& Other)
     {
-        Type = RHS.Type;
-        Format = RHS.Format;
+        Type   = Other.Type;
+        Format = Other.Format;
 
-        if (RHS.IsColorValue())
+        if (Other.IsColorValue())
         {
-            ColorValue = RHS.ColorValue;
+            ColorValue = Other.ColorValue;
         }
         else
         {
-            Check(RHS.IsDepthStencilValue());
-            DepthStencilValue = RHS.DepthStencilValue;
+            CHECK(Other.IsDepthStencilValue());
+            DepthStencilValue = Other.DepthStencilValue;
         }
 
         return *this;
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Instance to compare with
-     * @return: Returns true if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Instance to compare with
+     * @return      - Returns true if the instances are equal
      */
-    bool operator==(const CTextureClearValue& RHS) const
+    bool operator==(const FClearValue& Other) const
     {
-        if ((Type != RHS.Type) || (Format != RHS.Format))
+        if (Type != Other.Type || Format != Other.Format)
         {
             return false;
         }
 
         if (IsColorValue())
         {
-            return (ColorValue == RHS.ColorValue);
+            return ColorValue == Other.ColorValue;
         }
 
-        Check(IsDepthStencilValue());
-        return (DepthStencilValue == RHS.DepthStencilValue);
+        CHECK(IsDepthStencilValue());
+        return DepthStencilValue == Other.DepthStencilValue;
     }
 
     /**
-     * @brief: Compare with another instance
-     *
-     * @param RHS: Instance to compare with
-     * @return: Returns false if the instances are equal
+     * @brief       - Compare with another instance
+     * @param Other - Instance to compare with
+     * @return      - Returns false if the instances are equal
      */
-    bool operator!=(const CTextureClearValue& RHS) const
+    bool operator!=(const FClearValue& Other) const
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
-    /** @brief: Type of ClearValue */
+    /** @brief - Type of ClearValue */
     EType Type;
 
-    /** @brief: Format of the ClearValue */
+    /** @brief - Format of the ClearValue */
     EFormat Format;
 
     union
     {
-        /** @brief: Color-value */
-        CFloatColor ColorValue;
+        /** @brief - Color-value */
+        FFloatColor ColorValue;
 
-        /** @brief: DepthStencil-value */
-        CTextureDepthStencilValue DepthStencilValue;
+        /** @brief - DepthStencil-value */
+        FDepthStencilValue DepthStencilValue;
     };
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyBufferInfo
 
-struct SRHICopyBufferInfo
+struct FBufferRegion
 {
-    SRHICopyBufferInfo() = default;
+    FBufferRegion() = default;
 
-    FORCEINLINE SRHICopyBufferInfo(uint64 InSourceOffset, uint32 InDestinationOffset, uint32 InSizeInBytes)
-        : SourceOffset(InSourceOffset)
-        , DestinationOffset(InDestinationOffset)
-        , SizeInBytes(InSizeInBytes)
-    { }
+    FBufferRegion(uint64 InOffset, uint64 InSize)
+        : Offset(InOffset)
+        , Size(InSize)
+    {
+    }
 
-    uint64 SourceOffset = 0;
-    uint32 DestinationOffset = 0;
-    uint32 SizeInBytes = 0;
+    uint64 Offset;
+    uint64 Size;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureSubresourceInfo
 
-struct SRHICopyTextureSubresourceInfo
+struct FTextureRegion2D
 {
-    SRHICopyTextureSubresourceInfo() = default;
+    FTextureRegion2D() = default;
 
-    FORCEINLINE SRHICopyTextureSubresourceInfo(uint32 InX, uint32 InY, uint32 InZ, uint32 InSubresourceIndex)
-        : x(InX)
-        , y(InY)
-        , z(InZ)
-        , SubresourceIndex(InSubresourceIndex)
-    { }
+    FTextureRegion2D(uint32 InWidth, uint32 InHeight, uint32 InPositionX = 0, uint32 InPositionY = 0)
+        : Width(InWidth)
+        , Height(InHeight)
+        , PositionX(InPositionX)
+        , PositionY(InPositionY)
+    {
+    }
 
-    uint32 x = 0;
-    uint32 y = 0;
-    uint32 z = 0;
-    uint32 SubresourceIndex = 0;
+    uint32 Width;
+    uint32 Height;
+    
+    uint32 PositionX;
+    uint32 PositionY;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SRHICopyTextureInfo
 
-struct SRHICopyTextureInfo
+struct FRHIBufferCopyDesc
 {
-    SRHICopyTextureSubresourceInfo Source;
-    SRHICopyTextureSubresourceInfo Destination;
-    uint32 Width = 0;
-    uint32 Height = 0;
-    uint32 Depth = 0;
+    FRHIBufferCopyDesc() = default;
+
+    FRHIBufferCopyDesc(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize)
+        : SrcOffset(InSrcOffset)
+        , DstOffset(InDstOffset)
+        , Size(InSize)
+    {
+    }
+
+    uint64 SrcOffset = 0;
+    uint64 DstOffset = 0;
+    uint64 Size      = 0;
+};
+
+
+struct FRHITextureCopyDesc
+{
+    FIntVector3 DstPosition;
+    uint32      DstArraySlice;
+    uint32      DstMipSlice;
+
+    FIntVector3 SrcPosition;
+    uint32      SrcArraySlice;
+    uint32      SrcMipSlice;
+
+    FIntVector3 Size;
+    uint32      NumArraySlices;
+    uint32      NumMipLevels;
+};
+
+
+struct FRHIViewportRegion
+{
+    FRHIViewportRegion() = default;
+
+    FRHIViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth)
+        : Width(InWidth)
+        , Height(InHeight)
+        , PositionX(InPositionX)
+        , PositionY(InPositionY)
+        , MinDepth(InMinDepth)
+        , MaxDepth(InMaxDepth)
+    {
+    }
+
+    float Width     = 0.0f;
+    float Height    = 0.0f;
+    float PositionX = 0.0f;
+    float PositionY = 0.0f;
+    float MinDepth  = 0.0f;
+    float MaxDepth  = 1.0f;
+};
+
+
+struct FRHIScissorRegion
+{
+    FRHIScissorRegion() = default;
+
+    FRHIScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY)
+        : Width(InWidth)
+        , Height(InHeight)
+        , PositionX(InPositionX)
+        , PositionY(InPositionY)
+    {
+    }
+
+    float Width     = 0.0f;
+    float Height    = 0.0f;
+    float PositionX = 0.0f;
+    float PositionY = 0.0f;
 };

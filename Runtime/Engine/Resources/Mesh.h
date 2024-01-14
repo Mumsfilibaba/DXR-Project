@@ -1,41 +1,41 @@
 #pragma once
 #include "Engine/EngineModule.h"
-
+#include "Engine/Assets/MeshFactory.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Math/AABB.h"
-
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 
-#include "Engine/Assets/MeshFactory.h"
-
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMesh
-
-class ENGINE_API CMesh
+class ENGINE_API FMesh
 {
 public:
-    CMesh() = default;
-    ~CMesh() = default;
+    FMesh();
+    ~FMesh() = default;
 
-    bool Init(const SMeshData& Data);
+    bool Init(const FMeshData& Data);
 
-    bool BuildAccelerationStructure(CRHICommandList& CmdList);
+    bool BuildAccelerationStructure(FRHICommandList& CommandList);
 
-    static TSharedPtr<CMesh> Make(const SMeshData& Data);
+    static TSharedPtr<FMesh> Create(const FMeshData& Data);
 
 public:
-    void CreateBoundingBox(const SMeshData& Data);
+    void CreateBoundingBox(const FMeshData& Data);
 
-    TSharedRef<CRHIVertexBuffer>       VertexBuffer;
-    TSharedRef<CRHIShaderResourceView> VertexBufferSRV;
-    TSharedRef<CRHIIndexBuffer>        IndexBuffer;
-    TSharedRef<CRHIShaderResourceView> IndexBufferSRV;
-    TSharedRef<CRHIRayTracingGeometry> RTGeometry;
+    FRHIBufferRef             VertexBuffer;
+    FRHIBufferRef             PosOnlyVertexBuffer;
+    FRHIBufferRef             MaskedVertexBuffer;
+    FRHIShaderResourceViewRef VertexBufferSRV;
 
-    uint32 VertexCount = 0;
-    uint32 IndexCount = 0;
+    FRHIBufferRef             IndexBuffer;
+    FRHIShaderResourceViewRef IndexBufferSRV;
+    
+    FRHIRayTracingGeometryRef RTGeometry;
 
-    SAABB BoundingBox;
+    uint32       VertexCount;
+    
+    EIndexFormat IndexFormat;
+    uint32       IndexCount;
+
+    FAABB        BoundingBox;
 };

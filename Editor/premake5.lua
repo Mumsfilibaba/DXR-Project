@@ -79,7 +79,7 @@ project ( projectname )
 		links
 		{
 			"NullRHI",
-			"InterfaceRenderer",
+			"ViewportRenderer",
 			"Sandbox",
 		}
 	filter {}
@@ -94,7 +94,7 @@ project ( projectname )
 		-- Force references to module function in order to include it in the program
 		linkoptions 
 		{
-			"/INCLUDE:LinkModule_InterfaceRenderer",
+			"/INCLUDE:LinkModule_ViewportRenderer",
 			"/INCLUDE:LinkModule_NullRHI",
 			"/INCLUDE:LinkModule_D3D12RHI",
 			"/INCLUDE:LinkModule_Sandbox",
@@ -147,9 +147,9 @@ project ( projectname )
 	filter {}
 
 	-- Remove non-windows files
-	filter "system:windows"
-		removefiles
-		{
-			"%{wks.location}/**/Mac/**"
-		}
-	filter {}
+	-- filter "system:windows"
+		--removefiles
+		--{
+		--	"%{wks.location}/**/Mac/**"
+		--}
+	--filter {}

@@ -1,33 +1,37 @@
-include '../BuildScripts/Scripts/build_workspace.lua'
+include "../BuildScripts/Scripts/build_workspace.lua"
 
 ---------------------------------------------------------------------------------------------------
--- Sanbox Project
+-- Sandbox Project
 
-local SandboxProject = CTargetBuildRules('Sandbox')
-SandboxProject.AddModuleDependencies(
+local Workspace = FWorkspaceRules("DXR-Engine Sandbox")
+
+local Sandbox = FTargetBuildRules("Sandbox", Workspace)
+Sandbox.AddModuleDependencies(
 {
-	'Core',
-	'CoreApplication',
-	'Canvas',
-	'RHI',
-	'Engine',
-	'Renderer',
-	'InterfaceRenderer',
-	'NullRHI',
+    "Core",
+    "CoreApplication",
+    "Launch",
+    "Application",
+    "RHI",
+    "Engine",
+    "Renderer",
+    "NullRHI",
+    "VulkanRHI",
+    "RendererCore",
+    "Project",
 })
 
-if BuildWithXcode() then
-    SandboxProject.AddFrameWorks(
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
+if IsPlatformMac() then
+    Sandbox.AddModuleDependencies(
+    { 
+        "MetalRHI"
     })
-else
-	SandboxProject.AddModuleDependencies(
-	{ 
-		'D3D12RHI'
-	})
+elseif IsPlatformWindows() then
+    Sandbox.AddModuleDependencies(
+    { 
+        "D3D12RHI"
+    })
 end
 
-GenerateWorkspace('DXR-Engine Sandbox', { SandboxProject })
+Workspace.AddTarget(Sandbox)
+Workspace.Generate()

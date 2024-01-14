@@ -1,0 +1,70 @@
+#include "Structs.hlsli"
+#include "Constants.hlsli"
+
+RWTexture2D<min16float> Texture : register(u0);
+
+SHADER_CONSTANT_BLOCK_BEGIN
+    int2 ScreenSize;
+SHADER_CONSTANT_BLOCK_END
+
+#define NUM_THREADS (16)
+#define KERNEL_SIZE (5)
+
+groupshared min16float GTextureCache[NUM_THREADS][NUM_THREADS];
+
+static const int2 MAX_SIZE = int2(NUM_THREADS, NUM_THREADS);
+
+static const min16float KERNEL[KERNEL_SIZE] =
+{
+    0.06136, 0.24477, 0.38774, 0.24477, 0.06136
+};
+
+static const int OFFSETS[KERNEL_SIZE] =
+{
+    -2, -1, 0, 1, 2
+};
+
+[numthreads(NUM_THREADS, NUM_THREADS, 1)]
+void Main(FComputeShaderInput Input)
+{
+    const int2 Pixel = min(Input.DispatchThreadID.xy, int2(Constants.ScreenSize));   
+
+    // Cache texture fetches
+    const int2 GroupThreadID = int2(Input.GroupThreadID.xy);
+    GTextureCache[GroupThreadID.x][GroupThreadID.y] = Texture[Pixel];
+    
+    GroupMemoryBarrierWithGroupSync();
+    
+    // Perform blur
+    min16float Result = 0.0f;
+
+    [unroll]
+    for (int Index = 0; Index < KERNEL_SIZE; ++Index)
+    {
+        const int        Offset = OFFSETS[Index];
+        const min16float Weight = KERNEL[Index];
+        
+    #ifdef HORIZONTAL_PASS
+        const int2 CurrentTexCoord = int2(GroupThreadID.x + Offset, GroupThreadID.y);
+    #else
+        const int2 CurrentTexCoord = int2(GroupThreadID.x, GroupThreadID.y + Offset);
+    #endif
+    
+        // Going outside of the cache? 
+        if (any(CurrentTexCoord >= MAX_SIZE) || any(CurrentTexCoord < int2(0, 0)))
+        {
+    #ifdef HORIZONTAL_PASS
+        const int2 CurrentPixel = int2(min(max(Pixel.x + Offset, 0), Constants.ScreenSize.x), Pixel.y);
+    #else
+        const int2 CurrentPixel = int2(Pixel.x, min(max(Pixel.y + Offset, 0), Constants.ScreenSize.y));
+    #endif
+            Result += Texture[Pixel] * Weight;
+        }
+        else
+        {
+            Result += GTextureCache[CurrentTexCoord.x][CurrentTexCoord.y] * Weight;
+        }
+    }
+    
+    Texture[Pixel] = Result;
+}

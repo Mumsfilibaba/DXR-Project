@@ -1,21 +1,34 @@
-include '../../BuildScripts/Scripts/build_module.lua'
+include "../../BuildScripts/Scripts/Build_Module.lua"
 
 ---------------------------------------------------------------------------------------------------
 -- RHI Module
 
-local RHIModule = CModuleBuildRules('RHI')
-RHIModule.AddModuleDependencies( 
+local RHIModule = FModuleBuildRules("RHI")
+
+RHIModule.AddSystemIncludes(
 {
-    'Core',
+    CreateExternalDependencyPath("DXC/include"),
+    CreateExternalDependencyPath("SPIRV-Cross"),
+    CreateExternalDependencyPath("glslang")
 })
 
-if BuildWithXcode() then
-    RHIModule.AddFrameWorks( 
-    {
-        'Cocoa',
-        'AppKit',
-        'MetalKit'
-    })
-end
+RHIModule.AddModuleDependencies( 
+{
+    "Core",
+    "CoreApplication"
+})
 
-RHIModule.Generate()
+RHIModule.AddLinkLibraries(
+{
+    "SPIRV",
+    "MachineIndependent",
+    "SPVRemapper",
+    "OGLCompiler",
+    "glslang-default-resource-limits",
+    "glslang",
+})
+
+RHIModule.AddLinkLibraries( 
+{
+    "SPIRV-Cross",
+})

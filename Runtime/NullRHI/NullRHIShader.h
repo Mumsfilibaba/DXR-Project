@@ -1,55 +1,38 @@
 #pragma once
-#include "RHI/RHIResources.h"
+#include "RHI/RHIShader.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CNullRHIComputeShader
+template<typename T>
+struct TNullRHIShader;
 
-class CNullRHIComputeShader : public CRHIComputeShader
-{
-public:
+typedef TNullRHIShader<class FRHIVertexShader>           FNullRHIVertexShader;
+typedef TNullRHIShader<class FRHIHullShader>             FNullRHIHullShader;
+typedef TNullRHIShader<class FRHIDomainShader>           FNullRHIDomainShader;
+typedef TNullRHIShader<class FRHIGeometryShader>         FNullRHIGeometryShader;
+typedef TNullRHIShader<class FRHIAmplificationShader>    FNullRHIAmplificationShader;
+typedef TNullRHIShader<class FRHIMeshShader>             FNullRHIMeshShader;
+typedef TNullRHIShader<class FRHIPixelShader>            FNullRHIPixelShader;
 
-    CNullRHIComputeShader()
-        : CRHIComputeShader()
-    { }
+typedef TNullRHIShader<class FRHIComputeShader>          FNullRHIComputeShader;
 
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIComputeShader Interface
-
-    virtual CIntVector3 GetThreadGroupXYZ() const override final { return CIntVector3(1, 1, 1); }
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TNullRHIShader
+typedef TNullRHIShader<class FRHIRayTracingShader>       FNullRHIRayTracingShader;
+typedef TNullRHIShader<class FRHIRayGenShader>           FNullRHIRayGenShader;
+typedef TNullRHIShader<class FRHIRayMissShader>          FNullRHIRayMissShader;
+typedef TNullRHIShader<class FRHIRayClosestHitShader>    FNullRHIRayClosestHitShader;
+typedef TNullRHIShader<class FRHIRayAnyHitShader>        FNullRHIRayAnyHitShader;
+typedef TNullRHIShader<class FRHIRayIntersectionShader>  FNullRHIRayIntersectionShader;
+typedef TNullRHIShader<class FRHIRayCallableShader>      FNullRHIRayCallableShader;
 
 template<typename BaseShaderType>
-class TNullRHIShader : public BaseShaderType
+struct TNullRHIShader final : public BaseShaderType
 {
-public:
-
     TNullRHIShader()
         : BaseShaderType()
-    { }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CRHIShader Interface
+    {
+    }
 
     virtual void* GetRHIBaseShader() override final { return this; }
 };
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(pop)
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

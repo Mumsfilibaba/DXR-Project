@@ -1,22 +1,16 @@
 #pragma once
 #include "Core/Math/Vector3.h"
+#include "Engine/Core/Object.h"
 
-#include "Engine/CoreObject/CoreObject.h"
-
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CLight
-
-class ENGINE_API CLight : public CCoreObject
+class ENGINE_API FLight : public FObject
 {
-    CORE_OBJECT(CLight, CCoreObject);
-
 public:
-    CLight();
-    virtual ~CLight() = default;
+    FOBJECT_DECLARE_CLASS(FLight, FObject);
 
-    void SetColor(const CVector3& InColor);
-    void SetColor(float r, float g, float b);
+    FLight(const FObjectInitializer& ObjectInitializer);
+    virtual ~FLight() = default;
 
+    void SetColor(const FVector3& InColor);
     void SetIntensity(float InIntensity);
 
     FORCEINLINE void SetShadowBias(float InShadowBias)
@@ -34,7 +28,7 @@ public:
         return Intensity;
     }
 
-    FORCEINLINE const CVector3& GetColor() const
+    FORCEINLINE const FVector3& GetColor() const
     {
         return Color;
     }
@@ -60,10 +54,10 @@ public:
     }
 
 protected:
-    CVector3 Color;
-    float Intensity = 1.0f;
-    float ShadowNearPlane;
-    float ShadowFarPlane;
-    float ShadowBias;
-    float MaxShadowBias;
+    FVector3 Color;
+    float    Intensity = 1.0f;
+    float    ShadowNearPlane;
+    float    ShadowFarPlane;
+    float    ShadowBias;
+    float    MaxShadowBias;
 };

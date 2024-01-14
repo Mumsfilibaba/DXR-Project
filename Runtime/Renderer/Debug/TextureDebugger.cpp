@@ -1,116 +1,149 @@
 #include "TextureDebugger.h"
-
-#include "Core/Debug/Console/ConsoleManager.h"
-
-#include "Canvas/CanvasApplication.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Application/Application.h"
+#include "Application/WidgetUtilities.h"
 
 #include <imgui.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variable
+static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
+    "Renderer.Debug.ViewRenderTargets",
+    "Enables the Debug RenderTarget-viewer",
+    false);
 
-TAutoConsoleVariable<bool> GDrawTextureDebugger("Renderer.DrawTextureDebugger", false);
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TextureDebugWindow
-
-TSharedRef<CTextureDebugWindow> CTextureDebugWindow::Make()
+void FRenderTargetDebugWindow::Paint()
 {
-    return dbg_new CTextureDebugWindow();
-}
-
-void CTextureDebugWindow::Tick()
-{
-    if (GDrawTextureDebugger.GetBool())
+    if (CVarDrawTextureDebugger.GetValue())
     {
-        // NOTE: This may need to be dynamic
-        constexpr float InvAspectRatio = 16.0f / 9.0f;
-        constexpr float AspectRatio = 9.0f / 16.0f;
+        const ImVec2 MainViewportPos = FImGui::GetMainViewportPos();
+        const ImVec2 DisplaySize     = FImGui::GetMainViewportSize();
 
-        TSharedRef<CGenericWindow> MainViewport = CCanvasApplication::Get().GetMainViewport();
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-        const uint32 WindowWidth = MainViewport->GetWidth();
-        const uint32 WindowHeight = MainViewport->GetHeight();
+        ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
+        ImGui::SetNextWindowPos(MainViewportPos);
+        ImGui::SetNextWindowSize(DisplaySize);
 
-        const float Width = NMath::Max(WindowWidth * 0.6f, 400.0f);
-        const float Height = WindowHeight * 0.75f;
+        constexpr ImGuiWindowFlags Flags = 
+            ImGuiWindowFlags_NoDecoration | 
+            ImGuiWindowFlags_AlwaysAutoResize | 
+            ImGuiWindowFlags_NoFocusOnAppearing | 
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoDocking;
 
-        ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
+        constexpr float MinImageSize = 96.0f;
+        const float Width  = DisplaySize.x;
+		const float Height = DisplaySize.y;
 
-        const ImGuiWindowFlags Flags =
-            ImGuiWindowFlags_NoResize |
-            ImGuiWindowFlags_NoScrollbar |
-            ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoFocusOnAppearing |
-            ImGuiWindowFlags_NoSavedSettings;
-
-        bool TempDrawTextureDebugger = GDrawTextureDebugger.GetBool();
-        if (ImGui::Begin("FrameBuffer Debugger", &TempDrawTextureDebugger, Flags))
+        bool bTempDrawTextureDebugger = CVarDrawTextureDebugger.GetValue();
+        if (ImGui::Begin("RenderTarget Debugger", &bTempDrawTextureDebugger, Flags))
         {
-            ImGui::BeginChild("##ScrollBox", ImVec2(Width * 0.985f, Height * 0.125f), true, ImGuiWindowFlags_HorizontalScrollbar);
+            const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 
-            const int32 Count = DebugTextures.Size();
-            if (SelectedTextureIndex >= Count)
+            // Draw Image (Clamped to the window size)
+            if (!DebugTextures.IsEmpty())
             {
-                SelectedTextureIndex = -1;
+                if (FDrawableTexture* CurrImage = &DebugTextures[ImageIndex])
+                {
+                    const float TexWidth       = float(CurrImage->Texture->GetWidth());
+                    const float TexHeight      = float(CurrImage->Texture->GetHeight());
+                    const float AspectRatio    = TexHeight / TexWidth;
+                    const float InvAspectRatio = TexWidth / TexHeight;
+
+                    float ImageWidth  = 0.0f;
+                    float ImageHeight = 0.0f;
+                    if (TexWidth > TexHeight)
+                    {
+                        ImageWidth  = FMath::Max(MinImageSize, FMath::Min(TexWidth, float(Width)));
+                        ImageHeight = FMath::Max(MinImageSize, ImageWidth * AspectRatio);
+                    }
+                    else
+                    {
+                        ImageHeight = FMath::Max(MinImageSize, FMath::Min(TexHeight, float(Height)));
+                        ImageWidth  = FMath::Max(MinImageSize, ImageHeight * InvAspectRatio);
+                    }
+
+                    {
+                        const ImVec2 ImageSize     = ImVec2(ImageWidth, ImageHeight);
+                        const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
+                        const ImVec2 NewPosition   = ImVec2((ContentRegion.x - ImageSize.x) * 0.5f, (ContentRegion.y - ImageSize.y) * 0.5f);
+                        ImGui::SetCursorPos(NewPosition);
+                    }
+
+                    CurrImage->bSamplerLinear = false;
+                    ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+                }
             }
+            
+            // Draw Image menu on top
+            ImGui::SetNextWindowPos(MainViewportPos);
+            
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.05f, 0.05f, 0.05f, 0.95f));
 
-            for (int32 i = 0; i < Count; i++)
+            if (ImGui::BeginChild("##ScrollBox", ImVec2(196.0f, Height), false, ImGuiWindowFlags_None))
             {
-                ImGui::PushID(i);
+                ImGui::NewLine();
 
-                constexpr float MenuImageSize = 96.0f;
-
-                int32 FramePadding = 2;
-
-                ImVec2 Size = ImVec2(MenuImageSize * InvAspectRatio, MenuImageSize);
-                ImVec2 Uv0 = ImVec2(0.0f, 0.0f);
-                ImVec2 Uv1 = ImVec2(1.0f, 1.0f);
-                ImVec4 BgCol = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-                ImVec4 TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
-
-                SCanvasImage* CurrImage = &DebugTextures[i];
-                if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
+                if (ButtonCenteredOnLine("Close"))
                 {
-                    SelectedTextureIndex = i;
+                    CVarDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }
 
-                if (ImGui::IsItemHovered())
+                ImGui::Separator();
+
+                const int32 Count = DebugTextures.Size();
+                if (SelectedTextureIndex >= Count)
                 {
-                    ImGui::SetTooltip("%s", CurrImage->Image->GetName().CStr());
+                    SelectedTextureIndex = -1;
                 }
 
-                ImGui::PopID();
-
-                if (i != Count - 1)
+                for (int32 Index = 0; Index < Count; ++Index)
                 {
-                    ImGui::SameLine();
+                    ImGui::PushID(Index);
+
+                    constexpr float MenuImageSize = 96.0f;
+                    constexpr int32 FramePadding  = 0;
+
+                    FDrawableTexture* CurrImage = &DebugTextures[Index];
+
+                    const float ImageRatio = float(CurrImage->Texture->GetWidth()) / float(CurrImage->Texture->GetHeight());
+                    ImVec2 Size    = ImVec2(MenuImageSize * ImageRatio, MenuImageSize);
+                    ImVec2 Uv0     = ImVec2(0.0f, 0.0f);
+                    ImVec2 Uv1     = ImVec2(1.0f, 1.0f);
+                    ImVec4 BgCol   = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+                    ImVec4 TintCol = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+                    {
+                        const ImVec2 ContentRegion = ImGui::GetContentRegionAvail();
+                        ImGui::SetCursorPosX((ContentRegion.x - Size.x) * 0.5f);
+                    }
+
+                    if (ImGui::ImageButton(CurrImage, Size, Uv0, Uv1, FramePadding, BgCol, TintCol))
+                    {
+                        SelectedTextureIndex = Index;
+                    }
+
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("%s", CurrImage->Texture->GetName().GetCString());
+                    }
+
+                    ImGui::Separator();
+                    ImGui::PopID();
                 }
             }
 
             ImGui::EndChild();
-
-            const float ImageWidth = Width * 0.985f;
-            const float ImageHeight = ImageWidth * AspectRatio;
-            const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
-
-            SCanvasImage* CurrImage = &DebugTextures[ImageIndex];
-            ImGui::Image(CurrImage, ImVec2(ImageWidth, ImageHeight));
+            ImGui::PopStyleColor();
+            ImGui::PopStyleVar();
         }
 
         ImGui::End();
-
-        GDrawTextureDebugger.SetBool(TempDrawTextureDebugger);
+        ImGui::PopStyleVar();
     }
 }
 
-bool CTextureDebugWindow::IsTickable()
-{
-    return GDrawTextureDebugger.GetBool();
-}
-
-void CTextureDebugWindow::AddTextureForDebugging(const TSharedRef<CRHIShaderResourceView>& ImageView, const TSharedRef<CRHITexture>& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FRenderTargetDebugWindow::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }

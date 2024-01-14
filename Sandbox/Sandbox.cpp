@@ -1,66 +1,106 @@
 #include "Sandbox.h"
+#include "SandboxPlayer.h"
 #include "GameComponents.h"
 
 #include <Core/Math/Math.h>
-
+#include <Core/Misc/OutputDeviceLogger.h>
 #include <Renderer/Renderer.h>
-
 #include <Engine/Engine.h>
-#include <Engine/Assets/Loaders/OBJLoader.h>
-#include <Engine/Assets/Loaders/FBXLoader.h>
+#include <Engine/Assets/AssetManager.h>
+#include <Engine/Assets/AssetLoaders/MeshImporter.h>
 #include <Engine/Scene/Scene.h>
 #include <Engine/Scene/Lights/PointLight.h>
 #include <Engine/Scene/Lights/DirectionalLight.h>
+#include <Engine/Scene/Actors/PlayerController.h>
 #include <Engine/Scene/Components/MeshComponent.h>
-#include <Engine/Resources/TextureFactory.h>
-
-#include <Core/Logging/Log.h>
-
-#include <Canvas/CanvasApplication.h>
-
-#include <InterfaceRenderer/InterfaceRenderer.h>
+#include <Application/Application.h>
 
 // TODO: Custom random
 #include <random>
 
+#define LOAD_SPONZA         (1)
+#define LOAD_BISTRO         (0)
+#define LOAD_SUN_TEMPLE     (0)
+#define LOAD_EMERALD_SQUARE (0)
+
 #define ENABLE_LIGHT_TEST   (0)
 #define ENABLE_MANY_SPHERES (0)
 
-IMPLEMENT_ENGINE_MODULE(CSandbox, Sandbox);
+IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CSandbox
-
-bool CSandbox::Init()
+bool FSandbox::Init()
 {
-    if (!CApplicationModule::Init())
+    if (!FGameModule::Init())
     {
         return false;
     }
 
     // Initialize Scene
-    CActor*         NewActor     = nullptr;
-    CMeshComponent* NewComponent = nullptr;
+    MAYBE_UNUSED FActor*         NewActor     = nullptr;
+    MAYBE_UNUSED FMeshComponent* NewComponent = nullptr;
 
-    TSharedPtr<CScene> CurrentScene = GEngine->Scene;
+    // Store the Engine's scene pointer 
+    FScene* CurrentScene = GEngine->Scene;
 
     // Load Scene
-    SSceneData SceneData;
-#if 1
-    COBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
-    SceneData.Scale = 0.015f;
-#else
-    CFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
-    SceneData.AddToScene(CurrentScene.Get());
+    {
+        FSceneData SceneData;
 
-    CFBXLoader::LoadFile((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
-#endif
-    SceneData.AddToScene(CurrentScene.Get());
+    #if LOAD_SPONZA
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
+        SceneData.Scale = 0.015f;
+    #elif LOAD_BISTRO
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
+        for (auto& Material : SceneData.Materials)
+        {
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
+        }
+        
+        SceneData.AddToScene(CurrentScene);
 
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
+        for (auto& Material : SceneData.Materials)
+        {
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
+        }
+     #elif LOAD_SUN_TEMPLE
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"), SceneData);
+        for (auto& Material : SceneData.Materials)
+        {
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
+        }
+     #elif LOAD_EMERALD_SQUARE
+        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
+        for (auto& Material : SceneData.Materials)
+        {
+            if (Material.Name.Contains("DoubleSided"))
+            {
+                Material.bAlphaDiffuseCombined = true;
+                Material.bIsDoubleSided        = true;
+            }
+        }
+    #endif
+
+        SceneData.AddToScene(CurrentScene);
+    }
+
+#if LOAD_SPONZA
     // Create Spheres
-    SMeshData SphereMeshData = CMeshFactory::CreateSphere(3);
+    FMeshData SphereMeshData = FMeshFactory::CreateSphere(3);
 
-    TSharedPtr<CMesh> SphereMesh = CMesh::Make(SphereMeshData);
+    TSharedPtr<FMesh> SphereMesh = FMesh::Create(SphereMeshData);
 
     constexpr float  SphereOffset   = 1.25f;
     constexpr uint32 SphereCountX   = 8;
@@ -70,7 +110,7 @@ bool CSandbox::Init()
     constexpr float  MetallicDelta  = 1.0f / SphereCountY;
     constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
-    SMaterialDesc MatProperties;
+    FMaterialDesc MatProperties;
     MatProperties.AO = 1.0f;
 
     uint32 SphereIndex = 0;
@@ -78,24 +118,28 @@ bool CSandbox::Init()
     {
         for (uint32 x = 0; x < SphereCountX; x++)
         {
-            NewActor = CurrentScene->MakeActor();
-            NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
+            NewActor = CurrentScene->CreateActor();
+            if (NewActor)
+            {
+                NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
+                NewActor->SetName("Sphere[" + TTypeToString<uint32>::ToString(SphereIndex) + "]");
+                SphereIndex++;
 
-            NewActor->SetName("Sphere[" + ToString(SphereIndex) + "]");
-            SphereIndex++;
-
-            NewComponent = dbg_new CMeshComponent(NewActor);
-            NewComponent->Mesh = SphereMesh;
-            NewComponent->Material = MakeShared<CMaterial>(MatProperties);
-
-            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
-            NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-            NewComponent->Material->AOMap        = GEngine->BaseTexture;
-            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
-            NewComponent->Material->Init();
-
-            NewActor->AddComponent(NewComponent);
+                NewComponent = NewObject<FMeshComponent>();
+                if (NewComponent)
+                {
+                    NewComponent->Material               = MakeShared<FMaterial>(MatProperties);
+                    NewComponent->Mesh                   = SphereMesh;
+                    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+                    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
+                    NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+                    NewComponent->Material->AOMap        = GEngine->BaseTexture;
+                    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
+                    NewComponent->Material->Initialize();
+                    
+                    NewActor->AddComponent(NewComponent);
+                }
+            }
 
             MatProperties.Roughness += RoughnessDelta;
         }
@@ -106,12 +150,12 @@ bool CSandbox::Init()
 
 #if ENABLE_MANY_SPHERES
     {
-        constexpr uint32 kNumSpheres = 1024;
+        constexpr uint32 kNumSpheres = 4096 * 8;
         constexpr float  kMaxRadius  = 32.0f;
 
-        std::default_random_engine            Generator;
+        std::default_random_engine Generator;
 
-        std::uniform_real_distribution<float> Random0(0.0f, NMath::kTwoPI_f);
+        std::uniform_real_distribution<float> Random0(0.0f, FMath::kTwoPI_f);
         std::uniform_real_distribution<float> Random1(0.05f, 1.0);
         std::uniform_real_distribution<float> Random2(0.05f, 0.7);
         std::uniform_real_distribution<float> Random3(0.5f, 1.0);
@@ -123,10 +167,10 @@ bool CSandbox::Init()
             const float Alpha  = Random0(Generator);
             const float Theta  = Random0(Generator);
 
-            const float CosAlpha = NMath::Cos(Alpha);
-            const float SinAlpha = NMath::Sin(Alpha);
-            const float CosTheta = NMath::Cos(Theta);
-            const float SinTheta = NMath::Sin(Theta);
+            const float CosAlpha = FMath::Cos(Alpha);
+            const float SinAlpha = FMath::Sin(Alpha);
+            const float CosTheta = FMath::Cos(Theta);
+            const float SinTheta = FMath::Sin(Theta);
 
             const float PositionX = Radius * CosAlpha * SinTheta;
             const float PositionY = Radius * SinAlpha * SinTheta;
@@ -134,27 +178,37 @@ bool CSandbox::Init()
 
             const float Offset = -60.0f;
 
-            NewActor = CurrentScene->MakeActor();
-            NewActor->GetTransform().SetTranslation(PositionX, PositionY + 10.0f, Offset + PositionZ);
+            NewActor = CurrentScene->CreateActor();
+            if (NewActor)
+            {
+                NewActor->GetTransform().SetTranslation(PositionX, PositionY + 10.0f, Offset + PositionZ);
 
-            // MovingBallComponent
-            NewActor->AddComponent(dbg_new CMovingBallComponent(NewActor, Random4(Generator)));
+                // MovingBallComponent
+                FMovingBallComponent* NewBall = NewObject<FMovingBallComponent>();
+                if (NewBall)
+                {
+                    NewBall->Initialize(NewActor, Random4(Generator));
+                    NewActor->AddComponent(NewBall);
+                }
 
-            NewActor->SetName("Random Sphere[" + ToString(i) + "]");
+                NewActor->SetName("Random Sphere[" + ToString(i) + "]");
 
-            // MeshComponent
-            NewComponent           = dbg_new CMeshComponent(NewActor);
-            NewComponent->Mesh     = SphereMesh;
-            NewComponent->Material = MakeShared<CMaterial>(MatProperties);
+                // MeshComponent
+                NewComponent = NewObject<FMeshComponent>();
+                if (NewComponent)
+                {
+                    NewComponent->Initialize(NewActor, MakeShared<FMaterial>(MatProperties), SphereMesh);
 
-            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
-            NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-            NewComponent->Material->AOMap        = GEngine->BaseTexture;
-            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
-            NewComponent->Material->Init();
+                    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+                    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
+                    NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+                    NewComponent->Material->AOMap        = GEngine->BaseTexture;
+                    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
+                    NewComponent->Material->Initialize();
 
-            NewActor->AddComponent(NewComponent);
+                    NewActor->AddComponent(NewComponent);
+                }
+            }
 
             MatProperties.Roughness = Random2(Generator);
             MatProperties.Metallic  = Random3(Generator);
@@ -163,226 +217,221 @@ bool CSandbox::Init()
 #endif
 
     // Create Other Meshes
-    SMeshData CubeMeshData = CMeshFactory::CreateCube();
+    FMeshData CubeMeshData = FMeshFactory::CreateCube();
 
-    NewActor = CurrentScene->MakeActor();
+    NewActor = CurrentScene->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Cube");
+        NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
 
-    NewActor->SetName("Cube");
-    NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
+        MatProperties.AO           = 1.0f;
+        MatProperties.Metallic     = 1.0f;
+        MatProperties.Roughness    = 1.0f;
+        MatProperties.EnableHeight = 1;
 
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            FTextureResource2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
+            FTextureResource2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
+            FTextureResource2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
+            FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
+            FTextureResource2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
+            FTextureResource2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
+            
+            NewComponent->Mesh     = FMesh::Create(CubeMeshData);
+            NewComponent->Material = MakeShared<FMaterial>(MatProperties);
+            
+            NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();
+            NewComponent->Material->NormalMap    = NormalMap->GetRHITexture();
+            NewComponent->Material->RoughnessMap = RoughnessMap->GetRHITexture();
+            NewComponent->Material->HeightMap    = HeightMap->GetRHITexture();
+            NewComponent->Material->AOMap        = AOMap->GetRHITexture();
+            NewComponent->Material->MetallicMap  = MetallicMap->GetRHITexture();
+            NewComponent->Material->Initialize();
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    NewActor = CurrentScene->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Plane");
+        NewActor->GetTransform().SetRotation(FMath::kHalfPI_f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(50.0f);
+        NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
+
+        MatProperties.AO           = 1.0f;
+        MatProperties.Metallic     = 1.0f;
+        MatProperties.Roughness    = 0.5f;
+        MatProperties.EnableHeight = 0;
+        MatProperties.Albedo       = FVector3(1.0f);
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            NewComponent->Mesh                   = FMesh::Create(FMeshFactory::CreatePlane(10, 10));
+            NewComponent->Material               = MakeShared<FMaterial>(MatProperties);
+            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
+            NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+            NewComponent->Material->AOMap        = GEngine->BaseTexture;
+            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
+            NewComponent->Material->Initialize();
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+
+    FTextureResource2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
+    FTextureResource2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
+    FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
+    FTextureResource2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
+
+    MatProperties.Albedo       = FVector3(1.0f);
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 1.0f;
     MatProperties.Roughness    = 1.0f;
-    MatProperties.EnableHeight = 1;
-
-    NewComponent           = dbg_new CMeshComponent(NewActor);
-    NewComponent->Mesh     = CMesh::Make(CubeMeshData);
-    NewComponent->Material = MakeShared<CMaterial>(MatProperties);
-
-    TSharedRef<CRHITexture2D> AlbedoMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (AlbedoMap)
-    {
-        AlbedoMap->SetName("AlbedoMap");
-    }
-
-    TSharedRef<CRHITexture2D> NormalMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (NormalMap)
-    {
-        NormalMap->SetName("NormalMap");
-    }
-
-    TSharedRef<CRHITexture2D> AOMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (AOMap)
-    {
-        AOMap->SetName("AOMap");
-    }
-
-    TSharedRef<CRHITexture2D> RoughnessMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (RoughnessMap)
-    {
-        RoughnessMap->SetName("RoughnessMap");
-    }
-
-    TSharedRef<CRHITexture2D> HeightMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (HeightMap)
-    {
-        HeightMap->SetName("HeightMap");
-    }
-
-    TSharedRef<CRHITexture2D> MetallicMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (MetallicMap)
-    {
-        MetallicMap->SetName("MetallicMap");
-    }
-
-    NewComponent->Material->AlbedoMap    = AlbedoMap;
-    NewComponent->Material->NormalMap    = NormalMap;
-    NewComponent->Material->RoughnessMap = RoughnessMap;
-    NewComponent->Material->HeightMap    = HeightMap;
-    NewComponent->Material->AOMap        = AOMap;
-    NewComponent->Material->MetallicMap  = MetallicMap;
-    NewComponent->Material->Init();
-    NewActor->AddComponent(NewComponent);
-
-    NewActor = CurrentScene->MakeActor();
-
-    NewActor->SetName("Plane");
-    NewActor->GetTransform().SetRotation(NMath::kHalfPI_f, 0.0f, 0.0f);
-    NewActor->GetTransform().SetUniformScale(50.0f);
-    NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
-
-    MatProperties.AO           = 1.0f;
-    MatProperties.Metallic     = 0.0f;
-    MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo       = CVector3(1.0f);
+    MatProperties.EnableMask   = 0;
 
-    NewComponent                         = dbg_new CMeshComponent(NewActor);
-    NewComponent->Mesh                   = CMesh::Make(CMeshFactory::CreatePlane(10, 10));
-    NewComponent->Material               = MakeShared<CMaterial>(MatProperties);
-    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
-    NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-    NewComponent->Material->AOMap        = GEngine->BaseTexture;
-    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
-    NewComponent->Material->Init();
+    FSceneData StreetLightData;
+    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
 
-    NewActor->AddComponent(NewComponent);
-
-    AlbedoMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (AlbedoMap)
-    {
-        AlbedoMap->SetName("AlbedoMap");
-    }
-
-    NormalMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8G8B8A8_Unorm);
-    if (NormalMap)
-    {
-        NormalMap->SetName("NormalMap");
-    }
-
-    RoughnessMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (RoughnessMap)
-    {
-        RoughnessMap->SetName("RoughnessMap");
-    }
-
-    MetallicMap = CTextureFactory::LoadFromFile((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg"), TextureFactoryFlag_GenerateMips, EFormat::R8_Unorm);
-    if (MetallicMap)
-    {
-        MetallicMap->SetName("MetallicMap");
-    }
-
-    MatProperties.AO = 1.0f;
-    MatProperties.Metallic = 1.0f;
-    MatProperties.Roughness = 1.0f;
-    MatProperties.EnableHeight = 0;
-    MatProperties.Albedo = CVector3(1.0f, 1.0f, 1.0f);
-
-    SSceneData StreetLightData;
-    COBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
-
-    TSharedPtr<CMesh>     StreetLight = StreetLightData.HasModelData() ? CMesh::Make(StreetLightData.Models.FirstElement().Mesh) : nullptr;
-    TSharedPtr<CMaterial> StreetLightMat = MakeShared<CMaterial>(MatProperties);
+    TSharedPtr<FMesh>     StreetLight = StreetLightData.HasModelData() ? FMesh::Create(StreetLightData.Models.FirstElement().Mesh) : nullptr;
+    TSharedPtr<FMaterial> StreetLightMat = MakeShared<FMaterial>(MatProperties);
 
     for (uint32 i = 0; i < 4; i++)
     {
-        NewActor = CurrentScene->MakeActor();
+        NewActor = CurrentScene->CreateActor();
+        if (NewActor)
+        {
+            NewActor->SetName("Street Light " + TTypeToString<uint32>::ToString(i));
+            NewActor->GetTransform().SetUniformScale(0.25f);
+            NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
-        NewActor->SetName("Street Light " + ToString(i));
-        NewActor->GetTransform().SetUniformScale(0.25f);
-        NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - ((float)i * 3.0f));
+            NewComponent = NewObject<FMeshComponent>();
+            if (NewComponent)
+            {
+                NewComponent->Mesh                   = StreetLight;
+                NewComponent->Material               = StreetLightMat;
+                NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();;
+                NewComponent->Material->NormalMap    = NormalMap->GetRHITexture();;
+                NewComponent->Material->RoughnessMap = RoughnessMap->GetRHITexture();;
+                NewComponent->Material->AOMap        = GEngine->BaseTexture;
+                NewComponent->Material->MetallicMap  = MetallicMap->GetRHITexture();
+                NewComponent->Material->Initialize();
 
-        NewComponent                         = dbg_new CMeshComponent(NewActor);
-        NewComponent->Mesh                   = StreetLight;
-        NewComponent->Material               = StreetLightMat;
-        NewComponent->Material->AlbedoMap    = AlbedoMap;
-        NewComponent->Material->NormalMap    = NormalMap;
-        NewComponent->Material->RoughnessMap = RoughnessMap;
-        NewComponent->Material->AOMap        = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap  = MetallicMap;
-        NewComponent->Material->Init();
-        NewActor->AddComponent(NewComponent);
+                NewActor->AddComponent(NewComponent);
+            }
+        }
     }
 
     MatProperties.AO           = 1.0f;
     MatProperties.Metallic     = 0.0f;
     MatProperties.Roughness    = 1.0f;
     MatProperties.EnableHeight = 0;
-    MatProperties.Albedo       = CVector3(0.4f);
+    MatProperties.Albedo       = FVector3(0.4f);
 
-    SSceneData PillarData;
-    COBJLoader::LoadFile((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
+    FSceneData PillarData;
+    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
 
-    TSharedPtr<CMesh>     Pillar = PillarData.HasModelData() ? CMesh::Make(PillarData.Models.FirstElement().Mesh) : nullptr;
-    TSharedPtr<CMaterial> PillarMat = MakeShared<CMaterial>(MatProperties);
+    TSharedPtr<FMesh>     Pillar         = PillarData.HasModelData() ? FMesh::Create(PillarData.Models.FirstElement().Mesh) : nullptr;
+    TSharedPtr<FMaterial> PillarMaterial = MakeShared<FMaterial>(MatProperties);
 
     for (uint32 i = 0; i < 8; i++)
     {
-        NewActor = CurrentScene->MakeActor();
+        NewActor = CurrentScene->CreateActor();
+        if (NewActor)
+        {
+            NewActor->SetName("Pillar " + TTypeToString<uint32>::ToString(i));
+            NewActor->GetTransform().SetUniformScale(0.25f);
+            NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 0.0f, 60.0f);
 
-        NewActor->SetName("Pillar " + ToString(i));
-        NewActor->GetTransform().SetUniformScale(0.25f);
-        NewActor->GetTransform().SetTranslation(-15.0f + ((float)i * 1.75f), 0.0f, 60.0f);
+            NewComponent = NewObject<FMeshComponent>();
+            if (NewComponent)
+            {
+                NewComponent->Mesh                   = Pillar;
+                NewComponent->Material               = PillarMaterial;
+                NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
+                NewComponent->Material->NormalMap    = GEngine->BaseNormal;
+                NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
+                NewComponent->Material->AOMap        = GEngine->BaseTexture;
+                NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
+                NewComponent->Material->Initialize();
 
-        NewComponent                         = dbg_new CMeshComponent(NewActor);
-        NewComponent->Mesh                   = Pillar;
-        NewComponent->Material               = PillarMat;
-        NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-        NewComponent->Material->NormalMap    = GEngine->BaseNormal;
-        NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-        NewComponent->Material->AOMap        = GEngine->BaseTexture;
-        NewComponent->Material->MetallicMap  = MetallicMap;
-        NewComponent->Material->Init();
+                NewActor->AddComponent(NewComponent);
+            }
+        }
+    }
+#endif
 
-        NewActor->AddComponent(NewComponent);
+    FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>();
+    if (Player)
+    {
+        // TODO: Camera should be a component
+        CurrentScene->AddCamera(Player->GetCamera());
+        CurrentScene->AddActor(Player);
     }
 
-    CurrentCamera = dbg_new CCamera();
-    CurrentScene->AddCamera(CurrentCamera);
-
-    // Add PointLight- Source
+    
+    // Add PointLights
+#if LOAD_SPONZA
     const float Intensity = 50.0f;
 
-    CPointLight* Light0 = dbg_new CPointLight();
-    Light0->SetPosition(16.5f, 1.0f, 0.0f);
-    Light0->SetColor(1.0f, 1.0f, 1.0f);
-    Light0->SetShadowBias(0.001f);
-    Light0->SetMaxShadowBias(0.009f);
-    Light0->SetShadowFarPlane(50.0f);
-    Light0->SetIntensity(Intensity);
-    Light0->SetShadowCaster(true);
-    CurrentScene->AddLight(Light0);
+    FPointLight* Light0 = NewObject<FPointLight>();
+    if (Light0)
+    {
+        Light0->SetPosition(FVector3(16.5f, 1.0f, 0.0f));
+        Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        Light0->SetShadowBias(0.001f);
+        Light0->SetMaxShadowBias(0.009f);
+        Light0->SetShadowFarPlane(50.0f);
+        Light0->SetIntensity(Intensity);
+        Light0->SetShadowCaster(true);
+        CurrentScene->AddLight(Light0);
+    }
 
-    CPointLight* Light1 = dbg_new CPointLight();
-    Light1->SetPosition(-17.5f, 1.0f, 0.0f);
-    Light1->SetColor(1.0f, 1.0f, 1.0f);
-    Light1->SetShadowBias(0.001f);
-    Light1->SetMaxShadowBias(0.009f);
-    Light1->SetShadowFarPlane(50.0f);
-    Light1->SetIntensity(Intensity);
-    Light1->SetShadowCaster(true);
-    CurrentScene->AddLight(Light1);
+    FPointLight* Light1 = NewObject<FPointLight>();
+    if (Light1)
+    {
+        Light1->SetPosition(FVector3(-17.5f, 1.0f, 0.0f));
+        Light1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        Light1->SetShadowBias(0.001f);
+        Light1->SetMaxShadowBias(0.009f);
+        Light1->SetShadowFarPlane(50.0f);
+        Light1->SetIntensity(Intensity);
+        Light1->SetShadowCaster(true);
+        CurrentScene->AddLight(Light1);
+    }
 
-    CPointLight* Light2 = dbg_new CPointLight();
-    Light2->SetPosition(16.5f, 11.0f, 0.0f);
-    Light2->SetColor(1.0f, 1.0f, 1.0f);
-    Light2->SetShadowBias(0.001f);
-    Light2->SetMaxShadowBias(0.009f);
-    Light2->SetShadowFarPlane(50.0f);
-    Light2->SetIntensity(Intensity);
-    Light2->SetShadowCaster(true);
-    CurrentScene->AddLight(Light2);
+    FPointLight* Light2 = NewObject<FPointLight>();
+    if (Light2)
+    {
+        Light2->SetPosition(FVector3(16.5f, 11.0f, 0.0f));
+        Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        Light2->SetShadowBias(0.001f);
+        Light2->SetMaxShadowBias(0.009f);
+        Light2->SetShadowFarPlane(50.0f);
+        Light2->SetIntensity(Intensity);
+        Light2->SetShadowCaster(true);
+        CurrentScene->AddLight(Light2);
+    }
 
-    CPointLight* Light3 = dbg_new CPointLight();
-    Light3->SetPosition(-17.5f, 11.0f, 0.0f);
-    Light3->SetColor(1.0f, 1.0f, 1.0f);
-    Light3->SetShadowBias(0.001f);
-    Light3->SetMaxShadowBias(0.009f);
-    Light3->SetShadowFarPlane(50.0f);
-    Light3->SetIntensity(Intensity);
-    Light3->SetShadowCaster(true);
-    CurrentScene->AddLight(Light3);
+    FPointLight* Light3 = NewObject<FPointLight>();
+    if (Light3)
+    {
+        Light3->SetPosition(FVector3(-17.5f, 11.0f, 0.0f));
+        Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        Light3->SetShadowBias(0.001f);
+        Light3->SetMaxShadowBias(0.009f);
+        Light3->SetShadowFarPlane(50.0f);
+        Light3->SetIntensity(Intensity);
+        Light3->SetShadowCaster(true);
+        CurrentScene->AddLight(Light3);
+    }
+#endif
 
 #if ENABLE_LIGHT_TEST
     {
@@ -397,95 +446,47 @@ bool CSandbox::Init()
             float z = RandomFloats(Generator) * 16.0f - 8.0f;
             float Intentsity = RandomFloats(Generator) * 5.0f + 1.0f;
 
-            CPointLight* Light = dbg_new CPointLight();
-            Light->SetPosition(x, y, z);
-            Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
-            Light->SetIntensity(Intentsity);
-            CScene->AddLight(Light);
+            FPointLight* Light = NewObject<FPointLight>();
+            if (Light)
+            {
+                Light->SetPosition(x, y, z);
+                Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
+                Light->SetIntensity(Intentsity);
+                FScene->AddLight(Light);
+            }
         }
     }
 #endif
 
     // Add DirectionalLight- Source
-    CDirectionalLight* Light4 = dbg_new CDirectionalLight();
-    Light4->SetShadowBias(0.0002f);
-    Light4->SetMaxShadowBias(0.0015f);
-    Light4->SetColor(1.0f, 1.0f, 1.0f);
-    Light4->SetIntensity(10.0f);
-    Light4->SetRotation(NMath::ToRadians(35.0f), NMath::ToRadians(135.0f), 0.0f);
-    //Light4->SetRotation(0.0f, 0.0f, 0.0f);
-    CurrentScene->AddLight(Light4);
+    FDirectionalLight* Light4 = NewObject<FDirectionalLight>();
+    if (Light4)
+    {
+        Light4->SetShadowBias(0.0005f);
+        Light4->SetMaxShadowBias(0.0009f);
+        Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        Light4->SetIntensity(10.0f);
+    #if LOAD_SUN_TEMPLE
+        Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(-55.0f), 0.0f));
+    #else
+        Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
+    #endif
+        Light4->SetCascadeSplitLambda(0.9f);
+        CurrentScene->AddLight(Light4);
+    }
 
+    FLightProbe* LightProbe = NewObject<FLightProbe>();
+    if (LightProbe)
+    {
+        LightProbe->SetPosition(FVector3(0.0f));
+        CurrentScene->AddLightProbe(LightProbe);
+    }
+
+    LOG_INFO("Finished loading game");
     return true;
 }
 
-void CSandbox::Tick(CTimestamp DeltaTime)
+void FSandbox::Tick(FTimespan DeltaTime)
 {
-    CApplicationModule::Tick(DeltaTime);
-
-    LOG_INFO("Tick: %f", DeltaTime.AsMilliSeconds());
-
-    const float Delta = static_cast<float>(DeltaTime.AsSeconds());
-    const float RotationSpeed = 45.0f;
-
-    TSharedPtr<CCanvasUser> User = CCanvasApplication::Get().GetFirstUser();
-    if (User->IsKeyDown(EKey::Key_Right))
-    {
-        CurrentCamera->Rotate(0.0f, NMath::ToRadians(RotationSpeed * Delta), 0.0f);
-    }
-    else if (User->IsKeyDown(EKey::Key_Left))
-    {
-        CurrentCamera->Rotate(0.0f, NMath::ToRadians(-RotationSpeed * Delta), 0.0f);
-    }
-
-    if (User->IsKeyDown(EKey::Key_Up))
-    {
-        CurrentCamera->Rotate(NMath::ToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
-    }
-    else if (User->IsKeyDown(EKey::Key_Down))
-    {
-        CurrentCamera->Rotate(NMath::ToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
-    }
-
-    float Acceleration = 15.0f;
-    if (User->IsKeyDown(EKey::Key_LeftShift))
-    {
-        Acceleration = Acceleration * 3;
-    }
-
-    CVector3 CameraAcceleration;
-    if (User->IsKeyDown(EKey::Key_W))
-    {
-        CameraAcceleration.z = Acceleration;
-    }
-    else if (User->IsKeyDown(EKey::Key_S))
-    {
-        CameraAcceleration.z = -Acceleration;
-    }
-
-    if (User->IsKeyDown(EKey::Key_A))
-    {
-        CameraAcceleration.x = Acceleration;
-    }
-    else if (User->IsKeyDown(EKey::Key_D))
-    {
-        CameraAcceleration.x = -Acceleration;
-    }
-
-    if (User->IsKeyDown(EKey::Key_Q))
-    {
-        CameraAcceleration.y = Acceleration;
-    }
-    else if (User->IsKeyDown(EKey::Key_E))
-    {
-        CameraAcceleration.y = -Acceleration;
-    }
-
-    const float Deacceleration = -5.0f;
-    CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
-    CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
-
-    CVector3 Speed = CameraSpeed * Delta;
-    CurrentCamera->Move(Speed.x, Speed.y, Speed.z);
-    CurrentCamera->UpdateMatrices();
+    FGameModule::Tick(DeltaTime);
 }

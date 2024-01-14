@@ -1,198 +1,41 @@
 #pragma once
-#include "RHI/IRHICommandContext.h"
-
-#include "Core/Containers/SharedRef.h"
-
-#include "D3D12DeviceChild.h"
+#include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
-#include "D3D12CommandQueue.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12DescriptorHeap.h"
-#include "D3D12Fence.h"
-#include "D3D12DescriptorCache.h"
-#include "D3D12Buffer.h"
-#include "D3D12Views.h"
-#include "D3D12SamplerState.h"
-#include "D3D12PipelineState.h"
 #include "D3D12TimestampQuery.h"
+#include "D3D12Texture.h"
+#include "D3D12CommandContextState.h"
+#include "RHI/IRHICommandContext.h"
+#include "Core/Containers/SharedRef.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SD3D12UploadAllocation
-
-struct SD3D12UploadAllocation
-{
-    uint8* MappedPtr = nullptr;
-    uint64 ResourceOffset = 0;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12GPUResourceUploader
-
-class CD3D12GPUResourceUploader : public CD3D12DeviceChild
+class FD3D12ResourceBarrierBatcher
 {
 public:
-    CD3D12GPUResourceUploader(CD3D12Device* InDevice);
-    ~CD3D12GPUResourceUploader() = default;
-
-    bool Reserve(uint32 InSizeInBytes);
-
-    void Reset();
-
-    SD3D12UploadAllocation LinearAllocate(uint32 SizeInBytes);
-
-    FORCEINLINE ID3D12Resource* GetGpuResource() const
+    FD3D12ResourceBarrierBatcher()
+        : Barriers()
     {
-        return Resource.Get();
     }
-
-    FORCEINLINE uint32 GetSizeInBytes() const
-    {
-        return SizeInBytes;
-    }
-
-private:
-    uint8* MappedMemory = nullptr;
-
-    uint32 SizeInBytes = 0;
-    uint32 OffsetInBytes = 0;
-
-    TComPtr<ID3D12Resource> Resource;
-
-    TArray<TComPtr<ID3D12Resource>> GarbageResources;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12CommandBatch
-
-class CD3D12CommandBatch
-{
-public:
-    CD3D12CommandBatch(CD3D12Device* InDevice);
-    ~CD3D12CommandBatch() = default;
-
-    bool Init();
-
-    bool Reset()
-    {
-        if (CmdAllocator.Reset())
-        {
-            Resources.Clear();
-            NativeResources.Clear();
-            DxResources.Clear();
-
-            GpuResourceUploader.Reset();
-
-            OnlineResourceDescriptorHeap->Reset();
-            OnlineSamplerDescriptorHeap->Reset();
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    FORCEINLINE void AddInUseResource(IRHIResource* InResource)
-    {
-        if (InResource)
-        {
-            Resources.Emplace(MakeSharedRef<IRHIResource>(InResource));
-        }
-    }
-
-    FORCEINLINE void AddInUseResource(CD3D12Resource* InResource)
-    {
-        if (InResource)
-        {
-            DxResources.Emplace(MakeSharedRef<CD3D12Resource>(InResource));
-        }
-    }
-
-    FORCEINLINE void AddInUseResource(const TComPtr<ID3D12Resource>& InResource)
-    {
-        if (InResource)
-        {
-            NativeResources.Emplace(InResource);
-        }
-    }
-
-    FORCEINLINE CD3D12GPUResourceUploader& GetGpuResourceUploader()
-    {
-        return GpuResourceUploader;
-    }
-
-    FORCEINLINE CD3D12CommandAllocator& GetCommandAllocator()
-    {
-        return CmdAllocator;
-    }
-
-    FORCEINLINE CD3D12OnlineDescriptorHeap* GetOnlineResourceDescriptorHeap() const
-    {
-        return OnlineResourceDescriptorHeap.Get();
-    }
-
-    FORCEINLINE CD3D12OnlineDescriptorHeap* GetOnlineSamplerDescriptorHeap() const
-    {
-        return OnlineSamplerDescriptorHeap.Get();
-    }
-
-    CD3D12Device*                          Device = nullptr;
-    
-    uint64                                 AssignedFenceValue = 0;
-
-    CD3D12CommandAllocator                 CmdAllocator;
-    CD3D12GPUResourceUploader              GpuResourceUploader;
-
-    TSharedRef<CD3D12OnlineDescriptorHeap> OnlineResourceDescriptorHeap;
-    TSharedRef<CD3D12OnlineDescriptorHeap> OnlineSamplerDescriptorHeap;
-
-    TArray<TSharedRef<CD3D12Resource>>     DxResources;
-    TArray<TSharedRef<IRHIResource>>       Resources;
-
-    TArray<TComPtr<ID3D12Resource>>        NativeResources;
-};
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12ResourceBarrierBatcher
-
-class CD3D12ResourceBarrierBatcher
-{
-public:
-    CD3D12ResourceBarrierBatcher() = default;
-    ~CD3D12ResourceBarrierBatcher() = default;
 
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
 
-    void AddUnorderedAccessBarrier(ID3D12Resource* Resource)
-    {
-        Check(Resource != nullptr);
+    void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
 
-        D3D12_RESOURCE_BARRIER Barrier;
-        CMemory::Memzero(&Barrier);
-
-        Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-        Barrier.UAV.pResource = Resource;
-
-        Barriers.Emplace(Barrier);
-    }
-
-    void FlushBarriers(CD3D12CommandList& CmdList)
+    void FlushBarriers(FD3D12CommandList& CommandList)
     {
         if (!Barriers.IsEmpty())
         {
-            CmdList.ResourceBarrier(Barriers.Data(), Barriers.Size());
+            CommandList.ResourceBarrier(Barriers.Data(), Barriers.Size());
             Barriers.Clear();
         }
     }
 
-    FORCEINLINE const D3D12_RESOURCE_BARRIER* GetBarriers() const
+    const D3D12_RESOURCE_BARRIER* GetBarriers() const
     {
         return Barriers.Data();
     }
 
-    FORCEINLINE uint32 GetNumBarriers() const
+    uint32 GetNumBarriers() const
     {
         return Barriers.Size();
     }
@@ -201,188 +44,205 @@ private:
     TArray<D3D12_RESOURCE_BARRIER> Barriers;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12CommandContext
-
-class CD3D12CommandContext : public IRHICommandContext, public CD3D12DeviceChild
+class FD3D12CommandContext : public IRHICommandContext, public FD3D12DeviceChild
 {
-private:
-
-    friend class CD3D12CoreInterface;
-
-    CD3D12CommandContext(CD3D12Device* InDevice);
-    ~CD3D12CommandContext();
-
 public:
+    FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    ~FD3D12CommandContext();
 
-    static CD3D12CommandContext* CreateD3D12CommandContext(CD3D12Device* InDevice);
-
-    void UpdateBuffer(CD3D12Resource* Resource, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData);
-
-    FORCEINLINE CD3D12CommandQueue& GetQueue()
-    {
-        return CommandQueue;
-    }
-
-    FORCEINLINE CD3D12CommandList& GetCommandList()
-    {
-        return CommandList;
-    }
-
-    FORCEINLINE uint32 GetCurrentEpochValue() const
-    {
-        uint32 MaxValue = NMath::Max<int32>((int32)CmdBatches.Size() - 1, 0);
-        return NMath::Min<uint32>(NextCmdBatch - 1, MaxValue);
-    }
-
-    FORCEINLINE void UnorderedAccessBarrier(CD3D12Resource* Resource)
-    {
-        D3D12_ERROR_COND(Resource != nullptr, "UnorderedAccessBarrier cannot be called with a nullptr resource");
-        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetResource());
-    }
-
-    FORCEINLINE void TransitionResource(CD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
-    {
-        D3D12_ERROR_COND(Resource != nullptr, "TransitionResource cannot be called with a nullptr resource");
-        BarrierBatcher.AddTransitionBarrier(Resource->GetResource(), BeforeState, AfterState);
-    }
-
-    FORCEINLINE void FlushResourceBarriers()
-    {
-        BarrierBatcher.FlushBarriers(CommandList);
-    }
-
-    FORCEINLINE void DestroyResource(CD3D12Resource* Resource)
-    {
-        CmdBatch->AddInUseResource(Resource);
-    }
-
-public:
-
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // IRHICommandContext Interface
-
-    virtual void StartContext()  override final;
-    virtual void FinishContext() override final;
-
-    virtual void BeginTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
-    virtual void EndTimeStamp(CRHITimestampQuery* TimestampQuery, uint32 Index) override final;
-
-    virtual void ClearRenderTargetView(const CRHIRenderTargetView& RenderTargetView, const TStaticArray<float, 4>& ClearColor) override final;
-    virtual void ClearDepthStencilView(const CRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
-    virtual void ClearUnorderedAccessViewFloat(CRHIUnorderedAccessView* UnorderedAccessView, const TStaticArray<float, 4>& ClearColor) override final;
-
-    virtual void BeginRenderPass(const CRHIRenderPassInitializer& RenderPassInitializer) override final;
-    virtual void EndRenderPass() override final;
-
-    virtual void SetViewport(float Width, float Height, float MinDepth, float MaxDepth, float x, float y) override final;
-    virtual void SetScissorRect(float Width, float Height, float x, float y) override final;
-
-    virtual void SetBlendFactor(const TStaticArray<float, 4>& Color) override final;
-
-    virtual void SetVertexBuffers(CRHIVertexBuffer* const* VertexBuffers, uint32 BufferCount, uint32 BufferSlot) override final;
-    virtual void SetIndexBuffer(CRHIIndexBuffer* IndexBuffer) override final;
-
-    virtual void SetPrimitiveTopology(EPrimitiveTopology PrimitveTopologyType) override final;
-
-    virtual void SetGraphicsPipelineState(class CRHIGraphicsPipelineState* PipelineState) override final;
-    virtual void SetComputePipelineState(class CRHIComputePipelineState* PipelineState) override final;
-
-    virtual void Set32BitShaderConstants(CRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
-
-    virtual void SetShaderResourceView(CRHIShader* Shader, CRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
-    virtual void SetShaderResourceViews(CRHIShader* Shader, CRHIShaderResourceView* const* ShaderResourceView, uint32 NumShaderResourceViews, uint32 ParameterIndex) override final;
-
-    virtual void SetUnorderedAccessView(CRHIShader* Shader, CRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
-    virtual void SetUnorderedAccessViews(CRHIShader* Shader, CRHIUnorderedAccessView* const* UnorderedAccessViews, uint32 NumUnorderedAccessViews, uint32 ParameterIndex) override final;
-
-    virtual void SetConstantBuffer(CRHIShader* Shader, CRHIConstantBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
-    virtual void SetConstantBuffers(CRHIShader* Shader, CRHIConstantBuffer* const* ConstantBuffers, uint32 NumConstantBuffers, uint32 ParameterIndex) override final;
-
-    virtual void SetSamplerState(CRHIShader* Shader, CRHISamplerState* SamplerState, uint32 ParameterIndex) override final;
-    virtual void SetSamplerStates(CRHIShader* Shader, CRHISamplerState* const* SamplerStates, uint32 NumSamplerStates, uint32 ParameterIndex) override final;
-
-    virtual void UpdateBuffer(CRHIBuffer* Destination, uint64 OffsetInBytes, uint64 SizeInBytes, const void* SourceData) override final;
-    virtual void UpdateTexture2D(CRHITexture2D* Destination, uint32 Width, uint32 Height, uint32 MipLevel, const void* SourceData) override final;
-
-    virtual void ResolveTexture(CRHITexture* Destination, CRHITexture* Source) override final;
-
-    virtual void CopyBuffer(CRHIBuffer* Destination, CRHIBuffer* Source, const SRHICopyBufferInfo& CopyInfo) override final;
-    virtual void CopyTexture(CRHITexture* Destination, CRHITexture* Source) override final;
-    virtual void CopyTextureRegion(CRHITexture* Destination, CRHITexture* Source, const SRHICopyTextureInfo& CopyTextureInfo) override final;
-
-    virtual void DestroyResource(class IRHIResource* Resource) override final;
-    virtual void DiscardContents(class CRHITexture* Texture) override final;
-
-    virtual void BuildRayTracingGeometry(CRHIRayTracingGeometry* Geometry, CRHIVertexBuffer* VertexBuffer, CRHIIndexBuffer* IndexBuffer, bool bUpdate) override final;
-    virtual void BuildRayTracingScene(CRHIRayTracingScene* RayTracingScene, const TArrayView<const CRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
-
-     /** @brief: Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void SetRayTracingBindings( CRHIRayTracingScene* RayTracingScene
-                                      , CRHIRayTracingPipelineState* PipelineState
-                                      , const SRayTracingShaderResources* GlobalResource
-                                      , const SRayTracingShaderResources* RayGenLocalResources
-                                      , const SRayTracingShaderResources* MissLocalResources
-                                      , const SRayTracingShaderResources* HitGroupResources
-                                      , uint32 NumHitGroupResources) override final;
-
-    virtual void GenerateMips(CRHITexture* Texture) override final;
-
-    virtual void TransitionTexture(CRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
-    virtual void TransitionBuffer(CRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)    override final;
-
-    virtual void UnorderedAccessTextureBarrier(CRHITexture* Texture) override final;
-    virtual void UnorderedAccessBufferBarrier(CRHIBuffer* Buffer)    override final;
-
-    virtual void Draw(uint32 VertexCount, uint32 StartVertexLocation) override final;
-    virtual void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
-    virtual void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
-    virtual void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final;
-
-    virtual void Dispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
-
-    virtual void DispatchRays(CRHIRayTracingScene* InScene, CRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
-
-    virtual void ClearState() override final;
-
-    virtual void Flush() override final;
-
-    virtual void InsertMarker(const String& Message) override final;
-
-    virtual void BeginExternalCapture() override final;
-    virtual void EndExternalCapture() override final;
-
-    virtual void* GetRHIBaseCommandList() override final { return reinterpret_cast<void*>(&CommandList); }
-
-private:
     bool Initialize();
 
-    void InternalClearState();
+    void ObtainCommandList();
 
-    CD3D12CommandList  CommandList;
-    CD3D12Fence        Fence;
-    CD3D12CommandQueue CommandQueue;
+    void FinishCommandList();
 
-    uint64 FenceValue   = 0;
-    uint32 NextCmdBatch = 0;
+    void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
-    TArray<CD3D12CommandBatch> CmdBatches;
-    CD3D12CommandBatch*        CmdBatch = nullptr;
+    virtual void RHIStartContext() override final;
+    
+    virtual void RHIFinishContext() override final;
 
-    TArray<TSharedRef<CD3D12TimestampQuery>> ResolveQueries;
+    virtual void RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
 
-    TSharedRef<CD3D12GraphicsPipelineState> CurrentGraphicsPipelineState;
-    TSharedRef<CD3D12ComputePipelineState>  CurrentComputePipelineState;
+    virtual void RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
 
-    TSharedRef<CD3D12RootSignature> CurrentRootSignature;
+    virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
+    
+    virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
+    
+    virtual void RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
 
-    D3D12_PRIMITIVE_TOPOLOGY CurrentPrimitiveTolpology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    virtual void RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) override final;
+    
+    virtual void RHIEndRenderPass() override final { }
 
-    CD3D12ShaderConstantsCache   ShaderConstantsCache;
-    CD3D12DescriptorCache        DescriptorCache;
-    CD3D12ResourceBarrierBatcher BarrierBatcher;
+    virtual void RHISetViewport(const FRHIViewportRegion& ViewportRegion) override final;
 
-    bool bIsReady            : 1;
-    bool bIsCapturing        : 1;
-    bool bIsRenderPassActive : 1;
+    virtual void RHISetScissorRect(const FRHIScissorRegion& ScissorRegion) override final;
+
+    virtual void RHISetBlendFactor(const FVector4& Color) override final;
+
+    virtual void RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) override final;
+    
+    virtual void RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) override final;
+
+    virtual void RHISetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) override final;
+    
+    virtual void RHISetComputePipelineState(class FRHIComputePipelineState* PipelineState) override final;
+
+    virtual void RHISet32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) override final;
+
+    virtual void RHISetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) override final;
+    
+    virtual void RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) override final;
+
+    virtual void RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) override final;
+    
+    virtual void RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) override final;
+
+    virtual void RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex) override final;
+    
+    virtual void RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex) override final;
+
+    virtual void RHISetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) override final;
+    
+    virtual void RHISetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex) override final;
+
+    virtual void RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData) override final;
+    
+    virtual void RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) override final;
+
+    virtual void RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final;
+
+    virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc) override final;
+    
+    virtual void RHICopyTexture(FRHITexture* Dst, FRHITexture* Src) override final;
+    
+    virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc) override final;
+
+    virtual void RHIDestroyResource(class IRefCounted* Resource) override final;
+
+    virtual void RHIDiscardContents(class FRHITexture* Texture) override final;
+
+    virtual void RHIBuildRayTracingGeometry(
+        FRHIRayTracingGeometry* RayTracingGeometry,
+        FRHIBuffer*             VertexBuffer,
+        uint32                  NumVertices,
+        FRHIBuffer*             IndexBuffer,
+        uint32                  NumIndices,
+        EIndexFormat            IndexFormat,
+        bool                    bUpdate) override final;
+    
+    virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
+
+    virtual void RHISetRayTracingBindings(
+        FRHIRayTracingScene*              RayTracingScene,
+        FRHIRayTracingPipelineState*      PipelineState,
+        const FRayTracingShaderResources* GlobalResource,
+        const FRayTracingShaderResources* RayGenLocalResources,
+        const FRayTracingShaderResources* MissLocalResources,
+        const FRayTracingShaderResources* HitGroupResources,
+        uint32                            NumHitGroupResources) override final;
+
+    virtual void RHIGenerateMips(FRHITexture* Texture) override final;
+
+    virtual void RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+
+    virtual void RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+
+    virtual void RHIUnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
+    
+    virtual void RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;
+
+    virtual void RHIDraw(uint32 VertexCount, uint32 StartVertexLocation) override final;
+
+    virtual void RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) override final;
+    
+    virtual void RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) override final;
+    
+    virtual void RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) override final;
+
+    virtual void RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) override final;
+
+    virtual void RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth) override final;
+
+    virtual void RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync) override final;
+
+    virtual void RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) override final;
+
+    virtual void RHIClearState() override final;
+
+    virtual void RHIFlush() override final;
+
+    virtual void RHIInsertMarker(const FStringView& Message) override final;
+
+    virtual void RHIBeginExternalCapture() override final;
+
+    virtual void RHIEndExternalCapture() override final;
+
+    virtual void* RHIGetNativeCommandList() override final 
+    { 
+        return reinterpret_cast<void*>(&CommandList);
+    }
+
+    FD3D12CommandList& GetCommandList() 
+    {
+        CHECK(CommandList != nullptr);
+        return *CommandList; 
+    }
+
+    FD3D12CommandAllocatorManager& GetCommandAllocatorManager()
+    {
+        return CommandAllocatorManager;
+    }
+
+    FD3D12CommandAllocator& GetCommandAllocator()
+    {
+        CHECK(CommandAllocator != nullptr);
+        return *CommandAllocator;
+    }
+    
+    uint32 GetCurrentBatchIndex() const
+    {
+        return 0;
+    }
+
+    void UnorderedAccessBarrier(FD3D12Resource* Resource)
+    {
+        CHECK(Resource != nullptr);
+        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetD3D12Resource());
+    }
+
+    void TransitionResource(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+    {
+        CHECK(Resource != nullptr);
+        BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
+    }
+
+    void FlushResourceBarriers() 
+    { 
+        BarrierBatcher.FlushBarriers(*CommandList);
+    }
+
+    uint64 GetAssignedFenceValue() const
+    {
+        return AssignedFenceValue;
+    }
+
+private:
+    FD3D12CommandListRef          CommandList;
+    FD3D12CommandAllocatorRef     CommandAllocator;
+    FD3D12CommandAllocatorManager CommandAllocatorManager;
+    FD3D12CommandContextState     ContextState;
+    ED3D12CommandQueueType        QueueType;
+
+    uint64 AssignedFenceValue;
+    
+    bool bIsCapturing : 1;
+
+    FD3D12ResourceBarrierBatcher    BarrierBatcher;
+    TArray<FD3D12TimestampQueryRef> ResolveQueries;
+
+    // TODO: The whole CommandContext should only be used from one thread at a time
+    FCriticalSection CommandContextCS;
 };

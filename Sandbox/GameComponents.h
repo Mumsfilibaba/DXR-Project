@@ -1,42 +1,17 @@
 #pragma once
-#include <Engine/Scene/Actor.h>
+#include <Engine/Scene/Actors/Actor.h>
 #include <Engine/Scene/Components/Component.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMovingBallComponent
-
-class CMovingBallComponent : public CComponent
+class SANDBOX_API FMovingBallComponent : public FComponent
 {
-    CORE_OBJECT(CMovingBallComponent, CComponent);
-
 public:
+    FOBJECT_DECLARE_CLASS(FMovingBallComponent, FComponent);
 
-    CMovingBallComponent(CActor* InActorOwner, float InSpeed)
-        : CComponent(InActorOwner, false, true)
-        , Speed(InSpeed)
-        , CurrentSpeed(InSpeed)
-    { }
+    FMovingBallComponent(const FObjectInitializer& ObjectInitializer);
+    ~FMovingBallComponent() = default;
 
-    virtual void Tick(CTimestamp DeltaTime)
-    {
-        const float fDelta = float(DeltaTime.AsSeconds());
+    virtual void Tick(FTimespan DeltaTime) override;
 
-        CActor* Actor = GetActor();
-        
-        CActorTransform& ActorTransform = Actor->GetTransform();
-        ActorTransform.SetTranslation(ActorTransform.GetTranslation() + CVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
-
-        if (ActorTransform.GetTranslation().y >= 60.0f)
-        {
-            CurrentSpeed = -Speed;
-        }
-        else if (ActorTransform.GetTranslation().y <= 0.0f)
-        {
-            CurrentSpeed = Speed;
-        }
-    }
-
-private:
     float Speed;
     float CurrentSpeed;
 };

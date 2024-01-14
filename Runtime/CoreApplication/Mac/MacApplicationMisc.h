@@ -1,28 +1,17 @@
 #pragma once
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
 
-#if defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
-
 #include <AppKit/AppKit.h>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMacApplicationMisc
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CMacApplicationMisc final : public CGenericApplicationMisc
+struct COREAPPLICATION_API FMacApplicationMisc final : public FGenericApplicationMisc
 {
-public:
+    static TSharedPtr<FGenericApplication> CreateApplication();
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-    // CGenericApplicationMisc Interface
-
-    static class CGenericApplication* CreateApplication();
-
-    static class CGenericConsoleWindow* CreateConsoleWindow();
-
-    static void MessageBox(const String& Title, const String& Message);
+    static FOutputDeviceConsole* CreateOutputDeviceConsole();
+ 
+    static void MessageBox(const FString& Title, const FString& Message);
 
     static FORCEINLINE void RequestExit(int32 ExitCode)
     {
@@ -31,9 +20,7 @@ public:
 
     static void PumpMessages(bool bUntilEmpty);
 
-    static SModifierKeyState GetModifierKeyState();
+    static FModifierKeyState GetModifierKeyState();
 };
 
-#if defined(COMPILER_CLANG)
-    #pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

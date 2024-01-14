@@ -1,22 +1,23 @@
-#include "D3D12CommandQueue.h"
-#include "D3D12CoreInterface.h"
+#include "D3D12RHI.h"
 #include "D3D12Viewport.h"
+#include "Core/Misc/FrameProfiler.h"
 
-#include "Core/Debug/Profiler/FrameProfiler.h"
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Viewport
-
-CD3D12Viewport::CD3D12Viewport(CD3D12Device* InDevice, CD3D12CommandContext* InCmdContext, const CRHIViewportInitializer& Initializer)
-    : CD3D12DeviceChild(InDevice)
-    , CRHIViewport(Initializer)
-    , Hwnd(reinterpret_cast<HWND>(Initializer.WindowHandle))
+FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc)
+    : FD3D12DeviceChild(InDevice)
+    , FRHIViewport(InDesc)
     , SwapChain(nullptr)
-    , CmdContext(InCmdContext)
+    , CommandContext(InCmdContext)
+    , BackBuffer(nullptr)
     , BackBuffers()
-{ }
+    , Hwnd(reinterpret_cast<HWND>(InDesc.WindowHandle))
+    , SwapChainWaitableObject(0)
+    , Flags(0)
+    , NumBackBuffers(0)
+    , BackBufferIndex(0)
+{
+}
 
-CD3D12Viewport::~CD3D12Viewport()
+FD3D12Viewport::~FD3D12Viewport()
 {
     BOOL FullscreenState;
 
@@ -33,38 +34,40 @@ CD3D12Viewport::~CD3D12Viewport()
     {
         CloseHandle(SwapChainWaitableObject);
     }
+
+    BackBuffer->SetViewport(nullptr);
 }
 
-bool CD3D12Viewport::Init()
+bool FD3D12Viewport::Initialize()
 {
     // Save the flags
-    Flags = GetDevice()->CanAllowTearing() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    Flags = GetDevice()->GetAdapter()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     const uint32      NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
-    const DXGI_FORMAT NativeFormat        = ConvertFormat(Format);
+    const DXGI_FORMAT NativeFormat        = ConvertFormat(Desc.ColorFormat);
 
     RECT ClientRect;
     GetClientRect(Hwnd, &ClientRect);
 
-    if (Width == 0)
+    if (Desc.Width == 0)
     {
-        Width = uint16(ClientRect.right - ClientRect.left);
+        Desc.Width = uint16(ClientRect.right - ClientRect.left);
     }
 
-    if (Height == 0)
+    if (Desc.Height == 0)
     {
-        Height = uint16(ClientRect.bottom - ClientRect.top);
+        Desc.Height = uint16(ClientRect.bottom - ClientRect.top);
     }
 
-    D3D12_ERROR_COND(Width  != 0, "Viewport-width of zero is not supported");
-    D3D12_ERROR_COND(Height != 0, "Viewport-height of zero is not supported");
+    D3D12_ERROR_COND(Desc.Width  != 0, "Viewport-width of zero is not supported");
+    D3D12_ERROR_COND(Desc.Height != 0, "Viewport-height of zero is not supported");
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
-    CMemory::Memzero(&SwapChainDesc);
+    FMemory::Memzero(&SwapChainDesc);
 
-    SwapChainDesc.Width              = Width;
-    SwapChainDesc.Height             = Height;
+    SwapChainDesc.Width              = Desc.Width;
+    SwapChainDesc.Height             = Desc.Height;
     SwapChainDesc.Format             = NativeFormat;
     SwapChainDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     SwapChainDesc.BufferCount        = NumSwapChainBuffers;
@@ -76,7 +79,7 @@ bool CD3D12Viewport::Init()
     SwapChainDesc.Flags              = Flags;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC FullscreenDesc;
-    CMemory::Memzero(&FullscreenDesc);
+    FMemory::Memzero(&FullscreenDesc);
 
     FullscreenDesc.RefreshRate.Numerator   = 0;
     FullscreenDesc.RefreshRate.Denominator = 1;
@@ -84,14 +87,17 @@ bool CD3D12Viewport::Init()
     FullscreenDesc.ScanlineOrdering        = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
     FullscreenDesc.Windowed                = true;
 
+    IDXGIFactory2* Factory = GetDevice()->GetAdapter()->GetDXGIFactory();
+    CHECK(Factory != nullptr);
+
     TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = GetDevice()->GetFactory()->CreateSwapChainForHwnd(CmdContext->GetQueue().GetQueue(), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
+    HRESULT Result = Factory->CreateSwapChainForHwnd(GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
     if (SUCCEEDED(Result))
     {
         Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
-            D3D12_ERROR("[CD3D12Viewport]: FAILED to retrieve IDXGISwapChain3");
+            D3D12_ERROR("[FD3D12Viewport]: FAILED to retrieve IDXGISwapChain3");
             return false;
         }
 
@@ -102,44 +108,45 @@ bool CD3D12Viewport::Init()
             SwapChainWaitableObject = SwapChain->GetFrameLatencyWaitableObject();
         }
 
-        SwapChain->SetMaximumFrameLatency(5);
+        SwapChain->SetMaximumFrameLatency(NumSwapChainBuffers);
     }
     else
     {
-        D3D12_ERROR("[CD3D12Viewport]: FAILED to create SwapChain");
+        D3D12_ERROR("[FD3D12Viewport]: FAILED to create SwapChain");
         return false;
     }
 
-    GetDevice()->GetFactory()->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
+    Factory->MakeWindowAssociation(Hwnd, DXGI_MWA_NO_ALT_ENTER);
 
     if (!RetriveBackBuffers())
     {
         return false;
     }
 
-    D3D12_INFO("[CD3D12Viewport]: Created SwapChain");
+    D3D12_INFO("[FD3D12Viewport]: Created SwapChain");
     return true;
 }
 
-bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
+bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    // TODO: Make sure that we release the old surfaces
-
-    if ((InWidth != Width || InHeight != Height) && (InWidth > 0) && (InHeight > 0))
+    if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
     {
-        CmdContext->ClearState();
+        CommandContext->RHIClearState();
 
-        BackBuffers.Clear();
+        for (FD3D12TextureRef& Texture : BackBuffers)
+        {
+            Texture->SetResource(nullptr);
+        }
 
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
         {
-            Width  = uint16(InWidth);
-            Height = uint16(InHeight);
+            Desc.Width  = uint16(InWidth);
+            Desc.Height = uint16(InHeight);
         }
         else
         {
-            D3D12_WARNING("[CD3D12Viewport]: Resize FAILED");
+            D3D12_WARNING("[FD3D12Viewport]: Resize FAILED");
             return false;
         }
 
@@ -148,20 +155,21 @@ bool CD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
             return false;
         }
 
+        D3D12_INFO("[FD3D12Viewport]: Resized %u x %u", Desc.Width, Desc.Height);
     }
 
     // NOTE: Not considered an error to try to resize when the size is the same, maybe it should?
     return true;
 }
 
-bool CD3D12Viewport::Present(bool VerticalSync)
+bool FD3D12Viewport::Present(bool VerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
     const uint32 SyncInterval = !!VerticalSync;
 
     uint32 PresentFlags = 0;
-    if (SyncInterval == 0 && (Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING))
+    if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
     {
         PresentFlags = DXGI_PRESENT_ALLOW_TEARING;
     }
@@ -178,7 +186,11 @@ bool CD3D12Viewport::Present(bool VerticalSync)
 
         if (Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
-            WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, true);
+            Result = WaitForSingleObjectEx(SwapChainWaitableObject, INFINITE, true);
+            if (FAILED(Result))
+            {
+                return false;
+            }
         }
 
         return true;
@@ -189,28 +201,49 @@ bool CD3D12Viewport::Present(bool VerticalSync)
     }
 }
 
-bool CD3D12Viewport::RetriveBackBuffers()
+bool FD3D12Viewport::RetriveBackBuffers()
 {
-    if (BackBuffers.Size() < (int32)NumBackBuffers)
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+    if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
     {
         BackBuffers.Resize(NumBackBuffers);
+        for (FD3D12TextureRef& Texture : BackBuffers)
+        {
+            Texture = new FD3D12Texture(GetDevice(), BackBufferDesc);
+        }
     }
 
-    for (uint32 i = 0; i < NumBackBuffers; i++)
+    if (BackBuffer)
+    {
+        BackBuffer->Resize(GetWidth(), GetHeight());
+    }
+    else
+    {
+        BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
+    }
+
+    for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
-        HRESULT Result = SwapChain->GetBuffer(i, IID_PPV_ARGS(&BackBufferResource));
+
+        HRESULT Result = SwapChain->GetBuffer(Index, IID_PPV_ARGS(&BackBufferResource));
         if (FAILED(Result))
         {
-            D3D12_INFO("[CD3D12Viewport]: GetBuffer(%u) Failed", i);
+            D3D12_INFO("[FD3D12Viewport]: GetBuffer(%u) Failed", Index);
             return false;
         }
 
-        CRHITexture2DInitializer BackBufferInitializer(GetColorFormat(), Width, Height, 1, 1, ETextureUsageFlags::AllowRTV, EResourceAccess::Common);
-        BackBuffers[i] = dbg_new CD3D12Texture2D(GetDevice(), BackBufferInitializer);
-        BackBuffers[i]->SetResource(dbg_new CD3D12Resource(GetDevice(), BackBufferResource));
+        BackBuffers[Index]->SetResource(new FD3D12Resource(GetDevice(), BackBufferResource));
+        BackBuffers[Index]->GetD3D12Resource()->SetName(FString::CreateFormatted("BackBuffer[%u]", Index));
     }
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
+
+    FD3D12Texture* CurrentBackbuffer = BackBuffer->GetCurrentBackBufferTexture();
+    if (!CurrentBackbuffer)
+    {
+        return false;
+    }
+
     return true;
 }

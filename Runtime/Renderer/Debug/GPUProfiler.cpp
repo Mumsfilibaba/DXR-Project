@@ -1,13 +1,11 @@
 #include "GPUProfiler.h"
-
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Time/Timestamp.h"
+#include "Core/Time/Timespan.h"
+#include "RHI/RHI.h"
 
-#include "RHI/RHICoreInterface.h"
+FGPUProfiler FGPUProfiler::Instance;
 
-CGPUProfiler CGPUProfiler::Instance;
-
-CGPUProfiler::CGPUProfiler()
+FGPUProfiler::FGPUProfiler()
     : Timequeries(nullptr)
     , FrameTime()
     , Samples()
@@ -15,7 +13,7 @@ CGPUProfiler::CGPUProfiler()
 {
 }
 
-bool CGPUProfiler::Init()
+bool FGPUProfiler::Initialize()
 {
     Instance.Timequeries = RHICreateTimestampQuery();
     if (!Instance.Timequeries)
@@ -26,56 +24,57 @@ bool CGPUProfiler::Init()
     return true;
 }
 
-void CGPUProfiler::Release()
+void FGPUProfiler::Release()
 {
     Instance.Timequeries.Reset();
 }
 
-void CGPUProfiler::Enable()
+void FGPUProfiler::Enable()
 {
     bEnabled = true;
 }
 
-void CGPUProfiler::Disable()
+void FGPUProfiler::Disable()
 {
     bEnabled = false;
 }
 
-void CGPUProfiler::Tick()
+void FGPUProfiler::Tick()
 {
     if (Timequeries)
     {
-        SRHITimestamp Query;
+        FRHITimestamp Query;
         Timequeries->GetTimestampFromIndex(Query, FrameTime.TimeQueryIndex);
 
         const double Frequency = static_cast<double>(Timequeries->GetFrequency());
         const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
 
-        double Duration = (DeltaTime / Frequency) * 1000.0;
+        // To milliseconds
+        double Duration = (DeltaTime / Frequency) * (1000.0);
         FrameTime.AddSample((float)Duration);
     }
 }
 
-void CGPUProfiler::Reset()
+void FGPUProfiler::Reset()
 {
     FrameTime.Reset();
 
     {
-        TScopedLock Lock(Samples);
-        for (auto& Sample : Samples.Get())
+        TScopedLock Lock(SamplesLock);
+        for (auto& Sample : Samples)
         {
             Sample.second.Reset();
         }
     }
 }
 
-void CGPUProfiler::GetGPUSamples(GPUProfileSamplesTable& OutSamples)
+void FGPUProfiler::GetGPUSamples(GPUProfileSamplesTable& OutSamples)
 {
-    TScopedLock Lock(Samples);
-    OutSamples = Samples.Get();
+    TScopedLock Lock(SamplesLock);
+    OutSamples = Samples;
 }
 
-void CGPUProfiler::BeginGPUFrame(CRHICommandList& CmdList)
+void FGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
 {
     if (Timequeries && bEnabled)
     {
@@ -83,7 +82,7 @@ void CGPUProfiler::BeginGPUFrame(CRHICommandList& CmdList)
     }
 }
 
-void CGPUProfiler::EndGPUFrame(CRHICommandList& CmdList)
+void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
 {
     if (Timequeries && bEnabled)
     {
@@ -91,21 +90,21 @@ void CGPUProfiler::EndGPUFrame(CRHICommandList& CmdList)
     }
 }
 
-void CGPUProfiler::BeginGPUTrace(CRHICommandList& CmdList, const char* Name)
+void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
     if (Timequeries && bEnabled)
     {
-        const String ScopeName = Name;
+        const FString ScopeName = Name;
 
         int32 TimeQueryIndex = -1;
 
         {
-            TScopedLock Lock(Samples);
+            TScopedLock Lock(SamplesLock);
 
-            auto Entry = Samples.Get().find(ScopeName);
-            if (Entry == Samples.Get().end())
+            auto Entry = Samples.find(ScopeName);
+            if (Entry == Samples.end())
             {
-                auto NewSample = Samples.Get().insert(std::make_pair(ScopeName, SGPUProfileSample()));
+                auto NewSample = Samples.insert(std::make_pair(ScopeName, FGPUProfileSample()));
                 NewSample.first->second.TimeQueryIndex = ++CurrentTimeQueryIndex;
                 TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
             }
@@ -122,30 +121,32 @@ void CGPUProfiler::BeginGPUTrace(CRHICommandList& CmdList, const char* Name)
     }
 }
 
-void CGPUProfiler::EndGPUTrace(CRHICommandList& CmdList, const char* Name)
+void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
     if (Timequeries && bEnabled)
     {
-        const String ScopeName = Name;
+        const FString ScopeName = Name;
 
         int32 TimeQueryIndex = -1;
 
-        TScopedLock Lock(Samples);
+        TScopedLock Lock(SamplesLock);
 
-        auto Entry = Samples.Get().find(ScopeName);
-        if (Entry != Samples.Get().end())
+        auto Entry = Samples.find(ScopeName);
+        if (Entry != Samples.end())
         {
             TimeQueryIndex = Entry->second.TimeQueryIndex;
             CmdList.EndTimeStamp(Timequeries.Get(), TimeQueryIndex);
 
             if (TimeQueryIndex >= 0)
             {
-                SRHITimestamp Query;
+                FRHITimestamp Query;
                 Timequeries->GetTimestampFromIndex(Query, TimeQueryIndex);
 
                 const double Frequency = static_cast<double>(Timequeries->GetFrequency());
+                const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
 
-                double Duration = NTime::ToSeconds<double>(static_cast<double>((Query.End - Query.Begin) / Frequency));
+                // To nanoseconds
+                double Duration = (DeltaTime / Frequency) * (1000.0 * 1000.0 * 1000.0);
                 Entry->second.AddSample((float)Duration);
             }
         }

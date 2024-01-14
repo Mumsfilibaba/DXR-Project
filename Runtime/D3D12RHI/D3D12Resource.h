@@ -1,75 +1,51 @@
 #pragma once
 #include "D3D12DeviceChild.h"
-
-#include "Core/RefCounted.h"
+#include "D3D12RefCounted.h"
 #include "Core/Utilities/StringUtilities.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Typedef
+typedef TSharedRef<class FD3D12Resource> FD3D12ResourceRef;
 
-typedef TSharedRef<class CD3D12Resource> D3D12ResourceRef;
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CD3D12Resource
-
-class CD3D12Resource : public CD3D12DeviceChild, public CRefCounted
+class FD3D12Resource : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
+    FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
+    FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
 
-    CD3D12Resource(CD3D12Device* InDevice, const TComPtr<ID3D12Resource>& InNativeResource);
-    CD3D12Resource(CD3D12Device* InDevice, const D3D12_RESOURCE_DESC& InDesc, D3D12_HEAP_TYPE InHeapType);
-    ~CD3D12Resource() = default;
+    bool Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
 
-    bool Init(D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE* OptimizedClearValue);
+    void* MapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
 
-    void* Map(uint32 SubResource, const D3D12_RANGE* Range);
+    void UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
 
-    void Unmap(uint32 SubResource, const D3D12_RANGE* Range);
+    void SetName(const FString& Name);
+    
+    FString GetName() const;
 
-    FORCEINLINE void SetName(const String& Name)
-    {
-        WString WideName = CharToWide(Name);
-        Resource->SetName(WideName.CStr());
+    ID3D12Resource* GetD3D12Resource() const 
+    { 
+        return Resource.Get(); 
     }
 
-    FORCEINLINE ID3D12Resource* GetResource() const
-    {
-        return Resource.Get();
-    }
-
-    FORCEINLINE D3D12_GPU_VIRTUAL_ADDRESS GetGPUVirtualAddress() const
-    {
-        return Address;
-    }
-
-    FORCEINLINE D3D12_HEAP_TYPE GetHeapType() const
-    {
-        return HeapType;
-    }
-
-    FORCEINLINE D3D12_RESOURCE_DIMENSION GetDimension() const
-    {
-        return Desc.Dimension;
-    }
-
-    FORCEINLINE D3D12_RESOURCE_STATES GetState() const
-    {
-        return ResourceState;
-    }
-
-    FORCEINLINE const D3D12_RESOURCE_DESC& GetDesc() const
+    const D3D12_RESOURCE_DESC& GetDesc() const
     {
         return Desc;
     }
 
-    FORCEINLINE uint64 GetWidth() const
-    {
-        return Desc.Width;
-    }
+    // Texture accessors
+    uint64 GetWidth()  const { return Desc.Width; }
+    uint64 GetHeight() const { return Desc.Height; }
+    uint64 GetDepth()  const { return Desc.DepthOrArraySize; }
+
+    // Buffer accessors
+    uint64 GetSize() const { return Desc.Width; }
+
+    D3D12_GPU_VIRTUAL_ADDRESS  GetGPUVirtualAddress() const { return Address; }
+    D3D12_HEAP_TYPE            GetHeapType()          const { return HeapType; }
+    D3D12_RESOURCE_STATES      GetState()             const { return ResourceState; }
+    D3D12_RESOURCE_DIMENSION   GetDimension()         const { return Desc.Dimension; }
 
 private:
     TComPtr<ID3D12Resource>   Resource;
-
     D3D12_RESOURCE_STATES     ResourceState;
     D3D12_HEAP_TYPE           HeapType;
     D3D12_RESOURCE_DESC       Desc;

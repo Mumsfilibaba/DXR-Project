@@ -1,14 +1,9 @@
 #include "Material.h"
-
-#include "RHI/RHICoreInterface.h"
+#include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
-
 #include "Engine/Engine.h"
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMaterial
-
-CMaterial::CMaterial(const SMaterialDesc& InProperties)
+FMaterial::FMaterial(const FMaterialDesc& InProperties)
     : AlbedoMap()
     , NormalMap()
     , RoughnessMap()
@@ -17,13 +12,13 @@ CMaterial::CMaterial(const SMaterialDesc& InProperties)
     , MetallicMap()
     , Properties(InProperties)
     , MaterialBuffer()
-{ }
-
-void CMaterial::Init()
 {
-    CRHIConstantBufferInitializer Initializer(EBufferUsageFlags::Default, sizeof(SMaterialDesc));
+}
 
-    MaterialBuffer = RHICreateConstantBuffer(Initializer);
+void FMaterial::Initialize()
+{
+    FRHIBufferDesc Desc(sizeof(FMaterialDesc), sizeof(FMaterialDesc), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
+    MaterialBuffer = RHICreateBuffer(Desc, EResourceAccess::ConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetName("MaterialBuffer");
@@ -32,74 +27,60 @@ void CMaterial::Init()
     Sampler = GEngine->BaseMaterialSampler;
 }
 
-void CMaterial::BuildBuffer(CRHICommandList& CmdList)
+void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 {
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::VertexAndConstantBuffer, EResourceAccess::CopyDest);
-    CmdList.UpdateBuffer(MaterialBuffer.Get(), 0, sizeof(SMaterialDesc), &Properties);
-    CmdList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::VertexAndConstantBuffer);
-
+    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.UpdateBuffer(MaterialBuffer.Get(), FBufferRegion(0, sizeof(FMaterialDesc)), &Properties);
+    CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     bMaterialBufferIsDirty = false;
 }
 
-void CMaterial::SetAlbedo(const CVector3& Albedo)
+void FMaterial::SetAlbedo(const FVector3& Albedo)
 {
     Properties.Albedo      = Albedo;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetAlbedo(float r, float g, float b)
+void FMaterial::SetAlbedo(float r, float g, float b)
 {
-    Properties.Albedo      = CVector3(r, g, b);
+    Properties.Albedo      = FVector3(r, g, b);
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetMetallic(float Metallic)
+void FMaterial::SetMetallic(float Metallic)
 {
     Properties.Metallic    = Metallic;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetRoughness(float Roughness)
+void FMaterial::SetRoughness(float Roughness)
 {
     Properties.Roughness   = Roughness;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::SetAmbientOcclusion(float AO)
+void FMaterial::SetAmbientOcclusion(float AO)
 {
     Properties.AO          = AO;
     bMaterialBufferIsDirty = true;
 }
 
-void CMaterial::ForceForwardPass(bool bForceForwardRender)
+void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
     bRenderInForwardPass = bForceForwardRender;
 }
 
-void CMaterial::EnableHeightMap(bool bInEnableHeightMap)
+void FMaterial::EnableHeightMap(bool bInEnableHeightMap)
 {
-    Properties.EnableHeight = (int32)bInEnableHeightMap;
+    Properties.EnableHeight = bInEnableHeightMap ? 1 : 0;
 }
 
-void CMaterial::EnableAlphaMask(bool bInEnableAlphaMask)
+void FMaterial::EnableAlphaMask(bool bInEnableAlphaMask)
 {
-    Properties.EnableMask = (int32)bInEnableAlphaMask;
+    Properties.EnableMask = bInEnableAlphaMask ? 1 : 0;
 }
 
-void CMaterial::SetDebugName(const String& InDebugName)
+void FMaterial::SetDebugName(const FString& InDebugName)
 {
     DebugName = InDebugName;
-}
-
-CRHIShaderResourceView* const* CMaterial::GetShaderResourceViews() const
-{
-    ShaderResourceViews[0] = SafeGetDefaultSRV(AlbedoMap);
-    ShaderResourceViews[1] = SafeGetDefaultSRV(NormalMap);
-    ShaderResourceViews[2] = SafeGetDefaultSRV(RoughnessMap);
-    ShaderResourceViews[3] = SafeGetDefaultSRV(HeightMap);
-    ShaderResourceViews[4] = SafeGetDefaultSRV(MetallicMap);
-    ShaderResourceViews[5] = SafeGetDefaultSRV(AOMap);
-    ShaderResourceViews[6] = SafeGetDefaultSRV(AlphaMask);
-
-    return ShaderResourceViews.Data();
 }

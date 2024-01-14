@@ -1,61 +1,115 @@
 #pragma once
-#include "GenericWindow.h"
-
-#include "Core/Input/InputCodes.h"
-#include "Core/Input/ModifierKeyState.h"
+#include "GenericApplicationMisc.h"
+#include "InputCodes.h"
 #include "Core/Containers/SharedRef.h"
 
-#if defined(COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4100) // Disable unreferenced variable
-#elif defined(COMPILER_CLANG)
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CGenericApplicationMessageHandler
+class FGenericWindow;
 
-class CGenericApplicationMessageHandler
+struct FGenericApplicationMessageHandler
 {
-public:
+    virtual ~FGenericApplicationMessageHandler() = default;
 
-    virtual ~CGenericApplicationMessageHandler() = default;
+    virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
+    {
+        return false;
+    }
 
-    virtual void HandleKeyReleased(EKey KeyCode, SModifierKeyState ModierKeyState) { }
+    virtual bool OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
+    {
+        return false;
+    }
 
-    virtual void HandleKeyPressed(EKey KeyCode, bool bIsRepeat, SModifierKeyState ModierKeyState) { }
+    virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
+    {
+        return false;
+    }
 
-    virtual void HandleKeyChar(uint32 Character) { }
+    virtual bool OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
+    {
+        return false;
+    }
 
-    virtual void HandleMouseMove(int32 x, int32 y) { }
+    virtual bool OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+    {
+        return false;
+    }
 
-    virtual void HandleMouseReleased(EMouseButton Button, SModifierKeyState ModierKeyState) { }
+    virtual bool OnKeyChar(uint32 Character)
+    {
+        return false;
+    }
 
-    virtual void HandleMousePressed(EMouseButton Button, SModifierKeyState ModierKeyState) { }
+    virtual bool OnMouseMove(int32 x, int32 y)
+    {
+        return false;
+    }
 
-    virtual void HandleMouseScrolled(float HorizontalDelta, float VerticalDelta) { }
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    {
+        return false;
+    }
 
-    virtual void HandleHighPrecisionMouseInput(const TSharedRef<CGenericWindow>& Window, int32 x, uint32 y) { }
+    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    {
+        return false;
+    }
 
-    virtual void HandleWindowResized(const TSharedRef<CGenericWindow>& Window, uint32 Width, uint32 Height) { }
+    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    {
+        return false;
+    }
 
-    virtual void HandleWindowMoved(const TSharedRef<CGenericWindow>& Window, int32 x, int32 y) { }
+    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
+    {
+        return false;
+    }
 
-    virtual void HandleWindowFocusChanged(const TSharedRef<CGenericWindow>& Window, bool bHasFocus) { }
+    virtual bool OnHighPrecisionMouseInput(const TSharedRef<FGenericWindow>& Window, int32 x, uint32 y)
+    {
+        return false;
+    }
 
-    virtual void HandleWindowMouseLeft(const TSharedRef<CGenericWindow>& Window) { }
+    virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height)
+    {
+        return false;
+    }
 
-    virtual void HandleWindowMouseEntered(const TSharedRef<CGenericWindow>& Window) { }
+    virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 x, int32 y)
+    {
+        return false;
+    }
 
-    virtual void HandleWindowClosed(const TSharedRef<CGenericWindow>& Window) { }
+    virtual bool OnWindowMouseEntered(const TSharedRef<FGenericWindow>& Window)
+    {
+        return false;
+    }
 
-    virtual void HandleApplicationExit(int32 ExitCode) { }
+    virtual bool OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window)
+    {
+        return false;
+    }
+    
+    virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window)
+    {
+        return false;
+    }
+    
+    virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window)
+    {
+        return false;
+    }
+
+    virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window)
+    {
+        return false;
+    }
+
+    virtual bool OnMonitorChange()
+    {
+        return false;
+    }
 };
 
-#if defined(COMPILER_MSVC)
-#pragma warning(pop)
-
-#elif defined(COMPILER_CLANG)
-#pragma clang diagnostic pop
-#endif
+ENABLE_UNREFERENCED_VARIABLE_WARNING

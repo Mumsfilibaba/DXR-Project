@@ -1,51 +1,47 @@
 #pragma once
 #include "DelegateBase.h"
-
 #include "Core/Containers/Array.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CMulticastDelegateBase
-
-class CMulticastDelegateBase
+class FMulticastDelegateBase
 {
 public:
 
     /**
-     * @brief: Copy-constructor 
-     * 
-     * @param Other: Other delegate to copy
+     * @brief       - Copy-constructor 
+     * @param Other - Other delegate to copy
      */
-    FORCEINLINE CMulticastDelegateBase(const CMulticastDelegateBase& Other)
+    FORCEINLINE FMulticastDelegateBase(const FMulticastDelegateBase& Other) noexcept
         : Delegates(Other.Delegates)
         , LockVariable(Other.LockVariable)
-    { }
+    {
+    }
 
     /**
-     * @brief: Move-constructor
-     *
-     * @param Other: Other delegate to move
+     * @brief       - Move-constructor
+     * @param Other - Other delegate to move
      */
-    FORCEINLINE CMulticastDelegateBase(CMulticastDelegateBase&& Other)
-        : Delegates(Move(Other.Delegates))
+    FORCEINLINE FMulticastDelegateBase(FMulticastDelegateBase&& Other) noexcept
+        : Delegates(::Move(Other.Delegates))
         , LockVariable(Other.LockVariable)
-    { }
+    {
+    }
 
     /**
-     * @brief: Destructor 
+     * @brief - Destructor 
      */
-    FORCEINLINE ~CMulticastDelegateBase()
+    FORCEINLINE ~FMulticastDelegateBase() noexcept
     {
         UnbindAll();
     }
 
     /**
-     * @brief:  Unbind all bound delegates 
+     * @brief -  Unbind all bound delegates 
      */
-    FORCEINLINE void UnbindAll()
+    FORCEINLINE void UnbindAll() noexcept
     {
         if (IsLocked())
         {
-            for (CDelegateBase& Delegate : Delegates)
+            for (FDelegateBase& Delegate : Delegates)
             {
                 Delegate.Unbind();
             }
@@ -57,36 +53,34 @@ public:
     }
 
     /**
-     * @brief: Swap this instance with another delegate
-     * 
-     * @param Other: Delegate to swap with
+     * @brief       - Swap this instance with another delegate
+     * @param Other - Delegate to swap with
      */
-    FORCEINLINE void Swap(CMulticastDelegateBase& Other)
+    FORCEINLINE void Swap(FMulticastDelegateBase& Other) noexcept
     {
-        Delegates.Swap(Other.Delegates);
+        ::Swap(Delegates, Other.Delegates);
     }
 
     /**
-     * @brief: Unbind a handle 
-     * 
-     * @param Handle: Handle to remove
-     * @return: Returns true if the handle was found and unbound
+     * @brief        - Unbind a handle 
+     * @param Handle - Handle to remove
+     * @return       - Returns true if the handle was found and unbound
      */
-    FORCEINLINE bool Unbind(CDelegateHandle Handle)
+    FORCEINLINE bool Unbind(FDelegateHandle Handle) noexcept
     {
         if (Handle.IsValid())
         {
-            for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+            for (int32 Index = 0; Index < Delegates.Size(); ++Index)
             {
-                if (Handle == It->GetHandle())
+                if (Handle == Delegates[Index].GetHandle())
                 {
                     if (IsLocked())
                     {
-                        It->Unbind();
+                        Delegates[Index].Unbind();
                     }
                     else
                     {
-                        Delegates.RemoveAt(It);
+                        Delegates.RemoveAt(Index);
                     }
 
                     return true;
@@ -98,20 +92,18 @@ public:
     }
 
     /**
-     * @brief: Remove a delegate if an object is bound to it
-     * 
-     * @param Object: Object to check for
-     * @return: Returns true if the object was unbound from any delegate
+     * @brief        - Remove a delegate if an object is bound to it
+     * @param Object - Object to check for
+     * @return       - Returns true if the object was unbound from any delegate
      */
-    FORCEINLINE bool UnbindIfBound(const void* Object)
+    FORCEINLINE bool UnbindIfBound(const void* Object) noexcept
     {
         bool bResult = false;
-
         if (Object)
         {
-            for (int32 Index = 0; Index < Delegates.Size(); Index++)
+            for (int32 Index = 0; Index < Delegates.Size(); ++Index)
             {
-                CDelegateBase& Delegate = Delegates[Index];
+                FDelegateBase& Delegate = Delegates[Index];
 
                 const void* BoundObject = Delegate.GetBoundObject();
                 if (BoundObject != nullptr && BoundObject == Object)
@@ -122,9 +114,10 @@ public:
                     }
                     else
                     {
-                        int32 LastIndex = Delegates.LastElementIndex();
+                        const int32 LastIndex = Delegates.LastElementIndex();
                         ::Swap(Delegate, Delegates[LastIndex]);
                         Delegates.Pop();
+                        --Index;
                     }
 
                     bResult = true;
@@ -136,15 +129,14 @@ public:
     }
 
     /**
-     * @brief: Checks if a valid delegate is bound 
-     * 
-     * @return: Returns true if there is any delegate bound
+     * @brief  - Checks if a valid delegate is bound 
+     * @return - Returns true if there is any delegate bound
      */
-    FORCEINLINE bool IsBound() const
+    FORCEINLINE bool IsBound() const noexcept
     {
-        for (const CDelegateBase& Delegate : Delegates)
+        for (const FDelegateBase& Delegate : Delegates)
         {
-            CDelegateHandle Handle = Delegate.GetHandle();
+            FDelegateHandle Handle = Delegate.GetHandle();
             if (Handle.IsValid())
             {
                 return true;
@@ -155,18 +147,17 @@ public:
     }
 
     /**
-     * @brief: Checks if an object is bound to any delegate
-     * 
-     * @param Object: Object to check for
-     * @return: Returns true if any of the delegates has the object bound
+     * @brief        - Checks if an object is bound to any delegate
+     * @param Object - Object to check for
+     * @return       - Returns true if any of the delegates has the object bound
      */
-    FORCEINLINE bool IsObjectBound(const void* Object) const
+    FORCEINLINE bool IsObjectBound(const void* Object) const noexcept
     {
         if (Object)
         {
-            for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+            for (int32 Index = 0; Index < Delegates.Size(); ++Index)
             {
-                const void* BoundObject = It->GetBoundObject();
+                const void* BoundObject = Delegates[Index].GetBoundObject();
                 if (BoundObject != nullptr && BoundObject != Object)
                 {
                     return true;
@@ -178,102 +169,99 @@ public:
     }
 
     /**
-     * @brief: Retrieve the number of delegates 
-     * 
-     * @return: Returns the number of delegates bound
+     * @brief  - Retrieve the number of delegates 
+     * @return - Returns the number of delegates bound
      */
-    FORCEINLINE uint32 GetCount() const
+    FORCEINLINE uint32 GetCount() const noexcept
     {
         return static_cast<uint32>(Delegates.Size());
     }
 
     /**
-     * @brief: Copy-assignment operator
-     * 
-     * @param RHS: Delegate to copy from
-     * @return: Returns a reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - Delegate to copy from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE CMulticastDelegateBase& operator=(const CMulticastDelegateBase& RHS)
+    FORCEINLINE FMulticastDelegateBase& operator=(const FMulticastDelegateBase& Other) noexcept
     {
-        CopyFrom(RHS);
+        CopyFrom(Other);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: Delegate to move from
-     * @return: Returns a reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - Delegate to move from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE CMulticastDelegateBase& operator=(CMulticastDelegateBase&& RHS)
+    FORCEINLINE FMulticastDelegateBase& operator=(FMulticastDelegateBase&& Other) noexcept
     {
-        MoveFrom(Forward<CMulticastDelegateBase>(RHS));
+        MoveFrom(::Forward<FMulticastDelegateBase>(Other));
         return *this;
     }
 
 protected:
-
-    FORCEINLINE explicit CMulticastDelegateBase()
+    FORCEINLINE explicit FMulticastDelegateBase() noexcept
         : Delegates()
         , LockVariable(0)
-    { }
-
-    FORCEINLINE CDelegateHandle AddDelegate(const CDelegateBase& NewDelegate)
     {
-        CDelegateHandle NewHandle = NewDelegate.GetHandle();
+    }
+
+    FORCEINLINE FDelegateHandle AddDelegate(const FDelegateBase& NewDelegate) noexcept
+    {
+        FDelegateHandle NewHandle = NewDelegate.GetHandle();
         if (!NewHandle.IsValid())
         {
             return NewHandle;
         }
 
-        for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+        for (int32 Index = 0; Index < Delegates.Size(); ++Index)
         {
-            CDelegateHandle Handle = It->GetHandle();
+            FDelegateHandle Handle = Delegates[Index].GetHandle();
             if (NewHandle == Handle)
             {
                 return Handle;
             }
         }
 
-        for (auto It = Delegates.StartIterator(); It != Delegates.EndIterator(); It++)
+        for (int32 Index = 0; Index < Delegates.Size(); ++Index)
         {
-            CDelegateHandle Handle = It->GetHandle();
+            FDelegateHandle Handle = Delegates[Index].GetHandle();
             if (!NewHandle.IsValid())
             {
-                *It = NewDelegate;
+                Delegates[Index] = NewDelegate;
                 return Handle;
             }
         }
 
         CompactArray();
 
-        Delegates.Push(NewDelegate);
+        Delegates.Add(NewDelegate);
         return NewHandle;
     }
 
-    FORCEINLINE void CopyFrom(const CMulticastDelegateBase& Other)
+    FORCEINLINE void CopyFrom(const FMulticastDelegateBase& Other) noexcept
     {
         Delegates = Other.Delegates;
         LockVariable = Other.LockVariable;
     }
 
-    FORCEINLINE void MoveFrom(CMulticastDelegateBase&& Other)
+    FORCEINLINE void MoveFrom(FMulticastDelegateBase&& Other) noexcept
     {
-        Delegates = Move(Other.Delegates);
+        Delegates = ::Move(Other.Delegates);
         LockVariable = Other.LockVariable;
         Other.LockVariable = 0;
     }
 
-    FORCEINLINE void CompactArray()
+    FORCEINLINE void CompactArray() noexcept
     {
         if (!IsLocked() && !Delegates.IsEmpty())
         {
             int32 Next = Delegates.LastElementIndex();
             for (int32 Index = Next; Index >= 0; Index--)
             {
-                CDelegateBase& Delegate = Delegates[Index];
+                FDelegateBase& Delegate = Delegates[Index];
 
-                CDelegateHandle DelegateHandle = Delegate.GetHandle();
+                FDelegateHandle DelegateHandle = Delegate.GetHandle();
                 if (!DelegateHandle.IsValid())
                 {
                     // NOTE: It can be that we swap the same element when Index = Next
@@ -285,19 +273,19 @@ protected:
             int32 NumEmptyElements = Delegates.LastElementIndex() - Next;
             if (NumEmptyElements > 0)
             {
-                Delegates.PopRange(NumEmptyElements);
+                Delegates.Pop(NumEmptyElements);
             }
         }
     }
 
-    FORCEINLINE void Lock() const
+    FORCEINLINE void Lock() const noexcept
     {
         LockVariable++;
     }
 
-    FORCEINLINE void Unlock() const
+    FORCEINLINE void Unlock() const noexcept
     {
-        Check(LockVariable > 0);
+        CHECK(LockVariable > 0);
         LockVariable--;
     }
 
@@ -306,8 +294,8 @@ protected:
         return (LockVariable > 0);
     }
 
-    TArray<CDelegateBase> Delegates;
+    TArray<FDelegateBase> Delegates;
 
-     /** @brief: Lock protecting the delegate when removing during broadcasting */
+     /** @brief - Lock protecting the delegate when removing during broadcasting */
     mutable uint64 LockVariable = 0;
 };

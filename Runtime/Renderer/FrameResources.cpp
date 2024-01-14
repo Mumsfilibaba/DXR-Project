@@ -1,10 +1,7 @@
 #include "FrameResources.h"
 #include "LightSetup.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// SFrameResources
-
-void SFrameResources::Release()
+void FFrameResources::Release()
 {
     BackBuffer = nullptr;
 
@@ -25,9 +22,9 @@ void SFrameResources::Release()
     SSAOBuffer.Reset();
     FinalTarget.Reset();
 
-    for (uint32 i = 0; i < 5; i++)
+    for (FRHITextureRef& Buffer : GBuffer)
     {
-        GBuffer[i].Reset();
+        Buffer.Reset();
     }
 
     ReducedDepthBuffer[0].Reset();
@@ -35,7 +32,7 @@ void SFrameResources::Release()
 
     GBufferSampler.Reset();
 
-    StdInputLayout.Reset();
+    MeshInputLayout.Reset();
 
     RTScene.Reset();
     RTOutput.Reset();
@@ -45,6 +42,4 @@ void SFrameResources::Release()
 
     DeferredVisibleCommands.Clear();
     ForwardVisibleCommands.Clear();
-
-    MainWindowViewport.Reset();
 }

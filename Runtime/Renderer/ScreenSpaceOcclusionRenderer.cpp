@@ -1,313 +1,253 @@
 #include "ScreenSpaceOcclusionRenderer.h"
 #include "Renderer.h"
-
-#include "RHI/RHICoreInterface.h"
-#include "RHI/RHIShaderCompiler.h"
-
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
-#include "Core/Debug/Profiler/FrameProfiler.h"
-#include "Core/Debug/Console/ConsoleManager.h"
+#include "Core/Math/IntVector2.h"
+#include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "RHI/RHI.h"
+#include "RHI/RHIShaderCompiler.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Console-variable
+static TAutoConsoleVariable<float> CVarSSAORadius(
+    "Renderer.SSAO.Radius",
+    "Specifies the radius of the Screen-Space Ray-Trace in SSAO",
+    0.2f);
 
-TAutoConsoleVariable<float> GSSAORadius("Renderer.SSAORadius", 0.4f);
-TAutoConsoleVariable<float> GSSAOBias("Renderer.SSAOBias", 0.025f);
-TAutoConsoleVariable<int32> GSSAOKernelSize("Renderer.SSAOKernelSize", 32);
+static TAutoConsoleVariable<float> CVarSSAOBias(
+    "Renderer.SSAO.Bias", 
+    "Specifies the bias when testing the Screen-Space Rays against the depth-buffer",
+    0.075f);
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CScreenSpaceOcclusionRenderer
+static TAutoConsoleVariable<int32> CVarSSAOKernelSize(
+    "Renderer.SSAO.KernelSize",
+    "Specifies the number of samples for each pixel",
+    16);
 
-bool CScreenSpaceOcclusionRenderer::Init(SFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
 {
-    if (!CreateRenderTarget(FrameResources))
+    const uint32 Width  = FrameResources.MainViewport->GetWidth();
+    const uint32 Height = FrameResources.MainViewport->GetHeight();
+
+    if (!CreateRenderTarget(FrameResources, Width, Height))
     {
         return false;
     }
 
     TArray<uint8> ShaderCode;
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/SSAO.hlsl", "Main", nullptr, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     SSAOShader = RHICreateComputeShader(ShaderCode);
     if (!SSAOShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIComputePipelineStateInitializer PipelineStateInfo;
-    PipelineStateInfo.Shader = SSAOShader.Get();
-
-    PipelineState = RHICreateComputePipelineState(PipelineStateInfo);
-    if (!PipelineState)
     {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        PipelineState->SetName("SSAO PipelineState");
-    }
-
-    // Generate SSAO Kernel
-    std::default_random_engine            Generator;
-    std::uniform_real_distribution<float> RandomFloats(0.0f, 1.0f);
-
-    CVector3 Normal = CVector3(0.0f, 0.0f, 1.0f);
-
-    TArray<CVector3> SSAOKernel;
-    for (uint32 i = 0; i < 512 && SSAOKernel.Size() < 64; i++)
-    {
-        CVector3 Sample = CVector3(RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator) * 2.0f - 1.0f, RandomFloats(Generator));
-        Sample.Normalize();
-
-        float Dot = Sample.DotProduct(Normal);
-        if (NMath::Abs(Dot) > 0.95f)
+        FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
+        PipelineState = RHICreateComputePipelineState(PSOInitializer);
+        if (!PipelineState)
         {
-            continue;
+            DEBUG_BREAK();
+            return false;
         }
-
-        Sample *= RandomFloats(Generator);
-
-        float Scale = float(i) / 64.0f;
-        Scale = NMath::Lerp(0.1f, 1.0f, Scale * Scale);
-        Sample *= Scale;
-
-        SSAOKernel.Emplace(Sample);
+        else
+        {
+            PipelineState->SetName("SSAO PipelineState");
+        }
     }
 
-    // Generate noise
-    TArray<SFloat16> SSAONoise;
-    for (uint32 i = 0; i < 16; i++)
+    TArray<FShaderDefine> Defines = 
     {
-        const float x = RandomFloats(Generator) * 2.0f - 1.0f;
-        const float y = RandomFloats(Generator) * 2.0f - 1.0f;
-        SSAONoise.Emplace(x);
-        SSAONoise.Emplace(y);
-        SSAONoise.Emplace(0.0f);
-        SSAONoise.Emplace(0.0f);
-    }
+        { "HORIZONTAL_PASS", "(1)" }
+    };
 
-    CRHITexture2DInitializer SSAONoiseInitializer(EFormat::R16G16B16A16_Float, 4, 4, 1, 1, ETextureUsageFlags::AllowSRV, EResourceAccess::NonPixelShaderResource);
-    SSAONoiseTex = RHICreateTexture2D(SSAONoiseInitializer);
-    if (!SSAONoiseTex)
     {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        SSAONoiseTex->SetName("SSAO Noise Texture");
-    }
-
-    CRHICommandList CmdList;
-
-    CmdList.TransitionTexture(FrameResources.SSAOBuffer.Get(), EResourceAccess::Common, EResourceAccess::NonPixelShaderResource);
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::CopyDest);
-
-    CmdList.UpdateTexture2D(SSAONoiseTex.Get(), 4, 4, 0, SSAONoise.Data());
-
-    CmdList.TransitionTexture(SSAONoiseTex.Get(), EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource);
-
-    CRHICommandQueue::Get().ExecuteCommandList(CmdList);
-
-    CRHIBufferDataInitializer    SSAOSampleData(SSAOKernel.Data(), SSAOKernel.SizeInBytes());
-    CRHIGenericBufferInitializer SSAOSamplesInitializer( EBufferUsageFlags::AllowSRV | EBufferUsageFlags::Default
-                                                       , SSAOKernel.SizeInBytes()
-                                                       , sizeof(CVector3)
-                                                       , EResourceAccess::Common
-                                                       , &SSAOSampleData);
-
-    SSAOSamples = RHICreateGenericBuffer(SSAOSamplesInitializer);
-    if (!SSAOSamples)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        SSAOSamples->SetName("SSAO Samples");
-    }
-
-    CRHIBufferSRVInitializer SRVInitializer(SSAOSamples.Get(), 0, SSAOKernel.Size());
-    SSAOSamplesSRV = RHICreateShaderResourceView(SRVInitializer);
-    if (!SSAOSamplesSRV)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-
-    TArray<SShaderDefine> Defines;
-    Defines.Emplace("HORIZONTAL_PASS", "1");
-
-    // Load shader
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
-    {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     BlurHorizontalShader = RHICreateComputeShader(ShaderCode);
     if (!BlurHorizontalShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    CRHIComputePipelineStateInitializer PSOProperties;
-    PSOProperties.Shader = BlurHorizontalShader.Get();
+    {
+        FRHIComputePipelineStateInitializer PSOInitializer;
+        PSOInitializer.Shader = BlurHorizontalShader.Get();
 
-    BlurHorizontalPSO = RHICreateComputePipelineState(PSOProperties);
-    if (!BlurHorizontalPSO)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        BlurHorizontalPSO->SetName("SSAO Horizontal Blur PSO");
+        BlurHorizontalPSO = RHICreateComputePipelineState(PSOInitializer);
+        if (!BlurHorizontalPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            BlurHorizontalPSO->SetName("SSAO Horizontal Blur PSO");
+        }
     }
 
     Defines.Clear();
     Defines.Emplace("VERTICAL_PASS", "1");
 
-    if (!CRHIShaderCompiler::CompileFromFile("../Runtime/Shaders/Blur.hlsl", "Main", &Defines, EShaderStage::Compute, EShaderModel::SM_6_0, ShaderCode))
     {
-        CDebug::DebugBreak();
-        return false;
+        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, MakeArrayView(Defines));
+        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
     }
 
     BlurVerticalShader = RHICreateComputeShader(ShaderCode);
     if (!BlurVerticalShader)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
 
-    PSOProperties.Shader = BlurVerticalShader.Get();
+    {
+        FRHIComputePipelineStateInitializer PSOInitializer;
+        PSOInitializer.Shader = BlurVerticalShader.Get();
 
-    BlurVerticalPSO = RHICreateComputePipelineState(PSOProperties);
-    if (!BlurVerticalPSO)
-    {
-        CDebug::DebugBreak();
-        return false;
-    }
-    else
-    {
-        BlurVerticalPSO->SetName("SSAO Vertical Blur PSO");
+        BlurVerticalPSO = RHICreateComputePipelineState(PSOInitializer);
+        if (!BlurVerticalPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            BlurVerticalPSO->SetName("SSAO Vertical Blur PSO");
+        }
     }
 
     return true;
 }
 
-void CScreenSpaceOcclusionRenderer::Release()
+void FScreenSpaceOcclusionRenderer::Release()
 {
     PipelineState.Reset();
     BlurHorizontalPSO.Reset();
     BlurVerticalPSO.Reset();
-    SSAOSamples.Reset();
-    SSAOSamplesSRV.Reset();
-    SSAONoiseTex.Reset();
     SSAOShader.Reset();
     BlurHorizontalShader.Reset();
     BlurVerticalShader.Reset();
 }
 
-bool CScreenSpaceOcclusionRenderer::ResizeResources(SFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    return CreateRenderTarget(FrameResources);
+    // Destroy the old resource
+    CommandList.DestroyResource(FrameResources.SSAOBuffer.Get());
+
+    // Create the new resources
+    return CreateRenderTarget(FrameResources, Width, Height);
 }
 
-void CScreenSpaceOcclusionRenderer::Render(CRHICommandList& CmdList, SFrameResources& FrameResources)
+void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "Begin SSAO");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin SSAO");
 
     TRACE_SCOPE("SSAO");
 
-    CmdList.SetComputePipelineState(PipelineState.Get());
-
-    struct SSAOSettings
+    struct FSSAOSettings
     {
-        CVector2 ScreenSize;
-        CVector2 NoiseSize;
-        float    Radius;
-        float    Bias;
-        int32    KernelSize;
+        FVector2    ScreenSize;
+        FVector2    NoiseSize;
+        FIntVector2 GBufferSize;
+        float       Radius;
+        float       Bias;
+        int32       KernelSize;
     } SSAOSettings;
 
-    const uint32 Width  = FrameResources.SSAOBuffer->GetWidth();
-    const uint32 Height = FrameResources.SSAOBuffer->GetHeight();
-    SSAOSettings.ScreenSize = CVector2(float(Width), float(Height));
-    SSAOSettings.NoiseSize  = CVector2(4.0f, 4.0f);
-    SSAOSettings.Radius     = GSSAORadius.GetFloat();
-    SSAOSettings.KernelSize = GSSAOKernelSize.GetInt();
-    SSAOSettings.Bias       = GSSAOBias.GetFloat();
+    const uint32 Width         = FrameResources.SSAOBuffer->GetWidth();
+    const uint32 Height        = FrameResources.SSAOBuffer->GetHeight();
+    const uint32 GBufferWidth  = FrameResources.GBuffer[GBufferIndex_Depth]->GetWidth();
+    const uint32 GBufferHeight = FrameResources.GBuffer[GBufferIndex_Depth]->GetHeight();
+    
+    SSAOSettings.ScreenSize  = FVector2(float(Width), float(Height));
+    SSAOSettings.NoiseSize   = FVector2(4.0f, 4.0f);
+    SSAOSettings.GBufferSize = FIntVector2(GBufferWidth, GBufferHeight);
+    SSAOSettings.Radius      = CVarSSAORadius.GetValue();
+    SSAOSettings.KernelSize  = CVarSSAOKernelSize.GetValue();
+    SSAOSettings.Bias        = CVarSSAOBias.GetValue();
 
-    CmdList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+    CommandList.SetComputePipelineState(PipelineState.Get());
+    CommandList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
-    AddDebugTexture( MakeSharedRef<CRHIShaderResourceView>(SSAONoiseTex->GetShaderResourceView())
-                   , SSAONoiseTex
-                   , EResourceAccess::NonPixelShaderResource
-                   , EResourceAccess::NonPixelShaderResource);
+    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_ViewNormal]->GetShaderResourceView(), 0);
+    CommandList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 1);
 
-    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_VIEW_NORMAL_INDEX]->GetShaderResourceView(), 0);
-    CmdList.SetShaderResourceView(SSAOShader.Get(), FrameResources.GBuffer[GBUFFER_DEPTH_INDEX]->GetShaderResourceView(), 1);
-    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAONoiseTex->GetShaderResourceView(), 2);
-    CmdList.SetShaderResourceView(SSAOShader.Get(), SSAOSamplesSRV.Get(), 3);
+    CommandList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
 
-    CmdList.SetSamplerState(SSAOShader.Get(), FrameResources.GBufferSampler.Get(), 0);
-
-    CRHIUnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
-    CmdList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
-    CmdList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 7);
+    FRHIUnorderedAccessView* SSAOBufferUAV = FrameResources.SSAOBuffer->GetUnorderedAccessView();
+    CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
+    CommandList.Set32BitShaderConstants(SSAOShader.Get(), &SSAOSettings, 9);
 
     constexpr uint32 ThreadCount = 16;
+    const uint32 DispatchWidth   = FMath::DivideByMultiple<uint32>(Width, ThreadCount);
+    const uint32 DispatchHeight  = FMath::DivideByMultiple<uint32>(Height, ThreadCount);
 
-    const uint32 DispatchWidth  = NMath::DivideByMultiple<uint32>(Width, ThreadCount);
-    const uint32 DispatchHeight = NMath::DivideByMultiple<uint32>(Height, ThreadCount);
-    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    // Actual SSAO tracing
+    {
+        GPU_TRACE_SCOPE(CommandList, "SSAO Tracing");
 
-    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+        CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+        CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+    }
 
-    CmdList.SetComputePipelineState(BlurHorizontalPSO.Get());
+    // Horizontal blur
+    {
+        GPU_TRACE_SCOPE(CommandList, "SSAO Horizontal blur");
+        
+        CommandList.SetComputePipelineState(BlurHorizontalPSO.Get());
+        CommandList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
-    CmdList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+    }
 
-    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    // Vertical blur
+    {
+        GPU_TRACE_SCOPE(CommandList, "SSAO Vertical blur");
 
-    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
+        CommandList.SetComputePipelineState(BlurVerticalPSO.Get());
+        CommandList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+    }
 
-    CmdList.SetComputePipelineState(BlurVerticalPSO.Get());
-
-    CmdList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
-
-    CmdList.Dispatch(DispatchWidth, DispatchHeight, 1);
-
-    CmdList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
-
-    INSERT_DEBUG_CMDLIST_MARKER(CmdList, "End SSAO");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End SSAO");
 }
 
-bool CScreenSpaceOcclusionRenderer::CreateRenderTarget(SFrameResources& FrameResources)
+bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    const ETextureUsageFlags Flags = ETextureUsageFlags::RWTexture;
+    const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
     
-    const uint32 Width  = FrameResources.MainWindowViewport->GetWidth();
-    const uint32 Height = FrameResources.MainWindowViewport->GetHeight();
+    Width  = Width / 2;
+    Height = Height / 2;
 
-    CRHITexture2DInitializer SSAOBufferInitializer(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags, EResourceAccess::Common);
-    FrameResources.SSAOBuffer = RHICreateTexture2D(SSAOBufferInitializer);
+    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags);
+    FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
-        CDebug::DebugBreak();
+        DEBUG_BREAK();
         return false;
     }
     else

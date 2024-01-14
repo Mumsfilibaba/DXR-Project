@@ -1,55 +1,61 @@
 #pragma once
-#include "D3D12Device.h"
+#include "D3D12DeviceChild.h"
+#include "D3D12Fence.h"
+#include "Core/Containers/Queue.h"
+#include "Core/Platform/CriticalSection.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// D3D12CommandAllocator 
+typedef TSharedRef<class FD3D12CommandAllocator> FD3D12CommandAllocatorRef;
 
-class CD3D12CommandAllocator : public CD3D12DeviceChild
+class FD3D12CommandAllocator : public FD3D12DeviceChild, public FD3D12RefCounted
 {
 public:
+    FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
 
-    FORCEINLINE CD3D12CommandAllocator(CD3D12Device* InDevice)
-        : CD3D12DeviceChild(InDevice)
-        , Allocator(nullptr)
-    { }
+    bool Create();
 
-    FORCEINLINE bool Init(D3D12_COMMAND_LIST_TYPE Type)
-    {
-        HRESULT Result = GetDevice()->GetD3D12Device()->CreateCommandAllocator(Type, IID_PPV_ARGS(&Allocator));
-        if (SUCCEEDED(Result))
-        {
-            D3D12_INFO("[CD3D12CommandAllocator]: Created CommandAllocator");
-            return true;
-        }
-        else
-        {
-            D3D12_ERROR("[CD3D12CommandAllocator]: FAILED to create CommandAllocator");
-            return false;
-        }
-    }
+    bool Reset();
 
-    FORCEINLINE bool Reset()
-    {
-        HRESULT Result = Allocator->Reset();
-        if (Result == DXGI_ERROR_DEVICE_REMOVED)
-        {
-            D3D12DeviceRemovedHandlerRHI(GetDevice());
-        }
+    bool IsFinished() const;
 
-        return SUCCEEDED(Result);
-    }
-
-    FORCEINLINE void SetName(const String& Name)
-    {
-        WString WideName = CharToWide(Name);
-        Allocator->SetName(WideName.CStr());
-    }
-
-    FORCEINLINE ID3D12CommandAllocator* GetAllocator() const
+    FORCEINLINE ID3D12CommandAllocator* GetD3D12Allocator() const
     {
         return Allocator.Get();
     }
 
+    FORCEINLINE void SetSyncPoint(const FD3D12FenceSyncPoint& InSyncPoint)
+    {
+        SyncPoint = InSyncPoint;
+    }
+
+    FORCEINLINE void SetName(const FString& Name)
+    {
+        FStringWide WideName = CharToWide(Name);
+        Allocator->SetName(WideName.GetCString());
+    }
+
 private:
+    ED3D12CommandQueueType          QueueType;
     TComPtr<ID3D12CommandAllocator> Allocator;
+    FD3D12FenceSyncPoint            SyncPoint;
+};
+
+
+class FD3D12CommandAllocatorManager : public FD3D12DeviceChild
+{
+public:
+    FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+
+    FD3D12CommandAllocatorRef ObtainAllocator();
+
+    void ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator);
+
+    ED3D12CommandQueueType GetQueueType() const
+    {
+        return QueueType;
+    }
+
+private:
+    ED3D12CommandQueueType  QueueType;
+    D3D12_COMMAND_LIST_TYPE CommandListType;
+    TQueue<FD3D12CommandAllocatorRef, EQueueType::SPMC> Allocators;
 };

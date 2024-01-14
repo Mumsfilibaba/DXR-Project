@@ -28,3 +28,7 @@ packages/
 *.pbxproj
 *.xcworkspace
 *.xcodeproj
+*.msl
+*.metal
+*.glsl
+*.dxrmesh

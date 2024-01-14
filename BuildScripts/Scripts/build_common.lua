@@ -1,81 +1,84 @@
+include "build_log.lua"
+
 -- Custom options 
 newoption 
 {
-	trigger     = "monolithic",
-	description = "Links all modules as static libraries instead of DLLs"
+    trigger     = "monolithic",
+    description = "Links all modules as static libraries instead of DLLs"
 }
+
+newoption
+{
+    trigger     = "platform",
+    value       = "CurrentPlatform",
+    description = "Specify the platform to use",
+    allowed     = { { "Win32" }, { "macOS" } },
+    default     = "Win32"
+ }
 
 -- Check if the module should be built monolithicly
 function IsMonolithic()
     if GbIsMonolithic == nil then
-        GbIsMonolithic = (_OPTIONS['monolithic'] ~= nil)
+        GbIsMonolithic = (_OPTIONS["monolithic"] ~= nil)
     end
     
     return GbIsMonolithic
 end
 
--- Sets the global state IsMonolithic, the project creation overrides this variable
-function SetIsMonlithic( bIsMonolithic )
-    -- Ensures that global variable is created
-    local bCurrent = IsMonolithic()
-    if bCurrent ~= bIsMonolithic then
-        GbIsMonolithic = bIsMonolithic
-    end
+-- Check if the current platform to build for is Win32
+function IsPlatformWindows()
+    return _OPTIONS["platform"] == "Win32" 
+end
+
+-- Check if the current platform to build for is MacOS
+function IsPlatformMac()
+    return _OPTIONS["platform"] == "macOS" 
 end
 
 -- Check the action being used
 function BuildWithXcode()
-    return _ACTION == 'xcode4'
+    return _ACTION == "xcode4"
 end
 
-function BuildWithVS()
+function BuildWithVisualStudio()
     return 
-        _ACTION == 'vs2022' or 
-        _ACTION == 'vs2019' or 
-        _ACTION == 'vs2017' or 
-        _ACTION == 'vs2015' or 
-        _ACTION == 'vs2013' or
-        _ACTION == 'vs2012' or
-        _ACTION == 'vs2010' or
-        _ACTION == 'vs2008' or
-        _ACTION == 'vs2005'
+        _ACTION == "vs2022" or 
+        _ACTION == "vs2019" or 
+        _ACTION == "vs2017" or 
+        _ACTION == "vs2015" or 
+        _ACTION == "vs2013" or
+        _ACTION == "vs2012" or
+        _ACTION == "vs2010" or
+        _ACTION == "vs2008" or
+        _ACTION == "vs2005"
+end
+
+-- Verify language version
+function VerifyLanguageVersion(LanguageVersion)
+    return
+        LanguageVersion == "c++98" or
+        LanguageVersion == "c++11" or
+        LanguageVersion == "c++14" or
+        LanguageVersion == "c++17" or 
+        LanguageVersion == "c++20" or
+        LanguageVersion == "latest"
 end
 
 -- Helper for printing all strings in a table and ending with endline
-function PrintTableWithEndLine(Format, Table)
+function PrintTable(Format, Table)
     if Table == nil then
         return
     end
 
     if #Table >= 1 then
         for Index = 1, #Table do
-            printf(Format, Table[Index])
+            LogInfo(Format, Table[Index])
         end
-
-        -- Empty line
-        printf('')
-    end
-end
-
--- Helper appending an element to a table
-function TableAppendUniqueElement(Element, Table)
-    if Table == nil then
-        return
-    end
-
-    if Element ~= nil then
-        for i = 1, #Table do
-            if Table[i] == Element then
-                return
-            end
-        end
-        
-        Table[#Table + 1] = Element
     end
 end
 
 -- Helper to appending multiple elements to a table
-function TableAppendUniqueElementMultiple(Elements, Table)
+function AddUniqueElements(Elements, Table)
     if Table == nil then
         return
     end
@@ -86,6 +89,7 @@ function TableAppendUniqueElementMultiple(Elements, Table)
             for j = 1, #Table do
                 if Table[j] == Elements[i] then
                     bIsUnique = false
+                    break
                 end
             end
             
@@ -96,14 +100,15 @@ function TableAppendUniqueElementMultiple(Elements, Table)
     end
 end
 
+
 -- Global variable that stores all created modules
-GModules = {}
+GModules = { }
 
 function GetModule(ModuleName)
     if GModules ~= nil then
         return GModules[ModuleName]
     else
-        printf('Global list of modules does not exist')
+        LogError("Global Module-List has not been initialized")
         return nil
     end
 end
@@ -116,74 +121,56 @@ function AddModule(ModuleName, Module)
     if GModules ~= nil then
         GModules[ModuleName] = Module
     else
-        printf('Global list of modules does not exist')
+        LogError("Global Module-List has not been initialized")
     end
 end
 
--- Global variable that stores all created targets
-GTargets = {}
-
-function GetTarget(TargetName)
-    if GTargets ~= nil then
-        return GTargets[TargetName]
-    else
-        printf('Global list of targets does not exist')
-        return nil
-    end
+_GSeperatorForOS = ''
+if IsPlatformWindows() then
+    _GSeperatorForOS = '\\'
+else
+    _GSeperatorForOS = '/'
 end
 
-function IsTarget(TargetName)
-    return GetTarget(TargetName) ~= nil  
+function CreateOSPath(InPath)
+    return path.translate(InPath, _GSeperatorForOS)
 end
 
-function AddTarget(TargetName, Target)
-    if GTargets ~= nil then
-        GTargets[TargetName] = Target
-    else
-        printf('Global list of targets does not exist')
-    end
-end
-
--- Output path for dependencies (ImGui etc.)
-GOutputPath = '%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}'
-printf('\nINFO:\nBuildPath = \'%s\'', GOutputPath)
-
-function GetOutputPath()
-    return GOutputPath
-end
-
--- Mainpath ../BuildScripts
-GEnginePath = path.getabsolute( '../', _PREMAKE_DIR)  
-printf('EnginePath = \'%s\'\n', GEnginePath)
+-- Mainpath ../BuildScripts/Premake
+GEnginePath = CreateOSPath(path.getabsolute( "../../", _PREMAKE_DIR))
 
 function GetEnginePath()
     return GEnginePath
 end
 
--- Retrieve the workspace directory
-function FindWorkspaceDir()
-	return GEnginePath
+-- Join two paths
+function JoinPath(Path0, Path1)
+    return CreateOSPath(path.join(Path0, Path1))
 end
 
 -- Retrieve the path to the Runtime folder containing all the engine modules
+_GRuntimeFolderPath = JoinPath(GEnginePath, "Runtime")
 function GetRuntimeFolderPath()
-    return GEnginePath .. '/Runtime'
+    return _GRuntimeFolderPath
 end
 
 -- Retrieve the path to the solutions folder containing solution and project files
+_GSolutionsFolderPath = JoinPath(GEnginePath, "Solutions")
 function GetSolutionsFolderPath()
-    return GEnginePath .. '/Solutions'
+    return _GSolutionsFolderPath
 end
 
 -- Retrieve the path to the dependencies folder containing external dependecy projects
+_GExternalDependenciesFolderPath = JoinPath(GEnginePath, "Dependencies")
 function GetExternalDependenciesFolderPath()
-    return GEnginePath .. '/Dependencies'
+    return _GExternalDependenciesFolderPath
 end
 
 -- Make path relative to dependency folder
-function MakeExternalDependencyPath(Path)
-    return GetExternalDependenciesFolderPath() .. '/' .. Path
+function CreateExternalDependencyPath(Path)
+    return JoinPath(GetExternalDependenciesFolderPath(), Path)
 end
+
 
 -- Deep copy a table
 function Copy(Source)

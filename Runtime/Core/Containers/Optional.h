@@ -1,45 +1,29 @@
 #pragma once
-#include "Core/Templates/AlignedStorage.h"
-#include "Core/Templates/IsNullptr.h"
-#include "Core/Templates/Move.h"
-#include "Core/Templates/IsConstructible.h"
-#include "Core/Templates/RemoveReference.h"
-#include "Core/Templates/InPlace.h"
+#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// TOptional - Similar to std::optional
-
-template<typename T>
+template<typename ElementType>
 class TOptional
 {
 public:
-
-    using ElementType = T;
-
     template<typename OtherType>
     friend class TOptional;
 
-    /**
-     * @brief: Default constructor
-     */
-    FORCEINLINE TOptional() noexcept
-        : Value()
-        , bHasValue(false)
-    { }
+    /** @brief - Default constructor */
+    TOptional() = default;
 
     /**
-     * @brief: Construct from nullptr
+     * @brief - Construct from nullptr
      */
-    FORCEINLINE TOptional(NullptrType) noexcept
+    FORCEINLINE TOptional(nullptr_type) noexcept
         : Value()
         , bHasValue(false)
-    
-    { }
+    {
+    }
 
     /**
-     * @brief: Copy-constructor
-     * 
-     * @param Other: Optional to copy from
+     * @brief       - Copy-constructor
+     * @param Other - Optional to copy from
      */
     FORCEINLINE TOptional(const TOptional& Other) noexcept
         : Value()
@@ -47,32 +31,28 @@ public:
     {
         if (Other)
         {
-            Construct(*(Other.Value.GetStorage()));
-            bHasValue = true;
+            Construct(*reinterpret_cast<const ElementType*>(Other.Value.Data));
         }
     }
 
     /**
-     * @brief: Copy-constructor that takes another type
-     *
-     * @param Other: Optional to copy from
+     * @brief       - Copy-constructor that takes another type
+     * @param Other - Optional to copy from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConstructible<ElementType, const OtherType&>::Value>::Type>
-    FORCEINLINE TOptional(const TOptional<OtherType>& Other)
+    template<typename OtherType>
+    FORCEINLINE TOptional(const TOptional<OtherType>& Other) requires(TIsConstructible<ElementType, const typename TRemoveReference<OtherType>::Type&>::Value)
         : Value()
         , bHasValue(false)
     {
         if (Other)
         {
-            Construct(*(Other.Value.GetStorage()));
-            bHasValue = true;
+            Construct(*reinterpret_cast<const OtherType*>(Other.Value.Data));
         }
     }
 
     /**
-     * @brief: Move-constructor
-     *
-     * @param Other: Optional to move from
+     * @brief       - Move-constructor
+     * @param Other - Optional to move from
      */
     FORCEINLINE TOptional(TOptional&& Other) noexcept
         : Value()
@@ -80,45 +60,41 @@ public:
     {
         if (Other)
         {
-            Construct(Move(*Other.Value.GetStorage()));
+            Construct(::Move(*reinterpret_cast<ElementType*>(Other.Value.Data)));
             Other.Reset();
-            bHasValue = true;
         }
     }
 
     /**
-     * @brief: Move-constructor taking another type
-     *
-     * @param Other: Optional to move from
+     * @brief       - Move-constructor taking another type
+     * @param Other - Optional to move from
      */
-    template<typename OtherType, typename = typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value>::Type>
-    FORCEINLINE TOptional(TOptional<OtherType>&& Other) noexcept
+    template<typename OtherType>
+    FORCEINLINE TOptional(TOptional<OtherType>&& Other) noexcept requires(TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value)
         : Value()
         , bHasValue(false)
     {
         if (Other)
         {
-            Construct(Move<ElementType>(*(Other.Value.GetStorage())));
+            Construct(::Move<ElementType>(*reinterpret_cast<OtherType*>(Other.Value.Data)));
             Other.Reset();
-            bHasValue = true;
         }
     }
 
     /**
-     * @brief: Constructor that creates a value in-place
-     * 
-     * @param Args: Arguments for the element to create
+     * @brief      - Constructor that creates a value in-place
+     * @param Args - Arguments for the element to create
      */
     template<typename... ArgTypes>
     FORCEINLINE explicit TOptional(EInPlace, ArgTypes&&... Args) noexcept
         : Value()
-        , bHasValue(true)
+        , bHasValue()
     {
-        Construct(Forward<ArgTypes>(Args)...);
+        Construct(::Forward<ArgTypes>(Args)...);
     }
 
     /**
-     * @brief: Destructor
+     * @brief - Destructor
      */
     FORCEINLINE ~TOptional()
     {
@@ -126,276 +102,245 @@ public:
     }
 
     /**
-     * @brief: Check if optional has a value assigned
-     * 
-     * @return: Returns true if there is a value assigned
+     * @brief  - Check if optional has a value assigned
+     * @return - Returns true if there is a value assigned
      */
-    FORCEINLINE bool HasValue() const noexcept
+    NODISCARD FORCEINLINE bool HasValue() const noexcept
     {
         return bHasValue;
     }
 
     /**
-     * @brief: Emplace constructs a new element in the optional and destructs any old value
-     * 
-     * @param Args: Arguments for constructor
-     * @return: Returns a reference to the newly constructed value
+     * @brief      - Emplace constructs a new element in the optional and destructs any old value
+     * @param Args - Arguments for constructor
+     * @return     - Returns a reference to the newly constructed value
      */
     template<typename... ArgTypes>
     FORCEINLINE ElementType& Emplace(ArgTypes&&... Args) noexcept
     {
         Reset();
-
-        Construct(Forward<ArgTypes>(Args)...);
-
-        bHasValue = true;
-
-        return *Value.GetStorage();
+        Construct(::Forward<ArgTypes>(Args)...);
+        return *reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
-     * @brief: Resets the Optional and destructs any existing element
+     * @brief - Resets the Optional and destructs any existing element
      */
     FORCEINLINE void Reset() noexcept
     {
         if (HasValue())
         {
             Destruct();
-            bHasValue = false;
         }
     }
 
     /**
-     * @brief: Swap between this optional and another optional
-     * 
-     * @param Other: Optional to swap with
+     * @brief       - Swap between this optional and another optional
+     * @param Other - Optional to swap with
      */
     FORCEINLINE void Swap(TOptional& Other)
     {
-        TOptional TempOptional;
-        if (HasValue())
-        {
-            TempOptional.Construct(Move(GetValue()));
-            Destruct();
-            TempOptional.bHasValue = true;
-        }
-
+        TOptional TempOptional(Move(*this));
         if (Other.HasValue())
         {
-            Construct(Move(Other.GetValue()));
+            Construct(::Move(Other.GetValue()));
             Other.Destruct();
-            bHasValue = true;
         }
 
         if (TempOptional.HasValue())
         {
-            Other.Construct(Move(TempOptional.GetValue()));
+            Other.Construct(::Move(TempOptional.GetValue()));
             TempOptional.Destruct();
-            Other.bHasValue = true;
         }
     }
 
     /**
-     * @brief: Retrieve the optional value
-     * 
-     * @return: Returns a reference to the stored value
+     * @brief  - Retrieve the optional value
+     * @return - Returns a reference to the stored value
      */
-    FORCEINLINE ElementType& GetValue() noexcept
+    NODISCARD FORCEINLINE ElementType& GetValue() noexcept
     {
-        Check(HasValue());
-        return *Value.GetStorage();
+        CHECK(HasValue());
+        return *reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
-     * @brief: Retrieve the optional value
-     *
-     * @return: Returns a reference to the stored value
+     * @brief  - Retrieve the optional value
+     * @return - Returns a reference to the stored value
      */
-    FORCEINLINE const ElementType& GetValue() const noexcept
+    NODISCARD FORCEINLINE const ElementType& GetValue() const noexcept
     {
-        Check(HasValue());
-        return *Value.GetStorage();
+        CHECK(HasValue());
+        return *reinterpret_cast<const ElementType*>(Value.Data);
     }
 
     /**
-     * @brief: Try and retrieve the optional value, if no value is stored, it returns nullptr
-     *
-     * @return: Returns a pointer to the stored value, or nullptr if no value is held
+     * @brief  - Try and retrieve the optional value, if no value is stored, it returns nullptr
+     * @return - Returns a pointer to the stored value, or nullptr if no value is held
      */
-    FORCEINLINE ElementType* TryGetValue() noexcept
+    NODISCARD FORCEINLINE ElementType* TryGetValue() noexcept
     {
-        return HasValue() ? Value.GetStorage() : nullptr;
+        return HasValue() ? reinterpret_cast<ElementType*>(Value.Data) : nullptr;
     }
 
     /**
-     * @brief: Try and retrieve the optional value, if no value is stored, it returns nullptr
-     *
-     * @return: Returns a pointer to the stored value, or nullptr if no value is held
+     * @brief  - Try and retrieve the optional value, if no value is stored, it returns nullptr
+     * @return - Returns a pointer to the stored value, or nullptr if no value is held
      */
-    FORCEINLINE const ElementType* TryGetValue() const noexcept
+    NODISCARD FORCEINLINE const ElementType* TryGetValue() const noexcept
     {
-        return HasValue() ? Value.GetStorage() : nullptr;
+        return HasValue() ? reinterpret_cast<ElementType*>(Value.Data) : nullptr;
     }
 
     /**
-     * @brief: Retrieve the optional value
-     *
-     * @param Default: Default value to return if a value is not set
-     * @return: Returns a reference to the stored value
+     * @brief         - Retrieve the optional value
+     * @param Default - Default value to return if a value is not set
+     * @return        - Returns a reference to the stored value
      */
     template<typename OtherType>
-    FORCEINLINE const ElementType& GetValueOrDefault(const OtherType& Default) const noexcept
+    NODISCARD FORCEINLINE const ElementType& GetValueOrDefault(const OtherType& Default) const noexcept
     {
-        return HasValue() ? *Value.GetStorage() : static_cast<const ElementType&>(Default);
+        return HasValue() ? *reinterpret_cast<const ElementType*>(Value.Data) : static_cast<const ElementType&>(Default);
     }
 
 public:
 
     /**
-     * @brief: Nullptr assignment operator
-     * 
-     * @return: Returns a reference to this instance
+     * @brief  - Nullptr assignment operator
+     * @return - Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(NullptrType) noexcept
+    FORCEINLINE TOptional& operator=(nullptr_type) noexcept
     {
         Reset();
         return *this;
     }
 
     /**
-     * @brief: Copy-assignment operator
-     *
-     * @param RHS: Optional to copy from
-     * @return: Returns a reference to this instance
+     * @brief       - Copy-assignment operator
+     * @param Other - Optional to copy from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(const TOptional& RHS) noexcept
+    FORCEINLINE TOptional& operator=(const TOptional& Other) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Copy-assignment operator that takes another type
-     *
-     * @param RHS: Optional to copy from
-     * @return: Returns a reference to this instance
+     * @brief       - Copy-assignment operator that takes another type
+     * @param Other - Optional to copy from
+     * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(const TOptional<OtherType>& RHS) noexcept
+    FORCEINLINE TOptional& operator=(const TOptional<OtherType>& Other) noexcept 
+        requires(TIsConstructible<ElementType, typename TAddLValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value)
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(Other).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator
-     *
-     * @param RHS: Optional to move from
-     * @return: Returns a reference to this instance
+     * @brief       - Move-assignment operator
+     * @param Other - Optional to move from
+     * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(TOptional&& RHS) noexcept
+    FORCEINLINE TOptional& operator=(TOptional&& Other) noexcept
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(::Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Move-assignment operator that takes another type
-     *
-     * @param RHS: Optional to move from
-     * @return: Returns a reference to this instance
+     * @brief       - Move-assignment operator that takes another type
+     * @param Other - Optional to move from
+     * @return      - Returns a reference to this instance
      */
     template<typename OtherType>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(TOptional<OtherType>&& RHS) noexcept
+    FORCEINLINE TOptional& operator=(TOptional<OtherType>&& Other) noexcept
+        requires(TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value)
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(::Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Assignment operator that can take a r-value reference
-     *
-     * @param RHS: Instance to move-construct value from
-     * @return: Returns a reference to this instance
+     * @brief       - Assignment operator that can take a r-value reference
+     * @param Other - Instance to move-construct value from
+     * @return      - Returns a reference to this instance
      */
-    template<typename OtherType = T>
-    FORCEINLINE typename TEnableIf<TIsConstructible<ElementType, typename TRemoveReference<OtherType>::Type&&>::Value, TOptional&>::Type operator=(OtherType&& RHS) noexcept
+    template<typename OtherType = ElementType>
+    FORCEINLINE TOptional& operator=(OtherType&& Other) noexcept
+        requires(TIsConstructible<ElementType, typename TAddRValueReference<typename TRemoveReference<OtherType>::Type>::Type>::Value)
     {
-        TOptional(RHS).Swap(*this);
+        TOptional(::Move(Other)).Swap(*this);
         return *this;
     }
 
     /**
-     * @brief: Operator that returns true if there is a stored value
-     * 
-     * @return: Returns true if the optional has a stored value
+     * @brief  - Operator that returns true if there is a stored value
+     * @return - Returns true if the optional has a stored value
      */
-    FORCEINLINE operator bool() const noexcept
+    NODISCARD FORCEINLINE operator bool() const noexcept
     {
         return HasValue();
     }
 
     /**
-     * @brief: Retrieve a pointer to the stored value
-     *
-     * @return: Returns a pointer to the stored value
+     * @brief  - Retrieve a pointer to the stored value
+     * @return - Returns a pointer to the stored value
      */
-    FORCEINLINE T* operator->() noexcept
+    NODISCARD FORCEINLINE ElementType* operator->() noexcept
     {
-        Check(HasValue());
-        return Value.GetStorage();
+        CHECK(HasValue());
+        return reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
-     * @brief: Retrieve a pointer to the stored value
-     *
-     * @return: Returns a pointer to the stored value
+     * @brief  - Retrieve a pointer to the stored value
+     * @return - Returns a pointer to the stored value
      */
-    FORCEINLINE const T* operator->() const noexcept
+    NODISCARD FORCEINLINE const ElementType* operator->() const noexcept
     {
-        Check(HasValue());
-        return Value.GetStorage();
+        CHECK(HasValue());
+        return reinterpret_cast<const ElementType*>(Value.Data);
     }
 
     /**
-     * @brief: Retrieve a reference to the stored value
-     *
-     * @return: Returns a reference to the stored value
+     * @brief  - Retrieve a reference to the stored value
+     * @return - Returns a reference to the stored value
      */
-    FORCEINLINE T& operator*() noexcept
+    NODISCARD FORCEINLINE ElementType& operator*() noexcept
     {
-        Check(HasValue());
-        return *Value.GetStorage();
+        CHECK(HasValue());
+        return *reinterpret_cast<ElementType*>(Value.Data);
     }
 
     /**
-     * @brief: Retrieve a pointer to the stored value
-     *
-     * @return: Returns a pointer to the stored value
+     * @brief  - Retrieve a pointer to the stored value
+     * @return - Returns a pointer to the stored value
      */
-    FORCEINLINE const T& operator*() const noexcept
+    NODISCARD FORCEINLINE const ElementType& operator*() const noexcept
     {
-        Check(HasValue());
-        return *Value.GetStorage();
+        CHECK(HasValue());
+        return *reinterpret_cast<const ElementType*>(Value.Data);
     }
 
 public:
 
     /**
-     * @brief: Comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the values are equal
+     * @brief     - Comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the values are equal
      */
-    friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator==(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!LHS.bHasValue && !RHS.bHasValue)
+        if (!LHS.HasValue() && !RHS.HasValue())
         {
             return true;
         }
 
-        if (!LHS.bHasValue)
+        if (!LHS.HasValue())
         {
             return false;
         }
@@ -404,32 +349,30 @@ public:
     }
 
     /**
-     * @brief: Comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns false if the values are equal
+     * @brief     - Comparison operator 
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns false if the values are equal
      */
-    friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator!=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS != RHS);
     }
 
     /**
-     * @brief: Less than comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the LHS is less than RHS
+     * @brief     - Less than comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the LHS is less than RHS
      */
-    friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!LHS.bHasValue && !RHS.bHasValue)
+        if (!LHS.HasValue() && !RHS.HasValue())
         {
             return true;
         }
 
-        if (!LHS.bHasValue)
+        if (!LHS.HasValue())
         {
             return false;
         }
@@ -438,20 +381,19 @@ public:
     }
 
     /**
-     * @brief: Less than or equal comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the LHS is less than or equal to RHS
+     * @brief     - Less than or equal comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the LHS is less than or equal to RHS
      */
-    friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
-        if (!LHS.bHasValue && !RHS.bHasValue)
+        if (!LHS.HasValue() && !RHS.HasValue())
         {
             return true;
         }
 
-        if (!LHS.bHasValue)
+        if (!LHS.HasValue())
         {
             return false;
         }
@@ -460,53 +402,52 @@ public:
     }
 
     /**
-     * @brief: Great than comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if LHS is greater than RHS
+     * @brief     - Great than comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if LHS is greater than RHS
      */
-    friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS <= RHS);
     }
 
     /**
-     * @brief: Greater than or equal comparison operator
-     *
-     * @param LHS: Left side to compare with
-     * @param RHS: Right side to compare with
-     * @return: Returns true if the LHS is greater than or equal to RHS
+     * @brief     - Greater than or equal comparison operator
+     * @param LHS - Left side to compare with
+     * @param RHS - Right side to compare with
+     * @return    - Returns true if the LHS is greater than or equal to RHS
      */
-    friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>=(const TOptional& LHS, const TOptional& RHS) noexcept
     {
         return !(LHS < RHS);
     }
 
 private:
-
     template<typename... ArgTypes>
     FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
     {
-        new(reinterpret_cast<void*>(Value.GetStorage())) ElementType(Forward<ArgTypes>(Args)...);
+        new(reinterpret_cast<void*>(Value.Data)) ElementType(Forward<ArgTypes>(Args)...);
+        bHasValue = true;
     }
 
     FORCEINLINE void Destruct() noexcept
     {
         typedef ElementType ElementDestructType;
-        Value.GetStorage()->ElementDestructType::~ElementDestructType();
+        reinterpret_cast<ElementDestructType*>(Value.Data)->~ElementDestructType();
+        bHasValue = false;
     }
 
-    FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept
+    NODISCARD FORCEINLINE bool IsEqual(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) == (*RHS.Value.GetStorage());
+        return (*reinterpret_cast<ElementType*>(Value.Data)) == (*reinterpret_cast<ElementType*>(RHS.Value.Data));
     }
 
-    FORCEINLINE bool IsLessThan(const TOptional& RHS) const noexcept
+    NODISCARD FORCEINLINE bool IsLessThan(const TOptional& RHS) const noexcept
     {
-        return (*Value.GetStorage()) < (*RHS.Value.GetStorage());
+        return (*reinterpret_cast<ElementType*>(Value.Data)) < (*reinterpret_cast<ElementType*>(RHS.Value.Data));
     }
 
-    TTypedStorage<ElementType> Value;
-    bool                       bHasValue;
+    TTypeAlignedBytes<ElementType> Value;
+    bool bHasValue{false};
 };

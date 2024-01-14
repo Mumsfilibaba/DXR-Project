@@ -1,48 +1,80 @@
 #pragma once
 #include "FrameResources.h"
 #include "LightSetup.h"
-
 #include "Engine/Scene/Scene.h"
-
 #include "RHI/RHICommandList.h"
+#include "RHI/RHIShader.h"
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// CDeferredRenderer
-
-class RENDERER_API CDeferredRenderer
+class RENDERER_API FDeferredRenderer
 {
 public:
-    CDeferredRenderer() = default;
-    ~CDeferredRenderer() = default;
-
-    bool Init(SFrameResources& FrameResources);
+    bool Initialize(FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderPrePass(CRHICommandList& CmdList, SFrameResources& FrameResources, const CScene& Scene);
-    void RenderBasePass(CRHICommandList& CmdList, const SFrameResources& FrameResources);
-    void RenderDeferredTiledLightPass(CRHICommandList& CmdList, const SFrameResources& FrameResources, const SLightSetup& LightSetup);
+    void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, const FScene& Scene);
+    
+    void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources);
 
-    bool ResizeResources(SFrameResources& FrameResources);
+    void RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
+
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
 private:
-    bool CreateGBuffer(SFrameResources& FrameResources);
+    bool CreateGBuffer(FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
-    TSharedRef<CRHIGraphicsPipelineState> PipelineState;
-    TSharedRef<CRHIVertexShader>          BaseVertexShader;
-    TSharedRef<CRHIPixelShader>           BasePixelShader;
+    // States for materials that use a single texture for each material-property
+    FRHIGraphicsPipelineStateRef BasePassPSO;
+    FRHIGraphicsPipelineStateRef BasePassMaskedPSO;
+    FRHIGraphicsPipelineStateRef BasePassDoubleSidedPSO;
+    FRHIGraphicsPipelineStateRef BasePassHeightPSO;
+    FRHIVertexShaderRef          BasePassVS;
+    FRHIVertexShaderRef          BasePassMaskedVS;
+    FRHIVertexShaderRef          BasePassHeightVS;
+    FRHIPixelShaderRef           BasePassPS;
+    FRHIPixelShaderRef           BasePassMaskedPS;
+    FRHIPixelShaderRef           BasePassHeightPS;
 
-    TSharedRef<CRHIGraphicsPipelineState> PrePassPipelineState;
-    TSharedRef<CRHIVertexShader>          PrePassVertexShader;
+    // States for materials that use packed textures
+    FRHIGraphicsPipelineStateRef BasePassPackedPSO;
+    FRHIGraphicsPipelineStateRef BasePassPackedMaskedPSO;
+    FRHIGraphicsPipelineStateRef BasePassPackedDoubleSidedPSO;
+    FRHIGraphicsPipelineStateRef BasePassPackedHeightPSO;
+    FRHIVertexShaderRef          BasePassPackedVS;
+    FRHIVertexShaderRef          BasePassPackedMaskedVS;
+    FRHIVertexShaderRef          BasePassPackedHeightVS;
+    FRHIPixelShaderRef           BasePassPackedPS;
+    FRHIPixelShaderRef           BasePassPackedMaskedPS;
+    FRHIPixelShaderRef           BasePassPackedHeightPS;
 
-    TSharedRef<CRHIComputePipelineState>  TiledLightPassPSO;
-    TSharedRef<CRHIComputeShader>         TiledLightShader;
-    TSharedRef<CRHIComputePipelineState>  TiledLightPassPSODebug;
-    TSharedRef<CRHIComputeShader>         TiledLightDebugShader;
+    // States for materials that use a single texture for each material-property
+    FRHIGraphicsPipelineStateRef PrePassPSO;
+    FRHIGraphicsPipelineStateRef PrePassHeightPSO;
+    FRHIGraphicsPipelineStateRef PrePassMaskedPSO;
+    FRHIGraphicsPipelineStateRef PrePassDoubleSidedPSO;
+    FRHIVertexShaderRef          PrePassVS;
+    FRHIVertexShaderRef          PrePassHeightVS;
+    FRHIPixelShaderRef           PrePassHeightPS;
+    FRHIVertexShaderRef          PrePassMaskedVS;
+    FRHIPixelShaderRef           PrePassMaskedPS;
 
-    TSharedRef<CRHIComputePipelineState> ReduceDepthInitalPSO;
-    TSharedRef<CRHIComputeShader>        ReduceDepthInitalShader;
+    // States for materials that use packed textures
+    FRHIGraphicsPipelineStateRef PrePassPackedMaskedPSO;
+    FRHIGraphicsPipelineStateRef PrePassPackedDoubleSidedPSO;
+    FRHIVertexShaderRef          PrePassPackedMaskedVS;
+    FRHIPixelShaderRef           PrePassPackedMaskedPS;
 
-    TSharedRef<CRHIComputePipelineState> ReduceDepthPSO;
-    TSharedRef<CRHIComputeShader>        ReduceDepthShader;
+    // Compute states for Deferred Light stage
+    FRHIComputePipelineStateRef  TiledLightPassPSO;
+    FRHIComputeShaderRef         TiledLightShader;
+    FRHIComputePipelineStateRef  TiledLightPassPSO_TileDebug;
+    FRHIComputeShaderRef         TiledLightShader_TileDebug;
+    FRHIComputePipelineStateRef  TiledLightPassPSO_CascadeDebug;
+    FRHIComputeShaderRef         TiledLightShader_CascadeDebug;
+
+    FRHIComputePipelineStateRef  ReduceDepthInitalPSO;
+    FRHIComputeShaderRef         ReduceDepthInitalShader;
+
+    FRHIComputePipelineStateRef  ReduceDepthPSO;
+    FRHIComputeShaderRef         ReduceDepthShader;
 };
