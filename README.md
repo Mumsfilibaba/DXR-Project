@@ -6,6 +6,8 @@ Feel free to make a pull request but please ensure that code follow the code-sta
 
 # Features
 **Current:**
+* Support for both Vulkan (Windows and macOS) and D3D12 (Windows)
+* Multiplatform support (Windows and macOS)
 * Tiled Deferred Rendering
 * Normal mapping
 * Parallax Occlusion Mapping
@@ -17,32 +19,27 @@ Feel free to make a pull request but please ensure that code follow the code-sta
 * SSAO
 * TAA
 * FXAA
+* Support for dynamic block-compression of textures (BCH6)
 * Custom containers
     * TArray
     * TString
     * TBitArray
+* Task System (For easy multi-threading)
+* Module System (To make the engine more modular)
 
 **Planed:**
-* Vulkan backend
 * Screen Space Reflections
-* Ray-Traced reflections
+* Re-enable Ray-Traced reflections
 * Spotlights
 * Local Environment Probes
 
 # Screenshots
-**(Master - Branch)** **RT Off**
 ![Screen2](Screenshots/screen2.png? "Screen2")
-**(Master - Branch)** **RT Off**
 ![Screen1](Screenshots/screen1.png? "Screen1")
-**(Cascaded Shadow Maps - Branch)** Cascaded Shadow Maps **RT Off**
 ![Screen0](Screenshots/screen0.png? "Screen0")
-**(Ray Traced Reflections - Branch)** Ray Traced Reflections **RT On**
 ![ReflectionsScreen](Screenshots/ReflectionsScreen.png? "ReflectionsScreen") 
-**(Master - Branch)** Profiler **RT Off**
 ![Profiler](Screenshots/Profiler.png? "Profiler") 
-**(Master - Branch)** Texture Debugger **RT Off**
 ![TextureDebugger](Screenshots/TextureDebugger.png? "TextureDebugger") 
-**(Master - Branch)** In-Game Console **RT Off**
 ![Console](Screenshots/Console.png? "Console") 
 
 
