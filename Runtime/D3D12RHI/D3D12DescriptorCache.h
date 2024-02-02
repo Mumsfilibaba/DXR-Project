@@ -208,14 +208,11 @@ struct FD3D12UniqueSamplerTable
     uint16 UniqueIDs[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
 };
 
-template<>
-struct TTypeHash<FD3D12UniqueSamplerTable>
+inline uint64 HashType(const FD3D12UniqueSamplerTable& Table)
 {
-    static uint64 Hash(const FD3D12UniqueSamplerTable& Table)
-    {
-        return HashIntegers<uint16, D3D12_DEFAULT_SAMPLER_STATE_COUNT>(Table.UniqueIDs);
-    }
-};
+    return HashIntegers<uint16, D3D12_DEFAULT_SAMPLER_STATE_COUNT>(Table.UniqueIDs);
+}
+
 
 struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 {
@@ -287,7 +284,7 @@ public:
 private:
     int32 GetHashedIndex(const KeyType& Entry) const
     {
-        const uint64 Hash  = TTypeHash<KeyType>::Hash(Entry);
+        const uint64 Hash  = HashType(Entry);
         const uint64 Index = Hash % Table.Size();
         return static_cast<int32>(Index);
     }

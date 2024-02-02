@@ -1,7 +1,7 @@
 #include "VulkanSwapChain.h"
 
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , PresentResult(VK_SUCCESS)
     , SwapChain(VK_NULL_HANDLE)
     , Extent{ 0, 0 }

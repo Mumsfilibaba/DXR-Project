@@ -49,7 +49,7 @@ FVulkanRHI::~FVulkanRHI()
 
 bool FVulkanRHI::Initialize()
 {
-    FVulkanInstanceDesc InstanceDesc;
+    FVulkanInstanceCreateInfo InstanceDesc;
     InstanceDesc.RequiredExtensionNames = FPlatformVulkan::GetRequiredInstanceExtensions();
     InstanceDesc.RequiredLayerNames     = FPlatformVulkan::GetRequiredInstanceLayers();
     InstanceDesc.OptionalExtensionNames = FPlatformVulkan::GetOptionalInstanceExtentions();
@@ -84,7 +84,7 @@ bool FVulkanRHI::Initialize()
         return false;
     }
 
-    FVulkanPhysicalDeviceDesc AdapterDesc;
+    FVulkanPhysicalDeviceCreateInfo AdapterDesc;
     AdapterDesc.RequiredExtensionNames                     = FPlatformVulkan::GetRequiredDeviceExtensions();
     AdapterDesc.OptionalExtensionNames                     = FPlatformVulkan::GetOptionalDeviceExtentions();
     AdapterDesc.RequiredFeatures.samplerAnisotropy         = VK_TRUE;
@@ -99,7 +99,7 @@ bool FVulkanRHI::Initialize()
         return false;
     }
 
-    FVulkanDeviceDesc DeviceDesc;
+    FVulkanDeviceCreateInfo DeviceDesc;
     DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
     DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
     DeviceDesc.RequiredFeatures       = AdapterDesc.RequiredFeatures;

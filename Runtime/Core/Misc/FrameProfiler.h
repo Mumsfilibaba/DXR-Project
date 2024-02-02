@@ -92,7 +92,7 @@ struct FProfileSample
 };
 
 
-using ProfileSamplesTable = TMap<FString, FProfileSample, FStringHasher>;
+using ProfileSamplesMap = TMap<FString, FProfileSample>;
 
 class CORE_API FFrameProfiler
 {
@@ -129,14 +129,14 @@ public:
     void EndTraceScope(const CHAR* Name);
 
     /** @brief - CPU Profiler samples */
-    void GetCPUSamples(ProfileSamplesTable& OutCPUSamples);
+    void GetCPUSamples(ProfileSamplesMap& OutCPUSamples);
 
-    FORCEINLINE int32 GetFramesPerSecond() const
+    int32 GetFramesPerSecond() const
     {
         return Fps;
     }
 
-    FORCEINLINE const FProfileSample& GetCPUFrameTime() const
+    const FProfileSample& GetCPUFrameTime() const
     {
         return CPUFrameTime;
     }
@@ -151,8 +151,8 @@ private:
 
     bool bEnabled = true;
 
-    ProfileSamplesTable SamplesTable;
-    FSpinLock           SamplesTableLock;
+    ProfileSamplesMap SamplesTable;
+    FSpinLock         SamplesTableLock;
 };
 
 

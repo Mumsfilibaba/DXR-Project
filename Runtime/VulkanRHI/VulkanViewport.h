@@ -11,7 +11,7 @@
 
 typedef TSharedRef<class FVulkanViewport> FVulkanViewportRef;
 
-class FVulkanViewport final : public FRHIViewport, public FVulkanDeviceObject
+class FVulkanViewport final : public FRHIViewport, public FVulkanDeviceChild
 {
 public:
     FVulkanViewport(FVulkanDevice* InDevice, FVulkanQueue* InQueue, const FRHIViewportDesc& InDesc);
@@ -57,7 +57,6 @@ public:
 
 private:
     bool CreateSwapChain();
-    
     void DestroySwapChain();
     
     bool AquireNextImage();

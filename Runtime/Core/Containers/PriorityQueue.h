@@ -144,7 +144,7 @@ public:
     /**
      * @return - Returns the size of the queue
      */
-    FORCEINLINE int32 Size() const
+    int32 Size() const
     {
         return NumElements.Load();
     }

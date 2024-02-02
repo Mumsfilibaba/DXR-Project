@@ -3,7 +3,7 @@
 #include "VulkanLoader.h"
 
 FVulkanShader::FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InShaderVisibility)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , ShaderModule(VK_NULL_HANDLE)
     , ShaderVisibility(InShaderVisibility)
 {

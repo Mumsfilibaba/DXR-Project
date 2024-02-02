@@ -6,9 +6,9 @@
 #include "Core/Memory/Memory.h"
 
 #if !BUILD_PRODUCTION
-#define MEMZERO_TRIVIAL_OBJECTS (1)
+    #define MEMZERO_TRIVIAL_OBJECTS (1)
 #else
-#define MEMZERO_TRIVIAL_OBJECTS (0)
+    #define MEMZERO_TRIVIAL_OBJECTS (0)
 #endif
 
 template<typename ObjectType, typename SizeType>

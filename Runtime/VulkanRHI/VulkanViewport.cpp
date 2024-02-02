@@ -9,7 +9,7 @@ static TAutoConsoleVariable<int32> CVarBackbufferCount(
 
 FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanQueue* InQueue, const FRHIViewportDesc& InDesc)
     : FRHIViewport(InDesc)
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , WindowHandle(InDesc.WindowHandle)
     , Surface(nullptr)
     , SwapChain(nullptr)

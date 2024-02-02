@@ -67,7 +67,7 @@ FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateIn
 
 FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer)
     : FRHIRasterizerState()
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , Initializer(InInitializer)
 {
     FMemory::Memzero(&CreateInfo);
@@ -157,7 +157,7 @@ FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitiali
 
 
 FVulkanPipeline::FVulkanPipeline(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Pipeline(VK_NULL_HANDLE)
     , PipelineLayout(VK_NULL_HANDLE)
 {

@@ -6,7 +6,7 @@
 
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& InDesc)
     : FRHITexture(InDesc)
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , Image(VK_NULL_HANDLE)
     , Format(VK_FORMAT_UNDEFINED)
     , MemoryAllocation()

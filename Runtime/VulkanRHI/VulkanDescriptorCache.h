@@ -222,8 +222,7 @@ struct FVulkanDefaultResources
     VkSampler               NullSampler;
 };
 
-
-class FVulkanDescriptorSetCache : public FVulkanDeviceObject
+class FVulkanDescriptorSetCache : public FVulkanDeviceChild
 {
 public:
     FVulkanDescriptorSetCache(FVulkanDevice* InDevice, FVulkanCommandContext& InContext);

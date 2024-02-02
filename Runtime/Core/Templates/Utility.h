@@ -1,45 +1,39 @@
 #pragma once
 #include "TypeTraits.h"
+#include "IntegerSequence.h"
 
-#define ENUM_CLASS_OPERATORS(EnumType)                                                                         \
-    constexpr EnumType operator|(EnumType LHS, EnumType RHS) noexcept                                          \
-    {                                                                                                          \
-        return EnumType(((TUnderlyingType<EnumType>::Type)LHS) | ((TUnderlyingType<EnumType>::Type)RHS));      \
-    }                                                                                                          \
-                                                                                                               \
-    inline EnumType& operator|=(EnumType& LHS, EnumType RHS) noexcept                                          \
-    {                                                                                                          \
+#define ENUM_CLASS_OPERATORS(EnumType) \
+    constexpr EnumType operator|(EnumType LHS, EnumType RHS) noexcept \
+    { \
+        return EnumType(((TUnderlyingType<EnumType>::Type)LHS) | ((TUnderlyingType<EnumType>::Type)RHS)); \
+    } \
+    inline EnumType& operator|=(EnumType& LHS, EnumType RHS) noexcept \
+    { \
         return (EnumType&)(((TUnderlyingType<EnumType>::Type&)LHS) |= ((TUnderlyingType<EnumType>::Type)RHS)); \
-    }                                                                                                          \
-                                                                                                               \
-    constexpr EnumType operator&(EnumType LHS, EnumType RHS) noexcept                                          \
-    {                                                                                                          \
-        return EnumType(((TUnderlyingType<EnumType>::Type)LHS) & ((TUnderlyingType<EnumType>::Type)RHS));      \
-    }                                                                                                          \
-                                                                                                               \
-    inline EnumType& operator&=(EnumType& LHS, EnumType RHS) noexcept                                          \
-    {                                                                                                          \
+    } \
+    constexpr EnumType operator&(EnumType LHS, EnumType RHS) noexcept \
+    { \
+        return EnumType(((TUnderlyingType<EnumType>::Type)LHS) & ((TUnderlyingType<EnumType>::Type)RHS)); \
+    } \
+    inline EnumType& operator&=(EnumType& LHS, EnumType RHS) noexcept \
+    { \
         return (EnumType&)(((TUnderlyingType<EnumType>::Type&)LHS) &= ((TUnderlyingType<EnumType>::Type)RHS)); \
-    }                                                                                                          \
-                                                                                                               \
-    constexpr EnumType operator~(EnumType LHS) noexcept                                                        \
-    {                                                                                                          \
-        return EnumType(~((TUnderlyingType<EnumType>::Type)LHS));                                              \
-    }                                                                                                          \
-                                                                                                               \
-    constexpr EnumType operator^(EnumType LHS, EnumType RHS) noexcept                                          \
-    {                                                                                                          \
-        return EnumType(((TUnderlyingType<EnumType>::Type)LHS) ^ ((TUnderlyingType<EnumType>::Type)RHS));      \
-    }                                                                                                          \
-                                                                                                               \
-    inline EnumType& operator^=(EnumType&LHS, EnumType RHS) noexcept                                           \
-    {                                                                                                          \
+    } \
+    constexpr EnumType operator~(EnumType LHS) noexcept \
+    { \
+        return EnumType(~((TUnderlyingType<EnumType>::Type)LHS)); \
+    } \
+    constexpr EnumType operator^(EnumType LHS, EnumType RHS) noexcept \
+    { \
+        return EnumType(((TUnderlyingType<EnumType>::Type)LHS) ^ ((TUnderlyingType<EnumType>::Type)RHS)); \
+    } \
+    inline EnumType& operator^=(EnumType&LHS, EnumType RHS) noexcept \
+    { \
         return (EnumType&)(((TUnderlyingType<EnumType>::Type&)LHS) ^= ((TUnderlyingType<EnumType>::Type)RHS)); \
-    }                                                                                                          \
-                                                                                                               \
-    constexpr bool IsEnumFlagSet(EnumType EnumMask, EnumType EnumFlag) noexcept                                \
-    {                                                                                                          \
-        return (ToUnderlying((EnumMask) & (EnumFlag)) != 0);                                                   \
+    } \
+    constexpr bool IsEnumFlagSet(EnumType EnumMask, EnumType EnumFlag) noexcept \
+    { \
+        return ToUnderlying((EnumMask) & (EnumFlag)) != 0; \
     }
 
 
@@ -107,7 +101,7 @@ struct TAlignedBytes
 };
 
 template<typename T>
-using TTypeAlignedBytes = TAlignedBytes<sizeof(T), AlignmentOf<T>>;
+using TTypeAlignedBytes = TAlignedBytes<sizeof(T), TAlignmentOf<T>::Value>;
 
 
 struct FNonCopyable
@@ -139,60 +133,6 @@ struct FNonCopyAndNonMovable
     FNonCopyAndNonMovable(FNonCopyAndNonMovable&&)            = delete;
     FNonCopyAndNonMovable& operator=(FNonCopyAndNonMovable&&) = delete;
 };
-
-
-template <typename T, T... Sequence>
-struct TIntegerSequence
-{
-    static_assert(TIsInteger<T>::Value, "TIntegerSequence must an integral type");
-
-    typedef T Type;
- 
-    inline static constexpr auto Size = sizeof...(Sequence);
-};
-
-
-namespace IntegerSequenceInternal
-{
-    template <typename T, unsigned N>
-    struct TMakeIntegerSequenceImpl;
-}
-
-template<typename T, T N>
-using TMakeIntegerSequence = typename IntegerSequenceInternal::TMakeIntegerSequenceImpl<T, N>::Type;
-
-namespace IntegerSequenceInternal
-{
-    template<uint32 N, typename FirstSequence, typename SecondSequence>
-    struct TIntegerSequenceHelper;
-
-    template<uint32 N, typename T, T... First, T... Second>
-    struct TIntegerSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
-    {
-        using Type = TIntegerSequence<T, First..., (T(N + Second))...>;
-    };
-    
-    template<uint32 N, typename FirstSequence, typename SecondSequence>
-    using TIntegerSequenceHelperType = typename TIntegerSequenceHelper<N, FirstSequence, SecondSequence>::Type;
-
-    template<typename T, uint32 N>
-    struct TMakeIntegerSequenceImpl : TIntegerSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
-    {
-        using Type = TIntegerSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
-    };
-
-    template<typename T>
-    struct TMakeIntegerSequenceImpl<T, 1> : TIntegerSequence<T, T(0)>
-    {
-        using Type = TIntegerSequence<T, T(0)>;
-    };
-
-    template<typename T>
-    struct TMakeIntegerSequenceImpl<T, 0> : TIntegerSequence<T>
-    {
-        using Type = TIntegerSequence<T>;
-    };
-}
 
 
 template<typename NewType, typename ClassType>
@@ -229,9 +169,9 @@ constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
 template<typename T>
 constexpr void Swap(T& LHS, T& RHS) noexcept requires(TNot<TIsConst<T>>::Value)
 {
-    T TempElement = ::Move(LHS);
-    LHS = ::Move(RHS);
-    RHS = ::Move(TempElement);
+    T TempElement = Move(LHS);
+    LHS = Move(RHS);
+    RHS = Move(TempElement);
 }
 
 
@@ -250,13 +190,13 @@ constexpr uintptr ToInteger(T Pointer) requires(TIsPointer<T>::Value)
 
 
 template<typename T>
-FORCEINLINE T* AddressOf(T& Object) noexcept requires(TIsObject<T>::Value)
+inline T* AddressOf(T& Object) noexcept requires(TIsObject<T>::Value)
 {
     return reinterpret_cast<T*>(&const_cast<CHAR&>(reinterpret_cast<const volatile CHAR&>(Object)));
 }
 
 template<typename T>
-FORCEINLINE T* AddressOf(T& Object) noexcept requires(TNot<TIsObject<T>>::Value)
+inline T* AddressOf(T& Object) noexcept requires(TNot<TIsObject<T>>::Value)
 {
     return &Object;
 }
@@ -268,19 +208,6 @@ typename TAddReference<T>::RValue DeclVal() noexcept;
 
 template<typename... Packs>
 inline void ExpandPacks(Packs&&...) { }
-
-
-template<typename EnumType>
-constexpr EnumType EnumAdd(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept requires(TIsEnum<EnumType>::Value)
-{
-    return static_cast<EnumType>(::ToUnderlying(Value) + Offset);
-}
-
-template<typename EnumType>
-constexpr EnumType EnumSub(EnumType Value, typename TUnderlyingType<EnumType>::Type Offset) noexcept requires(TIsEnum<EnumType>::Value)
-{
-    return static_cast<EnumType>(::ToUnderlying(Value) - Offset);
-}
 
 
 template<typename T, uint32 NumElements>
@@ -298,7 +225,7 @@ constexpr bool CompareArrays(const T(&LHS)[NumElements], const T(&RHS)[NumElemen
 }
 
 template<typename T>
-FORCEINLINE bool CompareArrays(const T* LHS, const T* RHS, int32 NumElements)
+inline bool CompareArrays(const T* LHS, const T* RHS, int32 NumElements)
 {
     for (int32 Index = 0; Index < NumElements; Index++)
     {

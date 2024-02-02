@@ -15,7 +15,7 @@ static void DestroyFramebuffer(VkDevice Device, VkFramebuffer Framebuffer)
 
 
 FVulkanFramebufferCache::FVulkanFramebufferCache(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Framebuffers()
 {
 }
@@ -29,11 +29,10 @@ VkFramebuffer FVulkanFramebufferCache::GetFramebuffer(const FVulkanFramebufferKe
 {
     SCOPED_LOCK(FramebuffersCS);
 
-    //Check if a Framebuffer exists
-    auto FrameBufferIt = Framebuffers.find(FrameBufferKey);
-    if (FrameBufferIt != Framebuffers.end())
+    // Check if a Framebuffer exists
+    if (VkFramebuffer* ExistingFramebuffer = Framebuffers.Find(FrameBufferKey))
     {
-        return FrameBufferIt->second;
+        return *ExistingFramebuffer;
     }
 
     //Create new Framebuffer
@@ -58,63 +57,66 @@ VkFramebuffer FVulkanFramebufferCache::GetFramebuffer(const FVulkanFramebufferKe
     else
     {
         VULKAN_INFO("Created new Framebuffer");
-        Framebuffers.insert(std::pair<FVulkanFramebufferKey, VkFramebuffer>(FrameBufferKey, Framebuffer));
+        Framebuffers.Add(FrameBufferKey, Framebuffer);
         return Framebuffer;
     }
 }
 
-
 void FVulkanFramebufferCache::OnReleaseImageView(VkImageView View)
 {
     SCOPED_LOCK(FramebuffersCS);
-
-    //Find all FrameBuffers containing this texture
-    for (auto FrameBufferIt = Framebuffers.begin(); FrameBufferIt != Framebuffers.end();)
+    
+    // TODO: Iterate with an iterator instead
+    TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
+    
+    // Find all framebuffers containing this renderpass
+    for (const FVulkanFramebufferKey& Key : Keys)
     {
-        if (FrameBufferIt->first.ContainsImageView(View))
+        if (Key.ContainsImageView(View))
         {
-            //Destroy Framebuffer
-            DestroyFramebuffer(GetDevice()->GetVkDevice(), FrameBufferIt->second);
-            FrameBufferIt = Framebuffers.erase(FrameBufferIt);
-        }
-        else
-        {
-            FrameBufferIt++;
+            // Destroy Framebuffer
+            if (VkFramebuffer* Framebuffer = Framebuffers.Find(Key))
+            {
+                DestroyFramebuffer(GetDevice()->GetVkDevice(), *Framebuffer);
+            }
+            
+            Framebuffers.Remove(Key);
         }
     }
 }
 
-
-void FVulkanFramebufferCache::OnReleaseRenderPass(VkRenderPass renderpass)
+void FVulkanFramebufferCache::OnReleaseRenderPass(VkRenderPass RenderPass)
 {
     SCOPED_LOCK(FramebuffersCS);
 
-    //Find all framebuffers containing this renderpass
-    for (auto FrameBufferIt = Framebuffers.begin(); FrameBufferIt != Framebuffers.end();)
+    // TODO: Iterate with an iterator instead
+    TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
+    
+    // Find all framebuffers containing this renderpass
+    for (const FVulkanFramebufferKey& Key : Keys)
     {
-        if (FrameBufferIt->first.ContainsRenderPass(renderpass))
+        if (Key.ContainsRenderPass(RenderPass))
         {
-            //Destroy Framebuffer
-            DestroyFramebuffer(GetDevice()->GetVkDevice(), FrameBufferIt->second);
-            FrameBufferIt = Framebuffers.erase(FrameBufferIt);
-        }
-        else
-        {
-            FrameBufferIt++;
+            // Destroy Framebuffer
+            if (VkFramebuffer* Framebuffer = Framebuffers.Find(Key))
+            {
+                DestroyFramebuffer(GetDevice()->GetVkDevice(), *Framebuffer);
+            }
+            
+            Framebuffers.Remove(Key);
         }
     }
 }
-
 
 void FVulkanFramebufferCache::ReleaseAll()
 {
     SCOPED_LOCK(FramebuffersCS);
 
-    //Destroy all framebuffers
-    for (auto& Framebuffer : Framebuffers)
+    // Destroy all framebuffers
+    for (auto Framebuffer : Framebuffers)
     {
-        DestroyFramebuffer(GetDevice()->GetVkDevice(), Framebuffer.second);
+        DestroyFramebuffer(GetDevice()->GetVkDevice(), Framebuffer.Second);
     }
 
-    Framebuffers.clear();
+    Framebuffers.Clear();
 }

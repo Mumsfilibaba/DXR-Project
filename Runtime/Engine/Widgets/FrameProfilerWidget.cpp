@@ -171,17 +171,17 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
 
         // Retrieve a copy of the CPU samples
         FFrameProfiler::Get().GetCPUSamples(Samples);
-        for (auto& Sample : Samples)
+        for (auto Sample : Samples)
         {
             ImGui::TableNextRow();
 
-            float Avg   = Sample.second.GetAverage();
-            float Min   = Sample.second.Min;
-            float Max   = Sample.second.Max;
-            int32 Calls = Sample.second.TotalCalls;
+            float Avg   = Sample.Second.GetAverage();
+            float Min   = Sample.Second.Min;
+            float Max   = Sample.Second.Max;
+            int32 Calls = Sample.Second.TotalCalls;
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Sample.first.GetCString());
+            ImGui::Text("%s", Sample.First.GetCString());
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("%d", Calls);
             ImGui::TableSetColumnIndex(2);
@@ -192,7 +192,7 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
             ImGui_PrintTime(Max);
         }
 
-        Samples.clear();
+        Samples.Clear();
 
         ImGui::EndTable();
     }

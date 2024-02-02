@@ -4,7 +4,7 @@
 #include "VulkanDevice.h"
 
 FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanCommandQueueType InType)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , CommandPool(InDevice, InType)
     , Fence(InDevice)
     , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
@@ -15,7 +15,7 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanComma
 }
 
 FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanCommandBuffer&& Other)
-    : FVulkanDeviceObject(GetDevice())
+    : FVulkanDeviceChild(GetDevice())
     , CommandPool(Move(Other.CommandPool))
     , Fence(Move(Other.Fence))
     , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
@@ -61,5 +61,55 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
         return false;
     }
 
+    return true;
+}
+
+bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
+{
+    // Wait for GPU to finish with this CommandBuffer and then reset it
+    if (!WaitForFence())
+    {
+        return false;
+    }
+
+    if (!Fence.Reset())
+    {
+        return false;
+    }
+
+    // Avoid using the VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT since we can reuse the memory
+    if (!CommandPool.Reset())
+    {
+        return false;
+    }
+
+    VkCommandBufferBeginInfo BeginInfo;
+    FMemory::Memzero(&BeginInfo);
+
+    BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    BeginInfo.flags = Flags;
+
+    VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("vkBeginCommandBuffer Failed");
+        return false;
+    }
+
+    bIsRecording = true;
+    return true;
+}
+
+bool FVulkanCommandBuffer::End()
+{
+    VkResult Result = vkEndCommandBuffer(CommandBuffer);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("vkEndCommandBuffer Failed");
+        return false;
+    }
+
+    NumCommands  = 0;
+    bIsRecording = false;
     return true;
 }

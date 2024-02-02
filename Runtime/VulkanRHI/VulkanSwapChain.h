@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "VulkanSurface.h"
 #include "VulkanQueue.h"
 #include "VulkanSemaphore.h"
@@ -20,7 +20,7 @@ struct FVulkanSwapChainCreateInfo
     bool              bVerticalSync     = true;
 };
 
-class FVulkanSwapChain : public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanSwapChain : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanSwapChain(FVulkanDevice* InDevice);

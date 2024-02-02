@@ -2,7 +2,7 @@
 #include "VulkanDevice.h"
 
 FVulkanSemaphore::FVulkanSemaphore(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Semaphore(VK_NULL_HANDLE)
 {
 }

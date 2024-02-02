@@ -5,7 +5,7 @@ template<typename InComInterfaceType>
 class TComPtr
 {
 public:
-    using ElementType = InComInterfaceType;
+    typedef InComInterfaceType ElementType;
 
     template<typename OtherType>
     friend class TComPtr;

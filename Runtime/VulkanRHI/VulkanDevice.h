@@ -32,9 +32,9 @@ enum class EVulkanCommandQueueType
     Compute  = 3, 
 };
 
-struct FVulkanDeviceDesc
+struct FVulkanDeviceCreateInfo
 {
-    FVulkanDeviceDesc()
+    FVulkanDeviceCreateInfo()
         : RequiredExtensionNames()
         , OptionalExtensionNames()
         , RequiredFeatures()
@@ -59,7 +59,7 @@ public:
     FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter);
     ~FVulkanDevice();
 
-    bool Initialize(const FVulkanDeviceDesc& DeviceDesc);
+    bool Initialize(const FVulkanDeviceCreateInfo& DeviceDesc);
 
     uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
     
@@ -74,12 +74,12 @@ public:
     
     bool IsLayerEnabled(const FString& LayerName)
     {
-        return LayerNames.find(LayerName) != LayerNames.end();
+        return LayerNames.Find(LayerName) != nullptr;
     }
 
     bool IsExtensionEnabled(const FString& ExtensionName)
     {
-        return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
+        return ExtensionNames.Find(ExtensionName) != nullptr;
     }
 
     FVulkanInstance* GetInstance() const

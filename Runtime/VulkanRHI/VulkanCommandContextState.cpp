@@ -1,7 +1,7 @@
 #include "VulkanCommandContextState.h"
 
 FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Context(InContext)
     , GraphicsState()
     , ComputeState()

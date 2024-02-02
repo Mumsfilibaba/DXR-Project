@@ -101,9 +101,9 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
     TArray<int32> TempIndicies;
 
     // Unique tables
-    TMap<FVertex, uint32, FVertexHasher> UniqueVertices;
-    TMap<uint64, uint32> UniqueMaterials;
-    UniqueMaterials.reserve(MaterialCount);
+    TMap<FVertex, uint32> UniqueVertices;
+    TMap<uint64, uint32>  UniqueMaterials;
+    UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
     OutScene.Models.Reserve(FBXScene->getMeshCount());
@@ -122,7 +122,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
         for (int32 MaterialIdx = 0; MaterialIdx < CurrentMesh->getMaterialCount(); MaterialIdx++)
         {
             const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(MaterialIdx);
-            if (UniqueMaterials.count(CurrentMaterial->id) != 0)
+            if (UniqueMaterials.Contains(CurrentMaterial->id))
             {
                 continue;
             }
@@ -160,14 +160,14 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
 
         TempModelData.Mesh.Indices.Reserve(Positions.count);
         TempModelData.Mesh.Vertices.Reserve(Positions.values_count);
-        UniqueVertices.reserve(Positions.values_count);
+        UniqueVertices.Reserve(Positions.values_count);
         
         // Go through each mesh partition and add it to the scene as a separate mesh
         for (int32 PartitionIdx = 0; PartitionIdx < GeometryData.getPartitionCount(); PartitionIdx++)
         {
             // Clear the mesh data every mesh-partition
             TempModelData.Mesh.Clear();
-            UniqueVertices.clear();
+            UniqueVertices.Clear();
 
             ofbx::GeometryPartition Partition = GeometryData.getPartition(PartitionIdx);
             TempIndicies.Resize(Partition.max_polygon_triangles * 3);
@@ -220,7 +220,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
 
                     // Only push unique vertices
                     uint32 UniqueIndex = 0;
-                    if (UniqueVertices.count(TempVertex) == 0)
+                    if (UniqueVertices.Contains(TempVertex))
                     {
                         UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.Size());
                         UniqueVertices[TempVertex] = UniqueIndex;
@@ -254,7 +254,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
             if (PartitionIdx < CurrentMesh->getMaterialCount())
             {
                 const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(PartitionIdx);
-                if (UniqueMaterials.count(CurrentMaterial->id) != 0)
+                if (UniqueMaterials.Contains(CurrentMaterial->id))
                 {
                     TempModelData.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
                 }

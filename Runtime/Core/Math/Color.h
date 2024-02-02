@@ -1,7 +1,6 @@
 #pragma once
 #include "Float.h"
 #include "MathHash.h"
-
 #include "Core/Core.h"
 
 struct FColor

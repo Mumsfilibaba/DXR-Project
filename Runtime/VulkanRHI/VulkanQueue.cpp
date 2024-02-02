@@ -5,7 +5,7 @@
 #include "VulkanFence.h"
 
 FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InType)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Type(InType)
     , CommandQueue(VK_NULL_HANDLE)
 {

@@ -14,12 +14,12 @@ enum class EStringCaseType
 template<typename InCharType>
 class TStringView
 {
-    using FCStringType = TCString<InCharType>;
-    using FCharType    = TChar<InCharType>;
+    typedef TChar<InCharType>    FCharType;
+    typedef TCString<InCharType> FCStringType;
 
 public:
-    using CHARTYPE = InCharType;
-    using SizeType = int32;
+    typedef int32      SizeType;
+    typedef InCharType CHARTYPE;
     
     static_assert(TIsSame<CHARTYPE, CHAR>::Value || TIsSame<CHARTYPE, WIDECHAR>::Value, "TStringView only supports 'CHAR' and 'WIDECHAR'");
     static_assert(TIsSigned<SizeType>::Value, "TStringView only supports a SizeType that's signed");

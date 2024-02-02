@@ -42,8 +42,7 @@ struct FR10G10B10A2
 
     uint64 GetHash() const 
     {
-        THash<uint32> Hasher;
-        return static_cast<uint64>(Hasher(EncodeAsInteger()));
+        return HashType(EncodeAsInteger());
     }
 
     bool operator==(FR10G10B10A2 RHS) const
@@ -92,8 +91,7 @@ struct FRG16F
 
     uint64 GetHash() const
     {
-        THash<uint32> Hasher;
-        return static_cast<uint64>(Hasher(EncodeAsInteger()));
+        return HashType(EncodeAsInteger());
     }
 
     bool operator==(FRG16F RHS) const
@@ -146,8 +144,7 @@ struct FRGBA16F
 
     uint64 GetHash() const
     {
-        THash<uint64> Hasher;
-        return static_cast<uint64>(Hasher(EncodeAsInteger()));
+        return HashType(EncodeAsInteger());
     }
 
     bool operator==(FRGBA16F RHS) const

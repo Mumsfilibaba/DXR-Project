@@ -3,9 +3,7 @@
 #include "RHIResources.h"
 #include "RHICommandList.h"
 #include "IRHICommandContext.h"
-
 #include "Core/Modules/ModuleManager.h"
-
 #include "CoreApplication/Generic/GenericWindow.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

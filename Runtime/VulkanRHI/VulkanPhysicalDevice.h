@@ -10,9 +10,9 @@
 
 class FVulkanInstance;
 
-struct FVulkanPhysicalDeviceDesc
+struct FVulkanPhysicalDeviceCreateInfo
 {
-    FVulkanPhysicalDeviceDesc()
+    FVulkanPhysicalDeviceCreateInfo()
         : RequiredExtensionNames()
         , OptionalExtensionNames()
     {
@@ -55,22 +55,12 @@ public:
 
     static TOptional<FVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
 
-    bool Initialize(const FVulkanPhysicalDeviceDesc& AdapterDesc);
+    bool Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc);
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
     
     VkFormatProperties GetFormatProperties(VkFormat Format) const;
     
-    FVulkanInstance* GetInstance() const
-    {
-        return Instance;
-    }
-
-    VkPhysicalDevice GetVkPhysicalDevice() const
-    {
-        return PhysicalDevice;
-    }
-
     const VkPhysicalDeviceProperties&       GetDeviceProperties()       const { return DeviceProperties; }
     const VkPhysicalDeviceFeatures&         GetDeviceFeatures()         const { return DeviceFeatures; }
     const VkPhysicalDeviceMemoryProperties& GetDeviceMemoryProperties() const { return DeviceMemoryProperties; }
@@ -92,6 +82,16 @@ public:
 #if VK_EXT_conservative_rasterization
     const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const { return ConservativeRasterizationProperties; }
 #endif
+
+    FVulkanInstance* GetInstance() const
+    {
+        return Instance;
+    }
+
+    VkPhysicalDevice GetVkPhysicalDevice() const
+    {
+        return PhysicalDevice;
+    }
 
 private:
     FVulkanInstance* Instance;

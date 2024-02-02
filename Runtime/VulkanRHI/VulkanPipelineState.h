@@ -1,7 +1,7 @@
 #pragma once
 #include "VulkanShader.h"
 #include "VulkanRefCounted.h"
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "RHI/RHIResources.h"
 #include "Core/Utilities/StringUtilities.h"
 
@@ -66,7 +66,7 @@ private:
 };
 
 
-class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceObject
+class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceChild
 {
 public:
     FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer);
@@ -117,7 +117,7 @@ private:
 };
 
 
-class FVulkanPipeline : public FVulkanDeviceObject
+class FVulkanPipeline : public FVulkanDeviceChild
 {
 public:
     FVulkanPipeline(FVulkanDevice* InDevice);

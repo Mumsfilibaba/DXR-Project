@@ -479,11 +479,10 @@ FConsoleManager::~FConsoleManager()
 {
     for (auto ConsoleObject : ConsoleObjects)
     {
-        IConsoleObject* Object = ConsoleObject.second;
-        delete Object;
+        SAFE_DELETE(ConsoleObject.Second);
     }
 
-    ConsoleObjects.clear();
+    ConsoleObjects.Clear();
 }
 
 IConsoleCommand* FConsoleManager::RegisterCommand(const CHAR* InName, const CHAR* HelpString, const FConsoleCommandDelegate& CommandDelegate)
@@ -539,29 +538,26 @@ IConsoleVariable* FConsoleManager::RegisterVariable(const CHAR* InName, const CH
 void FConsoleManager::UnregisterObject(IConsoleObject* ConsoleObject)
 {
     const FString Name = FindConsoleObjectName(ConsoleObject);
-
-    auto ExistingObject = ConsoleObjects.find(Name);
-    if (ExistingObject != ConsoleObjects.end())
+    if (IConsoleObject** Object = ConsoleObjects.Find(Name))
     {
         // Delete and erase reference to object
-        IConsoleObject* Object = ExistingObject->second;
-        delete Object;
-        ConsoleObjects.erase(ExistingObject);
+        delete *Object;
+        ConsoleObjects.Remove(Name);
     }
 }
 
 bool FConsoleManager::IsConsoleObject(const CHAR* InName) const
 {
-    return (FindConsoleObject(InName) != nullptr);
+    return FindConsoleObject(InName) != nullptr;
 }
 
 FString FConsoleManager::FindConsoleObjectName(IConsoleObject* ConsoleObject)
 {
-    for (const auto& CurrentObject : ConsoleObjects)
+    for (auto CurrentObject : ConsoleObjects)
     {
-        if (ConsoleObject == CurrentObject.second)
+        if (ConsoleObject == CurrentObject.Second)
         {
-            return CurrentObject.first;
+            return CurrentObject.First;
         }
     }
 
@@ -591,11 +587,9 @@ IConsoleVariable* FConsoleManager::FindConsoleVariable(const CHAR* Name) const
 IConsoleObject* FConsoleManager::FindConsoleObject(const CHAR* InName) const
 {
     const FString Name(InName);
-
-    auto ExisitingObject = ConsoleObjects.find(Name);
-    if (ExisitingObject != ConsoleObjects.end())
+    if (IConsoleObject* const* Object = ConsoleObjects.Find(Name))
     {
-        return ExisitingObject->second;
+        return *Object;
     }
     else
     {
@@ -612,12 +606,10 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
 {
     for (const auto& Object : ConsoleObjects)
     {
-        const FString& ObjectName = Object.first;
-
         int32 Length = CandidateName.Length();
-        if (Length <= ObjectName.Length())
+        if (Length <= Object.First.Length())
         {
-            const CHAR* Command = ObjectName.GetCString();
+            const CHAR* Command = Object.First.GetCString();
             const CHAR* WordIt  = CandidateName.GetCString();
 
             int32 CharDiff = -1;
@@ -630,8 +622,7 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
 
             if (CharDiff == 0)
             {
-                IConsoleObject* ConsoleObject = Object.second;
-                OutCandidates.Emplace(ConsoleObject, ObjectName);
+                OutCandidates.Emplace(Object.Second, Object.First);
             }
         }
     }
@@ -704,40 +695,33 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
 IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObject* Object)
 {
     const FString Name(InName);
-
-    auto ExistingObject = ConsoleObjects.find(Name);
-    if (ExistingObject != ConsoleObjects.end())
+    if (IConsoleObject** Object = ConsoleObjects.Find(Name))
     {
         LOG_WARNING("Trying to register an already existing ConsoleObject '%s'", InName);
-        return ExistingObject->second;
+        return *Object;
     }
 
-    auto Result = ConsoleObjects.insert(std::make_pair(Name, Object));
-    if (Result.second)
+    IConsoleObject* Result = ConsoleObjects.Add(Name, Object);
+
+    // TODO: Refactor this, right now it only works with a single ConfigFile
+    if (IConsoleVariable* Variable = Object->AsVariable())
     {
-        // TODO: Refactor this, right now it only works with a single ConfigFile
-        if (IConsoleVariable* Variable = Object->AsVariable())
+        FStringView CommandLineValue;
+        if (FCommandLine::Parse(InName, CommandLineValue))
         {
-            FStringView CommandLineValue;
-            if (FCommandLine::Parse(InName, CommandLineValue))
+            const FString Value = FString(CommandLineValue);
+            Variable->SetString(Value, EConsoleVariableFlags::SetByCommandLine);
+        }
+        else if (GConfig)
+        {
+            FString Value;
+            if (GConfig->GetString("", InName, Value))
             {
-                const FString Value = FString(CommandLineValue);
-                Variable->SetString(Value, EConsoleVariableFlags::SetByCommandLine);
-            }
-            else if (GConfig)
-            {
-                FString Value;
-                if (GConfig->GetString("", InName, Value))
-                {
-                    Variable->SetString(Value, EConsoleVariableFlags::SetByConfigFile);
-                }
+                Variable->SetString(Value, EConsoleVariableFlags::SetByConfigFile);
             }
         }
-
-        LOG_INFO("Registered ConsoleObject '%s'", Name.GetCString());
-        return Result.first->second;
     }
 
-    LOG_ERROR("Failed to register ConsoleObject '%s'", InName);
-    return nullptr;
+    LOG_INFO("Registered ConsoleObject '%s'", Name.GetCString());
+    return Result;
 }

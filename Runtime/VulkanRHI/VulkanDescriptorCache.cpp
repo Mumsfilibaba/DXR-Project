@@ -179,7 +179,7 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
 
 
 FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Context(InContext)
     , DefaultResources()
     , DescriptorPool(VK_NULL_HANDLE)

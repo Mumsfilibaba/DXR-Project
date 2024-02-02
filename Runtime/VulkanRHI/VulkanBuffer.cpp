@@ -8,7 +8,7 @@
 
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , Buffer(VK_NULL_HANDLE)
     , MemoryAllocation()
     , RequiredAlignment(0)

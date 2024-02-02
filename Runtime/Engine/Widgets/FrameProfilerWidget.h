@@ -17,5 +17,5 @@ public:
     void DrawCPUData(float Width);
 
 private:
-    ProfileSamplesTable Samples;
+    ProfileSamplesMap Samples;
 };

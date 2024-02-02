@@ -9,9 +9,9 @@ template<uint32 NUM_BITS, typename InIntegerType = uint32>
 class TStaticBitArray
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
 
-    static_assert(NUM_BITS > 0                     , "StaticBitArray must have some bits allocated");
+    static_assert(NUM_BITS > 0, "StaticBitArray must have some bits allocated");
     static_assert(TIsUnsigned<InIntegerType>::Value, "StaticBitArray must have an unsigned InIntegerType");
     
     using BitReferenceType      = TBitReference<InIntegerType>;

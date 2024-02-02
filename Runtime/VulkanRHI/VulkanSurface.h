@@ -5,7 +5,7 @@
 
 typedef TSharedRef<class FVulkanSurface> FVulkanSurfaceRef;
 
-class FVulkanSurface : public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanSurface : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue* InQueue, void* InWindowHandle);

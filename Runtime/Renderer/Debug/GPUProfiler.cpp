@@ -61,14 +61,14 @@ void FGPUProfiler::Reset()
 
     {
         TScopedLock Lock(SamplesLock);
-        for (auto& Sample : Samples)
+        for (auto Sample : Samples)
         {
-            Sample.second.Reset();
+            Sample.Second.Reset();
         }
     }
 }
 
-void FGPUProfiler::GetGPUSamples(GPUProfileSamplesTable& OutSamples)
+void FGPUProfiler::GetGPUSamples(GPUProfileSamplesMap& OutSamples)
 {
     TScopedLock Lock(SamplesLock);
     OutSamples = Samples;
@@ -100,17 +100,15 @@ void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 
         {
             TScopedLock Lock(SamplesLock);
-
-            auto Entry = Samples.find(ScopeName);
-            if (Entry == Samples.end())
+            if (FGPUProfileSample* Entry = Samples.Find(ScopeName))
             {
-                auto NewSample = Samples.insert(std::make_pair(ScopeName, FGPUProfileSample()));
-                NewSample.first->second.TimeQueryIndex = ++CurrentTimeQueryIndex;
-                TimeQueryIndex = NewSample.first->second.TimeQueryIndex;
+                TimeQueryIndex = Entry->TimeQueryIndex;
             }
             else
             {
-                TimeQueryIndex = Entry->second.TimeQueryIndex;
+                FGPUProfileSample& NewSample = Samples.Add(ScopeName);
+                NewSample.TimeQueryIndex = ++CurrentTimeQueryIndex;
+                TimeQueryIndex = NewSample.TimeQueryIndex;
             }
         }
 
@@ -130,11 +128,9 @@ void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
         int32 TimeQueryIndex = -1;
 
         TScopedLock Lock(SamplesLock);
-
-        auto Entry = Samples.find(ScopeName);
-        if (Entry != Samples.end())
+        if (FGPUProfileSample* Entry = Samples.Find(ScopeName))
         {
-            TimeQueryIndex = Entry->second.TimeQueryIndex;
+            TimeQueryIndex = Entry->TimeQueryIndex;
             CmdList.EndTimeStamp(Timequeries.Get(), TimeQueryIndex);
 
             if (TimeQueryIndex >= 0)
@@ -146,8 +142,8 @@ void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
                 const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
 
                 // To nanoseconds
-                double Duration = (DeltaTime / Frequency) * (1000.0 * 1000.0 * 1000.0);
-                Entry->second.AddSample((float)Duration);
+                const double Duration = (DeltaTime / Frequency) * (1000.0 * 1000.0 * 1000.0);
+                Entry->AddSample((float)Duration);
             }
         }
     }

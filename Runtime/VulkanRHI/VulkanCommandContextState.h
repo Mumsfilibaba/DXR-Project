@@ -6,7 +6,7 @@
 
 class FVulkanCommandContext;
 
-struct FVulkanCommandContextState : public FVulkanDeviceObject, public FNonCopyAndNonMovable
+struct FVulkanCommandContextState : public FVulkanDeviceChild, public FNonCopyAndNonMovable
 {
     FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext);
     ~FVulkanCommandContextState() = default;

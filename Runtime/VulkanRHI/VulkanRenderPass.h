@@ -1,7 +1,6 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "Core/Containers/Map.h"
-
 
 struct FVulkanRenderPassActions
 {
@@ -19,14 +18,6 @@ struct FVulkanRenderPassKey
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = Key0;
-        HashCombine(Hash, Key1);
-        HashCombine(Hash, Key2);
-        return Hash;
-    }
-    
     bool operator==(const FVulkanRenderPassKey& Other) const
     {
         return FMemory::Memcmp(this, &Other, sizeof(FVulkanRenderPassKey)) == 0;
@@ -63,17 +54,16 @@ struct FVulkanRenderPassKey
 
 static_assert(sizeof(FVulkanRenderPassKey) == sizeof(uint64[3]), "Size of FVulkanRenderPassKey is invalid");
 
-
-struct FVulkanRenderPassKeyHasher
+inline uint64 HashType(const FVulkanRenderPassKey& Key)
 {
-    uint64 operator()(const FVulkanRenderPassKey& Key) const
-    {
-        return Key.GetHash();
-    }
-};
+    uint64 Hash = Key.Key0;
+    HashCombine(Hash, Key.Key1);
+    HashCombine(Hash, Key.Key2);
+    return Hash;
+}
 
 
-class FVulkanRenderPassCache : public FVulkanDeviceObject
+class FVulkanRenderPassCache : public FVulkanDeviceChild
 {
 public:
     FVulkanRenderPassCache(FVulkanDevice* InDevice);
@@ -84,5 +74,6 @@ public:
     void ReleaseAll();
 
 private:
-    TMap<FVulkanRenderPassKey, VkRenderPass, FVulkanRenderPassKeyHasher> RenderPasses;
+    TMap<FVulkanRenderPassKey, VkRenderPass> RenderPasses;
+    FCriticalSection                         RenderPassesCS;
 };

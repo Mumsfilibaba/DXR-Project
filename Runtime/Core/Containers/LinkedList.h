@@ -1,17 +1,5 @@
 #pragma once
-
-#if 1
-#include <list>
-#include <forward_list>
-
-template<typename T>
-using TLinkedList = std::forward_list<T>;
-
-template<typename T>
-using TDoubleLinkedList = std::list<T>;
-
-#else
-#include "Core/Templates/Move.h"
+#include "Core/Templates/Utility.h"
 
 template<typename T>
 struct TLinkedListNode
@@ -36,8 +24,7 @@ struct TDoubleLinkedListNode
 
     template<typename... ArgTypes>
     FORCEINLINE TDoubleLinkedListNode(ArgTypes&&... Args) noexcept
-        : Next(nullptr)
-        , Item(Forward<ArgTypes>(Args)...)
+        : Item(Forward<ArgTypes>(Args)...)
     {
     }
 
@@ -45,5 +32,3 @@ struct TDoubleLinkedListNode
     TDoubleLinkedListNode* Previous{nullptr};
     T Item;
 };
-
-#endif

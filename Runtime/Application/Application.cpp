@@ -523,7 +523,7 @@ bool FApplication::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState Mod
         });
 
     // Remove the Key
-    PressedKeys.erase(KeyCode);
+    PressedKeys.Remove(KeyCode);
 
     Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), ModierKeyState, KeyEvent.IsDown());
     if (Response.IsEventHandled())
@@ -563,7 +563,7 @@ bool FApplication::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FMo
     }
 
     // Add the Key among the pressed keys
-    PressedKeys.insert(KeyCode);
+    PressedKeys.Remove(KeyCode);
 
     Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), ModierKeyState, KeyEvent.IsDown());
     if (Response.IsEventHandled())
@@ -668,7 +668,7 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
         });
     
     // Remove the Key
-    PressedMouseButtons.erase(Button);
+    PressedMouseButtons.Remove(Button);
 
     // If the event is handled, abort the process
     Response = FImGui::OnMouseButtonEvent(MouseEvent.GetKey(), MouseEvent.IsDown());
@@ -711,7 +711,7 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
     }
 
     // Add the button to the pressed buttons
-    PressedMouseButtons.insert(Button);
+    PressedMouseButtons.Remove(Button);
 
     // If the event is handled, abort the process
     Response = FImGui::OnMouseButtonEvent(MouseEvent.GetKey(), MouseEvent.IsDown());
@@ -965,7 +965,7 @@ void FApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow)
 {
     PlatformApplication->SetCapture(CaptureWindow);
 
-    if (CaptureWindow && !PressedMouseButtons.empty())
+    if (CaptureWindow && !PressedMouseButtons.IsEmpty())
     {
         bIsTrackingMouse = true;
     }

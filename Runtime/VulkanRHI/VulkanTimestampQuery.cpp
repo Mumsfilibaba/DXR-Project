@@ -1,7 +1,7 @@
 #include "VulkanTimestampQuery.h"
 
 FVulkanTimestampQuery::FVulkanTimestampQuery(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
 {
 }
 

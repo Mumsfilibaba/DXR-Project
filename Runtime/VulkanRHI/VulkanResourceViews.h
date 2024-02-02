@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "VulkanLoader.h"
 #include "VulkanRefCounted.h"
 #include "Core/Containers/SharedRef.h"
@@ -9,7 +9,7 @@ typedef TSharedRef<class FVulkanImageView>           FVulkanImageViewRef;
 typedef TSharedRef<class FVulkanShaderResourceView>  FVulkanShaderResourceViewRef;
 typedef TSharedRef<class FVulkanUnorderedAccessView> FVulkanUnorderedAccessViewRef;
 
-class FVulkanImageView : public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanImageView : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanImageView(FVulkanDevice* InDevice);
@@ -47,7 +47,7 @@ private:
 };
 
 
-class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceObject
+class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceChild
 {
 public:
     FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
@@ -94,7 +94,7 @@ private:
 };
 
 
-class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceObject
+class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceChild
 {
 public:
     FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);

@@ -55,7 +55,7 @@ FVulkanDevice::~FVulkanDevice()
     }
 }
 
-bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
+bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 {
     VULKAN_ERROR_COND(PhysicalDevice != nullptr, "PhysicalDevice is not initalized correctly");
 
@@ -97,7 +97,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceDesc& DeviceDesc)
         if (DeviceDesc.RequiredExtensionNames.ContainsWithPredicate(CompareExtension) || DeviceDesc.OptionalExtensionNames.ContainsWithPredicate(CompareExtension))
         {
             EnabledExtensionNames.Add(ExtensionProperty.extensionName);
-            ExtensionNames.insert(FString(ExtensionProperty.extensionName));
+            ExtensionNames.Emplace(ExtensionProperty.extensionName);
         }
     }
 

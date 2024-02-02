@@ -13,7 +13,7 @@ template<typename InIntegerType = uint32, typename InAllocatorType = TDefaultArr
 class TBitArray
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
     static_assert(TIsUnsigned<InIntegerType>::Value, "BitArray must have an unsigned InIntegerType");
 
     using BitReferenceType      = TBitReference<InIntegerType>;
@@ -1014,8 +1014,8 @@ private:
 
 private:
     InAllocatorType Allocator;
-    SizeType NumBits{0};
-    SizeType NumElements{0};
+    SizeType        NumBits{ 0 };
+    SizeType        NumElements{ 0 };
 };
 
 typedef TBitArray<uint8>  FBitArray8;

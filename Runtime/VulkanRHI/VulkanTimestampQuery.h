@@ -1,11 +1,11 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "RHI/RHIResources.h"
 #include "Core/Containers/SharedRef.h"
 
 typedef TSharedRef<class FVulkanTimestampQuery> FVulkanTimestampQueryRef;
 
-class FVulkanTimestampQuery : public FRHITimestampQuery, public FVulkanDeviceObject
+class FVulkanTimestampQuery : public FRHITimestampQuery, public FVulkanDeviceChild
 {
 public:
     FVulkanTimestampQuery(FVulkanDevice* InDevice);

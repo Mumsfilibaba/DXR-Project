@@ -1,12 +1,12 @@
 #pragma once
 #include "VulkanLoader.h"
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "VulkanRefCounted.h"
 #include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FVulkanSamplerState> FVulkanSamplerStateRef;
 
-class FVulkanSamplerState : public FRHISamplerState, public FVulkanDeviceObject
+class FVulkanSamplerState : public FRHISamplerState, public FVulkanDeviceChild
 {
 public:
     FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InDesc);

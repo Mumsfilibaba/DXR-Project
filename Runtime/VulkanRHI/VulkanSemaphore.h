@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "VulkanLoader.h"
 #include "VulkanRefCounted.h"
 #include "Core/Containers/SharedRef.h"
@@ -11,7 +11,7 @@
 
 typedef TSharedRef<class FVulkanSemaphore> FVulkanSemaphoreRef;
 
-class FVulkanSemaphore : public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanSemaphore : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanSemaphore(FVulkanDevice* InDevice);

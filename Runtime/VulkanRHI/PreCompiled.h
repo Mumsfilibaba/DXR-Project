@@ -9,7 +9,7 @@
 #include "VulkanRHI/VulkanCore.h"
 #include "VulkanRHI/VulkanDescriptorCache.h"
 #include "VulkanRHI/VulkanDevice.h"
-#include "VulkanRHI/VulkanDeviceObject.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanFence.h"
 #include "VulkanRHI/VulkanFramebuffer.h"
 #include "VulkanRHI/VulkanInstance.h"

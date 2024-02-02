@@ -128,14 +128,17 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Sampler = Material->GetMaterialSampler();
 
         const FMatrix3x4 TinyTransform = Command.CurrentActor->GetTransform().GetTinyMatrix();
-        uint32 HitGroupIndex = 0;
 
-        auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find(Command.Mesh);
-        if (HitGroupIndexPair == Resources.RTMeshToHitGroupIndex.end())
+        uint32 HitGroupIndex = 0;
+        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Command.Mesh))
+        {
+            HitGroupIndex = *ExistingIndex;
+        }
+        else
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
             Resources.RTMeshToHitGroupIndex[Command.Mesh] = HitGroupIndex;
-
+            
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
             if (Command.Mesh->VertexBufferSRV)
@@ -146,12 +149,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
             {
                 HitGroupResources.AddShaderResourceView(Command.Mesh->IndexBufferSRV.Get());
             }
-
+            
             Resources.RTHitGroupResources.Emplace(HitGroupResources);
-        }
-        else
-        {
-            HitGroupIndex = HitGroupIndexPair->second;
         }
 
         FRHIRayTracingGeometryInstance Instance;

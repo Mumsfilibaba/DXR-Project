@@ -1,30 +1,16 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "Core/Containers/Map.h"
 
 struct FVulkanFramebufferKey
 {
     FVulkanFramebufferKey()
         : RenderPass(VK_NULL_HANDLE)
-        , NumAttachmentViews(0)
         , Width(0)
         , Height(0)
+        , NumAttachmentViews(0)
     {
         FMemory::Memzero(AttachmentViews, sizeof(AttachmentViews));
-    }
-
-    uint64 GetHash() const
-    {
-        uint64 Hash = reinterpret_cast<uint64>(RenderPass);
-        HashCombine(Hash, Width);
-        HashCombine(Hash, Height);
-
-        for (uint32 Index = 0; Index < NumAttachmentViews; Index++)
-        {
-            HashCombine(Hash, AttachmentViews[Index]);
-        }
-
-        return Hash;
     }
 
     bool ContainsImageView(VkImageView InView) const
@@ -75,17 +61,22 @@ struct FVulkanFramebufferKey
     VkImageView  AttachmentViews[FRHILimits::MaxRenderTargets + 1];
 };
 
-
-struct FVulkanFramebufferKeyHasher
+inline uint64 HashType(const FVulkanFramebufferKey& Key)
 {
-    uint64 operator()(const FVulkanFramebufferKey& Key) const
+    uint64 Hash = reinterpret_cast<uint64>(Key.RenderPass);
+    HashCombine(Hash, Key.Width);
+    HashCombine(Hash, Key.Height);
+
+    for (uint32 Index = 0; Index < Key.NumAttachmentViews; Index++)
     {
-        return Key.GetHash();
+        HashCombine(Hash, Key.AttachmentViews[Index]);
     }
-};
+
+    return Hash;
+}
 
 
-class FVulkanFramebufferCache : public FVulkanDeviceObject
+class FVulkanFramebufferCache : public FVulkanDeviceChild
 {
 public:
     FVulkanFramebufferCache(FVulkanDevice* InDevice);
@@ -96,10 +87,9 @@ public:
     void ReleaseAll();
 
     void OnReleaseImageView(VkImageView View);
-
-    void OnReleaseRenderPass(VkRenderPass Renderpass);
+    void OnReleaseRenderPass(VkRenderPass RenderPass);
 
 private:
-    TMap<FVulkanFramebufferKey, VkFramebuffer, FVulkanFramebufferKeyHasher> Framebuffers;
-    FCriticalSection FramebuffersCS;
+    TMap<FVulkanFramebufferKey, VkFramebuffer> Framebuffers;
+    FCriticalSection                           FramebuffersCS;
 };

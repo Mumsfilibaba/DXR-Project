@@ -94,15 +94,15 @@ void FMallocLeakTracker::DumpAllocations(IOutputDevice* OutputDevice)
     {
         SCOPED_LOCK(AllocationsCS);
 
-        const uint32 NumAllocations = static_cast<uint32>(Allocations.size());
+        const uint32 NumAllocations = static_cast<uint32>(Allocations.Size());
         OutputDevice->Log(FString::CreateFormatted("Current Allocations (Num=%u):", NumAllocations));
 
         for (auto CurrentAllocation : Allocations)
         {
             OutputDevice->Log(FString::CreateFormatted(
                 "    Address=0x%p Size=%llu",
-                CurrentAllocation.first,
-                CurrentAllocation.second.Size));
+                CurrentAllocation.First,
+                CurrentAllocation.Second.Size));
         }
     }
 
@@ -115,11 +115,9 @@ void FMallocLeakTracker::TrackAllocationMalloc(void* Block, uint64 Size)
 
     SCOPED_LOCK(AllocationsCS);
 
-    auto ExistingInfo = Allocations.find(Block);
-    CHECK(ExistingInfo == Allocations.end());
-
-    auto Result = Allocations.insert(std::make_pair(Block, FAllocationInfo{ Size }));
-    CHECK(Result.second == true);
+    auto ExistingInfo = Allocations.Find(Block);
+    CHECK(ExistingInfo == nullptr);
+    Allocations.Add(Block, FAllocationInfo{ Size });
 
     EnableTracking();
 }
@@ -129,12 +127,7 @@ void FMallocLeakTracker::TrackAllocationFree(void* Block)
     DisableTacking();
 
     SCOPED_LOCK(AllocationsCS);
-
-    auto ExistingInfo = Allocations.find(Block);
-    if (ExistingInfo != Allocations.end())
-    {
-        Allocations.erase(ExistingInfo);
-    }
+    Allocations.Remove(Block);
 
     EnableTracking();
 }
@@ -204,8 +197,8 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
     {
         SCOPED_LOCK(AllocationsCS);
 
-        const uint32 NumAllocations = static_cast<uint32>(Allocations.size());
-        OutputDevice->Log(FString::CreateFormatted("Current Allocations (Num=%u):", NumAllocations));
+        const int32 NumAllocations = Allocations.Size();
+        OutputDevice->Log(FString::CreateFormatted("Current Allocations (Num=%d):", NumAllocations));
 
         FPlatformStackTrace::InitializeSymbols();
 
@@ -214,11 +207,11 @@ void FMallocStackTraceTracker::DumpAllocations(IOutputDevice* OutputDevice)
             FString Message = FString::CreateFormatted(
                 "    Address=0x%p Size=%llu\n"
                 "        Callstack:\n",
-                CurrentAllocation.first,
-                CurrentAllocation.second.Size);
+                CurrentAllocation.First,
+                CurrentAllocation.Second.Size);
 
-            // Skip first since this is the FPlatformStackTrace::CaptureStackTrace
-            const auto Current = CurrentAllocation.second;
+            // Skip first since this is the FPlatformStackTrace::CaptureStackTrace function
+            const auto Current = CurrentAllocation.Second;
             for (uint64 Depth = 0; Depth < Current.StackDepth; ++Depth)
             {
                 FStackTraceEntry Entry;
@@ -243,14 +236,12 @@ void FMallocStackTraceTracker::TrackAllocationMalloc(void* Block, uint64 Size)
 
     SCOPED_LOCK(AllocationsCS);
 
-    auto ExistingInfo = Allocations.find(Block);
-    CHECK(ExistingInfo == Allocations.end());
-
-    auto Result = Allocations.insert(std::make_pair(Block, FAllocationStackTrace()));
-    CHECK(Result.second == true);
-
-    Result.first->second.StackDepth = FPlatformStackTrace::CaptureStackTrace(Result.first->second.StackTrace, NumStackTraces, 3);
-    Result.first->second.Size = Size;
+    FAllocationStackTrace* ExistingInfo = Allocations.Find(Block);
+    CHECK(ExistingInfo == nullptr);
+    
+    FAllocationStackTrace& Result = Allocations.Add(Block, FAllocationStackTrace());
+    Result.StackDepth = FPlatformStackTrace::CaptureStackTrace(Result.StackTrace, NumStackTraces, 3);
+    Result.Size       = Size;
 
     EnableTracking();
 }
@@ -260,12 +251,7 @@ void FMallocStackTraceTracker::TrackAllocationFree(void* Block)
     DisableTacking();
 
     SCOPED_LOCK(AllocationsCS);
-
-    auto ExistingInfo = Allocations.find(Block);
-    if (ExistingInfo != Allocations.end())
-    {
-        Allocations.erase(ExistingInfo);
-    }
+    Allocations.Remove(Block);
 
     EnableTracking();
 }

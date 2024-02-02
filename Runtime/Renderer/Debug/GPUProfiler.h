@@ -75,7 +75,7 @@ struct FGPUProfileSample
 };
 
 
-using GPUProfileSamplesTable = TMap<FString, FGPUProfileSample, FStringHasher>;
+using GPUProfileSamplesMap = TMap<FString, FGPUProfileSample>;
 
 class RENDERER_API FGPUProfiler
 {
@@ -101,7 +101,7 @@ public:
     void Reset();
 
      /** @brief - Retrieve a copy of the GPU Profiler samples */
-    void GetGPUSamples(GPUProfileSamplesTable& OutGPUSamples);
+    void GetGPUSamples(GPUProfileSamplesMap& OutGPUSamples);
 
      /** @brief - Start the GPU frame */
     void BeginGPUFrame(FRHICommandList& CmdList);
@@ -123,17 +123,12 @@ public:
 private:
     FGPUProfiler();
 
-     /** @brief - Queries for GPUTimeStamps */
     FRHITimestampQueryRef Timequeries;
-
     uint32 CurrentTimeQueryIndex = 0;
-
-     /** @brief - Sample for the GPU FrameTime */
-    FGPUProfileSample FrameTime;
-
-     /** @brief - Table for GPU- samples */
-    GPUProfileSamplesTable Samples;
-    FSpinLock              SamplesLock;
+    
+    FGPUProfileSample    FrameTime;
+    GPUProfileSamplesMap Samples;
+    FSpinLock            SamplesLock;
 
     bool bEnabled;
 
@@ -158,5 +153,5 @@ public:
 
 private:
     FRHICommandList& CommandList;
-    const CHAR*      Name = nullptr;
+    const CHAR* Name = nullptr;
 };

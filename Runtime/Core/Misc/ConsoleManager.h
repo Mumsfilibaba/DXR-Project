@@ -339,7 +339,7 @@ private:
 
     IConsoleObject* RegisterObject(const CHAR* Name, IConsoleObject* Variable);
 
-    TMap<FString, IConsoleObject*, FStringHasher> ConsoleObjects;
+    TMap<FString, IConsoleObject*> ConsoleObjects;
 
     TArray<FString> History;
     int32           HistoryLength = 50;

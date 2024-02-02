@@ -2,7 +2,7 @@
 #include "VulkanDevice.h"
 
 FVulkanImageView::FVulkanImageView(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Image(VK_NULL_HANDLE)
     , ImageView(VK_NULL_HANDLE)
     , Format(VK_FORMAT_UNDEFINED)
@@ -79,7 +79,7 @@ void FVulkanImageView::DestroyView()
 
 FVulkanShaderResourceView::FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , ImageView(nullptr)
     , BufferInfo{VK_NULL_HANDLE, 0, 0}
 {
@@ -184,7 +184,7 @@ bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc
 
 FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , ImageView(nullptr)
     , BufferInfo{VK_NULL_HANDLE, 0, 0}
 {

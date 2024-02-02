@@ -57,7 +57,7 @@ FVulkanInstance::~FVulkanInstance()
     }
 }
 
-bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
+bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
 {
     DriverHandle = FPlatformVulkan::LoadVulkanLibrary();
     if (!DriverHandle)
@@ -155,7 +155,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredLayerNames.ContainsWithPredicate(CompareLayer) || InstanceDesc.OptionalLayerNames.ContainsWithPredicate(CompareLayer))
         {
             EnabledLayerNames.Add(LayerProperty.layerName);
-            LayerNames.insert(FString(LayerProperty.layerName));
+            LayerNames.Emplace(LayerProperty.layerName);
         }
     }
 
@@ -185,7 +185,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredExtensionNames.ContainsWithPredicate(CompareExtension) || InstanceDesc.OptionalExtensionNames.ContainsWithPredicate(CompareExtension))
         {
             EnabledExtensionNames.Add(ExtensionProperty.extensionName);
-            ExtensionNames.insert(FString(ExtensionProperty.extensionName));
+            ExtensionNames.Emplace(ExtensionProperty.extensionName);
         }
     }
 

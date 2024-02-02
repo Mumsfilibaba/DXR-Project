@@ -2,8 +2,6 @@
 #include "Core/CoreDefines.h"
 #include "Core/CoreTypes.h"
 
-#include <limits>
-
 // TODO: Maybe have this as a platform define/variable somewhere (FPlatformMisc? FPlatformMath?)
 #define NUM_CHAR_DIGITS (8)
 

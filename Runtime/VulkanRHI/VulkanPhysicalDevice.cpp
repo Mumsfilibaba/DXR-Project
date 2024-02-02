@@ -9,7 +9,7 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper
 
-static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhysicalDeviceDesc& DeviceDesc)
+static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhysicalDeviceCreateInfo& DeviceDesc)
 {
     // Get the physical device properties
     VkPhysicalDeviceProperties AdapterProperties;
@@ -146,7 +146,7 @@ FVulkanPhysicalDevice::~FVulkanPhysicalDevice()
     PhysicalDevice = VK_NULL_HANDLE;
 }
 
-bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterDesc)
+bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc)
 {
     VkResult Result = VK_SUCCESS;
 

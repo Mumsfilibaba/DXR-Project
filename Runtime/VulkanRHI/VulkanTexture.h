@@ -10,7 +10,7 @@ typedef TSharedRef<FVulkanViewport>                FVulkanViewportRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
 typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 
-class FVulkanTexture : public FRHITexture, public FVulkanDeviceObject
+class FVulkanTexture : public FRHITexture, public FVulkanDeviceChild
 {
 public:
     FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& InDesc);
@@ -18,24 +18,19 @@ public:
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-    virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FVulkanTexture*>(this)); }
-    
+    virtual void* GetRHIBaseTexture()        override { return reinterpret_cast<void*>(static_cast<FVulkanTexture*>(this)); }
     virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetVkImage()); }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
-    
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const FString& InName) override final;
-    
     virtual FString GetName() const override final;
 
     FVulkanImageView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
-
     FVulkanImageView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
 
     void DestroyRenderTargetViews() { RenderTargetViews.Clear(); }

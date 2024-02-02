@@ -5,7 +5,7 @@
 template<typename... Types>
 class TVariant
 {
-    using TypeIndexType = int32;
+    typedef int32 TypeIndexType;
 
     inline static constexpr TypeIndexType SizeInBytes      = TMax<sizeof(Types)...>::Value;
     inline static constexpr TypeIndexType AlignmentInBytes = TMax<alignof(Types)...>::Value;

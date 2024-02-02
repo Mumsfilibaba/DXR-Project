@@ -1,47 +1,358 @@
 #pragma once
+#include "Array.h"
 #include "Core/Utilities/HashUtilities.h"
-
 // TODO: Custom map implementation
-#if 1
 #include <unordered_map>
 
-template<typename KeyType, typename T, typename HashType = THash<KeyType>>
-using TMap = std::unordered_map<KeyType, T, HashType>;
-
-#else
-
-#include "Pair.h"
-#include "Array.h"
-
-template<typename T>
-struct THash;
-
-template<typename ElementType, typename KeyType, typename HasherType = THash<KeyType>>
+template<typename InKeyType, typename InValueType>
 class TMap
 {
+    template<typename MapType, typename KeyType, typename ValueType>
+    friend class TMapIterator;
+
 public:
-    ElementType* Find(const KeyType& Key)
+    typedef InKeyType   KeyType;
+    typedef InValueType ValueType;
+    typedef int32       SizeType;
+
+private:
+    struct FHasher
     {
-        return nullptr;
+        size_t operator()(const KeyType& Value) const
+        {
+            return static_cast<size_t>(HashType(Value));
+        }
+    };
+    
+public:
+    typedef std::unordered_map<KeyType, ValueType, FHasher>          BaseMapType;
+    typedef TMapIterator<TMap, KeyType, ValueType>                   IteratorType;
+    typedef TMapIterator<const TMap, const KeyType, const ValueType> ConstIteratorType;
+
+    /** @brief - Default constructor */
+    TMap() = default;
+
+    /** @brief - Copy Constructor */
+    TMap(const TMap& Other)
+        : BaseMap(Other.BaseMap)
+    {
+    }
+    
+    /** @brief - Move Constructor */
+    TMap(TMap&& Other)
+        : BaseMap(Move(Other.BaseMap))
+    {
     }
 
-    void Add(const KeyType& Key, )
-
-    ElementType& operator[](const KeyType& Key)
+    void Append(const TMap& Other)
     {
-        if (ElementType* Element = Find(Key))
+        BaseMap.insert(Other.BaseMap.begin(), Other.BaseMap.end());
+    }
+
+    ValueType& Add(const KeyType& Key)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
         {
-            return *Element;
+            Element->second = ValueType();
+            return Element->second;
         }
         else
         {
-
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.insert(std::make_pair(Key, ValueType()));
+            return InsertedElement.first->second;
         }
     }
 
-private:
-    TArray<ElementType> Elements;
-    TArray<KeyType>     Keys;
-};
+    ValueType& Add(KeyType&& Key)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = ValueType();
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.emplace(::Forward<KeyType>(Key), ValueType());
+            return InsertedElement.first->second;
+        }
+    }
 
-#endif
+    ValueType& Add(const KeyType& Key, const ValueType& Value)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = Value;
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.insert(std::make_pair(Key, Value));
+            return InsertedElement.first->second;
+        }
+    }
+
+    ValueType& Add(KeyType&& Key, const ValueType& Value)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = Value;
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.emplace(::Forward<KeyType>(Key), Value);
+            return InsertedElement.first->second;
+        }
+    }
+    
+    ValueType& Add(const KeyType& Key, ValueType&& Value)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = ::Forward<ValueType>(Value);
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.emplace(Key, ::Forward<ValueType>(Value));
+            return InsertedElement.first->second;
+        }
+    }
+    
+    ValueType& Add(KeyType&& Key, ValueType&& Value)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = ::Forward<ValueType>(Value);
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.emplace(::Forward<KeyType>(Key), ::Forward<ValueType>(Value));
+            return InsertedElement.first->second;
+        }
+    }
+
+    ValueType& Emplace(KeyType&& Key)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = ValueType();
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.emplace(::Forward<KeyType>(Key), ValueType());
+            return InsertedElement.first->second;
+        }
+    }
+
+    ValueType& Emplace(KeyType&& Key, ValueType&& Value)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = ::Forward<ValueType>(Value);
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.emplace(::Forward<KeyType>(Key), ::Forward<ValueType>(Value));
+            return InsertedElement.first->second;
+        }
+    }
+
+    NODISCARD ValueType* Find(const KeyType& Key)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            return &Element->second;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    NODISCARD const ValueType* Find(const KeyType& Key) const
+    {
+        typename BaseMapType::const_iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            return &Element->second;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    NODISCARD ValueType& FindOrAdd(const KeyType& Key)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.insert(std::make_pair(Key, ValueType()));
+            return InsertedElement.first->second;
+        }
+    }
+    
+    NODISCARD ValueType& FindOrAdd(const KeyType& Key, const ValueType& Value)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            Element->second = Value;
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.insert(std::make_pair(Key, Value));
+            return InsertedElement.first->second;
+        }
+    }
+    
+    void Remove(const KeyType& InElement)
+    {
+        BaseMap.erase(InElement);
+    }
+
+    NODISCARD bool Contains(const KeyType& Key) const
+    {
+        typename BaseMapType::const_iterator Element = BaseMap.find(Key);
+        return Element != BaseMap.end();
+    }
+    
+    void Reserve(SizeType InCapacity)
+    {
+        BaseMap.reserve(InCapacity);
+    }
+    
+    void Clear()
+    {
+        BaseMap.clear();
+    }
+
+    NODISCARD bool IsEmpty() const
+    {
+        return BaseMap.empty();
+    }
+
+    NODISCARD SizeType Size() const
+    {
+        return static_cast<SizeType>(BaseMap.size());
+    }
+    
+    NODISCARD SizeType Capacity() const
+    {
+        return static_cast<SizeType>(BaseMap.max_size());
+    }
+
+    NODISCARD TArray<KeyType> GetKeys() const
+    {
+        TArray<KeyType> Keys;
+        Keys.Reserve(BaseMap.size());
+
+        for (const std::pair<KeyType, ValueType>& Pair : BaseMap)
+        {
+            Keys.Emplace(Pair.first);
+        }
+
+        return Keys;
+    }
+
+    NODISCARD TArray<ValueType> GetValues() const
+    {
+        TArray<ValueType> Values;
+        Values.Reserve(BaseMap.size());
+
+        for (const std::pair<KeyType, ValueType>& Pair : BaseMap)
+        {
+            Values.Emplace(Pair.second);
+        }
+
+        return Values;
+    }
+
+public: // Iterators
+    NODISCARD IteratorType CreateIterator()
+    {
+        return TMapIterator<TMap, KeyType, ValueType>(*this, BaseMap.begin());
+    }
+
+    NODISCARD ConstIteratorType CreateIterator() const
+    {
+        return TMapIterator<TMap, const KeyType, const ValueType>(*this, BaseMap.begin());
+    }
+
+    NODISCARD ConstIteratorType CreateConstIterator()
+    {
+        return TMapIterator<TMap, const KeyType, const ValueType>(*this, BaseMap.begin());
+    }
+
+public: // STL Iterators
+    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return TMapIterator<TMap, KeyType, ValueType>(*this, BaseMap.begin()); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return TMapIterator<const TMap, const KeyType, const ValueType>(*this, BaseMap.begin()); }
+    
+    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return TMapIterator<TMap, KeyType, ValueType>(*this, BaseMap.end()); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return TMapIterator<const TMap, const KeyType, const ValueType>(*this, BaseMap.end()); }
+
+public:
+    NODISCARD ValueType& operator[](const KeyType& Key)
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        if (Element != BaseMap.end())
+        {
+            return Element->second;
+        }
+        else
+        {
+            std::pair<typename BaseMapType::iterator, bool> InsertedElement = BaseMap.insert(std::make_pair(Key, ValueType()));
+            return InsertedElement.first->second;
+        }
+    }
+    
+    NODISCARD const ValueType& operator[](const KeyType& Key) const
+    {
+        typename BaseMapType::iterator Element = BaseMap.find(Key);
+        CHECK(Element != BaseMap.end());
+        return Element->second;
+    }
+
+    TMap& operator=(const TMap& Other)
+    {
+        BaseMap = Other.BaseMap;
+        return *this;
+    }
+
+    TMap& operator=(TMap&& Other)
+    {
+        BaseMap = Move(Other.BaseMap);
+        return *this;
+    }
+
+    NODISCARD bool operator==(const TMap& Other) const
+    {
+        return BaseMap == Other.BaseMap;
+    }
+
+    NODISCARD bool operator!=(const TMap& Other) const
+    {
+        return BaseMap != Other.BaseMap;
+    }
+
+private:
+    BaseMapType BaseMap;
+};

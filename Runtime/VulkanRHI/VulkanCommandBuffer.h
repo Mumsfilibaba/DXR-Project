@@ -28,7 +28,7 @@ struct FVulkanImageTransitionBarrier
 };
 
 
-class FVulkanCommandBuffer : public FVulkanDeviceObject
+class FVulkanCommandBuffer : public FVulkanDeviceChild
 {
 public:
     FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
@@ -37,55 +37,8 @@ public:
 
     bool Initialize(VkCommandBufferLevel InLevel);
 
-    FORCEINLINE bool Begin(VkCommandBufferUsageFlags Flags = 0)
-    {
-        // Wait for GPU to finish with this CommandBuffer and then reset it
-        if (!WaitForFence())
-        {
-            return false;
-        }
-
-        if (!Fence.Reset())
-        {
-            return false;
-        }
-
-        // Avoid using the VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT since we can reuse the memory
-        if (!CommandPool.Reset())
-        {
-            return false;
-        }
-
-        VkCommandBufferBeginInfo BeginInfo;
-        FMemory::Memzero(&BeginInfo);
-
-        BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        BeginInfo.flags = Flags;
-
-        VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("vkBeginCommandBuffer Failed");
-            return false;
-        }
-
-        bIsRecording = true;
-        return true;
-    }
-
-    FORCEINLINE bool End()
-    {
-        VkResult Result = vkEndCommandBuffer(CommandBuffer);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("vkEndCommandBuffer Failed");
-            return false;
-        }
-
-        NumCommands  = 0;
-        bIsRecording = false;
-        return true;
-    }
+    bool Begin(VkCommandBufferUsageFlags Flags = 0);
+    bool End();
 
     FORCEINLINE void ClearColorImage(VkImage Image, VkImageLayout ImageLayout, VkClearColorValue* ClearColor, uint32 RangeCount, VkImageSubresourceRange* Ranges)
     {

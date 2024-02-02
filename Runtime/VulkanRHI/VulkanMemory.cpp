@@ -7,7 +7,7 @@ static TAutoConsoleVariable<int32> CVarMemoryHeapSize(
     128);
 
 FVulkanMemoryHeap::FVulkanMemoryHeap(FVulkanDevice* InDevice, VkMemoryAllocateFlags InAllocationFlags, uint32 InHeapIndex, uint32 InMemoryIndex)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , SizeInBytes(0)
     , AllocationFlags(InAllocationFlags)
     , MemoryIndex(InMemoryIndex)
@@ -382,7 +382,7 @@ bool FVulkanMemoryHeap::ValidateChain() const
 
 
 FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , MemoryHeaps()
     , DeviceProperties()
     , HeapSize(0)

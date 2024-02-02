@@ -3,16 +3,16 @@
 
 class FVulkanDevice;
 
-class FVulkanDeviceObject
+class FVulkanDeviceChild
 {
 public:
-    FVulkanDeviceObject(FVulkanDevice* InDevice)
+    FVulkanDeviceChild(FVulkanDevice* InDevice)
         : Device(InDevice)
     {
         CHECK(Device != nullptr);
     }
 
-    virtual ~FVulkanDeviceObject()
+    virtual ~FVulkanDeviceChild()
     {
         Device = nullptr;
     }

@@ -4,7 +4,7 @@
 #include "Core/Containers/Set.h"
 #include "Core/Platform/PlatformLibrary.h"
 
-struct FVulkanInstanceDesc
+struct FVulkanInstanceCreateInfo
 {
     TArray<const CHAR*> RequiredExtensionNames;
     TArray<const CHAR*> RequiredLayerNames;
@@ -18,19 +18,19 @@ public:
     FVulkanInstance();
     ~FVulkanInstance();
 
-    bool Initialize(const FVulkanInstanceDesc& InstanceDesc);
+    bool Initialize(const FVulkanInstanceCreateInfo& InstanceDesc);
 
-    FORCEINLINE bool IsLayerEnabled(const FString& LayerName)
+    bool IsLayerEnabled(const FString& LayerName)
     {
-        return LayerNames.find(LayerName) != LayerNames.end();
+        return LayerNames.Find(LayerName) != nullptr;
     }
 
-    FORCEINLINE bool IsExtensionEnabled(const FString& ExtensionName)
+    bool IsExtensionEnabled(const FString& ExtensionName)
     {
-        return ExtensionNames.find(ExtensionName) != ExtensionNames.end();
+        return ExtensionNames.Find(ExtensionName) != nullptr;
     }
 
-    FORCEINLINE VkInstance GetVkInstance() const noexcept
+    VkInstance GetVkInstance() const noexcept
     {
         return Instance;
     }

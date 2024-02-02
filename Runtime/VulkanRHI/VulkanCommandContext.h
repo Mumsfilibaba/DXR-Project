@@ -7,7 +7,7 @@
 class FVulkanDevice;
 class FVulkanBuffer;
 
-class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceObject
+class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceChild
 {
 public:
     FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue* InCommandQueue);

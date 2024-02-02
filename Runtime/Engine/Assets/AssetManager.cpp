@@ -61,11 +61,10 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     // Convert backslashes
     FString FinalPath = Filename;
     ConvertBackslashes(FinalPath);
-
-    const auto ExistingTexture = TextureMap.find(FinalPath);
-    if (ExistingTexture != TextureMap.end())
+    
+    if (uint32* TextureID = TextureMap.Find(FinalPath))
     {
-        const uint32 TextureIndex = ExistingTexture->second;
+        const uint32 TextureIndex = *TextureID;
         return Textures[TextureIndex];
     }
 
@@ -108,7 +107,7 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     // Insert the new texture
     const auto Index = Textures.Size();
     Textures.Emplace(NewTexture);
-    TextureMap.insert(std::make_pair(FinalPath, Index));
+    TextureMap.Add(FinalPath, Index);
     return NewTexture;
 }
 

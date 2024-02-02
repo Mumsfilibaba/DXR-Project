@@ -6,7 +6,7 @@
 #include "VulkanDevice.h"
 
 FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue* InCommandQueue)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Queue(MakeSharedRef<FVulkanQueue>(InCommandQueue))
     , CommandBuffer(InDevice, InCommandQueue->GetType())
     , ContextState(InDevice, *this)

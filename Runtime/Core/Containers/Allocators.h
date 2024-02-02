@@ -9,9 +9,9 @@ template<typename ElementType>
 class TArrayAllocatorInterface
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
 
-    TArrayAllocatorInterface() = default;
+    TArrayAllocatorInterface()  = default;
     ~TArrayAllocatorInterface() = default;
 
     /**
@@ -56,7 +56,7 @@ template<typename ElementType>
 class TDefaultArrayAllocator
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
 
     TDefaultArrayAllocator() = default;
 
@@ -110,7 +110,7 @@ class TInlineArrayAllocator
     class FInlineStorage
     {
     public:
-        using SizeType = int32;
+        typedef int32 SizeType;
 
         NODISCARD constexpr ElementType* GetElements() const noexcept
         {
@@ -123,11 +123,11 @@ class TInlineArrayAllocator
         }
 
     private:
-        mutable TAlignedBytes<sizeof(ElementType), AlignmentOf<ElementType>> InlineAllocation[NumElements];
+        mutable TAlignedBytes<sizeof(ElementType), TAlignmentOf<ElementType>::Value> InlineAllocation[NumElements];
     };
 
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
 
     TInlineArrayAllocator() = default;
 

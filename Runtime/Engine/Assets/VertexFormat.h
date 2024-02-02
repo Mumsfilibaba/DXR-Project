@@ -41,17 +41,14 @@ struct FVertex
     FVector2 TexCoord;
 };
 
-struct FVertexHasher
+inline uint64 HashType(const FVertex& Vertex)
 {
-    inline size_t operator()(const FVertex& Vertex) const
-    {
-        uint64 Hash = TTypeHash<FVector3>::Hash(Vertex.Position);
-        HashCombine<FVector3>(Hash, Vertex.Normal);
-        HashCombine<FVector3>(Hash, Vertex.Tangent);
-        HashCombine<FVector2>(Hash, Vertex.TexCoord);
-        return Hash;
-    }
-};
+    uint64 Hash = HashType(Vertex.Position);
+    HashCombine<FVector3>(Hash, Vertex.Normal);
+    HashCombine<FVector3>(Hash, Vertex.Tangent);
+    HashCombine<FVector2>(Hash, Vertex.TexCoord);
+    return Hash;
+}
 
 
 struct FVertexMasked
@@ -82,15 +79,12 @@ struct FVertexMasked
     FVector2 TexCoord;
 };
 
-struct FVertexMaskedHasher
+inline uint64 HashType(const FVertexMasked& Vertex)
 {
-    inline size_t operator()(const FVertexMasked& Vertex) const
-    {
-        uint64 Hash = TTypeHash<FVector3>::Hash(Vertex.Position);
-        HashCombine<FVector2>(Hash, Vertex.TexCoord);
-        return Hash;
-    }
-};
+    uint64 Hash = HashType(Vertex.Position);
+    HashCombine<FVector2>(Hash, Vertex.TexCoord);
+    return Hash;
+}
 
 
 struct FVertexPacked

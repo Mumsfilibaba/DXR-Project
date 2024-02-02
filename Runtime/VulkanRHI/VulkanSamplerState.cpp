@@ -3,7 +3,7 @@
 
 FVulkanSamplerState::FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InDesc)
     : FRHISamplerState(InDesc)
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , Sampler(VK_NULL_HANDLE)
 {
 }

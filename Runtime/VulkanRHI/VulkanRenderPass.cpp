@@ -2,7 +2,7 @@
 #include "VulkanDevice.h"
 
 FVulkanRenderPassCache::FVulkanRenderPassCache(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , RenderPasses()
 {
 }
@@ -14,11 +14,12 @@ FVulkanRenderPassCache::~FVulkanRenderPassCache()
 
 VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& Key)
 {
+    SCOPED_LOCK(RenderPassesCS);
+
     // Check if the RenderPass exists
-    auto ExistingPass = RenderPasses.find(Key);
-    if (ExistingPass != RenderPasses.end())
+    if (VkRenderPass* ExistingPass = RenderPasses.Find(Key))
     {
-        return ExistingPass->second;
+        return *ExistingPass;
     }
 
     // Setup ColorAttachments
@@ -111,24 +112,26 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     else
     {
         VULKAN_INFO("Created new renderpass");
-        RenderPasses.insert(std::pair<FVulkanRenderPassKey, VkRenderPass>(Key, RenderPass));
+        RenderPasses.Add(Key, RenderPass);
         return RenderPass;
     }
 }
 
 void FVulkanRenderPassCache::ReleaseAll()
 {
+    SCOPED_LOCK(RenderPassesCS);
+
     // Destroy all renderpasses
-    for (auto& RenderPass : RenderPasses)
+    for (auto RenderPass : RenderPasses)
     {
-        GetDevice()->GetFramebufferCache().OnReleaseRenderPass(RenderPass.second);
+        GetDevice()->GetFramebufferCache().OnReleaseRenderPass(RenderPass.Second);
         
-        if (VULKAN_CHECK_HANDLE(RenderPass.second))
+        if (VULKAN_CHECK_HANDLE(RenderPass.Second))
         {
-            vkDestroyRenderPass(GetDevice()->GetVkDevice(), RenderPass.second, nullptr);
+            vkDestroyRenderPass(GetDevice()->GetVkDevice(), RenderPass.Second, nullptr);
         }
     }
 
     // Clear all
-    RenderPasses.clear();
+    RenderPasses.Clear();
 }

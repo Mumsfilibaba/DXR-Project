@@ -1,11 +1,11 @@
 #pragma once
 #include "VulkanDevice.h"
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "Core/Containers/SharedRef.h"
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 
-class FVulkanQueue : public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanQueue : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
