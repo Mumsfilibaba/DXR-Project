@@ -272,12 +272,12 @@ bool FVulkanDescriptorSetCache::AllocateDescriptorSets(EShaderVisibility ShaderS
 
 void FVulkanDescriptorSetCache::SetVertexBuffers(FVulkanVertexBufferCache& VertexBuffersCache)
 {
-    Context.GetCommandBuffer().BindVertexBuffers(0, VertexBuffersCache.NumVertexBuffers, VertexBuffersCache.VertexBuffers, VertexBuffersCache.VertexBufferOffsets);
+    Context.GetCommandBuffer()->BindVertexBuffers(0, VertexBuffersCache.NumVertexBuffers, VertexBuffersCache.VertexBuffers, VertexBuffersCache.VertexBufferOffsets);
 }
 
 void FVulkanDescriptorSetCache::SetIndexBuffer(FVulkanIndexBufferCache& IndexBufferCache)
 {
-    Context.GetCommandBuffer().BindIndexBuffer(IndexBufferCache.IndexBuffer, IndexBufferCache.Offset, IndexBufferCache.IndexType);
+    Context.GetCommandBuffer()->BindIndexBuffer(IndexBufferCache.IndexBuffer, IndexBufferCache.Offset, IndexBufferCache.IndexType);
 }
 
 void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs)
@@ -577,7 +577,7 @@ void FVulkanDescriptorSetCache::SetDescriptorSet(VkPipelineLayout PipelineLayout
     
     VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
     CHECK(DescriptorSet != VK_NULL_HANDLE);
-    Context.GetCommandBuffer().BindDescriptorSets(BindPoint, PipelineLayout, DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);
+    Context.GetCommandBuffer()->BindDescriptorSets(BindPoint, PipelineLayout, DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);
 }
 
 bool FVulkanDescriptorSetCache::AllocateDescriptorPool()

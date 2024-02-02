@@ -7,8 +7,8 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanComma
     : FVulkanDeviceChild(InDevice)
     , CommandPool(InDevice, InType)
     , Fence(InDevice)
+    , CommandBuffer()
     , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-    , CommandBuffer(VK_NULL_HANDLE)
     , NumCommands(0)
     , bIsRecording(false)
 {
@@ -18,14 +18,13 @@ FVulkanCommandBuffer::FVulkanCommandBuffer(FVulkanCommandBuffer&& Other)
     : FVulkanDeviceChild(GetDevice())
     , CommandPool(Move(Other.CommandPool))
     , Fence(Move(Other.Fence))
+    , CommandBuffer(Move(Other.CommandBuffer))
     , Level(VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-    , CommandBuffer(Other.CommandBuffer)
     , NumCommands(Other.NumCommands)
     , bIsRecording(Other.bIsRecording)
 {
-    Other.CommandBuffer = VK_NULL_HANDLE;
-    Other.NumCommands   = 0;
-    Other.bIsRecording  = false;
+    Other.NumCommands  = 0;
+    Other.bIsRecording = false;
 }
 
 FVulkanCommandBuffer::~FVulkanCommandBuffer()
@@ -49,7 +48,7 @@ bool FVulkanCommandBuffer::Initialize(VkCommandBufferLevel InLevel)
     CommandBufferAllocateInfo.level              = Level = InLevel;
     CommandBufferAllocateInfo.commandBufferCount = 1;
 
-    VkResult Result = vkAllocateCommandBuffers(GetDevice()->GetVkDevice(), &CommandBufferAllocateInfo, &CommandBuffer);
+    VkResult Result = CommandBuffer.AllocateCommandBuffer(GetDevice()->GetVkDevice(), &CommandBufferAllocateInfo);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to allocate CommandBuffer");
@@ -89,7 +88,7 @@ bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
     BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     BeginInfo.flags = Flags;
 
-    VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
+    VkResult Result = CommandBuffer.BeginCommandBuffer(&BeginInfo);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("vkBeginCommandBuffer Failed");
@@ -102,7 +101,7 @@ bool FVulkanCommandBuffer::Begin(VkCommandBufferUsageFlags Flags)
 
 bool FVulkanCommandBuffer::End()
 {
-    VkResult Result = vkEndCommandBuffer(CommandBuffer);
+    VkResult Result = CommandBuffer.EndCommandBuffer();
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("vkEndCommandBuffer Failed");

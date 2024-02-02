@@ -33,7 +33,7 @@ void FVulkanCommandContextState::BindGraphicsStates()
     if (GraphicsState.bBindPipelineState || GVulkanForceBinding)
     {
         VkPipeline Pipeline = GraphicsState.PipelineState->GetVkPipeline();
-        Context.GetCommandBuffer().BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
+        Context.GetCommandBuffer()->BindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, Pipeline);
         GraphicsState.bBindPipelineState = false;
     }
 
@@ -59,19 +59,19 @@ void FVulkanCommandContextState::BindGraphicsStates()
 
     if (GraphicsState.bBindViewports || GVulkanForceBinding)
     {
-        Context.GetCommandBuffer().SetViewport(0, GraphicsState.NumViewports, GraphicsState.Viewports);
+        Context.GetCommandBuffer()->SetViewport(0, GraphicsState.NumViewports, GraphicsState.Viewports);
         GraphicsState.bBindViewports = false;
     }
 
     if (GraphicsState.bBindScissorRects || GVulkanForceBinding)
     {
-        Context.GetCommandBuffer().SetScissor(0, GraphicsState.NumScissorRects, GraphicsState.ScissorRects);
+        Context.GetCommandBuffer()->SetScissor(0, GraphicsState.NumScissorRects, GraphicsState.ScissorRects);
         GraphicsState.bBindScissorRects = false;
     }
 
     if (GraphicsState.bBindBlendFactor || GVulkanForceBinding)
     {
-        Context.GetCommandBuffer().SetBlendConstants(GraphicsState.BlendFactor);
+        Context.GetCommandBuffer()->SetBlendConstants(GraphicsState.BlendFactor);
         GraphicsState.bBindBlendFactor = false;
     }
 }
@@ -88,7 +88,7 @@ void FVulkanCommandContextState::BindComputeState()
     if (ComputeState.bBindPipelineState || GVulkanForceBinding)
     {
         VkPipeline Pipeline = ComputeState.PipelineState->GetVkPipeline();
-        Context.GetCommandBuffer().BindPipeline(VK_PIPELINE_BIND_POINT_COMPUTE, Pipeline);
+        Context.GetCommandBuffer()->BindPipeline(VK_PIPELINE_BIND_POINT_COMPUTE, Pipeline);
         ComputeState.bBindPipelineState = false;
     }
 
@@ -139,7 +139,7 @@ void FVulkanCommandContextState::BindPushConstants(VkPipelineLayout PipelineLayo
 {
     if (CommonState.PushConstantsCache.NumConstants > 0)
     {
-        Context.GetCommandBuffer().PushConstants(PipelineLayout, VK_SHADER_STAGE_ALL, 0, CommonState.PushConstantsCache.NumConstants * sizeof(uint32), CommonState.PushConstantsCache.Constants);
+        Context.GetCommandBuffer()->PushConstants(PipelineLayout, VK_SHADER_STAGE_ALL, 0, CommonState.PushConstantsCache.NumConstants * sizeof(uint32), CommonState.PushConstantsCache.Constants);
     }
 }
 

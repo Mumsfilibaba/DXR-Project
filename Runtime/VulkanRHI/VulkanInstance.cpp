@@ -39,22 +39,7 @@ FVulkanInstance::FVulkanInstance()
 
 FVulkanInstance::~FVulkanInstance()
 {
-#if VK_EXT_debug_utils
-    if (VULKAN_CHECK_HANDLE(DebugMessenger))
-    {
-        vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
-    }
-#endif
-
-    if (VULKAN_CHECK_HANDLE(Instance))
-    {
-        vkDestroyInstance(Instance, nullptr);
-    }
-
-    if (DriverHandle)
-    {
-        FPlatformLibrary::FreeDynamicLib(DriverHandle);
-    }
+    Release();
 }
 
 bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
@@ -312,4 +297,27 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
 #endif
 
     return true;
+}
+
+void FVulkanInstance::Release()
+{
+#if VK_EXT_debug_utils
+    if (VULKAN_CHECK_HANDLE(DebugMessenger))
+    {
+        vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
+        DebugMessenger = VK_NULL_HANDLE;
+    }
+#endif
+
+    if (VULKAN_CHECK_HANDLE(Instance))
+    {
+        vkDestroyInstance(Instance, nullptr);
+        Instance = VK_NULL_HANDLE;
+    }
+
+    if (DriverHandle)
+    {
+        FPlatformLibrary::FreeDynamicLib(DriverHandle);
+        DriverHandle = nullptr;
+    }
 }

@@ -19,6 +19,7 @@ public:
     ~FVulkanInstance();
 
     bool Initialize(const FVulkanInstanceCreateInfo& InstanceDesc);
+    void Release();
 
     bool IsLayerEnabled(const FString& LayerName)
     {

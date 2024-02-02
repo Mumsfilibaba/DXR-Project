@@ -153,8 +153,8 @@ bool FVulkanViewport::CreateSwapChain()
     TArray<VkImage> SwapChainImages(SwapChain->GetBufferCount());
     SwapChain->GetSwapChainImages(SwapChainImages.Data());
 
-    TUniquePtr<FVulkanCommandBuffer> CommandBuffer = MakeUnique<FVulkanCommandBuffer>(GetDevice(), EVulkanCommandQueueType::Graphics);
-    if (!CommandBuffer->Initialize(VK_COMMAND_BUFFER_LEVEL_PRIMARY))
+    FVulkanCommandBuffer CommandBuffer(GetDevice(), EVulkanCommandQueueType::Graphics);
+    if (!CommandBuffer.Initialize(VK_COMMAND_BUFFER_LEVEL_PRIMARY))
     {
         return false;
     }
@@ -163,7 +163,7 @@ bool FVulkanViewport::CreateSwapChain()
     bAquireNextImage = true;
 
     // Transition images to the correct layout that is expected by the rendering engine (To be compatible with the other RHI modules)
-    CommandBuffer->Begin();
+    CommandBuffer.Begin();
 
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
@@ -187,11 +187,12 @@ bool FVulkanViewport::CreateSwapChain()
         BackBuffers[Index++]->SetVkImage(Image);
     }
 
-    CommandBuffer->End();
+    CommandBuffer.End();
 
-    Queue->ExecuteCommandBuffer(CommandBuffer.GetAddressOf(), 1, CommandBuffer->GetFence());
+    FVulkanCommandBuffer* CommandBuffers[] = { &CommandBuffer };
+    Queue->ExecuteCommandBuffer(CommandBuffers, 1, CommandBuffer.GetFence());
 
-    CommandBuffer->WaitForFence();
+    CommandBuffer.WaitForFence();
     return true;
 }
 

@@ -35,7 +35,7 @@ bool FVulkanCommandContext::Initialize()
     ObtainCommandBuffer();
 
     VkBuffer DefaultBuffer = ContextState.GetDescriptorSetCache().GetDefaultResources().NullBuffer;
-    CommandBuffer.FillBuffer(DefaultBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
+    CommandBuffer->FillBuffer(DefaultBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
 
     VkImage DefaultImage = ContextState.GetDescriptorSetCache().GetDefaultResources().NullImage;
 
@@ -54,7 +54,7 @@ bool FVulkanCommandContext::Initialize()
     TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
     TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
 
     VkBufferImageCopy BufferImageCopy;
     BufferImageCopy.bufferOffset                    = 0;
@@ -67,7 +67,7 @@ bool FVulkanCommandContext::Initialize()
     BufferImageCopy.imageOffset                     = { 0, 0, 0 };
     BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
 
-    CommandBuffer.CopyBufferToImage(DefaultBuffer, DefaultImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+    CommandBuffer->CopyBufferToImage(DefaultBuffer, DefaultImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
 
     TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     TransitionBarrier.NewLayout      = VK_IMAGE_LAYOUT_GENERAL;
@@ -76,7 +76,7 @@ bool FVulkanCommandContext::Initialize()
     TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
     TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
-    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
 
     FlushCommandBuffer();
     return true;
@@ -178,13 +178,13 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
         TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
 
         VkClearColorValue VulkanClearColor;
         FMemory::Memcpy(VulkanClearColor.float32, ClearColor.Data(), sizeof(VulkanClearColor.float32));
 
         VkImageSubresourceRange SubresourceRange = ImageView->GetSubresourceRange();
-        CommandBuffer.ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1, &SubresourceRange);
+        CommandBuffer->ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1, &SubresourceRange);
         
         // .. And transition back into "RenderTargetState"
         TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -193,7 +193,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         TransitionBarrier.DstAccessMask  = ConvertResourceStateToAccessFlags(EResourceAccess::RenderTarget);
         TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
         TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
     }
 }
 
@@ -223,14 +223,14 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
         TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
         TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
         
         VkClearDepthStencilValue DepthStenciLValue;
         DepthStenciLValue.depth   = Depth;
         DepthStenciLValue.stencil = Stencil;
         
         VkImageSubresourceRange SubresourceRange = ImageView->GetSubresourceRange();
-        CommandBuffer.ClearDepthStencilImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &DepthStenciLValue, 1, &SubresourceRange);
+        CommandBuffer->ClearDepthStencilImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &DepthStenciLValue, 1, &SubresourceRange);
         
         // .. And transition back into "DepthStencilState"
         TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -239,7 +239,7 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
         TransitionBarrier.DstAccessMask  = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
         TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
     }
 }
 
@@ -254,7 +254,7 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
     if (VulkanUnorderedAccessView->HasImageView())
     {
         VkImageSubresourceRange SubresourceRange = VulkanUnorderedAccessView->GetImageSubresourceRange();
-        CommandBuffer.ClearColorImage(VulkanUnorderedAccessView->GetVkImage(), VK_IMAGE_LAYOUT_GENERAL, &VulkanClearColor, 1, &SubresourceRange);
+        CommandBuffer->ClearColorImage(VulkanUnorderedAccessView->GetVkImage(), VK_IMAGE_LAYOUT_GENERAL, &VulkanClearColor, 1, &SubresourceRange);
     }
     else
     {
@@ -380,12 +380,12 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     RenderPassBeginInfo.clearValueCount          = NumClearValues;
     RenderPassBeginInfo.pClearValues             = ClearValues;
 
-    CommandBuffer.BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    CommandBuffer->BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void FVulkanCommandContext::RHIEndRenderPass()  
 {
-    CommandBuffer.EndRenderPass();
+    CommandBuffer->EndRenderPass();
 }
 
 void FVulkanCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegion)
@@ -618,7 +618,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
         BufferCopy.dstOffset = BufferRegion.Offset;
         BufferCopy.size      = BufferRegion.Size;
         
-        CommandBuffer.CopyBuffer(Allocation.Buffer->GetVkBuffer(), VulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
+        CommandBuffer->CopyBuffer(Allocation.Buffer->GetVkBuffer(), VulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
         DiscardListVk.Add(Allocation.Buffer);
     }
 }
@@ -664,7 +664,7 @@ void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureR
     BufferImageCopy.imageOffset                     = { 0, 0, 0 };
     BufferImageCopy.imageExtent                     = { TextureRegion.Width, TextureRegion.Height, 1 };
 
-    CommandBuffer.CopyBufferToImage(Allocation.Buffer->GetVkBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
+    CommandBuffer->CopyBufferToImage(Allocation.Buffer->GetVkBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
     DiscardListVk.Add(Allocation.Buffer);
 }
 
@@ -695,7 +695,7 @@ void FVulkanCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src
     ImageResolve.extent.height                 = DstVulkanTexture->GetHeight();
     ImageResolve.extent.depth                  = DstVulkanTexture->GetDepth();
     
-    CommandBuffer.ResolveImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &ImageResolve);
+    CommandBuffer->ResolveImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &ImageResolve);
 }
 
 void FVulkanCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
@@ -711,7 +711,7 @@ void FVulkanCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, cons
     BufferCopy.dstOffset = CopyDesc.DstOffset;
     BufferCopy.size      = CopyDesc.Size;
     
-    CommandBuffer.CopyBuffer(SrcVulkanBuffer->GetVkBuffer(), DstVulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
+    CommandBuffer->CopyBuffer(SrcVulkanBuffer->GetVkBuffer(), DstVulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
 }
 
 void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -760,7 +760,7 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
         }
     }
     
-    CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, Desc.NumMipLevels, ImageCopies);
+    CommandBuffer->CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, Desc.NumMipLevels, ImageCopies);
 }
 
 void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc)
@@ -831,7 +831,7 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
             CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.z >> MipLevel, 1);
         }
         
-        CommandBuffer.CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CopyDesc.NumMipLevels, ImageCopy);
+        CommandBuffer->CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CopyDesc.NumMipLevels, ImageCopy);
     }
 }
 
@@ -955,7 +955,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
 
         // Transition this the source MipLevel into correct layout
         TransitionBarrier.SubresourceRange.baseMipLevel = Index - 1;
-        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
 
         VkImageBlit ImageBlit;
         FMemory::Memzero(&ImageBlit);
@@ -973,12 +973,12 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
         ImageBlit.dstSubresource.baseArrayLayer  = 0;
         ImageBlit.dstSubresource.layerCount      = NumArrayLayers;
 
-        CommandBuffer.BlitImage(VulkanImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &ImageBlit, VK_FILTER_LINEAR);
+        CommandBuffer->BlitImage(VulkanImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VulkanImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &ImageBlit, VK_FILTER_LINEAR);
         SourceExtent = DestinationExtent;
     }
 
     TransitionBarrier.SubresourceRange.baseMipLevel = MipLevelCount - 1;
-    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
     
     // Insert a final TransitionBarrier from Source to Destination since the texture is expected to be in CopyDest
     TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -995,7 +995,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
     TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
     TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
     
-    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
 void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -1026,7 +1026,7 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
     
-        CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+        CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
     }
 }
 
@@ -1049,7 +1049,7 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
     BufferBarrier.Offset          = 0;
     BufferBarrier.Size            = VK_WHOLE_SIZE;
 
-    CommandBuffer.BufferMemoryPipelineBarrier(BufferBarrier);
+    CommandBuffer->BufferMemoryPipelineBarrier(BufferBarrier);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
@@ -1076,7 +1076,7 @@ void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Textur
     TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
     TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-    CommandBuffer.ImageLayoutTransitionBarrier(TransitionBarrier);
+    CommandBuffer->ImageLayoutTransitionBarrier(TransitionBarrier);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)   
@@ -1098,37 +1098,37 @@ void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     BufferBarrier.Offset          = 0;
     BufferBarrier.Size            = VK_WHOLE_SIZE;
 
-    CommandBuffer.BufferMemoryPipelineBarrier(BufferBarrier);
+    CommandBuffer->BufferMemoryPipelineBarrier(BufferBarrier);
 }
 
 void FVulkanCommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)
 {
     ContextState.BindGraphicsStates();
-    CommandBuffer.Draw(VertexCount, 1, StartVertexLocation, 0);
+    CommandBuffer->Draw(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void FVulkanCommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
     ContextState.BindGraphicsStates();
-    CommandBuffer.DrawIndexed(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
+    CommandBuffer->DrawIndexed(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
 void FVulkanCommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
     ContextState.BindGraphicsStates();
-    CommandBuffer.Draw(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
+    CommandBuffer->Draw(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void FVulkanCommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
     ContextState.BindGraphicsStates();
-    CommandBuffer.DrawIndexed(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+    CommandBuffer->DrawIndexed(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
 }
 
 void FVulkanCommandContext::RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ)
 {
     ContextState.BindComputeState();
-    CommandBuffer.Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
+    CommandBuffer->Dispatch(WorkGroupsX, WorkGroupsY, WorkGroupsZ);
 }
 
 void FVulkanCommandContext::RHIDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
@@ -1163,7 +1163,6 @@ void FVulkanCommandContext::RHIClearState()
 void FVulkanCommandContext::RHIFlush()
 {
     FlushCommandBuffer();
-
     Queue->WaitForCompletion();
 }
 
@@ -1182,7 +1181,7 @@ void FVulkanCommandContext::RHIInsertMarker(const FStringView& Message)
         DebugUtilsLabel.color[2]   = 0.0f;
         DebugUtilsLabel.color[3]   = 1.0f;
         
-        CommandBuffer.InsertDebugUtilsLabel(&DebugUtilsLabel);
+        CommandBuffer->InsertDebugUtilsLabel(&DebugUtilsLabel);
     }
 #endif
 }

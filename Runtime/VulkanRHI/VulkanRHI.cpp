@@ -23,7 +23,7 @@ FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
-    , Instance(nullptr)
+    , Instance()
 {
     if (!GVulkanRHI)
     {
@@ -39,7 +39,7 @@ FVulkanRHI::~FVulkanRHI()
 
     Device.Reset();
     PhysicalDevice.Reset();
-    Instance.Reset();
+    Instance.Release();
 
     if (GVulkanRHI == this)
     {
@@ -71,15 +71,14 @@ bool FVulkanRHI::Initialize()
     InstanceDesc.RequiredExtensionNames.Add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
-    Instance = new FVulkanInstance();
-    if (!Instance->Initialize(InstanceDesc))
+    if (!Instance.Initialize(InstanceDesc))
     {
         VULKAN_ERROR("Failed to initialize VulkanDriverInstance");
         return false;
     }
     
     // Load functions that requires an instance here
-    if (!LoadInstanceFunctions(Instance.Get()))
+    if (!LoadInstanceFunctions(GetInstance()))
     {
         return false;
     }

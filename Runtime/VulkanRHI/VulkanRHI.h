@@ -128,9 +128,9 @@ public:
     }
 
 public:
-    FVulkanInstance* GetInstance() const
+    FVulkanInstance* GetInstance()
     {
-        return Instance.Get();
+        return &Instance;
     }
 
     FVulkanPhysicalDevice* GetAdapter() const
@@ -149,7 +149,8 @@ public:
     }
 
 private:
-    TSharedRef<FVulkanInstance>       Instance;
+    FVulkanInstance Instance;
+
     TSharedRef<FVulkanPhysicalDevice> PhysicalDevice;
     TSharedRef<FVulkanDevice>         Device;
 
