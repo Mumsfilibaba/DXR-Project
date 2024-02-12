@@ -118,7 +118,7 @@ public:
         IRHICommandContext& CommandContextRef = GetCommandContext();
         CommandContextRef.RHIStartContext();
         
-        ExecuteWithContext(GetCommandContext());
+        ExecuteWithContext(CommandContextRef);
 
         CommandContextRef.RHIFinishContext();
     }
@@ -225,6 +225,17 @@ public:
         FRHICommandList* NewCommandList = EmplaceObject<FRHICommandList>();
         NewCommandList->ExchangeState(CommandList);
         EmplaceCommand<FRHICommandExecuteCommandList>(NewCommandList);
+    }
+
+public:
+    FORCEINLINE void BeginFrame() noexcept
+    {
+        EmplaceCommand<FRHICommandBeginFrame>();
+    }
+
+    FORCEINLINE void EndFrame() noexcept
+    {
+        EmplaceCommand<FRHICommandEndFrame>();
     }
 
     FORCEINLINE void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) noexcept
@@ -392,7 +403,7 @@ public:
         EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
 
-    FORCEINLINE void DestroyResource(IRefCounted* Resource) noexcept
+    FORCEINLINE void DestroyResource(FRHIResource* Resource) noexcept
     {
         EmplaceCommand<FRHICommandDestroyResource>(Resource);
     }

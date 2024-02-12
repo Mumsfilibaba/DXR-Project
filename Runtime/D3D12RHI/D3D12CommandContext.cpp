@@ -762,7 +762,7 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Src);
 }
 
-void FD3D12CommandContext::RHIDestroyResource(IRefCounted* Resource)
+void FD3D12CommandContext::RHIDestroyResource(FRHIResource* Resource)
 {
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Resource);
 }
@@ -777,14 +777,7 @@ void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
     }
 }
 
-void FD3D12CommandContext::RHIBuildRayTracingGeometry(
-    FRHIRayTracingGeometry* RayTracingGeometry,
-    FRHIBuffer*             VertexBuffer,
-    uint32                  NumVertices,
-    FRHIBuffer*             IndexBuffer,
-    uint32                  NumIndices,
-    EIndexFormat            IndexFormat,
-    bool                    bUpdate)
+void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate)
 {
     D3D12_ERROR_COND(RayTracingGeometry != nullptr, "RayTracingGeometry cannot be nullptr");
 
@@ -813,14 +806,7 @@ void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTraci
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, RayTracingScene);
 }
 
-void FD3D12CommandContext::RHISetRayTracingBindings(
-    FRHIRayTracingScene*              RayTracingScene,
-    FRHIRayTracingPipelineState*      PipelineState,
-    const FRayTracingShaderResources* GlobalResource,
-    const FRayTracingShaderResources* RayGenLocalResources,
-    const FRayTracingShaderResources* MissLocalResources,
-    const FRayTracingShaderResources* HitGroupResources,
-    uint32                            NumHitGroupResources)
+void FD3D12CommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)
 {
 #if 0
     FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
@@ -1246,7 +1232,19 @@ void FD3D12CommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Widt
 
 void FD3D12CommandContext::RHIClearState()
 {
-    RHIFlush();
+    SCOPED_LOCK(CommandContextCS);
+
+    if (CommandList)
+    {
+        FinishCommandList();
+    }
+
+    FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
+    CHECK(CommandListManager != nullptr);
+
+    CommandListManager->GetFenceManager().SignalGPU(QueueType);
+    CommandListManager->GetFenceManager().WaitForFence();
+
     ContextState.ResetState();
 }
 

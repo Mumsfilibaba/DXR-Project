@@ -33,9 +33,13 @@ FVulkanRHI::FVulkanRHI()
 
 FVulkanRHI::~FVulkanRHI()
 {
+    while (!PendingSubmissions.IsEmpty())
+    {
+        ProcessPendingCommands();
+    }
+    
     SAFE_DELETE(GraphicsCommandContext);
-
-    GraphicsQueue.Reset();
+    SAFE_DELETE(GraphicsQueue);
 
     Device.Reset();
     PhysicalDevice.Reset();
@@ -127,7 +131,7 @@ bool FVulkanRHI::Initialize()
 
     GraphicsQueue->SetName("Graphics Queue");
 
-    GraphicsCommandContext = new FVulkanCommandContext(Device.Get(), GraphicsQueue.Get());
+    GraphicsCommandContext = new FVulkanCommandContext(Device.Get(), *GraphicsQueue);
     if (!GraphicsCommandContext->Initialize())
     {
         VULKAN_ERROR("Failed to initialize VulkanCommandContext");
@@ -135,6 +139,16 @@ bool FVulkanRHI::Initialize()
     }
 
     return true;
+}
+
+void FVulkanRHI::RHIBeginFrame()
+{
+    // ProcessPendingCommands();
+}
+
+void FVulkanRHI::RHIEndFrame()
+{
+    // TODO: Empty for now
 }
 
 FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
@@ -179,7 +193,7 @@ FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& 
 
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
-    FVulkanViewportRef NewViewport = new FVulkanViewport(Device.Get(), GraphicsQueue.Get(), InDesc);
+    FVulkanViewportRef NewViewport = new FVulkanViewport(Device.Get(), GraphicsCommandContext, InDesc);
     if (!NewViewport->Initialize())
     {
         return nullptr;
@@ -586,8 +600,54 @@ bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
 FString FVulkanRHI::RHIGetAdapterName() const
 {
     VULKAN_ERROR_COND(PhysicalDevice != nullptr, "PhysicalDevice is not initialized properly");
-    
     VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetDeviceProperties();
     return FString(DeviceProperties.deviceName);
 }
 
+void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
+{
+    if (Resource)
+    {
+        DeletionQueue.Emplace(Resource);
+    }
+}
+
+void FVulkanRHI::ProcessPendingCommands()
+{
+    bool bProcess = true;
+    while (bProcess)
+    {
+        FVulkanCommandPacket* CommandPacket = nullptr;
+        if (PendingSubmissions.Peek(CommandPacket))
+        {
+            CHECK(CommandPacket != nullptr);
+            if (!CommandPacket->IsExecutionFinished())
+            {
+                bProcess = false;
+                break;
+            }
+            else
+            {
+                // If we are finished we remove the item from the queue
+                PendingSubmissions.Dequeue();
+                CommandPacket->HandleSubmitFinished();
+            }
+        }
+        else
+        {
+            bProcess = false;
+        }
+    }
+}
+
+void FVulkanRHI::SubmitCommands(FVulkanCommandPacket* CommandPacket)
+{
+    CHECK(CommandPacket != nullptr);
+
+    if (!CommandPacket->IsEmpty())
+    {
+        DeletionQueue.Dequeue(CommandPacket->Resources);
+        CommandPacket->Submit();
+        PendingSubmissions.Enqueue(CommandPacket);
+    }
+}

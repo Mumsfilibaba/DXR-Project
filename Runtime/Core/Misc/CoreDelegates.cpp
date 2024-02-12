@@ -1,6 +1,6 @@
 #include "CoreDelegates.h"
 
-namespace NCoreDelegates
+namespace CoreDelegates
 {
     CORE_API FPostInitRHIDelegate PostInitRHIDelegate;
 

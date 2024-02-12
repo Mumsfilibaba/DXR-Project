@@ -10,7 +10,7 @@ FVulkanFence::FVulkanFence(FVulkanFence&& Other)
     : FVulkanDeviceChild(Other.GetDevice())
     , Fence(Other.Fence)
 {
-    Other.Fence = VK_NULL_HANDLE;
+    Other.Fence  = VK_NULL_HANDLE;
 }
 
 FVulkanFence::~FVulkanFence()
@@ -22,14 +22,14 @@ FVulkanFence::~FVulkanFence()
     }
 }
 
-bool FVulkanFence::Initialize()
+bool FVulkanFence::Initialize(bool bSignaled)
 {
     VkFenceCreateInfo FenceCreateInfo;
     FMemory::Memzero(&FenceCreateInfo);
 
     FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     FenceCreateInfo.pNext = nullptr;
-    FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    FenceCreateInfo.flags = bSignaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0;
 
     VkResult Result = vkCreateFence(GetDevice()->GetVkDevice(), &FenceCreateInfo, nullptr, &Fence);
     if (VULKAN_FAILED(Result))
@@ -37,6 +37,8 @@ bool FVulkanFence::Initialize()
         VULKAN_ERROR("Failed to create Fence");
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }

@@ -117,7 +117,6 @@ bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDe
         SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice;
         SubresourceRange.layerCount     = FMath::Max<uint16>(InDesc.NumSlices, 1u);
     }
-
     
     VkImageViewType VulkanImageType;
     switch(VulkanTexture->GetDimension())
@@ -142,18 +141,18 @@ bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDe
             break;
     }
     
-    
     ImageView = new FVulkanImageView(GetDevice());
-    if (!ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
+    if (ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
     {
-        return false;
+        const FString ViewName = VulkanTexture->GetName() + " ImageView SRV";
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ViewName.GetCString(), ImageView->GetVkImageView(), VK_OBJECT_TYPE_IMAGE_VIEW);
+        ImageSubresourceRange = SubresourceRange;
+        return true;
     }
     else
     {
-        ImageSubresourceRange = SubresourceRange;
+        return false;
     }
-    
-    return true;
 }
 
 bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc)
@@ -165,6 +164,8 @@ bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc
         return false;
     }
 
+    // TODO: Use typed buffers
+    
     VkDeviceSize Stride = 0;
     if (InDesc.Format == EBufferSRVFormat::None)
     {
@@ -223,7 +224,6 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
         SubresourceRange.layerCount     = 1u;
     }
 
-    
     VkImageViewType VulkanImageType;
     switch(VulkanTexture->GetDimension())
     {
@@ -243,18 +243,18 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
             break;
     }
     
-    
     ImageView = new FVulkanImageView(GetDevice());
-    if (!ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
+    if (ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
     {
-        return false;
+        const FString ViewName = VulkanTexture->GetName() + " ImageView UAV";
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ViewName.GetCString(), ImageView->GetVkImageView(), VK_OBJECT_TYPE_IMAGE_VIEW);
+        ImageSubresourceRange = SubresourceRange;
+        return true;
     }
     else
     {
-        ImageSubresourceRange = SubresourceRange;
+        return false;
     }
-    
-    return true;
 }
 
 bool FVulkanUnorderedAccessView::CreateBufferView(const FRHIBufferUAVDesc& InDesc)
@@ -266,6 +266,8 @@ bool FVulkanUnorderedAccessView::CreateBufferView(const FRHIBufferUAVDesc& InDes
         return false;
     }
 
+    // TODO: Use typed buffers
+    
     VkDeviceSize Stride = 0;
     if (InDesc.Format == EBufferUAVFormat::None)
     {

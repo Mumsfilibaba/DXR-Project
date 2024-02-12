@@ -231,23 +231,17 @@ public:
     bool Initialize();
 
     void DirtyState();
-
     void DirtyStateSamplers();
-
     void DirtyStateResources();
 
     void SetVertexBuffers(FVulkanVertexBufferCache& VertexBuffers);
-    
     void SetIndexBuffer(FVulkanIndexBufferCache& IndexBuffer);
     
     bool AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout);
 
     void SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs);
-    
     void SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumUAVs);
-
     void SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumBuffers);
-    
     void SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers);
 
     void SetDescriptorSet(VkPipelineLayout PipelineLayout, EShaderVisibility ShaderStage);

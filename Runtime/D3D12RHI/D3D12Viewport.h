@@ -33,13 +33,11 @@ private:
 
     TComPtr<IDXGISwapChain3>   SwapChain;
     FD3D12CommandContext*      CommandContext;
-
     FD3D12BackBufferTextureRef BackBuffer;
     TArray<FD3D12TextureRef>   BackBuffers;
 
     HWND   Hwnd = 0;
     HANDLE SwapChainWaitableObject = 0;
-
     uint32 Flags           = 0;
     uint32 NumBackBuffers  = 0;
     uint32 BackBufferIndex = 0;

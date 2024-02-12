@@ -33,6 +33,9 @@ public:
 
     virtual bool Initialize() override final;
 
+    virtual void RHIBeginFrame() override final { }
+    virtual void RHIEndFrame() override final { }
+
     virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final;

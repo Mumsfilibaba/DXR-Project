@@ -363,7 +363,7 @@ void FMetalCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
 {
 }
 
-void FMetalCommandContext::RHIDestroyResource(class IRefCounted* Resource)
+void FMetalCommandContext::RHIDestroyResource(class FRHIResource* Resource)
 {
 }
 
@@ -371,14 +371,7 @@ void FMetalCommandContext::RHIDiscardContents(class FRHITexture* Texture)
 {
 }
 
-void FMetalCommandContext::RHIBuildRayTracingGeometry(
-    FRHIRayTracingGeometry* RayTracingGeometry,
-    FRHIBuffer*             VertexBuffer,
-    uint32                  NumVertices,
-    FRHIBuffer*             IndexBuffer,
-    uint32                  NumIndices,
-    EIndexFormat            IndexFormat,
-    bool                    bUpdate)
+void FMetalCommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate)
 {
 }
 
@@ -386,14 +379,7 @@ void FMetalCommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTraci
 {
 }
 
-void FMetalCommandContext::RHISetRayTracingBindings(
-    FRHIRayTracingScene*              RayTracingScene,
-    FRHIRayTracingPipelineState*      PipelineState,
-    const FRayTracingShaderResources* GlobalResource,
-    const FRayTracingShaderResources* RayGenLocalResources,
-    const FRayTracingShaderResources* MissLocalResources,
-    const FRayTracingShaderResources* HitGroupResources,
-    uint32                            NumHitGroupResources)
+void FMetalCommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)
 {
 }
 

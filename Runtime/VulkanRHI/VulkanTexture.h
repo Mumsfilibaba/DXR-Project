@@ -34,7 +34,6 @@ public:
     FVulkanImageView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
 
     void DestroyRenderTargetViews() { RenderTargetViews.Clear(); }
-
     void DestroyDepthStencilViews() { DepthStencilViews.Clear(); }
 
     void SetVkImage(VkImage InImage);
@@ -82,8 +81,7 @@ public:
     FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureDesc& InDesc);
     virtual ~FVulkanBackBufferTexture();
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
-    
+    virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkImage()); }
 
     void ResizeBackBuffer(int32 InWidth, int32 InHeight);

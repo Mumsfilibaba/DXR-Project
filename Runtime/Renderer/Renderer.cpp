@@ -697,12 +697,14 @@ void FRenderer::Tick()
         PerformFrustumCullingAndSort(Scene);
     }
 
-    // START FRAME ON THE GPU
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
+    CommandList.BeginFrame();
+
     GRHICommandExecutor.Tick();
 
     if (ResizeEvent)
     {
-        // Check if we resized and update the Viewport-size on the RHI-Thread
+        // Check if we resized and update the Viewport-size on the RHIThread
         FRHIViewport* Viewport = Resources.MainViewport.Get();
 
         // TODO: Remove these
@@ -745,8 +747,6 @@ void FRenderer::Tick()
         ResizeEvent.Reset();
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
-    
     CommandList.BeginExternalCapture();
 
     // Begin capture GPU FrameTime
@@ -1116,13 +1116,13 @@ void FRenderer::Tick()
 
     CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
-
     FGPUProfiler::Get().EndGPUFrame(CommandList);
 
     CommandList.EndExternalCapture();
 
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
     CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
+    CommandList.EndFrame();
 
     {
         TRACE_SCOPE("ExecuteCommandList");

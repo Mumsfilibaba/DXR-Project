@@ -162,7 +162,7 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-    NCoreDelegates::PostApplicationCreateDelegate.Broadcast();
+    CoreDelegates::PostApplicationCreateDelegate.Broadcast();
 
     // Initialize the Async-worker threads
     if (!FTaskManager::Initialize())
@@ -186,11 +186,11 @@ bool FEngineLoop::PreInitialize()
     // Startup RHI Thread
     if (!FRHIThread::Startup())
     {
-        LOG_ERROR("Failed to startup RHI-Thread");
+        LOG_ERROR("Failed to startup RHIThread");
         return false;
     }
 
-    NCoreDelegates::PostInitRHIDelegate.Broadcast();
+    CoreDelegates::PostInitRHIDelegate.Broadcast();
 
     if (!FGPUProfiler::Initialize())
     {
@@ -202,14 +202,14 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-    NCoreDelegates::PreInitFinishedDelegate.Broadcast();
+    CoreDelegates::PreInitFinishedDelegate.Broadcast();
     return true;
 }
 
 
 bool FEngineLoop::Initialize()
 {
-    NCoreDelegates::PreEngineInitDelegate.Broadcast();
+    CoreDelegates::PreEngineInitDelegate.Broadcast();
 
 #if PROJECT_EDITOR
     GEngine = FEditorEngine::Make();
@@ -222,7 +222,7 @@ bool FEngineLoop::Initialize()
         return false;
     }
 
-    NCoreDelegates::PreEngineInitDelegate.Broadcast();
+    CoreDelegates::PreEngineInitDelegate.Broadcast();
 
     // Initialize renderer
     if (!FRenderer::Initialize())
@@ -231,7 +231,7 @@ bool FEngineLoop::Initialize()
         return false;
     }
 
-    NCoreDelegates::PreApplicationLoadedDelegate.Broadcast();
+    CoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
     // Load application
     GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().GetCString());
@@ -241,7 +241,7 @@ bool FEngineLoop::Initialize()
     }
     else
     {
-        NCoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
+        CoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
     }
 
     // Prepare Application for Rendering

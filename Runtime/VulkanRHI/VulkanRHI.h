@@ -4,9 +4,12 @@
 #include "VulkanPhysicalDevice.h"
 #include "VulkanCommandContext.h"
 #include "VulkanQueue.h"
+#include "VulkanDeletionQueue.h"
+#include "VulkanSubmission.h"
 #include "RHI/RHI.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
+#include "Core/Containers/Queue.h"
 
 struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 {
@@ -27,8 +30,10 @@ public:
 
     virtual bool Initialize() override final;
 
+    virtual void RHIBeginFrame() override final;
+    virtual void RHIEndFrame() override final;
+
     virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
-    
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
 
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) override final;
@@ -38,61 +43,39 @@ public:
     virtual FRHITimestampQuery* RHICreateTimestampQuery() override final;
     
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
-
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final;
 
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final;
-    
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) override final;
-
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final;
-
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final;
 
     virtual FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
-
     virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final;
-    
     virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final;
-    
     virtual FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) override final;
-    
     virtual FRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) override final;
-    
     virtual FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) override final;
-    
     virtual FRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) override final;
-
     virtual FRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) override final;
-
     virtual FRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) override final;
-
     virtual FRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) override final;
-    
     virtual FRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) override final;
-    
     virtual FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) override final;
 
     virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final;
-    
     virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final;
-    
     virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final;
-    
     virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer) override final;
 
     virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final;
-
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
-    
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final;
 
     virtual IRHICommandContext* RHIObtainCommandContext() override final { return GraphicsCommandContext; }
 
     virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final;
-    
     virtual void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const override final;
-    
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
     virtual FString RHIGetAdapterName() const override final;
@@ -128,6 +111,16 @@ public:
     }
 
 public:
+    void EnqueueResourceDeletion(FRHIResource* Resource);
+    
+    void ProcessPendingCommands();
+    void SubmitCommands(FVulkanCommandPacket* CommandPacket);
+
+    FVulkanDeletionQueue& GetDeletionQueue()
+    {
+        return DeletionQueue;
+    }
+
     FVulkanInstance* GetInstance()
     {
         return &Instance;
@@ -149,13 +142,14 @@ public:
     }
 
 private:
-    FVulkanInstance Instance;
-
+    FVulkanInstance                   Instance;
     TSharedRef<FVulkanPhysicalDevice> PhysicalDevice;
     TSharedRef<FVulkanDevice>         Device;
+    FVulkanQueue*                     GraphicsQueue;
+    FVulkanCommandContext*            GraphicsCommandContext;
+    FVulkanDeletionQueue              DeletionQueue;
 
-    FVulkanQueueRef        GraphicsQueue;
-    FVulkanCommandContext* GraphicsCommandContext;
+    TQueue<FVulkanCommandPacket*, EQueueType::MPSC> PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;
 };

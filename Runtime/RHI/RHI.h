@@ -41,14 +41,10 @@ inline const CHAR* ToString(ERHIType RenderLayerApi)
 /** @brief - Global pointer for the RHIInterface */
 extern RHI_API FRHI* GRHI;
 
-/**
- * @brief - Initializes the RHI Interface and sets the global pointer
- */
+/** @brief - Initializes the RHI Interface and sets the global pointer */
 RHI_API bool RHIInitialize();
 
-/**
- * @brief - Releases the RHI Interface
- */
+/** @brief - Releases the RHI Interface */
 RHI_API void RHIRelease();
 
 
@@ -162,11 +158,14 @@ public:
 
     virtual ~FRHI() = default;
 
-    /**
-     * @brief  - Initialize the RHI
-     * @return - Returns true if initialization is successful
-     */
+    /** @return - Initialized the RHI and returns true if initialization is successful */
     virtual bool Initialize() = 0;
+
+    /** @brief - Called on the RHI Thread to begin a new frame */
+    virtual void RHIBeginFrame() = 0;
+
+    /** @brief - Called on the RHI Thread to end a new frame */
+    virtual void RHIEndFrame() = 0;
 
     /**
      * @brief                - Creates a Texture
@@ -381,34 +380,22 @@ public:
      */
     virtual FRHITimestampQuery* RHICreateTimestampQuery() = 0;
 
-    /**
-     * @return - Returns the a CommandContext
-     */
+    /** @return - Returns a CommandContext */
     virtual IRHICommandContext* RHIObtainCommandContext() = 0;
 
-    /**
-     * @return - Returns the native Adapter
-     */
+    /** @return - Returns the native Adapter */
     virtual void* RHIGetAdapter() { return nullptr; }
 
-    /**
-     * @return - Returns the native Device
-     */
+    /** @return - Returns the native Device */
     virtual void* RHIGetDevice() { return nullptr; }
 
-    /**
-     * @return - Returns the native Direct (Graphics) CommandQueue
-     */
+    /** @return - Returns the native Direct (Graphics) CommandQueue */
     virtual void* RHIGetDirectCommandQueue() { return nullptr; }
 
-    /**
-     * @return - Returns the native Compute CommandQueue
-     */
+    /** @return - Returns the native Compute CommandQueue */
     virtual void* RHIGetComputeCommandQueue() { return nullptr; }
 
-    /**
-     * @return - Returns the native Copy CommandQueue
-     */
+    /** @return - Returns the native Copy CommandQueue */
     virtual void* RHIGetCopyCommandQueue() { return nullptr; }
 
     /**
@@ -430,17 +417,14 @@ public:
      */
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const { return false; }
 
-    /**
-     * @brief  - Retrieve the name of the Adapter
-     * @return - Returns a string with the Adapter name
-     */
+    /** @return - Returns a string with the Adapter name */
     virtual FString RHIGetAdapterName() const { return ""; }
 
-    /**
-     * @brief  - retrieve the current API that is used
-     * @return - Returns the current RHI's API
-     */
-    ERHIType GetType() const { return RHIType; }
+    /** @return - Returns the current RHI's API */
+    ERHIType GetType() const 
+    {
+        return RHIType;
+    }
 
 private:
     ERHIType RHIType;

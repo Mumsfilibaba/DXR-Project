@@ -28,7 +28,7 @@ public:
 
     bool Initialize(const FVulkanSwapChainCreateInfo& CreateInfo);
 
-    VkResult Present(FVulkanQueue* Queue, FVulkanSemaphore* WaitSemaphore);
+    VkResult Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore);
 
     VkResult AquireNextImage(FVulkanSemaphore* AquireSemaphore);
     

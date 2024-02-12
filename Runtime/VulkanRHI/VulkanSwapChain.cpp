@@ -185,10 +185,8 @@ bool FVulkanSwapChain::GetSwapChainImages(VkImage* OutImages)
     return true;
 }
 
-VkResult FVulkanSwapChain::Present(FVulkanQueue* Queue, FVulkanSemaphore* WaitSemaphore)
+VkResult FVulkanSwapChain::Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore)
 {
-    CHECK(Queue != nullptr);
-
     VkPresentInfoKHR PresentInfo;
     FMemory::Memzero(&PresentInfo);
 
@@ -214,7 +212,7 @@ VkResult FVulkanSwapChain::Present(FVulkanQueue* Queue, FVulkanSemaphore* WaitSe
         PresentInfo.pWaitSemaphores    = nullptr;
     }
 
-    return vkQueuePresentKHR(Queue->GetVkQueue(), &PresentInfo);
+    return vkQueuePresentKHR(Queue.GetVkQueue(), &PresentInfo);
 }
 
 VkResult FVulkanSwapChain::AquireNextImage(FVulkanSemaphore* AquireSemaphore)

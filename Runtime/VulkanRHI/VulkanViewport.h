@@ -1,6 +1,5 @@
 #pragma once
 #include "VulkanTexture.h"
-#include "VulkanQueue.h"
 #include "VulkanSemaphore.h"
 #include "VulkanSurface.h"
 #include "VulkanSwapChain.h"
@@ -11,10 +10,12 @@
 
 typedef TSharedRef<class FVulkanViewport> FVulkanViewportRef;
 
+class FVulkanCommandContext;
+
 class FVulkanViewport final : public FRHIViewport, public FVulkanDeviceChild
 {
 public:
-    FVulkanViewport(FVulkanDevice* InDevice, FVulkanQueue* InQueue, const FRHIViewportDesc& InDesc);
+    FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
     virtual ~FVulkanViewport();
 
     virtual FRHITexture* GetBackBuffer() const override final;
@@ -45,11 +46,6 @@ public:
         return SwapChain.Get();
     }
 
-    FVulkanQueue* GetQueue() const
-    { 
-        return Queue.Get();
-    }
-
     FVulkanSurface* GetSurface() const
     { 
         return Surface.Get();
@@ -70,7 +66,7 @@ private:
 
     FVulkanSurfaceRef           Surface;
     FVulkanSwapChainRef         SwapChain;
-    FVulkanQueueRef             Queue;
+    FVulkanCommandContext*      CommandContext;
     FVulkanBackBufferTextureRef BackBuffer;
     TArray<FVulkanTextureRef>   BackBuffers;
     

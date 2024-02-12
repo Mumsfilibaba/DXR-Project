@@ -31,6 +31,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , FramebufferCache(this)
     , UploadHeap(this)
     , MemoryManager(this)
+    , FenceManager(this)
     , bSupportsDepthClip(false)
     , bSupportsConservativeRasterization(false)
 {

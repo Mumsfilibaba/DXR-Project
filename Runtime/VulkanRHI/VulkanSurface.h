@@ -8,7 +8,7 @@ typedef TSharedRef<class FVulkanSurface> FVulkanSurfaceRef;
 class FVulkanSurface : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
-    FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue* InQueue, void* InWindowHandle);
+    FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue& InQueue, void* InWindowHandle);
     ~FVulkanSurface();
 
     bool Initialize();
@@ -30,7 +30,7 @@ public:
     }
     
 private:
-    VkSurfaceKHR    Surface;
-    void*           WindowHandle;
-    FVulkanQueueRef Queue;
+    VkSurfaceKHR  Surface;
+    void*         WindowHandle;
+    FVulkanQueue& Queue;
 };

@@ -68,7 +68,7 @@ bool FRHIThread::Create()
         return false;
     }
 
-    Thread->SetName("RHI-Thread");
+    Thread->SetName("RHIThread");
 
     if (!Thread->Start())
     {

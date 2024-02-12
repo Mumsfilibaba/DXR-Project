@@ -225,7 +225,6 @@ bool FD3D12Viewport::RetriveBackBuffers()
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
     {
         TComPtr<ID3D12Resource> BackBufferResource;
-
         HRESULT Result = SwapChain->GetBuffer(Index, IID_PPV_ARGS(&BackBufferResource));
         if (FAILED(Result))
         {
@@ -239,11 +238,12 @@ bool FD3D12Viewport::RetriveBackBuffers()
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-    FD3D12Texture* CurrentBackbuffer = BackBuffer->GetCurrentBackBufferTexture();
-    if (!CurrentBackbuffer)
+    if (FD3D12Texture* CurrentBackbuffer = BackBuffer->GetCurrentBackBufferTexture())
+    {
+        return true;
+    }
+    else
     {
         return false;
     }
-
-    return true;
 }

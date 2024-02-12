@@ -3,11 +3,11 @@
 #include "VulkanInstance.h"
 #include "Platform/PlatformVulkan.h"
    
-FVulkanSurface::FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue* InQueue, void* InWindowHandle)
+FVulkanSurface::FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue& InQueue, void* InWindowHandle)
     : FVulkanDeviceChild(InDevice)
     , Surface(VK_NULL_HANDLE)
     , WindowHandle(InWindowHandle)
-    , Queue(MakeSharedRef<FVulkanQueue>(InQueue))
+    , Queue(InQueue)
 {
 }
 
@@ -34,7 +34,7 @@ bool FVulkanSurface::Initialize()
 
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
     VkBool32 PresentSupport = false;
-    Result = vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice->GetVkPhysicalDevice(), Queue->GetQueueFamilyIndex(), Surface, &PresentSupport);
+    Result = vkGetPhysicalDeviceSurfaceSupportKHR(PhysicalDevice->GetVkPhysicalDevice(), Queue.GetQueueFamilyIndex(), Surface, &PresentSupport);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to retrieve presentation support for surface");

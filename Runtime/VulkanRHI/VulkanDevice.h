@@ -6,6 +6,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanFramebuffer.h"
 #include "VulkanMemory.h"
+#include "VulkanFenceManager.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -68,6 +69,7 @@ public:
 
     FVulkanMemoryManager&       GetMemoryManager() { return MemoryManager; }
     FVulkanUploadHeapAllocator& GetUploadHeap()    { return UploadHeap; };
+    FVulkanFenceManager&        GetFenceManager()  { return FenceManager; }
 
     bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
     bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
@@ -111,6 +113,7 @@ private:
     FVulkanFramebufferCache    FramebufferCache;
     FVulkanUploadHeapAllocator UploadHeap;
     FVulkanMemoryManager       MemoryManager;
+    FVulkanFenceManager        FenceManager;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
     

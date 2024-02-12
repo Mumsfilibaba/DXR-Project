@@ -12,7 +12,7 @@ struct FVulkanInstanceCreateInfo
     TArray<const CHAR*> OptionalLayerNames;
 };
 
-class FVulkanInstance : public FVulkanRefCounted
+class FVulkanInstance
 {
 public:
     FVulkanInstance();

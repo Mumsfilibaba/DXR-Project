@@ -1,5 +1,4 @@
 #pragma once
-#include "VulkanCommandPool.h"
 #include "VulkanFence.h"
 
 struct FVulkanBufferBarrier
@@ -30,6 +29,9 @@ struct FVulkanImageTransitionBarrier
 class FCommandBuffer
 {
 public:
+    FCommandBuffer(const FCommandBuffer& Other) = delete;
+    FCommandBuffer& operator=(const FCommandBuffer& Other) = delete;
+    
     FORCEINLINE FCommandBuffer()
         : CommandBuffer(VK_NULL_HANDLE)
     {
@@ -39,6 +41,13 @@ public:
         : CommandBuffer(Other.CommandBuffer)
     {
         Other.CommandBuffer = VK_NULL_HANDLE;
+    }
+
+    FORCEINLINE FCommandBuffer& operator=(FCommandBuffer&& Other)
+    {
+        CommandBuffer = Move(Other.CommandBuffer);
+        Other.CommandBuffer = VK_NULL_HANDLE;
+        return *this;
     }
 
     FORCEINLINE ~FCommandBuffer()
@@ -228,11 +237,15 @@ private:
 };
 
 
+class FVulkanCommandPool;
+
 class FVulkanCommandBuffer : public FVulkanDeviceChild
 {
 public:
-    FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
-    FVulkanCommandBuffer(FVulkanCommandBuffer&& Other);
+    FVulkanCommandBuffer(const FVulkanCommandBuffer& Other) = delete;
+    FVulkanCommandBuffer& operator=(const FVulkanCommandBuffer& Other) = delete;
+
+    FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanCommandPool* InOwnerPool);
     ~FVulkanCommandBuffer();
 
     bool Initialize(VkCommandBufferLevel InLevel);
@@ -240,19 +253,9 @@ public:
     bool Begin(VkCommandBufferUsageFlags Flags = 0);
     bool End();
 
-    bool WaitForFence(uint64 TimeOut = UINT64_MAX)
+    FVulkanCommandPool* GetOwnerPool()
     {
-        return Fence.Wait(TimeOut);
-    }
-
-    FVulkanCommandPool* GetCommandPool()
-    {
-        return &CommandPool;
-    }
-
-    FVulkanFence* GetFence()
-    {
-        return &Fence;
+        return OwnerPool;
     }
 
     VkCommandBuffer GetVkCommandBuffer() const
@@ -277,10 +280,46 @@ public:
     }
 
 private:
-    FVulkanCommandPool   CommandPool;
-    FVulkanFence         Fence;
+    FVulkanCommandPool*  OwnerPool;
     FCommandBuffer       CommandBuffer;
     VkCommandBufferLevel Level;
     uint32               NumCommands;
     bool                 bIsRecording;
+};
+
+class FVulkanCommandPool : public FVulkanDeviceChild
+{
+public:
+    FVulkanCommandPool(const FVulkanCommandPool& Other) = delete;
+    FVulkanCommandPool& operator=(const FVulkanCommandPool& Other) = delete;
+
+    FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
+    ~FVulkanCommandPool();
+
+    bool Initialize();
+
+    FVulkanCommandBuffer* CreateBuffer();
+    void RecycleBuffer(FVulkanCommandBuffer* InCommandBuffer);
+    
+    bool Reset(VkCommandPoolResetFlags Flags = 0)
+    {
+        VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, Flags);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("vkResetCommandPool Failed");
+            return false;
+        }
+
+        return true;
+    }
+
+    VkCommandPool GetVkCommandPool() const
+    {
+        return CommandPool;
+    }
+    
+private:
+    VkCommandPool                 CommandPool;
+    EVulkanCommandQueueType       Type;
+    TArray<FVulkanCommandBuffer*> CommandBuffers;
 };

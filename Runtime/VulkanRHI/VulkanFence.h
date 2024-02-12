@@ -1,6 +1,8 @@
 #pragma once
 #include "VulkanDeviceChild.h"
 #include "VulkanLoader.h"
+#include "Core/Containers/Array.h"
+#include "Core/Platform/CriticalSection.h"
 
 class FVulkanFence : public FVulkanDeviceChild
 {
@@ -9,7 +11,7 @@ public:
     FVulkanFence(FVulkanFence&& Other);
     ~FVulkanFence();
 
-    bool Initialize();
+    bool Initialize(bool bSignaled);
 
     bool IsSignaled() const 
     {
@@ -23,7 +25,7 @@ public:
         return Result == VK_SUCCESS;
     }
 
-    bool Wait(uint64 TimeOut) const
+    bool Wait(uint64 TimeOut = UINT64_MAX) const
     {
         VkResult Result = vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut);
         if (VULKAN_FAILED(Result))
@@ -46,7 +48,7 @@ public:
 
         return true;
     }
-
+    
     VkFence GetVkFence() const
     {
         return Fence;
