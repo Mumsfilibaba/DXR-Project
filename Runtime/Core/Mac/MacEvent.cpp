@@ -74,13 +74,13 @@ void FMacEvent::Trigger()
     if (bManualReset)
     {
         Triggered = ETriggerType::All;
-        const auto Result = pthread_cond_broadcast(&Condition);
+        const int32 Result = pthread_cond_broadcast(&Condition);
         CHECK(Result == 0);
     }
     else 
     {
         Triggered = ETriggerType::One;
-        const auto Result = pthread_cond_signal(&Condition);
+        const int32 Result = pthread_cond_signal(&Condition);
         CHECK(Result == 0);
     }
 

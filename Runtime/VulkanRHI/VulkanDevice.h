@@ -7,6 +7,8 @@
 #include "VulkanFramebuffer.h"
 #include "VulkanMemory.h"
 #include "VulkanFenceManager.h"
+#include "VulkanPipelineLayout.h"
+#include "VulkanDescriptorSet.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -53,7 +55,6 @@ struct FVulkanDeviceCreateInfo
     VkPhysicalDeviceVulkan12Features RequiredFeatures12;
 };
 
-
 class FVulkanDevice : public FVulkanRefCounted
 {
 public:
@@ -62,14 +63,15 @@ public:
 
     bool Initialize(const FVulkanDeviceCreateInfo& DeviceDesc);
 
-    uint32 GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const;
+    FVulkanRenderPassCache&       GetRenderPassCache()       { return RenderPassCache; }
+    FVulkanFramebufferCache&      GetFramebufferCache()      { return FramebufferCache; }
+    FVulkanMemoryManager&         GetMemoryManager()         { return MemoryManager; }
+    FVulkanUploadHeapAllocator&   GetUploadHeap()            { return UploadHeap; }
+    FVulkanFenceManager&          GetFenceManager()          { return FenceManager; }
+    FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return PipelineLayoutManager; }
+    FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return DescriptorPoolManager; }
     
-    FVulkanRenderPassCache&  GetRenderPassCache()  { return RenderPassCache; }
-    FVulkanFramebufferCache& GetFramebufferCache() { return FramebufferCache; }
-
-    FVulkanMemoryManager&       GetMemoryManager() { return MemoryManager; }
-    FVulkanUploadHeapAllocator& GetUploadHeap()    { return UploadHeap; };
-    FVulkanFenceManager&        GetFenceManager()  { return FenceManager; }
+    uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
     bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
     bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
@@ -109,11 +111,13 @@ private:
     FVulkanPhysicalDevice* PhysicalDevice;
     VkDevice               Device;
     
-    FVulkanRenderPassCache     RenderPassCache;
-    FVulkanFramebufferCache    FramebufferCache;
-    FVulkanUploadHeapAllocator UploadHeap;
-    FVulkanMemoryManager       MemoryManager;
-    FVulkanFenceManager        FenceManager;
+    FVulkanRenderPassCache       RenderPassCache;
+    FVulkanFramebufferCache      FramebufferCache;
+    FVulkanUploadHeapAllocator   UploadHeap;
+    FVulkanMemoryManager         MemoryManager;
+    FVulkanFenceManager          FenceManager;
+    FVulkanPipelineLayoutManager PipelineLayoutManager;
+    FVulkanDescriptorPoolManager DescriptorPoolManager;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
     

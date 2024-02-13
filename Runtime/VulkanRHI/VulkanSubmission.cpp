@@ -2,9 +2,9 @@
 
 FVulkanCommandPacket::FVulkanCommandPacket(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
     : FVulkanDeviceChild(InDevice)
+    , Resources()
     , Queue(InQueue)
     , Fence(nullptr)
-    , Resources()
     , CommandPools()
     , CommandBuffers()
 {
@@ -32,23 +32,9 @@ void FVulkanCommandPacket::HandleSubmitFinished()
     Fence = nullptr;
     
     // Delete all the resources that has been queued up for destruction
-    for (const FVulkanDeletionQueue::FDeferredResource& Object : Resources)
+    for (FVulkanDeletionQueue::FDeferredResource& Object : Resources)
     {
-        switch(Object.Type)
-        {
-            case FVulkanDeletionQueue::EType::RHIResource:
-            {
-                CHECK(Object.Resource != nullptr);
-                Object.Resource->Release();
-                break;
-            }
-            case FVulkanDeletionQueue::EType::VulkanResource:
-            {
-                CHECK(Object.VulkanResource != nullptr);
-                Object.VulkanResource->Release();
-                break;
-            }
-        }
+        Object.Release();
     }
     
     Resources.Clear();

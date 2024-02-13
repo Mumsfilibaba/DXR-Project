@@ -174,7 +174,7 @@ public:
         typename BaseMapType::iterator Element = BaseMap.find(Key);
         if (Element != BaseMap.end())
         {
-            return &Element->second;
+            return AddressOf(Element->second);
         }
         else
         {
@@ -187,7 +187,7 @@ public:
         typename BaseMapType::const_iterator Element = BaseMap.find(Key);
         if (Element != BaseMap.end())
         {
-            return &Element->second;
+            return AddressOf(Element->second);
         }
         else
         {

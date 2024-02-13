@@ -11,7 +11,6 @@ typedef TSharedRef<class FVulkanGraphicsPipelineState>   FVulkanGraphicsPipeline
 typedef TSharedRef<class FVulkanComputePipelineState>    FVulkanComputePipelineStateRef;
 typedef TSharedRef<class FVulkanRayTracingPipelineState> FVulkanRayTracingPipelineStateRef;
 
-
 class FVulkanVertexInputLayout : public FRHIVertexInputLayout
 {
 public:
@@ -121,7 +120,7 @@ class FVulkanPipeline : public FVulkanDeviceChild
 {
 public:
     FVulkanPipeline(FVulkanDevice* InDevice);
-    ~FVulkanPipeline();
+    virtual ~FVulkanPipeline();
 
     void SetDebugName(const FString& InName);
 
@@ -130,14 +129,14 @@ public:
         return Pipeline;
     }
     
-    VkPipelineLayout GetVkPipelineLayout() const
+    FVulkanPipelineLayout* GetPipelineLayout() const
     {
-        return PipelineLayout;
+        return PipelineLayout.Get();
     }
 
 protected:
-    VkPipeline       Pipeline;
-    VkPipelineLayout PipelineLayout;
+    VkPipeline Pipeline;
+    TSharedRef<FVulkanPipelineLayout> PipelineLayout;
 };
 
 
@@ -145,7 +144,7 @@ class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FV
 {
 public:
     FVulkanGraphicsPipelineState(FVulkanDevice* InDevice);
-    ~FVulkanGraphicsPipelineState();
+    virtual ~FVulkanGraphicsPipelineState() = default;
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
     
@@ -159,8 +158,6 @@ public:
     FORCEINLINE FVulkanDomainShader*   GetDomainShader()   const { return DomainShader.Get(); }
     FORCEINLINE FVulkanGeometryShader* GetGeometryShader() const { return GeometryShader.Get(); }
     FORCEINLINE FVulkanPixelShader*    GetPixelShader()    const { return PixelShader.Get(); }
-
-    FORCEINLINE VkDescriptorSetLayout GetVkDescriptorSetLayout(EShaderVisibility ShaderVisibility) const { return DescriptorSetLayouts[ShaderVisibility]; }
     
 private:
     TSharedRef<FVulkanVertexShader>   VertexShader;
@@ -168,8 +165,6 @@ private:
     TSharedRef<FVulkanDomainShader>   DomainShader;
     TSharedRef<FVulkanGeometryShader> GeometryShader;
     TSharedRef<FVulkanPixelShader>    PixelShader;
-    
-    VkDescriptorSetLayout DescriptorSetLayouts[5];
 };
 
 
@@ -177,7 +172,7 @@ class FVulkanComputePipelineState : public FRHIComputePipelineState, public FVul
 {
 public:
     FVulkanComputePipelineState(FVulkanDevice* InDevice);
-    ~FVulkanComputePipelineState();
+    virtual ~FVulkanComputePipelineState() = default;
     
     bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
 
@@ -186,19 +181,19 @@ public:
         FVulkanPipeline::SetDebugName(InName);
     }
 
-    FORCEINLINE FVulkanComputeShader* GetComputeShader() const { return Shader.Get(); }
-
-    FORCEINLINE VkDescriptorSetLayout GetVkDescriptorSetLayout() const { return DescriptorSetLayout; }
+    FORCEINLINE FVulkanComputeShader* GetComputeShader() const 
+    {
+        return Shader.Get();
+    }
     
 private:
     TSharedRef<FVulkanComputeShader> Shader;
-    VkDescriptorSetLayout DescriptorSetLayout;
 };
 
 
 class FVulkanRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
-    FVulkanRayTracingPipelineState()  = default;
-    ~FVulkanRayTracingPipelineState() = default;
+    FVulkanRayTracingPipelineState() = default;
+    virtual ~FVulkanRayTracingPipelineState() = default;
 };

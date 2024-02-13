@@ -29,8 +29,8 @@ struct FVulkanImageTransitionBarrier
 class FCommandBuffer
 {
 public:
-    FCommandBuffer(const FCommandBuffer& Other) = delete;
-    FCommandBuffer& operator=(const FCommandBuffer& Other) = delete;
+    FCommandBuffer(const FCommandBuffer&) = delete;
+    FCommandBuffer& operator=(const FCommandBuffer&) = delete;
     
     FORCEINLINE FCommandBuffer()
         : CommandBuffer(VK_NULL_HANDLE)
@@ -242,8 +242,8 @@ class FVulkanCommandPool;
 class FVulkanCommandBuffer : public FVulkanDeviceChild
 {
 public:
-    FVulkanCommandBuffer(const FVulkanCommandBuffer& Other) = delete;
-    FVulkanCommandBuffer& operator=(const FVulkanCommandBuffer& Other) = delete;
+    FVulkanCommandBuffer(const FVulkanCommandBuffer&) = delete;
+    FVulkanCommandBuffer& operator=(const FVulkanCommandBuffer&) = delete;
 
     FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanCommandPool* InOwnerPool);
     ~FVulkanCommandBuffer();
@@ -290,8 +290,8 @@ private:
 class FVulkanCommandPool : public FVulkanDeviceChild
 {
 public:
-    FVulkanCommandPool(const FVulkanCommandPool& Other) = delete;
-    FVulkanCommandPool& operator=(const FVulkanCommandPool& Other) = delete;
+    FVulkanCommandPool(const FVulkanCommandPool&) = delete;
+    FVulkanCommandPool& operator=(const FVulkanCommandPool&) = delete;
 
     FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
     ~FVulkanCommandPool();

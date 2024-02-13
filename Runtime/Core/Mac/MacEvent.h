@@ -31,13 +31,13 @@ public:
 private:
     FORCEINLINE void LockMutex()
     {
-        const auto Result = pthread_mutex_lock(&Mutex);
+        const int32 Result = pthread_mutex_lock(&Mutex);
         CHECK(Result == 0);
     }
 
     FORCEINLINE void UnlockMutex()
     {
-        const auto Result = pthread_mutex_unlock(&Mutex);
+        const int32 Result = pthread_mutex_unlock(&Mutex);
         CHECK(Result == 0);
     }
 

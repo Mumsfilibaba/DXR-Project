@@ -64,7 +64,7 @@ public:
 
     bool HasAlphaMask() const
     {
-        return AlphaMask && Properties.EnableMask || Properties.EnableMask == AlphaMaskMode_DiffuseCombined;
+        return (AlphaMask && Properties.EnableMask) || Properties.EnableMask == AlphaMaskMode_DiffuseCombined;
     }
 
     bool HasHeightMap() const

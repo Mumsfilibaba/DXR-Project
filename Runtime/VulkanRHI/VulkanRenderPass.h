@@ -8,7 +8,6 @@ struct FVulkanRenderPassActions
     EAttachmentStoreAction StoreAction : 4;
 };
 
-
 struct FVulkanRenderPassKey
 {
     FVulkanRenderPassKey()

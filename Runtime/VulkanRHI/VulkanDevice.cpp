@@ -8,7 +8,7 @@
 
 VULKANRHI_API bool GVulkanForceBinding              = true;
 VULKANRHI_API bool GVulkanForceDedicatedAllocations = false;
-VULKANRHI_API bool GVulkanAllowNullDescriptors      = false;
+VULKANRHI_API bool GVulkanAllowNullDescriptors      = true;
 
 static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
 {
@@ -22,7 +22,6 @@ static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
     }
 }
 
-
 FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter)
     : Instance(InInstance)
     , PhysicalDevice(InAdapter)
@@ -32,6 +31,8 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , UploadHeap(this)
     , MemoryManager(this)
     , FenceManager(this)
+    , PipelineLayoutManager(this)
+    , DescriptorPoolManager(this)
     , bSupportsDepthClip(false)
     , bSupportsConservativeRasterization(false)
 {
@@ -39,6 +40,12 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
 
 FVulkanDevice::~FVulkanDevice()
 {
+    // Release all PipelineLayout
+    PipelineLayoutManager.ReleaseAll();
+
+    // Release all the DescriptorPools
+    DescriptorPoolManager.ReleaseAll();
+
     // Ensure that all RenderPasses and FrameBuffers are destroyed
     RenderPassCache.ReleaseAll();
     FramebufferCache.ReleaseAll();
@@ -46,6 +53,9 @@ FVulkanDevice::~FVulkanDevice()
     // Ensure that the upload allocator is released before we destroy the device
     UploadHeap.Release();
 
+    // Release all Fences
+    FenceManager.ReleaseAll();
+    
     // Release all heaps (Which will check for memory leaks)
     MemoryManager.ReleaseMemoryHeaps();
     
@@ -179,7 +189,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     DeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     DeviceFeatures2.features = DeviceDesc.RequiredFeatures;
 
-    const VkPhysicalDeviceFeatures& AvailableDeviceFeatures = GetPhysicalDevice()->GetDeviceFeatures();
+    const VkPhysicalDeviceFeatures& AvailableDeviceFeatures = GetPhysicalDevice()->GetFeatures();
     if (AvailableDeviceFeatures.robustBufferAccess)
     {
         DeviceFeatures2.features.robustBufferAccess = VK_TRUE;
@@ -197,7 +207,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     DeviceFeaturesVulkan12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     
     // Enable 'bufferDeviceAddress' if available
-    const VkPhysicalDeviceVulkan12Features& AvailableDeviceFeaturesVulkan12 = GetPhysicalDevice()->GetDeviceFeaturesVulkan12();
+    const VkPhysicalDeviceVulkan12Features& AvailableDeviceFeaturesVulkan12 = GetPhysicalDevice()->GetFeaturesVulkan12();
     if (AvailableDeviceFeaturesVulkan12.bufferDeviceAddress)
     {
         DeviceFeaturesVulkan12.bufferDeviceAddress = VK_TRUE;
@@ -269,7 +279,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     return true;
 }
 
-uint32 FVulkanDevice::GetCommandQueueIndexFromType(EVulkanCommandQueueType Type) const
+uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const
 {
     if (Type == EVulkanCommandQueueType::Graphics)
     {

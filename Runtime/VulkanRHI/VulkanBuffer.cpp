@@ -44,7 +44,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     BufferCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
     BufferCreateInfo.size                  = Desc.Size;
 
-    const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetDeviceProperties();
+    const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetProperties();
     RequiredAlignment = 1u;
     
     // TODO: Look into abstracting these flags

@@ -98,7 +98,7 @@ bool FVulkanCommandPool::Initialize()
     CommandPoolCreateInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     CommandPoolCreateInfo.pNext            = nullptr;
     CommandPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    CommandPoolCreateInfo.queueFamilyIndex = GetDevice()->GetCommandQueueIndexFromType(Type);
+    CommandPoolCreateInfo.queueFamilyIndex = GetDevice()->GetQueueIndexFromType(Type);
 
     VkResult Result = vkCreateCommandPool(GetDevice()->GetVkDevice(), &CommandPoolCreateInfo, nullptr, &CommandPool);
     if (VULKAN_FAILED(Result))

@@ -28,8 +28,10 @@ void FVulkanCommandContextState::BindGraphicsStates()
     {
         return;
     }
-    
-    VkPipelineLayout PipelineLayout = GraphicsState.PipelineState->GetVkPipelineLayout();
+
+    FVulkanPipelineLayout* PipelineLayout = GraphicsState.PipelineState->GetPipelineLayout();
+    CHECK(PipelineLayout != nullptr);
+
     if (GraphicsState.bBindPipelineState || GVulkanForceBinding)
     {
         VkPipeline Pipeline = GraphicsState.PipelineState->GetVkPipeline();
@@ -83,8 +85,8 @@ void FVulkanCommandContextState::BindComputeState()
     {
         return;
     }
-    
-    VkPipelineLayout PipelineLayout = ComputeState.PipelineState->GetVkPipelineLayout();
+
+    FVulkanPipelineLayout* PipelineLayout = ComputeState.PipelineState->GetPipelineLayout();
     if (ComputeState.bBindPipelineState || GVulkanForceBinding)
     {
         VkPipeline Pipeline = ComputeState.PipelineState->GetVkPipeline();
@@ -101,22 +103,22 @@ void FVulkanCommandContextState::BindComputeState()
     }
 }
 
-void FVulkanCommandContextState::BindDescriptorSets(VkPipelineLayout PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
+void FVulkanCommandContextState::BindDescriptorSets(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
         VkDescriptorSetLayout DescriptorSetLayout;
         if (CurrentStage == ShaderVisibility_Compute)
         {
-            DescriptorSetLayout = ComputeState.PipelineState->GetVkDescriptorSetLayout();
+            DescriptorSetLayout = PipelineLayout->GetVkDescriptorSetLayout(0);
         }
         else
         {
-            DescriptorSetLayout = GraphicsState.PipelineState->GetVkDescriptorSetLayout(CurrentStage);
+            DescriptorSetLayout = PipelineLayout->GetVkDescriptorSetLayout(CurrentStage);
         }
-        
+
         CHECK(DescriptorSetLayout != VK_NULL_HANDLE);
-        
+
         // TODO: Validate that we actually have all the descriptors in the DescriptorPool that the DescriptorSetLayout wants
         if (!CommonState.DescriptorSetCache.AllocateDescriptorSets(CurrentStage, DescriptorSetLayout))
         {
@@ -135,11 +137,11 @@ void FVulkanCommandContextState::BindDescriptorSets(VkPipelineLayout PipelineLay
     }
 }
 
-void FVulkanCommandContextState::BindPushConstants(VkPipelineLayout PipelineLayout)
+void FVulkanCommandContextState::BindPushConstants(FVulkanPipelineLayout* PipelineLayout)
 {
     if (CommonState.PushConstantsCache.NumConstants > 0)
     {
-        Context.GetCommandBuffer()->PushConstants(PipelineLayout, VK_SHADER_STAGE_ALL, 0, CommonState.PushConstantsCache.NumConstants * sizeof(uint32), CommonState.PushConstantsCache.Constants);
+        Context.GetCommandBuffer()->PushConstants(PipelineLayout->GetVkPipelineLayout(), VK_SHADER_STAGE_ALL, 0, CommonState.PushConstantsCache.NumConstants * sizeof(uint32), CommonState.PushConstantsCache.Constants);
     }
 }
 
@@ -229,7 +231,7 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             {
                 InternalSetShaderStageResourceCount(PixelShader, ShaderVisibility_Pixel);
             }
-            
+
             GraphicsState.PipelineState = MakeSharedRef<FVulkanGraphicsPipelineState>(InGraphicsPipelineState);
         }
 
@@ -248,7 +250,7 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
             {
                 InternalSetShaderStageResourceCount(PixelShader, ShaderVisibility_Compute);
             }
-            
+
             ComputeState.PipelineState = MakeSharedRef<FVulkanComputePipelineState>(InComputePipelineState);
         }
 

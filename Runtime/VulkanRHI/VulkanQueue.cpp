@@ -14,6 +14,17 @@ FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQu
 
 FVulkanQueue::~FVulkanQueue()
 {
+    {
+        SCOPED_LOCK(CommandPoolsCS);
+        
+        for (FVulkanCommandPool* CommandPool : CommandPools)
+        {
+            delete CommandPool;
+        }
+        
+        CommandPools.Clear();
+    }
+    
     Queue = VK_NULL_HANDLE;
 }
 
@@ -22,7 +33,7 @@ bool FVulkanQueue::Initialize()
     TOptional<FVulkanQueueFamilyIndices> QueueIndices = GetDevice()->GetQueueIndicies();
     VULKAN_ERROR_COND(QueueIndices.HasValue(), "Queue Families is not initialized correctly");
 
-    QueueFamilyIndex = GetDevice()->GetCommandQueueIndexFromType(QueueType);
+    QueueFamilyIndex = GetDevice()->GetQueueIndexFromType(QueueType);
     vkGetDeviceQueue(GetDevice()->GetVkDevice(), QueueFamilyIndex, 0, &Queue);
     return true;
 }
@@ -31,6 +42,7 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
 {
     {
         SCOPED_LOCK(CommandPoolsCS);
+        
         if (!CommandPools.IsEmpty())
         {
             FVulkanCommandPool* CommandPool = CommandPools.LastElement();

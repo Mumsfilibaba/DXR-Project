@@ -18,6 +18,10 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
 
 FVulkanCommandContext::~FVulkanCommandContext()
 {
+    // Release the DescriptorCache resources
+    ContextState.GetDescriptorSetCache().Release();
+    
+    // Flush
     RHIFlush();
 }
 
@@ -115,9 +119,6 @@ void FVulkanCommandContext::ObtainCommandBuffer()
     {
         CommandPacket = new FVulkanCommandPacket(GetDevice(), Queue);
     }
-
-    // Clear all the DescriptorPools for reuse
-    ContextState.ResetPendingDescriptorPools();
 }
 
 void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)

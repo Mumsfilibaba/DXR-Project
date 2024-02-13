@@ -182,22 +182,14 @@ FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice, FV
     : FVulkanDeviceChild(InDevice)
     , Context(InContext)
     , DefaultResources()
-    , DescriptorPool(VK_NULL_HANDLE)
-    , PendingDescriptorPools()
-    , AvailableDescriptorPools()
+    , DescriptorPool(nullptr)
 {
     FMemory::Memzero(DescriptorSets, sizeof(DescriptorSets));
 }
 
 FVulkanDescriptorSetCache::~FVulkanDescriptorSetCache()
 {
-    DefaultResources.Release(*GetDevice());
-    
-    if (VULKAN_CHECK_HANDLE(DescriptorPool))
-    {
-        vkDestroyDescriptorPool(GetDevice()->GetVkDevice(), DescriptorPool, nullptr);
-        DescriptorPool = VK_NULL_HANDLE;
-    }
+    Release();
 }
 
 bool FVulkanDescriptorSetCache::Initialize()
@@ -207,12 +199,24 @@ bool FVulkanDescriptorSetCache::Initialize()
         return false;
     }
     
-    if (!AllocateDescriptorPool())
+    DescriptorPool = GetDevice()->GetDescriptorPoolManager().ObtainPool();
+    if (!DescriptorPool)
     {
         return false;
     }
     
     return true;
+}
+
+void FVulkanDescriptorSetCache::Release()
+{
+    if (DescriptorPool)
+    {
+        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(DescriptorPool);
+        DescriptorPool = nullptr;
+    }
+    
+    DefaultResources.Release(*GetDevice());
 }
 
 void FVulkanDescriptorSetCache::DirtyState()
@@ -227,44 +231,24 @@ void FVulkanDescriptorSetCache::DirtyStateResources()
 {
 }
 
-void FVulkanDescriptorSetCache::ResetPendingDescriptorPools()
-{
-    for (VkDescriptorPool CurrentPool : PendingDescriptorPools)
-    {
-        vkResetDescriptorPool(GetDevice()->GetVkDevice(), CurrentPool, 0);
-        AvailableDescriptorPools.Add(CurrentPool);
-    }
-    
-    PendingDescriptorPools.Clear();
-}
-
 bool FVulkanDescriptorSetCache::AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout)
 {
-    VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo;
-    FMemory::Memzero(&DescriptorSetAllocateInfo);
-    
-    DescriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    DescriptorSetAllocateInfo.descriptorPool     = DescriptorPool;
-    DescriptorSetAllocateInfo.descriptorSetCount = 1;
-    DescriptorSetAllocateInfo.pSetLayouts        = &Layout;
-    
     VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
-    DescriptorSet = VK_NULL_HANDLE;
-    
-    VkResult Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &DescriptorSetAllocateInfo, &DescriptorSet);
-    if (Result == VK_ERROR_OUT_OF_POOL_MEMORY)
+    if (!DescriptorPool->AllocateDescriptorSet(Layout, DescriptorSet))
     {
-        AllocateDescriptorPool();
+        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(DescriptorPool);
+        DescriptorPool = nullptr;
+
+        DescriptorPool = GetDevice()->GetDescriptorPoolManager().ObtainPool();
+        if (!DescriptorPool)
+        {
+            return false;
+        }
         
-        // After we have allocated a new pool, we try and allocate again
-        DescriptorSetAllocateInfo.descriptorPool = DescriptorPool;
-        Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &DescriptorSetAllocateInfo, &DescriptorSet);
-    }
-    
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to allocate descriptorset");
-        return false;
+        if (!DescriptorPool->AllocateDescriptorSet(Layout, DescriptorSet))
+        {
+            return false;
+        }
     }
     
     return true;
@@ -559,7 +543,7 @@ void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, ESh
     vkUpdateDescriptorSets(GetDevice()->GetVkDevice(), NumSamplers, DescriptorWrites, 0, nullptr);
 }
 
-void FVulkanDescriptorSetCache::SetDescriptorSet(VkPipelineLayout PipelineLayout, EShaderVisibility ShaderStage)
+void FVulkanDescriptorSetCache::SetDescriptorSet(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility ShaderStage)
 {
     VkPipelineBindPoint BindPoint;
     uint32              DescriptorSetBindPoint;
@@ -577,66 +561,5 @@ void FVulkanDescriptorSetCache::SetDescriptorSet(VkPipelineLayout PipelineLayout
     
     VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
     CHECK(DescriptorSet != VK_NULL_HANDLE);
-    Context.GetCommandBuffer()->BindDescriptorSets(BindPoint, PipelineLayout, DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);
-}
-
-bool FVulkanDescriptorSetCache::AllocateDescriptorPool()
-{
-    if (VULKAN_CHECK_HANDLE(DescriptorPool))
-    {
-        PendingDescriptorPools.Add(DescriptorPool);
-        DescriptorPool = VK_NULL_HANDLE;
-    }
-    
-    if (!AvailableDescriptorPools.IsEmpty())
-    {
-        DescriptorPool = AvailableDescriptorPools.LastElement();
-        AvailableDescriptorPools.Pop();
-        
-        if (DescriptorPool != VK_NULL_HANDLE)
-        {
-            return true;
-        }
-    }
-    
-    const VkDescriptorType DescriptorTypes[] =
-    {
-        // ConstantBuffers
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        // SRV + UAV Buffers
-        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        // Samplers
-        VK_DESCRIPTOR_TYPE_SAMPLER,
-        // UAV Textures
-        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        // Textures
-        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-    };
-    
-    TArray<VkDescriptorPoolSize> PoolSizes;
-    for (VkDescriptorType DescriptorType : DescriptorTypes)
-    {
-        VkDescriptorPoolSize NewPoolSize;
-        NewPoolSize.type            = DescriptorType;
-        NewPoolSize.descriptorCount = 1024;
-        PoolSizes.Add(NewPoolSize);
-    }
-    
-    VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo;
-    FMemory::Memzero(&DescriptorPoolCreateInfo);
-    
-    DescriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    DescriptorPoolCreateInfo.maxSets       = 1024;
-    DescriptorPoolCreateInfo.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    DescriptorPoolCreateInfo.poolSizeCount = PoolSizes.Size();
-    DescriptorPoolCreateInfo.pPoolSizes    = PoolSizes.Data();
-    
-    VkResult Result = vkCreateDescriptorPool(GetDevice()->GetVkDevice(), &DescriptorPoolCreateInfo, nullptr, &DescriptorPool);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to create DescriptorPool");
-        return false;
-    }
-    
-    return true;
+    Context.GetCommandBuffer()->BindDescriptorSets(BindPoint, PipelineLayout->GetVkPipelineLayout(), DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);
 }

@@ -137,7 +137,7 @@ void FMacFileHandle::Close()
     {
         if (!bReadOnly)
         {
-            const auto Result = ::fsync(FileHandle);
+            const int32 Result = ::fsync(FileHandle);
             CHECK(Result >= 0);
         }
 
@@ -145,7 +145,7 @@ void FMacFileHandle::Close()
         ::flock(FileHandle, LOCK_UN | LOCK_NB);
 
         {
-            const auto Result = ::close(FileHandle);
+            const int32 Result = ::close(FileHandle);
             CHECK(Result >= 0);
         }
     }

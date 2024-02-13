@@ -103,7 +103,6 @@ struct FVertexPacked
         , Tangent(InTangent)
         , TexCoord(InTexCoord)
     {
-        sizeof(FVertexPacked);
     }
 
     bool operator==(const FVertexPacked& Other) const

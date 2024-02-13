@@ -15,7 +15,6 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     VkPhysicalDeviceProperties AdapterProperties;
     vkGetPhysicalDeviceProperties(PhysicalDevice, &AdapterProperties);
 
-
     // Get the physical device features
     VkPhysicalDeviceFeatures2 DeviceFeatures2;
     FMemory::Memzero(&DeviceFeatures2);

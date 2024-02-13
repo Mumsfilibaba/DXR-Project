@@ -10,10 +10,12 @@ class FVulkanFenceManager : public FVulkanDeviceChild
 {
 public:
     FVulkanFenceManager(FVulkanDevice* InDevice);
-    ~FVulkanFenceManager() = default;
+    ~FVulkanFenceManager();
     
     FVulkanFence* ObtainFence();
     void RecycleFence(FVulkanFence* InFence);
+    
+    void ReleaseAll();
     
 private:
     TArray<FVulkanFence*> Fences;

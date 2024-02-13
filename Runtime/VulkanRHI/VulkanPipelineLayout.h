@@ -26,6 +26,7 @@ struct FDescriptorSetLayout
     {
         struct
         {
+            uint8 ShaderStage;
             uint8 NumUniformBuffers;
             uint8 NumImages;
             uint8 NumSamplers;
@@ -41,15 +42,53 @@ struct FVulkanPipelineLayoutCreateInfo
 {
     FVulkanPipelineLayoutCreateInfo()
         : StageSetLayouts()
+        , NumSetLayouts(0)
         , NumGlobalConstants(0)
     {
     }
     
+    bool operator==(const FVulkanPipelineLayoutCreateInfo& Other) const
+    {
+        if (NumSetLayouts != Other.NumSetLayouts || NumGlobalConstants != Other.NumGlobalConstants)
+        {
+            return false;
+        }
+        
+        for (int32 Index = 0; Index < NumSetLayouts; Index++)
+        {
+            if (StageSetLayouts[Index] != Other.StageSetLayouts[Index])
+            {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    bool operator!=(const FVulkanPipelineLayoutCreateInfo& Other) const
+    {
+        return !(*this == Other);
+    }
+    
     FDescriptorSetLayout StageSetLayouts[DESCRIPTOR_SET_STAGE_COUNT];
+    uint8                NumSetLayouts;
     uint8                NumGlobalConstants;
 };
 
-class FVulkanPipelineLayout : public FVulkanDeviceChild
+inline uint64 HashType(const FVulkanPipelineLayoutCreateInfo& Value)
+{
+    uint64 Hash = Value.NumSetLayouts;
+    HashCombine(Hash, Value.NumGlobalConstants);
+    for (int32 Index = 0; Index < Value.NumSetLayouts; Index++)
+    {
+        HashCombine(Hash, Value.StageSetLayouts[Index].PackedLayout);
+    }
+    
+    return Hash;
+}
+
+
+class FVulkanPipelineLayout : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanPipelineLayout(FVulkanDevice* InDevice);
@@ -57,14 +96,14 @@ public:
 
     bool Initialize(const FVulkanPipelineLayoutCreateInfo& LayoutCreateInfo);
 
-    FORCEINLINE VkDescriptorSetLayout GetVkDescriptorSetLayout(uint32 Index) const
-    {
-        return DescriptorSetLayoutHandles[Index];
-    }
-
-    FORCEINLINE VkPipelineLayout GetVkPipelineLayout() const 
+    VkPipelineLayout GetVkPipelineLayout() const
     {
         return LayoutHandle;
+    }
+
+    VkDescriptorSetLayout GetVkDescriptorSetLayout(uint32 Index) const
+    {
+        return DescriptorSetLayoutHandles[Index];
     }
 
 private:
@@ -78,8 +117,10 @@ public:
     FVulkanPipelineLayoutManager(FVulkanDevice* InDevice);
     ~FVulkanPipelineLayoutManager();
 
-    FVulkanPipelineLayout* GetOrCreateLayout(const FVulkanPipelineLayoutCreateInfo& LayoutCreateInfo);
+    void ReleaseAll();
+    
+    TSharedRef<FVulkanPipelineLayout> GetOrCreateLayout(const FVulkanPipelineLayoutCreateInfo& LayoutCreateInfo);
 
 private:
-    // TMap<FVulkanPipelineLayoutCreateInfo, TSharedRef<FVulkanPipelineLayout>> Layouts;
+    TMap<FVulkanPipelineLayoutCreateInfo, TSharedRef<FVulkanPipelineLayout>> Layouts;
 };

@@ -115,7 +115,7 @@ void FMallocLeakTracker::TrackAllocationMalloc(void* Block, uint64 Size)
 
     SCOPED_LOCK(AllocationsCS);
 
-    auto ExistingInfo = Allocations.Find(Block);
+    FAllocationInfo* ExistingInfo = Allocations.Find(Block);
     CHECK(ExistingInfo == nullptr);
     Allocations.Add(Block, FAllocationInfo{ Size });
 

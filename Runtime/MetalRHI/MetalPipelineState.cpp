@@ -24,8 +24,8 @@ FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceCont
     : FRHIDepthStencilState()
     , FMetalObject(DeviceContext)
     , FMetalRefCounted()
-    , Initializer(InInitializer)
     , DepthStencilState(nullptr)
+    , Initializer(InInitializer)
 {
 }
 
@@ -83,9 +83,9 @@ bool FMetalDepthStencilState::Initialize()
 FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
     : FRHIRasterizerState()
     , FMetalRefCounted()
-    , Initializer(InInitializer)
     , FillMode(ConvertFillMode(InInitializer.FillMode))
     , FrontFaceWinding(InInitializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
+    , Initializer(InInitializer)
 {
 }
 

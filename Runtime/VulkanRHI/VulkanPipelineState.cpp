@@ -170,12 +170,6 @@ FVulkanPipeline::~FVulkanPipeline()
         vkDestroyPipeline(GetDevice()->GetVkDevice(), Pipeline, nullptr);
         Pipeline = VK_NULL_HANDLE;
     }
-
-    if (VULKAN_CHECK_HANDLE(PipelineLayout))
-    {
-        vkDestroyPipelineLayout(GetDevice()->GetVkDevice(), PipelineLayout, nullptr);
-        PipelineLayout = VK_NULL_HANDLE;
-    }
 }
 
 void FVulkanPipeline::SetDebugName(const FString& InName)
@@ -187,20 +181,12 @@ void FVulkanPipeline::SetDebugName(const FString& InName)
 FVulkanGraphicsPipelineState::FVulkanGraphicsPipelineState(FVulkanDevice* InDevice)
     : FRHIGraphicsPipelineState()
     , FVulkanPipeline(InDevice)
+    , VertexShader(nullptr)
+    , HullShader(nullptr)
+    , DomainShader(nullptr)
+    , GeometryShader(nullptr)
+    , PixelShader(nullptr)
 {
-    FMemory::Memzero(DescriptorSetLayouts, sizeof(DescriptorSetLayouts));
-}
-
-FVulkanGraphicsPipelineState::~FVulkanGraphicsPipelineState()
-{
-    for (VkDescriptorSetLayout& DescriptorSetLayout : DescriptorSetLayouts)
-    {
-        if (VULKAN_CHECK_HANDLE(DescriptorSetLayout))
-        {
-            vkDestroyDescriptorSetLayout(GetDevice()->GetVkDevice(), DescriptorSetLayout, nullptr);
-            DescriptorSetLayout = VK_NULL_HANDLE;
-        }
-    }
 }
 
 bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
@@ -261,7 +247,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         }
     }
 
-
     // VertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo VertexInputStateCreateInfo;
     FMemory::Memzero(&VertexInputStateCreateInfo);
@@ -278,7 +263,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         }
     }
 
-
     // InputAssembly CreateInfo
     VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo;
     FMemory::Memzero(&InputAssemblyCreateInfo);
@@ -286,7 +270,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     InputAssemblyCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     InputAssemblyCreateInfo.topology               = ConvertPrimitiveTopology(Initializer.PrimitiveTopology);
     InputAssemblyCreateInfo.primitiveRestartEnable = Initializer.bPrimitiveRestartEnable ? VK_TRUE : VK_FALSE;
-
 
     // Viewport CreateInfo
     VkPipelineViewportStateCreateInfo ViewportStateCreateInfo;
@@ -296,7 +279,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     ViewportStateCreateInfo.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     ViewportStateCreateInfo.viewportCount = 1;
     ViewportStateCreateInfo.scissorCount  = 1;
-
 
     // RasterizerState CreateInfo
     VkPipelineRasterizationStateCreateInfo RasterizerStateCreateInfo;
@@ -312,7 +294,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         return false;
     }
 
-
     // MultiSampling CreateInfo
     VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo;
     FMemory::Memzero(&MultisamplingCreateInfo);
@@ -324,7 +305,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     MultisamplingCreateInfo.pSampleMask           = nullptr;
     MultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE;
     MultisamplingCreateInfo.alphaToOneEnable      = VK_FALSE;
-
 
     // DepthStencilState CreateInfo
     VkPipelineDepthStencilStateCreateInfo DepthStencilStateCreateInfo;
@@ -339,7 +319,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         VULKAN_ERROR("DepthStencilState cannot be nullptr");
         return false;
     }
-    
 
     // BlendState CreateInfo
     VkPipelineColorBlendStateCreateInfo BlendStateCreateInfo;
@@ -354,7 +333,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         VULKAN_ERROR("BlendState cannot be nullptr");
         return false;
     }
-    
 
     // Dynamic-State CreateInfo
     VkDynamicState DynamicStates[] = 
@@ -370,115 +348,39 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
-
-
-    // ShaderStages
-    VkShaderStageFlagBits ShaderVisibility[] =
+    
+    // Get or Create PipelineLayout
+    const EShaderVisibility ShaderStages2[] =
     {
-        VK_SHADER_STAGE_VERTEX_BIT,
-        VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
-        VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-        VK_SHADER_STAGE_GEOMETRY_BIT,
-        VK_SHADER_STAGE_FRAGMENT_BIT,
+        ShaderVisibility_Vertex,
+        ShaderVisibility_Hull,
+        ShaderVisibility_Domain,
+        ShaderVisibility_Geometry,
+        ShaderVisibility_Pixel,
     };
 
-    VkDescriptorType DescriptorType[] =
+    FVulkanPipelineLayoutCreateInfo PipelineLayoutCreateInfo2;
+    PipelineLayoutCreateInfo2.NumGlobalConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
+    PipelineLayoutCreateInfo2.NumSetLayouts      = ARRAY_COUNT(ShaderStages2);
+    
+    for (uint32 ShaderStageIndex = 0; ShaderStageIndex < PipelineLayoutCreateInfo2.NumSetLayouts; ShaderStageIndex++)
     {
-        // ConstantBuffers
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // Binding 0
-        // SRV + UAV Buffers
-        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, // Binding 8
-        // Samplers
-        VK_DESCRIPTOR_TYPE_SAMPLER,        // Binding 24
-        // UAV Textures
-        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,  // Binding 32
-    };
-
-    // Create Descriptor Bindings
-    TArray<VkDescriptorSetLayoutBinding> LayoutBindings;
-    for (uint32 ShaderVisibilityIndex = 0; ShaderVisibilityIndex < ARRAY_COUNT(ShaderVisibility); ShaderVisibilityIndex++)
-    {
-        // Clear layout bindings for each DescriptorSet
-        LayoutBindings.Clear();
-
-        // ConstantBuffers, SRV+UAV Buffers, Samplers, UAV Images
-        int32 BindingsStartIndex = 0;
-        for (uint32 DescriptorTypeIndex = 0; DescriptorTypeIndex < ARRAY_COUNT(DescriptorType); DescriptorTypeIndex++)
-        {
-            VkDescriptorType CurrentDescriptorType = DescriptorType[DescriptorTypeIndex];
-            BindingsStartIndex = LayoutBindings.Size();
-
-            // StorageBuffers needs to have SRV+UAV number of bindings
-            constexpr uint32 NumStorageBufferBindings     = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS + VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-            constexpr uint32 NumDefaultDescriptorBindings = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-
-            const uint32 NumBindings = CurrentDescriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ? NumStorageBufferBindings : NumDefaultDescriptorBindings;
-            for (uint32 Index = 0; Index < NumBindings; Index++)
-            {
-                VkDescriptorSetLayoutBinding LayoutBinding;
-                LayoutBinding.descriptorCount    = 1;
-                LayoutBinding.binding            = BindingsStartIndex + Index;
-                LayoutBinding.pImmutableSamplers = nullptr;
-                LayoutBinding.stageFlags         = ShaderVisibility[ShaderVisibilityIndex];
-                LayoutBinding.descriptorType     = CurrentDescriptorType;
-                LayoutBindings.Add(LayoutBinding);
-            }
-        }
-
-        // Texture (SRV) bindings
-        BindingsStartIndex = LayoutBindings.Size();
-        for (uint32 Index = 0; Index < VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS; Index++)
-        {
-            // SRV Textures
-            VkDescriptorSetLayoutBinding LayoutBinding;
-            LayoutBinding.descriptorCount    = 1;
-            LayoutBinding.binding            = BindingsStartIndex + Index;
-            LayoutBinding.pImmutableSamplers = nullptr;
-            LayoutBinding.stageFlags         = ShaderVisibility[ShaderVisibilityIndex];
-            LayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            LayoutBindings.Add(LayoutBinding);
-        }
-
-        // Create DescriptorSetLayout
-        VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo;
-        FMemory::Memzero(&DescriptorSetLayoutCreateInfo);
-
-        DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        DescriptorSetLayoutCreateInfo.bindingCount = LayoutBindings.Size();
-        DescriptorSetLayoutCreateInfo.pBindings    = LayoutBindings.Data();
-
-        VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayouts[ShaderVisibilityIndex]);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("Failed to create DescriptorSetLayout");
-            return false;
-        }
+        FDescriptorSetLayout& SetLayout = PipelineLayoutCreateInfo2.StageSetLayouts[ShaderStageIndex];
+        SetLayout.ShaderStage       = static_cast<uint8>(ShaderStages2[ShaderStageIndex]);
+        SetLayout.NumImages         = VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS;
+        SetLayout.NumSamplers       = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+        SetLayout.NumStorageBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS + VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+        SetLayout.NumStorageImages  = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+        SetLayout.NumUniformBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
     }
-
-    // Create ConstantRange
-    VkPushConstantRange ConstantRange;
-    ConstantRange.size       = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
-    ConstantRange.offset     = 0;
-    ConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
-
-    // Create PipelineLayout
-    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo;
-    FMemory::Memzero(&PipelineLayoutCreateInfo);
-
-    PipelineLayoutCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    PipelineLayoutCreateInfo.setLayoutCount         = ARRAY_COUNT(DescriptorSetLayouts);
-    PipelineLayoutCreateInfo.pSetLayouts            = DescriptorSetLayouts;
-    PipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-    PipelineLayoutCreateInfo.pPushConstantRanges    = &ConstantRange;
-
-    VkResult Result = vkCreatePipelineLayout(GetDevice()->GetVkDevice(), &PipelineLayoutCreateInfo, nullptr, &PipelineLayout);
-    if (VULKAN_FAILED(Result))
+    
+    FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();
+    PipelineLayout = PipelineLayoutManager.GetOrCreateLayout(PipelineLayoutCreateInfo2);
+    if (!PipelineLayout)
     {
-        VULKAN_ERROR("Failed to create PipelineLayout");
         return false;
     }
-
-
+    
     // Retrieve a compatible RenderPass
     // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
     FVulkanRenderPassKey RenderPassKey;
@@ -501,7 +403,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         return false;
     }
 
-
     // Create PipelineState
     VkGraphicsPipelineCreateInfo PipelineCreateInfo;
     FMemory::Memzero(&PipelineCreateInfo);
@@ -517,13 +418,13 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     PipelineCreateInfo.pDepthStencilState  = &DepthStencilStateCreateInfo;
     PipelineCreateInfo.pColorBlendState    = &BlendStateCreateInfo;
     PipelineCreateInfo.pDynamicState       = &DynamicStateCreateInfo;
-    PipelineCreateInfo.layout              = PipelineLayout;
+    PipelineCreateInfo.layout              = PipelineLayout->GetVkPipelineLayout();
     PipelineCreateInfo.renderPass          = RenderPass;
     PipelineCreateInfo.subpass             = 0;
     PipelineCreateInfo.basePipelineHandle  = VK_NULL_HANDLE;
     PipelineCreateInfo.basePipelineIndex   = -1;
 
-    Result = vkCreateGraphicsPipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
+    VkResult Result = vkCreateGraphicsPipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to create GraphicsPipeline");
@@ -537,16 +438,8 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 FVulkanComputePipelineState::FVulkanComputePipelineState(FVulkanDevice* InDevice)
     : FRHIComputePipelineState()
     , FVulkanPipeline(InDevice)
+    , Shader(nullptr)
 {
-}
-
-FVulkanComputePipelineState::~FVulkanComputePipelineState()
-{
-    if (VULKAN_CHECK_HANDLE(DescriptorSetLayout))
-    {
-        vkDestroyDescriptorSetLayout(GetDevice()->GetVkDevice(), DescriptorSetLayout, nullptr);
-        DescriptorSetLayout = VK_NULL_HANDLE;
-    }
 }
 
 bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateInitializer& Initializer)
@@ -566,96 +459,23 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     ShaderStageCreateInfo.module = ComputeShader->GetVkShaderModule();
     ShaderStageCreateInfo.pName  = "main";
 
-
-    VkDescriptorType DescriptorType[] =
+    // PipelineLayout
+    FVulkanPipelineLayoutCreateInfo PipelineLayoutCreateInfo2;
+    PipelineLayoutCreateInfo2.NumGlobalConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
+    PipelineLayoutCreateInfo2.NumSetLayouts      = 1;
+    
+    FDescriptorSetLayout& SetLayout = PipelineLayoutCreateInfo2.StageSetLayouts[0];
+    SetLayout.ShaderStage       = ShaderVisibility_Compute;
+    SetLayout.NumImages         = VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS;
+    SetLayout.NumSamplers       = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+    SetLayout.NumStorageBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS + VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+    SetLayout.NumStorageImages  = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+    SetLayout.NumUniformBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+    
+    FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();
+    PipelineLayout = PipelineLayoutManager.GetOrCreateLayout(PipelineLayoutCreateInfo2);
+    if (!PipelineLayout)
     {
-        // ConstantBuffers
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, // Binding 0
-        // SRV + UAV Buffers
-        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, // Binding 8
-        // Samplers
-        VK_DESCRIPTOR_TYPE_SAMPLER,        // Binding 24
-        // UAV Textures
-        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,  // Binding 32
-    };
-
-    // Create Descriptor Bindings
-    TArray<VkDescriptorSetLayoutBinding> LayoutBindings;
-        
-    // ConstantBuffers, SRV+UAV Buffers, Samplers, UAV Images
-    int32 BindingsStartIndex = 0;
-    for (uint32 DescriptorTypeIndex = 0; DescriptorTypeIndex < ARRAY_COUNT(DescriptorType); DescriptorTypeIndex++)
-    {
-        VkDescriptorType CurrentDescriptorType = DescriptorType[DescriptorTypeIndex];
-        BindingsStartIndex = LayoutBindings.Size();
-
-        // StorageBuffers needs to have SRV+UAV number of bindings
-        constexpr uint32 NumStorageBufferBindings     = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS + VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-        constexpr uint32 NumDefaultDescriptorBindings = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-
-        const uint32 NumBindings = CurrentDescriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ? NumStorageBufferBindings : NumDefaultDescriptorBindings;
-        for (uint32 Index = 0; Index < NumBindings; Index++)
-        {
-            VkDescriptorSetLayoutBinding LayoutBinding;
-            LayoutBinding.descriptorCount    = 1;
-            LayoutBinding.binding            = BindingsStartIndex + Index;
-            LayoutBinding.pImmutableSamplers = nullptr;
-            LayoutBinding.stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
-            LayoutBinding.descriptorType     = CurrentDescriptorType;
-            LayoutBindings.Add(LayoutBinding);
-        }
-    }
-
-    // Texture (SRV) bindings
-    BindingsStartIndex = LayoutBindings.Size();
-    for (uint32 Index = 0; Index < VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS; Index++)
-    {
-        // SRV Textures
-        VkDescriptorSetLayoutBinding LayoutBinding;
-        LayoutBinding.descriptorCount    = 1;
-        LayoutBinding.binding            = BindingsStartIndex + Index;
-        LayoutBinding.pImmutableSamplers = nullptr;
-        LayoutBinding.stageFlags         = VK_SHADER_STAGE_COMPUTE_BIT;
-        LayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        LayoutBindings.Add(LayoutBinding);
-    }
-
-    // Create DescriptorSetLayout
-    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo;
-    FMemory::Memzero(&DescriptorSetLayoutCreateInfo);
-
-    DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    DescriptorSetLayoutCreateInfo.bindingCount = LayoutBindings.Size();
-    DescriptorSetLayoutCreateInfo.pBindings    = LayoutBindings.Data();
-
-    VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &DescriptorSetLayout);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to create DescriptorSetLayout");
-        return false;
-    }
-
-    // Create ConstantRange
-    VkPushConstantRange ConstantRange;
-    ConstantRange.size       = VULKAN_MAX_NUM_PUSH_CONSTANTS * sizeof(uint32);
-    ConstantRange.offset     = 0;
-    ConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
-
- 
-    // Create PipelineLayout
-    VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo;
-    FMemory::Memzero(&PipelineLayoutCreateInfo);
-
-    PipelineLayoutCreateInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    PipelineLayoutCreateInfo.setLayoutCount         = 1;
-    PipelineLayoutCreateInfo.pSetLayouts            = &DescriptorSetLayout;
-    PipelineLayoutCreateInfo.pushConstantRangeCount = 1;
-    PipelineLayoutCreateInfo.pPushConstantRanges    = &ConstantRange;
-
-    Result = vkCreatePipelineLayout(GetDevice()->GetVkDevice(), &PipelineLayoutCreateInfo, nullptr, &PipelineLayout);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to create PipelineLayout");
         return false;
     }
 
@@ -664,10 +484,10 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     FMemory::Memzero(&PipelineCreateInfo);
 
     PipelineCreateInfo.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    PipelineCreateInfo.layout = PipelineLayout;
+    PipelineCreateInfo.layout = PipelineLayout->GetVkPipelineLayout();
     PipelineCreateInfo.stage  = ShaderStageCreateInfo;
 
-    Result = vkCreateComputePipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
+    VkResult Result = vkCreateComputePipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to create ComputePipeline");

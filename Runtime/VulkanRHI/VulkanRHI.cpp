@@ -33,12 +33,24 @@ FVulkanRHI::FVulkanRHI()
 
 FVulkanRHI::~FVulkanRHI()
 {
+    // Delete the Default Context before we flush the submission queue..
+    SAFE_DELETE(GraphicsCommandContext);
+
+    //.. since the context will put objects into the Deferred Deletion Queue
     while (!PendingSubmissions.IsEmpty())
     {
         ProcessPendingCommands();
     }
     
-    SAFE_DELETE(GraphicsCommandContext);
+    // Delete all remaining resources
+    TArray<FVulkanDeletionQueue::FDeferredResource> Resources;
+    DeletionQueue.Dequeue(Resources);
+    
+    for (FVulkanDeletionQueue::FDeferredResource& Object : Resources)
+    {
+        Object.Release();
+    }
+    
     SAFE_DELETE(GraphicsQueue);
 
     Device.Reset();
@@ -600,7 +612,7 @@ bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
 FString FVulkanRHI::RHIGetAdapterName() const
 {
     VULKAN_ERROR_COND(PhysicalDevice != nullptr, "PhysicalDevice is not initialized properly");
-    VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetDeviceProperties();
+    VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
     return FString(DeviceProperties.deviceName);
 }
 

@@ -865,12 +865,12 @@ struct FRHIRenderTargetView
 {
     FRHIRenderTargetView()
         : Texture(nullptr)
-        , Format(EFormat::Unknown)
+        , ClearValue()
         , ArrayIndex(0)
+        , Format(EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(EAttachmentLoadAction::DontCare)
         , StoreAction(EAttachmentStoreAction::DontCare)
-        , ClearValue()
     {
     }
     
@@ -880,12 +880,12 @@ struct FRHIRenderTargetView
         EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
         const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
         : Texture(InTexture)
-        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , ClearValue(InClearValue)
         , ArrayIndex(0)
+        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -898,12 +898,12 @@ struct FRHIRenderTargetView
         EAttachmentStoreAction InStoreAction,
         const FFloatColor&     InClearValue)
         : Texture(InTexture)
-        , Format(InFormat)
+        , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
+        , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -944,17 +944,16 @@ struct FRHIRenderTargetView
     EAttachmentStoreAction StoreAction;
 };
 
-
 struct FRHIDepthStencilView
 {
     FRHIDepthStencilView()
         : Texture(nullptr)
+        , ClearValue()
         , Format(EFormat::Unknown)
         , ArrayIndex(0)
         , MipLevel(0)
         , LoadAction(EAttachmentLoadAction::DontCare)
         , StoreAction(EAttachmentStoreAction::DontCare)
-        , ClearValue()
     {
     }
 
@@ -964,12 +963,12 @@ struct FRHIDepthStencilView
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
+        , ClearValue(InClearValue)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -981,12 +980,12 @@ struct FRHIDepthStencilView
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
+        , ClearValue(InClearValue)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(uint16(InArrayIndex))
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -999,12 +998,12 @@ struct FRHIDepthStencilView
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
+        , ClearValue(InClearValue)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -2185,8 +2184,8 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleCount(1)
         , SampleQuality(0)
         , SampleMask(0xffffffff)
-        , bPrimitiveRestartEnable(false)
         , PrimitiveTopology(EPrimitiveTopology::TriangleList)
+        , bPrimitiveRestartEnable(false)
         , ShaderState()
         , PipelineFormats()
     {
@@ -2211,8 +2210,8 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleCount(InSampleCount)
         , SampleQuality(InSampleQuality)
         , SampleMask(InSampleMask)
-        , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
         , PrimitiveTopology(InPrimitiveTopology)
+        , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
         , ShaderState(InShaderState)
         , PipelineFormats(InPipelineFormats)
     {

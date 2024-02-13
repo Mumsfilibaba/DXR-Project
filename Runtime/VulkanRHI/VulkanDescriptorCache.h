@@ -2,13 +2,14 @@
 #include "VulkanLoader.h"
 #include "VulkanSamplerState.h"
 #include "VulkanResourceViews.h"
+#include "VulkanDescriptorSet.h"
 
 class FVulkanBuffer;
 class FVulkanCommandContext;
 
 struct FVulkanVertexBufferCache
 {
-    FVulkanVertexBufferCache()
+    FVulkanVertexBufferCache() 
     {
         Clear();
     }
@@ -57,7 +58,7 @@ struct FVulkanResourceCache
     {
         CHECK(EndStage < ShaderVisibility_Count);
 
-        for (uint32 Index = StartStage; Index < ShaderVisibility_Count; Index++)
+        for (uint32 Index = StartStage; Index < EndStage; Index++)
         {
             bDirty[Index] = true;
         }
@@ -222,6 +223,7 @@ struct FVulkanDefaultResources
     VkSampler               NullSampler;
 };
 
+
 class FVulkanDescriptorSetCache : public FVulkanDeviceChild
 {
 public:
@@ -229,6 +231,7 @@ public:
     ~FVulkanDescriptorSetCache();
 
     bool Initialize();
+    void Release();
 
     void DirtyState();
     void DirtyStateSamplers();
@@ -236,7 +239,7 @@ public:
 
     void SetVertexBuffers(FVulkanVertexBufferCache& VertexBuffers);
     void SetIndexBuffer(FVulkanIndexBufferCache& IndexBuffer);
-    
+
     bool AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout);
 
     void SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs);
@@ -244,28 +247,21 @@ public:
     void SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumBuffers);
     void SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers);
 
-    void SetDescriptorSet(VkPipelineLayout PipelineLayout, EShaderVisibility ShaderStage);
-    
-    void ResetPendingDescriptorPools();
-    
-    FORCEINLINE FVulkanCommandContext& GetContext()
+    void SetDescriptorSet(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility ShaderStage);
+
+    FVulkanCommandContext& GetContext()
     {
         return Context;
     }
-    
-    FORCEINLINE FVulkanDefaultResources& GetDefaultResources()
+
+    FVulkanDefaultResources& GetDefaultResources()
     {
         return DefaultResources;
     }
 
 private:
-    bool AllocateDescriptorPool();
-    
     FVulkanCommandContext&  Context;
     FVulkanDefaultResources DefaultResources;
-    
-    VkDescriptorSet          DescriptorSets[ShaderVisibility_Count];
-    VkDescriptorPool         DescriptorPool;
-    TArray<VkDescriptorPool> PendingDescriptorPools;
-    TArray<VkDescriptorPool> AvailableDescriptorPools;
+    VkDescriptorSet         DescriptorSets[ShaderVisibility_Count];
+    FVulkanDescriptorPool*  DescriptorPool;
 };
