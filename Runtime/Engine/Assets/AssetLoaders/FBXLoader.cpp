@@ -220,7 +220,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
 
                     // Only push unique vertices
                     uint32 UniqueIndex = 0;
-                    if (UniqueVertices.Contains(TempVertex))
+                    if (!UniqueVertices.Contains(TempVertex))
                     {
                         UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.Size());
                         UniqueVertices[TempVertex] = UniqueIndex;

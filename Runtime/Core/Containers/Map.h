@@ -234,6 +234,11 @@ public:
         typename BaseMapType::const_iterator Element = BaseMap.find(Key);
         return Element != BaseMap.end();
     }
+
+    NODISCARD SizeType Count(const KeyType& Key)
+    {
+        return static_cast<SizeType>(BaseMap.count(Key));
+    }
     
     void Reserve(SizeType InCapacity)
     {
