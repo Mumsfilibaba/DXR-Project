@@ -263,7 +263,7 @@ public:
     NODISCARD TArray<KeyType> GetKeys() const
     {
         TArray<KeyType> Keys;
-        Keys.Reserve(BaseMap.size());
+        Keys.Reserve(static_cast<int32>(BaseMap.size()));
 
         for (const std::pair<KeyType, ValueType>& Pair : BaseMap)
         {
@@ -276,7 +276,7 @@ public:
     NODISCARD TArray<ValueType> GetValues() const
     {
         TArray<ValueType> Values;
-        Values.Reserve(BaseMap.size());
+        Values.Reserve(static_cast<int32>(BaseMap.size()));
 
         for (const std::pair<KeyType, ValueType>& Pair : BaseMap)
         {

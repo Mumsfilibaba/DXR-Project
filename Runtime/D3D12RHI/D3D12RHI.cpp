@@ -49,7 +49,7 @@ FD3D12RHI::~FD3D12RHI()
 {
     SAFE_DELETE(DirectContext);
 
-    SamplerStateMap.clear();
+    SamplerStateMap.Clear();
 
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
@@ -224,10 +224,9 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& I
     FD3D12SamplerStateRef Result;
 
     // Check if there already is an existing sampler state with this description
-    auto ExistingSamplerState = SamplerStateMap.find(InDesc);
-    if (ExistingSamplerState != SamplerStateMap.end())
+    if (FD3D12SamplerStateRef* ExistingSamplerState = SamplerStateMap.Find(InDesc))
     {
-        Result = ExistingSamplerState->second;
+        Result = *ExistingSamplerState;
     }
     else
     {
@@ -250,8 +249,10 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& I
         {
             return nullptr;
         }
-
-        SamplerStateMap.insert(std::make_pair(InDesc, Result));
+        else
+        {
+            SamplerStateMap.Add(InDesc, Result);
+        }
     }
 
     return Result.ReleaseOwnership();

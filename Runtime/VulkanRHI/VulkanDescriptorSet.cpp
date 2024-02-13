@@ -10,9 +10,9 @@ FVulkanDescriptorPool::~FVulkanDescriptorPool()
 {
     if (VULKAN_CHECK_HANDLE(DescriptorPool))
     {
-        VkDevice Device = GetDevice()->GetVkDevice();
-        vkResetDescriptorPool(Device, DescriptorPool, 0);
-        vkDestroyDescriptorPool(Device, DescriptorPool, nullptr);
+        VkDevice VulkanDevice = GetDevice()->GetVkDevice();
+        vkResetDescriptorPool(VulkanDevice, DescriptorPool, 0);
+        vkDestroyDescriptorPool(VulkanDevice, DescriptorPool, nullptr);
         DescriptorPool = VK_NULL_HANDLE;
     }
 }

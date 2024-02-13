@@ -19,6 +19,8 @@ struct FD3D12DeferredObject
         OnlineDescriptorBlock = 4,
     };
 
+    FD3D12DeferredObject() = default;
+
     FD3D12DeferredObject(uint64 InFenceValue, FRHIResource* InResource)
         : Type(EDeferredObjectType::RHIResource)
         , FenceValue(InFenceValue)

@@ -1231,21 +1231,6 @@ struct FRHISamplerStateDesc
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToUnderlying(AddressU);
-        HashCombine(Hash, ToUnderlying(AddressV));
-        HashCombine(Hash, ToUnderlying(AddressW));
-        HashCombine(Hash, ToUnderlying(Filter));
-        HashCombine(Hash, ToUnderlying(ComparisonFunc));
-        HashCombine(Hash, MaxAnisotropy);
-        HashCombine(Hash, MinLOD);
-        HashCombine(Hash, MinLOD);
-        HashCombine(Hash, MaxLOD);
-        HashCombine(Hash, BorderColor.GetHash());
-        return Hash;
-    }
-
     bool operator==(const FRHISamplerStateDesc& Other) const
     {
         return AddressU       == Other.AddressU
@@ -1263,6 +1248,21 @@ struct FRHISamplerStateDesc
     bool operator!=(const FRHISamplerStateDesc& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 HashType(const FRHISamplerStateDesc& Value)
+    {
+        uint64 Hash = ToUnderlying(Value.AddressU);
+        HashCombine(Hash, ToUnderlying(Value.AddressV));
+        HashCombine(Hash, ToUnderlying(Value.AddressW));
+        HashCombine(Hash, ToUnderlying(Value.Filter));
+        HashCombine(Hash, ToUnderlying(Value.ComparisonFunc));
+        HashCombine(Hash, Value.MaxAnisotropy);
+        HashCombine(Hash, Value.MinLOD);
+        HashCombine(Hash, Value.MinLOD);
+        HashCombine(Hash, Value.MaxLOD);
+        HashCombine(Hash, Value.BorderColor.GetHash());
+        return Hash;
     }
 
     ESamplerMode    AddressU;
