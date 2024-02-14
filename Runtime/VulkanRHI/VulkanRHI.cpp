@@ -89,7 +89,7 @@ bool FVulkanRHI::Initialize()
 
     if (!Instance.Initialize(InstanceDesc))
     {
-        VULKAN_ERROR("Failed to initialize VulkanDriverInstance");
+        VULKAN_ERROR("Failed to initialize VulkanInstance");
         return false;
     }
     
@@ -124,25 +124,36 @@ bool FVulkanRHI::Initialize()
     Device = new FVulkanDevice(GetInstance(), GetAdapter());
     if (!Device->Initialize(DeviceDesc))
     {
-        VULKAN_ERROR("Failed to initialize VulkanPhysicalDevice");
+        VULKAN_ERROR("Failed to initialize VulkanDevice");
         return false;
     }
     
-    // Load functions that requires an device here (Order is important)
+    // Load functions that requires a device here (Order is important)
     if (!LoadDeviceFunctions(Device.Get()))
     {
         return false;
     }
 
-    GraphicsQueue = new FVulkanQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
-    if (!GraphicsQueue->Initialize())
+    // Initialize parts of the device that require device functions to be present
+    if (!Device->PostLoaderInitalize())
     {
-        VULKAN_ERROR("Failed to initialize VulkanCommandQueue");
+        VULKAN_ERROR("Failed to PostLoaderInitalize failed to VulkanDevice");
         return false;
     }
 
-    GraphicsQueue->SetName("Graphics Queue");
+    // Initialize Queues
+    GraphicsQueue = new FVulkanQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
+    if (!GraphicsQueue->Initialize())
+    {
+        VULKAN_ERROR("Failed to initialize VulkanQueue [Graphics]");
+        return false;
+    }
+    else
+    {
+        GraphicsQueue->SetName("Graphics Queue");
+    }
 
+    // Initialize Default CommandContext
     GraphicsCommandContext = new FVulkanCommandContext(Device.Get(), *GraphicsQueue);
     if (!GraphicsCommandContext->Initialize())
     {

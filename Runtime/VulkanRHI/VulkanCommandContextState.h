@@ -15,7 +15,7 @@ struct FVulkanCommandContextState : public FVulkanDeviceChild, public FNonCopyAn
 
     void BindGraphicsStates();
     void BindComputeState();
-    void BindDescriptorSets(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
+    void BindDescriptorSets(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage);
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
     
     void ResetState();
@@ -148,6 +148,7 @@ private:
     {
         FCommonState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
             : DescriptorSetCache(InDevice, InContext)
+            , CurrentPipelineLayout(nullptr)
         {
         }
 
@@ -158,5 +159,7 @@ private:
 
         FVulkanDescriptorSetCache       DescriptorSetCache;
         FVulkanPushConstantsCache       PushConstantsCache;
+
+        FVulkanPipelineLayout*          CurrentPipelineLayout;
     } CommonState;
 };

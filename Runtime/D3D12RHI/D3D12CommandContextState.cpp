@@ -70,7 +70,6 @@ void FD3D12CommandContextState::BindGraphicsStates()
     }
 
     BindResources(RootSignture, ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
-
     BindSamplers(RootSignture, ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
 
     if (ComputeState.bBindShaderConstants)
@@ -126,7 +125,6 @@ void FD3D12CommandContextState::BindComputeState()
     }
 
     BindResources(RootSignture, ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
-
     BindSamplers(RootSignture, ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
 
     if (ComputeState.bBindShaderConstants)

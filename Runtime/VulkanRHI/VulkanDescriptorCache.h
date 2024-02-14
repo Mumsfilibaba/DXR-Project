@@ -234,11 +234,6 @@ public:
     void Release();
 
     void DirtyState();
-    void DirtyStateSamplers();
-    void DirtyStateResources();
-
-    void SetVertexBuffers(FVulkanVertexBufferCache& VertexBuffers);
-    void SetIndexBuffer(FVulkanIndexBufferCache& IndexBuffer);
 
     bool AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout);
 
@@ -248,6 +243,11 @@ public:
     void SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers);
 
     void SetDescriptorSet(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility ShaderStage);
+
+    bool IsDescriptorSetValid(EShaderVisibility ShaderStage) const
+    {
+        return DescriptorSets[ShaderStage] != VK_NULL_HANDLE;
+    }
 
     FVulkanCommandContext& GetContext()
     {

@@ -22,6 +22,7 @@ static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
     }
 }
 
+
 FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter)
     : Instance(InInstance)
     , PhysicalDevice(InAdapter)
@@ -41,7 +42,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
 FVulkanDevice::~FVulkanDevice()
 {
     // Release all PipelineLayout
-    PipelineLayoutManager.ReleaseAll();
+    PipelineLayoutManager.Release();
 
     // Release all the DescriptorPools
     DescriptorPoolManager.ReleaseAll();
@@ -273,6 +274,17 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to create Device");
+        return false;
+    }
+
+    return true;
+}
+
+bool FVulkanDevice::PostLoaderInitalize()
+{
+    // Initialize PipelineLayoutManager
+    if (!PipelineLayoutManager.Initialize())
+    {
         return false;
     }
 

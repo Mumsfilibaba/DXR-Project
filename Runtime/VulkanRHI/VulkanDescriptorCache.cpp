@@ -221,14 +221,7 @@ void FVulkanDescriptorSetCache::Release()
 
 void FVulkanDescriptorSetCache::DirtyState()
 {
-}
-
-void FVulkanDescriptorSetCache::DirtyStateSamplers()
-{
-}
-
-void FVulkanDescriptorSetCache::DirtyStateResources()
-{
+    FMemory::Memzero(DescriptorSets, sizeof(DescriptorSets));
 }
 
 bool FVulkanDescriptorSetCache::AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout)
@@ -252,16 +245,6 @@ bool FVulkanDescriptorSetCache::AllocateDescriptorSets(EShaderVisibility ShaderS
     }
     
     return true;
-}
-
-void FVulkanDescriptorSetCache::SetVertexBuffers(FVulkanVertexBufferCache& VertexBuffersCache)
-{
-    Context.GetCommandBuffer()->BindVertexBuffers(0, VertexBuffersCache.NumVertexBuffers, VertexBuffersCache.VertexBuffers, VertexBuffersCache.VertexBufferOffsets);
-}
-
-void FVulkanDescriptorSetCache::SetIndexBuffer(FVulkanIndexBufferCache& IndexBufferCache)
-{
-    Context.GetCommandBuffer()->BindIndexBuffer(IndexBufferCache.IndexBuffer, IndexBufferCache.Offset, IndexBufferCache.IndexType);
 }
 
 void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs)
@@ -539,7 +522,7 @@ void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, ESh
             DescriptorInfo.sampler     = DefaultResources.NullSampler;
         }
     }
-    
+
     vkUpdateDescriptorSets(GetDevice()->GetVkDevice(), NumSamplers, DescriptorWrites, 0, nullptr);
 }
 
@@ -558,7 +541,7 @@ void FVulkanDescriptorSetCache::SetDescriptorSet(FVulkanPipelineLayout* Pipeline
         BindPoint              = VK_PIPELINE_BIND_POINT_GRAPHICS;
         DescriptorSetBindPoint = ShaderStage;
     }
-    
+
     VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
     CHECK(DescriptorSet != VK_NULL_HANDLE);
     Context.GetCommandBuffer()->BindDescriptorSets(BindPoint, PipelineLayout->GetVkPipelineLayout(), DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);

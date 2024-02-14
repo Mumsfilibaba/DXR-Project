@@ -62,6 +62,7 @@ public:
     ~FVulkanDevice();
 
     bool Initialize(const FVulkanDeviceCreateInfo& DeviceDesc);
+    bool PostLoaderInitalize();
 
     FVulkanRenderPassCache&       GetRenderPassCache()       { return RenderPassCache; }
     FVulkanFramebufferCache&      GetFramebufferCache()      { return FramebufferCache; }

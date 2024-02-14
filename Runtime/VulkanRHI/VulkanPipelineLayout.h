@@ -101,14 +101,14 @@ public:
         return LayoutHandle;
     }
 
-    VkDescriptorSetLayout GetVkDescriptorSetLayout(uint32 Index) const
+    VkDescriptorSetLayout GetVkDescriptorSetLayout(EShaderVisibility ShaderVisibility) const
     {
-        return DescriptorSetLayoutHandles[Index];
+        return DescriptorSetLayoutHandles[ShaderVisibility];
     }
 
 private:
-    VkPipelineLayout              LayoutHandle;
-    TArray<VkDescriptorSetLayout> DescriptorSetLayoutHandles;
+    VkPipelineLayout      LayoutHandle;
+    VkDescriptorSetLayout DescriptorSetLayoutHandles[ShaderVisibility_Count];
 };
 
 class FVulkanPipelineLayoutManager : public FVulkanDeviceChild
@@ -117,10 +117,18 @@ public:
     FVulkanPipelineLayoutManager(FVulkanDevice* InDevice);
     ~FVulkanPipelineLayoutManager();
 
-    void ReleaseAll();
-    
-    TSharedRef<FVulkanPipelineLayout> GetOrCreateLayout(const FVulkanPipelineLayoutCreateInfo& LayoutCreateInfo);
+    bool Initialize();
+    void Release();
+
+    TSharedRef<FVulkanPipelineLayout> CreateLayout(const FVulkanPipelineLayoutCreateInfo& LayoutCreateInfo);
+
+    VkDescriptorSetLayout GetDefaultSetLayout() const
+    {
+        return DefaultSetLayout;
+    }
 
 private:
+    VkDescriptorSetLayout DefaultSetLayout;
     TMap<FVulkanPipelineLayoutCreateInfo, TSharedRef<FVulkanPipelineLayout>> Layouts;
+    FCriticalSection LayoutsCS;
 };

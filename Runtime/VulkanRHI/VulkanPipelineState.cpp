@@ -192,6 +192,7 @@ FVulkanGraphicsPipelineState::FVulkanGraphicsPipelineState(FVulkanDevice* InDevi
 bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
     // Shader-Stages
+    TArray<EShaderVisibility> ShaderVisibility;
     TArray<VkPipelineShaderStageCreateInfo> ShaderStages;
 
     {
@@ -206,6 +207,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
             ShaderStageCreateInfo.module = VulkanVertexShader->GetVkShaderModule();
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_VERTEX_BIT;
             ShaderStages.Add(ShaderStageCreateInfo);
+            ShaderVisibility.Add(ShaderVisibility_Vertex);
             VertexShader = MakeSharedRef<FVulkanVertexShader>(VulkanVertexShader);
         }
         else
@@ -219,6 +221,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
             ShaderStageCreateInfo.module = VulkanHullShader->GetVkShaderModule();
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
             ShaderStages.Add(ShaderStageCreateInfo);
+            ShaderVisibility.Add(ShaderVisibility_Hull);
             HullShader = MakeSharedRef<FVulkanHullShader>(VulkanHullShader);
         }
 
@@ -227,6 +230,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
             ShaderStageCreateInfo.module = VulkanDomainShader->GetVkShaderModule();
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
             ShaderStages.Add(ShaderStageCreateInfo);
+            ShaderVisibility.Add(ShaderVisibility_Domain);
             DomainShader = MakeSharedRef<FVulkanDomainShader>(VulkanDomainShader);
         }
 
@@ -235,6 +239,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
             ShaderStageCreateInfo.module = VulkanGeometryShader->GetVkShaderModule();
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_GEOMETRY_BIT;
             ShaderStages.Add(ShaderStageCreateInfo);
+            ShaderVisibility.Add(ShaderVisibility_Geometry);
             GeometryShader = MakeSharedRef<FVulkanGeometryShader>(VulkanGeometryShader);
         }
 
@@ -243,6 +248,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
             ShaderStageCreateInfo.module = VulkanPixelShader->GetVkShaderModule();
             ShaderStageCreateInfo.stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
             ShaderStages.Add(ShaderStageCreateInfo);
+            ShaderVisibility.Add(ShaderVisibility_Pixel);
             PixelShader = MakeSharedRef<FVulkanPixelShader>(VulkanPixelShader);
         }
     }
@@ -348,39 +354,37 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     DynamicStateCreateInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     DynamicStateCreateInfo.dynamicStateCount = ARRAY_COUNT(DynamicStates);
     DynamicStateCreateInfo.pDynamicStates    = DynamicStates;
-    
-    // Get or Create PipelineLayout
-    const EShaderVisibility ShaderStages2[] =
-    {
-        ShaderVisibility_Vertex,
-        ShaderVisibility_Hull,
-        ShaderVisibility_Domain,
-        ShaderVisibility_Geometry,
-        ShaderVisibility_Pixel,
-    };
 
-    FVulkanPipelineLayoutCreateInfo PipelineLayoutCreateInfo2;
-    PipelineLayoutCreateInfo2.NumGlobalConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
-    PipelineLayoutCreateInfo2.NumSetLayouts      = ARRAY_COUNT(ShaderStages2);
-    
-    for (uint32 ShaderStageIndex = 0; ShaderStageIndex < PipelineLayoutCreateInfo2.NumSetLayouts; ShaderStageIndex++)
+    // Create PipelineLayout
+    constexpr uint8 NumGraphicsShaderStages = 5;
+
+    FVulkanPipelineLayoutCreateInfo PipelineLayoutCreateInfo;
+    PipelineLayoutCreateInfo.NumGlobalConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
+    PipelineLayoutCreateInfo.NumSetLayouts      = NumGraphicsShaderStages;
+
+    for (EShaderVisibility ShaderStage = ShaderVisibility_Vertex; ShaderStage <= ShaderVisibility_Pixel; ShaderStage = EShaderVisibility(ShaderStage + 1))
     {
-        FDescriptorSetLayout& SetLayout = PipelineLayoutCreateInfo2.StageSetLayouts[ShaderStageIndex];
-        SetLayout.ShaderStage       = static_cast<uint8>(ShaderStages2[ShaderStageIndex]);
-        SetLayout.NumImages         = VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS;
-        SetLayout.NumSamplers       = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-        SetLayout.NumStorageBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS + VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-        SetLayout.NumStorageImages  = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-        SetLayout.NumUniformBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+        FDescriptorSetLayout& SetLayout = PipelineLayoutCreateInfo.StageSetLayouts[ShaderStage];
+        SetLayout.ShaderStage = static_cast<uint8>(ShaderStage);
+
+        int32 ShaderStageIndex = ShaderVisibility.Find(ShaderStage);
+        if (ShaderStageIndex >= 0)
+        {
+            SetLayout.NumImages         = VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS;
+            SetLayout.NumSamplers       = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+            SetLayout.NumStorageBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS + VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+            SetLayout.NumStorageImages  = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+            SetLayout.NumUniformBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
+        }
     }
-    
+
     FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();
-    PipelineLayout = PipelineLayoutManager.GetOrCreateLayout(PipelineLayoutCreateInfo2);
+    PipelineLayout = PipelineLayoutManager.CreateLayout(PipelineLayoutCreateInfo);
     if (!PipelineLayout)
     {
         return false;
     }
-    
+
     // Retrieve a compatible RenderPass
     // NOTE: The RenderPass only needs to be compatible, and does not actually need to be the same one that actually will be used
     FVulkanRenderPassKey RenderPassKey;
@@ -430,8 +434,10 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         VULKAN_ERROR("Failed to create GraphicsPipeline");
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }
 
 
@@ -460,20 +466,20 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     ShaderStageCreateInfo.pName  = "main";
 
     // PipelineLayout
-    FVulkanPipelineLayoutCreateInfo PipelineLayoutCreateInfo2;
-    PipelineLayoutCreateInfo2.NumGlobalConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
-    PipelineLayoutCreateInfo2.NumSetLayouts      = 1;
-    
-    FDescriptorSetLayout& SetLayout = PipelineLayoutCreateInfo2.StageSetLayouts[0];
+    FVulkanPipelineLayoutCreateInfo PipelineLayoutCreateInfo;
+    PipelineLayoutCreateInfo.NumGlobalConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
+    PipelineLayoutCreateInfo.NumSetLayouts      = 1;
+
+    FDescriptorSetLayout& SetLayout = PipelineLayoutCreateInfo.StageSetLayouts[0];
     SetLayout.ShaderStage       = ShaderVisibility_Compute;
     SetLayout.NumImages         = VULKAN_DEFAULT_NUM_SAMPLED_IMAGE_DESCRIPTOR_BINDINGS;
     SetLayout.NumSamplers       = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
     SetLayout.NumStorageBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS + VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
     SetLayout.NumStorageImages  = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
     SetLayout.NumUniformBuffers = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS;
-    
+
     FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();
-    PipelineLayout = PipelineLayoutManager.GetOrCreateLayout(PipelineLayoutCreateInfo2);
+    PipelineLayout = PipelineLayoutManager.CreateLayout(PipelineLayoutCreateInfo);
     if (!PipelineLayout)
     {
         return false;
@@ -493,6 +499,8 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
         VULKAN_ERROR("Failed to create ComputePipeline");
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }
