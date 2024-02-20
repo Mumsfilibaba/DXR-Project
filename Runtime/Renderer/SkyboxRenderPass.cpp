@@ -4,7 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Renderer/Debug/GPUProfiler.h"
 #include "RHI/RHI.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
 #include "RendererCore/TextureFactory.h"
 
@@ -137,8 +137,8 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     TArray<uint8> ShaderCode;
     
     {
-        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -153,8 +153,8 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;

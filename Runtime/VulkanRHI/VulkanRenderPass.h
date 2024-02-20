@@ -27,7 +27,14 @@ struct FVulkanRenderPassKey
         return !(*this == Other);
     }
 
-    
+    friend uint64 HashType(const FVulkanRenderPassKey& Key)
+    {
+        uint64 Hash = Key.Key0;
+        HashCombine(Hash, Key.Key1);
+        HashCombine(Hash, Key.Key2);
+        return Hash;
+    }
+
     union
     {
         struct
@@ -52,15 +59,6 @@ struct FVulkanRenderPassKey
 };
 
 static_assert(sizeof(FVulkanRenderPassKey) == sizeof(uint64[3]), "Size of FVulkanRenderPassKey is invalid");
-
-inline uint64 HashType(const FVulkanRenderPassKey& Key)
-{
-    uint64 Hash = Key.Key0;
-    HashCombine(Hash, Key.Key1);
-    HashCombine(Hash, Key.Key2);
-    return Hash;
-}
-
 
 class FVulkanRenderPassCache : public FVulkanDeviceChild
 {

@@ -99,6 +99,7 @@ private:
     {
         FGraphicsState()
             : PipelineState(nullptr)
+            , CurrentPipelineLayout(nullptr)
             , NumViewports(0)
             , NumScissorRects(0)
             , IBCache()
@@ -110,6 +111,7 @@ private:
         }
 
         FVulkanGraphicsPipelineStateRef PipelineState;
+        FVulkanPipelineLayout*          CurrentPipelineLayout;
 
         float BlendFactor[4];
 
@@ -135,10 +137,12 @@ private:
     {
         FComputeState()
             : PipelineState(nullptr)
+            , CurrentPipelineLayout(nullptr)
         {
         }
 
         FVulkanComputePipelineStateRef PipelineState;
+        FVulkanPipelineLayout*         CurrentPipelineLayout;
 
         bool bBindPipelineState : 1;
         bool bBindPushConstants : 1;
@@ -148,7 +152,6 @@ private:
     {
         FCommonState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
             : DescriptorSetCache(InDevice, InContext)
-            , CurrentPipelineLayout(nullptr)
         {
         }
 
@@ -160,6 +163,6 @@ private:
         FVulkanDescriptorSetCache       DescriptorSetCache;
         FVulkanPushConstantsCache       PushConstantsCache;
 
-        FVulkanPipelineLayout*          CurrentPipelineLayout;
+        const FVulkanShaderLayout*      ShaderLayouts[ShaderVisibility_Count];
     } CommonState;
 };

@@ -2,7 +2,7 @@
 #include "TextureResourceData.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 
 struct TextureFactoryData
 {
@@ -18,8 +18,8 @@ bool FTextureFactory::Init()
     // Compile and create shader
     TArray<uint8> Code;
 
-    FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
     {
         return false;
     }

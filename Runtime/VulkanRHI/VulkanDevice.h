@@ -111,7 +111,7 @@ private:
     FVulkanInstance*       Instance;
     FVulkanPhysicalDevice* PhysicalDevice;
     VkDevice               Device;
-    
+
     FVulkanRenderPassCache       RenderPassCache;
     FVulkanFramebufferCache      FramebufferCache;
     FVulkanUploadHeapAllocator   UploadHeap;
@@ -121,11 +121,10 @@ private:
     FVulkanDescriptorPoolManager DescriptorPoolManager;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
-    
+
     TSet<FString> ExtensionNames;
     TSet<FString> LayerNames;
-    
-    // One off boolean features
+
     bool bSupportsDepthClip                 : 1;
     bool bSupportsConservativeRasterization : 1;
 };

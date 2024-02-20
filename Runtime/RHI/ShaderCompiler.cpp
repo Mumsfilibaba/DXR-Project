@@ -1,5 +1,5 @@
 #include "RHI.h"
-#include "RHIShaderCompiler.h"
+#include "ShaderCompiler.h"
 #include "Core/Containers/ComPtr.h"
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
@@ -210,16 +210,16 @@ private:
 };
 
 
-FRHIShaderCompiler* FRHIShaderCompiler::GInstance = nullptr;
+FShaderCompiler* FShaderCompiler::GInstance = nullptr;
 
-FRHIShaderCompiler::FRHIShaderCompiler(FStringView InAssetPath)
+FShaderCompiler::FShaderCompiler(FStringView InAssetPath)
     : DXCLib(nullptr)
     , DxcCreateInstanceFunc(nullptr)
     , AssetPath(InAssetPath)
 {
 }
 
-FRHIShaderCompiler::~FRHIShaderCompiler()
+FShaderCompiler::~FShaderCompiler()
 {
     if (DXCLib)
     {
@@ -230,11 +230,11 @@ FRHIShaderCompiler::~FRHIShaderCompiler()
     DxcCreateInstanceFunc = nullptr;
 }
 
-bool FRHIShaderCompiler::Create(FStringView InAssetFolderPath)
+bool FShaderCompiler::Create(FStringView InAssetFolderPath)
 {
     CHECK(GInstance == nullptr);
 
-    GInstance = new FRHIShaderCompiler(InAssetFolderPath);
+    GInstance = new FShaderCompiler(InAssetFolderPath);
     if (!GInstance->Initialize())
     {
         delete GInstance;
@@ -245,7 +245,7 @@ bool FRHIShaderCompiler::Create(FStringView InAssetFolderPath)
     return true;
 }
 
-void FRHIShaderCompiler::Destroy()
+void FShaderCompiler::Destroy()
 {
     if (GInstance)
     {
@@ -254,7 +254,7 @@ void FRHIShaderCompiler::Destroy()
     }
 }
 
-EShaderOutputLanguage FRHIShaderCompiler::GetOutputLanguageBasedOnRHI()
+EShaderOutputLanguage FShaderCompiler::GetOutputLanguageBasedOnRHI()
 {
     if (FRHI* CurrentRHI = GetRHI())
     {
@@ -273,7 +273,7 @@ EShaderOutputLanguage FRHIShaderCompiler::GetOutputLanguageBasedOnRHI()
     return EShaderOutputLanguage::HLSL;
 }
 
-bool FRHIShaderCompiler::Initialize()
+bool FShaderCompiler::Initialize()
 {
     DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
     if (!DXCLib)
@@ -292,13 +292,13 @@ bool FRHIShaderCompiler::Initialize()
     return true;
 }
 
-FRHIShaderCompiler& FRHIShaderCompiler::Get()
+FShaderCompiler& FShaderCompiler::Get()
 {
     CHECK(GInstance != nullptr);
     return *GInstance;
 }
 
-bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     // Add asset-path to the filename
     const FString FilePath = AssetPath + '/' + Filename;
@@ -324,12 +324,12 @@ bool FRHIShaderCompiler::CompileFromFile(const FString& Filename, const FRHIShad
     return Compile(Source, FilePath, CompileInfo, OutByteCode);
 }
 
-bool FRHIShaderCompiler::CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     return Compile(ShaderSource, "", CompileInfo, OutByteCode);
 }
 
-bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     OutByteCode.Clear();
 
@@ -337,7 +337,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
     if (FAILED(hResult))
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Compiler");
+        LOG_ERROR("[FShaderCompiler]: FAILED to create Compiler");
         DEBUG_BREAK();
         return false;
     }
@@ -346,7 +346,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     hResult = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
     if (FAILED(hResult))
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create Library");
+        LOG_ERROR("[FShaderCompiler]: FAILED to create Library");
         DEBUG_BREAK();
         return false;
     }
@@ -355,7 +355,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     hResult = Library->CreateIncludeHandler(&IncludeHandler);
     if (FAILED(hResult))
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to create IncludeHandler");
+        LOG_ERROR("[FShaderCompiler]: FAILED to create IncludeHandler");
         DEBUG_BREAK();
         return false;
     }
@@ -495,14 +495,14 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
 
     if (FAILED(hResult))
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Compile");
+        LOG_ERROR("[FShaderCompiler]: FAILED to Compile");
         DEBUG_BREAK();
         return false;
     }
 
     if (FAILED(Result->GetStatus(&hResult)))
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
+        LOG_ERROR("[FShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
         DEBUG_BREAK();
         return false;
     }
@@ -518,11 +518,11 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     {
         if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
         {
-            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+            LOG_ERROR("[FShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
         }
         else
         {
-            LOG_ERROR("[FRHIShaderCompiler]: FAILED to compile with. Unknown ERROR.");
+            LOG_ERROR("[FShaderCompiler]: FAILED to compile with. Unknown ERROR.");
         }
 
         DEBUG_BREAK();
@@ -532,17 +532,17 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", ArgumentsString.GetCString(), Output.GetCString());
+        LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", ArgumentsString.GetCString(), Output.GetCString());
     }
     else
     {
-        LOG_INFO("[FRHIShaderCompiler]: Successfully compiled shader with arguments '%s'.", ArgumentsString.GetCString());
+        LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s'.", ArgumentsString.GetCString());
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
     if (FAILED(Result->GetResult(&CompiledBlob)))
     {
-        LOG_ERROR("[FRHIShaderCompiler]: FAILED to retrieve result");
+        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve result");
         DEBUG_BREAK();
         return false;
     }
@@ -553,27 +553,16 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
-        LOG_INFO("[FRHIShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
+        LOG_INFO("[FShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
     }
     else
     {
-        LOG_INFO("[FRHIShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
+        LOG_INFO("[FShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
     }
 
-    // NOTE: When compiling SPIR-V we want to make changes to the code based on if the final code
-    // is goint to be SPIR-V or Metal Shading Language
-    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
+    // Convert SPIRV into MSL
+    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
     {
-        // Remap resources in the SPIR-V code
-        if (!RemapBindingsForSpirv(FilePath, CompileInfo, OutByteCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-    else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
-    {
-        // Convert SPIRV into MSL
         if (!ConvertSpirvToMetalShader(FilePath, CompileInfo, OutByteCode))
         {
             DEBUG_BREAK();
@@ -583,7 +572,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
-        LOG_INFO("[FRHIShaderCompiler]: Compiled Size (Final size): %u Bytes", OutByteCode.Size());
+        LOG_INFO("[FShaderCompiler]: Compiled Size (Final size): %u Bytes", OutByteCode.Size());
     }
     
     if (OutByteCode.IsEmpty())
@@ -595,7 +584,7 @@ bool FRHIShaderCompiler::Compile(const FString& ShaderSource, const FString& Fil
     return true;
 }
 
-bool FRHIShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource)
+bool FShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource)
 {
     // Find the actual entrypoint, and change it to a specific spirv one. This is done since
     // the current version of DXC available on macOS does not support the compiler argument
@@ -637,367 +626,7 @@ bool FRHIShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& O
     return true;
 }
 
-void FRHIShaderCompiler::ErrorCallback(void*, const CHAR* Error)
-{
-    LOG_ERROR("[SPIRV-Cross Error] %s", Error);
-}
-
-bool FRHIShaderCompiler::RemapBindingsForSpirv(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
-{
-    if (OutByteCode.IsEmpty())
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    
-    spvc_context Context = nullptr;
-    spvc_result Result = spvc_context_create(&Context);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("Failed to create SpvcContext");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    spvc_context_set_error_callback(Context, FRHIShaderCompiler::ErrorCallback, reinterpret_cast<void*>(this));
-    
-    // The code size needs to be aligned to the elementsize
-    constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
-    CHECK(OutByteCode.Size() % ElementSize == 0);
-    
-    // Calculate num words
-    const uint32 WordCount = OutByteCode.Size() / ElementSize;
-    
-    spvc_parsed_ir ParsedCode = nullptr;
-    Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), WordCount, &ParsedCode);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("Failed to parse Spirv");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    spvc_compiler Compiler = nullptr;
-    Result = spvc_context_create_compiler(Context, SPVC_BACKEND_GLSL, ParsedCode, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &Compiler);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("Failed to create SPIR-V compiler");
-        DEBUG_BREAK();
-        return false;
-    }
-
-    spvc_resources ShaderResources;
-    Result = spvc_compiler_create_shader_resources(Compiler, &ShaderResources);
-    if (Result != SPVC_SUCCESS)
-    {
-        LOG_ERROR("Failed to create shader resources");
-        DEBUG_BREAK();
-        return false;
-    }
-    
-    // We only compile if we perform any changes
-    bool bNeedsCompilation = false;
-
-    // TODO: Read this from somewhere
-    const uint32 UniformBuffersBindingOffset    = 0;
-    const uint32 StorageBuffersBindingOffsetUAV = 8;
-    const uint32 StorageBuffersBindingOffsetSRV = 16;
-    const uint32 SamplersBindingOffset          = 24;
-    const uint32 StorageImagesBindingOffset     = 32;
-    const uint32 SampledImagesBindingOffset     = 40;
-    const uint32 StageDescriptorSetOffset       = GetShaderStageDescriporSetOffset(CompileInfo.ShaderStage);
-    
-    // SRV Textures
-    {
-        size_t NumSampledImages = 0;
-        const spvc_reflected_resource* SampledImages = nullptr;
-        if (spvc_resources_get_resource_list_for_type(ShaderResources, SPVC_RESOURCE_TYPE_SEPARATE_IMAGE, &SampledImages, &NumSampledImages) == SPVC_SUCCESS)
-        {
-            for (size_t Index = 0; Index < NumSampledImages; Index++)
-            {
-                const uint32 CurrentBinding       = spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding);
-                const uint32 CurrentDescriptorSet = spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationDescriptorSet);
-                
-                const uint32 NewBinding       = SampledImagesBindingOffset + CurrentBinding;
-                const uint32 NewDescriptorSet = StageDescriptorSetOffset + CurrentDescriptorSet;
-                spvc_compiler_set_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding, NewBinding);
-                spvc_compiler_set_decoration(Compiler, SampledImages[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
-                bNeedsCompilation = true;
-                
-                LOG_INFO("[SampledImage] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", SampledImages[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
-            }
-        }
-    }
-    
-    // Samplers
-    {
-        size_t NumSamplers = 0;
-        const spvc_reflected_resource* Samplers = nullptr;
-        if (spvc_resources_get_resource_list_for_type(ShaderResources, SPVC_RESOURCE_TYPE_SEPARATE_SAMPLERS, &Samplers, &NumSamplers) == SPVC_SUCCESS)
-        {
-            for (size_t Index = 0; Index < NumSamplers; Index++)
-            {
-                const uint32 CurrentBinding       = spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding);
-                const uint32 CurrentDescriptorSet = spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationDescriptorSet);
-                
-                const uint32 NewBinding       = SamplersBindingOffset + CurrentBinding;
-                const uint32 NewDescriptorSet = StageDescriptorSetOffset + CurrentDescriptorSet;
-                spvc_compiler_set_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding, NewBinding);
-                spvc_compiler_set_decoration(Compiler, Samplers[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
-                bNeedsCompilation = true;
-                
-                LOG_INFO("[Sampler] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", Samplers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
-            }
-        }
-    }
-    
-    // UAV Textures
-    {
-        size_t NumStorageImages = 0;
-        const spvc_reflected_resource* StorageImages = nullptr;
-        if (spvc_resources_get_resource_list_for_type(ShaderResources, SPVC_RESOURCE_TYPE_STORAGE_IMAGE, &StorageImages, &NumStorageImages) == SPVC_SUCCESS)
-        {
-            for (size_t Index = 0; Index < NumStorageImages; Index++)
-            {
-                const uint32 CurrentBinding       = spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding);
-                const uint32 CurrentDescriptorSet = spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationDescriptorSet);
-                
-                const uint32 NewBinding       = StorageImagesBindingOffset + CurrentBinding;
-                const uint32 NewDescriptorSet = StageDescriptorSetOffset + CurrentDescriptorSet;
-                spvc_compiler_set_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding, NewBinding);
-                spvc_compiler_set_decoration(Compiler, StorageImages[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
-                bNeedsCompilation = true;
-                
-                LOG_INFO("[StorageImage] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageImages[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
-            }
-        }
-    }
-
-    // ConstantBuffers
-    {
-        size_t NumUniformBuffers = 0;
-        const spvc_reflected_resource* UniformBuffers = nullptr;
-        if (spvc_resources_get_resource_list_for_type(ShaderResources, SPVC_RESOURCE_TYPE_UNIFORM_BUFFER, &UniformBuffers, &NumUniformBuffers) == SPVC_SUCCESS)
-        {
-            for (size_t Index = 0; Index < NumUniformBuffers; Index++)
-            {
-                const uint32 CurrentBinding       = spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding);
-                const uint32 CurrentDescriptorSet = spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationDescriptorSet);
-                CHECK(CurrentDescriptorSet != 1); // This is not allowed since this space/descriptorset is reserved for push constants
-                
-                const uint32 NewBinding       = UniformBuffersBindingOffset + CurrentBinding;
-                const uint32 NewDescriptorSet = StageDescriptorSetOffset + CurrentDescriptorSet;
-                spvc_compiler_set_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding, NewBinding);
-                spvc_compiler_set_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
-                bNeedsCompilation = true;
-                
-                LOG_INFO("[UniformBuffer] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", UniformBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
-            }
-        }
-    }
-    
-    // SRV + UAV Buffers
-    {
-        size_t NumStorageBuffers = 0;
-        const spvc_reflected_resource* StorageBuffers = nullptr;
-        if (spvc_resources_get_resource_list_for_type(ShaderResources, SPVC_RESOURCE_TYPE_STORAGE_BUFFER, &StorageBuffers, &NumStorageBuffers) == SPVC_SUCCESS)
-        {
-            for (size_t Index = 0; Index < NumStorageBuffers; Index++)
-            {
-                const uint32 CurrentBinding       = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding);
-                const uint32 CurrentDescriptorSet = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationDescriptorSet);
-                
-                uint32 NewBinding;
-                const uint32 NewDescriptorSet = StageDescriptorSetOffset + CurrentDescriptorSet;
-
-                const FString BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
-                const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
-                if (bIsUAV)
-                {
-                    NewBinding = StorageBuffersBindingOffsetUAV + CurrentBinding;
-                    LOG_INFO("[UAV StorageBuffer] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
-                }
-                else
-                {
-                    NewBinding = StorageBuffersBindingOffsetSRV + CurrentBinding;
-                    LOG_INFO("[SRV StorageBuffer] Name=%s CurrentBinding=%d CurrentDescriptorSet=%d NewBinding=%d NewDescriptorSet=%d", StorageBuffers[Index].name, CurrentBinding, CurrentDescriptorSet, NewBinding, NewDescriptorSet);
-                }
-
-                spvc_compiler_set_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding, NewBinding);
-                spvc_compiler_set_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationDescriptorSet, NewDescriptorSet);
-                bNeedsCompilation = true;
-            }
-        }
-    }
-    
-    // Compile the changes into GLSL
-    if (bNeedsCompilation)
-    {
-        // Modify options.
-        spvc_compiler_options Options = nullptr;
-        spvc_compiler_create_compiler_options(Compiler, &Options);
-        spvc_compiler_options_set_uint(Options, SPVC_COMPILER_OPTION_GLSL_VERSION, 450);
-        spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_FALSE);
-        spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_TRUE);
-        spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_VULKAN_SEMANTICS, SPVC_TRUE);
-        spvc_compiler_install_compiler_options(Compiler, Options);
-        
-        // Compile the GLSL code
-        const CHAR* NewSource = nullptr;
-        Result = spvc_compiler_compile(Compiler, &NewSource);
-        if (Result != SPVC_SUCCESS)
-        {
-            LOG_ERROR("Failed to compile changes into GLSL");
-            DEBUG_BREAK();
-            return false;
-        }
-
-        // Create a new array (1 extra byte of slack for a null-terminator)
-        const uint32 SourceLength = FCString::Strlen(NewSource);
-        TArray<uint8> NewShader(reinterpret_cast<const uint8*>(NewSource), SourceLength * sizeof(const uint8), 1);
-        NewShader[SourceLength] = 0;
-
-        // Now we can destroy the context
-        spvc_context_destroy(Context);
-
-        // Print the GLSL file to disk
-        if (!FilePath.IsEmpty())
-        {
-            if (!DumpContentToFile(NewShader, FilePath + "_" + ToString(CompileInfo.ShaderStage) + ".glsl"))
-            {
-                DEBUG_BREAK();
-                return false;
-            }
-        }
-        
-        // Init glslang
-        static bool bIsGlslangReady = false;
-        if (!bIsGlslangReady)
-        {
-            glslang_initialize_process();
-            bIsGlslangReady = true;
-        }
-        
-        // Convert the shader stage to glslang-enum
-        const glslang_stage_t GlslangStage = GetGlslangStage(CompileInfo.ShaderStage);
-        
-        // Compile the GLSL to SPIRV
-        glslang_input_t Input;
-        Input.language                          = GLSLANG_SOURCE_GLSL;
-        Input.stage                             = GlslangStage;
-        Input.client                            = GLSLANG_CLIENT_VULKAN;
-        Input.client_version                    = GLSLANG_TARGET_VULKAN_1_2;
-        Input.target_language                   = GLSLANG_TARGET_SPV;
-        Input.target_language_version           = GLSLANG_TARGET_SPV_1_5;
-        Input.code                              = reinterpret_cast<int8*>(NewShader.Data());
-        Input.default_version                   = 110;
-        Input.default_profile                   = GLSLANG_NO_PROFILE;
-        Input.force_default_version_and_profile = false;
-        Input.forward_compatible                = false;
-        Input.messages                          = GLSLANG_MSG_DEFAULT_BIT;
-        Input.resource                          = glslang_default_resource();
-
-        glslang_shader_t* Shader = glslang_shader_create(&Input);
-        if (!glslang_shader_preprocess(Shader, &Input))
-        {
-            const CHAR* InfoLog      = glslang_shader_get_info_log(Shader);
-            const CHAR* InfoDebugLog = glslang_shader_get_info_debug_log(Shader);
-            
-            LOG_ERROR("GLSL preprocessing failed");
-            LOG_ERROR("    %s", InfoLog);
-            LOG_ERROR("    %s", InfoDebugLog);
-            
-            glslang_shader_delete(Shader);
-            
-            DEBUG_BREAK();
-            return false;
-        }
-
-        if (!glslang_shader_parse(Shader, &Input))
-        {
-            const CHAR* InfoLog      = glslang_shader_get_info_log(Shader);
-            const CHAR* InfoDebugLog = glslang_shader_get_info_debug_log(Shader);
-            
-            LOG_ERROR("GLSL parsing failed");
-            LOG_ERROR("    %s", InfoLog);
-            LOG_ERROR("    %s", InfoDebugLog);
-            LOG_ERROR("    %s", glslang_shader_get_preprocessed_code(Shader));
-
-            glslang_shader_delete(Shader);
-            
-            DEBUG_BREAK();
-            return false;
-        }
-
-        glslang_program_t* Program = glslang_program_create();
-        glslang_program_add_shader(Program, Shader);
-
-        if (!glslang_program_link(Program, GLSLANG_MSG_SPV_RULES_BIT | GLSLANG_MSG_VULKAN_RULES_BIT))
-        {
-            const CHAR* InfoLog      = glslang_program_get_info_log(Program);
-            const CHAR* InfoDebugLog = glslang_program_get_info_debug_log(Program);
-            
-            LOG_ERROR("GLSL linking failed");
-            LOG_ERROR("    %s", InfoLog);
-            LOG_ERROR("    %s", InfoDebugLog);
-            
-            glslang_program_delete(Program);
-            glslang_shader_delete(Shader);
-            
-            DEBUG_BREAK();
-            return false;
-        }
-
-        // Retrieve the SPIRV shader code
-        glslang_spv_options_t SpvOptions;
-        FMemory::Memzero(&SpvOptions);
-
-        SpvOptions.validate = true;
-        if (CompileInfo.bOptimize)
-        {
-            // SpvOptions.strip_debug_info = true;
-            SpvOptions.optimize_size = true;
-        }
-        else
-        {
-            SpvOptions.generate_debug_info = true;
-            SpvOptions.disable_optimizer   = true;
-        }
-        
-        glslang_program_SPIRV_generate_with_options(Program, GlslangStage, &SpvOptions);
-
-        // Get the size and allocate enough room in the vector
-        const uint64 ProgramSize = glslang_program_SPIRV_get_size(Program);
-        
-        // Transfer the SPIRV code into our format
-        TArray<uint8> CompiledGLSL;
-        CompiledGLSL.Resize(static_cast<int32>(ProgramSize * sizeof(uint32)));
-        
-        glslang_program_SPIRV_get(Program, reinterpret_cast<uint32*>(CompiledGLSL.Data()));
-
-        // Print any messages from linking
-        if (const CHAR* SpirvMessages = glslang_program_SPIRV_get_messages(Program))
-        {
-            LOG_INFO("%s", SpirvMessages);
-        }
-
-        // Cleanup
-        glslang_program_delete(Program);
-        glslang_shader_delete(Shader);
-        
-        // Output the code
-        OutByteCode = ::Move(CompiledGLSL);
-    }
-    else
-    {
-        // Now we can destroy the context
-        spvc_context_destroy(Context);
-    }
-
-    return true;
-}
-
-bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
 {
     if (OutByteCode.IsEmpty() || CompileInfo.EntryPoint.IsEmpty())
     {
@@ -1013,7 +642,10 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, cons
         return false;
     }
 
-    spvc_context_set_error_callback(Context, FRHIShaderCompiler::ErrorCallback, reinterpret_cast<void*>(this));
+    spvc_context_set_error_callback(Context, [](void*, const CHAR* Error)
+    {
+        LOG_ERROR("[SPIRV-Cross Error] %s", Error);
+    }, nullptr);
 
     // The code size needs to be aligned to the elementsize
     constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
@@ -1069,7 +701,7 @@ bool FRHIShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, cons
     return true;
 }
 
-bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
+bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FString& Filename)
 {
     FFileHandleRef Output = FPlatformFile::OpenForWrite(Filename);
     if (!Output)
@@ -1082,7 +714,7 @@ bool FRHIShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const 
     return true;
 }
 
-FString FRHIShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
+FString FShaderCompiler::CreateArgString(const TArrayView<LPCWSTR> Args)
 {
     FStringWide NewString;
     for (LPCWSTR CurrentArg : Args)

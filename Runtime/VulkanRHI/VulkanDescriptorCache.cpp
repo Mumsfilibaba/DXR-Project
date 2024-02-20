@@ -1,5 +1,21 @@
 #include "VulkanDescriptorCache.h"
 
+static bool GVulkanEnableDescriptorSetNames = false;
+
+static const CHAR* GetDescriptorSetName(EShaderVisibility ShaderVisibility)
+{
+    switch(ShaderVisibility)
+    {
+    case ShaderVisibility_Vertex:   return "DescriptorSet [Vertex]";
+    case ShaderVisibility_Hull:     return "DescriptorSet [Hull]";
+    case ShaderVisibility_Domain:   return "DescriptorSet [Domain]";
+    case ShaderVisibility_Geometry: return "DescriptorSet [Geometry]";
+    case ShaderVisibility_Pixel:    return "DescriptorSet [Pixel]";
+    case ShaderVisibility_Compute:  return "DescriptorSet [Compute]";
+    default:                        return "DescriptorSet [Unknown]";
+    }
+}
+
 bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
 {
     // Create NullBuffer
@@ -205,6 +221,11 @@ bool FVulkanDescriptorSetCache::Initialize()
         return false;
     }
     
+    // Reserve arrays large enough to fit all descriptors for a ShaderStage
+    constexpr uint32 MaxDescriptorWrites = 256;
+    DescriptorWrites.Reserve(MaxDescriptorWrites);
+    BufferInfos.Reserve(MaxDescriptorWrites);
+    ImageInfos.Reserve(MaxDescriptorWrites);
     return true;
 }
 
@@ -244,38 +265,32 @@ bool FVulkanDescriptorSetCache::AllocateDescriptorSets(EShaderVisibility ShaderS
         }
     }
     
+    if (GVulkanEnableDescriptorSetNames)
+    {
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), GetDescriptorSetName(ShaderStage), DescriptorSet, VK_OBJECT_TYPE_DESCRIPTOR_SET);
+    }
+    
     return true;
 }
 
-void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs)
+void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout)
 {
-    constexpr uint32 NumBufferSRVs       = VULKAN_DEFAULT_NUM_DESCRIPTOR_BINDINGS; // Limit due to MoltenVK
-    constexpr uint32 NumDescriptorWrites = VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT + NumBufferSRVs;
-
-    // TODO: We want to store this together with the PipelineLayout
-    constexpr uint32 ImageBindingsStartIndex  = 40;
-    constexpr uint32 BufferBindingsStartIndex = 16;
-
-    VkDescriptorImageInfo  ImageInfos[VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-    VkDescriptorBufferInfo BufferInfos[NumBufferSRVs];
-    VkWriteDescriptorSet   DescriptorWrites[NumDescriptorWrites];
-    
-    auto& SRVCache = Cache.ResourceViews[ShaderStage];
-    for (uint32 Index = 0; Index < NumSRVs; Index++)
+    const auto& SRVCache      = Cache.ResourceViews[ShaderStage];
+    const auto& ImageBindings = ShaderLayout->SampledImageBindings;
+    for (const FVulkanShaderBinding& Binding : ImageBindings)
     {
-        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites[Index];
-        FMemory::Memzero(&CurrentDescriptorWrite);
-        
+        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites.Emplace();
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
         CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
-        CurrentDescriptorWrite.dstBinding      = ImageBindingsStartIndex + Index;
+        CurrentDescriptorWrite.dstBinding      = Binding.Binding;
         
-        VkDescriptorImageInfo& DescriptorInfo = ImageInfos[Index];
-        CurrentDescriptorWrite.pImageInfo     = &DescriptorInfo;
+        VkDescriptorImageInfo& DescriptorInfo = ImageInfos.Emplace();
+        CurrentDescriptorWrite.pImageInfo = &DescriptorInfo;
         
-        FVulkanShaderResourceView* ShaderResourceView = SRVCache[Index];
+        CHECK(Binding.RegisterIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+        FVulkanShaderResourceView* ShaderResourceView = SRVCache[Binding.RegisterIndex];
         if (ShaderResourceView && ShaderResourceView->HasImageView())
         {
             DescriptorInfo.imageView   = ShaderResourceView->GetVkImageView();
@@ -299,25 +314,22 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
             }
         }
     }
-
-
-    // Limit NumSRVs since we have limited the amount of buffers allowed
-    NumSRVs = FMath::Min(NumSRVs, NumBufferSRVs);
-    for (uint32 Index = 0; Index < NumSRVs; Index++)
+    
+    const auto& BufferBindings = ShaderLayout->SRVStorageBufferBindings;
+    for (const FVulkanShaderBinding& Binding : BufferBindings)
     {
-        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites[VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT + Index];
-        FMemory::Memzero(&CurrentDescriptorWrite);
-        
+        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites.Emplace();
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
-        CurrentDescriptorWrite.dstBinding      = BufferBindingsStartIndex + Index;
+        CurrentDescriptorWrite.dstBinding      = Binding.Binding;
         
-        VkDescriptorBufferInfo& DescriptorInfo = BufferInfos[Index];
-        CurrentDescriptorWrite.pBufferInfo     = &DescriptorInfo;
+        VkDescriptorBufferInfo& DescriptorInfo = BufferInfos.Emplace();
+        CurrentDescriptorWrite.pBufferInfo = &DescriptorInfo;
         
-        FVulkanShaderResourceView* ShaderResourceView = SRVCache[Index];
+        CHECK(Binding.RegisterIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+        FVulkanShaderResourceView* ShaderResourceView = SRVCache[Binding.RegisterIndex];
         if (ShaderResourceView && !ShaderResourceView->HasImageView())
         {
             DescriptorInfo = ShaderResourceView->GetDescriptorBufferInfo();
@@ -339,37 +351,26 @@ void FVulkanDescriptorSetCache::SetSRVs(FVulkanShaderResourceViewCache& Cache, E
             }
         }
     }
-    
-    vkUpdateDescriptorSets(GetDevice()->GetVkDevice(), NumDescriptorWrites, DescriptorWrites, 0, nullptr);
 }
 
-void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumUAVs)
+void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout)
 {
-    // TODO: We want to store this together with the PipelineLayout
-    constexpr uint32 ImageBindingsStartIndex  = 32;
-    constexpr uint32 BufferBindingsStartIndex = 8;
-    constexpr uint32 NumDescriptorWrites      = VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT + VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT;
-
-    VkDescriptorImageInfo  ImageInfos[VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    VkDescriptorBufferInfo BufferInfos[VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-    VkWriteDescriptorSet   DescriptorWrites[NumDescriptorWrites];
-    
-    auto& UAVCache = Cache.ResourceViews[ShaderStage];
-    for (uint32 Index = 0; Index < NumUAVs; Index++)
+    const auto& UAVCache      = Cache.ResourceViews[ShaderStage];
+    const auto& ImageBindings = ShaderLayout->StorageImageBindings;
+    for (const FVulkanShaderBinding& Binding : ImageBindings)
     {
-        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites[Index];
-        FMemory::Memzero(&CurrentDescriptorWrite);
-        
+        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites.Emplace();
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
         CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
-        CurrentDescriptorWrite.dstBinding      = ImageBindingsStartIndex + Index;
+        CurrentDescriptorWrite.dstBinding      = Binding.Binding;
         
-        VkDescriptorImageInfo& DescriptorInfo = ImageInfos[Index];
-        CurrentDescriptorWrite.pImageInfo     = &DescriptorInfo;
+        VkDescriptorImageInfo& DescriptorInfo = ImageInfos.Emplace();
+        CurrentDescriptorWrite.pImageInfo = &DescriptorInfo;
         
-        FVulkanUnorderedAccessView* UnorderedAccessView = UAVCache[Index];
+        CHECK(Binding.RegisterIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+        FVulkanUnorderedAccessView* UnorderedAccessView = UAVCache[Binding.RegisterIndex];
         if (UnorderedAccessView && UnorderedAccessView->HasImageView())
         {
             DescriptorInfo.imageView   = UnorderedAccessView->GetVkImageView();
@@ -394,22 +395,21 @@ void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, 
         }
     }
     
-    
-    for (uint32 Index = 0; Index < NumUAVs; Index++)
+    const auto& BufferBindings = ShaderLayout->UAVStorageBufferBindings;
+    for (const FVulkanShaderBinding& Binding : BufferBindings)
     {
-        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites[VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT + Index];
-        FMemory::Memzero(&CurrentDescriptorWrite);
-        
+        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites.Emplace();
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
         CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
-        CurrentDescriptorWrite.dstBinding      = BufferBindingsStartIndex + Index;
+        CurrentDescriptorWrite.dstBinding      = Binding.Binding;
         
-        VkDescriptorBufferInfo& DescriptorInfo = BufferInfos[Index];
-        CurrentDescriptorWrite.pBufferInfo     = &DescriptorInfo;
+        VkDescriptorBufferInfo& DescriptorInfo = BufferInfos.Emplace();
+        CurrentDescriptorWrite.pBufferInfo = &DescriptorInfo;
         
-        FVulkanUnorderedAccessView* UnorderedAccessView = UAVCache[Index];
+        CHECK(Binding.RegisterIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+        FVulkanUnorderedAccessView* UnorderedAccessView = UAVCache[Binding.RegisterIndex];
         if (UnorderedAccessView && !UnorderedAccessView->HasImageView())
         {
             DescriptorInfo = UnorderedAccessView->GetDescriptorBufferInfo();
@@ -431,34 +431,26 @@ void FVulkanDescriptorSetCache::SetUAVs(FVulkanUnorderedAccessViewCache& Cache, 
             }
         }
     }
-    
-    vkUpdateDescriptorSets(GetDevice()->GetVkDevice(), NumDescriptorWrites, DescriptorWrites, 0, nullptr);
 }
 
-void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumBuffers)
+void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout)
 {
-    // TODO: We want to store this together with the PipelineLayout
-    constexpr uint32 BindingsStartIndex = 0;
-    
-    VkDescriptorBufferInfo BufferInfos[VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT];
-    VkWriteDescriptorSet   DescriptorWrites[VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT];
-    
-    auto& ConstantBufferCache = Cache.ConstantBuffers[ShaderStage];
-    for (uint32 Index = 0; Index < NumBuffers; Index++)
+    const auto& ConstantBufferCache = Cache.ConstantBuffers[ShaderStage];
+    const auto& BufferBindings      = ShaderLayout->UniformBufferBindings;
+    for (const FVulkanShaderBinding& Binding : BufferBindings)
     {
-        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites[Index];
-        FMemory::Memzero(&CurrentDescriptorWrite);
-        
+        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites.Emplace();
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
         CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
-        CurrentDescriptorWrite.dstBinding      = BindingsStartIndex + Index;
+        CurrentDescriptorWrite.dstBinding      = Binding.Binding;
         
-        VkDescriptorBufferInfo& DescriptorInfo = BufferInfos[Index];
-        CurrentDescriptorWrite.pBufferInfo     = &DescriptorInfo;
+        VkDescriptorBufferInfo& DescriptorInfo = BufferInfos.Emplace();
+        CurrentDescriptorWrite.pBufferInfo = &DescriptorInfo;
         
-        if (FVulkanBuffer* ConstantBuffer = ConstantBufferCache[Index])
+        CHECK(Binding.RegisterIndex < VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT);
+        if (FVulkanBuffer* ConstantBuffer = ConstantBufferCache[Binding.RegisterIndex])
         {
             DescriptorInfo.buffer = ConstantBuffer->GetVkBuffer();
             DescriptorInfo.offset = 0;
@@ -481,34 +473,26 @@ void FVulkanDescriptorSetCache::SetConstantBuffers(FVulkanConstantBufferCache& C
             }
         }
     }
-    
-    vkUpdateDescriptorSets(GetDevice()->GetVkDevice(), NumBuffers, DescriptorWrites, 0, nullptr);
 }
 
-void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers)
+void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout)
 {
-    // TODO: We want to store this together with the PipelineLayout
-    constexpr uint32 BindingsStartIndex = 24;
-    
-    VkDescriptorImageInfo ImageInfos[VULKAN_DEFAULT_SAMPLER_STATE_COUNT];
-    VkWriteDescriptorSet  DescriptorWrites[VULKAN_DEFAULT_SAMPLER_STATE_COUNT];
-    
-    auto& SamplerCache = Cache.SamplerStates[ShaderStage];
-    for (uint32 Index = 0; Index < NumSamplers; Index++)
+    const auto& SamplerCache    = Cache.SamplerStates[ShaderStage];
+    const auto& SamplerBindings = ShaderLayout->SamplerBindings;
+    for (const FVulkanShaderBinding& Binding : SamplerBindings)
     {
-        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites[Index];
-        FMemory::Memzero(&CurrentDescriptorWrite);
-        
+        VkWriteDescriptorSet& CurrentDescriptorWrite = DescriptorWrites.Emplace();
         CurrentDescriptorWrite.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         CurrentDescriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
         CurrentDescriptorWrite.dstSet          = DescriptorSets[ShaderStage];
         CurrentDescriptorWrite.descriptorCount = 1;
-        CurrentDescriptorWrite.dstBinding      = BindingsStartIndex + Index;
+        CurrentDescriptorWrite.dstBinding      = Binding.Binding;
         
-        VkDescriptorImageInfo& DescriptorInfo = ImageInfos[Index];
-        CurrentDescriptorWrite.pImageInfo     = &DescriptorInfo;
+        VkDescriptorImageInfo& DescriptorInfo = ImageInfos.Emplace();
+        CurrentDescriptorWrite.pImageInfo = &DescriptorInfo;
         
-        if (FVulkanSamplerState* SamplerState = SamplerCache[Index])
+        CHECK(Binding.RegisterIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
+        if (FVulkanSamplerState* SamplerState = SamplerCache[Binding.RegisterIndex])
         {
             DescriptorInfo.imageView   = VK_NULL_HANDLE;
             DescriptorInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -522,27 +506,35 @@ void FVulkanDescriptorSetCache::SetSamplers(FVulkanSamplerStateCache& Cache, ESh
             DescriptorInfo.sampler     = DefaultResources.NullSampler;
         }
     }
-
-    vkUpdateDescriptorSets(GetDevice()->GetVkDevice(), NumSamplers, DescriptorWrites, 0, nullptr);
 }
 
-void FVulkanDescriptorSetCache::SetDescriptorSet(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility ShaderStage)
+void FVulkanDescriptorSetCache::UpdateAndSetDescriptorSet(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility ShaderStage)
 {
+    if (DescriptorWrites.Size() > 0)
+    {
+        vkUpdateDescriptorSets(GetDevice()->GetVkDevice(), DescriptorWrites.Size(), DescriptorWrites.Data(), 0, nullptr);
+    }
+    
     VkPipelineBindPoint BindPoint;
-    uint32              DescriptorSetBindPoint;
+    uint32 DescriptorSetBindPoint;
 
     if (ShaderStage == ShaderVisibility_Compute)
     {
-        BindPoint              = VK_PIPELINE_BIND_POINT_COMPUTE;
+        BindPoint = VK_PIPELINE_BIND_POINT_COMPUTE;
         DescriptorSetBindPoint = 0;
     }
     else
     {
-        BindPoint              = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        BindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         DescriptorSetBindPoint = ShaderStage;
     }
 
     VkDescriptorSet& DescriptorSet = DescriptorSets[ShaderStage];
     CHECK(DescriptorSet != VK_NULL_HANDLE);
     Context.GetCommandBuffer()->BindDescriptorSets(BindPoint, PipelineLayout->GetVkPipelineLayout(), DescriptorSetBindPoint, 1, &DescriptorSet, 0, nullptr);
+
+    // Reset arrays so that they do not need to be reallocated
+    BufferInfos.Reset();
+    ImageInfos.Reset();
+    DescriptorWrites.Reset();
 }

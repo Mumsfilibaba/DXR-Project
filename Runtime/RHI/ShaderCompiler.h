@@ -50,38 +50,34 @@ struct FShaderDefine
 };
 
 
-struct FRHIShaderCompileInfo;
+struct FShaderCompileInfo;
 
-class RHI_API FRHIShaderCompiler
+class RHI_API FShaderCompiler
 {
-    FRHIShaderCompiler(FStringView InAssetPath);
-    ~FRHIShaderCompiler();
-
 public:
     static bool Create(FStringView AssetFolderPath);
-    
     static void Destroy();
     
     static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
 
-    static FRHIShaderCompiler& Get();
+    static FShaderCompiler& Get();
 
-    bool CompileFromFile(const FString& Filename, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-
-    bool CompileFromSource(const FString& ShaderSource, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
 private:
-    static void ErrorCallback(void* Userdata, const CHAR* Error);
+    FShaderCompiler(FStringView InAssetPath);
+    ~FShaderCompiler();
 
     bool Initialize();
     
-    bool Compile(const FString& ShaderSource, const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
     bool PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource);
     
-    bool RemapBindingsForSpirv(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool RemapBindingsForSpirv(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
-    bool ConvertSpirvToMetalShader(const FString& FilePath, const FRHIShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
+    bool ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
 
@@ -91,13 +87,13 @@ private:
     DxcCreateInstanceProc DxcCreateInstanceFunc;
     FString               AssetPath;
 
-    static FRHIShaderCompiler* GInstance;
+    static FShaderCompiler* GInstance;
 };
 
 
-struct FRHIShaderCompileInfo
+struct FShaderCompileInfo
 {
-    FRHIShaderCompileInfo()
+    FShaderCompileInfo()
         : ShaderModel(EShaderModel::Unknown)
         , ShaderStage(EShaderStage::Unknown)
         , OutputLanguage(EShaderOutputLanguage::Unknown)
@@ -107,12 +103,12 @@ struct FRHIShaderCompileInfo
     {
     }
     
-    FRHIShaderCompileInfo(
+    FShaderCompileInfo(
         const FString&                   InEntryPoint,
         EShaderModel                     InShaderModel,
         EShaderStage                     InShaderStage,
         const TArrayView<FShaderDefine>& InDefines        = TArrayView<FShaderDefine>(),
-        EShaderOutputLanguage            InOutputLanguage = FRHIShaderCompiler::GetOutputLanguageBasedOnRHI())
+        EShaderOutputLanguage            InOutputLanguage = FShaderCompiler::GetOutputLanguageBasedOnRHI())
         : ShaderModel(InShaderModel)
         , ShaderStage(InShaderStage)
         , OutputLanguage(InOutputLanguage)

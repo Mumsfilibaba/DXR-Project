@@ -74,7 +74,6 @@ protected:
     FString DebugName;
 };
 
-
 class FVulkanBackBufferTexture : public FVulkanTexture
 {
 public:

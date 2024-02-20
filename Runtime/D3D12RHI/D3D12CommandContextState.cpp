@@ -457,9 +457,9 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
 
         if (InComputePipelineState)
         {
-            if (FD3D12ComputeShader* PixelShader = InComputePipelineState->GetComputeShader())
+            if (FD3D12ComputeShader* ComputeShader = InComputePipelineState->GetComputeShader())
             {
-                InternalSetShaderStageResourceCount(PixelShader, ShaderVisibility_All);
+                InternalSetShaderStageResourceCount(ComputeShader, ShaderVisibility_All);
             }
         }
 

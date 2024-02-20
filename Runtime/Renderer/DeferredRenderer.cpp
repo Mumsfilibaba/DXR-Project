@@ -1,7 +1,7 @@
 #include "DeferredRenderer.h"
 #include "MeshDrawCommand.h"
 #include "RHI/RHI.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine//Resources/Material.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -60,8 +60,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(0)" }
         };
 
-        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -74,8 +74,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -96,8 +96,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(1)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -110,8 +110,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -132,8 +132,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(0)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -146,8 +146,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -168,8 +168,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(0)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -182,8 +182,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -204,8 +204,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(1)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -218,8 +218,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -240,8 +240,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(0)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -254,8 +254,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GeometryPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -434,8 +434,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 
     // PrePass
     {
-        FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -455,8 +455,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(1)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -469,8 +469,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -490,8 +490,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(0)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -504,8 +504,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -525,8 +525,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "ENABLE_ALPHA_MASK"             , "(1)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -539,8 +539,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PrePass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -760,8 +760,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
 
         {
-            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -819,8 +819,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 
     // Tiled lightning
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -849,8 +849,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "DRAW_TILE_DEBUG", "(1)" }
         };
 
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -883,8 +883,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             { "DRAW_CASCADE_DEBUG", "(1)" }
         };
 
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -912,8 +912,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 
     // Depth-Reduction
     {
-        FRHIShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -937,8 +937,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
 
     // Depth-Reduction
     {
-        FRHIShaderCompileInfo CompileInfo("ReductionMain", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("ReductionMain", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;

@@ -6,6 +6,7 @@
 
 class FVulkanBuffer;
 class FVulkanCommandContext;
+class FVulkanShaderLayout;
 
 struct FVulkanVertexBufferCache
 {
@@ -26,7 +27,6 @@ struct FVulkanVertexBufferCache
     uint32       NumVertexBuffers;
 };
 
-
 struct FVulkanIndexBufferCache
 {
     FVulkanIndexBufferCache()
@@ -45,7 +45,6 @@ struct FVulkanIndexBufferCache
     VkDeviceSize Offset;
     VkIndexType  IndexType;
 };
-
 
 struct FVulkanResourceCache
 {
@@ -75,7 +74,6 @@ struct FVulkanResourceCache
     bool bDirty[ShaderVisibility_Count];
 };
 
-
 struct FVulkanConstantBufferCache : public FVulkanResourceCache
 {
     FVulkanConstantBufferCache()
@@ -99,7 +97,6 @@ struct FVulkanConstantBufferCache : public FVulkanResourceCache
     uint8 NumBuffers[ShaderVisibility_Count];
 };
 
-
 struct FVulkanShaderResourceViewCache : public FVulkanResourceCache
 {
     FVulkanShaderResourceViewCache()
@@ -122,7 +119,6 @@ struct FVulkanShaderResourceViewCache : public FVulkanResourceCache
     FVulkanShaderResourceView* ResourceViews[ShaderVisibility_Count][VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
     uint8 NumViews[ShaderVisibility_Count];
 };
-
 
 struct FVulkanUnorderedAccessViewCache : public FVulkanResourceCache
 {
@@ -163,7 +159,6 @@ struct FVulkanPushConstantsCache
     uint32 Constants[VULKAN_MAX_NUM_PUSH_CONSTANTS];
     uint32 NumConstants;
 };
-
 
 struct FVulkanSamplerStateCache : public FVulkanResourceCache
 {
@@ -223,7 +218,6 @@ struct FVulkanDefaultResources
     VkSampler               NullSampler;
 };
 
-
 class FVulkanDescriptorSetCache : public FVulkanDeviceChild
 {
 public:
@@ -237,12 +231,12 @@ public:
 
     bool AllocateDescriptorSets(EShaderVisibility ShaderStage, VkDescriptorSetLayout Layout);
 
-    void SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumSRVs);
-    void SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, uint32 NumUAVs);
-    void SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, uint32 NumBuffers);
-    void SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, uint32 NumSamplers);
+    void SetSRVs(FVulkanShaderResourceViewCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout);
+    void SetUAVs(FVulkanUnorderedAccessViewCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout);
+    void SetConstantBuffers(FVulkanConstantBufferCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout);
+    void SetSamplers(FVulkanSamplerStateCache& Cache, EShaderVisibility ShaderStage, const FVulkanShaderLayout* ShaderLayout);
 
-    void SetDescriptorSet(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility ShaderStage);
+    void UpdateAndSetDescriptorSet(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility ShaderStage);
 
     bool IsDescriptorSetValid(EShaderVisibility ShaderStage) const
     {
@@ -260,8 +254,11 @@ public:
     }
 
 private:
-    FVulkanCommandContext&  Context;
-    FVulkanDefaultResources DefaultResources;
-    VkDescriptorSet         DescriptorSets[ShaderVisibility_Count];
-    FVulkanDescriptorPool*  DescriptorPool;
+    FVulkanCommandContext&         Context;
+    FVulkanDefaultResources        DefaultResources;
+    VkDescriptorSet                DescriptorSets[ShaderVisibility_Count];
+    FVulkanDescriptorPool*         DescriptorPool;
+    TArray<VkWriteDescriptorSet>   DescriptorWrites;
+    TArray<VkDescriptorBufferInfo> BufferInfos;
+    TArray<VkDescriptorImageInfo>  ImageInfos;
 };

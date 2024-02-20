@@ -46,7 +46,6 @@ private:
     VkImageViewCreateFlags  Flags;
 };
 
-
 class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceChild
 {
 public:
@@ -84,7 +83,6 @@ public:
     }
 
 private:
-    
     // Texture ResourceView
     TSharedRef<FVulkanImageView> ImageView;
     VkImageSubresourceRange      ImageSubresourceRange;
@@ -92,7 +90,6 @@ private:
     // Buffer ResourceView
     VkDescriptorBufferInfo BufferInfo;
 };
-
 
 class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceChild
 {

@@ -1,7 +1,7 @@
 #include "ForwardRenderer.h"
 #include "MeshDrawCommand.h"
 #include "RHI/RHI.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Scene/Actors/Actor.h"
@@ -17,8 +17,8 @@ bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
 
     TArray<uint8> ShaderCode;
     
-    FRHIShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;
@@ -31,8 +31,8 @@ bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    CompileInfo = FRHIShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
+    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ForwardPass.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;

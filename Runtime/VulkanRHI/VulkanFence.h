@@ -7,8 +7,10 @@
 class FVulkanFence : public FVulkanDeviceChild
 {
 public:
+    FVulkanFence(const FVulkanFence&) = delete;
+    FVulkanFence& operator=(const FVulkanFence&) = delete;
+
     FVulkanFence(FVulkanDevice* InDevice);
-    FVulkanFence(FVulkanFence&& Other);
     ~FVulkanFence();
 
     bool Initialize(bool bSignaled);

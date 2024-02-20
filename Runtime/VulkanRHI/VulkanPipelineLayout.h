@@ -8,58 +8,59 @@
 struct FDescriptorSetLayout
 {
     FDescriptorSetLayout()
-        : PackedLayout(0)
+        : ShaderVisibility(ShaderVisibility_Vertex)
+        , Bindings()
     {
     }
     
     bool operator==(const FDescriptorSetLayout& Other) const
     {
-        return PackedLayout == Other.PackedLayout;
+        if (Bindings.Size() != Other.Bindings.Size() || ShaderVisibility != Other.ShaderVisibility)
+            return false;
+        
+        for (int32 Index = 0; Index < Bindings.Size(); Index++)
+        {
+            if (Bindings[Index] != Other.Bindings[Index])
+                return false;
+        }
+        
+        return true;
     }
     
     bool operator!=(const FDescriptorSetLayout& Other) const
     {
-        return PackedLayout != Other.PackedLayout;
+        return !(*this == Other);
     }
     
-    union
+    friend uint64 HashType(const FDescriptorSetLayout& Value)
     {
-        struct
-        {
-            uint8 ShaderStage;
-            uint8 NumUniformBuffers;
-            uint8 NumImages;
-            uint8 NumSamplers;
-            uint8 NumStorageBuffers;
-            uint8 NumStorageImages;
-        };
-        
-        uint64 PackedLayout;
-    };
+        uint64 Hash = Value.ShaderVisibility;
+        for (const FVulkanShaderBinding& Binding : Value.Bindings)
+            HashCombine(Hash, Binding.EncodedBinding);
+        return Hash;
+    }
+    
+    EShaderVisibility ShaderVisibility;
+    TArray<FVulkanShaderBinding> Bindings;
 };
 
 struct FVulkanPipelineLayoutCreateInfo
 {
     FVulkanPipelineLayoutCreateInfo()
         : StageSetLayouts()
-        , NumSetLayouts(0)
         , NumGlobalConstants(0)
     {
     }
     
     bool operator==(const FVulkanPipelineLayoutCreateInfo& Other) const
     {
-        if (NumSetLayouts != Other.NumSetLayouts || NumGlobalConstants != Other.NumGlobalConstants)
-        {
+        if (StageSetLayouts.Size() != Other.StageSetLayouts.Size() || NumGlobalConstants != Other.NumGlobalConstants)
             return false;
-        }
         
-        for (int32 Index = 0; Index < NumSetLayouts; Index++)
+        for (int32 Index = 0; Index < StageSetLayouts.Size(); Index++)
         {
             if (StageSetLayouts[Index] != Other.StageSetLayouts[Index])
-            {
                 return false;
-            }
         }
         
         return true;
@@ -70,23 +71,17 @@ struct FVulkanPipelineLayoutCreateInfo
         return !(*this == Other);
     }
     
-    FDescriptorSetLayout StageSetLayouts[DESCRIPTOR_SET_STAGE_COUNT];
-    uint8                NumSetLayouts;
-    uint8                NumGlobalConstants;
-};
-
-inline uint64 HashType(const FVulkanPipelineLayoutCreateInfo& Value)
-{
-    uint64 Hash = Value.NumSetLayouts;
-    HashCombine(Hash, Value.NumGlobalConstants);
-    for (int32 Index = 0; Index < Value.NumSetLayouts; Index++)
+    friend uint64 HashType(const FVulkanPipelineLayoutCreateInfo& Value)
     {
-        HashCombine(Hash, Value.StageSetLayouts[Index].PackedLayout);
+        uint64 Hash = Value.NumGlobalConstants;
+        for (const FDescriptorSetLayout& SetLayout : Value.StageSetLayouts)
+            HashCombine(Hash, HashType(SetLayout));
+        return Hash;
     }
-    
-    return Hash;
-}
 
+    TArray<FDescriptorSetLayout> StageSetLayouts;
+    uint8                        NumGlobalConstants;
+};
 
 class FVulkanPipelineLayout : public FVulkanDeviceChild, public FVulkanRefCounted
 {
@@ -105,10 +100,16 @@ public:
     {
         return DescriptorSetLayoutHandles[ShaderVisibility];
     }
+    
+    uint32 GetNumPushConstants() const
+    {
+        return NumPushConstants;
+    }
 
 private:
     VkPipelineLayout      LayoutHandle;
     VkDescriptorSetLayout DescriptorSetLayoutHandles[ShaderVisibility_Count];
+    uint32                NumPushConstants;
 };
 
 class FVulkanPipelineLayoutManager : public FVulkanDeviceChild

@@ -38,7 +38,6 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     // Get the physical device features
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
 
-
     // Check Vulkan 1.0 features
     const uint64 NumFeatures10 = ((OFFSETOF(VkPhysicalDeviceFeatures, inheritedQueries) - OFFSETOF(VkPhysicalDeviceFeatures, robustBufferAccess)) / sizeof(VkBool32)) + 1;
 
@@ -61,7 +60,6 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
         return false;
     }
 
-
     // Check Vulkan 1.1 features
     const uint64 NumFeatures11 = ((OFFSETOF(VkPhysicalDeviceVulkan11Features, shaderDrawParameters) - OFFSETOF(VkPhysicalDeviceVulkan11Features, storageBuffer16BitAccess)) / sizeof(VkBool32)) + 1;
 
@@ -83,7 +81,6 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     {
         return false;
     }
-
 
     // Check Vulkan 1.2 features
     const uint64 NumFeatures12 = ((OFFSETOF(VkPhysicalDeviceVulkan12Features, subgroupBroadcastDynamicId) - OFFSETOF(VkPhysicalDeviceVulkan12Features, samplerMirrorClampToEdge)) / sizeof(VkBool32)) + 1;
@@ -286,7 +283,6 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     vkGetPhysicalDeviceProperties(PhysicalDevice, &DeviceProperties);
     vkGetPhysicalDeviceFeatures(PhysicalDevice, &DeviceFeatures);
     vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &DeviceMemoryProperties);
-    
 
     // Get Get Physical Device Properties
     FMemory::Memzero(&DeviceProperties2);
@@ -302,7 +298,6 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
 #endif
 
     vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
-
 
     // Get Physical Device Feature (For Vulkan 1.1 and Vulkan 1.2 and extensions)
     FMemory::Memzero(&DeviceFeatures2);
@@ -335,7 +330,6 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     
     // Get the physical device features
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
-
 
     // Get Physical Device Memory Properties
     FMemory::Memzero(&DeviceMemoryProperties2);

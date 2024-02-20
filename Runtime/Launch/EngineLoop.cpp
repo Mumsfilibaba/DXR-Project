@@ -19,7 +19,7 @@
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "RendererCore/TextureFactory.h"
 
@@ -171,7 +171,7 @@ bool FEngineLoop::PreInitialize()
     }
 
     // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
-    if (!FRHIShaderCompiler::Create(FProjectManager::Get().GetAssetPath()))
+    if (!FShaderCompiler::Create(FProjectManager::Get().GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
@@ -327,7 +327,7 @@ bool FEngineLoop::Release()
     RHIRelease();
 
     // Destroy the ShaderCompiler
-    FRHIShaderCompiler::Destroy();
+    FShaderCompiler::Destroy();
 
     // Shutdown the Async-task system
     FTaskManager::Release();

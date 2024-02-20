@@ -6,13 +6,6 @@ FVulkanFence::FVulkanFence(FVulkanDevice* InDevice)
 {
 }
 
-FVulkanFence::FVulkanFence(FVulkanFence&& Other)
-    : FVulkanDeviceChild(Other.GetDevice())
-    , Fence(Other.Fence)
-{
-    Other.Fence  = VK_NULL_HANDLE;
-}
-
 FVulkanFence::~FVulkanFence()
 {
     if (VULKAN_CHECK_HANDLE(Fence))

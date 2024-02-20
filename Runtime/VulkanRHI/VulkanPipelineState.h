@@ -42,7 +42,6 @@ private:
     TArray<VkVertexInputAttributeDescription> VertexInputAttributeDescriptions;
 };
 
-
 class FVulkanDepthStencilState : public FRHIDepthStencilState
 {
 public:
@@ -63,7 +62,6 @@ private:
     FRHIDepthStencilStateInitializer      Initializer;
     VkPipelineDepthStencilStateCreateInfo CreateInfo;
 };
-
 
 class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceChild
 {
@@ -92,7 +90,6 @@ private:
 #endif
 };
 
-
 class FVulkanBlendState : public FRHIBlendState
 {
 public:
@@ -114,7 +111,6 @@ private:
     VkPipelineColorBlendStateCreateInfo CreateInfo;
     VkPipelineColorBlendAttachmentState BlendAttachmentStates[FRHILimits::MaxRenderTargets];
 };
-
 
 class FVulkanPipeline : public FVulkanDeviceChild
 {
@@ -138,7 +134,6 @@ protected:
     VkPipeline Pipeline;
     TSharedRef<FVulkanPipelineLayout> PipelineLayout;
 };
-
 
 class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline
 {
@@ -167,7 +162,6 @@ private:
     TSharedRef<FVulkanPixelShader>    PixelShader;
 };
 
-
 class FVulkanComputePipelineState : public FRHIComputePipelineState, public FVulkanPipeline
 {
 public:
@@ -183,13 +177,12 @@ public:
 
     FORCEINLINE FVulkanComputeShader* GetComputeShader() const 
     {
-        return Shader.Get();
+        return ComputeShader.Get();
     }
     
 private:
-    TSharedRef<FVulkanComputeShader> Shader;
+    TSharedRef<FVulkanComputeShader> ComputeShader;
 };
-
 
 class FVulkanRayTracingPipelineState : public FRHIRayTracingPipelineState
 {

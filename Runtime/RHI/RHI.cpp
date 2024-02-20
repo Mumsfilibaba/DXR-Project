@@ -1,6 +1,6 @@
 #include "RHI.h"
 #include "RHICommandList.h"
-#include "RHIShaderCompiler.h"
+#include "ShaderCompiler.h"
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/ConsoleManager.h"
 

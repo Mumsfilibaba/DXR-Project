@@ -7,7 +7,7 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
 
 #include <imgui.h>
@@ -189,8 +189,8 @@ bool FImGuiRenderer::Initialize()
     TArray<uint8> ShaderCode;
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FRHIShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        if (!FShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -223,8 +223,8 @@ bool FImGuiRenderer::Initialize()
         })*";
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FRHIShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+        if (!FShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;

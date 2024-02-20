@@ -33,7 +33,6 @@ struct FVulkanMemoryAllocation
     bool                bIsDedicated;
 };
 
-
 struct FVulkanMemoryBlock
 {
     FVulkanMemoryBlock()
@@ -63,7 +62,6 @@ struct FVulkanMemoryBlock
     uint64 Offset;
     bool   bIsFree;
 };
-
 
 class FVulkanMemoryHeap : public FVulkanDeviceChild, private FNonCopyable
 {
@@ -131,7 +129,6 @@ private:
     TArray<FVulkanMemoryBlock*> AllBlocks;
 #endif
 };
-
 
 class FVulkanMemoryManager : public FVulkanDeviceChild
 {

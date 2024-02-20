@@ -34,16 +34,12 @@ struct FVulkanFramebufferKey
     bool operator==(const FVulkanFramebufferKey& Other) const
     {
         if (RenderPass != Other.RenderPass || NumAttachmentViews != Other.NumAttachmentViews || Width != Other.Width || Height != Other.Height)
-        {
             return false;
-        }
 
         for (uint32 Index = 0; Index < NumAttachmentViews; Index++)
         {
             if (AttachmentViews[Index] != Other.AttachmentViews[Index])
-            {
                 return false;
-            }
         }
 
         return true;
@@ -54,27 +50,24 @@ struct FVulkanFramebufferKey
         return !(*this == Other);
     }
 
+    friend uint64 HashType(const FVulkanFramebufferKey& Key)
+    {
+        uint64 Hash = reinterpret_cast<uint64>(Key.RenderPass);
+        HashCombine(Hash, Key.Width);
+        HashCombine(Hash, Key.Height);
+
+        for (uint32 Index = 0; Index < Key.NumAttachmentViews; Index++)
+            HashCombine(Hash, Key.AttachmentViews[Index]);
+
+        return Hash;
+    }
+
     VkRenderPass RenderPass;
     uint16       Width;
     uint16       Height;
     uint32       NumAttachmentViews;
     VkImageView  AttachmentViews[FRHILimits::MaxRenderTargets + 1];
 };
-
-inline uint64 HashType(const FVulkanFramebufferKey& Key)
-{
-    uint64 Hash = reinterpret_cast<uint64>(Key.RenderPass);
-    HashCombine(Hash, Key.Width);
-    HashCombine(Hash, Key.Height);
-
-    for (uint32 Index = 0; Index < Key.NumAttachmentViews; Index++)
-    {
-        HashCombine(Hash, Key.AttachmentViews[Index]);
-    }
-
-    return Hash;
-}
-
 
 class FVulkanFramebufferCache : public FVulkanDeviceChild
 {

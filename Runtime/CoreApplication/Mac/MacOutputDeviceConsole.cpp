@@ -73,8 +73,8 @@ void FMacOutputDeviceConsole::CreateConsole()
             const NSUInteger StyleMask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable;
             
             // TODO: Control with console vars?
-            const CGFloat Width  = 640.0f;
-            const CGFloat Height = 360.0f;
+            const CGFloat Width  = 800.0f;
+            const CGFloat Height = 480.0f;
             
             NSRect ContentRect = NSMakeRect(0.0f, 0.0f, Width, Height);
             

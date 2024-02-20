@@ -7,26 +7,26 @@
 #define VULKAN_FUNCTION_DECLARATION(FunctionName) extern PFN_vk##FunctionName vk##FunctionName
 #define VULKAN_FUNCTION_DEFINITION(FunctionName)  PFN_vk##FunctionName vk##FunctionName = nullptr
 
-#define VULKAN_LOAD_DEVICE_FUNCTION(Device, FunctionName)                                                          \
-    do                                                                                                             \
-    {                                                                                                              \
+#define VULKAN_LOAD_DEVICE_FUNCTION(Device, FunctionName) \
+    do \
+    { \
         vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FunctionName)); \
-        if (!vk##FunctionName)                                                                                     \
-        {                                                                                                          \
-            VULKAN_ERROR("Failed to load vk"#FunctionName);                                                        \
-            return false;                                                                                          \
-        }                                                                                                          \
+        if (!vk##FunctionName) \
+        { \
+            VULKAN_ERROR("Failed to load vk"#FunctionName); \
+            return false; \
+        } \
     } while(false)
 
-#define VULKAN_LOAD_INSTANCE_FUNCTION(Instance, FunctionName)                                                          \
-    do                                                                                                                 \
-    {                                                                                                                  \
+#define VULKAN_LOAD_INSTANCE_FUNCTION(Instance, FunctionName) \
+    do \
+    { \
         vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetInstanceProcAddr(Instance, "vk"#FunctionName)); \
-        if (!vk##FunctionName)                                                                                         \
-        {                                                                                                              \
-            VULKAN_ERROR("Failed to load vk"#FunctionName);                                                            \
-            return false;                                                                                              \
-        }                                                                                                              \
+        if (!vk##FunctionName) \
+        { \
+            VULKAN_ERROR("Failed to load vk"#FunctionName); \
+            return false; \
+        } \
     } while(false)
 
 class FVulkanInstance;
