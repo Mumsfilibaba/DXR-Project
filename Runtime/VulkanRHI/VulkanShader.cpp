@@ -1,7 +1,6 @@
 #include "VulkanShader.h"
 #include "VulkanDevice.h"
 #include "VulkanLoader.h"
-#include <glslang/Include/glslang_c_interface.h>
 #include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
 
@@ -15,9 +14,9 @@ static uint32 GetShaderStageDescriporSetOffset(EShaderVisibility ShaderVisibilit
         case ShaderVisibility_Domain:   return 2;
         case ShaderVisibility_Geometry: return 3;
         case ShaderVisibility_Pixel:    return 4;
-            
         // Compute
-        case ShaderVisibility_Compute:
+        case ShaderVisibility_Compute:  return 0;
+        // Other
         default: return 0;
     }
 }
@@ -90,13 +89,13 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
         VULKAN_ERROR("No SPIR-V code supplied");
         return false;
     }
-    
+
     if (InCode.Size() % sizeof(uint32) != 0)
     {
         VULKAN_ERROR("SPIR-V code must be a multiple of 4, ensure that the code is valid SPIR-V");
         return false;
     }
-    
+ 
     spvc_context Context = nullptr;
     spvc_result  Result  = spvc_context_create(&Context);
     if (Result != SPVC_SUCCESS)
@@ -109,11 +108,11 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
     {
         VULKAN_ERROR("[SPIRV-Cross Error] %s", Error);
     }, nullptr);
-    
+
     // The code size needs to be aligned to the elementsize
     constexpr uint32 ElementSize = sizeof(uint32) / sizeof(uint8);
     const uint32 NumElements = InCode.Size() / ElementSize;
-    
+
     spvc_parsed_ir ParsedCode = nullptr;
     Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(InCode.Data()), NumElements, &ParsedCode);
     if (Result != SPVC_SUCCESS)
@@ -137,15 +136,15 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
         VULKAN_ERROR("Failed to create shader resources");
         return false;
     }
-    
+
     // Not setting variables directly in case we fail on the way
     FVulkanShaderLayout LocalShaderLayout;
-    
+
     // Use global binding for Vulkan shaders
     uint32 GlobalBinding = 0;
-    // TODO: Get this from pipelinecreation
+    // TODO: Get this from pipeline-creation
     const uint32 DescriptorSetOffset = GetShaderStageDescriporSetOffset(ShaderVisibility);
-    
+
     // SRV Textures
     size_t NumSampledImages = 0;
     const spvc_reflected_resource* SampledImages = nullptr;
@@ -157,7 +156,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
             const uint32 CurrentBinding = spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding);
             spvc_compiler_set_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding, NewBinding);
             spvc_compiler_set_decoration(Compiler, SampledImages[Index].id, SpvDecorationDescriptorSet, DescriptorSetOffset);
-            
+
             LocalShaderLayout.SampledImageBindings.Emplace(BindingType_SampledImage, DescriptorSetOffset, NewBinding, CurrentBinding);
         }
     }
@@ -165,7 +164,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
     {
         return false;
     }
-    
+
     // Samplers
     size_t NumSamplers = 0;
     const spvc_reflected_resource* Samplers = nullptr;
@@ -177,7 +176,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
             const uint32 CurrentBinding = spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding);
             spvc_compiler_set_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding, NewBinding);
             spvc_compiler_set_decoration(Compiler, Samplers[Index].id, SpvDecorationDescriptorSet, DescriptorSetOffset);
-            
+
             LocalShaderLayout.SamplerBindings.Emplace(BindingType_Sampler, DescriptorSetOffset, NewBinding, CurrentBinding);
         }
     }
@@ -185,7 +184,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
     {
         return false;
     }
-    
+
     // UAV Textures
     size_t NumStorageImages = 0;
     const spvc_reflected_resource* StorageImages = nullptr;
@@ -197,7 +196,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
             const uint32 CurrentBinding = spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding);
             spvc_compiler_set_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding, NewBinding);
             spvc_compiler_set_decoration(Compiler, StorageImages[Index].id, SpvDecorationDescriptorSet, DescriptorSetOffset);
-            
+
             LocalShaderLayout.StorageImageBindings.Emplace(BindingType_StorageImage, DescriptorSetOffset, NewBinding, CurrentBinding);
         }
     }
@@ -205,7 +204,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
     {
         return false;
     }
-    
+
     // ConstantBuffers
     size_t NumUniformBuffers = 0;
     const spvc_reflected_resource* UniformBuffers = nullptr;
@@ -217,7 +216,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
             const uint32 CurrentBinding = spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding);
             spvc_compiler_set_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding, NewBinding);
             spvc_compiler_set_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationDescriptorSet, DescriptorSetOffset);
-            
+
             LocalShaderLayout.UniformBufferBindings.Emplace(BindingType_UniformBuffer, DescriptorSetOffset, NewBinding, CurrentBinding);
         }
     }
@@ -225,7 +224,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
     {
         return false;
     }
-    
+
     // SRV + UAV Buffers
     size_t NumStorageBuffers = 0;
     const spvc_reflected_resource* StorageBuffers = nullptr;
@@ -237,7 +236,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
             const uint32 CurrentBinding = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding);
             spvc_compiler_set_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding, NewBinding);
             spvc_compiler_set_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationDescriptorSet, DescriptorSetOffset);
-            
+
             const FString BaseTypeName = spvc_compiler_get_name(Compiler, StorageBuffers[Index].base_type_id);
             const bool bIsUAV = BaseTypeName.Contains("RWStructuredBuffer");
             if (bIsUAV)
@@ -254,13 +253,13 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
     {
         return false;
     }
-    
+
     // Push Constants
     size_t NumPushConstants = 0;
     const spvc_reflected_resource* PushConstants = nullptr;
     if (spvc_resources_get_resource_list_for_type(ShaderResources, SPVC_RESOURCE_TYPE_PUSH_CONSTANT, &PushConstants, &NumPushConstants) == SPVC_SUCCESS)
     {
-        uint32 NumPushBytes = 0;
+        size_t NumPushBytes = 0;
         for (uint32 Index = 0; Index < NumPushConstants; Index++)
         {
             size_t NumRanges = 0;
@@ -280,14 +279,14 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
                 return false;
             }
         }
-        
-        LocalShaderLayout.NumPushConstants = FMath::AlignUp<uint32>(NumPushBytes, sizeof(uint32)) / sizeof(uint32);
+
+        LocalShaderLayout.NumPushConstants = FMath::AlignUp<uint32>(static_cast<uint32>(NumPushBytes), sizeof(uint32)) / sizeof(uint32);
     }
     else
     {
         return false;
     }
-    
+
     // Modify options.
     spvc_compiler_options Options = nullptr;
     spvc_compiler_create_compiler_options(Compiler, &Options);
@@ -296,7 +295,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_TRUE);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_VULKAN_SEMANTICS, SPVC_TRUE);
     spvc_compiler_install_compiler_options(Compiler, Options);
-    
+
     // Compile the GLSL code
     const CHAR* NewSource = nullptr;
     Result = spvc_compiler_compile(Compiler, &NewSource);
@@ -313,7 +312,7 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
 
     // Now we can destroy the context
     spvc_context_destroy(Context);
-    
+
     // Init glslang
     static bool bIsGlslangReady = false;
     if (!bIsGlslangReady)
@@ -321,10 +320,10 @@ bool FVulkanShader::PatchShaderBindings(const TArray<uint8>& InCode, TArray<uint
         glslang_initialize_process();
         bIsGlslangReady = true;
     }
-    
+
     // Convert the shader stage to glslang-enum
     const glslang_stage_t GlslangStage = GetGlslangStage(ShaderVisibility);
-    
+
     // Compile the GLSL to SPIRV
     glslang_input_t Input;
     Input.language                          = GLSLANG_SOURCE_GLSL;

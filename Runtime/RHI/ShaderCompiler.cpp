@@ -6,10 +6,6 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
-
-// Headers for SPIR-V resource remapping and GLSL compilation
-#include <glslang/Include/glslang_c_interface.h>
-#include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
 
 static TAutoConsoleVariable<bool> CVarShaderDebug(
@@ -77,64 +73,9 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
         case EShaderModel::SM_6_3: return L"6_3";
         case EShaderModel::SM_6_4: return L"6_4";
         case EShaderModel::SM_6_5: return L"6_5";
-        case EShaderModel::SM_6_6: return L"6_6";  
-        case EShaderModel::SM_6_7: return L"6_7";           
+        case EShaderModel::SM_6_6: return L"6_6";
+        case EShaderModel::SM_6_7: return L"6_7";
         default:                   return L"0_0";
-    }
-}
-
-static glslang_stage_t GetGlslangStage(EShaderStage Stage)
-{
-    switch (Stage)
-    {
-        // Graphics
-        case EShaderStage::Vertex:          return GLSLANG_STAGE_VERTEX;
-        case EShaderStage::Hull:            return GLSLANG_STAGE_TESSCONTROL;
-        case EShaderStage::Domain:          return GLSLANG_STAGE_TESSEVALUATION;
-        case EShaderStage::Geometry:        return GLSLANG_STAGE_GEOMETRY;
-        case EShaderStage::Pixel:           return GLSLANG_STAGE_FRAGMENT;
-        // Mesh Pipeline
-        case EShaderStage::Mesh:            return GLSLANG_STAGE_MESH;
-        case EShaderStage::Amplification:   return GLSLANG_STAGE_TASK;
-        // Compute
-        case EShaderStage::Compute:         return GLSLANG_STAGE_COMPUTE;
-        // Ray Tracing
-        case EShaderStage::RayGen:          return GLSLANG_STAGE_RAYGEN;
-        case EShaderStage::RayAnyHit:       return GLSLANG_STAGE_ANYHIT;
-        case EShaderStage::RayClosestHit:   return GLSLANG_STAGE_CLOSESTHIT;
-        case EShaderStage::RayIntersection: return GLSLANG_STAGE_INTERSECT;
-        case EShaderStage::RayCallable:     return GLSLANG_STAGE_CALLABLE;
-        case EShaderStage::RayMiss:         return GLSLANG_STAGE_MISS;
-        // Other
-        default:                            return glslang_stage_t(-1);
-    }
-}
-
-static uint32 GetShaderStageDescriporSetOffset(EShaderStage Stage)
-{
-    switch (Stage)
-    {
-        // Graphics
-        case EShaderStage::Vertex:        return 0;
-        case EShaderStage::Hull:          return 1;
-        case EShaderStage::Domain:        return 2;
-        case EShaderStage::Geometry:      return 3;
-        case EShaderStage::Pixel:         return 4;
-        // Mesh Pipeline
-        case EShaderStage::Mesh:          return 0;
-        case EShaderStage::Amplification: return 1;
-        // Compute
-        case EShaderStage::Compute:
-        // Ray Tracing
-        case EShaderStage::RayGen:
-        case EShaderStage::RayAnyHit:
-        case EShaderStage::RayClosestHit:
-        case EShaderStage::RayIntersection:
-        case EShaderStage::RayCallable:
-        case EShaderStage::RayMiss:
-        // Other
-        default:
-            return 0;
     }
 }
 
@@ -311,7 +252,7 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
         return false;
     }
 
-    // Read the full file as a textfile
+    // Read the full file as a text-file
     TArray<CHAR> Text;
     if (!FFileHelpers::ReadTextFile(File.Get(), Text))
     {

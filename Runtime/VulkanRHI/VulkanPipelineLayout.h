@@ -15,7 +15,7 @@ struct FDescriptorSetLayout
     
     bool operator==(const FDescriptorSetLayout& Other) const
     {
-        if (Bindings.Size() != Other.Bindings.Size() || ShaderVisibility != Other.ShaderVisibility)
+        if (Bindings.Size() != Other.Bindings.Size() || ShaderVisibility != Other.ShaderVisibility)
             return false;
         
         for (int32 Index = 0; Index < Bindings.Size(); Index++)
