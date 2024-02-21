@@ -178,7 +178,7 @@ IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
     return new FWindowsFileHandle(NewHandle);
 }
 
-IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename)
+IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
 {
     ::SetLastError(S_OK);
 
@@ -196,7 +196,7 @@ IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename)
         FString ErrorString;
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
-        auto Position = ErrorString.FindLast("\r\n");
+        int32 Position = ErrorString.FindLast("\r\n");
         if (Position != FString::INVALID_INDEX)
         {
             ErrorString.Remove(Position, 2);
@@ -205,18 +205,35 @@ IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename)
         LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", ErrorString.GetCString());
         return nullptr;
     }
-
-    return new FWindowsFileHandle(NewHandle);
+    else
+    {
+        return new FWindowsFileHandle(NewHandle);
+    }
 }
 
-FString FWindowsPlatformFile::GetCurrentDirectory()
+const CHAR* FWindowsPlatformFile::GetExecutablePath()
+{
+    static CHAR StaticExecutablePath[512] = { 0 };
+
+    if(!StaticExecutablePath[0])
+    {
+        if (!GetModuleFileName(0, StaticExecutablePath, ARRAY_COUNT(StaticExecutablePath)))
+        {
+            StaticExecutablePath[0] = 0;
+        }
+    }
+
+    return StaticExecutablePath;
+}
+
+FString FWindowsPlatformFile::GetCurrentWorkingDirectory()
 {
     int32 Length = ::GetCurrentDirectoryA(0, nullptr);
     if (!Length)
     {
         FString Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
-        LOG_ERROR("GetCurrentDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
+        LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
         return FString();
     }
 
@@ -227,9 +244,11 @@ FString FWindowsPlatformFile::GetCurrentDirectory()
     {
         FString Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
-        LOG_ERROR("GetCurrentDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
+        LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
         return FString();
     }
-
-    return Result;
+    else
+    {
+        return Result;
+    }
 }

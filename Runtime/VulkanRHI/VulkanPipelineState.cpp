@@ -1,6 +1,15 @@
 #include "VulkanPipelineState.h"
 #include "VulkanDevice.h"
 #include "VulkanShader.h"
+#include "Core/Platform/PlatformFile.h"
+#include "Core/Threading/TaskManager.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Project/ProjectManager.h"
+
+static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
+    "VulkanRHI.PipelineCacheFileName",
+    "FileName for the file storing the PipelineCache",
+    "VulkanPipelineCache.pipelinecache");
 
 FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
     : FRHIVertexInputLayout()
@@ -454,6 +463,16 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     PipelineCreateInfo.basePipelineHandle  = VK_NULL_HANDLE;
     PipelineCreateInfo.basePipelineIndex   = -1;
 
+    FVulkanPipelineCache& PipelineCache = GetDevice()->GetPipelineCache();
+    if (PipelineCache.CreateGraphicsPipeline(PipelineCreateInfo, Pipeline))
+    {
+        return true;
+    }
+    else
+    {
+        VULKAN_WARNING("GraphicsPipeline was not found in PipelineCache");
+    }
+    
     VkResult Result = vkCreateGraphicsPipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
     if (VULKAN_FAILED(Result))
     {
@@ -530,10 +549,235 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     PipelineCreateInfo.layout = PipelineLayout->GetVkPipelineLayout();
     PipelineCreateInfo.stage  = ShaderStageCreateInfo;
 
+    FVulkanPipelineCache& PipelineCache = GetDevice()->GetPipelineCache();
+    if (PipelineCache.CreateComputePipeline(PipelineCreateInfo, Pipeline))
+    {
+        return true;
+    }
+    else
+    {
+        VULKAN_WARNING("GraphicsPipeline was not found in PipelineCache");
+    }
+    
     VkResult Result = vkCreateComputePipelines(GetDevice()->GetVkDevice(), VK_NULL_HANDLE, 1, &PipelineCreateInfo, nullptr, &Pipeline);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to create ComputePipeline");
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+FVulkanPipelineCache::FVulkanPipelineCache(FVulkanDevice* InDevice)
+    : FVulkanDeviceChild(InDevice)
+    , PipelineCache(VK_NULL_HANDLE)
+    , bPipelineDirty(false)
+{
+}
+
+FVulkanPipelineCache::~FVulkanPipelineCache()
+{
+    Release();
+}
+
+bool FVulkanPipelineCache::Initialize()
+{
+    if (LoadCacheFromFile())
+    {
+        return true;
+    }
+    
+    VkPipelineCacheCreateInfo CreateInfo;
+    FMemory::Memzero(&CreateInfo);
+    
+    CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+    CreateInfo.pInitialData    = nullptr;
+    CreateInfo.initialDataSize = 0;
+
+    if (GetDevice()->IsPipelineCacheControlSupported())
+    {
+        CreateInfo.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT;
+    }
+    
+    VkResult Result = vkCreatePipelineCache(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &PipelineCache);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create Vulkan PipelineCache");
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+void FVulkanPipelineCache::Release()
+{
+    if (VULKAN_CHECK_HANDLE(PipelineCache))
+    {
+        vkDestroyPipelineCache(GetDevice()->GetVkDevice(), PipelineCache, nullptr);
+        PipelineCache = VK_NULL_HANDLE;
+    }
+}
+
+bool FVulkanPipelineCache::CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline)
+{
+    TScopedLock Lock(PipelineCacheCS);
+    
+    VkResult Result = vkCreateGraphicsPipelines(GetDevice()->GetVkDevice(), PipelineCache, 1, &CreateInfo, nullptr, &OutPipeline);
+    if (VULKAN_FAILED(Result))
+    {
+        return false;
+    }
+    else
+    {
+        bPipelineDirty = true;
+        return true;
+    }
+}
+
+bool FVulkanPipelineCache::CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline)
+{
+    TScopedLock Lock(PipelineCacheCS);
+    
+    VkResult Result = vkCreateComputePipelines(GetDevice()->GetVkDevice(), PipelineCache, 1, &CreateInfo, nullptr, &OutPipeline);
+    if (VULKAN_FAILED(Result))
+    {
+        return false;
+    }
+    else
+    {
+        bPipelineDirty = true;
+        return true;
+    }
+}
+
+bool FVulkanPipelineCache::SaveCacheData()
+{
+    if (!VULKAN_CHECK_HANDLE(PipelineCache))
+    {
+        VULKAN_WARNING("No valid PipelineCache created");
+        return false;
+    }
+    
+    // No changes has been made to the pipeline
+    if (!bPipelineDirty)
+    {
+        return true;
+    }
+
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;
+    
+    FFileHandleRef CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
+    if (!CacheFile)
+    {
+        VULKAN_WARNING("Failed to open PipelineCache-file");
+        return false;
+    }
+    
+    {
+        TScopedLock Lock(PipelineCacheCS);
+        
+        size_t PipelineCacheSize = 0;
+        VkResult Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &PipelineCacheSize, nullptr);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("Failed to retrieve size of PipelineCache");
+            return false;
+        }
+        
+        TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(PipelineCacheSize);
+        Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &PipelineCacheSize, PipelineCacheData.Get());
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("Failed to retrieve size of PipelineCache");
+            return false;
+        }
+        
+        const int32 BytesWritten = CacheFile->Write(PipelineCacheData.Get(), static_cast<uint32>(PipelineCacheSize));
+        if (BytesWritten != static_cast<int32>(PipelineCacheSize))
+        {
+            VULKAN_ERROR("Failed to write PipelineCache");
+            return false;
+        }
+        else
+        {
+            VULKAN_INFO("Saved PipelineCache to file '%s'", PipelineCacheFilepath.GetCString());
+        }
+    }
+    
+    bPipelineDirty = false;
+    return true;
+}
+
+bool FVulkanPipelineCache::LoadCacheFromFile()
+{
+    const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
+    const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;
+    
+    FFileHandleRef CacheFile = FPlatformFile::OpenForRead(PipelineCacheFilepath);
+    if (!CacheFile)
+    {
+        VULKAN_WARNING("Failed to open PipelineCache-file");
+        return false;
+    }
+    
+    const int64 PipelineCacheSize = CacheFile->Size();
+    TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(PipelineCacheSize);
+    const int64 BytesRead = CacheFile->Read(PipelineCacheData.Get(), static_cast<uint32>(PipelineCacheSize));
+    if (PipelineCacheSize != BytesRead)
+    {
+        VULKAN_WARNING("Something went wrong when reading PipelineCache");
+        return false;
+    }
+    
+    if (static_cast<uint64>(PipelineCacheSize) < sizeof(FVulkanPipelineCacheHeader))
+    {
+        VULKAN_WARNING("PipelineCache is smaller than PipelineCacheHeader");
+        return false;
+    }
+    
+    const VkPhysicalDeviceProperties& DeviceProperties = GetDevice()->GetPhysicalDevice()->GetProperties();
+    FVulkanPipelineCacheHeader* Header = reinterpret_cast<FVulkanPipelineCacheHeader*>(PipelineCacheData.Get());
+    if (Header->VendorID != DeviceProperties.vendorID)
+    {
+        VULKAN_WARNING("PipelineCacheHeader contains invalid VendorID");
+        return false;
+    }
+    
+    if (Header->DeviceID != DeviceProperties.deviceID)
+    {
+        VULKAN_WARNING("PipelineCacheHeader contains invalid DeviceID");
+        return false;
+    }
+    
+    constexpr uint64 UUIDSize = sizeof(DeviceProperties.pipelineCacheUUID);
+    if (FMemory::Memcpy(Header->UUID, DeviceProperties.pipelineCacheUUID, UUIDSize) == 0)
+    {
+        VULKAN_WARNING("PipelineCacheHeader contains invalid UUID");
+        return false;
+    }
+    
+    VkPipelineCacheCreateInfo CreateInfo;
+    FMemory::Memzero(&CreateInfo);
+    
+    CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+    CreateInfo.pInitialData    = PipelineCacheData.Get();
+    CreateInfo.initialDataSize = PipelineCacheSize;
+
+    if (GetDevice()->IsPipelineCacheControlSupported())
+    {
+        CreateInfo.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT;
+    }
+    
+    VkResult Result = vkCreatePipelineCache(GetDevice()->GetVkDevice(), &CreateInfo, nullptr, &PipelineCache);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create Vulkan PipelineCache");
         return false;
     }
     else

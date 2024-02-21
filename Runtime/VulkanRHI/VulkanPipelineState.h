@@ -190,3 +190,39 @@ public:
     FVulkanRayTracingPipelineState() = default;
     virtual ~FVulkanRayTracingPipelineState() = default;
 };
+
+struct FVulkanPipelineCacheHeader
+{
+    uint32 Length;  // == sizeof(FVulkanPipelineCacheHeader)
+    uint32 Version; // == VK_PIPELINE_CACHE_HEADER_VERSION_ONE
+    uint32 VendorID;
+    uint32 DeviceID;
+    uint8  UUID[VK_UUID_SIZE];
+};
+
+class FVulkanPipelineCache : public FVulkanDeviceChild
+{
+public:
+    FVulkanPipelineCache(FVulkanDevice* InDevice);
+    ~FVulkanPipelineCache();
+
+    bool Initialize();
+    void Release();
+    
+    bool CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
+    bool CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
+
+    bool SaveCacheData();
+    
+    VkPipelineCache GetVkPipelineCache() const
+    {
+        return PipelineCache;
+    }
+
+private:
+    bool LoadCacheFromFile();
+    
+    VkPipelineCache  PipelineCache;
+    FCriticalSection PipelineCacheCS;
+    bool             bPipelineDirty;
+};

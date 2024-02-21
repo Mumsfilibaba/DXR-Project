@@ -42,7 +42,7 @@
 
 #undef GetClassName
 #undef GetModuleHandle
-#undef GetCurrentDirectory
+#undef GetCurrentWorkingDirectory
 
 #undef IsMinimized
 #undef IsMaximized

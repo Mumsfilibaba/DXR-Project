@@ -1,7 +1,6 @@
 #pragma once
 #include "Mac.h"
 #include "Core/Generic/GenericPlatformFile.h"
-
 #include <sys/stat.h>
 
 class CORE_API FMacFileHandle : public IFileHandle
@@ -13,9 +12,7 @@ public:
     virtual ~FMacFileHandle() = default;
 
     virtual bool SeekFromStart(int64 InOffset) override final;
-    
     virtual bool SeekFromCurrent(int64 InOffset) override final;
-
     virtual bool SeekFromEnd(int64 InOffset) override final;
 
     virtual int64 Size() const override final;
@@ -37,14 +34,13 @@ private:
     bool  bReadOnly;
 };
 
-
 struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
 {
     static IFileHandle* OpenForRead(const FString& Filename);
+    static IFileHandle* OpenForWrite(const FString& Filename, bool bTruncate = true);
 
-    static IFileHandle* OpenForWrite(const FString& Filename);
-
-    static FString GetCurrentDirectory();
+    static const CHAR* GetExecutablePath();
+    static FString     GetCurrentWorkingDirectory();
 
     static FORCEINLINE bool IsDirectory(const CHAR* Path)
     {
@@ -53,8 +49,10 @@ struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
         {
             return S_ISDIR(PathStat.st_mode);
         }
-
-        return false;
+        else
+        {
+            return false;
+        }
     }
 
     static FORCEINLINE bool IsFile(const CHAR* Path)
@@ -65,6 +63,6 @@ struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
 
     static FORCEINLINE bool IsPathRelative(const CHAR* Filepath)
     {
-        return Filepath && (Filepath[0] != '/');
+        return Filepath && Filepath[0] != '/';
     }
 };

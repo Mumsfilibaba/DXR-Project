@@ -11,7 +11,8 @@ class CORE_API FTaskWorkerThread : public FThreadInterface
 {
 public:
     FTaskWorkerThread();
-
+    virtual ~FTaskWorkerThread() = default;
+    
     virtual bool Start() override final;
 
     virtual int32 Run() override final;

@@ -13,6 +13,6 @@ struct FMacPlatformMisc final : public FGenericPlatformMisc
 
     static FORCEINLINE void MemoryBarrier() 
     {
-        _mm_sfence();
+        __sync_synchronize();
     }
 };

@@ -318,6 +318,12 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     DeviceFeaturesHelper.AddNext(Robustness2Features);
 #endif
     
+#if VK_EXT_pipeline_creation_cache_control
+    FMemory::Memzero(&PipelineCreationCacheControlFeatures);
+    PipelineCreationCacheControlFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
+    DeviceFeaturesHelper.AddNext(PipelineCreationCacheControlFeatures);
+#endif
+    
     // Vulkan 1.1 features
     FMemory::Memzero(&DeviceFeatures11);
     DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;

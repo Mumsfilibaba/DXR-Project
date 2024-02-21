@@ -58,6 +58,7 @@ VulkanRHI.AddModuleDependencies(
     'Core',
     'CoreApplication',
     'RHI',
+    'Project',
 })
 
 if IsPlatformMac() then

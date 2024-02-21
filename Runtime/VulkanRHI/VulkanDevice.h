@@ -9,6 +9,7 @@
 #include "VulkanFenceManager.h"
 #include "VulkanPipelineLayout.h"
 #include "VulkanDescriptorSet.h"
+#include "VulkanPipelineState.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -71,11 +72,13 @@ public:
     FVulkanFenceManager&          GetFenceManager()          { return FenceManager; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return PipelineLayoutManager; }
     FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return DescriptorPoolManager; }
+    FVulkanPipelineCache&         GetPipelineCache()         { return PipelineCache; }
     
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
     bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
     bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
+    bool IsPipelineCacheControlSupported()      const { return bSupportsPipelineCacheControl; }
     
     bool IsLayerEnabled(const FString& LayerName)
     {
@@ -119,6 +122,7 @@ private:
     FVulkanFenceManager          FenceManager;
     FVulkanPipelineLayoutManager PipelineLayoutManager;
     FVulkanDescriptorPoolManager DescriptorPoolManager;
+    FVulkanPipelineCache         PipelineCache;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
 
@@ -127,4 +131,5 @@ private:
 
     bool bSupportsDepthClip                 : 1;
     bool bSupportsConservativeRasterization : 1;
+    bool bSupportsPipelineCacheControl      : 1;
 };

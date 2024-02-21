@@ -160,7 +160,6 @@
 #include "Core/Threading/AtomicInt.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Spinlock.h"
-#include "Core/Threading/Thread.h"
 #include "Core/Threading/ThreadInterface.h"
 #include "Core/Threading/ThreadManager.h"
 

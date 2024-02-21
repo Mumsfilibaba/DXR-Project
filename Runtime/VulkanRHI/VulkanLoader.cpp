@@ -170,6 +170,10 @@ VULKAN_FUNCTION_DEFINITION(CreateGraphicsPipelines);
 VULKAN_FUNCTION_DEFINITION(CreateComputePipelines);
 VULKAN_FUNCTION_DEFINITION(DestroyPipeline);
 
+VULKAN_FUNCTION_DEFINITION(CreatePipelineCache);
+VULKAN_FUNCTION_DEFINITION(DestroyPipelineCache);
+VULKAN_FUNCTION_DEFINITION(GetPipelineCacheData);
+
 VULKAN_FUNCTION_DEFINITION(CreatePipelineLayout);
 VULKAN_FUNCTION_DEFINITION(DestroyPipelineLayout);
 
@@ -297,6 +301,10 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateComputePipelines);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyPipelineLayout);
 
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreatePipelineCache);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyPipelineCache);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetPipelineCacheData);
+    
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateDescriptorSetLayout);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyDescriptorSetLayout);
 

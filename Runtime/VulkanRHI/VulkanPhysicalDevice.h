@@ -58,13 +58,12 @@ public:
     bool Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc);
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
-    
+
     VkFormatProperties GetFormatProperties(VkFormat Format) const;
     
-    const VkPhysicalDeviceProperties&       GetProperties()       const { return DeviceProperties; }
-    const VkPhysicalDeviceFeatures&         GetFeatures()         const { return DeviceFeatures; }
-    const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const { return DeviceMemoryProperties; }
-    
+    const VkPhysicalDeviceProperties&        GetProperties()        const { return DeviceProperties; }
+    const VkPhysicalDeviceFeatures&          GetFeatures()          const { return DeviceFeatures; }
+    const VkPhysicalDeviceMemoryProperties&  GetMemoryProperties()  const { return DeviceMemoryProperties; }
     // Vulkan 1.1, Vulkan 1.2 features
     const VkPhysicalDeviceProperties2&       GetProperties2()       const { return DeviceProperties2; }
     const VkPhysicalDeviceFeatures2&         GetFeatures2()         const { return DeviceFeatures2; }
@@ -82,7 +81,10 @@ public:
 #if VK_EXT_conservative_rasterization
     const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const { return ConservativeRasterizationProperties; }
 #endif
-
+#if VK_EXT_pipeline_creation_cache_control
+    const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& GetPipelineCreationCacheControlFeatures() const { return PipelineCreationCacheControlFeatures; }
+#endif
+    
     FVulkanInstance* GetInstance() const
     {
         return Instance;
@@ -117,5 +119,8 @@ private:
 #endif
 #if VK_EXT_conservative_rasterization
     VkPhysicalDeviceConservativeRasterizationPropertiesEXT ConservativeRasterizationProperties;
+#endif
+#if VK_EXT_pipeline_creation_cache_control
+    VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT PipelineCreationCacheControlFeatures;
 #endif
 };

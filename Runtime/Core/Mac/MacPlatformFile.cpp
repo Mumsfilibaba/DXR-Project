@@ -1,11 +1,12 @@
 #include "MacPlatformFile.h"
-
+#include "Core/platform/PlatformString.h"
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
+
 
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     : IFileHandle()
@@ -154,7 +155,6 @@ void FMacFileHandle::Close()
     delete this;
 }
 
-
 IFileHandle* FMacPlatformFile::OpenForRead(const FString& Filename)
 {
     int32 FileHandle = ::open(Filename.GetCString(), O_RDONLY);
@@ -167,22 +167,28 @@ IFileHandle* FMacPlatformFile::OpenForRead(const FString& Filename)
         LOCK_NB | // Do not block, return error instead
         LOCK_SH ; // Shared lock, since we are reading
 
-    const auto Result = ::flock(FileHandle, LockFlags);
+    const int32 Result = ::flock(FileHandle, LockFlags);
     if (Result != 0)
     {
         ::close(FileHandle);
         return nullptr;
     }
-
-    return new FMacFileHandle(FileHandle, true);
+    else
+    {
+        return new FMacFileHandle(FileHandle, true);
+    }
 }
 
-IFileHandle* FMacPlatformFile::OpenForWrite(const FString& Filename)
+IFileHandle* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTruncate)
 {
-    const int32 Flags = 
+    int32 Flags =
         O_WRONLY | // Writing only 
-        O_CREAT  | // Create if the file does not exist
-        O_TRUNC;   // Truncate the file if it exists
+        O_CREAT;   // Create if the file does not exist
+    
+    if (bTruncate)
+    {
+        Flags |= O_TRUNC; // Truncate the file if it exists
+    }
 
     const int32 PermissonFlags = 
         S_IRUSR | // Read permission for User
@@ -202,27 +208,47 @@ IFileHandle* FMacPlatformFile::OpenForWrite(const FString& Filename)
         LOCK_NB | // Do not block, return error instead
         LOCK_EX ; // Exclusive lock, since we are writing
 
-    const auto Result = ::flock(FileHandle, LockFlags);
+    const int32 Result = ::flock(FileHandle, LockFlags);
     if (Result != 0)
     {
         ::close(FileHandle);
         return nullptr;
     }
-
-    return new FMacFileHandle(FileHandle, false);
+    else
+    {
+        return new FMacFileHandle(FileHandle, false);
+    }
 }
 
-FString FMacPlatformFile::GetCurrentDirectory()
+FString FMacPlatformFile::GetCurrentWorkingDirectory()
 {
-    CHAR Buffer[MAXPATHLEN];
-    FMemory::Memzero(Buffer, sizeof(Buffer));
-
+    CHAR Buffer[MAXPATHLEN] = { 0 };
     CHAR* CurrentDirectory = ::getcwd(Buffer, sizeof(Buffer));
     if (!CurrentDirectory)
     {
-        LOG_ERROR("getcwd failed");
         return FString();
     }
+    else
+    {
+        return CurrentDirectory;
+    }
+}
 
-    return CurrentDirectory;
+const CHAR* FMacPlatformFile::GetExecutablePath()
+{
+    static CHAR StaticExecutablePath[MAXPATHLEN] = { 0 };
+
+    if (!StaticExecutablePath[0])
+    {
+        SCOPED_AUTORELEASE_POOL();
+        
+        NSString* ExecutablePathNS = [[NSBundle mainBundle] executablePath];
+        const CHAR* ExecutablePath = [ExecutablePathNS UTF8String];
+        
+        const uint64 Length = FPlatformString::Strlen(ExecutablePath);
+        FPlatformString::Strncpy(StaticExecutablePath, ExecutablePath, MAXPATHLEN);
+        StaticExecutablePath[Length] = 0;
+    }
+
+    return StaticExecutablePath;
 }

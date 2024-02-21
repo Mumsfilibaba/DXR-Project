@@ -23,7 +23,6 @@ struct FGenericVulkanPlatform
         {
             // NOTE: This extension must be enabled on platforms that has it available
             "VK_KHR_portability_subset",
-
         #if VK_KHR_get_memory_requirements2
             VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
         #endif
@@ -113,6 +112,9 @@ struct FGenericVulkanPlatform
         #endif
         #if VK_KHR_fragment_shading_rate
             VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, 
+        #endif
+        #if VK_EXT_pipeline_creation_cache_control
+            VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME
         #endif
         };
     }

@@ -34,14 +34,20 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , FenceManager(this)
     , PipelineLayoutManager(this)
     , DescriptorPoolManager(this)
+    , PipelineCache(this)
     , bSupportsDepthClip(false)
     , bSupportsConservativeRasterization(false)
+    , bSupportsPipelineCacheControl(false)
 {
 }
 
 FVulkanDevice::~FVulkanDevice()
 {
-    // Release all PipelineLayout
+    // Release the PipelineCache
+    PipelineCache.SaveCacheData();
+    PipelineCache.Release();
+    
+    // Release all PipelineLayoutManager
     PipelineLayoutManager.Release();
 
     // Release all the DescriptorPools
@@ -231,7 +237,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 #if VK_EXT_robustness2
     VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
     FMemory::Memzero(&Robustness2Features);
-    
     Robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
     
     if (IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
@@ -247,7 +252,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
     FMemory::Memzero(&DepthClipEnableFeatures);
-    
     DepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
 
     const VkPhysicalDeviceDepthClipEnableFeaturesEXT& AvailableDepthClipEnableFeatures = GetPhysicalDevice()->GetDepthClipEnableFeatures();
@@ -270,14 +274,30 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     }
 #endif
 
+#if VK_EXT_pipeline_creation_cache_control
+    VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT PipelineCreationCacheControlFeatures;
+    FMemory::Memzero(&PipelineCreationCacheControlFeatures);
+    PipelineCreationCacheControlFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
+
+    const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& AvailablePipelineCreationCacheControlFeatures = GetPhysicalDevice()->GetPipelineCreationCacheControlFeatures();
+    if (IsExtensionEnabled(VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME) && AvailablePipelineCreationCacheControlFeatures.pipelineCreationCacheControl)
+    {
+        PipelineCreationCacheControlFeatures.pipelineCreationCacheControl = VK_TRUE;
+        DeviceCreateHelper.AddNext(PipelineCreationCacheControlFeatures);
+        bSupportsPipelineCacheControl = true;
+    }
+#endif
+    
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to create Device");
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }
 
 bool FVulkanDevice::PostLoaderInitalize()
@@ -288,6 +308,12 @@ bool FVulkanDevice::PostLoaderInitalize()
         return false;
     }
 
+    // Initialize PipelineCache (TODO: Maybe add this to FVulkanRHI instead?)
+    if (!PipelineCache.Initialize())
+    {
+        return false;
+    }
+    
     return true;
 }
 
