@@ -208,6 +208,7 @@ struct FD3D12UniqueSamplerTable
     uint16 UniqueIDs[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
 };
 
+// TODO: Add CRC32 here
 inline uint64 HashType(const FD3D12UniqueSamplerTable& Table)
 {
     return HashIntegers<uint16, D3D12_DEFAULT_SAMPLER_STATE_COUNT>(Table.UniqueIDs);
@@ -383,23 +384,17 @@ public:
     bool Initialize();
 
     void DirtyState();
-
     void DirtyStateSamplers();
-
     void DirtyStateResources();
 
     void SetRenderTargets(FD3D12RenderTargetCache& Cache);
 
     void SetVertexBuffers(FD3D12VertexBufferCache& VertexBuffers);
-    
     void SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer);
 
     void SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSRVs, uint32& DescriptorHandleOffset);
-    
     void SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumUAVs, uint32& DescriptorHandleOffset);
-
     void SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset);
-    
     void SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumSamplers, uint32& DescriptorHandleOffset);
 
     void SetDescriptorHeaps();

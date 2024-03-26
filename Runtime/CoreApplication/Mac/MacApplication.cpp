@@ -271,14 +271,14 @@ TSharedRef<FGenericWindow> FMacApplication::CreateWindow()
 void FMacApplication::Tick(float)
 {
     SCOPED_AUTORELEASE_POOL();
-    
+
     FPlatformApplicationMisc::PumpMessages(true);
-    
+
     TArray<FDeferredMacEvent> ProcessableEvents;
     if (!DeferredEvents.IsEmpty())
     {
         TScopedLock Lock(DeferredEventsCS);
-        
+
         ::Swap(ProcessableEvents, DeferredEvents);
         DeferredEvents.Clear();
     }

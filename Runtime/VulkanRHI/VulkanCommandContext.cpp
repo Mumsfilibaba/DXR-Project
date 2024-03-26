@@ -18,9 +18,6 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
 
 FVulkanCommandContext::~FVulkanCommandContext()
 {
-    // Release the DescriptorCache resources
-    ContextState.GetDescriptorSetCache().Release();
-    
     // Flush
     RHIFlush();
 }
@@ -33,54 +30,6 @@ bool FVulkanCommandContext::Initialize()
         return false;
     }
 
-    // TODO: Another solution for this but for now Transition default images here
-    ObtainCommandBuffer();
-
-    VkBuffer DefaultBuffer = ContextState.GetDescriptorSetCache().GetDefaultResources().NullBuffer;
-    GetCommandBuffer()->FillBuffer(DefaultBuffer, 0, VULKAN_DEFAULT_BUFFER_NUM_BYTES, 0);
-
-    VkImage DefaultImage = ContextState.GetDescriptorSetCache().GetDefaultResources().NullImage;
-
-    FVulkanImageTransitionBarrier TransitionBarrier;
-    TransitionBarrier.Image                           = DefaultImage;
-    TransitionBarrier.DependencyFlags                 = 0;
-    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
-    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
-    TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
-    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
-    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
-    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
-    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-
-    GetCommandBuffer()->ImageLayoutTransitionBarrier(TransitionBarrier);
-
-    VkBufferImageCopy BufferImageCopy;
-    BufferImageCopy.bufferOffset                    = 0;
-    BufferImageCopy.bufferRowLength                 = 0;
-    BufferImageCopy.bufferImageHeight               = 0;
-    BufferImageCopy.imageSubresource.aspectMask     = TransitionBarrier.SubresourceRange.aspectMask;
-    BufferImageCopy.imageSubresource.mipLevel       = 0;
-    BufferImageCopy.imageSubresource.baseArrayLayer = 0;
-    BufferImageCopy.imageSubresource.layerCount     = 1;
-    BufferImageCopy.imageOffset                     = { 0, 0, 0 };
-    BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
-
-    GetCommandBuffer()->CopyBufferToImage(DefaultBuffer, DefaultImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
-
-    TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    TransitionBarrier.NewLayout      = VK_IMAGE_LAYOUT_GENERAL;
-    TransitionBarrier.SrcAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
-    TransitionBarrier.DstAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
-    TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-
-    GetCommandBuffer()->ImageLayoutTransitionBarrier(TransitionBarrier);
-
-    FinishCommandBuffer(true);
     return true;
 }
 
@@ -161,7 +110,7 @@ void FVulkanCommandContext::RHIStartContext()
 
     // Reset the state
     ContextState.ResetState();
-
+    
     // Process submitted commands
     FVulkanRHI::GetRHI()->ProcessPendingCommands();
     
@@ -561,22 +510,22 @@ void FVulkanCommandContext::RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer*
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex < VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT);
+    CHECK(ParameterIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
 
     FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(ConstantBuffer);
-    ContextState.SetCBV(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex);
+    ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex);
 }
 
 void FVulkanCommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
 {
     FVulkanShader* VulkanShader = GetVulkanShader(Shader);
     CHECK(VulkanShader != nullptr);
-    CHECK(ParameterIndex + InConstantBuffers.Size() <= VULKAN_DEFAULT_CONSTANT_BUFFER_COUNT);
+    CHECK(ParameterIndex + InConstantBuffers.Size() <= VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
 
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         FVulkanBuffer* VulkanConstantBuffer = static_cast<FVulkanBuffer*>(InConstantBuffers[Index]);
-        ContextState.SetCBV(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
+        ContextState.SetUniformBuffer(VulkanConstantBuffer, VulkanShader->GetShaderVisibility(), ParameterIndex + Index);
     }
 }
 

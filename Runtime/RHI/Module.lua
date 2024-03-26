@@ -9,6 +9,7 @@ RHIModule.AddSystemIncludes(
 {
     CreateExternalDependencyPath("DXC/include"),
     CreateExternalDependencyPath("SPIRV-Cross"),
+    CreateExternalDependencyPath("glslang"),
 })
 
 RHIModule.AddModuleDependencies( 
@@ -22,7 +23,6 @@ RHIModule.AddLinkLibraries(
     "SPIRV",
     "MachineIndependent",
     "SPVRemapper",
-    "OGLCompiler",
     "glslang-default-resource-limits",
     "glslang",
     "SPIRV-Cross",

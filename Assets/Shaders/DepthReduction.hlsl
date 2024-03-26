@@ -77,7 +77,7 @@ void ReductionMainInital(FComputeShaderInput Input)
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void ReductionMain(FComputeShaderInput Input)
 {
-        // Retrieve thread indicies
+    // Retrieve thread indicies
     uint2 TextureSize;
     InputMinMax.GetDimensions(TextureSize.x, TextureSize.y);
     

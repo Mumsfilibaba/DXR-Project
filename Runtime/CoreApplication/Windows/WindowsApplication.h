@@ -69,12 +69,9 @@ public:
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
-
-    virtual TSharedRef<FGenericWindow> GetCapture() const override final;
-    
-    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
-
-    virtual TSharedRef<FGenericWindow> GetForegroundWindow() const override final;
+    virtual TSharedRef<FGenericWindow> GetCapture()           const override final;
+    virtual TSharedRef<FGenericWindow> GetActiveWindow()      const override final;
+    virtual TSharedRef<FGenericWindow> GetForegroundWindow()  const override final;
 
     virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
 

@@ -47,7 +47,7 @@ struct FVulkanQueueFamilyIndices
     uint32 ComputeQueueIndex  = uint32(~0);
 };
 
-class FVulkanPhysicalDevice : public FVulkanRefCounted
+class FVulkanPhysicalDevice
 {
 public:
     static TOptional<FVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);

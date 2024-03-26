@@ -49,6 +49,13 @@ private:
 class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceChild
 {
 public:
+    enum class EType
+    {
+        None = 0,
+        Texture,
+        Buffer,
+    };
+
     FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanShaderResourceView() = default;
 
@@ -62,38 +69,41 @@ public:
         return ImageView != nullptr;
     }
 
-    VkImage GetVkImage() const
+    EType GetType() const
     {
-        return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE;
-    }
-    
-    VkImageView GetVkImageView() const
-    {
-        return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
-    }
-    
-    const VkImageSubresourceRange& GetImageSubresourceRange() const
-    {
-        return ImageSubresourceRange;
-    }
-    
-    const VkDescriptorBufferInfo& GetDescriptorBufferInfo() const
-    {
-        return BufferInfo;
+        return Type;
     }
 
+    VkImage     GetVkImage()     const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
+    VkImageView GetVkImageView() const { return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE; }
+
+    VkBuffer GetVkBuffer() const { return HasImageView() ? VK_NULL_HANDLE : BufferInfo.buffer; }
+    
+    const VkImageSubresourceRange& GetImageSubresourceRange() const { return ImageSubresourceRange; }
+    const VkDescriptorBufferInfo&  GetDescriptorBufferInfo()  const { return BufferInfo; }
+
 private:
+    // Easy way to keep track of the type of SRV
+    EType Type;
+
+    // Buffer ResourceView
+    VkDescriptorBufferInfo       BufferInfo;
+
     // Texture ResourceView
     TSharedRef<FVulkanImageView> ImageView;
     VkImageSubresourceRange      ImageSubresourceRange;
-    
-    // Buffer ResourceView
-    VkDescriptorBufferInfo BufferInfo;
 };
 
 class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceChild
 {
 public:
+    enum class EType
+    {
+        None = 0,
+        Texture,
+        Buffer,
+    };
+
     FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanUnorderedAccessView() = default;
 
@@ -107,32 +117,27 @@ public:
         return ImageView != nullptr;
     }
 
-    VkImage GetVkImage() const
+    EType GetType() const
     {
-        return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE;
-    }
-    
-    VkImageView GetVkImageView() const
-    {
-        return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE;
+        return Type;
     }
 
-    const VkImageSubresourceRange& GetImageSubresourceRange() const
-    {
-        return ImageSubresourceRange;
-    }
+    VkBuffer GetVkBuffer() const { return HasImageView() ? VK_NULL_HANDLE : BufferInfo.buffer; }
+
+    VkImage     GetVkImage()     const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
+    VkImageView GetVkImageView() const { return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE; }
     
-    const VkDescriptorBufferInfo& GetDescriptorBufferInfo() const
-    {
-        return BufferInfo;
-    }
+    const VkImageSubresourceRange& GetImageSubresourceRange() const { return ImageSubresourceRange; }
+    const VkDescriptorBufferInfo&  GetDescriptorBufferInfo()  const { return BufferInfo; }
 
 private:
-    
+    // Easy way to keep track of the type of SRV
+    EType Type;
+
+    // Buffer ResourceView
+    VkDescriptorBufferInfo       BufferInfo;
+
     // Texture ResourceView
     TSharedRef<FVulkanImageView> ImageView;
     VkImageSubresourceRange      ImageSubresourceRange;
-    
-    // Buffer ResourceView
-    VkDescriptorBufferInfo BufferInfo;
 };

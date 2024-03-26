@@ -52,9 +52,10 @@ FVulkanRHI::~FVulkanRHI()
     }
     
     SAFE_DELETE(GraphicsQueue);
-
-    Device.Reset();
-    PhysicalDevice.Reset();
+    SAFE_DELETE(Device);
+    SAFE_DELETE(PhysicalDevice);
+    
+    // Finally release the VkInstance
     Instance.Release();
 
     if (GVulkanRHI == this)
@@ -129,7 +130,7 @@ bool FVulkanRHI::Initialize()
     }
     
     // Load functions that requires a device here (Order is important)
-    if (!LoadDeviceFunctions(Device.Get()))
+    if (!LoadDeviceFunctions(Device))
     {
         return false;
     }
@@ -142,7 +143,7 @@ bool FVulkanRHI::Initialize()
     }
 
     // Initialize Queues
-    GraphicsQueue = new FVulkanQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
+    GraphicsQueue = new FVulkanQueue(Device, EVulkanCommandQueueType::Graphics);
     if (!GraphicsQueue->Initialize())
     {
         VULKAN_ERROR("Failed to initialize VulkanQueue [Graphics]");
@@ -154,10 +155,16 @@ bool FVulkanRHI::Initialize()
     }
 
     // Initialize Default CommandContext
-    GraphicsCommandContext = new FVulkanCommandContext(Device.Get(), *GraphicsQueue);
+    GraphicsCommandContext = new FVulkanCommandContext(Device, *GraphicsQueue);
     if (!GraphicsCommandContext->Initialize())
     {
         VULKAN_ERROR("Failed to initialize VulkanCommandContext");
+        return false;
+    }
+
+    // Initialize DefaultResources
+    if (!Device->InitializeDefaultResources(*GraphicsCommandContext))
+    {
         return false;
     }
 
@@ -216,7 +223,7 @@ FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& 
 
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
-    FVulkanViewportRef NewViewport = new FVulkanViewport(Device.Get(), GraphicsCommandContext, InDesc);
+    FVulkanViewportRef NewViewport = new FVulkanViewport(Device, GraphicsCommandContext, InDesc);
     if (!NewViewport->Initialize())
     {
         return nullptr;
@@ -229,7 +236,7 @@ FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 
 FRHITimestampQuery* FVulkanRHI::RHICreateTimestampQuery()
 {
-    FVulkanTimestampQueryRef NewTimestampQuery = new FVulkanTimestampQuery(Device.Get());
+    FVulkanTimestampQueryRef NewTimestampQuery = new FVulkanTimestampQuery(Device);
     if (!NewTimestampQuery->Initialize())
     {
         return nullptr;

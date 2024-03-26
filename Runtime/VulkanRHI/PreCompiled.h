@@ -6,7 +6,7 @@
 #include "VulkanRHI/VulkanCommandContext.h"
 #include "VulkanRHI/VulkanConstants.h"
 #include "VulkanRHI/VulkanCore.h"
-#include "VulkanRHI/VulkanDescriptorCache.h"
+#include "VulkanRHI/VulkanDescriptorSetCache.h"
 #include "VulkanRHI/VulkanDevice.h"
 #include "VulkanRHI/VulkanDeviceChild.h"
 #include "VulkanRHI/VulkanFence.h"

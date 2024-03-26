@@ -128,12 +128,12 @@ public:
 
     FVulkanPhysicalDevice* GetAdapter() const
     {
-        return PhysicalDevice.Get();
+        return PhysicalDevice;
     }
 
     FVulkanDevice* GetDevice() const
     {
-        return Device.Get();
+        return Device;
     }
 
     FVulkanCommandContext* ObtainCommandContext()
@@ -142,12 +142,12 @@ public:
     }
 
 private:
-    FVulkanInstance                   Instance;
-    TSharedRef<FVulkanPhysicalDevice> PhysicalDevice;
-    TSharedRef<FVulkanDevice>         Device;
-    FVulkanQueue*                     GraphicsQueue;
-    FVulkanCommandContext*            GraphicsCommandContext;
-    FVulkanDeletionQueue              DeletionQueue;
+    FVulkanInstance        Instance;
+    FVulkanPhysicalDevice* PhysicalDevice;
+    FVulkanDevice*         Device;
+    FVulkanQueue*          GraphicsQueue;
+    FVulkanCommandContext* GraphicsCommandContext;
+    FVulkanDeletionQueue   DeletionQueue;
 
     TQueue<FVulkanCommandPacket*, EQueueType::MPSC> PendingSubmissions;
 

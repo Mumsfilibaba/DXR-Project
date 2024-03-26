@@ -10,6 +10,7 @@
 #include "VulkanPipelineLayout.h"
 #include "VulkanDescriptorSet.h"
 #include "VulkanPipelineState.h"
+#include "VulkanDescriptorSetCache.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -56,14 +57,55 @@ struct FVulkanDeviceCreateInfo
     VkPhysicalDeviceVulkan12Features RequiredFeatures12;
 };
 
-class FVulkanDevice : public FVulkanRefCounted
+struct FVulkanDefaultResources
+{
+    FVulkanDefaultResources()
+        : NullBuffer(VK_NULL_HANDLE)
+        , NullImage(VK_NULL_HANDLE)
+        , NullImageView(VK_NULL_HANDLE)
+        , NullSampler(VK_NULL_HANDLE)
+    {
+    }
+    
+    ~FVulkanDefaultResources()
+    {
+        CHECK(NullBuffer    == VK_NULL_HANDLE);
+        CHECK(NullImage     == VK_NULL_HANDLE);
+        CHECK(NullImageView == VK_NULL_HANDLE);
+        CHECK(NullSampler   == VK_NULL_HANDLE);
+    }
+    
+    bool Initialize(FVulkanDevice& Device);
+    bool InitializeBuffersAndImages(FVulkanDevice& Device);
+    void Release(FVulkanDevice& Device);
+    
+    // Null-Buffer
+    VkBuffer                NullBuffer;
+    FVulkanMemoryAllocation NullBufferMemory;
+    
+    // Null-Image
+    VkImage                 NullImage;
+    VkImageView             NullImageView;
+    FVulkanMemoryAllocation NullImageMemory;
+    
+    // NullSampler
+    VkSampler               NullSampler;
+};
+
+class FVulkanDevice
 {
 public:
     FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter);
     ~FVulkanDevice();
 
+    // Initialize the device, query device properties and load functions that require a device
     bool Initialize(const FVulkanDeviceCreateInfo& DeviceDesc);
+
+    // Initialize systems that needs an initialized device, but is a part of the device object
     bool PostLoaderInitalize();
+
+    // Initialize default resources that are just for null bindings
+    bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);
 
     FVulkanRenderPassCache&       GetRenderPassCache()       { return RenderPassCache; }
     FVulkanFramebufferCache&      GetFramebufferCache()      { return FramebufferCache; }
@@ -73,7 +115,9 @@ public:
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return PipelineLayoutManager; }
     FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return DescriptorPoolManager; }
     FVulkanPipelineCache&         GetPipelineCache()         { return PipelineCache; }
-    
+    FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return DescriptorSetCache; }
+    FVulkanDefaultResources&      GetDefaultResources()      { return DefaultResources; }
+
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
     bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
@@ -123,6 +167,8 @@ private:
     FVulkanPipelineLayoutManager PipelineLayoutManager;
     FVulkanDescriptorPoolManager DescriptorPoolManager;
     FVulkanPipelineCache         PipelineCache;
+    FVulkanDescriptorSetCache    DescriptorSetCache;
+    FVulkanDefaultResources      DefaultResources;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
 

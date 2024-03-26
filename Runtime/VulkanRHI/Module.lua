@@ -72,7 +72,6 @@ VulkanRHI.AddSystemIncludes(
 {
     VulkanInclude,
     CreateExternalDependencyPath("SPIRV-Cross"),
-    CreateExternalDependencyPath("glslang")
 })
 
 VulkanRHI.AddLibraryPaths(
@@ -82,11 +81,5 @@ VulkanRHI.AddLibraryPaths(
 
 VulkanRHI.AddLinkLibraries(
 {
-    "SPIRV",
-    "MachineIndependent",
-    "SPVRemapper",
-    "OGLCompiler",
-    "glslang-default-resource-limits",
-    "glslang",
     "SPIRV-Cross",
 })

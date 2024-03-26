@@ -1,5 +1,5 @@
 #include "MacPlatformFile.h"
-#include "Core/platform/PlatformString.h"
+#include "Core/Platform/PlatformString.h"
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>

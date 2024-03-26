@@ -552,12 +552,6 @@ function FWorkspaceRules(WorkspaceName)
                     targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/OSDependent/" .. self.GetOutputPath()))
                     objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/OSDependent/" .. self.GetOutputPath()))
 
-                    -- Include Directories
-                    includedirs
-                    {
-                        self.CreateExternalDependencyPath("glslang/OGLCompilersDLL"),
-                    }
-
                     -- Files
                     files 
                     {
@@ -567,7 +561,6 @@ function FWorkspaceRules(WorkspaceName)
                     filter "system:windows"
                         files 
                         {
-                            self.CreateExternalDependencyPath("glslang/glslang/OSDependent/Windows/main.cpp"),
                             self.CreateExternalDependencyPath("glslang/glslang/OSDependent/Windows/ossource.cpp"),
                         }
                     filter "system:macosx"
@@ -635,51 +628,56 @@ function FWorkspaceRules(WorkspaceName)
                         -- Cpp files
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/glslang.y"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
+
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/attribute.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Constant.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/iomapper.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/InfoSink.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Initialize.cpp"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/intermOut.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/iomapper.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Intermediate.cpp"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/limits.cpp"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/linkValidate.cpp"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/parseConst.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ParseHelper.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/reflection.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/RemoveTree.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Scan.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ShaderLang.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/SymbolTable.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Versions.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/intermOut.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/limits.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/linkValidate.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/parseConst.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/reflection.cpp"),
+
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
 
                         -- Header Files
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/attribute.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/gl_types.h"),
+
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/attribute.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Initialize.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/iomapper.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/LiveTraverser.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/localintermediate.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ParseHelper.h"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/parseVersions.h"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/reflection.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/RemoveTree.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Scan.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ScanContext.h"),
+                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/span.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/SymbolTable.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Versions.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/parseVersions.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
+
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
                     }
@@ -691,7 +689,6 @@ function FWorkspaceRules(WorkspaceName)
                     -- Links
                     links
                     {
-                        "OGLCompiler",
                         "OSDependent",
                         "GenericCodeGen",
                     }
@@ -773,7 +770,6 @@ function FWorkspaceRules(WorkspaceName)
                     -- Links
                     links
                     {
-                        "OGLCompiler",
                         "OSDependent",
                         "MachineIndependent",
                     }
@@ -840,59 +836,6 @@ function FWorkspaceRules(WorkspaceName)
                         -- Header
                         self.CreateExternalDependencyPath("glslang/glslang/Public/ResourceLimits.h"),
                         self.CreateExternalDependencyPath("glslang/glslang/Public/resource_limits_c.h"),
-                    }
-
-                    Glslang_SetPlatformProperties()
-
-                    -- Configurations
-                    filter "configurations:Debug or Release"
-                        symbols("on")
-                        runtime("Release")
-                        optimize("Full")
-                    filter {}
-                    
-                    filter "configurations:Production"
-                        symbols("off")
-                        runtime("Release")
-                        optimize("Full")
-                    filter {}
-
-                ------------------
-                -- OGLCompiler --
-                ------------------
-                project "OGLCompiler"
-                    LogInfo("        Generating dependecy OGLCompiler")
-
-                    kind("StaticLib")
-                    warnings("Off")
-                    intrinsics("On")
-                    editandcontinue("Off")
-                    language("C++")
-                    cppdialect("C++20")
-                    systemversion("latest")
-                    architecture("x86_64")
-                    exceptionhandling("On")
-                    rtti("Off")
-                    floatingpoint("Fast")
-                    vectorextensions("SSE2")
-                    characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
-                    
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/OGLCompiler/"))
-                
-                    -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/OGLCompiler/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/OGLCompiler/" .. self.GetOutputPath()))
-
-                    -- Files
-                    files 
-                    {
-                        self.CreateExternalDependencyPath("glslang/OGLCompilersDLL/InitializeDll.h"),
-                        self.CreateExternalDependencyPath("glslang/OGLCompilersDLL/InitializeDll.cpp"),
                     }
 
                     Glslang_SetPlatformProperties()

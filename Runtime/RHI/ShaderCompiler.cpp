@@ -6,6 +6,7 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
+#include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
 
 static TAutoConsoleVariable<bool> CVarShaderDebug(
@@ -76,6 +77,23 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
         case EShaderModel::SM_6_6: return L"6_6";
         case EShaderModel::SM_6_7: return L"6_7";
         default:                   return L"0_0";
+    }
+}
+
+static glslang_stage_t GetGlslangStage(EShaderStage ShaderStage)
+{
+    switch (ShaderStage)
+    {
+        // Graphics
+        case EShaderStage::Vertex:   return GLSLANG_STAGE_VERTEX;
+        case EShaderStage::Hull:     return GLSLANG_STAGE_TESSCONTROL;
+        case EShaderStage::Domain:   return GLSLANG_STAGE_TESSEVALUATION;
+        case EShaderStage::Geometry: return GLSLANG_STAGE_GEOMETRY;
+        case EShaderStage::Pixel:    return GLSLANG_STAGE_FRAGMENT;
+        // Compute
+        case EShaderStage::Compute:  return GLSLANG_STAGE_COMPUTE;
+        // Other
+        default: return glslang_stage_t(-1);
     }
 }
 
@@ -162,6 +180,7 @@ FShaderCompiler::FShaderCompiler(FStringView InAssetPath)
 
 FShaderCompiler::~FShaderCompiler()
 {
+    // Destroy DXC
     if (DXCLib)
     {
         FPlatformLibrary::FreeDynamicLib(DXCLib);
@@ -169,6 +188,9 @@ FShaderCompiler::~FShaderCompiler()
     }
 
     DxcCreateInstanceFunc = nullptr;
+    
+    // Destroy GLslang
+    glslang_finalize_process();
 }
 
 bool FShaderCompiler::Create(FStringView InAssetFolderPath)
@@ -216,6 +238,7 @@ EShaderOutputLanguage FShaderCompiler::GetOutputLanguageBasedOnRHI()
 
 bool FShaderCompiler::Initialize()
 {
+    // Init DXC
     DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
     if (!DXCLib)
     {
@@ -230,6 +253,8 @@ bool FShaderCompiler::Initialize()
         return false;
     }
 
+    // Init GLslang
+    glslang_initialize_process();
     return true;
 }
 
@@ -495,25 +520,30 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
         LOG_INFO("[FShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
+
+        // TODO: Investigate why we need to recompile our SPIR-V when compiled from HLSL directly
+        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
+        {
+            if (!RecompileSpirv(FilePath, CompileInfo, OutByteCode))
+            {
+                DEBUG_BREAK();
+                return false;
+            }
+        }
+        else if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
+        {
+            if (!ConvertSpirvToMetalShader(FilePath, CompileInfo, OutByteCode))
+            {
+                DEBUG_BREAK();
+                return false;
+            }
+        }
+
+        LOG_INFO("[FShaderCompiler]: Compiled Size (Final size): %u Bytes", OutByteCode.Size());
     }
     else
     {
         LOG_INFO("[FShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
-    }
-
-    // Convert SPIRV into MSL
-    if (CompileInfo.OutputLanguage == EShaderOutputLanguage::MSL)
-    {
-        if (!ConvertSpirvToMetalShader(FilePath, CompileInfo, OutByteCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-    
-    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
-    {
-        LOG_INFO("[FShaderCompiler]: Compiled Size (Final size): %u Bytes", OutByteCode.Size());
     }
     
     if (OutByteCode.IsEmpty())
@@ -564,6 +594,197 @@ bool FShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutS
         Position++;
     }
     
+    return true;
+}
+
+bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)
+{
+    if (OutByteCode.IsEmpty())
+    {
+        LOG_ERROR("No SPIR-V code supplied");
+        return false;
+    }
+    
+    if (OutByteCode.Size() % sizeof(uint32) != 0)
+    {
+        LOG_ERROR("SPIR-V code needs to be aligned to 4 bytes, ensure that valid SPIR-V code is supplied");
+        return false;
+    }
+    
+    spvc_context Context = nullptr;
+    spvc_result Result = spvc_context_create(&Context);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to create SpvcContext");
+        return false;
+    }
+
+    spvc_context_set_error_callback(Context, [](void*, const CHAR* Error)
+    {
+        LOG_ERROR("[SPIRV-Cross Error] %s", Error);
+    }, nullptr);
+
+    // The code size needs to be aligned to the elementsize
+    spvc_parsed_ir ParsedCode = nullptr;
+    const int32 SpirvCodeSize = OutByteCode.Size() / sizeof(uint32);
+    Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), SpirvCodeSize, &ParsedCode);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to parse Spirv");
+        return false;
+    }
+
+    spvc_compiler Compiler = nullptr;
+    Result = spvc_context_create_compiler(Context, SPVC_BACKEND_GLSL, ParsedCode, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &Compiler);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to create SPIR-V compiler");
+        return false;
+    }
+
+    // Compile the code to GLSL -> SPIR-V if we had to make any modifications
+    // Modify options.
+    spvc_compiler_options Options = nullptr;
+    spvc_compiler_create_compiler_options(Compiler, &Options);
+    spvc_compiler_options_set_uint(Options, SPVC_COMPILER_OPTION_GLSL_VERSION, 450);
+    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_FALSE);
+    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_TRUE);
+    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_VULKAN_SEMANTICS, SPVC_TRUE);
+    spvc_compiler_install_compiler_options(Compiler, Options);
+
+    // Compile the GLSL code
+    const CHAR* NewSource = nullptr;
+    Result = spvc_compiler_compile(Compiler, &NewSource);
+    if (Result != SPVC_SUCCESS)
+    {
+        LOG_ERROR("Failed to compile changes into GLSL");
+        return false;
+    }
+
+    // Create a new array (1 extra byte of slack for a null-terminator)
+    const uint32 SourceLength = FCString::Strlen(NewSource);
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(NewSource), SourceLength * sizeof(CHAR), 1);
+    NewShader[SourceLength] = 0;
+
+    // Dump the metal file to disk
+    if (!FilePath.IsEmpty())
+    {
+        if (!DumpContentToFile(NewShader, FilePath + "_" + ToString(CompileInfo.ShaderStage) + ".glsl"))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+    }
+    
+    // Now we can destroy the context
+    spvc_context_destroy(Context);
+
+    // Convert the shader stage to glslang-enum
+    const glslang_stage_t GlslangStage = GetGlslangStage(CompileInfo.ShaderStage);
+
+    // Compile the GLSL to SPIRV
+    glslang_input_t Input;
+    Input.language                          = GLSLANG_SOURCE_GLSL;
+    Input.stage                             = GlslangStage;
+    Input.client                            = GLSLANG_CLIENT_VULKAN;
+    Input.client_version                    = GLSLANG_TARGET_VULKAN_1_2;
+    Input.target_language                   = GLSLANG_TARGET_SPV;
+    Input.target_language_version           = GLSLANG_TARGET_SPV_1_5;
+    Input.code                              = reinterpret_cast<CHAR*>(NewShader.Data());
+    Input.default_version                   = 110;
+    Input.default_profile                   = GLSLANG_NO_PROFILE;
+    Input.force_default_version_and_profile = false;
+    Input.forward_compatible                = false;
+    Input.messages                          = GLSLANG_MSG_DEFAULT_BIT;
+    Input.resource                          = glslang_default_resource();
+
+    glslang_shader_t* Shader = glslang_shader_create(&Input);
+    if (!glslang_shader_preprocess(Shader, &Input))
+    {
+        const CHAR* InfoLog      = glslang_shader_get_info_log(Shader);
+        const CHAR* InfoDebugLog = glslang_shader_get_info_debug_log(Shader);
+        
+        LOG_ERROR("GLSL preprocessing failed");
+        LOG_ERROR("    %s", InfoLog);
+        LOG_ERROR("    %s", InfoDebugLog);
+        
+        glslang_shader_delete(Shader);
+        
+        DEBUG_BREAK();
+        return false;
+    }
+
+    if (!glslang_shader_parse(Shader, &Input))
+    {
+        const CHAR* InfoLog      = glslang_shader_get_info_log(Shader);
+        const CHAR* InfoDebugLog = glslang_shader_get_info_debug_log(Shader);
+        
+        LOG_ERROR("GLSL parsing failed");
+        LOG_ERROR("    %s", InfoLog);
+        LOG_ERROR("    %s", InfoDebugLog);
+        LOG_ERROR("    %s", glslang_shader_get_preprocessed_code(Shader));
+
+        glslang_shader_delete(Shader);
+        
+        DEBUG_BREAK();
+        return false;
+    }
+
+    glslang_program_t* Program = glslang_program_create();
+    glslang_program_add_shader(Program, Shader);
+
+    if (!glslang_program_link(Program, GLSLANG_MSG_SPV_RULES_BIT | GLSLANG_MSG_VULKAN_RULES_BIT))
+    {
+        const CHAR* InfoLog      = glslang_program_get_info_log(Program);
+        const CHAR* InfoDebugLog = glslang_program_get_info_debug_log(Program);
+        
+        LOG_ERROR("GLSL linking failed");
+        LOG_ERROR("    %s", InfoLog);
+        LOG_ERROR("    %s", InfoDebugLog);
+        
+        glslang_program_delete(Program);
+        glslang_shader_delete(Shader);
+        
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Retrieve the SPIRV shader code
+    glslang_spv_options_t SpvOptions;
+    FMemory::Memzero(&SpvOptions);
+
+    SpvOptions.validate            = true;
+    SpvOptions.generate_debug_info = true;
+
+    if (CompileInfo.bOptimize)
+    {
+        SpvOptions.optimize_size = true;
+    }
+    else
+    {
+        SpvOptions.disable_optimizer = true;
+    }
+    
+    glslang_program_SPIRV_generate_with_options(Program, GlslangStage, &SpvOptions);
+
+    // Get the size and allocate enough room in the vector
+    const uint64 ProgramSize = glslang_program_SPIRV_get_size(Program);
+    
+    // Transfer the SPIRV code into our format
+    TArray<uint8> NewCode;
+    NewCode.Resize(static_cast<int32>(ProgramSize) * sizeof(uint32));
+    glslang_program_SPIRV_get(Program, reinterpret_cast<uint32*>(NewCode.Data()));
+    OutByteCode = Move(NewCode);
+    
+    // Print any messages from linking
+    if (const CHAR* SpirvMessages = glslang_program_SPIRV_get_messages(Program))
+    {
+        LOG_INFO("%s", SpirvMessages);
+    }
+
+    // Cleanup
+    glslang_program_delete(Program);
+    glslang_shader_delete(Shader);
     return true;
 }
 

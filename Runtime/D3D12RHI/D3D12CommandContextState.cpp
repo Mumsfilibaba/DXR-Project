@@ -196,6 +196,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
 
     // NOTE: In case any of the descriptor heaps "roll-over" and we allocate a new heap, we clear the dirty states and need to recalculate the necessary descriptors
     constexpr int32 MaxTries = 4;
+    
     uint32 NumResourceDescriptors;
     for (int32 NumTries = 0; NumTries < MaxTries; NumTries++)
     {

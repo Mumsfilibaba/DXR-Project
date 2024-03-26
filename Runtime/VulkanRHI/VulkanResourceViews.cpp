@@ -76,12 +76,13 @@ void FVulkanImageView::DestroyView()
     }
 }
 
-
 FVulkanShaderResourceView::FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
     , FVulkanDeviceChild(InDevice)
-    , ImageView(nullptr)
+    , Type(EType::None)
     , BufferInfo{VK_NULL_HANDLE, 0, 0}
+    , ImageView(nullptr)
+    , ImageSubresourceRange()
 {
 }
 
@@ -146,6 +147,8 @@ bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDe
     {
         const FString ViewName = VulkanTexture->GetName() + " ImageView SRV";
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ViewName.GetCString(), ImageView->GetVkImageView(), VK_OBJECT_TYPE_IMAGE_VIEW);
+        
+        Type = EType::Texture;
         ImageSubresourceRange = SubresourceRange;
         return true;
     }
@@ -176,6 +179,7 @@ bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc
         Stride = sizeof(uint32);
     }
 
+    Type = EType::Buffer;
     BufferInfo.buffer = VulkanBuffer->GetVkBuffer();
     BufferInfo.offset = Stride * InDesc.FirstElement;
     BufferInfo.range  = Stride * InDesc.NumElements;
@@ -186,8 +190,10 @@ bool FVulkanShaderResourceView::CreateBufferView(const FRHIBufferSRVDesc& InDesc
 FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
     , FVulkanDeviceChild(InDevice)
-    , ImageView(nullptr)
+    , Type(EType::None)
     , BufferInfo{VK_NULL_HANDLE, 0, 0}
+    , ImageView(nullptr)
+    , ImageSubresourceRange()
 {
 }
 
@@ -248,6 +254,8 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
     {
         const FString ViewName = VulkanTexture->GetName() + " ImageView UAV";
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ViewName.GetCString(), ImageView->GetVkImageView(), VK_OBJECT_TYPE_IMAGE_VIEW);
+
+        Type = EType::Texture;
         ImageSubresourceRange = SubresourceRange;
         return true;
     }
@@ -278,6 +286,7 @@ bool FVulkanUnorderedAccessView::CreateBufferView(const FRHIBufferUAVDesc& InDes
         Stride = sizeof(uint32);
     }
 
+    Type = EType::Buffer;
     BufferInfo.buffer = VulkanBuffer->GetVkBuffer();
     BufferInfo.offset = Stride * InDesc.FirstElement;
     BufferInfo.range  = Stride * InDesc.NumElements;

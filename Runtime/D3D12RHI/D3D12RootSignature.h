@@ -69,6 +69,12 @@ private:
 
 class FD3D12RootSignature : public FD3D12DeviceChild, public FD3D12RefCounted
 {
+    struct FShaderStage
+    {
+        int8 RootParameterIndicies[ResourceType_Count];
+        int8 ResourceCount[ResourceType_Count];
+    };
+
 public:
     FD3D12RootSignature(FD3D12Device* InDevice);
     ~FD3D12RootSignature() = default;
@@ -115,13 +121,6 @@ private:
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;
-
-    struct FShaderStage
-    {
-        int8 RootParameterIndicies[ResourceType_Count];
-        int8 ResourceCount[ResourceType_Count];
-    };
-
     FShaderStage RootParameterMap[ShaderVisibility_Count];
     int32        ConstantRootParameterIndex;
 

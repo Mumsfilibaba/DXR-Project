@@ -164,50 +164,50 @@ void FSandboxPlayerController::SetupInputComponent()
 
 void FSandboxPlayerController::MoveForwardAxis(float Value)
 {
-    LOG_INFO("MoveForwardAxis %.4f", Value);
+    // LOG_INFO("MoveForwardAxis %.4f", Value);
 }
 
 void FSandboxPlayerController::MoveForward()
 {
-    LOG_INFO("MoveForward");
+    // LOG_INFO("MoveForward");
 }
 
 void FSandboxPlayerController::MoveBackwards()
 {
-    LOG_INFO("MoveBackward");
+    // LOG_INFO("MoveBackward");
 }
 
 void FSandboxPlayerController::MoveRight()
 {
-    LOG_INFO("MoveRight");
+    // LOG_INFO("MoveRight");
 }
 
 void FSandboxPlayerController::MoveLeft()
 {
-    LOG_INFO("MoveLeft");
+    // LOG_INFO("MoveLeft");
 }
 
 void FSandboxPlayerController::RotateUp()
 {
-    LOG_INFO("RotateUp");
+    // LOG_INFO("RotateUp");
 }
 
 void FSandboxPlayerController::RotateDown()
 {
-    LOG_INFO("RotateDown");
+    // LOG_INFO("RotateDown");
 }
 
 void FSandboxPlayerController::RotateRight()
 {
-    LOG_INFO("RotateRight");
+    // LOG_INFO("RotateRight");
 }
 
 void FSandboxPlayerController::RotateLeft()
 {
-    LOG_INFO("RotateLeft");
+    // LOG_INFO("RotateLeft");
 }
 
 void FSandboxPlayerController::Jump()
 {
-    LOG_INFO("Jump");
+    // LOG_INFO("Jump");
 }

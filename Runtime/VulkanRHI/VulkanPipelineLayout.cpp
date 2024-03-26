@@ -1,12 +1,56 @@
 #include "VulkanPipelineLayout.h"
+#include "VulkanShader.h"
+#include "Core/Memory/Memory.h"
+
+static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageFlags ShaderStage)
+{
+    switch(ShaderStage)
+    {
+    case VK_SHADER_STAGE_VERTEX_BIT:                  return ShaderVisibility_Vertex;
+    case VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT:    return ShaderVisibility_Domain;
+    case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT: return ShaderVisibility_Hull;
+    case VK_SHADER_STAGE_GEOMETRY_BIT:                return ShaderVisibility_Geometry;
+    case VK_SHADER_STAGE_FRAGMENT_BIT:                return ShaderVisibility_Pixel;
+    case VK_SHADER_STAGE_COMPUTE_BIT:
+    default: return ShaderVisibility_Compute;
+    }
+}
+
+void FVulkanPipelineLayoutInfo::AddSetForStage(VkShaderStageFlagBits ShaderStage, const FVulkanShaderInfo& ShaderInfo)
+{
+    // Setup all the bindings
+    FVulkanDescriptorSetLayoutInfo LayoutInfo;
+    LayoutInfo.Bindings.Reserve(ShaderInfo.ResourceBindings.Size());
+    
+    // Setup all the remapping info
+    FVulkanDescriptorRemappingInfo LayoutRemappings;
+    LayoutRemappings.RemappingInfo.Reserve(ShaderInfo.ResourceBindings.Size());
+
+    for (const FVulkanShaderInfo::FResourceBinding& Binding : ShaderInfo.ResourceBindings)
+    {
+        VkDescriptorSetLayoutBinding LayoutBinding;
+        LayoutBinding.descriptorCount    = 1;
+        LayoutBinding.binding            = Binding.BindingIndex;
+        LayoutBinding.pImmutableSamplers = nullptr;
+        LayoutBinding.stageFlags         = ShaderStage;
+        LayoutBinding.descriptorType     = GetDescriptorTypeFromBindingType(Binding.BindingType);
+        LayoutInfo.Bindings.Add(LayoutBinding);
+
+        FVulkanDescriptorRemappingInfo::FRemappingInfo RemappingInfo;
+        RemappingInfo.BindingType          = Binding.BindingType;
+        RemappingInfo.BindingIndex         = Binding.BindingIndex;
+        RemappingInfo.OriginalBindingIndex = Binding.OriginalBindingIndex;
+        LayoutRemappings.RemappingInfo.Add(RemappingInfo);
+    }
+
+    SetLayoutInfos.Add(Move(LayoutInfo));
+    SetLayoutRemappings.Add(Move(LayoutRemappings));
+}
 
 FVulkanPipelineLayout::FVulkanPipelineLayout(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , LayoutHandle(VK_NULL_HANDLE)
-    , DescriptorSetLayoutHandles()
-    , NumPushConstants(0)
 {
-    FMemory::Memzero(DescriptorSetLayoutHandles, sizeof(DescriptorSetLayoutHandles));
 }
 
 FVulkanPipelineLayout::~FVulkanPipelineLayout()
@@ -16,120 +60,47 @@ FVulkanPipelineLayout::~FVulkanPipelineLayout()
         vkDestroyPipelineLayout(GetDevice()->GetVkDevice(), LayoutHandle, nullptr);
         LayoutHandle = VK_NULL_HANDLE;
     }
-    
-    for (VkDescriptorSetLayout DescriptorSetLayout : DescriptorSetLayoutHandles)
-    {
-        if (VULKAN_CHECK_HANDLE(DescriptorSetLayout))
-        {
-            vkDestroyDescriptorSetLayout(GetDevice()->GetVkDevice(), DescriptorSetLayout, nullptr);
-            DescriptorSetLayout = VK_NULL_HANDLE;
-        }
-    }
 }
 
-bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutCreateInfo& CreateInfo)
+bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutInfo)
 {
-    // ShaderStages Lookup-table
-    const VkShaderStageFlagBits ShaderVisibility[] =
-    {
-        VK_SHADER_STAGE_VERTEX_BIT,                  // ShaderVisibility_Vertex
-        VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,    // ShaderVisibility_Hull
-        VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, // ShaderVisibility_Domain
-        VK_SHADER_STAGE_GEOMETRY_BIT,                // ShaderVisibility_Geometry
-        VK_SHADER_STAGE_FRAGMENT_BIT,                // ShaderVisibility_Pixel
-        VK_SHADER_STAGE_COMPUTE_BIT,                 // ShaderVisibility_Compute
-    };
-    static_assert(ARRAY_COUNT(ShaderVisibility) == ShaderVisibility_Count, "The ShaderVisibility array is out of date");
-    
-    // DescriptorType Lookup-table
-    const VkDescriptorType DescriptorTypes[] =
-    {
-        // ConstantBuffers
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        // SRV Images
-        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-        // UAV Textures
-        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        // SRV + UAV Buffers
-        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        // Samplers
-        VK_DESCRIPTOR_TYPE_SAMPLER,
-    };
-    static_assert(ARRAY_COUNT(DescriptorTypes) == BindingType_Count, "The DescriptorTypes array is out of date");
-    
     // Create Descriptor Bindings
-    TArray<VkDescriptorSetLayout>        Layouts;
-    TArray<VkDescriptorSetLayoutBinding> LayoutBindings;
-
-    for (int32 SetIndex = 0; SetIndex < CreateInfo.StageSetLayouts.Size(); SetIndex++)
+    TArray<VkDescriptorSetLayout> SetLayouts;
+    SetLayouts.Reserve(LayoutInfo.SetLayoutInfos.Size());
+    
+    FVulkanPipelineLayoutManager& PipelineLayoutManager = GetDevice()->GetPipelineLayoutManager();
+    for (int32 SetIndex = 0; SetIndex < LayoutInfo.SetLayoutInfos.Size(); SetIndex++)
     {
-        // Clear layout bindings for each DescriptorSet
-        LayoutBindings.Clear();
+        const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo = LayoutInfo.SetLayoutInfos[SetIndex];
         
-        const FDescriptorSetLayout& SetLayoutInfo = CreateInfo.StageSetLayouts[SetIndex];
-        CHECK(SetLayoutInfo.ShaderVisibility < ShaderVisibility_Count);
-
-        // Setup all the bindings
-        for (const FVulkanShaderBinding& Binding : SetLayoutInfo.Bindings)
+        // Retrieve a DescriptorSetLayout by creating or using a cached one
+        VkDescriptorSetLayout NewSetLayout = PipelineLayoutManager.FindOrCreateSetLayouts(SetLayoutInfo);
+        if (VULKAN_CHECK_HANDLE(NewSetLayout))
         {
-            VkDescriptorSetLayoutBinding LayoutBinding;
-            LayoutBinding.descriptorCount    = 1;
-            LayoutBinding.binding            = Binding.Binding;
-            LayoutBinding.pImmutableSamplers = nullptr;
-            LayoutBinding.stageFlags         = ShaderVisibility[SetLayoutInfo.ShaderVisibility];
-            LayoutBinding.descriptorType     = DescriptorTypes[Binding.BindingType];
-            CHECK(Binding.BindingType < BindingType_Count);
-            
-            LayoutBindings.Add(LayoutBinding);
-        }
-        
-        // Create the DescriptorSetLayout or assign an "default" empty DescriptorSetLayout
-        VkDescriptorSetLayout NewSetLayout = VK_NULL_HANDLE;
-        if (!LayoutBindings.IsEmpty())
-        {
-            VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo;
-            FMemory::Memzero(&DescriptorSetLayoutCreateInfo);
-
-            DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            DescriptorSetLayoutCreateInfo.bindingCount = LayoutBindings.Size();
-            DescriptorSetLayoutCreateInfo.pBindings    = LayoutBindings.Data();
-
-            VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &NewSetLayout);
-            if (VULKAN_FAILED(Result))
-            {
-                VULKAN_ERROR("Failed to create DescriptorSetLayout");
-                return false;
-            }
-            else
-            {
-                // Only set the actual handles when we create a new layout
-                DescriptorSetLayoutHandles[SetLayoutInfo.ShaderVisibility] = Layouts.Add(NewSetLayout);
-            }
+            SetLayouts.Add(NewSetLayout);
         }
         else
         {
-            // Default layout is only used to create the VkPipelineLayout and not when actually use the layout later when we bind/create DescriptorSets
-            NewSetLayout = GetDevice()->GetPipelineLayoutManager().GetDefaultSetLayout();
-            Layouts.Add(NewSetLayout);
+            return false;
         }
     }
-
-    // Create ConstantRange
-    VkPushConstantRange ConstantRange;
-    ConstantRange.size       = CreateInfo.NumGlobalConstants * sizeof(uint32);
-    ConstantRange.offset     = 0;
-    ConstantRange.stageFlags = VK_SHADER_STAGE_ALL;
 
     // Create PipelineLayout
     VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo;
     FMemory::Memzero(&PipelineLayoutCreateInfo);
 
     PipelineLayoutCreateInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    PipelineLayoutCreateInfo.setLayoutCount = Layouts.Size();
-    PipelineLayoutCreateInfo.pSetLayouts    = Layouts.Data();
-    
-    if (CreateInfo.NumGlobalConstants > 0)
+    PipelineLayoutCreateInfo.setLayoutCount = SetLayouts.Size();
+    PipelineLayoutCreateInfo.pSetLayouts    = SetLayouts.Data();
+
+    // Create ConstantRange
+    VkPushConstantRange ConstantRange;
+    if (LayoutInfo.ConstantsInfo.NumConstants > 0)
     {
+        ConstantRange.offset     = 0;
+        ConstantRange.size       = LayoutInfo.ConstantsInfo.NumConstants * sizeof(uint32);
+        ConstantRange.stageFlags = LayoutInfo.ConstantsInfo.StageFlags;
+
         PipelineLayoutCreateInfo.pushConstantRangeCount = 1;
         PipelineLayoutCreateInfo.pPushConstantRanges    = &ConstantRange;
     }
@@ -147,16 +118,124 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutCreateInfo& Cr
     }
     else
     {
-        // Store the number of push constants for use later when binding pushconstants
-        NumPushConstants = CreateInfo.NumGlobalConstants;
+        // Ensure that the information about constants are stored
+        ConstantsInfo = LayoutInfo.ConstantsInfo;
+        
+        // Ensure that we store the layout handles
+        SetLayoutHandles = Move(SetLayouts);
+        
+        // Ensure that the remapping info is copied for later use
+        SetLayoutRemappings = LayoutInfo.SetLayoutRemappings;
+    }
+
+    // Store the number of push constants for use later when binding pushconstants
+    SetupResourceMapping(LayoutInfo);
+    return true;
+}
+
+bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding)
+{
+    FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderStage];
+    if (StageMapping.DescriptorSetIndex == UINT8_MAX)
+    {
+        return false;
+    }
+
+    switch(ResourceType)
+    {
+    case ResourceType_SRV:
+        OutBinding = (ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT) ? StageMapping.SRVMappings[ResourceIndex] : UINT8_MAX;
+        break;
+    case ResourceType_UAV:
+        OutBinding = (ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT) ? StageMapping.UAVMappings[ResourceIndex] : UINT8_MAX;
+        break;
+    case ResourceType_UniformBuffer:
+        OutBinding = (ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT) ? StageMapping.UniformMappings[ResourceIndex] : UINT8_MAX;
+        break;
+    case ResourceType_Sampler:
+        OutBinding = (ResourceIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT) ? StageMapping.SamplerMappings[ResourceIndex] : UINT8_MAX;
+        break;
+    };
+
+    if (OutBinding == UINT8_MAX)
+    {
+        return false;
+    }
+
+    OutDescriptorSetIndex = StageMapping.DescriptorSetIndex;
+    return true;
+}
+
+bool FVulkanPipelineLayout::GetDescriptorSetIndex(EShaderVisibility ShaderStage, uint32& OutDescriptorSetIndex)
+{
+    FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderStage];
+    if (StageMapping.DescriptorSetIndex != UINT8_MAX)
+    {
+        OutDescriptorSetIndex = StageMapping.DescriptorSetIndex;
         return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo& LayoutInfo)
+{
+    CHECK(LayoutInfo.SetLayoutInfos.Size() == LayoutInfo.SetLayoutRemappings.Size());
+
+    // Initialize the mapping to zero
+    for (FStageDescriptorMap& StageMapping : DescriptorBindMap)
+    {
+        StageMapping.DescriptorSetIndex = UINT16_MAX;
+        FMemory::Memset(StageMapping.SRVMappings, UINT8_MAX, sizeof(StageMapping.SRVMappings));
+        FMemory::Memset(StageMapping.UAVMappings, UINT8_MAX, sizeof(StageMapping.UAVMappings));
+        FMemory::Memset(StageMapping.UniformMappings, UINT8_MAX, sizeof(StageMapping.UniformMappings));
+        FMemory::Memset(StageMapping.SamplerMappings, UINT8_MAX, sizeof(StageMapping.SamplerMappings));
+    }
+
+    // Initialize the actual DescriptorBinding mapping
+    for (int32 SetIndex = 0; SetIndex < LayoutInfo.SetLayoutInfos.Size(); SetIndex++)
+    {
+        const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo    = LayoutInfo.SetLayoutInfos[SetIndex];
+        const FVulkanDescriptorRemappingInfo& StageMappingInfo = LayoutInfo.SetLayoutRemappings[SetIndex];
+
+        CHECK(SetLayoutInfo.Bindings.Size() == StageMappingInfo.RemappingInfo.Size());
+        for (int32 BindingIndex = 0; BindingIndex < SetLayoutInfo.Bindings.Size(); BindingIndex++)
+        {
+            const EShaderVisibility ShaderVisibility = GetShaderVisibilityFromShaderFlag(SetLayoutInfo.Bindings[BindingIndex].stageFlags);
+
+            FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderVisibility];
+            StageMapping.DescriptorSetIndex = SetIndex;
+
+            const FVulkanDescriptorRemappingInfo::FRemappingInfo& RemappingInfo = StageMappingInfo.RemappingInfo[BindingIndex];
+            switch(RemappingInfo.BindingType)
+            {
+            case BindingType_UniformBuffer:
+                StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                break;
+            case BindingType_Sampler:
+                StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                break;
+            case BindingType_SampledImage:
+            case BindingType_StorageBufferRead:
+                StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                break;
+            case BindingType_StorageImage:
+            case BindingType_StorageBufferReadWrite:
+                StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                break;
+            default:
+                DEBUG_BREAK();
+                break;
+            }
+        }
     }
 }
 
 
 FVulkanPipelineLayoutManager::FVulkanPipelineLayoutManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
-    , DefaultSetLayout(VK_NULL_HANDLE)
     , Layouts()
     , LayoutsCS()
 {
@@ -167,55 +246,84 @@ FVulkanPipelineLayoutManager::~FVulkanPipelineLayoutManager()
     Release();
 }
 
-bool FVulkanPipelineLayoutManager::Initialize()
-{
-    // Create DescriptorSetLayout
-    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo;
-    FMemory::Memzero(&DescriptorSetLayoutCreateInfo);
-
-    DescriptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-
-    VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &DefaultSetLayout);
-    if (VULKAN_FAILED(Result))
-    {
-        VULKAN_ERROR("Failed to create Default DescriptorSetLayout");
-        return false;
-    }
-    else
-    {
-        return true;
-    }
-}
-
-void FVulkanPipelineLayoutManager::Release()
-{
-    if (VULKAN_CHECK_HANDLE(DefaultSetLayout))
-    {
-        vkDestroyDescriptorSetLayout(GetDevice()->GetVkDevice(), DefaultSetLayout, nullptr);
-        DefaultSetLayout = VK_NULL_HANDLE;
-    }
-
-    Layouts.Clear();
-}
-
-TSharedRef<FVulkanPipelineLayout> FVulkanPipelineLayoutManager::CreateLayout(const FVulkanPipelineLayoutCreateInfo& CreateInfo)
+FVulkanPipelineLayout* FVulkanPipelineLayoutManager::FindOrCreateLayout(const FVulkanPipelineLayoutInfo& LayoutInfo)
 {
     TScopedLock Lock(LayoutsCS);
 
-    if (TSharedRef<FVulkanPipelineLayout>* ExistingLayout = Layouts.Find(CreateInfo))
+    if (FVulkanPipelineLayout** ExistingLayout = Layouts.Find(LayoutInfo))
     {
         return *ExistingLayout;
     }
     
-    TSharedRef<FVulkanPipelineLayout> NewLayout = new FVulkanPipelineLayout(GetDevice());
-    if (NewLayout->Initialize(CreateInfo))
+    FVulkanPipelineLayout* NewLayout = new FVulkanPipelineLayout(GetDevice());
+    if (NewLayout->Initialize(LayoutInfo))
     {
-        Layouts.Add(CreateInfo, NewLayout);
+        Layouts.Add(LayoutInfo, NewLayout);
         LOG_INFO("Created a new PipelineLayout NumPipelineLayouts=%d", Layouts.Size());
         return NewLayout;
     }
     else
     {
         return nullptr;
+    }
+}
+
+VkDescriptorSetLayout FVulkanPipelineLayoutManager::FindOrCreateSetLayouts(const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo)
+{
+    TScopedLock Lock(SetLayoutsCS);
+
+    if (VkDescriptorSetLayout* ExistingSetLayout = SetLayouts.Find(SetLayoutInfo))
+    {
+        return *ExistingSetLayout;
+    }
+    
+    // Create the DescriptorSetLayout or assign an "default" empty DescriptorSetLayout
+    VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo;
+    FMemory::Memzero(&DescriptorSetLayoutCreateInfo);
+
+    DescriptorSetLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    DescriptorSetLayoutCreateInfo.bindingCount = SetLayoutInfo.Bindings.Size();
+    DescriptorSetLayoutCreateInfo.pBindings    = SetLayoutInfo.Bindings.Data();
+
+    VkDescriptorSetLayout NewSetLayout = VK_NULL_HANDLE;
+    VkResult Result = vkCreateDescriptorSetLayout(GetDevice()->GetVkDevice(), &DescriptorSetLayoutCreateInfo, nullptr, &NewSetLayout);
+    if (VULKAN_FAILED(Result))
+    {
+        VULKAN_ERROR("Failed to create DescriptorSetLayout");
+        return VK_NULL_HANDLE;
+    }
+    else
+    {
+        SetLayouts.Add(SetLayoutInfo, NewSetLayout);
+        return NewSetLayout;
+    }
+}
+
+void FVulkanPipelineLayoutManager::Release()
+{
+    {
+        TScopedLock Lock(LayoutsCS);
+        
+        for (const auto& LayoutPair : Layouts)
+        {
+            SAFE_DELETE(LayoutPair.Second);
+        }
+        
+        Layouts.Clear();
+    }
+    
+    {
+        TScopedLock Lock(SetLayoutsCS);
+
+        for (const auto& SetLayoutPair : SetLayouts)
+        {
+            if (VULKAN_CHECK_HANDLE(SetLayoutPair.Second))
+            {
+                vkDestroyDescriptorSetLayout(GetDevice()->GetVkDevice(), SetLayoutPair.Second, nullptr);
+                SetLayoutPair.Second = VK_NULL_HANDLE;
+            }
+        }
+        
+        SetLayouts.Clear();
     }
 }

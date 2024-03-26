@@ -169,8 +169,7 @@ protected:
     virtual ~FRHIBuffer() = default;
 
 public:
-    virtual void* GetRHIBaseBuffer() { return nullptr; }
-
+    virtual void* GetRHIBaseBuffer()         { return nullptr; }
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
@@ -442,15 +441,12 @@ protected:
 
 public:
     virtual void* GetRHIBaseTexture() { return nullptr; }
-
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
-
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const FString& InName) { }
