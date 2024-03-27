@@ -242,6 +242,7 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& I
         Desc.MaxLOD         = InDesc.MaxLOD;
         Desc.MinLOD         = InDesc.MinLOD;
         Desc.MipLODBias     = InDesc.MipLODBias;
+        
         FMemory::Memcpy(Desc.BorderColor, &InDesc.BorderColor.r, sizeof(Desc.BorderColor));
 
         Result = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InDesc);

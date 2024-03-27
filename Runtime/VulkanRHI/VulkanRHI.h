@@ -149,6 +149,9 @@ private:
     FVulkanCommandContext* GraphicsCommandContext;
     FVulkanDeletionQueue   DeletionQueue;
 
+    TMap<FRHISamplerStateDesc, TSharedRef<FVulkanSamplerState>> SamplerStateMap;
+    FCriticalSection SamplerStateMapCS;
+
     TQueue<FVulkanCommandPacket*, EQueueType::MPSC> PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;

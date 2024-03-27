@@ -92,6 +92,41 @@ struct FVulkanDefaultResources
     VkSampler               NullSampler;
 };
 
+struct FVulkanHashableSamplerCreateInfo
+{
+    bool operator==(const FVulkanHashableSamplerCreateInfo& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
+    }
+
+    bool operator!=(const FVulkanHashableSamplerCreateInfo& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
+    }
+
+    friend uint64 HashType(const FVulkanHashableSamplerCreateInfo& Value)
+    {
+        return FCRC32::Generate(&Value, sizeof(Value));
+    }
+
+    VkSamplerCreateFlags Flags;
+    VkFilter             MagFilter;
+    VkFilter             MinFilter;
+    VkSamplerMipmapMode  MipmapMode;
+    VkSamplerAddressMode AddressModeU;
+    VkSamplerAddressMode AddressModeV;
+    VkSamplerAddressMode AddressModeW;
+    float                MipLodBias;
+    VkBool32             AnisotropyEnable;
+    float                MaxAnisotropy;
+    VkBool32             CompareEnable;
+    VkCompareOp          CompareOp;
+    float                MinLod;
+    float                MaxLod;
+    VkBorderColor        BorderColor;
+    VkBool32             UnnormalizedCoordinates;
+};
+
 class FVulkanDevice
 {
 public:
@@ -106,6 +141,9 @@ public:
 
     // Initialize default resources that are just for null bindings
     bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);
+
+    // Create or returns an already created sampler, this is to avoid creating duplicate samplers
+    bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
 
     FVulkanRenderPassCache&       GetRenderPassCache()       { return RenderPassCache; }
     FVulkanFramebufferCache&      GetFramebufferCache()      { return FramebufferCache; }
@@ -171,6 +209,9 @@ private:
     FVulkanDefaultResources      DefaultResources;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
+
+    TMap<FVulkanHashableSamplerCreateInfo, VkSampler> SamplerMap;
+    FCriticalSection SamplerMapCS;
 
     TSet<FString> ExtensionNames;
     TSet<FString> LayerNames;

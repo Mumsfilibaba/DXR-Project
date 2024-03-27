@@ -176,14 +176,16 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             if (FVulkanDescriptorState** State = GraphicsState.DescriptorStates.Find(InGraphicsPipelineState))
             {
                 GraphicsState.CurrentDescriptorState = *State;
+                if (GVulkanForceBinding)
+                {
+                    GraphicsState.CurrentDescriptorState->Reset();
+                }
             }
             else
             {
                 GraphicsState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), GraphicsState.CurrentLayout, GetDevice()->GetDefaultResources());
                 GraphicsState.DescriptorStates.Add(InGraphicsPipelineState, GraphicsState.CurrentDescriptorState);
             }
-            
-            GraphicsState.CurrentDescriptorState->Reset();
         }
         else
         {
@@ -208,14 +210,16 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
             if (FVulkanDescriptorState** State = ComputeState.DescriptorStates.Find(InComputePipelineState))
             {
                 ComputeState.CurrentDescriptorState = *State;
+                if (GVulkanForceBinding)
+                {
+                    ComputeState.CurrentDescriptorState->Reset();
+                }
             }
             else
             {
                 ComputeState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), ComputeState.CurrentLayout, GetDevice()->GetDefaultResources());
                 ComputeState.DescriptorStates.Add(InComputePipelineState, ComputeState.CurrentDescriptorState);
             }
-
-            ComputeState.CurrentDescriptorState->Reset();
         }
         else
         {

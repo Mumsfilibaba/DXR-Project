@@ -36,6 +36,12 @@ FVulkanRHI::~FVulkanRHI()
     // Delete the Default Context before we flush the submission queue..
     SAFE_DELETE(GraphicsCommandContext);
 
+    // Then delete all samplers
+    {
+        TScopedLock Lock(SamplerStateMapCS);
+        SamplerStateMap.Clear();
+    }
+
     //.. since the context will put objects into the Deferred Deletion Queue
     while (!PendingSubmissions.IsEmpty())
     {
@@ -209,15 +215,29 @@ FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceA
 
 FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)
 {
-    FVulkanSamplerStateRef NewSamplerState = new FVulkanSamplerState(GetDevice(), InDesc);
-    if (!NewSamplerState->Initialize())
+    TScopedLock Lock(SamplerStateMapCS);
+
+    TSharedRef<FVulkanSamplerState> Result;
+
+    // Check if there already is an existing sampler state with this description
+    if (TSharedRef<FVulkanSamplerState>* ExistingSamplerState = SamplerStateMap.Find(InDesc))
     {
-        return nullptr;
+        Result = *ExistingSamplerState;
     }
     else
     {
-        return NewSamplerState.ReleaseOwnership();
+        Result = new FVulkanSamplerState(GetDevice(), InDesc);
+        if (!Result->Initialize())
+        {
+            return nullptr;
+        }
+        else
+        {
+            SamplerStateMap.Add(InDesc, Result);
+        }
     }
+
+    return Result.ReleaseOwnership();
 }
 
 

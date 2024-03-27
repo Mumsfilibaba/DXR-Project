@@ -49,6 +49,21 @@ FVulkanDevice::~FVulkanDevice()
     // Release default resources
     DefaultResources.Release(*this);
 
+    // Release all samplers
+    {
+        TScopedLock Lock(SamplerMapCS);
+
+        for (TPair<const FVulkanHashableSamplerCreateInfo&, VkSampler&> SamplerPair : SamplerMap)
+        {
+            if (VULKAN_CHECK_HANDLE(SamplerPair.Second))
+            {
+                vkDestroySampler(GetVkDevice(), SamplerPair.Second, nullptr);
+            }
+        }
+
+        SamplerMap.Clear();
+    }
+
     // Release the PipelineCache
     PipelineCache.SaveCacheData();
     PipelineCache.Release();
@@ -391,6 +406,48 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     return true;
 }
 
+bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler)
+{
+    CHECK(SamplerCreateInfo.pNext == nullptr);
+
+    TScopedLock Lock(SamplerMapCS);
+
+    FVulkanHashableSamplerCreateInfo HashableCreateInfo;
+    HashableCreateInfo.Flags                   = SamplerCreateInfo.flags;
+    HashableCreateInfo.MagFilter               = SamplerCreateInfo.magFilter;
+    HashableCreateInfo.MinFilter               = SamplerCreateInfo.minFilter;
+    HashableCreateInfo.MipmapMode              = SamplerCreateInfo.mipmapMode;
+    HashableCreateInfo.AddressModeU            = SamplerCreateInfo.addressModeU;
+    HashableCreateInfo.AddressModeV            = SamplerCreateInfo.addressModeV;
+    HashableCreateInfo.AddressModeW            = SamplerCreateInfo.addressModeW;
+    HashableCreateInfo.MipLodBias              = SamplerCreateInfo.mipLodBias;
+    HashableCreateInfo.AnisotropyEnable        = SamplerCreateInfo.anisotropyEnable;
+    HashableCreateInfo.MaxAnisotropy           = SamplerCreateInfo.maxAnisotropy;
+    HashableCreateInfo.CompareEnable           = SamplerCreateInfo.compareEnable;
+    HashableCreateInfo.CompareOp               = SamplerCreateInfo.compareOp;
+    HashableCreateInfo.MinLod                  = SamplerCreateInfo.minLod;
+    HashableCreateInfo.MaxLod                  = SamplerCreateInfo.maxLod;
+    HashableCreateInfo.BorderColor             = SamplerCreateInfo.borderColor;
+    HashableCreateInfo.UnnormalizedCoordinates = SamplerCreateInfo.unnormalizedCoordinates;
+
+    if (VkSampler* Sampler = SamplerMap.Find(HashableCreateInfo))
+    {
+        OutSampler = *Sampler;
+        return true;
+    }
+
+    VkResult Result = vkCreateSampler(GetVkDevice(), &SamplerCreateInfo, nullptr, &OutSampler);
+    if (VULKAN_FAILED(Result))
+    {
+        OutSampler = VK_NULL_HANDLE;
+        VULKAN_ERROR("Failed to create sampler");
+        return false;
+    }
+
+    SamplerMap.Add(HashableCreateInfo, OutSampler);
+    return true;
+}
+
 uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const
 {
     if (Type == EVulkanCommandQueueType::Graphics)
@@ -444,8 +501,7 @@ bool FVulkanDefaultResources::Initialize(FVulkanDevice& Device)
     SamplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
     SamplerCreateInfo.unnormalizedCoordinates = false;
 
-    VkResult Result = vkCreateSampler(Device.GetVkDevice(), &SamplerCreateInfo, nullptr, &NullSampler);
-    if (VULKAN_FAILED(Result))
+    if (!Device.FindOrCreateSampler(SamplerCreateInfo, NullSampler))
     {
         VULKAN_ERROR("vkCreateSampler failed");
         return false;
@@ -596,9 +652,6 @@ void FVulkanDefaultResources::Release(FVulkanDevice& Device)
         MemoryManager.Free(NullImageMemory);
     }
 
-    if (VULKAN_CHECK_HANDLE(NullSampler))
-    {
-        vkDestroySampler(VulkanDevice, NullSampler, nullptr);
-        NullSampler = VK_NULL_HANDLE;
-    }
+    // All samplers are cached and deleted by the device
+    NullSampler = VK_NULL_HANDLE;
 }
