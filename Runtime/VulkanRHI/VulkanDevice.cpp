@@ -443,6 +443,11 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
         VULKAN_ERROR("Failed to create sampler");
         return false;
     }
+    else
+    {
+        const FString DebugName = FString::CreateFormatted("Sampler %d", SamplerMap.Size());
+        FVulkanDebugUtilsEXT::SetObjectName(GetVkDevice(), DebugName.Data(), OutSampler, VK_OBJECT_TYPE_SAMPLER);
+    }
 
     SamplerMap.Add(HashableCreateInfo, OutSampler);
     return true;
