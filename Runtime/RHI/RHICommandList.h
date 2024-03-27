@@ -3,7 +3,6 @@
 #include "RHIResources.h"
 #include "RHICommands.h"
 #include "RHIRayTracing.h"
-
 #include "Core/Memory/MemoryStack.h"
 #include "Core/Threading/ThreadInterface.h"
 #include "Core/Platform/PlatformThreadMisc.h"
@@ -117,9 +116,7 @@ public:
     {
         IRHICommandContext& CommandContextRef = GetCommandContext();
         CommandContextRef.RHIStartContext();
-        
         ExecuteWithContext(CommandContextRef);
-
         CommandContextRef.RHIFinishContext();
     }
 
@@ -134,7 +131,6 @@ public:
         }
 
         FirstCommand = nullptr;
-
         Reset();
     }
 
@@ -151,7 +147,7 @@ public:
                 PreviousCommand->~FRHICommand();
             }
 
-            FirstCommand   = nullptr;
+            FirstCommand = nullptr;
         }
 
         CommandPointer = &FirstCommand;
@@ -161,7 +157,6 @@ public:
         bIsRenderPassActive = false;
 
         Statistics.Reset();
-
         Memory.Reset();
     }
 
@@ -194,7 +189,7 @@ public:
 
     FORCEINLINE bool HasCommands() const noexcept
     {
-        return (NumCommands > 0);
+        return NumCommands > 0;
     }
 
     FORCEINLINE uint32 GetNumDrawCalls() const noexcept
@@ -377,7 +372,6 @@ public:
     FORCEINLINE void UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* InSrcData, uint32 InSrcRowPitch) noexcept
     {
         const uint32 SizeInBytes = InSrcRowPitch * TextureRegion.Height;
-        
         void* SrcData = Allocate(SizeInBytes, alignof(uint8));
         FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
         EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, TextureRegion, MipLevel, SrcData, InSrcRowPitch);
@@ -426,10 +420,7 @@ public:
         EmplaceCommand<FRHICommandBuildRayTracingGeometry>(RayTracingGeometry, VertexBuffer, NumVertices, IndexBuffer, NumIndices, IndexFormat, bUpdate);
     }
 
-    FORCEINLINE void BuildRayTracingScene(
-        FRHIRayTracingScene*                                   Scene,
-        const TArrayView<const FRHIRayTracingGeometryInstance> Instances,
-        bool                                                   bUpdate) noexcept
+    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance> Instances, bool bUpdate) noexcept
     {
         CHECK(!bUpdate || (bUpdate && Scene && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
         EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
@@ -508,28 +499,28 @@ public:
 
     FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) noexcept
     {
-        CHECK((VertexCountPerInstance > 0) && (InstanceCount > 0));
+        CHECK(VertexCountPerInstance > 0 && InstanceCount > 0);
         EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
         Statistics.NumDrawCalls++;
     }
      
     FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) noexcept
     {
-        CHECK((IndexCountPerInstance > 0) && (InstanceCount > 0));
+        CHECK(IndexCountPerInstance > 0 && InstanceCount > 0);
         EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         Statistics.NumDrawCalls++;
     }
 
     FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
     {
-        CHECK((ThreadGroupCountX > 0) || (ThreadGroupCountY > 0) || (ThreadGroupCountZ > 0));
+        CHECK(ThreadGroupCountX > 0 || ThreadGroupCountY > 0 || ThreadGroupCountZ > 0);
         EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
         Statistics.NumDispatchCalls++;
     }
 
     FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
     {
-        CHECK((Width > 0) || (Height > 0) || (Depth > 0));
+        CHECK(Width > 0 || Height > 0 || Depth > 0);
         EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
     }
 
@@ -628,21 +619,13 @@ struct FRHIThreadTask : FNonCopyable
 
 class RHI_API FRHIThread : public FThreadInterface, FNonCopyable
 {
-    FRHIThread();
-    ~FRHIThread() = default;
-
 public:
-    static FORCEINLINE const CHAR* GetThreadName()
-    { 
-        return "RHI Executor-Thread"; 
-    }
-    
     static bool Startup();
     static void Shutdown();
 
-    static bool IsRunning() 
+    static bool IsRunning()
     { 
-        return (GInstance != nullptr);
+        return GInstance != nullptr;
     }
 
     static FRHIThread& Get();
@@ -658,18 +641,21 @@ public:
     void WaitForOutstandingTasks();
 
 private:
+    FRHIThread();
+    ~FRHIThread() = default;
+
     bool Create();
-    
-    TSharedRef<FGenericThread>      Thread;
 
-    FCriticalSection       WaitCS;
-    FConditionVariable     WaitCondition;
+    TSharedRef<FGenericThread> Thread;
 
-    FAtomicInt64           NumSubmittedTasks;
-    FAtomicInt64           NumCompletedTasks;
+    FCriticalSection   WaitCS;
+    FConditionVariable WaitCondition;
+
+    FAtomicInt64 NumSubmittedTasks;
+    FAtomicInt64 NumCompletedTasks;
 
     TArray<FRHIThreadTask> Tasks;
-    FCriticalSection       TasksCS;
+    FCriticalSection TasksCS;
 
     bool bIsRunning;
 
@@ -710,7 +696,7 @@ public:
 
 private:
     FRHICommandStatistics Statistics;
-    IRHICommandContext*   CommandContext;
+    IRHICommandContext* CommandContext;
 };
 
 extern RHI_API FRHICommandListExecutor GRHICommandExecutor;

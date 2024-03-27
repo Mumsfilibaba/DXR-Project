@@ -1173,7 +1173,7 @@ void FVulkanCommandContext::RHIInsertMarker(const FStringView& Message)
         FMemory::Memzero(&DebugUtilsLabel);
         
         DebugUtilsLabel.sType      = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
-        DebugUtilsLabel.pLabelName = Message.GetCString();
+        DebugUtilsLabel.pLabelName = Message.Data();
         DebugUtilsLabel.color[0]   = 0.0f;
         DebugUtilsLabel.color[1]   = 0.0f;
         DebugUtilsLabel.color[2]   = 0.0f;

@@ -33,8 +33,10 @@ void FVulkanCommandContextState::BindGraphicsStates()
         GraphicsState.bBindPipelineState = false;
     }
 
-    BindDescriptorSets(PipelineLayout, ShaderVisibility_Vertex, ShaderVisibility_Pixel);
-
+    // Update and bind descriptorsets
+    ComputeState.CurrentDescriptorState->UpdateDescriptorSets();
+    ComputeState.CurrentDescriptorState->BindGraphicsDescriptorSets(Context.GetCommandBuffer());
+    
     if (GraphicsState.bBindPushConstants || GVulkanForceBinding)
     {
         BindPushConstants(PipelineLayout);
@@ -89,101 +91,15 @@ void FVulkanCommandContextState::BindComputeState()
         Context.GetCommandBuffer()->BindPipeline(VK_PIPELINE_BIND_POINT_COMPUTE, Pipeline);
         ComputeState.bBindPipelineState = false;
     }
-
-    BindDescriptorSets(PipelineLayout, ShaderVisibility_Compute, ShaderVisibility_Compute);
-
+    
+    // Update and bind descriptorsets
+    ComputeState.CurrentDescriptorState->UpdateDescriptorSets();
+    ComputeState.CurrentDescriptorState->BindComputeDescriptorSets(Context.GetCommandBuffer());
+    
     if (ComputeState.bBindPushConstants || GVulkanForceBinding)
     {
         BindPushConstants(PipelineLayout);
         ComputeState.bBindPushConstants = false;
-    }
-}
-
-void FVulkanCommandContextState::BindDescriptorSets(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage)
-{
-    FVulkanDescriptorState* DescriptorState = (StartStage == ShaderVisibility_Compute) ? ComputeState.CurrentDescriptorState : GraphicsState.CurrentDescriptorState;
-    if (!DescriptorState)
-    {
-        return;
-    }
-
-    for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
-    {
-        // If the layout does not contain a DescriptorSet index then we continue to the next stage
-        uint32 DSStageIndex;
-        if (!PipelineLayout->GetDescriptorSetIndex(CurrentStage, DSStageIndex))
-        {
-            continue;
-        }
-
-        const FVulkanSRVCache& SRVCache = CommonState.SRVCache[CurrentStage];
-        for (int32 Index = 0; Index < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT; Index++)
-        {
-            uint32 BindingIndex;
-            uint32 DescriptorSetIndex;
-            if (!PipelineLayout->GetDescriptorBinding(CurrentStage, ResourceType_SRV, Index, DescriptorSetIndex, BindingIndex))
-            {
-                continue;
-            }
-
-            FVulkanShaderResourceView* ShaderResourceView = SRVCache.Views[Index];
-            DescriptorState->SetSRV(ShaderResourceView, DescriptorSetIndex, BindingIndex);
-        }
-
-        const FVulkanUAVCache& UAVCache = CommonState.UAVCache[CurrentStage];
-        for (int32 Index = 0; Index < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT; Index++)
-        {
-            uint32 BindingIndex;
-            uint32 DescriptorSetIndex;
-            if (!PipelineLayout->GetDescriptorBinding(CurrentStage, ResourceType_UAV, Index, DescriptorSetIndex, BindingIndex))
-            {
-                continue;
-            }
-            
-            FVulkanUnorderedAccessView* UnorderedAccessView = UAVCache.Views[Index];
-            DescriptorState->SetUAV(UnorderedAccessView, DescriptorSetIndex, BindingIndex);
-        }
-        
-        const FVulkanUniformCache& UniformBufferCache = CommonState.UniformCache[CurrentStage];
-        for (int32 Index = 0; Index < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT; Index++)
-        {
-            uint32 BindingIndex;
-            uint32 DescriptorSetIndex;
-            if (!PipelineLayout->GetDescriptorBinding(CurrentStage, ResourceType_UniformBuffer, Index, DescriptorSetIndex, BindingIndex))
-            {
-                continue;
-            }
-            
-            FVulkanBuffer* UniformBuffer = UniformBufferCache.UniformBuffers[Index];
-            DescriptorState->SetUniform(UniformBuffer, DescriptorSetIndex, BindingIndex);
-        }
-        
-        const FVulkanSamplerCache& SamplerCache = CommonState.SamplerCache[CurrentStage];
-        for (int32 Index = 0; Index < VULKAN_DEFAULT_SAMPLER_STATE_COUNT; Index++)
-        {
-            uint32 BindingIndex;
-            uint32 DescriptorSetIndex;
-            if (!PipelineLayout->GetDescriptorBinding(CurrentStage, ResourceType_Sampler, Index, DescriptorSetIndex, BindingIndex))
-            {
-                continue;
-            }
-            
-            FVulkanSamplerState* SamplerState = SamplerCache.Samplers[Index];
-            DescriptorState->SetSampler(SamplerState, DescriptorSetIndex, BindingIndex);
-        }
-    }
-    
-    // Update the descriptorsets
-    DescriptorState->UpdateDescriptorSets();
-
-    // Finally bind the DescriptorSets
-    if (StartStage == ShaderVisibility_Compute)
-    {
-        DescriptorState->BindComputeDescriptorSets(Context.GetCommandBuffer());
-    }
-    else
-    {
-        DescriptorState->BindGraphicsDescriptorSets(Context.GetCommandBuffer());
     }
 }
 
@@ -249,6 +165,8 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
 
         if (InGraphicsPipelineState)
         {
+            GraphicsState.CurrentLayout = InGraphicsPipelineState->GetPipelineLayout();
+            
             if (FVulkanDescriptorState** State = GraphicsState.DescriptorStates.Find(InGraphicsPipelineState))
             {
                 GraphicsState.CurrentDescriptorState = *State;
@@ -258,9 +176,12 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
                 GraphicsState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), InGraphicsPipelineState->GetPipelineLayout(), GetDevice()->GetDefaultResources());
                 GraphicsState.DescriptorStates.Add(InGraphicsPipelineState, GraphicsState.CurrentDescriptorState);
             }
+            
+            GraphicsState.CurrentDescriptorState->Reset();
         }
         else
         {
+            GraphicsState.CurrentLayout          = nullptr;
             GraphicsState.CurrentDescriptorState = nullptr;
         }
     }
@@ -276,6 +197,8 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
 
         if (InComputePipelineState)
         {
+            ComputeState.CurrentLayout = InComputePipelineState->GetPipelineLayout();
+            
             if (FVulkanDescriptorState** State = ComputeState.DescriptorStates.Find(InComputePipelineState))
             {
                 ComputeState.CurrentDescriptorState = *State;
@@ -285,9 +208,12 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
                 ComputeState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), InComputePipelineState->GetPipelineLayout(), GetDevice()->GetDefaultResources());
                 ComputeState.DescriptorStates.Add(InComputePipelineState, ComputeState.CurrentDescriptorState);
             }
+            
+            ComputeState.CurrentDescriptorState->Reset();
         }
         else
         {
+            ComputeState.CurrentLayout          = nullptr;
             ComputeState.CurrentDescriptorState = nullptr;
         }
     }
@@ -393,4 +319,140 @@ void FVulkanCommandContextState::SetPushConstants(const uint32* ShaderConstants,
         GraphicsState.bBindPushConstants = true;
         ComputeState.bBindPushConstants  = true;
     }
+}
+
+void FVulkanCommandContextState::SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+{
+    CHECK(ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+    
+    FVulkanPipelineLayout*  Layout = nullptr;
+    FVulkanDescriptorState* DescriptorState = nullptr;
+    if (ShaderStage == ShaderVisibility_Compute)
+    {
+        Layout          = ComputeState.CurrentLayout;
+        DescriptorState = ComputeState.CurrentDescriptorState;
+    }
+    else
+    {
+        Layout          = GraphicsState.CurrentLayout;
+        DescriptorState = GraphicsState.CurrentDescriptorState;
+    }
+    
+    if (!Layout || !DescriptorState)
+    {
+        VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
+        DEBUG_BREAK();
+        return;
+    }
+    
+    uint32 BindingIndex;
+    uint32 DescriptorSetIndex;
+    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_SRV, ResourceIndex, DescriptorSetIndex, BindingIndex))
+    {
+        return;
+    }
+    
+    DescriptorState->SetSRV(ShaderResourceView, DescriptorSetIndex, BindingIndex);
+}
+
+void FVulkanCommandContextState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+{
+    CHECK(ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+
+    FVulkanPipelineLayout*  Layout = nullptr;
+    FVulkanDescriptorState* DescriptorState = nullptr;
+    if (ShaderStage == ShaderVisibility_Compute)
+    {
+        Layout          = ComputeState.CurrentLayout;
+        DescriptorState = ComputeState.CurrentDescriptorState;
+    }
+    else
+    {
+        Layout          = GraphicsState.CurrentLayout;
+        DescriptorState = GraphicsState.CurrentDescriptorState;
+    }
+    
+    if (!Layout || !DescriptorState)
+    {
+        VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
+        DEBUG_BREAK();
+        return;
+    }
+    
+    uint32 BindingIndex;
+    uint32 DescriptorSetIndex;
+    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UAV, ResourceIndex, DescriptorSetIndex, BindingIndex))
+    {
+        return;
+    }
+    
+    DescriptorState->SetUAV(UnorderedAccessView, DescriptorSetIndex, BindingIndex);
+}
+
+void FVulkanCommandContextState::SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
+{
+    CHECK(ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
+    
+    FVulkanPipelineLayout*  Layout = nullptr;
+    FVulkanDescriptorState* DescriptorState = nullptr;
+    if (ShaderStage == ShaderVisibility_Compute)
+    {
+        Layout          = ComputeState.CurrentLayout;
+        DescriptorState = ComputeState.CurrentDescriptorState;
+    }
+    else
+    {
+        Layout          = GraphicsState.CurrentLayout;
+        DescriptorState = GraphicsState.CurrentDescriptorState;
+    }
+    
+    if (!Layout || !DescriptorState)
+    {
+        VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
+        DEBUG_BREAK();
+        return;
+    }
+    
+    uint32 BindingIndex;
+    uint32 DescriptorSetIndex;
+    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_UniformBuffer, ResourceIndex, DescriptorSetIndex, BindingIndex))
+    {
+        return;
+    }
+    
+    DescriptorState->SetUniform(UniformBuffer, DescriptorSetIndex, BindingIndex);
+}
+
+void FVulkanCommandContextState::SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
+{
+    CHECK(SamplerIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
+
+    FVulkanPipelineLayout*  Layout = nullptr;
+    FVulkanDescriptorState* DescriptorState = nullptr;
+    if (ShaderStage == ShaderVisibility_Compute)
+    {
+        Layout          = ComputeState.CurrentLayout;
+        DescriptorState = ComputeState.CurrentDescriptorState;
+    }
+    else
+    {
+        Layout          = GraphicsState.CurrentLayout;
+        DescriptorState = GraphicsState.CurrentDescriptorState;
+    }
+    
+    if (!Layout || !DescriptorState)
+    {
+        VULKAN_WARNING("Binding a ShaderResource without having a PipelineState set, this does not have any effect");
+        DEBUG_BREAK();
+        return;
+    }
+    
+    uint32 BindingIndex;
+    uint32 DescriptorSetIndex;
+    if (!Layout->GetDescriptorBinding(ShaderStage, ResourceType_Sampler, SamplerIndex, DescriptorSetIndex, BindingIndex))
+    {
+        return;
+    }
+    
+    DescriptorState->SetSampler(SamplerState, DescriptorSetIndex, BindingIndex);
 }

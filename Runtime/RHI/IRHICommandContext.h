@@ -20,7 +20,7 @@ struct IRHICommandContext
     /** @brief - End Frame on the RHIThread */
     virtual void RHIEndFrame() = 0;
 
-    virtual void RHIStartContext()  = 0;
+    virtual void RHIStartContext() = 0;
     virtual void RHIFinishContext() = 0;
 
     /**

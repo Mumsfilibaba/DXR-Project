@@ -55,42 +55,62 @@ struct FVulkanDescriptorSetKey
 class FVulkanDescriptorSetBuilder
 {
 public:
-    FVulkanDescriptorSetBuilder();
-    ~FVulkanDescriptorSetBuilder() = default;
-    
-    void SetupDescriptorWrites(const FVulkanDescriptorRemappingInfo& SetRemappingInfo);
+    FVulkanDescriptorSetBuilder()
+        : DescriptorWrites(nullptr)
+        , NumDescriptorWrites(0)
+        , bKeyIsDirty(true)
+    {
+    }
 
+    void SetupDescriptorWrites(VkWriteDescriptorSet* InDescriptorWrites, int32 InNumDescriptorWrites)
+    {
+        // Setup DescriptorWrites
+        DescriptorWrites    = InDescriptorWrites;
+        NumDescriptorWrites = InNumDescriptorWrites;
+        
+        // Allocate HashKey
+        DescriptorSetKey.Resources.Resize(InNumDescriptorWrites);
+        FMemory::Memzero(DescriptorSetKey.Resources.Data(), DescriptorSetKey.Resources.SizeInBytes());
+        UpdateHash();
+        
+        // Initialize all the types
+        for (int32 Index = 0; Index < NumDescriptorWrites; Index++)
+        {
+            DescriptorSetKey.Resources[Index].Type = DescriptorWrites[Index].descriptorType;
+        }
+    }
+    
     void WriteSampledImage(int32 Binding, VkImageView ImageView, VkImageLayout ImageLayout)
     {
-        CHECK(Binding < DescriptorWrites.Size());
+        CHECK(Binding < NumDescriptorWrites);
         CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE);
         WriteImage(Binding, ImageView, ImageLayout);
     }
     
     void WriteStorageImage(int32 Binding, VkImageView ImageView, VkImageLayout ImageLayout)
     {
-        CHECK(Binding < DescriptorWrites.Size());
+        CHECK(Binding < NumDescriptorWrites);
         CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE);
         WriteImage(Binding, ImageView, ImageLayout);
     }
     
     void WriteUniformBuffer(int32 Binding, VkBuffer Buffer, VkDeviceSize Offset, VkDeviceSize Range)
     {
-        CHECK(Binding < DescriptorWrites.Size());
+        CHECK(Binding < NumDescriptorWrites);
         CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
         WriteBuffer(Binding, Buffer, Offset, Range);
     }
     
     void WriteStorageBuffer(int32 Binding, VkBuffer Buffer, VkDeviceSize Offset, VkDeviceSize Range)
     {
-        CHECK(Binding < DescriptorWrites.Size());
+        CHECK(Binding < NumDescriptorWrites);
         CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER);
         WriteBuffer(Binding, Buffer, Offset, Range);
     }
     
     void WriteSampler(int32 Binding, VkSampler Sampler)
     {
-        CHECK(Binding < DescriptorWrites.Size());
+        CHECK(Binding < NumDescriptorWrites);
         CHECK(DescriptorWrites[Binding].descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER);
         
         VkDescriptorImageInfo* pImageInfo = const_cast<VkDescriptorImageInfo*>(DescriptorWrites[Binding].pImageInfo);
@@ -109,17 +129,17 @@ public:
 
     void SetDescriptorSet(VkDescriptorSet DescriptorSet)
     {
-        for (VkWriteDescriptorSet& CurrentWrite : DescriptorWrites)
+        for (int32 Index = 0; Index < NumDescriptorWrites; Index++)
         {
-            CurrentWrite.dstSet = DescriptorSet;
+            DescriptorWrites[Index].dstSet = DescriptorSet;
         }
     }
     
     void UpdateDescriptorSet(VkDevice Device)
     {
-        if (!DescriptorWrites.IsEmpty())
+        if (DescriptorWrites)
         {
-            vkUpdateDescriptorSets(Device, DescriptorWrites.Size(), DescriptorWrites.Data(), 0, nullptr);
+            vkUpdateDescriptorSets(Device, NumDescriptorWrites, DescriptorWrites, 0, nullptr);
         }
     }
     
@@ -137,20 +157,9 @@ public:
         return bKeyIsDirty;
     }
 
-    VkDescriptorType GetDescriptorType(int32 BindingIndex) const
-    {
-        CHECK(BindingIndex < DescriptorWrites.Size());
-        return DescriptorWrites[BindingIndex].descriptorType;
-    }
-
     const FVulkanDescriptorSetKey& GetKey() const
     {
         return DescriptorSetKey;
-    }
-
-    const VkWriteDescriptorSet* GetDescriptorWrites() const
-    {
-        return DescriptorWrites.Data();
     }
     
 private:
@@ -186,11 +195,17 @@ private:
         }
     }
         
+    FVulkanDescriptorSetKey DescriptorSetKey;
+    VkWriteDescriptorSet*   DescriptorWrites;
+    int32                   NumDescriptorWrites;
+    bool                    bKeyIsDirty;
+};
+
+struct FVulkanDescriptorWrites
+{
     TArray<VkWriteDescriptorSet>   DescriptorWrites;
     TArray<VkDescriptorBufferInfo> DescriptorBufferInfos;
     TArray<VkDescriptorImageInfo>  DescriptorImageInfos;
-    FVulkanDescriptorSetKey        DescriptorSetKey;
-    bool                           bKeyIsDirty;
 };
 
 class FVulkanDescriptorState : public FVulkanDeviceChild
@@ -213,6 +228,9 @@ public:
 
     // This function creates or retrieves handles for all descriptorsets
     void UpdateDescriptorSets();
+    
+    // Resets the state and puts default resources into all bindings
+    void Reset();
 
     // This function binds all descriptorsets to the graphics-pipeline
     inline void BindGraphicsDescriptorSets(class FVulkanCommandBuffer& CommandBuffer)
@@ -227,6 +245,7 @@ public:
     }
 
 private:
+    
     // Binds all the descriptorsets that we want to bind
     void BindDescriptorSets(class FVulkanCommandBuffer& CommandBuffer, VkPipelineBindPoint BindPoint);
 
@@ -235,6 +254,7 @@ private:
 
     FVulkanPipelineLayout*              Layout;
     TArray<VkDescriptorSet>             DescriptorSetHandles;
+    TArray<FVulkanDescriptorWrites>     DescriptorSetWrites;
     TArray<FVulkanDescriptorSetBuilder> DescriptorSetBuilders;
     const FVulkanDefaultResources&      DefaultResources;
 };

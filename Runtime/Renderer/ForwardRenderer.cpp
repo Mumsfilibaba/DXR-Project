@@ -131,6 +131,8 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
     CommandList.BeginRenderPass(RenderPass);
 
+    CommandList.SetGraphicsPipelineState(PipelineState.Get());
+
     CommandList.SetConstantBuffer(PShader.Get(), FrameResources.CameraBuffer.Get(), 0);
     // TODO: Fix point-light count in shader
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsBuffer.Get(), 1);
@@ -158,7 +160,6 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
         FMatrix4 TransformInv;
     } TransformPerObject;
 
-    CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
     for (const auto CommandIndex : FrameResources.ForwardVisibleCommands)
     {
