@@ -18,13 +18,23 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
     const int32 NumAttributes = Initializer.Elements.Size();
     VertexInputAttributeDescriptions.Reserve(NumAttributes);
 
-    int32 Location         = 0;
-    int32 CurrentBinding   = -1;
-    int32 CurrentInputSlot = -1;
+    // NOTE: The input struct on the ShaderSide, needs to match the CPU side struct for vertices
+    // otherwise we need to reflect the location from the vertex-shader and use the vertex-shader as 
+    // input, similar to D3D11 style input-layout
     for (const FVertexInputElement& Element : Initializer.Elements)
     {
-        // Create a new binding for each InputSlot we have
-        if (CurrentInputSlot != static_cast<int32>(Element.InputSlot))
+        // Create a new unique binding for each input slot that we need
+        int32 CurrentBinding = -1;
+        for (int32 Index = 0; Index < VertexInputBindingDescriptions.Size(); Index++)
+        {
+            if (VertexInputBindingDescriptions[Index].binding == Element.InputSlot)
+            {
+                CurrentBinding = Index;
+                break;
+            }
+        }
+
+        if (CurrentBinding < 0)
         {
             VkVertexInputBindingDescription BindingDescription;
             BindingDescription.binding   = Element.InputSlot;
@@ -32,12 +42,31 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
             BindingDescription.inputRate = Element.InputClass == EVertexInputClass::Vertex ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE;
             
             // Get the current binding for the attributes
-            CurrentBinding   = VertexInputBindingDescriptions.Size();
-            CurrentInputSlot = Element.InputSlot;
+            CurrentBinding = VertexInputBindingDescriptions.Size();
             VertexInputBindingDescriptions.Add(BindingDescription);
+        }
 
-            // Reset the location
-            Location = 0;
+        // Find location for the element which turns into the variable index in the structure
+        int32 Location = 0;
+        for (int32 Index = 0; Index < VertexInputAttributeDescriptions.Size(); Index++)
+        {
+            VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];
+            if (Attribute.binding != CurrentBinding)
+            {
+                continue;
+            }
+
+            // Put this element after this existing attribute if the offset in the struct is larger than the existing one
+            if (Element.ByteOffset > Attribute.offset)
+            {
+                Location++;
+            }
+
+            // if this existing attribute has a larger offset than the new one increase the location of the existing attribute
+            if (Attribute.offset > Element.ByteOffset)
+            {
+                Attribute.location++;
+            }
         }
 
         // Fill in the attribute
@@ -45,7 +74,7 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
         VertexInputAttributeDescription.format   = ConvertFormat(Element.Format);
         VertexInputAttributeDescription.offset   = Element.ByteOffset;
         VertexInputAttributeDescription.binding  = CurrentBinding;
-        VertexInputAttributeDescription.location = Location++; // This turns into the variable index in the structure
+        VertexInputAttributeDescription.location = Location;
         VertexInputAttributeDescriptions.Add(VertexInputAttributeDescription);
     }
 

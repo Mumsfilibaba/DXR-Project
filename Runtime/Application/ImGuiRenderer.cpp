@@ -166,8 +166,8 @@ bool FImGuiRenderer::Initialize()
         struct FVSInput
         {
             float2 Position : POSITION;
-            float4 Color    : COLOR0;
             float2 TexCoord : TEXCOORD0;
+            float4 Color    : COLOR0;
         };
 
         struct FPSInput
