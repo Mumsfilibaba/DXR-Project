@@ -33,9 +33,10 @@ void FVulkanCommandContextState::BindGraphicsStates()
         GraphicsState.bBindPipelineState = false;
     }
 
-    // Update and bind descriptorsets
-    ComputeState.CurrentDescriptorState->UpdateDescriptorSets();
-    ComputeState.CurrentDescriptorState->BindGraphicsDescriptorSets(Context.GetCommandBuffer());
+    // Update and bind descriptor-sets
+    CHECK(PipelineLayout == GraphicsState.CurrentDescriptorState->GetLayout());
+    GraphicsState.CurrentDescriptorState->UpdateDescriptorSets();
+    GraphicsState.CurrentDescriptorState->BindGraphicsDescriptorSets(Context.GetCommandBuffer());
     
     if (GraphicsState.bBindPushConstants || GVulkanForceBinding)
     {
@@ -92,7 +93,8 @@ void FVulkanCommandContextState::BindComputeState()
         ComputeState.bBindPipelineState = false;
     }
     
-    // Update and bind descriptorsets
+    // Update and bind descriptor-sets
+    CHECK(PipelineLayout == ComputeState.CurrentDescriptorState->GetLayout());
     ComputeState.CurrentDescriptorState->UpdateDescriptorSets();
     ComputeState.CurrentDescriptorState->BindComputeDescriptorSets(Context.GetCommandBuffer());
     
@@ -127,7 +129,9 @@ void FVulkanCommandContextState::ResetState()
     FMemory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
     GraphicsState.NumScissorRects = 0;
     
-    GraphicsState.PipelineState      = nullptr;
+    GraphicsState.PipelineState          = nullptr;
+    GraphicsState.CurrentDescriptorState = nullptr;
+    GraphicsState.CurrentLayout          = nullptr;
     GraphicsState.bBindIndexBuffer   = true;
     GraphicsState.bBindBlendFactor   = true;
     GraphicsState.bBindPipelineState = true;
@@ -136,7 +140,9 @@ void FVulkanCommandContextState::ResetState()
     GraphicsState.bBindVertexBuffers = true;
     GraphicsState.bBindPushConstants = true;
 
-    ComputeState.PipelineState      = nullptr;
+    ComputeState.PipelineState          = nullptr;
+    ComputeState.CurrentDescriptorState = nullptr;
+    ComputeState.CurrentLayout          = nullptr;
     ComputeState.bBindPipelineState = true;
     ComputeState.bBindPushConstants = true;
 }
@@ -173,7 +179,7 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             }
             else
             {
-                GraphicsState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), InGraphicsPipelineState->GetPipelineLayout(), GetDevice()->GetDefaultResources());
+                GraphicsState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), GraphicsState.CurrentLayout, GetDevice()->GetDefaultResources());
                 GraphicsState.DescriptorStates.Add(InGraphicsPipelineState, GraphicsState.CurrentDescriptorState);
             }
             
@@ -198,17 +204,17 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
         if (InComputePipelineState)
         {
             ComputeState.CurrentLayout = InComputePipelineState->GetPipelineLayout();
-            
+
             if (FVulkanDescriptorState** State = ComputeState.DescriptorStates.Find(InComputePipelineState))
             {
                 ComputeState.CurrentDescriptorState = *State;
             }
             else
             {
-                ComputeState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), InComputePipelineState->GetPipelineLayout(), GetDevice()->GetDefaultResources());
+                ComputeState.CurrentDescriptorState = new FVulkanDescriptorState(GetDevice(), ComputeState.CurrentLayout, GetDevice()->GetDefaultResources());
                 ComputeState.DescriptorStates.Add(InComputePipelineState, ComputeState.CurrentDescriptorState);
             }
-            
+
             ComputeState.CurrentDescriptorState->Reset();
         }
         else

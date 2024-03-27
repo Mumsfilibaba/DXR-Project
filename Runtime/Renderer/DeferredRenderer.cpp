@@ -1120,8 +1120,8 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         struct FReductionConstants
         {
             FMatrix4 CamProjection;
-            float NearPlane;
-            float FarPlane;
+            float    NearPlane;
+            float    FarPlane;
         } ReductionConstants;
 
         ReductionConstants.CamProjection = Scene.GetCamera()->GetProjectionMatrix();

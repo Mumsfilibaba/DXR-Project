@@ -211,6 +211,8 @@ public:
 
     bool Initialize(const FVulkanPipelineLayoutInfo& LayoutInfo);
 
+    void SetDebugName(const CHAR* InName);
+
     // Retrieve the DescriptorSetIndex and BindingIndex for a certain resource
     bool GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding);
 

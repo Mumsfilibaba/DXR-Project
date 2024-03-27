@@ -244,6 +244,11 @@ public:
         BindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
     }
 
+    FVulkanPipelineLayout* GetLayout() const
+    {
+        return Layout;
+    }
+
 private:
     
     // Binds all the descriptorsets that we want to bind

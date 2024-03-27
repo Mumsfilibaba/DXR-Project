@@ -73,14 +73,14 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 }
             };
         }
-        
+
         // Allocate Buffer and Image Infos
         DSWrites.DescriptorImageInfos.Resize(NumImageInfos);
         FMemory::Memzero(DSWrites.DescriptorImageInfos.Data(), DSWrites.DescriptorImageInfos.SizeInBytes());
-        
+
         DSWrites.DescriptorBufferInfos.Resize(NumBufferInfos);
         FMemory::Memzero(DSWrites.DescriptorBufferInfos.Data(), DSWrites.DescriptorBufferInfos.SizeInBytes());
-        
+
         // Setup Buffer and ImageInfos
         uint32 CurrentImageInfo  = 0;
         uint32 CurrentBufferInfo = 0;
@@ -250,8 +250,14 @@ void FVulkanDescriptorState::UpdateDescriptorSets()
             }
             else if (WriteInfo.pImageInfo)
             {
-                CHECK(WriteInfo.pImageInfo->sampler != DefaultResources.NullSampler);
-                CHECK(WriteInfo.pImageInfo->imageView != DefaultResources.NullImageView);
+                if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                {
+                    CHECK(WriteInfo.pImageInfo->imageView != DefaultResources.NullImageView);
+                }
+                else if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
+                {
+                    CHECK(WriteInfo.pImageInfo->sampler != DefaultResources.NullSampler);
+                }
             }
             else
             {
@@ -294,7 +300,7 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
 {
     FVulkanDescriptorWrites&     DSWrites  = DescriptorSetWrites[DescriptorSetIndex];
     FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
-    
+
     const VkDescriptorType Type = DSWrites.DescriptorWrites[BindingIndex].descriptorType;
     switch(Type)
     {

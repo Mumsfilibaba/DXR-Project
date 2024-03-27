@@ -128,9 +128,14 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
         SetLayoutRemappings = LayoutInfo.SetLayoutRemappings;
     }
 
-    // Store the number of push constants for use later when binding pushconstants
+    // Store the number of push constants for use later when binding push-constants
     SetupResourceMapping(LayoutInfo);
     return true;
+}
+
+void FVulkanPipelineLayout::SetDebugName(const CHAR* InName)
+{
+    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName, LayoutHandle, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
 }
 
 bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding)
@@ -258,7 +263,11 @@ FVulkanPipelineLayout* FVulkanPipelineLayoutManager::FindOrCreateLayout(const FV
     FVulkanPipelineLayout* NewLayout = new FVulkanPipelineLayout(GetDevice());
     if (NewLayout->Initialize(LayoutInfo))
     {
+        // Set a debug-name for the pipeline-layout
+        const FString DebugName = FString::CreateFormatted("PipelineLayout %d", Layouts.Size());
+        NewLayout->SetDebugName(DebugName.Data());
         Layouts.Add(LayoutInfo, NewLayout);
+
         LOG_INFO("Created a new PipelineLayout NumPipelineLayouts=%d", Layouts.Size());
         return NewLayout;
     }
