@@ -2,13 +2,13 @@
 #include "D3D12Resource.h"
 #include "RHI/RHIResources.h"
 
-typedef TSharedRef<class FD3D12TimestampQuery> FD3D12TimestampQueryRef;
+typedef TSharedRef<class FD3D12Query> FD3D12QueryRef;
 
-class FD3D12TimestampQuery : public FRHITimestampQuery, public FD3D12DeviceChild
+class FD3D12Query : public FRHIQuery, public FD3D12DeviceChild
 {
 public:
-    FD3D12TimestampQuery(FD3D12Device* InDevice);
-    virtual ~FD3D12TimestampQuery() = default;
+    FD3D12Query(FD3D12Device* InDevice);
+    virtual ~FD3D12Query() = default;
 
     bool Initialize();
 
@@ -20,7 +20,6 @@ public:
     }
 
     void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
-
     void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
 
     void ResolveQueries(class FD3D12CommandContext& CmdContext);

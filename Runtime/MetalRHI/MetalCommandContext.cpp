@@ -41,11 +41,11 @@ void FMetalCommandContext::RHIFinishContext()
     CommandBuffer = nil;
 }
 
-void FMetalCommandContext::RHIBeginTimeStamp(FRHITimestampQuery* Profiler, uint32 Index)
+void FMetalCommandContext::RHIBeginTimeStamp(FRHIQuery* Profiler, uint32 Index)
 {
 }
 
-void FMetalCommandContext::RHIEndTimeStamp(FRHITimestampQuery* Profiler, uint32 Index)
+void FMetalCommandContext::RHIEndTimeStamp(FRHIQuery* Profiler, uint32 Index)
 {
 }
 

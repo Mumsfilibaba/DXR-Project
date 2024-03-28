@@ -38,8 +38,16 @@ void FVulkanCommandPacket::HandleSubmitFinished()
     }
     
     Resources.Clear();
+
+    // Resolve queries
+    for (const FVulkanQueryRef& Query : QueriesToResolve)
+    {
+        Query->ResolveQueries();
+    }
+
+    QueriesToResolve.Clear();
     
-    // Recycle all the commandpool
+    // Recycle all the CommandPool
     for (FVulkanCommandPool* CommandPool : CommandPools)
     {
         Queue.RecycleCommandPool(CommandPool);
@@ -47,7 +55,7 @@ void FVulkanCommandPacket::HandleSubmitFinished()
     
     CommandPools.Clear();
     
-    // Recycle all the commandbuffers
+    // Recycle all the CommandBuffers
     for (FVulkanCommandBuffer* CommandBuffer : CommandBuffers)
     {
         FVulkanCommandPool* CommandPool = CommandBuffer->GetOwnerPool();

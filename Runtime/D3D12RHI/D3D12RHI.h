@@ -18,7 +18,6 @@ struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
     virtual class FRHI* CreateRHI() override final;
 };
 
-
 class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
@@ -43,7 +42,7 @@ public:
     
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final;
 
-    virtual FRHITimestampQuery* RHICreateTimestampQuery() override final;
+    virtual FRHIQuery* RHICreateQuery() override final;
     
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final;

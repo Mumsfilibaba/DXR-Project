@@ -185,6 +185,8 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
         GetCommandPacket().AddCommandBuffer(CommandBuffer);
         CommandBuffer = nullptr;
 
+        GetCommandPacket().QueriesToResolve = Move(QueriesToResolve);
+
         FVulkanRHI::GetRHI()->SubmitCommands(CommandPacket);
         CommandPacket = nullptr;
     }
@@ -216,7 +218,7 @@ void FVulkanCommandContext::RHIFinishContext()
 {
     // Submit the CommandBuffer
     FinishCommandBuffer(true);
-    
+
     // Update state
     CHECK(bIsRecording == true);
     bIsRecording = false;
@@ -226,18 +228,32 @@ void FVulkanCommandContext::RHIFinishContext()
     CommandContextCS.Unlock();
 }
 
-void FVulkanCommandContext::RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
+void FVulkanCommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
 {
-    // TODO: Implement queries
-    UNREFERENCED_VARIABLE(TimestampQuery);
-    UNREFERENCED_VARIABLE(Index);
+    if (FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query))
+    {
+        FVulkanCommandBuffer& CurrentCommandBuffer = GetCommandBuffer();
+        VulkanQuery->BeginQuery(CurrentCommandBuffer, Index);
+        QueriesToResolve.AddUnique(MakeSharedRef<FVulkanQuery>(VulkanQuery));
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
 }
 
-void FVulkanCommandContext::RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)  
+void FVulkanCommandContext::RHIEndTimeStamp(FRHIQuery* Query, uint32 Index)  
 {
-    // TODO: Implement queries
-    UNREFERENCED_VARIABLE(TimestampQuery);
-    UNREFERENCED_VARIABLE(Index);
+    if (FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query))
+    {
+        FVulkanCommandBuffer& CurrentCommandBuffer = GetCommandBuffer();
+        VulkanQuery->EndQuery(CurrentCommandBuffer, Index);
+        QueriesToResolve.AddUnique(MakeSharedRef<FVulkanQuery>(VulkanQuery));
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
 }
 
 void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)

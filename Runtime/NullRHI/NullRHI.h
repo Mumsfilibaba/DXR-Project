@@ -178,9 +178,9 @@ public:
         return new FNullRHIRayTracingPipelineState();
     }
 
-    virtual class FRHITimestampQuery* RHICreateTimestampQuery() override final
+    virtual class FRHIQuery* RHICreateQuery() override final
     {
-        return new FNullRHITimestampQuery();
+        return new FNullRHIQuery();
     }
 
     virtual struct IRHICommandContext* RHIObtainCommandContext() override final

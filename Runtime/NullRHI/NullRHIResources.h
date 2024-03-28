@@ -134,9 +134,9 @@ private:
 };
 
 
-struct FNullRHITimestampQuery : public FRHITimestampQuery
+struct FNullRHIQuery : public FRHIQuery
 {
-    FNullRHITimestampQuery() = default;
+    FNullRHIQuery() = default;
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final { OutQuery = FRHITimestamp(); }
 

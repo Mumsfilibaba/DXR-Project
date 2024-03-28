@@ -241,6 +241,11 @@ public:
     }
 #endif
 
+    FORCEINLINE void WriteTimestamp(VkPipelineStageFlagBits PipelineStage, VkQueryPool QueryPool, uint32 Query)
+    {
+        vkCmdWriteTimestamp(CommandBuffer, PipelineStage, QueryPool, Query);
+    }
+
     FORCEINLINE VkCommandBuffer GetVkCommandBuffer() const
     {
         return CommandBuffer;

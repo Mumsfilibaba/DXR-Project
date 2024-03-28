@@ -3,11 +3,11 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalTimestampQuery : public FRHITimestampQuery
+class FMetalQuery : public FRHIQuery
 {
 public:
-    FMetalTimestampQuery()  = default;
-    ~FMetalTimestampQuery() = default;
+    FMetalQuery()  = default;
+    ~FMetalQuery() = default;
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final
     {

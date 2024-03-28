@@ -6,7 +6,7 @@
 #include "MetalViewport.h"
 #include "MetalShader.h"
 #include "MetalCommandContext.h"
-#include "MetalTimestampQuery.h"
+#include "MetalQuery.h"
 #include "MetalPipelineState.h"
 #include "MetalRayTracing.h"
 #include "MetalDeviceContext.h"
@@ -44,7 +44,7 @@ public:
     
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final;
 
-    virtual FRHITimestampQuery* RHICreateTimestampQuery() override final;
+    virtual FRHIQuery* RHICreateQuery() override final;
     
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final;

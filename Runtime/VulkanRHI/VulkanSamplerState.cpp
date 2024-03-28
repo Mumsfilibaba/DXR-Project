@@ -40,6 +40,8 @@ bool FVulkanSamplerState::Initialize()
         VULKAN_ERROR("Failed to create sampler");
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }

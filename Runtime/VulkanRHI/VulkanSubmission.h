@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanFence.h"
+#include "VulkanQuery.h"
 #include "Core/Containers/Array.h"
 
 class FVulkanCommandPool;
@@ -39,7 +40,8 @@ public:
         return CommandBuffers.IsEmpty();
     }
 
-    FDeletionQueueArray Resources;
+    FDeletionQueueArray     Resources;
+    TArray<FVulkanQueryRef> QueriesToResolve;
 
 private:
     FVulkanQueue& Queue;

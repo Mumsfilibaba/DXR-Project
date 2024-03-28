@@ -1,6 +1,6 @@
 #include "VulkanRHI.h"
 #include "VulkanLoader.h"
-#include "VulkanTimestampQuery.h"
+#include "VulkanQuery.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
 #include "VulkanBuffer.h"
@@ -113,6 +113,7 @@ bool FVulkanRHI::Initialize()
     AdapterDesc.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
     AdapterDesc.RequiredFeatures.imageCubeArray            = VK_TRUE;
     AdapterDesc.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
+    AdapterDesc.RequiredFeatures12.hostQueryReset          = VK_TRUE;
 
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(AdapterDesc))
@@ -240,7 +241,6 @@ FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& 
     return Result.ReleaseOwnership();
 }
 
-
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
     FVulkanViewportRef NewViewport = new FVulkanViewport(Device, GraphicsCommandContext, InDesc);
@@ -254,16 +254,16 @@ FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
     }
 }
 
-FRHITimestampQuery* FVulkanRHI::RHICreateTimestampQuery()
+FRHIQuery* FVulkanRHI::RHICreateQuery()
 {
-    FVulkanTimestampQueryRef NewTimestampQuery = new FVulkanTimestampQuery(Device);
-    if (!NewTimestampQuery->Initialize())
+    FVulkanQueryRef NewQuery = new FVulkanQuery(Device);
+    if (!NewQuery->Initialize())
     {
         return nullptr;
     }
     else
     {
-        return NewTimestampQuery.ReleaseOwnership();
+        return NewQuery.ReleaseOwnership();
     }
 }
 

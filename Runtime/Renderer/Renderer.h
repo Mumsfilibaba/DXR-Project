@@ -142,7 +142,7 @@ private:
     FRHIGraphicsPipelineStateRef  FXAADebugPSO;
     FRHIPixelShaderRef            FXAADebugShader;
 
-    FRHITimestampQueryRef TimestampQueries;
+    FRHIQueryRef TimestampQueries;
 
     FRHICommandStatistics FrameStatistics;
 

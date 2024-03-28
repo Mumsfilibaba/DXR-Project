@@ -233,14 +233,14 @@ public:
         EmplaceCommand<FRHICommandEndFrame>();
     }
 
-    FORCEINLINE void BeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) noexcept
+    FORCEINLINE void BeginTimeStamp(FRHIQuery* Query, uint32 Index) noexcept
     {
-        EmplaceCommand<FRHICommandBeginTimeStamp>(TimestampQuery, Index);
+        EmplaceCommand<FRHICommandBeginTimeStamp>(Query, Index);
     }
 
-    FORCEINLINE void EndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) noexcept
+    FORCEINLINE void EndTimeStamp(FRHIQuery* Query, uint32 Index) noexcept
     {
-        EmplaceCommand<FRHICommandEndTimeStamp>(TimestampQuery, Index);
+        EmplaceCommand<FRHICommandEndTimeStamp>(Query, Index);
     }
 
     FORCEINLINE void ClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) noexcept
