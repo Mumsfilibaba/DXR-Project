@@ -8,6 +8,41 @@
 
 class FVulkanDevice;
 class FVulkanBuffer;
+class FVulkanCommandContext;
+
+class FBarrierBatcher
+{
+    struct FBatch
+    {
+        FBatch(VkPipelineStageFlags InSrcStageMask, VkPipelineStageFlags InDstStageMask, VkDependencyFlags InDependencyFlags)
+            : SrcStageMask(InSrcStageMask)
+            , DstStageMask(InDstStageMask)
+            , DependencyFlags(InDependencyFlags)
+        {
+        }
+
+        VkPipelineStageFlags          SrcStageMask;
+        VkPipelineStageFlags          DstStageMask;
+        VkDependencyFlags             DependencyFlags;
+        TArray<VkMemoryBarrier>       MemoryBarriers;
+        TArray<VkBufferMemoryBarrier> BufferMemoryBarriers;
+        TArray<VkImageMemoryBarrier>  ImageMemoryBarriers;
+    };
+
+public:
+    FBarrierBatcher(FVulkanCommandContext& InContext);
+    ~FBarrierBatcher() = default;
+
+    void AddMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkMemoryBarrier& MemoryBarrier);
+    void AddBufferMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier& BufferMemoryBarrier);
+    void AddImageMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier& ImageMemoryBarrier);
+
+    void FlushBarriers();
+
+private:
+    FVulkanCommandContext& Context;
+    TArray<FBatch>         Batches;
+};
 
 class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceChild
 {
@@ -121,6 +156,11 @@ public:
         return *CommandBuffer;
     }
 
+    FBarrierBatcher& GetBarrierBatcher()
+    {
+        return BarrierBatcher;
+    }
+
     bool IsRecording() const
     {
         return bIsRecording;
@@ -142,11 +182,13 @@ private:
     FVulkanCommandPool*        CommandPool;
     FVulkanCommandBuffer*      CommandBuffer;
     FVulkanCommandPacket*      CommandPacket;
+
+    FBarrierBatcher            BarrierBatcher;
     FVulkanCommandContextState ContextState;
 
     // Keeps track of the recording state of the context, i.e if RHIStartContext has been called
     bool bIsRecording;
 
-    // TODO: The whole commandcontext should only be used from one thread at a time
+    // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection CommandContextCS;
 };

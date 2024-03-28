@@ -371,7 +371,6 @@ bool FVulkanShader::InitializeShaderLayout()
             if (spvc_compiler_get_declared_struct_size(Compiler, type, &StructSize) == SPVC_SUCCESS)
             {
                 NumPushBytes = FMath::Max(NumPushBytes, StructSize);
-                VULKAN_INFO("    StructSize=%d", StructSize);
             }
             else
             {

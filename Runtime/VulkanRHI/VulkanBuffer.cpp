@@ -50,7 +50,6 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     // TODO: Look into abstracting these flags
     BufferCreateInfo.usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     
-    
     // VK_KHR_buffer_device_address (Core in 1.2)
     VkMemoryAllocateFlags AllocateFlags = 0;
     if (FVulkanBufferDeviceAddressKHR::IsEnabled() && Desc.IsDefault())
@@ -90,7 +89,6 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         return false;
     }
     
-    
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (Desc.IsDynamic())
     {
@@ -100,7 +98,6 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     {
         MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     }
-    
     
     // Allocate memory based on the buffer
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
