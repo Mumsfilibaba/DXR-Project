@@ -14,7 +14,6 @@ public:
     virtual ~FVulkanQuery();
 
     virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
-
     virtual uint64 GetFrequency() const override final;
 
     bool Initialize();
@@ -42,6 +41,13 @@ private:
 
     uint32 NumQueries;
     float  TimestampPeriod;
-
 };
 
+class FVulkanQueryPool : public FVulkanDeviceChild
+{
+public:
+    FVulkanQueryPool(FVulkanDevice* InDevice);
+    ~FVulkanQueryPool();
+    
+    
+};
