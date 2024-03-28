@@ -9,6 +9,7 @@ public:
 
     bool Initialize();
 
+    bool CompressBC1(const FRHITextureRef& Source, FRHITextureRef& Output);
     bool CompressBC6(const FRHITextureRef& Source, FRHITextureRef& Output);
     bool CompressCubeMapBC6(const FRHITextureRef& Source, FRHITextureRef& Output);
 
