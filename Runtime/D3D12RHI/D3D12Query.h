@@ -12,11 +12,11 @@ public:
 
     bool Initialize();
 
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final;
+    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final;
 
     virtual uint64 GetFrequency() const override final
     {
-        return static_cast<uint64>(Frequency);
+        return Frequency;
     }
 
     void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
@@ -37,7 +37,7 @@ private:
     FD3D12ResourceRef         WriteResource;
 
     TArray<FD3D12ResourceRef> ReadResources;
-    TArray<FRHITimestamp>     TimeQueries;
+    TArray<FTimingQuery>     TimeQueries;
 
     UINT64 Frequency;
 };

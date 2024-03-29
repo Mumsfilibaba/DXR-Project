@@ -185,7 +185,12 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
         GetCommandPacket().AddCommandBuffer(CommandBuffer);
         CommandBuffer = nullptr;
 
-        GetCommandPacket().QueriesToResolve = Move(QueriesToResolve);
+        for (FVulkanQuery* Query : Queries)
+        {
+            GetCommandPacket().QueryPools.Add(Query->DetachQueryPool());
+        }
+
+        Queries.Clear();
 
         FVulkanRHI::GetRHI()->SubmitCommands(CommandPacket);
         CommandPacket = nullptr;
@@ -234,7 +239,7 @@ void FVulkanCommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
     {
         FVulkanCommandBuffer& CurrentCommandBuffer = GetCommandBuffer();
         VulkanQuery->BeginQuery(CurrentCommandBuffer, Index);
-        QueriesToResolve.AddUnique(MakeSharedRef<FVulkanQuery>(VulkanQuery));
+        Queries.AddUnique(VulkanQuery);
     }
     else
     {
@@ -248,7 +253,7 @@ void FVulkanCommandContext::RHIEndTimeStamp(FRHIQuery* Query, uint32 Index)
     {
         FVulkanCommandBuffer& CurrentCommandBuffer = GetCommandBuffer();
         VulkanQuery->EndQuery(CurrentCommandBuffer, Index);
-        QueriesToResolve.AddUnique(MakeSharedRef<FVulkanQuery>(VulkanQuery));
+        Queries.AddUnique(VulkanQuery);
     }
     else
     {

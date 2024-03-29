@@ -18,10 +18,10 @@ public:
     ~FVulkanQueue();
 
     bool Initialize();
-    
+
     FVulkanCommandPool* ObtainCommandPool();
     void RecycleCommandPool(FVulkanCommandPool* InCommandPool);
-    
+
     bool ExecuteCommandBuffer(class FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class FVulkanFence* Fence);
 
     void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);

@@ -187,7 +187,7 @@ private:
     FBarrierBatcher            BarrierBatcher;
     FVulkanCommandContextState ContextState;
 
-    TArray<FVulkanQueryRef>    QueriesToResolve;
+    TArray<FVulkanQuery*>      Queries;
 
     // Keeps track of the recording state of the context, i.e if RHIStartContext has been called
     bool bIsRecording;

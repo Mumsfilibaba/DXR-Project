@@ -40,8 +40,8 @@ public:
         return CommandBuffers.IsEmpty();
     }
 
-    FDeletionQueueArray     Resources;
-    TArray<FVulkanQueryRef> QueriesToResolve;
+    TArray<FVulkanQueryPool*> QueryPools;
+    FDeletionQueueArray       Resources;
 
 private:
     FVulkanQueue& Queue;

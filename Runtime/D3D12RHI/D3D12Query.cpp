@@ -39,7 +39,7 @@ bool FD3D12Query::Initialize()
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FTimingQuery);
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;
@@ -71,7 +71,7 @@ bool FD3D12Query::Initialize()
     return true;
 }
 
-void FD3D12Query::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
+void FD3D12Query::GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const
 {
     if (Index >= static_cast<uint32>(TimeQueries.Size()))
     {
@@ -160,7 +160,7 @@ bool FD3D12Query::AllocateReadResource()
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FTimingQuery);
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;

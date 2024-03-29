@@ -1,21 +1,123 @@
 #include "VulkanQuery.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Platform/PlatformInterlocked.h"
 
 static TAutoConsoleVariable<int32> CVarVulkanQueryPoolSize(
     "VulkanRHI.QueryPoolSize",
     "Default size of QueryPools in Vulkan",
     256);
 
+// TODO: Store this with other globals in the Vulkan module
+static float GTimestampPeriod = 0.0f;
 
 FVulkanQuery::FVulkanQuery(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
-    , QueryPool(VK_NULL_HANDLE)
-    , NumQueries(0)
-    , TimestampPeriod(0.0f)
+    , QueryPool(nullptr)
+    , ResolvedQueryPool(nullptr)
 {
 }
 
 FVulkanQuery::~FVulkanQuery()
+{
+    if (ResolvedQueryPool)
+    {
+        GetDevice()->GetQueryPoolManager().RecycleQueryPool(ResolvedQueryPool);
+    }
+}
+
+void FVulkanQuery::GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const
+{
+    FVulkanQueryPool* CurrentPool = ResolvedQueryPool;
+    if (CurrentPool)
+    {
+        const uint32 FinalIndex = Index * 2;
+        if (FinalIndex < CurrentPool->QueryData.Size())
+        {
+            const FVulkanTimingQuery& FirstQuery = CurrentPool->QueryData[FinalIndex];
+            if (FirstQuery.Availability)
+            {
+                OutQuery.Begin = static_cast<double>(FirstQuery.Timestamp) * GTimestampPeriod;
+            }
+            else
+            {
+                OutQuery.Begin = 0;
+            }
+
+            const FVulkanTimingQuery& SecondQuery = CurrentPool->QueryData[FinalIndex + 1];
+            if (SecondQuery.Availability)
+            {
+                OutQuery.End = static_cast<double>(SecondQuery.Timestamp) * GTimestampPeriod;
+            }
+            else
+            {
+                OutQuery.End = OutQuery.Begin;
+            }
+
+            return;
+        }
+    }
+
+    // NOTE: If we do not have any resolved queries yet, then return a null query
+    OutQuery.Begin = 0;
+    OutQuery.End   = 0;
+}
+
+uint64 FVulkanQuery::GetFrequency() const
+{
+    return 1000000000;
+}
+
+void FVulkanQuery::BeginQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index)
+{
+    if (!QueryPool)
+    {
+        QueryPool = GetDevice()->GetQueryPoolManager().ObtainQueryPool();
+        CHECK(QueryPool->RHIQuery == nullptr);
+        QueryPool->RHIQuery = this;
+    }
+
+    const uint32 FinalIndex = Index * 2;
+    if (QueryPool->AllocateIndex(FinalIndex))
+    {
+        CommandBuffer->WriteTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, QueryPool->GetVkQueryPool(), FinalIndex);
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
+}
+
+void FVulkanQuery::EndQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index)
+{
+    if (!QueryPool)
+    {
+        QueryPool = GetDevice()->GetQueryPoolManager().ObtainQueryPool();
+        CHECK(QueryPool->RHIQuery == nullptr);
+        QueryPool->RHIQuery = this;
+    }
+
+    const uint32 FinalIndex = (Index * 2) + 1;
+    if (QueryPool->AllocateIndex(FinalIndex))
+    {
+        CommandBuffer->WriteTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, QueryPool->GetVkQueryPool(), FinalIndex);
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
+}
+
+FVulkanQueryPool::FVulkanQueryPool(FVulkanDevice* InDevice)
+    : FVulkanDeviceChild(InDevice)
+    , QueryPool(VK_NULL_HANDLE)
+    , UsedQueries()
+    , QueryData()
+    , RHIQuery(nullptr)
+    , NumQueries(0)
+{
+}
+
+FVulkanQueryPool::~FVulkanQueryPool()
 {
     if (VULKAN_CHECK_HANDLE(QueryPool))
     {
@@ -24,8 +126,16 @@ FVulkanQuery::~FVulkanQuery()
     }
 }
 
-bool FVulkanQuery::Initialize()
+bool FVulkanQueryPool::Initialize()
 {
+    // TODO: Do this once at DeviceCreation
+    if (GTimestampPeriod == 0.0f)
+    {
+        const VkPhysicalDeviceProperties& Properties = GetDevice()->GetPhysicalDevice()->GetProperties();
+        GTimestampPeriod = Properties.limits.timestampPeriod;
+        CHECK(GTimestampPeriod != 0.0f);
+    }
+
     VkQueryPoolCreateInfo QueryPoolCreateInfo;
     FMemory::Memzero(&QueryPoolCreateInfo, sizeof(VkQueryPoolCreateInfo));
 
@@ -41,75 +151,115 @@ bool FVulkanQuery::Initialize()
     }
     else
     {
-        vkResetQueryPool(GetDevice()->GetVkDevice(), QueryPool, 0, NumQueries);
+        // Reset pool before use
+        Reset();
+
+        // Allocate enough timing queries
+        QueryData.Resize(NumQueries);
+        UsedQueries.Resize(NumQueries);
     }
 
-    const VkPhysicalDeviceProperties& Properties = GetDevice()->GetPhysicalDevice()->GetProperties();
-    TimestampPeriod = Properties.limits.timestampPeriod;
     return true;
 }
 
-void FVulkanQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
+void FVulkanQueryPool::Reset()
 {
-    TScopedLock Lock(QueriesCS);
+    // Reset query handle
+    vkResetQueryPool(GetDevice()->GetVkDevice(), QueryPool, 0, NumQueries);
 
-    if (Index < Queries.Size())
+    // Reset RHI Query object
+    RHIQuery = nullptr;
+
+    // Release all "used" indices
+    UsedQueries.Reset();
+}
+
+void FVulkanQueryPool::ResolveQueries()
+{
+    if (UsedQueries.HasNoBitSet())
     {
-        OutQuery = Queries[Index];
+        return;
+    }
+
+    // NOTE: This means that queries between 0 and MostSignificant could be unwritten, however that is solved since we have the availability bit set
+    const uint32 NumUsedQueries = static_cast<uint32>(UsedQueries.MostSignificant()) + 1;
+
+    const VkQueryResultFlags Flags = VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT;
+    VkResult result = vkGetQueryPoolResults(GetDevice()->GetVkDevice(), QueryPool, 0, NumUsedQueries, QueryData.SizeInBytes(), QueryData.Data(), sizeof(FVulkanTimingQuery), Flags);
+    if (result == VK_SUCCESS || result == VK_NOT_READY)
+    {
+        FVulkanQueryPool* OldQueryPool = reinterpret_cast<FVulkanQueryPool*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&RHIQuery->ResolvedQueryPool), this));
+        if (OldQueryPool)
+        {
+            GetDevice()->GetQueryPoolManager().RecycleQueryPool(OldQueryPool);
+        }
     }
     else
-    {
-        OutQuery.Begin = 0;
-        OutQuery.End   = 0;
-    }
-}
-
-uint64 FVulkanQuery::GetFrequency() const
-{
-    return 1000000;
-}
-
-void FVulkanQuery::BeginQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index)
-{
-    const uint32 FinalIndex = Index * 2;
-    if (FinalIndex < NumQueries)
-    {
-        CommandBuffer->WriteTimestamp(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, QueryPool, FinalIndex);
-    }
-    else
-    {
-        DEBUG_BREAK();
-    }
-}
-
-void FVulkanQuery::EndQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index)
-{
-    const uint32 FinalIndex = (Index * 2) + 1;
-    if (FinalIndex < NumQueries)
-    {
-        CommandBuffer->WriteTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, QueryPool, FinalIndex);
-    }
-    else
-    {
-        DEBUG_BREAK();
-    }
-}
-
-void FVulkanQuery::ResolveQueries()
-{
-    TScopedLock Lock(QueriesCS);
-
-    // Each timestamp contains 2 queries (Both begin and end)
-    const int32 NumTimestamps = NumQueries / 2;
-    Queries.Resize(NumTimestamps);
-
-    VkResult result = vkGetQueryPoolResults(GetDevice()->GetVkDevice(), QueryPool, 0, NumQueries, Queries.SizeInBytes(), Queries.Data(), sizeof(uint64), VK_QUERY_RESULT_64_BIT);
-    if (VULKAN_FAILED(result))
     {
         VULKAN_ERROR("Failed to retrieve QueryPool results");
     }
-    else
+}
+
+bool FVulkanQueryPool::AllocateIndex(uint32 Index)
+{
+    if (Index >= static_cast<uint32>(UsedQueries.Size()))
+        return false;
+
+    if (UsedQueries[Index])
+        return false;
+
+    UsedQueries[Index] = true;
+    return true;
+}
+
+FVulkanQueryPoolManager::FVulkanQueryPoolManager(FVulkanDevice* InDevice)
+    : FVulkanDeviceChild(InDevice)
+    , QueryPools()
+{
+}
+
+FVulkanQueryPoolManager::~FVulkanQueryPoolManager()
+{
+    ReleaseAll();
+}
+
+FVulkanQueryPool* FVulkanQueryPoolManager::ObtainQueryPool()
+{
     {
-        vkResetQueryPool(GetDevice()->GetVkDevice(), QueryPool, 0, NumQueries);
+        TScopedLock Lock(QueryPoolsCS);
+
+        if (!QueryPools.IsEmpty())
+        {
+            FVulkanQueryPool* QueryPool = QueryPools.LastElement();
+            QueryPool->Reset();
+            QueryPools.Pop();
+            return QueryPool;
+        }
     }
+
+    FVulkanQueryPool* QueryPool = new FVulkanQueryPool(GetDevice());
+    if (!QueryPool->Initialize())
+    {
+        return nullptr;
+    }
+
+    return QueryPool;
+}
+
+void FVulkanQueryPoolManager::RecycleQueryPool(FVulkanQueryPool* InQueryPool)
+{
+    TScopedLock Lock(QueryPoolsCS);
+    QueryPools.Add(InQueryPool);
+}
+
+void FVulkanQueryPoolManager::ReleaseAll()
+{
+    TScopedLock Lock(QueryPoolsCS);
+
+    for (FVulkanQueryPool* QueryPool : QueryPools)
+    {
+        delete QueryPool;
+    }
+
+    QueryPools.Clear();
 }

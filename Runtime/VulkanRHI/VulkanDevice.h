@@ -11,6 +11,7 @@
 #include "VulkanDescriptorSet.h"
 #include "VulkanPipelineState.h"
 #include "VulkanDescriptorSetCache.h"
+#include "VulkanQuery.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -155,6 +156,7 @@ public:
     FVulkanPipelineCache&         GetPipelineCache()         { return PipelineCache; }
     FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return DescriptorSetCache; }
     FVulkanDefaultResources&      GetDefaultResources()      { return DefaultResources; }
+    FVulkanQueryPoolManager&      GetQueryPoolManager()      { return QueryPoolManager; }
 
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
@@ -207,6 +209,7 @@ private:
     FVulkanPipelineCache         PipelineCache;
     FVulkanDescriptorSetCache    DescriptorSetCache;
     FVulkanDefaultResources      DefaultResources;
+    FVulkanQueryPoolManager      QueryPoolManager;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
 

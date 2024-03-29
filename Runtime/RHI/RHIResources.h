@@ -1368,7 +1368,7 @@ protected:
 };
 
 
-struct FRHITimestamp
+struct FTimingQuery
 {
     uint64 Begin = 0;
     uint64 End   = 0;
@@ -1382,7 +1382,7 @@ protected:
     virtual ~FRHIQuery() = default;
 
 public:
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const = 0;
+    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const = 0;
 
     virtual uint64 GetFrequency() const = 0;
 };

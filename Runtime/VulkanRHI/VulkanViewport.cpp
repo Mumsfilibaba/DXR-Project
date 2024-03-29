@@ -115,7 +115,7 @@ bool FVulkanViewport::CreateSwapChain()
             FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
             if (NewImageSemaphore->Initialize())
             {
-                NewImageSemaphore->SetName("ImageSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
+                NewImageSemaphore->SetDebugName("ImageSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
                 ImageSemaphores[Index] = NewImageSemaphore;
             }
             else
@@ -126,7 +126,7 @@ bool FVulkanViewport::CreateSwapChain()
             FVulkanSemaphoreRef NewRenderSemaphore = new FVulkanSemaphore(GetDevice());
             if (NewRenderSemaphore->Initialize())
             {
-                NewRenderSemaphore->SetName("RenderSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
+                NewRenderSemaphore->SetDebugName("RenderSemaphore[" + TTypeToString<int32>::ToString(Index) + "]");
                 RenderSemaphores[Index] = NewRenderSemaphore;
             }
             else
@@ -164,7 +164,7 @@ bool FVulkanViewport::CreateSwapChain()
         CommandContext->RHIStartContext();
     }
 
-    // We always needs to aquire the next image after we have created a swapchain
+    // We always needs to acquire the next image after we have created a swapchain
     bAquireNextImage = true;
 
     int32 Index = 0;
@@ -279,7 +279,7 @@ bool FVulkanViewport::Present(bool bVerticalSync)
     return true;
 }
 
-void FVulkanViewport::SetName(const FString& InName)
+void FVulkanViewport::SetDebugName(const FString& InName)
 {
     // Name the swapchain object
     if (SwapChain)

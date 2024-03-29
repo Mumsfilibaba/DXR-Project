@@ -19,7 +19,7 @@ public:
 
     bool Initialize();
 
-    bool SetName(const FString& Name);
+    bool SetDebugName(const FString& Name);
 
     FORCEINLINE VkSemaphore GetVkSemaphore() const
     {

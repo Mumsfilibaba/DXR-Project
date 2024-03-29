@@ -205,16 +205,7 @@ public:
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }
 
-    FORCEINLINE void PipelineBarrier(
-        VkPipelineStageFlags         SrcStageMask, 
-        VkPipelineStageFlags         DstStageMask, 
-        VkDependencyFlags            DependencyFlags,
-        uint32                       MemoryBarrierCount, 
-        const VkMemoryBarrier*       MemoryBarriers, 
-        uint32                       BufferMemoryBarrierCount, 
-        const VkBufferMemoryBarrier* BufferMemoryBarriers, 
-        uint32                       ImageMemoryBarrierCount, 
-        const VkImageMemoryBarrier*  ImageMemoryBarriers)
+    FORCEINLINE void PipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 MemoryBarrierCount, const VkMemoryBarrier* MemoryBarriers, uint32 BufferMemoryBarrierCount, const VkBufferMemoryBarrier* BufferMemoryBarriers, uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier*  ImageMemoryBarriers)
     {
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, MemoryBarrierCount, MemoryBarriers, BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }

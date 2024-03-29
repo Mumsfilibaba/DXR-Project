@@ -256,15 +256,7 @@ FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 
 FRHIQuery* FVulkanRHI::RHICreateQuery()
 {
-    FVulkanQueryRef NewQuery = new FVulkanQuery(Device);
-    if (!NewQuery->Initialize())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewQuery.ReleaseOwnership();
-    }
+    return new FVulkanQuery(Device);
 }
 
 FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)

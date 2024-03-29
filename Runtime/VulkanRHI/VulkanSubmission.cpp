@@ -40,12 +40,12 @@ void FVulkanCommandPacket::HandleSubmitFinished()
     Resources.Clear();
 
     // Resolve queries
-    for (const FVulkanQueryRef& Query : QueriesToResolve)
+    for (FVulkanQueryPool* Query : QueryPools)
     {
         Query->ResolveQueries();
     }
 
-    QueriesToResolve.Clear();
+    QueryPools.Clear();
     
     // Recycle all the CommandPool
     for (FVulkanCommandPool* CommandPool : CommandPools)

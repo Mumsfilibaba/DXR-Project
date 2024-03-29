@@ -38,6 +38,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , PipelineCache(this)
     , DescriptorSetCache(this)
     , DefaultResources()
+    , QueryPoolManager(this)
     , bSupportsDepthClip(false)
     , bSupportsConservativeRasterization(false)
     , bSupportsPipelineCacheControl(false)
@@ -71,6 +72,9 @@ FVulkanDevice::~FVulkanDevice()
     // Release DescriptorSetCache
     DescriptorSetCache.Release();
     
+    // Release all QueryPools
+    QueryPoolManager.ReleaseAll();
+
     // Release all PipelineLayoutManager
     PipelineLayoutManager.Release();
 

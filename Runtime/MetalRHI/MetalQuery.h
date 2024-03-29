@@ -9,9 +9,9 @@ public:
     FMetalQuery()  = default;
     ~FMetalQuery() = default;
 
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final
+    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final
     {
-        OutQuery = FRHITimestamp();
+        OutQuery = FTimingQuery();
     }
 
     virtual uint64 GetFrequency() const override final

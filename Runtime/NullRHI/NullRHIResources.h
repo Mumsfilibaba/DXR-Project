@@ -138,7 +138,7 @@ struct FNullRHIQuery : public FRHIQuery
 {
     FNullRHIQuery() = default;
 
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const override final { OutQuery = FRHITimestamp(); }
+    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final { OutQuery = FTimingQuery(); }
 
     virtual uint64 GetFrequency() const override final { return 1; }
 };
