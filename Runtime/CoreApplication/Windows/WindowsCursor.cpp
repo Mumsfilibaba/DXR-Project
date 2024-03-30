@@ -57,13 +57,14 @@ void FWindowsCursor::SetPosition(int32 x, int32 y) const
 FIntVector2 FWindowsCursor::GetPosition() const
 {
     POINT CursorPos = { 0, 0 };
-    CHECK(::GetCursorPos(&CursorPos) == TRUE);
-    return FIntVector2{ CursorPos.x, CursorPos.y };
+    ::GetCursorPos(&CursorPos);
+    return FIntVector2(CursorPos.x, CursorPos.y);
 }
 
 void FWindowsCursor::SetVisibility(bool bVisible)
 {
     // TODO: Investigate if we need to do more in order to keep track of the ShowCursor calls
+
     if (bVisible)
     {
         if (!bIsVisible)

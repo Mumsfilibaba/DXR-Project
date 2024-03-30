@@ -8,7 +8,6 @@ class APPLICATION_API FImGui
 {
 public:
     static void CreateContext();
-
     static void DestroyContext();
 
     static bool IsInitialized()
@@ -26,30 +25,28 @@ public:
     static void SetMainViewport(FViewport* InViewport);
 
     static FResponse OnGamepadButtonEvent(FKey Key, bool bIsDown);
-
     static FResponse OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, float Analog);
 
     static FResponse OnKeyEvent(FKey Key, FModifierKeyState ModifierKeyState, bool bIsDown);
-
     static FResponse OnKeyCharEvent(uint32 Character);
 
     static FResponse OnMouseMoveEvent(int32 x, int32 y);
-
     static FResponse OnMouseButtonEvent(FKey Key, bool bIsDown);
-
     static FResponse OnMouseScrollEvent(float ScrollDelta, bool bVertical);
-
-    static FResponse OnWindowResize(void* PlatformHandle);
-
-    static FResponse OnWindowMoved(void* PlatformHandle);
-
-    static FResponse OnFocusLost();
-
-    static FResponse OnFocusGained();
-
     static FResponse OnMouseLeft();
 
+    static FResponse OnWindowResize(void* PlatformHandle);
+    static FResponse OnWindowMoved(void* PlatformHandle);
     static FResponse OnWindowClose(void* PlatformHandle);
+
+    static FResponse OnFocusLost();
+    static FResponse OnFocusGained();
+
+    static FORCEINLINE bool IsMultiViewportEnabled()
+    {
+        ImGuiIO& ImGuiState = ImGui::GetIO();
+        return (ImGuiState.BackendFlags & ImGuiBackendFlags_PlatformHasViewports) == ImGuiBackendFlags_PlatformHasViewports;
+    }
 
     static FORCEINLINE FViewportData* GetMainViewportData()
     {
@@ -63,12 +60,14 @@ public:
     
     static FORCEINLINE ImVec2 GetDisplaySize()
     {
-        return ImGui::GetIO().DisplaySize;
+        ImGuiIO& ImGuiState = ImGui::GetIO();
+        return ImGuiState.DisplaySize;
     }
 
     static FORCEINLINE ImVec2 GetDisplayFramebufferScale()
     {
-        return ImGui::GetIO().DisplayFramebufferScale;
+        ImGuiIO& ImGuiState = ImGui::GetIO();
+        return ImGuiState.DisplayFramebufferScale;
     }
 
     static FORCEINLINE ImVec2 GetMainViewportPos()
