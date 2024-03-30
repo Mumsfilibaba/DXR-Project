@@ -70,8 +70,9 @@ void FMacCursor::SetCursor(ECursor Cursor)
 
 void FMacCursor::SetPosition(int32 x, int32 y) const
 {
-    CGPoint NewPosition = CGPointMake(x, y);
-    CGWarpMouseCursorPosition(CGPointMake(NewPosition.x, CGDisplayBounds(CGMainDisplayID()).size.height - NewPosition.y - 1));
+    CGPoint NewPosition   = CGPointMake(x, y);
+    CGRect  DisplayBounds = CGDisplayBounds(CGMainDisplayID());
+    CGWarpMouseCursorPosition(CGPointMake(NewPosition.x, DisplayBounds.size.height - NewPosition.y));
     
     if (bIsVisible)
     {
@@ -82,7 +83,8 @@ void FMacCursor::SetPosition(int32 x, int32 y) const
 FIntVector2 FMacCursor::GetPosition() const
 {
     NSPoint CursorPosition = [NSEvent mouseLocation];
-    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+    CGRect  DisplayBounds  = CGDisplayBounds(CGMainDisplayID());
+    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(DisplayBounds.size.height - CursorPosition.y));
 }
 
 void FMacCursor::SetVisibility(bool bVisible)

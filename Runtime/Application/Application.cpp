@@ -4,12 +4,18 @@
 #include "Input/Keys.h"
 #include "Input/InputMapper.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/InputDevice.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
+
+static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
+    "ImGui.UseWindowDPIScale",
+    "Scale ImGui elements with the Window DPI scale",
+    false);
 
 struct FEventDispatcher
 {
@@ -24,7 +30,7 @@ struct FEventDispatcher
 
         bool ShouldProcess() const
         {
-            return (Index > 0) && (EventHandlers.Size() > 0);
+            return Index > 0 && !EventHandlers.IsEmpty();
         }
 
         void Next()
@@ -274,7 +280,6 @@ void FApplication::Tick(FTimespan DeltaTime)
     const float Delta = static_cast<float>(DeltaTime.AsMilliseconds());
     PlatformApplication->Tick(Delta);
 
-    // TODO: Investigate if this is a problem
     if (!MainWindow)
     {
         return;
@@ -287,8 +292,9 @@ void FApplication::Tick(FTimespan DeltaTime)
     UIState.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
 
     // Setup the display scale from the Main-Window
-    UIState.FontGlobalScale         = 1.0f; // MainWindow->GetWindowDpiScale();
-    UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
+    const float WindowDPIScale = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDpiScale() : 1.0f;
+    UIState.FontGlobalScale         = WindowDPIScale;
+    UIState.DisplayFramebufferScale = ImVec2(WindowDPIScale, WindowDPIScale);
 
     // Retrieve the current active window
     TSharedRef<FGenericWindow> ForegroundWindow = GetForegroundWindow();
