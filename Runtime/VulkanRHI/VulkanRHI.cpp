@@ -8,6 +8,7 @@
 #include "VulkanResourceViews.h"
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
+#include "VulkanDeviceLimits.h"
 #include "Platform/PlatformVulkan.h"
 #include "Core/Misc/ConsoleManager.h"
 
@@ -181,6 +182,13 @@ bool FVulkanRHI::Initialize()
 void FVulkanRHI::RHIBeginFrame()
 {
     // ProcessPendingCommands();
+
+    // Update timestamp period, this is necessary on MoltenVK in order to get correct measurements
+    {
+        VkPhysicalDeviceProperties Properties;
+        vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
+        FVulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
+    }
 }
 
 void FVulkanRHI::RHIEndFrame()

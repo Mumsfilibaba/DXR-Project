@@ -17,8 +17,7 @@ public:
     FVulkanQuery(FVulkanDevice* InDevice);
     virtual ~FVulkanQuery();
 
-    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final;
-
+    virtual void   GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final;
     virtual uint64 GetFrequency() const override final;
 
     void BeginQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index);
@@ -76,7 +75,7 @@ private:
 
 class FVulkanQueryPoolManager : public FVulkanDeviceChild
 {
-public:
+public:   
     FVulkanQueryPoolManager(FVulkanDevice* InDevice);
     ~FVulkanQueryPoolManager();
 

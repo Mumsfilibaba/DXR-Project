@@ -1,4 +1,5 @@
 #include "VulkanQuery.h"
+#include "VulkanDeviceLimits.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformInterlocked.h"
 
@@ -6,9 +7,6 @@ static TAutoConsoleVariable<int32> CVarVulkanQueryPoolSize(
     "VulkanRHI.QueryPoolSize",
     "Default size of QueryPools in Vulkan",
     256);
-
-// TODO: Store this with other globals in the Vulkan module
-static float GTimestampPeriod = 0.0f;
 
 FVulkanQuery::FVulkanQuery(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
@@ -28,38 +26,38 @@ FVulkanQuery::~FVulkanQuery()
 void FVulkanQuery::GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const
 {
     FVulkanQueryPool* CurrentPool = ResolvedQueryPool;
-    if (CurrentPool)
+    if (!CurrentPool)
     {
-        const uint32 FinalIndex = Index * 2;
-        if (FinalIndex < CurrentPool->QueryData.Size())
-        {
-            const FVulkanTimingQuery& FirstQuery = CurrentPool->QueryData[FinalIndex];
-            if (FirstQuery.Availability)
-            {
-                OutQuery.Begin = static_cast<double>(FirstQuery.Timestamp) * GTimestampPeriod;
-            }
-            else
-            {
-                OutQuery.Begin = 0;
-            }
-
-            const FVulkanTimingQuery& SecondQuery = CurrentPool->QueryData[FinalIndex + 1];
-            if (SecondQuery.Availability)
-            {
-                OutQuery.End = static_cast<double>(SecondQuery.Timestamp) * GTimestampPeriod;
-            }
-            else
-            {
-                OutQuery.End = OutQuery.Begin;
-            }
-
-            return;
-        }
+        OutQuery = FTimingQuery{ 0, 0 };
+        return;
+    }
+    
+    const uint32 FinalIndex = Index * 2;
+    if (FinalIndex >= static_cast<uint32>(CurrentPool->QueryData.Size()))
+    {
+        OutQuery = FTimingQuery{ 0, 0 };
+        return;
+    }
+        
+    const FVulkanTimingQuery& FirstQuery = CurrentPool->QueryData[FinalIndex];
+    if (FirstQuery.Availability)
+    {
+        OutQuery.Begin = static_cast<double>(FirstQuery.Timestamp) * static_cast<double>(FVulkanDeviceLimits::TimestampPeriod);
+    }
+    else
+    {
+        OutQuery.Begin = 0;
     }
 
-    // NOTE: If we do not have any resolved queries yet, then return a null query
-    OutQuery.Begin = 0;
-    OutQuery.End   = 0;
+    const FVulkanTimingQuery& SecondQuery = CurrentPool->QueryData[FinalIndex + 1];
+    if (SecondQuery.Availability)
+    {
+        OutQuery.End = static_cast<double>(SecondQuery.Timestamp) * static_cast<double>(FVulkanDeviceLimits::TimestampPeriod);
+    }
+    else
+    {
+        OutQuery.End = OutQuery.Begin;
+    }
 }
 
 uint64 FVulkanQuery::GetFrequency() const
@@ -128,14 +126,6 @@ FVulkanQueryPool::~FVulkanQueryPool()
 
 bool FVulkanQueryPool::Initialize()
 {
-    // TODO: Do this once at DeviceCreation
-    if (GTimestampPeriod == 0.0f)
-    {
-        const VkPhysicalDeviceProperties& Properties = GetDevice()->GetPhysicalDevice()->GetProperties();
-        GTimestampPeriod = Properties.limits.timestampPeriod;
-        CHECK(GTimestampPeriod != 0.0f);
-    }
-
     VkQueryPoolCreateInfo QueryPoolCreateInfo;
     FMemory::Memzero(&QueryPoolCreateInfo, sizeof(VkQueryPoolCreateInfo));
 
