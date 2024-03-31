@@ -265,7 +265,7 @@ bool FRenderer::Create()
     }
     else
     {
-        Resources.CameraBuffer->SetName("CameraBuffer");
+        Resources.CameraBuffer->SetDebugName("CameraBuffer");
     }
 
     // Initialize standard input layout
@@ -371,7 +371,7 @@ bool FRenderer::Create()
         return false;
     }
 
-    if (RHISupportsRayTracing())
+    if (false/*FHardwareSupport::bRayTracing*/)
     {
         if (!RayTracer.Initialize(Resources))
         {
@@ -397,7 +397,7 @@ bool FRenderer::Create()
         }
         else
         {
-            IrradianceMap->SetName("Irradiance Map");
+            IrradianceMap->SetDebugName("Irradiance Map");
         }
 
         FRHITextureRef SpecularIrradianceMap = RHICreateTexture(SpecularIrradianceProbeDesc, EResourceAccess::CopyDest);
@@ -408,7 +408,7 @@ bool FRenderer::Create()
         }
         else
         {
-            SpecularIrradianceMap->SetName("Specular Irradiance Map");
+            SpecularIrradianceMap->SetDebugName("Specular Irradiance Map");
         }
 
         CommandList.TransitionTexture(LightSetup.Skylight.IrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopySource);
@@ -869,7 +869,7 @@ void FRenderer::Tick()
     }
 
     // RayTracing PrePass
-    if (RHISupportsRayTracing())
+    if (false /*FHardwareSupport::bRayTracing*/)
     {
         GPU_TRACE_SCOPE(CommandList, "Ray Tracing");
         RayTracer.PreRender(CommandList, Resources, Scene);
@@ -1265,7 +1265,7 @@ bool FRenderer::InitAA()
     }
     else
     {
-        FXAAPSO->SetName("FXAA PipelineState");
+        FXAAPSO->SetDebugName("FXAA PipelineState");
     }
 
     TArray<FShaderDefine> Defines =
@@ -1303,16 +1303,13 @@ bool FRenderer::InitAA()
 
 bool FRenderer::InitShadingImage()
 {
-    FRHIShadingRateSupport Support;
-    RHIQueryShadingRateSupport(Support);
-
-    if (Support.Tier != ERHIShadingRateTier::Tier2 || Support.ShadingRateImageTileSize == 0)
+    if (FHardwareSupport::ShadingRateTier != EShadingRateTier::Tier2 || FHardwareSupport::ShadingRateImageTileSize == 0)
     {
         return true;
     }
 
-    const uint32 Width  = Resources.MainViewport->GetWidth() / Support.ShadingRateImageTileSize;
-    const uint32 Height = Resources.MainViewport->GetHeight() / Support.ShadingRateImageTileSize;
+    const uint32 Width  = Resources.MainViewport->GetWidth() / FHardwareSupport::ShadingRateImageTileSize;
+    const uint32 Height = Resources.MainViewport->GetHeight() / FHardwareSupport::ShadingRateImageTileSize;
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
     ShadingImage = RHICreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
@@ -1323,7 +1320,7 @@ bool FRenderer::InitShadingImage()
     }
     else
     {
-        ShadingImage->SetName("Shading Rate Image");
+        ShadingImage->SetDebugName("Shading Rate Image");
     }
 
     TArray<uint8> ShaderCode;

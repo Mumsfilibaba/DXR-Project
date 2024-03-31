@@ -280,7 +280,7 @@ void FVulkanMemoryHeap::Unmap(const FVulkanMemoryAllocation& Allocation)
     }
 }
 
-void FVulkanMemoryHeap::SetName(const FString& InName)
+void FVulkanMemoryHeap::SetDebugName(const FString& InName)
 {
     SCOPED_LOCK(HeapCS);
 

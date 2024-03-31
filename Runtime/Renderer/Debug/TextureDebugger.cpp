@@ -125,7 +125,7 @@ void FRenderTargetDebugWindow::Paint()
 
                     if (ImGui::IsItemHovered())
                     {
-                        ImGui::SetTooltip("%s", CurrImage->Texture->GetName().GetCString());
+                        ImGui::SetTooltip("%s", CurrImage->Texture->GetDebugName().GetCString());
                     }
 
                     ImGui::Separator();

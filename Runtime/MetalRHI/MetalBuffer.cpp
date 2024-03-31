@@ -83,7 +83,7 @@ bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     return true;
 }
 
-void FMetalBuffer::SetName(const FString& InName)
+void FMetalBuffer::SetDebugName(const FString& InName)
 {
     @autoreleasepool
     {
@@ -95,7 +95,7 @@ void FMetalBuffer::SetName(const FString& InName)
     }
 }
 
-FString FMetalBuffer::GetName() const
+FString FMetalBuffer::GetDebugName() const
 {
     FString Result;
     

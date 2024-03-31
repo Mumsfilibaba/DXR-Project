@@ -39,7 +39,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
 
     if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
     {
-        ResourceDesc.DepthOrArraySize = ResourceDesc.DepthOrArraySize * kRHINumCubeFaces;
+        ResourceDesc.DepthOrArraySize = ResourceDesc.DepthOrArraySize * RHI_NUM_CUBE_FACES;
     }
 
     if (Desc.NumSamples > 1)
@@ -238,7 +238,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
     }
 
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
-    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, "Texture '%s' does not allow RenderTargetViews", Resource->GetName().GetCString());
+    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, "Texture '%s' does not allow RenderTargetViews", Resource->GetDebugName().GetCString());
 
     const uint32 Subresource = D3D12CalculateSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
 
@@ -335,7 +335,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     }
 
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
-    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, "Texture '%s' does not allow DepthStencilViews", Resource->GetName().GetCString());
+    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, "Texture '%s' does not allow DepthStencilViews", Resource->GetDebugName().GetCString());
 
     const uint32 Subresource = D3D12CalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
 
@@ -413,19 +413,19 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     }
 }
 
-void FD3D12Texture::SetName(const FString& InName)
+void FD3D12Texture::SetDebugName(const FString& InName)
 {
     if (Resource)
     {
-        Resource->SetName(InName);
+        Resource->SetDebugName(InName);
     }
 }
 
-FString FD3D12Texture::GetName() const
+FString FD3D12Texture::GetDebugName() const
 {
     if (Resource)
     {
-        return Resource->GetName();
+        return Resource->GetDebugName();
     }
 
     return "";

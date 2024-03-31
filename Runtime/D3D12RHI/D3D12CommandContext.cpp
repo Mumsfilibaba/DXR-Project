@@ -931,7 +931,7 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
     }
     else
     {
-        StagingTexture->SetName("GenerateMips StagingTexture");
+        StagingTexture->SetDebugName("GenerateMips StagingTexture");
     }
 
     D3D12_SHADER_RESOURCE_VIEW_DESC SrvDesc;

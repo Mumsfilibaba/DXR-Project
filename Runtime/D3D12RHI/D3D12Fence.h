@@ -16,7 +16,7 @@ public:
 
     FORCEINLINE ID3D12Fence* GetD3D12Fence() const { return Fence.Get(); }
 
-    FORCEINLINE void SetName(const FString& Name)
+    FORCEINLINE void SetDebugName(const FString& Name)
     {
         CHECK(Fence != nullptr);
         Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.GetCString());

@@ -9,6 +9,7 @@
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
 #include "VulkanDeviceLimits.h"
+#include "VulkanRayTracing.h"
 #include "Platform/PlatformVulkan.h"
 #include "Core/Misc/ConsoleManager.h"
 
@@ -159,7 +160,7 @@ bool FVulkanRHI::Initialize()
     }
     else
     {
-        GraphicsQueue->SetName("Graphics Queue");
+        GraphicsQueue->SetDebugName("Graphics Queue");
     }
 
     // Initialize Default CommandContext
@@ -276,9 +277,15 @@ FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSc
 
 FRHIRayTracingGeometry* FVulkanRHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
 {
-    // TODO: Finish this
-    UNREFERENCED_VARIABLE(InDesc);
-    return nullptr;
+    FVulkanRayTracingGeometryRef NewGeometry = new FVulkanRayTracingGeometry(GetDevice(), InDesc);
+    if (!NewGeometry->Initialize())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return NewGeometry.ReleaseOwnership();
+    }
 }
 
 FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc)
@@ -554,78 +561,6 @@ FRHIComputePipelineState* FVulkanRHI::RHICreateComputePipelineState(const FRHICo
 FRHIRayTracingPipelineState* FVulkanRHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
 {
     return new FVulkanRayTracingPipelineState();
-}
-
-void FVulkanRHI::RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const
-{
-    static bool bIsAccelerationStructuresSupported = GetDevice()->IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-    static bool bIsRayTracingSupported             = bIsAccelerationStructuresSupported && GetDevice()->IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-    static bool bIsRayQueriesSupported             = bIsRayTracingSupported && GetDevice()->IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-
-    if (bIsRayTracingSupported)
-    {
-        VkPhysicalDeviceProperties2 DeviceProperties2;
-        FMemory::Memzero(&DeviceProperties2);
-        
-        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
-        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-        
-        VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPipelineProperties;
-        FMemory::Memzero(&RayTracingPipelineProperties);
-
-        DevicePropertiesHelper.AddNext(RayTracingPipelineProperties);
-        RayTracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
-
-        vkGetPhysicalDeviceProperties2(GetDevice()->GetPhysicalDevice()->GetVkPhysicalDevice(), &DeviceProperties2);
-
-        // Check if RayQueries are supported, then the Tier is kind of like Tier 1.1 (Inline RayTracing in DXR)
-        if (bIsRayQueriesSupported)
-        {
-            OutSupport.Tier = ERHIRayTracingTier::Tier1_1;
-        }
-        else
-        {
-            OutSupport.Tier = ERHIRayTracingTier::Tier1;
-        }
-
-        OutSupport.MaxRecursionDepth = static_cast<uint8>(RayTracingPipelineProperties.maxRayRecursionDepth);
-    }
-    else
-    {
-        OutSupport.MaxRecursionDepth = 0;
-        OutSupport.Tier = ERHIRayTracingTier::NotSupported;
-    }
-}
-
-void FVulkanRHI::RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const
-{
-    static bool bIsVariableShadingRateSupported = GetDevice()->IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
-
-    if (bIsVariableShadingRateSupported)
-    {
-        VkPhysicalDeviceProperties2 DeviceProperties2;
-        FMemory::Memzero(&DeviceProperties2);
-        
-        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
-        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-        
-        VkPhysicalDeviceFragmentShadingRatePropertiesKHR FragmentShadingRateProperties;
-        FMemory::Memzero(&FragmentShadingRateProperties);
-
-        DevicePropertiesHelper.AddNext(FragmentShadingRateProperties);
-        FragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-
-        vkGetPhysicalDeviceProperties2(GetDevice()->GetPhysicalDevice()->GetVkPhysicalDevice(), &DeviceProperties2);
-
-        // TODO: Finish this part
-        OutSupport.ShadingRateImageTileSize = 0;
-        OutSupport.Tier = ERHIShadingRateTier::NotSupported;
-    }
-    else
-    {
-        OutSupport.ShadingRateImageTileSize = 0;
-        OutSupport.Tier = ERHIShadingRateTier::NotSupported;
-    }
 }
 
 bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const

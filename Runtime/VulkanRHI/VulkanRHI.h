@@ -73,8 +73,6 @@ public:
 
     virtual IRHICommandContext* RHIObtainCommandContext() override final { return GraphicsCommandContext; }
 
-    virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final;
-    virtual void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const override final;
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
 
     virtual FString RHIGetAdapterName() const override final;

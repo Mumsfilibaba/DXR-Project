@@ -27,7 +27,7 @@ public:
         SyncPoint = InSyncPoint;
     }
 
-    FORCEINLINE void SetName(const FString& Name)
+    FORCEINLINE void SetDebugName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
         Allocator->SetName(WideName.GetCString());

@@ -98,7 +98,7 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     LOG_INFO("[FAssetManager]: Loaded Texture '%s'", FinalPath.GetCString());
 
     // Set name 
-    NewTexture->SetName(FinalPath);     // For the RHI
+    NewTexture->SetDebugName(FinalPath);     // For the RHI
     NewTexture->SetFilename(FinalPath); // For the AssetSystem
 
     // Release the data after the texture is loaded

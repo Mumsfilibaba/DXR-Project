@@ -320,7 +320,7 @@ DECLARE_RHICOMMAND(FRHICommandSet32BitShaderConstants)
         , Shader32BitConstants(InShader32BitConstants)
         , Num32BitConstants(InNum32BitConstants)
     { 
-        CHECK(InNum32BitConstants <= FRHILimits::MaxShaderConstants);
+        CHECK(InNum32BitConstants <= FHardwareLimits::MAX_SHADER_CONSTANTS);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)

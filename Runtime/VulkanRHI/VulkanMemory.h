@@ -77,7 +77,7 @@ public:
     void* Map(const FVulkanMemoryAllocation& OutAllocation);
     void  Unmap(const FVulkanMemoryAllocation& OutAllocation);
 
-    void SetName(const FString& InName);
+    void SetDebugName(const FString& InName);
 
     FORCEINLINE bool IsEmpty() const
     {

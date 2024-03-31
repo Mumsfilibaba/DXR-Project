@@ -26,7 +26,7 @@ FD3D12UploadHeapAllocator::~FD3D12UploadHeapAllocator()
 FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 Alignment)
 {
     FD3D12UploadAllocation Allocation;
-    
+
     // Make sure the size is properly aligned
     Size = FMath::AlignUp<uint64>(Size, Alignment);
 

@@ -362,7 +362,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
             }
             else
             {
-                RootSignature->SetName("Custom Graphics RootSignature");
+                RootSignature->SetDebugName("Custom Graphics RootSignature");
             }
         }
 
@@ -424,7 +424,7 @@ bool FD3D12ComputePipelineState::Initialize()
         }
         else
         {
-            RootSignature->SetName("Custom Compute RootSignature");
+            RootSignature->SetDebugName("Custom Compute RootSignature");
         }
     }
 

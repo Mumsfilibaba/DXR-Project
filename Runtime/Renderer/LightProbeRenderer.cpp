@@ -37,7 +37,7 @@ bool FLightProbeRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& F
     }
     else
     {
-        IrradianceGenPSO->SetName("IrradianceGen PSO");
+        IrradianceGenPSO->SetDebugName("IrradianceGen PSO");
     }
 
     {
@@ -61,7 +61,7 @@ bool FLightProbeRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& F
     }
     else
     {
-        SpecularIrradianceGenPSO->SetName("Specular IrradianceGen PSO");
+        SpecularIrradianceGenPSO->SetDebugName("Specular IrradianceGen PSO");
     }
 
     FRHISamplerStateDesc SamplerInitializer;
@@ -168,7 +168,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
     }
     else
     {
-        Skylight.IrradianceMap->SetName("Temp Irradiance Map");
+        Skylight.IrradianceMap->SetDebugName("Temp Irradiance Map");
     }
 
     FRHITextureUAVDesc UAVInitializer(Skylight.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0, 0, 1);
@@ -191,7 +191,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
     }
     else
     {
-        Skylight.SpecularIrradianceMap->SetName("Temp Specular Irradiance Map");
+        Skylight.SpecularIrradianceMap->SetDebugName("Temp Specular Irradiance Map");
     }
 
     for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)

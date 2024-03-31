@@ -110,8 +110,8 @@ bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDe
     
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
-        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice * VULKAN_NUM_CUBE_FACES;
-        SubresourceRange.layerCount     = FMath::Max<uint16>(InDesc.NumSlices, 1u) * VULKAN_NUM_CUBE_FACES;
+        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
+        SubresourceRange.layerCount     = FMath::Max<uint16>(InDesc.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
     }
     else
     {
@@ -145,7 +145,7 @@ bool FVulkanShaderResourceView::CreateTextureView(const FRHITextureSRVDesc& InDe
     ImageView = new FVulkanImageView(GetDevice());
     if (ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
     {
-        const FString ViewName = VulkanTexture->GetName() + " ImageView SRV";
+        const FString ViewName = VulkanTexture->GetDebugName() + " ImageView SRV";
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ViewName.GetCString(), ImageView->GetVkImageView(), VK_OBJECT_TYPE_IMAGE_VIEW);
         
         Type = EType::Texture;
@@ -221,8 +221,8 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
     
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
-        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice * VULKAN_NUM_CUBE_FACES;
-        SubresourceRange.layerCount     = VULKAN_NUM_CUBE_FACES;
+        SubresourceRange.baseArrayLayer = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
+        SubresourceRange.layerCount     = RHI_NUM_CUBE_FACES;
     }
     else
     {
@@ -252,7 +252,7 @@ bool FVulkanUnorderedAccessView::CreateTextureView(const FRHITextureUAVDesc& InD
     ImageView = new FVulkanImageView(GetDevice());
     if (ImageView->CreateView(VulkanTexture->GetVkImage(), VulkanImageType, VulkanFormat, 0, SubresourceRange))
     {
-        const FString ViewName = VulkanTexture->GetName() + " ImageView UAV";
+        const FString ViewName = VulkanTexture->GetDebugName() + " ImageView UAV";
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), ViewName.GetCString(), ImageView->GetVkImageView(), VK_OBJECT_TYPE_IMAGE_VIEW);
 
         Type = EType::Texture;

@@ -160,7 +160,7 @@ bool FImGuiRenderer::Initialize()
     }
     else
     {
-        FontTexture->SetName("ImGui FontTexture");
+        FontTexture->SetDebugName("ImGui FontTexture");
     }
 
     const CHAR* VSSource =
@@ -460,7 +460,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
         TSharedRef<FRHIBuffer> NewVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
-            NewVertexBuffer->SetName("ImGui VertexBuffer");
+            NewVertexBuffer->SetDebugName("ImGui VertexBuffer");
             ViewportData->VertexBuffer = NewVertexBuffer;
             ViewportData->VertexCount  = NewVertexCount;
         }
@@ -483,7 +483,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
         TSharedRef<FRHIBuffer> NewIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
-            NewIndexBuffer->SetName("ImGui IndexBuffer");
+            NewIndexBuffer->SetDebugName("ImGui IndexBuffer");
             ViewportData->IndexBuffer = NewIndexBuffer;
             ViewportData->IndexCount  = NewIndexCount;
         }

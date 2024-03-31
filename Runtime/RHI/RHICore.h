@@ -55,12 +55,16 @@ struct FHardwareLimits
 struct FHardwareSupport
 {
     // Hardware RayTracing
-    extern RHI_API static bool            bRayTracing;
-    extern RHI_API static ERayTracingTier RayTracingTier;
-    extern RHI_API static uint32          MaxRecursionDepth;
+    static RHI_API bool bRayTracing;
+
+    static RHI_API ERayTracingTier RayTracingTier;
+    
+    static RHI_API uint32 MaxRecursionDepth;
 
     // Hardware Variable Rate Shading
-    extern RHI_API static bool             bVariableShadingRate;
-    extern RHI_API static EShadingRateTier ShadingRateTier;
-    extern RHI_API static uint32           ShadingRateImageTileSize;
+    static RHI_API bool bVariableShadingRate;
+
+    static RHI_API EShadingRateTier ShadingRateTier;
+    
+    static RHI_API uint32 ShadingRateImageTileSize;
 };

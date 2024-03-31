@@ -27,8 +27,8 @@ public:
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const FString& InName) override final;
-    virtual FString GetName() const override final;
+    virtual void SetDebugName(const FString& InName) override final;
+    virtual FString GetDebugName() const override final;
 
     FVulkanImageView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
     FVulkanImageView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);

@@ -135,7 +135,7 @@ bool FEngine::Init()
     }
     else
     {
-        BaseTexture->SetName("BaseTexture");
+        BaseTexture->SetDebugName("BaseTexture");
     }
 
     Pixels[0] = 127;
@@ -149,7 +149,7 @@ bool FEngine::Init()
     }
     else
     {
-        BaseNormal->SetName("BaseNormal");
+        BaseNormal->SetDebugName("BaseNormal");
     }
 
     /* Create material sampler (Used for now by all materials) */

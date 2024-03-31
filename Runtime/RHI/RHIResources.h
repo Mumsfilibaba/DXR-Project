@@ -174,9 +174,9 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const FString& InName) { }
+    virtual void SetDebugName(const FString& InName) { }
 
-    virtual FString GetName() const { return ""; }
+    virtual FString GetDebugName() const { return ""; }
     
     uint64 GetSize() const
     {
@@ -449,9 +449,9 @@ public:
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const FString& InName) { }
+    virtual void SetDebugName(const FString& InName) { }
 
-    virtual FString GetName() const { return ""; }
+    virtual FString GetDebugName() const { return ""; }
 
     ETextureDimension GetDimension() const
     {
@@ -1043,7 +1043,7 @@ struct FRHIDepthStencilView
 
 struct FRHIRenderPassDesc
 {
-    typedef TStaticArray<FRHIRenderTargetView, FRHILimits::MaxRenderTargets> FRenderTargetViews;
+    typedef TStaticArray<FRHIRenderTargetView, FHardwareLimits::MAX_RENDER_TARGETS> FRenderTargetViews;
     
     FRHIRenderPassDesc()
         : ShadingRateTexture(nullptr)
@@ -1941,7 +1941,7 @@ struct FRHIBlendStateInitializer
         return !(*this == Other);
     }
 
-    FRenderTargetBlendDesc RenderTargets[FRHILimits::MaxRenderTargets];
+    FRenderTargetBlendDesc RenderTargets[FHardwareLimits::MAX_RENDER_TARGETS];
     uint8                  NumRenderTargets;
     ELogicOp               LogicOp;
 
@@ -2084,9 +2084,9 @@ protected:
     virtual ~FRHIPipelineState() = default;
 
 public:
-    virtual void SetName(const FString& InName) { }
+    virtual void SetDebugName(const FString& InName) { }
 
-    virtual FString GetName() const { return ""; }
+    virtual FString GetDebugName() const { return ""; }
 };
 
 
@@ -2117,7 +2117,7 @@ struct FGraphicsPipelineFormats
         return !(*this == Other);
     }
 
-    EFormat RenderTargetFormats[FRHILimits::MaxRenderTargets];
+    EFormat RenderTargetFormats[FHardwareLimits::MAX_RENDER_TARGETS];
     uint32  NumRenderTargets;
     EFormat DepthStencilFormat;
 };

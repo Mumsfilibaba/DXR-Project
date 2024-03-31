@@ -332,7 +332,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassPSO->SetName("GeometryPass PipelineState");
+            BasePassPSO->SetDebugName("GeometryPass PipelineState");
         }
 
         PSOInitializer.ShaderState.VertexShader = BasePassHeightVS.Get();
@@ -346,7 +346,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassHeightPSO->SetName("HeightMapped GeometryPass PipelineState");
+            BasePassHeightPSO->SetDebugName("HeightMapped GeometryPass PipelineState");
         }
 
         PSOInitializer.ShaderState.VertexShader = BasePassMaskedVS.Get();
@@ -360,7 +360,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassMaskedPSO->SetName("Masked GeometryPass PipelineState");
+            BasePassMaskedPSO->SetDebugName("Masked GeometryPass PipelineState");
         }
 
         PSOInitializer.RasterizerState = RasterizerStateDoubleSided.Get();
@@ -373,7 +373,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassDoubleSidedPSO->SetName("DoubleSided GeometryPass PipelineState");
+            BasePassDoubleSidedPSO->SetDebugName("DoubleSided GeometryPass PipelineState");
         }
 
         PSOInitializer.ShaderState.VertexShader = BasePassPackedVS.Get();
@@ -387,7 +387,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassPackedPSO->SetName("PackedTex GeometryPass PipelineState");
+            BasePassPackedPSO->SetDebugName("PackedTex GeometryPass PipelineState");
         }
 
         PSOInitializer.ShaderState.VertexShader = BasePassPackedHeightVS.Get();
@@ -401,7 +401,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassPackedHeightPSO->SetName("PackedTex HeightMapped GeometryPass PipelineState");
+            BasePassPackedHeightPSO->SetDebugName("PackedTex HeightMapped GeometryPass PipelineState");
         }
 
         PSOInitializer.ShaderState.VertexShader = BasePassPackedMaskedVS.Get();
@@ -415,7 +415,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassPackedMaskedPSO->SetName("PackedTex Masked GeometryPass PipelineState");
+            BasePassPackedMaskedPSO->SetDebugName("PackedTex Masked GeometryPass PipelineState");
         }
 
         PSOInitializer.RasterizerState = RasterizerStateDoubleSided.Get();
@@ -428,7 +428,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BasePassPackedDoubleSidedPSO->SetName("PackedTex DoubleSided GeometryPass PipelineState");
+            BasePassPackedDoubleSidedPSO->SetDebugName("PackedTex DoubleSided GeometryPass PipelineState");
         }
     }
 
@@ -636,7 +636,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PrePassPSO->SetName("PrePass PipelineState");
+            PrePassPSO->SetDebugName("PrePass PipelineState");
         }
 
         PSOInitializer.VertexInputLayout        = FrameResources.MeshInputLayout.Get();
@@ -651,7 +651,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PrePassHeightPSO->SetName("HeightMap PrePass PipelineState");
+            PrePassHeightPSO->SetDebugName("HeightMap PrePass PipelineState");
         }
 
         PSOInitializer.VertexInputLayout        = PrePassMaskedInputLayout.Get();
@@ -666,7 +666,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PrePassPSO->SetName("Masked PrePass PipelineState");
+            PrePassPSO->SetDebugName("Masked PrePass PipelineState");
         }
 
         PSOInitializer.RasterizerState = RasterizerStateDoubleSided.Get();
@@ -679,7 +679,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PrePassDoubleSidedPSO->SetName("DoubleSided PrePass PipelineState");
+            PrePassDoubleSidedPSO->SetDebugName("DoubleSided PrePass PipelineState");
         }
 
         PSOInitializer.ShaderState.VertexShader = PrePassPackedMaskedVS.Get();
@@ -693,7 +693,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PrePassPackedMaskedPSO->SetName("Packed Masked PrePass PipelineState");
+            PrePassPackedMaskedPSO->SetDebugName("Packed Masked PrePass PipelineState");
         }
 
         PSOInitializer.RasterizerState = RasterizerStateDoubleSided.Get();
@@ -706,7 +706,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PrePassPackedDoubleSidedPSO->SetName("Packed DoubleSided PrePass PipelineState");
+            PrePassPackedDoubleSidedPSO->SetDebugName("Packed DoubleSided PrePass PipelineState");
         }
     }
 
@@ -730,7 +730,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            StagingTexture->SetName("Staging IntegrationLUT");
+            StagingTexture->SetDebugName("Staging IntegrationLUT");
         }
 
         LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
@@ -743,7 +743,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            FrameResources.IntegrationLUT->SetName("IntegrationLUT");
+            FrameResources.IntegrationLUT->SetDebugName("IntegrationLUT");
         }
 
         FRHISamplerStateDesc SamplerInitializer;
@@ -785,7 +785,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BRDF_PipelineState->SetName("BRDFIntegationGen PipelineState");
+            BRDF_PipelineState->SetDebugName("BRDFIntegationGen PipelineState");
         }
 
         FRHICommandList CommandList;
@@ -872,7 +872,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            TiledLightPassPSO_TileDebug->SetName("DeferredLightPass PipelineState Tile-Debug");
+            TiledLightPassPSO_TileDebug->SetDebugName("DeferredLightPass PipelineState Tile-Debug");
         }
     }
 
@@ -906,7 +906,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            TiledLightPassPSO_CascadeDebug->SetName("DeferredLightPass PipelineState Cascade-Debug");
+            TiledLightPassPSO_CascadeDebug->SetDebugName("DeferredLightPass PipelineState Cascade-Debug");
         }
     }
 
@@ -960,7 +960,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            ReduceDepthPSO->SetName("DepthReduction PipelineState");
+            ReduceDepthPSO->SetDebugName("DepthReduction PipelineState");
         }
     }
 
@@ -1453,7 +1453,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Albedo])
     {
-        FrameResources.GBuffer[GBufferIndex_Albedo]->SetName("GBuffer Albedo");
+        FrameResources.GBuffer[GBufferIndex_Albedo]->SetDebugName("GBuffer Albedo");
     }
     else
     {
@@ -1466,7 +1466,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Normal])
     {
-        FrameResources.GBuffer[GBufferIndex_Normal]->SetName("GBuffer Normal");
+        FrameResources.GBuffer[GBufferIndex_Normal]->SetDebugName("GBuffer Normal");
     }
     else
     {
@@ -1479,7 +1479,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Material])
     {
-        FrameResources.GBuffer[GBufferIndex_Material]->SetName("GBuffer Material");
+        FrameResources.GBuffer[GBufferIndex_Material]->SetDebugName("GBuffer Material");
     }
     else
     {
@@ -1492,7 +1492,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
     {
-        FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetName("GBuffer ViewNormal");
+        FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetDebugName("GBuffer ViewNormal");
     }
     else
     {
@@ -1505,7 +1505,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Velocity])
     {
-        FrameResources.GBuffer[GBufferIndex_Velocity]->SetName("GBuffer Velocity");
+        FrameResources.GBuffer[GBufferIndex_Velocity]->SetDebugName("GBuffer Velocity");
     }
     else
     {
@@ -1519,7 +1519,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     FrameResources.FinalTarget = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (FrameResources.FinalTarget)
     {
-        FrameResources.FinalTarget->SetName("Final Target");
+        FrameResources.FinalTarget->SetDebugName("Final Target");
     }
     else
     {
@@ -1535,7 +1535,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Depth])
     {
-        FrameResources.GBuffer[GBufferIndex_Depth]->SetName("GBuffer DepthStencil");
+        FrameResources.GBuffer[GBufferIndex_Depth]->SetDebugName("GBuffer DepthStencil");
     }
     else
     {
@@ -1557,7 +1557,7 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
         FrameResources.ReducedDepthBuffer[i] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
         if (FrameResources.ReducedDepthBuffer[i])
         {
-            FrameResources.ReducedDepthBuffer[i]->SetName("Reduced DepthStencil[" + TTypeToString<int32>::ToString(i) + "]");
+            FrameResources.ReducedDepthBuffer[i]->SetDebugName("Reduced DepthStencil[" + TTypeToString<int32>::ToString(i) + "]");
         }
         else
         {

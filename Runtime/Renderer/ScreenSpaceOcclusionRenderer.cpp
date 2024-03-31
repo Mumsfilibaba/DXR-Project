@@ -63,7 +63,7 @@ bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PipelineState->SetName("SSAO PipelineState");
+            PipelineState->SetDebugName("SSAO PipelineState");
         }
     }
 
@@ -100,7 +100,7 @@ bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BlurHorizontalPSO->SetName("SSAO Horizontal Blur PSO");
+            BlurHorizontalPSO->SetDebugName("SSAO Horizontal Blur PSO");
         }
     }
 
@@ -135,7 +135,7 @@ bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            BlurVerticalPSO->SetName("SSAO Vertical Blur PSO");
+            BlurVerticalPSO->SetDebugName("SSAO Vertical Blur PSO");
         }
     }
 
@@ -258,7 +258,7 @@ bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameRes
     }
     else
     {
-        FrameResources.SSAOBuffer->SetName("SSAO Buffer");
+        FrameResources.SSAOBuffer->SetDebugName("SSAO Buffer");
     }
 
     return true;

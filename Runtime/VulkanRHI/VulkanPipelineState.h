@@ -122,7 +122,7 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
     
-    virtual void SetName(const FString& InName) override final
+    virtual void SetDebugName(const FString& InName) override final
     {
         FVulkanPipeline::SetDebugName(InName);
     }
@@ -136,7 +136,7 @@ public:
     
     bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
 
-    virtual void SetName(const FString& InName) override final
+    virtual void SetDebugName(const FString& InName) override final
     {
         FVulkanPipeline::SetDebugName(InName);
     }

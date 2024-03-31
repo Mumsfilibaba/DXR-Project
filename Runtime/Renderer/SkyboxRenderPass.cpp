@@ -69,7 +69,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        SkyboxVertexBuffer->SetName("Skybox VertexBuffer");
+        SkyboxVertexBuffer->SetDebugName("Skybox VertexBuffer");
     }
 
     // IndexBuffers
@@ -81,7 +81,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        SkyboxIndexBuffer->SetName("Skybox IndexBuffer");
+        SkyboxIndexBuffer->SetDebugName("Skybox IndexBuffer");
     }
 
 
@@ -96,7 +96,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            Panorama->SetName(PanoramaSourceFilename);
+            Panorama->SetDebugName(PanoramaSourceFilename);
         }
 
         // Compress the Panorama
@@ -109,14 +109,14 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            Skybox->SetName("Skybox Uncompressed");
+            Skybox->SetDebugName("Skybox Uncompressed");
         }
 
         // Compress the CubeMap
         TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
         if (FrameResources.Skybox)
         {
-            FrameResources.Skybox->SetName("Skybox Compressed");
+            FrameResources.Skybox->SetDebugName("Skybox Compressed");
         }
     }
 
@@ -232,7 +232,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
     else
     {
-        PipelineState->SetName("SkyboxPSO PipelineState");
+        PipelineState->SetDebugName("SkyboxPSO PipelineState");
     }
 
     return true;

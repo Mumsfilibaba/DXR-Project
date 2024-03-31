@@ -54,7 +54,7 @@ bool FD3D12Query::Initialize()
     }
     else
     {
-        NewWriteResource->SetName("Query Write Resource");
+        NewWriteResource->SetDebugName("Query Write Resource");
     }
 
     // Start with three
@@ -171,7 +171,7 @@ bool FD3D12Query::AllocateReadResource()
     FD3D12ResourceRef ReadResource = new FD3D12Resource(GetDevice(), Desc, D3D12_HEAP_TYPE_READBACK);
     if (ReadResource->Initialize(D3D12_RESOURCE_STATE_COPY_DEST, nullptr))
     {
-        ReadResource->SetName("Query Readback Resource");
+        ReadResource->SetDebugName("Query Readback Resource");
         ReadResources.Emplace(ReadResource);
     }
     else

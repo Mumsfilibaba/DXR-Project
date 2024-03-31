@@ -85,7 +85,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     }
     else
     {
-        Resources.RTOutput->SetName("RayTracing Output");
+        Resources.RTOutput->SetDebugName("RayTracing Output");
     }
 
     return true;

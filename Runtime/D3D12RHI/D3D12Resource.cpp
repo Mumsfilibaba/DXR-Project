@@ -76,34 +76,46 @@ void FD3D12Resource::UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Rang
     Resource->Unmap(SubresourceIndex, Range);
 }
 
-void FD3D12Resource::SetName(const FString& Name)
+void FD3D12Resource::SetDebugName(const FString& Name)
 {
     if (Resource)
     {
         HRESULT Result = Resource->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Size(), Name.GetCString());
-        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to set resource name");
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("Failed to set resource name");
+        }
 
         // Calling SetName as well since NVIDIA Nsight does not recognize the name otherwise
         FStringWide WideName = CharToWide(Name);
         Result = Resource->SetName(WideName.GetCString());
-        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to set resource name");
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("Failed to set resource name");
+        }
     }
 }
 
-FString FD3D12Resource::GetName() const
+FString FD3D12Resource::GetDebugName() const
 {
     if (Resource)
     {
         UINT NameLength;
         
         HRESULT Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, nullptr);
-        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to get size of resource name");
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("Failed to get size of resource name");
+        }
 
         FString NewName;
         NewName.Resize(NameLength);
 
         Result = Resource->GetPrivateData(WKPDID_D3DDebugObjectName, &NameLength, NewName.Data());
-        D3D12_ERROR_COND(SUCCEEDED(Result), "Failed to get resource name");
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("Failed to get resource name");
+        }
 
         return NewName;
     }

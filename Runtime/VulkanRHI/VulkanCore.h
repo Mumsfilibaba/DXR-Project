@@ -80,8 +80,6 @@
     #define VULKAN_CHECK_HANDLE(Handle) (Handle != VK_NULL_HANDLE)
 #endif
 
-#define VULKAN_NUM_CUBE_FACES (6)
-
 class FVulkanStructureHelper
 {
 public:

@@ -134,7 +134,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     return true;
 }
 
-void FMetalTexture::SetName(const FString& InName)
+void FMetalTexture::SetDebugName(const FString& InName)
 {
     @autoreleasepool
     {
@@ -146,7 +146,7 @@ void FMetalTexture::SetName(const FString& InName)
     }
 }
 
-FString FMetalTexture::GetName() const
+FString FMetalTexture::GetDebugName() const
 {
     FString Result;
     

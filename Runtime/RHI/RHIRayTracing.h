@@ -219,9 +219,9 @@ public:
 
     virtual void* GetRHIBaseAccelerationStructure() { return nullptr; }
 
-    virtual FString GetName() const { return ""; }
+    virtual FString GetDebugName() const { return ""; }
 
-    virtual void SetName(const FString& InName) { }
+    virtual void SetDebugName(const FString& InName) { }
 
     FORCEINLINE EAccelerationStructureBuildFlags GetFlags() const 
     {

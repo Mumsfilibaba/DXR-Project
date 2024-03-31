@@ -39,7 +39,7 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            TemporalAAPSO->SetName("TemporalAA PSO");
+            TemporalAAPSO->SetDebugName("TemporalAA PSO");
         }
     }
 
@@ -137,7 +137,7 @@ bool FTemporalAA::CreateRenderTarget(FFrameResources& FrameResources, uint32 Wid
         TAABuffer = RHICreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
         if (TAABuffer)
         {
-            TAABuffer->SetName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));
+            TAABuffer->SetDebugName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));
         }
         else
         {

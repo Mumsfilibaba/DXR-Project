@@ -115,7 +115,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
         else
         {
-            AABBDebugPipelineState->SetName("Debug PipelineState");
+            AABBDebugPipelineState->SetDebugName("Debug PipelineState");
         }
 
         TStaticArray<FVector3, 8> Vertices =
@@ -141,7 +141,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             }
             else
             {
-                AABBVertexBuffer->SetName("AABB VertexBuffer");
+                AABBVertexBuffer->SetDebugName("AABB VertexBuffer");
             }
         }
 
@@ -265,7 +265,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
         else
         {
-            LightDebugPSO->SetName("Light Debug PipelineState");
+            LightDebugPSO->SetDebugName("Light Debug PipelineState");
         }
 
         FMeshData SphereMesh = FMeshFactory::CreateSphere(1, 0.25f);
@@ -281,7 +281,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             }
             else
             {
-                DbgSphereVertexBuffer->SetName("Light Debug VertexBuffer");
+                DbgSphereVertexBuffer->SetDebugName("Light Debug VertexBuffer");
             }
         }
 
@@ -299,7 +299,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             }
             else
             {
-                DbgSphereIndexBuffer->SetName("Light Debug IndexBuffer");
+                DbgSphereIndexBuffer->SetDebugName("Light Debug IndexBuffer");
             }
         }
     }

@@ -79,10 +79,10 @@ void FTexture2D::ReleaseData()
     SAFE_DELETE(TextureData);
 }
 
-void FTexture2D::SetName(const FString& InName)
+void FTexture2D::SetDebugName(const FString& InName)
 {
     if (TextureRHI)
     {
-        TextureRHI->SetName(InName);
+        TextureRHI->SetDebugName(InName);
     }
 }

@@ -311,7 +311,7 @@ public:
     FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
     {
         const int32 Size = Num32BitConstants * sizeof(uint32);
-        CHECK(Num32BitConstants <= FRHILimits::MaxShaderConstants);
+        CHECK(Num32BitConstants <= FHardwareLimits::MAX_SHADER_CONSTANTS);
 
         void* SourceData = Allocate(Size, alignof(uint32));
         FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
@@ -453,7 +453,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Texture->GetName().GetCString(),  ToString(BeforeState));
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Texture->GetDebugName().GetCString(),  ToString(BeforeState));
         }
     }
 
@@ -467,7 +467,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Buffer->GetName().GetCString(),  ToString(BeforeState));
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Buffer->GetDebugName().GetCString(),  ToString(BeforeState));
         }
     }
 

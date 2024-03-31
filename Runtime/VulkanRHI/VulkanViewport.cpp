@@ -287,14 +287,14 @@ void FVulkanViewport::SetDebugName(const FString& InName)
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), SwapChain->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
 
         // Name the proxy
-        BackBuffer->SetName("BackBuffer Proxy");
+        BackBuffer->SetDebugName("BackBuffer Proxy");
 
         // Name all the images
         FString ImageName;
         for (uint32 Index = 0; FVulkanTextureRef Texture : BackBuffers)
         {
             ImageName = InName + FString::CreateFormatted(" BackBuffer Image[%d]", Index);
-            Texture->SetName(ImageName);
+            Texture->SetDebugName(ImageName);
         }
     }
 }

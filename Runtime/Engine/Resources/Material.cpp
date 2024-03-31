@@ -21,7 +21,7 @@ void FMaterial::Initialize()
     MaterialBuffer = RHICreateBuffer(Desc, EResourceAccess::ConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
-        MaterialBuffer->SetName("MaterialBuffer");
+        MaterialBuffer->SetDebugName("MaterialBuffer");
     }
 
     Sampler = GEngine->BaseMaterialSampler;

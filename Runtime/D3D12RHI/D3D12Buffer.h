@@ -17,8 +17,8 @@ public:
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const FString& InName) override final;
-    virtual FString GetName() const override final;
+    virtual void SetDebugName(const FString& InName) override final;
+    virtual FString GetDebugName() const override final;
 
     void SetResource(FD3D12Resource* InResource);
     

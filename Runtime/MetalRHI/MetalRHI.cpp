@@ -321,16 +321,6 @@ FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportDesc& Desc)
     }
 }
 
-void FMetalRHI::RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const
-{
-    OutSupport = FRHIRayTracingSupport();
-}
-
-void FMetalRHI::RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const
-{
-    OutSupport = FRHIShadingRateSupport();
-}
-
 bool FMetalRHI::RHIQueryUAVFormatSupport(EFormat Format) const
 {
     return true;

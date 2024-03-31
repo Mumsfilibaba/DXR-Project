@@ -88,7 +88,7 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            DirectionalLightsBuffer->SetName("DirectionalLightsBuffer");
+            DirectionalLightsBuffer->SetDebugName("DirectionalLightsBuffer");
         }
     }
 
@@ -105,7 +105,7 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            PointLightsBuffer->SetName("PointLightsBuffer");
+            PointLightsBuffer->SetDebugName("PointLightsBuffer");
         }
     }
 
@@ -121,7 +121,7 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            PointLightsPosRadBuffer->SetName("PointLightsPosRadBuffer");
+            PointLightsPosRadBuffer->SetDebugName("PointLightsPosRadBuffer");
         }
     }
 
@@ -137,7 +137,7 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            ShadowCastingPointLightsBuffer->SetName("ShadowCastingPointLightsBuffer");
+            ShadowCastingPointLightsBuffer->SetDebugName("ShadowCastingPointLightsBuffer");
         }
     }
 
@@ -153,7 +153,7 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            ShadowCastingPointLightsPosRadBuffer->SetName("ShadowCastingPointLightsPosRadBuffer");
+            ShadowCastingPointLightsPosRadBuffer->SetDebugName("ShadowCastingPointLightsPosRadBuffer");
         }
     }
 

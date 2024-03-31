@@ -100,7 +100,7 @@ public:
         return ConstantRootParameterIndex;
     }
 
-    void SetName(const FString& Name)
+    void SetDebugName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
         RootSignature->SetName(WideName.GetCString());

@@ -36,9 +36,9 @@ public:
     
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const FString& InName) override final;
+    virtual void SetDebugName(const FString& InName) override final;
     
-    virtual FString GetName() const override final;
+    virtual FString GetDebugName() const override final;
 
     id<MTLTexture> GetMTLTexture() const;
 

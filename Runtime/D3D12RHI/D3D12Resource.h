@@ -17,9 +17,9 @@ public:
 
     void UnmapRange(uint32 SubresourceIndex, const D3D12_RANGE* Range);
 
-    void SetName(const FString& Name);
+    void SetDebugName(const FString& Name);
     
-    FString GetName() const;
+    FString GetDebugName() const;
 
     ID3D12Resource* GetD3D12Resource() const 
     { 

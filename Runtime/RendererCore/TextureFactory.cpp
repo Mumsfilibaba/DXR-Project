@@ -34,7 +34,7 @@ bool FTextureFactory::Init()
     GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(GlobalFactoryData.ComputeShader.Get()));
     if (GlobalFactoryData.PanoramaPSO)
     {
-        GlobalFactoryData.PanoramaPSO->SetName("Generate CubeMap RootSignature");
+        GlobalFactoryData.PanoramaPSO->SetDebugName("Generate CubeMap RootSignature");
     }
     else
     {
@@ -119,7 +119,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
     }
     else
     {
-        StagingTexture->SetName("TextureCube From Panorama StagingTexture");
+        StagingTexture->SetDebugName("TextureCube From Panorama StagingTexture");
     }
 
     FRHITextureUAVDesc UAVInitializer(StagingTexture.Get(), Format, 0, 0, 1);

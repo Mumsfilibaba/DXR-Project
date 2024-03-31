@@ -151,7 +151,7 @@ bool FD3D12RHI::Initialize()
     }
     else
     {
-        GenerateMipsTex2D_PSO->SetName("GenerateMipsTex2D Gen PSO");
+        GenerateMipsTex2D_PSO->SetDebugName("GenerateMipsTex2D Gen PSO");
     }
 
     {
@@ -178,7 +178,7 @@ bool FD3D12RHI::Initialize()
     }
     else
     {
-        GenerateMipsTexCube_PSO->SetName("GenerateMipsTexCube Gen PSO");
+        GenerateMipsTexCube_PSO->SetDebugName("GenerateMipsTexCube Gen PSO");
     }
 
     // Initialize context
@@ -188,6 +188,38 @@ bool FD3D12RHI::Initialize()
         return false;
     }
 
+    // Initialize Hardware Support globals
+    FD3D12RayTracingDesc RayTracingDesc = GetDevice()->GetRayTracingDesc();
+    if (RayTracingDesc.IsSupported())
+    {
+        if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_1)
+        {
+            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1_1;
+        }
+        else if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_0)
+        {
+            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1;
+        }
+
+        FHardwareSupport::MaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+    }
+    else
+    {
+        FHardwareSupport::RayTracingTier = ERayTracingTier::NotSupported;
+    }
+    
+    FHardwareSupport::bRayTracing = FHardwareSupport::RayTracingTier != ERayTracingTier::NotSupported;
+
+    FD3D12VariableRateShadingDesc VariableRateShadingDesc = GetDevice()->GetVariableRateShadingDesc();
+    switch (VariableRateShadingDesc.Tier)
+    {
+        case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED: FHardwareSupport::ShadingRateTier = EShadingRateTier::NotSupported; break;
+        case D3D12_VARIABLE_SHADING_RATE_TIER_1:             FHardwareSupport::ShadingRateTier = EShadingRateTier::Tier1;        break;
+        case D3D12_VARIABLE_SHADING_RATE_TIER_2:             FHardwareSupport::ShadingRateTier = EShadingRateTier::Tier2;        break;
+    }
+
+    FHardwareSupport::bVariableShadingRate     = FHardwareSupport::ShadingRateTier != EShadingRateTier::NotSupported;
+    FHardwareSupport::ShadingRateImageTileSize = VariableRateShadingDesc.ShadingRateImageTileSize;
     return true;
 }
 
@@ -359,7 +391,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
         Desc.TextureCubeArray.MostDetailedMip     = InDesc.FirstMipLevel;
         Desc.TextureCubeArray.MipLevels           = InDesc.NumMips;
         Desc.TextureCubeArray.ResourceMinLODClamp = InDesc.MinLODClamp;
-        Desc.TextureCubeArray.First2DArrayFace    = InDesc.FirstArraySlice * D3D12_NUM_CUBE_FACES;
+        Desc.TextureCubeArray.First2DArrayFace    = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
         Desc.TextureCubeArray.NumCubes            = InDesc.NumSlices;
     }
     else if (TextureDesc.IsTexture3D())
@@ -493,8 +525,8 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
         Desc.Texture2DArray.PlaneSlice      = 0;
-        Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice * D3D12_NUM_CUBE_FACES;
-        Desc.Texture2DArray.ArraySize       = InDesc.NumSlices * D3D12_NUM_CUBE_FACES;
+        Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
+        Desc.Texture2DArray.ArraySize       = InDesc.NumSlices * RHI_NUM_CUBE_FACES;
     }
     else if (TextureDesc.IsTexture3D())
     {
@@ -833,39 +865,4 @@ bool FD3D12RHI::RHIQueryUAVFormatSupport(EFormat Format) const
     }
 
     return true;
-}
-
-void FD3D12RHI::RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const
-{
-    FD3D12RayTracingDesc RayTracingDesc = Device->GetRayTracingDesc();
-    if (RayTracingDesc.IsSupported())
-    {
-        if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_1)
-        {
-            OutSupport.Tier = ERHIRayTracingTier::Tier1_1;
-        }
-        else if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_0)
-        {
-            OutSupport.Tier = ERHIRayTracingTier::Tier1;
-        }
-
-        OutSupport.MaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
-    }
-    else
-    {
-        OutSupport.Tier = ERHIRayTracingTier::NotSupported;
-    }
-}
-
-void FD3D12RHI::RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const
-{
-    FD3D12VariableRateShadingDesc VariableRateShadingDesc = Device->GetVariableRateShadingDesc();
-    switch (VariableRateShadingDesc.Tier)
-    {
-        case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED: OutSupport.Tier = ERHIShadingRateTier::NotSupported; break;
-        case D3D12_VARIABLE_SHADING_RATE_TIER_1:             OutSupport.Tier = ERHIShadingRateTier::Tier1;        break;
-        case D3D12_VARIABLE_SHADING_RATE_TIER_2:             OutSupport.Tier = ERHIShadingRateTier::Tier2;        break;
-    }
-
-    OutSupport.ShadingRateImageTileSize = static_cast<uint8>(VariableRateShadingDesc.ShadingRateImageTileSize);
 }

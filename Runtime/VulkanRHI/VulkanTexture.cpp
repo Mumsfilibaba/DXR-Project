@@ -83,7 +83,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
     {
         ImageCreateInfo.flags       |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-        ImageCreateInfo.arrayLayers  = Desc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
+        ImageCreateInfo.arrayLayers  = Desc.NumArraySlices * RHI_NUM_CUBE_FACES;
     }
     
     
@@ -398,7 +398,7 @@ void FVulkanTexture::SetVkImage(VkImage InImage)
     }
 }
 
-void FVulkanTexture::SetName(const FString& InName)
+void FVulkanTexture::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(Image))
     {
@@ -407,7 +407,7 @@ void FVulkanTexture::SetName(const FString& InName)
     }
 }
 
-FString FVulkanTexture::GetName() const
+FString FVulkanTexture::GetDebugName() const
 {
     return DebugName;
 }

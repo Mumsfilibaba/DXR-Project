@@ -90,12 +90,12 @@ public:
 
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
-    virtual void SetName(const FString& InName) override final
+    virtual void SetDebugName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
         {
-            D3D12Resource->SetName(InName);
+            D3D12Resource->SetDebugName(InName);
         }
     }
 
@@ -141,12 +141,12 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetName(const FString& InName) override final
+    virtual void SetDebugName(const FString& InName) override final
     {
         FD3D12Resource* D3D12Resource = GetD3D12Resource();
         if (D3D12Resource)
         {
-            D3D12Resource->SetName(InName);
+            D3D12Resource->SetDebugName(InName);
         }
     }
 

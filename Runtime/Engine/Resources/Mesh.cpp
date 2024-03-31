@@ -19,7 +19,7 @@ FMesh::FMesh()
 
 bool FMesh::Init(const FMeshData& Data)
 {
-    const bool bRTOn = RHISupportsRayTracing();
+    const bool bRTOn = FHardwareSupport::bRayTracing;
 
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount  = static_cast<uint32>(Data.Indices.Size());
@@ -34,7 +34,7 @@ bool FMesh::Init(const FMeshData& Data)
     }
     else
     {
-        VertexBuffer->SetName("VertexBuffer");
+        VertexBuffer->SetDebugName("VertexBuffer");
     }
 
     // Create VertexBuffer with only positions
@@ -53,7 +53,7 @@ bool FMesh::Init(const FMeshData& Data)
     }
     else
     {
-        PosOnlyVertexBuffer->SetName("Position Only VertexBuffer");
+        PosOnlyVertexBuffer->SetDebugName("Position Only VertexBuffer");
     }
 
     // Create VertexBuffer with only positions and texcoords
@@ -73,7 +73,7 @@ bool FMesh::Init(const FMeshData& Data)
     }
     else
     {
-        MaskedVertexBuffer->SetName("Masked VertexBuffer");
+        MaskedVertexBuffer->SetDebugName("Masked VertexBuffer");
     }
 
     // If we can get away with 16-bit indices, store them in this array
@@ -107,7 +107,7 @@ bool FMesh::Init(const FMeshData& Data)
     }
     else
     {
-        IndexBuffer->SetName("IndexBuffer");
+        IndexBuffer->SetDebugName("IndexBuffer");
     }
 
     if (bRTOn)
@@ -120,7 +120,7 @@ bool FMesh::Init(const FMeshData& Data)
         }
         else
         {
-            RTGeometry->SetName("RayTracing Geometry");
+            RTGeometry->SetDebugName("RayTracing Geometry");
         }
 
         FRHIBufferSRVDesc SRVInitializer(VertexBuffer.Get(), 0, VertexCount);

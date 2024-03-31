@@ -193,16 +193,6 @@ public:
         return FString("NullRHI Adapter");
     }
 
-    virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const override final
-    {
-        OutSupport = FRHIRayTracingSupport();
-    }
-
-    virtual void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const override final
-    {
-        OutSupport = FRHIShadingRateSupport();
-    }
-
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final
     {
         return true;

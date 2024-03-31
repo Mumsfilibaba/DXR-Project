@@ -404,7 +404,7 @@ bool FD3D12RootSignatureManager::Initialize()
     }
     else
     {
-        SimpleGraphicsRootSignature->SetName("Default Simple Graphics RootSignature");
+        SimpleGraphicsRootSignature->SetDebugName("Default Simple Graphics RootSignature");
     }
 
     FD3D12RootSignatureLayout GraphicsKey;
@@ -429,7 +429,7 @@ bool FD3D12RootSignatureManager::Initialize()
     }
     else
     {
-        GraphicsRootSignature->SetName("Default Graphics RootSignature");
+        GraphicsRootSignature->SetDebugName("Default Graphics RootSignature");
     }
 
     FD3D12RootSignatureLayout ComputeKey;
@@ -449,7 +449,7 @@ bool FD3D12RootSignatureManager::Initialize()
     }
     else
     {
-        ComputeRootSignature->SetName("Default Compute RootSignature");
+        ComputeRootSignature->SetDebugName("Default Compute RootSignature");
     }
 
     const FD3D12RayTracingDesc& RayTracingDesc = GetDevice()->GetRayTracingDesc();
@@ -475,7 +475,7 @@ bool FD3D12RootSignatureManager::Initialize()
     }
     else
     {
-        RTGlobalRootSignature->SetName("Default Global RayTracing RootSignature");
+        RTGlobalRootSignature->SetDebugName("Default Global RayTracing RootSignature");
     }
 
     FD3D12RootSignatureLayout RTLocalKey;
@@ -494,7 +494,7 @@ bool FD3D12RootSignatureManager::Initialize()
     }
     else
     {
-        RTLocalRootSignature->SetName("Default Local RayTracing RootSignature");
+        RTLocalRootSignature->SetDebugName("Default Local RayTracing RootSignature");
     }
 
     return true;

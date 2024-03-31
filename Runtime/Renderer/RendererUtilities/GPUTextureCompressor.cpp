@@ -120,7 +120,7 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     }
     else
     {
-        CompressedTex->SetName("Temp Compressed Texture");
+        CompressedTex->SetDebugName("Temp Compressed Texture");
     }
 
     // Create the actual compressed texture
@@ -137,7 +137,7 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     }
     else
     {
-        Output->SetName("Compressed Texture");
+        Output->SetDebugName("Compressed Texture");
     }
 
     // Compress the texture
@@ -220,7 +220,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     }
     else
     {
-        CompressedTex->SetName("Temp Compressed Texture");
+        CompressedTex->SetDebugName("Temp Compressed Texture");
     }
 
     TArray<FRHIUnorderedAccessViewRef> CompressedUAVs;
@@ -262,7 +262,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     }
     else
     {
-        Output->SetName("Compressed Texture");
+        Output->SetDebugName("Compressed Texture");
     }
 
     // Compress the texture

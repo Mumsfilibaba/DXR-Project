@@ -147,13 +147,13 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     return true;
 }
 
-void FVulkanBuffer::SetName(const FString& InName)
+void FVulkanBuffer::SetDebugName(const FString& InName)
 {
     FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Buffer, VK_OBJECT_TYPE_BUFFER);
     DebugName = InName;
 }
 
-FString FVulkanBuffer::GetName() const
+FString FVulkanBuffer::GetDebugName() const
 {
     return DebugName;
 }

@@ -26,7 +26,7 @@ public:
 
     virtual EFormat GetFormat() const = 0;
 
-    virtual void SetName(const FString& InName) = 0;
+    virtual void SetDebugName(const FString& InName) = 0;
 
     void SetFilename(const FString& InFilename)
     {
@@ -58,7 +58,7 @@ public:
     
     virtual void ReleaseData() override final;
 
-    virtual void SetName(const FString& InName) override final;
+    virtual void SetDebugName(const FString& InName) override final;
 
     virtual EFormat GetFormat() const override final { return Format; }
 

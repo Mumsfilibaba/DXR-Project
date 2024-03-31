@@ -35,7 +35,7 @@ public:
     // Create empty submit that waits for the semaphores and waits for completion
     bool FlushWaitSemaphoresAndWait();
 
-    void SetName(const FString& Name)
+    void SetDebugName(const FString& Name)
     {
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), Name.GetCString(), Queue, VK_OBJECT_TYPE_QUEUE);
     }

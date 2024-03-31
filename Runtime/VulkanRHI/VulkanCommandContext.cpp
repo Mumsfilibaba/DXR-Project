@@ -392,7 +392,7 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
 
 void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
 {
-    VkClearValue ClearValues[FRHILimits::MaxRenderTargets + 1];
+    VkClearValue ClearValues[FHardwareLimits::MAX_RENDER_TARGETS + 1];
     FMemory::Memzero(ClearValues, sizeof(ClearValues));
     
     uint32 Width          = 0;
@@ -888,8 +888,8 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
         // NOTE: We want to copy the full function
         if (IsTextureCube(DstVulkanTexture->GetDimension()))
         {
-            ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
-            ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices() * VULKAN_NUM_CUBE_FACES;
+            ImageCopy.srcSubresource.layerCount = SrcVulkanTexture->GetNumArraySlices() * RHI_NUM_CUBE_FACES;
+            ImageCopy.dstSubresource.layerCount = DstVulkanTexture->GetNumArraySlices() * RHI_NUM_CUBE_FACES;
         }
         else
         {
@@ -919,8 +919,8 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
     uint32_t SrcBaseArrayLayer = 0;
     if (IsTextureCube(SrcVulkanTexture->GetDimension()))
     {
-        SrcBaseArrayLayer = CopyDesc.SrcArraySlice  * VULKAN_NUM_CUBE_FACES;
-        NumArrayLayers    = CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES;
+        SrcBaseArrayLayer = CopyDesc.SrcArraySlice  * RHI_NUM_CUBE_FACES;
+        NumArrayLayers    = CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES;
     }
     else
     {
@@ -930,13 +930,13 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
     
     if (IsTextureCube(DstVulkanTexture->GetDimension()))
     {
-        DstBaseArrayLayer = CopyDesc.DstArraySlice  * VULKAN_NUM_CUBE_FACES;
-        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES, NumArrayLayers);
+        DstBaseArrayLayer = CopyDesc.DstArraySlice * RHI_NUM_CUBE_FACES;
+        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
     }
     else
     {
         DstBaseArrayLayer = CopyDesc.DstArraySlice;
-        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES, NumArrayLayers);
+        NumArrayLayers    = FMath::Max(CopyDesc.NumArraySlices * RHI_NUM_CUBE_FACES, NumArrayLayers);
     }
 
     // Flush barriers
@@ -1080,7 +1080,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
     // Flush barriers
     BarrierBatcher.FlushBarriers();
 
-    const uint32 NumArrayLayers = IsTextureCube(VulkanTexture->GetDimension()) ? TextureDesc.NumArraySlices * VULKAN_NUM_CUBE_FACES : TextureDesc.NumArraySlices;
+    const uint32 NumArrayLayers = IsTextureCube(VulkanTexture->GetDimension()) ? TextureDesc.NumArraySlices * RHI_NUM_CUBE_FACES : TextureDesc.NumArraySlices;
     for (uint32 Index = 1; Index < MipLevelCount; Index++)
     {
         DestinationExtent = { FMath::Max(SourceExtent.width / 2U, 1u), FMath::Max(SourceExtent.height / 2U, 1U) };

@@ -9,8 +9,10 @@ typedef TSharedRef<class FVulkanRayTracingGeometry> FVulkanRayTracingGeometryRef
 class FVulkanRayTracingGeometry : public FRHIRayTracingGeometry, public FVulkanDeviceChild
 {
 public:
-    FVulkanRayTracingGeometry(FVulkanDevice* InDevice);
+    FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryDesc& InDesc);
     ~FVulkanRayTracingGeometry();
+
+    bool Initialize();
 
     VkAccelerationStructureKHR GetVkAccelerationStructure() const
     {

@@ -66,7 +66,7 @@ struct FVulkanFramebufferKey
     uint16       Width;
     uint16       Height;
     uint32       NumAttachmentViews;
-    VkImageView  AttachmentViews[FRHILimits::MaxRenderTargets + 1];
+    VkImageView  AttachmentViews[FHardwareLimits::MAX_RENDER_TARGETS + 1];
 };
 
 class FVulkanFramebufferCache : public FVulkanDeviceChild

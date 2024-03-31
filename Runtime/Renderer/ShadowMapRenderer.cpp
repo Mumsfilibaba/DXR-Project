@@ -126,7 +126,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            PointLightPipelineState->SetName("Point ShadowMap PipelineState");
+            PointLightPipelineState->SetDebugName("Point ShadowMap PipelineState");
         }
     }
 
@@ -141,7 +141,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            PerCascadeBuffer->SetName("Per Cascade Buffer");
+            PerCascadeBuffer->SetDebugName("Per Cascade Buffer");
         }
 
         FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
@@ -271,7 +271,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            DirectionalLightPSO->SetName("CSM PipelineState");
+            DirectionalLightPSO->SetDebugName("CSM PipelineState");
         }
 
         PSOInitializer.VertexInputLayout        = MaskedInputLayout.Get();
@@ -286,7 +286,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            DirectionalLightMaskedPSO->SetName("Masked CSM PipelineState");
+            DirectionalLightMaskedPSO->SetDebugName("Masked CSM PipelineState");
         }
     }
 
@@ -317,7 +317,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            CascadeGen->SetName("CascadeGen PSO");
+            CascadeGen->SetDebugName("CascadeGen PSO");
         }
     }
 
@@ -332,7 +332,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            CascadeGenerationData->SetName("Cascade GenerationData");
+            CascadeGenerationData->SetDebugName("Cascade GenerationData");
         }
 
         FRHIBufferDesc CascadeMatrixBufferDesc(sizeof(FCascadeMatrices) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatrices), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
@@ -344,7 +344,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            LightSetup.CascadeMatrixBuffer->SetName("Cascade MatrixBuffer");
+            LightSetup.CascadeMatrixBuffer->SetDebugName("Cascade MatrixBuffer");
         }
 
         FRHIBufferSRVDesc SRVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
@@ -372,7 +372,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            LightSetup.CascadeSplitsBuffer->SetName("Cascade SplitBuffer");
+            LightSetup.CascadeSplitsBuffer->SetDebugName("Cascade SplitBuffer");
         }
 
         SRVInitializer = FRHIBufferSRVDesc(LightSetup.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
@@ -419,7 +419,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            DirectionalShadowMaskPSO->SetName("Directional ShadowMask PSO");
+            DirectionalShadowMaskPSO->SetDebugName("Directional ShadowMask PSO");
         }
     }
 
@@ -455,7 +455,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            DirectionalShadowMaskPSO_Debug->SetName("Directional ShadowMask PSO Debug");
+            DirectionalShadowMaskPSO_Debug->SetDebugName("Directional ShadowMask PSO Debug");
         }
     }
 
@@ -494,7 +494,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
         {
             for (uint32 Face = 0; Face < 6; ++Face)
             {
-                const uint32 ArrayIndex = (Cube * kRHINumCubeFaces) + Face;
+                const uint32 ArrayIndex = (Cube * RHI_NUM_CUBE_FACES) + Face;
 
                 auto& Data = LightSetup.PointLightShadowMapsGenerationData[Cube];
                 PerShadowMapData.Matrix   = Data.Matrix[Face];
@@ -852,7 +852,7 @@ bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSet
     LightSetup.DirectionalShadowMask = RHICreateTexture(ShadowMaskDesc, EResourceAccess::NonPixelShaderResource);
     if (LightSetup.DirectionalShadowMask)
     {
-        LightSetup.DirectionalShadowMask->SetName("Directional Shadow Mask 0");
+        LightSetup.DirectionalShadowMask->SetDebugName("Directional Shadow Mask 0");
     }
     else
     {
@@ -863,7 +863,7 @@ bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSet
     LightSetup.CascadeIndexBuffer = RHICreateTexture(CascadeIndexBufferDesc, EResourceAccess::NonPixelShaderResource);
     if (LightSetup.CascadeIndexBuffer)
     {
-        LightSetup.CascadeIndexBuffer->SetName("Cascade Index Debug Buffer");
+        LightSetup.CascadeIndexBuffer->SetDebugName("Cascade Index Debug Buffer");
     }
     else
     {
@@ -897,7 +897,7 @@ bool FShadowMapRenderer::CreateShadowMaps(FLightSetup& LightSetup, FFrameResourc
     LightSetup.PointLightShadowMaps = RHICreateTexture(PointLightDesc, EResourceAccess::PixelShaderResource);
     if (LightSetup.PointLightShadowMaps)
     {
-        LightSetup.PointLightShadowMaps->SetName("PointLight ShadowMaps");
+        LightSetup.PointLightShadowMaps->SetDebugName("PointLight ShadowMaps");
     }
     else
     {
@@ -920,7 +920,7 @@ bool FShadowMapRenderer::CreateShadowMaps(FLightSetup& LightSetup, FFrameResourc
         LightSetup.ShadowMapCascades[Cascade] = RHICreateTexture(CascadeInitializer, EResourceAccess::NonPixelShaderResource);
         if (LightSetup.ShadowMapCascades[Cascade])
         {
-            LightSetup.ShadowMapCascades[Cascade]->SetName("Shadow Map Cascade[" + TTypeToString<int32>::ToString(Cascade) + "]");
+            LightSetup.ShadowMapCascades[Cascade]->SetDebugName("Shadow Map Cascade[" + TTypeToString<int32>::ToString(Cascade) + "]");
         }
         else
         {

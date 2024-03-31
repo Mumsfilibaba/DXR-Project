@@ -42,7 +42,7 @@ void FVulkanQuery::GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) c
     const FVulkanTimingQuery& FirstQuery = CurrentPool->QueryData[FinalIndex];
     if (FirstQuery.Availability)
     {
-        OutQuery.Begin = static_cast<double>(FirstQuery.Timestamp) * static_cast<double>(FVulkanDeviceLimits::TimestampPeriod);
+        OutQuery.Begin = static_cast<uint64>(static_cast<double>(FirstQuery.Timestamp) * static_cast<double>(FVulkanDeviceLimits::TimestampPeriod));
     }
     else
     {
@@ -52,7 +52,7 @@ void FVulkanQuery::GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) c
     const FVulkanTimingQuery& SecondQuery = CurrentPool->QueryData[FinalIndex + 1];
     if (SecondQuery.Availability)
     {
-        OutQuery.End = static_cast<double>(SecondQuery.Timestamp) * static_cast<double>(FVulkanDeviceLimits::TimestampPeriod);
+        OutQuery.End = static_cast<uint64>(static_cast<double>(SecondQuery.Timestamp) * static_cast<double>(FVulkanDeviceLimits::TimestampPeriod));
     }
     else
     {

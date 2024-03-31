@@ -331,7 +331,70 @@ bool FVulkanDevice::PostLoaderInitalize()
     {
         return false;
     }
-    
+
+    // Initialize hardware support globals
+    VkPhysicalDevice PhysicalDeviceHandle = GetPhysicalDevice()->GetVkPhysicalDevice();
+    if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) && IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
+    {
+        VkPhysicalDeviceProperties2 DeviceProperties2;
+        FMemory::Memzero(&DeviceProperties2);
+
+        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
+        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
+        VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPipelineProperties;
+        FMemory::Memzero(&RayTracingPipelineProperties);
+
+        DevicePropertiesHelper.AddNext(RayTracingPipelineProperties);
+        RayTracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+
+        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
+
+        // Check if RayQueries are supported, then the Tier is kind of like Tier 1.1 (Inline RayTracing in DXR)
+        if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
+        {
+            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1_1;
+        }
+        else
+        {
+            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1;
+        }
+
+        FHardwareSupport::MaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
+    }
+    else
+    {
+        FHardwareSupport::RayTracingTier = ERayTracingTier::NotSupported;
+    }
+
+    FHardwareSupport::bRayTracing = FHardwareSupport::RayTracingTier != ERayTracingTier::NotSupported;
+
+    if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
+    {
+        VkPhysicalDeviceProperties2 DeviceProperties2;
+        FMemory::Memzero(&DeviceProperties2);
+
+        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
+        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
+        VkPhysicalDeviceFragmentShadingRatePropertiesKHR FragmentShadingRateProperties;
+        FMemory::Memzero(&FragmentShadingRateProperties);
+
+        DevicePropertiesHelper.AddNext(FragmentShadingRateProperties);
+        FragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+
+        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
+
+        // TODO: Finish this part
+        FHardwareSupport::ShadingRateImageTileSize = 0;
+        FHardwareSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+    }
+    else
+    {
+        FHardwareSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+    }
+
+    FHardwareSupport::bVariableShadingRate = FHardwareSupport::ShadingRateTier != EShadingRateTier::NotSupported;
     return true;
 }
 

@@ -241,7 +241,7 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
-    virtual void SetName(const FString& InName) override final
+    virtual void SetDebugName(const FString& InName) override final
     {
         FD3D12PipelineStateCommon::SetDebugName(InName);
     }
@@ -291,7 +291,7 @@ public:
 
     bool Initialize();
 
-    virtual void SetName(const FString& InName) override final
+    virtual void SetDebugName(const FString& InName) override final
     {
         FD3D12PipelineStateCommon::SetDebugName(InName);
     }
@@ -316,7 +316,7 @@ public:
 
     bool Initialize(const FRHIRayTracingPipelineStateDesc& Initializer);
 
-    virtual void SetName(const FString& InName) override
+    virtual void SetDebugName(const FString& InName) override
     {
         FStringWide WideName = CharToWide(InName);
         StateObject->SetName(WideName.GetCString());

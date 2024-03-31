@@ -120,7 +120,7 @@ public:
         MTLBlendFactor    SourceColorBlendFactor;
     };
 
-    FBlendAttachment ColorAttachments[FRHILimits::MaxRenderTargets];
+    FBlendAttachment ColorAttachments[FHardwareLimits::MAX_RENDER_TARGETS];
     const FRHIBlendStateInitializer Initializer;
 };
 
@@ -273,10 +273,10 @@ public:
         NSSafeRelease(PipelineState);
     }
 
-    virtual void SetName(const FString& InName) override final {
+    virtual void SetDebugName(const FString& InName) override final {
 }
 
-    virtual FString GetName() const override final { return ""; }
+    virtual FString GetDebugName() const override final { return ""; }
     
 public:
     FMetalBlendState*        GetMetalBlendState()        const { return BlendState.Get(); }
@@ -312,10 +312,10 @@ public:
     FMetalComputePipelineState()  = default;
     ~FMetalComputePipelineState() = default;
 
-    virtual void SetName(const FString& InName) override final {
+    virtual void SetDebugName(const FString& InName) override final {
 }
 
-    virtual FString GetName() const override final { return ""; }
+    virtual FString GetDebugName() const override final { return ""; }
 };
 
 
@@ -325,10 +325,10 @@ public:
     FMetalRayTracingPipelineState()  = default;
     ~FMetalRayTracingPipelineState() = default;
 
-    virtual void SetName(const FString& InName) override final {
+    virtual void SetDebugName(const FString& InName) override final {
 }
 
-    virtual FString GetName() const override final { return ""; }
+    virtual FString GetDebugName() const override final { return ""; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

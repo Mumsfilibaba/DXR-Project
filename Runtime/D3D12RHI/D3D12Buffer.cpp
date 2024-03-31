@@ -114,19 +114,19 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
     return true;
 }
 
-void FD3D12Buffer::SetName(const FString& InName)
+void FD3D12Buffer::SetDebugName(const FString& InName)
 {
     if (Resource)
     {
-        Resource->SetName(InName);
+        Resource->SetDebugName(InName);
     }
 }
 
-FString FD3D12Buffer::GetName() const
+FString FD3D12Buffer::GetDebugName() const
 {
     if (Resource)
     {
-        return Resource->GetName();
+        return Resource->GetDebugName();
     }
 
     return "";

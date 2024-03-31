@@ -271,7 +271,7 @@ public:
         return NumCommands;
     }
 
-    FORCEINLINE void SetName(const FString& Name)
+    FORCEINLINE void SetDebugName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
         CmdList->SetName(WideName.GetCString());
