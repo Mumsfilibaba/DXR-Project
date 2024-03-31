@@ -34,7 +34,6 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , MemoryManager(this)
     , FenceManager(this)
     , PipelineLayoutManager(this)
-    , DescriptorPoolManager(this)
     , PipelineCache(this)
     , DescriptorSetCache(this)
     , DefaultResources()
@@ -77,9 +76,6 @@ FVulkanDevice::~FVulkanDevice()
 
     // Release all PipelineLayoutManager
     PipelineLayoutManager.Release();
-
-    // Release all the DescriptorPools
-    DescriptorPoolManager.ReleaseAll();
 
     // Ensure that all RenderPasses and FrameBuffers are destroyed
     RenderPassCache.ReleaseAll();
@@ -332,12 +328,6 @@ bool FVulkanDevice::PostLoaderInitalize()
 {
     // Initialize PipelineCache
     if (!PipelineCache.Initialize())
-    {
-        return false;
-    }
-    
-    // Initialize the DescriptorSetCache
-    if (!DescriptorSetCache.Initialize())
     {
         return false;
     }

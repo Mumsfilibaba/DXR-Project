@@ -1,6 +1,7 @@
 #pragma once
 #include "VulkanDeviceChild.h"
 #include "VulkanRefCounted.h"
+#include "Core/Containers/Map.h"
 #include "Core/Containers/Array.h"
 #include "Core/Misc/CRC.h"
 
@@ -28,11 +29,6 @@ struct FVulkanDescriptorSetKey
         return Hash;
     }
     
-    void Reset()
-    {
-        FMemory::Memzero(Resources.Data(), Resources.SizeInBytes());
-    }
-    
     bool operator==(const FVulkanDescriptorSetKey& Other) const
     {
         return (Resources.Size() == Other.Resources.Size()) ? FMemory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
@@ -50,6 +46,56 @@ struct FVulkanDescriptorSetKey
     
     TArray<FBinding> Resources;
     uint64           Hash;
+};
+
+struct FVulkanDescriptorPoolInfo
+{
+    struct FDescriptorSize
+    {
+        FDescriptorSize() = default;
+
+        FDescriptorSize(uint32 InType, uint32 InNumDescriptors)
+            : Type(InType)
+            , NumDescriptors(InNumDescriptors)
+        {
+        }
+
+        uint32 Type;
+        uint32 NumDescriptors;
+    };
+
+    FVulkanDescriptorPoolInfo()
+        : DescriptorSetLayout(VK_NULL_HANDLE)
+        , DescriptorSizes()
+        , Hash(0)
+    {
+    }
+
+    uint64 GenerateHash()
+    {
+        Hash = reinterpret_cast<uint64>(DescriptorSetLayout);
+        HashCombine(Hash, FCRC32::Generate(DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()));
+        return Hash;
+    }
+
+    bool operator==(const FVulkanDescriptorPoolInfo& Other) const
+    {
+        return (DescriptorSizes.Size() == Other.DescriptorSizes.Size()) ? FMemory::Memcmp(DescriptorSizes.Data(), Other.DescriptorSizes.Data(), DescriptorSizes.SizeInBytes()) == 0 : false;
+    }
+
+    bool operator!=(const FVulkanDescriptorPoolInfo& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    friend uint64 HashType(const FVulkanDescriptorPoolInfo& Value)
+    {
+        return Value.Hash;
+    }
+
+    VkDescriptorSetLayout   DescriptorSetLayout;
+    TArray<FDescriptorSize> DescriptorSizes;
+    uint64 Hash;
 };
 
 class FVulkanDescriptorSetBuilder
@@ -226,19 +272,19 @@ public:
     // Binds a SamplerState to a binding, mapping from register to binding needs to be done here  
     void SetSampler(class FVulkanSamplerState* SamplerState, uint32 DescriptorSetIndex, uint32 BindingIndex);
 
-    // This function creates or retrieves handles for all descriptorsets
+    // This function creates or retrieves handles for all DescriptorSets
     void UpdateDescriptorSets();
     
     // Resets the state and puts default resources into all bindings
     void Reset();
 
-    // This function binds all descriptorsets to the graphics-pipeline
+    // This function binds all DescriptorSets to the graphics-pipeline
     inline void BindGraphicsDescriptorSets(class FVulkanCommandBuffer& CommandBuffer)
     {
         BindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
     }
 
-    // This function binds all descriptorsets to the compute-pipeline
+    // This function binds all DescriptorSets to the compute-pipeline
     inline void BindComputeDescriptorSets(class FVulkanCommandBuffer& CommandBuffer)
     {
         BindDescriptorSets(CommandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE);
@@ -251,16 +297,17 @@ public:
 
 private:
     
-    // Binds all the descriptorsets that we want to bind
+    // Binds all the DescriptorSets that we want to bind
     void BindDescriptorSets(class FVulkanCommandBuffer& CommandBuffer, VkPipelineBindPoint BindPoint);
 
-    // Resets a particular bind point with nulldescriptors to ensure that there is a valid resource bound
+    // Resets a particular bind point with null-descriptors to ensure that there is a valid resource bound
     void ResetDescriptorBinding(uint32 DescriptorSetIndex, uint32 BindingIndex);
 
     FVulkanPipelineLayout*              Layout;
     TArray<VkDescriptorSet>             DescriptorSetHandles;
     TArray<FVulkanDescriptorWrites>     DescriptorSetWrites;
     TArray<FVulkanDescriptorSetBuilder> DescriptorSetBuilders;
+    TArray<FVulkanDescriptorPoolInfo>   DescriptorPoolInfos;
     const FVulkanDefaultResources&      DefaultResources;
 };
 
@@ -273,28 +320,19 @@ public:
     FVulkanDescriptorPool(FVulkanDevice* InDevice);
     ~FVulkanDescriptorPool();
     
-    bool Initialize();
-    
-    bool AllocateDescriptorSet(VkDescriptorSetLayout DescriptorSetLayout, VkDescriptorSet& OuDescriptorSet);
+    bool Initialize(const FVulkanDescriptorPoolInfo& PoolInfo);
+
+    bool AllocateDescriptorSet(const VkDescriptorSetAllocateInfo& DescriptorSetAllocateInfo, VkDescriptorSet* OutDescriptorSets);
     
     void Reset();
 
+    inline bool CanAllocateDescriptorSet()
+    {
+        return NumDescriptorSets > 0;
+    }
+
 private:
     VkDescriptorPool DescriptorPool;
-};
-
-class FVulkanDescriptorPoolManager : public FVulkanDeviceChild
-{
-public:
-    FVulkanDescriptorPoolManager(FVulkanDevice* InDevice);
-    ~FVulkanDescriptorPoolManager();
-    
-    FVulkanDescriptorPool* ObtainPool();
-    void RecyclePool(FVulkanDescriptorPool* InDescriptorPool);
-    
-    void ReleaseAll();
-    
-private:
-    TArray<FVulkanDescriptorPool*> DescriptorPools;
-    FCriticalSection               DescriptorPoolsCS;
+    int32           MaxDescriptorSets;
+    int32           NumDescriptorSets;
 };

@@ -105,7 +105,7 @@ bool FVulkanViewport::CreateSwapChain()
         ImageSemaphores.Resize(BufferCount);
         RenderSemaphores.Resize(BufferCount);
         BackBuffers.Resize(BufferCount);
-        
+
         const uint32 BackBufferWidth  = GetWidth();
         const uint32 BackBufferheight = GetHeight();
 

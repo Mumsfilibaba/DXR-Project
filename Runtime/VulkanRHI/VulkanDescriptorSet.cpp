@@ -4,6 +4,14 @@
 #include "VulkanResourceViews.h"
 #include "VulkanBuffer.h"
 #include "VulkanSamplerState.h"
+#include "Core/Misc/ConsoleManager.h"
+
+#define VALIDATE_NO_NULL_DESCRIPTORS (0)
+
+static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
+    "VulkanRHI.MaxDescriptorSetsPerPool",
+    "The number of DescriptorSets that can be created from a DescriptorPool",
+    32);
 
 FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanPipelineLayout* InLayout, const FVulkanDefaultResources& InDefaultResources)
     : FVulkanDeviceChild(InDevice)
@@ -19,15 +27,21 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         return;
     }
 
-    // Allocate all the per-descriptorset resources
+    // Allocate all the per DescriptorSet resources
     const TArray<FVulkanDescriptorRemappingInfo>& RemappingInfos = Layout->GetDescriptorRemappingInfos();
     DescriptorSetHandles.Resize(RemappingInfos.Size());
     DescriptorSetWrites.Resize(RemappingInfos.Size());
     DescriptorSetBuilders.Resize(RemappingInfos.Size());
+    DescriptorPoolInfos.Reserve(DescriptorSetHandles.Size());
     
+    // Maps from a descriptor-type to the number of descriptors for this type
+    TMap<VkDescriptorType, uint32> DescriptorCountMap;
+
     // Pre-Initialize all the DescriptorWrites that are necessary
     for (int32 DescriptorSetIndex = 0; DescriptorSetIndex < RemappingInfos.Size(); DescriptorSetIndex++)
     {
+        DescriptorCountMap.Clear();
+
         const FVulkanDescriptorRemappingInfo& SetRemappingInfo = RemappingInfos[DescriptorSetIndex];
         
         // Allocate DescriptorWrites
@@ -72,6 +86,8 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                     break;
                 }
             };
+
+            DescriptorCountMap[WriteDescriptorSet.descriptorType]++;
         }
 
         // Allocate Buffer and Image Infos
@@ -135,6 +151,18 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         
         // Setup the builders
         DescriptorSetBuilders[DescriptorSetIndex].SetupDescriptorWrites(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.Size());
+
+        // Fill in all the info we need to allocate DescriptorSets from a DescriptorPool
+        FVulkanDescriptorPoolInfo PoolInfo;
+        PoolInfo.DescriptorSetLayout = Layout->GetVkDescriptorSetLayout(DescriptorSetIndex);
+
+        for (TPair<const VkDescriptorType&, uint32&> TypePair : DescriptorCountMap)
+        {
+            PoolInfo.DescriptorSizes.Emplace(TypePair.First, TypePair.Second);
+        }
+
+        PoolInfo.GenerateHash();
+        DescriptorPoolInfos.Add(Move(PoolInfo));
     }
 }
 
@@ -241,6 +269,7 @@ void FVulkanDescriptorState::UpdateDescriptorSets()
 {
     for (int32 Index = 0; Index < DescriptorSetHandles.Size(); Index++)
     {
+    #if VALIDATE_NO_NULL_DESCRIPTORS
         const FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[Index];
         for (const VkWriteDescriptorSet& WriteInfo : DSWrites.DescriptorWrites)
         {
@@ -264,12 +293,14 @@ void FVulkanDescriptorState::UpdateDescriptorSets()
                 DEBUG_BREAK();
             }
         }
-        
+     #endif
+
         FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[Index];
         DSBuilder.UpdateHash();
 
-        VkDescriptorSetLayout SetLayout = Layout->GetVkDescriptorSetLayout(Index);
-        if (!GetDevice()->GetDescriptorSetCache().FindOrCreateDescriptorSet(SetLayout, DSBuilder, DescriptorSetHandles[Index]))
+        const FVulkanDescriptorPoolInfo& DescriptorPoolInfo = DescriptorPoolInfos[Index];
+        FVulkanDescriptorSetCache& DescriptorSetCache = GetDevice()->GetDescriptorSetCache();
+        if (!DescriptorSetCache.FindOrCreateDescriptorSet(DescriptorPoolInfo, DSBuilder, DescriptorSetHandles[Index]))
         {
             VULKAN_ERROR("Failed to find or create DescriptorSet");
             DEBUG_BREAK();
@@ -292,7 +323,7 @@ void FVulkanDescriptorState::Reset()
 
 void FVulkanDescriptorState::BindDescriptorSets(class FVulkanCommandBuffer& CommandBuffer, VkPipelineBindPoint BindPoint)
 {
-    CHECK(DescriptorSetHandles.Size() > 0); // Cannot bind zero descriptorsets
+    CHECK(DescriptorSetHandles.Size() > 0); // Cannot bind zero DescriptorSets
     CommandBuffer->BindDescriptorSets(BindPoint, Layout->GetVkPipelineLayout(), 0, DescriptorSetHandles.Size(), DescriptorSetHandles.Data(), 0, nullptr);
 }
 
@@ -338,10 +369,11 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
     }
 }
 
-
 FVulkanDescriptorPool::FVulkanDescriptorPool(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , DescriptorPool(VK_NULL_HANDLE)
+    , MaxDescriptorSets(0)
+    , NumDescriptorSets(0)
 {
 }
 
@@ -356,40 +388,28 @@ FVulkanDescriptorPool::~FVulkanDescriptorPool()
     }
 }
 
-bool FVulkanDescriptorPool::Initialize()
+bool FVulkanDescriptorPool::Initialize(const FVulkanDescriptorPoolInfo& PoolInfo)
 {
-    const VkDescriptorType DescriptorTypes[] =
-    {
-        // ConstantBuffers
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        // SRV + UAV Buffers
-        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        // Samplers
-        VK_DESCRIPTOR_TYPE_SAMPLER,
-        // UAV Textures
-        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        // Textures
-        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-    };
-    
+    const uint32 MaxDescriptorSetsPerPool = FMath::Max<int32>(CVarVulkanMaxDescriptorSetsPerPool.GetValue(), 1);
+
     TArray<VkDescriptorPoolSize> PoolSizes;
-    for (VkDescriptorType DescriptorType : DescriptorTypes)
+    for (const FVulkanDescriptorPoolInfo::FDescriptorSize& Size : PoolInfo.DescriptorSizes)
     {
         VkDescriptorPoolSize NewPoolSize;
-        NewPoolSize.type            = DescriptorType;
-        NewPoolSize.descriptorCount = 1024;
+        NewPoolSize.type            = static_cast<VkDescriptorType>(Size.Type);
+        NewPoolSize.descriptorCount = Size.NumDescriptors * MaxDescriptorSetsPerPool;
         PoolSizes.Add(NewPoolSize);
     }
-    
+
     VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo;
     FMemory::Memzero(&DescriptorPoolCreateInfo);
-    
+
     DescriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    DescriptorPoolCreateInfo.maxSets       = 1024;
+    DescriptorPoolCreateInfo.maxSets       = MaxDescriptorSetsPerPool;
     DescriptorPoolCreateInfo.flags         = 0;
     DescriptorPoolCreateInfo.poolSizeCount = PoolSizes.Size();
     DescriptorPoolCreateInfo.pPoolSizes    = PoolSizes.Data();
-    
+
     VkResult Result = vkCreateDescriptorPool(GetDevice()->GetVkDevice(), &DescriptorPoolCreateInfo, nullptr, &DescriptorPool);
     if (VULKAN_FAILED(Result))
     {
@@ -398,24 +418,20 @@ bool FVulkanDescriptorPool::Initialize()
     }
     else
     {
+        NumDescriptorSets = MaxDescriptorSets = MaxDescriptorSetsPerPool;
         return true;
     }
 }
 
-bool FVulkanDescriptorPool::AllocateDescriptorSet(VkDescriptorSetLayout DescriptorSetLayout, VkDescriptorSet& OutDescriptorSet)
+bool FVulkanDescriptorPool::AllocateDescriptorSet(const VkDescriptorSetAllocateInfo& DescriptorSetAllocateInfo, VkDescriptorSet* OutDescriptorSets)
 {
-    VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo;
-    FMemory::Memzero(&DescriptorSetAllocateInfo);
-    
-    DescriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    DescriptorSetAllocateInfo.descriptorPool     = DescriptorPool;
-    DescriptorSetAllocateInfo.descriptorSetCount = 1;
-    DescriptorSetAllocateInfo.pSetLayouts        = &DescriptorSetLayout;
-    
-    // Initalize the DescriptorSet to Null
-    OutDescriptorSet = VK_NULL_HANDLE;
-    
-    VkResult Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &DescriptorSetAllocateInfo, &OutDescriptorSet);
+    CHECK(DescriptorSetAllocateInfo.sType == VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
+    CHECK(DescriptorSetAllocateInfo.pNext == nullptr);
+
+    VkDescriptorSetAllocateInfo AllocateInfo = DescriptorSetAllocateInfo;
+    AllocateInfo.descriptorPool = DescriptorPool;
+
+    VkResult Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &AllocateInfo, OutDescriptorSets);
     if (Result == VK_ERROR_OUT_OF_POOL_MEMORY)
     {
         return false;
@@ -428,6 +444,7 @@ bool FVulkanDescriptorPool::AllocateDescriptorSet(VkDescriptorSetLayout Descript
     }
     else
     {
+        NumDescriptorSets--;
         return true;
     }
 }
@@ -435,70 +452,5 @@ bool FVulkanDescriptorPool::AllocateDescriptorSet(VkDescriptorSetLayout Descript
 void FVulkanDescriptorPool::Reset()
 {
     vkResetDescriptorPool(GetDevice()->GetVkDevice(), DescriptorPool, 0);
-}
-
-
-FVulkanDescriptorPoolManager::FVulkanDescriptorPoolManager(FVulkanDevice* InDevice)
-    : FVulkanDeviceChild(InDevice)
-    , DescriptorPools()
-    , DescriptorPoolsCS()
-{
-}
-
-FVulkanDescriptorPoolManager::~FVulkanDescriptorPoolManager()
-{
-    ReleaseAll();
-}
-
-FVulkanDescriptorPool* FVulkanDescriptorPoolManager::ObtainPool()
-{
-    {
-        SCOPED_LOCK(DescriptorPoolsCS);
-        
-        if (!DescriptorPools.IsEmpty())
-        {
-            FVulkanDescriptorPool* DescriptorPool = DescriptorPools.LastElement();
-            DescriptorPools.Pop();
-
-            // Reset the memory of the DescriptorPool
-            DescriptorPool->Reset();
-            return DescriptorPool;
-        }
-    }
-    
-    FVulkanDescriptorPool* DescriptorPool = new FVulkanDescriptorPool(GetDevice());
-    if (!DescriptorPool->Initialize())
-    {
-        DEBUG_BREAK();
-        return nullptr;
-    }
-    else
-    {
-        return DescriptorPool;
-    }
-}
-
-void FVulkanDescriptorPoolManager::RecyclePool(FVulkanDescriptorPool* InDescriptorPool)
-{
-    if (InDescriptorPool)
-    {
-        SCOPED_LOCK(DescriptorPoolsCS);
-        DescriptorPools.Add(InDescriptorPool);
-    }
-    else
-    {
-        LOG_WARNING("Trying to Recycle an invalid Fence");
-    }
-}
-
-void FVulkanDescriptorPoolManager::ReleaseAll()
-{
-    SCOPED_LOCK(DescriptorPoolsCS);
-    
-    for (FVulkanDescriptorPool* DescriptorPool : DescriptorPools)
-    {
-        delete DescriptorPool;
-    }
-    
-    DescriptorPools.Clear();
+    NumDescriptorSets = MaxDescriptorSets;
 }
