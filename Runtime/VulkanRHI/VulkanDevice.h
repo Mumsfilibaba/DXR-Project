@@ -162,6 +162,7 @@ public:
     bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
     bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
     bool IsPipelineCacheControlSupported()      const { return bSupportsPipelineCacheControl; }
+    bool IsAccelerationStructuresSupported()    const { return bSupportsAccelerationStructures; }
     
     bool IsLayerEnabled(const FString& LayerName)
     {
@@ -220,4 +221,5 @@ private:
     bool bSupportsDepthClip                 : 1;
     bool bSupportsConservativeRasterization : 1;
     bool bSupportsPipelineCacheControl      : 1;
+    bool bSupportsAccelerationStructures    : 1;
 };

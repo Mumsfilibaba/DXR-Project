@@ -54,18 +54,33 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     VkMemoryAllocateFlags AllocateFlags = 0;
     if (FVulkanBufferDeviceAddressKHR::IsEnabled() && Desc.IsDefault())
     {
+        AllocateFlags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-        AllocateFlags           = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
     }
 
+    const bool bIsRayTracingSupported = GetDevice()->IsAccelerationStructuresSupported();
     if (Desc.IsVertexBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    #if VK_KHR_acceleration_structure
+        if (bIsRayTracingSupported)
+        {
+            BufferCreateInfo.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+        }
+    #endif
+
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
     if (Desc.IsIndexBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    #if VK_KHR_acceleration_structure
+        if (bIsRayTracingSupported)
+        {
+            BufferCreateInfo.usage |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+        }
+    #endif
+
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
     if (Desc.IsConstantBuffer())

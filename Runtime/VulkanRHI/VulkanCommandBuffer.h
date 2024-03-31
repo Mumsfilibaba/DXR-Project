@@ -237,6 +237,13 @@ public:
         vkCmdWriteTimestamp(CommandBuffer, PipelineStage, QueryPool, Query);
     }
 
+#if VK_KHR_acceleration_structure
+    FORCEINLINE void BuildAccelerationStructures(uint32 InfoCount, const VkAccelerationStructureBuildGeometryInfoKHR* Infos, const VkAccelerationStructureBuildRangeInfoKHR* const* BuildRangeInfos)
+    {
+        vkCmdBuildAccelerationStructuresKHR(CommandBuffer, InfoCount, Infos, BuildRangeInfos);
+    }
+#endif
+
     FORCEINLINE VkCommandBuffer GetVkCommandBuffer() const
     {
         return CommandBuffer;
