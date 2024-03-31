@@ -164,7 +164,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     }
 
     // Signal other systems that the device is removed 
-    NCoreDelegates::DeviceRemovedDelegate.Broadcast();
+    CoreDelegates::DeviceRemovedDelegate.Broadcast();
 
     FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }

@@ -8,9 +8,10 @@
 template<typename ElementType, int32 NUM_ELEMENTS>
 struct TStaticArray
 {
-    using SizeType = int32;
+    typedef int32 SizeType;
+
     static_assert(TIsSigned<SizeType>::Value, "TStaticArray only supports a SizeType that's signed");
-    static_assert(NUM_ELEMENTS > 0          , "TStaticArray does not support a zero element count");
+    static_assert(NUM_ELEMENTS > 0, "TStaticArray does not support a zero element count");
 
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
     typedef TArrayIterator<const TStaticArray, const ElementType>        ConstIteratorType;

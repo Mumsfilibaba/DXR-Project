@@ -81,10 +81,6 @@ class ENGINE_API FMeshImporter
         bool bAlphaDiffuseCombined;
     };
 
-
-    FMeshImporter();
-    ~FMeshImporter() = default;
-
 public:
     static bool Initialize();
 
@@ -99,6 +95,9 @@ public:
     bool LoadMesh(const FString& Filename, FSceneData& OutScene, EMeshImportFlags Flags = EMeshImportFlags::Default);
 
 private:
+    FMeshImporter();
+    ~FMeshImporter() = default;
+
     void LoadCacheFile();
 
     void UpdateCacheFile();
@@ -108,7 +107,7 @@ private:
     bool LoadCustom(const FString& Filename, FSceneData& OutScene);
 
     // Maps the original path to the custom mesh format
-    TMap<FString, FString> Cache; 
+    TMap<FString, FString> Cache;
 
     static FMeshImporter* GInstance;
 };

@@ -531,7 +531,8 @@ void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
 
     if (Event.IsDown())
     {
-        if (!Event.IsRepeat() && Event.GetKey() == EKeys::GraveAccent)
+        const bool bIsEnableKey = Event.GetKey() == EKeys::GraveAccent || Event.GetKey() == EKeys::World1;
+        if (!Event.IsRepeat() && bIsEnableKey)
         {
             bIsActive = !bIsActive;
             InputHandler->bConsoleToggled = true;

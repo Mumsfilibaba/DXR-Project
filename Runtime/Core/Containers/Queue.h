@@ -18,7 +18,6 @@ enum class EQueueType
 template<typename ElementType, EQueueType QueueType = EQueueType::SPSC>
 class TQueue
 {
-private:
     struct FNode
     {
         FNode* volatile                NextNode;

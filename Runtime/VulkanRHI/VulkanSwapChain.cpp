@@ -1,7 +1,7 @@
 #include "VulkanSwapChain.h"
 
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , PresentResult(VK_SUCCESS)
     , SwapChain(VK_NULL_HANDLE)
     , Extent{ 0, 0 }
@@ -185,10 +185,8 @@ bool FVulkanSwapChain::GetSwapChainImages(VkImage* OutImages)
     return true;
 }
 
-VkResult FVulkanSwapChain::Present(FVulkanQueue* Queue, FVulkanSemaphore* WaitSemaphore)
+VkResult FVulkanSwapChain::Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore)
 {
-    CHECK(Queue != nullptr);
-
     VkPresentInfoKHR PresentInfo;
     FMemory::Memzero(&PresentInfo);
 
@@ -214,7 +212,7 @@ VkResult FVulkanSwapChain::Present(FVulkanQueue* Queue, FVulkanSemaphore* WaitSe
         PresentInfo.pWaitSemaphores    = nullptr;
     }
 
-    return vkQueuePresentKHR(Queue->GetVkQueue(), &PresentInfo);
+    return vkQueuePresentKHR(Queue.GetVkQueue(), &PresentInfo);
 }
 
 VkResult FVulkanSwapChain::AquireNextImage(FVulkanSemaphore* AquireSemaphore)

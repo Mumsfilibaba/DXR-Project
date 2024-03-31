@@ -10,9 +10,9 @@
 
 class FVulkanInstance;
 
-struct FVulkanPhysicalDeviceDesc
+struct FVulkanPhysicalDeviceCreateInfo
 {
-    FVulkanPhysicalDeviceDesc()
+    FVulkanPhysicalDeviceCreateInfo()
         : RequiredExtensionNames()
         , OptionalExtensionNames()
     {
@@ -47,40 +47,29 @@ struct FVulkanQueueFamilyIndices
     uint32 ComputeQueueIndex  = uint32(~0);
 };
 
-class FVulkanPhysicalDevice : public FVulkanRefCounted
+class FVulkanPhysicalDevice
 {
 public:
+    static TOptional<FVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
+
     FVulkanPhysicalDevice(FVulkanInstance* InInstance);
     ~FVulkanPhysicalDevice();
 
-    static TOptional<FVulkanQueueFamilyIndices> GetQueueFamilyIndices(VkPhysicalDevice physicalDevice);
-
-    bool Initialize(const FVulkanPhysicalDeviceDesc& AdapterDesc);
+    bool Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc);
 
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
-    
+
     VkFormatProperties GetFormatProperties(VkFormat Format) const;
     
-    FVulkanInstance* GetInstance() const
-    {
-        return Instance;
-    }
-
-    VkPhysicalDevice GetVkPhysicalDevice() const
-    {
-        return PhysicalDevice;
-    }
-
-    const VkPhysicalDeviceProperties&       GetDeviceProperties()       const { return DeviceProperties; }
-    const VkPhysicalDeviceFeatures&         GetDeviceFeatures()         const { return DeviceFeatures; }
-    const VkPhysicalDeviceMemoryProperties& GetDeviceMemoryProperties() const { return DeviceMemoryProperties; }
-    
+    const VkPhysicalDeviceProperties&        GetProperties()        const { return DeviceProperties; }
+    const VkPhysicalDeviceFeatures&          GetFeatures()          const { return DeviceFeatures; }
+    const VkPhysicalDeviceMemoryProperties&  GetMemoryProperties()  const { return DeviceMemoryProperties; }
     // Vulkan 1.1, Vulkan 1.2 features
-    const VkPhysicalDeviceProperties2&       GetDeviceProperties2()       const { return DeviceProperties2; }
-    const VkPhysicalDeviceFeatures2&         GetDeviceFeatures2()         const { return DeviceFeatures2; }
-    const VkPhysicalDeviceMemoryProperties2& GetDeviceMemoryProperties2() const { return DeviceMemoryProperties2; }
-    const VkPhysicalDeviceVulkan11Features&  GetDeviceFeaturesVulkan11()  const { return DeviceFeatures11; }
-    const VkPhysicalDeviceVulkan12Features&  GetDeviceFeaturesVulkan12()  const { return DeviceFeatures12; }
+    const VkPhysicalDeviceProperties2&       GetProperties2()       const { return DeviceProperties2; }
+    const VkPhysicalDeviceFeatures2&         GetFeatures2()         const { return DeviceFeatures2; }
+    const VkPhysicalDeviceMemoryProperties2& GetMemoryProperties2() const { return DeviceMemoryProperties2; }
+    const VkPhysicalDeviceVulkan11Features&  GetFeaturesVulkan11()  const { return DeviceFeatures11; }
+    const VkPhysicalDeviceVulkan12Features&  GetFeaturesVulkan12()  const { return DeviceFeatures12; }
 
     // Extension Information
 #if VK_EXT_depth_clip_enable
@@ -92,6 +81,19 @@ public:
 #if VK_EXT_conservative_rasterization
     const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& GetConservativeRasterizationProperties() const { return ConservativeRasterizationProperties; }
 #endif
+#if VK_EXT_pipeline_creation_cache_control
+    const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& GetPipelineCreationCacheControlFeatures() const { return PipelineCreationCacheControlFeatures; }
+#endif
+    
+    FVulkanInstance* GetInstance() const
+    {
+        return Instance;
+    }
+
+    VkPhysicalDevice GetVkPhysicalDevice() const
+    {
+        return PhysicalDevice;
+    }
 
 private:
     FVulkanInstance* Instance;
@@ -117,5 +119,8 @@ private:
 #endif
 #if VK_EXT_conservative_rasterization
     VkPhysicalDeviceConservativeRasterizationPropertiesEXT ConservativeRasterizationProperties;
+#endif
+#if VK_EXT_pipeline_creation_cache_control
+    VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT PipelineCreationCacheControlFeatures;
 #endif
 };

@@ -13,8 +13,8 @@ static TAutoConsoleVariable<int32> CVarNumTaskThreads(
 FTaskWorkerThread::FTaskWorkerThread()
     : CurrentTask(nullptr)
     , Triggered(0)
-    , Thread(nullptr)
     , Event(nullptr)
+    , Thread(nullptr)
     , bIsRunning(false)
 {
 }

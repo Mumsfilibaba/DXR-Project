@@ -1,7 +1,9 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
+#include "VulkanRefCounted.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
+#include "Core/Containers/Map.h"
 
 typedef TSharedRef<class FVulkanShader>              FVulkanShaderRef;
 
@@ -20,7 +22,7 @@ typedef TSharedRef<class FVulkanRayClosestHitShader> FVulkanRayClosestHitShaderR
 typedef TSharedRef<class FVulkanRayMissShader>       FVulkanRayMissShaderRef;
 
 
-enum EShaderVisibility : int32
+enum EShaderVisibility : uint32
 {
     ShaderVisibility_Vertex = 0,
     ShaderVisibility_Hull,
@@ -31,8 +33,125 @@ enum EShaderVisibility : int32
     ShaderVisibility_Count = ShaderVisibility_Compute + 1
 };
 
+inline const CHAR* ToString(EShaderVisibility ShaderVisibility)
+{
+    CHECK(ShaderVisibility < ShaderVisibility_Count);
+    
+    static constexpr const char* ShaderVisibilityStrings[]
+    {
+        "Vertex",
+        "Hull",
+        "Domain",
+        "Geometry",
+        "Pixel",
+        "Compute",
+    };
+    
+    static_assert(ARRAY_COUNT(ShaderVisibilityStrings) == ShaderVisibility_Count, "ShaderVisibilityStrings is out of date");
+    return ShaderVisibilityStrings[ShaderVisibility];
+}
 
-class FVulkanShader : public FVulkanDeviceObject
+
+enum EBindingType : uint8
+{
+    BindingType_UniformBuffer = 0,
+    BindingType_SampledImage,
+    BindingType_StorageImage,
+    BindingType_StorageBufferRead,
+    BindingType_StorageBufferReadWrite,
+    BindingType_Sampler,
+    BindingType_Count = BindingType_Sampler + 1,
+};
+
+inline const CHAR* ToString(EBindingType Binding)
+{
+    CHECK(Binding < BindingType_Count);
+    
+    static constexpr const char* BindingTypeStrings[]
+    {
+        "SampledImage",
+        "UniformBuffer",
+        "StorageImage",
+        "StorageBufferRead",
+        "StorageBufferRead",
+        "Sampler",
+    };
+    
+    static_assert(ARRAY_COUNT(BindingTypeStrings) == BindingType_Count, "BindingTypeStrings is out of date");
+    return BindingTypeStrings[Binding];
+}
+
+inline VkDescriptorType GetDescriptorTypeFromBindingType(EBindingType BindingType)
+{
+    // DescriptorType Lookup-table
+    static constexpr VkDescriptorType DescriptorTypes[] =
+    {
+        // ConstantBuffers
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        // SRV Images
+        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+        // UAV Textures
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+        // SRV
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        // UAV Buffers
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+        // Samplers
+        VK_DESCRIPTOR_TYPE_SAMPLER,
+    };
+
+    static_assert(ARRAY_COUNT(DescriptorTypes) == BindingType_Count, "The DescriptorTypes array is out of date");
+    return DescriptorTypes[BindingType];
+}
+
+
+struct FVulkanShaderInfo
+{
+    struct FBindingOffsets
+    {
+        uint32 DescriptorSetOffset = UINT32_MAX;
+        uint32 BindingOffset       = UINT32_MAX;
+    };
+    
+    struct FResourceBinding
+    {
+        EBindingType BindingType;
+        uint8        BindingIndex;
+        uint8        OriginalBindingIndex;
+        FString      DebugName;
+    };
+    
+    TArray<FBindingOffsets>  BindingOffsets;
+    TArray<FResourceBinding> ResourceBindings;
+    uint32                   NumPushConstants;
+};
+
+class FVulkanShaderModule : public FVulkanRefCounted
+{
+public:
+    FVulkanShaderModule(FVulkanDevice* InDevice, VkShaderModule InShaderModule);
+    ~FVulkanShaderModule();
+
+    VkShaderModule GetVkShaderModule() const
+    {
+        return ShaderModule;
+    }
+
+private:
+    static FVulkanDevice* GetDevice()
+    {
+        CHECK(StaticDevice != nullptr);
+        return StaticDevice;
+    }
+
+    VkShaderModule ShaderModule;
+    static FVulkanDevice* StaticDevice;
+};
+
+
+typedef TArray<uint32> FSpirvArray;
+
+class FVulkanShader : public FVulkanDeviceChild
 {
 public:
     FVulkanShader(FVulkanDevice* InDevice, EShaderVisibility InShaderVisibility);
@@ -40,21 +159,32 @@ public:
 
     bool Initialize(const TArray<uint8>& InCode);
 
-    VkShaderModule GetVkShaderModule() const 
-    {
-        return ShaderModule;
-    }
+    // Creates a ShaderModule based on what DescriptorSetIndex we need to use
+    TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
+
+    // Patch the shader bindings based on the DescriptorSet-Index and recieve the new code with the patched bindings
+    bool PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex);
 
     EShaderVisibility GetShaderVisibility() const
     {
         return ShaderVisibility;
     }
 
-protected:
-    VkShaderModule    ShaderModule;
-    EShaderVisibility ShaderVisibility;
-};
+    const FVulkanShaderInfo& GetShaderInfo() const
+    {
+        return ShaderInfo;
+    }
 
+protected:
+    bool InitializeShaderLayout();
+    
+    FSpirvArray       SpirvCode;
+    FVulkanShaderInfo ShaderInfo;
+    EShaderVisibility ShaderVisibility;
+    
+    TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
+    FCriticalSection ShaderModulesCS;
+};
 
 class FVulkanVertexShader : public FRHIVertexShader, public FVulkanShader
 {
@@ -65,9 +195,8 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanHullShader : public FRHIHullShader, public FVulkanShader
@@ -79,9 +208,8 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanDomainShader : public FRHIDomainShader, public FVulkanShader
@@ -93,9 +221,8 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanGeometryShader : public FRHIGeometryShader, public FVulkanShader
@@ -107,9 +234,8 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanPixelShader : public FRHIPixelShader, public FVulkanShader
@@ -121,9 +247,8 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 
@@ -143,7 +268,6 @@ protected:
     FString Identifier;
 };
 
-
 class FVulkanRayGenShader : public FRHIRayGenShader, public FVulkanRayTracingShader
 {
 public:
@@ -153,11 +277,9 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
-
 
 class FVulkanRayAnyHitShader : public FRHIRayAnyHitShader, public FVulkanRayTracingShader
 {
@@ -168,11 +290,9 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
-
 
 class FVulkanRayClosestHitShader : public FRHIRayClosestHitShader, public FVulkanRayTracingShader
 {
@@ -184,11 +304,9 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
-
 
 class FVulkanRayMissShader : public FRHIRayMissShader, public FVulkanRayTracingShader
 {
@@ -199,11 +317,9 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
-
 
 class FVulkanComputeShader : public FRHIComputeShader, public FVulkanShader
 {
@@ -214,9 +330,8 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(GetVkShaderModule()); }
-    
-    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
+    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 

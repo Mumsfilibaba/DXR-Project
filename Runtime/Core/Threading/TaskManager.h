@@ -11,7 +11,8 @@ class CORE_API FTaskWorkerThread : public FThreadInterface
 {
 public:
     FTaskWorkerThread();
-
+    virtual ~FTaskWorkerThread() = default;
+    
     virtual bool Start() override final;
 
     virtual int32 Run() override final;
@@ -23,12 +24,10 @@ public:
     void WakeUpAndStartTask(IAsyncTask* NewTask);
 
 private:
-    IAsyncTask* volatile CurrentTask;
-    FAtomicInt32         Triggered;
-
+    IAsyncTask* volatile       CurrentTask;
+    FAtomicInt32               Triggered;
     TSharedRef<FGenericEvent>  Event;
     TSharedRef<FGenericThread> Thread;
-
     bool bIsRunning : 1;
 };
 
@@ -42,7 +41,6 @@ public:
     }
 
     static bool Initialize();
-
     static void Release();
 
     static bool IsMultithreaded();
@@ -60,15 +58,12 @@ private:
     ~FTaskManager();
 
     bool CreateWorkers(int32 NumWorkers);
-
     void DestroyWorkers();
 
-    TArray<FTaskWorkerThread*> AvailableWorkers;
-    TArray<FTaskWorkerThread*> Workers;
-
+    TArray<FTaskWorkerThread*>  AvailableWorkers;
+    TArray<FTaskWorkerThread*>  Workers;
     TPriorityQueue<IAsyncTask*> TaskQueue;
     FCriticalSection            TaskQueueCS;
-
     bool bIsRunning;
 
     static FTaskManager* GInstance;

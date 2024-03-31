@@ -133,16 +133,16 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
         ImGui::TableHeadersRow();
 
         FGPUProfiler::Get().GetGPUSamples(Samples);
-        for (auto& Sample : Samples)
+        for (auto Sample : Samples)
         {
             ImGui::TableNextRow();
 
-            float Avg = Sample.second.GetAverage();
-            float Min = Sample.second.Min;
-            float Max = Sample.second.Max;
+            float Avg = Sample.Second.GetAverage();
+            float Min = Sample.Second.Min;
+            float Max = Sample.Second.Max;
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Sample.first.GetCString());
+            ImGui::Text("%s", Sample.First.GetCString());
             ImGui::TableSetColumnIndex(1);
             ImGui_PrintTime(Avg);
             ImGui::TableSetColumnIndex(2);
@@ -151,7 +151,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
             ImGui_PrintTime(Max);
         }
 
-        Samples.clear();
+        Samples.Clear();
 
         ImGui::EndTable();
     }

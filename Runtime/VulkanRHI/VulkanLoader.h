@@ -7,26 +7,26 @@
 #define VULKAN_FUNCTION_DECLARATION(FunctionName) extern PFN_vk##FunctionName vk##FunctionName
 #define VULKAN_FUNCTION_DEFINITION(FunctionName)  PFN_vk##FunctionName vk##FunctionName = nullptr
 
-#define VULKAN_LOAD_DEVICE_FUNCTION(Device, FunctionName)                                                          \
-    do                                                                                                             \
-    {                                                                                                              \
+#define VULKAN_LOAD_DEVICE_FUNCTION(Device, FunctionName) \
+    do \
+    { \
         vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetDeviceProcAddr(Device, "vk"#FunctionName)); \
-        if (!vk##FunctionName)                                                                                     \
-        {                                                                                                          \
-            VULKAN_ERROR("Failed to load vk"#FunctionName);                                                        \
-            return false;                                                                                          \
-        }                                                                                                          \
+        if (!vk##FunctionName) \
+        { \
+            VULKAN_ERROR("Failed to load vk"#FunctionName); \
+            return false; \
+        } \
     } while(false)
 
-#define VULKAN_LOAD_INSTANCE_FUNCTION(Instance, FunctionName)                                                          \
-    do                                                                                                                 \
-    {                                                                                                                  \
+#define VULKAN_LOAD_INSTANCE_FUNCTION(Instance, FunctionName) \
+    do \
+    { \
         vk##FunctionName = reinterpret_cast<PFN_vk##FunctionName>(vkGetInstanceProcAddr(Instance, "vk"#FunctionName)); \
-        if (!vk##FunctionName)                                                                                         \
-        {                                                                                                              \
-            VULKAN_ERROR("Failed to load vk"#FunctionName);                                                            \
-            return false;                                                                                              \
-        }                                                                                                              \
+        if (!vk##FunctionName) \
+        { \
+            VULKAN_ERROR("Failed to load vk"#FunctionName); \
+            return false; \
+        } \
     } while(false)
 
 class FVulkanInstance;
@@ -144,6 +144,10 @@ VULKAN_FUNCTION_DECLARATION(CreateGraphicsPipelines);
 VULKAN_FUNCTION_DECLARATION(CreateComputePipelines);
 VULKAN_FUNCTION_DECLARATION(DestroyPipeline);
 
+VULKAN_FUNCTION_DECLARATION(CreatePipelineCache);
+VULKAN_FUNCTION_DECLARATION(DestroyPipelineCache);
+VULKAN_FUNCTION_DECLARATION(GetPipelineCacheData);
+
 VULKAN_FUNCTION_DECLARATION(CreatePipelineLayout);
 VULKAN_FUNCTION_DECLARATION(DestroyPipelineLayout);
 
@@ -166,6 +170,11 @@ VULKAN_FUNCTION_DECLARATION(DestroyFramebuffer);
 
 VULKAN_FUNCTION_DECLARATION(CreateSampler);
 VULKAN_FUNCTION_DECLARATION(DestroySampler);
+
+VULKAN_FUNCTION_DECLARATION(CreateQueryPool);
+VULKAN_FUNCTION_DECLARATION(DestroyQueryPool);
+VULKAN_FUNCTION_DECLARATION(ResetQueryPool);
+VULKAN_FUNCTION_DECLARATION(GetQueryPoolResults);
 
 VULKAN_FUNCTION_DECLARATION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DECLARATION(FreeCommandBuffers);
@@ -206,6 +215,7 @@ VULKAN_FUNCTION_DECLARATION(CmdBlitImage);
 VULKAN_FUNCTION_DECLARATION(CmdDispatch);
 VULKAN_FUNCTION_DECLARATION(CmdDraw);
 VULKAN_FUNCTION_DECLARATION(CmdDrawIndexed);
+VULKAN_FUNCTION_DECLARATION(CmdWriteTimestamp);
 #if VK_EXT_debug_utils
     VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
 #endif

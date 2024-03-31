@@ -14,5 +14,5 @@ public:
     void DrawGPUData(float Width);
 
 private:
-    GPUProfileSamplesTable Samples;
+    GPUProfileSamplesMap Samples;
 };

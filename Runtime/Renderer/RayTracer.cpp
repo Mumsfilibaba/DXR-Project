@@ -2,7 +2,7 @@
 #include "Renderer.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
 
@@ -11,8 +11,8 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     TArray<uint8> Code;
     
     {
-        FRHIShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("RayGen", EShaderModel::SM_6_3, EShaderStage::RayGen);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/RayGen.hlsl", CompileInfo, Code))
         {
             DEBUG_BREAK();
             return false;
@@ -27,8 +27,8 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("ClosestHit", EShaderModel::SM_6_3, EShaderStage::RayClosestHit);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ClosestHit.hlsl", CompileInfo, Code))
         {
             DEBUG_BREAK();
             return false;
@@ -43,8 +43,8 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
+        FShaderCompileInfo CompileInfo("Miss", EShaderModel::SM_6_3, EShaderStage::RayMiss);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Miss.hlsl", CompileInfo, Code))
         {
             DEBUG_BREAK();
             return false;
@@ -128,14 +128,17 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Sampler = Material->GetMaterialSampler();
 
         const FMatrix3x4 TinyTransform = Command.CurrentActor->GetTransform().GetTinyMatrix();
-        uint32 HitGroupIndex = 0;
 
-        auto HitGroupIndexPair = Resources.RTMeshToHitGroupIndex.find(Command.Mesh);
-        if (HitGroupIndexPair == Resources.RTMeshToHitGroupIndex.end())
+        uint32 HitGroupIndex = 0;
+        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Command.Mesh))
+        {
+            HitGroupIndex = *ExistingIndex;
+        }
+        else
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
             Resources.RTMeshToHitGroupIndex[Command.Mesh] = HitGroupIndex;
-
+            
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
             if (Command.Mesh->VertexBufferSRV)
@@ -146,12 +149,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
             {
                 HitGroupResources.AddShaderResourceView(Command.Mesh->IndexBufferSRV.Get());
             }
-
+            
             Resources.RTHitGroupResources.Emplace(HitGroupResources);
-        }
-        else
-        {
-            HitGroupIndex = HitGroupIndexPair->second;
         }
 
         FRHIRayTracingGeometryInstance Instance;

@@ -1,4 +1,5 @@
 #pragma once
+#include "Pair.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ReferenceWrapper.h"
 #include "Core/Templates/BitReference.h"
@@ -7,11 +8,11 @@
 template<typename ArrayType, typename ElementType>
 class TArrayIterator
 {
-    using ConstElementType = const typename TRemoveCV<ElementType>::Type;
-    using ConstArrayType   = const typename TRemoveCV<ArrayType>::Type;
+    typedef const typename TRemoveCV<ArrayType>::Type   ConstArrayType;
+    typedef const typename TRemoveCV<ElementType>::Type ConstElementType;
 
 public:
-    using SizeType = typename ArrayType::SizeType;
+    typedef typename ArrayType::SizeType SizeType;
 
     TArrayIterator(const TArrayIterator&) = default;
     TArrayIterator(TArrayIterator&&)      = default;
@@ -45,38 +46,26 @@ public:
         return Array.AddressOf() == FromPointer;
     }
 
-    /**
-     * @brief  - Check if the iterator is valid
-     * @return - Returns true if the iterator is valid
-     */
+    /** @return - Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Index >= 0) && (Index <= Array.Get().Size());
+        return Index >= 0 && Index <= Array.Get().Size();
     }
 
-    /**
-     * @brief  - Check if the iterator is equal to the end iterator
-     * @return - Returns true if the iterator is the end-iterator
-     */
+    /** @return - Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const noexcept
     {
         return Index == Array.Get().Size();
     }
 
-    /**
-     * @brief  - Retrieve a raw pointer to the data
-     * @return - Returns a raw pointer to the data 
-     */
+    /** @return - Returns a raw pointer to the data */
     NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
         CHECK(IsValid());
-        return Array.Get().Data() + GetIndex();
+        return Array.Get().Data() + Index;
     }
 
-    /**
-     * @brief  - Retrieve the index to for the iterator in the array
-     * @return - Returns the index to the element that the iterator represent within the array   
-     */
+    /** @return - Returns the index to the element that the iterator represents */
     FORCEINLINE SizeType GetIndex() const noexcept
     {
         return Index;
@@ -84,19 +73,13 @@ public:
 
 public:
 
-    /**
-     * @brief  - Retrieve a raw pointer to the data
-     * @return - Returns a raw pointer to the data 
-     */
+    /** @return - Returns a raw pointer to the data */
     FORCEINLINE ElementType* operator->() const noexcept
     {
         return GetPointer();
     }
 
-    /**
-     * @brief  - Retrieve the data
-     * @return - Returns a reference to the data 
-     */
+    /** @return - Returns a reference to the data */
     FORCEINLINE ElementType& operator*() const noexcept
     {
         return *GetPointer();
@@ -201,7 +184,7 @@ public:
      */
     NODISCARD FORCEINLINE bool operator==(const TArrayIterator& Other) const noexcept
     {
-        return (Index == Other.Index) && Other.IsFrom(Array);
+        return Index == Other.Index && Other.IsFrom(Array);
     }
 
     /**
@@ -241,11 +224,11 @@ FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIter
 template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
 {
-    using ConstElementType = const typename TRemoveCV<ElementType>::Type;
-    using ConstArrayType   = const typename TRemoveCV<ArrayType>::Type;
+    typedef const typename TRemoveCV<ArrayType>::Type   ConstArrayType;
+    typedef const typename TRemoveCV<ElementType>::Type ConstElementType;
 
 public:
-    using SizeType = typename ArrayType::SizeType;
+    typedef typename ArrayType::SizeType SizeType;
 
     TReverseArrayIterator(const TReverseArrayIterator&) = default;
     TReverseArrayIterator(TReverseArrayIterator&&)      = default;
@@ -280,38 +263,26 @@ public:
         return Array.AddressOf() == FromPointer;
     }
 
-    /**
-     * @brief  - Check if the iterator is valid
-     * @return - Returns true if the iterator is valid
-     */
+    /** @return - Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Index >= 0) && (Index <= Array.Get().Size());
+        return Index >= 0 && Index <= Array.Get().Size();
     }
 
-    /**
-     * @brief  - Check if the iterator is equal to the end iterator
-     * @return - Returns true if the iterator is the end-iterator
-     */
+    /** @return - Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const noexcept
     {
-        return (Index == 0);
+        return Index == 0;
     }
 
-    /**
-     * @brief  - Retrieve a raw pointer to the data
-     * @return - Returns a raw pointer to the data
-     */
+    /** @return - Returns a raw pointer to the data */
     NODISCARD FORCEINLINE ElementType* GetPointer() const noexcept
     {
         CHECK(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
-    /**
-     * @brief  - Retrieve the index to for the iterator in the array
-     * @return - Returns the index to the element that the iterator represent within the array
-     */
+    /** @return - Returns the index to the element that the iterator represents */
     NODISCARD FORCEINLINE SizeType GetIndex() const noexcept
     {
         return Index - 1;
@@ -319,19 +290,13 @@ public:
 
 public:
 
-    /**
-     * @brief  - Retrieve a raw pointer to the data
-     * @return - Returns a raw pointer to the data
-     */
+    /** @return - Returns a raw pointer to the data */
     NODISCARD FORCEINLINE ElementType* operator->() const noexcept
     {
         return GetPointer();
     }
 
-    /**
-     * @brief  - Retrieve the data
-     * @return - Returns a reference to the data
-     */
+    /** @return - Returns a reference to the data */
     NODISCARD FORCEINLINE ElementType& operator*() const noexcept
     {
         return *GetPointer();
@@ -436,7 +401,7 @@ public:
      */
     NODISCARD FORCEINLINE bool operator==(const TReverseArrayIterator& Other) const noexcept
     {
-        return (Index == Other.Index) && Other.IsFrom(Array);
+        return Index == Other.Index && Other.IsFrom(Array);
     }
 
     /**
@@ -473,112 +438,15 @@ NODISCARD FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(ty
 }
 
 
-#if 0
-template<typename NodeType, typename ElementType>
-class TTreeIterator
-{
-public:
-    using SizeType = int32;
-
-    TTreeIterator(const TTreeIterator&) = default;
-    TTreeIterator(TTreeIterator&&) = default;
-    ~TTreeIterator() = default;
-
-    TTreeIterator& operator=(const TTreeIterator&) = default;
-    TTreeIterator& operator=(TTreeIterator&&) = default;
-
-    FORCEINLINE TTreeIterator(NodeType* InNode) noexcept
-        : Node(InNode)
-    {
-        CHECK(IsValid());
-    }
-
-    FORCEINLINE bool IsValid() const noexcept
-    {
-        return (Node != nullptr) && (Node->GetPointer() != nullptr);
-    }
-
-    FORCEINLINE ElementType* GetPointer() const noexcept
-    {
-        CHECK(IsValid());
-        return Node->GetPointer();
-    }
-
-    FORCEINLINE ElementType* operator->() const noexcept
-    {
-        return GetPointer();
-    }
-
-    FORCEINLINE ElementType& operator*() const noexcept
-    {
-        return *GetPointer();
-    }
-
-    FORCEINLINE TTreeIterator operator++() noexcept
-    {
-        CHECK(IsValid());
-
-        Node = Node->GetNext();
-        return *this;
-    }
-
-    FORCEINLINE TTreeIterator operator++(int) noexcept
-    {
-        TTreeIterator NewIterator(*this);
-        Node = Node->GetNext();
-
-        CHECK(IsValid());
-        return NewIterator;
-    }
-
-    FORCEINLINE TTreeIterator operator--() noexcept
-    {
-        CHECK(IsValid());
-
-        Node = Node->GetPrevious();
-        return *this;
-    }
-
-    FORCEINLINE TTreeIterator operator--(int) noexcept
-    {
-        TTreeIterator NewIterator(*this);
-        Node = Node->GetPrevious();
-
-        CHECK(IsValid());
-        return NewIterator;
-    }
-
-    FORCEINLINE bool operator==(const TTreeIterator& Other) const noexcept
-    {
-        return (Node == Other.Node);
-    }
-
-    FORCEINLINE bool operator!=(const TTreeIterator& Other) const noexcept
-    {
-        return !(*this == Other);
-    }
-
-    FORCEINLINE operator TTreeIterator<const NodeType, const ElementType>() const noexcept
-    {
-        // The array type must be const here in order to make the dereference work properly
-        return TTreeIterator<const NodeType, const ElementType>(Node);
-    }
-
-private:
-    NodeType* Node;
-};
-#endif
-
-
 template<typename BitArrayType, typename StorageType>
 class TBitArrayIterator
 {
-    using ConstStorageType  = const typename TRemoveCV<StorageType>::Type;
-    using ConstBitArrayType = const typename TRemoveCV<BitArrayType>::Type;
+    typedef const typename TRemoveCV<StorageType>::Type  ConstStorageType;
+    typedef const typename TRemoveCV<BitArrayType>::Type ConstBitArrayType;
 
 public:
-    using BitReferenceType      = TBitReference<StorageType>;
-    using ConstBitReferenceType = TBitReference<ConstStorageType>;
+    typedef TBitReference<StorageType>      BitReferenceType;
+    typedef TBitReference<ConstStorageType> ConstBitReferenceType;
 
     TBitArrayIterator(const TBitArrayIterator&) = default;
     TBitArrayIterator(TBitArrayIterator&&)      = default;
@@ -609,30 +477,21 @@ public:
         return BitArray.AddressOf() == FromPointer;
     }
 
-    /**
-     * @brief  - Check if the iterator is valid
-     * @return - Returns true if the iterator is valid
-     */
+    /** @return - Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         const auto Count = BitArray.Get().Count();
-        return (Index >= 0) && (Index <= Count);
+        return Index >= 0 && Index <= Count;
     }
 
-    /**
-     * @brief  - Retrieve the value of the bit
-     * @return - Returns the value of the bit
-     */
+    /** @return - Returns the value of the bit */
     NODISCARD FORCEINLINE BitReferenceType GetBitValue() noexcept
     {
         CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
-    /**
-     * @brief  - Retrieve the value of the bit
-     * @return - Returns the value of the bit
-     */
+    /** @return - Returns the value of the bit */
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitValue() const noexcept
     {
         CHECK(IsValid());
@@ -694,7 +553,7 @@ public:
      */
     NODISCARD FORCEINLINE bool operator==(const TBitArrayIterator& Other) const noexcept
     {
-        return (Index == Other.Index) && BitArray.IsFrom(Other.BitArray);
+        return Index == Other.Index && BitArray.IsFrom(Other.BitArray);
     }
 
     /**
@@ -707,10 +566,7 @@ public:
         return !(*this == Other);
     }
 
-    /**
-     * @brief  - Retrieve the data
-     * @return - Returns a reference to the data
-     */
+    /** @return - Returns a reference to the data */
     NODISCARD FORCEINLINE BitReferenceType& operator*() noexcept
     {
         return GetBitValue();
@@ -735,12 +591,12 @@ private:
 template<typename BitArrayType, typename StorageType>
 class TReverseBitArrayIterator
 {
-    using ConstStorageType  = const typename TRemoveCV<StorageType>::Type;
-    using ConstBitArrayType = const typename TRemoveCV<BitArrayType>::Type;
+    typedef const typename TRemoveCV<StorageType>::Type  ConstStorageType;
+    typedef const typename TRemoveCV<BitArrayType>::Type ConstBitArrayType;
 
 public:
-    using BitReferenceType      = TBitReference<StorageType>;
-    using ConstBitReferenceType = TBitReference<ConstStorageType>;
+    typedef TBitReference<StorageType>      BitReferenceType;
+    typedef TBitReference<ConstStorageType> ConstBitReferenceType;
 
     TReverseBitArrayIterator(const TReverseBitArrayIterator&) = default;
     TReverseBitArrayIterator(TReverseBitArrayIterator&&)      = default;
@@ -771,30 +627,21 @@ public:
         return BitArray.AddressOf() == FromPointer;
     }
 
-    /**
-     * @brief  - Check if the iterator is valid
-     * @return - Returns true if the iterator is valid
-     */
+    /** @return - Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
         const auto Count = BitArray.Get().Count();
-        return (Index >= 0) && (Index <= Count);
+        return Index >= 0 && Index <= Count;
     }
 
-    /**
-     * @brief  - Retrieve the value of the bit
-     * @return - Returns the value of the bit
-     */
+    /** @return - Returns the value of the bit */
     NODISCARD FORCEINLINE BitReferenceType GetBitValue() noexcept
     {
         CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
-    /**
-     * @brief  - Retrieve the value of the bit
-     * @return - Returns the value of the bit
-     */
+    /** @return - Returns the value of the bit */
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitValue() const noexcept
     {
         CHECK(IsValid());
@@ -856,7 +703,7 @@ public:
      */
     NODISCARD FORCEINLINE bool operator==(const TReverseBitArrayIterator& Other) const noexcept
     {
-        return (Index == Other.Index) && BitArray.IsFrom(Other.BitArray);
+        return Index == Other.Index && BitArray.IsFrom(Other.BitArray);
     }
 
     /**
@@ -869,10 +716,7 @@ public:
         return !(*this == Other);
     }
 
-    /**
-     * @brief  - Retrieve the data
-     * @return - Returns a reference to the data
-     */
+    /** @return - Returns a reference to the data */
     NODISCARD FORCEINLINE BitReferenceType& operator*() noexcept
     {
         return GetBitValue();
@@ -891,4 +735,282 @@ public:
 private:
     TReferenceWrapper<BitArrayType> BitArray;
     uint32                          Index;
+};
+
+
+template<typename MapType, typename KeyType, typename ValueType>
+class TMapIterator
+{
+public:
+    typedef typename MapType::BaseMapType::iterator   BaseIteratorType;
+    typedef const typename TRemoveCV<KeyType>::Type   ConstKeyType;
+    typedef const typename TRemoveCV<ValueType>::Type ConstValueType;
+    typedef const typename TRemoveCV<MapType>::Type   ConstMapType;
+
+    TMapIterator(const TMapIterator&) = default;
+    TMapIterator(TMapIterator&&)      = default;
+    ~TMapIterator()                   = default;
+
+    TMapIterator& operator=(const TMapIterator&) = default;
+    TMapIterator& operator=(TMapIterator&&)      = default;
+
+    explicit TMapIterator(MapType& InMap, BaseIteratorType InBaseIterator)
+        : Map(InMap)
+        , BaseIterator(InBaseIterator)
+    {
+    }
+
+    /** @return - Returns true if the iterator is the end-iterator */
+    NODISCARD FORCEINLINE bool IsEnd() const noexcept
+    {
+        return BaseIterator == Map.Get().BaseMap.end();
+    }
+
+    /** @return - Returns true if the iterator is valid */
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
+    {
+        return true;
+    }
+
+    /** @return - Returns the key for this iterator */
+    NODISCARD FORCEINLINE const KeyType& GetKey() const
+    {
+        return BaseIterator->first;
+    }
+
+    /** @return - Returns the value for this iterator */
+    NODISCARD FORCEINLINE ValueType& GetValue()
+    {
+        return BaseIterator->second;
+    }
+
+    /** @return - Returns the value for this iterator */
+    NODISCARD FORCEINLINE const ValueType& GetValue() const
+    {
+        return BaseIterator->second;
+    }
+
+public:
+
+    /**
+     * @brief  - Pre-increment operator
+     * @return - Returns a iterator with the next index
+     */
+    FORCEINLINE TMapIterator operator++() noexcept
+    {
+        BaseIterator++;
+        return *this;
+    }
+
+    /**
+     * @brief  - Post-increment operator
+     * @return - Returns a iterator with the current index
+     */
+    FORCEINLINE TMapIterator operator++(int) noexcept
+    {
+        TMapIterator NewIterator(*this);
+        BaseIterator++;
+        return NewIterator;
+    }
+
+    /**
+     * @brief  - Pre-decrement operator
+     * @return - Returns a iterator with the next index
+     */
+    FORCEINLINE TMapIterator operator--() noexcept
+    {
+        BaseIterator--;
+        return *this;
+    }
+
+    /**
+     * @brief  - Post-decrement operator
+     * @return - Returns a iterator with the current index
+     */
+    FORCEINLINE TMapIterator operator--(int) noexcept
+    {
+        TMapIterator NewIterator(*this);
+        BaseIterator--;
+        return NewIterator;
+    }
+
+    /**
+     * @brief  - Retrieve key and value pair
+     * @return - Returns references to the key and values from this iterator
+     */
+    NODISCARD FORCEINLINE TPair<ConstKeyType&, ValueType&> operator*() noexcept
+    {
+        return TPair<ConstKeyType&, ValueType&>{ BaseIterator->first, BaseIterator->second };
+    }
+
+    /**
+     * @brief  - Retrieve key and value pair
+     * @return - Returns references to the key and values from this iterator
+     */
+    NODISCARD FORCEINLINE TPair<ConstKeyType&, ConstValueType&> operator*() const noexcept
+    {
+        return TPair<ConstKeyType&, ConstValueType&>{ BaseIterator->first, BaseIterator->second };
+    }
+
+    /**
+     * @brief       - Compare this and another instance
+     * @param Other - Value to compare with
+     * @return      - Returns true if the iterators are equal
+     */
+    NODISCARD FORCEINLINE bool operator==(const TMapIterator& Other) const noexcept
+    {
+        return BaseIterator == Other.BaseIterator;
+    }
+
+    /**
+     * @brief       - Compare this and another instance
+     * @param Other - Value to compare with
+     * @return      - Returns false if the iterators are equal
+     */
+    NODISCARD FORCEINLINE bool operator!=(const TMapIterator& Other) const noexcept
+    {
+        return !(*this == Other);
+    }
+
+    /**
+     * @brief  - Create a constant iterator from this
+     * @return - Returns a new iterator based on the index from this instance
+     */
+    NODISCARD FORCEINLINE operator TMapIterator<ConstMapType, ConstKeyType, ConstValueType>() const noexcept
+    {
+        // The array type must be const here in order to make the dereference work properly
+        return TMapIterator<ConstMapType, ConstKeyType, ConstValueType>(Map, BaseIterator);
+    }
+
+private:
+    TReferenceWrapper<MapType> Map;
+    BaseIteratorType           BaseIterator;
+};
+
+
+template<typename SetType, typename ElementType>
+class TSetIterator
+{
+public:
+    typedef typename SetType::BaseSetType::iterator     BaseIteratorType;
+    typedef const typename TRemoveCV<ElementType>::Type ConstElementType;
+    typedef const typename TRemoveCV<SetType>::Type     ConstSetType;
+
+    TSetIterator(const TSetIterator&) = default;
+    TSetIterator(TSetIterator&&)      = default;
+    ~TSetIterator()                   = default;
+
+    TSetIterator& operator=(const TSetIterator&) = default;
+    TSetIterator& operator=(TSetIterator&&)      = default;
+
+    explicit TSetIterator(SetType& InSet, BaseIteratorType InBaseIterator)
+        : Set(InSet)
+        , BaseIterator(InBaseIterator)
+    {
+    }
+
+    /** @return - Returns true if the iterator is the end-iterator */
+    NODISCARD FORCEINLINE bool IsEnd() const noexcept
+    {
+        return BaseIterator == Set.Get().BaseSet.end();
+    }
+
+    /** @return - Returns true if the iterator is valid */
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
+    {
+        return true;
+    }
+
+    /** @return - Returns the element for this iterator */
+    NODISCARD FORCEINLINE const ElementType& GetElement() const
+    {
+        return *BaseIterator;
+    }
+
+public:
+
+    /**
+     * @brief  - Pre-increment operator
+     * @return - Returns a iterator with the next index
+     */
+    FORCEINLINE TSetIterator operator++() noexcept
+    {
+        BaseIterator++;
+        return *this;
+    }
+
+    /**
+     * @brief  - Post-increment operator
+     * @return - Returns a iterator with the current index
+     */
+    FORCEINLINE TSetIterator operator++(int) noexcept
+    {
+        TSetIterator NewIterator(*this);
+        BaseIterator++;
+        return NewIterator;
+    }
+
+    /**
+     * @brief  - Pre-decrement operator
+     * @return - Returns a iterator with the next index
+     */
+    FORCEINLINE TSetIterator operator--() noexcept
+    {
+        BaseIterator--;
+        return *this;
+    }
+
+    /**
+     * @brief  - Post-decrement operator
+     * @return - Returns a iterator with the current index
+     */
+    FORCEINLINE TSetIterator operator--(int) noexcept
+    {
+        TSetIterator NewIterator(*this);
+        BaseIterator--;
+        return NewIterator;
+    }
+
+    /**
+     * @brief  - Retrieve key and value pair
+     * @return - Returns references to the key and values from this iterator
+     */
+    NODISCARD FORCEINLINE const ElementType& operator*() const noexcept
+    {
+        return *BaseIterator;
+    }
+
+    /**
+     * @brief       - Compare this and another instance
+     * @param Other - Value to compare with
+     * @return      - Returns true if the iterators are equal
+     */
+    NODISCARD FORCEINLINE bool operator==(const TSetIterator& Other) const noexcept
+    {
+        return BaseIterator == Other.BaseIterator;
+    }
+
+    /**
+     * @brief       - Compare this and another instance
+     * @param Other - Value to compare with
+     * @return      - Returns false if the iterators are equal
+     */
+    NODISCARD FORCEINLINE bool operator!=(const TSetIterator& Other) const noexcept
+    {
+        return !(*this == Other);
+    }
+
+    /**
+     * @brief  - Create a constant iterator from this
+     * @return - Returns a new iterator based on the index from this instance
+     */
+    NODISCARD FORCEINLINE operator TSetIterator<ConstSetType, ConstElementType>() const noexcept
+    {
+        // The array type must be const here in order to make the dereference work properly
+        return TSetIterator<ConstSetType, ConstElementType>(Set, BaseIterator);
+    }
+
+private:
+    TReferenceWrapper<SetType> Set;
+    BaseIteratorType           BaseIterator;
 };

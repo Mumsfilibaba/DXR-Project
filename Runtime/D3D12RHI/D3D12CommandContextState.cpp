@@ -70,7 +70,6 @@ void FD3D12CommandContextState::BindGraphicsStates()
     }
 
     BindResources(RootSignture, ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
-
     BindSamplers(RootSignture, ShaderVisibility_Vertex, ShaderVisibility_Pixel, bRootSignatureReset);
 
     if (ComputeState.bBindShaderConstants)
@@ -126,7 +125,6 @@ void FD3D12CommandContextState::BindComputeState()
     }
 
     BindResources(RootSignture, ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
-
     BindSamplers(RootSignture, ShaderVisibility_All, ShaderVisibility_All, bRootSignatureReset);
 
     if (ComputeState.bBindShaderConstants)
@@ -198,6 +196,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
 
     // NOTE: In case any of the descriptor heaps "roll-over" and we allocate a new heap, we clear the dirty states and need to recalculate the necessary descriptors
     constexpr int32 MaxTries = 4;
+    
     uint32 NumResourceDescriptors;
     for (int32 NumTries = 0; NumTries < MaxTries; NumTries++)
     {
@@ -459,9 +458,9 @@ void FD3D12CommandContextState::SetComputePipelineState(FD3D12ComputePipelineSta
 
         if (InComputePipelineState)
         {
-            if (FD3D12ComputeShader* PixelShader = InComputePipelineState->GetComputeShader())
+            if (FD3D12ComputeShader* ComputeShader = InComputePipelineState->GetComputeShader())
             {
-                InternalSetShaderStageResourceCount(PixelShader, ShaderVisibility_All);
+                InternalSetShaderStageResourceCount(ComputeShader, ShaderVisibility_All);
             }
         }
 

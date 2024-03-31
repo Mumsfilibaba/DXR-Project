@@ -4,7 +4,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Scene/Lights/PointLight.h"
@@ -42,8 +42,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
 
         {
-            FRHIShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -58,8 +58,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
 
         {
-            FRHIShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -144,8 +144,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
             PerCascadeBuffer->SetName("Per Cascade Buffer");
         }
 
-        FRHIShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -163,8 +163,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
             { "ENABLE_ALPHA_MASK", "(1)" }
         };
 
-        CompileInfo = FRHIShaderCompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -177,8 +177,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
             return false;
         }
 
-        CompileInfo = FRHIShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        CompileInfo = FShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -292,8 +292,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
 
     // Cascade Matrix Generation
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/CascadeMatrixGen.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -395,8 +395,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
     // Directional Light ShadowMask
     {
         {
-            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -431,8 +431,8 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
                 { "ENABLE_DEBUG", "(1)" },
             };
 
-            FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -661,9 +661,6 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             FRHIScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
-            CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
-
             // Draw all objects to shadow-map
             static IConsoleVariable* CVarFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
             if (CVarFrustumCullEnabled && CVarFrustumCullEnabled->GetBool())
@@ -697,6 +694,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
 
                         CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
+                        CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
+                        CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
+
                         ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
                         CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
 
@@ -727,6 +727,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
 
                     ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
                     CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
+
+                    CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
+                    CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
                     CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
                 }

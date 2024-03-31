@@ -9,7 +9,7 @@ template<typename ElementType>
 class TArrayView
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
     static_assert(TIsSigned<SizeType>::Value, "TArrayView only supports a SizeType that's signed");
 
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;

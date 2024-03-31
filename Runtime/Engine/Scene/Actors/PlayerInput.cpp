@@ -195,7 +195,7 @@ void FPlayerInput::OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat)
     KeyState.bPreviousState = KeyState.bIsDown;
     KeyState.bIsDown        = bIsDown;
 
-    LOG_INFO("KeyState=%s Index=%d IsDown=%s", Key.ToString(), Index, bIsDown ? "true" : "false");
+    // LOG_INFO("KeyState=%s Index=%d IsDown=%s", Key.ToString(), Index, bIsDown ? "true" : "false");
 
     if (bIsRepeat)
     {

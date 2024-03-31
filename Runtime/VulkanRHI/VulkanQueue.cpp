@@ -4,15 +4,28 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanFence.h"
 
-FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InType)
-    : FVulkanDeviceObject(InDevice)
-    , Type(InType)
-    , CommandQueue(VK_NULL_HANDLE)
+FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQueueType)
+    : FVulkanDeviceChild(InDevice)
+    , Queue(VK_NULL_HANDLE)
+    , QueueType(InQueueType)
+    , CommandPools()
 {
 }
 
 FVulkanQueue::~FVulkanQueue()
 {
+    {
+        SCOPED_LOCK(CommandPoolsCS);
+        
+        for (FVulkanCommandPool* CommandPool : CommandPools)
+        {
+            delete CommandPool;
+        }
+        
+        CommandPools.Clear();
+    }
+    
+    Queue = VK_NULL_HANDLE;
 }
 
 bool FVulkanQueue::Initialize()
@@ -20,9 +33,48 @@ bool FVulkanQueue::Initialize()
     TOptional<FVulkanQueueFamilyIndices> QueueIndices = GetDevice()->GetQueueIndicies();
     VULKAN_ERROR_COND(QueueIndices.HasValue(), "Queue Families is not initialized correctly");
 
-    QueueFamilyIndex = GetDevice()->GetCommandQueueIndexFromType(Type);
-    vkGetDeviceQueue(GetDevice()->GetVkDevice(), QueueFamilyIndex, 0, &CommandQueue);
+    QueueFamilyIndex = GetDevice()->GetQueueIndexFromType(QueueType);
+    vkGetDeviceQueue(GetDevice()->GetVkDevice(), QueueFamilyIndex, 0, &Queue);
     return true;
+}
+
+FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
+{
+    {
+        SCOPED_LOCK(CommandPoolsCS);
+        
+        if (!CommandPools.IsEmpty())
+        {
+            FVulkanCommandPool* CommandPool = CommandPools.LastElement();
+            CommandPools.Pop();
+            CommandPool->Reset();
+            return CommandPool;
+        }
+    }
+    
+    FVulkanCommandPool* CommandPool = new FVulkanCommandPool(GetDevice(), QueueType);
+    if (!CommandPool->Initialize())
+    {
+        DEBUG_BREAK();
+        return nullptr;
+    }
+    else
+    {
+        return CommandPool;
+    }
+}
+
+void FVulkanQueue::RecycleCommandPool(FVulkanCommandPool* InCommandPool)
+{
+    if (InCommandPool)
+    {
+        SCOPED_LOCK(CommandPoolsCS);
+        CommandPools.Add(InCommandPool);
+    }
+    else
+    {
+        LOG_WARNING("Trying to Recycle an invalid CommandPool");
+    }
 }
 
 bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, FVulkanFence* Fence)
@@ -82,7 +134,7 @@ bool FVulkanQueue::ExecuteCommandBuffer(FVulkanCommandBuffer* const* CommandBuff
     }
 
     VkFence SignalFence = Fence ? Fence->GetVkFence() : VK_NULL_HANDLE;
-    VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, SignalFence);
+    VkResult Result = vkQueueSubmit(Queue, 1, &SubmitInfo, SignalFence);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("vkQueueSubmit failed");
@@ -110,7 +162,7 @@ void FVulkanQueue::AddSignalSemaphore(VkSemaphore Semaphore)
 
 void FVulkanQueue::WaitForCompletion()
 {
-    vkQueueWaitIdle(CommandQueue);
+    vkQueueWaitIdle(Queue);
 }
 
 bool FVulkanQueue::FlushWaitSemaphoresAndWait()
@@ -140,7 +192,7 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
         SubmitInfo.pWaitDstStageMask  = nullptr;
     }
 
-    VkResult Result = vkQueueSubmit(CommandQueue, 1, &SubmitInfo, VK_NULL_HANDLE);
+    VkResult Result = vkQueueSubmit(Queue, 1, &SubmitInfo, VK_NULL_HANDLE);
     if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("vkQueueSubmit failed");

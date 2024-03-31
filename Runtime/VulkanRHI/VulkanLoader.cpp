@@ -170,6 +170,10 @@ VULKAN_FUNCTION_DEFINITION(CreateGraphicsPipelines);
 VULKAN_FUNCTION_DEFINITION(CreateComputePipelines);
 VULKAN_FUNCTION_DEFINITION(DestroyPipeline);
 
+VULKAN_FUNCTION_DEFINITION(CreatePipelineCache);
+VULKAN_FUNCTION_DEFINITION(DestroyPipelineCache);
+VULKAN_FUNCTION_DEFINITION(GetPipelineCacheData);
+
 VULKAN_FUNCTION_DEFINITION(CreatePipelineLayout);
 VULKAN_FUNCTION_DEFINITION(DestroyPipelineLayout);
 
@@ -186,6 +190,11 @@ VULKAN_FUNCTION_DEFINITION(UpdateDescriptorSets);
 
 VULKAN_FUNCTION_DEFINITION(CreateSampler);
 VULKAN_FUNCTION_DEFINITION(DestroySampler);
+
+VULKAN_FUNCTION_DEFINITION(CreateQueryPool);
+VULKAN_FUNCTION_DEFINITION(DestroyQueryPool);
+VULKAN_FUNCTION_DEFINITION(ResetQueryPool);
+VULKAN_FUNCTION_DEFINITION(GetQueryPoolResults);
 
 VULKAN_FUNCTION_DEFINITION(CreateRenderPass);
 VULKAN_FUNCTION_DEFINITION(DestroyRenderPass);
@@ -232,6 +241,7 @@ VULKAN_FUNCTION_DEFINITION(CmdBlitImage);
 VULKAN_FUNCTION_DEFINITION(CmdDispatch);
 VULKAN_FUNCTION_DEFINITION(CmdDraw);
 VULKAN_FUNCTION_DEFINITION(CmdDrawIndexed);
+VULKAN_FUNCTION_DEFINITION(CmdWriteTimestamp);
 #if VK_EXT_debug_utils
     VULKAN_FUNCTION_DEFINITION(CmdInsertDebugUtilsLabelEXT);
 #endif
@@ -297,6 +307,10 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateComputePipelines);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyPipelineLayout);
 
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreatePipelineCache);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyPipelineCache);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetPipelineCacheData);
+    
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateDescriptorSetLayout);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyDescriptorSetLayout);
 
@@ -310,6 +324,11 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSampler);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySampler);
+
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateQueryPool);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyQueryPool);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, ResetQueryPool);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetQueryPoolResults);
 
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateRenderPass);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyRenderPass);
@@ -362,6 +381,7 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDispatch);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDraw);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDrawIndexed);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdWriteTimestamp);
     
     // Initialize DedicatedAllocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);

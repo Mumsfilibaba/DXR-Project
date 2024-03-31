@@ -13,7 +13,7 @@ template<typename InIntegerType = uint32, typename InAllocatorType = TDefaultArr
 class TBitArray
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
     static_assert(TIsUnsigned<InIntegerType>::Value, "BitArray must have an unsigned InIntegerType");
 
     using BitReferenceType      = TBitReference<InIntegerType>;
@@ -137,7 +137,7 @@ public:
      */
     FORCEINLINE void Reset()
     {
-        FMemory::Memset(Allocator.GetAllocation(), 0x0, CapacityInBytes());
+        FMemory::Memset(Allocator.GetAllocation(), 0, CapacityInBytes());
     }
 
     /**
@@ -146,7 +146,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
     {
-        return (Index >= 0) && (Index < NumBits);
+        return Index >= 0 && Index < NumBits;
     }
 
     /**
@@ -236,12 +236,12 @@ public:
     NODISCARD FORCEINLINE SizeType MostSignificant() const
     {
         SizeType Result = 0;
-        for (int32 Index = int32(NumElements) - 1; Index >= 0; --Index)
+        for (SizeType Index = NumElements - 1; Index >= 0; --Index)
         {
-            const auto Element = GetInteger(Index);
+            const InIntegerType Element = GetInteger(Index);
             if (Element)
             {
-                const auto BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
+                const SizeType BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -259,10 +259,10 @@ public:
         SizeType Result = 0;
         for (SizeType Index = 0; Index < NumElements; ++Index)
         {
-            const auto Element = GetInteger(Index);
+            const InIntegerType Element = GetInteger(Index);
             if (Element)
             {
-                const auto BitIndex = FBitHelper::LeastSignificant<SizeType>(Element);
+                const SizeType BitIndex = FBitHelper::LeastSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -406,9 +406,7 @@ public:
     FORCEINLINE void BitshiftRight(SizeType Steps) noexcept
     {
         if (Steps && NumBits)
-        {
             BitshiftRightUnchecked(Steps, 0);
-        }
     }
 
     /**
@@ -418,39 +416,7 @@ public:
     FORCEINLINE void BitshiftLeft(SizeType Steps) noexcept
     {
         if (Steps && NumBits)
-        {
             BitshiftLeftUnchecked(Steps, 0);
-        }
-    }
-
-    /**
-     * @brief       - Retrieve a reference to the bit with the index
-     * @param Index - Index of the bit
-     * @return      - Returns a reference to the bit with the index
-     */
-    NODISCARD FORCEINLINE BitReferenceType GetBitReference(SizeType BitIndex) noexcept
-    {
-        CHECK(BitIndex < NumBits);
-        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
-        CHECK(ElementIndex < NumElements);
-
-        InIntegerType& Element = GetInteger(ElementIndex);
-        return BitReferenceType(Element, ~Element);
-    }
-
-    /**
-     * @brief       - Retrieve a reference to the bit with the index
-     * @param Index - Index of the bit
-     * @return      - Returns a reference to the bit with the index
-     */
-    NODISCARD FORCEINLINE ConstBitReferenceType GetBitReference(SizeType BitIndex) const noexcept
-    {
-        CHECK(BitIndex < NumBits);
-        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
-        CHECK(ElementIndex < NumElements);
-
-        const InIntegerType& Element = GetInteger(ElementIndex);
-        return ConstBitReferenceType(Element, CreateMaskForBit(BitIndex));
     }
 
     /**
@@ -622,9 +588,14 @@ public:
      * @param Index - Index to the bit
      * @return      - Returns a BitReference to the specified bit
      */
-    NODISCARD FORCEINLINE BitReferenceType operator[](SizeType Index) noexcept
+    NODISCARD FORCEINLINE BitReferenceType operator[](SizeType BitIndex) noexcept
     {
-        return GetBitReference(Index);
+        CHECK(BitIndex < NumBits);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
+        CHECK(ElementIndex < NumElements);
+
+        InIntegerType& Element = GetInteger(ElementIndex);
+        return BitReferenceType(Element, CreateMaskForBit(BitIndex));
     }
 
     /**
@@ -632,9 +603,14 @@ public:
      * @param Index - Index to the bit
      * @return      - Returns a BitReference to the specified bit
      */
-    NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SizeType BitIndex) const noexcept
     {
-        return GetBitReference(Index);
+        CHECK(BitIndex < NumBits);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
+        CHECK(ElementIndex < NumElements);
+
+        const InIntegerType& Element = GetInteger(ElementIndex);
+        return ConstBitReferenceType(Element, CreateMaskForBit(BitIndex));
     }
 
     /**
@@ -667,20 +643,7 @@ public:
     template<typename OtherIntegerType, typename OtherAllocatorType>
     NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const noexcept
     {
-        if (NumBits != RHS.NumBits)
-        {
-            return false;
-        }
-
-        for (SizeType Index = 0; Index < NumElements; ++Index)
-        {
-            if (GetInteger(Index) != RHS.GetInteger(Index))
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return CapacityInBytes() == RHS.CapacityInBytes() ? FMemory::Memcmp(Allocator.GetAllocation(), RHS.Allocator.GetAllocation(), CapacityInBytes()) : false;
     }
 
     /**
@@ -789,12 +752,12 @@ public:
 private:
     NODISCARD static constexpr SizeType GetArrayIndexOfBit(SizeType BitIndex) noexcept
     {
-        return (BitIndex / NumBitsPerInteger());
+        return BitIndex / NumBitsPerInteger();
     }
 
     NODISCARD static constexpr SizeType GetIndexOfBitInArray(SizeType BitIndex) noexcept
     {
-        return (BitIndex % NumBitsPerInteger());
+        return BitIndex % NumBitsPerInteger();
     }
 
     NODISCARD static constexpr InIntegerType CreateMaskForBit(SizeType BitIndex) noexcept
@@ -903,7 +866,7 @@ private:
         const InIntegerType StartValue  = *Array;
         const InIntegerType Mask        = CreateMaskUpToBit(BitPosition);
         const InIntegerType InverseMask = ~Mask;
-        *Array = (StartValue & InverseMask);
+        *Array = StartValue & InverseMask;
 
         BitshiftRight_Simple(Steps, StartElementIndex, ElementsToShift);
 
@@ -969,7 +932,7 @@ private:
         const InIntegerType StartValue  = *Array;
         const InIntegerType Mask        = CreateMaskUpToBit(BitPosition);
         const InIntegerType InverseMask = ~Mask;
-        *Array = (StartValue & InverseMask);
+        *Array = StartValue & InverseMask;
 
         BitshiftLeft_Simple(Steps, StartElementIndex, ElementsToShift);
 
@@ -977,7 +940,7 @@ private:
         *Array = (CurrentValue & InverseMask) | (StartValue & Mask);
     }
 
-    FORCEINLINE void MaskOutLastInteger()
+    FORCEINLINE void MaskLastInteger()
     {
         const SizeType LastValidBit     = NumBits ? (NumBits - 1) : 0;
         const SizeType LastElementIndex = GetArrayIndexOfBit(LastValidBit);
@@ -1014,11 +977,12 @@ private:
 
 private:
     InAllocatorType Allocator;
-    SizeType NumBits{0};
-    SizeType NumElements{0};
+    SizeType        NumBits{ 0 };
+    SizeType        NumElements{ 0 };
 };
 
 typedef TBitArray<uint8>  FBitArray8;
 typedef TBitArray<uint16> FBitArray16;
 typedef TBitArray<uint32> FBitArray32;
 typedef TBitArray<uint64> FBitArray64;
+typedef FBitArray32       FBitArray;

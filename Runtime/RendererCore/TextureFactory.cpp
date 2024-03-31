@@ -2,7 +2,7 @@
 #include "TextureResourceData.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 
 struct TextureFactoryData
 {
@@ -18,8 +18,8 @@ bool FTextureFactory::Init()
     // Compile and create shader
     TArray<uint8> Code;
 
-    FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/CubeMapGen.hlsl", CompileInfo, Code))
     {
         return false;
     }
@@ -82,7 +82,6 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     InitalData.InitMipData(Pixels, RowPitch, RowPitch*Height);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::ShaderResource);
-
     FRHITextureRef Texture = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
@@ -90,7 +89,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
         return nullptr;
     }
 
-    if (GenerateMips)
+    if (GenerateMips && NumMips > 1)
     {
         FRHICommandList CommandList;
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);

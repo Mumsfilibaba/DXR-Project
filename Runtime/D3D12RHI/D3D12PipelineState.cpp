@@ -835,8 +835,11 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
 
 void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportName)
 {
-    const auto MapItem = ShaderIdentifers.find(ExportName);
-    if (MapItem == ShaderIdentifers.end())
+    if (FD3D12RayTracingShaderIdentifer* MapItem = ShaderIdentifers.Find(ExportName))
+    {
+        return MapItem->ShaderIdentifier;
+    }
+    else
     {
         FStringWide WideExportName = CharToWide(ExportName);
 
@@ -849,11 +852,7 @@ void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportNam
         FD3D12RayTracingShaderIdentifer Identifier;
         FMemory::Memcpy(Identifier.ShaderIdentifier, Result, D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
-        const auto NewIdentifier = ShaderIdentifers.insert(std::make_pair(ExportName, Identifier));
-        return NewIdentifier.first->second.ShaderIdentifier;
-    }
-    else
-    {
-        return MapItem->second.ShaderIdentifier;
+        FD3D12RayTracingShaderIdentifer& NewIdentifier = ShaderIdentifers.Add(ExportName, Identifier);
+        return NewIdentifier.ShaderIdentifier;
     }
 }

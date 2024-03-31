@@ -243,17 +243,16 @@ FORCEINLINE const WIDECHAR* TCString<WIDECHAR>::Empty() noexcept
 typedef TCString<CHAR>     FCString;
 typedef TCString<WIDECHAR> FCStringWide;
 
-#define DECLARE_FORMAT_STRING_SPECIFIER(Type, Specifier)                              \
-template<>                                                                            \
-NODISCARD FORCEINLINE decltype(auto) TFormatSpecifier<Type>::GetStringSpecifier()     \
-{                                                                                     \
-    return Specifier;                                                                 \
-}                                                                                     \
-                                                                                      \
-template<>                                                                            \
+#define DECLARE_FORMAT_STRING_SPECIFIER(Type, Specifier) \
+template<> \
+NODISCARD FORCEINLINE decltype(auto) TFormatSpecifier<Type>::GetStringSpecifier() \
+{ \
+    return Specifier; \
+} \
+template<> \
 NODISCARD FORCEINLINE decltype(auto) TFormatSpecifierWide<Type>::GetStringSpecifier() \
-{                                                                                     \
-    return L##Specifier;                                                              \
+{ \
+    return L##Specifier; \
 }
 
 template<typename T>

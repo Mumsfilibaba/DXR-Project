@@ -2,6 +2,7 @@
 #include "Array.h"
 #include "StringView.h"
 #include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/TypeHash.h"
 #include "Core/Templates/ArrayContainerHelper.h"
 
 #if defined(__OBJC__)
@@ -26,13 +27,13 @@
 template<typename InCharType>
 class TString
 {
-    using FCStringType = TCString<InCharType>;
-    using FCharType    = TChar<InCharType>;
+    typedef TChar<InCharType>    FCharType;
+    typedef TCString<InCharType> FCStringType;
 
 public:
-    using CHARTYPE    = InCharType;
-    using SizeType    = int32;
-    using StorageType = TArray<CHARTYPE, TStringAllocator<CHARTYPE>>;
+    typedef int32                                        SizeType;
+    typedef InCharType                                   CHARTYPE;
+    typedef TArray<CHARTYPE, TStringAllocator<CHARTYPE>> StorageType;
 
     static_assert(TIsSame<CHARTYPE, CHAR>::Value || TIsSame<CHARTYPE, WIDECHAR>::Value, "TString only supports 'CHAR' and 'WIDECHAR'");
     static_assert(TIsSigned<SizeType>::Value, "TString only supports a SizeType that's signed");
@@ -1651,37 +1652,51 @@ NODISCARD inline FString WideToChar(const FStringWide& WideString) noexcept
 }
 
 
-template<typename CHARTYPE>
-struct TStringHasher
+// Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
+inline uint64 HashType(const FString& String)
 {
-    // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-    FORCEINLINE size_t operator()(const TString<CHARTYPE>& String) const
+    const CHAR* Key = String.GetCString();
+
+    int32  Index = 0;
+    uint64 Hash  = 0;
+
+    const int32 Length = String.Length();
+    while (Index != Length)
     {
-        // TODO: Investigate how good is this for wide chars
-
-        const CHARTYPE* Key = String.GetCString();
-
-        int32  Index = 0;
-        uint64 Hash  = 0;
-
-        const int32 Length = String.Length();
-        while (Index != Length)
-        {
-            Hash += Key[Index++];
-            Hash += Hash << 10;
-            Hash ^= Hash >> 6;
-        }
-
-        Hash += Hash << 3;
-        Hash ^= Hash >> 11;
-        Hash += Hash << 15;
-        return Hash;
+        Hash += Key[Index++];
+        Hash += Hash << 10;
+        Hash ^= Hash >> 6;
     }
-};
 
+    Hash += Hash << 3;
+    Hash ^= Hash >> 11;
+    Hash += Hash << 15;
+    return Hash;
+}
 
-using FStringHasher     = TStringHasher<CHAR>;
-using FStringHasherWide = TStringHasher<WIDECHAR>;
+// Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
+inline uint64 HashType(const FStringWide& String)
+{
+    // TODO: Investigate how good is this for wide chars
+    const WIDECHAR* Key = String.GetCString();
+
+    int32  Index = 0;
+    uint64 Hash  = 0;
+
+    const int32 Length = String.Length();
+    while (Index != Length)
+    {
+        Hash += Key[Index++];
+        Hash += Hash << 10;
+        Hash ^= Hash >> 6;
+    }
+
+    Hash += Hash << 3;
+    Hash ^= Hash >> 11;
+    Hash += Hash << 15;
+    return Hash;
+}
+
 
 template<typename T>
 struct TTypeToString

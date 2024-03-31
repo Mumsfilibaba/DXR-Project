@@ -4,12 +4,18 @@
 #include "Input/Keys.h"
 #include "Input/InputMapper.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/InputDevice.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
+
+static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
+    "ImGui.UseWindowDPIScale",
+    "Scale ImGui elements with the Window DPI scale",
+    false);
 
 struct FEventDispatcher
 {
@@ -24,7 +30,7 @@ struct FEventDispatcher
 
         bool ShouldProcess() const
         {
-            return (Index > 0) && (EventHandlers.Size() > 0);
+            return Index > 0 && !EventHandlers.IsEmpty();
         }
 
         void Next()
@@ -238,7 +244,11 @@ FApplication::FApplication()
     // Configure ImGui
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    UIState.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    if (FImGui::IsMultiViewportEnabled())
+    {
+        UIState.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    }
 
     // Init monitor information
     UpdateMonitorInfo();
@@ -274,7 +284,6 @@ void FApplication::Tick(FTimespan DeltaTime)
     const float Delta = static_cast<float>(DeltaTime.AsMilliseconds());
     PlatformApplication->Tick(Delta);
 
-    // TODO: Investigate if this is a problem
     if (!MainWindow)
     {
         return;
@@ -282,32 +291,47 @@ void FApplication::Tick(FTimespan DeltaTime)
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.DeltaTime = static_cast<float>(DeltaTime.AsSeconds());
+    
     // Setup the display size of the Main-Window
     UIState.DisplaySize = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
+
     // Setup the display scale from the Main-Window
-    UIState.FontGlobalScale         = MainWindow->GetWindowDpiScale();
-    UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
+    const float WindowDPIScale = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDpiScale() : 1.0f;
+    UIState.FontGlobalScale         = WindowDPIScale;
+    UIState.DisplayFramebufferScale = ImVec2(WindowDPIScale, WindowDPIScale);
 
     // Retrieve the current active window
     TSharedRef<FGenericWindow> ForegroundWindow = GetForegroundWindow();
     
     // Update Mouse
-    ImGuiViewport* ForegroundViewport = nullptr;
-    if (ForegroundWindow)
-    {
-        ForegroundViewport = ImGui::FindViewportByPlatformHandle(ForegroundWindow->GetPlatformHandle());
-    }
+    ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow->GetPlatformHandle()) : nullptr;
 
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || MainWindow->IsChildWindow(ForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
     {
+        FWindowShape WindowShape;
+        ForegroundWindow->GetWindowShape(WindowShape);
+
         if (UIState.WantSetMousePos)
         {
-            SetCursorPos(FIntVector2(static_cast<int32>(UIState.MousePos.x), static_cast<int32>(UIState.MousePos.y)));
+            ImVec2 MousePos = UIState.MousePos;
+            if (!FImGui::IsMultiViewportEnabled())
+            {
+                MousePos.x = MousePos.x - WindowShape.Position.x;
+                MousePos.y = MousePos.y - WindowShape.Position.y;
+            }
+
+            SetCursorPos(FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y)));
         }
         else if (!UIState.WantSetMousePos && !bIsTrackingMouse)
         {
-            const FIntVector2 CursorPos = GetCursorPos();
+            FIntVector2 CursorPos = GetCursorPos();
+            if (!FImGui::IsMultiViewportEnabled())
+            {
+                CursorPos.x = CursorPos.x - WindowShape.Position.x;
+                CursorPos.y = CursorPos.y - WindowShape.Position.y;
+            }
+
             UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
         }
     }
@@ -523,7 +547,7 @@ bool FApplication::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState Mod
         });
 
     // Remove the Key
-    PressedKeys.erase(KeyCode);
+    PressedKeys.Remove(KeyCode);
 
     Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), ModierKeyState, KeyEvent.IsDown());
     if (Response.IsEventHandled())
@@ -563,7 +587,7 @@ bool FApplication::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FMo
     }
 
     // Add the Key among the pressed keys
-    PressedKeys.insert(KeyCode);
+    PressedKeys.Remove(KeyCode);
 
     Response = FImGui::OnKeyEvent(KeyEvent.GetKey(), ModierKeyState, KeyEvent.IsDown());
     if (Response.IsEventHandled())
@@ -633,7 +657,24 @@ bool FApplication::OnMouseMove(int32 x, int32 y)
         return true;
     }
 
-    Response = FImGui::OnMouseMoveEvent(x, y);
+    if (!FImGui::IsMultiViewportEnabled())
+    {
+        if (TSharedRef<FGenericWindow> Window = GetWindowUnderCursor())
+        {
+            FWindowShape WindowShape;
+            Window->GetWindowShape(WindowShape);
+
+            x = x - WindowShape.Position.x;
+            y = y - WindowShape.Position.y;
+
+            Response = FImGui::OnMouseMoveEvent(x, y);
+        }
+    }
+    else
+    {
+        Response = FImGui::OnMouseMoveEvent(x, y);
+    }
+
     if (Response.IsEventHandled())
     {
         return true;
@@ -668,7 +709,7 @@ bool FApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeySt
         });
     
     // Remove the Key
-    PressedMouseButtons.erase(Button);
+    PressedMouseButtons.Remove(Button);
 
     // If the event is handled, abort the process
     Response = FImGui::OnMouseButtonEvent(MouseEvent.GetKey(), MouseEvent.IsDown());
@@ -711,7 +752,7 @@ bool FApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, E
     }
 
     // Add the button to the pressed buttons
-    PressedMouseButtons.insert(Button);
+    PressedMouseButtons.Remove(Button);
 
     // If the event is handled, abort the process
     Response = FImGui::OnMouseButtonEvent(MouseEvent.GetKey(), MouseEvent.IsDown());
@@ -965,7 +1006,7 @@ void FApplication::SetCapture(const TSharedRef<FGenericWindow>& CaptureWindow)
 {
     PlatformApplication->SetCapture(CaptureWindow);
 
-    if (CaptureWindow && !PressedMouseButtons.empty())
+    if (CaptureWindow && !PressedMouseButtons.IsEmpty())
     {
         bIsTrackingMouse = true;
     }

@@ -18,9 +18,6 @@ struct FConsoleInputHandler final : public FInputPreProcessor
     DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
     FHandleKeyEventDelegate HandleKeyEventDelegate;
 
-    FConsoleInputHandler() = default;
-    ~FConsoleInputHandler() = default;
-
     virtual bool OnKeyUp(const FKeyEvent& KeyEvent) override final
     {
         HandleKeyEventDelegate.Execute(KeyEvent);

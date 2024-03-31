@@ -80,8 +80,7 @@ public:
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
-
-    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
+    virtual TSharedRef<FGenericWindow> GetActiveWindow()      const override final;
 
     virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
 
@@ -103,24 +102,22 @@ private:
     void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
     
     mutable FDisplayInfo DisplayInfo;
-    
+
     // Observer that checks for monitor changes
     FMacApplicationObserver* Observer;
-    
+
     // InputDevice handling gamepads
     TSharedPtr<FGCInputDevice> InputDevice;
-    
+
     EMouseButtonName::Type LastPressedButton;
     mutable bool           bHasDisplayInfoChanged;
-    
-    TArray<TSharedRef<FMacWindow>> Windows;
-    mutable FCriticalSection WindowsCS;
-    
-    TArray<TSharedRef<FMacWindow>> ClosedWindows;
-    FCriticalSection ClosedWindowsCS;
 
-    TArray<FDeferredMacEvent> DeferredEvents;
-    FCriticalSection DeferredEventsCS;
+    TArray<TSharedRef<FMacWindow>> Windows;
+    mutable FCriticalSection       WindowsCS;
+    TArray<TSharedRef<FMacWindow>> ClosedWindows;
+    FCriticalSection               ClosedWindowsCS;
+    TArray<FDeferredMacEvent>      DeferredEvents;
+    FCriticalSection               DeferredEventsCS;
 };
 
 extern FMacApplication* MacApplication;

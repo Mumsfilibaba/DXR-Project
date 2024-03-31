@@ -4,7 +4,7 @@
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 
-class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceObject
+class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
 {
 public:
     FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
@@ -12,31 +12,29 @@ public:
     
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
 
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FVulkanBuffer*>(this)); }
-    
+    virtual void* GetRHIBaseBuffer()         override final { return reinterpret_cast<void*>(static_cast<FVulkanBuffer*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkBuffer()); }
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const FString& InName) override final;
-
     virtual FString GetName() const override final;
 
     VkBuffer GetVkBuffer() const
     {
         return Buffer;
     }
-    
+
     VkDeviceMemory GetVkDeviceMemory() const
     {
         return MemoryAllocation.Memory;
     }
-    
+
     VkDeviceSize GetRequiredAlignment() const
     {
         return RequiredAlignment;
     }
-    
+
 protected:
     VkBuffer                Buffer;
     FVulkanMemoryAllocation MemoryAllocation;

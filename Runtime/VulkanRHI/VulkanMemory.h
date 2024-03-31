@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 
 struct FVulkanMemoryBlock;
 class FVulkanMemoryHeap;
@@ -33,28 +33,37 @@ struct FVulkanMemoryAllocation
     bool                bIsDedicated;
 };
 
-
 struct FVulkanMemoryBlock
 {
-    FVulkanMemoryHeap* Page = nullptr;
+    FVulkanMemoryBlock()
+        : Page(nullptr)
+        , Next(nullptr)
+        , Previous(nullptr)
+        , SizeInBytes(0)
+        , TotalSizeInBytes(0)
+        , Offset(0)
+        , bIsFree(true)
+    {
+    }
+
+    FVulkanMemoryHeap* Page;
 
     // Linked list of blocks
-    FVulkanMemoryBlock* Next     = nullptr;
-    FVulkanMemoryBlock* Previous = nullptr;
+    FVulkanMemoryBlock* Next;
+    FVulkanMemoryBlock* Previous;
 
     // Size of the allocation
-    uint64 SizeInBytes = 0;
+    uint64 SizeInBytes;
 
     // Total size of the block (TotalSizeInBytes - SizeInBytes = AlignmentOffset)
-    uint64 TotalSizeInBytes = 0;
+    uint64 TotalSizeInBytes;
 
     // Offset of the DeviceMemory
-    uint64 Offset  = 0;
-    bool   bIsFree = true;
+    uint64 Offset;
+    bool   bIsFree;
 };
 
-
-class FVulkanMemoryHeap : public FVulkanDeviceObject, private FNonCopyable
+class FVulkanMemoryHeap : public FVulkanDeviceChild, private FNonCopyable
 {
 public:
     FVulkanMemoryHeap(FVulkanDevice* InDevice, VkMemoryAllocateFlags InAllocationFlags, uint32 InHeapIndex, uint32 InMemoryIndex);
@@ -121,8 +130,7 @@ private:
 #endif
 };
 
-
-class FVulkanMemoryManager : public FVulkanDeviceObject
+class FVulkanMemoryManager : public FVulkanDeviceChild
 {
 public:
     FVulkanMemoryManager(FVulkanDevice* InDevice);

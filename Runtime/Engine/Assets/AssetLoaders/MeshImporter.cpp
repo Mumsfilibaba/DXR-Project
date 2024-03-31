@@ -35,15 +35,14 @@ void FMeshImporter::Release()
 
 bool FMeshImporter::LoadMesh(const FString& Filename, FSceneData& OutScene, EMeshImportFlags Flags)
 {
-    auto CachedMesh = Cache.find(Filename);
-    if (CachedMesh != Cache.end())
+    if (FString* MeshName = Cache.Find(Filename))
     {
-        if (LoadCustom(CachedMesh->second, OutScene))
+        if (LoadCustom(*MeshName, OutScene))
         {
             return true;
         }
 
-        Cache.erase(CachedMesh);
+        Cache.Remove(Filename);
         UpdateCacheFile();
     }
 
@@ -141,9 +140,9 @@ void FMeshImporter::LoadCacheFile()
             while (*ValueEnd == ' ')
                 *(ValueEnd--) = '\0';
 
-            const FString OriginalValue = Key;
-            const FString NewValue      = Value;
-            Cache.emplace(std::make_pair(OriginalValue, NewValue));
+            FString OriginalValue = Key;
+            FString NewValue      = Value;
+            Cache.Emplace(Move(OriginalValue), Move(NewValue));
         }
     }
 }
@@ -151,9 +150,9 @@ void FMeshImporter::LoadCacheFile()
 void FMeshImporter::UpdateCacheFile()
 {
     FString FileContents;
-    for (const auto& Entry : Cache)
+    for (auto Entry : Cache)
     {
-        FileContents.AppendFormat("%s = %s\n", Entry.first.GetCString(), Entry.second.GetCString());
+        FileContents.AppendFormat("%s = %s\n", Entry.First.GetCString(), Entry.Second.GetCString());
     }
 
     {
@@ -378,8 +377,7 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
         }
     }
 
-    Cache.emplace(std::make_pair(OriginalFile, NewFile));
-
+    Cache.Add(OriginalFile, NewFile);
     UpdateCacheFile();
     return true;
 }
@@ -408,12 +406,16 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
 
     // 2) Model Headers
     FCustomModel* ModelHeaders = reinterpret_cast<FCustomModel*>(SceneHeader + 1);
+    
     // 3) Vertices
     FVertex* Vertices = reinterpret_cast<FVertex*>(ModelHeaders + SceneHeader->NumModels);
+    
     // 4) Indices
     uint32* Indices = reinterpret_cast<uint32*>(Vertices + SceneHeader->NumTotalVertices);
+    
     // 5) Indices
     FTextureHeader* Textures = reinterpret_cast<FTextureHeader*>(Indices + SceneHeader->NumTotalIndices);
+    
     // 6) Materials
     FCustomMaterial* Materials = reinterpret_cast<FCustomMaterial*>(Textures + SceneHeader->NumTextures);
 

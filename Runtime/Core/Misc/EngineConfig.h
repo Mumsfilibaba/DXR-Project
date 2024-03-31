@@ -28,14 +28,20 @@ struct FConfigValue
     }
 
      /** @brief - Restores the value to the value currently in the save file */
-    FORCEINLINE void Restore() { CurrentValue = SavedValue; }
+    void Restore() 
+    { 
+        CurrentValue = SavedValue; 
+    }
 
      /** @brief - Sets the current value to the saved value */
-    FORCEINLINE void SaveCurrent() { SavedValue = CurrentValue; }
+    void SaveCurrent() 
+    {
+        SavedValue = CurrentValue;
+    }
 
     bool operator==(const FConfigValue& Other) const 
     {
-        return (SavedValue == Other.SavedValue) && (CurrentValue == Other.CurrentValue);
+        return SavedValue == Other.SavedValue && CurrentValue == Other.CurrentValue;
     }
 
     bool operator!=(const FConfigValue& Other) const
@@ -55,18 +61,6 @@ struct CORE_API FConfigSection
 {
     FConfigSection();
     FConfigSection(const CHAR* InName);
-
-     /** @brief - Add a specific value to a new string */
-    bool AddValue(const CHAR* NewKey, const CHAR* NewValue);
-
-    /** @brief - Find a value with a certain or add it with the specified value */
-    FConfigValue* FindOrAddValue(const CHAR* Key, const CHAR* Value);
-
-     /** @brief - Retrieve a value */
-    FConfigValue* FindValue(const CHAR* Key);
-
-     /** @brief - Retrieve a value */
-    const FConfigValue* FindValue(const CHAR* Key) const;
 
     /** @brief - Restores all values in the section */
     void Restore();
@@ -97,17 +91,11 @@ struct CORE_API FConfigFile
     {
     }
 
-    /** @brief - Looks up a section and returns nullptr when not found */
-    FConfigSection* FindSection(const CHAR* SectionName);
-    
-    /** @brief - Looks up a section and adds it when not found */
-    FConfigSection* FindOrAddSection(const CHAR* SectionName);
-
+    /** @return - Looks up a value from any section and returns nullptr if not found */
     FConfigValue* FindValue(const CHAR* Name);
-    FConfigValue* FindValue(const CHAR* SectionName, const CHAR* Name);
 
-    /** @brief - Combines this config-file with another */
-    void Combine(const FConfigFile& ConfigFile);
+    /** @return - Looks up a value from the section with 'SectionName' and returns nullptr if not found */
+    FConfigValue* FindValue(const CHAR* SectionName, const CHAR* Name);
 
      /** @brief - Set a string from the Engine config */
     bool SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue);
@@ -141,7 +129,7 @@ struct CORE_API FConfigFile
 
     bool operator==(const FConfigFile& Other) const
     {
-        return (Filename == Other.Filename) && (Sections == Other.Sections);
+        return Filename == Other.Filename && Sections == Other.Sections;
     }
 
     bool operator!=(const FConfigFile& Other) const
@@ -158,22 +146,17 @@ extern CORE_API FConfigFile* GConfig;
 
 class CORE_API FConfig
 {
-    FConfig();
-    ~FConfig() = default;
-
 public:
     static bool Initialize();
     static void Release();
 
     FConfigFile* LoadFile(const FString& Filename);
-    FConfigFile* FindFile(const FString& Filename);
     
     void LoadConsoleVariables();
 
 private:
-    FConfigFile* AddConfigFile(const FString& Filename);
-    
-    TMap<FString, FConfigFile> ConfigFiles;
+    FConfig();
 
+    TMap<FString, FConfigFile> ConfigFiles;
     static FConfig* GInstance;
 };

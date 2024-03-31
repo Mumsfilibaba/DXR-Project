@@ -7,7 +7,7 @@
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Resources/Mesh.h"
 #include "RHI/RHI.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 
 bool FDebugRenderer::Initialize(FFrameResources& Resources)
 {
@@ -20,8 +20,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         };
         
         {
-            FRHIShaderCompileInfo CompileInfo("AABB_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, AABBDefines);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("AABB_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, AABBDefines);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -36,8 +36,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
 
         {
-            FRHIShaderCompileInfo CompileInfo("AABB_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, AABBDefines);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("AABB_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, AABBDefines);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -182,8 +182,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         };
         
         {
-            FRHIShaderCompileInfo CompileInfo("Light_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, PointLightDefines);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Light_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, PointLightDefines);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -198,8 +198,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
 
         {
-            FRHIShaderCompileInfo CompileInfo("Light_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, PointLightDefines);
-            if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+            FShaderCompileInfo CompileInfo("Light_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, PointLightDefines);
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return false;

@@ -1,5 +1,4 @@
 #pragma once
-#include "Core/Core.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/NumericLimits.h"
 

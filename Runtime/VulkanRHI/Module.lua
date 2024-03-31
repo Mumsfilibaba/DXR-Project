@@ -58,6 +58,7 @@ VulkanRHI.AddModuleDependencies(
     'Core',
     'CoreApplication',
     'RHI',
+    'Project',
 })
 
 if IsPlatformMac() then
@@ -69,10 +70,16 @@ end
 
 VulkanRHI.AddSystemIncludes(
 {
-    VulkanInclude
+    VulkanInclude,
+    CreateExternalDependencyPath("SPIRV-Cross"),
 })
 
 VulkanRHI.AddLibraryPaths(
 {
-    VulkanLibraries
+    VulkanLibraries,
+})
+
+VulkanRHI.AddLinkLibraries(
+{
+    "SPIRV-Cross",
 })

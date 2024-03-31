@@ -21,7 +21,7 @@ struct FD3D12DeferredObject
 
     FD3D12DeferredObject() = default;
 
-    FD3D12DeferredObject(uint64 InFenceValue, IRefCounted* InResource)
+    FD3D12DeferredObject(uint64 InFenceValue, FRHIResource* InResource)
         : Type(EDeferredObjectType::RHIResource)
         , FenceValue(InFenceValue)
         , RHIResource{InResource}
@@ -68,7 +68,7 @@ struct FD3D12DeferredObject
             FD3D12OnlineDescriptorBlock* Block;
         } OnlineDescriptorBlock;
 
-        IRefCounted*    RHIResource;
+        FRHIResource*   RHIResource;
         FD3D12Resource* Resource;
         ID3D12Resource* D3DResource;
     };
@@ -78,7 +78,6 @@ class FD3D12DeferredDeletionQueue : public FThreadInterface, public FD3D12Device
 {
 public:
     FD3D12DeferredDeletionQueue(FD3D12Device* InDevice);
-    ~FD3D12DeferredDeletionQueue() = default;
 
     bool Initialize();
 

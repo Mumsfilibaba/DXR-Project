@@ -8,15 +8,6 @@
 
 typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;
 
-struct FD3D12SamplerDescHasher
-{
-    SIZE_T operator()(const FRHISamplerStateDesc& InDesc) const
-    {
-        return InDesc.GetHash();
-    }
-};
-
-
 struct FD3D12SamplerStateIdentifier
 {
     static constexpr uint16 InvalidIdentifier = 0xffff;

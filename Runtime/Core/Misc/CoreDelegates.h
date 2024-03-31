@@ -2,7 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Delegates/MulticastDelegate.h"
 
-namespace NCoreDelegates
+namespace CoreDelegates
 {
     /**
      * @brief - Delegate that gets called after the RHI is initialized 

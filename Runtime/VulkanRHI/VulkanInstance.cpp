@@ -9,6 +9,11 @@ static TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
     "Enables more logging within VulkanRHI",
     true);
 
+static TAutoConsoleVariable<bool> CVarBreakOnValidationError(
+    "VulkanRHI.BreakOnValidationError",
+    "Enables breakpoints when the validation-layer encounters an error",
+    true);
+
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFlagBitsEXT MessageSeverity, VkDebugUtilsMessageTypeFlagsEXT MessageType, const VkDebugUtilsMessengerCallbackDataEXT* CallbackData, void* UserData)
@@ -16,6 +21,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFla
     if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         LOG_ERROR("[Vulkan Validation layer] %s", CallbackData->pMessage);
+        
+        if (CVarBreakOnValidationError.GetValue())
+        {
+            DEBUG_BREAK();
+        }
     }
     else if (MessageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
@@ -39,25 +49,10 @@ FVulkanInstance::FVulkanInstance()
 
 FVulkanInstance::~FVulkanInstance()
 {
-#if VK_EXT_debug_utils
-    if (VULKAN_CHECK_HANDLE(DebugMessenger))
-    {
-        vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
-    }
-#endif
-
-    if (VULKAN_CHECK_HANDLE(Instance))
-    {
-        vkDestroyInstance(Instance, nullptr);
-    }
-
-    if (DriverHandle)
-    {
-        FPlatformLibrary::FreeDynamicLib(DriverHandle);
-    }
+    Release();
 }
 
-bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
+bool FVulkanInstance::Initialize(const FVulkanInstanceCreateInfo& InstanceDesc)
 {
     DriverHandle = FPlatformVulkan::LoadVulkanLibrary();
     if (!DriverHandle)
@@ -155,7 +150,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredLayerNames.ContainsWithPredicate(CompareLayer) || InstanceDesc.OptionalLayerNames.ContainsWithPredicate(CompareLayer))
         {
             EnabledLayerNames.Add(LayerProperty.layerName);
-            LayerNames.insert(FString(LayerProperty.layerName));
+            LayerNames.Emplace(LayerProperty.layerName);
         }
     }
 
@@ -185,7 +180,7 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
         if (InstanceDesc.RequiredExtensionNames.ContainsWithPredicate(CompareExtension) || InstanceDesc.OptionalExtensionNames.ContainsWithPredicate(CompareExtension))
         {
             EnabledExtensionNames.Add(ExtensionProperty.extensionName);
-            ExtensionNames.insert(FString(ExtensionProperty.extensionName));
+            ExtensionNames.Emplace(ExtensionProperty.extensionName);
         }
     }
 
@@ -312,4 +307,27 @@ bool FVulkanInstance::Initialize(const FVulkanInstanceDesc& InstanceDesc)
 #endif
 
     return true;
+}
+
+void FVulkanInstance::Release()
+{
+#if VK_EXT_debug_utils
+    if (VULKAN_CHECK_HANDLE(DebugMessenger))
+    {
+        vkDestroyDebugUtilsMessengerEXT(Instance, DebugMessenger, nullptr);
+        DebugMessenger = VK_NULL_HANDLE;
+    }
+#endif
+
+    if (VULKAN_CHECK_HANDLE(Instance))
+    {
+        vkDestroyInstance(Instance, nullptr);
+        Instance = VK_NULL_HANDLE;
+    }
+
+    if (DriverHandle)
+    {
+        FPlatformLibrary::FreeDynamicLib(DriverHandle);
+        DriverHandle = nullptr;
+    }
 }

@@ -7,7 +7,7 @@ static TAutoConsoleVariable<int32> CVarMemoryHeapSize(
     128);
 
 FVulkanMemoryHeap::FVulkanMemoryHeap(FVulkanDevice* InDevice, VkMemoryAllocateFlags InAllocationFlags, uint32 InHeapIndex, uint32 InMemoryIndex)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , SizeInBytes(0)
     , AllocationFlags(InAllocationFlags)
     , MemoryIndex(InMemoryIndex)
@@ -382,7 +382,7 @@ bool FVulkanMemoryHeap::ValidateChain() const
 
 
 FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , MemoryHeaps()
     , DeviceProperties()
     , HeapSize(0)
@@ -390,13 +390,13 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     , ManagerCS()
 {
     // Cache the DeviceProperties
-    DeviceProperties = GetDevice()->GetPhysicalDevice()->GetDeviceProperties();
+    DeviceProperties = GetDevice()->GetPhysicalDevice()->GetProperties();
  
     // Calculate the HeapSize in bytes
     HeapSize = CVarMemoryHeapSize.GetValue() * 1024 * 1024;
 
     // List all the MemoryHeaps available
-    const VkPhysicalDeviceMemoryProperties& MemoryProperties = GetDevice()->GetPhysicalDevice()->GetDeviceMemoryProperties();
+    const VkPhysicalDeviceMemoryProperties& MemoryProperties = GetDevice()->GetPhysicalDevice()->GetMemoryProperties();
     VULKAN_INFO("Current Device has the following MemoryHeaps:");
  
     for (uint32 Index = 0; Index < MemoryProperties.memoryHeapCount; Index++)

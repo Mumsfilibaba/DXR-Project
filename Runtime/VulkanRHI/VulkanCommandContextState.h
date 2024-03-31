@@ -2,69 +2,102 @@
 #include "VulkanQueue.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanPipelineState.h"
-#include "VulkanDescriptorCache.h"
 
 class FVulkanCommandContext;
+class FVulkanDescriptorState;
 
-struct FVulkanCommandContextState : public FVulkanDeviceObject, public FNonCopyAndNonMovable
+struct FVulkanVertexBufferCache
 {
+    FVulkanVertexBufferCache() 
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        FMemory::Memzero(VertexBuffers, sizeof(VertexBuffers));
+        FMemory::Memzero(VertexBufferOffsets, sizeof(VertexBufferOffsets));
+        NumVertexBuffers = 0;
+    }
+
+    VkBuffer     VertexBuffers[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
+    VkDeviceSize VertexBufferOffsets[VULKAN_MAX_VERTEX_BUFFER_SLOTS];
+    uint32       NumVertexBuffers;
+};
+
+struct FVulkanIndexBufferCache
+{
+    FVulkanIndexBufferCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        IndexType   = VK_INDEX_TYPE_UINT32;
+        Offset      = 0;
+        IndexBuffer = VK_NULL_HANDLE;
+    }
+
+    VkBuffer     IndexBuffer;
+    VkDeviceSize Offset;
+    VkIndexType  IndexType;
+};
+
+struct FVulkanPushConstantsCache
+{
+    FVulkanPushConstantsCache()
+    {
+        Clear();
+    }
+
+    void Clear()
+    {
+        FMemory::Memzero(Constants, sizeof(Constants));
+        NumConstants = VULKAN_MAX_NUM_PUSH_CONSTANTS;
+    }
+
+    uint32 Constants[VULKAN_MAX_NUM_PUSH_CONSTANTS];
+    uint32 NumConstants;
+};
+
+class FVulkanCommandContextState : public FVulkanDeviceChild, public FNonCopyAndNonMovable
+{
+public:
     FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext);
     ~FVulkanCommandContextState() = default;
 
     bool Initialize();
 
     void BindGraphicsStates();
-    
     void BindComputeState();
-
-    void BindDescriptorSets(VkPipelineLayout PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
-    
-    void BindPushConstants(VkPipelineLayout PipelineLayout);
+    void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
     
     void ResetState();
-    
-    void ResetStateResources();
-
     void ResetStateForNewCommandBuffer();
 
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState);
-    
     void SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState);
 
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
-    
     void SetScissorRects(VkRect2D* ScissorRects, uint32 NumScissorRects);
 
     void SetBlendFactor(const float BlendFactor[4]);
 
     void SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 VertexBufferSlot);
-    
     void SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexFormat);
-
-    void SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-    
-    void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-
-    void SetCBV(FVulkanBuffer* ConstantBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
-
-    void SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
 
     void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
-    void ResetPendingDescriptorPools()
-    {
-        CommonState.DescriptorSetCache.ResetPendingDescriptorPools();
-    }
+    void SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
     
 public:
     FORCEINLINE FVulkanCommandContext& GetContext()
     {
         return Context;
-    }
-    
-    FORCEINLINE FVulkanDescriptorSetCache& GetDescriptorSetCache()
-    {
-        return CommonState.DescriptorSetCache;
     }
 
 public:
@@ -107,14 +140,13 @@ public:
     }
 
 private:
-    void InternalSetShaderStageResourceCount(FVulkanShader* Shader, EShaderVisibility ShaderStage);
-
-    FVulkanCommandContext& Context;
-
     struct FGraphicsState
     {
         FGraphicsState()
-            : PipelineState(nullptr)
+            : CurrentLayout(nullptr)
+            , PipelineState(nullptr)
+            , DescriptorStates()
+            , CurrentDescriptorState(nullptr)
             , NumViewports(0)
             , NumScissorRects(0)
             , IBCache()
@@ -125,8 +157,12 @@ private:
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
+        FVulkanPipelineLayout* CurrentLayout;
         FVulkanGraphicsPipelineStateRef PipelineState;
 
+        TMap<FVulkanGraphicsPipelineState*, FVulkanDescriptorState*> DescriptorStates;
+        FVulkanDescriptorState* CurrentDescriptorState;
+        
         float BlendFactor[4];
 
         VkViewport Viewports[VULKAN_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
@@ -150,29 +186,27 @@ private:
     struct FComputeState
     {
         FComputeState()
-            : PipelineState(nullptr)
+            : CurrentLayout(nullptr)
+            , PipelineState(nullptr)
+            , DescriptorStates()
+            , CurrentDescriptorState(nullptr)
         {
         }
 
+        FVulkanPipelineLayout* CurrentLayout;
         FVulkanComputePipelineStateRef PipelineState;
 
+        TMap<FVulkanComputePipelineState*, FVulkanDescriptorState*> DescriptorStates;
+        FVulkanDescriptorState* CurrentDescriptorState;
+        
         bool bBindPipelineState : 1;
         bool bBindPushConstants : 1;
     } ComputeState;
 
     struct FCommonState
     {
-        FCommonState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
-            : DescriptorSetCache(InDevice, InContext)
-        {
-        }
-
-        FVulkanConstantBufferCache      ConstantBufferCache;
-        FVulkanShaderResourceViewCache  ShaderResourceViewCache;
-        FVulkanUnorderedAccessViewCache UnorderedAccessViewCache;
-        FVulkanSamplerStateCache        SamplerStateCache;
-
-        FVulkanDescriptorSetCache       DescriptorSetCache;
-        FVulkanPushConstantsCache       PushConstantsCache;
+        FVulkanPushConstantsCache PushConstantsCache;
     } CommonState;
+    
+    FVulkanCommandContext& Context;
 };

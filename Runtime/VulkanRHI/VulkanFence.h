@@ -1,50 +1,19 @@
 #pragma once
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "VulkanLoader.h"
+#include "Core/Containers/Array.h"
+#include "Core/Platform/CriticalSection.h"
 
-class FVulkanFence : public FVulkanDeviceObject
+class FVulkanFence : public FVulkanDeviceChild
 {
 public:
-    FVulkanFence(FVulkanDevice* InDevice)
-        : FVulkanDeviceObject(InDevice)
-        , Fence(VK_NULL_HANDLE)
-    {
-    }
+    FVulkanFence(const FVulkanFence&) = delete;
+    FVulkanFence& operator=(const FVulkanFence&) = delete;
 
-    FVulkanFence(FVulkanFence&& Other)
-        : FVulkanDeviceObject(Other.GetDevice())
-        , Fence(Other.Fence)
-    {
-        Other.Fence = VK_NULL_HANDLE;
-    }
+    FVulkanFence(FVulkanDevice* InDevice);
+    ~FVulkanFence();
 
-    ~FVulkanFence()
-    {
-        if (VULKAN_CHECK_HANDLE(Fence))
-        {
-            vkDestroyFence(GetDevice()->GetVkDevice(), Fence, nullptr);
-            Fence = VK_NULL_HANDLE;
-        }
-    }
-
-    bool Initialize()
-    {
-        VkFenceCreateInfo FenceCreateInfo;
-        FMemory::Memzero(&FenceCreateInfo);
-
-        FenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        FenceCreateInfo.pNext = nullptr;
-        FenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-        VkResult Result = vkCreateFence(GetDevice()->GetVkDevice(), &FenceCreateInfo, nullptr, &Fence);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("Failed to create Fence");
-            return false;
-        }
-
-        return true;
-    }
+    bool Initialize(bool bSignaled);
 
     bool IsSignaled() const 
     {
@@ -58,7 +27,7 @@ public:
         return Result == VK_SUCCESS;
     }
 
-    bool Wait(uint64 TimeOut) const
+    bool Wait(uint64 TimeOut = UINT64_MAX) const
     {
         VkResult Result = vkWaitForFences(GetDevice()->GetVkDevice(), 1, &Fence, VK_TRUE, TimeOut);
         if (VULKAN_FAILED(Result))
@@ -81,8 +50,8 @@ public:
 
         return true;
     }
-
-    FORCEINLINE VkFence GetVkFence() const
+    
+    VkFence GetVkFence() const
     {
         return Fence;
     }

@@ -2,18 +2,6 @@
 
 #define NUM_THREADS (16)
 
-#define RootSig \
-    "RootFlags(0), " \
-    "RootConstants(b0, space = 1, num32BitConstants = 1), " \
-    "DescriptorTable(SRV(t0, numDescriptors = 1))," \
-    "DescriptorTable(UAV(u0, numDescriptors = 1))," \
-    "DescriptorTable(Sampler(s1, numDescriptors = 1))," \
-    "StaticSampler(s0," \
-        "addressU = TEXTURE_ADDRESS_WRAP," \
-        "addressV = TEXTURE_ADDRESS_WRAP," \
-        "addressW = TEXTURE_ADDRESS_WRAP," \
-        "filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
-
 // Shader Constants
 SHADER_CONSTANT_BLOCK_BEGIN
     uint CubeMapSize; // Size of one side of the TextureCube
@@ -31,31 +19,30 @@ static const float3x3 ROTATE_UV[6] =
 {
     // +X
     float3x3( 0,  0,  1,
-               0, -1,  0,
-              -1,  0,  0),
+              0, -1,  0,
+             -1,  0,  0),
     // -X
     float3x3( 0,  0, -1,
-               0, -1,  0,
-               1,  0,  0),
+              0, -1,  0,
+              1,  0,  0),
     // +Y
     float3x3( 1,  0,  0,
-               0,  0,  1,
-               0,  1,  0),
+              0,  0,  1,
+              0,  1,  0),
     // -Y
     float3x3( 1,  0,  0,
-               0,  0, -1,
-               0, -1,  0),
+              0,  0, -1,
+              0, -1,  0),
     // +Z
     float3x3( 1,  0,  0,
-               0, -1,  0,
-               0,  0,  1),
+              0, -1,  0,
+              0,  0,  1),
     // -Z
     float3x3(-1,  0,  0,
-               0, -1,  0,
-               0,  0, -1)
+              0, -1,  0,
+              0,  0, -1)
 };
 
-[RootSignature(RootSig)]
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {

@@ -9,12 +9,11 @@
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper
 
-static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhysicalDeviceDesc& DeviceDesc)
+static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhysicalDeviceCreateInfo& DeviceDesc)
 {
     // Get the physical device properties
     VkPhysicalDeviceProperties AdapterProperties;
     vkGetPhysicalDeviceProperties(PhysicalDevice, &AdapterProperties);
-
 
     // Get the physical device features
     VkPhysicalDeviceFeatures2 DeviceFeatures2;
@@ -39,7 +38,6 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     // Get the physical device features
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
 
-
     // Check Vulkan 1.0 features
     const uint64 NumFeatures10 = ((OFFSETOF(VkPhysicalDeviceFeatures, inheritedQueries) - OFFSETOF(VkPhysicalDeviceFeatures, robustBufferAccess)) / sizeof(VkBool32)) + 1;
 
@@ -62,7 +60,6 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
         return false;
     }
 
-
     // Check Vulkan 1.1 features
     const uint64 NumFeatures11 = ((OFFSETOF(VkPhysicalDeviceVulkan11Features, shaderDrawParameters) - OFFSETOF(VkPhysicalDeviceVulkan11Features, storageBuffer16BitAccess)) / sizeof(VkBool32)) + 1;
 
@@ -84,7 +81,6 @@ static bool CheckAvailability(VkPhysicalDevice PhysicalDevice, const FVulkanPhys
     {
         return false;
     }
-
 
     // Check Vulkan 1.2 features
     const uint64 NumFeatures12 = ((OFFSETOF(VkPhysicalDeviceVulkan12Features, subgroupBroadcastDynamicId) - OFFSETOF(VkPhysicalDeviceVulkan12Features, samplerMirrorClampToEdge)) / sizeof(VkBool32)) + 1;
@@ -146,7 +142,7 @@ FVulkanPhysicalDevice::~FVulkanPhysicalDevice()
     PhysicalDevice = VK_NULL_HANDLE;
 }
 
-bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterDesc)
+bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc)
 {
     VkResult Result = VK_SUCCESS;
 
@@ -287,7 +283,6 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     vkGetPhysicalDeviceProperties(PhysicalDevice, &DeviceProperties);
     vkGetPhysicalDeviceFeatures(PhysicalDevice, &DeviceFeatures);
     vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, &DeviceMemoryProperties);
-    
 
     // Get Get Physical Device Properties
     FMemory::Memzero(&DeviceProperties2);
@@ -303,7 +298,6 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
 #endif
 
     vkGetPhysicalDeviceProperties2(PhysicalDevice, &DeviceProperties2);
-
 
     // Get Physical Device Feature (For Vulkan 1.1 and Vulkan 1.2 and extensions)
     FMemory::Memzero(&DeviceFeatures2);
@@ -324,6 +318,12 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     DeviceFeaturesHelper.AddNext(Robustness2Features);
 #endif
     
+#if VK_EXT_pipeline_creation_cache_control
+    FMemory::Memzero(&PipelineCreationCacheControlFeatures);
+    PipelineCreationCacheControlFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
+    DeviceFeaturesHelper.AddNext(PipelineCreationCacheControlFeatures);
+#endif
+    
     // Vulkan 1.1 features
     FMemory::Memzero(&DeviceFeatures11);
     DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
@@ -336,7 +336,6 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceDesc& AdapterD
     
     // Get the physical device features
     vkGetPhysicalDeviceFeatures2(PhysicalDevice, &DeviceFeatures2);
-
 
     // Get Physical Device Memory Properties
     FMemory::Memzero(&DeviceMemoryProperties2);

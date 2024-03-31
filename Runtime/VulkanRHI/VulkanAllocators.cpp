@@ -10,7 +10,7 @@ static TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
 
 
 FVulkanUploadBuffer::FVulkanUploadBuffer(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , Buffer(VK_NULL_HANDLE)
     , MemoryAllocation()
 {
@@ -80,7 +80,7 @@ bool FVulkanUploadBuffer::Initialize(uint64 Size)
 
 
 FVulkanUploadHeapAllocator::FVulkanUploadHeapAllocator(FVulkanDevice* InDevice)
-    : FVulkanDeviceObject(InDevice)
+    : FVulkanDeviceChild(InDevice)
     , BufferSize(0)
     , CurrentOffset(0)
     , Buffer(nullptr)

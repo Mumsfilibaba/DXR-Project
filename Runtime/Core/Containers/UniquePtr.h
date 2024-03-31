@@ -567,7 +567,7 @@ NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUnique(ArgTypes&&... Args) noe
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUnique(uint32 Size) noexcept requires(TIsArray<ElementType>::Value)
+NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUnique(uint64 Size) noexcept requires(TIsArray<ElementType>::Value)
 {
     typedef typename TRemoveExtent<ElementType>::Type Type;
 

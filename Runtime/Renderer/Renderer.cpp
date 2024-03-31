@@ -6,7 +6,7 @@
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Application/Application.h"
 #include "RHI/RHI.h"
-#include "RHI/RHIShaderCompiler.h"
+#include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"
 #include "Engine/Scene/Lights/PointLight.h"
@@ -607,17 +607,17 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     if (CVarFXAADebug.GetValue())
     {
+        InCommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
         InCommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         InCommandList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
         InCommandList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
-        InCommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
     }
     else
     {
+        InCommandList.SetGraphicsPipelineState(FXAAPSO.Get());
         InCommandList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
         InCommandList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
         InCommandList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
-        InCommandList.SetGraphicsPipelineState(FXAAPSO.Get());
     }
 
     InCommandList.DrawInstanced(3, 1, 0, 0);
@@ -649,10 +649,11 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 
     InCmdList.BeginRenderPass(RenderPass);
 
+    InCmdList.SetGraphicsPipelineState(PostPSO.Get());
+    
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
     InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
-    InCmdList.SetGraphicsPipelineState(PostPSO.Get());
 
     InCmdList.DrawInstanced(3, 1, 0, 0);
 
@@ -697,12 +698,14 @@ void FRenderer::Tick()
         PerformFrustumCullingAndSort(Scene);
     }
 
-    // START FRAME ON THE GPU
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
+    CommandList.BeginFrame();
+
     GRHICommandExecutor.Tick();
 
     if (ResizeEvent)
     {
-        // Check if we resized and update the Viewport-size on the RHI-Thread
+        // Check if we resized and update the Viewport-size on the RHIThread
         FRHIViewport* Viewport = Resources.MainViewport.Get();
 
         // TODO: Remove these
@@ -745,8 +748,6 @@ void FRenderer::Tick()
         ResizeEvent.Reset();
     }
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
-    
     CommandList.BeginExternalCapture();
 
     // Begin capture GPU FrameTime
@@ -1116,13 +1117,13 @@ void FRenderer::Tick()
 
     CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
-
     FGPUProfiler::Get().EndGPUFrame(CommandList);
 
     CommandList.EndExternalCapture();
 
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
     CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
+    CommandList.EndFrame();
 
     {
         TRACE_SCOPE("ExecuteCommandList");
@@ -1143,8 +1144,8 @@ bool FRenderer::InitAA()
     TArray<uint8> ShaderCode;
     
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -1159,8 +1160,8 @@ bool FRenderer::InitAA()
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -1239,8 +1240,8 @@ bool FRenderer::InitAA()
     }
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -1273,8 +1274,8 @@ bool FRenderer::InitAA()
     };
 
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;
@@ -1328,8 +1329,8 @@ bool FRenderer::InitShadingImage()
     TArray<uint8> ShaderCode;
     
     {
-        FRHIShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FRHIShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
+        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return false;

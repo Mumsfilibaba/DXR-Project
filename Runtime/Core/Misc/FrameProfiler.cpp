@@ -1,5 +1,4 @@
 #include "FrameProfiler.h"
-
 #include "Core/Threading/ScopedLock.h"
 
 FFrameProfiler& FFrameProfiler::Get()
@@ -46,9 +45,9 @@ void FFrameProfiler::Reset()
 
     {
         TScopedLock Lock(SamplesTableLock);
-        for (auto& Sample : SamplesTable)
+        for (auto Sample : SamplesTable)
         {
-            Sample.second.Reset();
+            Sample.Second.Reset();
         }
     }
 }
@@ -57,19 +56,19 @@ void FFrameProfiler::BeginTraceScope(const CHAR* Name)
 {
     if (bEnabled)
     {
-        TScopedLock Lock(SamplesTableLock);
-
         const FString ScopeName = Name;
-
-        auto Entry = SamplesTable.find(ScopeName);
-        if (Entry == SamplesTable.end())
+        
         {
-            auto NewSample = SamplesTable.insert(std::make_pair(ScopeName, FProfileSample()));
-            NewSample.first->second.Begin();
-        }
-        else
-        {
-            Entry->second.Begin();
+            TScopedLock Lock(SamplesTableLock);
+            if (FProfileSample* Entry = SamplesTable.Find(ScopeName))
+            {
+                Entry->Begin();
+            }
+            else
+            {
+                FProfileSample& NewSample = SamplesTable.Add(ScopeName, FProfileSample());
+                NewSample.Begin();
+            }
         }
     }
 }
@@ -79,22 +78,22 @@ void FFrameProfiler::EndTraceScope(const CHAR* Name)
     if (bEnabled)
     {
         const FString ScopeName = Name;
-
-        TScopedLock Lock(SamplesTableLock);
-
-        auto Entry = SamplesTable.find(ScopeName);
-        if (Entry != SamplesTable.end())
+        
         {
-            Entry->second.End();
-        }
-        else
-        {
-            CHECK(false);
+            TScopedLock Lock(SamplesTableLock);
+            if (FProfileSample* Entry = SamplesTable.Find(ScopeName))
+            {
+                Entry->End();
+            }
+            else
+            {
+                CHECK(false);
+            }
         }
     }
 }
 
-void FFrameProfiler::GetCPUSamples(ProfileSamplesTable& OutCPUSamples)
+void FFrameProfiler::GetCPUSamples(ProfileSamplesMap& OutCPUSamples)
 {
     TScopedLock Lock(SamplesTableLock);
     OutCPUSamples = SamplesTable;

@@ -84,8 +84,7 @@ protected:
 
 public:
     virtual void* GetRHIBaseResource() { return nullptr; }
-
-    virtual void* GetRHIBaseShader() { return nullptr; }
+    virtual void* GetRHIBaseShader()   { return nullptr; }
     
     EShaderStage GetShaderStage() const
     { 

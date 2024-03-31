@@ -349,5 +349,5 @@ private:
     FD3D12RootSignatureRef MissLocalRootSignature;
     FD3D12RootSignatureRef HitLocalRootSignature;
 
-    TMap<FString, FD3D12RayTracingShaderIdentifer, FStringHasher> ShaderIdentifers;
+    TMap<FString, FD3D12RayTracingShaderIdentifer> ShaderIdentifers;
 };

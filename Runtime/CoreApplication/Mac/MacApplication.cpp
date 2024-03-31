@@ -271,14 +271,14 @@ TSharedRef<FGenericWindow> FMacApplication::CreateWindow()
 void FMacApplication::Tick(float)
 {
     SCOPED_AUTORELEASE_POOL();
-    
+
     FPlatformApplicationMisc::PumpMessages(true);
-    
+
     TArray<FDeferredMacEvent> ProcessableEvents;
     if (!DeferredEvents.IsEmpty())
     {
         TScopedLock Lock(DeferredEventsCS);
-        
+
         ::Swap(ProcessableEvents, DeferredEvents);
         DeferredEvents.Clear();
     }
@@ -399,7 +399,7 @@ void FMacApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const
     // Ensure that we don't do the same calculations when calling GetMonitorInfo multiple times
     bHasDisplayInfoChanged = false;
     
-    //Return the DisplayInfo
+    // Return the DisplayInfo
     OutDisplayInfo = DisplayInfo;
 }
 
@@ -545,20 +545,25 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
     }
     else if (Event.Event)
     {
-        NSEvent* CurrentEvent = Event.Event;
+        const auto GetCorrectedMouseLocation = []()
+        {
+            const CGRect  DisplayBounds = CGDisplayBounds(CGMainDisplayID());
+            const NSPoint MouseLocation = [NSEvent mouseLocation];
+            return CGPointMake(MouseLocation.x, DisplayBounds.size.height - MouseLocation.y);
+        };
         
-        NSEventType EventType = CurrentEvent.type;
-        switch(EventType)
+        NSEvent* EventObject = Event.Event;
+        switch(EventObject.type)
         {
             case NSEventTypeKeyUp:
             {
-                MessageHandler->OnKeyUp(FPlatformInputMapper::GetKeyCodeFromScanCode(CurrentEvent.keyCode), FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnKeyUp(FPlatformInputMapper::GetKeyCodeFromScanCode(EventObject.keyCode), FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
                
             case NSEventTypeKeyDown:
             {
-                MessageHandler->OnKeyDown(FPlatformInputMapper::GetKeyCodeFromScanCode(CurrentEvent.keyCode), CurrentEvent.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
+                MessageHandler->OnKeyDown(FPlatformInputMapper::GetKeyCodeFromScanCode(EventObject.keyCode), EventObject.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
 
@@ -566,8 +571,8 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
             case NSEventTypeRightMouseUp:
             case NSEventTypeOtherMouseUp:
             {
-                const NSPoint CursorPosition = [NSEvent mouseLocation];
-                MessageHandler->OnMouseButtonUp(FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+                const NSPoint CursorPosition = GetCorrectedMouseLocation();
+                MessageHandler->OnMouseButtonUp(FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(EventObject.buttonNumber)), FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
                 break;
             }
 
@@ -575,10 +580,10 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
             case NSEventTypeRightMouseDown:
             case NSEventTypeOtherMouseDown:
             {
-                const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(CurrentEvent.buttonNumber));
+                const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(EventObject.buttonNumber));
                 
-                const NSPoint CursorPosition = [NSEvent mouseLocation];
-                if (LastPressedButton == CurrentMouseButton && CurrentEvent.clickCount % 2 == 0)
+                const NSPoint CursorPosition = GetCorrectedMouseLocation();
+                if (LastPressedButton == CurrentMouseButton && EventObject.clickCount % 2 == 0)
                 {
                     MessageHandler->OnMouseButtonDoubleClick(Window, CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
                 }
@@ -597,25 +602,25 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
             case NSEventTypeRightMouseDragged:
             case NSEventTypeMouseMoved:
             {
-                const NSPoint CursorPosition = [NSEvent mouseLocation];
+                const NSPoint CursorPosition = GetCorrectedMouseLocation();
                 MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
                 break;
             }
                
             case NSEventTypeScrollWheel:
             {
-                if (CurrentEvent.phase != NSEventPhaseCancelled)
+                if (EventObject.phase != NSEventPhaseCancelled)
                 {
-                    CGFloat ScrollDeltaX = CurrentEvent.scrollingDeltaX;
-                    CGFloat ScrollDeltaY = CurrentEvent.scrollingDeltaY;
+                    CGFloat ScrollDeltaX = EventObject.scrollingDeltaX;
+                    CGFloat ScrollDeltaY = EventObject.scrollingDeltaY;
                     
-                    if (CurrentEvent.hasPreciseScrollingDeltas)
+                    if (EventObject.hasPreciseScrollingDeltas)
                     {
                         ScrollDeltaX *= 0.1;
                         ScrollDeltaY *= 0.1;
                     }
                     
-                    const NSPoint CursorPosition = [NSEvent mouseLocation];
+                    const NSPoint CursorPosition = GetCorrectedMouseLocation();
                     MessageHandler->OnMouseScrolled(int32(ScrollDeltaX), int32(ScrollDeltaY), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
                 }
 
@@ -624,7 +629,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                 
             case NSEventTypeMouseEntered:
             {
-                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
+                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
                 if (Window)
                 {
                     MessageHandler->OnWindowMouseEntered(Window);
@@ -635,7 +640,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                 
             case NSEventTypeMouseExited:
             {
-                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(CurrentEvent.window);
+                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
                 if (Window)
                 {
                     MessageHandler->OnWindowMouseLeft(Window);

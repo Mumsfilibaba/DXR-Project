@@ -5,8 +5,6 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Templates/TypeTraits.h"
 
-#undef IsMinimized
-
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FGenericWindow;
@@ -157,12 +155,7 @@ struct FGenericWindowInitializer
     
     bool operator==(const FGenericWindowInitializer& Other) const
     {
-        return Title        == Other.Title 
-            && Width        == Other.Width 
-            && Height       == Other.Height 
-            && Position     == Other.Position 
-            && Style        == Other.Style
-            && ParentWindow == Other.ParentWindow;
+        return Title == Other.Title && Width == Other.Width && Height == Other.Height && Position == Other.Position && Style == Other.Style && ParentWindow == Other.ParentWindow;
     }
 
     bool operator!=(const FGenericWindowInitializer& Other) const

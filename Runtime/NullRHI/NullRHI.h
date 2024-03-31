@@ -11,7 +11,6 @@ struct NULLRHI_API FNullRHIModule final : public FRHIModule
     virtual FRHI* CreateRHI() override final;
 };
 
-
 class NULLRHI_API FNullRHI final : public FRHI
 {
 public:
@@ -30,6 +29,9 @@ public:
     { 
         return true; 
     }
+
+    virtual void RHIBeginFrame() override final { }
+    virtual void RHIEndFrame() override final { }
 
     virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final
     {
@@ -176,9 +178,9 @@ public:
         return new FNullRHIRayTracingPipelineState();
     }
 
-    virtual class FRHITimestampQuery* RHICreateTimestampQuery() override final
+    virtual class FRHIQuery* RHICreateQuery() override final
     {
-        return new FNullRHITimestampQuery();
+        return new FNullRHIQuery();
     }
 
     virtual struct IRHICommandContext* RHIObtainCommandContext() override final

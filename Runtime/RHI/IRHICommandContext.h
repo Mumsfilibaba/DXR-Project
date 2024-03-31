@@ -5,8 +5,7 @@
 class FRHIViewport;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
-class FRHITimestampQuery;
-class FRHITimestampQuery;
+class FRHIQuery;
 class FRHIShader;
 class FRHIRayTracingPipelineState;
 struct FRayTracingShaderResources;
@@ -14,22 +13,28 @@ struct FRHIRayTracingGeometryInstance;
 
 struct IRHICommandContext
 {
+    /** @brief - Begin Frame on the RHIThread */
+    virtual void RHIBeginFrame() = 0;
+    
+    /** @brief - End Frame on the RHIThread */
+    virtual void RHIEndFrame() = 0;
+
     virtual void RHIStartContext()  = 0;
     virtual void RHIFinishContext() = 0;
 
     /**
-     * @brief                - Begins the timestamp with the specified index in the TimestampQuery 
-     * @param TimestampQuery - Timestamp-Query object to work on
-     * @param Index          - Timestamp index within the query object to begin
+     * @brief       - Begins the timestamp with the specified index in the Query 
+     * @param Query - Query object to work on
+     * @param Index - Query index within the query object to begin
      */ 
-    virtual void RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) = 0;
+    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) = 0;
     
     /**
-     * @brief                - Ends the timestamp with the specified index in the TimestampQuery
-     * @param TimestampQuery - Timestamp-Query object to work on
-     * @param Index          - Timestamp index within the query object to end
+     * @brief       - Ends the timestamp with the specified index in the Query
+     * @param Query - Query object to work on
+     * @param Index - Query index within the query object to end
      */
-    virtual void RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) = 0;
+    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) = 0;
 
     /**
      * @brief                  - Clears a RenderTargetView with a specific color 
@@ -250,7 +255,7 @@ struct IRHICommandContext
      *     the resource will be destroyed when the underlying command-list is completed.
      * @param Resource - Resource to destroy
      */
-    virtual void RHIDestroyResource(class IRefCounted* Resource) = 0;
+    virtual void RHIDestroyResource(class FRHIResource* Resource) = 0;
 
     /**
      * @brief         - Signal the driver that the contents can be discarded
@@ -268,14 +273,7 @@ struct IRHICommandContext
      * @param IndexFormat  - Format of the indices in the IndexBuffer
      * @param bUpdate      - True if the build should be an update, false if it should build from the ground up
      */ 
-    virtual void RHIBuildRayTracingGeometry(
-        FRHIRayTracingGeometry* RayTracingGeometry,
-        FRHIBuffer*             VertexBuffer,
-        uint32                  NumVertices,
-        FRHIBuffer*             IndexBuffer,
-        uint32                  NumIndices,
-        EIndexFormat            IndexFormat,
-        bool                    bUpdate) = 0;
+    virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate) = 0;
     
     /**
      * @brief           - Builds the Top-Level Acceleration-Structure for ray tracing
@@ -286,14 +284,7 @@ struct IRHICommandContext
     virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) = 0;
 
      /** @brief - Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
-    virtual void RHISetRayTracingBindings(
-        FRHIRayTracingScene*              RayTracingScene,
-        FRHIRayTracingPipelineState*      PipelineState,
-        const FRayTracingShaderResources* GlobalResource,
-        const FRayTracingShaderResources* RayGenLocalResources,
-        const FRayTracingShaderResources* MissLocalResources,
-        const FRayTracingShaderResources* HitGroupResources,
-        uint32                            NumHitGroupResources) = 0;
+    virtual void RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
 
     /**
      * @brief         - Generate MipLevels for a texture. Works with Texture2D and TextureCubes.

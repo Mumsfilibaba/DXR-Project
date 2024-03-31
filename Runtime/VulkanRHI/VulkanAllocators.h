@@ -7,12 +7,19 @@ typedef TSharedRef<class FVulkanUploadBuffer> FVulkanUploadBufferRef;
 
 struct FVulkanUploadAllocation
 {
+    FVulkanUploadAllocation()
+        : Buffer(nullptr)
+        , Memory(nullptr)
+        , Offset(0)
+    {
+    }
+
     FVulkanUploadBufferRef Buffer;
-    uint8*                 Memory = nullptr;
-    VkDeviceSize           Offset = 0;
+    uint8*                 Memory;
+    VkDeviceSize           Offset;
 };
 
-class FVulkanUploadBuffer : public FVulkanDeviceObject, public FVulkanRefCounted
+class FVulkanUploadBuffer : public FVulkanDeviceChild, public FVulkanRefCounted
 {
 public:
     FVulkanUploadBuffer(FVulkanDevice* InDevice);
@@ -36,7 +43,7 @@ private:
     uint8*                  MappedMemory;
 };
 
-class FVulkanUploadHeapAllocator : public FVulkanDeviceObject
+class FVulkanUploadHeapAllocator : public FVulkanDeviceChild
 {
 public:
     FVulkanUploadHeapAllocator(FVulkanDevice* InDevice);

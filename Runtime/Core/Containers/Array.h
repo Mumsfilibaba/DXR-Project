@@ -12,7 +12,7 @@ template<typename ElementType, typename AllocatorType = TDefaultArrayAllocator<E
 class TArray
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
     static_assert(TIsSigned<SizeType>::Value, "TArray only supports a SizeType that's signed");
 
     typedef TArrayIterator<TArray, ElementType>                    IteratorType;
@@ -1293,12 +1293,12 @@ private:
 
     NODISCARD static FORCEINLINE SizeType LeftIndex(SizeType Index) noexcept
     {
-        return (2 * Index + 1);
+        return 2 * Index + 1;
     }
 
     NODISCARD static FORCEINLINE SizeType RightIndex(SizeType Index) noexcept
     {
-        return (2 * Index + 2);
+        return 2 * Index + 2;
     }
 
     // Calculate how much the array should grow, will always be at least one
@@ -1376,8 +1376,8 @@ private:
 
 private:
     AllocatorType Allocator;
-    SizeType ArraySize{0};
-    SizeType ArrayMax{0};
+    SizeType      ArraySize{ 0 };
+    SizeType      ArrayMax{ 0 };
 };
 
 template<typename T, typename AllocatorType>

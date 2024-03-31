@@ -7,12 +7,12 @@
 template<typename InCharType, int32 NUM_CHARS = STANDARD_STATIC_STRING_LENGTH>
 class TStaticString
 {
-    using FCStringType = TCString<InCharType>;
-    using FCharType    = TChar<InCharType>;
+    typedef TChar<InCharType>    FCharType;
+    typedef TCString<InCharType> FCStringType;
 
 public:
-    using CHARTYPE = InCharType;
-    using SizeType = int32;
+    typedef int32      SizeType;
+    typedef InCharType CHARTYPE;
 
     static_assert(TIsSame<CHARTYPE, CHAR>::Value || TIsSame<CHARTYPE, WIDECHAR>::Value, "TStaticString only supports 'CHAR' and 'WIDECHAR'");
     static_assert(NUM_CHARS > 0, "TStaticString does not support a zero element count");

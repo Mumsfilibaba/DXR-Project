@@ -1,7 +1,7 @@
 #pragma once
 #include "VulkanShader.h"
 #include "VulkanRefCounted.h"
-#include "VulkanDeviceObject.h"
+#include "VulkanDeviceChild.h"
 #include "RHI/RHIResources.h"
 #include "Core/Utilities/StringUtilities.h"
 
@@ -11,38 +11,22 @@ typedef TSharedRef<class FVulkanGraphicsPipelineState>   FVulkanGraphicsPipeline
 typedef TSharedRef<class FVulkanComputePipelineState>    FVulkanComputePipelineStateRef;
 typedef TSharedRef<class FVulkanRayTracingPipelineState> FVulkanRayTracingPipelineStateRef;
 
-
 class FVulkanVertexInputLayout : public FRHIVertexInputLayout
 {
 public:
     FVulkanVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
     virtual ~FVulkanVertexInputLayout() = default;
 
-    const VkVertexInputBindingDescription* GetVertexInputBindingDescriptions() const
+    const VkPipelineVertexInputStateCreateInfo& GetVkCreateInfo() const
     {
-        return VertexInputBindingDescriptions.Data();
-    }
-    
-    uint32 GetNumVertexInputBindingDescriptions() const
-    {
-        return VertexInputBindingDescriptions.Size();
-    }
-    
-    const VkVertexInputAttributeDescription* GetVertexInputAttributeDescriptions() const
-    {
-        return VertexInputAttributeDescriptions.Data();
-    }
-    
-    uint32 GetNumVertexInputAttributeDescriptions() const
-    {
-        return VertexInputAttributeDescriptions.Size();
+        return CreateInfo;
     }
     
 private:
     TArray<VkVertexInputBindingDescription>   VertexInputBindingDescriptions;
     TArray<VkVertexInputAttributeDescription> VertexInputAttributeDescriptions;
+    VkPipelineVertexInputStateCreateInfo      CreateInfo;
 };
-
 
 class FVulkanDepthStencilState : public FRHIDepthStencilState
 {
@@ -50,10 +34,7 @@ public:
     FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
     virtual ~FVulkanDepthStencilState() = default;
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
-    {
-        return Initializer;
-    }
+    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final { return Initializer; }
     
     const VkPipelineDepthStencilStateCreateInfo& GetVkCreateInfo() const
     {
@@ -65,17 +46,13 @@ private:
     VkPipelineDepthStencilStateCreateInfo CreateInfo;
 };
 
-
-class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceObject
+class FVulkanRasterizerState : public FRHIRasterizerState, public FVulkanDeviceChild
 {
 public:
     FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer);
     virtual ~FVulkanRasterizerState() = default;
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
-    {
-        return Initializer;
-    }
+    virtual FRHIRasterizerStateInitializer GetInitializer() const override final { return Initializer; }
 
     const VkPipelineRasterizationStateCreateInfo& GetVkCreateInfo() const
     {
@@ -86,13 +63,12 @@ private:
     FRHIRasterizerStateInitializer         Initializer;
     VkPipelineRasterizationStateCreateInfo CreateInfo;
 #if VK_EXT_depth_clip_enable
-    VkPipelineRasterizationDepthClipStateCreateInfoEXT DepthClipStateCreateInfo;
+    VkPipelineRasterizationDepthClipStateCreateInfoEXT    DepthClipStateCreateInfo;
 #endif
 #if VK_EXT_conservative_rasterization
     VkPipelineRasterizationConservativeStateCreateInfoEXT ConservativeStateCreateInfo;
 #endif
 };
-
 
 class FVulkanBlendState : public FRHIBlendState
 {
@@ -100,10 +76,7 @@ public:
     FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer);
     virtual ~FVulkanBlendState() = default;
 
-    virtual FRHIBlendStateInitializer GetInitializer() const override final 
-    {
-        return Initializer;
-    }
+    virtual FRHIBlendStateInitializer GetInitializer() const override final { return Initializer; }
 
     const VkPipelineColorBlendStateCreateInfo& GetVkCreateInfo() const
     {
@@ -113,15 +86,14 @@ public:
 private:
     FRHIBlendStateInitializer           Initializer;
     VkPipelineColorBlendStateCreateInfo CreateInfo;
-    VkPipelineColorBlendAttachmentState BlendAttachmentStates[FRHILimits::MaxRenderTargets];
+    VkPipelineColorBlendAttachmentState BlendAttachmentStates[VULKAN_MAX_RENDER_TARGET_COUNT];
 };
 
-
-class FVulkanPipeline : public FVulkanDeviceObject
+class FVulkanPipeline : public FVulkanDeviceChild
 {
 public:
     FVulkanPipeline(FVulkanDevice* InDevice);
-    ~FVulkanPipeline();
+    virtual ~FVulkanPipeline();
 
     void SetDebugName(const FString& InName);
 
@@ -130,22 +102,23 @@ public:
         return Pipeline;
     }
     
-    VkPipelineLayout GetVkPipelineLayout() const
+    FVulkanPipelineLayout* GetPipelineLayout() const
     {
         return PipelineLayout;
     }
 
 protected:
-    VkPipeline       Pipeline;
-    VkPipelineLayout PipelineLayout;
+    // Pipeline Object is owned by this class
+    VkPipeline Pipeline;
+    // Layout is NOT owned by this class and should not be deleted when the FVulkanPipeline is destroyed
+    FVulkanPipelineLayout* PipelineLayout;
 };
-
 
 class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline
 {
 public:
     FVulkanGraphicsPipelineState(FVulkanDevice* InDevice);
-    ~FVulkanGraphicsPipelineState();
+    virtual ~FVulkanGraphicsPipelineState() = default;
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
     
@@ -153,31 +126,13 @@ public:
     {
         FVulkanPipeline::SetDebugName(InName);
     }
-
-    FORCEINLINE FVulkanVertexShader*   GetVertexShader()   const { return VertexShader.Get(); }
-    FORCEINLINE FVulkanHullShader*     GetHullShader()     const { return HullShader.Get(); }
-    FORCEINLINE FVulkanDomainShader*   GetDomainShader()   const { return DomainShader.Get(); }
-    FORCEINLINE FVulkanGeometryShader* GetGeometryShader() const { return GeometryShader.Get(); }
-    FORCEINLINE FVulkanPixelShader*    GetPixelShader()    const { return PixelShader.Get(); }
-
-    FORCEINLINE VkDescriptorSetLayout GetVkDescriptorSetLayout(EShaderVisibility ShaderVisibility) const { return DescriptorSetLayouts[ShaderVisibility]; }
-    
-private:
-    TSharedRef<FVulkanVertexShader>   VertexShader;
-    TSharedRef<FVulkanHullShader>     HullShader;
-    TSharedRef<FVulkanDomainShader>   DomainShader;
-    TSharedRef<FVulkanGeometryShader> GeometryShader;
-    TSharedRef<FVulkanPixelShader>    PixelShader;
-    
-    VkDescriptorSetLayout DescriptorSetLayouts[5];
 };
-
 
 class FVulkanComputePipelineState : public FRHIComputePipelineState, public FVulkanPipeline
 {
 public:
     FVulkanComputePipelineState(FVulkanDevice* InDevice);
-    ~FVulkanComputePipelineState();
+    virtual ~FVulkanComputePipelineState() = default;
     
     bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
 
@@ -185,20 +140,48 @@ public:
     {
         FVulkanPipeline::SetDebugName(InName);
     }
-
-    FORCEINLINE FVulkanComputeShader* GetComputeShader() const { return Shader.Get(); }
-
-    FORCEINLINE VkDescriptorSetLayout GetVkDescriptorSetLayout() const { return DescriptorSetLayout; }
-    
-private:
-    TSharedRef<FVulkanComputeShader> Shader;
-    VkDescriptorSetLayout DescriptorSetLayout;
 };
-
 
 class FVulkanRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
 public:
-    FVulkanRayTracingPipelineState()  = default;
-    ~FVulkanRayTracingPipelineState() = default;
+    FVulkanRayTracingPipelineState() = default;
+    virtual ~FVulkanRayTracingPipelineState() = default;
+};
+
+
+struct FVulkanPipelineCacheHeader
+{
+    uint32 Length;  // == sizeof(FVulkanPipelineCacheHeader)
+    uint32 Version; // == VK_PIPELINE_CACHE_HEADER_VERSION_ONE
+    uint32 VendorID;
+    uint32 DeviceID;
+    uint8  UUID[VK_UUID_SIZE];
+};
+
+class FVulkanPipelineCache : public FVulkanDeviceChild
+{
+public:
+    FVulkanPipelineCache(FVulkanDevice* InDevice);
+    ~FVulkanPipelineCache();
+
+    bool Initialize();
+    void Release();
+    
+    bool CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
+    bool CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
+
+    bool SaveCacheData();
+    
+    VkPipelineCache GetVkPipelineCache() const
+    {
+        return PipelineCache;
+    }
+
+private:
+    bool LoadCacheFromFile();
+    
+    VkPipelineCache  PipelineCache;
+    FCriticalSection PipelineCacheCS;
+    bool             bPipelineDirty;
 };

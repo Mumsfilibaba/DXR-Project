@@ -1,6 +1,6 @@
 #include "VulkanRHI.h"
 #include "VulkanLoader.h"
-#include "VulkanTimestampQuery.h"
+#include "VulkanQuery.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
 #include "VulkanBuffer.h"
@@ -8,6 +8,7 @@
 #include "VulkanResourceViews.h"
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
+#include "VulkanDeviceLimits.h"
 #include "Platform/PlatformVulkan.h"
 #include "Core/Misc/ConsoleManager.h"
 
@@ -23,7 +24,7 @@ FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 
 FVulkanRHI::FVulkanRHI()
     : FRHI(ERHIType::Vulkan)
-    , Instance(nullptr)
+    , Instance()
 {
     if (!GVulkanRHI)
     {
@@ -33,13 +34,36 @@ FVulkanRHI::FVulkanRHI()
 
 FVulkanRHI::~FVulkanRHI()
 {
+    // Delete the Default Context before we flush the submission queue..
     SAFE_DELETE(GraphicsCommandContext);
 
-    GraphicsQueue.Reset();
+    // Then delete all samplers
+    {
+        TScopedLock Lock(SamplerStateMapCS);
+        SamplerStateMap.Clear();
+    }
 
-    Device.Reset();
-    PhysicalDevice.Reset();
-    Instance.Reset();
+    //.. since the context will put objects into the Deferred Deletion Queue
+    while (!PendingSubmissions.IsEmpty())
+    {
+        ProcessPendingCommands();
+    }
+    
+    // Delete all remaining resources
+    TArray<FVulkanDeletionQueue::FDeferredResource> Resources;
+    DeletionQueue.Dequeue(Resources);
+    
+    for (FVulkanDeletionQueue::FDeferredResource& Object : Resources)
+    {
+        Object.Release();
+    }
+    
+    SAFE_DELETE(GraphicsQueue);
+    SAFE_DELETE(Device);
+    SAFE_DELETE(PhysicalDevice);
+    
+    // Finally release the VkInstance
+    Instance.Release();
 
     if (GVulkanRHI == this)
     {
@@ -49,7 +73,7 @@ FVulkanRHI::~FVulkanRHI()
 
 bool FVulkanRHI::Initialize()
 {
-    FVulkanInstanceDesc InstanceDesc;
+    FVulkanInstanceCreateInfo InstanceDesc;
     InstanceDesc.RequiredExtensionNames = FPlatformVulkan::GetRequiredInstanceExtensions();
     InstanceDesc.RequiredLayerNames     = FPlatformVulkan::GetRequiredInstanceLayers();
     InstanceDesc.OptionalExtensionNames = FPlatformVulkan::GetOptionalInstanceExtentions();
@@ -71,26 +95,26 @@ bool FVulkanRHI::Initialize()
     InstanceDesc.RequiredExtensionNames.Add(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
-    Instance = new FVulkanInstance();
-    if (!Instance->Initialize(InstanceDesc))
+    if (!Instance.Initialize(InstanceDesc))
     {
-        VULKAN_ERROR("Failed to initialize VulkanDriverInstance");
+        VULKAN_ERROR("Failed to initialize VulkanInstance");
         return false;
     }
     
     // Load functions that requires an instance here
-    if (!LoadInstanceFunctions(Instance.Get()))
+    if (!LoadInstanceFunctions(GetInstance()))
     {
         return false;
     }
 
-    FVulkanPhysicalDeviceDesc AdapterDesc;
+    FVulkanPhysicalDeviceCreateInfo AdapterDesc;
     AdapterDesc.RequiredExtensionNames                     = FPlatformVulkan::GetRequiredDeviceExtensions();
     AdapterDesc.OptionalExtensionNames                     = FPlatformVulkan::GetOptionalDeviceExtentions();
     AdapterDesc.RequiredFeatures.samplerAnisotropy         = VK_TRUE;
     AdapterDesc.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
     AdapterDesc.RequiredFeatures.imageCubeArray            = VK_TRUE;
     AdapterDesc.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
+    AdapterDesc.RequiredFeatures12.hostQueryReset          = VK_TRUE;
 
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(AdapterDesc))
@@ -99,7 +123,7 @@ bool FVulkanRHI::Initialize()
         return false;
     }
 
-    FVulkanDeviceDesc DeviceDesc;
+    FVulkanDeviceCreateInfo DeviceDesc;
     DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
     DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
     DeviceDesc.RequiredFeatures       = AdapterDesc.RequiredFeatures;
@@ -109,33 +133,67 @@ bool FVulkanRHI::Initialize()
     Device = new FVulkanDevice(GetInstance(), GetAdapter());
     if (!Device->Initialize(DeviceDesc))
     {
-        VULKAN_ERROR("Failed to initialize VulkanPhysicalDevice");
+        VULKAN_ERROR("Failed to initialize VulkanDevice");
         return false;
     }
     
-    // Load functions that requires an device here (Order is important)
-    if (!LoadDeviceFunctions(Device.Get()))
+    // Load functions that requires a device here (Order is important)
+    if (!LoadDeviceFunctions(Device))
     {
         return false;
     }
 
-    GraphicsQueue = new FVulkanQueue(Device.Get(), EVulkanCommandQueueType::Graphics);
+    // Initialize parts of the device that require device functions to be present
+    if (!Device->PostLoaderInitalize())
+    {
+        VULKAN_ERROR("Failed to PostLoaderInitalize failed to VulkanDevice");
+        return false;
+    }
+
+    // Initialize Queues
+    GraphicsQueue = new FVulkanQueue(Device, EVulkanCommandQueueType::Graphics);
     if (!GraphicsQueue->Initialize())
     {
-        VULKAN_ERROR("Failed to initialize VulkanCommandQueue");
+        VULKAN_ERROR("Failed to initialize VulkanQueue [Graphics]");
         return false;
     }
+    else
+    {
+        GraphicsQueue->SetName("Graphics Queue");
+    }
 
-    GraphicsQueue->SetName("Graphics Queue");
-
-    GraphicsCommandContext = new FVulkanCommandContext(Device.Get(), GraphicsQueue.Get());
+    // Initialize Default CommandContext
+    GraphicsCommandContext = new FVulkanCommandContext(Device, *GraphicsQueue);
     if (!GraphicsCommandContext->Initialize())
     {
         VULKAN_ERROR("Failed to initialize VulkanCommandContext");
         return false;
     }
 
+    // Initialize DefaultResources
+    if (!Device->InitializeDefaultResources(*GraphicsCommandContext))
+    {
+        return false;
+    }
+
     return true;
+}
+
+void FVulkanRHI::RHIBeginFrame()
+{
+    // ProcessPendingCommands();
+
+    // Update timestamp period, this is necessary on MoltenVK in order to get correct measurements
+    {
+        VkPhysicalDeviceProperties Properties;
+        vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
+        FVulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
+    }
+}
+
+void FVulkanRHI::RHIEndFrame()
+{
+    // TODO: Empty for now
 }
 
 FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
@@ -166,21 +224,34 @@ FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceA
 
 FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)
 {
-    FVulkanSamplerStateRef NewSamplerState = new FVulkanSamplerState(GetDevice(), InDesc);
-    if (!NewSamplerState->Initialize())
+    TScopedLock Lock(SamplerStateMapCS);
+
+    TSharedRef<FVulkanSamplerState> Result;
+
+    // Check if there already is an existing sampler state with this description
+    if (TSharedRef<FVulkanSamplerState>* ExistingSamplerState = SamplerStateMap.Find(InDesc))
     {
-        return nullptr;
+        Result = *ExistingSamplerState;
     }
     else
     {
-        return NewSamplerState.ReleaseOwnership();
+        Result = new FVulkanSamplerState(GetDevice(), InDesc);
+        if (!Result->Initialize())
+        {
+            return nullptr;
+        }
+        else
+        {
+            SamplerStateMap.Add(InDesc, Result);
+        }
     }
-}
 
+    return Result.ReleaseOwnership();
+}
 
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
-    FVulkanViewportRef NewViewport = new FVulkanViewport(Device.Get(), GraphicsQueue.Get(), InDesc);
+    FVulkanViewportRef NewViewport = new FVulkanViewport(Device, GraphicsCommandContext, InDesc);
     if (!NewViewport->Initialize())
     {
         return nullptr;
@@ -191,17 +262,9 @@ FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
     }
 }
 
-FRHITimestampQuery* FVulkanRHI::RHICreateTimestampQuery()
+FRHIQuery* FVulkanRHI::RHICreateQuery()
 {
-    FVulkanTimestampQueryRef NewTimestampQuery = new FVulkanTimestampQuery(Device.Get());
-    if (!NewTimestampQuery->Initialize())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewTimestampQuery.ReleaseOwnership();
-    }
+    return new FVulkanQuery(Device);
 }
 
 FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
@@ -587,8 +650,54 @@ bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
 FString FVulkanRHI::RHIGetAdapterName() const
 {
     VULKAN_ERROR_COND(PhysicalDevice != nullptr, "PhysicalDevice is not initialized properly");
-    
-    VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetDeviceProperties();
+    VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
     return FString(DeviceProperties.deviceName);
 }
 
+void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
+{
+    if (Resource)
+    {
+        DeletionQueue.Emplace(Resource);
+    }
+}
+
+void FVulkanRHI::ProcessPendingCommands()
+{
+    bool bProcess = true;
+    while (bProcess)
+    {
+        FVulkanCommandPacket* CommandPacket = nullptr;
+        if (PendingSubmissions.Peek(CommandPacket))
+        {
+            CHECK(CommandPacket != nullptr);
+            if (!CommandPacket->IsExecutionFinished())
+            {
+                bProcess = false;
+                break;
+            }
+            else
+            {
+                // If we are finished we remove the item from the queue
+                PendingSubmissions.Dequeue();
+                CommandPacket->HandleSubmitFinished();
+            }
+        }
+        else
+        {
+            bProcess = false;
+        }
+    }
+}
+
+void FVulkanRHI::SubmitCommands(FVulkanCommandPacket* CommandPacket)
+{
+    CHECK(CommandPacket != nullptr);
+
+    if (!CommandPacket->IsEmpty())
+    {
+        DeletionQueue.Dequeue(CommandPacket->Resources);
+        CommandPacket->Submit();
+        PendingSubmissions.Enqueue(CommandPacket);
+    }
+}

@@ -29,18 +29,16 @@ public:
             return -1;
         }
 
-        auto TextureIndexPair = ResourceIndices.find(Resource);
-        if (TextureIndexPair == ResourceIndices.end())
+        if (int32* TextureIndex = ResourceIndices.Find(Resource))
+        {
+            return *TextureIndex;
+        }
+        else
         {
             int32 NewIndex = Resources.Size();
             ResourceIndices[Resource] = NewIndex;
             Resources.Emplace(Resource);
-
             return NewIndex;
-        }
-        else
-        {
-            return TextureIndexPair->second;
         }
     }
 

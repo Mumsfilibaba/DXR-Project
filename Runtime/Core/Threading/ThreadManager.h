@@ -6,12 +6,6 @@
 
 class CORE_API FThreadManager
 {
-private:
-    friend class TOptional<FThreadManager>;
-
-    FThreadManager();
-    ~FThreadManager();
-
 public:
     static bool Initialize();
     static bool Release();
@@ -24,6 +18,11 @@ public:
     TSharedRef<FGenericThread> GetThreadFromHandle(void* ThreadHandle);
 
 private:
+    friend class TOptional<FThreadManager>;
+    
+    FThreadManager();
+    ~FThreadManager();
+
     TArray<TSharedRef<FGenericThread>> Threads;
-    void*                     MainThread;
+    void*  MainThread;
 };

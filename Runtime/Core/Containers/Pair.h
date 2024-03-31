@@ -121,7 +121,7 @@ public:
 template<typename FirstType, typename SecondType>
 NODISCARD inline bool operator==(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
-    return (LHS.First == RHS.First) && (LHS.Second == RHS.Second);
+    return LHS.First == RHS.First && LHS.Second == RHS.Second;
 }
 
 template<typename FirstType, typename SecondType>
@@ -133,25 +133,25 @@ NODISCARD inline bool operator!=(const TPair<FirstType, SecondType>& LHS, const 
 template<typename FirstType, typename SecondType>
 NODISCARD inline bool operator<=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
-    return (LHS.First <= RHS.First) && (LHS.Second <= RHS.Second);
+    return LHS.First <= RHS.First && LHS.Second <= RHS.Second;
 }
 
 template<typename FirstType, typename SecondType>
 NODISCARD inline bool operator<(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
-    return (LHS.First < RHS.First) && (LHS.Second < RHS.Second);
+    return LHS.First < RHS.First && LHS.Second < RHS.Second;
 }
 
 template<typename FirstType, typename SecondType>
 NODISCARD inline bool operator>=(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
-    return (LHS.First >= RHS.First) && (LHS.Second >= RHS.Second);
+    return LHS.First >= RHS.First && LHS.Second >= RHS.Second;
 }
 
 template<typename FirstType, typename SecondType>
 NODISCARD inline bool operator>(const TPair<FirstType, SecondType>& LHS, const TPair<FirstType, SecondType>& RHS) noexcept
 {
-    return (LHS.First > RHS.First) && (LHS.Second > RHS.Second);
+    return LHS.First > RHS.First && LHS.Second > RHS.Second;
 }
 
 

@@ -117,14 +117,19 @@ struct CORE_API FGenericPlatformFile
         return nullptr;
     }
 
-    static FORCEINLINE IFileHandle* OpenForWrite(const FString& Filename)
+    static FORCEINLINE IFileHandle* OpenForWrite(const FString& Filename, bool bTruncate = true)
     {
         return nullptr;
-    }
+    }    
 
-    static FORCEINLINE FString GetCurrentDirectory()
+    static FORCEINLINE FString GetCurrentWorkingDirectory()
     {
         return FString();
+    }
+
+    static FORCEINLINE const CHAR* GetExecutablePath()
+    {
+        return "";
     }
 
     static FORCEINLINE bool IsDirectory(const CHAR* Path)

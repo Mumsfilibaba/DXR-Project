@@ -1,14 +1,13 @@
 #pragma once
 #include "Core/CoreTypes.h"
 #include "Core/CoreDefines.h"
-
 #include <initializer_list>
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Types
 
-using nullptr_type = decltype(nullptr);
 using void_type    = void;
+using nullptr_type = decltype(nullptr);
 
 template <typename T>
 struct TVoid
@@ -951,6 +950,7 @@ struct TIsFunction
     #pragma warning(pop)
 #endif
 
+
 template<typename T>
 struct TIsFundamental
 {
@@ -987,9 +987,6 @@ struct TAlignmentOf
 {
     inline static constexpr uint64 Value = alignof(T);
 };
-
-template<typename T>
-inline constexpr int32 AlignmentOf = TAlignmentOf<T>::Value;
 
 // Determine if the type can be reallocated using realloc, that is the type does
 // not reference itself or have classes pointing directly to an element. This

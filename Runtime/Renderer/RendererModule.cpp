@@ -25,13 +25,13 @@ static void InitContext()
 
 bool FRendererModule::Load()
 {
-    PostApplicationCreateHandle = NCoreDelegates::PostApplicationCreateDelegate.AddLambda([this]()
+    PostApplicationCreateHandle = CoreDelegates::PostApplicationCreateDelegate.AddLambda([this]()
     {
         InitContext();
 
         FDelegateHandle Handle = PostApplicationCreateHandle;
         PostApplicationCreateHandle = FDelegateHandle();
-        NCoreDelegates::PostApplicationCreateDelegate.Unbind(Handle);
+        CoreDelegates::PostApplicationCreateDelegate.Unbind(Handle);
     });
 
     return true;

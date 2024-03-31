@@ -1,5 +1,4 @@
 #pragma once
-#include "VulkanCommandPool.h"
 #include "VulkanFence.h"
 
 struct FVulkanBufferBarrier
@@ -27,174 +26,140 @@ struct FVulkanImageTransitionBarrier
     VkImageSubresourceRange SubresourceRange;
 };
 
-
-class FVulkanCommandBuffer : public FVulkanDeviceObject
+class FCommandBuffer
 {
 public:
-    FVulkanCommandBuffer(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
-    FVulkanCommandBuffer(FVulkanCommandBuffer&& Other);
-    ~FVulkanCommandBuffer();
-
-    bool Initialize(VkCommandBufferLevel InLevel);
-
-    FORCEINLINE bool Begin(VkCommandBufferUsageFlags Flags = 0)
+    FCommandBuffer(const FCommandBuffer&) = delete;
+    FCommandBuffer& operator=(const FCommandBuffer&) = delete;
+    
+    FORCEINLINE FCommandBuffer()
+        : CommandBuffer(VK_NULL_HANDLE)
     {
-        // Wait for GPU to finish with this CommandBuffer and then reset it
-        if (!WaitForFence())
-        {
-            return false;
-        }
-
-        if (!Fence.Reset())
-        {
-            return false;
-        }
-
-        // Avoid using the VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT since we can reuse the memory
-        if (!CommandPool.Reset())
-        {
-            return false;
-        }
-
-        VkCommandBufferBeginInfo BeginInfo;
-        FMemory::Memzero(&BeginInfo);
-
-        BeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        BeginInfo.flags = Flags;
-
-        VkResult Result = vkBeginCommandBuffer(CommandBuffer, &BeginInfo);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("vkBeginCommandBuffer Failed");
-            return false;
-        }
-
-        bIsRecording = true;
-        return true;
     }
 
-    FORCEINLINE bool End()
+    FORCEINLINE FCommandBuffer(FCommandBuffer&& Other)
+        : CommandBuffer(Other.CommandBuffer)
     {
-        VkResult Result = vkEndCommandBuffer(CommandBuffer);
-        if (VULKAN_FAILED(Result))
-        {
-            VULKAN_ERROR("vkEndCommandBuffer Failed");
-            return false;
-        }
-
-        NumCommands  = 0;
-        bIsRecording = false;
-        return true;
+        Other.CommandBuffer = VK_NULL_HANDLE;
     }
 
+    FORCEINLINE FCommandBuffer& operator=(FCommandBuffer&& Other)
+    {
+        CommandBuffer = Move(Other.CommandBuffer);
+        Other.CommandBuffer = VK_NULL_HANDLE;
+        return *this;
+    }
+
+    FORCEINLINE ~FCommandBuffer()
+    {
+        CHECK(CommandBuffer == VK_NULL_HANDLE);
+    }
+
+    FORCEINLINE VkResult AllocateCommandBuffer(VkDevice Device, const VkCommandBufferAllocateInfo* AllocateInfo)
+    {
+        return vkAllocateCommandBuffers(Device, AllocateInfo, &CommandBuffer);
+    }
+
+    FORCEINLINE VkResult BeginCommandBuffer(const VkCommandBufferBeginInfo* BeginInfo)
+    {
+        return vkBeginCommandBuffer(CommandBuffer, BeginInfo);
+    }
+
+    FORCEINLINE VkResult EndCommandBuffer()
+    {
+        return vkEndCommandBuffer(CommandBuffer);
+    }
+    
     FORCEINLINE void ClearColorImage(VkImage Image, VkImageLayout ImageLayout, VkClearColorValue* ClearColor, uint32 RangeCount, VkImageSubresourceRange* Ranges)
     {
         vkCmdClearColorImage(CommandBuffer, Image, ImageLayout, ClearColor, RangeCount, Ranges);
-        NumCommands++;
     }
 
     FORCEINLINE void ClearDepthStencilImage(VkImage Image, VkImageLayout ImageLayout, const VkClearDepthStencilValue* DepthStencil, uint32 RangeCount, VkImageSubresourceRange* Ranges)
     {
         vkCmdClearDepthStencilImage(CommandBuffer, Image, ImageLayout, DepthStencil, RangeCount, Ranges);
-        NumCommands++;
     }
     
     FORCEINLINE void ResolveImage(VkImage SrcImage, VkImageLayout SrcImageLayout, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkImageResolve* Regions)
     {
         vkCmdResolveImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions);
-        NumCommands++;
     }
 
     FORCEINLINE void BeginRenderPass(const VkRenderPassBeginInfo* RenderPassBegin, VkSubpassContents SubpassContents)
     {
         vkCmdBeginRenderPass(CommandBuffer, RenderPassBegin, SubpassContents);
-        NumCommands++;
     }
 
     FORCEINLINE void EndRenderPass()
     {
         vkCmdEndRenderPass(CommandBuffer);
-        NumCommands++;
     }
     
     FORCEINLINE void SetViewport(uint32 FirstViewport, uint32 ViewportCount, const VkViewport* Viewports)
     {
         vkCmdSetViewport(CommandBuffer, FirstViewport, ViewportCount, Viewports);
-        NumCommands++;
     }
     
     FORCEINLINE void SetScissor(uint32 FirstScissor, uint32 ScissorCount, const VkRect2D* Scissors)
     {
         vkCmdSetScissor(CommandBuffer, FirstScissor, ScissorCount, Scissors);
-        NumCommands++;
     }
     
     FORCEINLINE void BindVertexBuffers(uint32 FirstBinding, uint32 BindingCount, const VkBuffer* Buffers, const VkDeviceSize* Offsets)
     {
         vkCmdBindVertexBuffers(CommandBuffer, FirstBinding, BindingCount, Buffers, Offsets);
-        NumCommands++;
     }
     
     FORCEINLINE void BindIndexBuffer(VkBuffer Buffer, VkDeviceSize Offset, VkIndexType IndexType)
     {
         vkCmdBindIndexBuffer(CommandBuffer, Buffer, Offset, IndexType);
-        NumCommands++;
     }
     
     FORCEINLINE void BindDescriptorSets(VkPipelineBindPoint PipelineBindPoint, VkPipelineLayout Layout, uint32 FirstSet, uint32 DescriptorSetCount, const VkDescriptorSet* DescriptorSets, uint32 DynamicOffsetCount, const uint32* DynamicOffsets)
     {
         vkCmdBindDescriptorSets(CommandBuffer, PipelineBindPoint, Layout, FirstSet, DescriptorSetCount, DescriptorSets, DynamicOffsetCount, DynamicOffsets);
-        NumCommands++;
     }
     
     FORCEINLINE void SetBlendConstants(const float BlendConstants[4])
     {
         vkCmdSetBlendConstants(CommandBuffer, BlendConstants);
-        NumCommands++;
     }
     
     FORCEINLINE void BindPipeline(VkPipelineBindPoint PipelineBindPoint, VkPipeline Pipeline)
     {
         vkCmdBindPipeline(CommandBuffer, PipelineBindPoint, Pipeline);
-        NumCommands++;
     }
     
     FORCEINLINE void PushConstants(VkPipelineLayout Layout, VkShaderStageFlags StageFlags, uint32 Offset, uint32 Size, const void* Values)
     {
         vkCmdPushConstants(CommandBuffer, Layout, StageFlags, Offset, Size, Values);
-        NumCommands++;
     }
 
     FORCEINLINE void FillBuffer(VkBuffer DstBuffer, VkDeviceSize DstOffset, VkDeviceSize Size, uint32 Data)
     {
         vkCmdFillBuffer(CommandBuffer, DstBuffer, DstOffset, Size, Data);
-        NumCommands++;
     }
     
     FORCEINLINE void CopyBuffer(VkBuffer SrcBuffer, VkBuffer DstBuffer, uint32 RegionCount, const VkBufferCopy* Regions)
     {
         vkCmdCopyBuffer(CommandBuffer, SrcBuffer, DstBuffer, RegionCount, Regions);
-        NumCommands++;
     }
 
     FORCEINLINE void CopyBufferToImage(VkBuffer SrcBuffer, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkBufferImageCopy* Regions)
     {
         vkCmdCopyBufferToImage(CommandBuffer, SrcBuffer, DstImage, DstImageLayout, RegionCount, Regions);
-        NumCommands++;
     }
     
     FORCEINLINE void CopyImage(VkImage SrcImage, VkImageLayout SrcImageLayout, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkImageCopy* Regions)
     {
         vkCmdCopyImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions);
-        NumCommands++;
     }
     
     FORCEINLINE void BlitImage(VkImage SrcImage, VkImageLayout SrcImageLayout, VkImage DstImage, VkImageLayout DstImageLayout, uint32 RegionCount, const VkImageBlit* Regions, VkFilter Filter)
     {
         vkCmdBlitImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions, Filter);
-        NumCommands++;
     }
-
+    
     FORCEINLINE void BufferMemoryPipelineBarrier(const FVulkanBufferBarrier& BufferBarrier)
     {
         VkBufferMemoryBarrier BufferMemoryBarrier;
@@ -211,11 +176,10 @@ public:
         
         BufferMemoryPipelineBarrier(BufferBarrier.SrcStageMask, BufferBarrier.DstStageMask, BufferBarrier.DependencyFlags, 1, &BufferMemoryBarrier);
     }
-    
+
     FORCEINLINE void BufferMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 BufferMemoryBarrierCount, const VkBufferMemoryBarrier* BufferMemoryBarriers)
     {
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, BufferMemoryBarrierCount, BufferMemoryBarriers, 0, nullptr);
-        NumCommands++;
     }
 
     FORCEINLINE void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier)
@@ -236,56 +200,77 @@ public:
         ImageMemoryPipelineBarrier(TransitionBarrier.SrcStageMask, TransitionBarrier.DstStageMask, TransitionBarrier.DependencyFlags, 1, &ImageMemoryBarrier);
     }
 
-    void ImageMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier* ImageMemoryBarriers)
+    FORCEINLINE void ImageMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier* ImageMemoryBarriers)
     {
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
-        NumCommands++;
+    }
+
+    FORCEINLINE void PipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 MemoryBarrierCount, const VkMemoryBarrier* MemoryBarriers, uint32 BufferMemoryBarrierCount, const VkBufferMemoryBarrier* BufferMemoryBarriers, uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier*  ImageMemoryBarriers)
+    {
+        vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, MemoryBarrierCount, MemoryBarriers, BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }
     
-    void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
+    FORCEINLINE void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
         vkCmdDraw(CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);
-        NumCommands++;
     }
     
-    void DrawIndexed(uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
+    FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 InstanceCount, uint32 FirstIndex, int32 VertexOffset, uint32 FirstInstance)
     {
         vkCmdDrawIndexed(CommandBuffer, IndexCount, InstanceCount, FirstIndex, VertexOffset, FirstInstance);
-        NumCommands++;
     }
     
-    void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
+    FORCEINLINE void Dispatch(uint32 GroupCountX, uint32 GroupCountY, uint32 GroupCountZ)
     {
         vkCmdDispatch(CommandBuffer, GroupCountX, GroupCountY, GroupCountZ);
-        NumCommands++;
     }
     
 #if VK_EXT_debug_utils
-    void InsertDebugUtilsLabel(const VkDebugUtilsLabelEXT* LabelInfo)
+    FORCEINLINE void InsertDebugUtilsLabel(const VkDebugUtilsLabelEXT* LabelInfo)
     {
         vkCmdInsertDebugUtilsLabelEXT(CommandBuffer, LabelInfo);
-        NumCommands++;
     }
 #endif
 
-    bool WaitForFence(uint64 TimeOut = UINT64_MAX)
+    FORCEINLINE void WriteTimestamp(VkPipelineStageFlagBits PipelineStage, VkQueryPool QueryPool, uint32 Query)
     {
-        return Fence.Wait(TimeOut);
+        vkCmdWriteTimestamp(CommandBuffer, PipelineStage, QueryPool, Query);
     }
 
-    FVulkanCommandPool* GetCommandPool()
+    FORCEINLINE VkCommandBuffer GetVkCommandBuffer() const
     {
-        return &CommandPool;
+        return CommandBuffer;
     }
 
-    FVulkanFence* GetFence()
+private:
+    VkCommandBuffer CommandBuffer;
+};
+
+
+class FVulkanCommandPool;
+
+class FVulkanCommandBuffer : public FVulkanDeviceChild
+{
+public:
+    FVulkanCommandBuffer(const FVulkanCommandBuffer&) = delete;
+    FVulkanCommandBuffer& operator=(const FVulkanCommandBuffer&) = delete;
+
+    FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanCommandPool* InOwnerPool);
+    ~FVulkanCommandBuffer();
+
+    bool Initialize(VkCommandBufferLevel InLevel);
+
+    bool Begin(VkCommandBufferUsageFlags Flags = 0);
+    bool End();
+
+    FVulkanCommandPool* GetOwnerPool()
     {
-        return &Fence;
+        return OwnerPool;
     }
 
     VkCommandBuffer GetVkCommandBuffer() const
     {
-        return CommandBuffer;
+        return CommandBuffer.GetVkCommandBuffer();
     }
     
     bool IsRecording() const
@@ -298,13 +283,53 @@ public:
         return NumCommands;
     }
 
+    FCommandBuffer* operator->()
+    {
+        NumCommands++;
+        return &CommandBuffer;
+    }
+
 private:
-    FVulkanCommandPool   CommandPool;
-    FVulkanFence         Fence;
-
+    FVulkanCommandPool*  OwnerPool;
+    FCommandBuffer       CommandBuffer;
     VkCommandBufferLevel Level;
-    VkCommandBuffer      CommandBuffer;
-
     uint32               NumCommands;
     bool                 bIsRecording;
+};
+
+class FVulkanCommandPool : public FVulkanDeviceChild
+{
+public:
+    FVulkanCommandPool(const FVulkanCommandPool&) = delete;
+    FVulkanCommandPool& operator=(const FVulkanCommandPool&) = delete;
+
+    FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
+    ~FVulkanCommandPool();
+
+    bool Initialize();
+
+    FVulkanCommandBuffer* CreateBuffer();
+    void RecycleBuffer(FVulkanCommandBuffer* InCommandBuffer);
+    
+    bool Reset(VkCommandPoolResetFlags Flags = 0)
+    {
+        VkResult Result = vkResetCommandPool(GetDevice()->GetVkDevice(), CommandPool, Flags);
+        if (VULKAN_FAILED(Result))
+        {
+            VULKAN_ERROR("vkResetCommandPool Failed");
+            return false;
+        }
+
+        return true;
+    }
+
+    VkCommandPool GetVkCommandPool() const
+    {
+        return CommandPool;
+    }
+    
+private:
+    VkCommandPool                 CommandPool;
+    EVulkanCommandQueueType       Type;
+    TArray<FVulkanCommandBuffer*> CommandBuffers;
 };

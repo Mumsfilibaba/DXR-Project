@@ -39,7 +39,7 @@ typedef TSharedRef<FRHIShaderResourceView>            FRHIShaderResourceViewRef;
 typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef;
 typedef TSharedRef<class FRHISamplerState>            FRHISamplerStateRef;
 typedef TSharedRef<class FRHIViewport>                FRHIViewportRef;
-typedef TSharedRef<class FRHITimestampQuery>          FRHITimestampQueryRef;
+typedef TSharedRef<class FRHIQuery>          FRHIQueryRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
@@ -169,8 +169,7 @@ protected:
     virtual ~FRHIBuffer() = default;
 
 public:
-    virtual void* GetRHIBaseBuffer() { return nullptr; }
-
+    virtual void* GetRHIBaseBuffer()         { return nullptr; }
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
@@ -442,15 +441,12 @@ protected:
 
 public:
     virtual void* GetRHIBaseTexture() { return nullptr; }
-
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
-
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
 
     virtual void SetName(const FString& InName) { }
@@ -865,12 +861,12 @@ struct FRHIRenderTargetView
 {
     FRHIRenderTargetView()
         : Texture(nullptr)
-        , Format(EFormat::Unknown)
+        , ClearValue()
         , ArrayIndex(0)
+        , Format(EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(EAttachmentLoadAction::DontCare)
         , StoreAction(EAttachmentStoreAction::DontCare)
-        , ClearValue()
     {
     }
     
@@ -880,12 +876,12 @@ struct FRHIRenderTargetView
         EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
         const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
         : Texture(InTexture)
-        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , ClearValue(InClearValue)
         , ArrayIndex(0)
+        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -898,12 +894,12 @@ struct FRHIRenderTargetView
         EAttachmentStoreAction InStoreAction,
         const FFloatColor&     InClearValue)
         : Texture(InTexture)
-        , Format(InFormat)
+        , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
+        , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -944,17 +940,16 @@ struct FRHIRenderTargetView
     EAttachmentStoreAction StoreAction;
 };
 
-
 struct FRHIDepthStencilView
 {
     FRHIDepthStencilView()
         : Texture(nullptr)
+        , ClearValue()
         , Format(EFormat::Unknown)
         , ArrayIndex(0)
         , MipLevel(0)
         , LoadAction(EAttachmentLoadAction::DontCare)
         , StoreAction(EAttachmentStoreAction::DontCare)
-        , ClearValue()
     {
     }
 
@@ -964,12 +959,12 @@ struct FRHIDepthStencilView
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
+        , ClearValue(InClearValue)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -981,12 +976,12 @@ struct FRHIDepthStencilView
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
+        , ClearValue(InClearValue)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(uint16(InArrayIndex))
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -999,12 +994,12 @@ struct FRHIDepthStencilView
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
+        , ClearValue(InClearValue)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
-        , ClearValue(InClearValue)
     {
     }
 
@@ -1232,21 +1227,6 @@ struct FRHISamplerStateDesc
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToUnderlying(AddressU);
-        HashCombine(Hash, ToUnderlying(AddressV));
-        HashCombine(Hash, ToUnderlying(AddressW));
-        HashCombine(Hash, ToUnderlying(Filter));
-        HashCombine(Hash, ToUnderlying(ComparisonFunc));
-        HashCombine(Hash, MaxAnisotropy);
-        HashCombine(Hash, MinLOD);
-        HashCombine(Hash, MinLOD);
-        HashCombine(Hash, MaxLOD);
-        HashCombine(Hash, BorderColor.GetHash());
-        return Hash;
-    }
-
     bool operator==(const FRHISamplerStateDesc& Other) const
     {
         return AddressU       == Other.AddressU
@@ -1264,6 +1244,21 @@ struct FRHISamplerStateDesc
     bool operator!=(const FRHISamplerStateDesc& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 HashType(const FRHISamplerStateDesc& Value)
+    {
+        uint64 Hash = ToUnderlying(Value.AddressU);
+        HashCombine(Hash, ToUnderlying(Value.AddressV));
+        HashCombine(Hash, ToUnderlying(Value.AddressW));
+        HashCombine(Hash, ToUnderlying(Value.Filter));
+        HashCombine(Hash, ToUnderlying(Value.ComparisonFunc));
+        HashCombine(Hash, Value.MaxAnisotropy);
+        HashCombine(Hash, Value.MinLOD);
+        HashCombine(Hash, Value.MinLOD);
+        HashCombine(Hash, Value.MaxLOD);
+        HashCombine(Hash, Value.BorderColor.GetHash());
+        return Hash;
     }
 
     ESamplerMode    AddressU;
@@ -1373,21 +1368,21 @@ protected:
 };
 
 
-struct FRHITimestamp
+struct FTimingQuery
 {
     uint64 Begin = 0;
     uint64 End   = 0;
 };
 
 
-class FRHITimestampQuery : public FRHIResource
+class FRHIQuery : public FRHIResource
 {
 protected:
-    FRHITimestampQuery()          = default;
-    virtual ~FRHITimestampQuery() = default;
+    FRHIQuery()          = default;
+    virtual ~FRHIQuery() = default;
 
 public:
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const = 0;
+    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const = 0;
 
     virtual uint64 GetFrequency() const = 0;
 };
@@ -2185,8 +2180,8 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleCount(1)
         , SampleQuality(0)
         , SampleMask(0xffffffff)
-        , bPrimitiveRestartEnable(false)
         , PrimitiveTopology(EPrimitiveTopology::TriangleList)
+        , bPrimitiveRestartEnable(false)
         , ShaderState()
         , PipelineFormats()
     {
@@ -2211,8 +2206,8 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleCount(InSampleCount)
         , SampleQuality(InSampleQuality)
         , SampleMask(InSampleMask)
-        , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
         , PrimitiveTopology(InPrimitiveTopology)
+        , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
         , ShaderState(InShaderState)
         , PipelineFormats(InPipelineFormats)
     {

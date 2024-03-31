@@ -62,9 +62,25 @@ DECLARE_RHICOMMAND(FRHICommandExecuteCommandList)
     FRHICommandList* CommandList;
 };
 
+DECLARE_RHICOMMAND(FRHICommandBeginFrame)
+{
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RHIBeginFrame();
+    }
+};
+
+DECLARE_RHICOMMAND(FRHICommandEndFrame)
+{
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RHIEndFrame();
+    }
+};
+
 DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
 {
-    FORCEINLINE FRHICommandBeginTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandBeginTimeStamp(FRHIQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     {
@@ -75,13 +91,13 @@ DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
         CommandContext.RHIBeginTimeStamp(Query, Index);
     }
 
-    FRHITimestampQuery* Query;
-    uint32              Index;
+    FRHIQuery* Query;
+    uint32     Index;
 };
 
 DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
 {
-    FORCEINLINE FRHICommandEndTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandEndTimeStamp(FRHIQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     {
@@ -92,8 +108,8 @@ DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
         CommandContext.RHIEndTimeStamp(Query, Index);
     }
 
-    FRHITimestampQuery* Query;
-    uint32              Index;
+    FRHIQuery* Query;
+    uint32     Index;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)
@@ -601,8 +617,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 
 DECLARE_RHICOMMAND(FRHICommandDestroyResource)
 {
-    FORCEINLINE FRHICommandDestroyResource(IRefCounted* InResource)
-        : Resource(MakeSharedRef<IRefCounted>(InResource))
+    FORCEINLINE FRHICommandDestroyResource(FRHIResource* InResource)
+        : Resource(MakeSharedRef<FRHIResource>(InResource))
     {
     }
 
@@ -611,7 +627,7 @@ DECLARE_RHICOMMAND(FRHICommandDestroyResource)
         CommandContext.RHIDestroyResource(Resource.Get());
     }
 
-    TSharedRef<IRefCounted> Resource;
+    TSharedRef<FRHIResource> Resource;
 };
 
 DECLARE_RHICOMMAND(FRHICommandDiscardContents)

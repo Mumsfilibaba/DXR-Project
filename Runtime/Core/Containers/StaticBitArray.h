@@ -9,9 +9,9 @@ template<uint32 NUM_BITS, typename InIntegerType = uint32>
 class TStaticBitArray
 {
 public:
-    using SizeType = int32;
+    typedef int32 SizeType;
 
-    static_assert(NUM_BITS > 0                     , "StaticBitArray must have some bits allocated");
+    static_assert(NUM_BITS > 0, "StaticBitArray must have some bits allocated");
     static_assert(TIsUnsigned<InIntegerType>::Value, "StaticBitArray must have an unsigned InIntegerType");
     
     using BitReferenceType      = TBitReference<InIntegerType>;
@@ -41,7 +41,7 @@ public:
     {
         Reset();
         Integers[0] = InValue;
-        MaskOutLastInteger();
+        MaskLastInteger();
     }
 
     /**
@@ -60,7 +60,7 @@ public:
             Integers[Index] = InValues[Index];
         }
 
-        MaskOutLastInteger();
+        MaskLastInteger();
     }
 
     /**
@@ -156,7 +156,7 @@ public:
      */
     NODISCARD constexpr bool HasAnyBitSet() const noexcept
     {
-        return (CountAssignedBits() != 0);
+        return CountAssignedBits() != 0;
     }
 
     /**
@@ -165,7 +165,7 @@ public:
      */
     NODISCARD constexpr bool HasNoBitSet() const noexcept
     {
-        return (CountAssignedBits() == 0);
+        return CountAssignedBits() == 0;
     }
 
     /**
@@ -177,10 +177,10 @@ public:
         SizeType Result = 0;
         for (int32 Index = int32(NumIntegers()) - 1; Index >= 0; --Index)
         {
-            const auto Element = Integers[Index];
+            const InIntegerType Element = Integers[Index];
             if (Element)
             {
-                const auto BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
+                const SizeType BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -282,32 +282,6 @@ public:
         }
     }
 
-    /**
-     * @brief       - Retrieve a reference to the bit with the index
-     * @param Index - Index of the bit
-     * @return      - Returns a reference to the bit with the index
-     */
-    NODISCARD constexpr BitReferenceType GetBitReference(SizeType BitIndex) noexcept
-    {
-        CHECK(BitIndex < NUM_BITS);
-        const SizeType ElementIndex = GetIntegersIndexOfBit(BitIndex);
-        CHECK(ElementIndex < Capacity());
-        return BitReferenceType(Integers[ElementIndex], ~Integers[ElementIndex]);
-    }
-
-    /**
-     * @brief       - Retrieve a reference to the bit with the index
-     * @param Index - Index of the bit
-     * @return      - Returns a reference to the bit with the index
-     */
-    NODISCARD constexpr const ConstBitReferenceType GetBitReference(SizeType Index) const noexcept
-    {
-        CHECK(Index < NUM_BITS);
-        const SizeType ElementIndex = GetIntegersIndexOfBit(Index);
-        CHECK(ElementIndex < Capacity());
-        return ConstBitReferenceType(Integers[ElementIndex], CreateMaskForBit(Index));
-    }
-
 public:
 
     /**
@@ -315,9 +289,12 @@ public:
      * @param Index - Index to the bit
      * @return      - Returns a BitReference to the specified bit
      */
-    NODISCARD constexpr BitReferenceType operator[](SizeType Index) noexcept
+    NODISCARD constexpr BitReferenceType operator[](SizeType BitIndex) noexcept
     {
-        return GetBitReference(Index);
+        CHECK(BitIndex < NUM_BITS);
+        const SizeType ElementIndex = GetIntegersIndexOfBit(BitIndex);
+        CHECK(ElementIndex < Capacity());
+        return BitReferenceType(Integers[ElementIndex], CreateMaskForBit(BitIndex));
     }
 
     /**
@@ -325,9 +302,12 @@ public:
      * @param Index - Index to the bit
      * @return      - Returns a BitReference to the specified bit
      */
-    NODISCARD constexpr ConstBitReferenceType operator[](SizeType Index) const noexcept
+    NODISCARD constexpr ConstBitReferenceType operator[](SizeType BitIndex) const noexcept
     {
-        return GetBitReference(Index);
+        CHECK(BitIndex < NUM_BITS);
+        const SizeType ElementIndex = GetIntegersIndexOfBit(BitIndex);
+        CHECK(ElementIndex < Capacity());
+        return ConstBitReferenceType(Integers[ElementIndex], CreateMaskForBit(BitIndex));
     }
 
     /**
@@ -337,15 +317,7 @@ public:
      */
     NODISCARD constexpr bool operator==(const TStaticBitArray& Other) const noexcept
     {
-        for (SizeType Index = 0; Index < IntegerSize(); ++Index)
-        {
-            if (Integers[Index] != Other.Integers[Index])
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return Capacity() == Other.Capacity() ? FMemory::Memcmp(Integers, Other.Integers, CapacityInBytes()) : false;
     }
 
     /**
@@ -608,7 +580,7 @@ private:
 
     NODISCARD static constexpr SizeType NumIntegers() noexcept
     {
-        return (NUM_BITS + NumBitsPerInteger() - 1) / NumBitsPerInteger();
+        return (NUM_BITS + (NumBitsPerInteger() - 1)) / NumBitsPerInteger();
     }
 
     NODISCARD static constexpr InIntegerType CreateMaskForBit(SizeType BitIndex) noexcept
@@ -731,7 +703,7 @@ private:
         }
     }
 
-    constexpr void MaskOutLastInteger()
+    constexpr void MaskLastInteger()
     {
         const SizeType LastValidBit     = NUM_BITS - 1;
         const SizeType LastElementIndex = GetIntegersIndexOfBit(LastValidBit);
@@ -744,7 +716,8 @@ private:
     InIntegerType Integers[NumIntegers()];
 };
 
-using FStaticBitArray8  = TStaticBitArray<8, uint8>;
-using FStaticBitArray16 = TStaticBitArray<16, uint16>;
-using FStaticBitArray32 = TStaticBitArray<32, uint32>;
-using FStaticBitArray64 = TStaticBitArray<64, uint64>;
+typedef TStaticBitArray<8, uint8>   FStaticBitArray8 ;
+typedef TStaticBitArray<16, uint16> FStaticBitArray16;
+typedef TStaticBitArray<32, uint32> FStaticBitArray32;
+typedef TStaticBitArray<64, uint64> FStaticBitArray64;
+typedef FStaticBitArray32           FStaticBitArray;

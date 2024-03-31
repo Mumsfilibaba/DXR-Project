@@ -282,9 +282,9 @@ FRHIRayTracingPipelineState* FMetalRHI::RHICreateRayTracingPipelineState(const F
     return new FMetalRayTracingPipelineState();
 }
 
-FRHITimestampQuery* FMetalRHI::RHICreateTimestampQuery()
+FRHIQuery* FMetalRHI::RHICreateQuery()
 {
-    return new FMetalTimestampQuery();
+    return new FMetalQuery();
 }
 
 FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportDesc& Desc)

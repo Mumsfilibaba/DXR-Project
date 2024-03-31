@@ -46,7 +46,7 @@ public:
 
     void* Allocate(int32 Size, int32 Alignment = STANDARD_ALIGNMENT) noexcept
     {
-        CHECK(Size      > 0);
+        CHECK(Size > 0);
         CHECK(Alignment > 0);
 
         const int32 AlignedSize = FMath::AlignUp(Size, Alignment);

@@ -3,18 +3,14 @@
 
 FVulkanSamplerState::FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InDesc)
     : FRHISamplerState(InDesc)
-    , FVulkanDeviceObject(InDevice)
+    , FVulkanDeviceChild(InDevice)
     , Sampler(VK_NULL_HANDLE)
 {
 }
 
 FVulkanSamplerState::~FVulkanSamplerState()
 {
-    if (VULKAN_CHECK_HANDLE(Sampler))
-    {
-        vkDestroySampler(GetDevice()->GetVkDevice(), Sampler, nullptr);
-        Sampler = VK_NULL_HANDLE;
-    }
+    Sampler = VK_NULL_HANDLE;
 }
 
 bool FVulkanSamplerState::Initialize()
@@ -39,12 +35,13 @@ bool FVulkanSamplerState::Initialize()
     SamplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
     SamplerCreateInfo.unnormalizedCoordinates = false;
 
-    VkResult Result = vkCreateSampler(GetDevice()->GetVkDevice(), &SamplerCreateInfo, nullptr, &Sampler);
-    if (VULKAN_FAILED(Result))
+    if (!GetDevice()->FindOrCreateSampler(SamplerCreateInfo, Sampler))
     {
         VULKAN_ERROR("Failed to create sampler");
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }

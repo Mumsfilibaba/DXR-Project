@@ -236,7 +236,6 @@ protected:
     FModuleLoadedDelegate     ModuleLoadedDelegate;
 
     typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
-    
     TArray<FStaticModulePair> StaticModuleDelegates;
     FCriticalSection          StaticModuleDelegatesCS;
 

@@ -4,9 +4,6 @@
 
 class PROJECT_API FProjectManager
 {
-    FProjectManager(const FString& InProjectName, const FString& InProjectPath, const FString& InAssetPath);
-    ~FProjectManager() = default;
-
 public:
     static bool Initialize();
     static void Release();
@@ -19,6 +16,9 @@ public:
     FStringView GetAssetPath()         { return FStringView(AssetPath); }
 
 private:
+    FProjectManager(const FString& InProjectName, const FString& InProjectPath, const FString& InAssetPath);
+    ~FProjectManager() = default;
+
     FString ProjectName;
     FString ProjectPath;
     FString AssetPath;

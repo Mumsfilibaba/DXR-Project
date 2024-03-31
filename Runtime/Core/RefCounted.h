@@ -9,8 +9,9 @@ protected:
     virtual ~FRefCounted();
 
 public:
-    virtual int32 AddRef()            override;
-    virtual int32 Release()           override;
+    virtual int32 AddRef()  override;
+    virtual int32 Release() override;
+
     virtual int32 GetRefCount() const override;
 
 private:

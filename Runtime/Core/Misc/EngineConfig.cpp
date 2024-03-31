@@ -17,95 +17,26 @@ FConfigSection::FConfigSection(const CHAR* InName)
 {
 }
 
-bool FConfigSection::AddValue(const CHAR* NewKey, const CHAR* NewValue)
-{
-    if (FConfigValue* CurrentValue = FindValue(NewKey))
-    {
-        return false;
-    }
-
-    const auto Result = Values.emplace(NewKey, NewValue);
-    return Result.second;
-}
-
-FConfigValue* FConfigSection::FindOrAddValue(const CHAR* InKey, const CHAR* InValue)
-{
-    if (FConfigValue* CurrentValue = FindValue(InKey))
-    {
-        return CurrentValue;
-    }
-
-    auto Result = Values.emplace(InKey, InValue);
-    if (Result.second)
-    {
-        return &Result.first->second;
-    }
-
-    return nullptr;
-}
-
-FConfigValue* FConfigSection::FindValue(const CHAR* Key)
-{
-    auto Value = Values.find(FString(Key));
-    if (Value != Values.end())
-    {
-        return &Value->second;
-    }
-
-    return nullptr;
-}
-
-const FConfigValue* FConfigSection::FindValue(const CHAR* Key) const
-{
-    auto Value = Values.find(FString(Key));
-    if (Value != Values.end())
-    {
-        return &Value->second;
-    }
-
-    return nullptr;
-}
-
 void FConfigSection::Restore()
 {
     for (auto Value : Values)
     {
-        Value.second.Restore();
+        Value.Second.Restore();
     }
 }
 
 void FConfigSection::DumpToString(FString& OutString)
 {
-    for (auto& ValuePair : Values)
+    for (auto ValuePair : Values)
     {
-        FConfigValue& Value = ValuePair.second;
-        OutString.AppendFormat("%s=%s\n", ValuePair.first.GetCString(), Value.CurrentValue.GetCString());
+        OutString.AppendFormat("%s=%s\n", ValuePair.First.GetCString(), ValuePair.Second.CurrentValue.GetCString());
     }
 }
 
-
-
-void FConfigFile::Combine(const FConfigFile& ConfigFile)
-{
-    for (const auto& Section : ConfigFile.Sections)
-    {
-        Sections.insert(Section);
-    }
-}
 
 bool FConfigFile::SetString(const CHAR* SectionName, const CHAR* Name, const FString& NewValue)
 {
-    FConfigValue* Value = nullptr;
-    if (SectionName)
-    {
-        Value = FindValue(SectionName, Name);
-    }
-    else
-    {
-        Value = FindValue(Name);
-    }
-
-    if (Value)
+    if (FConfigValue* Value = FindValue(SectionName, Name))
     {
         Value->CurrentValue = NewValue;
         return true;
@@ -134,17 +65,7 @@ bool FConfigFile::SetBool(const CHAR* SectionName, const CHAR* Name, bool bNewVa
 
 bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& OutValue)
 {
-    FConfigValue* Value = nullptr;
-    if (!SectionName || FCString::Strcmp(SectionName, "") == 0)
-    {
-        Value = FindValue(Name);
-    }
-    else
-    {
-        Value = FindValue(SectionName, Name);
-    }
-
-    if (Value)
+    if (FConfigValue* Value = FindValue(SectionName, Name))
     {
         OutValue = Value->CurrentValue;
         return true;
@@ -157,17 +78,7 @@ bool FConfigFile::GetString(const CHAR* SectionName, const CHAR* Name, FString& 
 
 bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutValue)
 {
-    FConfigValue* Value = nullptr;
-    if (SectionName)
-    {
-        Value = FindValue(SectionName, Name);
-    }
-    else
-    {
-        Value = FindValue(Name);
-    }
-
-    if (Value)
+    if (FConfigValue* Value = FindValue(SectionName, Name))
     {
         return TTypeFromString<int32>::FromString(Value->CurrentValue, OutValue);
     }
@@ -179,17 +90,7 @@ bool FConfigFile::GetInt(const CHAR* SectionName, const CHAR* Name, int32& OutVa
 
 bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& OutValue)
 {
-    FConfigValue* Value = nullptr;
-    if (SectionName)
-    {
-        Value = FindValue(SectionName, Name);
-    }
-    else
-    {
-        Value = FindValue(Name);
-    }
-
-    if (Value)
+    if (FConfigValue* Value = FindValue(SectionName, Name))
     {
         return TTypeFromString<float>::FromString(Value->CurrentValue, OutValue);
     }
@@ -201,17 +102,7 @@ bool FConfigFile::GetFloat(const CHAR* SectionName, const CHAR* Name, float& Out
 
 bool FConfigFile::GetBool(const CHAR* SectionName, const CHAR* Name, bool& bOutValue)
 {
-    FConfigValue* Value = nullptr;
-    if (SectionName)
-    {
-        Value = FindValue(SectionName, Name);
-    }
-    else
-    {
-        Value = FindValue(Name);
-    }
-
-    if (Value)
+    if (FConfigValue* Value = FindValue(SectionName, Name))
     {
         return TTypeFromString<bool>::FromString(Value->CurrentValue, bOutValue);
     }
@@ -226,12 +117,14 @@ DISABLE_UNREACHABLE_CODE_WARNING
 
 FConfigValue* FConfigFile::FindValue(const CHAR* Key)
 {
-    for (auto& CurrentSection : Sections)
+    for (auto CurrentSection : Sections)
     {
-        FConfigSection& ConfigSection = CurrentSection.second;
-        return ConfigSection.FindValue(Key);
+        if (FConfigValue* Value = CurrentSection.Second.Values.Find(Key))
+        {
+            return Value;
+        }
     }
-
+    
     return nullptr;
 }
 
@@ -239,36 +132,14 @@ ENABLE_UNREACHABLE_CODE_WARNING
 
 FConfigValue* FConfigFile::FindValue(const CHAR* SectionName, const CHAR* Name)
 {
-    if (FConfigSection* Section = FindSection(SectionName))
+    const bool bIsGlobal = !SectionName || FCString::Strcmp(SectionName, "") == 0;
+    if (bIsGlobal)
     {
-        return Section->FindValue(Name);
+        return FindValue(Name);
     }
-
-    return nullptr;
-}
-
-FConfigSection* FConfigFile::FindSection(const CHAR* SectionName)
-{
-    auto Section = Sections.find(SectionName);
-    if (Section != Sections.end())
+    else if (FConfigSection* Section = Sections.Find(SectionName))
     {
-        return &Section->second;
-    }
-
-    return nullptr;
-}
-
-FConfigSection* FConfigFile::FindOrAddSection(const CHAR* SectionName)
-{
-    if (FConfigSection* CurrentSection = FindSection(SectionName))
-    {
-        return CurrentSection;
-    }
-
-    auto Result = Sections.emplace(SectionName, FConfigSection(SectionName));
-    if (Result.second)
-    {
-        return &Result.first->second;
+        return Section->Values.Find(Name);
     }
 
     return nullptr;
@@ -294,17 +165,14 @@ bool FConfigFile::WriteToFile()
 
 void FConfigFile::DumpToString(FString& OutString)
 {
-    for (auto& CurrentSection : Sections)
+    for (auto CurrentSection : Sections)
     {
-        const FString& SectionName = CurrentSection.first;
-        if (!SectionName.IsEmpty())
+        if (!CurrentSection.First.IsEmpty())
         {
-            OutString.AppendFormat("[%s]\n", SectionName.GetCString());
+            OutString.AppendFormat("[%s]\n", CurrentSection.First.GetCString());
         }
-
-        FConfigSection& Section = CurrentSection.second;
-        Section.DumpToString(OutString);
-
+        
+        CurrentSection.Second.DumpToString(OutString);
         OutString += '\n';
     }
 }
@@ -353,6 +221,7 @@ void FConfig::Release()
 FConfigFile* FConfig::LoadFile(const FString& Filename)
 {
     TArray<CHAR> FileContents;
+
     {
         FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
         if (!File)
@@ -371,15 +240,17 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
     FileContents.Remove('\r');
 
     // Get a config file, if the file already exists the values will be overwritten
-    FConfigFile*    ConfigFile = AddConfigFile(Filename);
+    FConfigFile*    ConfigFile     = &ConfigFiles.FindOrAdd(Filename);
     FConfigSection* CurrentSection = nullptr;
-
+    
     CHAR* Start = FileContents.Data();
     while (Start && *Start)
     {
         // Skip newline chars
         while (*Start == '\n')
+        {
             ++Start;
+        }
 
         CHAR* LineStart = Start;
         FParse::ParseLine(&Start);
@@ -400,7 +271,9 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
             {
                 CHAR* SectionStart = LineStart;
                 *SectionEnd = '\0';
-                CurrentSection = ConfigFile->FindOrAddSection(SectionStart);
+                
+                FConfigSection& Section = ConfigFile->Sections.FindOrAdd(SectionStart, FConfigSection(SectionStart));
+                CurrentSection = &Section;
             }
         }
         else if (*LineStart != ';') // Check if this is a comment line
@@ -411,7 +284,9 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
 
                 CHAR* KeyEnd = EqualSign - 1;
                 while (*KeyEnd == ' ')
+                {
                     *(KeyEnd--) = '\0';
+                }
 
                 // The parsed key
                 CHAR* Key = LineStart;
@@ -420,7 +295,7 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
                 FParse::ParseWhiteSpace(&LineStart);
 
                 // Find the end of the value
-                CHAR* Value = LineStart;
+                CHAR* Value    = LineStart;
                 CHAR* ValueEnd = nullptr;
 
                 // Special case for string-values
@@ -442,22 +317,25 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
                 }
 
                 while (*ValueEnd == ' ')
+                {
                     *(ValueEnd--) = '\0';
+                }
 
                 // If there are no section, use the global one
                 if (!CurrentSection)
                 {
-                    CurrentSection = ConfigFile->FindOrAddSection("");
+                    FConfigSection& Section = ConfigFile->Sections.FindOrAdd("");
+                    CurrentSection = &Section;
                 }
 
                 // The parsed value
-                if (FConfigValue* CurrentValue = CurrentSection->FindValue(Key))
+                if (FConfigValue* CurrentValue = CurrentSection->Values.Find(Key))
                 {
-                    *CurrentValue = ::Move(FConfigValue(Value));
+                    *CurrentValue = FConfigValue(Value);
                 }
                 else
                 {
-                    CurrentSection->AddValue(Key, Value);
+                    CurrentSection->Values.Add(Key, FConfigValue(Value));
                 }
             }
         }
@@ -469,47 +347,17 @@ FConfigFile* FConfig::LoadFile(const FString& Filename)
 void FConfig::LoadConsoleVariables()
 {
     FConsoleManager& ConsoleManager = FConsoleManager::Get();
-    for (const auto& FilePair : ConfigFiles)
+    for (auto File : ConfigFiles)
     {
-        for (const auto& SectionPair : FilePair.second.Sections)
+        for (auto Section : File.Second.Sections)
         {
-            for (const auto& ValuePair : SectionPair.second.Values)
+            for (auto Value : Section.Second.Values)
             {
-                const auto& Key = ValuePair.first;
-                const auto& Value = ValuePair.second;
-
-                if (IConsoleVariable* Variable = ConsoleManager.FindConsoleVariable(Key.GetCString()))
+                if (IConsoleVariable* Variable = ConsoleManager.FindConsoleVariable(Value.First.GetCString()))
                 {
-                    Variable->SetString(Value.CurrentValue.GetCString(), EConsoleVariableFlags::SetByConfigFile);
+                    Variable->SetString(Value.Second.CurrentValue.GetCString(), EConsoleVariableFlags::SetByConfigFile);
                 }
             }
         }
     }
-}
-
-FConfigFile* FConfig::FindFile(const FString& Filename)
-{
-    auto CurrentFile = ConfigFiles.find(Filename);
-    if (CurrentFile != ConfigFiles.end())
-    {
-        return &CurrentFile->second;
-    }
-
-    return nullptr;
-}
-
-FConfigFile* FConfig::AddConfigFile(const FString& Filename)
-{
-    if (FConfigFile* CurrentFile = FindFile(Filename))
-    {
-        return CurrentFile;
-    }
-
-    auto Result = ConfigFiles.emplace(Filename, FConfigFile());
-    if (!Result.second)
-    {
-        return nullptr;
-    }
-
-    return &Result.first->second;
 }
