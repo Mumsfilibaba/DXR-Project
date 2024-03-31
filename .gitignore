@@ -32,3 +32,4 @@ packages/
 *.metal
 *.glsl
 *.dxrmesh
+*.pipelinecache

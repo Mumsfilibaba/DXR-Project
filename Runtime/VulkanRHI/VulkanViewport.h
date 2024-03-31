@@ -61,7 +61,7 @@ private:
     {
         SemaphoreIndex = (SemaphoreIndex + 1) % ImageSemaphores.Size();
     }
-    
+
     void* WindowHandle;
 
     FVulkanSurfaceRef           Surface;
@@ -69,10 +69,10 @@ private:
     FVulkanCommandContext*      CommandContext;
     FVulkanBackBufferTextureRef BackBuffer;
     TArray<FVulkanTextureRef>   BackBuffers;
-    
+
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> ImageSemaphores;
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> RenderSemaphores;
-    
+
     uint32 SemaphoreIndex;
     uint32 BackBufferIndex;
     bool   bAquireNextImage;
