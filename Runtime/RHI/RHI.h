@@ -48,92 +48,6 @@ RHI_API bool RHIInitialize();
 RHI_API void RHIRelease();
 
 
-enum class ERHIShadingRateTier : uint8
-{
-    NotSupported = 0,
-    Tier1        = 1,
-    Tier2        = 2,
-};
-
-inline const CHAR* ToString(ERHIShadingRateTier Tier)
-{
-    switch (Tier)
-    {
-        case ERHIShadingRateTier::NotSupported: return "NotSupported";
-        case ERHIShadingRateTier::Tier1:        return "Tier1";
-        case ERHIShadingRateTier::Tier2:        return "Tier2";
-        default:                                return "Unknown";
-    }
-}
-
-struct FRHIShadingRateSupport
-{
-    FRHIShadingRateSupport() = default;
-
-    FRHIShadingRateSupport(ERHIShadingRateTier InTier, uint8 InShadingRateImageTileSize)
-        : Tier(InTier)
-        , ShadingRateImageTileSize(InShadingRateImageTileSize)
-    {
-    }
-
-    bool operator==(const FRHIShadingRateSupport& RHS) const
-    {
-        return Tier == RHS.Tier && ShadingRateImageTileSize == RHS.ShadingRateImageTileSize;
-    }
-
-    bool operator!=(const FRHIShadingRateSupport& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    ERHIShadingRateTier Tier{ERHIShadingRateTier::NotSupported};
-    uint8               ShadingRateImageTileSize{0};
-};
-
-
-enum class ERHIRayTracingTier : uint8
-{
-    NotSupported = 0,
-    Tier1        = 1,
-    Tier1_1      = 2,
-};
-
-inline const CHAR* ToString(ERHIRayTracingTier Tier)
-{
-    switch (Tier)
-    {
-        case ERHIRayTracingTier::NotSupported: return "NotSupported";
-        case ERHIRayTracingTier::Tier1:        return "Tier1";
-        case ERHIRayTracingTier::Tier1_1:      return "Tier1_1";
-        default:                               return "Unknown";
-    }
-}
-
-struct FRHIRayTracingSupport
-{
-    FRHIRayTracingSupport() = default;
-
-    FRHIRayTracingSupport(ERHIRayTracingTier InTier, uint8 InMaxRecursionDepth)
-        : Tier(InTier)
-        , MaxRecursionDepth(InMaxRecursionDepth)
-    {
-    }
-
-    bool operator==(const FRHIRayTracingSupport& RHS) const
-    {
-        return Tier == RHS.Tier && MaxRecursionDepth == RHS.MaxRecursionDepth;
-    }
-
-    bool operator!=(const FRHIRayTracingSupport& RHS) const
-    {
-        return !(*this == RHS);
-    }
-
-    ERHIRayTracingTier Tier{ERHIRayTracingTier::NotSupported};
-    uint8              MaxRecursionDepth{0};
-};
-
-
 struct RHI_API FRHIModule : public FModuleInterface
 {
     virtual ~FRHIModule() = default;
@@ -399,18 +313,6 @@ public:
     virtual void* RHIGetCopyCommandQueue() { return nullptr; }
 
     /**
-     * @brief            - Check for Ray tracing support
-     * @param OutSupport - Struct containing the Ray tracing support for the system and current RHI
-     */
-    virtual void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport) const = 0;
-
-    /**
-     * @brief            - Check for Shading-rate support
-     * @param OutSupport - Struct containing the Shading-rate support for the system and current RHI
-     */
-    virtual void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport) const = 0;
-
-    /**
      * @brief        - Check if the current RHI supports UnorderedAccessViews for the specified format
      * @param Format - Format to check
      * @return       - Returns true if the current RHI supports UnorderedAccessViews with the specified format
@@ -600,30 +502,6 @@ FORCEINLINE IRHICommandContext* RHIGetDefaultCommandContext()
 FORCEINLINE FString RHIGetAdapterName()
 {
     return GetRHI()->RHIGetAdapterName();
-}
-
-FORCEINLINE void RHIQueryShadingRateSupport(FRHIShadingRateSupport& OutSupport)
-{
-    GetRHI()->RHIQueryShadingRateSupport(OutSupport);
-}
-
-FORCEINLINE void RHIQueryRayTracingSupport(FRHIRayTracingSupport& OutSupport)
-{
-    GetRHI()->RHIQueryRayTracingSupport(OutSupport);
-}
-
-FORCEINLINE bool RHISupportsRayTracing()
-{
-    FRHIRayTracingSupport Support;
-    RHIQueryRayTracingSupport(Support);
-    return false;// (Support.Tier != ERHIRayTracingTier::NotSupported);
-}
-
-FORCEINLINE bool RHISupportsVariableRateShading()
-{
-    FRHIShadingRateSupport Support;
-    RHIQueryShadingRateSupport(Support);
-    return (Support.Tier != ERHIShadingRateTier::NotSupported);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

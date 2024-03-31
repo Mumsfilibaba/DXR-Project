@@ -1,6 +1,7 @@
 #include "Mesh.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
+#include "Core/Templates/NumericLimits.h"
 
 FMesh::FMesh()
     : VertexBuffer(nullptr)
@@ -143,15 +144,7 @@ bool FMesh::Init(const FMeshData& Data)
 
 bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
 {
-    CommandList.BuildRayTracingGeometry(
-        RTGeometry.Get(),
-        VertexBuffer.Get(),
-        VertexCount,
-        IndexBuffer.Get(),
-        IndexCount,
-        IndexFormat,
-        true);
-
+    CommandList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, true);
     return true;
 }
 
@@ -170,7 +163,7 @@ TSharedPtr<FMesh> FMesh::Create(const FMeshData& Data)
 
 void FMesh::CreateBoundingBox(const FMeshData& Data)
 {
-    constexpr float Inf = std::numeric_limits<float>::infinity();
+    constexpr float Inf = TNumericLimits<float>::Infinity();
 
     FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
     FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);

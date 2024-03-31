@@ -2,6 +2,8 @@
 #include "Core/CoreDefines.h"
 #include "Core/CoreTypes.h"
 
+#include <math.h>
+
 // TODO: Maybe have this as a platform define/variable somewhere (FPlatformMisc? FPlatformMath?)
 #define NUM_CHAR_DIGITS (8)
 
@@ -30,6 +32,16 @@ struct TNumericLimits<bool>
     { 
         return Min();
     }
+
+    NODISCARD static constexpr bool Infinity() noexcept
+    {
+        return false;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
+    }
 };
 
 template<>
@@ -53,6 +65,16 @@ struct TNumericLimits<int8>
     NODISCARD static constexpr int8 Lowest() noexcept 
     { 
         return Min();
+    }
+
+    NODISCARD static constexpr int8 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
     }
 };
 
@@ -79,6 +101,16 @@ struct TNumericLimits<uint8>
     { 
         return Min();
     }
+
+    NODISCARD static constexpr uint8 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
+    }
 };
 
 template<>
@@ -102,6 +134,16 @@ struct TNumericLimits<int16>
     NODISCARD static constexpr int16 Lowest() noexcept 
     { 
         return Min();
+    }
+
+    NODISCARD static constexpr int16 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
     }
 };
 
@@ -127,6 +169,16 @@ struct TNumericLimits<uint16>
     { 
         return Min();
     }
+
+    NODISCARD static constexpr uint16 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
+    }
 };
 
 template<>
@@ -150,6 +202,16 @@ struct TNumericLimits<int32>
     NODISCARD static constexpr int32 Lowest() noexcept 
     { 
         return Min();
+    }
+
+    NODISCARD static constexpr int32 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
     }
 };
 
@@ -175,6 +237,16 @@ struct TNumericLimits<uint32>
     { 
         return Min();
     }
+
+    NODISCARD static constexpr uint32 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
+    }
 };
 
 template<>
@@ -199,6 +271,16 @@ struct TNumericLimits<int64>
     { 
         return Min();
     }
+
+    NODISCARD static constexpr int64 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
+    }
 };
 
 template<>
@@ -222,6 +304,16 @@ struct TNumericLimits<uint64>
     NODISCARD static constexpr uint64 Lowest() noexcept 
     { 
         return Min();
+    }
+
+    NODISCARD static constexpr uint64 Infinity() noexcept
+    {
+        return 0;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return false;
     }
 };
 
@@ -248,6 +340,16 @@ struct TNumericLimits<float>
     { 
         return -Min();
     }
+
+    NODISCARD static constexpr float Infinity() noexcept
+    {
+        return HUGE_VALF;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return true;
+    }
 };
 
 template<>
@@ -272,5 +374,15 @@ struct TNumericLimits<double>
     NODISCARD static constexpr double Lowest() noexcept 
     { 
         return -Min();
+    }
+
+    NODISCARD static constexpr double Infinity() noexcept
+    {
+        return HUGE_VAL;
+    }
+
+    NODISCARD static constexpr bool HasInfinity() noexcept
+    {
+        return true;
     }
 };

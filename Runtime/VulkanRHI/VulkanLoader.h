@@ -43,9 +43,9 @@ VULKAN_FUNCTION_DECLARATION(EnumerateInstanceExtensionProperties);
 VULKAN_FUNCTION_DECLARATION(EnumerateInstanceLayerProperties);
 
 #if VK_EXT_debug_utils
-    VULKAN_FUNCTION_DECLARATION(SetDebugUtilsObjectNameEXT);
-    VULKAN_FUNCTION_DECLARATION(CreateDebugUtilsMessengerEXT);
-    VULKAN_FUNCTION_DECLARATION(DestroyDebugUtilsMessengerEXT);
+VULKAN_FUNCTION_DECLARATION(SetDebugUtilsObjectNameEXT);
+VULKAN_FUNCTION_DECLARATION(CreateDebugUtilsMessengerEXT);
+VULKAN_FUNCTION_DECLARATION(DestroyDebugUtilsMessengerEXT);
 #endif
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -70,23 +70,23 @@ VULKAN_FUNCTION_DECLARATION(DestroyDevice);
 VULKAN_FUNCTION_DECLARATION(GetDeviceProcAddr);
 
 #if VK_EXT_metal_surface
-    VULKAN_FUNCTION_DECLARATION(CreateMetalSurfaceEXT);
+VULKAN_FUNCTION_DECLARATION(CreateMetalSurfaceEXT);
 #endif
 
 #if VK_MVK_macos_surface
-    VULKAN_FUNCTION_DECLARATION(CreateMacOSSurfaceMVK);
+VULKAN_FUNCTION_DECLARATION(CreateMacOSSurfaceMVK);
 #endif
 
 #if VK_KHR_win32_surface
-    VULKAN_FUNCTION_DECLARATION(CreateWin32SurfaceKHR);
+VULKAN_FUNCTION_DECLARATION(CreateWin32SurfaceKHR);
 #endif
 
 #if VK_KHR_surface
-    VULKAN_FUNCTION_DECLARATION(DestroySurfaceKHR);
-    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
-    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceFormatsKHR);
-    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfacePresentModesKHR);
-    VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceSupportKHR);
+VULKAN_FUNCTION_DECLARATION(DestroySurfaceKHR);
+VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceCapabilitiesKHR);
+VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceFormatsKHR);
+VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfacePresentModesKHR);
+VULKAN_FUNCTION_DECLARATION(GetPhysicalDeviceSurfaceSupportKHR);
 #endif
 
 bool LoadInstanceFunctions(FVulkanInstance* Instance);
@@ -171,6 +171,11 @@ VULKAN_FUNCTION_DECLARATION(DestroyFramebuffer);
 VULKAN_FUNCTION_DECLARATION(CreateSampler);
 VULKAN_FUNCTION_DECLARATION(DestroySampler);
 
+#if VK_KHR_acceleration_structure
+VULKAN_FUNCTION_DECLARATION(CreateAccelerationStructureKHR);
+VULKAN_FUNCTION_DECLARATION(DestroyAccelerationStructureKHR);
+#endif
+
 VULKAN_FUNCTION_DECLARATION(AllocateCommandBuffers);
 VULKAN_FUNCTION_DECLARATION(FreeCommandBuffers);
 
@@ -181,11 +186,11 @@ VULKAN_FUNCTION_DECLARATION(GetDeviceQueue);
 VULKAN_FUNCTION_DECLARATION(QueueSubmit);
 
 #if VK_KHR_swapchain
-    VULKAN_FUNCTION_DECLARATION(CreateSwapchainKHR);
-    VULKAN_FUNCTION_DECLARATION(DestroySwapchainKHR);
-    VULKAN_FUNCTION_DECLARATION(AcquireNextImageKHR);
-    VULKAN_FUNCTION_DECLARATION(QueuePresentKHR);
-    VULKAN_FUNCTION_DECLARATION(GetSwapchainImagesKHR);
+VULKAN_FUNCTION_DECLARATION(CreateSwapchainKHR);
+VULKAN_FUNCTION_DECLARATION(DestroySwapchainKHR);
+VULKAN_FUNCTION_DECLARATION(AcquireNextImageKHR);
+VULKAN_FUNCTION_DECLARATION(QueuePresentKHR);
+VULKAN_FUNCTION_DECLARATION(GetSwapchainImagesKHR);
 #endif
 
 VULKAN_FUNCTION_DECLARATION(CmdClearColorImage);
@@ -211,11 +216,10 @@ VULKAN_FUNCTION_DECLARATION(CmdDispatch);
 VULKAN_FUNCTION_DECLARATION(CmdDraw);
 VULKAN_FUNCTION_DECLARATION(CmdDrawIndexed);
 #if VK_EXT_debug_utils
-    VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
+VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
 #endif
 
 bool LoadDeviceFunctions(FVulkanDevice* Device);
-
 
 class FVulkanDebugUtilsEXT
 {
@@ -255,7 +259,6 @@ private:
     static bool bIsEnabled;
 };
 
-
 class FVulkanDedicatedAllocationKHR
 {
 public:
@@ -270,7 +273,6 @@ private:
     static bool bIsEnabled;
 };
 
-
 class FVulkanBufferDeviceAddressKHR
 {
 public:
@@ -284,7 +286,6 @@ public:
 private:
     static bool bIsEnabled;
 };
-
 
 class FVulkanRobustness2EXT
 {
