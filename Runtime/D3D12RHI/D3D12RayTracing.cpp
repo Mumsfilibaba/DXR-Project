@@ -19,26 +19,6 @@ FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const
 {
 }
 
-void FD3D12RayTracingGeometry::SetDebugName(const FString& InName)
-{
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
-    if (D3D12Resource)
-    {
-        D3D12Resource->SetDebugName(InName);
-    }
-}
-
-FString FD3D12RayTracingGeometry::GetDebugName() const
-{
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
-    if (D3D12Resource)
-    {
-        return D3D12Resource->GetDebugName();
-    }
-
-    return FString();
-}
-
 bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo)
 {
     VertexBuffer = MakeSharedRef<FD3D12Buffer>(BuildInfo.VertexBuffer);
@@ -158,6 +138,26 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
     return true;
 }
 
+void FD3D12RayTracingGeometry::SetDebugName(const FString& InName)
+{
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        D3D12Resource->SetDebugName(InName);
+    }
+}
+
+FString FD3D12RayTracingGeometry::GetDebugName() const
+{
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        return D3D12Resource->GetDebugName();
+    }
+
+    return FString();
+}
+
 FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer)
     : FRHIRayTracingScene(Initializer)
     , FD3D12AccelerationStructure(InDevice)
@@ -169,26 +169,6 @@ FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIR
     , Instances()
     , ShaderBindingTableBuilder(InDevice)
 {
-}
-
-void FD3D12RayTracingScene::SetDebugName(const FString& InName)
-{
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
-    if (D3D12Resource)
-    {
-        D3D12Resource->SetDebugName(InName);
-    }
-}
-
-FString FD3D12RayTracingScene::GetDebugName() const
-{
-    FD3D12Resource* D3D12Resource = GetD3D12Resource();
-    if (D3D12Resource)
-    {
-        return D3D12Resource->GetDebugName();
-    }
-
-    return FString();
 }
 
 bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTracingSceneBuildInfo& BuildInfo)
@@ -503,8 +483,25 @@ D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE FD3D12RayTracingScene::GetMissShaderT
     return { BindingTableAdress + AddressOffset, BindingTableStride, BindingTableStride };
 }
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12ShaderBindingTableBuilder 
+void FD3D12RayTracingScene::SetDebugName(const FString& InName)
+{
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        D3D12Resource->SetDebugName(InName);
+    }
+}
+
+FString FD3D12RayTracingScene::GetDebugName() const
+{
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        return D3D12Resource->GetDebugName();
+    }
+
+    return FString();
+}
 
 FD3D12ShaderBindingTableBuilder::FD3D12ShaderBindingTableBuilder(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)

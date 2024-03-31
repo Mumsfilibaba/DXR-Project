@@ -470,7 +470,7 @@ bool FVulkanRobustness2EXT::bSupportsNullDescriptors = false;
 void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
 {
     VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
-    
+
 #if VK_EXT_robustness2
     if (Device->IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
     {
