@@ -1010,10 +1010,10 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
 
         CommandList.BeginRenderPass(RenderPass);
 
-        FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+        FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.SetViewport(ViewportRegion);
 
-        FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+        FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
         CommandList.SetScissorRect(ScissorRegion);
 
         struct FTransformBuffer
@@ -1197,10 +1197,10 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
     CommandList.BeginRenderPass(RenderPass);
 
-    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
 
-    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
     struct FTransformBuffer

@@ -164,7 +164,7 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
     CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
 
-    FRHITextureCopyDesc CopyDesc;
+    FTextureCopyInfo CopyDesc;
     CopyDesc.DstArraySlice = 0;
     CopyDesc.DstMipSlice   = 0;
     CopyDesc.DstPosition   = FIntVector3();
@@ -303,7 +303,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
         CurrentFaceSizeInBlocks = CurrentFaceSizeInBlocks / 2;
     }
 
-    FRHITextureCopyDesc CopyDesc;
+    FTextureCopyInfo CopyDesc;
     CopyDesc.DstPosition    = FIntVector3();
     CopyDesc.DstArraySlice  = 0;
     CopyDesc.DstMipSlice    = 0;

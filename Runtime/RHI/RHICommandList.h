@@ -272,12 +272,12 @@ public:
         bIsRenderPassActive = false;
     }
 
-    FORCEINLINE void SetViewport(const FRHIViewportRegion& ViewportRegion) noexcept
+    FORCEINLINE void SetViewport(const FViewportRegion& ViewportRegion) noexcept
     {
         EmplaceCommand<FRHICommandSetViewport>(ViewportRegion);
     }
 
-    FORCEINLINE void SetScissorRect(const FRHIScissorRegion& ScissorRegion) noexcept
+    FORCEINLINE void SetScissorRect(const FScissorRegion& ScissorRegion) noexcept
     {
         EmplaceCommand<FRHICommandSetScissorRect>(ScissorRegion);
     }
@@ -311,8 +311,6 @@ public:
     FORCEINLINE void Set32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) noexcept
     {
         const int32 Size = Num32BitConstants * sizeof(uint32);
-        CHECK(Num32BitConstants <= FHardwareLimits::MAX_SHADER_CONSTANTS);
-
         void* SourceData = Allocate(Size, alignof(uint32));
         FMemory::Memcpy(SourceData, Shader32BitConstants, Size);
         EmplaceCommand<FRHICommandSet32BitShaderConstants>(Shader, SourceData, Num32BitConstants);
@@ -369,12 +367,12 @@ public:
         EmplaceCommand<FRHICommandUpdateBuffer>(Dst, BufferRegion, SrcData);
     }
 
-    FORCEINLINE void UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* InSrcData, uint32 InSrcRowPitch) noexcept
+    FORCEINLINE void UpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* InSrcData, uint32 SrcRowPitch) noexcept
     {
-        const uint32 SizeInBytes = InSrcRowPitch * TextureRegion.Height;
+        const uint32 SizeInBytes = SrcRowPitch * TextureRegion.Height;
         void* SrcData = Allocate(SizeInBytes, alignof(uint8));
         FMemory::Memcpy(SrcData, InSrcData, SizeInBytes);
-        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, TextureRegion, MipLevel, SrcData, InSrcRowPitch);
+        EmplaceCommand<FRHICommandUpdateTexture2D>(Dst, TextureRegion, MipLevel, SrcData, SrcRowPitch);
     }
 
     FORCEINLINE void ResolveTexture(FRHITexture* Dst, FRHITexture* Src) noexcept
@@ -382,7 +380,7 @@ public:
         EmplaceCommand<FRHICommandResolveTexture>(Dst, Src);
     }
 
-    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo) noexcept
+    FORCEINLINE void CopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo) noexcept
     {
         EmplaceCommand<FRHICommandCopyBuffer>(Dst, Src, CopyInfo);
     }
@@ -392,7 +390,7 @@ public:
         EmplaceCommand<FRHICommandCopyTexture>(Dst, Src);
     }
 
-    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyTextureInfo) noexcept
+    FORCEINLINE void CopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyTextureInfo) noexcept
     {
         EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
@@ -407,23 +405,14 @@ public:
         EmplaceCommand<FRHICommandDiscardContents>(Texture);
     }
 
-    FORCEINLINE void BuildRayTracingGeometry(
-        FRHIRayTracingGeometry* RayTracingGeometry,
-        FRHIBuffer*             VertexBuffer,
-        uint32                  NumVertices,
-        FRHIBuffer*             IndexBuffer,
-        uint32                  NumIndices,
-        EIndexFormat            IndexFormat,
-        bool                    bUpdate) noexcept
+    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo) noexcept
     {
-        CHECK(!bUpdate || (bUpdate && RayTracingGeometry && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
-        EmplaceCommand<FRHICommandBuildRayTracingGeometry>(RayTracingGeometry, VertexBuffer, NumVertices, IndexBuffer, NumIndices, IndexFormat, bUpdate);
+        EmplaceCommand<FRHICommandBuildRayTracingScene>(RayTracingScene, BuildInfo);
     }
 
-    FORCEINLINE void BuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance> Instances, bool bUpdate) noexcept
+    FORCEINLINE void BuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo) noexcept
     {
-        CHECK(!bUpdate || (bUpdate && Scene && IsEnumFlagSet(Scene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
-        EmplaceCommand<FRHICommandBuildRayTracingScene>(Scene, Instances, bUpdate);
+        EmplaceCommand<FRHICommandBuildRayTracingGeometry>(RayTracingGeometry, BuildInfo);
     }
 
     // TODO: Refactor
@@ -441,7 +430,6 @@ public:
 
     FORCEINLINE void GenerateMips(FRHITexture* Texture) noexcept
     {
-        CHECK(Texture != nullptr);
         EmplaceCommand<FRHICommandGenerateMips>(Texture);
     }
 
@@ -459,8 +447,6 @@ public:
 
     FORCEINLINE void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
     {
-        CHECK(Buffer != nullptr);
-
         if (BeforeState != AfterState)
         {
             EmplaceCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
@@ -473,66 +459,56 @@ public:
 
     FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture) noexcept
     {
-        CHECK(Texture != nullptr);
         EmplaceCommand<FRHICommandUnorderedAccessTextureBarrier>(Texture);
     }
 
     FORCEINLINE void UnorderedAccessBufferBarrier(FRHIBuffer* Buffer) noexcept
     {
-        CHECK(Buffer != nullptr);
         EmplaceCommand<FRHICommandUnorderedAccessBufferBarrier>(Buffer);
     }
 
     FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept
     {
-        CHECK(VertexCount > 0);
         EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
         Statistics.NumDrawCalls++;
     }
 
     FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) noexcept
     {
-        CHECK(IndexCount > 0);
         EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
         Statistics.NumDrawCalls++;
     }
 
     FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) noexcept
     {
-        CHECK(VertexCountPerInstance > 0 && InstanceCount > 0);
         EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
         Statistics.NumDrawCalls++;
     }
      
     FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) noexcept
     {
-        CHECK(IndexCountPerInstance > 0 && InstanceCount > 0);
         EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
         Statistics.NumDrawCalls++;
     }
 
     FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
     {
-        CHECK(ThreadGroupCountX > 0 || ThreadGroupCountY > 0 || ThreadGroupCountZ > 0);
         EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
         Statistics.NumDispatchCalls++;
     }
 
     FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
     {
-        CHECK(Width > 0 || Height > 0 || Depth > 0);
         EmplaceCommand<FRHICommandDispatchRays>(Scene, PipelineState, Width, Height, Depth);
     }
 
     FORCEINLINE void PresentViewport(FRHIViewport* Viewport, bool bVerticalSync) noexcept
     {
-        CHECK(Viewport != nullptr);
         EmplaceCommand<FRHICommandPresentViewport>(Viewport, bVerticalSync);
     }
 
     FORCEINLINE void ResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) noexcept
     {
-        CHECK(Viewport != nullptr);
         EmplaceCommand<FRHICommandResizeViewport>(Viewport, Width, Height);
     }
 
@@ -560,7 +536,7 @@ public:
 private:
     FMemoryStack          Memory;
 
-    /** @brief - pointer to FirstCommand to avoid branching */
+    // NOTE: Pointer to FirstCommand to avoid branching
     FRHICommand**         CommandPointer;
     FRHICommand*          FirstCommand;
     IRHICommandContext*   CommandContext;
@@ -571,13 +547,11 @@ private:
     bool                  bIsRenderPassActive = false;
 };
 
-
 void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 {
     CommandList->ExecuteWithContext(CommandContext);
     CommandList->~FRHICommandList();
 }
-
 
 struct FRHIThreadTask : FNonCopyable
 {

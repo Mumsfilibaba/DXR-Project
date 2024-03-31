@@ -78,7 +78,7 @@ bool FMesh::Init(const FMeshData& Data)
 
     // If we can get away with 16-bit indices, store them in this array
     TArray<uint16> NewIndicies;
-    
+
     // Initial data
     const void* InitialIndicies = nullptr;
 
@@ -144,7 +144,15 @@ bool FMesh::Init(const FMeshData& Data)
 
 bool FMesh::BuildAccelerationStructure(FRHICommandList& CommandList)
 {
-    CommandList.BuildRayTracingGeometry(RTGeometry.Get(), VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, true);
+    FRayTracingGeometryBuildInfo BuildInfo;
+    BuildInfo.VertexBuffer = VertexBuffer.Get();
+    BuildInfo.NumVertices  = VertexCount;
+    BuildInfo.IndexBuffer  = IndexBuffer.Get();
+    BuildInfo.NumIndices   = IndexCount;
+    BuildInfo.IndexFormat  = IndexFormat;
+    BuildInfo.bUpdate      = true;
+
+    CommandList.BuildRayTracingGeometry(RTGeometry.Get(), BuildInfo);
     return true;
 }
 

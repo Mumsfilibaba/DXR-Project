@@ -84,7 +84,13 @@ public:
 #if VK_EXT_pipeline_creation_cache_control
     const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& GetPipelineCreationCacheControlFeatures() const { return PipelineCreationCacheControlFeatures; }
 #endif
-    
+#if VK_KHR_acceleration_structure
+    const VkPhysicalDeviceAccelerationStructureFeaturesKHR& GetAccelerationStructureFeatures() const { return AccelerationStructureFeatures; }
+#endif
+#if VK_KHR_ray_tracing_pipeline
+    const VkPhysicalDeviceRayTracingPipelineFeaturesKHR& GetRayTracingPipelineFeatures() const { return RayTracingPipelineFeatures; }
+#endif
+
     FVulkanInstance* GetInstance() const
     {
         return Instance;
@@ -122,5 +128,11 @@ private:
 #endif
 #if VK_EXT_pipeline_creation_cache_control
     VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT PipelineCreationCacheControlFeatures;
+#endif
+#if VK_KHR_acceleration_structure
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR AccelerationStructureFeatures;
+#endif
+#if VK_KHR_ray_tracing_pipeline
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingPipelineFeatures;
 #endif
 };

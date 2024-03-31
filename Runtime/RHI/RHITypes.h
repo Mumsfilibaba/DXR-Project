@@ -4,6 +4,9 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
+class FRHIBuffer;
+struct FRHIRayTracingGeometryInstance;
+
 enum class EFormat : uint8
 {
     Unknown               = 0,
@@ -213,7 +216,6 @@ constexpr const CHAR* ToString(EFormat Format)
         default:                                return "Unknown";
     }
 }
-
 
 constexpr uint32 GetByteStrideFromFormat(EFormat Format)
 {
@@ -499,7 +501,6 @@ constexpr const CHAR* ToString(EResourceAccess ResourceState)
     }
 }
 
-
 enum class EPrimitiveTopology
 {
     Undefined     = 0,
@@ -523,7 +524,6 @@ constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
     default:                                return "Unknown";
     }
 }
-
 
 enum class EShadingRate
 {
@@ -550,7 +550,6 @@ constexpr const CHAR* ToString(EShadingRate ShadingRate)
     default:                    return "Unknown";
     }
 }
-
 
 enum class EDescriptorType : uint32
 {
@@ -584,48 +583,27 @@ class FRHIDescriptorHandle
 
 public:
 
-    /**
-     * @brief - Default Constructor
-     */
     constexpr FRHIDescriptorHandle()
         : Data(0)
     {
     }
 
-    /**
-     * @brief         - Constructor that creates a descriptor-handle
-     * @param InType  - Type of descriptor
-     * @param InIndex - Index to identify the descriptor-handle inside the backend (Descriptor-Heap)
-     */
     constexpr FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
         : Index(InIndex)
         , Type(InType)
     {
     }
 
-    /** 
-     * @return - Returns true if the handle is valid
-     */
     constexpr bool IsValid() const
     { 
         return Type != EDescriptorType::Unknown && Index != InvalidHandle; 
     }
 
-    /**
-     * @brief       - Compare two descriptor-handles to see if the reference the same resource
-     * @param Other - Other instance to compare with
-     * @return      - Returns true if the handles are equal
-     */
     constexpr bool operator==(const FRHIDescriptorHandle& Other) const
     {
         return Data == Other.Data;
     }
 
-    /**
-     * @brief       - Compare two descriptor-handles to see if the reference the same resource
-     * @param Other - Other instance to compare with
-     * @return      - Returns false if the handles are equal
-     */
     constexpr bool operator!=(const FRHIDescriptorHandle& Other) const
     {
         return Data != Other.Data;
@@ -644,32 +622,20 @@ private:
     };
 };
 
-
 struct FDepthStencilValue
 {
-    /**
-     * @brief - Default Constructor
-     */
     constexpr FDepthStencilValue()
         : Depth(1.0f)
         , Stencil(0)
     {
     }
 
-    /**
-     * @brief           - Constructor taking depth and stencil value
-     * @param InDepth   - Depth-value
-     * @param InStencil - Stencil-value
-     */
-    constexpr FDepthStencilValue(float InDepth, uint8 InStencil)
+    constexpr FDepthStencilValue(float InDepth, uint32 InStencil)
         : Depth(InDepth)
         , Stencil(InStencil)
     {
     }
 
-    /** 
-     * @return - Returns and calculates the hash for this type
-     */
     constexpr uint64 GetHash() const
     {
         uint64 Hash = Stencil;
@@ -677,33 +643,19 @@ struct FDepthStencilValue
         return Hash;
     }
 
-    /**
-     * @brief       - Compare with another instance
-     * @param Other - Other instance to compare with
-     * @return      - Returns true if the instances are equal
-     */
     constexpr bool operator==(const FDepthStencilValue& Other) const
     {
         return Depth == Other.Depth && Stencil && Other.Stencil;
     }
 
-    /**
-     * @brief       - Compare with another instance
-     * @param Other - Other instance to compare with
-     * @return      - Returns false if the instances are equal
-     */
     constexpr bool operator!=(const FDepthStencilValue& Other) const
     {
         return !(*this == Other);
     }
 
-    /** @brief - Value to clear the depth portion of a texture with */
-    float Depth;
-
-    /** @brief - Value to clear the stencil portion of a texture with */
-    uint8 Stencil;
+    float  Depth;
+    uint32 Stencil;
 };
-
 
 struct FClearValue
 {
@@ -713,9 +665,6 @@ struct FClearValue
         DepthStencil = 2,
     };
 
-    /**
-     * @brief - Default Constructor that creates a black clear color
-     */
     FClearValue()
         : Type(EType::Color)
         , Format(EFormat::Unknown)
@@ -723,12 +672,6 @@ struct FClearValue
     {
     }
 
-    /**
-     * @brief           - Constructor that creates a DepthStencil-ClearValue
-     * @param InFormat  - Format to clear
-     * @param InDepth   - Depth-value
-     * @param InStencil - Stencil-value
-     */
     FClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
         : Type(EType::DepthStencil)
         , Format(InFormat)
@@ -736,14 +679,6 @@ struct FClearValue
     {
     }
 
-    /**
-     * @brief          - Constructor that creates Color-ClearValue
-     * @param InFormat - Format to clear
-     * @param InR      - Red-Channel value
-     * @param InG      - Green-Channel value
-     * @param InB      - Blue-Channel value
-     * @param InA      - Alpha-Channel value
-     */
     FClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
         : Type(EType::Color)
         , Format(InFormat)
@@ -751,10 +686,6 @@ struct FClearValue
     {
     }
 
-    /**
-     * @brief       - Copy-constructor
-     * @param Other - Instance to copy
-     */
     FClearValue(const FClearValue& Other)
         : Type(Other.Type)
         , Format(Other.Format)
@@ -771,63 +702,33 @@ struct FClearValue
         }
     }
 
-    /** 
-     * @return - Returns a true if the value is a FloatColor
-     */
-    FORCEINLINE bool IsColorValue() const 
-    { 
-        return Type == EType::Color;
-    }
+    bool IsColorValue()        const { return Type == EType::Color; }
+    bool IsDepthStencilValue() const { return Type == EType::DepthStencil; }
 
-    /** 
-     * @return - Returns a true if the value is a DepthStencilClearValue 
-     */
-    FORCEINLINE bool IsDepthStencilValue() const 
-    { 
-        return Type == EType::DepthStencil;
-    }
-
-    /**
-     * @return - Returns a FloatColor
-     */
-    FORCEINLINE FFloatColor& AsColor()
+    FFloatColor& AsColor()
     {
         CHECK(IsColorValue());
         return ColorValue;
     }
 
-    /**
-     * @return - Returns a FloatColor
-     */
-    FORCEINLINE const FFloatColor& AsColor() const
+    const FFloatColor& AsColor() const
     {
         CHECK(IsColorValue());
         return ColorValue;
     }
 
-    /** 
-     * @return - Returns a DepthStencilClearValue 
-     */
-    FORCEINLINE FDepthStencilValue& AsDepthStencil()
+    FDepthStencilValue& AsDepthStencil()
     {
         CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
-    /** 
-     * @return - Returns a DepthStencilClearValue 
-     */
-    FORCEINLINE const FDepthStencilValue& AsDepthStencil() const
+    const FDepthStencilValue& AsDepthStencil() const
     {
         CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
-    /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Instance to copy
-     * @return      - Returns a reference to this instance
-     */
     FClearValue& operator=(const FClearValue& Other)
     {
         Type   = Other.Type;
@@ -846,11 +747,6 @@ struct FClearValue
         return *this;
     }
 
-    /**
-     * @brief       - Compare with another instance
-     * @param Other - Instance to compare with
-     * @return      - Returns true if the instances are equal
-     */
     bool operator==(const FClearValue& Other) const
     {
         if (Type != Other.Type || Format != Other.Format)
@@ -867,32 +763,19 @@ struct FClearValue
         return DepthStencilValue == Other.DepthStencilValue;
     }
 
-    /**
-     * @brief       - Compare with another instance
-     * @param Other - Instance to compare with
-     * @return      - Returns false if the instances are equal
-     */
     bool operator!=(const FClearValue& Other) const
     {
         return !(*this == Other);
     }
 
-    /** @brief - Type of ClearValue */
-    EType Type;
-
-    /** @brief - Format of the ClearValue */
+    EType   Type;
     EFormat Format;
-
     union
     {
-        /** @brief - Color-value */
-        FFloatColor ColorValue;
-
-        /** @brief - DepthStencil-value */
+        FFloatColor        ColorValue;
         FDepthStencilValue DepthStencilValue;
     };
 };
-
 
 struct FBufferRegion
 {
@@ -907,7 +790,6 @@ struct FBufferRegion
     uint64 Offset;
     uint64 Size;
 };
-
 
 struct FTextureRegion2D
 {
@@ -928,12 +810,11 @@ struct FTextureRegion2D
     uint32 PositionY;
 };
 
-
-struct FRHIBufferCopyDesc
+struct FBufferCopyInfo
 {
-    FRHIBufferCopyDesc() = default;
+    FBufferCopyInfo() = default;
 
-    FRHIBufferCopyDesc(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize)
+    FBufferCopyInfo(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize)
         : SrcOffset(InSrcOffset)
         , DstOffset(InDstOffset)
         , Size(InSize)
@@ -945,8 +826,7 @@ struct FRHIBufferCopyDesc
     uint64 Size      = 0;
 };
 
-
-struct FRHITextureCopyDesc
+struct FTextureCopyInfo
 {
     FIntVector3 DstPosition;
     uint32      DstArraySlice;
@@ -961,12 +841,11 @@ struct FRHITextureCopyDesc
     uint32      NumMipLevels;
 };
 
-
-struct FRHIViewportRegion
+struct FViewportRegion
 {
-    FRHIViewportRegion() = default;
+    FViewportRegion() = default;
 
-    FRHIViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth)
+    FViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth)
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
@@ -984,12 +863,11 @@ struct FRHIViewportRegion
     float MaxDepth  = 1.0f;
 };
 
-
-struct FRHIScissorRegion
+struct FScissorRegion
 {
-    FRHIScissorRegion() = default;
+    FScissorRegion() = default;
 
-    FRHIScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY)
+    FScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY)
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
@@ -1001,4 +879,42 @@ struct FRHIScissorRegion
     float Height    = 0.0f;
     float PositionX = 0.0f;
     float PositionY = 0.0f;
+};
+
+struct FRayTracingSceneBuildInfo
+{
+    FRayTracingSceneBuildInfo() = default;
+
+    FRayTracingSceneBuildInfo(const FRHIRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate)
+        : Instances(InInstances)
+        , NumInstances(InNumInstances)
+        , bUpdate(bInUpdate)
+    {
+    }
+
+    const FRHIRayTracingGeometryInstance* Instances    = nullptr;
+    uint32                                NumInstances = 0;
+    bool                                  bUpdate      = false;
+};
+
+struct FRayTracingGeometryBuildInfo
+{
+    FRayTracingGeometryBuildInfo() = default;
+
+    FRayTracingGeometryBuildInfo(FRHIBuffer* InVertexBuffer, uint32 InNumVertices, FRHIBuffer* InIndexBuffer, uint32 InNumIndices, EIndexFormat InIndexFormat, bool bInUpdate)
+        : VertexBuffer(InVertexBuffer)
+        , NumVertices(InNumVertices)
+        , IndexBuffer(InIndexBuffer)
+        , NumIndices(InNumIndices)
+        , IndexFormat(InIndexFormat)
+        , bUpdate(bInUpdate)
+    {
+    }
+
+    FRHIBuffer*  VertexBuffer = nullptr;
+    uint32       NumVertices  = 0;
+    FRHIBuffer*  IndexBuffer  = nullptr;
+    uint32       NumIndices   = 0;
+    EIndexFormat IndexFormat  = EIndexFormat::uint32;
+    bool         bUpdate      = false;
 };

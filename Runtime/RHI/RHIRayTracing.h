@@ -4,6 +4,8 @@
 #include "Core/Math/Matrix3x4.h"
 #include "Core/Containers/SharedRef.h"
 
+#define RHI_DEFAULT_GEOMETRY_INSTANCE_MASK (0xff)
+
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 class FRHIRayTracingGeometry;
@@ -11,10 +13,11 @@ class FRHIShaderResourceView;
 class FRHIUnorderedAccessView;
 class FRHIBuffer;
 class FRHISamplerState;
+struct FRHIRayTracingGeometryInstance;
 
 typedef TSharedRef<class FRHIAccelerationStructure>  FRHIAccelerationStructureRef;
-typedef TSharedRef<class FRHIRayTracingGeometry>     FRHIRayTracingGeometryRef;
 typedef TSharedRef<class FRHIRayTracingScene>        FRHIRayTracingSceneRef;
+typedef TSharedRef<class FRHIRayTracingGeometry>     FRHIRayTracingGeometryRef;
 
 struct FRayPayload
 {
@@ -28,7 +31,6 @@ struct FRayIntersectionAttributes
     float Attrib1;
 };
 
-
 enum class EAccelerationStructureBuildFlags : uint8
 {
     None            = 0,
@@ -38,7 +40,6 @@ enum class EAccelerationStructureBuildFlags : uint8
 };
 
 ENUM_CLASS_OPERATORS(EAccelerationStructureBuildFlags);
-
 
 enum class ERayTracingInstanceFlags : uint8
 {
@@ -51,18 +52,11 @@ enum class ERayTracingInstanceFlags : uint8
 
 ENUM_CLASS_OPERATORS(ERayTracingInstanceFlags);
 
-
 struct FRHIRayTracingGeometryInstance
 {
     FRHIRayTracingGeometryInstance() = default;
 
-    FRHIRayTracingGeometryInstance(
-        FRHIRayTracingGeometry*  InGeometry,
-        uint32                   InInstanceIndex,
-        uint32                   InHitGroupIndex,
-        ERayTracingInstanceFlags InFlags,
-        uint32                   InMask,
-        const FMatrix3x4&        InTransform)
+    FRHIRayTracingGeometryInstance(FRHIRayTracingGeometry* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex, ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform)
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -72,29 +66,24 @@ struct FRHIRayTracingGeometryInstance
     {
     }
 
-    bool operator==(const FRHIRayTracingGeometryInstance& RHS) const
+    bool operator==(const FRHIRayTracingGeometryInstance& Other) const
     {
-        return Geometry      == RHS.Geometry
-            && InstanceIndex == RHS.InstanceIndex
-            && HitGroupIndex == RHS.HitGroupIndex
-            && Flags         == RHS.Flags
-            && Mask          == RHS.Mask
-            && Transform     == RHS.Transform;
+        return Geometry == Other.Geometry && InstanceIndex == Other.InstanceIndex && HitGroupIndex == Other.HitGroupIndex && Flags == Other.Flags && Mask == Other.Mask && Transform == Other.Transform;
     }
 
-    bool operator!=(const FRHIRayTracingGeometryInstance& RHS) const
+    bool operator!=(const FRHIRayTracingGeometryInstance& Other) const
     {
-        return !(*this == RHS);
+        return !(*this == Other);
     }
 
-    FRHIRayTracingGeometry*  Geometry{nullptr};
-    uint32                   InstanceIndex{0};
-    uint32                   HitGroupIndex{0};
-    ERayTracingInstanceFlags Flags{ERayTracingInstanceFlags::None};
-    uint32                   Mask{0xff};
-    FMatrix3x4               Transform;
+    FRHIRayTracingGeometry*  Geometry      = nullptr;
+    uint32                   InstanceIndex = 0;
+    uint32                   HitGroupIndex = 0;
+    ERayTracingInstanceFlags Flags         = ERayTracingInstanceFlags::None;
+    uint32                   Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
+
+    FMatrix3x4 Transform;
 };
-
 
 struct FRHIAccelerationStructureInitializer
 {
@@ -167,11 +156,11 @@ struct FRHIRayTracingGeometryDesc : public FRHIAccelerationStructureInitializer
         return !(*this == RHS);
     }
 
-    FRHIBuffer*  VertexBuffer{nullptr};
-    uint32       NumVertices{0};
-    FRHIBuffer*  IndexBuffer{nullptr};
-    uint32       NumIndices{0};
-    EIndexFormat IndexFormat{EIndexFormat::Unknown};
+    FRHIBuffer*  VertexBuffer;
+    uint32       NumVertices;
+    FRHIBuffer*  IndexBuffer;
+    uint32       NumIndices;
+    EIndexFormat IndexFormat;
 };
 
 
@@ -211,19 +200,16 @@ protected:
     virtual ~FRHIAccelerationStructure() = default;
 
 public:
-    virtual class FRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
-
+    virtual class FRHIRayTracingScene*    GetRayTracingScene()    { return nullptr; }
     virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
 
-    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
-
+    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return nullptr; }
 
-    virtual FString GetDebugName() const { return ""; }
-
     virtual void SetDebugName(const FString& InName) { }
+    virtual FString GetDebugName() const { return FString(); }
 
-    FORCEINLINE EAccelerationStructureBuildFlags GetFlags() const 
+    EAccelerationStructureBuildFlags GetFlags() const 
     {
         return Flags;
     }

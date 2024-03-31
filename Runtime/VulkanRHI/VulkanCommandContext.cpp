@@ -519,7 +519,7 @@ void FVulkanCommandContext::RHIEndRenderPass()
     GetCommandBuffer()->EndRenderPass();
 }
 
-void FVulkanCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegion)
+void FVulkanCommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)
 {
     static bool bNegativeViewport = true;
     
@@ -546,7 +546,7 @@ void FVulkanCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportReg
     ContextState.SetViewports(&Viewport, 1);
 }
 
-void FVulkanCommandContext::RHISetScissorRect(const FRHIScissorRegion& ScissorRegion)
+void FVulkanCommandContext::RHISetScissorRect(const FScissorRegion& ScissorRegion)
 {
     VkRect2D ScissorRect;
     ScissorRect.offset.x      = static_cast<int32_t>(ScissorRegion.PositionX);
@@ -834,7 +834,7 @@ void FVulkanCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src
     GetCommandBuffer()->ResolveImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &ImageResolve);
 }
 
-void FVulkanCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
+void FVulkanCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc)
 {
     FVulkanBuffer* SrcVulkanBuffer = GetVulkanBuffer(Src);
     CHECK(SrcVulkanBuffer != nullptr);
@@ -903,7 +903,7 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     GetCommandBuffer()->CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, Desc.NumMipLevels, ImageCopies);
 }
 
-void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc)
+void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc)
 {
     FVulkanTexture* SrcVulkanTexture = GetVulkanTexture(Src);
     CHECK(SrcVulkanTexture != nullptr);
@@ -991,22 +991,16 @@ void FVulkanCommandContext::RHIDiscardContents(FRHITexture* Resource)
     UNREFERENCED_VARIABLE(Resource);
 }
 
-void FVulkanCommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate)
+void FVulkanCommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* InRayTracingScene, const FRayTracingSceneBuildInfo& InBuildInfo)
 {
-    UNREFERENCED_VARIABLE(RayTracingGeometry);
-    UNREFERENCED_VARIABLE(VertexBuffer);
-    UNREFERENCED_VARIABLE(NumVertices);
-    UNREFERENCED_VARIABLE(IndexBuffer);
-    UNREFERENCED_VARIABLE(NumIndices);
-    UNREFERENCED_VARIABLE(IndexFormat);
-    UNREFERENCED_VARIABLE(bUpdate);
+    UNREFERENCED_VARIABLE(InRayTracingScene);
+    UNREFERENCED_VARIABLE(InBuildInfo);
 }
 
-void FVulkanCommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
+void FVulkanCommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* InRayTracingGeometry, const FRayTracingGeometryBuildInfo& InBuildInfo)
 {
-    UNREFERENCED_VARIABLE(RayTracingScene);
-    UNREFERENCED_VARIABLE(Instances);
-    UNREFERENCED_VARIABLE(bUpdate);
+    UNREFERENCED_VARIABLE(InRayTracingGeometry);
+    UNREFERENCED_VARIABLE(InBuildInfo);
 }
 
 void FVulkanCommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)

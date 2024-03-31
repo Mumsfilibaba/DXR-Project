@@ -627,7 +627,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                     continue;
                 }
 
-                FRHIScissorRegion ScissorRegion(
+                FScissorRegion ScissorRegion(
                     DrawCommand->ClipRect.z - ClipOffset.x,
                     DrawCommand->ClipRect.w - ClipOffset.y,
                     DrawCommand->ClipRect.x - ClipOffset.x,
@@ -666,7 +666,7 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* Draw
     }
 
     // Setup viewport
-    FRHIViewportRegion ViewportRegion(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 0.0f, 0.0f, 1.0f);
     CmdList.SetViewport(ViewportRegion);
 
     // Bind shader and vertex buffers

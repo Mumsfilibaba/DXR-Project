@@ -119,10 +119,10 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     const float RenderWidth  = float(FrameResources.CurrentWidth);
     const float RenderHeight = float(FrameResources.CurrentHeight);
 
-    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
 
-    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
     FRHIRenderPassDesc RenderPass;

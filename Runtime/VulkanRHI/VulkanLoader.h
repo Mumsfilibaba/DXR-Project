@@ -174,6 +174,8 @@ VULKAN_FUNCTION_DECLARATION(DestroySampler);
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DECLARATION(CreateAccelerationStructureKHR);
 VULKAN_FUNCTION_DECLARATION(DestroyAccelerationStructureKHR);
+VULKAN_FUNCTION_DECLARATION(GetAccelerationStructureBuildSizesKHR);
+VULKAN_FUNCTION_DECLARATION(GetAccelerationStructureDeviceAddressKHR);
 #endif
 
 VULKAN_FUNCTION_DECLARATION(CreateQueryPool);
@@ -223,6 +225,9 @@ VULKAN_FUNCTION_DECLARATION(CmdDrawIndexed);
 VULKAN_FUNCTION_DECLARATION(CmdWriteTimestamp);
 #if VK_EXT_debug_utils
 VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
+#endif
+#if VK_KHR_acceleration_structure
+VULKAN_FUNCTION_DECLARATION(CmdBuildAccelerationStructuresKHR);
 #endif
 
 bool LoadDeviceFunctions(FVulkanDevice* Device);

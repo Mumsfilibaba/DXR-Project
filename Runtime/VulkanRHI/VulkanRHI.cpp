@@ -277,15 +277,25 @@ FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSc
 
 FRHIRayTracingGeometry* FVulkanRHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
 {
+    FRayTracingGeometryBuildInfo BuildInfo;
+    BuildInfo.VertexBuffer = InDesc.VertexBuffer;
+    BuildInfo.NumVertices  = InDesc.NumVertices;
+    BuildInfo.IndexBuffer  = InDesc.IndexBuffer;
+    BuildInfo.NumIndices   = InDesc.NumIndices;
+    BuildInfo.IndexFormat  = InDesc.IndexFormat;
+    BuildInfo.bUpdate      = false;
+
+    GraphicsCommandContext->RHIStartContext();
+
     FVulkanRayTracingGeometryRef NewGeometry = new FVulkanRayTracingGeometry(GetDevice(), InDesc);
-    if (!NewGeometry->Initialize())
+    if (!NewGeometry->Build(*GraphicsCommandContext, BuildInfo))
     {
-        return nullptr;
+        DEBUG_BREAK();
+        NewGeometry.Reset();
     }
-    else
-    {
-        return NewGeometry.ReleaseOwnership();
-    }
+
+    GraphicsCommandContext->RHIFinishContext();
+    return NewGeometry.ReleaseOwnership();
 }
 
 FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc)

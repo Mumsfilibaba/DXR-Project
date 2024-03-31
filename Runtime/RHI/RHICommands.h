@@ -1,7 +1,8 @@
 #pragma once
 #include "RHITypes.h"
-#include "IRHICommandContext.h"
 #include "RHIResources.h"
+#include "RHIRayTracing.h"
+#include "IRHICommandContext.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Debug.h"
@@ -195,7 +196,7 @@ DECLARE_RHICOMMAND(FRHICommandEndRenderPass)
 
 DECLARE_RHICOMMAND(FRHICommandSetViewport)
 {
-    FORCEINLINE FRHICommandSetViewport(const FRHIViewportRegion& InViewportRegion)
+    FORCEINLINE FRHICommandSetViewport(const FViewportRegion& InViewportRegion)
         : ViewportRegion(InViewportRegion)
     {
     }
@@ -205,12 +206,12 @@ DECLARE_RHICOMMAND(FRHICommandSetViewport)
         CommandContext.RHISetViewport(ViewportRegion);
     }
 
-    FRHIViewportRegion ViewportRegion;
+    FViewportRegion ViewportRegion;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
 {
-    FORCEINLINE FRHICommandSetScissorRect(const FRHIScissorRegion& InScissorRegion)
+    FORCEINLINE FRHICommandSetScissorRect(const FScissorRegion& InScissorRegion)
         : ScissorRegion(InScissorRegion)
     {
     }
@@ -220,7 +221,7 @@ DECLARE_RHICOMMAND(FRHICommandSetScissorRect)
         CommandContext.RHISetScissorRect(ScissorRegion);
     }
 
-    FRHIScissorRegion ScissorRegion;
+    FScissorRegion ScissorRegion;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetBlendFactor)
@@ -562,7 +563,7 @@ DECLARE_RHICOMMAND(FRHICommandResolveTexture)
 
 DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 {
-    FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FRHIBufferCopyDesc& InCopyBufferInfo)
+    FORCEINLINE FRHICommandCopyBuffer(FRHIBuffer* InDst, FRHIBuffer* InSrc, const FBufferCopyInfo& InCopyBufferInfo)
         : Dst(InDst)
         , Src(InSrc)
         , CopyBufferInfo(InCopyBufferInfo)
@@ -576,7 +577,7 @@ DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
 
     FRHIBuffer*        Dst;
     FRHIBuffer*        Src;
-    FRHIBufferCopyDesc CopyBufferInfo;
+    FBufferCopyInfo CopyBufferInfo;
 };
 
 DECLARE_RHICOMMAND(FRHICommandCopyTexture)
@@ -598,7 +599,7 @@ DECLARE_RHICOMMAND(FRHICommandCopyTexture)
 
 DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 {
-    FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FRHITextureCopyDesc& InCopyInfo)
+    FORCEINLINE FRHICommandCopyTextureRegion(FRHITexture* InDst, FRHITexture* InSrc, const FTextureCopyInfo& InCopyInfo)
         : Dst(InDst)
         , Src(InSrc)
         , CopyInfo(InCopyInfo)
@@ -612,7 +613,7 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
 
     FRHITexture*        Dst;
     FRHITexture*        Src;
-    FRHITextureCopyDesc CopyInfo;
+    FTextureCopyInfo CopyInfo;
 };
 
 DECLARE_RHICOMMAND(FRHICommandDestroyResource)
@@ -645,62 +646,44 @@ DECLARE_RHICOMMAND(FRHICommandDiscardContents)
     FRHITexture* Texture;
 };
 
-DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
-{
-    FORCEINLINE FRHICommandBuildRayTracingGeometry(
-        FRHIRayTracingGeometry* InRayTracingGeometry,
-        FRHIBuffer*             InVertexBuffer,
-        uint32                  InNumVertices,
-        FRHIBuffer*             InIndexBuffer,
-        uint32                  InNumIndices,
-        EIndexFormat            InIndexFormat,
-        bool                    bInUpdate)
-        : RayTracingGeometry(InRayTracingGeometry)
-        , VertexBuffer(InVertexBuffer)
-        , NumVertices(InNumVertices)
-        , IndexBuffer(InIndexBuffer)
-        , NumIndices(InNumIndices)
-        , IndexFormat(InIndexFormat)
-        , bUpdate(bInUpdate)
-    { 
-        CHECK(VertexBuffer && VertexBuffer->GetDesc().IsVertexBuffer());
-        CHECK(IndexBuffer  && IndexBuffer->GetDesc().IsIndexBuffer());
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.RHIBuildRayTracingGeometry(RayTracingGeometry, VertexBuffer, NumVertices, IndexBuffer, NumIndices, IndexFormat, bUpdate);
-    }
-
-    FRHIRayTracingGeometry* RayTracingGeometry;
-    FRHIBuffer*             VertexBuffer;
-    uint32                  NumVertices;
-    FRHIBuffer*             IndexBuffer;
-    uint32                  NumIndices;
-    EIndexFormat            IndexFormat;
-    bool                    bUpdate;
-};
-
 DECLARE_RHICOMMAND(FRHICommandBuildRayTracingScene)
 {
-    FORCEINLINE FRHICommandBuildRayTracingScene(
-        FRHIRayTracingScene* InScene,
-        const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances,
-        bool bInUpdate)
-        : Scene(InScene)
-        , Instances(InInstances)
-        , bUpdate(bInUpdate)
+    FORCEINLINE FRHICommandBuildRayTracingScene(FRHIRayTracingScene* InRayTracingScene, const FRayTracingSceneBuildInfo& InBuildInfo)
+        : RayTracingScene(InRayTracingScene)
+        , BuildInfo(InBuildInfo)
     {
+        CHECK(RayTracingScene != nullptr);
+        CHECK(!BuildInfo.bUpdate || (BuildInfo.bUpdate && IsEnumFlagSet(RayTracingScene->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.RHIBuildRayTracingScene(Scene, Instances, bUpdate);
+        CommandContext.RHIBuildRayTracingScene(RayTracingScene, BuildInfo);
     }
 
-    FRHIRayTracingScene*                             Scene;
-    TArrayView<const FRHIRayTracingGeometryInstance> Instances;
-    bool                                             bUpdate;
+    FRHIRayTracingScene*      RayTracingScene;
+    FRayTracingSceneBuildInfo BuildInfo;
+};
+
+DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
+{
+    FORCEINLINE FRHICommandBuildRayTracingGeometry(FRHIRayTracingGeometry* InRayTracingGeometry, const FRayTracingGeometryBuildInfo& InBuildInfo)
+        : RayTracingGeometry(InRayTracingGeometry)
+        , BuildInfo(InBuildInfo)
+    { 
+        CHECK(RayTracingGeometry != nullptr);
+        CHECK(!BuildInfo.bUpdate || (BuildInfo.bUpdate && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
+        CHECK(BuildInfo.VertexBuffer && BuildInfo.VertexBuffer->GetDesc().IsVertexBuffer());
+        CHECK(BuildInfo.IndexBuffer  && BuildInfo.IndexBuffer->GetDesc().IsIndexBuffer());
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RHIBuildRayTracingGeometry(RayTracingGeometry, BuildInfo);
+    }
+
+    FRHIRayTracingGeometry*      RayTracingGeometry;
+    FRayTracingGeometryBuildInfo BuildInfo;
 };
 
 DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
@@ -742,6 +725,7 @@ DECLARE_RHICOMMAND(FRHICommandGenerateMips)
     FORCEINLINE FRHICommandGenerateMips(FRHITexture* InTexture)
         : Texture(InTexture)
     {
+        CHECK(Texture != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -759,6 +743,7 @@ DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
     {
+        CHECK(Texture != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -778,6 +763,7 @@ DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)
         , BeforeState(InBeforeState)
         , AfterState(InAfterState)
     {
+        CHECK(Buffer != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -795,6 +781,7 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessTextureBarrier)
     FORCEINLINE FRHICommandUnorderedAccessTextureBarrier(FRHITexture* InTexture)
         : Texture(InTexture)
     {
+        CHECK(Texture != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -810,6 +797,7 @@ DECLARE_RHICOMMAND(FRHICommandUnorderedAccessBufferBarrier)
     FORCEINLINE FRHICommandUnorderedAccessBufferBarrier(FRHIBuffer* InBuffer)
         : Buffer(InBuffer)
     {
+        CHECK(Buffer != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -826,6 +814,7 @@ DECLARE_RHICOMMAND(FRHICommandDraw)
         : VertexCount(InVertexCount)
         , StartVertexLocation(InStartVertexLocation)
     {
+        CHECK(VertexCount > 0);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -844,6 +833,7 @@ DECLARE_RHICOMMAND(FRHICommandDrawIndexed)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
     {
+        CHECK(IndexCount > 0);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -864,6 +854,7 @@ DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
         , StartVertexLocation(InStartVertexLocation)
         , StartInstanceLocation(InStartInstanceLocation)
     {
+        CHECK(VertexCountPerInstance > 0 && InstanceCount > 0);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -879,18 +870,14 @@ DECLARE_RHICOMMAND(FRHICommandDrawInstanced)
 
 DECLARE_RHICOMMAND(FRHICommandDrawIndexedInstanced)
 {
-    FORCEINLINE FRHICommandDrawIndexedInstanced(
-        uint32 InIndexCountPerInstance,
-        uint32 InInstanceCount,
-        uint32 InStartIndexLocation,
-        uint32 InBaseVertexLocation,
-        uint32 InStartInstanceLocation)
+    FORCEINLINE FRHICommandDrawIndexedInstanced(uint32 InIndexCountPerInstance, uint32 InInstanceCount, uint32 InStartIndexLocation, uint32 InBaseVertexLocation, uint32 InStartInstanceLocation)
         : IndexCountPerInstance(InIndexCountPerInstance)
         , InstanceCount(InInstanceCount)
         , StartIndexLocation(InStartIndexLocation)
         , BaseVertexLocation(InBaseVertexLocation)
         , StartInstanceLocation(InStartInstanceLocation)
     {
+        CHECK(IndexCountPerInstance > 0 && InstanceCount > 0);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -912,6 +899,7 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
         , ThreadGroupCountY(InThreadGroupCountY)
         , ThreadGroupCountZ(InThreadGroupCountZ)
     {
+        CHECK(ThreadGroupCountX > 0 || ThreadGroupCountY > 0 || ThreadGroupCountZ > 0);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -926,18 +914,14 @@ DECLARE_RHICOMMAND(FRHICommandDispatch)
 
 DECLARE_RHICOMMAND(FRHICommandDispatchRays)
 {
-    FORCEINLINE FRHICommandDispatchRays(
-        FRHIRayTracingScene*         InScene,
-        FRHIRayTracingPipelineState* InPipelineState,
-        uint32                       InWidth,
-        uint32                       InHeight,
-        uint32                       InDepth)
+    FORCEINLINE FRHICommandDispatchRays(FRHIRayTracingScene* InScene, FRHIRayTracingPipelineState* InPipelineState, uint32 InWidth, uint32 InHeight, uint32 InDepth)
         : Scene(InScene)
         , PipelineState(InPipelineState)
         , Width(InWidth)
         , Height(InHeight)
         , Depth(InDepth)
     {
+        CHECK(Width > 0 || Height > 0 || Depth > 0);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -1011,6 +995,7 @@ DECLARE_RHICOMMAND(FRHICommandPresentViewport)
         : Viewport(InViewport)
         , bVerticalSync(bInVerticalSync)
     {
+        CHECK(Viewport != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
@@ -1029,6 +1014,7 @@ DECLARE_RHICOMMAND(FRHICommandResizeViewport)
         , Width(InWidth)
         , Height(InHeight)
     {
+        CHECK(Viewport != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)

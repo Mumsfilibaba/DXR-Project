@@ -324,6 +324,18 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     DeviceFeaturesHelper.AddNext(PipelineCreationCacheControlFeatures);
 #endif
     
+#if VK_KHR_acceleration_structure
+    FMemory::Memzero(&AccelerationStructureFeatures);
+    AccelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+    DeviceFeaturesHelper.AddNext(AccelerationStructureFeatures);
+#endif
+
+#if VK_KHR_ray_tracing_pipeline
+    FMemory::Memzero(&RayTracingPipelineFeatures);
+    RayTracingPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+    DeviceFeaturesHelper.AddNext(RayTracingPipelineFeatures);
+#endif
+
     // Vulkan 1.1 features
     FMemory::Memzero(&DeviceFeatures11);
     DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;

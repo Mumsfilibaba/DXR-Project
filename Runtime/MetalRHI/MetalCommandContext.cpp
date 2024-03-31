@@ -148,7 +148,7 @@ void FMetalCommandContext::RHIEndRenderPass()
     NSRelease(GraphicsEncoder);
 }
 
-void FMetalCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegion)
+void FMetalCommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)
 {
     MTLViewport Viewport;
     Viewport.width   = ViewportRegion.Width;
@@ -161,7 +161,7 @@ void FMetalCommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegi
     CurrentViewport = Viewport;
 }
 
-void FMetalCommandContext::RHISetScissorRect(const FRHIScissorRegion& ScissorRegion)
+void FMetalCommandContext::RHISetScissorRect(const FScissorRegion& ScissorRegion)
 {
     // TODO: ImGui is screwing something up here
     /*// Ensure that the size is correct;
@@ -321,7 +321,7 @@ void FMetalCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
 }
 
-void FMetalCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc)
+void FMetalCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc)
 {
     FMetalBuffer* MetalDst = GetMetalBuffer(Dst);
     FMetalBuffer* MetalSrc = GetMetalBuffer(Src);
@@ -359,7 +359,7 @@ void FMetalCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CopyContext.FinishEncoder();
 }
 
-void FMetalCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc)
+void FMetalCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc)
 {
 }
 
@@ -371,11 +371,11 @@ void FMetalCommandContext::RHIDiscardContents(class FRHITexture* Texture)
 {
 }
 
-void FMetalCommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate)
+void FMetalCommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo)
 {
 }
 
-void FMetalCommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
+void FMetalCommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo)
 {
 }
 

@@ -80,9 +80,9 @@ public:
     virtual void RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassDesc) override final;
     virtual void RHIEndRenderPass() override final;
 
-    virtual void RHISetViewport(const FRHIViewportRegion& ViewportRegion) override final;
+    virtual void RHISetViewport(const FViewportRegion& ViewportRegion) override final;
 
-    virtual void RHISetScissorRect(const FRHIScissorRegion& ScissorRegion) override final;
+    virtual void RHISetScissorRect(const FScissorRegion& ScissorRegion) override final;
 
     virtual void RHISetBlendFactor(const FVector4& Color) override final;
 
@@ -108,16 +108,16 @@ public:
 
     virtual void RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src) override final;
 
-    virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc) override final;
+    virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc) override final;
     virtual void RHICopyTexture(FRHITexture* Dst, FRHITexture* Src) override final;
-    virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc) override final;
+    virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) override final;
 
     virtual void RHIDestroyResource(class FRHIResource* Resource) override final;
 
     virtual void RHIDiscardContents(class FRHITexture* Texture) override final;
 
-    virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate) override final;
-    virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) override final;
+    virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo) override final;
+    virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo) override final;
 
     virtual void RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) override final;
 

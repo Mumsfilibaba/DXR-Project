@@ -382,7 +382,7 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
         if (CurrentDSV.LoadAction == EAttachmentLoadAction::Clear)
         {
             const D3D12_CLEAR_FLAGS ClearFlags = D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL;
-            CommandList->ClearDepthStencilView(CurrentDepthStencilView->GetOfflineHandle(), ClearFlags, CurrentDSV.ClearValue.Depth, CurrentDSV.ClearValue.Stencil);
+            CommandList->ClearDepthStencilView(CurrentDepthStencilView->GetOfflineHandle(), ClearFlags, CurrentDSV.ClearValue.Depth, static_cast<uint8>(CurrentDSV.ClearValue.Stencil));
         }
 
         DepthStencilView = CurrentDepthStencilView;
@@ -400,7 +400,7 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
     ContextState.SetShadingRate(RenderPassInitializer.StaticShadingRate);
 }
 
-void FD3D12CommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegion)
+void FD3D12CommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)
 {
     D3D12_VIEWPORT Viewport;
     Viewport.Width    = ViewportRegion.Width;
@@ -413,7 +413,7 @@ void FD3D12CommandContext::RHISetViewport(const FRHIViewportRegion& ViewportRegi
     ContextState.SetViewports(&Viewport, 1);
 }
 
-void FD3D12CommandContext::RHISetScissorRect(const FRHIScissorRegion& ScissorRegion)
+void FD3D12CommandContext::RHISetScissorRect(const FScissorRegion& ScissorRegion)
 {
     D3D12_RECT ScissorRect;
     ScissorRect.left   = LONG(ScissorRegion.PositionX);
@@ -660,7 +660,7 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Allocation.Resource.Get());
 }
 
-void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyInfo)
+void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo)
 {
     D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
 
@@ -696,7 +696,7 @@ void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Src);
 }
 
-void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& InCopyDesc)
+void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& InCopyDesc)
 {
     D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
 
@@ -716,9 +716,9 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
     const uint32 NumSrcArraySlices = D3D12CalculateArraySlices(TextureDimension, Src->GetNumArraySlices());
     const uint32 NumDstArraySlices = D3D12CalculateArraySlices(TextureDimension, Dst->GetNumArraySlices());
 
-    for (int32 ArraySlice = 0; ArraySlice < NumArraySlices; ArraySlice++)
+    for (uint32 ArraySlice = 0; ArraySlice < NumArraySlices; ArraySlice++)
     {
-        for (int32 MipLevel = 0; MipLevel < InCopyDesc.NumMipLevels; MipLevel++)
+        for (uint32 MipLevel = 0; MipLevel < InCopyDesc.NumMipLevels; MipLevel++)
         {
             // Source
             D3D12_TEXTURE_COPY_LOCATION SourceLocation;
@@ -771,33 +771,30 @@ void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
     }
 }
 
-void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate)
-{
-    D3D12_ERROR_COND(RayTracingGeometry != nullptr, "RayTracingGeometry cannot be nullptr");
-
-    FlushResourceBarriers();
-
-    FD3D12Buffer* D3D12VertexBuffer = static_cast<FD3D12Buffer*>(VertexBuffer);
-    FD3D12Buffer* D3D12IndexBuffer  = static_cast<FD3D12Buffer*>(IndexBuffer);
-    D3D12_ERROR_COND(D3D12VertexBuffer != nullptr, "VertexBuffer cannot be nullptr");
-
-    FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
-    D3D12Geometry->Build(*this, D3D12VertexBuffer, NumVertices, D3D12IndexBuffer, NumIndices, IndexFormat, bUpdate);
-
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, VertexBuffer);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, IndexBuffer);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, RayTracingGeometry);
-}
-
-void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate)
+void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo)
 {
     D3D12_ERROR_COND(RayTracingScene != nullptr, "RayTracingScene cannot be nullptr");
 
     FlushResourceBarriers();
 
-    FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
-    D3D12Scene->Build(*this, Instances, bUpdate);
+    FD3D12RayTracingScene* D3D12RayTracingScene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
+    D3D12RayTracingScene->Build(*this, BuildInfo);
+
     GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, RayTracingScene);
+}
+
+void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo)
+{
+    D3D12_ERROR_COND(RayTracingGeometry != nullptr, "RayTracingGeometry cannot be nullptr");
+
+    FlushResourceBarriers();
+
+    FD3D12RayTracingGeometry* D3D12RayTracingGeometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
+    D3D12RayTracingGeometry->Build(*this, BuildInfo);
+
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, BuildInfo.VertexBuffer);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, BuildInfo.IndexBuffer);
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, RayTracingGeometry);
 }
 
 void FD3D12CommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)

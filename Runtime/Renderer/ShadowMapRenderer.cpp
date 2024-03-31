@@ -511,10 +511,10 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 CommandList.BeginRenderPass(RenderPass);
 
                 const uint32 PointLightShadowSize = LightSetup.PointLightShadowSize;
-                FRHIViewportRegion ViewportRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 0.0f, 0.0f, 1.0f);
+                FViewportRegion ViewportRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 0.0f, 0.0f, 1.0f);
                 CommandList.SetViewport(ViewportRegion);
 
-                FRHIScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
+                FScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
                 CommandList.SetScissorRect(ScissorRegion);
 
                 CommandList.SetConstantBuffer(PointLightVertexShader.Get(), PerShadowMapBuffer.Get(), 0);
@@ -655,10 +655,10 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             CommandList.BeginRenderPass(RenderPass);
 
             const float CascadeSize = static_cast<float>(LightSetup.CascadeSize);
-            FRHIViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
+            FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
             CommandList.SetViewport(ViewportRegion);
 
-            FRHIScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
+            FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
             // Draw all objects to shadow-map

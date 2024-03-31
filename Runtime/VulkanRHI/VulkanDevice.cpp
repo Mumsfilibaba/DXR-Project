@@ -41,6 +41,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , bSupportsDepthClip(false)
     , bSupportsConservativeRasterization(false)
     , bSupportsPipelineCacheControl(false)
+    , bSupportsAccelerationStructures(false)
 {
 }
 
@@ -256,16 +257,15 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     
     DeviceCreateHelper.AddNext(DeviceFeaturesVulkan12);
 
-
     // Check and enable extension features
 #if VK_EXT_robustness2
     VkPhysicalDeviceRobustness2FeaturesEXT Robustness2Features;
-    FMemory::Memzero(&Robustness2Features);
-    Robustness2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
-    
     if (IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))
     {
         const VkPhysicalDeviceRobustness2FeaturesEXT& AvailableRobustness2Features = GetPhysicalDevice()->GetRobustness2Features();
+
+        FMemory::Memzero(&Robustness2Features);
+        Robustness2Features.sType               = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
         Robustness2Features.robustImageAccess2  = AvailableRobustness2Features.robustImageAccess2;
         Robustness2Features.robustBufferAccess2 = AvailableRobustness2Features.robustBufferAccess2;
         Robustness2Features.nullDescriptor      = AvailableRobustness2Features.nullDescriptor;
@@ -275,16 +275,15 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
-    FMemory::Memzero(&DepthClipEnableFeatures);
-    DepthClipEnableFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
-
-    const VkPhysicalDeviceDepthClipEnableFeaturesEXT& AvailableDepthClipEnableFeatures = GetPhysicalDevice()->GetDepthClipEnableFeatures();
-    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME) && AvailableDepthClipEnableFeatures.depthClipEnable)
+    if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME))
     {
-        if (AvailableDeviceFeatures.depthClamp)
+        const VkPhysicalDeviceDepthClipEnableFeaturesEXT& AvailableDepthClipEnableFeatures = GetPhysicalDevice()->GetDepthClipEnableFeatures();
+        if (AvailableDepthClipEnableFeatures.depthClipEnable && AvailableDeviceFeatures.depthClamp)
         {
-            DeviceFeatures2.features.depthClamp     = VK_TRUE;
+            FMemory::Memzero(&DepthClipEnableFeatures);
+            DepthClipEnableFeatures.sType           = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
             DepthClipEnableFeatures.depthClipEnable = VK_TRUE;
+            DeviceFeatures2.features.depthClamp     = VK_TRUE;
             DeviceCreateHelper.AddNext(DepthClipEnableFeatures);
             bSupportsDepthClip = true;
         }
@@ -300,18 +299,51 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 
 #if VK_EXT_pipeline_creation_cache_control
     VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT PipelineCreationCacheControlFeatures;
-    FMemory::Memzero(&PipelineCreationCacheControlFeatures);
-    PipelineCreationCacheControlFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
-
-    const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& AvailablePipelineCreationCacheControlFeatures = GetPhysicalDevice()->GetPipelineCreationCacheControlFeatures();
-    if (IsExtensionEnabled(VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME) && AvailablePipelineCreationCacheControlFeatures.pipelineCreationCacheControl)
+    if (IsExtensionEnabled(VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME))
     {
-        PipelineCreationCacheControlFeatures.pipelineCreationCacheControl = VK_TRUE;
-        DeviceCreateHelper.AddNext(PipelineCreationCacheControlFeatures);
-        bSupportsPipelineCacheControl = true;
+        const VkPhysicalDevicePipelineCreationCacheControlFeaturesEXT& AvailablePipelineCreationCacheControlFeatures = GetPhysicalDevice()->GetPipelineCreationCacheControlFeatures();
+        if (AvailablePipelineCreationCacheControlFeatures.pipelineCreationCacheControl)
+        {
+            FMemory::Memzero(&PipelineCreationCacheControlFeatures);
+            PipelineCreationCacheControlFeatures.sType                        = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
+            PipelineCreationCacheControlFeatures.pipelineCreationCacheControl = VK_TRUE;
+            DeviceCreateHelper.AddNext(PipelineCreationCacheControlFeatures);
+            bSupportsPipelineCacheControl = true;
+        }
     }
 #endif
-    
+
+#if VK_KHR_acceleration_structure
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR AccelerationStructureFeatures;
+    if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))
+    {
+        const VkPhysicalDeviceAccelerationStructureFeaturesKHR& AvailableAccelerationStructureFeatures = GetPhysicalDevice()->GetAccelerationStructureFeatures();
+        if (AvailableAccelerationStructureFeatures.accelerationStructure)
+        {
+            FMemory::Memzero(&AccelerationStructureFeatures);
+            AccelerationStructureFeatures.sType                 = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+            AccelerationStructureFeatures.accelerationStructure = VK_TRUE;
+            DeviceCreateHelper.AddNext(AccelerationStructureFeatures);
+            bSupportsAccelerationStructures = true;
+        }
+    }
+#endif
+
+#if VK_KHR_ray_tracing_pipeline
+    VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingPipelineFeatures;
+    if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
+    {
+        const VkPhysicalDeviceRayTracingPipelineFeaturesKHR& AvailableRayTracingPipelineFeatures = GetPhysicalDevice()->GetRayTracingPipelineFeatures();
+        if (AvailableRayTracingPipelineFeatures.rayTracingPipeline)
+        {
+            FMemory::Memzero(&RayTracingPipelineFeatures);
+            RayTracingPipelineFeatures.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+            RayTracingPipelineFeatures.rayTracingPipeline = VK_TRUE;
+            DeviceCreateHelper.AddNext(RayTracingPipelineFeatures);
+        }
+    }
+#endif
+
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     if (VULKAN_FAILED(Result))
     {

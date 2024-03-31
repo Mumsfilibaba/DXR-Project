@@ -141,6 +141,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
             
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
+
             if (Command.Mesh->VertexBufferSRV)
             {
                 HitGroupResources.AddShaderResourceView(Command.Mesh->VertexBufferSRV.Get());
@@ -170,7 +171,11 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
     }
     else
     {
-        CommandList.BuildRayTracingScene(Resources.RTScene.Get(), TArrayView<const FRHIRayTracingGeometryInstance>(Resources.RTGeometryInstances), false);
+        FRayTracingSceneBuildInfo BuildScene;
+        BuildScene.Instances    = Resources.RTGeometryInstances.Data();
+        BuildScene.NumInstances = Resources.RTGeometryInstances.Size();
+        BuildScene.bUpdate      = false;
+        CommandList.BuildRayTracingScene(Resources.RTScene.Get(), BuildScene);
     }
 
     Resources.GlobalResources.Reset();

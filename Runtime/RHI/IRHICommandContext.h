@@ -72,13 +72,13 @@ struct IRHICommandContext
      * @brief                - Set the current viewport settings
      * @param ViewportRegion - Region of the viewport
      */
-    virtual void RHISetViewport(const FRHIViewportRegion& ViewportRegion) = 0;
+    virtual void RHISetViewport(const FViewportRegion& ViewportRegion) = 0;
     
     /**
      * @brief               - Set the current scissor settings 
      * @param ScissorRegion - Region of the scissor rectangle
      */
-    virtual void RHISetScissorRect(const FRHIScissorRegion& ScissorRegion) = 0;
+    virtual void RHISetScissorRect(const FScissorRegion& ScissorRegion) = 0;
 
     /**
      * @brief       - Set the BlendFactor color 
@@ -121,9 +121,7 @@ struct IRHICommandContext
     virtual void RHISet32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants) = 0;
 
     /**
-     * @brief - Sets a single ShaderResourceView to the ParameterIndex this must be a valid 
-     *     index in the specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                    - Sets a single ShaderResourceView to the ParameterIndex this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader             - Shader to bind resource to
      * @param ShaderResourceView - ShaderResourceView to bind
      * @param ParameterIndex     - ShaderResourceView-index to bind to
@@ -131,9 +129,7 @@ struct IRHICommandContext
     virtual void RHISetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) = 0;
     
     /**
-     * @brief - Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader),
-     *     this must be a valid index in the specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                     - Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader              - Shader to bind resource to
      * @param ShaderResourceViews - ArrayView of ShaderResourceViews to bind
      * @param ParameterIndex      - ShaderResourceView-index to bind to
@@ -141,9 +137,7 @@ struct IRHICommandContext
     virtual void RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex) = 0;
 
     /**
-     * @brief - Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index
-     *     in the specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                     - Sets a single UnorderedAccessView to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader              - Shader to bind resource to
      * @param UnorderedAccessView - UnorderedAccessView to bind
      * @param ParameterIndex      - UnorderedAccessView-index to bind to
@@ -151,9 +145,7 @@ struct IRHICommandContext
     virtual void RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex) = 0;
 
     /**
-     * @brief - Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader),
-     *     this must be a valid index in the specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                        - Sets a multiple UnorderedAccessViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader                 - Shader to bind resource to
      * @param InUnorderedAccessViews - ArrayView of UnorderedAccessViews to bind
      * @param ParameterIndex         - UnorderedAccessView-index to bind to
@@ -161,9 +153,7 @@ struct IRHICommandContext
     virtual void RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex) = 0;
 
     /**
-     * @brief - Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the
-     *     specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                - Sets a single ConstantBuffer to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader         - Shader to bind resource to
      * @param ConstantBuffer - ConstantBuffer to bind
      * @param ParameterIndex - ConstantBuffer-index to bind to
@@ -171,9 +161,7 @@ struct IRHICommandContext
     virtual void RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
     
     /**
-     * @brief - Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader),
-     *     this must be a valid index in the specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                 - Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader          - Shader to bind resource to
      * @param ConstantBuffers - ArrayView of ConstantBuffers to bind
      * @param ParameterIndex  - ConstantBuffer-index to bind to
@@ -181,9 +169,7 @@ struct IRHICommandContext
     virtual void RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex) = 0;
 
     /**
-     * @brief - Sets a single SamplerState to the ParameterIndex, this must be a valid index in the
-     *     specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                - Sets a single SamplerState to the ParameterIndex, this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader         - Shader to bind sampler to
      * @param SamplerState   - SamplerState to bind
      * @param ParameterIndex - SamplerState-index to bind to
@@ -191,9 +177,7 @@ struct IRHICommandContext
     virtual void RHISetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex) = 0;
 
     /**
-     * @brief - Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader),
-     *     this must be a valid index in the specified shader, which can be queried from the shader-object.
-     * 
+     * @brief                - Sets a multiple SamplerStates to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader         - Shader to bind resource to
      * @param SamplerStates  - ArrayView of SamplerStates to bind
      * @param ParameterIndex - ConstantBuffer-index to bind to
@@ -231,7 +215,7 @@ struct IRHICommandContext
      * @param Src      - Source buffer to copy from
      * @param CopyDesc - Information about the copy operation
      */
-    virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FRHIBufferCopyDesc& CopyDesc) = 0;
+    virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc) = 0;
     
     /**
      * @brief     - Copies the entire contents of one texture to another, which require the size and formats to be the same 
@@ -241,18 +225,15 @@ struct IRHICommandContext
     virtual void RHICopyTexture(FRHITexture* Dst, FRHITexture* Src) = 0;
 
     /**
-     * @brief - Copies contents of a texture region of one texture to another,
-     *     which require the size and formats to be the same.
-     * 
+     * @brief          - Copies contents of a texture region of one texture to another, which require the size and formats to be the same.
      * @param Dst      - Destination texture
      * @param Src      - Source texture
      * @param CopyDesc - Information about the copy operation
      */
-    virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FRHITextureCopyDesc& CopyDesc) = 0;
+    virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) = 0;
 
     /**
-     * @brief - Destroys a resource, this can be used to not having to deal with resource life time,
-     *     the resource will be destroyed when the underlying command-list is completed.
+     * @brief          - Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed.
      * @param Resource - Resource to destroy
      */
     virtual void RHIDestroyResource(class FRHIResource* Resource) = 0;
@@ -264,26 +245,22 @@ struct IRHICommandContext
     virtual void RHIDiscardContents(class FRHITexture* Texture) = 0;
 
     /**
-     * @brief              - Builds the Bottom-Level Acceleration-Structure for ray tracing 
-     * @param Geometry     - Bottom-level acceleration-structure to build or update
-     * @param VertexBuffer - VertexBuffer to build Geometry of
-     * @param NumVertices  - Number of vertices in the VertexBuffer
-     * @param IndexBuffer  - IndexBuffer to build Geometry of
-     * @param NumIndices   - Number of indices in the IndexBuffer
-     * @param IndexFormat  - Format of the indices in the IndexBuffer
-     * @param bUpdate      - True if the build should be an update, false if it should build from the ground up
-     */ 
-    virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate) = 0;
-    
-    /**
-     * @brief           - Builds the Top-Level Acceleration-Structure for ray tracing
-     * @param Scene     - Top-level acceleration-structure to build or update
-     * @param Instances - Instances to build the scene of
-     * @param bUpdate   - True if the build should be an update, false if it should build from the ground up
+     * @brief                 - Builds the Top-Level Acceleration-Structure for ray tracing
+     * @param RayTracingScene - Top-level acceleration-structure to build or update
+     * @param BuildInfo       - A structure containing information about the build
      */
-    virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* Scene, const TArrayView<const FRHIRayTracingGeometryInstance>& Instances, bool bUpdate) = 0;
+    virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo) = 0;
 
-     /** @brief - Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored */
+    /**
+     * @brief                    - Builds the Bottom-Level Acceleration-Structure for ray tracing 
+     * @param RayTracingGeometry - Bottom-level acceleration-structure to build or update
+     * @param BuildInfo          - A structure containing information about the build
+     */ 
+    virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo) = 0;
+
+     /** 
+      * @brief - Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored
+      */
     virtual void RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
 
     /**
@@ -309,33 +286,21 @@ struct IRHICommandContext
     virtual void RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
 
     /**
-     * @brief - Add a UnorderedAccessBarrier for a Texture resource, which should be
-     *     issued before reading of a resource in UnorderedAccessState.
-     * 
+     * @brief         - Add a UnorderedAccessBarrier for a Texture resource, which should be issued before reading of a resource in UnorderedAccessState.
      * @param Texture - Texture to issue barrier for
      */
     virtual void RHIUnorderedAccessTextureBarrier(FRHITexture* Texture) = 0;
     
     /**
-     * @brief - Add a UnorderedAccessBarrier for a Buffer resource, which should be
-     *     issued before reading of a resource in UnorderedAccessState.
-     * 
+     * @brief        - Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState.
      * @param Buffer - Buffer to issue barrier for
      */
     virtual void RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer) = 0;
 
     virtual void RHIDraw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
-    
     virtual void RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
-
     virtual void RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
-    
-    virtual void RHIDrawIndexedInstanced(
-        uint32 IndexCountPerInstance,
-        uint32 InstanceCount,
-        uint32 StartIndexLocation,
-        uint32 BaseVertexLocation,
-        uint32 StartInstanceLocation) = 0;
+    virtual void RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
 
     virtual void RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
 

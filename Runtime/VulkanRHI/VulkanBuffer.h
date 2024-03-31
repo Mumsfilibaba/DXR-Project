@@ -9,7 +9,7 @@ class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
 public:
     FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
     ~FVulkanBuffer();
-    
+
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
 
     virtual void* GetRHIBaseBuffer()         override final { return reinterpret_cast<void*>(static_cast<FVulkanBuffer*>(this)); }
@@ -17,7 +17,7 @@ public:
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void SetDebugName(const FString& InName) override final;
+    virtual void    SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
     VkBuffer GetVkBuffer() const
@@ -28,6 +28,11 @@ public:
     VkDeviceMemory GetVkDeviceMemory() const
     {
         return MemoryAllocation.Memory;
+    }
+
+    VkDeviceAddress GetDeviceAddress() const
+    {
+        return MemoryAllocation.DeviceAddress;
     }
 
     VkDeviceSize GetRequiredAlignment() const
@@ -41,7 +46,6 @@ protected:
     VkDeviceSize            RequiredAlignment;
     FString                 DebugName;
 };
-
 
 inline FVulkanBuffer* GetVulkanBuffer(FRHIBuffer* Buffer)
 {

@@ -291,30 +291,17 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& I
     return Result.ReleaseOwnership();
 }
 
-FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
-{
-    FD3D12Buffer* D3D12VertexBuffer = static_cast<FD3D12Buffer*>(InDesc.VertexBuffer);
-    FD3D12Buffer* D3D12IndexBuffer  = static_cast<FD3D12Buffer*>(InDesc.IndexBuffer);
-
-    DirectContext->RHIStartContext();
-    
-    TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InDesc);
-    if (!D3D12Geometry->Build(*DirectContext, D3D12VertexBuffer, InDesc.NumVertices, D3D12IndexBuffer, InDesc.NumIndices, InDesc.IndexFormat, false))
-    {
-        DEBUG_BREAK();
-        D3D12Geometry.Reset();
-    }
-
-    DirectContext->RHIFinishContext();
-    return D3D12Geometry.ReleaseOwnership();
-}
-
 FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
 {
+    FRayTracingSceneBuildInfo BuildInfo;
+    BuildInfo.Instances    = InDesc.Instances.Data();
+    BuildInfo.NumInstances = InDesc.Instances.Size();
+    BuildInfo.bUpdate      = false;
+
     DirectContext->RHIStartContext();
 
     TSharedRef<FD3D12RayTracingScene> D3D12Scene = new FD3D12RayTracingScene(GetDevice(), InDesc);
-    if (!D3D12Scene->Build(*DirectContext, TArrayView<const FRHIRayTracingGeometryInstance>(InDesc.Instances), false))
+    if (!D3D12Scene->Build(*DirectContext, BuildInfo))
     {
         DEBUG_BREAK();
         D3D12Scene.Reset();
@@ -322,6 +309,29 @@ FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSce
 
     DirectContext->RHIFinishContext();
     return D3D12Scene.ReleaseOwnership();
+}
+
+FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
+{
+    FRayTracingGeometryBuildInfo BuildInfo;
+    BuildInfo.VertexBuffer = InDesc.VertexBuffer;
+    BuildInfo.NumVertices  = InDesc.NumVertices;
+    BuildInfo.IndexBuffer  = InDesc.IndexBuffer;
+    BuildInfo.NumIndices   = InDesc.NumIndices;
+    BuildInfo.IndexFormat  = InDesc.IndexFormat;
+    BuildInfo.bUpdate      = false;
+
+    DirectContext->RHIStartContext();
+
+    TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InDesc);
+    if (!D3D12Geometry->Build(*DirectContext, BuildInfo))
+    {
+        DEBUG_BREAK();
+        D3D12Geometry.Reset();
+    }
+
+    DirectContext->RHIFinishContext();
+    return D3D12Geometry.ReleaseOwnership();
 }
 
 FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc)

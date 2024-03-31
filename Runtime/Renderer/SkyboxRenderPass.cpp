@@ -259,10 +259,10 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
 
     CommandList.BeginRenderPass(RenderPass);
 
-    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
 
-    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
     CommandList.SetVertexBuffers(MakeArrayView(&SkyboxVertexBuffer, 1), 0);

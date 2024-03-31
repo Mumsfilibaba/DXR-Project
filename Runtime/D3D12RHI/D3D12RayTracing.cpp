@@ -19,19 +19,30 @@ FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const
 {
 }
 
-bool FD3D12RayTracingGeometry::Build(
-    FD3D12CommandContext& CmdContext,
-    FD3D12Buffer* InVertexBuffer,
-    uint32 InNumVertices,
-    FD3D12Buffer* InIndexBuffer,
-    uint32 InNumIndices,
-    EIndexFormat InIndexFormat,
-    bool bUpdate)
+void FD3D12RayTracingGeometry::SetDebugName(const FString& InName)
 {
-    CHECK(VertexBuffer != nullptr);
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        D3D12Resource->SetDebugName(InName);
+    }
+}
 
-    VertexBuffer = MakeSharedRef<FD3D12Buffer>(InVertexBuffer);
-    IndexBuffer  = MakeSharedRef<FD3D12Buffer>(InIndexBuffer);
+FString FD3D12RayTracingGeometry::GetDebugName() const
+{
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        return D3D12Resource->GetDebugName();
+    }
+
+    return FString();
+}
+
+bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo)
+{
+    VertexBuffer = MakeSharedRef<FD3D12Buffer>(BuildInfo.VertexBuffer);
+    IndexBuffer  = MakeSharedRef<FD3D12Buffer>(BuildInfo.IndexBuffer);
 
     D3D12_RAYTRACING_GEOMETRY_DESC GeometryDesc;
     FMemory::Memzero(&GeometryDesc);
@@ -40,14 +51,14 @@ bool FD3D12RayTracingGeometry::Build(
     GeometryDesc.Triangles.VertexBuffer.StartAddress  = VertexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
     GeometryDesc.Triangles.VertexBuffer.StrideInBytes = VertexBuffer->GetStride();
     GeometryDesc.Triangles.VertexFormat               = DXGI_FORMAT_R32G32B32_FLOAT;
-    GeometryDesc.Triangles.VertexCount                = InNumVertices;
+    GeometryDesc.Triangles.VertexCount                = BuildInfo.NumVertices;
     GeometryDesc.Flags                                = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 
     if (IndexBuffer)
     {
-        GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(InIndexFormat);
+        GeometryDesc.Triangles.IndexFormat = ConvertIndexFormat(BuildInfo.IndexFormat);
         GeometryDesc.Triangles.IndexBuffer = IndexBuffer->GetD3D12Resource()->GetGPUVirtualAddress();
-        GeometryDesc.Triangles.IndexCount  = InNumIndices;
+        GeometryDesc.Triangles.IndexCount  = BuildInfo.NumIndices;
     }
 
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
@@ -58,14 +69,14 @@ bool FD3D12RayTracingGeometry::Build(
     Inputs.pGeometryDescs = &GeometryDesc;
     Inputs.Type           = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
     Inputs.Flags          = ConvertAccelerationStructureBuildFlags(GetFlags());
-    if (bUpdate)
+
+    if (BuildInfo.bUpdate)
     {
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
     }
 
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO PreBuildInfo;
     FMemory::Memzero(&PreBuildInfo);
-
     GetDevice()->GetD3D12Device5()->GetRaytracingAccelerationStructurePrebuildInfo(&Inputs, &PreBuildInfo);
 
     uint64 CurrentSize = ResultBuffer ? ResultBuffer->GetWidth() : 0;
@@ -98,7 +109,7 @@ bool FD3D12RayTracingGeometry::Build(
         }
     }
 
-    uint64 RequiredSize = FMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
+    const uint64 RequiredSize = FMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if (CurrentSize < RequiredSize)
     {
@@ -144,12 +155,8 @@ bool FD3D12RayTracingGeometry::Build(
     CmdList.BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
 
     CmdContext.UnorderedAccessBarrier(ResultBuffer.Get());
-
     return true;
 }
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FD3D12RayTracingScene
 
 FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer)
     : FRHIRayTracingScene(Initializer)
@@ -164,17 +171,37 @@ FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIR
 {
 }
 
-bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, bool bUpdate)
+void FD3D12RayTracingScene::SetDebugName(const FString& InName)
+{
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        D3D12Resource->SetDebugName(InName);
+    }
+}
+
+FString FD3D12RayTracingScene::GetDebugName() const
+{
+    FD3D12Resource* D3D12Resource = GetD3D12Resource();
+    if (D3D12Resource)
+    {
+        return D3D12Resource->GetDebugName();
+    }
+
+    return FString();
+}
+
+bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTracingSceneBuildInfo& BuildInfo)
 {
     D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS Inputs;
     FMemory::Memzero(&Inputs);
 
     Inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-    Inputs.NumDescs    = InInstances.Size();
+    Inputs.NumDescs    = BuildInfo.NumInstances;
     Inputs.Type        = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
     Inputs.Flags       = ConvertAccelerationStructureBuildFlags(GetFlags());
     
-    if (bUpdate)
+    if (BuildInfo.bUpdate)
     {
         CHECK((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
         Inputs.Flags |= D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
@@ -233,7 +260,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         }
     }
 
-    uint64 RequiredSize = FMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
+    const uint64 RequiredSize = FMath::Max(PreBuildInfo.ScratchDataSizeInBytes, PreBuildInfo.UpdateScratchDataSizeInBytes);
     CurrentSize = ScratchBuffer ? ScratchBuffer->GetWidth() : 0;
     if (CurrentSize < RequiredSize)
     {
@@ -266,17 +293,17 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
         CmdContext.TransitionResource(ScratchBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     }
 
-    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(InInstances.Size());
+    TArray<D3D12_RAYTRACING_INSTANCE_DESC> InstanceDescs(BuildInfo.NumInstances);
     for (int32 Instance = 0; Instance < InstanceDescs.Size(); Instance++)
     {
-        FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(InInstances[Instance].Geometry);
-        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &InInstances[Instance].Transform, sizeof(FMatrix3x4));
+        FD3D12RayTracingGeometry* D3D12Geometry = static_cast<FD3D12RayTracingGeometry*>(BuildInfo.Instances[Instance].Geometry);
+        FMemory::Memcpy(&InstanceDescs[Instance].Transform, &BuildInfo.Instances[Instance].Transform, sizeof(FMatrix3x4));
 
         InstanceDescs[Instance].AccelerationStructure               = D3D12Geometry->GetGPUVirtualAddress();
-        InstanceDescs[Instance].InstanceID                          = InInstances[Instance].InstanceIndex;
-        InstanceDescs[Instance].Flags                               = ConvertRayTracingInstanceFlags(InInstances[Instance].Flags);
-        InstanceDescs[Instance].InstanceMask                        = InInstances[Instance].Mask;
-        InstanceDescs[Instance].InstanceContributionToHitGroupIndex = InInstances[Instance].HitGroupIndex;
+        InstanceDescs[Instance].InstanceID                          = BuildInfo.Instances[Instance].InstanceIndex;
+        InstanceDescs[Instance].Flags                               = ConvertRayTracingInstanceFlags(BuildInfo.Instances[Instance].Flags);
+        InstanceDescs[Instance].InstanceMask                        = BuildInfo.Instances[Instance].Mask;
+        InstanceDescs[Instance].InstanceContributionToHitGroupIndex = BuildInfo.Instances[Instance].HitGroupIndex;
     }
 
     CurrentSize = InstanceBuffer ? InstanceBuffer->GetWidth() : 0;
@@ -322,7 +349,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
     AccelerationStructureDesc.Inputs.InstanceDescs             = InstanceBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.DestAccelerationStructureData    = ResultBuffer->GetGPUVirtualAddress();
     AccelerationStructureDesc.ScratchAccelerationStructureData = ScratchBuffer->GetGPUVirtualAddress();
-    if (bUpdate)
+    if (BuildInfo.bUpdate)
     {
         CHECK((GetFlags() & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None);
         AccelerationStructureDesc.SourceAccelerationStructureData = ResultBuffer->GetGPUVirtualAddress();
@@ -335,7 +362,7 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const TArray
 
     CmdContext.UnorderedAccessBarrier(ResultBuffer.Get());
 
-    Instances.Reset(InInstances);
+    Instances.Reset(BuildInfo.Instances, BuildInfo.NumInstances);
     return true;
 }
 

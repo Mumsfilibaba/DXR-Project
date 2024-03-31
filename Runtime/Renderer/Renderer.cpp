@@ -591,10 +591,10 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
     Settings.Width  = RenderWidth;
     Settings.Height = RenderHeight;
 
-    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     InCommandList.SetViewport(ViewportRegion);
 
-    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     InCommandList.SetScissorRect(ScissorRegion);
 
     FRHIRenderPassDesc RenderPass;
@@ -636,10 +636,10 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     const float RenderWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
     const float RenderHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
 
-    FRHIViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     InCmdList.SetViewport(ViewportRegion);
 
-    FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     InCmdList.SetScissorRect(ScissorRegion);
 
     FRHIRenderPassDesc RenderPass;
