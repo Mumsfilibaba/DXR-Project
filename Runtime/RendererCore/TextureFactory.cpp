@@ -82,7 +82,6 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     InitalData.InitMipData(Pixels, RowPitch, RowPitch*Height);
 
     FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::ShaderResource);
-
     FRHITextureRef Texture = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
@@ -90,7 +89,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
         return nullptr;
     }
 
-    if (GenerateMips)
+    if (GenerateMips && NumMips > 1)
     {
         FRHICommandList CommandList;
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);

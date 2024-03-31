@@ -39,7 +39,7 @@ typedef TSharedRef<FRHIShaderResourceView>            FRHIShaderResourceViewRef;
 typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef;
 typedef TSharedRef<class FRHISamplerState>            FRHISamplerStateRef;
 typedef TSharedRef<class FRHIViewport>                FRHIViewportRef;
-typedef TSharedRef<class FRHITimestampQuery>          FRHITimestampQueryRef;
+typedef TSharedRef<class FRHIQuery>          FRHIQueryRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
@@ -1368,21 +1368,21 @@ protected:
 };
 
 
-struct FRHITimestamp
+struct FTimingQuery
 {
     uint64 Begin = 0;
     uint64 End   = 0;
 };
 
 
-class FRHITimestampQuery : public FRHIResource
+class FRHIQuery : public FRHIResource
 {
 protected:
-    FRHITimestampQuery()          = default;
-    virtual ~FRHITimestampQuery() = default;
+    FRHIQuery()          = default;
+    virtual ~FRHIQuery() = default;
 
 public:
-    virtual void GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const = 0;
+    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const = 0;
 
     virtual uint64 GetFrequency() const = 0;
 };

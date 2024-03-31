@@ -11,6 +11,7 @@
 #include "VulkanDescriptorSet.h"
 #include "VulkanPipelineState.h"
 #include "VulkanDescriptorSetCache.h"
+#include "VulkanQuery.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -92,6 +93,41 @@ struct FVulkanDefaultResources
     VkSampler               NullSampler;
 };
 
+struct FVulkanHashableSamplerCreateInfo
+{
+    bool operator==(const FVulkanHashableSamplerCreateInfo& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) == 0;
+    }
+
+    bool operator!=(const FVulkanHashableSamplerCreateInfo& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
+    }
+
+    friend uint64 HashType(const FVulkanHashableSamplerCreateInfo& Value)
+    {
+        return FCRC32::Generate(&Value, sizeof(Value));
+    }
+
+    VkSamplerCreateFlags Flags;
+    VkFilter             MagFilter;
+    VkFilter             MinFilter;
+    VkSamplerMipmapMode  MipmapMode;
+    VkSamplerAddressMode AddressModeU;
+    VkSamplerAddressMode AddressModeV;
+    VkSamplerAddressMode AddressModeW;
+    float                MipLodBias;
+    VkBool32             AnisotropyEnable;
+    float                MaxAnisotropy;
+    VkBool32             CompareEnable;
+    VkCompareOp          CompareOp;
+    float                MinLod;
+    float                MaxLod;
+    VkBorderColor        BorderColor;
+    VkBool32             UnnormalizedCoordinates;
+};
+
 class FVulkanDevice
 {
 public:
@@ -107,16 +143,19 @@ public:
     // Initialize default resources that are just for null bindings
     bool InitializeDefaultResources(class FVulkanCommandContext& CommandContext);
 
+    // Create or returns an already created sampler, this is to avoid creating duplicate samplers
+    bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
+
     FVulkanRenderPassCache&       GetRenderPassCache()       { return RenderPassCache; }
     FVulkanFramebufferCache&      GetFramebufferCache()      { return FramebufferCache; }
     FVulkanMemoryManager&         GetMemoryManager()         { return MemoryManager; }
     FVulkanUploadHeapAllocator&   GetUploadHeap()            { return UploadHeap; }
     FVulkanFenceManager&          GetFenceManager()          { return FenceManager; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return PipelineLayoutManager; }
-    FVulkanDescriptorPoolManager& GetDescriptorPoolManager() { return DescriptorPoolManager; }
     FVulkanPipelineCache&         GetPipelineCache()         { return PipelineCache; }
     FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return DescriptorSetCache; }
     FVulkanDefaultResources&      GetDefaultResources()      { return DefaultResources; }
+    FVulkanQueryPoolManager&      GetQueryPoolManager()      { return QueryPoolManager; }
 
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
@@ -165,12 +204,15 @@ private:
     FVulkanMemoryManager         MemoryManager;
     FVulkanFenceManager          FenceManager;
     FVulkanPipelineLayoutManager PipelineLayoutManager;
-    FVulkanDescriptorPoolManager DescriptorPoolManager;
     FVulkanPipelineCache         PipelineCache;
     FVulkanDescriptorSetCache    DescriptorSetCache;
     FVulkanDefaultResources      DefaultResources;
+    FVulkanQueryPoolManager      QueryPoolManager;
 
     TOptional<FVulkanQueueFamilyIndices> QueueIndicies;
+
+    TMap<FVulkanHashableSamplerCreateInfo, VkSampler> SamplerMap;
+    FCriticalSection SamplerMapCS;
 
     TSet<FString> ExtensionNames;
     TSet<FString> LayerNames;

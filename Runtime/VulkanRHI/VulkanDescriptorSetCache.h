@@ -7,19 +7,32 @@ class FVulkanBuffer;
 
 class FVulkanDescriptorSetCache : public FVulkanDeviceChild
 {
+    class FCachedPool : public FVulkanDeviceChild
+    {
+    public:
+        FCachedPool(FVulkanDevice* InDevice, const FVulkanDescriptorPoolInfo& InPoolInfo);
+        ~FCachedPool();
+
+        bool AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet);
+
+        void ReleaseAll();
+
+    private:
+        FVulkanDescriptorPool*         CurrentDescriptorPool;
+        TArray<FVulkanDescriptorPool*> DescriptorPools;
+        FVulkanDescriptorPoolInfo      PoolInfo;
+    };
+
 public:
     FVulkanDescriptorSetCache(FVulkanDevice* InDevice);
     ~FVulkanDescriptorSetCache();
 
-    bool FindOrCreateDescriptorSet(VkDescriptorSetLayout SetLayout, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
-    
-    bool Initialize();
+    bool FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
+
     void Release();
 
 private:
-    FVulkanDescriptorPool*         CurrentDescriptorPool;
-    TArray<FVulkanDescriptorPool*> DescriptorPools;
-
+    TMap<FVulkanDescriptorPoolInfo, FCachedPool>   Caches;
     TMap<FVulkanDescriptorSetKey, VkDescriptorSet> DescriptorSets;
-    FCriticalSection DescriptorSetsCS;
+    FCriticalSection                               CacheCS;
 };

@@ -1,9 +1,5 @@
 #include "PBRHelpers.hlsli"
 
-#define RootSig \
-    "RootFlags(0), " \
-    "DescriptorTable(UAV(u0, numDescriptors = 1))" \
-
 #define NUM_THREADS (16)
 
 RWTexture2D<float2> IntegrationMap : register(u0);
@@ -45,7 +41,6 @@ float2 IntegrateBRDF(float NdotV, float Roughness)
     return float2(A, B) / SAMPLE_COUNT;
 }
 
-[RootSignature(RootSig)]
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
 {

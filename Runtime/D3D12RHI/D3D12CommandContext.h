@@ -3,7 +3,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
 #include "D3D12CommandAllocator.h"
-#include "D3D12TimestampQuery.h"
+#include "D3D12Query.h"
 #include "D3D12Texture.h"
 #include "D3D12CommandContextState.h"
 #include "RHI/IRHICommandContext.h"
@@ -18,7 +18,6 @@ public:
     }
 
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
-
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
 
     void FlushBarriers(FD3D12CommandList& CommandList)
@@ -56,8 +55,8 @@ public:
     virtual void RHIStartContext() override final;
     virtual void RHIFinishContext() override final;
 
-    virtual void RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
-    virtual void RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
+    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) override final;
+    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) override final;
 
     virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
     virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
@@ -203,7 +202,7 @@ private:
     bool bIsCapturing : 1;
 
     FD3D12ResourceBarrierBatcher    BarrierBatcher;
-    TArray<FD3D12TimestampQueryRef> ResolveQueries;
+    TArray<FD3D12QueryRef> ResolveQueries;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection CommandContextCS;

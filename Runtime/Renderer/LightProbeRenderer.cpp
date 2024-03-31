@@ -87,17 +87,18 @@ void FLightProbeRenderer::Release()
     SpecularIrradianceGenShader.Reset();
 }
 
-void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, FLightSetup& LightSetup, const FFrameResources& FrameResources)
+void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FLightSetup& LightSetup, const FFrameResources& FrameResources)
 {
     FProxyLightProbe& Skylight = LightSetup.Skylight;
-    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-    CmdList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
-    CmdList.SetComputePipelineState(IrradianceGenPSO.Get());
+    CommandList.SetComputePipelineState(IrradianceGenPSO.Get());
 
     FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
-    CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
-    CmdList.SetUnorderedAccessView(IrradianceGenShader.Get(), Skylight.IrradianceMapUAV.Get(), 0);
+    CommandList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
+    CommandList.SetUnorderedAccessView(IrradianceGenShader.Get(), Skylight.IrradianceMapUAV.Get(), 0);
+    CommandList.SetSamplerState(IrradianceGenShader.Get(), FrameResources.IrradianceSampler.Get(), 0);
 
     {
         const uint32 IrradianceMapSize = static_cast<uint32>(Skylight.IrradianceMap->GetWidth());
@@ -105,47 +106,48 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CmdList, FLightSe
         constexpr uint32 NumThreads = 16;
         const uint32 ThreadWidth  = FMath::DivideByMultiple(IrradianceMapSize, NumThreads);
         const uint32 ThreadHeight = FMath::DivideByMultiple(IrradianceMapSize, NumThreads);
-        CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
+        CommandList.Dispatch(ThreadWidth, ThreadHeight, 6);
     }
 
-    CmdList.UnorderedAccessTextureBarrier(Skylight.IrradianceMap.Get());
+    CommandList.UnorderedAccessTextureBarrier(Skylight.IrradianceMap.Get());
 
-    CmdList.DestroyResource(Skylight.IrradianceMapUAV.Get());
+    CommandList.DestroyResource(Skylight.IrradianceMapUAV.Get());
 
-    CmdList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
-    CmdList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
-    CmdList.SetShaderResourceView(IrradianceGenShader.Get(), SkyboxSRV, 0);
-
-    CmdList.SetComputePipelineState(SpecularIrradianceGenPSO.Get());
+    CommandList.SetComputePipelineState(SpecularIrradianceGenPSO.Get());
+    
+    CommandList.SetShaderResourceView(SpecularIrradianceGenShader.Get(), SkyboxSRV, 0);
+    CommandList.SetSamplerState(SpecularIrradianceGenShader.Get(), FrameResources.IrradianceSampler.Get(), 0);
 
     uint32 Width = Skylight.SpecularIrradianceMap->GetWidth();
-    float  Roughness = 0.0f;
+    const uint32 NumMiplevels = Skylight.SpecularIrradianceMap->GetNumMipLevels();
 
-    const uint32 NumMiplevels   = Skylight.SpecularIrradianceMap->GetNumMipLevels();
-    const float  RoughnessDelta = 1.0f / (NumMiplevels - 1);
+    float Roughness = 0.0f;
+    const float RoughnessDelta = 1.0f / (NumMiplevels - 1);
     for (uint32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
-        CmdList.Set32BitShaderConstants(SpecularIrradianceGenShader.Get(), &Roughness, 1);
+        CommandList.Set32BitShaderConstants(SpecularIrradianceGenShader.Get(), &Roughness, 1);
 
         FRHIUnorderedAccessView* UnorderedAccessView = Skylight.SpecularIrradianceMapUAVs[Mip].Get();
-        CmdList.SetUnorderedAccessView(SpecularIrradianceGenShader.Get(), UnorderedAccessView, 0);
+        CommandList.SetUnorderedAccessView(SpecularIrradianceGenShader.Get(), UnorderedAccessView, 0);
 
         constexpr uint32 NumThreads = 16;
         const uint32 ThreadWidth  = FMath::DivideByMultiple(Width, NumThreads);
         const uint32 ThreadHeight = FMath::DivideByMultiple(Width, NumThreads);
-        CmdList.Dispatch(ThreadWidth, ThreadHeight, 6);
+        CommandList.Dispatch(ThreadWidth, ThreadHeight, 6);
 
-        CmdList.UnorderedAccessTextureBarrier(Skylight.SpecularIrradianceMap.Get());
+        CommandList.UnorderedAccessTextureBarrier(Skylight.SpecularIrradianceMap.Get());
 
-        Width      = FMath::Max<uint32>(Width / 2, 1U);
+        Width = FMath::Max<uint32>(Width / 2, 1U);
         Roughness += RoughnessDelta;
 
-        CmdList.DestroyResource(UnorderedAccessView);
+        CommandList.DestroyResource(UnorderedAccessView);
     }
 
-    CmdList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-    CmdList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
 
     Skylight.IrradianceMapUAV.Reset();
     Skylight.WeakSpecularIrradianceMapUAVs.Clear(true);

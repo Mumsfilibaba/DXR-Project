@@ -25,5 +25,5 @@
 #include "VulkanRHI/VulkanSurface.h"
 #include "VulkanRHI/VulkanSwapChain.h"
 #include "VulkanRHI/VulkanTexture.h"
-#include "VulkanRHI/VulkanTimestampQuery.h"
+#include "VulkanRHI/VulkanQuery.h"
 #include "VulkanRHI/VulkanViewport.h"

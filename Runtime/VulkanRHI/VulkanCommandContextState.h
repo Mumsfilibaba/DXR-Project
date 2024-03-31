@@ -61,66 +61,6 @@ struct FVulkanPushConstantsCache
     uint32 NumConstants;
 };
 
-struct FVulkanSRVCache
-{
-    FVulkanSRVCache()
-    {
-        Clear();
-    }
-    
-    void Clear()
-    {
-        FMemory::Memzero(Views, sizeof(Views));
-    }
-    
-    FVulkanShaderResourceView* Views[VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
-};
-
-struct FVulkanUAVCache
-{
-    FVulkanUAVCache()
-    {
-        Clear();
-    }
-    
-    void Clear()
-    {
-        FMemory::Memzero(Views, sizeof(Views));
-    }
-    
-    FVulkanUnorderedAccessView* Views[VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
-};
-
-struct FVulkanSamplerCache
-{
-    FVulkanSamplerCache()
-    {
-        Clear();
-    }
-    
-    void Clear()
-    {
-        FMemory::Memzero(Samplers, sizeof(Samplers));
-    }
-    
-    FVulkanSamplerState* Samplers[VULKAN_DEFAULT_SAMPLER_STATE_COUNT];
-};
-
-struct FVulkanUniformCache
-{
-    FVulkanUniformCache()
-    {
-        Clear();
-    }
-    
-    void Clear()
-    {
-        FMemory::Memzero(UniformBuffers, sizeof(UniformBuffers));
-    }
-    
-    FVulkanBuffer* UniformBuffers[VULKAN_DEFAULT_SAMPLER_STATE_COUNT];
-};
-
 class FVulkanCommandContextState : public FVulkanDeviceChild, public FNonCopyAndNonMovable
 {
 public:
@@ -131,7 +71,6 @@ public:
 
     void BindGraphicsStates();
     void BindComputeState();
-    void BindDescriptorSets(FVulkanPipelineLayout* PipelineLayout, EShaderVisibility StartStage, EShaderVisibility EndStage);
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
     
     void ResetState();
@@ -150,30 +89,11 @@ public:
 
     void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
-    FORCEINLINE void SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
-    {
-        CHECK(ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
-        CommonState.SRVCache[ShaderStage].Views[ResourceIndex] = ShaderResourceView;
-    }
-
-    FORCEINLINE void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex)
-    {
-        CHECK(ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
-        CommonState.UAVCache[ShaderStage].Views[ResourceIndex] = UnorderedAccessView;
-    }
-
-    FORCEINLINE void SetUniformBuffer(FVulkanBuffer* ConstantBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex)
-    {
-        CHECK(ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT);
-        CommonState.UniformCache[ShaderStage].UniformBuffers[ResourceIndex] = ConstantBuffer;
-    }
-
-    FORCEINLINE void SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex)
-    {
-        CHECK(SamplerIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT);
-        CommonState.SamplerCache[ShaderStage].Samplers[SamplerIndex] = SamplerState;
-    }
-
+    void SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
+    void SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
+    
 public:
     FORCEINLINE FVulkanCommandContext& GetContext()
     {
@@ -223,7 +143,10 @@ private:
     struct FGraphicsState
     {
         FGraphicsState()
-            : PipelineState(nullptr)
+            : CurrentLayout(nullptr)
+            , PipelineState(nullptr)
+            , DescriptorStates()
+            , CurrentDescriptorState(nullptr)
             , NumViewports(0)
             , NumScissorRects(0)
             , IBCache()
@@ -234,6 +157,7 @@ private:
             FMemory::Memzero(ScissorRects, sizeof(ScissorRects));
         }
 
+        FVulkanPipelineLayout* CurrentLayout;
         FVulkanGraphicsPipelineStateRef PipelineState;
 
         TMap<FVulkanGraphicsPipelineState*, FVulkanDescriptorState*> DescriptorStates;
@@ -262,10 +186,14 @@ private:
     struct FComputeState
     {
         FComputeState()
-            : PipelineState(nullptr)
+            : CurrentLayout(nullptr)
+            , PipelineState(nullptr)
+            , DescriptorStates()
+            , CurrentDescriptorState(nullptr)
         {
         }
 
+        FVulkanPipelineLayout* CurrentLayout;
         FVulkanComputePipelineStateRef PipelineState;
 
         TMap<FVulkanComputePipelineState*, FVulkanDescriptorState*> DescriptorStates;
@@ -278,10 +206,6 @@ private:
     struct FCommonState
     {
         FVulkanPushConstantsCache PushConstantsCache;
-        FVulkanSRVCache           SRVCache[ShaderVisibility_Count];
-        FVulkanUAVCache           UAVCache[ShaderVisibility_Count];
-        FVulkanUniformCache       UniformCache[ShaderVisibility_Count];
-        FVulkanSamplerCache       SamplerCache[ShaderVisibility_Count];
     } CommonState;
     
     FVulkanCommandContext& Context;

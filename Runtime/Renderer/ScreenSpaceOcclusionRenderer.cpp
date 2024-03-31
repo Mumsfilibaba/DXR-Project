@@ -218,7 +218,10 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
         GPU_TRACE_SCOPE(CommandList, "SSAO Horizontal blur");
         
         CommandList.SetComputePipelineState(BlurHorizontalPSO.Get());
+        
+        CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
         CommandList.Set32BitShaderConstants(BlurHorizontalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
 
         CommandList.UnorderedAccessTextureBarrier(FrameResources.SSAOBuffer.Get());
@@ -229,7 +232,10 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
         GPU_TRACE_SCOPE(CommandList, "SSAO Vertical blur");
 
         CommandList.SetComputePipelineState(BlurVerticalPSO.Get());
+        
+        CommandList.SetUnorderedAccessView(SSAOShader.Get(), SSAOBufferUAV, 0);
         CommandList.Set32BitShaderConstants(BlurVerticalShader.Get(), &SSAOSettings.ScreenSize, 2);
+        
         CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
     }
 

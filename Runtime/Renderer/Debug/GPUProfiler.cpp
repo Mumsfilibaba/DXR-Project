@@ -15,7 +15,7 @@ FGPUProfiler::FGPUProfiler()
 
 bool FGPUProfiler::Initialize()
 {
-    Instance.Timequeries = RHICreateTimestampQuery();
+    Instance.Timequeries = RHICreateQuery();
     if (!Instance.Timequeries)
     {
         return false;
@@ -43,7 +43,7 @@ void FGPUProfiler::Tick()
 {
     if (Timequeries)
     {
-        FRHITimestamp Query;
+        FTimingQuery Query;
         Timequeries->GetTimestampFromIndex(Query, FrameTime.TimeQueryIndex);
 
         const double Frequency = static_cast<double>(Timequeries->GetFrequency());
@@ -135,7 +135,7 @@ void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 
             if (TimeQueryIndex >= 0)
             {
-                FRHITimestamp Query;
+                FTimingQuery Query;
                 Timequeries->GetTimestampFromIndex(Query, TimeQueryIndex);
 
                 const double Frequency = static_cast<double>(Timequeries->GetFrequency());

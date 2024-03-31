@@ -5,8 +5,7 @@
 class FRHIViewport;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
-class FRHITimestampQuery;
-class FRHITimestampQuery;
+class FRHIQuery;
 class FRHIShader;
 class FRHIRayTracingPipelineState;
 struct FRayTracingShaderResources;
@@ -24,18 +23,18 @@ struct IRHICommandContext
     virtual void RHIFinishContext() = 0;
 
     /**
-     * @brief                - Begins the timestamp with the specified index in the TimestampQuery 
-     * @param TimestampQuery - Timestamp-Query object to work on
-     * @param Index          - Timestamp index within the query object to begin
+     * @brief       - Begins the timestamp with the specified index in the Query 
+     * @param Query - Query object to work on
+     * @param Index - Query index within the query object to begin
      */ 
-    virtual void RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) = 0;
+    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) = 0;
     
     /**
-     * @brief                - Ends the timestamp with the specified index in the TimestampQuery
-     * @param TimestampQuery - Timestamp-Query object to work on
-     * @param Index          - Timestamp index within the query object to end
+     * @brief       - Ends the timestamp with the specified index in the Query
+     * @param Query - Query object to work on
+     * @param Index - Query index within the query object to end
      */
-    virtual void RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) = 0;
+    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) = 0;
 
     /**
      * @brief                  - Clears a RenderTargetView with a specific color 
