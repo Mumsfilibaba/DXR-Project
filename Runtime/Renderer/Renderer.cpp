@@ -607,17 +607,17 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     if (CVarFXAADebug.GetValue())
     {
+        InCommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
         InCommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
         InCommandList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
         InCommandList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
-        InCommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
     }
     else
     {
+        InCommandList.SetGraphicsPipelineState(FXAAPSO.Get());
         InCommandList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
         InCommandList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
         InCommandList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
-        InCommandList.SetGraphicsPipelineState(FXAAPSO.Get());
     }
 
     InCommandList.DrawInstanced(3, 1, 0, 0);
@@ -649,10 +649,11 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 
     InCmdList.BeginRenderPass(RenderPass);
 
+    InCmdList.SetGraphicsPipelineState(PostPSO.Get());
+    
     FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
     InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
     InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
-    InCmdList.SetGraphicsPipelineState(PostPSO.Get());
 
     InCmdList.DrawInstanced(3, 1, 0, 0);
 

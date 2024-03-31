@@ -1,6 +1,6 @@
 #include "VulkanRHI.h"
 #include "VulkanLoader.h"
-#include "VulkanTimestampQuery.h"
+#include "VulkanQuery.h"
 #include "VulkanShader.h"
 #include "VulkanPipelineState.h"
 #include "VulkanBuffer.h"
@@ -8,6 +8,7 @@
 #include "VulkanResourceViews.h"
 #include "VulkanSamplerState.h"
 #include "VulkanViewport.h"
+#include "VulkanDeviceLimits.h"
 #include "Platform/PlatformVulkan.h"
 #include "Core/Misc/ConsoleManager.h"
 
@@ -35,6 +36,12 @@ FVulkanRHI::~FVulkanRHI()
 {
     // Delete the Default Context before we flush the submission queue..
     SAFE_DELETE(GraphicsCommandContext);
+
+    // Then delete all samplers
+    {
+        TScopedLock Lock(SamplerStateMapCS);
+        SamplerStateMap.Clear();
+    }
 
     //.. since the context will put objects into the Deferred Deletion Queue
     while (!PendingSubmissions.IsEmpty())
@@ -107,6 +114,7 @@ bool FVulkanRHI::Initialize()
     AdapterDesc.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
     AdapterDesc.RequiredFeatures.imageCubeArray            = VK_TRUE;
     AdapterDesc.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
+    AdapterDesc.RequiredFeatures12.hostQueryReset          = VK_TRUE;
 
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
     if (!PhysicalDevice->Initialize(AdapterDesc))
@@ -174,6 +182,13 @@ bool FVulkanRHI::Initialize()
 void FVulkanRHI::RHIBeginFrame()
 {
     // ProcessPendingCommands();
+
+    // Update timestamp period, this is necessary on MoltenVK in order to get correct measurements
+    {
+        VkPhysicalDeviceProperties Properties;
+        vkGetPhysicalDeviceProperties(PhysicalDevice->GetVkPhysicalDevice(), &Properties);
+        FVulkanDeviceLimits::TimestampPeriod = Properties.limits.timestampPeriod;
+    }
 }
 
 void FVulkanRHI::RHIEndFrame()
@@ -209,17 +224,30 @@ FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceA
 
 FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)
 {
-    FVulkanSamplerStateRef NewSamplerState = new FVulkanSamplerState(GetDevice(), InDesc);
-    if (!NewSamplerState->Initialize())
+    TScopedLock Lock(SamplerStateMapCS);
+
+    TSharedRef<FVulkanSamplerState> Result;
+
+    // Check if there already is an existing sampler state with this description
+    if (TSharedRef<FVulkanSamplerState>* ExistingSamplerState = SamplerStateMap.Find(InDesc))
     {
-        return nullptr;
+        Result = *ExistingSamplerState;
     }
     else
     {
-        return NewSamplerState.ReleaseOwnership();
+        Result = new FVulkanSamplerState(GetDevice(), InDesc);
+        if (!Result->Initialize())
+        {
+            return nullptr;
+        }
+        else
+        {
+            SamplerStateMap.Add(InDesc, Result);
+        }
     }
-}
 
+    return Result.ReleaseOwnership();
+}
 
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
 {
@@ -234,17 +262,9 @@ FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
     }
 }
 
-FRHITimestampQuery* FVulkanRHI::RHICreateTimestampQuery()
+FRHIQuery* FVulkanRHI::RHICreateQuery()
 {
-    FVulkanTimestampQueryRef NewTimestampQuery = new FVulkanTimestampQuery(Device);
-    if (!NewTimestampQuery->Initialize())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewTimestampQuery.ReleaseOwnership();
-    }
+    return new FVulkanQuery(Device);
 }
 
 FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)

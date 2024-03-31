@@ -113,22 +113,36 @@ static void ImGuiSwapBuffers(ImGuiViewport* Viewport, void* CmdList)
     }
 }
 
+
 FImGuiRenderer::~FImGuiRenderer()
 {
     // Release the MainViewport
-    FImGui::SetMainViewport(nullptr);
+    if (FImGui::IsMultiViewportEnabled())
+    {
+        FImGui::SetMainViewport(nullptr);
+    }
 }
-
 
 bool FImGuiRenderer::Initialize()
 {
     // Start by initializing the functions for handling Viewports
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    PlatformState.Renderer_CreateWindow  = ImGuiCreateWindow;
-    PlatformState.Renderer_DestroyWindow = ImGuiDestroyWindow;
-    PlatformState.Renderer_SetWindowSize = ImGuiSetWindowSize;
-    PlatformState.Renderer_RenderWindow  = ImGuiRenderWindow;
-    PlatformState.Renderer_SwapBuffers   = ImGuiSwapBuffers;
+    if (FImGui::IsMultiViewportEnabled())
+    {
+        PlatformState.Renderer_CreateWindow  = ImGuiCreateWindow;
+        PlatformState.Renderer_DestroyWindow = ImGuiDestroyWindow;
+        PlatformState.Renderer_SetWindowSize = ImGuiSetWindowSize;
+        PlatformState.Renderer_RenderWindow  = ImGuiRenderWindow;
+        PlatformState.Renderer_SwapBuffers   = ImGuiSwapBuffers;
+    }
+    else
+    {
+        PlatformState.Renderer_CreateWindow  = nullptr;
+        PlatformState.Renderer_DestroyWindow = nullptr;
+        PlatformState.Renderer_SetWindowSize = nullptr;
+        PlatformState.Renderer_RenderWindow  = nullptr;
+        PlatformState.Renderer_SwapBuffers   = nullptr;
+    }
 
     // Build texture atlas
     uint8* Pixels = nullptr;
@@ -166,8 +180,8 @@ bool FImGuiRenderer::Initialize()
         struct FVSInput
         {
             float2 Position : POSITION;
-            float4 Color    : COLOR0;
             float2 TexCoord : TEXCOORD0;
+            float4 Color    : COLOR0;
         };
 
         struct FPSInput

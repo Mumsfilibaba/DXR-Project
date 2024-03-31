@@ -2,12 +2,48 @@
 #include "VulkanCommandContextState.h"
 #include "VulkanSubmission.h"
 #include "VulkanDescriptorSet.h"
+#include "VulkanQuery.h"
 #include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
 
 class FVulkanDevice;
 class FVulkanBuffer;
+class FVulkanCommandContext;
+
+class FBarrierBatcher
+{
+    struct FBatch
+    {
+        FBatch(VkPipelineStageFlags InSrcStageMask, VkPipelineStageFlags InDstStageMask, VkDependencyFlags InDependencyFlags)
+            : SrcStageMask(InSrcStageMask)
+            , DstStageMask(InDstStageMask)
+            , DependencyFlags(InDependencyFlags)
+        {
+        }
+
+        VkPipelineStageFlags          SrcStageMask;
+        VkPipelineStageFlags          DstStageMask;
+        VkDependencyFlags             DependencyFlags;
+        TArray<VkMemoryBarrier>       MemoryBarriers;
+        TArray<VkBufferMemoryBarrier> BufferMemoryBarriers;
+        TArray<VkImageMemoryBarrier>  ImageMemoryBarriers;
+    };
+
+public:
+    FBarrierBatcher(FVulkanCommandContext& InContext);
+    ~FBarrierBatcher() = default;
+
+    void AddMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkMemoryBarrier& MemoryBarrier);
+    void AddBufferMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier& BufferMemoryBarrier);
+    void AddImageMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier& ImageMemoryBarrier);
+
+    void FlushBarriers();
+
+private:
+    FVulkanCommandContext& Context;
+    TArray<FBatch>         Batches;
+};
 
 class FVulkanCommandContext : public IRHICommandContext, public FVulkanDeviceChild
 {
@@ -21,8 +57,8 @@ public:
     virtual void RHIStartContext() override final;
     virtual void RHIFinishContext() override final;
 
-    virtual void RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
-    virtual void RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index) override final;
+    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) override final;
+    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) override final;
 
     virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
     virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
@@ -121,6 +157,11 @@ public:
         return *CommandBuffer;
     }
 
+    FBarrierBatcher& GetBarrierBatcher()
+    {
+        return BarrierBatcher;
+    }
+
     bool IsRecording() const
     {
         return bIsRecording;
@@ -142,11 +183,15 @@ private:
     FVulkanCommandPool*        CommandPool;
     FVulkanCommandBuffer*      CommandBuffer;
     FVulkanCommandPacket*      CommandPacket;
+
+    FBarrierBatcher            BarrierBatcher;
     FVulkanCommandContextState ContextState;
+
+    TArray<FVulkanQuery*>      Queries;
 
     // Keeps track of the recording state of the context, i.e if RHIStartContext has been called
     bool bIsRecording;
 
-    // TODO: The whole commandcontext should only be used from one thread at a time
+    // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection CommandContextCS;
 };

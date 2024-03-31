@@ -80,7 +80,7 @@ DECLARE_RHICOMMAND(FRHICommandEndFrame)
 
 DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
 {
-    FORCEINLINE FRHICommandBeginTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandBeginTimeStamp(FRHIQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     {
@@ -91,13 +91,13 @@ DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
         CommandContext.RHIBeginTimeStamp(Query, Index);
     }
 
-    FRHITimestampQuery* Query;
-    uint32              Index;
+    FRHIQuery* Query;
+    uint32     Index;
 };
 
 DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
 {
-    FORCEINLINE FRHICommandEndTimeStamp(FRHITimestampQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandEndTimeStamp(FRHIQuery* InQuery, uint32 InIndex)
         : Query(InQuery)
         , Index(InIndex)
     {
@@ -108,8 +108,8 @@ DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
         CommandContext.RHIEndTimeStamp(Query, Index);
     }
 
-    FRHITimestampQuery* Query;
-    uint32              Index;
+    FRHIQuery* Query;
+    uint32     Index;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)

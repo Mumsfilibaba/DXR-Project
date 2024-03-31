@@ -18,12 +18,5 @@ void FVulkanDeletionQueue::FDeferredResource::Release()
             VulkanResource->Release();
             break;
         }
-        case FVulkanDeletionQueue::EType::DescriptorPool:
-        {
-            CHECK(DescriptorPool != nullptr);
-            // TODO: Move this to the FVulkanRHI
-            FVulkanRHI::GetRHI()->GetDevice()->GetDescriptorPoolManager().RecyclePool(DescriptorPool);
-            break;
-        }
     }
 }

@@ -4,70 +4,14 @@
 #include "VulkanResourceViews.h"
 #include "VulkanBuffer.h"
 #include "VulkanSamplerState.h"
+#include "Core/Misc/ConsoleManager.h"
 
-FVulkanDescriptorSetBuilder::FVulkanDescriptorSetBuilder()
-    : bKeyIsDirty(true)
-{
-}
+#define VALIDATE_NO_NULL_DESCRIPTORS (0)
 
-void FVulkanDescriptorSetBuilder::SetupDescriptorWrites(const FVulkanDescriptorRemappingInfo& SetRemappingInfo)
-{
-    // Allocate HashKey
-    DescriptorSetKey.Resources.Resize(SetRemappingInfo.RemappingInfo.Size());
-    FMemory::Memzero(DescriptorSetKey.Resources.Data(), DescriptorSetKey.Resources.SizeInBytes());
-    UpdateHash();
-    
-    // Allocate DescriptorWrites
-    DescriptorWrites.Resize(SetRemappingInfo.RemappingInfo.Size());
-    FMemory::Memzero(DescriptorWrites.Data(), DescriptorWrites.SizeInBytes());
-    
-    // Init DescriptorWrites and count the other bindings
-    uint32 NumImageInfos  = 0;
-    uint32 NumBufferInfos = 0;
-    for (int32 Index = 0; Index < SetRemappingInfo.RemappingInfo.Size(); Index++)
-    {
-        const FVulkanDescriptorRemappingInfo::FRemappingInfo& Binding = SetRemappingInfo.RemappingInfo[Index];
-        CHECK(Binding.BindingIndex == static_cast<uint32>(Index));
-        
-        VkWriteDescriptorSet& WriteDescriptorSet = DescriptorWrites[Index];
-        WriteDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        WriteDescriptorSet.descriptorType  = GetDescriptorTypeFromBindingType(Binding.BindingType);
-        WriteDescriptorSet.descriptorCount = 1;
-        WriteDescriptorSet.dstBinding      = Binding.BindingIndex;
-        WriteDescriptorSet.dstArrayElement = 0;
-        
-        DescriptorSetKey.Resources[Index].Type = WriteDescriptorSet.descriptorType;
-        
-        if (WriteDescriptorSet.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || WriteDescriptorSet.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
-        {
-            NumBufferInfos++;
-        }
-        else
-        {
-            NumImageInfos++;
-        }
-    }
-    
-    // Allocate Buffer and Image Infos
-    DescriptorImageInfos.Resize(NumImageInfos);
-    DescriptorBufferInfos.Resize(NumBufferInfos);
-    
-    // Setup Buffer and ImageInfos
-    uint32 CurrentImageInfo  = 0;
-    uint32 CurrentBufferInfo = 0;
-    for (int32 Index = 0; Index < DescriptorWrites.Size(); Index++)
-    {
-        VkWriteDescriptorSet& WriteDescriptorSet = DescriptorWrites[Index];
-        if (WriteDescriptorSet.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || WriteDescriptorSet.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
-        {
-            WriteDescriptorSet.pBufferInfo = &DescriptorBufferInfos[CurrentBufferInfo++];
-        }
-        else
-        {
-            WriteDescriptorSet.pImageInfo = &DescriptorImageInfos[CurrentImageInfo++];
-        }
-    }
-}
+static TAutoConsoleVariable<int32> CVarVulkanMaxDescriptorSetsPerPool(
+    "VulkanRHI.MaxDescriptorSetsPerPool",
+    "The number of DescriptorSets that can be created from a DescriptorPool",
+    32);
 
 FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanPipelineLayout* InLayout, const FVulkanDefaultResources& InDefaultResources)
     : FVulkanDeviceChild(InDevice)
@@ -83,13 +27,142 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
         return;
     }
 
+    // Allocate all the per DescriptorSet resources
     const TArray<FVulkanDescriptorRemappingInfo>& RemappingInfos = Layout->GetDescriptorRemappingInfos();
     DescriptorSetHandles.Resize(RemappingInfos.Size());
+    DescriptorSetWrites.Resize(RemappingInfos.Size());
     DescriptorSetBuilders.Resize(RemappingInfos.Size());
+    DescriptorPoolInfos.Reserve(DescriptorSetHandles.Size());
     
-    for (int32 Index = 0; Index < RemappingInfos.Size(); Index++)
+    // Maps from a descriptor-type to the number of descriptors for this type
+    TMap<VkDescriptorType, uint32> DescriptorCountMap;
+
+    // Pre-Initialize all the DescriptorWrites that are necessary
+    for (int32 DescriptorSetIndex = 0; DescriptorSetIndex < RemappingInfos.Size(); DescriptorSetIndex++)
     {
-        DescriptorSetBuilders[Index].SetupDescriptorWrites(RemappingInfos[Index]);
+        DescriptorCountMap.Clear();
+
+        const FVulkanDescriptorRemappingInfo& SetRemappingInfo = RemappingInfos[DescriptorSetIndex];
+        
+        // Allocate DescriptorWrites
+        FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[DescriptorSetIndex];
+        DSWrites.DescriptorWrites.Resize(SetRemappingInfo.RemappingInfo.Size());
+        FMemory::Memzero(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.SizeInBytes());
+        
+        // Init DescriptorWrites and count the other bindings
+        uint32 NumImageInfos  = 0;
+        uint32 NumBufferInfos = 0;
+        for (int32 Index = 0; Index < SetRemappingInfo.RemappingInfo.Size(); Index++)
+        {
+            const FVulkanDescriptorRemappingInfo::FRemappingInfo& Binding = SetRemappingInfo.RemappingInfo[Index];
+            CHECK(Binding.BindingIndex == static_cast<uint32>(Index));
+            
+            VkWriteDescriptorSet& WriteDescriptorSet = DSWrites.DescriptorWrites[Index];
+            WriteDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            WriteDescriptorSet.descriptorType  = GetDescriptorTypeFromBindingType(Binding.BindingType);
+            WriteDescriptorSet.descriptorCount = 1;
+            WriteDescriptorSet.dstBinding      = Binding.BindingIndex;
+            WriteDescriptorSet.dstArrayElement = 0;
+            
+            switch(WriteDescriptorSet.descriptorType)
+            {
+                case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+                {
+                    NumBufferInfos++;
+                    break;
+                }
+                case VK_DESCRIPTOR_TYPE_SAMPLER:
+                case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+                {
+                    NumImageInfos++;
+                    break;
+                }
+                default:
+                {
+                    VULKAN_ERROR("Unhandled DescriptorType");
+                    DEBUG_BREAK();
+                    break;
+                }
+            };
+
+            DescriptorCountMap[WriteDescriptorSet.descriptorType]++;
+        }
+
+        // Allocate Buffer and Image Infos
+        DSWrites.DescriptorImageInfos.Resize(NumImageInfos);
+        FMemory::Memzero(DSWrites.DescriptorImageInfos.Data(), DSWrites.DescriptorImageInfos.SizeInBytes());
+
+        DSWrites.DescriptorBufferInfos.Resize(NumBufferInfos);
+        FMemory::Memzero(DSWrites.DescriptorBufferInfos.Data(), DSWrites.DescriptorBufferInfos.SizeInBytes());
+
+        // Setup Buffer and ImageInfos
+        uint32 CurrentImageInfo  = 0;
+        uint32 CurrentBufferInfo = 0;
+        for (int32 Index = 0; Index < DSWrites.DescriptorWrites.Size(); Index++)
+        {
+            VkWriteDescriptorSet& WriteDescriptorSet = DSWrites.DescriptorWrites[Index];
+            switch(WriteDescriptorSet.descriptorType)
+            {
+                case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+                case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+                {
+                    WriteDescriptorSet.pBufferInfo = &DSWrites.DescriptorBufferInfos[CurrentBufferInfo++];
+                    
+                    // Initialize buffers to use a null-buffer
+                    VkDescriptorBufferInfo* BufferInfo = const_cast<VkDescriptorBufferInfo*>(WriteDescriptorSet.pBufferInfo);
+                    BufferInfo->buffer = DefaultResources.NullBuffer;
+                    BufferInfo->offset = 0;
+                    BufferInfo->range  = VK_WHOLE_SIZE;
+                    break;
+                }
+                case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+                case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+                {
+                    // Initialize textures to use a null-image
+                    WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
+                    
+                    VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
+                    ImageInfo->imageView   = DefaultResources.NullImageView;
+                    ImageInfo->imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+                    ImageInfo->sampler     = VK_NULL_HANDLE;
+                    break;
+                }
+                case VK_DESCRIPTOR_TYPE_SAMPLER:
+                {
+                    // Initialize samplers to use a null-sampler
+                    WriteDescriptorSet.pImageInfo = &DSWrites.DescriptorImageInfos[CurrentImageInfo++];
+                    
+                    VkDescriptorImageInfo* ImageInfo = const_cast<VkDescriptorImageInfo*>(WriteDescriptorSet.pImageInfo);
+                    ImageInfo->imageView   = VK_NULL_HANDLE;
+                    ImageInfo->imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    ImageInfo->sampler     = DefaultResources.NullSampler;
+                    break;
+                }
+                default:
+                {
+                    VULKAN_ERROR("Unhandled DescriptorType");
+                    DEBUG_BREAK();
+                    break;
+                }
+            };
+        }
+        
+        // Setup the builders
+        DescriptorSetBuilders[DescriptorSetIndex].SetupDescriptorWrites(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.Size());
+
+        // Fill in all the info we need to allocate DescriptorSets from a DescriptorPool
+        FVulkanDescriptorPoolInfo PoolInfo;
+        PoolInfo.DescriptorSetLayout = Layout->GetVkDescriptorSetLayout(DescriptorSetIndex);
+
+        for (TPair<const VkDescriptorType&, uint32&> TypePair : DescriptorCountMap)
+        {
+            PoolInfo.DescriptorSizes.Emplace(TypePair.First, TypePair.Second);
+        }
+
+        PoolInfo.GenerateHash();
+        DescriptorPoolInfos.Add(Move(PoolInfo));
     }
 }
 
@@ -196,11 +269,38 @@ void FVulkanDescriptorState::UpdateDescriptorSets()
 {
     for (int32 Index = 0; Index < DescriptorSetHandles.Size(); Index++)
     {
+    #if VALIDATE_NO_NULL_DESCRIPTORS
+        const FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[Index];
+        for (const VkWriteDescriptorSet& WriteInfo : DSWrites.DescriptorWrites)
+        {
+            if (WriteInfo.pBufferInfo)
+            {
+                CHECK(WriteInfo.pBufferInfo->buffer != DefaultResources.NullBuffer);
+            }
+            else if (WriteInfo.pImageInfo)
+            {
+                if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                {
+                    CHECK(WriteInfo.pImageInfo->imageView != DefaultResources.NullImageView);
+                }
+                else if (WriteInfo.descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER)
+                {
+                    CHECK(WriteInfo.pImageInfo->sampler != DefaultResources.NullSampler);
+                }
+            }
+            else
+            {
+                DEBUG_BREAK();
+            }
+        }
+     #endif
+
         FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[Index];
         DSBuilder.UpdateHash();
 
-        VkDescriptorSetLayout SetLayout = Layout->GetVkDescriptorSetLayout(Index);
-        if (!GetDevice()->GetDescriptorSetCache().FindOrCreateDescriptorSet(SetLayout, DSBuilder, DescriptorSetHandles[Index]))
+        const FVulkanDescriptorPoolInfo& DescriptorPoolInfo = DescriptorPoolInfos[Index];
+        FVulkanDescriptorSetCache& DescriptorSetCache = GetDevice()->GetDescriptorSetCache();
+        if (!DescriptorSetCache.FindOrCreateDescriptorSet(DescriptorPoolInfo, DSBuilder, DescriptorSetHandles[Index]))
         {
             VULKAN_ERROR("Failed to find or create DescriptorSet");
             DEBUG_BREAK();
@@ -209,16 +309,31 @@ void FVulkanDescriptorState::UpdateDescriptorSets()
     }
 }
 
+void FVulkanDescriptorState::Reset()
+{
+    for (int32 DescriptorSetIndex = 0; DescriptorSetIndex < DescriptorSetWrites.Size(); DescriptorSetIndex++)
+    {
+        FVulkanDescriptorWrites& DSWrites = DescriptorSetWrites[DescriptorSetIndex];
+        for (int32 BindingIndex = 0; BindingIndex < DSWrites.DescriptorWrites.Size(); BindingIndex++)
+        {
+            ResetDescriptorBinding(DescriptorSetIndex, BindingIndex);
+        }
+    }
+}
+
 void FVulkanDescriptorState::BindDescriptorSets(class FVulkanCommandBuffer& CommandBuffer, VkPipelineBindPoint BindPoint)
 {
-    CHECK(DescriptorSetHandles.Size() > 0); // Cannot bind zero descriptorsets
+    CHECK(DescriptorSetHandles.Size() > 0); // Cannot bind zero DescriptorSets
     CommandBuffer->BindDescriptorSets(BindPoint, Layout->GetVkPipelineLayout(), 0, DescriptorSetHandles.Size(), DescriptorSetHandles.Data(), 0, nullptr);
 }
 
 void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, uint32 BindingIndex)
 {
+    FVulkanDescriptorWrites&     DSWrites  = DescriptorSetWrites[DescriptorSetIndex];
     FVulkanDescriptorSetBuilder& DSBuilder = DescriptorSetBuilders[DescriptorSetIndex];
-    switch(DSBuilder.GetDescriptorType(BindingIndex))
+
+    const VkDescriptorType Type = DSWrites.DescriptorWrites[BindingIndex].descriptorType;
+    switch(Type)
     {
         case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
         {
@@ -240,6 +355,11 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
             DSBuilder.WriteSampledImage(BindingIndex, DefaultResources.NullImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
             break;
         }
+        case VK_DESCRIPTOR_TYPE_SAMPLER:
+        {
+            DSBuilder.WriteSampler(BindingIndex, DefaultResources.NullSampler);
+            break;
+        }
         default:
         {
             VULKAN_ERROR("Unhandled DescriptorType");
@@ -249,10 +369,11 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
     }
 }
 
-
 FVulkanDescriptorPool::FVulkanDescriptorPool(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , DescriptorPool(VK_NULL_HANDLE)
+    , MaxDescriptorSets(0)
+    , NumDescriptorSets(0)
 {
 }
 
@@ -267,40 +388,28 @@ FVulkanDescriptorPool::~FVulkanDescriptorPool()
     }
 }
 
-bool FVulkanDescriptorPool::Initialize()
+bool FVulkanDescriptorPool::Initialize(const FVulkanDescriptorPoolInfo& PoolInfo)
 {
-    const VkDescriptorType DescriptorTypes[] =
-    {
-        // ConstantBuffers
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        // SRV + UAV Buffers
-        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        // Samplers
-        VK_DESCRIPTOR_TYPE_SAMPLER,
-        // UAV Textures
-        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        // Textures
-        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-    };
-    
+    const uint32 MaxDescriptorSetsPerPool = FMath::Max<int32>(CVarVulkanMaxDescriptorSetsPerPool.GetValue(), 1);
+
     TArray<VkDescriptorPoolSize> PoolSizes;
-    for (VkDescriptorType DescriptorType : DescriptorTypes)
+    for (const FVulkanDescriptorPoolInfo::FDescriptorSize& Size : PoolInfo.DescriptorSizes)
     {
         VkDescriptorPoolSize NewPoolSize;
-        NewPoolSize.type            = DescriptorType;
-        NewPoolSize.descriptorCount = 1024;
+        NewPoolSize.type            = static_cast<VkDescriptorType>(Size.Type);
+        NewPoolSize.descriptorCount = Size.NumDescriptors * MaxDescriptorSetsPerPool;
         PoolSizes.Add(NewPoolSize);
     }
-    
+
     VkDescriptorPoolCreateInfo DescriptorPoolCreateInfo;
     FMemory::Memzero(&DescriptorPoolCreateInfo);
-    
+
     DescriptorPoolCreateInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    DescriptorPoolCreateInfo.maxSets       = 1024;
+    DescriptorPoolCreateInfo.maxSets       = MaxDescriptorSetsPerPool;
     DescriptorPoolCreateInfo.flags         = 0;
     DescriptorPoolCreateInfo.poolSizeCount = PoolSizes.Size();
     DescriptorPoolCreateInfo.pPoolSizes    = PoolSizes.Data();
-    
+
     VkResult Result = vkCreateDescriptorPool(GetDevice()->GetVkDevice(), &DescriptorPoolCreateInfo, nullptr, &DescriptorPool);
     if (VULKAN_FAILED(Result))
     {
@@ -309,24 +418,20 @@ bool FVulkanDescriptorPool::Initialize()
     }
     else
     {
+        NumDescriptorSets = MaxDescriptorSets = MaxDescriptorSetsPerPool;
         return true;
     }
 }
 
-bool FVulkanDescriptorPool::AllocateDescriptorSet(VkDescriptorSetLayout DescriptorSetLayout, VkDescriptorSet& OutDescriptorSet)
+bool FVulkanDescriptorPool::AllocateDescriptorSet(const VkDescriptorSetAllocateInfo& DescriptorSetAllocateInfo, VkDescriptorSet* OutDescriptorSets)
 {
-    VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo;
-    FMemory::Memzero(&DescriptorSetAllocateInfo);
-    
-    DescriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    DescriptorSetAllocateInfo.descriptorPool     = DescriptorPool;
-    DescriptorSetAllocateInfo.descriptorSetCount = 1;
-    DescriptorSetAllocateInfo.pSetLayouts        = &DescriptorSetLayout;
-    
-    // Initalize the DescriptorSet to Null
-    OutDescriptorSet = VK_NULL_HANDLE;
-    
-    VkResult Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &DescriptorSetAllocateInfo, &OutDescriptorSet);
+    CHECK(DescriptorSetAllocateInfo.sType == VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO);
+    CHECK(DescriptorSetAllocateInfo.pNext == nullptr);
+
+    VkDescriptorSetAllocateInfo AllocateInfo = DescriptorSetAllocateInfo;
+    AllocateInfo.descriptorPool = DescriptorPool;
+
+    VkResult Result = vkAllocateDescriptorSets(GetDevice()->GetVkDevice(), &AllocateInfo, OutDescriptorSets);
     if (Result == VK_ERROR_OUT_OF_POOL_MEMORY)
     {
         return false;
@@ -339,6 +444,7 @@ bool FVulkanDescriptorPool::AllocateDescriptorSet(VkDescriptorSetLayout Descript
     }
     else
     {
+        NumDescriptorSets--;
         return true;
     }
 }
@@ -346,70 +452,5 @@ bool FVulkanDescriptorPool::AllocateDescriptorSet(VkDescriptorSetLayout Descript
 void FVulkanDescriptorPool::Reset()
 {
     vkResetDescriptorPool(GetDevice()->GetVkDevice(), DescriptorPool, 0);
-}
-
-
-FVulkanDescriptorPoolManager::FVulkanDescriptorPoolManager(FVulkanDevice* InDevice)
-    : FVulkanDeviceChild(InDevice)
-    , DescriptorPools()
-    , DescriptorPoolsCS()
-{
-}
-
-FVulkanDescriptorPoolManager::~FVulkanDescriptorPoolManager()
-{
-    ReleaseAll();
-}
-
-FVulkanDescriptorPool* FVulkanDescriptorPoolManager::ObtainPool()
-{
-    {
-        SCOPED_LOCK(DescriptorPoolsCS);
-        
-        if (!DescriptorPools.IsEmpty())
-        {
-            FVulkanDescriptorPool* DescriptorPool = DescriptorPools.LastElement();
-            DescriptorPools.Pop();
-
-            // Reset the memory of the DescriptorPool
-            DescriptorPool->Reset();
-            return DescriptorPool;
-        }
-    }
-    
-    FVulkanDescriptorPool* DescriptorPool = new FVulkanDescriptorPool(GetDevice());
-    if (!DescriptorPool->Initialize())
-    {
-        DEBUG_BREAK();
-        return nullptr;
-    }
-    else
-    {
-        return DescriptorPool;
-    }
-}
-
-void FVulkanDescriptorPoolManager::RecyclePool(FVulkanDescriptorPool* InDescriptorPool)
-{
-    if (InDescriptorPool)
-    {
-        SCOPED_LOCK(DescriptorPoolsCS);
-        DescriptorPools.Add(InDescriptorPool);
-    }
-    else
-    {
-        LOG_WARNING("Trying to Recycle an invalid Fence");
-    }
-}
-
-void FVulkanDescriptorPoolManager::ReleaseAll()
-{
-    SCOPED_LOCK(DescriptorPoolsCS);
-    
-    for (FVulkanDescriptorPool* DescriptorPool : DescriptorPools)
-    {
-        delete DescriptorPool;
-    }
-    
-    DescriptorPools.Clear();
+    NumDescriptorSets = MaxDescriptorSets;
 }

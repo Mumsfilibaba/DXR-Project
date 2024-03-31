@@ -661,9 +661,6 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             FRHIScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
-            CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
-
             // Draw all objects to shadow-map
             static IConsoleVariable* CVarFrustumCullEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.FrustumCulling");
             if (CVarFrustumCullEnabled && CVarFrustumCullEnabled->GetBool())
@@ -697,6 +694,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
 
                         CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
+                        CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
+                        CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
+
                         ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
                         CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
 
@@ -727,6 +727,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
 
                     ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
                     CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
+
+                    CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
+                    CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
                     CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
                 }

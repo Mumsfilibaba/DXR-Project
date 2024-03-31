@@ -66,7 +66,7 @@ public:
      */
     FORCEINLINE operator bool() const noexcept
     {
-        return (Storage & Mask);
+        return Storage & Mask;
     }
 
 private:

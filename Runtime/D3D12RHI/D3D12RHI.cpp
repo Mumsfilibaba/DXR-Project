@@ -12,7 +12,7 @@
 #include "D3D12SamplerState.h"
 #include "D3D12Viewport.h"
 #include "D3D12RHIShaderCompiler.h"
-#include "D3D12TimestampQuery.h"
+#include "D3D12Query.h"
 #include "DynamicD3D12.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
@@ -242,6 +242,7 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& I
         Desc.MaxLOD         = InDesc.MaxLOD;
         Desc.MinLOD         = InDesc.MinLOD;
         Desc.MipLODBias     = InDesc.MipLODBias;
+        
         FMemory::Memcpy(Desc.BorderColor, &InDesc.BorderColor.r, sizeof(Desc.BorderColor));
 
         Result = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InDesc);
@@ -780,16 +781,16 @@ FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const F
     }
 }
 
-FRHITimestampQuery* FD3D12RHI::RHICreateTimestampQuery()
+FRHIQuery* FD3D12RHI::RHICreateQuery()
 {
-    FD3D12TimestampQueryRef NewTimestampQuery = new FD3D12TimestampQuery(GetDevice());
-    if (!NewTimestampQuery->Initialize())
+    FD3D12QueryRef NewQuery = new FD3D12Query(GetDevice());
+    if (!NewQuery->Initialize())
     {
         return nullptr;
     }
     else
     {
-        return NewTimestampQuery.ReleaseOwnership();
+        return NewQuery.ReleaseOwnership();
     }
 }
 

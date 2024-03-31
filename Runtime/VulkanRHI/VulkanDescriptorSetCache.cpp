@@ -1,11 +1,66 @@
 #include "VulkanDescriptorSetCache.h"
 #include "VulkanDevice.h"
 
-FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice)
+FVulkanDescriptorSetCache::FCachedPool::FCachedPool(FVulkanDevice* InDevice, const FVulkanDescriptorPoolInfo& InPoolInfo)
     : FVulkanDeviceChild(InDevice)
     , CurrentDescriptorPool(nullptr)
+    , DescriptorPools()
+    , PoolInfo(InPoolInfo)
+{
+}
+
+FVulkanDescriptorSetCache::FCachedPool::~FCachedPool()
+{
+    ReleaseAll();
+}
+
+bool FVulkanDescriptorSetCache::FCachedPool::AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet)
+{
+    VkDescriptorSetAllocateInfo AllocateInfo;
+    FMemory::Memzero(&AllocateInfo, sizeof(VkDescriptorSetAllocateInfo));
+
+    AllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    AllocateInfo.pSetLayouts        = &SetLayout;
+    AllocateInfo.descriptorSetCount = 1;
+
+    if (CurrentDescriptorPool)
+    {
+        if (CurrentDescriptorPool->CanAllocateDescriptorSet())
+        {
+            return CurrentDescriptorPool->AllocateDescriptorSet(AllocateInfo, &OutDescriptorSet);
+        }
+
+        DescriptorPools.Add(CurrentDescriptorPool);
+    }
+
+    CurrentDescriptorPool = new FVulkanDescriptorPool(GetDevice());
+    if (!CurrentDescriptorPool->Initialize(PoolInfo))
+    {
+        return false;
+    }
+
+    return CurrentDescriptorPool->AllocateDescriptorSet(AllocateInfo, &OutDescriptorSet);
+}
+
+void FVulkanDescriptorSetCache::FCachedPool::ReleaseAll()
+{
+    SAFE_DELETE(CurrentDescriptorPool);
+
+    // TODO: Look into putting the pools in the deferred deletion queue
+    for (FVulkanDescriptorPool* DescriptorPool : DescriptorPools)
+    {
+        delete DescriptorPool;
+    }
+
+    DescriptorPools.Clear();
+}
+
+
+FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice)
+    : FVulkanDeviceChild(InDevice)
+    , Caches()
     , DescriptorSets()
-    , DescriptorSetsCS()
+    , CacheCS()
 {
 }
 
@@ -14,66 +69,49 @@ FVulkanDescriptorSetCache::~FVulkanDescriptorSetCache()
     Release();
 }
 
-bool FVulkanDescriptorSetCache::Initialize()
-{   
-    CurrentDescriptorPool = GetDevice()->GetDescriptorPoolManager().ObtainPool();
-    if (!CurrentDescriptorPool)
-    {
-        return false;
-    }
-    
-    return true;
-}
-
 void FVulkanDescriptorSetCache::Release()
 {
-    if (CurrentDescriptorPool)
-    {
-        GetDevice()->GetDescriptorPoolManager().RecyclePool(CurrentDescriptorPool);
-        CurrentDescriptorPool = nullptr;
-    }
-    
-    for (FVulkanDescriptorPool* DescriptorPool : DescriptorPools)
-    {
-        GetDevice()->GetDescriptorPoolManager().RecyclePool(DescriptorPool);
-    }
-    
+    TScopedLock Lock(CacheCS);
     DescriptorSets.Clear();
-    DescriptorPools.Clear();
+    Caches.Clear();
 }
 
-bool FVulkanDescriptorSetCache::FindOrCreateDescriptorSet(VkDescriptorSetLayout SetLayout, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet)
+bool FVulkanDescriptorSetCache::FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet)
 {
-        // Get or Create a DescriptorSet
+    TScopedLock Lock(CacheCS);
+
+    // Get or Create a DescriptorSet
     if (VkDescriptorSet* DescriptorSet = DescriptorSets.Find(DSBuilder.GetKey()))
     {
         OutDescriptorSet = *DescriptorSet;
     }
     else
     {
-        // Create a new DescriptorSet
-        if (!CurrentDescriptorPool->AllocateDescriptorSet(SetLayout, OutDescriptorSet))
+        FCachedPool* Pool = nullptr;
+        if (FCachedPool* ExistingPool = Caches.Find(PoolInfo))
         {
-            DescriptorPools.Add(CurrentDescriptorPool);
-            
-            //FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(DescriptorPool);
-            //DescriptorPool = nullptr;
-
-            CurrentDescriptorPool = GetDevice()->GetDescriptorPoolManager().ObtainPool();
-            if (!CurrentDescriptorPool)
-            {
-                return false;
-            }
-            
-            if (!CurrentDescriptorPool->AllocateDescriptorSet(SetLayout, OutDescriptorSet))
-            {
-                return false;
-            }
+            Pool = ExistingPool;
         }
-        
+        else
+        {
+            FCachedPool NewPool(GetDevice(), PoolInfo);
+            Pool = &Caches.Add(Move(PoolInfo), Move(NewPool));
+        }
+
+        if (!Pool)
+        {
+            return false;
+        }
+
+        // Create a new DescriptorSet
+        if (!Pool->AllocateDescriptorSet(PoolInfo.DescriptorSetLayout, OutDescriptorSet))
+        {
+            return false;
+        }
+
         CHECK(OutDescriptorSet != VK_NULL_HANDLE);
         DescriptorSets.Add(DSBuilder.GetKey(), OutDescriptorSet);
-        
+
         DSBuilder.SetDescriptorSet(OutDescriptorSet);
         DSBuilder.UpdateDescriptorSet(GetDevice()->GetVkDevice());
     }
