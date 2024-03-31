@@ -123,7 +123,7 @@ public:
 private:
     FGPUProfiler();
 
-    FRHITimestampQueryRef Timequeries;
+    FRHIQueryRef Timequeries;
     uint32 CurrentTimeQueryIndex = 0;
     
     FGPUProfileSample    FrameTime;

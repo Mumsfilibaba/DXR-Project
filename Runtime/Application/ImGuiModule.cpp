@@ -1,7 +1,13 @@
 #include "ImGuiModule.h"
 #include "Application.h"
 #include "Input/InputMapper.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+
+static TAutoConsoleVariable<bool> CVarImGuiEnableMultiViewports(
+    "ImGui.EnableMultiViewports",
+    "Enable multiple Viewports in ImGui",
+    false);
 
 // TODO: Turn this into lookup tables
 static uint32 ImGui_GetMouseButtonIndex(EMouseButtonName::Type Button)
@@ -381,52 +387,73 @@ void FImGui::CreateContext()
     Context = ImGui::CreateContext();
     CHECK(Context != nullptr);
 
-    // Make sure that the Viewport is zeroed
-    if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
-    {
-        Viewport->PlatformWindowCreated = false;
-        Viewport->PlatformRequestMove   = false;
-        Viewport->PlatformRequestResize = false;
-        Viewport->PlatformUserData      = nullptr;
-        Viewport->PlatformHandle        = Viewport->PlatformHandleRaw = nullptr;
-        Viewport->RendererUserData      = nullptr;
-    }
-    
     // Application Flags
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;              // Platform supports Gamepad and currently has one connected.
     UIState.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values
     UIState.BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests
-    UIState.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;    // We can create Multi-Viewports on the Platform side
     UIState.BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data
+    
+    if (CVarImGuiEnableMultiViewports.GetValue())
+    {
+        // We have support for multiple Viewports, but we may not always want to utilize it
+        UIState.BackendFlags |= ImGuiBackendFlags_PlatformHasViewports;
+        UIState.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
+    }
 
     // Renderer Flags
     UIState.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
-    UIState.BackendFlags |= ImGuiBackendFlags_RendererHasViewports;    // We can call io.AddMouseViewportEvent() with correct data
-
-    // Ensure that the Main-Viewport is setup correctly
-    if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
-    {
-        Viewport->PlatformWindowCreated = false;
-    }
 
     // Register platform interface (will be coupled with a renderer interface)
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    PlatformState.Platform_CreateWindow       = ImGuiCreateWindow;
-    PlatformState.Platform_DestroyWindow      = ImGuiDestroyWindow;
-    PlatformState.Platform_ShowWindow         = ImGuiShowWindow;
-    PlatformState.Platform_SetWindowPos       = ImGuiSetWindowPos;
-    PlatformState.Platform_GetWindowPos       = ImGuiGetWindowPos;
-    PlatformState.Platform_SetWindowSize      = ImGuiSetWindowSize;
-    PlatformState.Platform_GetWindowSize      = ImGuiGetWindowSize;
-    PlatformState.Platform_SetWindowFocus     = ImGuiSetWindowFocus;
-    PlatformState.Platform_GetWindowFocus     = ImGuiGetWindowFocus;
-    PlatformState.Platform_GetWindowMinimized = ImGuiGetWindowMinimized;
-    PlatformState.Platform_SetWindowTitle     = ImGuiSetWindowTitle;
-    PlatformState.Platform_SetWindowAlpha     = ImGuiSetWindowAlpha;
-    PlatformState.Platform_UpdateWindow       = ImGuiUpdateWindow;
-    PlatformState.Platform_GetWindowDpiScale  = ImGuiGetWindowDpiScale;
-    PlatformState.Platform_OnChangedViewport  = ImGuiOnChangedViewport;
+    if (CVarImGuiEnableMultiViewports.GetValue())
+    {
+        // Make sure that the Viewport is zeroed
+        if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
+        {
+            Viewport->PlatformHandle        = nullptr;
+            Viewport->PlatformHandleRaw     = nullptr;
+            Viewport->PlatformWindowCreated = false;
+            Viewport->PlatformRequestMove   = false;
+            Viewport->PlatformRequestResize = false;
+            Viewport->PlatformUserData      = nullptr;
+            Viewport->RendererUserData      = nullptr;
+        }
+
+        PlatformState.Platform_CreateWindow       = ImGuiCreateWindow;
+        PlatformState.Platform_DestroyWindow      = ImGuiDestroyWindow;
+        PlatformState.Platform_ShowWindow         = ImGuiShowWindow;
+        PlatformState.Platform_SetWindowPos       = ImGuiSetWindowPos;
+        PlatformState.Platform_GetWindowPos       = ImGuiGetWindowPos;
+        PlatformState.Platform_SetWindowSize      = ImGuiSetWindowSize;
+        PlatformState.Platform_GetWindowSize      = ImGuiGetWindowSize;
+        PlatformState.Platform_SetWindowFocus     = ImGuiSetWindowFocus;
+        PlatformState.Platform_GetWindowFocus     = ImGuiGetWindowFocus;
+        PlatformState.Platform_GetWindowMinimized = ImGuiGetWindowMinimized;
+        PlatformState.Platform_SetWindowTitle     = ImGuiSetWindowTitle;
+        PlatformState.Platform_SetWindowAlpha     = ImGuiSetWindowAlpha;
+        PlatformState.Platform_UpdateWindow       = ImGuiUpdateWindow;
+        PlatformState.Platform_GetWindowDpiScale  = ImGuiGetWindowDpiScale;
+        PlatformState.Platform_OnChangedViewport  = ImGuiOnChangedViewport;
+    }
+    else
+    {
+        PlatformState.Platform_CreateWindow       = nullptr;
+        PlatformState.Platform_DestroyWindow      = nullptr;
+        PlatformState.Platform_ShowWindow         = nullptr;
+        PlatformState.Platform_SetWindowPos       = nullptr;
+        PlatformState.Platform_GetWindowPos       = nullptr;
+        PlatformState.Platform_SetWindowSize      = nullptr;
+        PlatformState.Platform_GetWindowSize      = nullptr;
+        PlatformState.Platform_SetWindowFocus     = nullptr;
+        PlatformState.Platform_GetWindowFocus     = nullptr;
+        PlatformState.Platform_GetWindowMinimized = nullptr;
+        PlatformState.Platform_SetWindowTitle     = nullptr;
+        PlatformState.Platform_SetWindowAlpha     = nullptr;
+        PlatformState.Platform_UpdateWindow       = nullptr;
+        PlatformState.Platform_GetWindowDpiScale  = nullptr;
+        PlatformState.Platform_OnChangedViewport  = nullptr;
+    }
 }
 
 void FImGui::DestroyContext()
@@ -595,21 +622,20 @@ void FImGui::SetMainViewport(FViewport* InViewport)
         }
         else
         {
-            // Delete any exisiting viewport
+            // Delete any existing viewport
             if (Viewport->RendererUserData)
             {
                 FViewportData* ViewportData = reinterpret_cast<FViewportData*>(Viewport->RendererUserData);
+                Viewport->RendererUserData = nullptr;
                 delete ViewportData;
             }
-            
-            Viewport->RendererUserData = nullptr;
 
             // Release platform information
+            Viewport->PlatformHandle        = Viewport->PlatformHandleRaw = nullptr;
+            Viewport->PlatformUserData      = nullptr;
             Viewport->PlatformWindowCreated = false;
             Viewport->PlatformRequestMove   = false;
             Viewport->PlatformRequestResize = false;
-            Viewport->PlatformUserData      = nullptr;
-            Viewport->PlatformHandle        = Viewport->PlatformHandleRaw = nullptr;
         }
     }
 }
@@ -617,11 +643,11 @@ void FImGui::SetMainViewport(FViewport* InViewport)
 FResponse FImGui::OnGamepadButtonEvent(FKey Key, bool bIsDown)
 {
     const EGamepadButtonName::Type Button = FInputMapper::Get().GetGamepadButtonNameFromKey(Key);
-
     const ImGuiKey GamepadButton = ImGui_GetGamepadButton(Button);
     if (GamepadButton != ImGuiKey_None)
     {
-        ImGui::GetIO().AddKeyEvent(GamepadButton, bIsDown);
+        ImGuiIO& UIState = ImGui::GetIO();
+        UIState.AddKeyEvent(GamepadButton, bIsDown);
     }
 
     return FResponse::Unhandled();
@@ -630,12 +656,13 @@ FResponse FImGui::OnGamepadButtonEvent(FKey Key, bool bIsDown)
 FResponse FImGui::OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, float Analog)
 {
     const bool bIsNegative = Analog < 0.0f;
-
     const ImGuiKey GamepadButton = ImGui_GetGamepadAnalog(AnalogSource, bIsNegative);
     if (GamepadButton != ImGuiKey_None)
     {
         const float Normalized = FMath::Abs<float>(Analog);
-        ImGui::GetIO().AddKeyAnalogEvent(GamepadButton, Normalized > 0.10f, Normalized);
+        
+        ImGuiIO& UIState = ImGui::GetIO();
+        UIState.AddKeyAnalogEvent(GamepadButton, Normalized > 0.10f, Normalized);
     }
 
     return FResponse::Unhandled();
@@ -668,23 +695,24 @@ FResponse FImGui::OnKeyEvent(FKey InKey, FModifierKeyState ModifierKeyState, boo
 
 FResponse FImGui::OnKeyCharEvent(uint32 Character)
 {
-    ImGui::GetIO().AddInputCharacter(Character);
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddInputCharacter(Character);
     return FResponse::Unhandled();
 }
 
 FResponse FImGui::OnMouseMoveEvent(int32 x, int32 y)
 {
-    ImGui::GetIO().AddMousePosEvent(static_cast<float>(x), static_cast<float>(y));
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddMousePosEvent(static_cast<float>(x), static_cast<float>(y));
     return FResponse::Unhandled();
 }
 
 FResponse FImGui::OnMouseButtonEvent(FKey InKey, bool bIsDown)
 {
     const EMouseButtonName::Type ButtonName = FInputMapper::Get().GetMouseButtonNameFromKey(InKey);
+    const uint32 ButtonIndex = ImGui_GetMouseButtonIndex(ButtonName);
 
     ImGuiIO& UIState = ImGui::GetIO();
-
-    const uint32 ButtonIndex = ImGui_GetMouseButtonIndex(ButtonName);
     UIState.AddMouseButtonEvent(ButtonIndex, bIsDown);
 
     if (UIState.WantCaptureMouse)
@@ -733,19 +761,22 @@ FResponse FImGui::OnWindowMoved(void* PlatformHandle)
 
 FResponse FImGui::OnFocusLost()
 {
-    ImGui::GetIO().AddFocusEvent(false);
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddFocusEvent(false);
     return FResponse::Unhandled();
 }
 
 FResponse FImGui::OnFocusGained()
 {
-    ImGui::GetIO().AddFocusEvent(true);
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddFocusEvent(true);
     return FResponse::Unhandled();
 }
 
 FResponse FImGui::OnMouseLeft()
 {
-    ImGui::GetIO().AddMousePosEvent(-TNumericLimits<float>::Max(), -TNumericLimits<float>::Max());
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddMousePosEvent(-TNumericLimits<float>::Max(), -TNumericLimits<float>::Max());
     return FResponse::Unhandled();
 }
 

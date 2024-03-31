@@ -204,6 +204,11 @@ public:
     {
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, 0, nullptr, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }
+
+    FORCEINLINE void PipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 MemoryBarrierCount, const VkMemoryBarrier* MemoryBarriers, uint32 BufferMemoryBarrierCount, const VkBufferMemoryBarrier* BufferMemoryBarriers, uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier*  ImageMemoryBarriers)
+    {
+        vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, MemoryBarrierCount, MemoryBarriers, BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
+    }
     
     FORCEINLINE void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
@@ -226,6 +231,11 @@ public:
         vkCmdInsertDebugUtilsLabelEXT(CommandBuffer, LabelInfo);
     }
 #endif
+
+    FORCEINLINE void WriteTimestamp(VkPipelineStageFlagBits PipelineStage, VkQueryPool QueryPool, uint32 Query)
+    {
+        vkCmdWriteTimestamp(CommandBuffer, PipelineStage, QueryPool, Query);
+    }
 
     FORCEINLINE VkCommandBuffer GetVkCommandBuffer() const
     {

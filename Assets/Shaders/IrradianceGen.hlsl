@@ -2,17 +2,6 @@
 
 #define NUM_THREADS (16)
 
-#define RootSig \
-    "RootFlags(0), " \
-    "RootConstants(b0, num32BitConstants = 1), " \
-    "DescriptorTable(SRV(t0, numDescriptors = 1))," \
-    "DescriptorTable(UAV(u0, numDescriptors = 1))," \
-    "StaticSampler(s0," \
-        "addressU = TEXTURE_ADDRESS_WRAP," \
-        "addressV = TEXTURE_ADDRESS_WRAP," \
-        "addressW = TEXTURE_ADDRESS_WRAP," \
-        "filter = FILTER_MIN_MAG_LINEAR_MIP_POINT)"
-
 TextureCube<float4> EnvironmentMap     : register(t0);
 SamplerState        EnvironmentSampler : register(s0);
 
@@ -47,7 +36,6 @@ static const float3x3 RotateUV[6] =
               0,  0, -1)
 };
 
-[RootSignature(RootSig)]
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
 void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {

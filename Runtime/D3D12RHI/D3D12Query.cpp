@@ -1,10 +1,10 @@
 #include "D3D12Device.h"
 #include "D3D12CommandContext.h"
-#include "D3D12TimestampQuery.h"
+#include "D3D12Query.h"
 
-FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
+FD3D12Query::FD3D12Query(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
-    , FRHITimestampQuery()
+    , FRHIQuery()
     , QueryHeap(nullptr)
     , WriteResource(nullptr)
     , ReadResources()
@@ -13,7 +13,7 @@ FD3D12TimestampQuery::FD3D12TimestampQuery(FD3D12Device* InDevice)
 {
 }
 
-bool FD3D12TimestampQuery::Initialize()
+bool FD3D12Query::Initialize()
 {
     ID3D12Device* D3D12Device = GetDevice()->GetD3D12Device();
 
@@ -28,7 +28,7 @@ bool FD3D12TimestampQuery::Initialize()
     HRESULT Result = D3D12Device->CreateQueryHeap(&QueryHeapDesc, IID_PPV_ARGS(&Heap));
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12TimestampQuery]: FAILED to create Query Heap");
+        D3D12_ERROR("[FD3D12Query]: FAILED to create Query Heap");
         return false;
     }
 
@@ -39,7 +39,7 @@ bool FD3D12TimestampQuery::Initialize()
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FTimingQuery);
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;
@@ -71,7 +71,7 @@ bool FD3D12TimestampQuery::Initialize()
     return true;
 }
 
-void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32 Index) const
+void FD3D12Query::GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const
 {
     if (Index >= static_cast<uint32>(TimeQueries.Size()))
     {
@@ -84,12 +84,13 @@ void FD3D12TimestampQuery::GetTimestampFromIndex(FRHITimestamp& OutQuery, uint32
     }
 }
 
-void FD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void FD3D12Query::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
-    CHECK(Index < D3D12_DEFAULT_QUERY_COUNT);
     CHECK(CmdList != nullptr);
+    CHECK(Index < D3D12_DEFAULT_QUERY_COUNT);
 
-    CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2));
+    const uint32 FinalIndex = Index * 2;
+    CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, FinalIndex);
 
     uint32 QueryCount = Index + 1;
     if (QueryCount >= (uint32)TimeQueries.Size())
@@ -98,15 +99,16 @@ void FD3D12TimestampQuery::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32
     }
 }
 
-void FD3D12TimestampQuery::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void FD3D12Query::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 {
     CHECK(CmdList != nullptr);
-    CHECK(Index < (uint32)TimeQueries.Size());
+    CHECK(Index < D3D12_DEFAULT_QUERY_COUNT);
 
-    CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, (Index * 2) + 1);
+    const uint32 FinalIndex = (Index * 2) + 1;
+    CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, FinalIndex);
 }
 
-void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandContext)
+void FD3D12Query::ResolveQueries(class FD3D12CommandContext& CommandContext)
 {
     FD3D12CommandList CommandList = CommandContext.GetCommandList();
     
@@ -145,11 +147,11 @@ void FD3D12TimestampQuery::ResolveQueries(class FD3D12CommandContext& CommandCon
     HRESULT Result = D3D12Queue->GetTimestampFrequency(&Frequency);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12TimestampQuery] FAILED to query ClockCalibration");
+        D3D12_ERROR("[FD3D12Query] FAILED to query ClockCalibration");
     }
 }
 
-bool FD3D12TimestampQuery::AllocateReadResource()
+bool FD3D12Query::AllocateReadResource()
 {
     D3D12_RESOURCE_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -158,7 +160,7 @@ bool FD3D12TimestampQuery::AllocateReadResource()
     Desc.Flags              = D3D12_RESOURCE_FLAG_NONE;
     Desc.Format             = DXGI_FORMAT_UNKNOWN;
     Desc.Layout             = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FRHITimestamp);
+    Desc.Width              = D3D12_DEFAULT_QUERY_COUNT * sizeof(FTimingQuery);
     Desc.Height             = 1;
     Desc.DepthOrArraySize   = 1;
     Desc.MipLevels          = 1;

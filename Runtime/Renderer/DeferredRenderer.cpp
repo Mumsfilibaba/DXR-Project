@@ -1016,8 +1016,6 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         FRHIScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
         CommandList.SetScissorRect(ScissorRegion);
 
-        CommandList.SetConstantBuffer(PrePassVS.Get(), FrameResources.CameraBuffer.Get(), 0);
-
         struct FTransformBuffer
         {
             FMatrix4 Transform;
@@ -1029,41 +1027,40 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
             const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
             if (Command.Material->ShouldRenderInPrePass())
             {
-                CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
-
-                TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
-                TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
-                CommandList.Set32BitShaderConstants(PrePassVS.Get(), &TransformPerObject, 32);
-
-
                 if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
                 {
+                    FRHIGraphicsPipelineState* PipelineState = PrePassPackedDoubleSidedPSO.Get();
                     if (Command.Material->IsPackedMaterial())
                     {
                         if (Command.Material->IsDoubleSided())
                         {
-                            CommandList.SetGraphicsPipelineState(PrePassPackedDoubleSidedPSO.Get());
+                            PipelineState = PrePassPackedDoubleSidedPSO.Get();
                         }
                         else
                         {
-                            CommandList.SetGraphicsPipelineState(PrePassPackedMaskedPSO.Get());
+                            PipelineState = PrePassPackedMaskedPSO.Get();
                         }
                     }
                     else
                     {
                         if (Command.Material->IsDoubleSided())
                         {
-                            CommandList.SetGraphicsPipelineState(PrePassDoubleSidedPSO.Get());
+                            PipelineState = PrePassDoubleSidedPSO.Get();
                         }
                         else
                         {
-                            CommandList.SetGraphicsPipelineState(PrePassMaskedPSO.Get());
+                            PipelineState = PrePassMaskedPSO.Get();
                         }
                     }
+
+                    CHECK(PipelineState != nullptr);
+                    CommandList.SetGraphicsPipelineState(PipelineState);
 
                     CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->MaskedVertexBuffer, 1), 0);
 
                     CommandList.SetSamplerState(PrePassMaskedPS.Get(), Command.Material->GetMaterialSampler(), 0);
+
+                    CommandList.SetConstantBuffer(PrePassVS.Get(), FrameResources.CameraBuffer.Get(), 0);
                     CommandList.SetConstantBuffer(PrePassMaskedPS.Get(), Command.Material->GetMaterialBuffer(), 1);
 
                     if (Command.Material->IsPackedMaterial())
@@ -1082,7 +1079,10 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
                     CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->VertexBuffer, 1), 0);
 
                     CommandList.SetSamplerState(PrePassHeightPS.Get(), Command.Material->GetMaterialSampler(), 0);
+
+                    CommandList.SetConstantBuffer(PrePassVS.Get(), FrameResources.CameraBuffer.Get(), 0);
                     CommandList.SetConstantBuffer(PrePassHeightPS.Get(), Command.Material->GetMaterialBuffer(), 1);
+
                     CommandList.SetShaderResourceView(PrePassHeightPS.Get(), Command.Material->HeightMap->GetShaderResourceView(), 1);
                 }
                 else
@@ -1090,7 +1090,15 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
                     CommandList.SetGraphicsPipelineState(PrePassPSO.Get());
 
                     CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->PosOnlyVertexBuffer, 1), 0);
+
+                    CommandList.SetConstantBuffer(PrePassVS.Get(), FrameResources.CameraBuffer.Get(), 0);
                 }
+
+                CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
+
+                TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
+                TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
+                CommandList.Set32BitShaderConstants(PrePassVS.Get(), &TransformPerObject, 32);
 
                 CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
             }
@@ -1112,8 +1120,8 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
         struct FReductionConstants
         {
             FMatrix4 CamProjection;
-            float NearPlane;
-            float FarPlane;
+            float    NearPlane;
+            float    FarPlane;
         } ReductionConstants;
 
         ReductionConstants.CamProjection = Scene.GetCamera()->GetProjectionMatrix();
@@ -1205,6 +1213,94 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
     {
         const FMeshDrawCommand& Command = FrameResources.GlobalMeshDrawCommands[CommandIndex];
 
+        // Setup textures
+        FMaterial* CurrentMaterial = Command.Material;
+        if (CurrentMaterial->IsPackedMaterial())
+        {
+            // Setup Pipeline
+            FRHIGraphicsPipelineState* PipelineState = nullptr;
+            if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+            {
+                if (Command.Material->IsDoubleSided())
+                {
+                    PipelineState = BasePassPackedDoubleSidedPSO.Get();
+                }
+                else
+                {
+                    PipelineState = BasePassPackedMaskedPSO.Get();
+                }
+            }
+            else
+            {
+                if (Command.Material->HasHeightMap())
+                {
+                    PipelineState = BasePassPackedHeightPSO.Get();
+                }
+                else
+                {
+                    PipelineState = BasePassPackedPSO.Get();
+                }
+            }
+
+            CHECK(PipelineState != nullptr);
+            CommandList.SetGraphicsPipelineState(PipelineState);
+
+            // Setup resources after the pipelinestate since binding a pipeline invalidates all resources
+            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->AlbedoMap->GetShaderResourceView(), 0);
+            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->NormalMap->GetShaderResourceView(), 1);
+            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->SpecularMap->GetShaderResourceView(), 2);
+            if (CurrentMaterial->HasHeightMap())
+            {
+                CommandList.SetShaderResourceView(BasePassPackedHeightPS.Get(), CurrentMaterial->HeightMap->GetShaderResourceView(), 3);
+            }
+        }
+        else
+        {
+            // Setup Pipeline
+            FRHIGraphicsPipelineState* PipelineState = nullptr;
+            if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+            {
+                if (Command.Material->IsDoubleSided())
+                {
+                    PipelineState = BasePassDoubleSidedPSO.Get();
+                }
+                else
+                {
+                    PipelineState = BasePassMaskedPSO.Get();
+                }
+            }
+            else
+            {
+                if (Command.Material->HasHeightMap())
+                {
+                    PipelineState = BasePassHeightPSO.Get();
+                }
+                else
+                {
+                    PipelineState = BasePassPSO.Get();
+                }
+            }
+
+            CHECK(PipelineState != nullptr);
+            CommandList.SetGraphicsPipelineState(PipelineState);
+
+            // Setup resources after the pipelinestate since binding a pipeline invalidates all resources
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->AlbedoMap->GetShaderResourceView(), 0);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->NormalMap->GetShaderResourceView(), 1);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->RoughnessMap->GetShaderResourceView(), 2);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->MetallicMap->GetShaderResourceView(), 3);
+            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->AOMap->GetShaderResourceView(), 4);
+
+            if (CurrentMaterial->HasAlphaMask())
+            {
+                CommandList.SetShaderResourceView(BasePassMaskedPS.Get(), CurrentMaterial->AlphaMask->GetShaderResourceView(), 5);
+            }
+            if (CurrentMaterial->HasHeightMap())
+            {
+                CommandList.SetShaderResourceView(BasePassHeightPS.Get(), CurrentMaterial->HeightMap->GetShaderResourceView(), 6);
+            }
+        }
+
         CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
         CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
 
@@ -1213,8 +1309,6 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         TransformPerObject.Transform    = Command.CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.TransformInv = Command.CurrentActor->GetTransform().GetMatrixInverse();
         CommandList.Set32BitShaderConstants(BasePassVS.Get(), &TransformPerObject, 32);
-
-        FMaterial* CurrentMaterial = Command.Material;
 
         FRHIBuffer* PSConstantBuffers[] =
         {
@@ -1226,82 +1320,6 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
         FRHISamplerState* Sampler = CurrentMaterial->GetMaterialSampler();
         CommandList.SetSamplerState(BasePassPS.Get(), Sampler, 0);
-
-        // Setup textures
-        if (CurrentMaterial->IsPackedMaterial())
-        {
-            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->AlbedoMap->GetShaderResourceView(), 0);
-            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->NormalMap->GetShaderResourceView(), 1);
-            CommandList.SetShaderResourceView(BasePassPackedPS.Get(), CurrentMaterial->SpecularMap->GetShaderResourceView(), 2);
-            if (CurrentMaterial->HasHeightMap())
-            {
-                CommandList.SetShaderResourceView(BasePassPackedHeightPS.Get(), CurrentMaterial->HeightMap->GetShaderResourceView(), 3);
-            }
-
-            // Setup Pipeline
-            if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
-            {
-                if (Command.Material->IsDoubleSided())
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassPackedDoubleSidedPSO.Get());
-                }
-                else
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassPackedMaskedPSO.Get());
-                }
-            }
-            else
-            {
-                if (Command.Material->HasHeightMap())
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassPackedHeightPSO.Get());
-                }
-                else
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassPackedPSO.Get());
-                }
-            }
-        }
-        else
-        {
-            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->AlbedoMap->GetShaderResourceView(), 0);
-            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->NormalMap->GetShaderResourceView(), 1);
-            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->RoughnessMap->GetShaderResourceView(), 2);
-            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->MetallicMap->GetShaderResourceView(), 3);
-            CommandList.SetShaderResourceView(BasePassPS.Get(), CurrentMaterial->AOMap->GetShaderResourceView(), 4);
-            if (CurrentMaterial->HasAlphaMask())
-            {
-                CommandList.SetShaderResourceView(BasePassMaskedPS.Get(), CurrentMaterial->AlphaMask->GetShaderResourceView(), 5);
-            }
-            if (CurrentMaterial->HasHeightMap())
-            {
-                CommandList.SetShaderResourceView(BasePassHeightPS.Get(), CurrentMaterial->HeightMap->GetShaderResourceView(), 6);
-            }
-
-            // Setup Pipeline
-            if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
-            {
-                if (Command.Material->IsDoubleSided())
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassDoubleSidedPSO.Get());
-                }
-                else
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassMaskedPSO.Get());
-                }
-            }
-            else
-            {
-                if (Command.Material->HasHeightMap())
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassHeightPSO.Get());
-                }
-                else
-                {
-                    CommandList.SetGraphicsPipelineState(BasePassPSO.Get());
-                }
-            }
-        }
 
         CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
     }

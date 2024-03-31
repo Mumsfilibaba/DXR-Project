@@ -695,10 +695,10 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
 IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObject* Object)
 {
     const FString Name(InName);
-    if (IConsoleObject** Object = ConsoleObjects.Find(Name))
+    if (IConsoleObject** ExistingObject = ConsoleObjects.Find(Name))
     {
         LOG_WARNING("Trying to register an already existing ConsoleObject '%s'", InName);
-        return *Object;
+        return *ExistingObject;
     }
 
     IConsoleObject* Result = ConsoleObjects.Add(Name, Object);

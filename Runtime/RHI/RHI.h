@@ -375,10 +375,10 @@ public:
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) = 0;
 
     /**
-     * @brief  - Create a new Timestamp Query
-     * @return - Returns the newly created Timestamp Query
+     * @brief  - Create a new Query-object
+     * @return - Returns the newly created Query-object
      */
-    virtual FRHITimestampQuery* RHICreateTimestampQuery() = 0;
+    virtual FRHIQuery* RHICreateQuery() = 0;
 
     /** @return - Returns a CommandContext */
     virtual IRHICommandContext* RHIObtainCommandContext() = 0;
@@ -577,9 +577,9 @@ FORCEINLINE FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const 
     return GetRHI()->RHICreateRayTracingPipelineState(Initializer);
 }
 
-FORCEINLINE class FRHITimestampQuery* RHICreateTimestampQuery()
+FORCEINLINE class FRHIQuery* RHICreateQuery()
 {
-    return GetRHI()->RHICreateTimestampQuery();
+    return GetRHI()->RHICreateQuery();
 }
 
 FORCEINLINE class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& Initializer)

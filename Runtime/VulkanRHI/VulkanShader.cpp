@@ -208,7 +208,7 @@ bool FVulkanShader::InitializeShaderLayout()
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, SampledImages[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
                 DescriptorSetOffset = UINT32_MAX;
 
-            // Set debugname
+            // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, SampledImages[Index].base_type_id);
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
@@ -240,7 +240,7 @@ bool FVulkanShader::InitializeShaderLayout()
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, Samplers[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
                 DescriptorSetOffset = UINT32_MAX;
 
-            // Set debugname
+            // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, Samplers[Index].base_type_id);
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
@@ -272,7 +272,7 @@ bool FVulkanShader::InitializeShaderLayout()
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, StorageImages[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
                 DescriptorSetOffset = UINT32_MAX;
             
-            // Set debugname
+            // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, StorageImages[Index].base_type_id);
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
@@ -304,7 +304,7 @@ bool FVulkanShader::InitializeShaderLayout()
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationDescriptorSet, &DescriptorSetOffset))
                 DescriptorSetOffset = UINT32_MAX;
 
-            // Set debugname
+            // Set debug-name
             Binding.DebugName = spvc_compiler_get_name(Compiler, UniformBuffers[Index].base_type_id);
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
@@ -346,7 +346,7 @@ bool FVulkanShader::InitializeShaderLayout()
                 Binding.BindingType = BindingType_StorageBufferRead;
             }
 
-            // Set debugname
+            // Set debug-name
             Binding.DebugName = Move(BaseTypeName);
 
             ShaderInfo.BindingOffsets.Add({ DescriptorSetOffset, BindingOffset });
@@ -371,7 +371,6 @@ bool FVulkanShader::InitializeShaderLayout()
             if (spvc_compiler_get_declared_struct_size(Compiler, type, &StructSize) == SPVC_SUCCESS)
             {
                 NumPushBytes = FMath::Max(NumPushBytes, StructSize);
-                VULKAN_INFO("    StructSize=%d", StructSize);
             }
             else
             {

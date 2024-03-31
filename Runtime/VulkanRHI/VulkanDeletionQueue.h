@@ -14,7 +14,6 @@ public:
     {
         RHIResource    = 1,
         VulkanResource = 2,
-        DescriptorPool = 3,
     };
 
     struct FDeferredResource
@@ -35,21 +34,13 @@ public:
             InResource->AddRef();
         }
         
-        FDeferredResource(FVulkanDescriptorPool* InDescriptorPool)
-            : Type(EType::DescriptorPool)
-            , DescriptorPool(InDescriptorPool)
-        {
-            CHECK(DescriptorPool != nullptr);
-        }
-        
         void Release();
 
         EType Type;
         union
         {
-            FRHIResource*          Resource;
-            FVulkanRefCounted*     VulkanResource;
-            FVulkanDescriptorPool* DescriptorPool;
+            FRHIResource*      Resource;
+            FVulkanRefCounted* VulkanResource;
         };
     };
 

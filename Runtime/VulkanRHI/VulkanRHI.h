@@ -35,12 +35,11 @@ public:
 
     virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
-
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) override final;
     
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final;
 
-    virtual FRHITimestampQuery* RHICreateTimestampQuery() override final;
+    virtual FRHIQuery* RHICreateQuery() override final;
     
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final;
@@ -148,6 +147,9 @@ private:
     FVulkanQueue*          GraphicsQueue;
     FVulkanCommandContext* GraphicsCommandContext;
     FVulkanDeletionQueue   DeletionQueue;
+
+    TMap<FRHISamplerStateDesc, TSharedRef<FVulkanSamplerState>> SamplerStateMap;
+    FCriticalSection SamplerStateMapCS;
 
     TQueue<FVulkanCommandPacket*, EQueueType::MPSC> PendingSubmissions;
 

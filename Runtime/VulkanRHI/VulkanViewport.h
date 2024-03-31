@@ -23,10 +23,9 @@ public:
     bool Initialize();
 
     bool Resize(uint32 InWidth, uint32 InHeight);
-
     bool Present(bool bVerticalSync);
 
-    void SetName(const FString& InName);
+    void SetDebugName(const FString& InName);
     
     FVulkanTexture* GetCurrentBackBuffer();
     

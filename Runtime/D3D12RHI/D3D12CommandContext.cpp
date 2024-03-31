@@ -8,7 +8,7 @@
 #include "D3D12PipelineState.h"
 #include "D3D12RayTracing.h"
 #include "D3D12RHIShaderCompiler.h"
-#include "D3D12TimestampQuery.h"
+#include "D3D12Query.h"
 #include "D3D12CommandContext.h"
 #include "DynamicD3D12.h"
 #include "D3D12Viewport.h"
@@ -271,24 +271,20 @@ void FD3D12CommandContext::RHIFinishContext()
     CommandContextCS.Unlock();
 }
 
-void FD3D12CommandContext::RHIBeginTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
+void FD3D12CommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
 {
-    FD3D12TimestampQuery* D3D12TimestampQuery = static_cast<FD3D12TimestampQuery*>(TimestampQuery);
-    D3D12_ERROR_COND(D3D12TimestampQuery != nullptr, "TimestampQuery cannot be nullptr");
+    FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
+    D3D12_ERROR_COND(D3D12Query != nullptr, "Query cannot be nullptr");
+    D3D12Query->BeginQuery(CommandList->GetGraphicsCommandList(), Index);
 
-    ID3D12GraphicsCommandList* DxCmdList = CommandList->GetGraphicsCommandList();
-    D3D12TimestampQuery->BeginQuery(DxCmdList, Index);
-
-    ResolveQueries.AddUnique(MakeSharedRef<FD3D12TimestampQuery>(D3D12TimestampQuery));
+    ResolveQueries.AddUnique(MakeSharedRef<FD3D12Query>(D3D12Query));
 }
 
-void FD3D12CommandContext::RHIEndTimeStamp(FRHITimestampQuery* TimestampQuery, uint32 Index)
+void FD3D12CommandContext::RHIEndTimeStamp(FRHIQuery* Query, uint32 Index)
 {
-    FD3D12TimestampQuery* D3D12TimestampQuery = static_cast<FD3D12TimestampQuery*>(TimestampQuery);
-    D3D12_ERROR_COND(D3D12TimestampQuery != nullptr, "TimestampQuery cannot be nullptr");
-
-    ID3D12GraphicsCommandList* D3D12CmdList = CommandList->GetGraphicsCommandList();
-    D3D12TimestampQuery->EndQuery(D3D12CmdList, Index);
+    FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
+    D3D12_ERROR_COND(D3D12Query != nullptr, "Query cannot be nullptr");
+    D3D12Query->EndQuery(CommandList->GetGraphicsCommandList(), Index);
 }
 
 void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
@@ -300,7 +296,6 @@ void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& 
 
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRenderTargetView(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
-
     CommandList->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.Data(), 0, nullptr);
 }
 
@@ -313,7 +308,6 @@ void FD3D12CommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& 
 
     FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDepthStencilView(DepthStencilView);
     CHECK(D3D12DepthStencilView != nullptr);
-
     CommandList->ClearDepthStencilView(D3D12DepthStencilView->GetOfflineHandle(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, Depth, Stencil);
 }
 

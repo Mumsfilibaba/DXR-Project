@@ -13,8 +13,8 @@ struct FNullRHICommandContext final : public IRHICommandContext
     virtual void RHIStartContext() override final { }
     virtual void RHIFinishContext() override final { }
 
-    virtual void RHIBeginTimeStamp(FRHITimestampQuery* Profiler, uint32 Index) override final { }
-    virtual void RHIEndTimeStamp(FRHITimestampQuery* Profiler, uint32 Index) override final { }
+    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) override final { }
+    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) override final { }
 
     virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final { }
     virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final { }

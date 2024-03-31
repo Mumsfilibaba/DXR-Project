@@ -69,9 +69,12 @@ public:
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
-    virtual TSharedRef<FGenericWindow> GetCapture()           const override final;
-    virtual TSharedRef<FGenericWindow> GetActiveWindow()      const override final;
-    virtual TSharedRef<FGenericWindow> GetForegroundWindow()  const override final;
+
+    virtual TSharedRef<FGenericWindow> GetCapture() const override final;
+
+    virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
+
+    virtual TSharedRef<FGenericWindow> GetForegroundWindow() const override final;
 
     virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
 
@@ -119,8 +122,8 @@ private:
     mutable FDisplayInfo DisplayInfo;
     FXInputDevice        XInputDevice;
     
-    bool          bIsTrackingMouse;
-    mutable bool  bHasDisplayInfoChanged;
+    bool         bIsTrackingMouse;
+    mutable bool bHasDisplayInfoChanged;
 
     TArray<FWindowsMessage> Messages;
     FCriticalSection MessagesCS;

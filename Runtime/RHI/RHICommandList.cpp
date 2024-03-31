@@ -30,7 +30,7 @@ bool FRHIThread::Startup()
         {
             return true;
         }
-        
+
         if (!GInstance->Create())
         {
             return false;
@@ -69,7 +69,6 @@ bool FRHIThread::Create()
     }
 
     Thread->SetName("RHIThread");
-
     if (!Thread->Start())
     {
         return false;
@@ -136,7 +135,6 @@ void FRHIThread::Execute(FRHIThreadTask&& NewTask)
         // Set the work to execute
         {
             SCOPED_LOCK(TasksCS);
-
             Tasks.Emplace(Move(NewTask));
             NumSubmittedTasks++;
         }
