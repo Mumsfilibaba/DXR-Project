@@ -1,4 +1,5 @@
 #include "LightSetup.h"
+#include "RendererScene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "Engine/Scene/Lights/PointLight.h"
@@ -160,7 +161,7 @@ bool FLightSetup::Initialize()
     return true;
 }
 
-void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
+void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene)
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();
@@ -172,10 +173,10 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, const FScene& Scene)
 
     TRACE_SCOPE("Update LightBuffers");
 
-    FCamera* Camera = Scene.GetCamera();
+    FCamera* Camera = Scene->Camera;
     CHECK(Camera != nullptr);
 
-    for (FLight* Light : Scene.GetLights())
+    for (FLight* Light : Scene->Lights)
     {
         const float Intensity = Light->GetIntensity();
         FVector3 Color = Light->GetColor();

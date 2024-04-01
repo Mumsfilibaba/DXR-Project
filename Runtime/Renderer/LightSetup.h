@@ -108,7 +108,7 @@ struct RENDERER_API FLightSetup
 
     void Release();
 
-    void BeginFrame(FRHICommandList& CommandList, const FScene& Scene);
+    void BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene);
 
     // PointLights
     TArray<FVector4>        PointLightsPosRad;

@@ -1,4 +1,4 @@
-#include "Renderer.h"
+#include "SceneRenderer.h"
 #include "Debug/GPUProfiler.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -12,6 +12,8 @@
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "RendererCore/TextureFactory.h"
+
+#define SUPPORT_VARIABLE_RATE_SHADING (0)
 
 static TAutoConsoleVariable<bool> CVarEnableSSAO(
     "Renderer.Feature.SSAO",
@@ -98,9 +100,6 @@ static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
     "Enables Ray Tracing (Currently broken)",
     false);
 
-
-#define SUPPORT_VARIABLE_RATE_SHADING (0)
-
 FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {
     if (!GEngine)
@@ -113,14 +112,11 @@ FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent
         return FResponse::Unhandled();
     }
 
-    FRenderer::Get().OnWindowResize(WindowEvent);
+    Renderer->OnWindowResize(WindowEvent);
     return FResponse::Handled();
 }
 
-
-FRenderer* FRenderer::GInstance = nullptr;
-
-FRenderer::FRenderer()
+FSceneRenderer::FSceneRenderer()
     : TextureDebugger(nullptr)
     , InfoWindow(nullptr)
     , GPUProfilerWindow(nullptr)
@@ -129,15 +125,15 @@ FRenderer::FRenderer()
     , LightSetup()
     , CameraBuffer()
     , HaltonState()
-    , DeferredRenderer()
-    , ShadowMapRenderer()
-    , SSAORenderer()
-    , LightProbeRenderer()
-    , SkyboxRenderPass()
-    , ForwardRenderer()
-    , RayTracer()
-    , DebugRenderer()
-    , TemporalAA()
+    , DeferredRenderer(this)
+    , ShadowMapRenderer(this)
+    , SSAORenderer(this)
+    , LightProbeRenderer(this)
+    , SkyboxRenderPass(this)
+    , ForwardRenderer(this)
+    , RayTracer(this)
+    , DebugRenderer(this)
+    , TemporalAA(this)
     , ShadingImage(nullptr)
     , ShadingRatePipeline(nullptr)
     , ShadingRateShader(nullptr)
@@ -152,7 +148,7 @@ FRenderer::FRenderer()
 {
 }
 
-FRenderer::~FRenderer()
+FSceneRenderer::~FSceneRenderer()
 {
     GRHICommandExecutor.WaitForGPU();
 
@@ -202,35 +198,7 @@ FRenderer::~FRenderer()
     }
 }
 
-bool FRenderer::Initialize()
-{
-    CHECK(GInstance == nullptr);
-
-    GInstance = new FRenderer();
-    if (!GInstance->Create())
-    {
-        return false;
-    }
-
-    return true;
-}
-
-void FRenderer::Release()
-{
-    if (GInstance)
-    {
-        delete GInstance;
-        GInstance = nullptr;
-    }
-}
-
-FRenderer& FRenderer::Get()
-{
-    CHECK(GInstance != nullptr);
-    return *GInstance;
-}
-
-bool FRenderer::Create()
+bool FSceneRenderer::Initialize()
 {
     if (!GEngine->MainViewport)
     {
@@ -247,7 +215,7 @@ bool FRenderer::Create()
 
     if (FApplication::IsInitialized())
     {
-        EventHandler = MakeShared<FRendererEventHandler>();
+        EventHandler = MakeShared<FRendererEventHandler>(this);
         FApplication::Get().AddEventHandler(EventHandler);
     }
     else
@@ -435,7 +403,7 @@ bool FRenderer::Create()
         TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
         FApplication::Get().AddWidget(TextureDebugger);
 
-        InfoWindow = MakeShared<FRendererInfoWindow>();
+        InfoWindow = MakeShared<FRendererInfoWindow>(this);
         FApplication::Get().AddWidget(InfoWindow);
 
         GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
@@ -445,7 +413,7 @@ bool FRenderer::Create()
     return true;
 }
 
-void FRenderer::FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands)
+void FSceneRenderer::FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands)
 {
     TRACE_SCOPE("Frustum Culling And Sorting Inner");
 
@@ -487,18 +455,18 @@ void FRenderer::FrustumCullingAndSortingInternal(const FCamera* Camera, const TP
     {
         const uint32 CommandIndex = StartCommand + Index;
 
-        const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
+        const FProxyRendererComponent* Component = Resources.GlobalMeshDrawCommands[CommandIndex];
 
-        FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+        FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
 
-        const FVector3 Top    = TransformMatrix.Transform(Command.Mesh->BoundingBox.Top);
-        const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
+        const FVector3 Top    = TransformMatrix.Transform(Component->Mesh->BoundingBox.Top);
+        const FVector3 Bottom = TransformMatrix.Transform(Component->Mesh->BoundingBox.Bottom);
 
         FAABB Box(Top, Bottom);
         if (CameraFrustum.CheckAABB(Box))
         {
-            if (Command.Material->ShouldRenderInForwardPass())
+            if (Component->Material->ShouldRenderInForwardPass())
             {
                 OutForwardDrawCommands.Emplace(CommandIndex);
             }
@@ -511,7 +479,7 @@ void FRenderer::FrustumCullingAndSortingInternal(const FCamera* Camera, const TP
     }
 }
 
-void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
+void FSceneRenderer::PerformFrustumCullingAndSort(FRendererScene* Scene)
 {
     TRACE_SCOPE("FrustumCulling And Sorting");
 
@@ -526,9 +494,9 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
     TArray<TPair<uint32, uint32>> ReadableMeshCommands;
     ReadableMeshCommands.Reserve(NumThreads);
 
-    const auto CameraPtr            = Scene.GetCamera();
-    const auto NumMeshCommands      = Scene.GetMeshDrawCommands().Size();
-    const auto NumCommandsPerThread = (NumMeshCommands / NumThreads) + 1;
+    const FCamera* Camera = Scene->Camera;
+    const int32 NumMeshCommands      = Scene->Primitives.Size();
+    const int32 NumCommandsPerThread = (NumMeshCommands / NumThreads) + 1;
 
     int32 RemainingCommands = NumMeshCommands;
     int32 StartCommand      = 0;
@@ -549,7 +517,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
 
         FAsyncTaskBase* AsyncTask = new TAsyncLambdaTask([&]() -> void
         {
-            FrustumCullingAndSortingInternal(CameraPtr, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
+            FrustumCullingAndSortingInternal(Camera, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
         });
 
         AsyncTask->Launch(EQueuePriority::Normal);
@@ -571,7 +539,7 @@ void FRenderer::PerformFrustumCullingAndSort(const FScene& Scene)
     }
 }
 
-void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
+void FSceneRenderer::PerformFXAA(FRHICommandList& InCommandList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "Begin FXAA");
 
@@ -627,7 +595,7 @@ void FRenderer::PerformFXAA(FRHICommandList& InCommandList)
     INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "End FXAA");
 }
 
-void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
+void FSceneRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Draw BackBuffer");
 
@@ -662,12 +630,10 @@ void FRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
-void FRenderer::Tick()
+void FSceneRenderer::Tick(FRendererScene* Scene)
 {
-    const FScene& Scene = *GEngine->Scene;
-
     Resources.BackBuffer             = Resources.MainViewport->GetBackBuffer();
-    Resources.GlobalMeshDrawCommands = TArrayView<const FMeshDrawCommand>(Scene.GetMeshDrawCommands());
+    Resources.GlobalMeshDrawCommands = TArrayView<FProxyRendererComponent* const>(Scene->Primitives);
 
     // Perform frustum culling
     Resources.DeferredVisibleCommands.Clear();
@@ -682,8 +648,8 @@ void FRenderer::Tick()
     {
         for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
         {
-            const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[CommandIndex];
-            if (Command.Material->ShouldRenderInForwardPass())
+            const FProxyRendererComponent* Component = Resources.GlobalMeshDrawCommands[CommandIndex];
+            if (Component->Material->ShouldRenderInForwardPass())
             {
                 Resources.ForwardVisibleCommands.Emplace(CommandIndex);
             }
@@ -758,23 +724,24 @@ void FRenderer::Tick()
 
     // Update camera-buffer
     // TODO: All matrices needs to be in Transposed the same
+    FCamera* Camera = Scene->Camera;
     CameraBuffer.PrevViewProjection          = CameraBuffer.ViewProjection;
-    CameraBuffer.ViewProjection              = Scene.GetCamera()->GetViewProjectionMatrix();
-    CameraBuffer.ViewProjectionInv           = Scene.GetCamera()->GetViewProjectionInverseMatrix();
+    CameraBuffer.ViewProjection              = Camera->GetViewProjectionMatrix();
+    CameraBuffer.ViewProjectionInv           = Camera->GetViewProjectionInverseMatrix();
     CameraBuffer.ViewProjectionUnjittered    = CameraBuffer.ViewProjection;
     CameraBuffer.ViewProjectionInvUnjittered = CameraBuffer.ViewProjectionInv;
 
-    CameraBuffer.View           = Scene.GetCamera()->GetViewMatrix();
-    CameraBuffer.ViewInv        = Scene.GetCamera()->GetViewInverseMatrix();
-    CameraBuffer.Projection     = Scene.GetCamera()->GetProjectionMatrix();
-    CameraBuffer.ProjectionInv  = Scene.GetCamera()->GetProjectionInverseMatrix();
+    CameraBuffer.View           = Camera->GetViewMatrix();
+    CameraBuffer.ViewInv        = Camera->GetViewInverseMatrix();
+    CameraBuffer.Projection     = Camera->GetProjectionMatrix();
+    CameraBuffer.ProjectionInv  = Camera->GetProjectionInverseMatrix();
 
-    CameraBuffer.Position       = Scene.GetCamera()->GetPosition();
-    CameraBuffer.Forward        = Scene.GetCamera()->GetForward();
-    CameraBuffer.Right          = Scene.GetCamera()->GetRight();
-    CameraBuffer.NearPlane      = Scene.GetCamera()->GetNearPlane();
-    CameraBuffer.FarPlane       = Scene.GetCamera()->GetFarPlane();
-    CameraBuffer.AspectRatio    = Scene.GetCamera()->GetAspectRatio();
+    CameraBuffer.Position       = Camera->GetPosition();
+    CameraBuffer.Forward        = Camera->GetForward();
+    CameraBuffer.Right          = Camera->GetRight();
+    CameraBuffer.NearPlane      = Camera->GetNearPlane();
+    CameraBuffer.FarPlane       = Camera->GetFarPlane();
+    CameraBuffer.AspectRatio    = Camera->GetAspectRatio();
     CameraBuffer.ViewportWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
     CameraBuffer.ViewportHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
 
@@ -809,11 +776,11 @@ void FRenderer::Tick()
     CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
     // TODO: Optimize (Materials should be collected and built once in the beginning of the frame)
-    for (const FMeshDrawCommand& Command : Resources.GlobalMeshDrawCommands)
+    for (const FProxyRendererComponent* Component : Resources.GlobalMeshDrawCommands)
     {
-        if (Command.Material->IsBufferDirty())
+        if (Component->Material->IsBufferDirty())
         {
-            Command.Material->BuildBuffer(CommandList);
+            Component->Material->BuildBuffer(CommandList);
         }
     }
     
@@ -1134,12 +1101,12 @@ void FRenderer::Tick()
     }
 }
 
-void FRenderer::OnWindowResize(const FWindowEvent& Event)
+void FSceneRenderer::OnWindowResize(const FWindowEvent& Event)
 {
     ResizeEvent.Emplace(Event);
 }
 
-bool FRenderer::InitAA()
+bool FSceneRenderer::InitAA()
 {
     TArray<uint8> ShaderCode;
     
@@ -1301,7 +1268,7 @@ bool FRenderer::InitAA()
     return true;
 }
 
-bool FRenderer::InitShadingImage()
+bool FSceneRenderer::InitShadingImage()
 {
     if (FHardwareSupport::ShadingRateTier != EShadingRateTier::Tier2 || FHardwareSupport::ShadingRateImageTileSize == 0)
     {

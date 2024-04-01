@@ -4,7 +4,7 @@
 #include "Core/Containers/ArrayView.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
-#include "Renderer/MeshDrawCommand.h"
+#include "Engine/Scene/Components/ProxyRendererComponent.h"
 
 enum EGBufferIndex
 {
@@ -57,7 +57,7 @@ private:
     TMap<TResource*, int32> ResourceIndices;
 };
 
-struct RENDERER_API FFrameResources
+struct FFrameResources
 {
     void Release();
 
@@ -72,37 +72,37 @@ struct RENDERER_API FFrameResources
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
     const EFormat VelocityFormat     = EFormat::R16G16_Float;
 
-    FRHITexture*           BackBuffer = nullptr;
+    FRHITexture*             BackBuffer = nullptr;
 
     // GlobalBuffers
-    FRHIBufferRef          CameraBuffer;
-    FRHIBufferRef          TransformBuffer;
+    FRHIBufferRef            CameraBuffer;
+    FRHIBufferRef            TransformBuffer;
 
     // Samplers
-    FRHISamplerStateRef    PointLightShadowSampler;
-    FRHISamplerStateRef    DirectionalLightShadowSampler;
-    FRHISamplerStateRef    IrradianceSampler;
-    FRHISamplerStateRef    GBufferSampler;
-    FRHISamplerStateRef    FXAASampler;
+    FRHISamplerStateRef      PointLightShadowSampler;
+    FRHISamplerStateRef      DirectionalLightShadowSampler;
+    FRHISamplerStateRef      IrradianceSampler;
+    FRHISamplerStateRef      GBufferSampler;
+    FRHISamplerStateRef      FXAASampler;
 
-    FRHITextureRef         Skybox;
+    FRHITextureRef           Skybox;
 
-    FRHITextureRef         IntegrationLUT;
-    FRHISamplerStateRef    IntegrationLUTSampler;
+    FRHITextureRef           IntegrationLUT;
+    FRHISamplerStateRef      IntegrationLUTSampler;
 
     // GBuffer
-    FRHITextureRef         SSAOBuffer;
-    FRHITextureRef         FinalTarget;
-    FRHITextureRef         GBuffer[GBuffer_NumBuffers];
+    FRHITextureRef           SSAOBuffer;
+    FRHITextureRef           FinalTarget;
+    FRHITextureRef           GBuffer[GBuffer_NumBuffers];
 
     // Two resources that can be ping-ponged between
-    FRHITextureRef         ReducedDepthBuffer[2];
+    FRHITextureRef           ReducedDepthBuffer[2];
 
     FRHIVertexInputLayoutRef MeshInputLayout;
 
     // RayTracing
-    FRHITextureRef         RTOutput;
-    FRHIRayTracingSceneRef RTScene;
+    FRHITextureRef           RTOutput;
+    FRHIRayTracingSceneRef   RTScene;
 
     FRayTracingShaderResources             GlobalResources;
     FRayTracingShaderResources             RayGenLocalResources;
@@ -113,7 +113,7 @@ struct RENDERER_API FFrameResources
     TMap<class FMesh*, uint32>             RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
-    TArrayView<const FMeshDrawCommand>     GlobalMeshDrawCommands;
+    TArrayView<FProxyRendererComponent* const>    GlobalMeshDrawCommands;
     TArray<uint32>                         DeferredVisibleCommands;
     TArray<uint32>                         ForwardVisibleCommands;
 

@@ -2,8 +2,19 @@
 #include "Application/Widget.h"
 #include "Core/Containers/SharedRef.h"
 
-struct FRendererInfoWindow : public FWidget
+class FSceneRenderer;
+
+class FRendererInfoWindow : public FWidget
 {
-     /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
+public:
+    FRendererInfoWindow(FSceneRenderer* InRenderer)
+        : Renderer(InRenderer)
+    {
+    }
+     
+    /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
     virtual void Paint() override final;
+
+private:
+    FSceneRenderer* Renderer;
 };

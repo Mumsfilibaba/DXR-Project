@@ -11,7 +11,6 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "VulkanPipelineCache.pipelinecache");
 
-
 FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
     : FRHIVertexInputLayout()
 {
@@ -97,7 +96,6 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
     }
 }
 
-
 FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
     : FRHIDepthStencilState()
     , Initializer(InInitializer)
@@ -118,7 +116,6 @@ FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateIn
     CreateInfo.front.compareMask = CreateInfo.back.compareMask = InInitializer.StencilReadMask;
     CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInitializer.StencilWriteMask;
 }
-
 
 FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer)
     : FRHIRasterizerState()
@@ -183,7 +180,6 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
 #endif
 }
 
-
 FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer)
     : FRHIBlendState()
     , Initializer(InInitializer)
@@ -210,7 +206,6 @@ FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitiali
     }
 }
 
-
 FVulkanPipeline::FVulkanPipeline(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , Pipeline(VK_NULL_HANDLE)
@@ -234,7 +229,6 @@ void FVulkanPipeline::SetDebugName(const FString& InName)
 {
     FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Pipeline, VK_OBJECT_TYPE_PIPELINE);
 }
-
 
 FVulkanGraphicsPipelineState::FVulkanGraphicsPipelineState(FVulkanDevice* InDevice)
     : FRHIGraphicsPipelineState()
@@ -531,7 +525,6 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     }
 }
 
-
 FVulkanComputePipelineState::FVulkanComputePipelineState(FVulkanDevice* InDevice)
     : FRHIComputePipelineState()
     , FVulkanPipeline(InDevice)
@@ -707,7 +700,7 @@ bool FVulkanPipelineCache::SaveCacheData()
 
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
     const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;
-    
+
     FFileHandleRef CacheFile = FPlatformFile::OpenForWrite(PipelineCacheFilepath);
     if (!CacheFile)
     {

@@ -2,8 +2,9 @@
 #include "Core/Core.h"
 #include "RHI/RHITypes.h"
 
-struct FMeshDrawCommand
+class FProxyRendererComponent
 {
+public:
     class FMaterial*  Material     = nullptr;
     class FMesh*      Mesh         = nullptr;
     class FActor*     CurrentActor = nullptr;
@@ -16,5 +17,3 @@ struct FMeshDrawCommand
 
     class FRHIRayTracingGeometry* Geometry = nullptr;
 };
-
-MARK_AS_REALLOCATABLE(FMeshDrawCommand);

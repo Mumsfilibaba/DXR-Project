@@ -7,9 +7,9 @@
 
 FScene::FScene()
     : Actors()
+    , CurrentCamera(nullptr)
     , RendererScene(nullptr)
 {
-    RendererScene = new FRendererScene(this);
 }
 
 FScene::~FScene()
@@ -24,9 +24,7 @@ FScene::~FScene()
         SAFE_DELETE(CurrentLight);
     }
 
-    // TODO: Fix crash on exit
     SAFE_DELETE(CurrentCamera);
-    SAFE_DELETE(RendererScene);
 }
 
 FActor* FScene::CreateActor()
@@ -78,77 +76,98 @@ void FScene::AddCamera(FCamera* InCamera)
     }
 
     CurrentCamera = InCamera;
+
+    if (RendererScene)
+    {
+        RendererScene->AddCamera(CurrentCamera);
+    }
 }
 
 void FScene::AddActor(FActor* InActor)
 {
-    CHECK(InActor != nullptr);
-    CHECK(InActor->GetSceneOwner() == nullptr);
-    
-    // Set this scene to be the owner of the added actor
-    InActor->SetSceneOwner(this);
-    Actors.Emplace(InActor);
-
-    if (IsSubClassOf<FPlayerController>(InActor))
+    if (InActor)
     {
-        PlayerControllers.Emplace(Cast<FPlayerController>(InActor));
+        // Set this scene to be the owner of the added actor
+        CHECK(InActor->GetSceneOwner() == nullptr);
+        InActor->SetSceneOwner(this);
+        Actors.Emplace(InActor);
+    }
+    else
+    {
+        DEBUG_BREAK();
     }
 
-    FMeshComponent* Component = InActor->GetComponentOfType<FMeshComponent>();
-    if (Component)
+    if (FPlayerController* PlayerController = Cast<FPlayerController>(InActor))
     {
-        AddMeshComponent(Component);
+        AddPlayerController(PlayerController);
+    }
+
+    if (FRendererComponent* RendererComponent = InActor->GetComponentOfType<FRendererComponent>())
+    {
+        AddRendererComponent(RendererComponent);
+    }
+}
+
+void FScene::AddPlayerController(FPlayerController* InPlayerController)
+{
+    if (InPlayerController)
+    {
+        PlayerControllers.Emplace(InPlayerController);
+    }
+    else
+    {
+        DEBUG_BREAK();
     }
 }
 
 void FScene::AddLight(FLight* InLight)
 {
-    CHECK(InLight != nullptr);
-    Lights.Emplace(InLight);
+    if (InLight)
+    {
+        Lights.Emplace(InLight);
+    }
+    else
+    {
+        DEBUG_BREAK();
+    }
+
+    if (RendererScene)
+    {
+        RendererScene->AddLight(InLight);
+    }
 }
 
 void FScene::AddLightProbe(FLightProbe* InLightProbe)
 {
-    CHECK(InLightProbe != nullptr);
-    LightProbes.Emplace(InLightProbe);
-}
-
-void FScene::OnAddedComponent(FComponent* NewComponent)
-{
-    FMeshComponent* Component = Cast<FMeshComponent>(NewComponent);
-    if (Component && Component->Mesh)
+    if (InLightProbe)
     {
-        AddMeshComponent(Component);
+        LightProbes.Emplace(InLightProbe);
+    }
+    else
+    {
+        DEBUG_BREAK();
     }
 }
 
-void FScene::AddMeshComponent(FMeshComponent* Component)
+void FScene::AddRendererComponent(FRendererComponent* RendererComponent)
 {
-    FMeshDrawCommand Command;
-    Command.CurrentActor = Component->GetActorOwner();
-    Command.Geometry     = Component->Mesh->RTGeometry.Get();
-    Command.VertexBuffer = Component->Mesh->VertexBuffer.Get();
-    Command.NumVertices  = Component->Mesh->VertexCount;
-    Command.IndexBuffer  = Component->Mesh->IndexBuffer.Get();
-    Command.NumIndices   = Component->Mesh->IndexCount;
-    Command.IndexFormat  = Component->Mesh->IndexFormat;
-    Command.Material     = Component->Material.Get();
-    Command.Mesh         = Component->Mesh.Get();
-    MeshDrawCommands.Add(Command);
+    if (RendererScene && RendererComponent)
+    {
+        if (FProxyRendererComponent* ProxyComponent = RendererComponent->CreateProxyComponent())
+        {
+            RendererScene->AddProxyComponent(ProxyComponent);
+        }
+    }
 }
 
-FRendererScene::FRendererScene(FScene* InScene)
-    : Scene(InScene)
+void FScene::SetRendererScene(IRendererScene* InRendererScene)
 {
-    CHECK(Scene != nullptr);
-}
-
-FRendererScene::~FRendererScene()
-{
-    Scene = nullptr;
-}
-
-void FRendererScene::AddPrimitive(FScenePrimitive* InPrimitive)
-{
-    ScenePrimitives.Add(InPrimitive);
+    if (InRendererScene)
+    {
+        RendererScene = InRendererScene;
+    }
+    else
+    {
+        LOG_WARNING("Trying to add a null RendererScene");
+    }
 }

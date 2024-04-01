@@ -122,7 +122,6 @@ public:
     virtual FString GetDebugName() const override final;
 
     bool Build(FD3D12CommandContext& CmdContext, const FRayTracingSceneBuildInfo& BuildInfo);
-
     bool BuildBindingTable(
         class FD3D12CommandContext&       CmdContext,
         FD3D12RayTracingPipelineState*    PipelineState,

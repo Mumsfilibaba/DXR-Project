@@ -59,9 +59,8 @@ public:
     FInputComponent(const FObjectInitializer& ObjectInitializer);
     ~FInputComponent() = default;
 
-    int32 BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
-
     int32 BindAxis(const FStringView& InName, const FInputAxisDelegate& Delegate);
+    int32 BindAction(const FStringView& InName, EActionState ActionState, const FInputActionDelegate& Delegate);
 
     template<typename ClassType>
     FORCEINLINE int32 BindAction(const FStringView& InName, EActionState ActionState, ClassType* Actor, ActionFunction<ClassType> ActorFunction)

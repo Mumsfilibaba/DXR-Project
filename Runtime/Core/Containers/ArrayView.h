@@ -69,7 +69,7 @@ public:
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
     {
-        return (Address >= View) && (Address < (View + ViewSize));
+        return Address >= View && Address < (View + ViewSize);
     }
 
     /**
@@ -78,7 +78,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
     {
-        return (Index >= 0) && (Index < ViewSize);
+        return Index >= 0 && Index < ViewSize;
     }
 
     /**
@@ -255,7 +255,7 @@ public:
      */
     NODISCARD FORCEINLINE SizeType LastElementIndex() const noexcept
     {
-        return (ViewSize > 0) ? (ViewSize - 1) : 0;
+        return ViewSize > 0 ? ViewSize - 1 : 0;
     }
 
     /**
@@ -394,8 +394,8 @@ public: // STL Iterators
     NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ViewSize); }
 
 private:
-    ElementType* View{nullptr};
-    SizeType     ViewSize{0};
+    ElementType* View     = nullptr;
+    SizeType     ViewSize = 0;
 };
 
 

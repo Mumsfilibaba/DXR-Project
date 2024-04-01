@@ -1,5 +1,5 @@
 #include "RayTracer.h"
-#include "Renderer.h"
+#include "SceneRenderer.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
@@ -99,7 +99,7 @@ void FRayTracer::Release()
     RayClosestHitShader.Reset();
 }
 
-void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resources, const FScene& Scene)
+void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene)
 {
     UNREFERENCED_VARIABLE(Scene);
 
@@ -111,10 +111,10 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     for (int32 Index = 0; Index < Resources.GlobalMeshDrawCommands.Size(); ++Index)
     {
-        const FMeshDrawCommand& Command = Resources.GlobalMeshDrawCommands[Index];
+        const FProxyRendererComponent* Component = Resources.GlobalMeshDrawCommands[Index];
 
-        FMaterial* Material = Command.Material;
-        if (Command.Material->HasAlphaMask())
+        FMaterial* Material = Component->Material;
+        if (Component->Material->HasAlphaMask())
         {
             continue;
         }
@@ -127,35 +127,35 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         Resources.RTMaterialTextureCache.Add(SafeGetDefaultSRV(Material->AOMap));
         Sampler = Material->GetMaterialSampler();
 
-        const FMatrix3x4 TinyTransform = Command.CurrentActor->GetTransform().GetTinyMatrix();
+        const FMatrix3x4 TinyTransform = Component->CurrentActor->GetTransform().GetTinyMatrix();
 
         uint32 HitGroupIndex = 0;
-        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Command.Mesh))
+        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Component->Mesh))
         {
             HitGroupIndex = *ExistingIndex;
         }
         else
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
-            Resources.RTMeshToHitGroupIndex[Command.Mesh] = HitGroupIndex;
+            Resources.RTMeshToHitGroupIndex[Component->Mesh] = HitGroupIndex;
             
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
 
-            if (Command.Mesh->VertexBufferSRV)
+            if (Component->Mesh->VertexBufferSRV)
             {
-                HitGroupResources.AddShaderResourceView(Command.Mesh->VertexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(Component->Mesh->VertexBufferSRV.Get());
             }
-            if (Command.Mesh->IndexBufferSRV)
+            if (Component->Mesh->IndexBufferSRV)
             {
-                HitGroupResources.AddShaderResourceView(Command.Mesh->IndexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(Component->Mesh->IndexBufferSRV.Get());
             }
             
             Resources.RTHitGroupResources.Emplace(HitGroupResources);
         }
 
         FRHIRayTracingGeometryInstance Instance;
-        Instance.Geometry      = Command.Geometry;
+        Instance.Geometry      = Component->Geometry;
         Instance.Flags         = ERayTracingInstanceFlags::None;
         Instance.HitGroupIndex = HitGroupIndex;
         Instance.InstanceIndex = AlbedoIndex;
@@ -215,5 +215,9 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     CommandList.UnorderedAccessTextureBarrier(Resources.RTOutput.Get());
 
-    AddDebugTexture(MakeSharedRef<FRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()), Resources.RTOutput, EResourceAccess::UnorderedAccess, EResourceAccess::UnorderedAccess);
+    GetRenderer()->AddDebugTexture(
+        MakeSharedRef<FRHIShaderResourceView>(Resources.RTOutput->GetShaderResourceView()),
+        Resources.RTOutput,
+        EResourceAccess::UnorderedAccess,
+        EResourceAccess::UnorderedAccess);
 }

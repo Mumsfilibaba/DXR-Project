@@ -9,13 +9,8 @@
 
 struct ENGINE_API FEngine
 {
-    virtual ~FEngine() = default;
-
-    /** @brief - Creates the main window */
-    void CreateMainWindow();
-
-    /** @return - Returns true the main viewport could be initialized */
-    bool CreateMainViewport();
+    FEngine();
+    virtual ~FEngine();
 
     /** @return - Returns true if Engine initialization was successful */
     virtual bool Init();
@@ -31,6 +26,12 @@ struct ENGINE_API FEngine
     
     /** @brief - Exit the engine */
     virtual void Exit();
+
+    /** @brief - Creates the main window */
+    void CreateMainWindow();
+
+    /** @return - Returns true the main viewport could be initialized */
+    bool CreateMainViewport();
 
     /** @brief - The main Window */
     TSharedRef<FGenericWindow> MainWindow; 

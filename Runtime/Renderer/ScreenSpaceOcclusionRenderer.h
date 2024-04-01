@@ -1,12 +1,18 @@
 #pragma once
+#include "RenderPass.h"
 #include "FrameResources.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 #include "Engine/Scene/Scene.h"
 
-class RENDERER_API FScreenSpaceOcclusionRenderer
+class FScreenSpaceOcclusionRenderer : public FRenderPass
 {
 public:
+    FScreenSpaceOcclusionRenderer(FSceneRenderer* InRenderer)
+        : FRenderPass(InRenderer)
+    {
+    }
+
     bool Initialize(FFrameResources& FrameResources);
 
     void Release();

@@ -1,5 +1,5 @@
 #include "ScreenSpaceOcclusionRenderer.h"
-#include "Renderer.h"
+#include "SceneRenderer.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector2.h"

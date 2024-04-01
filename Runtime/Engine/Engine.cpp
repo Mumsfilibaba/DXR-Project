@@ -12,6 +12,7 @@
 #include "Engine/Widgets/FrameProfilerWidget.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
+#include "RendererCore/Interfaces/IRendererModule.h"
 
 ENGINE_API FEngine* GEngine = nullptr;
 
@@ -51,6 +52,15 @@ static FAutoConsoleCommand GToggleFullscreen(
     "Toggles fullscreen on the main Viewport",
     FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
 
+FEngine::FEngine()
+    : Scene(nullptr)
+{
+}
+
+FEngine::~FEngine()
+{
+    Scene = nullptr;
+}
 
 void FEngine::CreateMainWindow()
 {
@@ -185,6 +195,13 @@ bool FEngine::Init()
 
     // Create a new scene
     Scene = new FScene();
+    if (IRendererModule* Renderer = IRendererModule::Get())
+    {
+        if (IRendererScene* RendererScene = Renderer->CreateRendererScene(Scene))
+        {
+            Scene->SetRendererScene(RendererScene);
+        }
+    }
 
     // Create a SceneViewport
     SceneViewport = MakeShared<FSceneViewport>(MainViewport);
@@ -242,6 +259,12 @@ void FEngine::Release()
     if (Scene)
     {
         SceneViewport->SetScene(nullptr);
+
+        if (IRendererModule* Renderer = IRendererModule::Get())
+        {
+            Renderer->DestroyRendererScene(Scene->GetRendererScene());
+        }
+
         delete Scene;
     }
 

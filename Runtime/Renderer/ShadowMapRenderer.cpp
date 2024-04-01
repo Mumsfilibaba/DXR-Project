@@ -1,5 +1,5 @@
 #include "ShadowMapRenderer.h"
-#include "MeshDrawCommand.h"
+#include "RendererScene.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -9,6 +9,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
+#include "Engine/Scene/Components/ProxyRendererComponent.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarCascadeDebug(
@@ -462,7 +463,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
     return true;
 }
 
-void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FScene& Scene)
+void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, FRendererScene* Scene)
 {
     //PointLightFrame++;
     //if (PointLightFrame > 6)
@@ -525,38 +526,38 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 if (CVarFrustumCullEnabled && CVarFrustumCullEnabled->GetBool())
                 {
                     const FFrustum CameraFrustum = FFrustum(Data.FarPlane, Data.ViewMatrix[Face], Data.ProjMatrix[Face]);
-                    for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+                    for (FProxyRendererComponent* Component : Scene->Primitives)
                     {
-                        FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+                        FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
                         TransformMatrix = TransformMatrix.Transpose();
 
-                        const FVector3 Top    = TransformMatrix.Transform(Command.Mesh->BoundingBox.Top);
-                        const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
+                        const FVector3 Top    = TransformMatrix.Transform(Component->Mesh->BoundingBox.Top);
+                        const FVector3 Bottom = TransformMatrix.Transform(Component->Mesh->BoundingBox.Bottom);
 
                         FAABB Box(Top, Bottom);
                         if (CameraFrustum.CheckAABB(Box))
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
-                            CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
+                            CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
+                            CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                            ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+                            ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                             CommandList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                            CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
+                            CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
                         }
                     }
                 }
                 else
                 {
-                    for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+                    for (FProxyRendererComponent* Component : Scene->Primitives)
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Command.VertexBuffer, 1), 0);
-                        CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
+                        CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
+                        CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                        ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                         CommandList.Set32BitShaderConstants(PointLightVertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                        CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
+                        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
                     }
                 }
 
@@ -572,7 +573,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
     CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
 }
 
-void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, const FScene& Scene)
+void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FRendererScene* Scene)
 {
     // Generate matrices for directional light
     if (CVarGPUGeneratedCascades.GetValue())
@@ -666,72 +667,72 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             if (CVarFrustumCullEnabled && CVarFrustumCullEnabled->GetBool())
             {
                 const FFrustum CameraFrustum = FFrustum(LightSetup.DirectionalLightFarPlane, LightSetup.DirectionalLightViewMatrix, LightSetup.DirectionalLightProjMatrix);
-                for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+                for (FProxyRendererComponent* Component : Scene->Primitives)
                 {
-                    FMatrix4 TransformMatrix = Command.CurrentActor->GetTransform().GetMatrix();
+                    FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
                     TransformMatrix = TransformMatrix.Transpose();
 
-                    const FVector3 Top    = TransformMatrix.Transform(Command.Mesh->BoundingBox.Top);
-                    const FVector3 Bottom = TransformMatrix.Transform(Command.Mesh->BoundingBox.Bottom);
+                    const FVector3 Top    = TransformMatrix.Transform(Component->Mesh->BoundingBox.Top);
+                    const FVector3 Bottom = TransformMatrix.Transform(Component->Mesh->BoundingBox.Bottom);
 
                     const FAABB Box(Top, Bottom);
                     if (CameraFrustum.CheckAABB(Box))
                     {
-                        if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+                        if (Component->Material->HasAlphaMask() || Component->Material->IsDoubleSided())
                         {
                             CommandList.SetGraphicsPipelineState(DirectionalLightMaskedPSO.Get());
-                            CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->MaskedVertexBuffer, 1), 0);
+                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
 
-                            CommandList.SetSamplerState(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialSampler(), 0);
-                            CommandList.SetConstantBuffer(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialBuffer(), 1);
-                            CommandList.SetShaderResourceView(DirectionalLightMaskedPS.Get(), Command.Material->GetAlphaMaskSRV(), 1);
+                            CommandList.SetSamplerState(DirectionalLightMaskedPS.Get(), Component->Material->GetMaterialSampler(), 0);
+                            CommandList.SetConstantBuffer(DirectionalLightMaskedPS.Get(), Component->Material->GetMaterialBuffer(), 1);
+                            CommandList.SetShaderResourceView(DirectionalLightMaskedPS.Get(), Component->Material->GetAlphaMaskSRV(), 1);
                         }
                         else
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->PosOnlyVertexBuffer, 1), 0);
+                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
                             CommandList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
                         }
 
-                        CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
+                        CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
                         CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
                         CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
-                        ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                         CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
 
-                        CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
+                        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
                     }
                 }
             }
             else
             {
-                for (const FMeshDrawCommand& Command : Scene.GetMeshDrawCommands())
+                for (FProxyRendererComponent* Component : Scene->Primitives)
                 {
-                    if (Command.Material->HasAlphaMask() || Command.Material->IsDoubleSided())
+                    if (Component->Material->HasAlphaMask() || Component->Material->IsDoubleSided())
                     {
                         CommandList.SetGraphicsPipelineState(DirectionalLightMaskedPSO.Get());
-                        CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->MaskedVertexBuffer, 1), 0);
+                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
 
-                        CommandList.SetSamplerState(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialSampler(), 0);
-                        CommandList.SetConstantBuffer(DirectionalLightMaskedPS.Get(), Command.Material->GetMaterialBuffer(), 1);
-                        CommandList.SetShaderResourceView(DirectionalLightMaskedPS.Get(), Command.Material->GetAlphaMaskSRV(), 1);
+                        CommandList.SetSamplerState(DirectionalLightMaskedPS.Get(), Component->Material->GetMaterialSampler(), 0);
+                        CommandList.SetConstantBuffer(DirectionalLightMaskedPS.Get(), Component->Material->GetMaterialBuffer(), 1);
+                        CommandList.SetShaderResourceView(DirectionalLightMaskedPS.Get(), Component->Material->GetAlphaMaskSRV(), 1);
                     }
                     else
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Command.Mesh->PosOnlyVertexBuffer, 1), 0);
+                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
                         CommandList.SetGraphicsPipelineState(DirectionalLightPSO.Get());
                     }
 
-                    CommandList.SetIndexBuffer(Command.IndexBuffer, Command.IndexFormat);
+                    CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                    ShadowPerObjectBuffer.Matrix = Command.CurrentActor->GetTransform().GetMatrix();
+                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                     CommandList.Set32BitShaderConstants(DirectionalLightVS.Get(), &ShadowPerObjectBuffer, 16);
 
                     CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
                     CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
-                    CommandList.DrawIndexedInstanced(Command.NumIndices, 1, 0, 0, 0);
+                    CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
                 }
             }
 

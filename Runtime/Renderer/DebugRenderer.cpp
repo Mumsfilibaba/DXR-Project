@@ -1,11 +1,12 @@
 #include "DebugRenderer.h"
-#include "MeshDrawCommand.h"
+#include "RendererScene.h"
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Engine/Resources/Mesh.h"
 #include "Engine/Scene/Actors/Actor.h"
 #include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Scene/Components/ProxyRendererComponent.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 
@@ -342,16 +343,16 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer.Get(), EIndexFormat::uint16);
 
-    for (const FMeshDrawCommand& Command : Resources.GlobalMeshDrawCommands)
+    for (const FProxyRendererComponent* Component : Resources.GlobalMeshDrawCommands)
     {
-        FAABB& Box = Command.Mesh->BoundingBox;
+        FAABB& Box = Component->Mesh->BoundingBox;
 
         FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         FVector3 Position = Box.GetCenter();
 
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
-        FMatrix4 TransformMatrix   = Command.CurrentActor->GetTransform().GetMatrix();
+        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
         TransformMatrix = TransformMatrix.Transpose();
@@ -366,7 +367,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End AABB DebugPass");
 }
 
-void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, const FScene& Scene)
+void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PointLight DebugPass");
 
@@ -393,10 +394,9 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
         float    Padding;
     } PointLightData;
 
-    for (FLight* Light : Scene.GetLights())
+    for (FLight* Light : Scene->Lights)
     {
-        FPointLight* CurrentPointLight = Cast<FPointLight>(Light);
-        if (CurrentPointLight)
+        if (FPointLight* CurrentPointLight = Cast<FPointLight>(Light))
         {
             FVector3 Color = CurrentPointLight->GetColor();
             PointLightData.Color         = FVector4(Color.x, Color.y, Color.z, 1.0f);

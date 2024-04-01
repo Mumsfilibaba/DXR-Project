@@ -1,4 +1,5 @@
 #include "SkyboxRenderPass.h"
+#include "RendererScene.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -238,7 +239,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FScene& Scene)
+void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Skybox");
 
@@ -274,8 +275,7 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
         FMatrix4 Matrix;
     } SimpleCamera;
 
-    SimpleCamera.Matrix = Scene.GetCamera()->GetViewProjectionWitoutTranslateMatrix();
-
+    SimpleCamera.Matrix = Scene->Camera->GetViewProjectionWitoutTranslateMatrix();
     CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
 
     FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();

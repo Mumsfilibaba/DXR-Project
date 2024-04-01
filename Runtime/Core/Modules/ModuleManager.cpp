@@ -115,7 +115,7 @@ FModuleInterface* FModuleManager::GetModule(const CHAR* ModuleName)
     if (Index >= 0)
     {
         FModuleInterface* EngineModule = Modules[Index].Interface;
-        if (EngineModule)
+        if (!EngineModule)
         {
             LOG_WARNING("Module is loaded but does not contain an EngineModule interface");
             return nullptr;
@@ -152,7 +152,7 @@ void FModuleManager::RegisterStaticModule(const CHAR* ModuleName, FInitializeSta
 
     const bool bContains = StaticModuleDelegates.ContainsWithPredicate([=](const FStaticModulePair& Element)
     {
-        return (Element.First == ModuleName);
+        return Element.First == ModuleName;
     });
 
     if (!bContains)
@@ -164,7 +164,7 @@ void FModuleManager::RegisterStaticModule(const CHAR* ModuleName, FInitializeSta
 bool FModuleManager::IsModuleLoaded(const CHAR* ModuleName)
 {
     const int32 Index = GetModuleIndexUnlocked(ModuleName);
-    return (Index >= 0);
+    return Index >= 0;
 }
 
 void FModuleManager::UnloadModule(const CHAR* ModuleName)
@@ -238,7 +238,7 @@ int32 FModuleManager::GetModuleIndexUnlocked(const CHAR* ModuleName)
 {
     const auto Index = Modules.FindWithPredicate([=](const FModuleData& Element)
     {
-        return (Element.Name == ModuleName);
+        return Element.Name == ModuleName;
     });
 
     return static_cast<int32>(Index);

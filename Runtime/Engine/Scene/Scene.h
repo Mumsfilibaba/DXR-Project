@@ -5,9 +5,12 @@
 #include "Reflections/LightProbe.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
-#include "Renderer/MeshDrawCommand.h"
+#include "RendererCore/Interfaces/IRendererScene.h"
 
-class FRendererScene;
+// TODO: Remove
+#include "Engine/Scene/Components/ProxyRendererComponent.h"
+
+class FRendererComponent;
 
 class ENGINE_API FScene
 {
@@ -53,6 +56,12 @@ public:
     void AddActor(FActor* InActor);
 
     /**
+     * @brief                    - Adds a player-controller into the scene
+     * @param InPlayerController - PlayerController to add to the scene
+     */
+    void AddPlayerController(FPlayerController* InPlayerController);
+
+    /**
      * @brief         - Adds an light into the scene
      * @param InLight - Light to add to the scene
      */
@@ -65,12 +74,24 @@ public:
     void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
-     * @brief              - Function called when adding a component
-     * @param NewComponent - New component just added to the scene
+     * @brief                   - Function called when adding a new RendererComponent
+     * @param RendererComponent - New RendererComponent just added to the scene
      */
-    void OnAddedComponent(FComponent* NewComponent);
+    void AddRendererComponent(FRendererComponent* RendererComponent);
 
-    void SyncRendering();
+    /**
+      * @brief                 - Sets the scene representation in the renderer
+      * @param InRendererScene - Interface to the renderer scene representation
+      */
+    void SetRendererScene(IRendererScene* InRendererScene);
+
+    /**
+     * @return - Returns the Renderer representation of this scene 
+     */
+    IRendererScene* GetRendererScene() const
+    {
+        return RendererScene;
+    }
 
     /**
      * @brief  - Retrieve all components of a certain type
@@ -91,22 +112,6 @@ public:
         }
 
         return ::Move(Components);
-    }
-
-    /**
-     * @return - Returns a pointer to the Renderers View of the scene
-     */
-    FRendererScene* GetRendererScene()
-    {
-        return RendererScene;
-    }
-
-    /**
-     * @return - Returns a pointer to the Renderers View of the scene
-     */
-    const FRendererScene* GetRendererScene() const
-    {
-        return RendererScene;
     }
 
     /**
@@ -162,49 +167,12 @@ public:
         return CurrentCamera;
     }
 
-    /**
-     * @return - Returns a reference to an array of all MeshDrawCommands in the scene
-     */
-    FORCEINLINE const TArray<FMeshDrawCommand>& GetMeshDrawCommands() const
-    {
-        return MeshDrawCommands;
-    }
-
 private:
-    void AddMeshComponent(class FMeshComponent* Component);
-
-    // These actors were added this frame is waiting to be syncronized with the renderer
-    TArray<FActor*> NewActors;
-
+    FCamera*                   CurrentCamera;
+    IRendererScene*            RendererScene;
     // These actors are the "permanent" storage of actors
-    TArray<FActor*> Actors;
-
+    TArray<FActor*>            Actors;
     TArray<FPlayerController*> PlayerControllers;
     TArray<FLight*>            Lights;
     TArray<FLightProbe*>       LightProbes;
-    TArray<FMeshDrawCommand>   MeshDrawCommands;
-
-    FCamera*        CurrentCamera = nullptr;
-    FRendererScene* RendererScene = nullptr;
-};
-
-
-struct FScenePrimitive
-{
-    FVector3 Translation;
-    FVector3 Scale;
-    FVector3 Rotation;
-};
-
-class ENGINE_API FRendererScene
-{
-public:
-    FRendererScene(FScene* InScene);
-    ~FRendererScene();
-
-    void AddPrimitive(FScenePrimitive* InPrimitive);
-
-private:
-    FScene*                  Scene;
-    TArray<FScenePrimitive*> ScenePrimitives;
 };

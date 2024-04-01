@@ -1,7 +1,8 @@
 #include "EngineLoop.h"
 #if PROJECT_EDITOR
-    #include "EditorEngine.h"
+#include "EditorEngine.h"
 #endif
+
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/TaskManager.h"
@@ -17,7 +18,6 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleWindow.h"
-#include "Renderer/Renderer.h"
 #include "Renderer/Debug/GPUProfiler.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
@@ -216,6 +216,7 @@ bool FEngineLoop::Initialize()
 #else
     GEngine = new FEngine();
 #endif
+
     if (!GEngine->Init())
     {
         LOG_ERROR("Failed to initialize engine");
@@ -225,7 +226,8 @@ bool FEngineLoop::Initialize()
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
     // Initialize renderer
-    if (!FRenderer::Initialize())
+    IRendererModule* RendererModule = IRendererModule::Get();
+    if (!RendererModule->Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
         return false;
@@ -234,7 +236,7 @@ bool FEngineLoop::Initialize()
     CoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
     // Load application
-    GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().GetCString());
+    GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().Data());
     if (!GGameModule)
     {
         LOG_WARNING("Failed to load Game-module, the application may not behave as intended");
@@ -287,7 +289,8 @@ void FEngineLoop::Tick()
     FGPUProfiler::Get().Tick();
 
     // Tick the renderer
-    FRenderer::Get().Tick();
+    IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->Tick();
 }
 
 
@@ -309,7 +312,8 @@ bool FEngineLoop::Release()
     }
 
     // Release the renderer
-    FRenderer::Release();
+    IRendererModule* RendererModule = IRendererModule::Get();
+    RendererModule->Release();
     
     // Release the Engine. Protect against failed initialization where the global pointer was never initialized
     if (GEngine)

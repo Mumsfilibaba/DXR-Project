@@ -1,13 +1,19 @@
 #pragma once
+#include "RenderPass.h"
 #include "FrameResources.h"
 #include "LightSetup.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 #include "RendererUtilities/GPUTextureCompressor.h"
 
-class RENDERER_API FLightProbeRenderer
+class FLightProbeRenderer : public FRenderPass
 {
 public:
+    FLightProbeRenderer(FSceneRenderer* InRenderer)
+        : FRenderPass(InRenderer)
+    {
+    }
+
     bool Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
     void Release();

@@ -1,4 +1,5 @@
 #pragma once
+#include "RenderPass.h"
 #include "FrameResources.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
@@ -72,10 +73,14 @@ struct FHaltonState
     uint32       SampleIndex;
 };
 
-
-class RENDERER_API FTemporalAA
+class FTemporalAA : public FRenderPass
 {
 public:
+    FTemporalAA(FSceneRenderer* InRenderer)
+        : FRenderPass(InRenderer)
+    {
+    }
+
     bool Initialize(FFrameResources& FrameResources);
 
     void Release();

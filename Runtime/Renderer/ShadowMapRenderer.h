@@ -1,4 +1,5 @@
 #pragma once
+#include "RenderPass.h"
 #include "FrameResources.h"
 #include "LightSetup.h"
 #include "RHI/RHICommandList.h"
@@ -77,19 +78,23 @@ struct FPerCascade
 
 MARK_AS_REALLOCATABLE(FPerCascade);
 
-
-class RENDERER_API FShadowMapRenderer
+class FShadowMapRenderer : public FRenderPass
 {
 public:
+    FShadowMapRenderer(FSceneRenderer* InRenderer)
+        : FRenderPass(InRenderer)
+    {
+    }
+
     bool Initialize(FLightSetup& LightSetup, FFrameResources& Resources);
 
     void Release();
 
      /** @brief - Render Point light shadows */
-    void RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FScene& Scene);
+    void RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, FRendererScene* Scene);
 
      /** @brief - Render Directional light shadows */
-    void RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, const FScene& Scene);
+    void RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FRendererScene* Scene);
 
      /** @brief - Render ShadowMasks */
     void RenderShadowMasks(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources);

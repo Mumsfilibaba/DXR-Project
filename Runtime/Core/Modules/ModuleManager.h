@@ -17,23 +17,22 @@
  */
 
 #if MONOLITHIC_BUILD
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                  \
-    /** @brief - Self registering object for static modules */                                                                                \
-    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName );                                                       \
+#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName) \
+    /** @brief - Self registering object for static modules */ \
+    static TStaticModuleInitializer<ModuleClassType> GModuleInitializer( #ModuleName ); \
     /** @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
     extern "C" void LinkModule_##ModuleName() { }
 #else
-#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName)                                                                                  \
-    extern "C"                                                                                                                                \
-    {                                                                                                                                         \
-        MODULE_EXPORT FModuleInterface* LoadEngineModule()                                                                                    \
-        {                                                                                                                                     \
-            return new ModuleClassType();                                                                                                     \
-        }                                                                                                                                     \
-    }                                                                                                                                         \
-                                                                                                                                              \
+#define IMPLEMENT_ENGINE_MODULE(ModuleClassType, ModuleName) \
+    extern "C" \
+    { \
+        MODULE_EXPORT FModuleInterface* LoadEngineModule() \
+        { \
+            return new ModuleClassType(); \
+        } \
+    } \
     /** @brief - This function is force-included by the linker in order to not strip out the translation unit that contains the initializer*/ \
-    extern "C" MODULE_EXPORT void LinkModule_##ModuleName() { }                                                                               \
+    extern "C" MODULE_EXPORT void LinkModule_##ModuleName() { } \
     IMPLEMENT_NEW_AND_DELETE_OPERATORS()
 #endif
 
@@ -74,9 +73,6 @@ class CORE_API FModuleManager
     };
 
     friend class TOptional<FModuleManager>;
-
-    FModuleManager()  = default;
-    ~FModuleManager() = default;
 
 public:
     

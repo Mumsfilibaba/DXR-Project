@@ -1,18 +1,24 @@
 #pragma once
+#include "RenderPass.h"
 #include "FrameResources.h"
 #include "LightSetup.h"
 #include "Engine/Scene/Scene.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 
-class RENDERER_API FDeferredRenderer
+class FDeferredRenderer : public FRenderPass
 {
 public:
+    FDeferredRenderer(FSceneRenderer* InRenderer)
+        : FRenderPass(InRenderer)
+    {
+    }
+
     bool Initialize(FFrameResources& FrameResources);
 
     void Release();
 
-    void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, const FScene& Scene);
+    void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FRendererScene* Scene);
     
     void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources);
 

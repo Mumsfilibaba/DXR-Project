@@ -1,4 +1,5 @@
 #pragma once
+#include "RenderPass.h"
 #include "FrameResources.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
@@ -6,12 +7,19 @@
 #include "Engine/Scene/Scene.h"
 #include "RendererUtilities/GPUTextureCompressor.h"
 
-class RENDERER_API FSkyboxRenderPass final
+class FSkyboxRenderPass : public FRenderPass
 {
 public:
+    FSkyboxRenderPass(FSceneRenderer* InRenderer)
+        : FRenderPass(InRenderer)
+        , SkyboxIndexCount(0)
+        , SkyboxIndexFormat(EIndexFormat::Unknown)
+    {
+    }
+
     bool Initialize(FFrameResources& FrameResources);
 
-    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FScene& Scene);
+    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene);
 
     void Release();
 
@@ -22,7 +30,7 @@ private:
     FRHIPixelShaderRef           SkyboxPixelShader;
     FRHIBufferRef                SkyboxVertexBuffer;
     FRHIBufferRef                SkyboxIndexBuffer;
-    uint32                       SkyboxIndexCount  = 0;
-    EIndexFormat                 SkyboxIndexFormat = EIndexFormat::Unknown;
+    uint32                       SkyboxIndexCount;
+    EIndexFormat                 SkyboxIndexFormat;
     FRHISamplerStateRef          SkyboxSampler;
 };

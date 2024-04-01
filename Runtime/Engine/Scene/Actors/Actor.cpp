@@ -56,7 +56,6 @@ void FActorTransform::CalculateMatrix()
     Matrix = Matrix.Transpose();
 }
 
-
 FActor::FActor(const FObjectInitializer& ObjectInitializer)
     : FObject(ObjectInitializer)
     , Name()
@@ -109,9 +108,9 @@ void FActor::AddComponent(FComponent* InComponent)
     InComponent->SetActorOwner(this);
     Components.Emplace(InComponent);
 
-    if (SceneOwner)
+    if (FRendererComponent* RendererComponent = Cast<FRendererComponent>(InComponent))
     {
-        SceneOwner->OnAddedComponent(InComponent);
+        SceneOwner->AddRendererComponent(RendererComponent);
     }
 }
 

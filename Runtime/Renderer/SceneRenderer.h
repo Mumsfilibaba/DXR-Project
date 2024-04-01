@@ -8,6 +8,7 @@
 #include "RayTracer.h"
 #include "DebugRenderer.h"
 #include "TemporalAA.h"
+#include "RendererScene.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Application/Events.h"
@@ -25,6 +26,7 @@
 #include "Debug/GPUProfilerWindow.h"
 
 class FViewport;
+class FSceneRenderer;
 
 struct FCameraBuffer
 {
@@ -56,33 +58,45 @@ struct FCameraBuffer
 
     float    ViewportWidth  = 0.0f;
     float    ViewportHeight = 0.0f;
-    float    Padding0 = 0.0f;
-    float    Padding1 = 0.0f;
+    float    Padding0       = 0.0f;
+    float    Padding1       = 0.0f;
 };
 
-struct RENDERER_API FRendererEventHandler : public FApplicationEventHandler
-{
-    virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
-};
-
-class RENDERER_API FRenderer
+class FRendererEventHandler : public FApplicationEventHandler
 {
 public:
-    static bool Initialize();
-    
-    static void Release();
+    FRendererEventHandler(FSceneRenderer* InRenderer)
+        : Renderer(InRenderer)
+    {
+    }
 
-    static FRenderer& Get();
+    virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
 
-    void Tick();
+private:
+    FSceneRenderer* Renderer;
+};
+
+class FSceneRenderer
+{
+public:
+    FSceneRenderer();
+    ~FSceneRenderer();
+
+    bool Initialize();
+    void Release();
+
+    void Tick(FRendererScene* Scene);
 
     void OnWindowResize(const FWindowEvent& Event);
 
-    void PerformFrustumCullingAndSort(const FScene& Scene);
-    
+    void PerformFrustumCullingAndSort(FRendererScene* Scene);
     void PerformFXAA(FRHICommandList& InCmdList);
-    
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
+
+    void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+    {
+        TextureDebugger->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
+    }
 
     TSharedPtr<FRenderTargetDebugWindow> GetTextureDebugger() const
     {
@@ -95,25 +109,12 @@ public:
     }
 
 private:
-    FRenderer();
-    ~FRenderer();
-
-    bool Create();
-    
     bool InitAA();
-    
     bool InitShadingImage();
 
     void FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands);
 
-    TOptional<FWindowEvent> ResizeEvent;
-
-    TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
-    TSharedPtr<FRendererInfoWindow>      InfoWindow;
-    TSharedPtr<FGPUProfilerWindow>       GPUProfilerWindow;
-
-    FRHICommandList CommandList;
-
+    // RenderPasses and Resources
     FFrameResources               Resources;
     FLightSetup                   LightSetup;
 
@@ -130,6 +131,12 @@ private:
     FDebugRenderer                DebugRenderer;
     FTemporalAA                   TemporalAA;
 
+    // RHI
+    FRHICommandList               CommandList;
+    FRHICommandStatistics         FrameStatistics;
+
+    FRHIQueryRef                  TimestampQueries;
+    
     FRHITextureRef                ShadingImage;
     FRHIComputePipelineStateRef   ShadingRatePipeline;
     FRHIComputeShaderRef          ShadingRateShader;
@@ -142,17 +149,12 @@ private:
     FRHIGraphicsPipelineStateRef  FXAADebugPSO;
     FRHIPixelShaderRef            FXAADebugShader;
 
-    FRHIQueryRef TimestampQueries;
+    // Event handling and Widgets
+    TOptional<FWindowEvent>              ResizeEvent;
+    TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
+    TSharedPtr<FRendererInfoWindow>      InfoWindow;
+    TSharedPtr<FGPUProfilerWindow>       GPUProfilerWindow;
+    TSharedPtr<FRendererEventHandler>    EventHandler;
 
-    FRHICommandStatistics FrameStatistics;
-
-    TSharedPtr<FRendererEventHandler> EventHandler;
-
-    static FRenderer* GInstance;
+    static FSceneRenderer* GInstance;
 };
-
-
-inline void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
-{
-    FRenderer::Get().GetTextureDebugger()->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
-}

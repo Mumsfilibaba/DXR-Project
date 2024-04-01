@@ -1,8 +1,8 @@
 #include "RendererInfoWindow.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
-#include "Renderer/Renderer.h"
 #include "Application/Application.h"
+#include "Renderer/SceneRenderer.h"
 
 #include <imgui.h>
 
@@ -10,7 +10,6 @@ static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
     "Renderer.DrawRendererInfo",
     "Enables the drawing of the Renderer Info Window", 
     true);
-
 
 void FRendererInfoWindow::Paint()
 {
@@ -55,7 +54,7 @@ void FRendererInfoWindow::Paint()
         ImGui::Text("%s", AdapterName.GetCString());
         ImGui::NextColumn();
 
-        FRHICommandStatistics Statistics = FRenderer::Get().GetStatistics();
+        const FRHICommandStatistics& Statistics = Renderer->GetStatistics();
         ImGui::Text("DrawCalls: ");
         ImGui::NextColumn();
 

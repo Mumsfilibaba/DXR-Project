@@ -1,12 +1,18 @@
 #pragma once
+#include "RenderPass.h"
 #include "FrameResources.h"
 #include "LightSetup.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 
-class RENDERER_API FForwardRenderer
+class FForwardRenderer : public FRenderPass
 {
 public:
+    FForwardRenderer(FSceneRenderer* InRenderer)
+        : FRenderPass(InRenderer)
+    {
+    }
+
     bool Initialize(FFrameResources& FrameResources);
 
     void Release();

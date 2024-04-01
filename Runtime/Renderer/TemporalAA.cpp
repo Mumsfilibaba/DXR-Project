@@ -1,5 +1,5 @@
 #include "TemporalAA.h"
-#include "Renderer.h"
+#include "SceneRenderer.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -101,13 +101,13 @@ void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameRes
 
     CommandList.TransitionTexture(CurrentBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture(
+    GetRenderer()->AddDebugTexture(
         MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[0]->GetShaderResourceView()),
         TAAHistoryBuffers[0],
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
-    AddDebugTexture(
+    GetRenderer()->AddDebugTexture(
         MakeSharedRef<FRHIShaderResourceView>(TAAHistoryBuffers[1]->GetShaderResourceView()),
         TAAHistoryBuffers[1],
         EResourceAccess::NonPixelShaderResource,

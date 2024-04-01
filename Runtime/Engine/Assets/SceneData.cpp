@@ -75,14 +75,14 @@ void FSceneData::AddToScene(FScene* Scene)
             {
                 if (!CreatedMaterials.IsEmpty() && ModelData.MaterialIndex >= 0)
                 {
-                    MeshComponent->Material = CreatedMaterials[ModelData.MaterialIndex];
+                    MeshComponent->SetMaterial(CreatedMaterials[ModelData.MaterialIndex]);
                 }
                 else
                 {
-                    MeshComponent->Material = GEngine->BaseMaterial;
+                    MeshComponent->SetMaterial(GEngine->BaseMaterial);
                 }
                 
-                MeshComponent->Mesh = FMesh::Create(ModelData.Mesh);
+                MeshComponent->SetMesh(FMesh::Create(ModelData.Mesh));
                 NewActor->AddComponent(MeshComponent);
             }
         }
