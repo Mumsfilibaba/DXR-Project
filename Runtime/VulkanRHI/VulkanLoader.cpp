@@ -342,6 +342,8 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyAccelerationStructureKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetAccelerationStructureBuildSizesKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetAccelerationStructureDeviceAddressKHR);
+        
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBuildAccelerationStructuresKHR);
     }
 #endif
 
@@ -402,9 +404,6 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDraw);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDrawIndexed);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdWriteTimestamp);
-#if VK_KHR_acceleration_structure
-    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBuildAccelerationStructuresKHR);
-#endif
 
     // Initialize DedicatedAllocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);

@@ -135,7 +135,7 @@ bool FVulkanRayTracingGeometry::Build(FVulkanCommandContext& CmdContext, const F
     AccelerationStructureCreateInfo.deviceAddress = 0;
 
     Result = vkCreateAccelerationStructureKHR(GetDevice()->GetVkDevice(), &AccelerationStructureCreateInfo, nullptr, &Geometry);
-    if (FAILED(Result))
+    if (VULKAN_FAILED(Result))
     {
         VULKAN_ERROR("Failed to create AccelerationStructure");
         return false;
