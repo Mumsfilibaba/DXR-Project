@@ -83,7 +83,6 @@ public:
     ~FSceneRenderer();
 
     bool Initialize();
-    void Release();
 
     void Tick(FRendererScene* Scene);
 

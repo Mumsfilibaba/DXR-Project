@@ -440,9 +440,9 @@ void FSceneRenderer::PerformFXAA(FRHICommandList& InCommandList)
     InCommandList.SetScissorRect(ScissorRegion);
 
     FRHIRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
+    RenderPass.NumRenderTargets = 1;
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
-    RenderPass.NumRenderTargets            = 1;
 
     InCommandList.BeginRenderPass(RenderPass);
 
@@ -485,9 +485,9 @@ void FSceneRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     InCmdList.SetScissorRect(ScissorRegion);
 
     FRHIRenderPassDesc RenderPass;
-    RenderPass.RenderTargets[0]            = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
+    RenderPass.NumRenderTargets = 1;
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
-    RenderPass.NumRenderTargets            = 1;
 
     InCmdList.BeginRenderPass(RenderPass);
 
@@ -751,7 +751,6 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 
-
     // Render Shadows
     if (CVarShadowsEnabled.GetValue())
     {
@@ -789,7 +788,7 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
             CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
             
             const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), DebugClearColor);
+            CommandList.ClearUnorderedAccessView(LightSetup.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
             
             CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
             CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
@@ -933,6 +932,7 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
     CommandList.EndExternalCapture();
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--END FRAME--");
+
     CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
     CommandList.EndFrame();
 

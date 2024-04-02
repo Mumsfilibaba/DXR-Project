@@ -69,6 +69,7 @@ void FRendererScene::UpdateVisibility()
         VisiblePrimitives.Reserve(Primitives.Capacity());
     }
 
+    // Clear for this frame
     VisiblePrimitives.Clear();
 
     const FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
@@ -86,6 +87,57 @@ void FRendererScene::UpdateVisibility()
             VisiblePrimitives.Add(Component);
         }
     }
+}
 
-    return;
+void FRendererScene::UpdateBatches()
+{
+    TRACE_SCOPE("UpdateBatches");
+
+    // Clear for this frame
+    MeshBatches.Clear();
+    VisibleMeshBatches.Clear();
+
+    TMap<uint64, int32> MaterialToBatchIndex;
+    for (FProxyRendererComponent* Component : Primitives)
+    {
+        const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
+
+        int32 BatchIndex;
+        if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+        {
+            BatchIndex = *ExistingBatchIndex;
+        }
+        else
+        {
+            const int32 NewIndex = BatchIndex = MeshBatches.Size();
+            MeshBatches.Emplace(Component->Material);
+            MaterialToBatchIndex.Add(MaterialID, NewIndex);
+        }
+
+        FMeshBatch& Batch = MeshBatches[BatchIndex];
+        Batch.Primitives.Add(Component);
+    }
+
+    // Clear map for next draw
+    MaterialToBatchIndex.Clear();
+
+    for (FProxyRendererComponent* Component : VisiblePrimitives)
+    {
+        const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
+
+        int32 BatchIndex;
+        if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+        {
+            BatchIndex = *ExistingBatchIndex;
+        }
+        else
+        {
+            const int32 NewIndex = BatchIndex = VisibleMeshBatches.Size();
+            VisibleMeshBatches.Emplace(Component->Material);
+            MaterialToBatchIndex.Add(MaterialID, NewIndex);
+        }
+
+        FMeshBatch& Batch = VisibleMeshBatches[BatchIndex];
+        Batch.Primitives.Add(Component);
+    }
 }

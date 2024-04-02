@@ -122,7 +122,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
                     TempVertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
-                if (UniqueVertices.Contains(TempVertex))
+                if (!UniqueVertices.Contains(TempVertex))
                 {
                     UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
                     Data.Mesh.Vertices.Add(TempVertex);
