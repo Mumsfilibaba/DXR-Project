@@ -323,7 +323,7 @@ void FDebugRenderer::Release()
     DbgSphereIndexBuffer.Reset();
 }
 
-void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources)
+void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin AABB DebugPass");
 
@@ -343,7 +343,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer.Get(), EIndexFormat::uint16);
 
-    for (const FProxyRendererComponent* Component : Resources.GlobalMeshDrawCommands)
+    for (const FProxyRendererComponent* Component : Scene->VisiblePrimitives)
     {
         FAABB& Box = Component->Mesh->BoundingBox;
 

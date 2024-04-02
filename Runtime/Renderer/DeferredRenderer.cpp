@@ -1023,9 +1023,8 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
             FMatrix4 TransformInv;
         } TransformPerObject;
 
-        for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
+        for (const FProxyRendererComponent* Component : Scene->VisiblePrimitives)
         {
-            const FProxyRendererComponent* Component = FrameResources.GlobalMeshDrawCommands[CommandIndex];
             if (Component->Material->ShouldRenderInPrePass())
             {
                 if (Component->Material->HasAlphaMask() || Component->Material->IsDoubleSided())
@@ -1175,7 +1174,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
     }
 }
 
-void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources)
+void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin GeometryPass");
 
@@ -1211,12 +1210,15 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         FMatrix4 TransformInv;
     } TransformPerObject;
 
-    for (const auto CommandIndex : FrameResources.DeferredVisibleCommands)
+    for (const FProxyRendererComponent* Component : Scene->VisiblePrimitives)
     {
-        const FProxyRendererComponent* Component = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+        FMaterial* CurrentMaterial = Component->Material;
+        if (CurrentMaterial->ShouldRenderInForwardPass())
+        {
+            continue;
+        }
 
         // Setup textures
-        FMaterial* CurrentMaterial = Component->Material;
         if (CurrentMaterial->IsPackedMaterial())
         {
             // Setup Pipeline

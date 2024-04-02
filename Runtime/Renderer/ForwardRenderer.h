@@ -14,10 +14,9 @@ public:
     }
 
     bool Initialize(FFrameResources& FrameResources);
-
     void Release();
 
-    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
+    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FRendererScene* Scene);
 
 private:
     FRHIGraphicsPipelineStateRef PipelineState;

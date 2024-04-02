@@ -15,12 +15,10 @@ public:
     }
 
     bool Initialize(FFrameResources& FrameResources);
-
     void Release();
 
     void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FRendererScene* Scene);
-    
-    void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources);
+    void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene);
 
     void RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 

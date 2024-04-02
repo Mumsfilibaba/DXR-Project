@@ -10,21 +10,21 @@ class FDebugRenderer : public FRenderPass
 public:
     FDebugRenderer(FSceneRenderer* InRenderer)
         : FRenderPass(InRenderer)
+        , AABBIndexCount(0)
+        , DbgSphereIndexCount(0)
     {
     }
 
     bool Initialize(FFrameResources& Resources);
-    
     void Release();
 
-    void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources);
-    
+    void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene);
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene);
 
 private:
     FRHIBufferRef                AABBVertexBuffer;
     FRHIBufferRef                AABBIndexBuffer;
-    uint32                       AABBIndexCount = 0;
+    uint32                       AABBIndexCount;
 
     FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
     FRHIVertexShaderRef          AABBVertexShader;
@@ -36,5 +36,5 @@ private:
 
     FRHIBufferRef                DbgSphereVertexBuffer;
     FRHIBufferRef                DbgSphereIndexBuffer;
-    uint32                       DbgSphereIndexCount = 0;
+    uint32                       DbgSphereIndexCount;
 };

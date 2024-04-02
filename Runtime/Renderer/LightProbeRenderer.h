@@ -15,7 +15,6 @@ public:
     }
 
     bool Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources);
-
     void Release();
 
     void RenderSkyLightProbe(FRHICommandList& CommandList, FLightSetup& LightSetup, const FFrameResources& Resources);

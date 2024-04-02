@@ -14,7 +14,6 @@ public:
     }
 
     bool Initialize(FFrameResources& Resources);
-
     void Release();
 
     void PreRender(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene);

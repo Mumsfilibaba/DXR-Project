@@ -113,10 +113,6 @@ struct FFrameResources
     TMap<class FMesh*, uint32>             RTMeshToHitGroupIndex;
     TResourceCache<FRHIShaderResourceView> RTMaterialTextureCache;
 
-    TArrayView<FProxyRendererComponent* const>    GlobalMeshDrawCommands;
-    TArray<uint32>                         DeferredVisibleCommands;
-    TArray<uint32>                         ForwardVisibleCommands;
-
     // BackBuffer
     FRHIViewportRef MainViewport;
     EFormat         BackBufferFormat;

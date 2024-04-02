@@ -57,11 +57,11 @@ void FVulkanFenceManager::RecycleFence(FVulkanFence* InFence)
 void FVulkanFenceManager::ReleaseAll()
 {
     SCOPED_LOCK(FencesCS);
-    
+
     for (FVulkanFence* Fence : Fences)
     {
         delete Fence;
     }
-    
+
     Fences.Clear();
 }

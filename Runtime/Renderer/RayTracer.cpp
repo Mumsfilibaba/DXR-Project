@@ -109,10 +109,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     FRHISamplerState* Sampler = nullptr;
 
-    for (int32 Index = 0; Index < Resources.GlobalMeshDrawCommands.Size(); ++Index)
+    for (const FProxyRendererComponent* Component : Scene->Primitives)
     {
-        const FProxyRendererComponent* Component = Resources.GlobalMeshDrawCommands[Index];
-
         FMaterial* Material = Component->Material;
         if (Component->Material->HasAlphaMask())
         {

@@ -1,4 +1,5 @@
 #include "ForwardRenderer.h"
+#include "RendererScene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
@@ -107,7 +108,7 @@ void FForwardRenderer::Release()
     PShader.Reset();
 }
 
-void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)
+void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FRendererScene* Scene)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ForwardPass");
@@ -161,9 +162,12 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     } TransformPerObject;
 
 
-    for (const auto CommandIndex : FrameResources.ForwardVisibleCommands)
+    for (const FProxyRendererComponent* Component : Scene->VisiblePrimitives)
     {
-        const FProxyRendererComponent* Component = FrameResources.GlobalMeshDrawCommands[CommandIndex];
+        if (!Component->Material->ShouldRenderInForwardPass())
+        {
+            continue;
+        }
 
         CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);

@@ -90,14 +90,13 @@ struct FProxyLightProbe
 
 struct RENDERER_API FLightSetup
 {
-    const EFormat ShadowMaskFormat = EFormat::R8_Unorm;
-    const EFormat ShadowMapFormat  = EFormat::D16_Unorm;
-    const EFormat LightProbeFormat = EFormat::R11G11B10_Float;
+    const EFormat ShadowMaskFormat    = EFormat::R8_Unorm;
+    const EFormat ShadowMapFormat     = EFormat::D16_Unorm;
+    const EFormat LightProbeFormat    = EFormat::R11G11B10_Float;
 
-    const uint32 MaxPointLights         = 256;
-    const uint32 MaxDirectionalLights   = 256;
-    const uint32 MaxPointLightShadows   = 8;
-
+    const uint32 MaxPointLights       = 256;
+    const uint32 MaxDirectionalLights = 256;
+    const uint32 MaxPointLightShadows = 8;
 
     int32 CascadeSize                 = 0;
     int32 PointLightShadowSize        = 512;
@@ -105,30 +104,25 @@ struct RENDERER_API FLightSetup
     int32 SpecularIrradianceProbeSize = 0;
 
     bool Initialize();
-
     void Release();
 
     void BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene);
 
     // PointLights
-    TArray<FVector4>        PointLightsPosRad;
-    TArray<FPointLightData> PointLightsData;
-
-    FRHIBufferRef           PointLightsBuffer;
-    FRHIBufferRef           PointLightsPosRadBuffer;
+    TArray<FVector4>                           PointLightsPosRad;
+    TArray<FPointLightData>                    PointLightsData;
+    FRHIBufferRef                              PointLightsBuffer;
+    FRHIBufferRef                              PointLightsPosRadBuffer;
 
     TArray<FPointLightShadowMapGenerationData> PointLightShadowMapsGenerationData;
-
-    TArray<FVector4>                     ShadowCastingPointLightsPosRad;
-    TArray<FShadowCastingPointLightData> ShadowCastingPointLightsData;
-
-    FRHIBufferRef                        ShadowCastingPointLightsBuffer;
-    FRHIBufferRef                        ShadowCastingPointLightsPosRadBuffer;
-
-    FRHITextureRef                       PointLightShadowMaps;
+    TArray<FVector4>                           ShadowCastingPointLightsPosRad;
+    TArray<FShadowCastingPointLightData>       ShadowCastingPointLightsData;
+    FRHIBufferRef                              ShadowCastingPointLightsBuffer;
+    FRHIBufferRef                              ShadowCastingPointLightsPosRadBuffer;
+    FRHITextureRef                             PointLightShadowMaps;
 
     // DirectionalLight
-    // NOTE: Only one directional light (TODO: This is ugly)
+    // NOTE: Only one directional light
     FDirectionalLightData      DirectionalLightData;
 
     FMatrix4                   DirectionalLightViewMatrix;

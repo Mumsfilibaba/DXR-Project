@@ -14,7 +14,6 @@ public:
     }
 
     bool Initialize(FFrameResources& FrameResources);
-
     void Release();
 
     void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);

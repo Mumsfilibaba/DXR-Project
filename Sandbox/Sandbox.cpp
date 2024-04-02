@@ -1,10 +1,8 @@
 #include "Sandbox.h"
 #include "SandboxPlayer.h"
 #include "GameComponents.h"
-
 #include <Core/Math/Math.h>
 #include <Core/Misc/OutputDeviceLogger.h>
-#include <Renderer/Renderer.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/Assets/AssetLoaders/MeshImporter.h>
@@ -128,14 +126,16 @@ bool FSandbox::Init()
                 NewComponent = NewObject<FMeshComponent>();
                 if (NewComponent)
                 {
-                    NewComponent->Material               = MakeShared<FMaterial>(MatProperties);
-                    NewComponent->Mesh                   = SphereMesh;
-                    NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-                    NewComponent->Material->NormalMap    = GEngine->BaseNormal;
-                    NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-                    NewComponent->Material->AOMap        = GEngine->BaseTexture;
-                    NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
-                    NewComponent->Material->Initialize();
+                    TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MatProperties);
+                    NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+                    NewMaterial->NormalMap    = GEngine->BaseNormal;
+                    NewMaterial->RoughnessMap = GEngine->BaseTexture;
+                    NewMaterial->AOMap        = GEngine->BaseTexture;
+                    NewMaterial->MetallicMap  = GEngine->BaseTexture;
+                    NewMaterial->Initialize();
+
+                    NewComponent->SetMesh(SphereMesh);
+                    NewComponent->SetMaterial(NewMaterial);
                     
                     NewActor->AddComponent(NewComponent);
                 }
@@ -240,16 +240,18 @@ bool FSandbox::Init()
             FTextureResource2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
             FTextureResource2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
             
-            NewComponent->Mesh     = FMesh::Create(CubeMeshData);
-            NewComponent->Material = MakeShared<FMaterial>(MatProperties);
-            
-            NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();
-            NewComponent->Material->NormalMap    = NormalMap->GetRHITexture();
-            NewComponent->Material->RoughnessMap = RoughnessMap->GetRHITexture();
-            NewComponent->Material->HeightMap    = HeightMap->GetRHITexture();
-            NewComponent->Material->AOMap        = AOMap->GetRHITexture();
-            NewComponent->Material->MetallicMap  = MetallicMap->GetRHITexture();
-            NewComponent->Material->Initialize();
+            TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MatProperties);
+            NewMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
+            NewMaterial->NormalMap    = NormalMap->GetRHITexture();
+            NewMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
+            NewMaterial->HeightMap    = HeightMap->GetRHITexture();
+            NewMaterial->AOMap        = AOMap->GetRHITexture();
+            NewMaterial->MetallicMap  = MetallicMap->GetRHITexture();
+            NewMaterial->Initialize();
+
+            NewComponent->SetMesh(FMesh::Create(CubeMeshData));
+            NewComponent->SetMaterial(NewMaterial);
+
             NewActor->AddComponent(NewComponent);
         }
     }
@@ -271,14 +273,16 @@ bool FSandbox::Init()
         NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
-            NewComponent->Mesh                   = FMesh::Create(FMeshFactory::CreatePlane(10, 10));
-            NewComponent->Material               = MakeShared<FMaterial>(MatProperties);
-            NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-            NewComponent->Material->NormalMap    = GEngine->BaseNormal;
-            NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-            NewComponent->Material->AOMap        = GEngine->BaseTexture;
-            NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
-            NewComponent->Material->Initialize();
+            TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MatProperties);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->NormalMap    = GEngine->BaseNormal;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            NewMaterial->Initialize();
+
+            NewComponent->SetMesh(FMesh::Create(FMeshFactory::CreatePlane(10, 10)));
+            NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
         }
@@ -314,14 +318,15 @@ bool FSandbox::Init()
             NewComponent = NewObject<FMeshComponent>();
             if (NewComponent)
             {
-                NewComponent->Mesh                   = StreetLight;
-                NewComponent->Material               = StreetLightMat;
-                NewComponent->Material->AlbedoMap    = AlbedoMap->GetRHITexture();;
-                NewComponent->Material->NormalMap    = NormalMap->GetRHITexture();;
-                NewComponent->Material->RoughnessMap = RoughnessMap->GetRHITexture();;
-                NewComponent->Material->AOMap        = GEngine->BaseTexture;
-                NewComponent->Material->MetallicMap  = MetallicMap->GetRHITexture();
-                NewComponent->Material->Initialize();
+                StreetLightMat->AlbedoMap    = AlbedoMap->GetRHITexture();;
+                StreetLightMat->NormalMap    = NormalMap->GetRHITexture();;
+                StreetLightMat->RoughnessMap = RoughnessMap->GetRHITexture();;
+                StreetLightMat->AOMap        = GEngine->BaseTexture;
+                StreetLightMat->MetallicMap  = MetallicMap->GetRHITexture();
+                StreetLightMat->Initialize();
+
+                NewComponent->SetMesh(StreetLight);
+                NewComponent->SetMaterial(StreetLightMat);
 
                 NewActor->AddComponent(NewComponent);
             }
@@ -352,14 +357,15 @@ bool FSandbox::Init()
             NewComponent = NewObject<FMeshComponent>();
             if (NewComponent)
             {
-                NewComponent->Mesh                   = Pillar;
-                NewComponent->Material               = PillarMaterial;
-                NewComponent->Material->AlbedoMap    = GEngine->BaseTexture;
-                NewComponent->Material->NormalMap    = GEngine->BaseNormal;
-                NewComponent->Material->RoughnessMap = GEngine->BaseTexture;
-                NewComponent->Material->AOMap        = GEngine->BaseTexture;
-                NewComponent->Material->MetallicMap  = GEngine->BaseTexture;
-                NewComponent->Material->Initialize();
+                PillarMaterial->AlbedoMap    = GEngine->BaseTexture;
+                PillarMaterial->NormalMap    = GEngine->BaseNormal;
+                PillarMaterial->RoughnessMap = GEngine->BaseTexture;
+                PillarMaterial->AOMap        = GEngine->BaseTexture;
+                PillarMaterial->MetallicMap  = GEngine->BaseTexture;
+                PillarMaterial->Initialize();
+
+                NewComponent->SetMesh(Pillar);
+                NewComponent->SetMaterial(PillarMaterial);
 
                 NewActor->AddComponent(NewComponent);
             }
@@ -375,7 +381,6 @@ bool FSandbox::Init()
         CurrentScene->AddActor(Player);
     }
 
-    
     // Add PointLights
 #if LOAD_SPONZA
     const float Intensity = 50.0f;

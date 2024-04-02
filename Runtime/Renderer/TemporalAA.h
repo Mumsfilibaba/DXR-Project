@@ -64,7 +64,6 @@ struct FHaltonState
     FVector2 NextSample()
     {
         SampleIndex = (SampleIndex + 1) % MaxNumSamples;
-        // Avoid the first (0, 0) by adding 1
         FVector2 Sample = HaltonPrivate::Halton23(SampleIndex);
         return (Sample * 2.0f) - 1.0f;
     }
@@ -82,7 +81,6 @@ public:
     }
 
     bool Initialize(FFrameResources& FrameResources);
-
     void Release();
 
     void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);

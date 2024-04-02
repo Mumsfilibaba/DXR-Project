@@ -173,9 +173,6 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
 
     TRACE_SCOPE("Update LightBuffers");
 
-    FCamera* Camera = Scene->Camera;
-    CHECK(Camera != nullptr);
-
     for (FLight* Light : Scene->Lights)
     {
         const float Intensity = Light->GetIntensity();
@@ -185,7 +182,6 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
         if (IsSubClassOf<FPointLight>(Light))
         {
             FPointLight* CurrentLight = Cast<FPointLight>(Light);
-            CHECK(CurrentLight != nullptr);
 
             constexpr float MinLuma = 0.005f;
             const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
@@ -229,9 +225,9 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
         else if (IsSubClassOf<FDirectionalLight>(Light))
         {
             FDirectionalLight* CurrentLight = Cast<FDirectionalLight>(Light);
-            CHECK(CurrentLight != nullptr);
+            CurrentLight->Tick(*Scene->Camera);
 
-            CurrentLight->Tick(*Camera);
+            CascadeSplitLambda                 = CurrentLight->GetCascadeSplitLambda();
 
             DirectionalLightData.Color         = FVector3(Color.x, Color.y, Color.z);
             DirectionalLightData.ShadowBias    = CurrentLight->GetShadowBias();
@@ -246,14 +242,11 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
             DirectionalLightFarPlane           = CurrentLight->GetShadowFarPlane();
             DirectionalLightViewMatrix         = CurrentLight->GetViewMatrix();
             DirectionalLightProjMatrix         = CurrentLight->GetProjectionMatrix();
-
-            CascadeSplitLambda = CurrentLight->GetCascadeSplitLambda();
-
             DirectionalLightDataDirty = true;
         }
     }
 
-    if (PointLightsData.SizeInBytes() > (int32)PointLightsBuffer->GetSize())
+    if (PointLightsData.SizeInBytes() > static_cast<int32>(PointLightsBuffer->GetSize()))
     {
         CommandList.DestroyResource(PointLightsBuffer.Get());
 
@@ -265,7 +258,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
         }
     }
 
-    if (PointLightsPosRad.SizeInBytes() > (int32)PointLightsPosRadBuffer->GetSize())
+    if (PointLightsPosRad.SizeInBytes() > static_cast<int32>(PointLightsPosRadBuffer->GetSize()))
     {
         CommandList.DestroyResource(PointLightsPosRadBuffer.Get());
 
@@ -277,7 +270,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
         }
     }
 
-    if (ShadowCastingPointLightsData.SizeInBytes() > (int32)ShadowCastingPointLightsBuffer->GetSize())
+    if (ShadowCastingPointLightsData.SizeInBytes() > static_cast<int32>(ShadowCastingPointLightsBuffer->GetSize()))
     {
         CommandList.DestroyResource(ShadowCastingPointLightsBuffer.Get());
 
@@ -289,7 +282,7 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
         }
     }
 
-    if (ShadowCastingPointLightsPosRad.SizeInBytes() > (int32)ShadowCastingPointLightsPosRadBuffer->GetSize())
+    if (ShadowCastingPointLightsPosRad.SizeInBytes() > static_cast<int32>(ShadowCastingPointLightsPosRadBuffer->GetSize()))
     {
         CommandList.DestroyResource(ShadowCastingPointLightsPosRadBuffer.Get());
 

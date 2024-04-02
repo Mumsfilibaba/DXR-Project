@@ -89,7 +89,6 @@ public:
 
     void OnWindowResize(const FWindowEvent& Event);
 
-    void PerformFrustumCullingAndSort(FRendererScene* Scene);
     void PerformFXAA(FRHICommandList& InCmdList);
     void PerformBackBufferBlit(FRHICommandList& InCmdList);
 
@@ -111,8 +110,6 @@ public:
 private:
     bool InitAA();
     bool InitShadingImage();
-
-    void FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands);
 
     // RenderPasses and Resources
     FFrameResources               Resources;

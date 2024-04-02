@@ -66,7 +66,14 @@ void FRendererModule::Tick()
 {
     for (FRendererScene* Scene : Scenes)
     {
+        // Performs frustum culling and updates visible primitives
+        Scene->UpdateVisibility();
+
+        // Render the scene
         Renderer->Tick(Scene);
+
+        // TODO: Break for now since we always output to the BackBuffer
+        break;
     }
 }
 

@@ -413,132 +413,6 @@ bool FSceneRenderer::Initialize()
     return true;
 }
 
-void FSceneRenderer::FrustumCullingAndSortingInternal(const FCamera* Camera, const TPair<uint32, uint32>& DrawCommands, TArray<uint32>& OutDeferredDrawCommands, TArray<uint32>& OutForwardDrawCommands)
-{
-    TRACE_SCOPE("Frustum Culling And Sorting Inner");
-
-    // Inserts a mesh based on distance
-    const auto InsertSorted = [](int32 CommandIndex, const FCamera* Camera, const FVector3& WorldPosition, TArray<float>& OutDistances, TArray<uint32>& OutCommands) -> void
-    {
-        CHECK(OutDistances.Size() == OutCommands.Size());
-
-        FVector3 CameraPosition = Camera->GetPosition();
-        FVector3 DistanceVector = WorldPosition - CameraPosition;
-
-        const float NewDistance = DistanceVector.LengthSquared();
-
-        int32 Index = 0;
-        for (; Index < OutCommands.Size(); ++Index)
-        {
-            const float Distance = OutDistances[Index];
-            if (NewDistance < Distance)
-            {
-                break;
-            }
-        }
-
-        OutCommands.Insert(Index, CommandIndex);
-        OutDistances.Insert(Index, NewDistance);
-    };
-
-    // Perform frustum culling and insert based on distance to the camera
-    TArray<float> DeferredDistances;
-    
-    const uint32 StartCommand = DrawCommands.First;
-    const uint32 NumCommands  = DrawCommands.Second;
-
-    DeferredDistances.Reserve(NumCommands);
-    OutDeferredDrawCommands.Reserve(NumCommands);
-
-    const FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-    for (uint32 Index = 0; Index < NumCommands; ++Index)
-    {
-        const uint32 CommandIndex = StartCommand + Index;
-
-        const FProxyRendererComponent* Component = Resources.GlobalMeshDrawCommands[CommandIndex];
-
-        FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformMatrix = TransformMatrix.Transpose();
-
-        const FVector3 Top    = TransformMatrix.Transform(Component->Mesh->BoundingBox.Top);
-        const FVector3 Bottom = TransformMatrix.Transform(Component->Mesh->BoundingBox.Bottom);
-
-        FAABB Box(Top, Bottom);
-        if (CameraFrustum.CheckAABB(Box))
-        {
-            if (Component->Material->ShouldRenderInForwardPass())
-            {
-                OutForwardDrawCommands.Emplace(CommandIndex);
-            }
-            else
-            {
-                FVector3 WorldPosition = Box.GetCenter();
-                InsertSorted(CommandIndex, Camera, WorldPosition, DeferredDistances, OutDeferredDrawCommands);
-            }
-        }
-    }
-}
-
-void FSceneRenderer::PerformFrustumCullingAndSort(FRendererScene* Scene)
-{
-    TRACE_SCOPE("FrustumCulling And Sorting");
-
-    const auto NumThreads = 1;// FPlatformThreadMisc::GetNumProcessors();
-    
-    TArray<TArray<uint32>> WriteableDeferredMeshCommands;
-    WriteableDeferredMeshCommands.Reserve(NumThreads);
-
-    TArray<TArray<uint32>> WriteableForwardMeshCommands;
-    WriteableForwardMeshCommands.Reserve(NumThreads);
-
-    TArray<TPair<uint32, uint32>> ReadableMeshCommands;
-    ReadableMeshCommands.Reserve(NumThreads);
-
-    const FCamera* Camera = Scene->Camera;
-    const int32 NumMeshCommands      = Scene->Primitives.Size();
-    const int32 NumCommandsPerThread = (NumMeshCommands / NumThreads) + 1;
-
-    int32 RemainingCommands = NumMeshCommands;
-    int32 StartCommand      = 0;
-
-    TArray<FAsyncTaskBase*> Tasks(NumThreads);
-    for (uint32 Index = 0; Index < NumThreads; ++Index)
-    {
-        // Allocate Array for commands to fill
-        TArray<uint32>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands.Emplace();
-        TArray<uint32>& WriteForwardMeshCommands  = WriteableForwardMeshCommands.Emplace();
-        
-        const int32 NumCommands = FMath::Min<int32>(RemainingCommands, NumCommandsPerThread);
-        RemainingCommands -= NumCommands;
-
-        // Allocate ArrayView for reading
-        TPair<uint32, uint32>& ReadMeshCommands = ReadableMeshCommands.Emplace(StartCommand, NumCommands);
-        StartCommand += NumCommands;
-
-        FAsyncTaskBase* AsyncTask = new TAsyncLambdaTask([&]() -> void
-        {
-            FrustumCullingAndSortingInternal(Camera, ReadMeshCommands, WriteDeferredMeshCommands, WriteForwardMeshCommands);
-        });
-
-        AsyncTask->Launch(EQueuePriority::Normal);
-        Tasks[Index] = AsyncTask;
-    }
-
-    // Sync and insert
-    for (uint32 Index = 0; Index < NumThreads; ++Index)
-    {
-        FAsyncTaskBase* AsyncTask = Tasks[Index];
-        AsyncTask->WaitForCompletion();
-        delete AsyncTask;
-
-        const TArray<uint32>& WriteForwardMeshCommands = WriteableForwardMeshCommands[Index];
-        Resources.ForwardVisibleCommands.Append(WriteForwardMeshCommands);
-
-        const TArray<uint32>& WriteDeferredMeshCommands = WriteableDeferredMeshCommands[Index];
-        Resources.DeferredVisibleCommands.Append(WriteDeferredMeshCommands);
-    }
-}
-
 void FSceneRenderer::PerformFXAA(FRHICommandList& InCommandList)
 {
     INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "Begin FXAA");
@@ -632,37 +506,11 @@ void FSceneRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
 
 void FSceneRenderer::Tick(FRendererScene* Scene)
 {
-    Resources.BackBuffer             = Resources.MainViewport->GetBackBuffer();
-    Resources.GlobalMeshDrawCommands = TArrayView<FProxyRendererComponent* const>(Scene->Primitives);
-
-    // Perform frustum culling
-    Resources.DeferredVisibleCommands.Clear();
-    Resources.ForwardVisibleCommands.Clear();
+    Resources.BackBuffer = Resources.MainViewport->GetBackBuffer();
 
     // Clear the images that were debug-able last frame 
     // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
-
-    // FrustumCulling
-    if (!CVarFrustumCullEnabled.GetValue())
-    {
-        for (int32 CommandIndex = 0; CommandIndex < Resources.GlobalMeshDrawCommands.Size(); ++CommandIndex)
-        {
-            const FProxyRendererComponent* Component = Resources.GlobalMeshDrawCommands[CommandIndex];
-            if (Component->Material->ShouldRenderInForwardPass())
-            {
-                Resources.ForwardVisibleCommands.Emplace(CommandIndex);
-            }
-            else
-            {
-                Resources.DeferredVisibleCommands.Emplace(CommandIndex);
-            }
-        }
-    }
-    else
-    {
-        PerformFrustumCullingAndSort(Scene);
-    }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
     CommandList.BeginFrame();
@@ -674,10 +522,8 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
         // Check if we resized and update the Viewport-size on the RHIThread
         FRHIViewport* Viewport = Resources.MainViewport.Get();
 
-        // TODO: Remove these
         uint32 NewWidth  = ResizeEvent->GetWidth();
         uint32 NewHeight = ResizeEvent->GetHeight();
-
         if ((Resources.CurrentWidth != NewWidth || Resources.CurrentHeight != NewHeight) && NewWidth > 0 && NewHeight > 0)
         {
             CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
@@ -775,12 +621,11 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
     CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraBuffer)), &CameraBuffer);
     CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-    // TODO: Optimize (Materials should be collected and built once in the beginning of the frame)
-    for (const FProxyRendererComponent* Component : Resources.GlobalMeshDrawCommands)
+    for (FMaterial* Material : Scene->Materials)
     {
-        if (Component->Material->IsBufferDirty())
+        if (Material->IsBufferDirty())
         {
-            Component->Material->BuildBuffer(CommandList);
+            Material->BuildBuffer(CommandList);
         }
     }
     
@@ -832,7 +677,7 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
     // BasePass
     if (CVarBasePassEnabled.GetValue())
     {
-        DeferredRenderer.RenderBasePass(CommandList, Resources);
+        DeferredRenderer.RenderBasePass(CommandList, Resources, Scene);
     }
 
     // RayTracing PrePass
@@ -923,7 +768,6 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
         }
     }
 
-
     // ShadowMask and GBuffer
     {
         CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess);
@@ -1006,10 +850,10 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
         EResourceAccess::PixelShaderResource);
 
     // Forward Pass
-    if (!Resources.ForwardVisibleCommands.IsEmpty())
+    if (false/*!Resources.ForwardVisibleCommands.IsEmpty()*/)
     {
         GPU_TRACE_SCOPE(CommandList, "Forward Pass");
-        ForwardRenderer.Render(CommandList, Resources, LightSetup);
+        ForwardRenderer.Render(CommandList, Resources, LightSetup, Scene);
     }
 
     // Debug PointLights
@@ -1021,7 +865,7 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
     // Debug AABBs
     if (CVarDrawAABBs.GetValue())
     {
-        DebugRenderer.RenderObjectAABBs(CommandList, Resources);
+        DebugRenderer.RenderObjectAABBs(CommandList, Resources, Scene);
     }
 
     // Temporal AA
