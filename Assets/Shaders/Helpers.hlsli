@@ -196,7 +196,7 @@ float3 AcesFitted(float3 Color)
 
 float3 ApplyGammaCorrectionAndTonemapping(float3 Color)
 {
-    const float INTENSITY = 1.0f;
+    const float INTENSITY = 0.2f;
     return ApplyGammaInv(AcesFitted(Color));
 }
 

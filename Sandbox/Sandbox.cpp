@@ -16,8 +16,8 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (0)
-#define LOAD_BISTRO         (1)
+#define LOAD_SPONZA         (1)
+#define LOAD_BISTRO         (0)
 #define LOAD_SUN_TEMPLE     (0)
 #define LOAD_EMERALD_SQUARE (0)
 
@@ -382,14 +382,15 @@ bool FSandbox::Init()
 
     // Add PointLights
 #if LOAD_SPONZA
-    const float Intensity = 100.0f;
+    const float Intensity      = 100.0f;
+    const float ShadowFarPlane = 20.0f;
     if (FPointLight* Light0 = NewObject<FPointLight>())
     {
         Light0->SetPosition(FVector3(16.5f, 1.0f, 0.0f));
         Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light0->SetShadowBias(0.001f);
         Light0->SetMaxShadowBias(0.009f);
-        Light0->SetShadowFarPlane(50.0f);
+        Light0->SetShadowFarPlane(ShadowFarPlane);
         Light0->SetIntensity(Intensity);
         Light0->SetShadowCaster(true);
         CurrentScene->AddLight(Light0);
@@ -400,7 +401,7 @@ bool FSandbox::Init()
         Light1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light1->SetShadowBias(0.001f);
         Light1->SetMaxShadowBias(0.009f);
-        Light1->SetShadowFarPlane(50.0f);
+        Light1->SetShadowFarPlane(ShadowFarPlane);
         Light1->SetIntensity(Intensity);
         Light1->SetShadowCaster(true);
         CurrentScene->AddLight(Light1);
@@ -411,7 +412,7 @@ bool FSandbox::Init()
         Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light2->SetShadowBias(0.001f);
         Light2->SetMaxShadowBias(0.009f);
-        Light2->SetShadowFarPlane(50.0f);
+        Light2->SetShadowFarPlane(ShadowFarPlane);
         Light2->SetIntensity(Intensity);
         Light2->SetShadowCaster(true);
         CurrentScene->AddLight(Light2);
@@ -422,7 +423,7 @@ bool FSandbox::Init()
         Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light3->SetShadowBias(0.001f);
         Light3->SetMaxShadowBias(0.009f);
-        Light3->SetShadowFarPlane(50.0f);
+        Light3->SetShadowFarPlane(ShadowFarPlane);
         Light3->SetIntensity(Intensity);
         Light3->SetShadowCaster(true);
         CurrentScene->AddLight(Light3);
@@ -460,7 +461,7 @@ bool FSandbox::Init()
         Light4->SetShadowBias(0.0005f);
         Light4->SetMaxShadowBias(0.0009f);
         Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
-        Light4->SetIntensity(10.0f);
+        Light4->SetIntensity(50.0f);
     #if LOAD_SUN_TEMPLE
         Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(-55.0f), 0.0f));
     #else

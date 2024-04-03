@@ -28,6 +28,7 @@ FVulkanUploadBuffer::~FVulkanUploadBuffer()
     {
         FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
         MemoryManager.Unmap(MemoryAllocation);
+        MemoryManager.Free(MemoryAllocation);
     }
 }
 

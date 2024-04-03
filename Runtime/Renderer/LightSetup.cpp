@@ -183,9 +183,10 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
 
         if (FPointLight* PointLight = Cast<FPointLight>(Light))
         {
-            constexpr float MinLuma = 0.005f;
-            const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
-            const float Radius = FMath::Sqrt(Dot / MinLuma);
+            // constexpr float MinLuma = 0.005f;
+            // const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
+            // const float Radius = FMath::Sqrt(Dot / MinLuma);
+            const float Radius = PointLight->GetShadowFarPlane();
 
             FVector3 Position = PointLight->GetPosition();
             FVector4 PosRad   = FVector4(Position, Radius);

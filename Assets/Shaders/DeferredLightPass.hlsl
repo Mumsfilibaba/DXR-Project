@@ -8,7 +8,7 @@
 #define NUM_THREADS        (16)
 #define TOTAL_THREAD_COUNT (NUM_THREADS * NUM_THREADS)
 
-#define BASE_OCCLUSION (0.2f)
+#define BASE_OCCLUSION (0.1f)
 
 // Can be defined from the application
 #ifndef MAX_LIGHTS_PER_TILE
@@ -162,19 +162,19 @@ void Main(FComputeShaderInput Input)
         
         float3 CornerPoints[4];
         CornerPoints[0] = Float3_ProjToView(
-            float3((pxm / Width) * 2.0f - 1.0f, ((Height - pym) / Height) * 2.0f - 1.0f, 1.0f),
+            float3((pxm / Width) * 2.0 - 1.0, ((Height - pym) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
         
         CornerPoints[1] = Float3_ProjToView(
-            float3((pxp / Width) * 2.0f - 1.0f, ((Height - pym) / Height) * 2.0f - 1.0f, 1.0f),
+            float3((pxp / Width) * 2.0 - 1.0, ((Height - pym) / Height) * 2.0- 1.0, 1.0),
             CameraBuffer.ProjectionInv);
         
         CornerPoints[2] = Float3_ProjToView(
-            float3((pxp / Width) * 2.0f - 1.0f, ((Height - pyp) / Height) * 2.0f - 1.0f, 1.0f),
+            float3((pxp / Width) * 2.0 - 1.0, ((Height - pyp) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
         
         CornerPoints[3] = Float3_ProjToView(
-            float3((pxm / Width) * 2.0f - 1.0f, ((Height - pyp) / Height) * 2.0f - 1.0f, 1.0f),
+            float3((pxm / Width) * 2.0 - 1.0, ((Height - pyp) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
 
         for (uint i = 0; i < 4; i++)
@@ -194,7 +194,7 @@ void Main(FComputeShaderInput Input)
     for (uint i = ThreadIndex; i < Constants.NumPointLights; i += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = PointLightsPosRad[i].Position;
-        float3 ViewPos = mul(float4(Pos, 1.0f), CameraBuffer.View).xyz;
+        float3 ViewPos = mul(float4(Pos, 1.0), CameraBuffer.View).xyz;
         float  Radius  = PointLightsPosRad[i].Radius;
 
         if ((GetSignedDistanceFromPlane(ViewPos, Frustum[0]) < Radius) && 
@@ -212,7 +212,7 @@ void Main(FComputeShaderInput Input)
     for (uint j = ThreadIndex; j < Constants.NumShadowCastingPointLights; j += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = ShadowCastingPointLightsPosRad[j].Position;
-        float3 ViewPos = mul(float4(Pos, 1.0f), CameraBuffer.View).xyz;
+        float3 ViewPos = mul(float4(Pos, 1.0), CameraBuffer.View).xyz;
         float  Radius  = ShadowCastingPointLightsPosRad[j].Radius;
 
         if ((GetSignedDistanceFromPlane(ViewPos, Frustum[0]) < Radius) &&
@@ -239,7 +239,7 @@ void Main(FComputeShaderInput Input)
 
     const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5f)) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
     const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInv);
-    const float3 WorldPosition = mul(float4(ViewPosition, 1.0f), CameraBuffer.ViewInv).xyz;
+    const float3 WorldPosition = mul(float4(ViewPosition, 1.0), CameraBuffer.ViewInv).xyz;
 
     const float3 GBufferAlbedo   = saturate(AlbedoTex.Load(int3(Pixel, 0)).rgb);
     const float3 GBufferMaterial = MaterialTex.Load(int3(Pixel, 0)).rgb;
@@ -269,7 +269,7 @@ void Main(FComputeShaderInput Input)
 
         float3 L = LightPosRad.Position - WorldPosition;
         float  DistanceSqrd = dot(L, L);
-        float  Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+        float  Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
         L = normalize(L);
 
         float3 IncidentRadiance = Light.Color * Attenuation;
@@ -289,7 +289,7 @@ void Main(FComputeShaderInput Input)
         {
             float3 L = LightPosRad.Position - WorldPosition;
             float DistanceSqrd = dot(L, L);
-            float Attenuation  = 1.0f / max(DistanceSqrd, 0.01f * 0.01f);
+            float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
             L = normalize(L);
             
             float3 IncidentRadiance = Light.Color * Attenuation;
