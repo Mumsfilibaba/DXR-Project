@@ -8,6 +8,9 @@ struct IRendererScene
 {
     virtual ~IRendererScene() = default;
 
+    // Update the scene this frame
+    virtual void Tick() = 0;
+
     // Adds a Renderer version of a camera
     virtual void AddCamera(FCamera* InCamera) = 0;
 

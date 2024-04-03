@@ -16,8 +16,8 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (1)
-#define LOAD_BISTRO         (0)
+#define LOAD_SPONZA         (0)
+#define LOAD_BISTRO         (1)
 #define LOAD_SUN_TEMPLE     (0)
 #define LOAD_EMERALD_SQUARE (0)
 
@@ -373,8 +373,7 @@ bool FSandbox::Init()
     }
 #endif
 
-    FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>();
-    if (Player)
+    if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
         // TODO: Camera should be a component
         CurrentScene->AddCamera(Player->GetCamera());
@@ -383,10 +382,8 @@ bool FSandbox::Init()
 
     // Add PointLights
 #if LOAD_SPONZA
-    const float Intensity = 50.0f;
-
-    FPointLight* Light0 = NewObject<FPointLight>();
-    if (Light0)
+    const float Intensity = 100.0f;
+    if (FPointLight* Light0 = NewObject<FPointLight>())
     {
         Light0->SetPosition(FVector3(16.5f, 1.0f, 0.0f));
         Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
@@ -397,9 +394,7 @@ bool FSandbox::Init()
         Light0->SetShadowCaster(true);
         CurrentScene->AddLight(Light0);
     }
-
-    FPointLight* Light1 = NewObject<FPointLight>();
-    if (Light1)
+    if (FPointLight* Light1 = NewObject<FPointLight>())
     {
         Light1->SetPosition(FVector3(-17.5f, 1.0f, 0.0f));
         Light1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
@@ -410,9 +405,7 @@ bool FSandbox::Init()
         Light1->SetShadowCaster(true);
         CurrentScene->AddLight(Light1);
     }
-
-    FPointLight* Light2 = NewObject<FPointLight>();
-    if (Light2)
+    if (FPointLight* Light2 = NewObject<FPointLight>())
     {
         Light2->SetPosition(FVector3(16.5f, 11.0f, 0.0f));
         Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
@@ -423,9 +416,7 @@ bool FSandbox::Init()
         Light2->SetShadowCaster(true);
         CurrentScene->AddLight(Light2);
     }
-
-    FPointLight* Light3 = NewObject<FPointLight>();
-    if (Light3)
+    if (FPointLight* Light3 = NewObject<FPointLight>())
     {
         Light3->SetPosition(FVector3(-17.5f, 11.0f, 0.0f));
         Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
@@ -464,8 +455,7 @@ bool FSandbox::Init()
 #endif
 
     // Add DirectionalLight- Source
-    FDirectionalLight* Light4 = NewObject<FDirectionalLight>();
-    if (Light4)
+    if (FDirectionalLight* Light4 = NewObject<FDirectionalLight>())
     {
         Light4->SetShadowBias(0.0005f);
         Light4->SetMaxShadowBias(0.0009f);
@@ -480,8 +470,7 @@ bool FSandbox::Init()
         CurrentScene->AddLight(Light4);
     }
 
-    FLightProbe* LightProbe = NewObject<FLightProbe>();
-    if (LightProbe)
+    if (FLightProbe* LightProbe = NewObject<FLightProbe>())
     {
         LightProbe->SetPosition(FVector3(0.0f));
         CurrentScene->AddLightProbe(LightProbe);

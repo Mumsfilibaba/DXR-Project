@@ -67,8 +67,7 @@ void FRendererModule::Tick()
     for (FRendererScene* Scene : Scenes)
     {
         // Performs frustum culling and updates visible primitives
-        Scene->UpdateVisibility();
-        Scene->UpdateBatches();
+        Scene->Tick();
 
         // Render the scene
         Renderer->Tick(Scene);

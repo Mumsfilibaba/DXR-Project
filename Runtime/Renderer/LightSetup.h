@@ -37,8 +37,9 @@ struct FPointLightShadowMapGenerationData
     TStaticArray<FMatrix4, 6> ViewMatrix;
     TStaticArray<FMatrix4, 6> ProjMatrix;
 
-    float    FarPlane;
     FVector3 Position;
+    float    FarPlane;
+    int32    LightIndex;
 };
 
 MARK_AS_REALLOCATABLE(FPointLightShadowMapGenerationData);

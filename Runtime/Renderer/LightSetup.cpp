@@ -173,42 +173,43 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
 
     TRACE_SCOPE("Update LightBuffers");
 
-    for (FLight* Light : Scene->Lights)
+    for (int32 Index = 0; Index < Scene->Lights.Size(); Index++)
     {
+        FLight* Light = Scene->Lights[Index];
+
         const float Intensity = Light->GetIntensity();
         FVector3 Color = Light->GetColor();
         Color = Color * Intensity;
 
-        if (IsSubClassOf<FPointLight>(Light))
+        if (FPointLight* PointLight = Cast<FPointLight>(Light))
         {
-            FPointLight* CurrentLight = Cast<FPointLight>(Light);
-
             constexpr float MinLuma = 0.005f;
             const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
             const float Radius = FMath::Sqrt(Dot / MinLuma);
 
-            FVector3 Position = CurrentLight->GetPosition();
+            FVector3 Position = PointLight->GetPosition();
             FVector4 PosRad   = FVector4(Position, Radius);
-            if (CurrentLight->IsShadowCaster())
+            if (PointLight->IsShadowCaster())
             {
                 FShadowCastingPointLightData Data;
                 Data.Color         = Color;
-                Data.FarPlane      = CurrentLight->GetShadowFarPlane();
-                Data.MaxShadowBias = CurrentLight->GetMaxShadowBias();
-                Data.ShadowBias    = CurrentLight->GetShadowBias();
+                Data.FarPlane      = PointLight->GetShadowFarPlane();
+                Data.MaxShadowBias = PointLight->GetMaxShadowBias();
+                Data.ShadowBias    = PointLight->GetShadowBias();
 
                 ShadowCastingPointLightsData.Emplace(Data);
                 ShadowCastingPointLightsPosRad.Emplace(PosRad);
 
                 FPointLightShadowMapGenerationData ShadowMapData;
-                ShadowMapData.FarPlane = CurrentLight->GetShadowFarPlane();
-                ShadowMapData.Position = CurrentLight->GetPosition();
+                ShadowMapData.LightIndex = Index;
+                ShadowMapData.FarPlane   = PointLight->GetShadowFarPlane();
+                ShadowMapData.Position   = PointLight->GetPosition();
 
-                for (uint32 Face = 0; Face < 6; Face++)
+                for (uint32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
                 {
-                    ShadowMapData.Matrix[Face]     = CurrentLight->GetMatrix(Face);
-                    ShadowMapData.ViewMatrix[Face] = CurrentLight->GetViewMatrix(Face);
-                    ShadowMapData.ProjMatrix[Face] = CurrentLight->GetProjectionMatrix(Face);
+                    ShadowMapData.Matrix[FaceIndex]     = PointLight->GetMatrix(FaceIndex);
+                    ShadowMapData.ViewMatrix[FaceIndex] = PointLight->GetViewMatrix(FaceIndex);
+                    ShadowMapData.ProjMatrix[FaceIndex] = PointLight->GetProjectionMatrix(FaceIndex);
                 }
 
                 PointLightShadowMapsGenerationData.Emplace(ShadowMapData);
@@ -222,26 +223,23 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene
                 PointLightsPosRad.Emplace(PosRad);
             }
         }
-        else if (IsSubClassOf<FDirectionalLight>(Light))
+        else if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Light))
         {
-            FDirectionalLight* CurrentLight = Cast<FDirectionalLight>(Light);
-            CurrentLight->Tick(*Scene->Camera);
+            DirectionalLight->Tick(*Scene->Camera);
 
-            CascadeSplitLambda                 = CurrentLight->GetCascadeSplitLambda();
-
+            CascadeSplitLambda                 = DirectionalLight->GetCascadeSplitLambda();
             DirectionalLightData.Color         = FVector3(Color.x, Color.y, Color.z);
-            DirectionalLightData.ShadowBias    = CurrentLight->GetShadowBias();
-            DirectionalLightData.Direction     = CurrentLight->GetDirection();
-
+            DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
+            DirectionalLightData.Direction     = DirectionalLight->GetDirection();
             // TODO: Is this used?
-            DirectionalLightData.UpVector      = CurrentLight->GetUp();
-            DirectionalLightData.MaxShadowBias = CurrentLight->GetMaxShadowBias();
-            DirectionalLightData.LightSize     = CurrentLight->GetSize();
-            DirectionalLightData.ShadowMatrix  = CurrentLight->GetShadowMatrix();
+            DirectionalLightData.UpVector      = DirectionalLight->GetUp();
+            DirectionalLightData.MaxShadowBias = DirectionalLight->GetMaxShadowBias();
+            DirectionalLightData.LightSize     = DirectionalLight->GetSize();
+            DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
+            DirectionalLightFarPlane           = DirectionalLight->GetShadowFarPlane();
+            DirectionalLightViewMatrix         = DirectionalLight->GetViewMatrix();
+            DirectionalLightProjMatrix         = DirectionalLight->GetProjectionMatrix();
 
-            DirectionalLightFarPlane           = CurrentLight->GetShadowFarPlane();
-            DirectionalLightViewMatrix         = CurrentLight->GetViewMatrix();
-            DirectionalLightProjMatrix         = CurrentLight->GetProjectionMatrix();
             DirectionalLightDataDirty = true;
         }
     }

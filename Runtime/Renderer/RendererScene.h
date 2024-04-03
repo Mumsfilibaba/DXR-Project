@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Containers/Array.h"
+#include "Core/Math/Frustum.h"
 #include "RendererCore/Interfaces/IRendererScene.h"
 
 class FScene;
@@ -18,11 +19,33 @@ struct FMeshBatch
     TArray<FProxyRendererComponent*> Primitives;
 };
 
+struct FLightView
+{
+    typedef TArray<FMeshBatch>               MeshBatchArray;
+    typedef TArray<FProxyRendererComponent*> PrimitivesArray;
+
+    enum ELightType : int32
+    {
+        LightType_None = 0,
+        LightType_Directional,
+        LightType_Point,
+    };
+
+    TArray<FFrustum>        Frustums;
+    TArray<PrimitivesArray> Primitives;
+    TArray<MeshBatchArray>  MeshBatches;
+    ELightType              LightType;
+    int32                   NumSubViews;
+};
+
 class FRendererScene : public IRendererScene
 {
 public:
     FRendererScene(FScene* InScene);
     virtual ~FRendererScene();
+
+    // Update the scene this frame
+    virtual void Tick() override final;
 
     // Adds a camera to the scene
     virtual void AddCamera(FCamera* InCamera) override final;
@@ -48,17 +71,18 @@ public:
     // All Primitives in this scene
     TArray<FProxyRendererComponent*> Primitives;
 
-    // Visible Primitives (From the camera's point of view)
+    // Visible Primitives (From the main camera's point of view)
     TArray<FProxyRendererComponent*> VisiblePrimitives;
 
-    // Batches of meshes that are visible
-    TArray<FMeshBatch> MeshBatches;
-
-    // Batches of meshes that are visible
+    // Batches of meshes that are visible (From the main camera's point of view)
     TArray<FMeshBatch> VisibleMeshBatches;
 
     // All Lights in the Scene
-    TArray<FLight*> Lights;
+    TArray<FLight*>    Lights;
+    TArray<FLightView> LightViews;
+
+    // NOTE: Currently a single DirectionalLight is supported
+    int32 DirectionalLightIndex;
 
     // All materials
     TArray<FMaterial*> Materials;
