@@ -90,7 +90,7 @@ public:
 
     NODISCARD FORCEINLINE bool HasAllocation() const noexcept
     {
-        return (Allocation != nullptr);
+        return Allocation != nullptr;
     }
 
     NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
@@ -129,7 +129,10 @@ class TInlineArrayAllocator
 public:
     typedef int32 SizeType;
 
-    TInlineArrayAllocator() = default;
+    TInlineArrayAllocator()
+    {
+        FMemory::Memzero(InlineAllocation.GetElements(), InlineAllocation.Size());
+    }
 
     FORCEINLINE ~TInlineArrayAllocator()
     {

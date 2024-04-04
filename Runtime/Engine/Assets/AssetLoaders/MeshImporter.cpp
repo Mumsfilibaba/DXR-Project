@@ -252,94 +252,95 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
     int32 CurrentTexture = 0;
     for (int32 Index = 0; Index < SceneHeader.NumMaterials; ++Index)
     {
-        const auto& CurrentMaterial = Scene.Materials[Index];
+        FCustomMaterial& CustomMaterial = Materials[Index];
+        FMemory::Memzero(&CustomMaterial, sizeof(FCustomMaterial));
+
+        const FMaterialData& CurrentMaterial = Scene.Materials[Index];
         if (CurrentMaterial.DiffuseTexture)
         {
             CurrentMaterial.DiffuseTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].DiffuseTexIndex = CurrentTexture++;
+            CustomMaterial.DiffuseTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].DiffuseTexIndex = -1;
+            CustomMaterial.DiffuseTexIndex = -1;
         }
 
         if (CurrentMaterial.NormalTexture)
         {
             CurrentMaterial.NormalTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].NormalTexIndex = CurrentTexture++;
+            CustomMaterial.NormalTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].NormalTexIndex = -1;
+            CustomMaterial.NormalTexIndex = -1;
         }
 
         if (CurrentMaterial.SpecularTexture)
         {
             CurrentMaterial.SpecularTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].SpecularTexIndex = CurrentTexture++;
+            CustomMaterial.SpecularTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].SpecularTexIndex = -1;
+            CustomMaterial.SpecularTexIndex = -1;
         }
 
         if (CurrentMaterial.EmissiveTexture)
         {
             CurrentMaterial.EmissiveTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].EmissiveTexIndex = CurrentTexture++;
+            CustomMaterial.EmissiveTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].EmissiveTexIndex = -1;
+            CustomMaterial.EmissiveTexIndex = -1;
         }
 
         if (CurrentMaterial.AOTexture)
         {
             CurrentMaterial.AOTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].AOTexIndex = CurrentTexture++;
+            CustomMaterial.AOTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].AOTexIndex = -1;
+            CustomMaterial.AOTexIndex = -1;
         }
 
         if (CurrentMaterial.RoughnessTexture)
         {
             CurrentMaterial.RoughnessTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].RoughnessTexIndex = CurrentTexture++;
+            CustomMaterial.RoughnessTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].RoughnessTexIndex = -1;
+            CustomMaterial.RoughnessTexIndex = -1;
         }
 
         if (CurrentMaterial.MetallicTexture)
         {
             CurrentMaterial.MetallicTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].MetallicTexIndex = CurrentTexture++;
+            CustomMaterial.MetallicTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].MetallicTexIndex = -1;
+            CustomMaterial.MetallicTexIndex = -1;
         }
 
         if (CurrentMaterial.AlphaMaskTexture)
         {
             CurrentMaterial.AlphaMaskTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            Materials[Index].AlphaMaskTexIndex = CurrentTexture++;
+            CustomMaterial.AlphaMaskTexIndex = CurrentTexture++;
         }
         else
         {
-            Materials[Index].AlphaMaskTexIndex = -1;
+            CustomMaterial.AlphaMaskTexIndex = -1;
         }
 
-
-        Materials[Index].Diffuse   = CurrentMaterial.Diffuse;
-        Materials[Index].AO        = CurrentMaterial.AO;
-        Materials[Index].Roughness = CurrentMaterial.Roughness;
-        Materials[Index].Metallic  = CurrentMaterial.Metallic;
-
-        Materials[Index].bAlphaDiffuseCombined = CurrentMaterial.bAlphaDiffuseCombined;
+        CustomMaterial.Diffuse       = CurrentMaterial.Diffuse;
+        CustomMaterial.AO            = CurrentMaterial.AO;
+        CustomMaterial.Roughness     = CurrentMaterial.Roughness;
+        CustomMaterial.Metallic      = CurrentMaterial.Metallic;
+        CustomMaterial.MaterialFlags = CurrentMaterial.MaterialFlags;
     }
 
     {
@@ -499,12 +500,11 @@ bool FMeshImporter::LoadCustom(const FString& InFilename, FSceneData& OutScene)
             Material.AlphaMaskTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].AlphaMaskTexIndex]->GetTexture2D());
         }
 
-        Material.Diffuse   = Materials[Index].Diffuse;
-        Material.Roughness = Materials[Index].Roughness;
-        Material.AO        = Materials[Index].AO;
-        Material.Metallic  = Materials[Index].Metallic;
-
-        Material.bAlphaDiffuseCombined = Materials[Index].bAlphaDiffuseCombined;
+        Material.MaterialFlags = static_cast<EMaterialFlags>(Materials[Index].MaterialFlags);
+        Material.Diffuse       = Materials[Index].Diffuse;
+        Material.Roughness     = Materials[Index].Roughness;
+        Material.AO            = Materials[Index].AO;
+        Material.Metallic      = Materials[Index].Metallic;
     }
 
     return true;

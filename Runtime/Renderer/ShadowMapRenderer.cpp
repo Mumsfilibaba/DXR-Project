@@ -145,7 +145,13 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
             PerCascadeBuffer->SetDebugName("Per Cascade Buffer");
         }
 
-        FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+        TArray<FShaderDefine> Defines =
+        {
+            { "ENABLE_ALPHA_MASK",              "(0)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(0)" }
+        };
+
+        FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
@@ -159,9 +165,10 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
             return false;
         }
 
-        TArray<FShaderDefine> Defines =
+        Defines =
         {
-            { "ENABLE_ALPHA_MASK", "(1)" }
+            { "ENABLE_ALPHA_MASK",              "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(0)" }
         };
 
         CompileInfo = FShaderCompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, Defines);
@@ -187,6 +194,26 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
 
         DirectionalLightMaskedPS = RHICreatePixelShader(ShaderCode);
         if (!DirectionalLightMaskedPS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        Defines =
+        {
+            { "ENABLE_ALPHA_MASK",              "(1)" },
+            { "ENABLE_PACKED_MATERIAL_TEXTURE", "(1)" }
+        };
+
+        CompileInfo = FShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        DirectionalLightMaskedPackedPS = RHICreatePixelShader(ShaderCode);
+        if (!DirectionalLightMaskedPackedPS)
         {
             DEBUG_BREAK();
             return false;
@@ -288,6 +315,20 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         else
         {
             DirectionalLightMaskedPSO->SetDebugName("Masked CSM PipelineState");
+        }
+
+        PSOInitializer.ShaderState.VertexShader = DirectionalLightMaskedVS.Get();
+        PSOInitializer.ShaderState.PixelShader  = DirectionalLightMaskedPackedPS.Get();
+
+        DirectionalLightMaskedPackedPSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!DirectionalLightMaskedPackedPSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            DirectionalLightMaskedPackedPSO->SetDebugName("Masked Packed CSM PipelineState");
         }
     }
 
@@ -635,9 +676,16 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
                 for (const FMeshBatch& Batch : DirectionalLightView.MeshBatches[SubViewIndex])
                 {
                     FMaterial* Material = Batch.Material;
-                    if (Material->HasAlphaMask() || Material->IsDoubleSided())
+                    if (Material->HasAlphaMask())
                     {
-                        CommandList.SetGraphicsPipelineState(DirectionalLightMaskedPSO.Get());
+                        if (Material->IsPackedMaterial())
+                        {
+                            CommandList.SetGraphicsPipelineState(DirectionalLightMaskedPackedPSO.Get());
+                        }
+                        else
+                        {
+                            CommandList.SetGraphicsPipelineState(DirectionalLightMaskedPSO.Get());
+                        }
 
                         CommandList.SetSamplerState(DirectionalLightMaskedPS.Get(), Material->GetMaterialSampler(), 0);
                         CommandList.SetConstantBuffer(DirectionalLightMaskedPS.Get(), Material->GetMaterialBuffer(), 1);
@@ -653,7 +701,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
 
                     for (const FProxyRendererComponent* Component : Batch.Primitives)
                     {
-                        if (Material->HasAlphaMask() || Material->IsDoubleSided())
+                        if (Material->HasAlphaMask())
                         {
                             CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
                         }

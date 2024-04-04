@@ -1376,8 +1376,8 @@ private:
 
 private:
     AllocatorType Allocator;
-    SizeType      ArraySize{ 0 };
-    SizeType      ArrayMax{ 0 };
+    SizeType      ArraySize = 0;
+    SizeType      ArrayMax  = 0;
 };
 
 template<typename T, typename AllocatorType>

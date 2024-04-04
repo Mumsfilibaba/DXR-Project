@@ -1,38 +1,39 @@
 #pragma once
 #include "VertexFormat.h"
 #include "TextureResource.h"
-#include "Engine/EngineModule.h"
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
+#include "Engine/EngineModule.h"
+#include "Engine/Resources/Material.h"
 #include "RHI/RHITypes.h"
 
 struct FMeshData
 {
-    FORCEINLINE void Clear()
+    void Clear()
     {
         Vertices.Clear();
         Indices.Clear();
     }
 
-    FORCEINLINE bool Hasdata() const
+    bool Hasdata() const
     {
         return !Vertices.IsEmpty();
     }
 
-    FORCEINLINE void ShrinkBuffers()
+    void ShrinkBuffers()
     {
         Vertices.Shrink();
         Indices.Shrink();
     }
 
-    FORCEINLINE int32 GetVertexCount() const
+    int32 GetVertexCount() const
     {
         return Vertices.Size();
     }
 
-    FORCEINLINE int32 GetIndexCount() const
+    int32 GetIndexCount() const
     {
         return Indices.Size();
     }
@@ -95,11 +96,8 @@ struct FMaterialData
     /** @brief - Metallic Parameter */
     float Metallic = 1.0f;
 
-    /** @brief - Is the diffuse and alpha stored in the same texture? */
-    bool bAlphaDiffuseCombined = false;
-
-    /** @brief - Should this material have culling turned off ? */
-    bool bIsDoubleSided = false;
+    /** @brief - Flags containing material-properties */
+    EMaterialFlags MaterialFlags = MaterialFlag_None;
 };
 
 
@@ -107,17 +105,17 @@ struct ENGINE_API FSceneData
 {
     void AddToScene(class FScene* Scene);
 
-    FORCEINLINE bool HasData() const
+    bool HasData() const
     {
         return !Models.IsEmpty() && !Materials.IsEmpty();
     }
 
-    FORCEINLINE bool HasModelData() const
+    bool HasModelData() const
     {
         return !Models.IsEmpty();
     }
 
-    FORCEINLINE bool HasMaterialData() const
+    bool HasMaterialData() const
     {
         return !Materials.IsEmpty();
     }

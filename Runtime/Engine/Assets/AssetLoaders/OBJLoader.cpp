@@ -51,11 +51,12 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
         MaterialData.NormalTexture    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
         MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
 
-        MaterialData.Diffuse   = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
-        MaterialData.Metallic  = Mat.ambient[0];
-        MaterialData.AO        = 1.0f;
-        MaterialData.Roughness = 1.0f;
-        
+        MaterialData.Diffuse       = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialData.Metallic      = Mat.ambient[0];
+        MaterialData.AO            = 1.0f;
+        MaterialData.Roughness     = 1.0f;
+        MaterialData.MaterialFlags = MaterialFlag_None;
+
         if (Mat.name.empty())
         {
             MaterialData.Name = FString::CreateFormatted("%s_material_%d", FilenameWithoutPath.GetCString(), SceneMaterialIndex);
@@ -65,7 +66,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
             MaterialData.Name = Mat.name.c_str();
         }
         
-        OutScene.Materials.Emplace(MaterialData);
+        OutScene.Materials.Emplace(Move(MaterialData));
         SceneMaterialIndex++;
     }
 

@@ -10,7 +10,6 @@ enum class EMeshImportFlags : uint8
     None             = 0,
     ApplyScaleFactor = BIT(1),
     EnsureLeftHanded = BIT(2),
-
     Default = EnsureLeftHanded
 };
 
@@ -63,27 +62,24 @@ class ENGINE_API FMeshImporter
 
     struct FCustomMaterial
     {
-        int32 DiffuseTexIndex;
-        int32 NormalTexIndex;
-        int32 SpecularTexIndex;
-        int32 EmissiveTexIndex;
-        int32 AOTexIndex;
-        int32 RoughnessTexIndex;
-        int32 MetallicTexIndex;
-        int32 AlphaMaskTexIndex;
+        int32    DiffuseTexIndex;
+        int32    NormalTexIndex;
+        int32    SpecularTexIndex;
+        int32    EmissiveTexIndex;
+        int32    AOTexIndex;
+        int32    RoughnessTexIndex;
+        int32    MetallicTexIndex;
+        int32    AlphaMaskTexIndex;
 
         FVector3 Diffuse;
-
-        float AO;
-        float Roughness;
-        float Metallic;
-
-        bool bAlphaDiffuseCombined;
+        float    AO;
+        float    Roughness;
+        float    Metallic;
+        int32    MaterialFlags;
     };
 
 public:
     static bool Initialize();
-
     static void Release();
 
     static FORCEINLINE FMeshImporter& Get()
@@ -99,7 +95,6 @@ private:
     ~FMeshImporter() = default;
 
     void LoadCacheFile();
-
     void UpdateCacheFile();
 
     bool AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const FSceneData& Scene);

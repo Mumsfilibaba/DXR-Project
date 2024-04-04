@@ -109,9 +109,11 @@ private:
 
     FRHIGraphicsPipelineStateRef DirectionalLightPSO;
     FRHIGraphicsPipelineStateRef DirectionalLightMaskedPSO;
+    FRHIGraphicsPipelineStateRef DirectionalLightMaskedPackedPSO;
     FRHIVertexShaderRef          DirectionalLightVS;
     FRHIVertexShaderRef          DirectionalLightMaskedVS;
     FRHIPixelShaderRef           DirectionalLightMaskedPS;
+    FRHIPixelShaderRef           DirectionalLightMaskedPackedPS;
 
     FRHIComputePipelineStateRef  DirectionalShadowMaskPSO;
     FRHIComputeShaderRef         DirectionalShadowMaskShader;
@@ -129,6 +131,6 @@ private:
     FRHIComputePipelineStateRef  CascadeGen;
     FRHIComputeShaderRef         CascadeGenShader;
 
-    bool bUpdateDirLight   = true;
+    bool   bUpdateDirLight = true;
     uint64 DirLightFrame   = 0;
 };

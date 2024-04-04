@@ -162,7 +162,7 @@ bool FEngine::Init()
         BaseNormal->SetDebugName("BaseNormal");
     }
 
-    /* Create material sampler (Used for now by all materials) */
+    // Create material sampler (Used for now by all materials)
     FRHISamplerStateDesc SamplerCreateInfo;
     SamplerCreateInfo.AddressU       = ESamplerMode::Wrap;
     SamplerCreateInfo.AddressV       = ESamplerMode::Wrap;
@@ -176,13 +176,12 @@ bool FEngine::Init()
 
     BaseMaterialSampler = RHICreateSamplerState(SamplerCreateInfo);
 
-    /* Base material */
-    FMaterialDesc MaterialDesc;
-    MaterialDesc.AO           = 1.0f;
-    MaterialDesc.Metallic     = 0.0f;
-    MaterialDesc.Roughness    = 1.0f;
-    MaterialDesc.EnableHeight = 0;
-    MaterialDesc.Albedo       = FVector3(1.0f);
+    // Base material
+    FMaterialCreateInfo MaterialDesc;
+    MaterialDesc.AmbientOcclusion = 1.0f;
+    MaterialDesc.Metallic         = 0.0f;
+    MaterialDesc.Roughness        = 1.0f;
+    MaterialDesc.Albedo           = FVector3(1.0f);
 
     BaseMaterial = MakeShared<FMaterial>(MaterialDesc);
     BaseMaterial->AlbedoMap    = GEngine->BaseTexture;

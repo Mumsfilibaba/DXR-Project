@@ -143,13 +143,12 @@ struct FTransform
 struct FMaterial
 {
     float3 Albedo;
-    
     float  Roughness;
+    
     float  Metallic;
     float  AO;
-
-    int    EnableHeight;
-    int    EnableMask;
+    int    Padding0;
+    int    Padding1;
 };
 
 #endif

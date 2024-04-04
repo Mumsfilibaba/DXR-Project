@@ -6,31 +6,55 @@
 
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
 
-// TODO: This should be refactored into using different shaders
-enum EAlphaMaskMode
+enum EMaterialFlags : int32
 {
-    AlphaMaskMode_Disabled        = 0, // Disabled completely
-    AlphaMaskMode_Enabled         = 1, // Stored in separate texture
-    AlphaMaskMode_DiffuseCombined = 2, // Stored in Alpha channel of diffuse texture
+    MaterialFlag_None               = 0,       // No flags
+    MaterialFlag_EnableHeight       = FLAG(0), // Enable HeightMaps (Parallax Occlusion Mapping)
+    MaterialFlag_EnableAlpha        = FLAG(1), // Enable Alpha Textures
+    MaterialFlag_PackedDiffuseAlpha = FLAG(2), // The alpha and diffuse is stored in the same texture
+    MaterialFlag_PackedParams       = FLAG(3), // The Roughness, AO, and Metallic is stored in the same texture
+    MaterialFlag_DoubleSided        = FLAG(4), // The Material should be rendered without culling
+    MaterialFlag_ForceForwardPass   = FLAG(5), // This material should be rendered in the ForwardPass
 };
 
+ENUM_CLASS_OPERATORS(EMaterialFlags);
 
-struct FMaterialDesc
+struct FMaterialCreateInfo
 {
-    FVector3 Albedo       = FVector3(1.0f);
-    float    Roughness    = 0.0f;
+    FMaterialCreateInfo()
+        : Albedo(1.0f)
+        , Roughness(0.0f)
+        , Metallic(0.0f)
+        , AmbientOcclusion(0.5f)
+        , MaterialFlags(MaterialFlag_None)
 
-    float    Metallic     = 0.0f;
-    float    AO           = 0.5f;
-    int32    EnableHeight = 0;
-    int32    EnableMask   = AlphaMaskMode_Disabled;
+    {
+    }
+
+    EMaterialFlags MaterialFlags;
+
+    FVector3       Albedo;
+    float          Roughness;
+
+    float          Metallic;
+    float          AmbientOcclusion;
 };
 
+struct FMaterialHLSL
+{
+    FVector3 Albedo           = FVector3(1.0f);
+    float    Roughness        = 1.0f;
+
+    float    Metallic         = 0.0f;
+    float    AmbientOcclusion = 1.0f;
+    int32    Padding0         = 0;
+    int32    Padding1         = 0;
+};
 
 class ENGINE_API FMaterial
 {
 public:
-    FMaterial(const FMaterialDesc& InProperties);
+    FMaterial(const FMaterialCreateInfo& InProperties);
     ~FMaterial() = default;
 
     void Initialize();
@@ -40,47 +64,27 @@ public:
     bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
     void SetAlbedo(const FVector3& Albedo);
-
     void SetAlbedo(float r, float g, float b);
-
     void SetMetallic(float Metallic);
-    
     void SetRoughness(float Roughness);
-    
     void SetAmbientOcclusion(float AO);
 
     void ForceForwardPass(bool bForceForwardRender);
 
-    void EnableHeightMap(bool bInEnableHeightMap);
-    
-    void EnableAlphaMask(bool bInEnableAlphaMask);
-
-    void EnableDoubleSided(bool bInIsDoubleSided)
-    {
-        bIsDoubleSided = bInIsDoubleSided;
-    }
+    void EnableHeightMap(bool bEnableHeightMap);
+    void EnableAlphaMask(bool bEnableAlphaMask);
+    void EnableDoubleSided(bool bIsDoubleSided);
 
     void SetDebugName(const FString& InDebugName);
 
-    bool HasAlphaMask() const
-    {
-        return (AlphaMask && Properties.EnableMask) || Properties.EnableMask == AlphaMaskMode_DiffuseCombined;
-    }
+    bool HasAlphaMask() const { return (Properties.MaterialFlags & MaterialFlag_EnableAlpha) != MaterialFlag_None; }
+    bool HasHeightMap() const { return (Properties.MaterialFlags & MaterialFlag_EnableHeight) != MaterialFlag_None; }
 
-    bool HasHeightMap() const
-    {
-        return HeightMap && Properties.EnableHeight == 1;
-    }
+    bool IsDoubleSided()    const { return (Properties.MaterialFlags & MaterialFlag_DoubleSided) != MaterialFlag_None; }
+    bool IsPackedMaterial() const { return (Properties.MaterialFlags & (MaterialFlag_PackedDiffuseAlpha | MaterialFlag_PackedParams)) != MaterialFlag_None; }
 
-    bool IsDoubleSided() const
-    {
-        return bIsDoubleSided;
-    }
-
-    bool IsPackedMaterial() const
-    {
-        return Properties.EnableMask == AlphaMaskMode_DiffuseCombined || SpecularMap != nullptr;
-    }
+    bool ShouldRenderInPrePass()     const { return (Properties.MaterialFlags & MaterialFlag_ForceForwardPass) == MaterialFlag_None; }
+    bool ShouldRenderInForwardPass() const { return (Properties.MaterialFlags & MaterialFlag_ForceForwardPass) != MaterialFlag_None; }
 
     FRHISamplerState* GetMaterialSampler() const
     {
@@ -92,24 +96,9 @@ public:
         return MaterialBuffer.Get();
     }
 
-    bool ShouldRenderInPrePass()
-    {
-        return !bRenderInForwardPass;
-    }
-
-    bool ShouldRenderInForwardPass()
-    {
-        return bRenderInForwardPass;
-    }
-
-    const FMaterialDesc& GetMaterialProperties() const
-    {
-        return Properties;
-    }
-
     FRHIShaderResourceView* GetAlphaMaskSRV() const
     {
-        return Properties.EnableMask == AlphaMaskMode_DiffuseCombined ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
+        return (Properties.MaterialFlags & MaterialFlag_PackedDiffuseAlpha) != MaterialFlag_None ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
     }
 
 public:
@@ -123,13 +112,12 @@ public:
     FRHITextureRef AlphaMask;
 
 private:
-    FMaterialDesc       Properties;
+    FMaterialHLSL       MaterialData;
+    FMaterialCreateInfo Properties;
+    bool                bMaterialBufferIsDirty;
+
     FRHIBufferRef       MaterialBuffer;
     FRHISamplerStateRef Sampler;
 
-    bool bRenderInForwardPass   = false;
-    bool bIsDoubleSided         = false;
-    bool bMaterialBufferIsDirty = true;
-
-    FString DebugName;
+    FString             DebugName;
 };

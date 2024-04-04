@@ -377,6 +377,8 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
             BasePassDoubleSidedPSO->SetDebugName("DoubleSided GeometryPass PipelineState");
         }
 
+        PSOInitializer.RasterizerState = RasterizerState.Get();
+
         PSOInitializer.ShaderState.VertexShader = BasePassPackedVS.Get();
         PSOInitializer.ShaderState.PixelShader  = BasePassPackedPS.Get();
 
@@ -667,7 +669,7 @@ bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
         }
         else
         {
-            PrePassPSO->SetDebugName("Masked PrePass PipelineState");
+            PrePassMaskedPSO->SetDebugName("Masked PrePass PipelineState");
         }
 
         PSOInitializer.RasterizerState = RasterizerStateDoubleSided.Get();

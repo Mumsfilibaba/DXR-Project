@@ -172,7 +172,8 @@ float4 PSMain(FPSInput Input) : SV_Target0
 {
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
-    
+
+#if 0 
     if (MaterialBuffer.EnableHeight != 0)
     {
         float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
@@ -182,6 +183,7 @@ float4 PSMain(FPSInput Input) : SV_Target0
             discard;
         }
     }
+#endif
 
     float3 SampledAlbedo = ApplyGamma(AlbedoTex.Sample(MaterialSampler, TexCoords).rgb) * MaterialBuffer.Albedo;
     

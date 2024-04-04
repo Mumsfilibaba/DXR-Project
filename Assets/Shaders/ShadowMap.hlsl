@@ -1,6 +1,10 @@
 #include "Constants.hlsli"
 #include "Structs.hlsli"
 
+#ifndef ENABLE_PACKED_MATERIAL_TEXTURE
+    #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
+#endif
+
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK (0)
 #endif
@@ -31,8 +35,11 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
     
     SamplerState MaterialSampler : register(s0);
-    
+#if ENABLE_PACKED_MATERIAL_TEXTURE
     Texture2D<float4> AlphaMaskTex : register(t1);
+#else
+    Texture2D<float> AlphaMaskTex : register(t1);
+#endif
 #endif
 
 // Cascade Shadow Generation
@@ -90,36 +97,21 @@ struct FPSInput
     float2 TexCoord : TEXCOORD0;
 };
 
-#define ALPHA_DISABLED         (0)
-#define ALPHA_ENABLED          (1)
-#define ALPHA_DIFFUSE_COMBINED (2)
-
 void Cascade_PSMain(FPSInput Input)
 {
 #if ENABLE_ALPHA_MASK
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
     
+#if ENABLE_PACKED_MATERIAL_TEXTURE
+    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
+#else
+    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);        
+#endif
     [[branch]]
-    if (MaterialBuffer.EnableMask == ALPHA_ENABLED)
+    if (AlphaMask < 0.5f)
     {
-        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).r;
-        
-        [[branch]]
-        if (AlphaMask < 0.5f)
-        {
-            discard;
-        }
-    }
-    else if (MaterialBuffer.EnableMask == ALPHA_DIFFUSE_COMBINED)
-    {
-        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
-        
-        [[branch]]
-        if (AlphaMask < 0.5f)
-        {
-            discard;
-        }
+        discard;
     }
 #endif
 }
