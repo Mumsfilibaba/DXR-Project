@@ -572,12 +572,9 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                     if (DrawableTexture->BeforeState != EResourceAccess::PixelShaderResource)
                     {
                         CmdList.TransitionTexture(DrawableTexture->Texture.Get(), DrawableTexture->BeforeState, EResourceAccess::PixelShaderResource);
-
                         // TODO: Another way to do this? May break somewhere?
                         DrawableTexture->BeforeState = EResourceAccess::PixelShaderResource;
                     }
-
-                    CmdList.SetShaderResourceView(PShader.Get(), DrawableTexture->View.Get(), 0);
 
                     if (!DrawableTexture->bAllowBlending)
                     {
@@ -596,6 +593,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                     {
                         CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                     }
+
+                    CmdList.SetShaderResourceView(PShader.Get(), DrawableTexture->View.Get(), 0);
                 }
                 else
                 {
@@ -604,6 +603,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                         SetupRenderState(CmdList, DrawData, *ViewportData);
                         bResetRenderState = false;
                     }
+
+                    CmdList.SetGraphicsPipelineState(PipelineState.Get());
 
                     if (DrawCmdList->Flags & ImDrawListFlags_AntiAliasedLinesUseTex)
                     {
@@ -616,7 +617,6 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
 
                     FRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
                     CmdList.SetShaderResourceView(PShader.Get(), View, 0);
-                    CmdList.SetGraphicsPipelineState(PipelineState.Get());
                 }
 
                 // Project Scissor/Clipping rectangles into Framebuffer space
@@ -675,7 +675,6 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* Draw
     CmdList.SetVertexBuffers(MakeArrayView(&Buffers.VertexBuffer, 1), 0);
     
     CmdList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
-    CmdList.SetGraphicsPipelineState(PipelineState.Get());
 
     CmdList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }

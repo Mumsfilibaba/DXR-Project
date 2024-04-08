@@ -23,16 +23,24 @@ void FSceneData::AddToScene(FScene* Scene)
             CreateInfo.Metallic         = MaterialData.Metallic;
             CreateInfo.Roughness        = MaterialData.Roughness;
             CreateInfo.MaterialFlags    = MaterialData.MaterialFlags;
+            
+            if (MaterialData.NormalTexture)
+            {
+                CreateInfo.MaterialFlags |= MaterialFlag_EnableNormalMapping;
+            }
 
             TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(CreateInfo);
             Material->AlbedoMap    = MaterialData.DiffuseTexture   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
             Material->AOMap        = MaterialData.AOTexture        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
             Material->SpecularMap  = MaterialData.SpecularTexture  ? MaterialData.SpecularTexture->GetRHITexture()  : GEngine->BaseTexture;
             Material->MetallicMap  = MaterialData.MetallicTexture  ? MaterialData.MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
-            Material->NormalMap    = MaterialData.NormalTexture    ? MaterialData.NormalTexture->GetRHITexture()    : GEngine->BaseNormal;
             Material->RoughnessMap = MaterialData.RoughnessTexture ? MaterialData.RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
             Material->AlphaMask    = MaterialData.AlphaMaskTexture ? MaterialData.AlphaMaskTexture->GetRHITexture() : GEngine->BaseTexture;
-            Material->HeightMap    = GEngine->BaseTexture;
+
+            if (MaterialData.NormalTexture)
+            {
+                Material->NormalMap = MaterialData.NormalTexture->GetRHITexture();
+            }
 
             Material->Initialize();
             Material->SetDebugName(MaterialData.Name);

@@ -16,7 +16,6 @@ FMaterial::FMaterial(const FMaterialCreateInfo& InProperties)
     , bMaterialBufferIsDirty(true)
     , DebugName()
 {
-    CHECK((Properties.MaterialFlags & MaterialFlag_PackedDiffuseAlpha) == MaterialFlag_None);
 }
 
 void FMaterial::Initialize()

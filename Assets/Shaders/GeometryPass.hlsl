@@ -31,15 +31,19 @@ SHADER_CONSTANT_BLOCK_END
 ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
 
 #if ENABLE_PACKED_MATERIAL_TEXTURE
-    Texture2D<float4> AlbedoAlphaMap         : register(t0);
-    Texture2D<float3> NormalTex              : register(t1);
+    Texture2D<float4> AlbedoAlphaMap : register(t0);
+#if ENABLE_NORMAL_MAPPING
+    Texture2D<float3> NormalTex : register(t1);
+#endif
     Texture2D<float3> AO_Roughness_Metal_Tex : register(t2);
 #if ENABLE_PARALLAX_MAPPING
     Texture2D<float> HeightTex : register(t3);
 #endif
 #else
-    Texture2D<float3> AlbedoMap    : register(t0);
-    Texture2D<float3> NormalTex    : register(t1);
+    Texture2D<float3> AlbedoMap : register(t0);
+#if ENABLE_NORMAL_MAPPING
+    Texture2D<float3> NormalTex : register(t1);
+#endif
     Texture2D<float>  RoughnessTex : register(t2);
     Texture2D<float>  MetallicTex  : register(t3);
     Texture2D<float>  AOTex        : register(t4);
@@ -148,7 +152,6 @@ struct FPSOutput
 };
 
 #if ENABLE_PARALLAX_MAPPING
-
 // TODO: We probably do not want any constants like this, it should be a constantbuffer or something similar
 static const float HEIGHT_SCALE = 0.03f;
 
@@ -232,6 +235,7 @@ FPSOutput PSMain(FPSInput Input)
     float3 SampledAlbedo = ApplyGamma(AlbedoMap.Sample(MaterialSampler, TexCoords)) * MaterialBuffer.Albedo;
 #endif
 
+#if ENABLE_NORMAL_MAPPING
     float3 SampledNormal = NormalTex.Sample(MaterialSampler, TexCoords);
     SampledNormal = UnpackNormalBC5(SampledNormal);
 
@@ -239,8 +243,12 @@ FPSOutput PSMain(FPSInput Input)
     float3 Bitangent = normalize(Input.Bitangent);
     float3 Normal    = normalize(Input.Normal);
 
-    float3 MappedNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
-    MappedNormal = PackNormal(MappedNormal);
+    float3 OutputNormal = ApplyNormalMapping(SampledNormal, Normal, Tangent, Bitangent);
+    OutputNormal = PackNormal(OutputNormal);
+#else
+    float3 OutputNormal = normalize(Input.Normal);
+    OutputNormal = PackNormal(OutputNormal);
+#endif
 
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     const float3 AO_Roughness_Metal = AO_Roughness_Metal_Tex.Sample(MaterialSampler, TexCoords);
@@ -257,7 +265,7 @@ FPSOutput PSMain(FPSInput Input)
     
     FPSOutput Output;
     Output.Albedo     = float4(SampledAlbedo, 1.0f);
-    Output.Normal     = float4(MappedNormal, 1.0f);
+    Output.Normal     = float4(OutputNormal, 1.0f);
     Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
     Output.ViewNormal = float4(PackNormal(Input.ViewNormal), 1.0f);
 

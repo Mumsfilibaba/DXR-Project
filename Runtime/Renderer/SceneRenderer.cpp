@@ -623,6 +623,9 @@ void FSceneRenderer::Tick(FRendererScene* Scene)
 
     for (FMaterial* Material : Scene->Materials)
     {
+        // TODO: Only do this once?
+        DeferredRenderer.InitializePipelineState(Material, Resources);
+
         if (Material->IsBufferDirty())
         {
             Material->BuildBuffer(CommandList);

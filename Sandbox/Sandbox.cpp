@@ -18,7 +18,7 @@
 
 #define LOAD_SPONZA         (0)
 #define LOAD_BISTRO         (0)
-#define LOAD_SUN_TEMPLE     (1)
+#define LOAD_SUN_TEMPLE     (0)
 #define LOAD_EMERALD_SQUARE (0)
 
 #define ENABLE_LIGHT_TEST   (0)
@@ -139,7 +139,6 @@ bool FSandbox::Init()
                 {
                     TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialCreateInfo);
                     NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-                    NewMaterial->NormalMap    = GEngine->BaseNormal;
                     NewMaterial->RoughnessMap = GEngine->BaseTexture;
                     NewMaterial->AOMap        = GEngine->BaseTexture;
                     NewMaterial->MetallicMap  = GEngine->BaseTexture;
@@ -241,7 +240,7 @@ bool FSandbox::Init()
         MaterialCreateInfo.AmbientOcclusion = 1.0f;
         MaterialCreateInfo.Metallic         = 1.0f;
         MaterialCreateInfo.Roughness        = 1.0f;
-        MaterialCreateInfo.MaterialFlags   |= MaterialFlag_EnableHeight;
+        MaterialCreateInfo.MaterialFlags   |= MaterialFlag_EnableHeight | MaterialFlag_EnableNormalMapping;
 
         NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
@@ -289,7 +288,6 @@ bool FSandbox::Init()
         {
             TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialCreateInfo);
             NewMaterial->AlbedoMap    = GEngine->BaseTexture;
-            NewMaterial->NormalMap    = GEngine->BaseNormal;
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
@@ -312,7 +310,7 @@ bool FSandbox::Init()
     MaterialCreateInfo.AmbientOcclusion = 1.0f;
     MaterialCreateInfo.Metallic         = 1.0f;
     MaterialCreateInfo.Roughness        = 1.0f;
-    MaterialCreateInfo.MaterialFlags    = MaterialFlag_None;
+    MaterialCreateInfo.MaterialFlags    = MaterialFlag_EnableNormalMapping;
 
     FSceneData StreetLightData;
     FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
@@ -357,7 +355,6 @@ bool FSandbox::Init()
 
     TSharedPtr<FMaterial> PillarMaterial = MakeShared<FMaterial>(MaterialCreateInfo);
     PillarMaterial->AlbedoMap    = GEngine->BaseTexture;
-    PillarMaterial->NormalMap    = GEngine->BaseNormal;
     PillarMaterial->RoughnessMap = GEngine->BaseTexture;
     PillarMaterial->AOMap        = GEngine->BaseTexture;
     PillarMaterial->MetallicMap  = GEngine->BaseTexture;

@@ -24,7 +24,6 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 // Per Object
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
-    
     SamplerState MaterialSampler : register(s0);
 #if ENABLE_ALPHA_MASK
     #if ENABLE_PACKED_MATERIAL_TEXTURE
@@ -162,7 +161,6 @@ void PSMain(FPSInput Input)
 #if ENABLE_ALPHA_MASK
     #if ENABLE_PACKED_MATERIAL_TEXTURE
         const float AlphaMask = AlbedoAlphaTex.Sample(MaterialSampler, TexCoords).a;
-
         [[branch]]
         if (AlphaMask < 0.5)
         {
@@ -170,7 +168,6 @@ void PSMain(FPSInput Input)
         }
     #else
         const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
-        
         [[branch]]
         if (AlphaMask < 0.5)
         {

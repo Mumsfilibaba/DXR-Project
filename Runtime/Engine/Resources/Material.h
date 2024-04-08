@@ -8,13 +8,14 @@
 
 enum EMaterialFlags : int32
 {
-    MaterialFlag_None               = 0,       // No flags
-    MaterialFlag_EnableHeight       = FLAG(0), // Enable HeightMaps (Parallax Occlusion Mapping)
-    MaterialFlag_EnableAlpha        = FLAG(1), // Enable Alpha Textures
-    MaterialFlag_PackedDiffuseAlpha = FLAG(2), // The alpha and diffuse is stored in the same texture
-    MaterialFlag_PackedParams       = FLAG(3), // The Roughness, AO, and Metallic is stored in the same texture
-    MaterialFlag_DoubleSided        = FLAG(4), // The Material should be rendered without culling
-    MaterialFlag_ForceForwardPass   = FLAG(5), // This material should be rendered in the ForwardPass
+    MaterialFlag_None                = 0,       // No flags
+    MaterialFlag_EnableHeight        = FLAG(0), // Enable HeightMaps (Parallax Occlusion Mapping)
+    MaterialFlag_EnableAlpha         = FLAG(1), // Enable Alpha Textures
+    MaterialFlag_EnableNormalMapping = FLAG(2), // Enable Normal Mapping
+    MaterialFlag_PackedDiffuseAlpha  = FLAG(3), // The alpha and diffuse is stored in the same texture
+    MaterialFlag_PackedParams        = FLAG(4), // The Roughness, AO, and Metallic is stored in the same texture
+    MaterialFlag_DoubleSided         = FLAG(5), // The Material should be rendered without culling
+    MaterialFlag_ForceForwardPass    = FLAG(6), // This material should be rendered in the ForwardPass
 };
 
 ENUM_CLASS_OPERATORS(EMaterialFlags);
@@ -79,6 +80,7 @@ public:
 
     bool HasAlphaMask() const { return (Properties.MaterialFlags & MaterialFlag_EnableAlpha) != MaterialFlag_None; }
     bool HasHeightMap() const { return (Properties.MaterialFlags & MaterialFlag_EnableHeight) != MaterialFlag_None; }
+    bool HasNormalMap() const { return (Properties.MaterialFlags & MaterialFlag_EnableNormalMapping) != MaterialFlag_None; }
 
     bool IsDoubleSided()    const { return (Properties.MaterialFlags & MaterialFlag_DoubleSided) != MaterialFlag_None; }
     bool IsPackedMaterial() const { return (Properties.MaterialFlags & (MaterialFlag_PackedDiffuseAlpha | MaterialFlag_PackedParams)) != MaterialFlag_None; }
@@ -99,6 +101,11 @@ public:
     FRHIShaderResourceView* GetAlphaMaskSRV() const
     {
         return (Properties.MaterialFlags & MaterialFlag_PackedDiffuseAlpha) != MaterialFlag_None ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
+    }
+
+    EMaterialFlags GetMaterialFlags() const 
+    {
+        return Properties.MaterialFlags;
     }
 
 public:
