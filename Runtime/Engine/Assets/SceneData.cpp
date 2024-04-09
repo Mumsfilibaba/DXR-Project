@@ -1,11 +1,11 @@
 #include "SceneData.h"
 #include "Engine/Engine.h"
-#include "Engine/Scene/Scene.h"
-#include "Engine/Scene/Components/MeshComponent.h"
+#include "Engine/World/World.h"
+#include "Engine/World/Components/MeshComponent.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-void FSceneData::AddToScene(FScene* Scene)
+void FSceneData::AddToWorld(FWorld* World)
 {
     if (!HasModelData())
     {
@@ -55,7 +55,7 @@ void FSceneData::AddToScene(FScene* Scene)
     {
         if (ModelData.Mesh.Hasdata())
         {
-            FActor* NewActor = Scene->CreateActor();
+            FActor* NewActor = World->CreateActor();
             NewActor->SetName(ModelData.Name);
             NewActor->GetTransform().SetUniformScale(Scale);
 

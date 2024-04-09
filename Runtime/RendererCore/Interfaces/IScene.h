@@ -4,9 +4,9 @@ class FCamera;
 class FLight;
 class FProxyRendererComponent;
 
-struct IRendererScene
+struct IScene
 {
-    virtual ~IRendererScene() = default;
+    virtual ~IScene() = default;
 
     // Update the scene this frame
     virtual void Tick() = 0;

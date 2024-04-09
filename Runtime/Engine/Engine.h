@@ -1,6 +1,6 @@
 #pragma once
-#include "Scene/Scene.h"
-#include "Scene/SceneViewport.h"
+#include "World/World.h"
+#include "World/SceneViewport.h"
 #include "Resources/Material.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
@@ -48,8 +48,8 @@ struct ENGINE_API FEngine
     /** @brief - Profiler Widget */
     TSharedPtr<class FFrameProfilerWidget> ProfilerWidget;
 
-    /** @brief - The current scene */
-    FScene* Scene;
+    /** @brief - The current world */
+    FWorld* World;
 
     /** @brief - A completely white texture */
     FRHITextureRef BaseTexture;

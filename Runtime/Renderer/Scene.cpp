@@ -1,15 +1,15 @@
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Math/Frustum.h"
-#include "Engine/Scene/Scene.h"
-#include "Engine/Scene/Lights/DirectionalLight.h"
-#include "Engine/Scene/Lights/PointLight.h"
+#include "Engine/World/World.h"
+#include "Engine/World/Lights/DirectionalLight.h"
+#include "Engine/World/Lights/PointLight.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-FRendererScene::FRendererScene(FScene* InScene)
-    : IRendererScene()
-    , Scene(InScene)
+FScene::FScene(FWorld* InWorld)
+    : IScene()
+    , World(InWorld)
     , Primitives()
     , Lights()
     , Camera(nullptr)
@@ -17,7 +17,7 @@ FRendererScene::FRendererScene(FScene* InScene)
 {
 }
 
-FRendererScene::~FRendererScene()
+FScene::~FScene()
 {
     for (FProxyRendererComponent* Component : Primitives)
     {
@@ -28,12 +28,22 @@ FRendererScene::~FRendererScene()
     Lights.Clear();
     LightViews.Clear();
 
-    Scene  = nullptr;
+    World  = nullptr;
     Camera = nullptr;
 }
 
-void FRendererScene::Tick()
+void FScene::Tick()
 {
+    // Update LightIndex
+    for (int32 Index = 0; Index < Lights.Size(); Index++)
+    {
+        FLight* Light = Lights[Index];
+        if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Light))
+        {
+            DirectionalLightIndex = Index;
+        }
+    }
+
     // Performs frustum culling and updates visible primitives
     UpdateVisibility();
 
@@ -41,7 +51,7 @@ void FRendererScene::Tick()
     UpdateBatches();
 }
 
-void FRendererScene::AddCamera(FCamera* InCamera)
+void FScene::AddCamera(FCamera* InCamera)
 {
     // TODO: For now it is replacing the current camera
     if (InCamera)
@@ -50,7 +60,7 @@ void FRendererScene::AddCamera(FCamera* InCamera)
     }
 }
 
-void FRendererScene::AddLight(FLight* InLight)
+void FScene::AddLight(FLight* InLight)
 {
     if (InLight)
     {
@@ -58,7 +68,7 @@ void FRendererScene::AddLight(FLight* InLight)
     }
 }
 
-void FRendererScene::AddProxyComponent(FProxyRendererComponent* InComponent)  
+void FScene::AddProxyComponent(FProxyRendererComponent* InComponent)  
 {
     if (InComponent)
     {
@@ -67,7 +77,7 @@ void FRendererScene::AddProxyComponent(FProxyRendererComponent* InComponent)
     }
 }
 
-void FRendererScene::UpdateVisibility()
+void FScene::UpdateVisibility()
 {
     TRACE_SCOPE("UpdateVisibility - FrustumCulling");
 
@@ -152,7 +162,6 @@ void FRendererScene::UpdateVisibility()
             {
                 // For now all primitives are visible to the DirectionalLight
                 LightView.Primitives[0].Add(Component);
-                DirectionalLightIndex = Index;
             }
             else if (FPointLight* PointLight = Cast<FPointLight>(Light))
             {
@@ -168,7 +177,7 @@ void FRendererScene::UpdateVisibility()
     }
 }
 
-void FRendererScene::UpdateBatches()
+void FScene::UpdateBatches()
 {
     TRACE_SCOPE("UpdateBatches");
 

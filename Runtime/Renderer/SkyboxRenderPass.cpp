@@ -1,5 +1,5 @@
 #include "SkyboxRenderPass.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -239,7 +239,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene)
+void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Skybox");
 

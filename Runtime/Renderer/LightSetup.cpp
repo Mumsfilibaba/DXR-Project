@@ -1,9 +1,9 @@
 #include "LightSetup.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
-#include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Scene/Lights/DirectionalLight.h"
+#include "Engine/World/Lights/PointLight.h"
+#include "Engine/World/Lights/DirectionalLight.h"
 #include "Core/Misc/ConsoleManager.h"
 
 static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
@@ -161,7 +161,7 @@ bool FLightSetup::Initialize()
     return true;
 }
 
-void FLightSetup::BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene)
+void FLightSetup::BeginFrame(FRHICommandList& CommandList, FScene* Scene)
 {
     PointLightsPosRad.Clear();
     PointLightsData.Clear();

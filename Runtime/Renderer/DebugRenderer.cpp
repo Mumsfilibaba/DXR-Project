@@ -1,12 +1,12 @@
 #include "DebugRenderer.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Engine/Resources/Mesh.h"
-#include "Engine/Scene/Actors/Actor.h"
-#include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Scene/Components/ProxyRendererComponent.h"
+#include "Engine/World/Actors/Actor.h"
+#include "Engine/World/Lights/PointLight.h"
+#include "Engine/World/Components/ProxyRendererComponent.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 
@@ -323,7 +323,7 @@ void FDebugRenderer::Release()
     DbgSphereIndexBuffer.Reset();
 }
 
-void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene)
+void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin AABB DebugPass");
 
@@ -367,7 +367,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End AABB DebugPass");
 }
 
-void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene)
+void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PointLight DebugPass");
 

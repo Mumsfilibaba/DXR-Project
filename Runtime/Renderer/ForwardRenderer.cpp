@@ -1,12 +1,12 @@
 #include "ForwardRenderer.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Scene/Actors/Actor.h"
-#include "Engine/Scene/Components/ProxyRendererComponent.h"
+#include "Engine/World/Actors/Actor.h"
+#include "Engine/World/Components/ProxyRendererComponent.h"
 
 bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
 {
@@ -108,7 +108,7 @@ void FForwardRenderer::Release()
     PShader.Reset();
 }
 
-void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FRendererScene* Scene)
+void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FScene* Scene)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ForwardPass");

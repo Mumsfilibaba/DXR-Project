@@ -1,12 +1,12 @@
 #include "DeferredRenderer.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Scene/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxyRendererComponent.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTileDebug(
@@ -606,7 +606,7 @@ void FDeferredRenderer::Release()
     ReduceDepthShader.Reset();
 }
 
-void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FRendererScene* Scene)
+void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
 {
     const float RenderWidth  = float(FrameResources.CurrentWidth);
     const float RenderHeight = float(FrameResources.CurrentHeight);
@@ -774,7 +774,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
     }
 }
 
-void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene)
+void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin GeometryPass");
 

@@ -8,14 +8,14 @@
 #include "RayTracer.h"
 #include "DebugRenderer.h"
 #include "TemporalAA.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Application/Events.h"
 #include "Application/ApplicationEventHandler.h"
-#include "Engine/Scene/Actors/Actor.h"
-#include "Engine/Scene/Scene.h"
-#include "Engine/Scene/Camera.h"
+#include "Engine/World/Actors/Actor.h"
+#include "Engine/World/World.h"
+#include "Engine/World/Camera.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
@@ -84,7 +84,7 @@ public:
 
     bool Initialize();
 
-    void Tick(FRendererScene* Scene);
+    void Tick(FScene* Scene);
 
     void OnWindowResize(const FWindowEvent& Event);
 

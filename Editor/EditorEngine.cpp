@@ -5,7 +5,7 @@
 #include "Renderer/Renderer.h"
 #include "ViewportRenderer/ViewportRenderer.h"
 #include "Engine/Engine.h"
-#include "Engine/Scene/Scene.h"
+#include "Engine/Scene/World.h"
 #include "Engine/Scene/Lights/DirectionalLight.h"
 #include "Engine/Scene/Lights/PointLight.h"
 #include "Engine/Scene/Components/MeshComponent.h"

@@ -1,7 +1,7 @@
 #pragma once
 #include <Core/Core.h>
 #include <Core/Modules/ModuleManager.h>
-#include <Engine/Scene/Camera.h>
+#include <Engine/World/Camera.h>
 
 class SANDBOX_API FSandbox : public FGameModule
 {

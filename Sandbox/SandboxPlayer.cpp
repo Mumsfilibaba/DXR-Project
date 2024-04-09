@@ -1,9 +1,9 @@
 #include "SandboxPlayer.h"
 #include <Core/Misc/OutputDeviceLogger.h>
-#include <Engine/Scene/Camera.h>
-#include <Engine/Scene/Scene.h>
-#include <Engine/Scene/Actors/PlayerInput.h>
-#include <Engine/Scene/Components/InputComponent.h>
+#include <Engine/World/Camera.h>
+#include <Engine/World/World.h>
+#include <Engine/World/Actors/PlayerInput.h>
+#include <Engine/World/Components/InputComponent.h>
 
 FOBJECT_IMPLEMENT_CLASS(FSandboxPlayerController);
 

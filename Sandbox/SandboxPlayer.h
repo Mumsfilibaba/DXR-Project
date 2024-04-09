@@ -1,6 +1,6 @@
 #pragma once
-#include <Engine/Scene/Camera.h>
-#include <Engine/Scene/Actors/PlayerController.h>
+#include <Engine/World/Camera.h>
+#include <Engine/World/Actors/PlayerController.h>
 
 class SANDBOX_API FSandboxPlayerController : public FPlayerController
 {

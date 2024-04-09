@@ -9,8 +9,8 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"
-#include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Scene/Lights/DirectionalLight.h"
+#include "Engine/World/Lights/PointLight.h"
+#include "Engine/World/Lights/DirectionalLight.h"
 #include "RendererCore/TextureFactory.h"
 
 #define SUPPORT_VARIABLE_RATE_SHADING (0)
@@ -504,7 +504,7 @@ void FSceneRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
     INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
-void FSceneRenderer::Tick(FRendererScene* Scene)
+void FSceneRenderer::Tick(FScene* Scene)
 {
     Resources.BackBuffer = Resources.MainViewport->GetBackBuffer();
 

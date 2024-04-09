@@ -1,5 +1,5 @@
 #include "RendererModule.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "SceneRenderer.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Application/Application.h"
@@ -16,7 +16,7 @@ FRendererModule::FRendererModule()
 
 FRendererModule::~FRendererModule()
 {
-    for (FRendererScene* Scene : Scenes)
+    for (FScene* Scene : Scenes)
     {
         delete Scene;
     }
@@ -64,7 +64,7 @@ bool FRendererModule::Initialize()
 
 void FRendererModule::Tick()
 {
-    for (FRendererScene* Scene : Scenes)
+    for (FScene* Scene : Scenes)
     {
         // Performs frustum culling and updates visible primitives
         Scene->Tick();
@@ -86,16 +86,16 @@ void FRendererModule::Release()
     }
 }
 
-IRendererScene* FRendererModule::CreateRendererScene(FScene* Scene)
+IScene* FRendererModule::CreateScene(FWorld* World)
 {
-    FRendererScene* NewScene = new FRendererScene(Scene);
+    FScene* NewScene = new FScene(World);
     Scenes.Add(NewScene);
     return NewScene;
 }
 
-void FRendererModule::DestroyRendererScene(IRendererScene* Scene)
+void FRendererModule::DestroyScene(IScene* Scene)
 {
-    if (FRendererScene* SceneToRemove = static_cast<FRendererScene*>(Scene))
+    if (FScene* SceneToRemove = static_cast<FScene*>(Scene))
     {
         Scenes.Remove(SceneToRemove);
         delete SceneToRemove;

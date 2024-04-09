@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Math/Frustum.h"
-#include "RendererCore/Interfaces/IRendererScene.h"
+#include "RendererCore/Interfaces/IScene.h"
 
-class FScene;
+class FWorld;
 class FMaterial;
 class FDirectionalLight;
 
@@ -38,11 +38,11 @@ struct FLightView
     int32                   NumSubViews;
 };
 
-class FRendererScene : public IRendererScene
+class FScene : public IScene
 {
 public:
-    FRendererScene(FScene* InScene);
-    virtual ~FRendererScene();
+    FScene(FWorld* InWorld);
+    virtual ~FScene();
 
     // Update the scene this frame
     virtual void Tick() override final;
@@ -62,10 +62,10 @@ public:
     // Updates MeshBatches
     void UpdateBatches();
 
-    // Scene that is mirrored by this RendererScene
-    FScene* Scene;
+    // World that is mirrored by this RendererScene
+    FWorld* World;
 
-    // TODO: Differ the Renderer's camera from the Scene's
+    // TODO: Differ the Renderer's camera from the World's
     FCamera* Camera;
 
     // All Primitives in this scene

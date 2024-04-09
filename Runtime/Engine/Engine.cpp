@@ -53,13 +53,13 @@ static FAutoConsoleCommand GToggleFullscreen(
     FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
 
 FEngine::FEngine()
-    : Scene(nullptr)
+    : World(nullptr)
 {
 }
 
 FEngine::~FEngine()
 {
-    Scene = nullptr;
+    World = nullptr;
 }
 
 void FEngine::CreateMainWindow()
@@ -192,19 +192,19 @@ bool FEngine::Init()
     BaseMaterial->AlphaMask    = GEngine->BaseTexture;
     BaseMaterial->Initialize();
 
-    // Create a new scene
-    Scene = new FScene();
+    // Create a new world
+    World = new FWorld();
     if (IRendererModule* Renderer = IRendererModule::Get())
     {
-        if (IRendererScene* RendererScene = Renderer->CreateRendererScene(Scene))
+        if (IScene* RendererScene = Renderer->CreateScene(World))
         {
-            Scene->SetRendererScene(RendererScene);
+            World->SetSceneInterface(RendererScene);
         }
     }
 
     // Create a SceneViewport
     SceneViewport = MakeShared<FSceneViewport>(MainViewport);
-    SceneViewport->SetScene(Scene);
+    SceneViewport->SetWorld(World);
     MainViewport->SetViewportInterface(SceneViewport);
 
     // Create Widgets
@@ -222,9 +222,9 @@ bool FEngine::Init()
 
 bool FEngine::Start()
 {
-    if (Scene)
+    if (World)
     {
-        Scene->Start();
+        World->Start();
     }
     else
     {
@@ -238,9 +238,9 @@ void FEngine::Tick(FTimespan DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
-    if (Scene)
+    if (World)
     {
-        Scene->Tick(DeltaTime);
+        World->Tick(DeltaTime);
     }
 }
 
@@ -255,16 +255,16 @@ void FEngine::Release()
         ConsoleWidget.Reset();
     }
 
-    if (Scene)
+    if (World)
     {
-        SceneViewport->SetScene(nullptr);
+        SceneViewport->SetWorld(nullptr);
 
         if (IRendererModule* Renderer = IRendererModule::Get())
         {
-            Renderer->DestroyRendererScene(Scene->GetRendererScene());
+            Renderer->DestroyScene(World->GetSceneInterface());
         }
 
-        delete Scene;
+        delete World;
     }
 
     FAssetManager::Release();

@@ -3,7 +3,7 @@
 #include "FrameResources.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
-#include "Engine/Scene/Scene.h"
+#include "Engine/World/World.h"
 
 namespace HaltonPrivate
 {

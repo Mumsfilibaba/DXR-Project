@@ -4,7 +4,7 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 #include "Engine/Assets/MeshFactory.h"
-#include "Engine/Scene/Scene.h"
+#include "Engine/World/World.h"
 #include "RendererUtilities/GPUTextureCompressor.h"
 
 class FSkyboxRenderPass : public FRenderPass
@@ -18,7 +18,7 @@ public:
     }
 
     bool Initialize(FFrameResources& FrameResources);
-    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene);
+    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
     void Release();
 

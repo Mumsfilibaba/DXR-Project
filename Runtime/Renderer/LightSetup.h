@@ -3,8 +3,8 @@
 #include "Core/Math/Vector4.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
-#include "Engine/Scene/Scene.h"
-#include "Engine/Scene/Lights/DirectionalLight.h"
+#include "Engine/World/World.h"
+#include "Engine/World/Lights/DirectionalLight.h"
 
 #define MAX_LIGHTS_PER_TILE (1024)
 
@@ -107,7 +107,7 @@ struct RENDERER_API FLightSetup
     bool Initialize();
     void Release();
 
-    void BeginFrame(FRHICommandList& CommandList, FRendererScene* Scene);
+    void BeginFrame(FRHICommandList& CommandList, FScene* Scene);
 
     // PointLights
     TArray<FVector4>                           PointLightsPosRad;

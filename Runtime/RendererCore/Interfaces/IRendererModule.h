@@ -1,8 +1,8 @@
 #pragma once
-#include "IRendererScene.h"
+#include "IScene.h"
 #include "Core/Modules/ModuleManager.h"
 
-class FScene;
+class FWorld;
 
 struct IRendererModule : public FModuleInterface
 {
@@ -22,9 +22,9 @@ struct IRendererModule : public FModuleInterface
     // Release the Renderer from the EngineLoop
     virtual void Release() = 0;
 
-    // Create a Renderer version of the Scene
-    virtual IRendererScene* CreateRendererScene(FScene* InScene) = 0;
+    // Create a Renderer version of the World
+    virtual IScene* CreateScene(FWorld* InScene) = 0;
 
     // Destroy a Renderer Scene
-    virtual void DestroyRendererScene(IRendererScene* Scene) = 0;
+    virtual void DestroyScene(IScene* Scene) = 0;
 };

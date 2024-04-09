@@ -71,7 +71,7 @@ private:
 };
 
 
-class FScene;
+class FWorld;
 class FComponent;
 
 class ENGINE_API FActor : public FObject
@@ -158,17 +158,17 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the Scene that owns the actor
-     * @return - Returns the Scene that owns the actor
+     * @brief  - Retrieve the World that owns the actor
+     * @return - Returns the World that owns the actor
      */
-    FScene* GetSceneOwner() const
+    FWorld* GetWorld() const
     {
-        return SceneOwner;
+        return World;
     }
 
-    void SetSceneOwner(FScene* InSceneOwner)
+    void SetWorld(FWorld* InWorld)
     {
-        SceneOwner = InSceneOwner;
+        World = InWorld;
     }
 
     /**
@@ -213,7 +213,7 @@ public:
 
 private:
     FString Name;
-    FScene* SceneOwner = nullptr;
+    FWorld* World;
 
     bool bIsStartable : 1;
     bool bIsTickable  : 1;

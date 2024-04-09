@@ -3,7 +3,7 @@
 #include "FrameResources.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
-#include "Engine/Scene/Scene.h"
+#include "Engine/World/World.h"
 
 class FRayTracer : public FRenderPass
 {
@@ -16,7 +16,7 @@ public:
     bool Initialize(FFrameResources& Resources);
     void Release();
 
-    void PreRender(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene);
+    void PreRender(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
 
 private:
     FRHIRayTracingPipelineStateRef Pipeline;

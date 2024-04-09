@@ -4,7 +4,7 @@
 #include "Core/Containers/ArrayView.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
-#include "Engine/Scene/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxyRendererComponent.h"
 
 enum EGBufferIndex
 {

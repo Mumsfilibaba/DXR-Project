@@ -99,7 +99,7 @@ void FRayTracer::Release()
     RayClosestHitShader.Reset();
 }
 
-void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene)
+void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
     UNREFERENCED_VARIABLE(Scene);
 

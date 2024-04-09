@@ -103,7 +103,7 @@ struct FMaterialData
 
 struct ENGINE_API FSceneData
 {
-    void AddToScene(class FScene* Scene);
+    void AddToWorld(class FWorld* World);
 
     bool HasData() const
     {

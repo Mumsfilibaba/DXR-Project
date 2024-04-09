@@ -3,7 +3,7 @@
 #include "FrameResources.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
-#include "Engine/Scene/Scene.h"
+#include "Engine/World/World.h"
 
 class FDebugRenderer : public FRenderPass
 {
@@ -18,8 +18,8 @@ public:
     bool Initialize(FFrameResources& Resources);
     void Release();
 
-    void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene);
-    void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FRendererScene* Scene);
+    void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
+    void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
 
 private:
     FRHIBufferRef                AABBVertexBuffer;

@@ -3,7 +3,7 @@
 #include "RendererCore/Interfaces/IRendererModule.h"
 
 class FSceneRenderer;
-class FRendererScene;
+class FScene;
 
 class FRendererModule : public IRendererModule
 {
@@ -23,12 +23,12 @@ public:
     virtual void Release() override final;
 
     // Creates and adds a scene to the list of scenes
-    virtual IRendererScene* CreateRendererScene(FScene* Scene) override final;
+    virtual IScene* CreateScene(FWorld* World) override final;
     
     // Destroys and removes a scene from the list of scenes
-    virtual void DestroyRendererScene(IRendererScene* Scene) override final;
+    virtual void DestroyScene(IScene* Scene) override final;
 
-    const TArray<FRendererScene*>& GetScenes() const
+    const TArray<FScene*>& GetScenes() const
     {
         return Scenes;
     }
@@ -39,7 +39,7 @@ private:
     FSceneRenderer* Renderer;
 
     // All scenes that has been allocated and will be rendered
-    TArray<FRendererScene*> Scenes;
+    TArray<FScene*> Scenes;
 
     // Delegate that is called to properly initialize ImGui for this module
     FDelegateHandle PostApplicationCreateHandle;

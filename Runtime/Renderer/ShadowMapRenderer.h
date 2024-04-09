@@ -4,7 +4,7 @@
 #include "LightSetup.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
-#include "Engine/Scene/Scene.h"
+#include "Engine/World/World.h"
 
 struct FCascadeGenerationInfo
 {
@@ -90,10 +90,10 @@ public:
     void Release();
 
      /** @brief - Render Point light shadows */
-    void RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, FRendererScene* Scene);
+    void RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, FScene* Scene);
 
      /** @brief - Render Directional light shadows */
-    void RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FRendererScene* Scene);
+    void RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FScene* Scene);
 
      /** @brief - Render ShadowMasks */
     void RenderShadowMasks(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources);

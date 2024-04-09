@@ -1,6 +1,6 @@
 #include "Actor.h"
-#include "Engine/Scene/Scene.h"
-#include "Engine/Scene/Components/Component.h"
+#include "Engine/World/World.h"
+#include "Engine/World/Components/Component.h"
 
 FOBJECT_IMPLEMENT_CLASS(FActor);
 
@@ -59,7 +59,7 @@ void FActorTransform::CalculateMatrix()
 FActor::FActor(const FObjectInitializer& ObjectInitializer)
     : FObject(ObjectInitializer)
     , Name()
-    , SceneOwner(nullptr)
+    , World(nullptr)
     , bIsStartable(true)
     , bIsTickable(true)
     , Transform()
@@ -110,7 +110,7 @@ void FActor::AddComponent(FComponent* InComponent)
 
     if (FRendererComponent* RendererComponent = Cast<FRendererComponent>(InComponent))
     {
-        SceneOwner->AddRendererComponent(RendererComponent);
+        World->AddRendererComponent(RendererComponent);
     }
 }
 

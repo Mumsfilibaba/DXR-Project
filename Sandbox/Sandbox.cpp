@@ -6,17 +6,17 @@
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
 #include <Engine/Assets/AssetLoaders/MeshImporter.h>
-#include <Engine/Scene/Scene.h>
-#include <Engine/Scene/Lights/PointLight.h>
-#include <Engine/Scene/Lights/DirectionalLight.h>
-#include <Engine/Scene/Actors/PlayerController.h>
-#include <Engine/Scene/Components/MeshComponent.h>
+#include <Engine/World/World.h>
+#include <Engine/World/Lights/PointLight.h>
+#include <Engine/World/Lights/DirectionalLight.h>
+#include <Engine/World/Actors/PlayerController.h>
+#include <Engine/World/Components/MeshComponent.h>
 #include <Application/Application.h>
 
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (0)
+#define LOAD_SPONZA         (1)
 #define LOAD_BISTRO         (0)
 #define LOAD_SUN_TEMPLE     (0)
 #define LOAD_EMERALD_SQUARE (0)
@@ -33,12 +33,12 @@ bool FSandbox::Init()
         return false;
     }
 
-    // Initialize Scene
+    // Initialize World
     MAYBE_UNUSED FActor*         NewActor     = nullptr;
     MAYBE_UNUSED FMeshComponent* NewComponent = nullptr;
 
-    // Store the Engine's scene pointer 
-    FScene* CurrentScene = GEngine->Scene;
+    // Store the Engine's world pointer 
+    FWorld* CurrentWorld = GEngine->World;
 
     // Load Scene
     {
@@ -67,7 +67,7 @@ bool FSandbox::Init()
             }
         }
         
-        SceneData.AddToScene(CurrentScene);
+        SceneData.AddToWorld(CurrentWorld);
 
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
@@ -100,7 +100,7 @@ bool FSandbox::Init()
         }
     #endif
 
-        SceneData.AddToScene(CurrentScene);
+        SceneData.AddToWorld(CurrentWorld);
     }
 
 #if LOAD_SPONZA
@@ -127,7 +127,7 @@ bool FSandbox::Init()
     {
         for (uint32 x = 0; x < SphereCountX; x++)
         {
-            NewActor = CurrentScene->CreateActor();
+            NewActor = CurrentWorld->CreateActor();
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
@@ -189,7 +189,7 @@ bool FSandbox::Init()
 
             const float Offset = -60.0f;
 
-            NewActor = CurrentScene->CreateActor();
+            NewActor = CurrentWorld->CreateActor();
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(PositionX, PositionY + 10.0f, Offset + PositionZ);
@@ -230,7 +230,7 @@ bool FSandbox::Init()
     // Create Other Meshes
     FMeshData CubeMeshData = FMeshFactory::CreateCube();
 
-    NewActor = CurrentScene->CreateActor();
+    NewActor = CurrentWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Cube");
@@ -269,7 +269,7 @@ bool FSandbox::Init()
         }
     }
 
-    NewActor = CurrentScene->CreateActor();
+    NewActor = CurrentWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Plane");
@@ -324,22 +324,32 @@ bool FSandbox::Init()
     StreetLightMat->Initialize();
     StreetLightMat->SetDebugName("StreetLightMaterial");
 
-    TSharedPtr<FMesh> StreetLight = StreetLightData.HasModelData() ? FMesh::Create(StreetLightData.Models.FirstElement().Mesh) : nullptr;
+    TArray<TSharedPtr<FMesh>> StreetLightMeshes;
+    StreetLightMeshes.Reserve(StreetLightData.Models.Size());
+
+    for (int32 i = 0; i < StreetLightData.Models.Size(); i++)
+    {
+        StreetLightMeshes.Add(FMesh::Create(StreetLightData.Models[i].Mesh));
+    }
+
     for (uint32 i = 0; i < 4; i++)
     {
-        NewActor = CurrentScene->CreateActor();
-        if (NewActor)
+        for (int32 MeshIndex = 0; MeshIndex < StreetLightMeshes.Size(); MeshIndex++)
         {
-            NewActor->SetName("Street Light " + TTypeToString<uint32>::ToString(i));
-            NewActor->GetTransform().SetUniformScale(0.25f);
-            NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
-
-            NewComponent = NewObject<FMeshComponent>();
-            if (NewComponent)
+            NewActor = CurrentWorld->CreateActor();
+            if (NewActor)
             {
-                NewComponent->SetMesh(StreetLight);
-                NewComponent->SetMaterial(StreetLightMat);
-                NewActor->AddComponent(NewComponent);
+                NewActor->SetName("Street Light (" + StreetLightData.Models[MeshIndex].Name + ")" + TTypeToString<uint32>::ToString(i));
+                NewActor->GetTransform().SetUniformScale(0.25f);
+                NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
+
+                NewComponent = NewObject<FMeshComponent>();
+                if (NewComponent)
+                {
+                    NewComponent->SetMesh(StreetLightMeshes[MeshIndex]);
+                    NewComponent->SetMaterial(StreetLightMat);
+                    NewActor->AddComponent(NewComponent);
+                }
             }
         }
     }
@@ -364,7 +374,7 @@ bool FSandbox::Init()
     TSharedPtr<FMesh> Pillar = PillarData.HasModelData() ? FMesh::Create(PillarData.Models.FirstElement().Mesh) : nullptr;
     for (uint32 i = 0; i < 8; i++)
     {
-        NewActor = CurrentScene->CreateActor();
+        NewActor = CurrentWorld->CreateActor();
         if (NewActor)
         {
             NewActor->SetName("Pillar " + TTypeToString<uint32>::ToString(i));
@@ -385,8 +395,8 @@ bool FSandbox::Init()
     if (FSandboxPlayerController* Player = NewObject<FSandboxPlayerController>())
     {
         // TODO: Camera should be a component
-        CurrentScene->AddCamera(Player->GetCamera());
-        CurrentScene->AddActor(Player);
+        CurrentWorld->AddCamera(Player->GetCamera());
+        CurrentWorld->AddActor(Player);
     }
 
     // Add PointLights
@@ -402,7 +412,7 @@ bool FSandbox::Init()
         Light0->SetShadowFarPlane(ShadowFarPlane);
         Light0->SetIntensity(Intensity);
         Light0->SetShadowCaster(true);
-        CurrentScene->AddLight(Light0);
+        CurrentWorld->AddLight(Light0);
     }
     if (FPointLight* Light1 = NewObject<FPointLight>())
     {
@@ -413,7 +423,7 @@ bool FSandbox::Init()
         Light1->SetShadowFarPlane(ShadowFarPlane);
         Light1->SetIntensity(Intensity);
         Light1->SetShadowCaster(true);
-        CurrentScene->AddLight(Light1);
+        CurrentWorld->AddLight(Light1);
     }
     if (FPointLight* Light2 = NewObject<FPointLight>())
     {
@@ -424,7 +434,7 @@ bool FSandbox::Init()
         Light2->SetShadowFarPlane(ShadowFarPlane);
         Light2->SetIntensity(Intensity);
         Light2->SetShadowCaster(true);
-        CurrentScene->AddLight(Light2);
+        CurrentWorld->AddLight(Light2);
     }
     if (FPointLight* Light3 = NewObject<FPointLight>())
     {
@@ -435,7 +445,7 @@ bool FSandbox::Init()
         Light3->SetShadowFarPlane(ShadowFarPlane);
         Light3->SetIntensity(Intensity);
         Light3->SetShadowCaster(true);
-        CurrentScene->AddLight(Light3);
+        CurrentWorld->AddLight(Light3);
     }
 #endif
 
@@ -458,13 +468,13 @@ bool FSandbox::Init()
                 Light->SetPosition(x, y, z);
                 Light->SetColor(RandomFloats(Generator), RandomFloats(Generator), RandomFloats(Generator));
                 Light->SetIntensity(Intentsity);
-                FScene->AddLight(Light);
+                FWorld->AddLight(Light);
             }
         }
     }
 #endif
 
-    // Add DirectionalLight- Source
+    // Add DirectionalLight
     if (FDirectionalLight* Light4 = NewObject<FDirectionalLight>())
     {
         Light4->SetShadowBias(0.0005f);
@@ -477,13 +487,13 @@ bool FSandbox::Init()
         Light4->SetRotation(FVector3(FMath::ToRadians(35.0f), FMath::ToRadians(135.0f), 0.0f));
     #endif
         Light4->SetCascadeSplitLambda(0.9f);
-        CurrentScene->AddLight(Light4);
+        CurrentWorld->AddLight(Light4);
     }
 
     if (FLightProbe* LightProbe = NewObject<FLightProbe>())
     {
         LightProbe->SetPosition(FVector3(0.0f));
-        CurrentScene->AddLightProbe(LightProbe);
+        CurrentWorld->AddLightProbe(LightProbe);
     }
 
     LOG_INFO("Finished loading game");

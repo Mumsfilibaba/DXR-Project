@@ -1,5 +1,5 @@
 #include "ShadowMapRenderer.h"
-#include "RendererScene.h"
+#include "Scene.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -7,9 +7,9 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Scene/Lights/DirectionalLight.h"
-#include "Engine/Scene/Components/ProxyRendererComponent.h"
+#include "Engine/World/Lights/PointLight.h"
+#include "Engine/World/Lights/DirectionalLight.h"
+#include "Engine/World/Components/ProxyRendererComponent.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarCascadeDebug(
@@ -504,7 +504,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
     return true;
 }
 
-void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, FRendererScene* Scene)
+void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, FScene* Scene)
 {
     CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
 
@@ -578,7 +578,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
     CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
 }
 
-void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FRendererScene* Scene)
+void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FScene* Scene)
 {
     // Generate matrices for directional light
     if (CVarGPUGeneratedCascades.GetValue())

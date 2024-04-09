@@ -5,29 +5,29 @@
 #include "Reflections/LightProbe.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Containers/Array.h"
-#include "RendererCore/Interfaces/IRendererScene.h"
+#include "RendererCore/Interfaces/IScene.h"
 
 // TODO: Remove
-#include "Engine/Scene/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxyRendererComponent.h"
 
 class FRendererComponent;
 
-class ENGINE_API FScene
+class ENGINE_API FWorld
 {
 public:
 
     /**
      * @brief - Default constructor
      */
-    FScene();
+    FWorld();
 
     /**
      * @brief - Destructor
      */
-    ~FScene();
+    ~FWorld();
 
     /**
-     * @brief  - Create a new actor and add it to the scene 
+     * @brief  - Create a new actor and add it to the world 
      * @return - Returns the newly created actor
      */
     FActor* CreateActor();
@@ -38,59 +38,59 @@ public:
     void Start();
 
      /**
-      * @brief          - Ticks all actors in the scene, should be called once per frame
+      * @brief           - Ticks all actors in the world, should be called once per frame
       * @param DeltaTime - The time between this and the last tick
       */
     void Tick(FTimespan DeltaTime);
 
     /**
-     * @brief          - Adds a camera into the scene 
-     * @param InCamera - Camera to add to the scene
+     * @brief          - Adds a camera into the world 
+     * @param InCamera - Camera to add to the world
      */
     void AddCamera(FCamera* InCamera);
 
     /**
-     * @brief         - Adds an actor into the scene 
-     * @param InActor - Actor to add to the scene
+     * @brief         - Adds an actor into the world 
+     * @param InActor - Actor to add to the world
      */
     void AddActor(FActor* InActor);
 
     /**
-     * @brief                    - Adds a player-controller into the scene
-     * @param InPlayerController - PlayerController to add to the scene
+     * @brief                    - Adds a player-controller into the world
+     * @param InPlayerController - PlayerController to add to the world
      */
     void AddPlayerController(FPlayerController* InPlayerController);
 
     /**
-     * @brief         - Adds an light into the scene
-     * @param InLight - Light to add to the scene
+     * @brief         - Adds an light into the world
+     * @param InLight - Light to add to the world
      */
     void AddLight(FLight* InLight);
 
     /**
-     * @brief              - Adds a light-probe into the scene
-     * @param InLightProbe - LightProbe to add to the scene
+     * @brief              - Adds a light-probe into the world
+     * @param InLightProbe - LightProbe to add to the world
      */
     void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
      * @brief                   - Function called when adding a new RendererComponent
-     * @param RendererComponent - New RendererComponent just added to the scene
+     * @param RendererComponent - New RendererComponent just added to the world
      */
     void AddRendererComponent(FRendererComponent* RendererComponent);
 
     /**
-      * @brief                 - Sets the scene representation in the renderer
-      * @param InRendererScene - Interface to the renderer scene representation
+      * @brief         - Sets the scene representation in the renderer
+      * @param InScene - Interface to the renderer scene representation
       */
-    void SetRendererScene(IRendererScene* InRendererScene);
+    void SetSceneInterface(IScene* InScene);
 
     /**
      * @return - Returns the Renderer representation of this scene 
      */
-    IRendererScene* GetRendererScene() const
+    IScene* GetSceneInterface() const
     {
-        return RendererScene;
+        return Scene;
     }
 
     /**
@@ -115,7 +115,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all actors in the scene
+     * @return - Returns a reference to an array of all actors in the world
      */
     const TArray<FActor*>& GetActors() const
     {
@@ -123,7 +123,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all actors in the scene
+     * @return - Returns a reference to an array of all actors in the world
      */
     const TArray<FPlayerController*>& GetPlayerControllers() const
     {
@@ -131,7 +131,7 @@ public:
     }
 
     /**
-     * @return - Returns a pointer to the first PlayerController in the scene
+     * @return - Returns a pointer to the first PlayerController in the world
      */
     FPlayerController* GetFirstPlayerController() const
     {
@@ -144,7 +144,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all lights in the scene
+     * @return - Returns a reference to an array of all lights in the world
      */
     const TArray<FLight*>& GetLights() const
     {
@@ -152,7 +152,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all light-probes in the scene
+     * @return - Returns a reference to an array of all light-probes in the world
      */
     const TArray<FLightProbe*>& GetLightProbes() const
     {
@@ -160,7 +160,7 @@ public:
     }
 
     /**
-     * @return - Returns a pointer to the camera of the scene
+     * @return - Returns a pointer to the camera of the world
      */
     FCamera* GetCamera() const
     {
@@ -168,8 +168,9 @@ public:
     }
 
 private:
-    FCamera*                   CurrentCamera;
-    IRendererScene*            RendererScene;
+    FCamera* CurrentCamera;
+    IScene*  Scene;
+
     // These actors are the "permanent" storage of actors
     TArray<FActor*>            Actors;
     TArray<FPlayerController*> PlayerControllers;

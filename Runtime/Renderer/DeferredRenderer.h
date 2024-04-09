@@ -3,7 +3,7 @@
 #include "FrameResources.h"
 #include "LightSetup.h"
 #include "Core/Containers/Map.h"
-#include "Engine/Scene/Scene.h"
+#include "Engine/World/World.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 
@@ -20,8 +20,8 @@ public:
     bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FRendererScene* Scene);
-    void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FRendererScene* Scene);
+    void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
+    void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
     void RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
 

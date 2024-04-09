@@ -1,5 +1,5 @@
 #pragma once
-#include "Scene.h"
+#include "World.h"
 #include "Application/Viewport.h"
 #include "Core/Containers/SharedPtr.h"
 
@@ -50,21 +50,21 @@ public:
         return Viewport.IsValid() ? TSharedPtr<const FViewport>(Viewport) : nullptr;
     }
 
-    void SetScene(FScene* InScene) 
+    void SetWorld(FWorld* InWorld) 
     { 
-        Scene = InScene; 
+        World = InWorld; 
     }
 
-    FScene* GetSceneOwner() const 
+    FWorld* GetWorldOwner() const 
     {
-        return Scene; 
+        return World; 
     }
 
     FPlayerController* GetFirstPlayerController()
     {
-        if (Scene)
+        if (World)
         {
-            return Scene->GetFirstPlayerController();
+            return World->GetFirstPlayerController();
         }
 
         return nullptr;
@@ -72,5 +72,5 @@ public:
 
 private:
     TWeakPtr<FViewport> Viewport;
-    FScene*             Scene;
+    FWorld*             World;
 };

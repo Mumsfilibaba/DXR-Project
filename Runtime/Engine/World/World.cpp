@@ -1,18 +1,18 @@
-#include "Scene.h"
+#include "World.h"
 #include "Components/MeshComponent.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
 #include "RHI/RHIResources.h"
 
-FScene::FScene()
+FWorld::FWorld()
     : Actors()
     , CurrentCamera(nullptr)
-    , RendererScene(nullptr)
+    , Scene(nullptr)
 {
 }
 
-FScene::~FScene()
+FWorld::~FWorld()
 {
     for (FActor* CurrentActor : Actors)
     {
@@ -27,7 +27,7 @@ FScene::~FScene()
     SAFE_DELETE(CurrentCamera);
 }
 
-FActor* FScene::CreateActor()
+FActor* FWorld::CreateActor()
 {
     FActor* NewActor = NewObject<FActor>();
     if (NewActor)
@@ -39,7 +39,7 @@ FActor* FScene::CreateActor()
     return nullptr;
 }
 
-void FScene::Start()
+void FWorld::Start()
 {
     // Setup the input components for the PlayerControllers
     for (FPlayerController* PlayerController : PlayerControllers)
@@ -57,7 +57,7 @@ void FScene::Start()
     }
 }
 
-void FScene::Tick(FTimespan DeltaTime)
+void FWorld::Tick(FTimespan DeltaTime)
 {
     for (FActor* Actor : Actors)
     {
@@ -68,7 +68,7 @@ void FScene::Tick(FTimespan DeltaTime)
     }
 }
 
-void FScene::AddCamera(FCamera* InCamera)
+void FWorld::AddCamera(FCamera* InCamera)
 {
     if (CurrentCamera)
     {
@@ -77,19 +77,19 @@ void FScene::AddCamera(FCamera* InCamera)
 
     CurrentCamera = InCamera;
 
-    if (RendererScene)
+    if (Scene)
     {
-        RendererScene->AddCamera(CurrentCamera);
+        Scene->AddCamera(CurrentCamera);
     }
 }
 
-void FScene::AddActor(FActor* InActor)
+void FWorld::AddActor(FActor* InActor)
 {
     if (InActor)
     {
         // Set this scene to be the owner of the added actor
-        CHECK(InActor->GetSceneOwner() == nullptr);
-        InActor->SetSceneOwner(this);
+        CHECK(InActor->GetWorld() == nullptr);
+        InActor->SetWorld(this);
         Actors.Emplace(InActor);
     }
     else
@@ -108,7 +108,7 @@ void FScene::AddActor(FActor* InActor)
     }
 }
 
-void FScene::AddPlayerController(FPlayerController* InPlayerController)
+void FWorld::AddPlayerController(FPlayerController* InPlayerController)
 {
     if (InPlayerController)
     {
@@ -120,7 +120,7 @@ void FScene::AddPlayerController(FPlayerController* InPlayerController)
     }
 }
 
-void FScene::AddLight(FLight* InLight)
+void FWorld::AddLight(FLight* InLight)
 {
     if (InLight)
     {
@@ -131,13 +131,13 @@ void FScene::AddLight(FLight* InLight)
         DEBUG_BREAK();
     }
 
-    if (RendererScene)
+    if (Scene)
     {
-        RendererScene->AddLight(InLight);
+        Scene->AddLight(InLight);
     }
 }
 
-void FScene::AddLightProbe(FLightProbe* InLightProbe)
+void FWorld::AddLightProbe(FLightProbe* InLightProbe)
 {
     if (InLightProbe)
     {
@@ -149,25 +149,25 @@ void FScene::AddLightProbe(FLightProbe* InLightProbe)
     }
 }
 
-void FScene::AddRendererComponent(FRendererComponent* RendererComponent)
+void FWorld::AddRendererComponent(FRendererComponent* RendererComponent)
 {
-    if (RendererScene && RendererComponent)
+    if (Scene && RendererComponent)
     {
         if (FProxyRendererComponent* ProxyComponent = RendererComponent->CreateProxyComponent())
         {
-            RendererScene->AddProxyComponent(ProxyComponent);
+            Scene->AddProxyComponent(ProxyComponent);
         }
     }
 }
 
-void FScene::SetRendererScene(IRendererScene* InRendererScene)
+void FWorld::SetSceneInterface(IScene* InScene)
 {
-    if (InRendererScene)
+    if (InScene)
     {
-        RendererScene = InRendererScene;
+        Scene = InScene;
     }
     else
     {
-        LOG_WARNING("Trying to add a null RendererScene");
+        LOG_WARNING("Trying to add a null SceneInterface");
     }
 }

@@ -1,6 +1,6 @@
 #pragma once
-#include <Engine/Scene/Actors/Actor.h>
-#include <Engine/Scene/Components/Component.h>
+#include <Engine/World/Actors/Actor.h>
+#include <Engine/World/Components/Component.h>
 
 class SANDBOX_API FMovingBallComponent : public FComponent
 {

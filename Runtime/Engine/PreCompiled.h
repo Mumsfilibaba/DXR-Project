@@ -19,24 +19,24 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
 
-#include "Engine/Scene/Actors/Actor.h"
-#include "Engine/Scene/Actors/PlayerInput.h"
-#include "Engine/Scene/Actors/PlayerController.h"
+#include "Engine/World/Actors/Actor.h"
+#include "Engine/World/Actors/PlayerInput.h"
+#include "Engine/World/Actors/PlayerController.h"
 
-#include "Engine/Scene/Components/Component.h"
-#include "Engine/Scene/Components/MeshComponent.h"
-#include "Engine/Scene/Components/InputComponent.h"
+#include "Engine/World/Components/Component.h"
+#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/World/Components/InputComponent.h"
 
-#include "Engine/Scene/Lights/DirectionalLight.h"
-#include "Engine/Scene/Lights/Light.h"
-#include "Engine/Scene/Lights/PointLight.h"
-#include "Engine/Scene/Lights/SpotLight.h"
+#include "Engine/World/Lights/DirectionalLight.h"
+#include "Engine/World/Lights/Light.h"
+#include "Engine/World/Lights/PointLight.h"
+#include "Engine/World/Lights/SpotLight.h"
 
-#include "Engine/Scene/Reflections/LightProbe.h"
+#include "Engine/World/Reflections/LightProbe.h"
 
-#include "Engine/Scene/Camera.h"
-#include "Engine/Scene/Scene.h"
-#include "Engine/Scene/SceneViewport.h"
+#include "Engine/World/Camera.h"
+#include "Engine/World/World.h"
+#include "Engine/World/SceneViewport.h"
 
 #include "Engine/Widgets/ConsoleWidget.h"
 #include "Engine/Widgets/FrameProfilerWidget.h"

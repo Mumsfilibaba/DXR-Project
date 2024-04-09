@@ -3,14 +3,14 @@
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
     : IViewport()
     , Viewport(InViewport)
-    , Scene(nullptr)
+    , World(nullptr)
 {
 }
 
 FSceneViewport::~FSceneViewport()
 {
     Viewport = nullptr;
-    Scene    = nullptr;
+    World    = nullptr;
 }
 
 FResponse FSceneViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
