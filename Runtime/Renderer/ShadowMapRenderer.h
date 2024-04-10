@@ -6,24 +6,7 @@
 #include "RHI/RHIShader.h"
 #include "Engine/World/World.h"
 
-struct FCascadeGenerationInfo
-{
-    FMatrix4 ShadowMatrix;
-
-    FVector3 LightDirection;
-    float    CascadeSplitLambda;
-    
-    FVector3 LightUp;
-    float    CascadeResolution;
-
-    int32    bDepthReductionEnabled;
-    int32    MaxCascadeIndex;
-    int32    Padding1;
-    int32    Padding2;
-};
-
-MARK_AS_REALLOCATABLE(FCascadeGenerationInfo);
-
+#define NUM_FRUSTUM_PLANES (6)
 
 struct FCascadeMatrices
 {
@@ -32,9 +15,6 @@ struct FCascadeMatrices
 };
 
 MARK_AS_REALLOCATABLE(FCascadeMatrices);
-
-
-#define NUM_FRUSTUM_PLANES (6)
 
 struct FCascadeSplit
 {
@@ -57,7 +37,6 @@ struct FCascadeSplit
 
 MARK_AS_REALLOCATABLE(FCascadeSplit);
 
-
 struct FPerShadowMap
 {
     FMatrix4 Matrix;
@@ -66,7 +45,6 @@ struct FPerShadowMap
 };
 
 MARK_AS_REALLOCATABLE(FPerShadowMap);
-
 
 struct FPerCascade
 {
@@ -126,11 +104,7 @@ private:
     FRHIPixelShaderRef           PointLightPixelShader;
 
     FRHIBufferRef                PerCascadeBuffer;
-    FRHIBufferRef                CascadeGenerationData;
 
     FRHIComputePipelineStateRef  CascadeGen;
     FRHIComputeShaderRef         CascadeGenShader;
-
-    bool   bUpdateDirLight = true;
-    uint64 DirLightFrame   = 0;
 };

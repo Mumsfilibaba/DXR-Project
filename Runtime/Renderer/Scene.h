@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Containers/Array.h"
 #include "Core/Math/Frustum.h"
+#include "Core/Math/Vector3.h"
 #include "RendererCore/Interfaces/IScene.h"
 
 class FWorld;
@@ -15,13 +16,13 @@ struct FMeshBatch
     {
     }
 
-    FMaterial*                       Material;
+    FMaterial*                    Material;
     TArray<FProxySceneComponent*> Primitives;
 };
 
 struct FLightView
 {
-    typedef TArray<FMeshBatch>               MeshBatchArray;
+    typedef TArray<FMeshBatch>            MeshBatchArray;
     typedef TArray<FProxySceneComponent*> PrimitivesArray;
 
     enum ELightType : int32
@@ -31,7 +32,28 @@ struct FLightView
         LightType_Point,
     };
 
+    struct FShadowData
+    {
+        FMatrix4 Matrix;
+        FVector3 Position;
+        float    NearPlane;
+        float    FarPlane;
+    };
+
+    FLightView()
+    {
+    }
+
+    FLightView(int32 NumSubViews)
+    {
+        Frustums.Resize(NumSubViews);
+        Primitives.Resize(NumSubViews);
+        MeshBatches.Resize(NumSubViews);
+        ShadowData.Resize(NumSubViews);
+    }
+
     TArray<FFrustum>        Frustums;
+    TArray<FShadowData>     ShadowData;
     TArray<PrimitivesArray> Primitives;
     TArray<MeshBatchArray>  MeshBatches;
     ELightType              LightType;
@@ -56,6 +78,9 @@ public:
     // TODO: Adds a new mesh to be drawn, but most renderer primitives should take this path
     virtual void AddProxyComponent(FProxySceneComponent* InComponent) override final;
 
+    // Update Lights
+    void UpdateLights();
+
     // Performs frustum culling
     void UpdateVisibility();
 
@@ -78,8 +103,9 @@ public:
     TArray<FMeshBatch> VisibleMeshBatches;
 
     // All Lights in the Scene
-    TArray<FLight*>    Lights;
-    TArray<FLightView> LightViews;
+    TArray<FLight*>     Lights;
+    TArray<FLightView>  LightViews;
+    TArray<FLightView*> PointLightViews;
 
     // NOTE: Currently a single DirectionalLight is supported
     int32 DirectionalLightIndex;

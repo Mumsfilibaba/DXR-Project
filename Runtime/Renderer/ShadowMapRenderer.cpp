@@ -365,18 +365,6 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
 
     // Create buffers for cascade matrix generation
     {
-        FRHIBufferDesc CascadeGenerationDataDesc(sizeof(FCascadeGenerationInfo), sizeof(FCascadeGenerationInfo), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-        CascadeGenerationData = RHICreateBuffer(CascadeGenerationDataDesc, EResourceAccess::ConstantBuffer, nullptr);
-        if (!CascadeGenerationData)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            CascadeGenerationData->SetDebugName("Cascade GenerationData");
-        }
-
         FRHIBufferDesc CascadeMatrixBufferDesc(sizeof(FCascadeMatrices) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatrices), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
         LightSetup.CascadeMatrixBuffer = RHICreateBuffer(CascadeMatrixBufferDesc, EResourceAccess::UnorderedAccess, nullptr);
         if (!LightSetup.CascadeMatrixBuffer)
@@ -386,7 +374,7 @@ bool FShadowMapRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& Fr
         }
         else
         {
-            LightSetup.CascadeMatrixBuffer->SetDebugName("Cascade MatrixBuffer");
+            LightSetup.CascadeMatrixBuffer->SetDebugName("Cascade Matrices Buffer");
         }
 
         FRHIBufferSRVDesc SRVInitializer(LightSetup.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
@@ -527,13 +515,13 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
         } ShadowPerObjectBuffer;
 
         FPerShadowMap PerShadowMapData;
-        for (int32 Cube = 0; Cube < LightSetup.PointLightShadowMapsGenerationData.Size(); ++Cube)
+        for (int32 CubeIndex = 0; CubeIndex < Scene->PointLightViews.Size(); ++CubeIndex)
         {
-            auto& Data = LightSetup.PointLightShadowMapsGenerationData[Cube];
-            FLightView& LightView = Scene->LightViews[Data.LightIndex];
+            FLightView* LightView = Scene->PointLightViews[CubeIndex];
             for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
             {
-                PerShadowMapData.Matrix   = Data.Matrix[FaceIndex];
+                FLightView::FShadowData& Data = LightView->ShadowData[FaceIndex];
+                PerShadowMapData.Matrix   = Data.Matrix;
                 PerShadowMapData.Position = Data.Position;
                 PerShadowMapData.FarPlane = Data.FarPlane;
 
@@ -541,7 +529,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 CommandList.UpdateBuffer(PerShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FPerShadowMap)), &PerShadowMapData);
                 CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-                const uint32 ArrayIndex = (Cube * RHI_NUM_CUBE_FACES) + FaceIndex;
+                const uint32 ArrayIndex = (CubeIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
                 FRHIRenderPassDesc RenderPass;
                 RenderPass.DepthStencilView = FRHIDepthStencilView(LightSetup.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
 
@@ -554,7 +542,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
                 FScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
                 CommandList.SetScissorRect(ScissorRegion);
 
-                for (const FMeshBatch& Batch : LightView.MeshBatches[FaceIndex])
+                for (const FMeshBatch& Batch : LightView->MeshBatches[FaceIndex])
                 {
                     for (FProxySceneComponent* Component : Batch.Primitives)
                     {
@@ -588,33 +576,10 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
         CommandList.TransitionBuffer(LightSetup.CascadeMatrixBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
         CommandList.TransitionBuffer(LightSetup.CascadeSplitsBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
-        FCascadeGenerationInfo GenerationInfo;
-        FMemory::Memzero(&GenerationInfo);
-        
-        GenerationInfo.CascadeSplitLambda = LightSetup.CascadeSplitLambda;
-        GenerationInfo.LightUp            = LightSetup.DirectionalLightData.UpVector;
-        GenerationInfo.LightDirection     = LightSetup.DirectionalLightData.Direction;
-        GenerationInfo.CascadeResolution  = static_cast<float>(LightSetup.CascadeSize);
-        GenerationInfo.ShadowMatrix       = LightSetup.DirectionalLightData.ShadowMatrix;
-        GenerationInfo.MaxCascadeIndex    = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
-
-        if (IConsoleVariable* CVarPrePassDepthReduce = FConsoleManager::Get().FindConsoleVariable("Renderer.PrePass.DepthReduce"))
-        {
-            GenerationInfo.bDepthReductionEnabled = CVarPrePassDepthReduce->GetBool();
-        }
-        else
-        {
-            GenerationInfo.bDepthReductionEnabled = true;
-        }
-
-        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-        CommandList.UpdateBuffer(CascadeGenerationData.Get(), FBufferRegion(0, sizeof(FCascadeGenerationInfo)), &GenerationInfo);
-        CommandList.TransitionBuffer(CascadeGenerationData.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-
         CommandList.SetComputePipelineState(CascadeGen.Get());
 
         CommandList.SetConstantBuffer(CascadeGenShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-        CommandList.SetConstantBuffer(CascadeGenShader.Get(), CascadeGenerationData.Get(), 1);
+        CommandList.SetConstantBuffer(CascadeGenShader.Get(), LightSetup.CascadeGenerationDataBuffer.Get(), 1);
 
         CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeMatrixBufferUAV.Get(), 0);
         CommandList.SetUnorderedAccessView(CascadeGenShader.Get(), LightSetup.CascadeSplitsBufferUAV.Get(), 1);
@@ -646,9 +611,9 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
             FMatrix4 Matrix;
         } ShadowPerObjectBuffer;
 
-        FPerCascade PerCascadeData;
         for (uint32 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
         {
+            FPerCascade PerCascadeData;
             PerCascadeData.CascadeIndex = Index;
 
             CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
@@ -759,7 +724,7 @@ void FShadowMapRenderer::RenderShadowMasks(FRHICommandList& CommandList, const F
         }
 
         CommandList.SetConstantBuffer(CurrentShadowMaskShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-        CommandList.SetConstantBuffer(CurrentShadowMaskShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 1);
+        CommandList.SetConstantBuffer(CurrentShadowMaskShader.Get(), LightSetup.DirectionalLightDataBuffer.Get(), 1);
 
         CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
         CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), LightSetup.CascadeSplitsBufferSRV.Get(), 1);
@@ -827,8 +792,6 @@ void FShadowMapRenderer::Release()
 
     CascadeGen.Reset();
     CascadeGenShader.Reset();
-
-    CascadeGenerationData.Reset();
 }
 
 bool FShadowMapRenderer::CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup)

@@ -70,7 +70,6 @@ static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
     return ClosestPowerOf2(Result);
 }
 
-
 bool FLightSetup::Initialize()
 {
     // Initialize the light-setup from CVars
@@ -80,19 +79,32 @@ bool FLightSetup::Initialize()
     SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, CVarEnvironmentSpecularIrradianceProbeSize.GetValue());
 
     {
-        FRHIBufferDesc BufferDesc(sizeof(DirectionalLightData), sizeof(DirectionalLightData), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-        DirectionalLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
-        if (!DirectionalLightsBuffer)
+        FRHIBufferDesc BufferDesc(sizeof(FDirectionalLightDataHLSL), sizeof(FDirectionalLightDataHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+        DirectionalLightDataBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+        if (!DirectionalLightDataBuffer)
         {
             DEBUG_BREAK();
             return false;
         }
         else
         {
-            DirectionalLightsBuffer->SetDebugName("DirectionalLightsBuffer");
+            DirectionalLightDataBuffer->SetDebugName("DirectionalLightData Buffer");
         }
     }
 
+    {
+        FRHIBufferDesc BufferDesc(sizeof(FCascadeGenerationInfoHLSL), sizeof(FCascadeGenerationInfoHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+        CascadeGenerationDataBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+        if (!CascadeGenerationDataBuffer)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            CascadeGenerationDataBuffer->SetDebugName("CascadeGenerationData Buffer");
+        }
+    }
 
     {
         PointLightsData.Reserve(MAX_LIGHTS_PER_TILE);
@@ -106,7 +118,7 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            PointLightsBuffer->SetDebugName("PointLightsBuffer");
+            PointLightsBuffer->SetDebugName("PointLights Buffer");
         }
     }
 
@@ -122,12 +134,12 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            PointLightsPosRadBuffer->SetDebugName("PointLightsPosRadBuffer");
+            PointLightsPosRadBuffer->SetDebugName("PointLights Position and Radius Buffer");
         }
     }
 
     {
-        ShadowCastingPointLightsData.Reserve(8);
+        ShadowCastingPointLightsData.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
 
         FRHIBufferDesc BufferDesc(ShadowCastingPointLightsData.CapacityInBytes(), ShadowCastingPointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         ShadowCastingPointLightsBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
@@ -138,12 +150,12 @@ bool FLightSetup::Initialize()
         }
         else
         {
-            ShadowCastingPointLightsBuffer->SetDebugName("ShadowCastingPointLightsBuffer");
+            ShadowCastingPointLightsBuffer->SetDebugName("ShadowCasting PointLights Buffer");
         }
     }
 
     {
-        ShadowCastingPointLightsPosRad.Reserve(8);
+        ShadowCastingPointLightsPosRad.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
 
         FRHIBufferDesc BufferDesc(ShadowCastingPointLightsPosRad.CapacityInBytes(), ShadowCastingPointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
         ShadowCastingPointLightsPosRadBuffer = RHICreateBuffer(BufferDesc, EResourceAccess::ConstantBuffer, nullptr);
@@ -167,7 +179,6 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FScene* Scene)
     PointLightsData.Clear();
     ShadowCastingPointLightsPosRad.Clear();
     ShadowCastingPointLightsData.Clear();
-    PointLightShadowMapsGenerationData.Clear();
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Update Lights");
 
@@ -177,71 +188,68 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FScene* Scene)
     {
         FLight* Light = Scene->Lights[Index];
 
+        // Pre-multiply light intensity
+        // TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
         const float Intensity = Light->GetIntensity();
         FVector3 Color = Light->GetColor();
         Color = Color * Intensity;
 
         if (FPointLight* PointLight = Cast<FPointLight>(Light))
         {
-            // constexpr float MinLuma = 0.005f;
-            // const float Dot    = Color.x * 0.2126f + Color.y * 0.7152f + Color.z * 0.0722f;
-            // const float Radius = FMath::Sqrt(Dot / MinLuma);
             const float Radius = PointLight->GetShadowFarPlane();
+            FVector3 Position          = PointLight->GetPosition();
+            FVector4 PositionAndRadius = FVector4(Position, Radius);
 
-            FVector3 Position = PointLight->GetPosition();
-            FVector4 PosRad   = FVector4(Position, Radius);
             if (PointLight->IsShadowCaster())
             {
-                FShadowCastingPointLightData Data;
+                FShadowCastingPointLightDataHLSL Data;
                 Data.Color         = Color;
                 Data.FarPlane      = PointLight->GetShadowFarPlane();
                 Data.MaxShadowBias = PointLight->GetMaxShadowBias();
                 Data.ShadowBias    = PointLight->GetShadowBias();
 
                 ShadowCastingPointLightsData.Emplace(Data);
-                ShadowCastingPointLightsPosRad.Emplace(PosRad);
-
-                FPointLightShadowMapGenerationData ShadowMapData;
-                ShadowMapData.LightIndex = Index;
-                ShadowMapData.FarPlane   = PointLight->GetShadowFarPlane();
-                ShadowMapData.Position   = PointLight->GetPosition();
-
-                for (uint32 FaceIndex = 0; FaceIndex < 6; FaceIndex++)
-                {
-                    ShadowMapData.Matrix[FaceIndex]     = PointLight->GetMatrix(FaceIndex);
-                    ShadowMapData.ViewMatrix[FaceIndex] = PointLight->GetViewMatrix(FaceIndex);
-                    ShadowMapData.ProjMatrix[FaceIndex] = PointLight->GetProjectionMatrix(FaceIndex);
-                }
-
-                PointLightShadowMapsGenerationData.Emplace(ShadowMapData);
+                ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);
             }
             else
             {
-                FPointLightData Data;
+                FPointLightDataHLSL Data;
                 Data.Color = Color;
 
                 PointLightsData.Emplace(Data);
-                PointLightsPosRad.Emplace(PosRad);
+                PointLightsPosRad.Emplace(PositionAndRadius);
             }
         }
         else if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Light))
         {
             DirectionalLight->Tick(*Scene->Camera);
 
-            CascadeSplitLambda                 = DirectionalLight->GetCascadeSplitLambda();
             DirectionalLightData.Color         = FVector3(Color.x, Color.y, Color.z);
             DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
             DirectionalLightData.Direction     = DirectionalLight->GetDirection();
-            // TODO: Is this used?
             DirectionalLightData.UpVector      = DirectionalLight->GetUp();
             DirectionalLightData.MaxShadowBias = DirectionalLight->GetMaxShadowBias();
             DirectionalLightData.LightSize     = DirectionalLight->GetSize();
             DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
-            DirectionalLightFarPlane           = DirectionalLight->GetShadowFarPlane();
-            DirectionalLightViewMatrix         = DirectionalLight->GetViewMatrix();
-            DirectionalLightProjMatrix         = DirectionalLight->GetProjectionMatrix();
-
             DirectionalLightDataDirty = true;
+
+            CascadeGenerationData.CascadeSplitLambda = DirectionalLight->GetCascadeSplitLambda();
+            CascadeGenerationData.LightUp            = DirectionalLightData.UpVector;
+            CascadeGenerationData.LightDirection     = DirectionalLightData.Direction;
+            CascadeGenerationData.CascadeResolution  = static_cast<float>(CascadeSize);
+            CascadeGenerationData.ShadowMatrix       = DirectionalLightData.ShadowMatrix;
+            CascadeGenerationData.MaxCascadeIndex    = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
+
+            if (IConsoleVariable* CVarPrePassDepthReduce = FConsoleManager::Get().FindConsoleVariable("Renderer.PrePass.DepthReduce"))
+            {
+                CascadeGenerationData.bDepthReductionEnabled = CVarPrePassDepthReduce->GetBool();
+            }
+            else
+            {
+                CascadeGenerationData.bDepthReductionEnabled = true;
+            }
+
+            CascadeGenerationDataDirty = true;
         }
     }
 
@@ -293,7 +301,8 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FScene* Scene)
         }
     }
 
-    CommandList.TransitionBuffer(DirectionalLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBuffer(DirectionalLightDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.TransitionBuffer(CascadeGenerationDataBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
@@ -301,8 +310,14 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FScene* Scene)
 
     if (DirectionalLightDataDirty)
     {
-        CommandList.UpdateBuffer(DirectionalLightsBuffer.Get(), FBufferRegion(0, sizeof(DirectionalLightData)), &DirectionalLightData);
+        CommandList.UpdateBuffer(DirectionalLightDataBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalLightDataHLSL)), &DirectionalLightData);
         DirectionalLightDataDirty = false;
+    }
+
+    if (CascadeGenerationDataDirty)
+    {
+        CommandList.UpdateBuffer(CascadeGenerationDataBuffer.Get(), FBufferRegion(0, sizeof(FCascadeGenerationInfoHLSL)), &CascadeGenerationData);
+        CascadeGenerationDataDirty = false;
     }
 
     if (!PointLightsData.IsEmpty())
@@ -317,7 +332,8 @@ void FLightSetup::BeginFrame(FRHICommandList& CommandList, FScene* Scene)
         CommandList.UpdateBuffer(ShadowCastingPointLightsPosRadBuffer.Get(), FBufferRegion(0, ShadowCastingPointLightsPosRad.SizeInBytes()), ShadowCastingPointLightsPosRad.Data());
     }
 
-    CommandList.TransitionBuffer(DirectionalLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBuffer(DirectionalLightDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+    CommandList.TransitionBuffer(CascadeGenerationDataBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     CommandList.TransitionBuffer(PointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     CommandList.TransitionBuffer(PointLightsPosRadBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
     CommandList.TransitionBuffer(ShadowCastingPointLightsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
@@ -337,7 +353,8 @@ void FLightSetup::Release()
     ShadowCastingPointLightsBuffer.Reset();
     ShadowCastingPointLightsPosRadBuffer.Reset();
 
-    DirectionalLightsBuffer.Reset();
+    DirectionalLightDataBuffer.Reset();
+    CascadeGenerationDataBuffer.Reset();
 
     PointLightShadowMaps.Reset();
 

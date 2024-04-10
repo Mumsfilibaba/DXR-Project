@@ -34,15 +34,8 @@ FScene::~FScene()
 
 void FScene::Tick()
 {
-    // Update LightIndex
-    for (int32 Index = 0; Index < Lights.Size(); Index++)
-    {
-        FLight* Light = Lights[Index];
-        if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Light))
-        {
-            DirectionalLightIndex = Index;
-        }
-    }
+    // Updates LightData
+    UpdateLights();
 
     // Performs frustum culling and updates visible primitives
     UpdateVisibility();
@@ -77,6 +70,69 @@ void FScene::AddProxyComponent(FProxySceneComponent* InComponent)
     }
 }
 
+void FScene::UpdateLights()
+{
+    TRACE_SCOPE("UpdateLights");
+
+    if (LightViews.Size() < Lights.Size())
+        LightViews.Resize(Lights.Size());
+
+    // Update LightData
+    PointLightViews.Clear();
+
+    for (int32 Index = 0; Index < Lights.Size(); Index++)
+    {
+        FLightView& LightView = LightViews[Index];
+        if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Lights[Index]))
+        {
+            // Update LightIndex
+            DirectionalLightIndex = Index;
+
+            constexpr int32 NumDirectionalLightViews = 1;
+            if (LightView.Primitives.Size() < NumDirectionalLightViews)
+            {
+                LightView.LightType = FLightView::LightType_Directional;
+                LightView.NumSubViews = NumDirectionalLightViews;
+                LightView.Frustums.Resize(LightView.NumSubViews);
+                LightView.Primitives.Resize(LightView.NumSubViews);
+                LightView.MeshBatches.Resize(LightView.NumSubViews);
+                LightView.ShadowData.Resize(LightView.NumSubViews);
+
+                LightView.Primitives[0].Reserve(Primitives.Capacity());
+            }
+        }
+        else if (FPointLight* PointLight = Cast<FPointLight>(Lights[Index]))
+        {
+            if (!PointLight->IsShadowCaster())
+            {
+                continue;
+            }
+
+            constexpr int32 NumPointLightViews = RHI_NUM_CUBE_FACES;
+            if (LightView.Primitives.Size() < NumPointLightViews)
+            {
+                LightView.LightType = FLightView::LightType_Point;
+                LightView.NumSubViews = NumPointLightViews;
+                LightView.Frustums.Resize(LightView.NumSubViews);
+                LightView.Primitives.Resize(LightView.NumSubViews);
+                LightView.MeshBatches.Resize(LightView.NumSubViews);
+                LightView.ShadowData.Resize(LightView.NumSubViews);
+            }
+
+            for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
+            {
+                LightView.Frustums[FaceIndex] = FFrustum(PointLight->GetShadowFarPlane(), PointLight->GetViewMatrix(FaceIndex), PointLight->GetProjectionMatrix(FaceIndex));
+                LightView.ShadowData[FaceIndex].Matrix    = PointLight->GetMatrix(FaceIndex);
+                LightView.ShadowData[FaceIndex].Position  = PointLight->GetPosition();
+                LightView.ShadowData[FaceIndex].NearPlane = PointLight->GetShadowNearPlane();
+                LightView.ShadowData[FaceIndex].FarPlane  = PointLight->GetShadowFarPlane();
+            }
+            
+            PointLightViews.Add(&LightView);
+        }
+    }
+}
+
 void FScene::UpdateVisibility()
 {
     TRACE_SCOPE("UpdateVisibility - FrustumCulling");
@@ -87,51 +143,20 @@ void FScene::UpdateVisibility()
     if (VisiblePrimitives.Capacity() < Primitives.Capacity())
         VisiblePrimitives.Reserve(Primitives.Capacity());
 
-    if (LightViews.Size() < Lights.Size())
-        LightViews.Resize(Lights.Size());
-
     // Clear for this frame
     VisiblePrimitives.Clear();
 
     for (int32 Index = 0; Index < Lights.Size(); Index++)
     {
-        FLight*     Light     = Lights[Index];
         FLightView& LightView = LightViews[Index];
-
-        if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Light))
+        if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Lights[Index]))
         {
-            constexpr int32 NumDirectionalLightViews = 1;
-            if (LightView.Primitives.Size() < NumDirectionalLightViews)
-            {
-                LightView.LightType   = FLightView::LightType_Directional;
-                LightView.NumSubViews = NumDirectionalLightViews;
-                LightView.Frustums.Resize(LightView.NumSubViews);
-                LightView.Primitives.Resize(LightView.NumSubViews);
-                LightView.MeshBatches.Resize(LightView.NumSubViews);
-                LightView.Primitives[0].Reserve(Primitives.Capacity());
-            }
-
             LightView.Primitives[0].Clear();
         }
-        else if (FPointLight* PointLight = Cast<FPointLight>(Light))
+        else if (FPointLight* PointLight = Cast<FPointLight>(Lights[Index]))
         {
-            constexpr int32 NumPointLightViews = RHI_NUM_CUBE_FACES;
-            if (LightView.Primitives.Size() < NumPointLightViews)
-            {
-                LightView.LightType   = FLightView::LightType_Point;
-                LightView.NumSubViews = NumPointLightViews;
-                LightView.Frustums.Resize(LightView.NumSubViews);
-                LightView.Primitives.Resize(LightView.NumSubViews);
-                LightView.MeshBatches.Resize(LightView.NumSubViews);
-            }
-
-            for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
-                LightView.Frustums[FaceIndex] = FFrustum(PointLight->GetShadowFarPlane(), PointLight->GetViewMatrix(FaceIndex), PointLight->GetProjectionMatrix(FaceIndex));
-
             for (FLightView::PrimitivesArray& CubeFacePrimitives : LightView.Primitives)
-            {
                 CubeFacePrimitives.Clear();
-            }
         }
     }
 
@@ -155,21 +180,20 @@ void FScene::UpdateVisibility()
         // Update the visibility for lights
         for (int32 Index = 0; Index < Lights.Size(); Index++)
         {
-            FLight*     Light     = Lights[Index];
             FLightView& LightView = LightViews[Index];
-
-            if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Light))
+            if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Lights[Index]))
             {
                 // For now all primitives are visible to the DirectionalLight
                 LightView.Primitives[0].Add(Component);
             }
-            else if (FPointLight* PointLight = Cast<FPointLight>(Light))
+            else if (FPointLight* PointLight = Cast<FPointLight>(Lights[Index]))
             {
-                for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
+                if (PointLight->IsShadowCaster())
                 {
-                    if (LightView.Frustums[FaceIndex].CheckAABB(Box))
+                    for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
                     {
-                        LightView.Primitives[FaceIndex].Add(Component);
+                        if (LightView.Frustums[FaceIndex].CheckAABB(Box))
+                            LightView.Primitives[FaceIndex].Add(Component);
                     }
                 }
             }

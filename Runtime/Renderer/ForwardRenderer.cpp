@@ -140,7 +140,7 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 2);
     CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
     CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
-    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightsBuffer.Get(), 5);
+    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightDataBuffer.Get(), 5);
 
     const FProxyLightProbe& Skylight = LightSetup.Skylight;
     CommandList.SetShaderResourceView(PShader.Get(), Skylight.IrradianceMap->GetShaderResourceView(), 0);

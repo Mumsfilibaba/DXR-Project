@@ -900,7 +900,6 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightPass");
 
     TRACE_SCOPE("LightPass");
-
     GPU_TRACE_SCOPE(CommandList, "Light Pass");
 
     bool bDrawCascades = false;
@@ -909,7 +908,7 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
         bDrawCascades = CVarDrawCascades->GetBool();
     }
 
-    FRHIComputeShader* LightPassShader = nullptr;
+    FRHIComputeShader* LightPassShader;
     if (CVarDrawTileDebug.GetValue())
     {
         LightPassShader = TiledLightShader_TileDebug.Get();
@@ -949,7 +948,7 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     CommandList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsPosRadBuffer.Get(), 2);
     CommandList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
     CommandList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
-    CommandList.SetConstantBuffer(LightPassShader, LightSetup.DirectionalLightsBuffer.Get(), 5);
+    CommandList.SetConstantBuffer(LightPassShader, LightSetup.DirectionalLightDataBuffer.Get(), 5);
 
     CommandList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
     CommandList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
@@ -972,10 +971,10 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     const int32 RenderHeight = FrameResources.CurrentHeight;
 
     Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
-    Settings.NumPointLights  = LightSetup.PointLightsData.Size();
-    Settings.NumSkyLightMips = Skylight.SpecularIrradianceMap->GetNumMipLevels();
-    Settings.ScreenWidth     = static_cast<int32>(RenderWidth);
-    Settings.ScreenHeight    = static_cast<int32>(RenderHeight);
+    Settings.NumPointLights              = LightSetup.PointLightsData.Size();
+    Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
+    Settings.ScreenWidth                 = static_cast<int32>(RenderWidth);
+    Settings.ScreenHeight                = static_cast<int32>(RenderHeight);
     CommandList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
 
     constexpr uint32 NumThreads = 16;

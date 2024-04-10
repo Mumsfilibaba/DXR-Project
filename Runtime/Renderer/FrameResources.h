@@ -95,6 +95,7 @@ struct FFrameResources
     FRHITextureRef           FinalTarget;
     FRHITextureRef           GBuffer[GBuffer_NumBuffers];
 
+    // TODO: Move to the RenderPass and store only the final downsized texture
     // Two resources that can be ping-ponged between
     FRHITextureRef           ReducedDepthBuffer[2];
 
