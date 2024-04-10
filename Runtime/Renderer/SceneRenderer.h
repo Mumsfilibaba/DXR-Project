@@ -28,34 +28,35 @@
 class FViewport;
 class FSceneRenderer;
 
-struct FCameraBuffer
+struct FCameraHLSL
 {
+    // 0-64
     FMatrix4 PrevViewProjection;
-    
+    // 64-192
     FMatrix4 ViewProjection;
     FMatrix4 ViewProjectionInv;
-
+    // 192-320
     FMatrix4 ViewProjectionUnjittered;
     FMatrix4 ViewProjectionInvUnjittered;
-
+    // 320-448
     FMatrix4 View;
     FMatrix4 ViewInv;
-
+    // 448-576
     FMatrix4 Projection;
     FMatrix4 ProjectionInv;
-
+    // 576-592
     FVector3 Position;
     float    NearPlane = 0.0f;
-
+    // 592-608
     FVector3 Forward;
     float    FarPlane = 0.0f;
-
+    // 608-624
     FVector3 Right;
     float    AspectRatio = 0.0f;
-
+    // 624-640
     FVector2 Jitter;
     FVector2 PrevJitter;
-
+    // 640-656
     float    ViewportWidth  = 0.0f;
     float    ViewportHeight = 0.0f;
     float    Padding0       = 0.0f;
@@ -114,7 +115,7 @@ private:
     FFrameResources               Resources;
     FLightSetup                   LightSetup;
 
-    FCameraBuffer                 CameraBuffer;
+    FCameraHLSL                   CameraBuffer;
     FHaltonState                  HaltonState;
 
     FDeferredRenderer             DeferredRenderer;
@@ -145,12 +146,12 @@ private:
     FRHIGraphicsPipelineStateRef  FXAADebugPSO;
     FRHIPixelShaderRef            FXAADebugShader;
 
-    // Event handling and Widgets
-    TOptional<FWindowEvent>              ResizeEvent;
+    // Event handling
+    TOptional<FWindowEvent>       ResizeEvent;
+
+    // Widgets
     TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
     TSharedPtr<FRendererInfoWindow>      InfoWindow;
     TSharedPtr<FGPUProfilerWindow>       GPUProfilerWindow;
     TSharedPtr<FRendererEventHandler>    EventHandler;
-
-    static FSceneRenderer* GInstance;
 };
