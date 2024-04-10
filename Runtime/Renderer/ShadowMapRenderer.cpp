@@ -9,7 +9,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
-#include "Engine/World/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarCascadeDebug(
@@ -556,7 +556,7 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
 
                 for (const FMeshBatch& Batch : LightView.MeshBatches[FaceIndex])
                 {
-                    for (FProxyRendererComponent* Component : Batch.Primitives)
+                    for (FProxySceneComponent* Component : Batch.Primitives)
                     {
                         CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
@@ -699,7 +699,7 @@ void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandL
                     CommandList.SetConstantBuffer(DirectionalLightVS.Get(), PerCascadeBuffer.Get(), 0);
                     CommandList.SetShaderResourceView(DirectionalLightVS.Get(), LightSetup.CascadeMatrixBufferSRV.Get(), 0);
 
-                    for (const FProxyRendererComponent* Component : Batch.Primitives)
+                    for (const FProxySceneComponent* Component : Batch.Primitives)
                     {
                         if (Material->HasAlphaMask())
                         {

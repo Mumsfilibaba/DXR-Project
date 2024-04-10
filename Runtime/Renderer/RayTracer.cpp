@@ -109,7 +109,7 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     FRHISamplerState* Sampler = nullptr;
 
-    for (const FProxyRendererComponent* Component : Scene->Primitives)
+    for (const FProxySceneComponent* Component : Scene->Primitives)
     {
         FMaterial* Material = Component->Material;
         if (Component->Material->HasAlphaMask())

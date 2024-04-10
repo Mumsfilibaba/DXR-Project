@@ -6,7 +6,7 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/World/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTileDebug(
@@ -679,7 +679,7 @@ void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResour
                 CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
             }
 
-            for (const FProxyRendererComponent* Component : Batch.Primitives)
+            for (const FProxySceneComponent* Component : Batch.Primitives)
             {
                 if (Material->HasAlphaMask() || Material->IsDoubleSided())
                 {
@@ -877,7 +877,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         CommandList.SetConstantBuffers(Instance->PixelShader.Get(), MakeArrayView(PSConstantBuffers), 0);
         CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
 
-        for (const FProxyRendererComponent* Component : Batch.Primitives)
+        for (const FProxySceneComponent* Component : Batch.Primitives)
         {
             CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);

@@ -16,13 +16,13 @@ struct FMeshBatch
     }
 
     FMaterial*                       Material;
-    TArray<FProxyRendererComponent*> Primitives;
+    TArray<FProxySceneComponent*> Primitives;
 };
 
 struct FLightView
 {
     typedef TArray<FMeshBatch>               MeshBatchArray;
-    typedef TArray<FProxyRendererComponent*> PrimitivesArray;
+    typedef TArray<FProxySceneComponent*> PrimitivesArray;
 
     enum ELightType : int32
     {
@@ -54,7 +54,7 @@ public:
     virtual void AddLight(FLight* InLight) override final;
 
     // TODO: Adds a new mesh to be drawn, but most renderer primitives should take this path
-    virtual void AddProxyComponent(FProxyRendererComponent* InComponent) override final;
+    virtual void AddProxyComponent(FProxySceneComponent* InComponent) override final;
 
     // Performs frustum culling
     void UpdateVisibility();
@@ -69,10 +69,10 @@ public:
     FCamera* Camera;
 
     // All Primitives in this scene
-    TArray<FProxyRendererComponent*> Primitives;
+    TArray<FProxySceneComponent*> Primitives;
 
     // Visible Primitives (From the main camera's point of view)
-    TArray<FProxyRendererComponent*> VisiblePrimitives;
+    TArray<FProxySceneComponent*> VisiblePrimitives;
 
     // Batches of meshes that are visible (From the main camera's point of view)
     TArray<FMeshBatch> VisibleMeshBatches;

@@ -108,7 +108,7 @@ void FActor::AddComponent(FComponent* InComponent)
     InComponent->SetActorOwner(this);
     Components.Emplace(InComponent);
 
-    if (FRendererComponent* RendererComponent = Cast<FRendererComponent>(InComponent))
+    if (FSceneComponent* RendererComponent = Cast<FSceneComponent>(InComponent))
     {
         World->AddRendererComponent(RendererComponent);
     }

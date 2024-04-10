@@ -2,7 +2,7 @@
 #include "Core/Core.h"
 #include "RHI/RHITypes.h"
 
-class FProxyRendererComponent
+class FProxySceneComponent
 {
 public:
     class FMaterial*  Material     = nullptr;

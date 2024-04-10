@@ -19,7 +19,7 @@ FScene::FScene(FWorld* InWorld)
 
 FScene::~FScene()
 {
-    for (FProxyRendererComponent* Component : Primitives)
+    for (FProxySceneComponent* Component : Primitives)
     {
         delete Component;
     }
@@ -68,7 +68,7 @@ void FScene::AddLight(FLight* InLight)
     }
 }
 
-void FScene::AddProxyComponent(FProxyRendererComponent* InComponent)  
+void FScene::AddProxyComponent(FProxySceneComponent* InComponent)  
 {
     if (InComponent)
     {
@@ -137,7 +137,7 @@ void FScene::UpdateVisibility()
 
     // Perform frustum culling
     const FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
-    for (FProxyRendererComponent* Component : Primitives)
+    for (FProxySceneComponent* Component : Primitives)
     {
         FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
@@ -185,7 +185,7 @@ void FScene::UpdateBatches()
     VisibleMeshBatches.Clear();
 
     TMap<uint64, int32> MaterialToBatchIndex;
-    for (FProxyRendererComponent* Component : VisiblePrimitives)
+    for (FProxySceneComponent* Component : VisiblePrimitives)
     {
         const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
 
@@ -217,7 +217,7 @@ void FScene::UpdateBatches()
             FLightView::MeshBatchArray& MeshBatchesArray = LightView.MeshBatches[SubViewIndex];
             MeshBatchesArray.Clear();
 
-            for (FProxyRendererComponent* Component : LightView.Primitives[SubViewIndex])
+            for (FProxySceneComponent* Component : LightView.Primitives[SubViewIndex])
             {
                 const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
 

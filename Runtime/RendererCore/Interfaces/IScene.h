@@ -2,7 +2,7 @@
 
 class FCamera;
 class FLight;
-class FProxyRendererComponent;
+class FProxySceneComponent;
 
 struct IScene
 {
@@ -18,5 +18,5 @@ struct IScene
     virtual void AddLight(FLight* InLight) = 0;
 
     // Add a Renderer version of a component
-    virtual void AddProxyComponent(FProxyRendererComponent* InComponent) = 0;
+    virtual void AddProxyComponent(FProxySceneComponent* InComponent) = 0;
 };

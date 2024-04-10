@@ -102,7 +102,7 @@ void FWorld::AddActor(FActor* InActor)
         AddPlayerController(PlayerController);
     }
 
-    if (FRendererComponent* RendererComponent = InActor->GetComponentOfType<FRendererComponent>())
+    if (FSceneComponent* RendererComponent = InActor->GetComponentOfType<FSceneComponent>())
     {
         AddRendererComponent(RendererComponent);
     }
@@ -149,11 +149,11 @@ void FWorld::AddLightProbe(FLightProbe* InLightProbe)
     }
 }
 
-void FWorld::AddRendererComponent(FRendererComponent* RendererComponent)
+void FWorld::AddRendererComponent(FSceneComponent* RendererComponent)
 {
     if (Scene && RendererComponent)
     {
-        if (FProxyRendererComponent* ProxyComponent = RendererComponent->CreateProxyComponent())
+        if (FProxySceneComponent* ProxyComponent = RendererComponent->CreateProxyComponent())
         {
             Scene->AddProxyComponent(ProxyComponent);
         }

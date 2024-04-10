@@ -1,18 +1,18 @@
 #include "MeshComponent.h"
-#include "ProxyRendererComponent.h"
+#include "ProxySceneComponent.h"
 
 FOBJECT_IMPLEMENT_CLASS(FMeshComponent);
 
 FMeshComponent::FMeshComponent(const FObjectInitializer& ObjectInitializer)
-    : FRendererComponent(ObjectInitializer)
+    : FSceneComponent(ObjectInitializer)
     , Material(nullptr)
     , Mesh(nullptr)
 {
 }
 
-FProxyRendererComponent* FMeshComponent::CreateProxyComponent()
+FProxySceneComponent* FMeshComponent::CreateProxyComponent()
 {
-    FProxyRendererComponent* NewComponent = new FProxyRendererComponent();
+    FProxySceneComponent* NewComponent = new FProxySceneComponent();
     NewComponent->CurrentActor = GetActorOwner();
     NewComponent->Geometry     = Mesh->RTGeometry.Get();
     NewComponent->VertexBuffer = Mesh->VertexBuffer.Get();

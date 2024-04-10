@@ -8,9 +8,9 @@
 #include "RendererCore/Interfaces/IScene.h"
 
 // TODO: Remove
-#include "Engine/World/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxySceneComponent.h"
 
-class FRendererComponent;
+class FSceneComponent;
 
 class ENGINE_API FWorld
 {
@@ -77,7 +77,7 @@ public:
      * @brief                   - Function called when adding a new RendererComponent
      * @param RendererComponent - New RendererComponent just added to the world
      */
-    void AddRendererComponent(FRendererComponent* RendererComponent);
+    void AddRendererComponent(FSceneComponent* RendererComponent);
 
     /**
       * @brief         - Sets the scene representation in the renderer

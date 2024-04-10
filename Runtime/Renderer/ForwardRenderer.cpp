@@ -6,7 +6,7 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
-#include "Engine/World/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxySceneComponent.h"
 
 bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
 {
@@ -162,7 +162,7 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
     } TransformPerObject;
 
 
-    for (const FProxyRendererComponent* Component : Scene->VisiblePrimitives)
+    for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
     {
         if (!Component->Material->ShouldRenderInForwardPass())
         {

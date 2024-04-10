@@ -6,7 +6,7 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Lights/PointLight.h"
-#include "Engine/World/Components/ProxyRendererComponent.h"
+#include "Engine/World/Components/ProxySceneComponent.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 
@@ -343,7 +343,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer.Get(), EIndexFormat::uint16);
 
-    for (const FProxyRendererComponent* Component : Scene->VisiblePrimitives)
+    for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
     {
         FAABB& Box = Component->Mesh->BoundingBox;
 
