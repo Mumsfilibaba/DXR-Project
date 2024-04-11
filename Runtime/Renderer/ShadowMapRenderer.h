@@ -64,6 +64,8 @@ public:
     {
     }
 
+    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+
     bool Initialize(FLightSetup& LightSetup, FFrameResources& Resources);
     void Release();
 
@@ -83,27 +85,20 @@ private:
     bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);
     bool CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources);
 
-    FRHIBufferRef                PerShadowMapBuffer;
+    // PointLight ShadowMaps
+    TMap<int32, FPipelineStateInstance> PointLightPSOs;
 
-    FRHIGraphicsPipelineStateRef DirectionalLightPSO;
-    FRHIGraphicsPipelineStateRef DirectionalLightMaskedPSO;
-    FRHIGraphicsPipelineStateRef DirectionalLightMaskedPackedPSO;
-    FRHIVertexShaderRef          DirectionalLightVS;
-    FRHIVertexShaderRef          DirectionalLightMaskedVS;
-    FRHIPixelShaderRef           DirectionalLightMaskedPS;
-    FRHIPixelShaderRef           DirectionalLightMaskedPackedPS;
+    // Cascaded ShadowMaps
+    TMap<int32, FPipelineStateInstance> DirectionalLightPSOs;
+
+    FRHIBufferRef                PerCascadeBuffer;
+    FRHIBufferRef                PerShadowMapBuffer;
 
     FRHIComputePipelineStateRef  DirectionalShadowMaskPSO;
     FRHIComputeShaderRef         DirectionalShadowMaskShader;
 
     FRHIComputePipelineStateRef  DirectionalShadowMaskPSO_Debug;
     FRHIComputeShaderRef         DirectionalShadowMaskShader_Debug;
-
-    FRHIGraphicsPipelineStateRef PointLightPipelineState;
-    FRHIVertexShaderRef          PointLightVertexShader;
-    FRHIPixelShaderRef           PointLightPixelShader;
-
-    FRHIBufferRef                PerCascadeBuffer;
 
     FRHIComputePipelineStateRef  CascadeGen;
     FRHIComputeShaderRef         CascadeGenShader;

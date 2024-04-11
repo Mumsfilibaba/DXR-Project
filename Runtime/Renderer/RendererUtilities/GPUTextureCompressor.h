@@ -2,7 +2,7 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
 
-class RENDERER_API FGPUTextureCompressor
+class FGPUTextureCompressor
 {
 public:
     FGPUTextureCompressor();

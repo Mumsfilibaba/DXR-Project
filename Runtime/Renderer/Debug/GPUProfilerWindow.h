@@ -10,7 +10,6 @@ public:
     virtual void Paint() override final;
 
     void DrawWindow();
-
     void DrawGPUData(float Width);
 
 private:

@@ -625,6 +625,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     {
         // TODO: Only do this once?
         DeferredRenderer.InitializePipelineState(Material, Resources);
+        ShadowMapRenderer.InitializePipelineState(Material, Resources);
 
         if (Material->IsBufferDirty())
         {

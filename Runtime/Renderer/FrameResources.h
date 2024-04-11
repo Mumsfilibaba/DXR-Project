@@ -71,6 +71,9 @@ struct FFrameResources
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
     const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
     const EFormat VelocityFormat     = EFormat::R16G16_Float;
+    const EFormat ShadowMaskFormat   = EFormat::R8_Unorm;
+    const EFormat ShadowMapFormat    = EFormat::D16_Unorm;
+    const EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
 
     FRHITexture*             BackBuffer = nullptr;
 
