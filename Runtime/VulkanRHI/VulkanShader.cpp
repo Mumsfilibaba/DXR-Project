@@ -196,9 +196,9 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSampledImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_SampledImage;
-            Binding.BindingIndex = GlobalBinding++;
-            Binding.OriginalBindingIndex = spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding);
+            Binding.BindingType          = BindingType_SampledImage;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, SampledImages[Index].id, SpvDecorationBinding, &BindingOffset))
@@ -228,9 +228,9 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumSamplers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_Sampler;
-            Binding.BindingIndex = GlobalBinding++;
-            Binding.OriginalBindingIndex = spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding);
+            Binding.BindingType          = BindingType_Sampler;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, Samplers[Index].id, SpvDecorationBinding, &BindingOffset))
@@ -260,9 +260,9 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageImages; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_StorageImage;
-            Binding.BindingIndex = GlobalBinding++;
-            Binding.OriginalBindingIndex = spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding);
+            Binding.BindingType          = BindingType_StorageImage;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, StorageImages[Index].id, SpvDecorationBinding, &BindingOffset))
@@ -292,9 +292,9 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumUniformBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingType  = BindingType_UniformBuffer;
-            Binding.BindingIndex = GlobalBinding++;
-            Binding.OriginalBindingIndex = spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding);
+            Binding.BindingType          = BindingType_UniformBuffer;
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, UniformBuffers[Index].id, SpvDecorationBinding, &BindingOffset))
@@ -324,8 +324,8 @@ bool FVulkanShader::InitializeShaderLayout()
         for (uint32 Index = 0; Index < NumStorageBuffers; Index++)
         {
             FVulkanShaderInfo::FResourceBinding Binding;
-            Binding.BindingIndex = GlobalBinding++;
-            Binding.OriginalBindingIndex = spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding);
+            Binding.BindingIndex         = static_cast<uint8>(GlobalBinding++);
+            Binding.OriginalBindingIndex = static_cast<uint8>(spvc_compiler_get_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding));
             
             uint32 BindingOffset = UINT32_MAX;
             if (!spvc_compiler_get_binary_offset_for_decoration(Compiler, StorageBuffers[Index].id, SpvDecorationBinding, &BindingOffset))

@@ -131,7 +131,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         }
     }
 
-
     // ShaderStages
     TArray<FD3D12Shader*> ShadersWithRootSignature;
     TArray<FD3D12Shader*> BaseShaders;
@@ -241,7 +240,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         }
     }
 
-
     // RenderTarget
     {
         D3D12_RT_FORMAT_ARRAY& RenderTargetInfo = PipelineStream.RenderTargetInfo;
@@ -255,7 +253,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         // DepthStencil
         PipelineStream.DepthBufferFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
     }
-
 
     // RasterizerState
     {
@@ -271,7 +268,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         }
     }
 
-
     // DepthStencilState
     {
         if (FD3D12DepthStencilState* D3D12DepthStencilState = static_cast<FD3D12DepthStencilState*>(Initializer.DepthStencilState))
@@ -285,7 +281,6 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
             return false;
         }
     }
-
 
     // BlendState
     {
@@ -301,13 +296,11 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         }
     }
 
-
     // Topology
     {
         PipelineStream.PrimitiveTopologyType = ConvertPrimitiveTopologyType(Initializer.PrimitiveTopology);
         PrimitiveTopology = ConvertPrimitiveTopology(Initializer.PrimitiveTopology);
     }
-
 
     // IndexBufferStripCutValue
     {
@@ -316,14 +309,12 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
             D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
     }
 
-
     // MSAA
     {
         DXGI_SAMPLE_DESC& SamplerDesc = PipelineStream.SampleDesc;
         SamplerDesc.Count   = Initializer.SampleCount;
         SamplerDesc.Quality = Initializer.SampleQuality;
     }
-
 
     // RootSignature
     {

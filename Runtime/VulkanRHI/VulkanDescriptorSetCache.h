@@ -14,7 +14,6 @@ class FVulkanDescriptorSetCache : public FVulkanDeviceChild
         ~FCachedPool();
 
         bool AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet);
-
         void ReleaseAll();
 
     private:
@@ -28,11 +27,12 @@ public:
     ~FVulkanDescriptorSetCache();
 
     bool FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
-
+    
+    void ReleaseDescriptorSets();
     void Release();
 
 private:
-    TMap<FVulkanDescriptorPoolInfo, FCachedPool>   Caches;
+    TMap<FVulkanDescriptorPoolInfo, FCachedPool*>  Caches;
     TMap<FVulkanDescriptorSetKey, VkDescriptorSet> DescriptorSets;
     FCriticalSection                               CacheCS;
 };

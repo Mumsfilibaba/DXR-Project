@@ -288,10 +288,7 @@ public:
      */
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) = 0;
 
-    /**
-     * @brief  - Create a new Query-object
-     * @return - Returns the newly created Query-object
-     */
+    /** @return - Returns a newly created Query-object */
     virtual FRHIQuery* RHICreateQuery() = 0;
 
     /** @return - Returns a CommandContext */

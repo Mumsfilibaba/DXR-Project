@@ -7,46 +7,87 @@
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 
-class FDeferredRenderer : public FRenderPass
+class FDepthPrePass : public FRenderPass
 {
 public:
-    FDeferredRenderer(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-    {
-    }
+    FDepthPrePass(FSceneRenderer* InRenderer);
+    virtual ~FDepthPrePass();
+
+    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+    
+    bool Initialize(FFrameResources& FrameResources);
+    void Release();
+
+    bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
+    
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
+
+private:
+    TMap<int32, FPipelineStateInstance> MaterialPSOs;
+};
+
+class FDeferredBasePass : public FRenderPass
+{
+public:
+    FDeferredBasePass(FSceneRenderer* InRenderer);
+    virtual ~FDeferredBasePass();
 
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
     bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    void RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
-    void RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
-
-    void RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
-
+    bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
     bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
+
 private:
-    bool CreateGBuffer(FFrameResources& FrameResources, uint32 Width, uint32 Height);
+    TMap<int32, FPipelineStateInstance> MaterialPSOs;
+};
 
-    // PrePass
-    TMap<int32, FPipelineStateInstance> PrePassPSOs;
+class FTiledLightPass : public FRenderPass
+{
+public:
+    FTiledLightPass(FSceneRenderer* InRenderer);
+    virtual ~FTiledLightPass();
 
-    // BasePass
-    TMap<int32, FPipelineStateInstance> BasePassPSOs;
+    bool Initialize(FFrameResources& FrameResources);
+    void Release();
 
-    // Compute states for Deferred Light stage
-    FRHIComputePipelineStateRef  TiledLightPassPSO;
-    FRHIComputeShaderRef         TiledLightShader;
-    FRHIComputePipelineStateRef  TiledLightPassPSO_TileDebug;
-    FRHIComputeShaderRef         TiledLightShader_TileDebug;
-    FRHIComputePipelineStateRef  TiledLightPassPSO_CascadeDebug;
-    FRHIComputeShaderRef         TiledLightShader_CascadeDebug;
+    bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
-    FRHIComputePipelineStateRef  ReduceDepthInitalPSO;
-    FRHIComputeShaderRef         ReduceDepthInitalShader;
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
-    FRHIComputePipelineStateRef  ReduceDepthPSO;
-    FRHIComputeShaderRef         ReduceDepthShader;
+private:
+    FRHIComputePipelineStateRef TiledLightPassPSO;
+    FRHIComputeShaderRef        TiledLightShader;
+    FRHIComputePipelineStateRef TiledLightPassPSO_TileDebug;
+    FRHIComputeShaderRef        TiledLightShader_TileDebug;
+    FRHIComputePipelineStateRef TiledLightPassPSO_CascadeDebug;
+    FRHIComputeShaderRef        TiledLightShader_CascadeDebug;
+};
+
+class FDepthReducePass : public FRenderPass
+{
+public:
+    FDepthReducePass(FSceneRenderer* InRenderer);
+    virtual ~FDepthReducePass();
+
+    bool Initialize(FFrameResources& FrameResources);
+    void Release();
+
+    bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
+
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
+
+private:
+    FRHIComputePipelineStateRef ReduceDepthInitalPSO;
+    FRHIComputeShaderRef        ReduceDepthInitalShader;
+
+    FRHIComputePipelineStateRef ReduceDepthPSO;
+    FRHIComputeShaderRef        ReduceDepthShader;
 };

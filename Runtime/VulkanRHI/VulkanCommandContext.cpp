@@ -1157,6 +1157,8 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         VkPipelineStageFlags SrcStageMask = ConvertResourceStateToPipelineStageFlags(BeforeState);
         VkPipelineStageFlags DstStageMask = ConvertResourceStateToPipelineStageFlags(AfterState);
         BarrierBatcher.AddImageMemoryBarrier(SrcStageMask, DstStageMask, 0, ImageBarrier);
+
+        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(VulkanTexture);
     }
 }
 
@@ -1184,6 +1186,8 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
     VkPipelineStageFlags SrcStageMask = ConvertResourceStateToPipelineStageFlags(BeforeState);
     VkPipelineStageFlags DstStageMask = ConvertResourceStateToPipelineStageFlags(AfterState);
     BarrierBatcher.AddBufferMemoryBarrier(SrcStageMask, DstStageMask, 0, BufferBarrier);
+
+    FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(VulkanBuffer);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)

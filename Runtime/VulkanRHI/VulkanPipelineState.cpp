@@ -46,7 +46,7 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
         }
 
         // Find location for the element which turns into the variable index in the structure
-        int32 Location = 0;
+        uint32 Location = 0;
         for (int32 Index = 0; Index < VertexInputAttributeDescriptions.Size(); Index++)
         {
             VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];

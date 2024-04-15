@@ -62,8 +62,8 @@ struct FCascadeGenerationInfoHLSL
     // 96-112
     int32    bDepthReductionEnabled;
     int32    MaxCascadeIndex;
+    int32    Padding0;
     int32    Padding1;
-    int32    Padding2;
 };
 
 MARK_AS_REALLOCATABLE(FCascadeGenerationInfoHLSL);

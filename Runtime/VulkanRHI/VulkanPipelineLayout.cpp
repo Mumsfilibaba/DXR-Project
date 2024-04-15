@@ -149,16 +149,16 @@ bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, 
     switch(ResourceType)
     {
     case ResourceType_SRV:
-        OutBinding = (ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT) ? StageMapping.SRVMappings[ResourceIndex] : UINT8_MAX;
+        OutBinding = ResourceIndex < VULKAN_DEFAULT_SHADER_RESOURCE_VIEW_COUNT ? StageMapping.SRVMappings[ResourceIndex] : UINT8_MAX;
         break;
     case ResourceType_UAV:
-        OutBinding = (ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT) ? StageMapping.UAVMappings[ResourceIndex] : UINT8_MAX;
+        OutBinding = ResourceIndex < VULKAN_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT ? StageMapping.UAVMappings[ResourceIndex] : UINT8_MAX;
         break;
     case ResourceType_UniformBuffer:
-        OutBinding = (ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT) ? StageMapping.UniformMappings[ResourceIndex] : UINT8_MAX;
+        OutBinding = ResourceIndex < VULKAN_DEFAULT_UNIFORM_BUFFER_COUNT ? StageMapping.UniformMappings[ResourceIndex] : UINT8_MAX;
         break;
     case ResourceType_Sampler:
-        OutBinding = (ResourceIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT) ? StageMapping.SamplerMappings[ResourceIndex] : UINT8_MAX;
+        OutBinding = ResourceIndex < VULKAN_DEFAULT_SAMPLER_STATE_COUNT ? StageMapping.SamplerMappings[ResourceIndex] : UINT8_MAX;
         break;
     };
 
@@ -192,7 +192,7 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
     // Initialize the mapping to zero
     for (FStageDescriptorMap& StageMapping : DescriptorBindMap)
     {
-        StageMapping.DescriptorSetIndex = UINT16_MAX;
+        StageMapping.DescriptorSetIndex = UINT8_MAX;
         FMemory::Memset(StageMapping.SRVMappings, UINT8_MAX, sizeof(StageMapping.SRVMappings));
         FMemory::Memset(StageMapping.UAVMappings, UINT8_MAX, sizeof(StageMapping.UAVMappings));
         FMemory::Memset(StageMapping.UniformMappings, UINT8_MAX, sizeof(StageMapping.UniformMappings));
@@ -211,24 +211,24 @@ void FVulkanPipelineLayout::SetupResourceMapping(const FVulkanPipelineLayoutInfo
             const EShaderVisibility ShaderVisibility = GetShaderVisibilityFromShaderFlag(SetLayoutInfo.Bindings[BindingIndex].stageFlags);
 
             FStageDescriptorMap& StageMapping = DescriptorBindMap[ShaderVisibility];
-            StageMapping.DescriptorSetIndex = SetIndex;
+            StageMapping.DescriptorSetIndex = static_cast<uint8>(SetIndex);
 
             const FVulkanDescriptorRemappingInfo::FRemappingInfo& RemappingInfo = StageMappingInfo.RemappingInfo[BindingIndex];
             switch(RemappingInfo.BindingType)
             {
             case BindingType_UniformBuffer:
-                StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                StageMapping.UniformMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             case BindingType_Sampler:
-                StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                StageMapping.SamplerMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             case BindingType_SampledImage:
             case BindingType_StorageBufferRead:
-                StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                StageMapping.SRVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             case BindingType_StorageImage:
             case BindingType_StorageBufferReadWrite:
-                StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = BindingIndex;
+                StageMapping.UAVMappings[RemappingInfo.OriginalBindingIndex] = static_cast<uint8>(BindingIndex);
                 break;
             default:
                 DEBUG_BREAK();

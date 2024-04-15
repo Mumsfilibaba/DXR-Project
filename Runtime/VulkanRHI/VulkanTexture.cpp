@@ -30,8 +30,8 @@ FVulkanTexture::~FVulkanTexture()
         Image = VK_NULL_HANDLE;
 
         // Free the memory
-        FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
-        MemoryManager.Free(MemoryAllocation);
+        //FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
+        //MemoryManager.Free(MemoryAllocation);
     }
 }
 
@@ -290,6 +290,10 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         VkPipelineStageFlags SrcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
         VkPipelineStageFlags DstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
         Context->GetBarrierBatcher().AddImageMemoryBarrier(SrcStageMask, DstStageMask, 0, ImageBarrier);
+
+        // TODO: Refactor RHI resource deletion so that this is not necessary
+        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(this);
+
         Context->RHIFinishContext();
     }
     

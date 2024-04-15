@@ -14,21 +14,28 @@ static TAutoConsoleVariable<bool> CVarDrawTileDebug(
     "Draws the tiled lightning overlay, that displays how many lights are used in a certain tile", 
     false);
 
-static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
-    "Renderer.PrePass.DepthReduce",
-    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer",
-    true);
-
 static TAutoConsoleVariable<bool> CVarBasePassClearAllTargets(
     "Renderer.BasePass.ClearAllTargets",
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
     true);
 
-void FDeferredRenderer::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+
+FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , MaterialPSOs()
+{
+}
+
+FDepthPrePass::~FDepthPrePass()
+{
+    Release();
+}
+
+void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
 
-    FPipelineStateInstance* CachedPrePassPSO = PrePassPSOs.Find(MaterialFlags);
+    FPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedPrePassPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -175,10 +182,170 @@ void FDeferredRenderer::InitializePipelineState(FMaterial* Material, const FFram
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 
-        PrePassPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
+        MaterialPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
+    }
+}
+
+bool FDepthPrePass::Initialize(FFrameResources& FrameResources)
+{
+    return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
+}
+
+void FDepthPrePass::Release()
+{
+    MaterialPSOs.Clear();
+}
+
+bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
+    if (Width <= 0 && Height <= 0)
+    {
+        return true;
     }
 
-    FPipelineStateInstance* CachedBasePassPSO = BasePassPSOs.Find(MaterialFlags);
+    const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
+    const FClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
+
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
+    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    if (FrameResources.GBuffer[GBufferIndex_Depth])
+    {
+        FrameResources.GBuffer[GBufferIndex_Depth]->SetDebugName("GBuffer DepthStencil");
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FDepthPrePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
+    if (FrameResources.GBuffer[GBufferIndex_Depth])
+        CommandList.DestroyResource(FrameResources.FinalTarget.Get());
+
+    return CreateResources(FrameResources, Width, Height);
+}
+
+void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
+{
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Pre-Pass");
+
+    TRACE_SCOPE("Depth Pre-Pass");
+
+    GPU_TRACE_SCOPE(CommandList, "Depth Pre-Pass");
+
+    FRHIRenderPassDesc RenderPass;
+    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get());
+
+    CommandList.BeginRenderPass(RenderPass);
+
+    const float RenderWidth  = float(FrameResources.CurrentWidth);
+    const float RenderHeight = float(FrameResources.CurrentHeight);
+
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
+
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetScissorRect(ScissorRegion);
+
+    struct FTransformBuffer
+    {
+        FMatrix4 Transform;
+        FMatrix4 TransformInv;
+    } TransformPerObject;
+    TransformPerObject.TransformInv = FMatrix4::Identity();
+
+    for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
+    {
+        FMaterial* Material = Batch.Material;
+        CHECK(Material != nullptr);
+
+        if (!Material->ShouldRenderInPrePass())
+        {
+            continue;
+        }
+
+        FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+        if (!Instance)
+        {
+            DEBUG_BREAK();
+        }
+
+        FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
+        CHECK(PipelineState  != nullptr);
+        CommandList.SetGraphicsPipelineState(PipelineState);
+
+        CommandList.SetConstantBuffer(Instance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
+        if (Material->HasAlphaMask())
+        {
+            CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
+            CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+
+            if (Material->IsPackedMaterial())
+            {
+                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
+            }
+            else
+            {
+                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 0);
+            }
+        }
+        else if (Material->HasHeightMap())
+        {
+            CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
+            CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+        }
+
+        for (const FProxySceneComponent* Component : Batch.Primitives)
+        {
+            if (Material->HasAlphaMask() || Material->IsDoubleSided())
+            {
+                CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+            }
+            else if (Material->HasHeightMap())
+            {
+                CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->VertexBuffer, 1), 0);
+            }
+            else
+            {
+                CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+            }
+
+            CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
+
+            TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
+            CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &TransformPerObject, 32);
+
+            CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+        }
+    }
+
+    CommandList.EndRenderPass();
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Pre-Pass");
+}
+
+
+FDeferredBasePass::FDeferredBasePass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , MaterialPSOs()
+{
+}
+
+FDeferredBasePass::~FDeferredBasePass()
+{
+    Release();
+}
+
+void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
+{
+    const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
+
+    FPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedBasePassPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -272,7 +439,7 @@ void FDeferredRenderer::InitializePipelineState(FMaterial* Material, const FFram
             return;
         }
 
-        // NOTE: Always use the default mesh-inputlayout
+        // NOTE: Always use the default InputLayout
         NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
 
         FRHIGraphicsPipelineStateInitializer PSOInitializer;
@@ -302,491 +469,125 @@ void FDeferredRenderer::InitializePipelineState(FMaterial* Material, const FFram
             NewPipelineInstance.PipelineState->SetDebugName(DebugName);
         }
 
-        BasePassPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
+        MaterialPSOs.Add(MaterialFlags, Move(NewPipelineInstance));
     }
 }
 
-bool FDeferredRenderer::Initialize(FFrameResources& FrameResources)
+bool FDeferredBasePass::Initialize(FFrameResources& FrameResources)
 {
-    const uint32 Width  = FrameResources.MainViewport->GetWidth();
-    const uint32 Height = FrameResources.MainViewport->GetHeight();
+    return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
+}
 
-    if (!CreateGBuffer(FrameResources, Width, Height))
+void FDeferredBasePass::Release()
+{
+    MaterialPSOs.Clear();
+}
+
+bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
+    if (Width <= 0 && Height <= 0)
+    {
+        return true;
+    }
+
+    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage);
+
+    // Albedo
+    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[GBufferIndex_Albedo])
+    {
+        FrameResources.GBuffer[GBufferIndex_Albedo]->SetDebugName("GBuffer Albedo");
+    }
+    else
     {
         return false;
     }
 
-    {
-        FRHISamplerStateDesc SamplerInitializer;
-        SamplerInitializer.AddressU = ESamplerMode::Clamp;
-        SamplerInitializer.AddressV = ESamplerMode::Clamp;
-        SamplerInitializer.AddressW = ESamplerMode::Clamp;
-        SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
+    // Normal
+    TextureDesc.Format = FrameResources.NormalFormat;
 
-        FrameResources.GBufferSampler = RHICreateSamplerState(SamplerInitializer);
-        if (!FrameResources.GBufferSampler)
-        {
-            return false;
-        }
+    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[GBufferIndex_Normal])
+    {
+        FrameResources.GBuffer[GBufferIndex_Normal]->SetDebugName("GBuffer Normal");
+    }
+    else
+    {
+        return false;
     }
 
-    TArray<uint8> ShaderCode;
+    // Material Properties
+    TextureDesc.Format = FrameResources.MaterialFormat;
 
-    // BRDF LUT Generation
+    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[GBufferIndex_Material])
     {
-        constexpr uint32  LUTSize   = 512;
-        constexpr EFormat LUTFormat = EFormat::R16G16_Float;
-        if (!RHIQueryUAVFormatSupport(LUTFormat))
-        {
-            LOG_ERROR("[FSceneRenderer]: R16G16_Float is not supported for UAVs");
-            return false;
-        }
-
-        FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccess);
-
-        FRHITextureRef StagingTexture = RHICreateTexture(LUTDesc, EResourceAccess::Common);
-        if (!StagingTexture)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            StagingTexture->SetDebugName("Staging IntegrationLUT");
-        }
-
-        LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
-
-        FrameResources.IntegrationLUT = RHICreateTexture(LUTDesc, EResourceAccess::Common);
-        if (!FrameResources.IntegrationLUT)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            FrameResources.IntegrationLUT->SetDebugName("IntegrationLUT");
-        }
-
-        FRHISamplerStateDesc SamplerInitializer;
-        SamplerInitializer.AddressU = ESamplerMode::Clamp;
-        SamplerInitializer.AddressV = ESamplerMode::Clamp;
-        SamplerInitializer.AddressW = ESamplerMode::Clamp;
-        SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
-
-        FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInitializer);
-        if (!FrameResources.IntegrationLUTSampler)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        {
-            FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return false;
-            }
-        }
-
-        FRHIComputeShaderRef CShader = RHICreateComputeShader(ShaderCode);
-        if (!CShader)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        FRHIComputePipelineStateInitializer PSOInitializer(CShader.Get());
-        FRHIComputePipelineStateRef BRDFPipelineState = RHICreateComputePipelineState(PSOInitializer);
-        if (!BRDFPipelineState)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            BRDFPipelineState->SetDebugName("BRDFIntegationGen PipelineState");
-        }
-
-        FRHICommandList CommandList;
-        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
-
-        CommandList.SetComputePipelineState(BRDFPipelineState.Get());
-
-        FRHIUnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
-        CommandList.SetUnorderedAccessView(CShader.Get(), StagingUAV, 0);
-
-        constexpr uint32 ThreadCount = 16;
-        constexpr uint32 DispatchWidth  = FMath::DivideByMultiple(LUTSize, ThreadCount);
-        constexpr uint32 DispatchHeight = FMath::DivideByMultiple(LUTSize, ThreadCount);
-        CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
-
-        CommandList.UnorderedAccessTextureBarrier(StagingTexture.Get());
-
-        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
-        CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
-
-        CommandList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
-
-        CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-
-        CommandList.DestroyResource(CShader.Get());
-        CommandList.DestroyResource(BRDFPipelineState.Get());
-        CommandList.DestroyResource(StagingTexture.Get());
-
-        GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FrameResources.GBuffer[GBufferIndex_Material]->SetDebugName("GBuffer Material");
+    }
+    else
+    {
+        return false;
     }
 
-    // Tiled lightning
+    // View Normal
+    TextureDesc.Format = FrameResources.ViewNormalFormat;
+
+    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        TiledLightShader = RHICreateComputeShader(ShaderCode);
-        if (!TiledLightShader)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader.Get());
-        TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassInitializer);
-        if (!TiledLightPassPSO)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetDebugName("GBuffer ViewNormal");
+    }
+    else
+    {
+        return false;
     }
 
-    // Tiled lightning Tile debugging
+    // Velocity
+    TextureDesc.Format = FrameResources.VelocityFormat;
+
+    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    if (FrameResources.GBuffer[GBufferIndex_Velocity])
     {
-        TArray<FShaderDefine> Defines =
-        {
-            { "DRAW_TILE_DEBUG", "(1)" }
-        };
-
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        TiledLightShader_TileDebug = RHICreateComputeShader(ShaderCode);
-        if (!TiledLightShader_TileDebug)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_TileDebug.Get());
-        TiledLightPassPSO_TileDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
-        if (!TiledLightPassPSO_TileDebug)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            TiledLightPassPSO_TileDebug->SetDebugName("DeferredLightPass PipelineState Tile-Debug");
-        }
+        FrameResources.GBuffer[GBufferIndex_Velocity]->SetDebugName("GBuffer Velocity");
     }
-
-    // Tiled lightning Cascade debugging
+    else
     {
-        TArray<FShaderDefine> Defines =
-        {
-            { "DRAW_CASCADE_DEBUG", "(1)" }
-        };
-
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        TiledLightShader_CascadeDebug = RHICreateComputeShader(ShaderCode);
-        if (!TiledLightShader_CascadeDebug)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader_CascadeDebug.Get());
-        TiledLightPassPSO_CascadeDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
-        if (!TiledLightPassPSO_CascadeDebug)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            TiledLightPassPSO_CascadeDebug->SetDebugName("DeferredLightPass PipelineState Cascade-Debug");
-        }
-    }
-
-    // Depth-Reduction
-    {
-        FShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        ReduceDepthInitalShader = RHICreateComputeShader(ShaderCode);
-        if (!ReduceDepthInitalShader)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        FRHIComputePipelineStateInitializer PipelineStateInfo(ReduceDepthInitalShader.Get());
-        ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
-        if (!ReduceDepthInitalPSO)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-
-    // Depth-Reduction
-    {
-        FShaderCompileInfo CompileInfo("ReductionMain", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        ReduceDepthShader = RHICreateComputeShader(ShaderCode);
-        if (!ReduceDepthShader)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-
-        FRHIComputePipelineStateInitializer PSOInitializer(ReduceDepthShader.Get());
-        ReduceDepthPSO = RHICreateComputePipelineState(PSOInitializer);
-        if (!ReduceDepthPSO)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            ReduceDepthPSO->SetDebugName("DepthReduction PipelineState");
-        }
+        return false;
     }
 
     return true;
 }
 
-void FDeferredRenderer::Release()
+bool FDeferredBasePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    TiledLightPassPSO.Reset();
-    TiledLightShader.Reset();
+    if (FrameResources.GBuffer[GBufferIndex_Albedo])
+        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
+    if (FrameResources.GBuffer[GBufferIndex_Normal])
+        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Normal].Get());
+    if (FrameResources.GBuffer[GBufferIndex_Material])
+        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Material].Get());
+    if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
+        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get());
+    if (FrameResources.GBuffer[GBufferIndex_Velocity])
+        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
 
-    TiledLightPassPSO_TileDebug.Reset();
-    TiledLightShader_TileDebug.Reset();
-
-    TiledLightPassPSO_CascadeDebug.Reset();
-    TiledLightShader_CascadeDebug.Reset();
-
-    ReduceDepthInitalPSO.Reset();
-    ReduceDepthInitalShader.Reset();
-
-    ReduceDepthPSO.Reset();
-    ReduceDepthShader.Reset();
+    return CreateResources(FrameResources, Width, Height);
 }
 
-void FDeferredRenderer::RenderPrePass(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
+void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
 {
-    const float RenderWidth  = float(FrameResources.CurrentWidth);
-    const float RenderHeight = float(FrameResources.CurrentHeight);
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Deferred BasePass");
 
-    {
-        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PrePass");
-    
-        TRACE_SCOPE("PrePass");
+    TRACE_SCOPE("Deferred BasePass");
 
-        GPU_TRACE_SCOPE(CommandList, "Pre Pass");
-
-        FRHIRenderPassDesc RenderPass;
-        RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get());
-
-        CommandList.BeginRenderPass(RenderPass);
-
-        FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
-        CommandList.SetViewport(ViewportRegion);
-
-        FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
-        CommandList.SetScissorRect(ScissorRegion);
-
-        struct FTransformBuffer
-        {
-            FMatrix4 Transform;
-            FMatrix4 TransformInv;
-        } TransformPerObject;
-        TransformPerObject.TransformInv = FMatrix4::Identity();
-
-        for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
-        {
-            FMaterial* Material = Batch.Material;
-            CHECK(Material != nullptr);
-
-            if (!Material->ShouldRenderInPrePass())
-            {
-                continue;
-            }
-
-            FPipelineStateInstance* Instance = PrePassPSOs.Find(Material->GetMaterialFlags());
-            if (!Instance)
-            {
-                DEBUG_BREAK();
-            }
-
-            FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
-            CHECK(PipelineState  != nullptr);
-            CommandList.SetGraphicsPipelineState(PipelineState);
-
-            CommandList.SetConstantBuffer(Instance->VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-
-            if (Material->HasAlphaMask())
-            {
-                CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-                CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-                
-                if (Material->IsPackedMaterial())
-                {
-                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 0);
-                }
-                else
-                {
-                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->AlphaMask->GetShaderResourceView(), 0);
-                }
-            }
-            else if (Material->HasHeightMap())
-            {
-                CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-                CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-                CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-            }
-
-            for (const FProxySceneComponent* Component : Batch.Primitives)
-            {
-                if (Material->HasAlphaMask() || Material->IsDoubleSided())
-                {
-                    CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
-                }
-                else if (Material->HasHeightMap())
-                {
-                    CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->VertexBuffer, 1), 0);
-                }
-                else
-                {
-                    CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
-                }
-
-                CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
-
-                TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
-                CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &TransformPerObject, 32);
-
-                CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
-            }
-        }
-
-        CommandList.EndRenderPass();
-    
-        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End PrePass");
-    }
-
-    // TODO: Move to after GBuffer gen
-    if (CVarPrePassDepthReduce.GetValue())
-    {
-        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Reduction");
-
-        TRACE_SCOPE("Depth Reduction");
-
-        GPU_TRACE_SCOPE(CommandList, "Depth Reduction");
-
-        struct FReductionConstants
-        {
-            FMatrix4 CamProjection;
-            float    NearPlane;
-            float    FarPlane;
-        } ReductionConstants;
-
-        FCamera* Camera = Scene->Camera;
-        ReductionConstants.CamProjection = Camera->GetProjectionMatrix();
-        ReductionConstants.NearPlane     = Camera->GetNearPlane();
-        ReductionConstants.FarPlane      = Camera->GetFarPlane();
-
-        // Perform the first reduction
-        CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
-        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-
-        CommandList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
-
-        CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
-        CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
-
-        CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, FMath::BytesToNum32BitConstants(sizeof(ReductionConstants)));
-
-        uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
-        uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
-        CommandList.Dispatch(ThreadsX, ThreadsY, 1);
-
-        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-        CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
-
-        // Perform the other reductions
-        CommandList.SetComputePipelineState(ReduceDepthPSO.Get());
-
-        CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
-        CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0);
-
-        ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
-        ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
-        CommandList.Dispatch(ThreadsX, ThreadsY, 1);
-
-        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-
-        CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
-        CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
-
-        ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
-        ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
-        CommandList.Dispatch(ThreadsX, ThreadsY, 1);
-
-        CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-    
-        INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
-    }
-}
-
-void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
-{
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin GeometryPass");
-
-    TRACE_SCOPE("GeometryPass");
-
-    GPU_TRACE_SCOPE(CommandList, "Base Pass");
+    GPU_TRACE_SCOPE(CommandList, "Deferred BasePass");
 
     const float RenderWidth  = float(FrameResources.CurrentWidth);
     const float RenderHeight = float(FrameResources.CurrentHeight);
 
     const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
-    
+
     FRHIRenderPassDesc RenderPass;
     RenderPass.NumRenderTargets = 5;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
@@ -817,8 +618,8 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
         {
             continue;
         }
-        
-        FPipelineStateInstance* Instance = BasePassPSOs.Find(Material->GetMaterialFlags());
+
+        FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
         if (!Instance)
         {
             DEBUG_BREAK();
@@ -882,7 +683,7 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
             CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-            TransformPerObject.Transform    = Component->CurrentActor->GetTransform().GetMatrix();
+            TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
             TransformPerObject.TransformInv = Component->CurrentActor->GetTransform().GetMatrixInverse();
             CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &TransformPerObject, 32);
 
@@ -892,14 +693,285 @@ void FDeferredRenderer::RenderBasePass(FRHICommandList& CommandList, const FFram
 
     CommandList.EndRenderPass();
 
-    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End GeometryPass");
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Deferred BasePass");
 }
 
-void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup)
+
+FTiledLightPass::FTiledLightPass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , TiledLightPassPSO(nullptr)
+    , TiledLightShader(nullptr)
+    , TiledLightPassPSO_TileDebug(nullptr)
+    , TiledLightShader_TileDebug(nullptr)
+    , TiledLightPassPSO_CascadeDebug(nullptr)
+    , TiledLightShader_CascadeDebug(nullptr)
+{
+}
+
+FTiledLightPass::~FTiledLightPass()
+{
+    Release();
+}
+
+bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
+{
+    FRHISamplerStateDesc SamplerInitializer;
+    SamplerInitializer.AddressU = ESamplerMode::Clamp;
+    SamplerInitializer.AddressV = ESamplerMode::Clamp;
+    SamplerInitializer.AddressW = ESamplerMode::Clamp;
+    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
+
+    FrameResources.GBufferSampler = RHICreateSamplerState(SamplerInitializer);
+    if (!FrameResources.GBufferSampler)
+    {
+        return false;
+    }
+
+    if (!CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight))
+    {
+        return false;
+    }
+
+    TArray<uint8> ShaderCode;
+
+    // BRDF LUT Generation
+    constexpr uint32  LUTSize   = 512;
+    constexpr EFormat LUTFormat = EFormat::R16G16_Float;
+    if (!RHIQueryUAVFormatSupport(LUTFormat))
+    {
+        LOG_ERROR("[FSceneRenderer]: R16G16_Float is not supported for UAVs");
+        return false;
+    }
+
+    FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccess);
+    FRHITextureRef StagingTexture = RHICreateTexture(LUTDesc, EResourceAccess::Common);
+    if (!StagingTexture)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        StagingTexture->SetDebugName("Staging IntegrationLUT");
+    }
+
+    LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
+
+    FrameResources.IntegrationLUT = RHICreateTexture(LUTDesc, EResourceAccess::Common);
+    if (!FrameResources.IntegrationLUT)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        FrameResources.IntegrationLUT->SetDebugName("IntegrationLUT");
+    }
+
+    SamplerInitializer.AddressU = ESamplerMode::Clamp;
+    SamplerInitializer.AddressV = ESamplerMode::Clamp;
+    SamplerInitializer.AddressW = ESamplerMode::Clamp;
+    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
+
+    FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInitializer);
+    if (!FrameResources.IntegrationLUTSampler)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/BRDFIntegationGen.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIComputeShaderRef BRDFShader = RHICreateComputeShader(ShaderCode);
+    if (!BRDFShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIComputePipelineStateInitializer PSOInitializer(BRDFShader.Get());
+    FRHIComputePipelineStateRef BRDFPipelineState = RHICreateComputePipelineState(PSOInitializer);
+    if (!BRDFPipelineState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        BRDFPipelineState->SetDebugName("BRDFIntegationGen PipelineState");
+    }
+
+    FRHICommandList CommandList;
+    CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
+
+    CommandList.SetComputePipelineState(BRDFPipelineState.Get());
+
+    FRHIUnorderedAccessView* StagingUAV = StagingTexture->GetUnorderedAccessView();
+    CommandList.SetUnorderedAccessView(BRDFShader.Get(), StagingUAV, 0);
+
+    constexpr uint32 ThreadCount = 16;
+    constexpr uint32 DispatchWidth  = FMath::DivideByMultiple(LUTSize, ThreadCount);
+    constexpr uint32 DispatchHeight = FMath::DivideByMultiple(LUTSize, ThreadCount);
+    CommandList.Dispatch(DispatchWidth, DispatchHeight, 1);
+
+    CommandList.UnorderedAccessTextureBarrier(StagingTexture.Get());
+
+    CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+    CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+
+    CommandList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
+
+    CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+
+    CommandList.DestroyResource(StagingTexture.Get());
+    CommandList.DestroyResource(BRDFShader.Get());
+    CommandList.DestroyResource(BRDFPipelineState.Get());
+
+    GRHICommandExecutor.ExecuteCommandList(CommandList);
+
+    // Tiled lightning
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    TiledLightShader = RHICreateComputeShader(ShaderCode);
+    if (!TiledLightShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIComputePipelineStateInitializer DeferredLightPassInitializer(TiledLightShader.Get());
+    TiledLightPassPSO = RHICreateComputePipelineState(DeferredLightPassInitializer);
+    if (!TiledLightPassPSO)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Tiled lightning Tile debugging
+    TArray<FShaderDefine> Defines =
+    {
+        { "DRAW_TILE_DEBUG", "(1)" }
+    };
+
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    TiledLightShader_TileDebug = RHICreateComputeShader(ShaderCode);
+    if (!TiledLightShader_TileDebug)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    DeferredLightPassInitializer = FRHIComputePipelineStateInitializer(TiledLightShader_TileDebug.Get());
+    TiledLightPassPSO_TileDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
+    if (!TiledLightPassPSO_TileDebug)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        TiledLightPassPSO_TileDebug->SetDebugName("DeferredLightPass PipelineState Tile-Debug");
+    }
+
+    // Tiled lightning Cascade debugging
+    Defines =
+    {
+        { "DRAW_CASCADE_DEBUG", "(1)" }
+    };
+
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DeferredLightPass.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    TiledLightShader_CascadeDebug = RHICreateComputeShader(ShaderCode);
+    if (!TiledLightShader_CascadeDebug)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    DeferredLightPassInitializer = FRHIComputePipelineStateInitializer(TiledLightShader_CascadeDebug.Get());
+    TiledLightPassPSO_CascadeDebug = RHICreateComputePipelineState(DeferredLightPassInitializer);
+    if (!TiledLightPassPSO_CascadeDebug)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        TiledLightPassPSO_CascadeDebug->SetDebugName("DeferredLightPass PipelineState Cascade-Debug");
+    }
+
+    return true;
+}
+
+void FTiledLightPass::Release()
+{
+    TiledLightPassPSO.Reset();
+    TiledLightShader.Reset();
+    
+    TiledLightPassPSO_TileDebug.Reset();
+    TiledLightShader_TileDebug.Reset();
+
+    TiledLightPassPSO_CascadeDebug.Reset();
+    TiledLightShader_CascadeDebug.Reset();
+}
+
+bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
+    if (Width <= 0 && Height <= 0)
+    {
+        return true;
+    }
+
+    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
+    FRHITextureDesc FinalTargetDesc = FRHITextureDesc::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage);
+    FrameResources.FinalTarget = RHICreateTexture(FinalTargetDesc, EResourceAccess::PixelShaderResource);
+    if (FrameResources.FinalTarget)
+    {
+        FrameResources.FinalTarget->SetDebugName("Final Target");
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool FTiledLightPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
+    if (FrameResources.FinalTarget)
+        CommandList.DestroyResource(FrameResources.FinalTarget.Get());
+
+    return CreateResources(FrameResources, Width, Height);
+}
+
+void FTiledLightPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, const FLightSetup& LightSetup)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightPass");
 
     TRACE_SCOPE("LightPass");
+
     GPU_TRACE_SCOPE(CommandList, "Light Pass");
 
     bool bDrawCascades = false;
@@ -985,144 +1057,112 @@ void FDeferredRenderer::RenderDeferredTiledLightPass(FRHICommandList& CommandLis
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
 }
 
-bool FDeferredRenderer::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
+
+FDepthReducePass::FDepthReducePass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , ReduceDepthInitalPSO(nullptr)
+    , ReduceDepthInitalShader(nullptr)
+    , ReduceDepthPSO(nullptr)
+    , ReduceDepthShader(nullptr)
 {
-    // Destroy the old resources
-    for (FRHITextureRef& Texture : FrameResources.GBuffer)
-    {
-        CommandList.DestroyResource(Texture.Get());
-    }
-
-    for (FRHITextureRef& Texture : FrameResources.ReducedDepthBuffer)
-    {
-        CommandList.DestroyResource(Texture.Get());
-    }
-
-    CommandList.DestroyResource(FrameResources.FinalTarget.Get());
-
-    // Create the new resources
-    return CreateGBuffer(FrameResources, Width, Height);
 }
 
-bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+FDepthReducePass::~FDepthReducePass()
 {
-    const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
+    Release();
+}
+
+bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
+{
+    TArray<uint8> ShaderCode;
+
+    // Depth-Reduction
+    FShaderCompileInfo CompileInfo("ReductionMainInital", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    ReduceDepthInitalShader = RHICreateComputeShader(ShaderCode);
+    if (!ReduceDepthInitalShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIComputePipelineStateInitializer PipelineStateInfo(ReduceDepthInitalShader.Get());
+    ReduceDepthInitalPSO = RHICreateComputePipelineState(PipelineStateInfo);
+    if (!ReduceDepthInitalPSO)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        ReduceDepthInitalPSO->SetDebugName("Initial DepthReduction PipelineState");
+    }
+
+    // Depth-Reduction
+    CompileInfo = FShaderCompileInfo("ReductionMain", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DepthReduction.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    ReduceDepthShader = RHICreateComputeShader(ShaderCode);
+    if (!ReduceDepthShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIComputePipelineStateInitializer PSOInitializer(ReduceDepthShader.Get());
+    ReduceDepthPSO = RHICreateComputePipelineState(PSOInitializer);
+    if (!ReduceDepthPSO)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        ReduceDepthPSO->SetDebugName("DepthReduction PipelineState");
+    }
+
+    if (!CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight))
+        return false;
+
+    return true;
+}
+
+void FDepthReducePass::Release()
+{
+    ReduceDepthInitalPSO.Reset();
+    ReduceDepthInitalShader.Reset();
+    ReduceDepthPSO.Reset();
+    ReduceDepthShader.Reset();
+}
+
+bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
     if (Width <= 0 && Height <= 0)
     {
         return true;
     }
 
-    // Albedo
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage);
-
-    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Albedo])
-    {
-        FrameResources.GBuffer[GBufferIndex_Albedo]->SetDebugName("GBuffer Albedo");
-    }
-    else
-    {
-        return false;
-    }
-
-    // Normal
-    TextureDesc.Format = FrameResources.NormalFormat;
-
-    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Normal])
-    {
-        FrameResources.GBuffer[GBufferIndex_Normal]->SetDebugName("GBuffer Normal");
-    }
-    else
-    {
-        return false;
-    }
-
-    // Material Properties
-    TextureDesc.Format = FrameResources.MaterialFormat;
-
-    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Material])
-    {
-        FrameResources.GBuffer[GBufferIndex_Material]->SetDebugName("GBuffer Material");
-    }
-    else
-    {
-        return false;
-    }
-
-    // View Normal
-    TextureDesc.Format = FrameResources.ViewNormalFormat;
-
-    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
-    {
-        FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetDebugName("GBuffer ViewNormal");
-    }
-    else
-    {
-        return false;
-    }
-
-    // Velocity
-    TextureDesc.Format = FrameResources.VelocityFormat;
-
-    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Velocity])
-    {
-        FrameResources.GBuffer[GBufferIndex_Velocity]->SetDebugName("GBuffer Velocity");
-    }
-    else
-    {
-        return false;
-    }
-
-    // Final Image
-    TextureDesc.Format     = FrameResources.FinalTargetFormat;
-    TextureDesc.UsageFlags = Usage | ETextureUsageFlags::UnorderedAccess;
-
-    FrameResources.FinalTarget = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
-    if (FrameResources.FinalTarget)
-    {
-        FrameResources.FinalTarget->SetDebugName("Final Target");
-    }
-    else
-    {
-        return false;
-    }
-
-    // DepthStencil
-    const FClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
-    TextureDesc.Format     = FrameResources.DepthBufferFormat;
-    TextureDesc.UsageFlags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
-    TextureDesc.ClearValue = DepthClearValue;
-
-    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_Depth])
-    {
-        FrameResources.GBuffer[GBufferIndex_Depth]->SetDebugName("GBuffer DepthStencil");
-    }
-    else
-    {
-        return false;
-    }
-
     constexpr uint32 Alignment = 16;
-
     const uint32 ReducedWidth  = FMath::DivideByMultiple(Width, Alignment);
     const uint32 ReducedHeight = FMath::DivideByMultiple(Height, Alignment);
 
-    TextureDesc.Format     = EFormat::R32G32_Float;
-    TextureDesc.Extent.x   = uint16(ReducedWidth);
-    TextureDesc.Extent.y   = uint16(ReducedHeight);
-    TextureDesc.UsageFlags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
-
-    for (uint32 i = 0; i < 2; i++)
+    const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
+    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, Usage);
+    for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
     {
-        FrameResources.ReducedDepthBuffer[i] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
-        if (FrameResources.ReducedDepthBuffer[i])
+        FrameResources.ReducedDepthBuffer[Index] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+        if (FrameResources.ReducedDepthBuffer[Index])
         {
-            FrameResources.ReducedDepthBuffer[i]->SetDebugName("Reduced DepthStencil[" + TTypeToString<int32>::ToString(i) + "]");
+            FrameResources.ReducedDepthBuffer[Index]->SetDebugName("Reduced DepthStencil[" + TTypeToString<int32>::ToString(Index) + "]");
         }
         else
         {
@@ -1131,4 +1171,76 @@ bool FDeferredRenderer::CreateGBuffer(FFrameResources& FrameResources, uint32 Wi
     }
 
     return true;
+}
+
+bool FDepthReducePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
+{
+    for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
+        CommandList.DestroyResource(FrameResources.ReducedDepthBuffer[Index].Get());
+
+    return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
+}
+
+void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
+{
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Depth Reduction");
+
+    TRACE_SCOPE("Depth Reduction");
+
+    GPU_TRACE_SCOPE(CommandList, "Depth Reduction");
+
+    struct FReductionConstants
+    {
+        FMatrix4 CamProjection;
+        float    NearPlane;
+        float    FarPlane;
+    } ReductionConstants;
+
+    FCamera* Camera = Scene->Camera;
+    ReductionConstants.CamProjection = Camera->GetProjectionMatrix();
+    ReductionConstants.NearPlane     = Camera->GetNearPlane();
+    ReductionConstants.FarPlane      = Camera->GetFarPlane();
+
+    // Perform the first reduction
+    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+
+    CommandList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
+
+    CommandList.SetShaderResourceView(ReduceDepthInitalShader.Get(), FrameResources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 0);
+    CommandList.SetUnorderedAccessView(ReduceDepthInitalShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
+
+    CommandList.Set32BitShaderConstants(ReduceDepthInitalShader.Get(), &ReductionConstants, FMath::BytesToNum32BitConstants(sizeof(ReductionConstants)));
+
+    uint32 ThreadsX = FrameResources.ReducedDepthBuffer[0]->GetWidth();
+    uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
+    CommandList.Dispatch(ThreadsX, ThreadsY, 1);
+
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
+
+    // Perform the other reductions
+    CommandList.SetComputePipelineState(ReduceDepthPSO.Get());
+
+    CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetShaderResourceView(), 0);
+    CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetUnorderedAccessView(), 0);
+
+    ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
+    ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
+    CommandList.Dispatch(ThreadsX, ThreadsY, 1);
+
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+
+    CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
+    CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
+
+    ThreadsX = FMath::DivideByMultiple(ThreadsX, 16);
+    ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
+    CommandList.Dispatch(ThreadsX, ThreadsY, 1);
+
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+    
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
 }

@@ -17,11 +17,6 @@ static TAutoConsoleVariable<bool> CVarCascadeDebug(
     "Draws an overlay that shows which pixel uses what shadow cascade",
     false);
 
-static TAutoConsoleVariable<bool> CVarGPUGeneratedCascades(
-    "Renderer.Feature.GPUGeneratedCascades",
-    "Draws an overlay that shows which pixel uses what shadow cascade",
-    true);
-
 void FShadowMapRenderer::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) 
 {
     // Point Shadow Maps
@@ -565,7 +560,6 @@ void FShadowMapRenderer::RenderPointLightShadows(FRHICommandList& CommandList, c
 void FShadowMapRenderer::RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FScene* Scene)
 {
     // Generate matrices for directional light
-    if (CVarGPUGeneratedCascades.GetValue())
     {
         GPU_TRACE_SCOPE(CommandList, "Generate Cascade Matrices");
 

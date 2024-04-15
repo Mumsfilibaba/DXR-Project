@@ -149,14 +149,14 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
             };
         }
         
-        // Setup the builders
-        DescriptorSetBuilders[DescriptorSetIndex].SetupDescriptorWrites(DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.Size());
-
         // Fill in all the info we need to allocate DescriptorSets from a DescriptorPool
         FVulkanDescriptorPoolInfo PoolInfo;
         PoolInfo.DescriptorSetLayout = Layout->GetVkDescriptorSetLayout(DescriptorSetIndex);
 
-        for (TPair<const VkDescriptorType&, uint32&> TypePair : DescriptorCountMap)
+        // Setup the builders
+        DescriptorSetBuilders[DescriptorSetIndex].SetupDescriptorWrites(PoolInfo.DescriptorSetLayout, DSWrites.DescriptorWrites.Data(), DSWrites.DescriptorWrites.Size());
+
+        for (auto TypePair : DescriptorCountMap)
         {
             PoolInfo.DescriptorSizes.Emplace(TypePair.First, TypePair.Second);
         }

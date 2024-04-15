@@ -100,6 +100,11 @@ static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
     "Enables Ray Tracing (Currently broken)",
     false);
 
+static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
+    "Renderer.PrePass.DepthReduce",
+    "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer",
+    true);
+
 FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {
     if (!GEngine)
@@ -125,7 +130,10 @@ FSceneRenderer::FSceneRenderer()
     , LightSetup()
     , CameraBuffer()
     , HaltonState()
-    , DeferredRenderer(this)
+    , DepthPrePass(nullptr)
+    , BasePass(nullptr)
+    , DepthReducePass(nullptr)
+    , TiledLightPass(nullptr)
     , ShadowMapRenderer(this)
     , SSAORenderer(this)
     , LightProbeRenderer(this)
@@ -154,7 +162,11 @@ FSceneRenderer::~FSceneRenderer()
 
     CommandList.Reset();
 
-    DeferredRenderer.Release();
+    SAFE_DELETE(DepthPrePass);
+    SAFE_DELETE(BasePass);
+    SAFE_DELETE(DepthReducePass);
+    SAFE_DELETE(TiledLightPass);
+
     ShadowMapRenderer.Release();
     SSAORenderer.Release();
     LightProbeRenderer.Release();
@@ -285,66 +297,42 @@ bool FSceneRenderer::Initialize()
     }
 
     if (!InitAA())
-    {
         return false;
-    }
 
     if (!InitShadingImage())
-    {
         return false;
-    }
 
     if (!DebugRenderer.Initialize(Resources))
-    {
         return false;
-    }
 
     if (!LightSetup.Initialize())
-    {
         return false;
-    }
 
-    if (!DeferredRenderer.Initialize(Resources))
-    {
+    if (!BuildRenderPasses())
         return false;
-    }
 
     if (!ShadowMapRenderer.Initialize(LightSetup, Resources))
-    {
         return false;
-    }
 
     if (!SSAORenderer.Initialize(Resources))
-    {
         return false;
-    }
 
     if (!LightProbeRenderer.Initialize(LightSetup, Resources))
-    {
         return false;
-    }
 
     if (!SkyboxRenderPass.Initialize(Resources))
-    {
         return false;
-    }
 
     if (!ForwardRenderer.Initialize(Resources))
-    {
         return false;
-    }
 
     if (!TemporalAA.Initialize(Resources))
-    {
         return false;
-    }
 
     if (false/*FHardwareSupport::bRayTracing*/)
     {
         if (!RayTracer.Initialize(Resources))
-        {
             return false;
-        }
     }
 
     // Copy over the texture
@@ -409,6 +397,27 @@ bool FSceneRenderer::Initialize()
         GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
         FApplication::Get().AddWidget(GPUProfilerWindow);
     }
+
+    return true;
+}
+
+bool FSceneRenderer::BuildRenderPasses()
+{
+    DepthPrePass = new FDepthPrePass(this);
+    if (!DepthPrePass->Initialize(Resources))
+        return false;
+
+    BasePass = new FDeferredBasePass(this);
+    if (!BasePass->Initialize(Resources))
+        return false;
+
+    TiledLightPass = new FTiledLightPass(this);
+    if (!TiledLightPass->Initialize(Resources))
+        return false;
+
+    DepthReducePass = new FDepthReducePass(this);
+    if (!DepthReducePass->Initialize(Resources))
+        return false;
 
     return true;
 }
@@ -530,7 +539,25 @@ void FSceneRenderer::Tick(FScene* Scene)
             LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, NewWidth, NewHeight);
 
             // TODO: Resources should not require a CommandList to be released safely
-            if (!DeferredRenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (DepthPrePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (BasePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (TiledLightPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            {
+                DEBUG_BREAK();
+                return;
+            }
+
+            if (DepthReducePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
@@ -624,7 +651,8 @@ void FSceneRenderer::Tick(FScene* Scene)
     for (FMaterial* Material : Scene->Materials)
     {
         // TODO: Only do this once?
-        DeferredRenderer.InitializePipelineState(Material, Resources);
+        DepthPrePass->InitializePipelineState(Material, Resources);
+        BasePass->InitializePipelineState(Material, Resources);
         ShadowMapRenderer.InitializePipelineState(Material, Resources);
 
         if (Material->IsBufferDirty())
@@ -643,7 +671,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     // PrePass
     if (CVarPrePassEnabled.GetValue())
     {
-        DeferredRenderer.RenderPrePass(CommandList, Resources, Scene);
+        DepthPrePass->Execute(CommandList, Resources, Scene);
     }
     else
     {
@@ -681,7 +709,13 @@ void FSceneRenderer::Tick(FScene* Scene)
     // BasePass
     if (CVarBasePassEnabled.GetValue())
     {
-        DeferredRenderer.RenderBasePass(CommandList, Resources, Scene);
+        BasePass->Execute(CommandList, Resources, Scene);
+    }
+
+    // Depth Reduce
+    if (CVarPrePassDepthReduce.GetValue())
+    {
+        DepthReducePass->Execute(CommandList, Resources, Scene);
     }
 
     // RayTracing PrePass
@@ -772,34 +806,33 @@ void FSceneRenderer::Tick(FScene* Scene)
     }
 
     // ShadowMask and GBuffer
+    CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(LightSetup.Skylight.IrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(LightSetup.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+
+    if (CVarShadowMaskEnabled.GetValue())
     {
-        CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::UnorderedAccess);
-        CommandList.TransitionTexture(Resources.BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
-        CommandList.TransitionTexture(LightSetup.Skylight.IrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-        CommandList.TransitionTexture(LightSetup.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-        CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-
-        if (CVarShadowMaskEnabled.GetValue())
-        {
-            ShadowMapRenderer.RenderShadowMasks(CommandList, LightSetup, Resources);
-        }
-        else
-        {
-            CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-
-            const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-            CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
-            
-            const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            CommandList.ClearUnorderedAccessView(LightSetup.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
-            
-            CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-            CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-        }
-
-        DeferredRenderer.RenderDeferredTiledLightPass(CommandList, Resources, LightSetup);
+        ShadowMapRenderer.RenderShadowMasks(CommandList, LightSetup, Resources);
     }
+    else
+    {
+        CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+
+        const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        CommandList.ClearUnorderedAccessView(LightSetup.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
+            
+        const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        CommandList.ClearUnorderedAccessView(LightSetup.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
+            
+        CommandList.TransitionTexture(LightSetup.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(LightSetup.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+    }
+
+    // Main LightPass
+    TiledLightPass->Execute(CommandList, Resources, LightSetup);
 
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
     CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::RenderTarget);

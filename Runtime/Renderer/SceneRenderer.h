@@ -84,6 +84,7 @@ public:
     ~FSceneRenderer();
 
     bool Initialize();
+    bool BuildRenderPasses();
 
     void Tick(FScene* Scene);
 
@@ -118,7 +119,11 @@ private:
     FCameraHLSL                   CameraBuffer;
     FHaltonState                  HaltonState;
 
-    FDeferredRenderer             DeferredRenderer;
+    FDepthPrePass*                DepthPrePass;
+    FDeferredBasePass*            BasePass;
+    FDepthReducePass*             DepthReducePass;
+    FTiledLightPass*              TiledLightPass;
+
     FShadowMapRenderer            ShadowMapRenderer;
     FScreenSpaceOcclusionRenderer SSAORenderer;
     FLightProbeRenderer           LightProbeRenderer;

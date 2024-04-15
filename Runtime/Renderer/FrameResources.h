@@ -100,7 +100,8 @@ struct FFrameResources
 
     // TODO: Move to the RenderPass and store only the final downsized texture
     // Two resources that can be ping-ponged between
-    FRHITextureRef           ReducedDepthBuffer[2];
+    inline static constexpr int32 NumReducedDepthBuffers = 2;
+    FRHITextureRef           ReducedDepthBuffer[NumReducedDepthBuffers];
 
     FRHIVertexInputLayoutRef MeshInputLayout;
 

@@ -13,13 +13,10 @@ public:
     
     virtual bool Load() override final;
 
-    // Initialize the Renderer from the EngineLoop
     virtual bool Initialize() override final;
 
-    // Run a frame on the Renderer side
     virtual void Tick() override final;
 
-    // Release the Renderer from the EngineLoop
     virtual void Release() override final;
 
     // Creates and adds a scene to the list of scenes

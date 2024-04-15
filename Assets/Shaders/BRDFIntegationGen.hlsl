@@ -53,6 +53,6 @@ void Main(uint3 DispatchThreadID : SV_DispatchThreadID)
     float NdotV     = max(TexCoord.x, MIN_VALUE);
     float Roughness = min(max(1.0f - TexCoord.y, MIN_ROUGHNESS), MAX_ROUGHNESS);
     
-    float2 IntegratedBDRF = IntegrateBRDF(NdotV, Roughness);
+    const float2 IntegratedBDRF = IntegrateBRDF(NdotV, Roughness);
     IntegrationMap[DispatchThreadID.xy] = IntegratedBDRF;
 }

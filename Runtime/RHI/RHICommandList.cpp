@@ -4,7 +4,7 @@
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-RHI_API FRHICommandListExecutor GRHICommandExecutor;
+RHI_API FRHICommandExecutor GRHICommandExecutor;
 
 static TAutoConsoleVariable<bool> CVarEnableRHIThread(
     "RHI.EnableRHIThread",
@@ -154,18 +154,18 @@ void FRHIThread::WaitForOutstandingTasks()
 }
 
 
-FRHICommandListExecutor::FRHICommandListExecutor()
+FRHICommandExecutor::FRHICommandExecutor()
     : Statistics()
     , CommandContext(nullptr)
 {
 }
 
-bool FRHICommandListExecutor::Initialize()
+bool FRHICommandExecutor::Initialize()
 {
     return true;
 }
 
-void FRHICommandListExecutor::Release()
+void FRHICommandExecutor::Release()
 {
     if (FRHIThread::IsRunning())
     {
@@ -173,15 +173,41 @@ void FRHICommandListExecutor::Release()
     }
 }
 
-void FRHICommandListExecutor::Tick()
+void FRHICommandExecutor::Tick()
 {
     Statistics.NumDrawCalls     = 0;
     Statistics.NumDispatchCalls = 0;
     Statistics.NumCommands      = 0;
 }
 
-void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
+void FRHICommandExecutor::EnqueueResourceDeletion(FRHIResource* InResource)
 {
+    TScopedLock Lock(DeletedResourcesCS);
+
+    if (InResource)
+    {
+        InResource->AddRef();
+        DeletedResources.Add(InResource);
+    }
+}
+
+void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
+{
+    {
+        TScopedLock Lock(DeletedResourcesCS);
+
+        if (!DeletedResources.IsEmpty())
+        {
+            for (FRHIResource* Resource : DeletedResources)
+            {
+                CommandList.DestroyResource(Resource);
+                Resource->Release();
+            }
+
+            DeletedResources.Clear();
+        }
+    }
+
     if (CommandList.HasCommands())
     {
         Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
@@ -204,12 +230,12 @@ void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
     }
 }
 
-void FRHICommandListExecutor::WaitForOutstandingTasks()
+void FRHICommandExecutor::WaitForOutstandingTasks()
 {
     FRHIThread::Get().WaitForOutstandingTasks();
 }
 
-void FRHICommandListExecutor::WaitForGPU()
+void FRHICommandExecutor::WaitForGPU()
 {
     if (FRHIThread::IsRunning())
     {

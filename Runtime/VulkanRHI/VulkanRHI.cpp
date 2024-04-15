@@ -184,6 +184,8 @@ void FVulkanRHI::RHIBeginFrame()
 {
     // ProcessPendingCommands();
 
+    Device->GetDescriptorSetCache().ReleaseDescriptorSets();
+
     // Update timestamp period, this is necessary on MoltenVK in order to get correct measurements
     {
         VkPhysicalDeviceProperties Properties;

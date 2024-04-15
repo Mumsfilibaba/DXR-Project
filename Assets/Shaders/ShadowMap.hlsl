@@ -9,6 +9,10 @@
     #define ENABLE_ALPHA_MASK (0)
 #endif
 
+#ifndef ENABLE_PARALLAX_MAPPING
+    #define ENABLE_PARALLAX_MAPPING (0)
+#endif
+
 struct FPerCascade
 {
     int CascadeIndex;
@@ -31,14 +35,20 @@ SHADER_CONSTANT_BLOCK_END
 
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
-#if ENABLE_ALPHA_MASK
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
-    
     SamplerState MaterialSampler : register(s0);
+
+#if ENABLE_ALPHA_MASK
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     Texture2D<float4> AlphaMaskTex : register(t1);
 #else
     Texture2D<float> AlphaMaskTex : register(t1);
+#endif
+#endif
+
+#if ENABLE_PARALLAX_MAPPING
+    Texture2D<float> HeightMap : register(t2);
 #endif
 #endif
 
@@ -49,14 +59,14 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 struct FVSInput
 {
     float3 Position : POSITION0;
-#if ENABLE_ALPHA_MASK
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
 };
 
 struct FVSCascadeOutput
 {
-#if ENABLE_ALPHA_MASK 
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
     float4 Position : SV_POSITION;
@@ -80,7 +90,7 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
 
 struct FGSOutput
 {
-#if ENABLE_ALPHA_MASK 
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
     float3 Position : POSITION0;
@@ -99,10 +109,11 @@ struct FPSInput
 
 void Cascade_PSMain(FPSInput Input)
 {
-#if ENABLE_ALPHA_MASK
+#if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
-    
+
+#if ENABLE_ALPHA_MASK
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
 #else
@@ -113,6 +124,7 @@ void Cascade_PSMain(FPSInput Input)
     {
         discard;
     }
+#endif
 #endif
 }
 

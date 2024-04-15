@@ -14,38 +14,44 @@ struct FVulkanDescriptorSetKey
     struct FBinding
     {
         uint64 Type;
-        uint64 ResourceID;
+        uint64 Resource;
     };
-    
+
     FVulkanDescriptorSetKey()
         : Resources()
+        , SetLayout(VK_NULL_HANDLE)
         , Hash(0)
     {
     }
-    
+
     uint64 GenerateHash()
     {
-        Hash = FCRC32::Generate(Resources.Data(), Resources.SizeInBytes());
+        Hash = reinterpret_cast<uint64>(SetLayout);
+        HashCombine(Hash, FCRC32::Generate(Resources.Data(), Resources.SizeInBytes()));
         return Hash;
     }
-    
+
     bool operator==(const FVulkanDescriptorSetKey& Other) const
     {
-        return (Resources.Size() == Other.Resources.Size()) ? FMemory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
+        if (SetLayout != Other.SetLayout)
+            return false;
+        
+        return Resources.Size() == Other.Resources.Size() ? FMemory::Memcmp(Resources.Data(), Other.Resources.Data(), Resources.SizeInBytes()) == 0 : false;
     }
-    
+
     bool operator!=(const FVulkanDescriptorSetKey& Other) const
     {
         return !(*this == Other);
     }
-    
+
     friend uint64 HashType(const FVulkanDescriptorSetKey& Value)
     {
         return Value.Hash;
     }
     
-    TArray<FBinding> Resources;
-    uint64           Hash;
+    TArray<FBinding>      Resources;
+    VkDescriptorSetLayout SetLayout;
+    uint64                Hash;
 };
 
 struct FVulkanDescriptorPoolInfo
@@ -108,17 +114,19 @@ public:
     {
     }
 
-    void SetupDescriptorWrites(VkWriteDescriptorSet* InDescriptorWrites, int32 InNumDescriptorWrites)
+    void SetupDescriptorWrites(VkDescriptorSetLayout SetLayout, VkWriteDescriptorSet* InDescriptorWrites, int32 InNumDescriptorWrites)
     {
         // Setup DescriptorWrites
         DescriptorWrites    = InDescriptorWrites;
         NumDescriptorWrites = InNumDescriptorWrites;
-        
+
         // Allocate HashKey
         DescriptorSetKey.Resources.Resize(InNumDescriptorWrites);
         FMemory::Memzero(DescriptorSetKey.Resources.Data(), DescriptorSetKey.Resources.SizeInBytes());
+        DescriptorSetKey.SetLayout = SetLayout;
+
         UpdateHash();
-        
+
         // Initialize all the types
         for (int32 Index = 0; Index < NumDescriptorWrites; Index++)
         {
@@ -162,13 +170,13 @@ public:
         VkDescriptorImageInfo* pImageInfo = const_cast<VkDescriptorImageInfo*>(DescriptorWrites[Binding].pImageInfo);
         CHECK(pImageInfo != nullptr);
         
-        const uint64 ResourceID = reinterpret_cast<uint64>(Sampler);
-        if (DescriptorSetKey.Resources[Binding].ResourceID != ResourceID)
+        const uint64 Resource = reinterpret_cast<uint64>(Sampler);
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource)
         {
             pImageInfo->sampler     = Sampler;
             pImageInfo->imageView   = VK_NULL_HANDLE;
             pImageInfo->imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            DescriptorSetKey.Resources[Binding].ResourceID = ResourceID;
+            DescriptorSetKey.Resources[Binding].Resource = Resource;
             bKeyIsDirty = true;
         }
     }
@@ -176,9 +184,7 @@ public:
     void SetDescriptorSet(VkDescriptorSet DescriptorSet)
     {
         for (int32 Index = 0; Index < NumDescriptorWrites; Index++)
-        {
             DescriptorWrites[Index].dstSet = DescriptorSet;
-        }
     }
     
     void UpdateDescriptorSet(VkDevice Device)
@@ -214,13 +220,13 @@ private:
         VkDescriptorBufferInfo* pBufferInfo = const_cast<VkDescriptorBufferInfo*>(DescriptorWrites[Binding].pBufferInfo);
         CHECK(pBufferInfo != nullptr);
         
-        const uint64 ResourceID = reinterpret_cast<uint64>(Buffer);
-        if (DescriptorSetKey.Resources[Binding].ResourceID != ResourceID)
+        const uint64 Resource = reinterpret_cast<uint64>(Buffer);
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource)
         {
             pBufferInfo->buffer = Buffer;
             pBufferInfo->offset = Offset;
             pBufferInfo->range  = Range;
-            DescriptorSetKey.Resources[Binding].ResourceID = ResourceID;
+            DescriptorSetKey.Resources[Binding].Resource = Resource;
             bKeyIsDirty = true;
         }
     }
@@ -230,13 +236,13 @@ private:
         VkDescriptorImageInfo* pImageInfo = const_cast<VkDescriptorImageInfo*>(DescriptorWrites[Binding].pImageInfo);
         CHECK(pImageInfo != nullptr);
         
-        const uint64 ResourceID = reinterpret_cast<uint64>(ImageView);
-        if (DescriptorSetKey.Resources[Binding].ResourceID != ResourceID)
+        const uint64 Resource = reinterpret_cast<uint64>(ImageView);
+        if (DescriptorSetKey.Resources[Binding].Resource != Resource)
         {
             pImageInfo->sampler     = VK_NULL_HANDLE;
             pImageInfo->imageView   = ImageView;
             pImageInfo->imageLayout = ImageLayout;
-            DescriptorSetKey.Resources[Binding].ResourceID = ResourceID;
+            DescriptorSetKey.Resources[Binding].Resource = Resource;
             bKeyIsDirty = true;
         }
     }

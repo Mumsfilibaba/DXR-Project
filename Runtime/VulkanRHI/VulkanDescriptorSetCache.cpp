@@ -69,10 +69,23 @@ FVulkanDescriptorSetCache::~FVulkanDescriptorSetCache()
     Release();
 }
 
+void FVulkanDescriptorSetCache::ReleaseDescriptorSets()
+{
+    TScopedLock Lock(CacheCS);
+    DescriptorSets.Clear();
+}
+
 void FVulkanDescriptorSetCache::Release()
 {
     TScopedLock Lock(CacheCS);
     DescriptorSets.Clear();
+
+    // Destroy all cached-pools
+    for (auto CachedPools : Caches)
+    {
+        SAFE_DELETE(CachedPools.Second);
+    }
+
     Caches.Clear();
 }
 
@@ -81,36 +94,38 @@ bool FVulkanDescriptorSetCache::FindOrCreateDescriptorSet(const FVulkanDescripto
     TScopedLock Lock(CacheCS);
 
     // Get or Create a DescriptorSet
-    if (VkDescriptorSet* DescriptorSet = DescriptorSets.Find(DSBuilder.GetKey()))
+    const FVulkanDescriptorSetKey& DSKey = DSBuilder.GetKey();
+    if (VkDescriptorSet* DescriptorSet = DescriptorSets.Find(DSKey))
     {
         OutDescriptorSet = *DescriptorSet;
     }
     else
     {
-        FCachedPool* Pool = nullptr;
-        if (FCachedPool* ExistingPool = Caches.Find(PoolInfo))
+        FCachedPool* CachedPool = nullptr;
+        if (FCachedPool** ExistingPool = Caches.Find(PoolInfo))
         {
-            Pool = ExistingPool;
+            CachedPool = *ExistingPool;
         }
         else
         {
-            FCachedPool NewPool(GetDevice(), PoolInfo);
-            Pool = &Caches.Add(Move(PoolInfo), Move(NewPool));
+            FCachedPool* NewPool = new FCachedPool(GetDevice(), PoolInfo);
+            CachedPool = Caches.Add(Move(PoolInfo), NewPool);
         }
 
-        if (!Pool)
+        if (!CachedPool)
         {
+            DEBUG_BREAK();
             return false;
         }
 
         // Create a new DescriptorSet
-        if (!Pool->AllocateDescriptorSet(PoolInfo.DescriptorSetLayout, OutDescriptorSet))
+        if (!CachedPool->AllocateDescriptorSet(PoolInfo.DescriptorSetLayout, OutDescriptorSet))
         {
             return false;
         }
 
         CHECK(OutDescriptorSet != VK_NULL_HANDLE);
-        DescriptorSets.Add(DSBuilder.GetKey(), OutDescriptorSet);
+        DescriptorSets.Add(DSKey, OutDescriptorSet);
 
         DSBuilder.SetDescriptorSet(OutDescriptorSet);
         DSBuilder.UpdateDescriptorSet(GetDevice()->GetVkDevice());

@@ -24,7 +24,7 @@ struct FRHICommand
 template<typename CommandType>
 struct TRHICommand : public FRHICommand
 {
-    TRHICommand() = default;
+    TRHICommand()  = default;
     ~TRHICommand() = default;
 
     virtual void ExecuteAndRelease(IRHICommandContext& CommandContext) override final
@@ -575,8 +575,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyBuffer)
         CommandContext.RHICopyBuffer(Dst, Src, CopyBufferInfo);
     }
 
-    FRHIBuffer*        Dst;
-    FRHIBuffer*        Src;
+    FRHIBuffer*     Dst;
+    FRHIBuffer*     Src;
     FBufferCopyInfo CopyBufferInfo;
 };
 
@@ -611,8 +611,8 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
         CommandContext.RHICopyTextureRegion(Dst, Src, CopyInfo);
     }
 
-    FRHITexture*        Dst;
-    FRHITexture*        Src;
+    FRHITexture*     Dst;
+    FRHITexture*     Src;
     FTextureCopyInfo CopyInfo;
 };
 

@@ -636,11 +636,11 @@ private:
     static FRHIThread* GInstance;
 };
 
-class RHI_API FRHICommandListExecutor : FNonCopyable
+class RHI_API FRHICommandExecutor : FNonCopyable
 {
 public:
-    FRHICommandListExecutor();
-    ~FRHICommandListExecutor() = default;
+    FRHICommandExecutor();
+    ~FRHICommandExecutor() = default;
 
     bool Initialize();
     void Release();
@@ -649,6 +649,8 @@ public:
 
     void WaitForOutstandingTasks();
     void WaitForGPU();
+
+    void EnqueueResourceDeletion(FRHIResource* InResource);
 
     void ExecuteCommandList(class FRHICommandList& CmdList);
 
@@ -669,8 +671,11 @@ public:
     }
 
 private:
+    TArray<FRHIResource*> DeletedResources;
+    FCriticalSection DeletedResourcesCS;
+
     FRHICommandStatistics Statistics;
     IRHICommandContext* CommandContext;
 };
 
-extern RHI_API FRHICommandListExecutor GRHICommandExecutor;
+extern RHI_API FRHICommandExecutor GRHICommandExecutor;

@@ -1108,6 +1108,8 @@ void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceA
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
+
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, D3D12Texture);
 }
 
 void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -1116,22 +1118,20 @@ void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcce
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
-    CHECK(D3D12Buffer != nullptr);
-
     TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
+
+    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, D3D12Buffer);
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
-    CHECK(D3D12Texture != nullptr);
     UnorderedAccessBarrier(D3D12Texture->GetD3D12Resource());
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
-    CHECK(D3D12Buffer != nullptr);
     UnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
 }
 

@@ -16,13 +16,15 @@ Texture2D<float2> MinMaxDepthTex : register(t0);
 [numthreads(NUM_THREADS, 1, 1)]
 void Main(FComputeShaderInput Input)
 {
-    const int CascadeIndex = min(int(Input.DispatchThreadID.x), GenerationInfo.MaxCascadeIndex);
+    const int MaxCascadeIndex = min(GenerationInfo.MaxCascadeIndex, NUM_THREADS);
+    const int CascadeIndex    = min(int(Input.DispatchThreadID.x), MaxCascadeIndex);
     
     // Get the min and max depth of the scene
     float2 MinMaxDepth = float2(0.0f, 1.0f);
     if (GenerationInfo.bDepthReductionEnabled)
     {
-        MinMaxDepth = MinMaxDepthTex[uint2(0, 0)];
+        const uint2 FirstCoord = uint2(0, 0);
+        MinMaxDepth = MinMaxDepthTex[FirstCoord];
     }
 
     float4x4 InvCamera = CameraBuffer.ViewProjectionInvUnjittered;
