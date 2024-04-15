@@ -7,9 +7,11 @@
 ////////////////////////////////////////////////////
 // Global variables that describe different features
 
-VULKANRHI_API bool GVulkanForceBinding              = false;
-VULKANRHI_API bool GVulkanForceDedicatedAllocations = false;
-VULKANRHI_API bool GVulkanAllowNullDescriptors      = true;
+VULKANRHI_API bool GVulkanForceBinding                    = false;
+VULKANRHI_API bool GVulkanForceDedicatedAllocations       = false;
+VULKANRHI_API bool GVulkanForceDedicatedImageAllocations  = GVulkanForceDedicatedAllocations || true;
+VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations = GVulkanForceDedicatedAllocations || false;
+VULKANRHI_API bool GVulkanAllowNullDescriptors            = true;
 
 static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
 {

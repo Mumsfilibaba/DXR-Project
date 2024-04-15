@@ -409,7 +409,7 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
 bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation)
 {
     // We can force dedicated allocations
-    bool bUseDedicatedAllocation = bForceDedicatedAllocation;
+    bool bUseDedicatedAllocation = false;
     
     // Check if the driver prefers us to use a dedicated allocation
     VkMemoryRequirements MemoryRequirements;
@@ -443,6 +443,9 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
         vkGetBufferMemoryRequirements(GetDevice()->GetVkDevice(), Buffer, &MemoryRequirements);
     }
 
+    // After checking if we should use dedication allocation, force it on, if that is wanted
+    if (bForceDedicatedAllocation)
+        bUseDedicatedAllocation = true;
 
     // Find the correct type of memory index
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, PropertyFlags);
@@ -451,7 +454,6 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
         VULKAN_ERROR("Did not find any suitable memory type");
         return false;
     }
-
 
     // Allocate memory, either pooled or dedicated
     bool bResult = false;
@@ -542,7 +544,7 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
 bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation)
 {
     // We can force dedicated allocations
-    bool bUseDedicatedAllocation = bForceDedicatedAllocation;
+    bool bUseDedicatedAllocation = false;
     
     // Check if the driver prefers us to use a dedicated allocation
     VkMemoryRequirements MemoryRequirements;
@@ -578,6 +580,9 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
         vkGetImageMemoryRequirements(GetDevice()->GetVkDevice(), Image, &MemoryRequirements);
     }
 
+    // After checking if we should use dedication allocation, force it on, if that is wanted
+    if (bForceDedicatedAllocation)
+        bUseDedicatedAllocation = true;
 
     // Find the correct type of memory index
     const int32 MemoryTypeIndex = GetDevice()->GetPhysicalDevice()->FindMemoryTypeIndex(MemoryRequirements.memoryTypeBits, PropertyFlags);

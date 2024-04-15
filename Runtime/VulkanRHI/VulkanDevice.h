@@ -27,6 +27,8 @@ class FVulkanPhysicalDevice;
 
 extern VULKANRHI_API bool GVulkanForceBinding;
 extern VULKANRHI_API bool GVulkanForceDedicatedAllocations;
+extern VULKANRHI_API bool GVulkanForceDedicatedImageAllocations;
+extern VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations;
 extern VULKANRHI_API bool GVulkanAllowNullDescriptors;
 
 

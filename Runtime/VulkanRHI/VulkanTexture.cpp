@@ -30,8 +30,8 @@ FVulkanTexture::~FVulkanTexture()
         Image = VK_NULL_HANDLE;
 
         // Free the memory
-        //FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
-        //MemoryManager.Free(MemoryAllocation);
+        FVulkanMemoryManager& MemoryManager = VulkanDevice->GetMemoryManager();
+        MemoryManager.Free(MemoryAllocation);
     }
 }
 
@@ -125,7 +125,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     const VkMemoryAllocateFlags AllocateFlags    = 0;
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, MemoryAllocation))
+    if (!MemoryManager.AllocateImageMemory(Image, MemoryProperties, AllocateFlags, GVulkanForceDedicatedImageAllocations, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate ImageMemory");
         return false;
@@ -446,9 +446,8 @@ FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture()
     return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;
 }
 
-//////////////////////////
-// FVulkanTextureHelper //
-//////////////////////////
+
+// FVulkanTextureHelper
 
 uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
 {
