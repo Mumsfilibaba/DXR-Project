@@ -116,7 +116,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     
     // Allocate memory based on the buffer
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
-    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedAllocations, MemoryAllocation))
+    if (!MemoryManager.AllocateBufferMemory(Buffer, MemoryProperties, AllocateFlags, GVulkanForceDedicatedBufferAllocations, MemoryAllocation))
     {
         VULKAN_ERROR("Failed to allocate buffer memory");
         return false;

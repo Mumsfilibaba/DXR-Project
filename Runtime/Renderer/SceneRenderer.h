@@ -123,8 +123,11 @@ private:
     FDeferredBasePass*            BasePass;
     FDepthReducePass*             DepthReducePass;
     FTiledLightPass*              TiledLightPass;
+    FPointLightRenderPass*        PointLightRenderPass;
+    FCascadeGenerationPass*       CascadeGenerationPass;
+    FCascadedShadowsRenderPass*   CascadedShadowsRenderPass;
+    FShadowMaskRenderPass*        ShadowMaskRenderPass;
 
-    FShadowMapRenderer            ShadowMapRenderer;
     FScreenSpaceOcclusionRenderer SSAORenderer;
     FLightProbeRenderer           LightProbeRenderer;
     FSkyboxRenderPass             SkyboxRenderPass;

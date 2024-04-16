@@ -134,7 +134,10 @@ FSceneRenderer::FSceneRenderer()
     , BasePass(nullptr)
     , DepthReducePass(nullptr)
     , TiledLightPass(nullptr)
-    , ShadowMapRenderer(this)
+    , PointLightRenderPass(nullptr)
+    , CascadeGenerationPass(nullptr)
+    , CascadedShadowsRenderPass(nullptr)
+    , ShadowMaskRenderPass(nullptr)
     , SSAORenderer(this)
     , LightProbeRenderer(this)
     , SkyboxRenderPass(this)
@@ -166,8 +169,11 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(BasePass);
     SAFE_DELETE(DepthReducePass);
     SAFE_DELETE(TiledLightPass);
+    SAFE_DELETE(PointLightRenderPass);
+    SAFE_DELETE(CascadeGenerationPass);
+    SAFE_DELETE(CascadedShadowsRenderPass);
+    SAFE_DELETE(ShadowMaskRenderPass);
 
-    ShadowMapRenderer.Release();
     SSAORenderer.Release();
     LightProbeRenderer.Release();
     SkyboxRenderPass.Release();
@@ -311,9 +317,6 @@ bool FSceneRenderer::Initialize()
     if (!BuildRenderPasses())
         return false;
 
-    if (!ShadowMapRenderer.Initialize(LightSetup, Resources))
-        return false;
-
     if (!SSAORenderer.Initialize(Resources))
         return false;
 
@@ -417,6 +420,22 @@ bool FSceneRenderer::BuildRenderPasses()
 
     DepthReducePass = new FDepthReducePass(this);
     if (!DepthReducePass->Initialize(Resources))
+        return false;
+
+    PointLightRenderPass = new FPointLightRenderPass(this);
+    if (!PointLightRenderPass->Initialize(LightSetup))
+        return false;
+
+    CascadeGenerationPass = new FCascadeGenerationPass(this);
+    if (!CascadeGenerationPass->Initialize(LightSetup))
+        return false;
+
+    CascadedShadowsRenderPass = new FCascadedShadowsRenderPass(this);
+    if (!CascadedShadowsRenderPass->Initialize(LightSetup))
+        return false;
+
+    ShadowMaskRenderPass = new FShadowMaskRenderPass(this);
+    if (!ShadowMaskRenderPass->Initialize(Resources, LightSetup))
         return false;
 
     return true;
@@ -569,7 +588,7 @@ void FSceneRenderer::Tick(FScene* Scene)
                 return;
             }
 
-            if (!ShadowMapRenderer.ResizeResources(CommandList, NewWidth, NewHeight, LightSetup))
+            if (ShadowMaskRenderPass->ResizeResources(CommandList, LightSetup, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
@@ -653,7 +672,8 @@ void FSceneRenderer::Tick(FScene* Scene)
         // TODO: Only do this once?
         DepthPrePass->InitializePipelineState(Material, Resources);
         BasePass->InitializePipelineState(Material, Resources);
-        ShadowMapRenderer.InitializePipelineState(Material, Resources);
+        PointLightRenderPass->InitializePipelineState(Material, Resources);
+        CascadedShadowsRenderPass->InitializePipelineState(Material, Resources);
 
         if (Material->IsBufferDirty())
         {
@@ -795,13 +815,14 @@ void FSceneRenderer::Tick(FScene* Scene)
         // Point Lights
         if (CVarPointLightShadowsEnabled.GetValue())
         {
-            ShadowMapRenderer.RenderPointLightShadows(CommandList, LightSetup, Scene);
+            PointLightRenderPass->Execute(CommandList, LightSetup, Scene);
         }
 
         // Directional Light
         if (CVarSunShadowsEnabled.GetValue())
         {
-            ShadowMapRenderer.RenderDirectionalLightShadows(CommandList, LightSetup, Resources, Scene);
+            CascadeGenerationPass->Execute(CommandList, Resources, LightSetup);
+            CascadedShadowsRenderPass->Execute(CommandList, LightSetup, Scene);
         }
     }
 
@@ -814,7 +835,7 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     if (CVarShadowMaskEnabled.GetValue())
     {
-        ShadowMapRenderer.RenderShadowMasks(CommandList, LightSetup, Resources);
+        ShadowMaskRenderPass->Execute(CommandList, Resources, LightSetup);
     }
     else
     {

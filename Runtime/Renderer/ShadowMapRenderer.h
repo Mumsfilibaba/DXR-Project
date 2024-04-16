@@ -8,98 +8,132 @@
 
 #define NUM_FRUSTUM_PLANES (6)
 
-struct FCascadeMatrices
+struct FCascadeMatricesHLSL
 {
+    // 0-128
     FMatrix4 ViewProjection;
     FMatrix4 View;
 };
 
-MARK_AS_REALLOCATABLE(FCascadeMatrices);
+MARK_AS_REALLOCATABLE(FCascadeMatricesHLSL);
 
-struct FCascadeSplit
+struct FCascadeSplitHLSL
 {
+    // 0-96
     FVector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
-
+    // 96-112
     FVector4 Offsets;
     FVector4 Scale;
-
+    // 112-128
     FVector3 MinExtent;
     float    Split;
-    
+    // 128-144
     FVector3 MaxExtent;
     float    NearPlane;
-
+    // 144-160
     float FarPlane;
     float MinDepth;
     float MaxDepth;
     float PreviousSplit;
 };
 
-MARK_AS_REALLOCATABLE(FCascadeSplit);
+MARK_AS_REALLOCATABLE(FCascadeSplitHLSL);
 
-struct FPerShadowMap
+struct FPerShadowMapHLSL
 {
+    // 0-64
     FMatrix4 Matrix;
+    // 64-80
     FVector3 Position;
     float    FarPlane;
 };
 
-MARK_AS_REALLOCATABLE(FPerShadowMap);
+MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
 
-struct FPerCascade
+struct FPerCascadeHLSL
 {
+    // 0-16
     int32 CascadeIndex;
     int32 Padding0;
     int32 Padding1;
     int32 Padding2;
 };
 
-MARK_AS_REALLOCATABLE(FPerCascade);
+MARK_AS_REALLOCATABLE(FPerCascadeHLSL);
 
-class FShadowMapRenderer : public FRenderPass
+class FPointLightRenderPass : public FRenderPass
 {
 public:
-    FShadowMapRenderer(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-    {
-    }
+    FPointLightRenderPass(FSceneRenderer* InRenderer);
+    virtual ~FPointLightRenderPass();
 
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
-    bool Initialize(FLightSetup& LightSetup, FFrameResources& Resources);
+    bool Initialize(FLightSetup& LightSetup);
     void Release();
 
-     /** @brief - Render Point light shadows */
-    void RenderPointLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, FScene* Scene);
+    bool CreateResources(FLightSetup& LightSetup);
 
-     /** @brief - Render Directional light shadows */
-    void RenderDirectionalLightShadows(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources, FScene* Scene);
-
-     /** @brief - Render ShadowMasks */
-    void RenderShadowMasks(FRHICommandList& CommandList, const FLightSetup& LightSetup, const FFrameResources& FrameResources);
-
-     /** @brief - Resize the resources that are dependent on the viewport */
-    bool ResizeResources(FRHICommandList& CommandList, uint32 Width, uint32 Height, FLightSetup& LightSetup);
+    void Execute(FRHICommandList& CommandList, const FLightSetup& LightSetup, FScene* Scene);
 
 private:
-    bool CreateShadowMask(uint32 Width, uint32 Height, FLightSetup& LightSetup);
-    bool CreateShadowMaps(FLightSetup& LightSetup, FFrameResources& FrameResources);
+    TMap<int32, FPipelineStateInstance> MaterialPSOs;
+    FRHIBufferRef PerShadowMapBuffer;
+};
 
-    // PointLight ShadowMaps
-    TMap<int32, FPipelineStateInstance> PointLightPSOs;
+class FCascadeGenerationPass : public FRenderPass
+{
+public:
+    FCascadeGenerationPass(FSceneRenderer* InRenderer);
+    virtual ~FCascadeGenerationPass();
 
-    // Cascaded ShadowMaps
-    TMap<int32, FPipelineStateInstance> DirectionalLightPSOs;
+    bool Initialize(FLightSetup& LightSetup);
+    void Release();
 
-    FRHIBufferRef                PerCascadeBuffer;
-    FRHIBufferRef                PerShadowMapBuffer;
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, const FLightSetup& LightSetup);
 
-    FRHIComputePipelineStateRef  DirectionalShadowMaskPSO;
-    FRHIComputeShaderRef         DirectionalShadowMaskShader;
+private:
+    FRHIComputePipelineStateRef CascadeGen;
+    FRHIComputeShaderRef        CascadeGenShader;
+};
 
-    FRHIComputePipelineStateRef  DirectionalShadowMaskPSO_Debug;
-    FRHIComputeShaderRef         DirectionalShadowMaskShader_Debug;
+class FCascadedShadowsRenderPass : public FRenderPass
+{
+public:
+    FCascadedShadowsRenderPass(FSceneRenderer* InRenderer);
+    virtual ~FCascadedShadowsRenderPass();
 
-    FRHIComputePipelineStateRef  CascadeGen;
-    FRHIComputeShaderRef         CascadeGenShader;
+    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+
+    bool Initialize(FLightSetup& LightSetup);
+    void Release();
+
+    bool CreateResources(FLightSetup& LightSetup);
+
+    void Execute(FRHICommandList& CommandList, const FLightSetup& LightSetup, FScene* Scene);
+
+private:
+    TMap<int32, FPipelineStateInstance> MaterialPSOs;
+    FRHIBufferRef PerCascadeBuffer;
+};
+
+class FShadowMaskRenderPass : public FRenderPass
+{
+public:
+    FShadowMaskRenderPass(FSceneRenderer* InRenderer);
+    virtual ~FShadowMaskRenderPass();
+
+    bool Initialize(const FFrameResources& FrameResources, FLightSetup& LightSetup);
+    void Release();
+
+    bool CreateResources(FLightSetup& LightSetup, uint32 Width, uint32 Height);
+    bool ResizeResources(FRHICommandList& CommandList, FLightSetup& LightSetup, uint32 Width, uint32 Height);
+
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
+
+private:
+    FRHIComputePipelineStateRef DirectionalShadowMaskPSO;
+    FRHIComputeShaderRef        DirectionalShadowMaskShader;
+    FRHIComputePipelineStateRef DirectionalShadowMaskPSO_Debug;
+    FRHIComputeShaderRef        DirectionalShadowMaskShader_Debug;
 };
