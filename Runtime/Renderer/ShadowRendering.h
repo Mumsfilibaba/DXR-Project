@@ -1,7 +1,6 @@
 #pragma once
 #include "RenderPass.h"
 #include "FrameResources.h"
-#include "LightSetup.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
 #include "Engine/World/World.h"
@@ -69,12 +68,12 @@ public:
 
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
-    bool Initialize(FLightSetup& LightSetup);
+    bool Initialize(FFrameResources& Resources);
     void Release();
 
-    bool CreateResources(FLightSetup& LightSetup);
+    bool CreateResources(FFrameResources& Resources);
 
-    void Execute(FRHICommandList& CommandList, const FLightSetup& LightSetup, FScene* Scene);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
     TMap<int32, FPipelineStateInstance> MaterialPSOs;
@@ -87,10 +86,10 @@ public:
     FCascadeGenerationPass(FSceneRenderer* InRenderer);
     virtual ~FCascadeGenerationPass();
 
-    bool Initialize(FLightSetup& LightSetup);
+    bool Initialize(FFrameResources& Resources);
     void Release();
 
-    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, const FLightSetup& LightSetup);
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
 
 private:
     FRHIComputePipelineStateRef CascadeGen;
@@ -105,12 +104,12 @@ public:
 
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
-    bool Initialize(FLightSetup& LightSetup);
+    bool Initialize(FFrameResources& Resources);
     void Release();
 
-    bool CreateResources(FLightSetup& LightSetup);
+    bool CreateResources(FFrameResources& Resources);
 
-    void Execute(FRHICommandList& CommandList, const FLightSetup& LightSetup, FScene* Scene);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
     TMap<int32, FPipelineStateInstance> MaterialPSOs;
@@ -123,13 +122,13 @@ public:
     FShadowMaskRenderPass(FSceneRenderer* InRenderer);
     virtual ~FShadowMaskRenderPass();
 
-    bool Initialize(const FFrameResources& FrameResources, FLightSetup& LightSetup);
+    bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    bool CreateResources(FLightSetup& LightSetup, uint32 Width, uint32 Height);
-    bool ResizeResources(FRHICommandList& CommandList, FLightSetup& LightSetup, uint32 Width, uint32 Height);
+    bool CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height);
+    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& Resources, uint32 Width, uint32 Height);
 
-    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
 
 private:
     FRHIComputePipelineStateRef DirectionalShadowMaskPSO;

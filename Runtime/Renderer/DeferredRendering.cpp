@@ -966,7 +966,7 @@ bool FTiledLightPass::ResizeResources(FRHICommandList& CommandList, FFrameResour
     return CreateResources(FrameResources, Width, Height);
 }
 
-void FTiledLightPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, const FLightSetup& LightSetup)
+void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin LightPass");
 
@@ -997,7 +997,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, FFrameResources& Fra
         CommandList.SetComputePipelineState(TiledLightPassPSO.Get());
     }
 
-    const FProxyLightProbe& Skylight = LightSetup.Skylight;
+    const FProxyLightProbe& Skylight = FrameResources.Skylight;
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Albedo]->GetShaderResourceView(), 0);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 1);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.GBuffer[GBufferIndex_Material]->GetShaderResourceView(), 2);
@@ -1006,21 +1006,21 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, FFrameResources& Fra
     CommandList.SetShaderResourceView(LightPassShader, Skylight.IrradianceMap->GetShaderResourceView(), 5);
     CommandList.SetShaderResourceView(LightPassShader, Skylight.SpecularIrradianceMap->GetShaderResourceView(), 6);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.IntegrationLUT->GetShaderResourceView(), 7);
-    CommandList.SetShaderResourceView(LightPassShader, LightSetup.DirectionalShadowMask->GetShaderResourceView(), 8);
-    CommandList.SetShaderResourceView(LightPassShader, LightSetup.PointLightShadowMaps->GetShaderResourceView(), 9);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.DirectionalShadowMask->GetShaderResourceView(), 8);
+    CommandList.SetShaderResourceView(LightPassShader, FrameResources.PointLightShadowMaps->GetShaderResourceView(), 9);
     CommandList.SetShaderResourceView(LightPassShader, FrameResources.SSAOBuffer->GetShaderResourceView(), 10);
 
     if (bDrawCascades)
     {
-        CommandList.SetShaderResourceView(LightPassShader, LightSetup.CascadeIndexBuffer->GetShaderResourceView(), 11);
+        CommandList.SetShaderResourceView(LightPassShader, FrameResources.CascadeIndexBuffer->GetShaderResourceView(), 11);
     }
 
     CommandList.SetConstantBuffer(LightPassShader, FrameResources.CameraBuffer.Get(), 0);
-    CommandList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsBuffer.Get(), 1);
-    CommandList.SetConstantBuffer(LightPassShader, LightSetup.PointLightsPosRadBuffer.Get(), 2);
-    CommandList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
-    CommandList.SetConstantBuffer(LightPassShader, LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
-    CommandList.SetConstantBuffer(LightPassShader, LightSetup.DirectionalLightDataBuffer.Get(), 5);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.PointLightsBuffer.Get(), 1);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.PointLightsPosRadBuffer.Get(), 2);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.ShadowCastingPointLightsBuffer.Get(), 3);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
+    CommandList.SetConstantBuffer(LightPassShader, FrameResources.DirectionalLightDataBuffer.Get(), 5);
 
     CommandList.SetSamplerState(LightPassShader, FrameResources.IntegrationLUTSampler.Get(), 0);
     CommandList.SetSamplerState(LightPassShader, FrameResources.IrradianceSampler.Get(), 1);
@@ -1042,8 +1042,8 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, FFrameResources& Fra
     const int32 RenderWidth  = FrameResources.CurrentWidth;
     const int32 RenderHeight = FrameResources.CurrentHeight;
 
-    Settings.NumShadowCastingPointLights = LightSetup.ShadowCastingPointLightsData.Size();
-    Settings.NumPointLights              = LightSetup.PointLightsData.Size();
+    Settings.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
+    Settings.NumPointLights              = FrameResources.PointLightsData.Size();
     Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
     Settings.ScreenWidth                 = static_cast<int32>(RenderWidth);
     Settings.ScreenHeight                = static_cast<int32>(RenderHeight);
@@ -1178,7 +1178,7 @@ bool FDepthReducePass::ResizeResources(FRHICommandList& CommandList, FFrameResou
     for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
         CommandList.DestroyResource(FrameResources.ReducedDepthBuffer[Index].Get());
 
-    return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
+    return CreateResources(FrameResources, Width, Height);
 }
 
 void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)

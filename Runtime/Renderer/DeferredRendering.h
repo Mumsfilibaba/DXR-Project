@@ -1,7 +1,6 @@
 #pragma once
 #include "RenderPass.h"
 #include "FrameResources.h"
-#include "LightSetup.h"
 #include "Core/Containers/Map.h"
 #include "Engine/World/World.h"
 #include "RHI/RHICommandList.h"
@@ -59,7 +58,7 @@ public:
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
     bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
-    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, const FLightSetup& LightSetup);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
 
 private:
     FRHIComputePipelineStateRef TiledLightPassPSO;

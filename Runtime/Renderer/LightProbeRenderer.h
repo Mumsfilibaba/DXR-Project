@@ -1,7 +1,6 @@
 #pragma once
 #include "RenderPass.h"
 #include "FrameResources.h"
-#include "LightSetup.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 #include "RendererUtilities/GPUTextureCompressor.h"
@@ -14,13 +13,13 @@ public:
     {
     }
 
-    bool Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources);
+    bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    void RenderSkyLightProbe(FRHICommandList& CommandList, FLightSetup& LightSetup, const FFrameResources& Resources);
+    void RenderSkyLightProbe(FRHICommandList& CommandList, FFrameResources& Resources);
 
 private:
-    bool CreateSkyLightResources(FLightSetup& LightSetup);
+    bool CreateSkyLightResources(FFrameResources& Resources);
 
     FGPUTextureCompressor       Compressor;
 

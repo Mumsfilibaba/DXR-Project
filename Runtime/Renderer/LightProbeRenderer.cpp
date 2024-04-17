@@ -2,14 +2,14 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 
-bool FLightProbeRenderer::Initialize(FLightSetup& LightSetup, FFrameResources& FrameResources)
+bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
 {
     if (!Compressor.Initialize())
     {
         return false;
     }
 
-    if (!CreateSkyLightResources(LightSetup))
+    if (!CreateSkyLightResources(FrameResources))
     {
         return false;
     }
@@ -87,9 +87,9 @@ void FLightProbeRenderer::Release()
     SpecularIrradianceGenShader.Reset();
 }
 
-void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FLightSetup& LightSetup, const FFrameResources& FrameResources)
+void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
-    FProxyLightProbe& Skylight = LightSetup.Skylight;
+    FProxyLightProbe& Skylight = FrameResources.Skylight;
     CommandList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
     CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
@@ -154,12 +154,12 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FLig
     Skylight.SpecularIrradianceMapUAVs.Clear(true);
 }
 
-bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
+bool FLightProbeRenderer::CreateSkyLightResources(FFrameResources& FrameResources)
 {
-    FProxyLightProbe& Skylight = LightSetup.Skylight;
+    FProxyLightProbe& Skylight = FrameResources.Skylight;
 
     // Generate global irradiance (From Skybox)
-    FRHITextureDesc LightProbeDesc = FRHITextureDesc::CreateTextureCube(LightSetup.LightProbeFormat, LightSetup.IrradianceProbeSize, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    FRHITextureDesc LightProbeDesc = FRHITextureDesc::CreateTextureCube(FrameResources.LightProbeFormat, FrameResources.IrradianceProbeSize, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
     Skylight.IrradianceMap = RHICreateTexture(LightProbeDesc);
     if (!Skylight.IrradianceMap)
     {
@@ -171,7 +171,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
         Skylight.IrradianceMap->SetDebugName("Temp Irradiance Map");
     }
 
-    FRHITextureUAVDesc UAVInitializer(Skylight.IrradianceMap.Get(), LightSetup.LightProbeFormat, 0, 0, 1);
+    FRHITextureUAVDesc UAVInitializer(Skylight.IrradianceMap.Get(), FrameResources.LightProbeFormat, 0, 0, 1);
     Skylight.IrradianceMapUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!Skylight.IrradianceMapUAV)
     {
@@ -179,8 +179,8 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
         return false;
     }
 
-    const int32 SpecularIrradianceMiplevels = FMath::Max(FMath::Log2(LightSetup.SpecularIrradianceProbeSize), 1);
-    LightProbeDesc.Extent       = FIntVector3(LightSetup.SpecularIrradianceProbeSize, LightSetup.SpecularIrradianceProbeSize, 0);
+    const int32 SpecularIrradianceMiplevels = FMath::Max(FMath::Log2(FrameResources.SpecularIrradianceProbeSize), 1);
+    LightProbeDesc.Extent       = FIntVector3(FrameResources.SpecularIrradianceProbeSize, FrameResources.SpecularIrradianceProbeSize, 0);
     LightProbeDesc.NumMipLevels = uint8(SpecularIrradianceMiplevels);
 
     Skylight.SpecularIrradianceMap = RHICreateTexture(LightProbeDesc);
@@ -196,7 +196,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FLightSetup& LightSetup)
 
     for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        UAVInitializer = FRHITextureUAVDesc(Skylight.SpecularIrradianceMap.Get(), LightSetup.LightProbeFormat, MipLevel, 0, 1);
+        UAVInitializer = FRHITextureUAVDesc(Skylight.SpecularIrradianceMap.Get(), FrameResources.LightProbeFormat, MipLevel, 0, 1);
         FRHIUnorderedAccessViewRef UAV = RHICreateUnorderedAccessView(UAVInitializer);
         if (UAV)
         {

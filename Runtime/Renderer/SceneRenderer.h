@@ -111,7 +111,6 @@ private:
 
     // RenderPasses and Resources
     FFrameResources             Resources;
-    FLightSetup                 LightSetup;
 
     FCameraHLSL                 CameraBuffer;
     FHaltonState                HaltonState;

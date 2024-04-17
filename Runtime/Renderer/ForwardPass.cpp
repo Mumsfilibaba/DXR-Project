@@ -119,7 +119,7 @@ void FForwardPass::Release()
     PShader.Reset();
 }
 
-void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FScene* Scene)
+void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ForwardPass");
@@ -128,7 +128,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     GPU_TRACE_SCOPE(CommandList, "Forward Pass");
 
-    CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
     const float RenderWidth  = float(FrameResources.CurrentWidth);
     const float RenderHeight = float(FrameResources.CurrentHeight);
@@ -151,17 +151,17 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     // TODO: Fix point-light count in shader
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsBuffer.Get(), 1);
     //CmdList.SetConstantBuffer(PShader.Get(), LightSetup.PointLightsPosRadBuffer.Get(), 2);
-    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsBuffer.Get(), 3);
-    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
-    CommandList.SetConstantBuffer(PShader.Get(), LightSetup.DirectionalLightDataBuffer.Get(), 5);
+    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.ShadowCastingPointLightsBuffer.Get(), 3);
+    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.ShadowCastingPointLightsPosRadBuffer.Get(), 4);
+    CommandList.SetConstantBuffer(PShader.Get(), FrameResources.DirectionalLightDataBuffer.Get(), 5);
 
-    const FProxyLightProbe& Skylight = LightSetup.Skylight;
+    const FProxyLightProbe& Skylight = FrameResources.Skylight;
     CommandList.SetShaderResourceView(PShader.Get(), Skylight.IrradianceMap->GetShaderResourceView(), 0);
     CommandList.SetShaderResourceView(PShader.Get(), Skylight.SpecularIrradianceMap->GetShaderResourceView(), 1);
     CommandList.SetShaderResourceView(PShader.Get(), FrameResources.IntegrationLUT->GetShaderResourceView(), 2);
     //TODO: Fix directional-light shadows
     //CmdList.SetShaderResourceView(PShader.Get(), LightSetup.ShadowMapCascades[0]->GetShaderResourceView(), 3);
-    CommandList.SetShaderResourceView(PShader.Get(), LightSetup.PointLightShadowMaps->GetShaderResourceView(), 4);
+    CommandList.SetShaderResourceView(PShader.Get(), FrameResources.PointLightShadowMaps->GetShaderResourceView(), 4);
 
     CommandList.SetSamplerState(PShader.Get(), FrameResources.IntegrationLUTSampler.Get(), 1);
     CommandList.SetSamplerState(PShader.Get(), FrameResources.IrradianceSampler.Get(), 2);
@@ -208,7 +208,7 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.ShadowMapCascades[0].Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End ForwardPass");
 }

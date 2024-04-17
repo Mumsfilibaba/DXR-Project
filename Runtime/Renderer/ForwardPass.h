@@ -1,7 +1,6 @@
 #pragma once
 #include "RenderPass.h"
 #include "FrameResources.h"
-#include "LightSetup.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 
@@ -14,7 +13,7 @@ public:
     bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FScene* Scene);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
     FRHIGraphicsPipelineStateRef PipelineState;
