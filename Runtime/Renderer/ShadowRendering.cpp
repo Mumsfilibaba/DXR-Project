@@ -208,13 +208,13 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     } ShadowPerObjectBuffer;
 
     FPerShadowMapHLSL PerShadowMapData;
-    for (int32 CubeIndex = 0; CubeIndex < Scene->PointLightViews.Size(); ++CubeIndex)
+    for (int32 LightIndex = 0; LightIndex < Scene->PointLights.Size(); ++LightIndex)
     {
-        FLightView* LightView = Scene->PointLightViews[CubeIndex];
+        FScenePointLight* ScenePointLight = Scene->PointLights[LightIndex];
         for (uint32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; ++FaceIndex)
         {
-            FLightView::FShadowData& Data = LightView->ShadowData[FaceIndex];
-            PerShadowMapData.Matrix = Data.Matrix;
+            FScenePointLight::FShadowData& Data = ScenePointLight->ShadowData[FaceIndex];
+            PerShadowMapData.Matrix   = Data.Matrix;
             PerShadowMapData.Position = Data.Position;
             PerShadowMapData.FarPlane = Data.FarPlane;
 
@@ -222,7 +222,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.UpdateBuffer(PerShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FPerShadowMapHLSL)), &PerShadowMapData);
             CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-            const uint32 ArrayIndex = (CubeIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
+            const uint32 ArrayIndex = (LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
             FRHIRenderPassDesc RenderPass;
             RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
 
@@ -235,7 +235,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             FScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
             CommandList.SetScissorRect(ScissorRegion);
 
-            for (const FMeshBatch& Batch : LightView->MeshBatches[FaceIndex])
+            for (const FMeshBatch& Batch : ScenePointLight->MeshBatches[FaceIndex])
             {
                 FPipelineStateInstance* Instance = MaterialPSOs.Find(Batch.Material->GetMaterialFlags());
                 if (!Instance)
@@ -629,34 +629,31 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
         FMatrix4 Matrix;
     } ShadowPerObjectBuffer;
 
-    for (uint32 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
+    if (Scene->DirectionalLight)
     {
-        FPerCascadeHLSL PerCascadeData;
-        PerCascadeData.CascadeIndex = Index;
-
-        CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-        CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
-        CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-
-        FRHIRenderPassDesc RenderPass;
-        RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.ShadowMapCascades[Index].Get());
-
-        CommandList.BeginRenderPass(RenderPass);
-
-        const float CascadeSize = static_cast<float>(Resources.CascadeSize);
-        FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
-        CommandList.SetViewport(ViewportRegion);
-
-        FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
-        CommandList.SetScissorRect(ScissorRegion);
-
-        // Draw all objects to shadow-map
-        CHECK(Scene->DirectionalLightIndex >= 0);
-
-        FLightView& DirectionalLightView = Scene->LightViews[Scene->DirectionalLightIndex];
-        for (int32 SubViewIndex = 0; SubViewIndex < DirectionalLightView.NumSubViews; SubViewIndex++)
+        for (uint32 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
         {
-            for (const FMeshBatch& Batch : DirectionalLightView.MeshBatches[SubViewIndex])
+            FPerCascadeHLSL PerCascadeData;
+            PerCascadeData.CascadeIndex = Index;
+
+            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+            CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
+            CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+
+            FRHIRenderPassDesc RenderPass;
+            RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.ShadowMapCascades[Index].Get());
+
+            CommandList.BeginRenderPass(RenderPass);
+
+            const float CascadeSize = static_cast<float>(Resources.CascadeSize);
+            FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
+            CommandList.SetViewport(ViewportRegion);
+
+            FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
+            CommandList.SetScissorRect(ScissorRegion);
+
+            FSceneDirectionalLight* SceneDirectionalLight = Scene->DirectionalLight;
+            for (const FMeshBatch& Batch : SceneDirectionalLight->MeshBatches)
             {
                 FMaterial* Material = Batch.Material;
 
@@ -699,9 +696,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
                 }
             }
-        }
 
-        CommandList.EndRenderPass();
+            CommandList.EndRenderPass();
+        }
     }
 
     CommandList.TransitionTexture(Resources.ShadowMapCascades[0].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);

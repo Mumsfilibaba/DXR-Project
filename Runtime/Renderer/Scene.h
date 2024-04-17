@@ -3,10 +3,12 @@
 #include "Core/Math/Frustum.h"
 #include "Core/Math/Vector3.h"
 #include "RendererCore/Interfaces/IScene.h"
+#include "RHI/RHICore.h"
 
 class FWorld;
 class FMaterial;
 class FDirectionalLight;
+class FPointLight;
 
 struct FMeshBatch
 {
@@ -20,18 +22,8 @@ struct FMeshBatch
     TArray<FProxySceneComponent*> Primitives;
 };
 
-struct FLightView
+struct FScenePointLight
 {
-    typedef TArray<FMeshBatch>            MeshBatchArray;
-    typedef TArray<FProxySceneComponent*> PrimitivesArray;
-
-    enum ELightType : int32
-    {
-        LightType_None = 0,
-        LightType_Directional,
-        LightType_Point,
-    };
-
     struct FShadowData
     {
         FMatrix4 Matrix;
@@ -40,24 +32,38 @@ struct FLightView
         float    FarPlane;
     };
 
-    FLightView()
+    FScenePointLight(FPointLight* InLight)
+        : Light(InLight)
+    {
+    }
+    
+    ~FScenePointLight()
+    {
+        Light = nullptr;
+    }
+
+    FPointLight*                  Light;
+    FFrustum                      Frustums[RHI_NUM_CUBE_FACES];
+    TArray<FMeshBatch>            MeshBatches[RHI_NUM_CUBE_FACES];
+    TArray<FProxySceneComponent*> Primitives[RHI_NUM_CUBE_FACES];
+    FShadowData                   ShadowData[RHI_NUM_CUBE_FACES];
+};
+
+struct FSceneDirectionalLight
+{
+    FSceneDirectionalLight(FDirectionalLight* InLight)
+        : Light(InLight)
     {
     }
 
-    FLightView(int32 NumSubViews)
+    ~FSceneDirectionalLight()
     {
-        Frustums.Resize(NumSubViews);
-        Primitives.Resize(NumSubViews);
-        MeshBatches.Resize(NumSubViews);
-        ShadowData.Resize(NumSubViews);
+        Light = nullptr;
     }
 
-    TArray<FFrustum>        Frustums;
-    TArray<FShadowData>     ShadowData;
-    TArray<PrimitivesArray> Primitives;
-    TArray<MeshBatchArray>  MeshBatches;
-    ELightType              LightType;
-    int32                   NumSubViews;
+    FDirectionalLight*            Light;
+    TArray<FMeshBatch>            MeshBatches;
+    TArray<FProxySceneComponent*> Primitives;
 };
 
 class FScene : public IScene
@@ -103,12 +109,9 @@ public:
     TArray<FMeshBatch> VisibleMeshBatches;
 
     // All Lights in the Scene
-    TArray<FLight*>     Lights;
-    TArray<FLightView>  LightViews;
-    TArray<FLightView*> PointLightViews;
-
-    // NOTE: Currently a single DirectionalLight is supported
-    int32 DirectionalLightIndex;
+    TArray<FLight*>           Lights;
+    FSceneDirectionalLight*   DirectionalLight;
+    TArray<FScenePointLight*> PointLights;
 
     // All materials
     TArray<FMaterial*> Materials;

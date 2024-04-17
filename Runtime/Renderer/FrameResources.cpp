@@ -184,75 +184,80 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
     TRACE_SCOPE("Update LightBuffers");
 
-    for (int32 Index = 0; Index < Scene->Lights.Size(); Index++)
+    // Update DirectionalLight
+    if (Scene->DirectionalLight)
     {
-        FLight* Light = Scene->Lights[Index];
+        FDirectionalLight* DirectionalLight = Scene->DirectionalLight->Light;
 
-        // Pre-multiply light intensity
-        // TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
-        const float Intensity = Light->GetIntensity();
-        FVector3 Color = Light->GetColor();
-        Color = Color * Intensity;
+        // Pre-multiply light intensity TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
+        FVector3 Color = DirectionalLight->GetColor();
+        Color = Color * DirectionalLight->GetIntensity();
 
-        if (FPointLight* PointLight = Cast<FPointLight>(Light))
+        DirectionalLight->Tick(*Scene->Camera);
+
+        DirectionalLightData.Color         = Color;
+        DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
+        DirectionalLightData.Direction     = DirectionalLight->GetDirection();
+        DirectionalLightData.UpVector      = DirectionalLight->GetUp();
+        DirectionalLightData.MaxShadowBias = DirectionalLight->GetMaxShadowBias();
+        DirectionalLightData.LightSize     = DirectionalLight->GetSize();
+        DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
+        DirectionalLightDataDirty = true;
+
+        CascadeGenerationData.CascadeSplitLambda = DirectionalLight->GetCascadeSplitLambda();
+        CascadeGenerationData.LightUp            = DirectionalLightData.UpVector;
+        CascadeGenerationData.LightDirection     = DirectionalLightData.Direction;
+        CascadeGenerationData.CascadeResolution  = static_cast<float>(CascadeSize);
+        CascadeGenerationData.ShadowMatrix       = DirectionalLightData.ShadowMatrix;
+        CascadeGenerationData.MaxCascadeIndex    = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
+
+        if (IConsoleVariable* CVarPrePassDepthReduce = FConsoleManager::Get().FindConsoleVariable("Renderer.PrePass.DepthReduce"))
         {
-            const float Radius         = PointLight->GetShadowFarPlane();
-            FVector3 Position          = PointLight->GetPosition();
-            FVector4 PositionAndRadius = FVector4(Position, Radius);
-
-            if (PointLight->IsShadowCaster())
-            {
-                FShadowCastingPointLightDataHLSL Data;
-                Data.Color         = Color;
-                Data.FarPlane      = PointLight->GetShadowFarPlane();
-                Data.MaxShadowBias = PointLight->GetMaxShadowBias();
-                Data.ShadowBias    = PointLight->GetShadowBias();
-
-                ShadowCastingPointLightsData.Emplace(Data);
-                ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);
-            }
-            else
-            {
-                FPointLightDataHLSL Data;
-                Data.Color = Color;
-
-                PointLightsData.Emplace(Data);
-                PointLightsPosRad.Emplace(PositionAndRadius);
-            }
+            CascadeGenerationData.bDepthReductionEnabled = CVarPrePassDepthReduce->GetBool();
         }
-        else if (FDirectionalLight* DirectionalLight = Cast<FDirectionalLight>(Light))
+        else
         {
-            DirectionalLight->Tick(*Scene->Camera);
+            CascadeGenerationData.bDepthReductionEnabled = true;
+        }
 
-            DirectionalLightData.Color         = FVector3(Color.x, Color.y, Color.z);
-            DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
-            DirectionalLightData.Direction     = DirectionalLight->GetDirection();
-            DirectionalLightData.UpVector      = DirectionalLight->GetUp();
-            DirectionalLightData.MaxShadowBias = DirectionalLight->GetMaxShadowBias();
-            DirectionalLightData.LightSize     = DirectionalLight->GetSize();
-            DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
-            DirectionalLightDataDirty = true;
+        CascadeGenerationDataDirty = true;
+    }
 
-            CascadeGenerationData.CascadeSplitLambda = DirectionalLight->GetCascadeSplitLambda();
-            CascadeGenerationData.LightUp            = DirectionalLightData.UpVector;
-            CascadeGenerationData.LightDirection     = DirectionalLightData.Direction;
-            CascadeGenerationData.CascadeResolution  = static_cast<float>(CascadeSize);
-            CascadeGenerationData.ShadowMatrix       = DirectionalLightData.ShadowMatrix;
-            CascadeGenerationData.MaxCascadeIndex    = FMath::Max(NUM_SHADOW_CASCADES - 1, 0);
+    // Update PointLights
+    for (int32 Index = 0; Index < Scene->PointLights.Size(); Index++)
+    {
+        FPointLight* PointLight = Scene->PointLights[Index]->Light;
 
-            if (IConsoleVariable* CVarPrePassDepthReduce = FConsoleManager::Get().FindConsoleVariable("Renderer.PrePass.DepthReduce"))
-            {
-                CascadeGenerationData.bDepthReductionEnabled = CVarPrePassDepthReduce->GetBool();
-            }
-            else
-            {
-                CascadeGenerationData.bDepthReductionEnabled = true;
-            }
+        // Pre-multiply light intensity TODO: Just specify the light color directly FVector4(100.0f, 1.0f, 58.0f, 6.0f)
+        FVector3 Color = PointLight->GetColor();
+        Color = Color * PointLight->GetIntensity();
 
-            CascadeGenerationDataDirty = true;
+        const float Radius         = PointLight->GetShadowFarPlane();
+        FVector3 Position          = PointLight->GetPosition();
+        FVector4 PositionAndRadius = FVector4(Position, Radius);
+
+        if (PointLight->IsShadowCaster())
+        {
+            FShadowCastingPointLightDataHLSL Data;
+            Data.Color         = Color;
+            Data.FarPlane      = PointLight->GetShadowFarPlane();
+            Data.MaxShadowBias = PointLight->GetMaxShadowBias();
+            Data.ShadowBias    = PointLight->GetShadowBias();
+
+            ShadowCastingPointLightsData.Emplace(Data);
+            ShadowCastingPointLightsPosRad.Emplace(PositionAndRadius);
+        }
+        else
+        {
+            FPointLightDataHLSL Data;
+            Data.Color = Color;
+
+            PointLightsData.Emplace(Data);
+            PointLightsPosRad.Emplace(PositionAndRadius);
         }
     }
 
+    // Update GPU Buffers
     if (PointLightsData.SizeInBytes() > static_cast<int32>(PointLightsBuffer->GetSize()))
     {
         CommandList.DestroyResource(PointLightsBuffer.Get());
