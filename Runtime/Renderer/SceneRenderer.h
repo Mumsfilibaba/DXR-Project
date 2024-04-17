@@ -136,11 +136,10 @@ private:
     FDebugRenderer              DebugRenderer;
 
     // RHI
+    FRHIQueryRef                TimestampQueries;
     FRHICommandList             CommandList;
     FRHICommandStatistics       FrameStatistics;
 
-    FRHIQueryRef                TimestampQueries;
-    
     FRHITextureRef              ShadingImage;
     FRHIComputePipelineStateRef ShadingRatePipeline;
     FRHIComputeShaderRef        ShadingRateShader;

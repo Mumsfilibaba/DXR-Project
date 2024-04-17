@@ -855,7 +855,7 @@ void FSceneRenderer::Tick(FScene* Scene)
         FXAAPass->Execute(CommandList, Resources, Scene);
     }
 
-    // Perform ToneMapping and blit to BackBuffer
+    // Perform ToneMapping and Blit to BackBuffer
     TonemapPass->Execute(CommandList, Resources, Scene);
 
     AddDebugTexture(
@@ -867,8 +867,6 @@ void FSceneRenderer::Tick(FScene* Scene)
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin UI Render");
 
     {
-        TRACE_SCOPE("Render UI");
-
     #if SUPPORT_VARIABLE_RATE_SHADING
         if (RHISupportsVariableRateShading())
         {
@@ -877,6 +875,7 @@ void FSceneRenderer::Tick(FScene* Scene)
         }
     #endif
 
+        TRACE_SCOPE("Render UI");
         FApplication::Get().DrawWindows(CommandList);
     }
 
@@ -930,14 +929,12 @@ bool FSceneRenderer::InitShadingImage()
     }
 
     TArray<uint8> ShaderCode;
-    
+
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadingImage.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     ShadingRateShader = RHICreateComputeShader(ShaderCode);
