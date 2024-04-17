@@ -396,6 +396,5 @@ void Main(FComputeShaderInput Input)
     
     // Finalize
     float FinalLuminance = Luminance(FinalColor);
-    FinalColor = ApplyGammaCorrectionAndTonemapping(FinalColor);
     Output[Pixel] = float4(FinalColor, FinalLuminance);
 }

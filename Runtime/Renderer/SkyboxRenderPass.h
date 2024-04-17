@@ -10,17 +10,13 @@
 class FSkyboxRenderPass : public FRenderPass
 {
 public:
-    FSkyboxRenderPass(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-        , SkyboxIndexCount(0)
-        , SkyboxIndexFormat(EIndexFormat::Unknown)
-    {
-    }
+    FSkyboxRenderPass(FSceneRenderer* InRenderer);
+    virtual ~FSkyboxRenderPass();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
-
     void Release();
+
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
     FGPUTextureCompressor        TextureCompressor;

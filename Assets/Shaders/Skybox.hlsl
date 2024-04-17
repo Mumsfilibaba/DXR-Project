@@ -34,8 +34,6 @@ FVSOutput VSMain(FVSInput Input)
 float4 PSMain(float3 TexCoord : TEXCOORD0) : SV_TARGET0
 {
     float3 Color = Skybox.Sample(SkyboxSampler, TexCoord).rgb;
-    // Finalize
     float FinalLuminance = Luminance(Color);
-    Color = ApplyGammaCorrectionAndTonemapping(Color);
     return float4(Color, FinalLuminance);
 }

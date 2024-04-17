@@ -1,4 +1,4 @@
-#include "ShadowMapRenderer.h"
+#include "ShadowRendering.h"
 #include "Scene.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"

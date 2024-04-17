@@ -52,7 +52,6 @@ namespace HaltonPrivate
     }
 }
 
-
 struct FHaltonState
 {
     FHaltonState(const uint32 InMaxNumSamples = 16)
@@ -75,27 +74,24 @@ struct FHaltonState
 class FTemporalAA : public FRenderPass
 {
 public:
-    FTemporalAA(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-    {
-    }
+    FTemporalAA(FSceneRenderer* InRenderer);
+    virtual ~FTemporalAA();
 
     bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
 
+    bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
     bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
 private:
-    bool CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-
-    FRHIComputePipelineStateRef  TemporalAAPSO;
-    FRHIComputeShaderRef         TemporalAAShader;
+    FRHIComputePipelineStateRef TemporalAAPSO;
+    FRHIComputeShaderRef        TemporalAAShader;
 
     // Two buffers to ping-pong between
-    FRHITextureRef               TAAHistoryBuffers[2];
-    FRHISamplerStateRef          LinearSampler;
+    FRHITextureRef              TAAHistoryBuffers[2];
+    FRHISamplerStateRef         LinearSampler;
 
-    uint32                       CurrentBufferIndex = 0;
+    uint32 CurrentBufferIndex;
 };

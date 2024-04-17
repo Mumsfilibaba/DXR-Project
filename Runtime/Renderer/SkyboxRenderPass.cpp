@@ -14,6 +14,18 @@ static TAutoConsoleVariable<bool> GClearBeforeSkyboxEnabled(
     "Clear the final target before rendering the Skybox (Used for debugging)",
     false);
 
+FSkyboxRenderPass::FSkyboxRenderPass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , SkyboxIndexCount(0)
+    , SkyboxIndexFormat(EIndexFormat::Unknown)
+{
+}
+
+FSkyboxRenderPass::~FSkyboxRenderPass()
+{
+    Release();
+}
+
 bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 {
     if (!TextureCompressor.Initialize())
@@ -21,15 +33,13 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-
     // Sphere-Data
     TArray<FVector3> SkyboxVertices;
     TArray<uint16>   SkyboxIndicies16;
     TArray<uint32>   SkyboxIndicies32;
-    void* SkyboxInitalIndicies = nullptr;
-
 
     // Create a sphere used for the Skybox
+    void* SkyboxInitalIndicies = nullptr;
     {
         FMeshData SkyboxMesh = FMeshFactory::CreateSphere(0);
         SkyboxIndexCount = SkyboxMesh.Indices.Size();
@@ -60,7 +70,6 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         }
     }
 
-
     // VertexBuffer
     FRHIBufferDesc VBDesc(SkyboxVertices.SizeInBytes(), SkyboxVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
     SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
@@ -84,7 +93,6 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     {
         SkyboxIndexBuffer->SetDebugName("Skybox IndexBuffer");
     }
-
 
     // Create Texture Cube
     {
@@ -239,7 +247,17 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
+void FSkyboxRenderPass::Release()
+{
+    PipelineState.Reset();
+    SkyboxVertexBuffer.Reset();
+    SkyboxIndexBuffer.Reset();
+    SkyboxSampler.Reset();
+    SkyboxVertexShader.Reset();
+    SkyboxPixelShader.Reset();
+}
+
+void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Skybox");
 
@@ -288,14 +306,4 @@ void FSkyboxRenderPass::Render(FRHICommandList& CommandList, const FFrameResourc
     CommandList.EndRenderPass();
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Skybox");
-}
-
-void FSkyboxRenderPass::Release()
-{
-    PipelineState.Reset();
-    SkyboxVertexBuffer.Reset();
-    SkyboxIndexBuffer.Reset();
-    SkyboxSampler.Reset();
-    SkyboxVertexShader.Reset();
-    SkyboxPixelShader.Reset();
 }

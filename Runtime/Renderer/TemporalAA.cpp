@@ -4,12 +4,23 @@
 #include "RHI/ShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
 
+FTemporalAA::FTemporalAA(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , CurrentBufferIndex(0)
+{
+}
+
+FTemporalAA::~FTemporalAA()
+{
+    Release();
+}
+
 bool FTemporalAA::Initialize(FFrameResources& FrameResources)
 {
     const uint32 Width  = FrameResources.MainViewport->GetWidth();
     const uint32 Height = FrameResources.MainViewport->GetHeight();
 
-    if (!CreateRenderTarget(FrameResources, Width, Height))
+    if (!CreateResources(FrameResources, Width, Height))
     {
         return false;
     }
@@ -66,7 +77,7 @@ void FTemporalAA::Release()
     TemporalAAShader.Reset();
 }
 
-void FTemporalAA::Render(FRHICommandList& CommandList, FFrameResources& FrameResources)
+void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin TemporalAA");
 
@@ -123,10 +134,10 @@ bool FTemporalAA::ResizeResources(FRHICommandList& CommandList, FFrameResources&
         CommandList.DestroyResource(TAABuffer.Get());
     }
 
-    return CreateRenderTarget(FrameResources, Width, Height);
+    return CreateResources(FrameResources, Width, Height);
 }
 
-bool FTemporalAA::CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+bool FTemporalAA::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     // TAA History-Buffer
     FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);

@@ -1,6 +1,7 @@
 #include "PBRHelpers.hlsli"
 #include "Structs.hlsli"
 #include "Constants.hlsli"
+#include "Tonemapping.hlsli"
 
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)

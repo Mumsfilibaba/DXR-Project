@@ -25,11 +25,6 @@ static TAutoConsoleVariable<bool> CVarEnableFXAA(
     "Enables FXAA for Anti-Aliasing",
     false);
 
-static TAutoConsoleVariable<bool> CVarFXAADebug(
-    "Renderer.Debug.FXAADebug",
-    "Enables FXAA (Anti-Aliasing) Debugging mode",
-    false);
-
 static TAutoConsoleVariable<bool> CVarEnableTemporalAA(
     "Renderer.Feature.TemporalAA",
     "Enables Temporal Anti-Aliasing",
@@ -117,7 +112,7 @@ FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent
         return FResponse::Unhandled();
     }
 
-    Renderer->OnWindowResize(WindowEvent);
+    Renderer->ResizeResources(WindowEvent);
     return FResponse::Handled();
 }
 
@@ -138,22 +133,17 @@ FSceneRenderer::FSceneRenderer()
     , CascadeGenerationPass(nullptr)
     , CascadedShadowsRenderPass(nullptr)
     , ShadowMaskRenderPass(nullptr)
-    , SSAORenderer(this)
+    , ScreenSpaceOcclusionPass(nullptr)
+    , SkyboxRenderPass(nullptr)
     , LightProbeRenderer(this)
-    , SkyboxRenderPass(this)
-    , ForwardRenderer(this)
+    , TemporalAA(nullptr)
+    , ForwardPass(nullptr)
+    , TonemapPass(nullptr)
     , RayTracer(this)
     , DebugRenderer(this)
-    , TemporalAA(this)
     , ShadingImage(nullptr)
     , ShadingRatePipeline(nullptr)
     , ShadingRateShader(nullptr)
-    , PostPSO(nullptr)
-    , PostShader(nullptr)
-    , FXAAPSO(nullptr)
-    , FXAAShader(nullptr)
-    , FXAADebugPSO(nullptr)
-    , FXAADebugShader(nullptr)
     , TimestampQueries(nullptr)
     , FrameStatistics()
 {
@@ -173,24 +163,19 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(CascadeGenerationPass);
     SAFE_DELETE(CascadedShadowsRenderPass);
     SAFE_DELETE(ShadowMaskRenderPass);
+    SAFE_DELETE(ScreenSpaceOcclusionPass);
+    SAFE_DELETE(SkyboxRenderPass);
+    SAFE_DELETE(TemporalAA);
+    SAFE_DELETE(ForwardPass);
+    SAFE_DELETE(FXAAPass);
+    SAFE_DELETE(TonemapPass);
 
-    SSAORenderer.Release();
     LightProbeRenderer.Release();
-    SkyboxRenderPass.Release();
-    ForwardRenderer.Release();
     RayTracer.Release();
     DebugRenderer.Release();
-    TemporalAA.Release();
 
     Resources.Release();
     LightSetup.Release();
-
-    PostPSO.Reset();
-    PostShader.Reset();
-    FXAAPSO.Reset();
-    FXAAShader.Reset();
-    FXAADebugPSO.Reset();
-    FXAADebugShader.Reset();
 
     ShadingImage.Reset();
     ShadingRatePipeline.Reset();
@@ -302,9 +287,6 @@ bool FSceneRenderer::Initialize()
         }
     }
 
-    if (!InitAA())
-        return false;
-
     if (!InitShadingImage())
         return false;
 
@@ -314,22 +296,10 @@ bool FSceneRenderer::Initialize()
     if (!LightSetup.Initialize())
         return false;
 
-    if (!BuildRenderPasses())
-        return false;
-
-    if (!SSAORenderer.Initialize(Resources))
+    if (!InitializeRenderPasses())
         return false;
 
     if (!LightProbeRenderer.Initialize(LightSetup, Resources))
-        return false;
-
-    if (!SkyboxRenderPass.Initialize(Resources))
-        return false;
-
-    if (!ForwardRenderer.Initialize(Resources))
-        return false;
-
-    if (!TemporalAA.Initialize(Resources))
         return false;
 
     if (false/*FHardwareSupport::bRayTracing*/)
@@ -404,7 +374,7 @@ bool FSceneRenderer::Initialize()
     return true;
 }
 
-bool FSceneRenderer::BuildRenderPasses()
+bool FSceneRenderer::InitializeRenderPasses()
 {
     DepthPrePass = new FDepthPrePass(this);
     if (!DepthPrePass->Initialize(Resources))
@@ -438,98 +408,31 @@ bool FSceneRenderer::BuildRenderPasses()
     if (!ShadowMaskRenderPass->Initialize(Resources, LightSetup))
         return false;
 
+    ScreenSpaceOcclusionPass = new FScreenSpaceOcclusionPass(this);
+    if (!ScreenSpaceOcclusionPass->Initialize(Resources))
+        return false;
+
+    SkyboxRenderPass = new FSkyboxRenderPass(this);
+    if (!SkyboxRenderPass->Initialize(Resources))
+        return false;
+
+    TemporalAA = new FTemporalAA(this);
+    if (!TemporalAA->Initialize(Resources))
+        return false;
+
+    ForwardPass = new FForwardPass(this);
+    if (!ForwardPass->Initialize(Resources))
+        return false;
+
+    TonemapPass = new FTonemapPass(this);
+    if (!TonemapPass->Initialize(Resources))
+        return false;
+
+    FXAAPass = new FFXAAPass(this);
+    if (!FXAAPass->Initialize(Resources))
+        return false;
+
     return true;
-}
-
-void FSceneRenderer::PerformFXAA(FRHICommandList& InCommandList)
-{
-    INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "Begin FXAA");
-
-    TRACE_SCOPE("FXAA");
-
-    GPU_TRACE_SCOPE(InCommandList, "FXAA");
-
-    struct FFXAASettings
-    {
-        float Width;
-        float Height;
-    } Settings;
-
-    const float RenderWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
-    const float RenderHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
-
-    Settings.Width  = RenderWidth;
-    Settings.Height = RenderHeight;
-
-    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
-    InCommandList.SetViewport(ViewportRegion);
-
-    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
-    InCommandList.SetScissorRect(ScissorRegion);
-
-    FRHIRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-    InCommandList.BeginRenderPass(RenderPass);
-
-    FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    if (CVarFXAADebug.GetValue())
-    {
-        InCommandList.SetGraphicsPipelineState(FXAADebugPSO.Get());
-        InCommandList.SetShaderResourceView(FXAADebugShader.Get(), FinalTargetSRV, 0);
-        InCommandList.SetSamplerState(FXAADebugShader.Get(), Resources.FXAASampler.Get(), 0);
-        InCommandList.Set32BitShaderConstants(FXAADebugShader.Get(), &Settings, 2);
-    }
-    else
-    {
-        InCommandList.SetGraphicsPipelineState(FXAAPSO.Get());
-        InCommandList.SetShaderResourceView(FXAAShader.Get(), FinalTargetSRV, 0);
-        InCommandList.SetSamplerState(FXAAShader.Get(), Resources.FXAASampler.Get(), 0);
-        InCommandList.Set32BitShaderConstants(FXAAShader.Get(), &Settings, 2);
-    }
-
-    InCommandList.DrawInstanced(3, 1, 0, 0);
-
-    InCommandList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(InCommandList, "End FXAA");
-}
-
-void FSceneRenderer::PerformBackBufferBlit(FRHICommandList& InCmdList)
-{
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "Begin Draw BackBuffer");
-
-    TRACE_SCOPE("Draw to BackBuffer");
-
-    const float RenderWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
-    const float RenderHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
-
-    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
-    InCmdList.SetViewport(ViewportRegion);
-
-    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
-    InCmdList.SetScissorRect(ScissorRegion);
-
-    FRHIRenderPassDesc RenderPass;
-    RenderPass.NumRenderTargets = 1;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.BackBuffer, EAttachmentLoadAction::Load);
-    RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-    InCmdList.BeginRenderPass(RenderPass);
-
-    InCmdList.SetGraphicsPipelineState(PostPSO.Get());
-    
-    FRHIShaderResourceView* FinalTargetSRV = Resources.FinalTarget->GetShaderResourceView();
-    InCmdList.SetShaderResourceView(PostShader.Get(), FinalTargetSRV, 0);
-    InCmdList.SetSamplerState(PostShader.Get(), Resources.GBufferSampler.Get(), 0);
-
-    InCmdList.DrawInstanced(3, 1, 0, 0);
-
-    InCmdList.EndRenderPass();
-
-    INSERT_DEBUG_CMDLIST_MARKER(InCmdList, "End Draw BackBuffer");
 }
 
 void FSceneRenderer::Tick(FScene* Scene)
@@ -582,7 +485,7 @@ void FSceneRenderer::Tick(FScene* Scene)
                 return;
             }
 
-            if (!SSAORenderer.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!ScreenSpaceOcclusionPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
@@ -594,7 +497,7 @@ void FSceneRenderer::Tick(FScene* Scene)
                 return;
             }
 
-            if (!TemporalAA.ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!TemporalAA->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
@@ -793,8 +696,7 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     if (CVarEnableSSAO.GetValue())
     {
-        GPU_TRACE_SCOPE(CommandList, "SSAO");
-        SSAORenderer.Render(CommandList, Resources);
+        ScreenSpaceOcclusionPass->Execute(CommandList, Resources);
     }
     else
     {
@@ -861,7 +763,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     // Skybox Pass
     if (CVarSkyboxEnabled.GetValue())
     {
-        SkyboxRenderPass.Render(CommandList, Resources, Scene);
+        SkyboxRenderPass->Execute(CommandList, Resources, Scene);
     }
 
     CommandList.TransitionTexture(LightSetup.PointLightShadowMaps.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
@@ -909,8 +811,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     // Forward Pass
     if (false/*!Resources.ForwardVisibleCommands.IsEmpty()*/)
     {
-        GPU_TRACE_SCOPE(CommandList, "Forward Pass");
-        ForwardRenderer.Render(CommandList, Resources, LightSetup, Scene);
+        ForwardPass->Execute(CommandList, Resources, LightSetup, Scene);
     }
 
     // Debug PointLights
@@ -931,7 +832,7 @@ void FSceneRenderer::Tick(FScene* Scene)
         CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
         CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::RenderTarget, EResourceAccess::UnorderedAccess);
 
-        TemporalAA.Render(CommandList, Resources);
+        TemporalAA->Execute(CommandList, Resources);
 
         CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
         CommandList.TransitionTexture(Resources.FinalTarget.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
@@ -951,13 +852,11 @@ void FSceneRenderer::Tick(FScene* Scene)
     // FXAA
     if (CVarEnableFXAA.GetValue())
     {
-        PerformFXAA(CommandList);
+        FXAAPass->Execute(CommandList, Resources, Scene);
     }
-    else
-    {
-        // Render to the BackBuffer
-        PerformBackBufferBlit(CommandList);
-    }
+
+    // Perform ToneMapping and blit to BackBuffer
+    TonemapPass->Execute(CommandList, Resources, Scene);
 
     AddDebugTexture(
         MakeSharedRef<FRHIShaderResourceView>(Resources.FinalTarget->GetShaderResourceView()),
@@ -1003,171 +902,9 @@ void FSceneRenderer::Tick(FScene* Scene)
     }
 }
 
-void FSceneRenderer::OnWindowResize(const FWindowEvent& Event)
+void FSceneRenderer::ResizeResources(const FWindowEvent& Event)
 {
     ResizeEvent.Emplace(Event);
-}
-
-bool FSceneRenderer::InitAA()
-{
-    TArray<uint8> ShaderCode;
-    
-    {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/FullscreenVS.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-
-    FRHIVertexShaderRef VShader = RHICreateVertexShader(ShaderCode);
-    if (!VShader)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/PostProcessPS.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-
-    PostShader = RHICreatePixelShader(ShaderCode);
-    if (!PostShader)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIDepthStencilStateInitializer DepthStencilInitializer;
-    DepthStencilInitializer.DepthFunc         = EComparisonFunc::Always;
-    DepthStencilInitializer.bDepthEnable      = false;
-    DepthStencilInitializer.bDepthWriteEnable = false;
-
-    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
-    if (!DepthStencilState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIRasterizerStateInitializer RasterizerInitializer;
-    RasterizerInitializer.CullMode = ECullMode::None;
-
-    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
-    if (!RasterizerState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIBlendStateInitializer BlendStateInitializer;
-    BlendStateInitializer.NumRenderTargets = 1;
-
-    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
-    if (!BlendState)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FRHIGraphicsPipelineStateInitializer PSOInitializer;
-    PSOInitializer.VertexInputLayout                      = nullptr;
-    PSOInitializer.BlendState                             = BlendState.Get();
-    PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
-    PSOInitializer.RasterizerState                        = RasterizerState.Get();
-    PSOInitializer.ShaderState.VertexShader               = VShader.Get();
-    PSOInitializer.ShaderState.PixelShader                = PostShader.Get();
-    PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
-    PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.BackBufferFormat;
-    PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
-    PSOInitializer.PipelineFormats.DepthStencilFormat     = EFormat::Unknown;
-
-    PostPSO = RHICreateGraphicsPipelineState(PSOInitializer);
-    if (!PostPSO)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    // FXAA
-    FRHISamplerStateDesc SamplerInitializer;
-    SamplerInitializer.AddressU = ESamplerMode::Clamp;
-    SamplerInitializer.AddressV = ESamplerMode::Clamp;
-    SamplerInitializer.AddressW = ESamplerMode::Clamp;
-    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
-
-    Resources.FXAASampler = RHICreateSamplerState(SamplerInitializer);
-    if (!Resources.FXAASampler)
-    {
-        return false;
-    }
-
-    {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-
-    FXAAShader = RHICreatePixelShader(ShaderCode);
-    if (!FXAAShader)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    PSOInitializer.ShaderState.PixelShader = FXAAShader.Get();
-
-    FXAAPSO = RHICreateGraphicsPipelineState(PSOInitializer);
-    if (!FXAAPSO)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        FXAAPSO->SetDebugName("FXAA PipelineState");
-    }
-
-    TArray<FShaderDefine> Defines =
-    {
-        { "ENABLE_DEBUG", "(1)" }
-    };
-
-    {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel, Defines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/FXAA_PS.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-    }
-
-    FXAADebugShader = RHICreatePixelShader(ShaderCode);
-    if (!FXAADebugShader)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    PSOInitializer.ShaderState.PixelShader = FXAADebugShader.Get();
-
-    FXAADebugPSO = RHICreateGraphicsPipelineState(PSOInitializer);
-    if (!FXAADebugPSO)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    return true;
 }
 
 bool FSceneRenderer::InitShadingImage()

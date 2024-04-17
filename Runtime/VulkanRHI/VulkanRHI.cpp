@@ -192,7 +192,7 @@ void FVulkanRHI::RHIBeginFrame()
 
 void FVulkanRHI::RHIEndFrame()
 {
-    // TODO: Empty for now
+    // NOTE: Empty for now
 }
 
 FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)

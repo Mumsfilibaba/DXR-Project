@@ -1,4 +1,4 @@
-#include "ForwardRenderer.h"
+#include "ForwardPass.h"
 #include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
@@ -7,8 +7,19 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
+#include "Renderer/Debug/GPUProfiler.h"
 
-bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
+FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+{
+}
+
+FForwardPass::~FForwardPass()
+{
+    Release();
+}
+
+bool FForwardPass::Initialize(FFrameResources& FrameResources)
 {
     TArray<FShaderDefine> Defines =
     {
@@ -101,19 +112,21 @@ bool FForwardRenderer::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FForwardRenderer::Release()
+void FForwardPass::Release()
 {
     PipelineState.Reset();
     VShader.Reset();
     PShader.Reset();
 }
 
-void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FScene* Scene)
+void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FScene* Scene)
 {
     // Forward Pass
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin ForwardPass");
 
     TRACE_SCOPE("ForwardPass");
+
+    GPU_TRACE_SCOPE(CommandList, "Forward Pass");
 
     CommandList.TransitionTexture(LightSetup.ShadowMapCascades[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
@@ -160,7 +173,6 @@ void FForwardRenderer::Render(FRHICommandList& CommandList, const FFrameResource
         FMatrix4 Transform;
         FMatrix4 TransformInv;
     } TransformPerObject;
-
 
     for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
     {

@@ -1,14 +1,15 @@
 #pragma once
-#include "DeferredRenderer.h"
-#include "ShadowMapRenderer.h"
-#include "ScreenSpaceOcclusionRenderer.h"
+#include "DeferredRendering.h"
+#include "ShadowRendering.h"
+#include "ScreenSpaceOcclusionRendering.h"
 #include "LightProbeRenderer.h"
 #include "SkyboxRenderPass.h"
-#include "ForwardRenderer.h"
+#include "ForwardPass.h"
 #include "RayTracer.h"
-#include "DebugRenderer.h"
+#include "DebugRendering.h"
 #include "TemporalAA.h"
 #include "Scene.h"
+#include "PostProcessing.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Application/Events.h"
@@ -84,14 +85,11 @@ public:
     ~FSceneRenderer();
 
     bool Initialize();
-    bool BuildRenderPasses();
+    bool InitializeRenderPasses();
 
     void Tick(FScene* Scene);
 
-    void OnWindowResize(const FWindowEvent& Event);
-
-    void PerformFXAA(FRHICommandList& InCmdList);
-    void PerformBackBufferBlit(FRHICommandList& InCmdList);
+    void ResizeResources(const FWindowEvent& Event);
 
     void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
     {
@@ -109,53 +107,46 @@ public:
     }
 
 private:
-    bool InitAA();
     bool InitShadingImage();
 
     // RenderPasses and Resources
-    FFrameResources               Resources;
-    FLightSetup                   LightSetup;
+    FFrameResources             Resources;
+    FLightSetup                 LightSetup;
 
-    FCameraHLSL                   CameraBuffer;
-    FHaltonState                  HaltonState;
+    FCameraHLSL                 CameraBuffer;
+    FHaltonState                HaltonState;
 
-    FDepthPrePass*                DepthPrePass;
-    FDeferredBasePass*            BasePass;
-    FDepthReducePass*             DepthReducePass;
-    FTiledLightPass*              TiledLightPass;
-    FPointLightRenderPass*        PointLightRenderPass;
-    FCascadeGenerationPass*       CascadeGenerationPass;
-    FCascadedShadowsRenderPass*   CascadedShadowsRenderPass;
-    FShadowMaskRenderPass*        ShadowMaskRenderPass;
+    FDepthPrePass*              DepthPrePass;
+    FDeferredBasePass*          BasePass;
+    FDepthReducePass*           DepthReducePass;
+    FTiledLightPass*            TiledLightPass;
+    FPointLightRenderPass*      PointLightRenderPass;
+    FCascadeGenerationPass*     CascadeGenerationPass;
+    FCascadedShadowsRenderPass* CascadedShadowsRenderPass;
+    FShadowMaskRenderPass*      ShadowMaskRenderPass;
+    FScreenSpaceOcclusionPass*  ScreenSpaceOcclusionPass;
+    FSkyboxRenderPass*          SkyboxRenderPass;
+    FTemporalAA*                TemporalAA;
+    FForwardPass*               ForwardPass;
+    FFXAAPass*                  FXAAPass;
+    FTonemapPass*               TonemapPass;
 
-    FScreenSpaceOcclusionRenderer SSAORenderer;
-    FLightProbeRenderer           LightProbeRenderer;
-    FSkyboxRenderPass             SkyboxRenderPass;
-    FForwardRenderer              ForwardRenderer;
-    FRayTracer                    RayTracer;
-    FDebugRenderer                DebugRenderer;
-    FTemporalAA                   TemporalAA;
+    FLightProbeRenderer         LightProbeRenderer;
+    FRayTracer                  RayTracer;
+    FDebugRenderer              DebugRenderer;
 
     // RHI
-    FRHICommandList               CommandList;
-    FRHICommandStatistics         FrameStatistics;
+    FRHICommandList             CommandList;
+    FRHICommandStatistics       FrameStatistics;
 
-    FRHIQueryRef                  TimestampQueries;
+    FRHIQueryRef                TimestampQueries;
     
-    FRHITextureRef                ShadingImage;
-    FRHIComputePipelineStateRef   ShadingRatePipeline;
-    FRHIComputeShaderRef          ShadingRateShader;
-
-    FRHIGraphicsPipelineStateRef  PostPSO;
-    FRHIPixelShaderRef            PostShader;
-
-    FRHIGraphicsPipelineStateRef  FXAAPSO;
-    FRHIPixelShaderRef            FXAAShader;
-    FRHIGraphicsPipelineStateRef  FXAADebugPSO;
-    FRHIPixelShaderRef            FXAADebugShader;
+    FRHITextureRef              ShadingImage;
+    FRHIComputePipelineStateRef ShadingRatePipeline;
+    FRHIComputeShaderRef        ShadingRateShader;
 
     // Event handling
-    TOptional<FWindowEvent>       ResizeEvent;
+    TOptional<FWindowEvent>     ResizeEvent;
 
     // Widgets
     TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;

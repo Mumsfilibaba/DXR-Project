@@ -2,6 +2,7 @@
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
 #include "ShadowHelpers.hlsli"
+#include "Tonemapping.hlsli"
 
 // Per Frame Buffers
 
@@ -297,6 +298,5 @@ float4 PSMain(FPSInput Input) : SV_Target0
     
     // Finalize
     float FinalLuminance = Luminance(FinalColor);
-    FinalColor = ApplyGammaCorrectionAndTonemapping(FinalColor);
     return float4(FinalColor, FinalLuminance);
 }

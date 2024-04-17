@@ -61,5 +61,5 @@ void RayGen()
 
     TraceRay(Scene, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xff, 0, 0, 0, Ray, PayLoad);
 
-    OutTexture[DispatchIndex.xy] = float4(ApplyGammaCorrectionAndTonemapping(PayLoad.Color), 1.0f);
+    OutTexture[DispatchIndex.xy] = float4(PayLoad.Color, 1.0f);
 }

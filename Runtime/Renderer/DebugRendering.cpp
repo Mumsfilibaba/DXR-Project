@@ -1,4 +1,4 @@
-#include "DebugRenderer.h"
+#include "DebugRendering.h"
 #include "Scene.h"
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"

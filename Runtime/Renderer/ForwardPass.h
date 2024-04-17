@@ -5,18 +5,16 @@
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
 
-class FForwardRenderer : public FRenderPass
+class FForwardPass : public FRenderPass
 {
 public:
-    FForwardRenderer(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-    {
-    }
+    FForwardPass(FSceneRenderer* InRenderer);
+    virtual ~FForwardPass();
 
     bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    void Render(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FScene* Scene);
+    void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, const FLightSetup& LightSetup, FScene* Scene);
 
 private:
     FRHIGraphicsPipelineStateRef PipelineState;

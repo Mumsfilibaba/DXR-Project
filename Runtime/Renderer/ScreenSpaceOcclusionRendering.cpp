@@ -1,4 +1,4 @@
-#include "ScreenSpaceOcclusionRenderer.h"
+#include "ScreenSpaceOcclusionRendering.h"
 #include "SceneRenderer.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
@@ -26,12 +26,22 @@ static TAutoConsoleVariable<int32> CVarSSAOKernelSize(
     "Specifies the number of samples for each pixel",
     16);
 
-bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
+FScreenSpaceOcclusionPass::FScreenSpaceOcclusionPass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+{
+}
+
+FScreenSpaceOcclusionPass::~FScreenSpaceOcclusionPass()
+{
+    Release();
+}
+
+bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
 {
     const uint32 Width  = FrameResources.MainViewport->GetWidth();
     const uint32 Height = FrameResources.MainViewport->GetHeight();
 
-    if (!CreateRenderTarget(FrameResources, Width, Height))
+    if (!CreateResources(FrameResources, Width, Height))
     {
         return false;
     }
@@ -142,7 +152,7 @@ bool FScreenSpaceOcclusionRenderer::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FScreenSpaceOcclusionRenderer::Release()
+void FScreenSpaceOcclusionPass::Release()
 {
     PipelineState.Reset();
     BlurHorizontalPSO.Reset();
@@ -152,16 +162,16 @@ void FScreenSpaceOcclusionRenderer::Release()
     BlurVerticalShader.Reset();
 }
 
-bool FScreenSpaceOcclusionRenderer::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
+bool FScreenSpaceOcclusionPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     // Destroy the old resource
     CommandList.DestroyResource(FrameResources.SSAOBuffer.Get());
 
     // Create the new resources
-    return CreateRenderTarget(FrameResources, Width, Height);
+    return CreateResources(FrameResources, Width, Height);
 }
 
-void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameResources& FrameResources)
+void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin SSAO");
 
@@ -242,7 +252,7 @@ void FScreenSpaceOcclusionRenderer::Render(FRHICommandList& CommandList, FFrameR
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End SSAO");
 }
 
-bool FScreenSpaceOcclusionRenderer::CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height)
+bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
     

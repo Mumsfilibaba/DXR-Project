@@ -5,24 +5,21 @@
 #include "RHI/RHIShader.h"
 #include "Engine/World/World.h"
 
-class FScreenSpaceOcclusionRenderer : public FRenderPass
+class FScreenSpaceOcclusionPass : public FRenderPass
 {
 public:
-    FScreenSpaceOcclusionRenderer(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-    {
-    }
+    FScreenSpaceOcclusionPass(FSceneRenderer* InRenderer);
+    virtual ~FScreenSpaceOcclusionPass();
 
     bool Initialize(FFrameResources& FrameResources);
     void Release();
 
-    void Render(FRHICommandList& CommandList, FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
 
+    bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
     bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
 private:
-    bool CreateRenderTarget(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-
     FRHIComputePipelineStateRef PipelineState;
     FRHIComputeShaderRef        SSAOShader;
     
