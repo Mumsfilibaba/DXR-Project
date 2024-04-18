@@ -402,10 +402,10 @@ bool FSandbox::Init()
     // Add PointLights
 #if LOAD_SPONZA
     const float Intensity      = 100.0f;
-    const float ShadowFarPlane = 20.0f;
+    const float ShadowFarPlane = 40.0f;
     if (FPointLight* Light0 = NewObject<FPointLight>())
     {
-        Light0->SetPosition(FVector3(16.5f, 1.0f, 0.0f));
+        Light0->SetPosition(FVector3(15.0f, 1.5f, 0.0f));
         Light0->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light0->SetShadowBias(0.001f);
         Light0->SetMaxShadowBias(0.009f);
@@ -416,7 +416,7 @@ bool FSandbox::Init()
     }
     if (FPointLight* Light1 = NewObject<FPointLight>())
     {
-        Light1->SetPosition(FVector3(-17.5f, 1.0f, 0.0f));
+        Light1->SetPosition(FVector3(-15.0f, 1.5f, 0.0f));
         Light1->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light1->SetShadowBias(0.001f);
         Light1->SetMaxShadowBias(0.009f);
@@ -427,7 +427,7 @@ bool FSandbox::Init()
     }
     if (FPointLight* Light2 = NewObject<FPointLight>())
     {
-        Light2->SetPosition(FVector3(16.5f, 11.0f, 0.0f));
+        Light2->SetPosition(FVector3(16.5f, 10.0f, 0.0f));
         Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light2->SetShadowBias(0.001f);
         Light2->SetMaxShadowBias(0.009f);
@@ -438,7 +438,7 @@ bool FSandbox::Init()
     }
     if (FPointLight* Light3 = NewObject<FPointLight>())
     {
-        Light3->SetPosition(FVector3(-17.5f, 11.0f, 0.0f));
+        Light3->SetPosition(FVector3(-16.5f, 10.0f, 0.0f));
         Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light3->SetShadowBias(0.001f);
         Light3->SetMaxShadowBias(0.009f);

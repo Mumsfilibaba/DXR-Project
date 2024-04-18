@@ -55,13 +55,11 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
         else
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
 
+        FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
-            FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return;
-            }
+            DEBUG_BREAK();
+            return;
         }
 
         FPipelineStateInstance NewPipelineStateInstance;
@@ -72,13 +70,36 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
             return;
         }
 
+        CompileInfo = FShaderCompileInfo("Point_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
         {
-            FShaderCompileInfo CompileInfo("Point_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            DEBUG_BREAK();
+            return;
+        }
+
+        // Initialize standard input layout
+        FRHIVertexInputLayoutInitializer InputLayoutInitializer;
+        if (MaterialFlags & (MaterialFlag_EnableHeight | MaterialFlag_EnableAlpha))
+        {
+            InputLayoutInitializer =
             {
-                DEBUG_BREAK();
-                return;
-            }
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexMasked), 0, 0,  EVertexInputClass::Vertex, 0 },
+                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexMasked), 0, 12, EVertexInputClass::Vertex, 0 }
+            };
+        }
+        else
+        {
+            InputLayoutInitializer =
+            {
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+            };
+        }
+
+        NewPipelineStateInstance.InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+        if (!NewPipelineStateInstance.InputLayout)
+        {
+            DEBUG_BREAK();
+            return;
         }
 
         NewPipelineStateInstance.PixelShader = RHICreatePixelShader(ShaderCode);
@@ -100,10 +121,17 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
             return;
         }
 
-        FRHIRasterizerStateInitializer RasterizerInitializer;
-        RasterizerInitializer.CullMode = ECullMode::Back;
+        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        if (MaterialFlags & MaterialFlag_DoubleSided)
+        {
+            RasterizerStateInitializer.CullMode = ECullMode::None;
+        }
+        else
+        {
+            RasterizerStateInitializer.CullMode = ECullMode::Back;
+        }
 
-        NewPipelineStateInstance.RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+        NewPipelineStateInstance.RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -122,7 +150,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
         PSOInitializer.BlendState                         = NewPipelineStateInstance.BlendState.Get();
         PSOInitializer.DepthStencilState                  = NewPipelineStateInstance.DepthStencilState.Get();
         PSOInitializer.bPrimitiveRestartEnable            = false;
-        PSOInitializer.VertexInputLayout                  = FrameResources.MeshInputLayout.Get();
+        PSOInitializer.VertexInputLayout                  = NewPipelineStateInstance.InputLayout.Get();
         PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
         PSOInitializer.RasterizerState                    = NewPipelineStateInstance.RasterizerState.Get();
         PSOInitializer.SampleCount                        = 1;
@@ -224,7 +252,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
             const uint32 ArrayIndex = (LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
             FRHIRenderPassDesc RenderPass;
-            RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
+            RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
+            RenderPass.DepthStencilView.LoadAction = EAttachmentLoadAction::Clear;
+            RenderPass.DepthStencilView.ClearValue = FDepthStencilValue(1.0f, 0);
 
             CommandList.BeginRenderPass(RenderPass);
 
@@ -237,7 +267,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
             for (const FMeshBatch& Batch : ScenePointLight->MeshBatches[FaceIndex])
             {
-                FPipelineStateInstance* Instance = MaterialPSOs.Find(Batch.Material->GetMaterialFlags());
+                FMaterial* Material = Batch.Material;
+
+                FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
                 if (!Instance)
                 {
                     DEBUG_BREAK();
@@ -247,12 +279,30 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 CHECK(PipelineState  != nullptr);
                 CommandList.SetGraphicsPipelineState(PipelineState);
 
+                if (Material->HasAlphaMask())
+                {
+                    CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                }
+                if (Material->HasHeightMap())
+                {
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                }
+
                 CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerShadowMapBuffer.Get(), 0);
                 CommandList.SetConstantBuffer(Instance->PixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                 for (FProxySceneComponent* Component : Batch.Primitives)
                 {
-                    CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
+                    if (Material->HasHeightMap() || Material->HasAlphaMask())
+                    {
+                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                    }
+                    else
+                    {
+                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                    }
+
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
                     ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
@@ -515,10 +565,17 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             return;
         }
 
-        FRHIRasterizerStateInitializer RasterizerInitializer;
-        RasterizerInitializer.CullMode = ECullMode::Back;
+        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        if (MaterialFlags & MaterialFlag_DoubleSided)
+        {
+            RasterizerStateInitializer.CullMode = ECullMode::None;
+        }
+        else
+        {
+            RasterizerStateInitializer.CullMode = ECullMode::Back;
+        }
 
-        NewPipelineStateInstance.RasterizerState = RHICreateRasterizerState(RasterizerInitializer);
+        NewPipelineStateInstance.RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
         if (!NewPipelineStateInstance.RasterizerState)
         {
             DEBUG_BREAK();
@@ -664,14 +721,17 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 }
 
                 FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
-                CHECK(PipelineState  != nullptr);
+                CHECK(PipelineState != nullptr);
                 CommandList.SetGraphicsPipelineState(PipelineState);
 
                 if (Material->HasAlphaMask())
                 {
                     CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), Material->GetMaterialBuffer(), 1);
-                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 1);
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                }
+                if (Material->HasHeightMap())
+                {
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                 }
 
                 CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerCascadeBuffer.Get(), 0);
