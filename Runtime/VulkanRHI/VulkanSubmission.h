@@ -6,14 +6,13 @@
 class FVulkanCommandPool;
 class FVulkanCommandBuffer;
 
-class FVulkanCommandPacket : public FVulkanDeviceChild
+struct FVulkanCommandPayload
 {
-public:
-    FVulkanCommandPacket(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
-    ~FVulkanCommandPacket();
+    FVulkanCommandPayload(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
+    ~FVulkanCommandPayload();
 
     void Submit();
-    void HandleSubmitFinished();
+    void Finish();
     
     void AddCommandPool(FVulkanCommandPool* InCommandPool)
     {
@@ -40,13 +39,12 @@ public:
         return CommandBuffers.IsEmpty();
     }
 
-    TArray<FVulkanQueryPool*> QueryPools;
-    FDeletionQueueArray       Resources;
-
-private:
-    FVulkanQueue& Queue;
-    FVulkanFence* Fence;
+    FVulkanQueue&  Queue;
+    FVulkanFence*  Fence;
+    FVulkanDevice* Device;
 
     TArray<FVulkanCommandPool*>   CommandPools;
     TArray<FVulkanCommandBuffer*> CommandBuffers;
+    TArray<FVulkanQueryPool*>     QueryPools;
+    TArray<FVulkanDeferredObject> DeletionQueue;
 };

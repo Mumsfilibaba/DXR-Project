@@ -1,61 +1,42 @@
 #include "VulkanSubmission.h"
 
-FVulkanCommandPacket::FVulkanCommandPacket(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
-    : FVulkanDeviceChild(InDevice)
-    , Resources()
-    , Queue(InQueue)
+FVulkanCommandPayload::FVulkanCommandPayload(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
+    : Queue(InQueue)
+    , Device(InDevice)
     , Fence(nullptr)
+    , DeletionQueue()
     , CommandPools()
     , CommandBuffers()
 {
 }
 
-FVulkanCommandPacket::~FVulkanCommandPacket()
+FVulkanCommandPayload::~FVulkanCommandPayload()
 {
     CHECK(Fence == nullptr);
 }
 
-void FVulkanCommandPacket::Submit()
+void FVulkanCommandPayload::Submit()
 {
-    FVulkanFenceManager& FenceManager = GetDevice()->GetFenceManager();
+    FVulkanFenceManager& FenceManager = Device->GetFenceManager();
     Fence = FenceManager.ObtainFence();
     CHECK(Fence != nullptr);
     CHECK(CommandBuffers.IsEmpty() == false);
     Queue.ExecuteCommandBuffer(CommandBuffers.Data(), CommandBuffers.Size(), Fence);
 }
 
-void FVulkanCommandPacket::HandleSubmitFinished()
+void FVulkanCommandPayload::Finish()
 {
-    // Recycle the fence
-    FVulkanFenceManager& FenceManager = GetDevice()->GetFenceManager();
-    FenceManager.RecycleFence(Fence);
-    Fence = nullptr;
-    
     // Delete all the resources that has been queued up for destruction
-    for (FVulkanDeletionQueue::FDeferredResource& Object : Resources)
-    {
-        Object.Release();
-    }
-    
-    Resources.Clear();
+    FVulkanDeferredObject::ProcessItems(DeletionQueue);
+    DeletionQueue.Clear();
 
     // Resolve queries
     for (FVulkanQueryPool* Query : QueryPools)
-    {
         Query->ResolveQueries();
-    }
 
     QueryPools.Clear();
-    
-    // Recycle all the CommandPool
-    for (FVulkanCommandPool* CommandPool : CommandPools)
-    {
-        Queue.RecycleCommandPool(CommandPool);
-    }
-    
-    CommandPools.Clear();
-    
-    // Recycle all the CommandBuffers
+        
+    // Recycle all the CommandBuffers before CommandPools to avoid needing to lock the CommandPools
     for (FVulkanCommandBuffer* CommandBuffer : CommandBuffers)
     {
         FVulkanCommandPool* CommandPool = CommandBuffer->GetOwnerPool();
@@ -63,6 +44,17 @@ void FVulkanCommandPacket::HandleSubmitFinished()
     }
 
     CommandBuffers.Clear();
+
+    // Recycle all the CommandPool
+    for (FVulkanCommandPool* CommandPool : CommandPools)
+        Queue.RecycleCommandPool(CommandPool);
+    
+    CommandPools.Clear();
+
+    // Recycle the fence
+    FVulkanFenceManager& FenceManager = Device->GetFenceManager();
+    FenceManager.RecycleFence(Fence);
+    Fence = nullptr;
     
     // Destroy this instance after execution is finished
     delete this;

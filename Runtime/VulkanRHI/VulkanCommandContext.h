@@ -173,16 +173,10 @@ public:
     }
 
 private:
-    FVulkanCommandPacket& GetCommandPacket()
-    {
-        CHECK(CommandPacket != nullptr);
-        return *CommandPacket;
-    }
-
     FVulkanQueue&              Queue;
     FVulkanCommandPool*        CommandPool;
     FVulkanCommandBuffer*      CommandBuffer;
-    FVulkanCommandPacket*      CommandPacket;
+    FVulkanCommandPayload*     CommandPayload;
 
     FBarrierBatcher            BarrierBatcher;
     FVulkanCommandContextState ContextState;

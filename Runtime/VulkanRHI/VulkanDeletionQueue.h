@@ -7,59 +7,37 @@
 class FRHIResource;
 class FVulkanDescriptorPool;
 
-class FVulkanDeletionQueue
+struct FVulkanDeferredObject
 {
-public:
+    // Go through an array of deferred resources and delete them
+    static void ProcessItems(const TArray<FVulkanDeferredObject>& Items);
+
     enum class EType
     {
         RHIResource    = 1,
         VulkanResource = 2,
     };
 
-    struct FDeferredResource
+    FVulkanDeferredObject(FRHIResource* InResource)
+        : Type(EType::RHIResource)
+        , Resource(InResource)
     {
-        FDeferredResource(FRHIResource* InResource)
-            : Type(EType::RHIResource)
-            , Resource(InResource)
-        {
-            CHECK(InResource != nullptr);
-            InResource->AddRef();
-        }
+        CHECK(InResource != nullptr);
+        InResource->AddRef();
+    }
 
-        FDeferredResource(FVulkanRefCounted* InResource)
-            : Type(EType::VulkanResource)
-            , VulkanResource(InResource)
-        {
-            CHECK(InResource != nullptr);
-            InResource->AddRef();
-        }
-        
-        void Release();
+    FVulkanDeferredObject(FVulkanRefCounted* InResource)
+        : Type(EType::VulkanResource)
+        , VulkanResource(InResource)
+    {
+        CHECK(InResource != nullptr);
+        InResource->AddRef();
+    }
 
-        EType Type;
-        union
-        {
-            FRHIResource*      Resource;
-            FVulkanRefCounted* VulkanResource;
-        };
+    EType Type;
+    union
+    {
+        FRHIResource* Resource;
+        FVulkanRefCounted* VulkanResource;
     };
-
-    template<typename... ArgTypes>
-    void Emplace(ArgTypes&&... Args)
-    {
-        TScopedLock Lock(ResourcesCS);
-        Resources.Emplace(Forward<ArgTypes>(Args)...);
-    }
-
-    void Dequeue(TArray<FDeferredResource>& OutResources)
-    {
-        TScopedLock Lock(ResourcesCS);
-        OutResources = Move(Resources);
-    }
-    
-private:
-    TArray<FDeferredResource> Resources;
-    FCriticalSection          ResourcesCS;
 };
-
-using FDeletionQueueArray = TArray<FVulkanDeletionQueue::FDeferredResource>;

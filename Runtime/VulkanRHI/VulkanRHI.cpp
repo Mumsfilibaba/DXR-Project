@@ -51,12 +51,9 @@ FVulkanRHI::~FVulkanRHI()
     }
     
     // Delete all remaining resources
-    TArray<FVulkanDeletionQueue::FDeferredResource> Resources;
-    DeletionQueue.Dequeue(Resources);
-    
-    for (FVulkanDeletionQueue::FDeferredResource& Object : Resources)
     {
-        Object.Release();
+        TScopedLock Lock(DeletionQueueCS);
+        FVulkanDeferredObject::ProcessItems(DeletionQueue);
     }
     
     SAFE_DELETE(GraphicsQueue);
@@ -85,7 +82,7 @@ bool FVulkanRHI::Initialize()
         bEnableDebugLayer = CVarEnableDebugLayer->GetBool();
     }
     
-    // Turn on the debuglayer
+    // Turn on the DebugLayer
     if (bEnableDebugLayer)
     {
         InstanceDesc.RequiredLayerNames.Add("VK_LAYER_KHRONOS_validation");
@@ -610,11 +607,11 @@ void FVulkanRHI::ProcessPendingCommands()
     bool bProcess = true;
     while (bProcess)
     {
-        FVulkanCommandPacket* CommandPacket = nullptr;
-        if (PendingSubmissions.Peek(CommandPacket))
+        FVulkanCommandPayload* CommandPayload = nullptr;
+        if (PendingSubmissions.Peek(CommandPayload))
         {
-            CHECK(CommandPacket != nullptr);
-            if (!CommandPacket->IsExecutionFinished())
+            CHECK(CommandPayload != nullptr);
+            if (!CommandPayload->IsExecutionFinished())
             {
                 bProcess = false;
                 break;
@@ -623,7 +620,7 @@ void FVulkanRHI::ProcessPendingCommands()
             {
                 // If we are finished we remove the item from the queue
                 PendingSubmissions.Dequeue();
-                CommandPacket->HandleSubmitFinished();
+                CommandPayload->Finish();
             }
         }
         else
@@ -633,14 +630,20 @@ void FVulkanRHI::ProcessPendingCommands()
     }
 }
 
-void FVulkanRHI::SubmitCommands(FVulkanCommandPacket* CommandPacket)
+void FVulkanRHI::SubmitCommands(FVulkanCommandPayload* CommandPayload, bool bFlushDeletionQueue)
 {
-    CHECK(CommandPacket != nullptr);
+    CHECK(CommandPayload != nullptr);
 
-    if (!CommandPacket->IsEmpty())
+    if (!CommandPayload->IsEmpty())
     {
-        DeletionQueue.Dequeue(CommandPacket->Resources);
-        CommandPacket->Submit();
-        PendingSubmissions.Enqueue(CommandPacket);
+        if (bFlushDeletionQueue)
+        {
+            TScopedLock Lock(DeletionQueueCS);
+            CommandPayload->DeletionQueue = Move(DeletionQueue);
+        }
+
+        CommandPayload->Submit();
+        
+        PendingSubmissions.Enqueue(CommandPayload);
     }
 }

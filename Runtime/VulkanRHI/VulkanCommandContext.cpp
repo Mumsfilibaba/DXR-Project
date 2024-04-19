@@ -100,7 +100,7 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , Queue(InQueue)
     , CommandPool(nullptr)
     , CommandBuffer(nullptr)
-    , CommandPacket(nullptr)
+    , CommandPayload(nullptr)
     , BarrierBatcher(*this)
     , ContextState(InDevice, *this)
     , bIsRecording(false)
@@ -155,9 +155,9 @@ void FVulkanCommandContext::ObtainCommandBuffer()
         DEBUG_BREAK();
     }
     
-    if (!CommandPacket)
+    if (!CommandPayload)
     {
-        CommandPacket = new FVulkanCommandPacket(GetDevice(), Queue);
+        CommandPayload = new FVulkanCommandPayload(GetDevice(), Queue);
     }
 }
 
@@ -178,22 +178,22 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
 
         if (bFlushPool)
         {
-            GetCommandPacket().AddCommandPool(CommandPool);
+            CommandPayload->AddCommandPool(CommandPool);
             CommandPool = nullptr;
         }
         
-        GetCommandPacket().AddCommandBuffer(CommandBuffer);
+        CommandPayload->AddCommandBuffer(CommandBuffer);
         CommandBuffer = nullptr;
 
         for (FVulkanQuery* Query : Queries)
         {
-            GetCommandPacket().QueryPools.Add(Query->DetachQueryPool());
+            CommandPayload->QueryPools.Add(Query->DetachQueryPool());
         }
 
         Queries.Clear();
 
-        FVulkanRHI::GetRHI()->SubmitCommands(CommandPacket);
-        CommandPacket = nullptr;
+        FVulkanRHI::GetRHI()->SubmitCommands(CommandPayload, true);
+        CommandPayload = nullptr;
     }
     
     ContextState.ResetStateForNewCommandBuffer();
@@ -751,7 +751,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
         BarrierBatcher.FlushBarriers();
 
         GetCommandBuffer()->CopyBuffer(Allocation.Buffer->GetVkBuffer(), VulkanBuffer->GetVkBuffer(), 1, &BufferCopy);
-        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(Allocation.Buffer.Get());
+        FVulkanRHI::GetRHI()->DeferDeletion(Allocation.Buffer.Get());
     }
 }
 
@@ -799,7 +799,7 @@ void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureR
     BarrierBatcher.FlushBarriers();
 
     GetCommandBuffer()->CopyBufferToImage(Allocation.Buffer->GetVkBuffer(), VulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
-    FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(Allocation.Buffer.Get());
+    FVulkanRHI::GetRHI()->DeferDeletion(Allocation.Buffer.Get());
 }
 
 void FVulkanCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -982,7 +982,7 @@ void FVulkanCommandContext::RHIDestroyResource(FRHIResource* Resource)
 {
     if (Resource)
     {
-        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(Resource);
+        FVulkanRHI::GetRHI()->DeferDeletion(Resource);
     }
 }
 
@@ -1158,7 +1158,7 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         VkPipelineStageFlags DstStageMask = ConvertResourceStateToPipelineStageFlags(AfterState);
         BarrierBatcher.AddImageMemoryBarrier(SrcStageMask, DstStageMask, 0, ImageBarrier);
 
-        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(VulkanTexture);
+        FVulkanRHI::GetRHI()->DeferDeletion(VulkanTexture);
     }
 }
 
@@ -1187,7 +1187,7 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
     VkPipelineStageFlags DstStageMask = ConvertResourceStateToPipelineStageFlags(AfterState);
     BarrierBatcher.AddBufferMemoryBarrier(SrcStageMask, DstStageMask, 0, BufferBarrier);
 
-    FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(VulkanBuffer);
+    FVulkanRHI::GetRHI()->DeferDeletion(VulkanBuffer);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)

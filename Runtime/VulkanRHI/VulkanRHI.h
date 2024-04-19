@@ -108,15 +108,17 @@ public:
     }
 
 public:
+    template<typename... ArgTypes>
+    void DeferDeletion(ArgTypes&&... Args)
+    {
+        TScopedLock Lock(DeletionQueueCS);
+        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
+    }
+
     void EnqueueResourceDeletion(FRHIResource* Resource);
     
     void ProcessPendingCommands();
-    void SubmitCommands(FVulkanCommandPacket* CommandPacket);
-
-    FVulkanDeletionQueue& GetDeletionQueue()
-    {
-        return DeletionQueue;
-    }
+    void SubmitCommands(FVulkanCommandPayload* CommandPayload, bool bFlushDeletionQueue);
 
     FVulkanInstance* GetInstance()
     {
@@ -144,12 +146,14 @@ private:
     FVulkanDevice*         Device;
     FVulkanQueue*          GraphicsQueue;
     FVulkanCommandContext* GraphicsCommandContext;
-    FVulkanDeletionQueue   DeletionQueue;
+
+    TArray<FVulkanDeferredObject> DeletionQueue;
+    FCriticalSection              DeletionQueueCS;
 
     TMap<FRHISamplerStateDesc, TSharedRef<FVulkanSamplerState>> SamplerStateMap;
     FCriticalSection SamplerStateMapCS;
 
-    TQueue<FVulkanCommandPacket*, EQueueType::MPSC> PendingSubmissions;
+    TQueue<FVulkanCommandPayload*, EQueueType::MPSC> PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;
 };

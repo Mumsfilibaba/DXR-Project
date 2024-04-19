@@ -2,21 +2,24 @@
 #include "VulkanDevice.h"
 #include "VulkanRHI.h"
 
-void FVulkanDeletionQueue::FDeferredResource::Release()
+void FVulkanDeferredObject::ProcessItems(const TArray<FVulkanDeferredObject>& Items)
 {
-    switch(Type)
+    for (const FVulkanDeferredObject& Item : Items)
     {
-        case FVulkanDeletionQueue::EType::RHIResource:
+        switch(Item.Type)
         {
-            CHECK(Resource != nullptr);
-            Resource->Release();
-            break;
-        }
-        case FVulkanDeletionQueue::EType::VulkanResource:
-        {
-            CHECK(VulkanResource != nullptr);
-            VulkanResource->Release();
-            break;
+            case FVulkanDeferredObject::EType::RHIResource:
+            {
+                CHECK(Item.Resource != nullptr);
+                Item.Resource->Release();
+                break;
+            }
+            case FVulkanDeferredObject::EType::VulkanResource:
+            {
+                CHECK(Item.VulkanResource != nullptr);
+                Item.VulkanResource->Release();
+                break;
+            }
         }
     }
 }

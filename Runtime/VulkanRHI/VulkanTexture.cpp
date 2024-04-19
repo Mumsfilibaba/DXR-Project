@@ -292,7 +292,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         Context->GetBarrierBatcher().AddImageMemoryBarrier(SrcStageMask, DstStageMask, 0, ImageBarrier);
 
         // TODO: Refactor RHI resource deletion so that this is not necessary
-        FVulkanRHI::GetRHI()->GetDeletionQueue().Emplace(this);
+        FVulkanRHI::GetRHI()->DeferDeletion(this);
 
         Context->RHIFinishContext();
     }
