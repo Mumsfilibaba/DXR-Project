@@ -1,5 +1,12 @@
 #include "ModuleManager.h"
 #include "Core/Misc/EngineLoopTicker.h"
+#include "Core/Misc/ConsoleManager.h"
+
+static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
+    "Core.ModuleManagerBreakOnError",
+    "Breaks when trying to retrieve a module that is not loaded",
+    true);
+
 
 // This needs to be initialized with static variable behavior since we don't
 // know when FModuleManager::Get() is called from the TStaticModuleInitializers
@@ -34,10 +41,14 @@ FModuleInterface* FModuleManager::LoadModule(const CHAR* ModuleName)
 {
     CHECK(ModuleName != nullptr);
 
-    if (FModuleInterface* ExistingModule = GetModule(ModuleName))
     {
-        LOG_WARNING("Module '%s' is already loaded", ModuleName);
-        return ExistingModule;
+        SCOPED_LOCK(ModulesCS);
+        
+        if (FModuleInterface* ExistingModule = GetModuleInternal(ModuleName))
+        {
+            LOG_WARNING("Module '%s' is already loaded", ModuleName);
+            return ExistingModule;
+        }
     }
 
     FModuleData NewModule;
@@ -89,8 +100,6 @@ FModuleInterface* FModuleManager::LoadModule(const CHAR* ModuleName)
 
     if (NewModule.Interface->Load())
     {
-        SCOPED_LOCK(ModulesCS);
-
         LOG_INFO("Loaded module '%s'", ModuleName);
 
         NewModule.Name = ModuleName;
@@ -111,6 +120,25 @@ FModuleInterface* FModuleManager::GetModule(const CHAR* ModuleName)
 {
     SCOPED_LOCK(ModulesCS);
 
+    if (FModuleInterface* EngineModule = GetModuleInternal(ModuleName))
+    {
+        return EngineModule;
+    }
+    else
+    {
+        LOG_ERROR("Failed to retrieve module '%s'", ModuleName);
+        
+        if (CVarModuleManagerBreakOnError.GetValue())
+        {
+            DEBUG_BREAK();
+        }
+        
+        return nullptr;
+    }
+}
+
+FModuleInterface* FModuleManager::GetModuleInternal(const CHAR* ModuleName)
+{
     const int32 Index = GetModuleIndexUnlocked(ModuleName);
     if (Index >= 0)
     {

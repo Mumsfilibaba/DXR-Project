@@ -8,7 +8,8 @@ struct IRendererModule : public FModuleInterface
 {
     static IRendererModule* Get()
     {
-        return FModuleManager::Get().GetModule<IRendererModule>("Renderer");
+        IRendererModule* RendererModule = FModuleManager::Get().GetModule<IRendererModule>("Renderer");
+        return RendererModule;
     }
 
     virtual ~IRendererModule() = default;

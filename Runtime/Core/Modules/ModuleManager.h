@@ -217,14 +217,21 @@ public:
     }
 
 protected:
-    void HandleModuleLoaded(const CHAR* ModuleName, FModuleInterface* Module) { ModuleLoadedDelegate.Broadcast(ModuleName, Module); }
+    void HandleModuleLoaded(const CHAR* ModuleName, FModuleInterface* Module) 
+    {
+        ModuleLoadedDelegate.Broadcast(ModuleName, Module);
+    }
+    
     void ReleaseAllModules();
 
     FInitializeStaticModuleDelegate* GetStaticModuleDelegate(const CHAR* ModuleName);
 
+    // Used to retrieve a module, does not break on error
+    FModuleInterface* GetModuleInternal(const CHAR* ModuleName);
+    
     int32 GetModuleIndexUnlocked(const CHAR* ModuleName);
 
-    FORCEINLINE uint32 GetLoadedModuleCountUnlocked()
+    uint32 GetLoadedModuleCountUnlocked()
     {
         return static_cast<uint32>(Modules.Size());
     }

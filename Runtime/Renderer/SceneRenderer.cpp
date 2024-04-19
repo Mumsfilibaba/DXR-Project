@@ -459,25 +459,25 @@ void FSceneRenderer::Tick(FScene* Scene)
             LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, NewWidth, NewHeight);
 
             // TODO: Resources should not require a CommandList to be released safely
-            if (DepthPrePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!DepthPrePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (BasePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!BasePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (TiledLightPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!TiledLightPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (DepthReducePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!DepthReducePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
@@ -489,7 +489,7 @@ void FSceneRenderer::Tick(FScene* Scene)
                 return;
             }
 
-            if (ShadowMaskRenderPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!ShadowMaskRenderPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
