@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanFence.h"
+#include "Core/Containers/Queue.h"
 
 struct FVulkanBufferBarrier
 {
@@ -314,6 +315,7 @@ public:
     ~FVulkanCommandPool();
 
     bool Initialize();
+    void DestroyBuffers();
 
     FVulkanCommandBuffer* CreateBuffer();
     void RecycleBuffer(FVulkanCommandBuffer* InCommandBuffer);
@@ -329,7 +331,7 @@ public:
 
         return true;
     }
-
+    
     VkCommandPool GetVkCommandPool() const
     {
         return CommandPool;
@@ -338,5 +340,6 @@ public:
 private:
     VkCommandPool                 CommandPool;
     EVulkanCommandQueueType       Type;
+    TQueue<FVulkanCommandBuffer*> AvailableCommandBuffers;
     TArray<FVulkanCommandBuffer*> CommandBuffers;
 };

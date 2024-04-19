@@ -129,7 +129,7 @@ void FD3D12CommandContext::ObtainCommandList()
 
     if (!CommandList)
     {
-        CommandList = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(*CommandAllocator, nullptr);
+        CommandList = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(CommandAllocator, nullptr);
         if (!CommandList)
         {
             D3D12_ERROR("Failed to initialize CommandList");
@@ -139,7 +139,7 @@ void FD3D12CommandContext::ObtainCommandList()
     {
         if (!CommandList->IsReady())
         {
-            if (!CommandList->Reset(*CommandAllocator))
+            if (!CommandList->Reset(CommandAllocator))
             {
                 D3D12_ERROR("Failed to reset Commandlist");
             }

@@ -110,7 +110,7 @@ void FD3D12Query::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
 
 void FD3D12Query::ResolveQueries(class FD3D12CommandContext& CommandContext)
 {
-    FD3D12CommandList CommandList = CommandContext.GetCommandList();
+    FD3D12CommandList& CommandList = CommandContext.GetCommandList();
     
     ID3D12CommandQueue* D3D12Queue = GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct);
     CHECK(D3D12Queue != nullptr);

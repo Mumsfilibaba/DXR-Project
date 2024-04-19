@@ -78,11 +78,15 @@ FVulkanCommandPool::FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQu
     : FVulkanDeviceChild(InDevice)
     , CommandPool(VK_NULL_HANDLE)
     , Type(InType)
+    , CommandBuffers()
+    , AvailableCommandBuffers()
 {
 }
 
 FVulkanCommandPool::~FVulkanCommandPool()
 {
+    DestroyBuffers();
+
     if (VULKAN_CHECK_HANDLE(CommandPool))
     {
         vkDestroyCommandPool(GetDevice()->GetVkDevice(), CommandPool, nullptr);
@@ -112,21 +116,33 @@ bool FVulkanCommandPool::Initialize()
     }
 }
 
+void FVulkanCommandPool::DestroyBuffers()
+{
+    for (FVulkanCommandBuffer* CommandBuffer : CommandBuffers)
+    {
+        delete CommandBuffer;
+    }
+
+    CommandBuffers.Clear();
+    AvailableCommandBuffers.Clear();
+}
+
 FVulkanCommandBuffer* FVulkanCommandPool::CreateBuffer()
 {
     FVulkanCommandBuffer* CommandBuffer = nullptr;
-    if (CommandBuffers.IsEmpty())
+    if (AvailableCommandBuffers.IsEmpty())
     {
         FVulkanCommandBuffer* NewCommandBuffer = new FVulkanCommandBuffer(GetDevice(), this);
         if (NewCommandBuffer->Initialize(VK_COMMAND_BUFFER_LEVEL_PRIMARY))
         {
             CommandBuffer = NewCommandBuffer;
         }
+
+        CommandBuffers.Add(NewCommandBuffer);
     }
     else
     {
-        CommandBuffer = CommandBuffers.LastElement();
-        CommandBuffers.Pop();
+        AvailableCommandBuffers.Dequeue(CommandBuffer);
     }
     
     CHECK(CommandBuffer != nullptr);
@@ -137,6 +153,6 @@ void FVulkanCommandPool::RecycleBuffer(FVulkanCommandBuffer* InCommandBuffer)
 {
     if (InCommandBuffer)
     {
-        CommandBuffers.Add(InCommandBuffer);
+        AvailableCommandBuffers.Enqueue(InCommandBuffer);
     }
 }

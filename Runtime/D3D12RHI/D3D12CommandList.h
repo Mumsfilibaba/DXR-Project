@@ -8,16 +8,18 @@
 
 class FD3D12ComputePipelineState;
 
-typedef TSharedRef<class FD3D12CommandList> FD3D12CommandListRef;
-
-class FD3D12CommandList : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12CommandList : public FD3D12DeviceChild
 {
 public:
+    FD3D12CommandList(const FD3D12CommandList&) = delete;
+    FD3D12CommandList& operator=(const FD3D12CommandList&) = delete;
+
     FD3D12CommandList(FD3D12Device* InDevice);
+    ~FD3D12CommandList() = default;
+    
+    bool Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
 
-    bool Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator& Allocator, ID3D12PipelineState* InitalPipeline);
-
-    bool Reset(FD3D12CommandAllocator& Allocator);
+    bool Reset(FD3D12CommandAllocator* Allocator);
     
     bool Close();
 

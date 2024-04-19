@@ -8,7 +8,7 @@ FD3D12CommandAllocator::FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12Com
 {
 }
 
-bool FD3D12CommandAllocator::Create()
+bool FD3D12CommandAllocator::Initialize()
 {
     const D3D12_COMMAND_LIST_TYPE Type = ToCommandListType(QueueType);
 
@@ -48,17 +48,22 @@ FD3D12CommandAllocatorManager::FD3D12CommandAllocatorManager(FD3D12Device* InDev
     : FD3D12DeviceChild(InDevice)
     , QueueType(InQueueType)
     , CommandListType(ToCommandListType(QueueType))
-    , Allocators()
+    , AvailableAllocators()
+    , CommandAllocators()
 {
 }
 
-FD3D12CommandAllocatorRef FD3D12CommandAllocatorManager::ObtainAllocator()
+FD3D12CommandAllocatorManager::~FD3D12CommandAllocatorManager()
 {
-    FD3D12CommandAllocatorRef CommandAllocator;
-    if (!Allocators.IsEmpty() && (*Allocators.Peek())->IsFinished())
+    DestroyAllocators();
+}
+
+FD3D12CommandAllocator* FD3D12CommandAllocatorManager::ObtainAllocator()
+{
+    FD3D12CommandAllocator* CommandAllocator;
+    if (!AvailableAllocators.IsEmpty() && (*AvailableAllocators.Peek())->IsFinished())
     {
-        Allocators.Dequeue(CommandAllocator);
-        
+        AvailableAllocators.Dequeue(CommandAllocator);
         if (!CommandAllocator->Reset())
         {
             DEBUG_BREAK();
@@ -68,16 +73,19 @@ FD3D12CommandAllocatorRef FD3D12CommandAllocatorManager::ObtainAllocator()
     else
     {
         CommandAllocator = new FD3D12CommandAllocator(GetDevice(), QueueType);
-        if (!CommandAllocator->Create())
+        if (!CommandAllocator->Initialize())
         {
+            DEBUG_BREAK();
             return nullptr;
         }
+
+        CommandAllocators.Add(CommandAllocator);
     }
 
     return CommandAllocator;
 }
 
-void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator)
+void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocator* InAllocator)
 {
     CHECK(InAllocator != nullptr);
 
@@ -86,5 +94,16 @@ void FD3D12CommandAllocatorManager::ReleaseAllocator(FD3D12CommandAllocatorRef I
 
     const FD3D12FenceSyncPoint SyncPoint(CommandListManager->GetFenceManager().GetFence(), CommandListManager->GetFenceManager().GetCurrentValue());
     InAllocator->SetSyncPoint(SyncPoint);
-    Allocators.Enqueue(InAllocator);
+    AvailableAllocators.Enqueue(InAllocator);
+}
+
+void FD3D12CommandAllocatorManager::DestroyAllocators()
+{
+    for (FD3D12CommandAllocator* CommandAllocator : CommandAllocators)
+    {
+        delete CommandAllocator;
+    }
+
+    CommandAllocators.Clear();
+    AvailableAllocators.Clear();
 }

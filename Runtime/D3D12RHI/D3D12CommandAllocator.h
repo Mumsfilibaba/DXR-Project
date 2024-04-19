@@ -4,14 +4,16 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 
-typedef TSharedRef<class FD3D12CommandAllocator> FD3D12CommandAllocatorRef;
-
-class FD3D12CommandAllocator : public FD3D12DeviceChild, public FD3D12RefCounted
+class FD3D12CommandAllocator : public FD3D12DeviceChild
 {
 public:
-    FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    FD3D12CommandAllocator(const FD3D12CommandAllocator&) = delete;
+    FD3D12CommandAllocator& operator=(const FD3D12CommandAllocator&) = delete;
 
-    bool Create();
+    FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    ~FD3D12CommandAllocator() = default;
+
+    bool Initialize();
 
     bool Reset();
 
@@ -39,15 +41,16 @@ private:
     FD3D12FenceSyncPoint            SyncPoint;
 };
 
-
 class FD3D12CommandAllocatorManager : public FD3D12DeviceChild
 {
 public:
     FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    ~FD3D12CommandAllocatorManager();
 
-    FD3D12CommandAllocatorRef ObtainAllocator();
+    FD3D12CommandAllocator* ObtainAllocator();
+    void ReleaseAllocator(FD3D12CommandAllocator* InAllocator);
 
-    void ReleaseAllocator(FD3D12CommandAllocatorRef InAllocator);
+    void DestroyAllocators();
 
     ED3D12CommandQueueType GetQueueType() const
     {
@@ -55,7 +58,8 @@ public:
     }
 
 private:
-    ED3D12CommandQueueType  QueueType;
-    D3D12_COMMAND_LIST_TYPE CommandListType;
-    TQueue<FD3D12CommandAllocatorRef, EQueueType::SPMC> Allocators;
+    ED3D12CommandQueueType          QueueType;
+    D3D12_COMMAND_LIST_TYPE         CommandListType;
+    TQueue<FD3D12CommandAllocator*> AvailableAllocators;
+    TArray<FD3D12CommandAllocator*> CommandAllocators;
 };

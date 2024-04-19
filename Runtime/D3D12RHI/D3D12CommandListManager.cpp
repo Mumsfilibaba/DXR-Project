@@ -20,6 +20,11 @@ FD3D12CommandListManager::FD3D12CommandListManager(FD3D12Device* InDevice, ED3D1
 {
 }
 
+FD3D12CommandListManager::~FD3D12CommandListManager()
+{
+    DestroyCommandLists();
+}
+
 bool FD3D12CommandListManager::Initialize()
 {
     // CommandQueue
@@ -59,12 +64,25 @@ bool FD3D12CommandListManager::Initialize()
     return true;
 }
 
-FD3D12CommandListRef FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAllocator& CommandAllocator, ID3D12PipelineState* InitialPipelineState)
+void FD3D12CommandListManager::DestroyCommandLists()
 {
     TScopedLock Lock(CommandListsCS);
 
-    FD3D12CommandListRef CommandList;
-    if (CommandLists.IsEmpty())
+    for (FD3D12CommandList* CommandList : CommandLists)
+    {
+        delete CommandList;
+    }
+
+    CommandLists.Clear();
+    AvailableCommandLists.Clear();
+}
+
+FD3D12CommandList* FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAllocator* CommandAllocator, ID3D12PipelineState* InitialPipelineState)
+{
+    TScopedLock Lock(CommandListsCS);
+
+    FD3D12CommandList* CommandList;
+    if (AvailableCommandLists.IsEmpty())
     {
         CommandList = new FD3D12CommandList(GetDevice());
         if (!CommandList->Initialize(CommandListType, CommandAllocator, InitialPipelineState))
@@ -76,25 +94,35 @@ FD3D12CommandListRef FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAl
         {
             return nullptr;
         }
+
+        CommandLists.Add(CommandList);
     }
     else
     {
-        CommandList = CommandLists.LastElement();
-        CommandLists.Pop();
+        AvailableCommandLists.Dequeue(CommandList);
+
+        // TODO: Enable when we handle fences better
+    #if 0
+        if (!CommandList->Reset(CommandAllocator))
+        {
+            DEBUG_BREAK();
+            return nullptr;
+        }
+    #endif
     }
 
     return CommandList;
 }
 
-void FD3D12CommandListManager::ReleaseCommandList(FD3D12CommandListRef InCommandList)
+void FD3D12CommandListManager::RecycleCommandList(FD3D12CommandList* InCommandList)
 {
     CHECK(InCommandList != nullptr);
     
     TScopedLock Lock(CommandListsCS);
-    CommandLists.Emplace(InCommandList);
+    AvailableCommandLists.Enqueue(InCommandList);
 }
 
-FD3D12FenceSyncPoint FD3D12CommandListManager::ExecuteCommandList(FD3D12CommandListRef InCommandList, bool bWaitForCompletion)
+FD3D12FenceSyncPoint FD3D12CommandListManager::ExecuteCommandList(FD3D12CommandList* InCommandList, bool bWaitForCompletion)
 {
     CHECK(InCommandList != nullptr);
 

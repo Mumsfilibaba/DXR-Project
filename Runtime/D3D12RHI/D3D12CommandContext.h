@@ -191,8 +191,8 @@ public:
     }
 
 private:
-    FD3D12CommandListRef          CommandList;
-    FD3D12CommandAllocatorRef     CommandAllocator;
+    FD3D12CommandList*            CommandList;
+    FD3D12CommandAllocator*       CommandAllocator;
     FD3D12CommandAllocatorManager CommandAllocatorManager;
     FD3D12CommandContextState     ContextState;
     ED3D12CommandQueueType        QueueType;

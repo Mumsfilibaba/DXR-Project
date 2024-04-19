@@ -482,7 +482,13 @@ FD3D12Device::~FD3D12Device()
 {
     DeferredDeletionQueue.WaitForOutstandingTasks();
     DeferredDeletionQueue.Stop();
+    
+    // Destroy all commandlists before moving on
+    DirectCommandListManager.DestroyCommandLists();
+    ComputeCommandListManager.DestroyCommandLists();
+    CopyCommandListManager.DestroyCommandLists();
 
+    // Report any live objects still hanging around
     if (Adapter->IsDebugLayerEnabled())
     {
         // Disable filter for warnings since this triggers breakpoints when we check for alive object

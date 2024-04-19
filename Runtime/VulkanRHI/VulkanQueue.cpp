@@ -9,21 +9,21 @@ FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQu
     , Queue(VK_NULL_HANDLE)
     , QueueType(InQueueType)
     , CommandPools()
+    , AvailableCommandPools()
 {
 }
 
 FVulkanQueue::~FVulkanQueue()
 {
+    SCOPED_LOCK(CommandPoolsCS);
+
+    for (FVulkanCommandPool* CommandPool : CommandPools)
     {
-        SCOPED_LOCK(CommandPoolsCS);
-        
-        for (FVulkanCommandPool* CommandPool : CommandPools)
-        {
-            delete CommandPool;
-        }
-        
-        CommandPools.Clear();
+        delete CommandPool;
     }
+
+    CommandPools.Clear();
+    AvailableCommandPools.Clear();
     
     Queue = VK_NULL_HANDLE;
 }
@@ -40,13 +40,13 @@ bool FVulkanQueue::Initialize()
 
 FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
 {
+    SCOPED_LOCK(CommandPoolsCS);
+    
+    if (!AvailableCommandPools.IsEmpty())
     {
-        SCOPED_LOCK(CommandPoolsCS);
-        
-        if (!CommandPools.IsEmpty())
+        FVulkanCommandPool* CommandPool;
+        if (AvailableCommandPools.Dequeue(CommandPool))
         {
-            FVulkanCommandPool* CommandPool = CommandPools.LastElement();
-            CommandPools.Pop();
             CommandPool->Reset();
             return CommandPool;
         }
@@ -58,10 +58,9 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
         DEBUG_BREAK();
         return nullptr;
     }
-    else
-    {
-        return CommandPool;
-    }
+
+    CommandPools.Add(CommandPool);
+    return CommandPool;
 }
 
 void FVulkanQueue::RecycleCommandPool(FVulkanCommandPool* InCommandPool)
@@ -69,7 +68,7 @@ void FVulkanQueue::RecycleCommandPool(FVulkanCommandPool* InCommandPool)
     if (InCommandPool)
     {
         SCOPED_LOCK(CommandPoolsCS);
-        CommandPools.Add(InCommandPool);
+        AvailableCommandPools.Enqueue(InCommandPool);
     }
     else
     {

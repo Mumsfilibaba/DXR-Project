@@ -5,6 +5,7 @@
 #include "VulkanFence.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Queue.h"
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 
@@ -59,9 +60,12 @@ private:
     VkQueue                      Queue;
     uint32                       QueueFamilyIndex;
     EVulkanCommandQueueType      QueueType;
+
     TArray<VkSemaphore>          WaitSemaphores;
     TArray<VkPipelineStageFlags> WaitStages;
     TArray<VkSemaphore>          SignalSemaphores;
+
+    TQueue<FVulkanCommandPool*>  AvailableCommandPools;
     TArray<FVulkanCommandPool*>  CommandPools;
     FCriticalSection             CommandPoolsCS;
 };
