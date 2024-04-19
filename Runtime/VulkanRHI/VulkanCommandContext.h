@@ -1,6 +1,5 @@
 #pragma once
 #include "VulkanCommandContextState.h"
-#include "VulkanSubmission.h"
 #include "VulkanDescriptorSet.h"
 #include "VulkanQuery.h"
 #include "RHI/IRHICommandContext.h"
