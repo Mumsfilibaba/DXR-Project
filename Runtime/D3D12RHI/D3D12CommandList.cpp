@@ -4,7 +4,14 @@
 FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , CmdList(nullptr)
+    , CmdList1(nullptr)
+    , CmdList2(nullptr)
+    , CmdList3(nullptr)
+    , CmdList4(nullptr)
     , CmdList5(nullptr)
+    , CmdList6(nullptr)
+    , NumCommands(0)
+    , bIsReady(false)
 {
 }
 

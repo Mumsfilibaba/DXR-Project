@@ -24,7 +24,7 @@ public:
     {
         if (!Barriers.IsEmpty())
         {
-            CommandList.ResourceBarrier(Barriers.Data(), Barriers.Size());
+            CommandList->ResourceBarrier(Barriers.Size(), Barriers.Data());
             Barriers.Clear();
         }
     }

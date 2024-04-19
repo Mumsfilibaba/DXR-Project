@@ -254,7 +254,6 @@ private:
     VkCommandBuffer CommandBuffer;
 };
 
-
 class FVulkanCommandPool;
 
 class FVulkanCommandBuffer : public FVulkanDeviceChild

@@ -253,11 +253,11 @@ void FD3D12DescriptorCache::SetRenderTargets(FD3D12RenderTargetCache& Cache)
     if (Cache.DepthStencilView)
     {
         D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilHandle = Cache.DepthStencilView->GetOfflineHandle();
-        Context.GetCommandList().OMSetRenderTargets(RenderTargetViewHandles, Cache.NumRenderTargets, false, &DepthStencilHandle);
+        Context.GetCommandList()->OMSetRenderTargets(Cache.NumRenderTargets, RenderTargetViewHandles, false, &DepthStencilHandle);
     }
     else
     {
-        Context.GetCommandList().OMSetRenderTargets(RenderTargetViewHandles, Cache.NumRenderTargets, false, nullptr);
+        Context.GetCommandList()->OMSetRenderTargets(Cache.NumRenderTargets, RenderTargetViewHandles, false, nullptr);
     }
 }
 
@@ -265,13 +265,13 @@ void FD3D12DescriptorCache::SetVertexBuffers(FD3D12VertexBufferCache& VertexBuff
 {
     if (VertexBuffers.NumVertexBuffers != 0)
     {
-        Context.GetCommandList().IASetVertexBuffers(0, VertexBuffers.VertexBuffers, VertexBuffers.NumVertexBuffers);
+        Context.GetCommandList()->IASetVertexBuffers(0, VertexBuffers.NumVertexBuffers, VertexBuffers.VertexBuffers);
     }
 }
 
 void FD3D12DescriptorCache::SetIndexBuffer(FD3D12IndexBufferCache& IndexBuffer)
 {
-    Context.GetCommandList().IASetIndexBuffer(&IndexBuffer.IndexBuffer);
+    Context.GetCommandList()->IASetIndexBuffer(&IndexBuffer.IndexBuffer);
 }
 
 void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12RootSignature* RootSignature, EShaderVisibility ShaderStage, uint32 NumCBVs, uint32& DescriptorHandleOffset)
@@ -321,11 +321,11 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
 
     if (ShaderStage == ShaderVisibility_All)
     {
-        Context.GetCommandList().SetComputeRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
     else
     {
-        Context.GetCommandList().SetGraphicsRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetGraphicsRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
 }
 
@@ -376,11 +376,11 @@ void FD3D12DescriptorCache::SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12
 
     if (ShaderStage == ShaderVisibility_All)
     {
-        Context.GetCommandList().SetComputeRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
     else
     {
-        Context.GetCommandList().SetGraphicsRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetGraphicsRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
 }
 
@@ -431,11 +431,11 @@ void FD3D12DescriptorCache::SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D1
 
     if (ShaderStage == ShaderVisibility_All)
     {
-        Context.GetCommandList().SetComputeRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
     else
     {
-        Context.GetCommandList().SetGraphicsRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetGraphicsRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
 }
 
@@ -510,11 +510,11 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
 
     if (ShaderStage == ShaderVisibility_All)
     {
-        Context.GetCommandList().SetComputeRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetComputeRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
     else
     {
-        Context.GetCommandList().SetGraphicsRootDescriptorTable(GPUDescriptorHandle, ParameterIndex);
+        Context.GetCommandList()->SetGraphicsRootDescriptorTable(ParameterIndex, GPUDescriptorHandle);
     }
 }
 
@@ -528,7 +528,7 @@ void FD3D12DescriptorCache::SetDescriptorHeaps()
 
     if (CurrentDescriptorHeaps[0] != DescriptorHeaps[0] || CurrentDescriptorHeaps[1] != DescriptorHeaps[1] || GD3D12ForceBinding)
     {
-        Context.GetCommandList().SetDescriptorHeaps(DescriptorHeaps, ARRAY_COUNT(DescriptorHeaps));
+        Context.GetCommandList()->SetDescriptorHeaps(ARRAY_COUNT(DescriptorHeaps), DescriptorHeaps);
         CurrentDescriptorHeaps[0] = DescriptorHeaps[0];
         CurrentDescriptorHeaps[1] = DescriptorHeaps[1];
     }

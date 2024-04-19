@@ -27,14 +27,14 @@ void FD3D12CommandContextState::BindGraphicsStates()
     FD3D12RootSignature* RootSignture = GraphicsState.PipelineState->GetRootSignature();
     if (GraphicsState.bBindPipelineState)
     {
-        Context.GetCommandList().SetPipelineState(GraphicsState.PipelineState->GetD3D12PipelineState());
+        Context.GetCommandList()->SetPipelineState(GraphicsState.PipelineState->GetD3D12PipelineState());
         GraphicsState.bBindPipelineState = false;
     }
 
     D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology = GraphicsState.PipelineState->GetD3D12PrimitiveTopology();
     if (GraphicsState.bBindPrimitiveTopology)
     {
-        Context.GetCommandList().IASetPrimitiveTopology(PrimitiveTopology);
+        Context.GetCommandList()->IASetPrimitiveTopology(PrimitiveTopology);
         GraphicsState.bBindPrimitiveTopology = false;
     }
 
@@ -53,7 +53,7 @@ void FD3D12CommandContextState::BindGraphicsStates()
     if (GraphicsState.bBindShadingRateImage)
     {
         ID3D12Resource* Resource = GraphicsState.ShadingRateImage ? GraphicsState.ShadingRateImage->GetD3D12Resource()->GetD3D12Resource() : nullptr;
-        Context.GetCommandList().RSSetShadingRateImage(Resource);
+        Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRateImage(Resource);
         GraphicsState.bBindShadingRateImage = false;
     }
 
@@ -65,7 +65,7 @@ void FD3D12CommandContextState::BindGraphicsStates()
             D3D12_SHADING_RATE_COMBINER_OVERRIDE,
         };
 
-        Context.GetCommandList().RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
+        Context.GetCommandList().GetGraphicsCommandList5()->RSSetShadingRate(GraphicsState.ShadingRate, Combiners);
         GraphicsState.bBindShadingRate = false;
     }
 
@@ -92,19 +92,19 @@ void FD3D12CommandContextState::BindGraphicsStates()
 
     if (GraphicsState.bBindViewports)
     {
-        Context.GetCommandList().RSSetViewports(GraphicsState.Viewports, GraphicsState.NumViewports);
+        Context.GetCommandList()->RSSetViewports(GraphicsState.NumViewports, GraphicsState.Viewports);
         GraphicsState.bBindViewports = false;
     }
 
     if (GraphicsState.bBindScissorRects)
     {
-        Context.GetCommandList().RSSetScissorRects(GraphicsState.ScissorRects, GraphicsState.NumScissorRects);
+        Context.GetCommandList()->RSSetScissorRects(GraphicsState.NumScissorRects, GraphicsState.ScissorRects);
         GraphicsState.bBindScissorRects = false;
     }
 
     if (GraphicsState.bBindBlendFactor)
     {
-        Context.GetCommandList().OMSetBlendFactor(GraphicsState.BlendFactor);
+        Context.GetCommandList()->OMSetBlendFactor(GraphicsState.BlendFactor);
         GraphicsState.bBindBlendFactor = false;
     }
 }
@@ -114,7 +114,7 @@ void FD3D12CommandContextState::BindComputeState()
     FD3D12RootSignature* RootSignture = ComputeState.PipelineState->GetRootSignature();
     if (ComputeState.bBindPipelineState)
     {
-        Context.GetCommandList().SetPipelineState(ComputeState.PipelineState->GetD3D12PipelineState());
+        Context.GetCommandList()->SetPipelineState(ComputeState.PipelineState->GetD3D12PipelineState());
         ComputeState.bBindPipelineState = false;
     }
 
@@ -304,11 +304,11 @@ void FD3D12CommandContextState::BindShaderConstants(FD3D12RootSignature* InRootS
         FD3D12ShaderConstantsCache& ConstantCache = CommonState.ShaderConstantsCache;
         if (ShaderStage == ShaderVisibility_All)
         {
-            Context.GetCommandList().SetComputeRoot32BitConstants(ConstantCache.Constants, ConstantCache.NumConstants, 0, ParameterIndex);
+            Context.GetCommandList()->SetComputeRoot32BitConstants(ParameterIndex, ConstantCache.NumConstants, ConstantCache.Constants, 0);
         }
         else
         {
-            Context.GetCommandList().SetGraphicsRoot32BitConstants(ConstantCache.Constants, ConstantCache.NumConstants, 0, ParameterIndex);
+            Context.GetCommandList()->SetGraphicsRoot32BitConstants(ParameterIndex, ConstantCache.NumConstants, ConstantCache.Constants, 0);
         }
     }
 }
@@ -654,7 +654,7 @@ bool FD3D12CommandContextState::InternalSetRootSignature(FD3D12RootSignature* In
     {
         if (ComputeState.bBindRootSignature)
         {
-            Context.GetCommandList().SetComputeRootSignature(InRootSignature);
+            Context.GetCommandList()->SetComputeRootSignature(InRootSignature->GetD3D12RootSignature());
             ComputeState.bBindRootSignature = false;
             bRootSignatureReset = true;
         }
@@ -663,7 +663,7 @@ bool FD3D12CommandContextState::InternalSetRootSignature(FD3D12RootSignature* In
     {
         if (GraphicsState.bBindRootSignature)
         {
-            Context.GetCommandList().SetGraphicsRootSignature(InRootSignature);
+            Context.GetCommandList()->SetGraphicsRootSignature(InRootSignature->GetD3D12RootSignature());
             GraphicsState.bBindRootSignature = false;
             bRootSignatureReset = true;
         }

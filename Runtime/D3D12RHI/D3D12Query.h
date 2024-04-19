@@ -1,5 +1,6 @@
 #pragma once
 #include "D3D12Resource.h"
+#include "D3D12CommandList.h"
 #include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FD3D12Query> FD3D12QueryRef;
@@ -19,12 +20,12 @@ public:
         return Frequency;
     }
 
-    void BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
-    void EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index);
+    void BeginQuery(FD3D12CommandList& CommandList, uint32 Index);
+    void EndQuery(FD3D12CommandList& CommandList, uint32 Index);
 
     void ResolveQueries(class FD3D12CommandContext& CmdContext);
 
-    FORCEINLINE ID3D12QueryHeap* GetQueryHeap() const
+    ID3D12QueryHeap* GetQueryHeap() const
     {
         return QueryHeap.Get();
     }

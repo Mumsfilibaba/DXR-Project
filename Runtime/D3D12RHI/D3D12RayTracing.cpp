@@ -131,8 +131,8 @@ bool FD3D12RayTracingGeometry::Build(FD3D12CommandContext& CmdContext, const FRa
 
     CmdContext.FlushResourceBarriers();
 
-    FD3D12CommandList& CmdList = CmdContext.GetCommandList();
-    CmdList.BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
+    FD3D12CommandList& CommandList = CmdContext.GetCommandList();
+    CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
     CmdContext.UnorderedAccessBarrier(ResultBuffer.Get());
     return true;
@@ -337,8 +337,8 @@ bool FD3D12RayTracingScene::Build(FD3D12CommandContext& CmdContext, const FRayTr
 
     CmdContext.FlushResourceBarriers();
 
-    FD3D12CommandList& CmdList = CmdContext.GetCommandList();
-    CmdList.BuildRaytracingAccelerationStructure(&AccelerationStructureDesc);
+    FD3D12CommandList& CommandList = CmdContext.GetCommandList();
+    CommandList.GetGraphicsCommandList4()->BuildRaytracingAccelerationStructure(&AccelerationStructureDesc, 0, nullptr);
 
     CmdContext.UnorderedAccessBarrier(ResultBuffer.Get());
 

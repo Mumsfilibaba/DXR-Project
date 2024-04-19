@@ -84,39 +84,32 @@ void FD3D12Query::GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) co
     }
 }
 
-void FD3D12Query::BeginQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void FD3D12Query::BeginQuery(FD3D12CommandList& CommandList, uint32 Index)
 {
-    CHECK(CmdList != nullptr);
     CHECK(Index < D3D12_DEFAULT_QUERY_COUNT);
 
     const uint32 FinalIndex = Index * 2;
-    CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, FinalIndex);
+    CommandList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, FinalIndex);
 
-    uint32 QueryCount = Index + 1;
+    const uint32 QueryCount = Index + 1;
     if (QueryCount >= (uint32)TimeQueries.Size())
     {
         TimeQueries.Resize(QueryCount);
     }
 }
 
-void FD3D12Query::EndQuery(ID3D12GraphicsCommandList* CmdList, uint32 Index)
+void FD3D12Query::EndQuery(FD3D12CommandList& CommandList, uint32 Index)
 {
-    CHECK(CmdList != nullptr);
     CHECK(Index < D3D12_DEFAULT_QUERY_COUNT);
 
     const uint32 FinalIndex = (Index * 2) + 1;
-    CmdList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, FinalIndex);
+    CommandList->EndQuery(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, FinalIndex);
 }
 
 void FD3D12Query::ResolveQueries(class FD3D12CommandContext& CommandContext)
 {
-    FD3D12CommandList& CommandList = CommandContext.GetCommandList();
-    
     ID3D12CommandQueue* D3D12Queue = GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct);
     CHECK(D3D12Queue != nullptr);
-
-    ID3D12GraphicsCommandList* D3D12CommandList = CommandList.GetGraphicsCommandList();
-    CHECK(D3D12CommandList != nullptr);
 
     uint32 ReadIndex = CommandContext.GetCurrentBatchIndex();
     if (ReadIndex >= (uint32)ReadResources.Size())
@@ -138,11 +131,22 @@ void FD3D12Query::ResolveQueries(class FD3D12CommandContext& CommandContext)
     }
 
     // Make use of RESOURCE_STATE promotion during the first call
-    D3D12CommandList->ResolveQueryData(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, D3D12_DEFAULT_QUERY_COUNT, WriteResource->GetD3D12Resource(), 0);
+    FD3D12CommandList& CommandList = CommandContext.GetCommandList();
+    CommandList->ResolveQueryData(QueryHeap.Get(), D3D12_QUERY_TYPE_TIMESTAMP, 0, D3D12_DEFAULT_QUERY_COUNT, WriteResource->GetD3D12Resource(), 0);
 
-    CommandList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
-    D3D12CommandList->CopyResource(CurrentReadResource->GetD3D12Resource(), WriteResource->GetD3D12Resource());
-    CommandList.TransitionBarrier(WriteResource->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
+    D3D12_RESOURCE_BARRIER Barrier;
+    Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    Barrier.Transition.pResource   = WriteResource->GetD3D12Resource();
+    Barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_COPY_DEST;
+    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE;
+    Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+    CommandList->ResourceBarrier(1, &Barrier);
+
+    CommandList->CopyResource(CurrentReadResource->GetD3D12Resource(), WriteResource->GetD3D12Resource());
+    
+    Barrier.Transition.StateAfter  = D3D12_RESOURCE_STATE_COPY_SOURCE;
+    Barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+    CommandList->ResourceBarrier(1, &Barrier);
 
     HRESULT Result = D3D12Queue->GetTimestampFrequency(&Frequency);
     if (FAILED(Result))
