@@ -1,11 +1,11 @@
 #include "RHICore.h"
 
-// Hardware RayTracing support
-ERayTracingTier FHardwareSupport::RayTracingTier = ERayTracingTier::NotSupported;
-bool            FHardwareSupport::bRayTracing = false;
-uint32          FHardwareSupport::MaxRecursionDepth = 0;
+// Hardware RayTracing
+RHI_API bool            GRHISupportsRayTracing          = false;
+RHI_API ERayTracingTier GRHIRayTracingTier              = ERayTracingTier::NotSupported;
+RHI_API uint32          GRHIRayTracingMaxRecursionDepth = 0;
 
-// Hardware Variable Rate Shading Support
-bool             FHardwareSupport::bVariableShadingRate = false;
-EShadingRateTier FHardwareSupport::ShadingRateTier = EShadingRateTier::NotSupported;
-uint32           FHardwareSupport::ShadingRateImageTileSize = 0;
+// Hardware Variable Rate Shading
+RHI_API bool             GRHISupportsVRS              = false;
+RHI_API EShadingRateTier GRHIShadingRateTier          = EShadingRateTier::NotSupported;
+RHI_API uint32           GRHIShadingRateImageTileSize = 0;

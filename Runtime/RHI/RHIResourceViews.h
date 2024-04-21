@@ -511,7 +511,7 @@ struct FRHIDepthStencilView
 
 struct FRHIRenderPassDesc
 {
-    typedef TStaticArray<FRHIRenderTargetView, FHardwareLimits::MAX_RENDER_TARGETS> FRenderTargetViews;
+    typedef TStaticArray<FRHIRenderTargetView, RHI_MAX_RENDER_TARGETS> FRenderTargetViews;
 
     FRHIRenderPassDesc()
         : ShadingRateTexture(nullptr)

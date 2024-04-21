@@ -19,7 +19,7 @@ FMesh::FMesh()
 
 bool FMesh::Init(const FMeshData& Data)
 {
-    const bool bRTOn = FHardwareSupport::bRayTracing;
+    const bool bRTOn = GRHISupportsRayTracing;
 
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount  = static_cast<uint32>(Data.Indices.Size());

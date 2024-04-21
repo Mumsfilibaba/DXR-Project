@@ -45,8 +45,8 @@ struct FVulkanRenderPassKey
             uint8 NumSamples       : 4;
             uint8 NumRenderTargets : 4;
             
-            EFormat                  RenderTargetFormats[FHardwareLimits::MAX_RENDER_TARGETS];
-            FVulkanRenderPassActions RenderTargetActions[FHardwareLimits::MAX_RENDER_TARGETS];
+            EFormat                  RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
+            FVulkanRenderPassActions RenderTargetActions[RHI_MAX_RENDER_TARGETS];
         };
         
         struct

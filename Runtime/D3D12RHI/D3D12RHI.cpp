@@ -213,32 +213,32 @@ bool FD3D12RHI::Initialize()
     {
         if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_1)
         {
-            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1_1;
+            GRHIRayTracingTier = ERayTracingTier::Tier1_1;
         }
         else if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_0)
         {
-            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1;
+            GRHIRayTracingTier = ERayTracingTier::Tier1;
         }
 
-        FHardwareSupport::MaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+        GRHIRayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
     }
     else
     {
-        FHardwareSupport::RayTracingTier = ERayTracingTier::NotSupported;
+        GRHIRayTracingTier = ERayTracingTier::NotSupported;
     }
     
-    FHardwareSupport::bRayTracing = FHardwareSupport::RayTracingTier != ERayTracingTier::NotSupported;
+    GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
 
     FD3D12VariableRateShadingDesc VariableRateShadingDesc = GetDevice()->GetVariableRateShadingDesc();
     switch (VariableRateShadingDesc.Tier)
     {
-        case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED: FHardwareSupport::ShadingRateTier = EShadingRateTier::NotSupported; break;
-        case D3D12_VARIABLE_SHADING_RATE_TIER_1:             FHardwareSupport::ShadingRateTier = EShadingRateTier::Tier1;        break;
-        case D3D12_VARIABLE_SHADING_RATE_TIER_2:             FHardwareSupport::ShadingRateTier = EShadingRateTier::Tier2;        break;
+        case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED: GRHIShadingRateTier = EShadingRateTier::NotSupported; break;
+        case D3D12_VARIABLE_SHADING_RATE_TIER_1:             GRHIShadingRateTier = EShadingRateTier::Tier1;        break;
+        case D3D12_VARIABLE_SHADING_RATE_TIER_2:             GRHIShadingRateTier = EShadingRateTier::Tier2;        break;
     }
 
-    FHardwareSupport::bVariableShadingRate     = FHardwareSupport::ShadingRateTier != EShadingRateTier::NotSupported;
-    FHardwareSupport::ShadingRateImageTileSize = VariableRateShadingDesc.ShadingRateImageTileSize;
+    GRHISupportsVRS     = GRHIShadingRateTier != EShadingRateTier::NotSupported;
+    GRHIShadingRateImageTileSize = VariableRateShadingDesc.ShadingRateImageTileSize;
     return true;
 }
 

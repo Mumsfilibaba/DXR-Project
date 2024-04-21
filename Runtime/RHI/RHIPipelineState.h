@@ -538,7 +538,7 @@ struct FRHIBlendStateInitializer
         return !(*this == Other);
     }
 
-    FRenderTargetBlendInfo RenderTargets[FHardwareLimits::MAX_RENDER_TARGETS];
+    FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS];
     uint8                  NumRenderTargets;
     ELogicOp               LogicOp;
 
@@ -701,7 +701,7 @@ struct FGraphicsPipelineFormats
         return !(*this == Other);
     }
 
-    EFormat RenderTargetFormats[FHardwareLimits::MAX_RENDER_TARGETS];
+    EFormat RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
     uint8   NumRenderTargets;
     EFormat DepthStencilFormat;
 };

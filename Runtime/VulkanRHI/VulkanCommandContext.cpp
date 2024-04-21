@@ -401,7 +401,7 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
 
 void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
 {
-    VkClearValue ClearValues[FHardwareLimits::MAX_RENDER_TARGETS + 1];
+    VkClearValue ClearValues[RHI_MAX_RENDER_TARGETS + 1];
     FMemory::Memzero(ClearValues, sizeof(ClearValues));
     
     uint32 Width          = 0;

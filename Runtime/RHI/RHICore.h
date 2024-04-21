@@ -5,6 +5,11 @@
 #define RHI_REMAINING_ARRAY_SLICES uint32(~0)
 #define RHI_NUM_CUBE_FACES (6)
 
+#define RHI_MAX_RENDER_TARGETS (8)
+#define RHI_MAX_LOCAL_SHADER_BINDINGS (4)
+#define RHI_MAX_SHADER_CONSTANTS (32)
+#define RHI_MAX_VERTEX_BUFFERS (32)
+
 enum class ERayTracingTier : uint8
 {
     NotSupported = 0,
@@ -41,30 +46,12 @@ inline const CHAR* ToString(EShadingRateTier Tier)
     }
 }
 
-struct FHardwareLimits
-{
-    inline static constexpr uint32 MAX_RENDER_TARGETS = 8;
-    
-    inline static constexpr uint32 MAX_LOCAL_SHADER_BINDINGS = 4;
-    
-    inline static constexpr uint32 MAX_SHADER_CONSTANTS = 32;
+// Hardware RayTracing
+extern RHI_API bool            GRHISupportsRayTracing;
+extern RHI_API ERayTracingTier GRHIRayTracingTier;
+extern RHI_API uint32          GRHIRayTracingMaxRecursionDepth;
 
-    inline static constexpr uint32 MAX_VERTEX_BUFFERS = 32;
-};
-
-struct FHardwareSupport
-{
-    // Hardware RayTracing
-    static RHI_API bool bRayTracing;
-
-    static RHI_API ERayTracingTier RayTracingTier;
-    
-    static RHI_API uint32 MaxRecursionDepth;
-
-    // Hardware Variable Rate Shading
-    static RHI_API bool bVariableShadingRate;
-
-    static RHI_API EShadingRateTier ShadingRateTier;
-    
-    static RHI_API uint32 ShadingRateImageTileSize;
-};
+// Hardware Variable Rate Shading
+extern RHI_API bool             GRHISupportsVRS;
+extern RHI_API EShadingRateTier GRHIShadingRateTier;
+extern RHI_API uint32           GRHIShadingRateImageTileSize;

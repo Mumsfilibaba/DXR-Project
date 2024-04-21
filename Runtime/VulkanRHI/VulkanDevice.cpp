@@ -391,21 +391,21 @@ bool FVulkanDevice::PostLoaderInitalize()
         // Check if RayQueries are supported, then the Tier is kind of like Tier 1.1 (Inline RayTracing in DXR)
         if (IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
         {
-            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1_1;
+            GRHIRayTracingTier = ERayTracingTier::Tier1_1;
         }
         else
         {
-            FHardwareSupport::RayTracingTier = ERayTracingTier::Tier1;
+            GRHIRayTracingTier = ERayTracingTier::Tier1;
         }
 
-        FHardwareSupport::MaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
+        GRHIRayTracingMaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
     }
     else
     {
-        FHardwareSupport::RayTracingTier = ERayTracingTier::NotSupported;
+        GRHIRayTracingTier = ERayTracingTier::NotSupported;
     }
 
-    FHardwareSupport::bRayTracing = FHardwareSupport::RayTracingTier != ERayTracingTier::NotSupported;
+    GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
 
     if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
@@ -424,15 +424,15 @@ bool FVulkanDevice::PostLoaderInitalize()
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
         // TODO: Finish this part
-        FHardwareSupport::ShadingRateImageTileSize = 0;
-        FHardwareSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+        GRHIShadingRateImageTileSize = 0;
+        GRHIShadingRateTier = EShadingRateTier::NotSupported;
     }
     else
     {
-        FHardwareSupport::ShadingRateTier = EShadingRateTier::NotSupported;
+        GRHIShadingRateTier = EShadingRateTier::NotSupported;
     }
 
-    FHardwareSupport::bVariableShadingRate = FHardwareSupport::ShadingRateTier != EShadingRateTier::NotSupported;
+    GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
     return true;
 }
 

@@ -168,8 +168,8 @@ private:
     MTLPrimitiveType                        CurrentPrimitiveType;
 
     // VertexBuffer- state
-    TStaticArray<id<MTLBuffer>, FHardwareLimits::MAX_VERTEX_BUFFERS> CurrentVertexBuffers;
-    TStaticArray<NSUInteger   , FHardwareLimits::MAX_VERTEX_BUFFERS> CurrentVertexOffsets;
+    TStaticArray<id<MTLBuffer>, RHI_MAX_VERTEX_BUFFERS> CurrentVertexBuffers;
+    TStaticArray<NSUInteger   , RHI_MAX_VERTEX_BUFFERS> CurrentVertexOffsets;
     NSRange CurrentVertexBufferRange;
     
     // Resources
