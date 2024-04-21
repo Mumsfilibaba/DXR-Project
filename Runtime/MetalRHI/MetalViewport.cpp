@@ -24,8 +24,8 @@
 @end
 
 
-FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportDesc& Desc)
-    : FRHIViewport(Desc)
+FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInfo& ViewportInfo)
+    : FRHIViewport(ViewportInfo)
     , FMetalObject(InDeviceContext)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
@@ -47,7 +47,7 @@ FMetalViewport::~FMetalViewport()
 
 bool FMetalViewport::Initialize()
 {
-    if (!Desc.WindowHandle)
+    if (!Info.WindowHandle)
     {
         LOG_ERROR("WindowHandle cannot be null");
         return false;
@@ -60,8 +60,8 @@ bool FMetalViewport::Initialize()
         SCOPED_AUTORELEASE_POOL();
 
         NSRect Frame;
-        Frame.size.width  = Desc.Width;
-        Frame.size.height = Desc.Height;
+        Frame.size.width  = Info.Width;
+        Frame.size.height = Info.Height;
         Frame.origin.x    = 0;
         Frame.origin.y    = 0;
         
@@ -87,7 +87,7 @@ bool FMetalViewport::Initialize()
         [MetalView setLayer:NewMetalLayer];
         [MetalView retain];
         
-        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
+        FCocoaWindow* CocoaWindow = reinterpret_cast<FCocoaWindow*>(Info.WindowHandle);
         [CocoaWindow setContentView:MetalView];
         [CocoaWindow makeFirstResponder:MetalView];
 
@@ -112,7 +112,7 @@ bool FMetalViewport::Initialize()
     // Create BackBuffer
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
 
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), Desc.Width, Desc.Height, 1, 1, Flags);
+    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), Info.Width, Info.Height, 1, 1, Flags);
     BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferDesc);
     BackBuffer->SetViewport(this);
     return true;
@@ -122,7 +122,7 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    if (Desc.Width != InWidth || Desc.Height != InHeight)
+    if (Info.Width != InWidth || Info.Height != InHeight)
     {
         ExecuteOnMainThread(^
         {
@@ -133,8 +133,8 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
             }
         }, NSDefaultRunLoopMode, true);
         
-        Desc.Width  = uint16(InWidth);
-        Desc.Height = uint16(InHeight);
+        Info.Width  = uint16(InWidth);
+        Info.Height = uint16(InHeight);
     }
     
     return true;

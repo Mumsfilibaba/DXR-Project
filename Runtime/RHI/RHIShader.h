@@ -4,7 +4,6 @@
 #include "Core/Containers/String.h"
 
 typedef TSharedRef<class FRHIShader>                FRHIShaderRef;
-
 typedef TSharedRef<class FRHIVertexShader>          FRHIVertexShaderRef;
 typedef TSharedRef<class FRHIHullShader>            FRHIHullShaderRef;
 typedef TSharedRef<class FRHIDomainShader>          FRHIDomainShaderRef;
@@ -12,9 +11,7 @@ typedef TSharedRef<class FRHIGeometryShader>        FRHIGeometryShaderRef;
 typedef TSharedRef<class FRHIMeshShader>            FRHIMeshShaderRef;
 typedef TSharedRef<class FRHIAmplificationShader>   FRHIAmplificationShaderRef;
 typedef TSharedRef<class FRHIPixelShader>           FRHIPixelShaderRef;
-
 typedef TSharedRef<class FRHIComputeShader>         FRHIComputeShaderRef;
-
 typedef TSharedRef<class FRHIRayTracingShader>      FRHIRayTracingShaderRef;
 typedef TSharedRef<class FRHIRayGenShader>          FRHIRayGenShaderRef;
 typedef TSharedRef<class FRHIRayMissShader>         FRHIRayMissShaderRef;

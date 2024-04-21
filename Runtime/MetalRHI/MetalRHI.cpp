@@ -287,16 +287,16 @@ FRHIQuery* FMetalRHI::RHICreateQuery()
     return new FMetalQuery();
 }
 
-FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportDesc& Desc)
+FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportInfo& ViewportInfo)
 {
-    FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(Desc.WindowHandle);
+    FCocoaWindow* Window = reinterpret_cast<FCocoaWindow*>(ViewportInfo.WindowHandle);
     if (!Window)
     {
         return nullptr;
     }
 
-    FRHIViewportDesc NewDesc(Desc);
-    if (Desc.Width == 0 || Desc.Height == 0)
+    FRHIViewportInfo NewViewportInfo(ViewportInfo);
+    if (ViewportInfo.Width == 0 || ViewportInfo.Height == 0)
     {
         __block NSRect Frame;
         __block NSRect ContentRect;
@@ -306,11 +306,11 @@ FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportDesc& Desc)
             ContentRect = [Window contentRectForFrameRect:Window.frame];
         }, NSDefaultRunLoopMode, true);
         
-        NewDesc.Width  = ContentRect.size.width;
-        NewDesc.Height = ContentRect.size.height;
+        NewViewportInfo.Width  = ContentRect.size.width;
+        NewViewportInfo.Height = ContentRect.size.height;
     }
     
-    FMetalViewportRef NewViewport = new FMetalViewport(GetDeviceContext(), NewDesc);
+    FMetalViewportRef NewViewport = new FMetalViewport(GetDeviceContext(), NewViewportInfo);
     if (!NewViewport->Initialize())
     {
         return nullptr;

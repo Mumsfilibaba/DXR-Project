@@ -26,13 +26,13 @@ bool FViewport::InitializeRHI(const FViewportInitializer& Initializer)
         return false;
     }
     
-    FRHIViewportDesc ViewportDesc;
-    ViewportDesc.WindowHandle = Initializer.Window->GetPlatformHandle();
-    ViewportDesc.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use rgba for all RHIs except Vulkan?
-    ViewportDesc.Width        = static_cast<uint16>(Initializer.Width);
-    ViewportDesc.Height       = static_cast<uint16>(Initializer.Height);
+    FRHIViewportInfo ViewportInfo;
+    ViewportInfo.WindowHandle = Initializer.Window->GetPlatformHandle();
+    ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use rgba for all RHIs except Vulkan?
+    ViewportInfo.Width        = static_cast<uint16>(Initializer.Width);
+    ViewportInfo.Height       = static_cast<uint16>(Initializer.Height);
     
-    FRHIViewportRef NewViewport = RHICreateViewport(ViewportDesc);
+    FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
     if (!NewViewport)
     {
         DEBUG_BREAK();

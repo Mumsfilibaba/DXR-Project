@@ -15,7 +15,7 @@ class FVulkanCommandContext;
 class FVulkanViewport final : public FRHIViewport, public FVulkanDeviceChild
 {
 public:
-    FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
+    FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo);
     virtual ~FVulkanViewport();
 
     virtual FRHITexture* GetBackBuffer() const override final;

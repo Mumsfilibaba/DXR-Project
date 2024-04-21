@@ -663,7 +663,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
     TArray<FRHIRayAnyHitShader*>     AnyHitShaders;
     TArray<FRHIRayClosestHitShader*> ClosestHitShaders;
 
-    for (const FRHIRayTracingHitGroupDesc& HitGroup : Initializer.HitGroups)
+    for (const FRHIRayTracingHitGroupInfo& HitGroup : Initializer.HitGroups)
     {
         HitGroupName.Clear();
         ClosestHitName.Clear();

@@ -112,18 +112,18 @@ struct FNullRHISamplerState : public FRHISamplerState
 class FNullRHIViewport : public FRHIViewport
 {
 public:
-    FNullRHIViewport(const FRHIViewportDesc& InDesc)
-        : FRHIViewport(InDesc)
+    FNullRHIViewport(const FRHIViewportInfo& InViewportInfo)
+        : FRHIViewport(InViewportInfo)
         , BackBuffer(nullptr)
     { 
-        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Desc.ColorFormat, Desc.Width, Desc.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
+        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Info.ColorFormat, Info.Width, Info.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
         BackBuffer = new FNullRHITexture(BackBufferDesc);
     }
 
     bool Resize(uint32 InWidth, uint32 InHeight)
     {
-        Desc.Width  = uint16(InWidth);
-        Desc.Height = uint16(InHeight);
+        Info.Width  = uint16(InWidth);
+        Info.Height = uint16(InHeight);
         return true;
     }
 

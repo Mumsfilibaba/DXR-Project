@@ -245,9 +245,9 @@ FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& 
     return Result.ReleaseOwnership();
 }
 
-FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
+FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
-    FVulkanViewportRef NewViewport = new FVulkanViewport(Device, GraphicsCommandContext, InDesc);
+    FVulkanViewportRef NewViewport = new FVulkanViewport(Device, GraphicsCommandContext, InViewportInfo);
     if (!NewViewport->Initialize())
     {
         return nullptr;

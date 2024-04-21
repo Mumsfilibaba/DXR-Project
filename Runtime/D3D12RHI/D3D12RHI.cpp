@@ -855,9 +855,9 @@ FRHIQuery* FD3D12RHI::RHICreateQuery()
     }
 }
 
-FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportDesc& InDesc)
+FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
-    FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectContext, InDesc);
+    FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectContext, InViewportInfo);
     if (!Viewport->Initialize())
     {
         return nullptr;

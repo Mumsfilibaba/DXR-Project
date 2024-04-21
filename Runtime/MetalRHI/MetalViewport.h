@@ -18,7 +18,7 @@ typedef TSharedRef<class FMetalViewport> FMetalViewportRef;
 class FMetalViewport : public FRHIViewport, public FMetalObject
 {
 public:
-    FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportDesc& Desc);
+    FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInfo& ViewportInfo);
     ~FMetalViewport();
 
     bool Initialize();

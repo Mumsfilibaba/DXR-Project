@@ -111,7 +111,7 @@ public:
      * @param Initializer - Structure containing the information for the Viewport
      * @return            - Returns the newly created viewport
      */
-    virtual FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) = 0;
+    virtual FRHIViewport* RHICreateViewport(const FRHIViewportInfo& InViewportInfo) = 0;
 
     /**
      * @brief        - Create a new Ray Tracing Scene
@@ -481,9 +481,9 @@ FORCEINLINE class FRHIQuery* RHICreateQuery()
     return GetRHI()->RHICreateQuery();
 }
 
-FORCEINLINE class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& Initializer)
+FORCEINLINE class FRHIViewport* RHICreateViewport(const FRHIViewportInfo& ViewportInfo)
 {
-    return GetRHI()->RHICreateViewport(Initializer);
+    return GetRHI()->RHICreateViewport(ViewportInfo);
 }
 
 FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)

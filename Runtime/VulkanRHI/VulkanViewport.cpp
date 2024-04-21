@@ -7,10 +7,10 @@ static TAutoConsoleVariable<int32> CVarBackbufferCount(
     "The preferred number of backbuffers for the SwapChain",
     NUM_BACK_BUFFERS);
 
-FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportDesc& InDesc)
-    : FRHIViewport(InDesc)
+FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo)
+    : FRHIViewport(InViewportInfo)
     , FVulkanDeviceChild(InDevice)
-    , WindowHandle(InDesc.WindowHandle)
+    , WindowHandle(InViewportInfo.WindowHandle)
     , Surface(nullptr)
     , SwapChain(nullptr)
     , CommandContext(InCmdContext)
@@ -61,12 +61,12 @@ bool FVulkanViewport::CreateSwapChain()
     SwapChainCreateInfo.PreviousSwapChain = GetSwapChain();
     SwapChainCreateInfo.Surface           = Surface.Get();
     SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
-    SwapChainCreateInfo.Extent.width      = Desc.Width;
-    SwapChainCreateInfo.Extent.height     = Desc.Height;
+    SwapChainCreateInfo.Extent.width      = Info.Width;
+    SwapChainCreateInfo.Extent.height     = Info.Height;
     SwapChainCreateInfo.Format            = GetColorFormat();
     SwapChainCreateInfo.bVerticalSync     = false;
 
-    if (Desc.Width == 0 || Desc.Height == 0)
+    if (Info.Width == 0 || Info.Height == 0)
     {
         VULKAN_ERROR("Viewport Width or Height of zero is not supported");
         return false;
@@ -86,15 +86,15 @@ bool FVulkanViewport::CreateSwapChain()
 
     // Update the description if the requested image size was not supported
     VkExtent2D SwapChainExtent = SwapChain->GetExtent();
-    if (Desc.Width != SwapChainExtent.width || Desc.Height != SwapChainExtent.height)
+    if (Info.Width != SwapChainExtent.width || Info.Height != SwapChainExtent.height)
     {
-        VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Desc.Width, Desc.Height, SwapChainExtent.width, SwapChainExtent.height);
-        Desc.Width  = static_cast<uint16>(SwapChainExtent.width);
-        Desc.Height = static_cast<uint16>(SwapChainExtent.height);
+        VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Info.Width, Info.Height, SwapChainExtent.width, SwapChainExtent.height);
+        Info.Width  = static_cast<uint16>(SwapChainExtent.width);
+        Info.Height = static_cast<uint16>(SwapChainExtent.height);
         
         if (BackBuffer)
         {
-            BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
+            BackBuffer->ResizeBackBuffer(Info.Width, Info.Height);
         }
     }
 
@@ -216,7 +216,7 @@ void FVulkanViewport::DestroySwapChain()
 
 bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
+    if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
     {
         // Ensure that all work is completed, if this function is called from a RHICommandList
         // the we do this "manually" since the context is already started and we need to ensure that there
@@ -241,9 +241,9 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
             return false;
         }
 
-        Desc.Width  = static_cast<uint16>(InWidth);
-        Desc.Height = static_cast<uint16>(InHeight);
-        BackBuffer->ResizeBackBuffer(Desc.Width, Desc.Height);
+        Info.Width  = static_cast<uint16>(InWidth);
+        Info.Height = static_cast<uint16>(InHeight);
+        BackBuffer->ResizeBackBuffer(Info.Width, Info.Height);
     }
 
     return true;

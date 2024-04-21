@@ -3,9 +3,43 @@
 #include "Core/Math/IntVector3.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
+#include "Core/Containers/SharedRef.h"
 
 class FRHIBuffer;
 struct FRHIRayTracingGeometryInstance;
+class FRHIShader;
+class FRHIVertexShader;
+class FRHIHullShader;
+class FRHIDomainShader;
+class FRHIGeometryShader;
+class FRHIPixelShader;
+class FRHIMeshShader;
+class FRHIAmplificationShader;
+class FRHIComputeShader;
+class FRHIRayTracingShader;
+class FRHIRayGenShader;
+class FRHIRayCallableShader;
+class FRHIRayMissShader;
+class FRHIRayAnyHitShader;
+class FRHIRayClosestHitShader;
+class FRHIShaderResourceView;
+class FRHIUnorderedAccessView;
+struct IRHITextureData;
+
+typedef TSharedRef<class FRHIBuffer>                  FRHIBufferRef;
+typedef TSharedRef<class FRHITexture>                 FRHITextureRef;
+typedef TSharedRef<FRHIShaderResourceView>            FRHIShaderResourceViewRef;
+typedef TSharedRef<FRHIUnorderedAccessView>           FRHIUnorderedAccessViewRef;
+typedef TSharedRef<class FRHISamplerState>            FRHISamplerStateRef;
+typedef TSharedRef<class FRHIViewport>                FRHIViewportRef;
+typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;
+typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
+typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
+typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
+typedef TSharedRef<class FRHIVertexInputLayout>       FRHIVertexInputLayoutRef;
+typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateRef;
+typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
+typedef TSharedRef<class FRHIRayTracingPipelineState> FRHIRayTracingPipelineStateRef;
 
 enum class EFormat : uint8
 {

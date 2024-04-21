@@ -2,14 +2,14 @@
 #include "D3D12Viewport.h"
 #include "Core/Misc/FrameProfiler.h"
 
-FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc)
+FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo)
     : FD3D12DeviceChild(InDevice)
-    , FRHIViewport(InDesc)
+    , FRHIViewport(InViewportInfo)
     , SwapChain(nullptr)
     , CommandContext(InCmdContext)
     , BackBuffer(nullptr)
     , BackBuffers()
-    , Hwnd(reinterpret_cast<HWND>(InDesc.WindowHandle))
+    , Hwnd(reinterpret_cast<HWND>(InViewportInfo.WindowHandle))
     , SwapChainWaitableObject(0)
     , Flags(0)
     , NumBackBuffers(0)
@@ -45,28 +45,28 @@ bool FD3D12Viewport::Initialize()
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     const uint32      NumSwapChainBuffers = D3D12_NUM_BACK_BUFFERS;
-    const DXGI_FORMAT NativeFormat        = ConvertFormat(Desc.ColorFormat);
+    const DXGI_FORMAT NativeFormat        = ConvertFormat(Info.ColorFormat);
 
     RECT ClientRect;
     GetClientRect(Hwnd, &ClientRect);
 
-    if (Desc.Width == 0)
+    if (Info.Width == 0)
     {
-        Desc.Width = uint16(ClientRect.right - ClientRect.left);
+        Info.Width = uint16(ClientRect.right - ClientRect.left);
     }
 
-    if (Desc.Height == 0)
+    if (Info.Height == 0)
     {
-        Desc.Height = uint16(ClientRect.bottom - ClientRect.top);
+        Info.Height = uint16(ClientRect.bottom - ClientRect.top);
     }
 
-    if (!Desc.Width)
+    if (!Info.Width)
     {
         D3D12_ERROR("Viewport width of zero is not supported");
         return false;
     }
 
-    if (!Desc.Height)
+    if (!Info.Height)
     {
         D3D12_ERROR("Viewport height of zero is not supported");
         return false;
@@ -75,8 +75,8 @@ bool FD3D12Viewport::Initialize()
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     FMemory::Memzero(&SwapChainDesc);
 
-    SwapChainDesc.Width              = Desc.Width;
-    SwapChainDesc.Height             = Desc.Height;
+    SwapChainDesc.Width              = Info.Width;
+    SwapChainDesc.Height             = Info.Height;
     SwapChainDesc.Format             = NativeFormat;
     SwapChainDesc.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     SwapChainDesc.BufferCount        = NumSwapChainBuffers;
@@ -138,7 +138,7 @@ bool FD3D12Viewport::Initialize()
 
 bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
-    if ((InWidth != Desc.Width || InHeight != Desc.Height) && InWidth > 0 && InHeight > 0)
+    if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
     {
         CommandContext->RHIClearState();
 
@@ -150,8 +150,8 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
         HRESULT Result = SwapChain->ResizeBuffers(0, InWidth, InHeight, DXGI_FORMAT_UNKNOWN, Flags);
         if (SUCCEEDED(Result))
         {
-            Desc.Width  = uint16(InWidth);
-            Desc.Height = uint16(InHeight);
+            Info.Width  = uint16(InWidth);
+            Info.Height = uint16(InHeight);
         }
         else
         {
@@ -164,7 +164,7 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
             return false;
         }
 
-        D3D12_INFO("[FD3D12Viewport]: Resized %u x %u", Desc.Width, Desc.Height);
+        D3D12_INFO("[FD3D12Viewport]: Resized %u x %u", Info.Width, Info.Height);
     }
 
     // NOTE: Not considered an error to try to resize when the size is the same, maybe it should?

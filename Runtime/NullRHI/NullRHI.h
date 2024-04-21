@@ -48,9 +48,9 @@ public:
         return new FNullRHISamplerState(InDesc);
     }
 
-    virtual class FRHIViewport* RHICreateViewport(const FRHIViewportDesc& InDesc) override final
+    virtual class FRHIViewport* RHICreateViewport(const FRHIViewportInfo& InViewportInfo) override final
     {
-        return new FNullRHIViewport(InDesc);
+        return new FNullRHIViewport(InViewportInfo);
     }
 
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final

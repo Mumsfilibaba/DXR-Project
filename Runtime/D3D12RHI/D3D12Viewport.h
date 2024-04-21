@@ -12,7 +12,7 @@ typedef TSharedRef<class FD3D12Viewport> FD3D12ViewportRef;
 class FD3D12Viewport : public FRHIViewport, public FD3D12DeviceChild
 {
 public:
-    FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportDesc& InDesc);
+    FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo);
     virtual ~FD3D12Viewport();
 
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
