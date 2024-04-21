@@ -102,7 +102,11 @@ FVulkanDevice::~FVulkanDevice()
 
 bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 {
-    VULKAN_ERROR_COND(PhysicalDevice != nullptr, "PhysicalDevice is not initalized correctly");
+    if (!PhysicalDevice)
+    {
+        VULKAN_ERROR("PhysicalDevice is not initalized correctly");
+        return false;
+    }
 
     VkResult Result = VK_SUCCESS;
     

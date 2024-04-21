@@ -194,7 +194,6 @@ bool FD3D12ShaderCompiler::CompileFromFile(
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
-        DEBUG_BREAK();
         return false;
     }
 
@@ -216,7 +215,6 @@ bool FD3D12ShaderCompiler::CompileShader(
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
-        DEBUG_BREAK();
         return false;
     }
 

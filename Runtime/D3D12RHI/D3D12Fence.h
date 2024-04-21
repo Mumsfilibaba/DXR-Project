@@ -14,12 +14,21 @@ public:
 
     bool WaitForValue(uint64 Value);
 
-    FORCEINLINE ID3D12Fence* GetD3D12Fence() const { return Fence.Get(); }
+    uint64 GetCompletedValue() const
+    {
+        CHECK(Fence != nullptr);
+        return Fence->GetCompletedValue();
+    }
 
-    FORCEINLINE void SetDebugName(const FString& Name)
+    void SetDebugName(const FString& Name)
     {
         CHECK(Fence != nullptr);
         Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.GetCString());
+    }
+
+    ID3D12Fence* GetD3D12Fence() const
+    {
+        return Fence.Get();
     }
 
 private:
@@ -42,6 +51,12 @@ struct FD3D12FenceSyncPoint
     {
     }
 
+    bool IsReached() const
+    {
+        CHECK(Fence != nullptr);
+        return FenceValue <= Fence->GetCompletedValue();
+    }
+
     FD3D12Fence* Fence;
     uint64       FenceValue;
 };
@@ -58,11 +73,9 @@ public:
     uint64 SignalGPU(ED3D12CommandQueueType QueueType);
 
     void WaitGPU(ED3D12CommandQueueType QueueType);
-    
     void WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue);
 
     void WaitForFence();
-
     void WaitForFence(uint64 InFenceValue);
 
     uint64 GetCompletedValue() const;
@@ -89,8 +102,7 @@ public:
 
 private:
     FD3D12FenceRef Fence;
-
+    mutable uint64 LastCompletedValue;
     uint64         CurrentValue;
     uint64         LastSignaledValue;
-    mutable uint64 LastCompletedValue;
 };

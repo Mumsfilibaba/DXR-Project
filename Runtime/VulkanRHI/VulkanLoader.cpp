@@ -61,7 +61,11 @@ VULKAN_FUNCTION_DEFINITION(GetPhysicalDeviceSurfaceSupportKHR);
 
 bool LoadInstanceFunctions(FVulkanInstance* Instance)
 {
-    VULKAN_ERROR_COND(Instance, "Instance cannot be nullptr");
+    if (!Instance)
+    {
+        VULKAN_ERROR("Instance cannot be nullptr");
+        return false;
+    }
 
     VkInstance InstanceHandle = Instance->GetVkInstance();
     VULKAN_LOAD_INSTANCE_FUNCTION(InstanceHandle, EnumeratePhysicalDevices);
@@ -258,7 +262,11 @@ VULKAN_FUNCTION_DEFINITION(CmdBuildAccelerationStructuresKHR);
 
 bool LoadDeviceFunctions(FVulkanDevice* Device)
 {
-    VULKAN_ERROR_COND(Device, "Device cannot be nullptr");
+    if (!Device)
+    {
+        VULKAN_ERROR("Device cannot be nullptr");
+        return false;
+    }
 
     VkDevice DeviceHandle = Device->GetVkDevice();
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DeviceWaitIdle);
@@ -420,7 +428,11 @@ bool FVulkanDebugUtilsEXT::bIsEnabled = false;
 
 bool FVulkanDebugUtilsEXT::Initialize(FVulkanInstance* Instance)
 {
-    VULKAN_ERROR_COND(Instance != nullptr, "Instance cannot be nullptr");
+    if (!Instance)
+    {
+        VULKAN_ERROR("Instance cannot be nullptr");
+        return false;
+    }
 
 #if VK_EXT_debug_utils
     if (Instance->IsExtensionEnabled(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
@@ -441,8 +453,12 @@ bool FVulkanDedicatedAllocationKHR::bIsEnabled = false;
 
 void FVulkanDedicatedAllocationKHR::Initialize(FVulkanDevice* Device)
 {
-    VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
-    
+    if (!Device)
+    {
+        VULKAN_ERROR("Device cannot be nullptr");
+        return;
+    }
+
     // VK_KHR_get_memory_requirements2 && VK_KHR_dedicated_allocation (Core in 1.1)
     if (Device->IsExtensionEnabled(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && Device->IsExtensionEnabled(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
     {
@@ -454,8 +470,12 @@ bool FVulkanBufferDeviceAddressKHR::bIsEnabled = false;
 
 void FVulkanBufferDeviceAddressKHR::Initialize(FVulkanDevice* Device)
 {
-    VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
-    
+    if (!Device)
+    {
+        VULKAN_ERROR("Device cannot be nullptr");
+        return;
+    }
+
     // VK_KHR_buffer_device_address (Core in 1.2)
     if (Device->IsExtensionEnabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
     {
@@ -468,7 +488,11 @@ bool FVulkanRobustness2EXT::bSupportsNullDescriptors = false;
 
 void FVulkanRobustness2EXT::Initialize(FVulkanDevice* Device)
 {
-    VULKAN_ERROR_COND(Device != nullptr, "Device cannot be nullptr");
+    if (!Device)
+    {
+        VULKAN_ERROR("Device cannot be nullptr");
+        return;
+    }
 
 #if VK_EXT_robustness2
     if (Device->IsExtensionEnabled(VK_EXT_ROBUSTNESS_2_EXTENSION_NAME))

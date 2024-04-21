@@ -236,7 +236,7 @@ void FD3D12OnlineDescriptorHeap::RecycleBlock(FD3D12OnlineDescriptorBlock* InBlo
     BlockQueue.Enqueue(InBlock);
 }
 
-void FD3D12OnlineDescriptorHeap::FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock, uint64 FenceValue)
+void FD3D12OnlineDescriptorHeap::FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock)
 {
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(FenceValue, this, InBlock);
+    FD3D12RHI::GetRHI()->DeferDeletion(this, InBlock);
 }

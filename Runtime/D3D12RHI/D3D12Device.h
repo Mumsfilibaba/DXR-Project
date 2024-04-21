@@ -4,15 +4,12 @@
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandListManager.h"
-#include "D3D12CommandAllocator.h"
-#include "D3D12DeferredDeletionQueue.h"
 #include "Core/Containers/SharedRef.h"
 
+#include <DXProgrammableCapture.h>
 #if WIN10_BUILD_17134
     #include <dxgi1_6.h>
 #endif
-
-#include <DXProgrammableCapture.h>
 
 class FD3D12Device;
 class FD3D12Adapter;
@@ -172,24 +169,17 @@ public:
 
     int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
+    FD3D12CommandListManager*      GetCommandListManager(ED3D12CommandQueueType QueueType);
+    FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
 
     ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
     {
         FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
-        CHECK(CommandListManager != nullptr);
-        return CommandListManager->GetD3D12CommandQueue();
+        return CommandListManager ? CommandListManager->GetD3D12CommandQueue() : nullptr;
     }
 
-    FD3D12CommandListManager& GetDirectCommandListManager()  { return DirectCommandListManager; }
-    FD3D12CommandListManager& GetCopyCommandListManager()    { return CopyCommandListManager; }
-    FD3D12CommandListManager& GetComputeCommandListManager() { return ComputeCommandListManager; }
-
-    FD3D12UploadHeapAllocator& GetUploadAllocator() { return UploadAllocator; }
-
-    FD3D12CommandAllocatorManager& GetCopyCommandAllocatorManager() { return CopyCommandAllocatorManager; }
-    FD3D12RootSignatureManager&    GetRootSignatureManager()        { return RootSignatureManager; }
-    FD3D12DeferredDeletionQueue&   GetDeferredDeletionQueue()       { return DeferredDeletionQueue; }
+    FD3D12UploadHeapAllocator&  GetUploadAllocator()      { return UploadAllocator; }
+    FD3D12RootSignatureManager& GetRootSignatureManager() { return RootSignatureManager; }
     
     FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return GlobalResourceHeap; }
     FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap()  { return GlobalSamplerHeap; }
@@ -251,25 +241,24 @@ private:
     FD3D12OnlineDescriptorHeap    GlobalResourceHeap;
     FD3D12OnlineDescriptorHeap    GlobalSamplerHeap;
 
+    FD3D12UploadHeapAllocator     UploadAllocator;
     FD3D12RootSignatureManager    RootSignatureManager;
 
     FD3D12CommandListManager      DirectCommandListManager;
     FD3D12CommandListManager      CopyCommandListManager;
     FD3D12CommandListManager      ComputeCommandListManager;
 
+    FD3D12CommandAllocatorManager DirectCommandAllocatorManager;
     FD3D12CommandAllocatorManager CopyCommandAllocatorManager;
-
-    FD3D12UploadHeapAllocator     UploadAllocator;
-    FD3D12DeferredDeletionQueue   DeferredDeletionQueue;
+    FD3D12CommandAllocatorManager ComputeCommandAllocatorManager;
 
     FD3D12RayTracingDesc          RayTracingDesc;
     FD3D12MeshShadingDesc         MeshShadingDesc;
     FD3D12SamplerFeedbackDesc     SamplerFeedbackDesc;
     FD3D12VariableRateShadingDesc VariableRateShadingDesc;
     
-    D3D_FEATURE_LEVEL MinFeatureLevel;
-    D3D_FEATURE_LEVEL ActiveFeatureLevel;
-
+    D3D_FEATURE_LEVEL                MinFeatureLevel;
+    D3D_FEATURE_LEVEL                ActiveFeatureLevel;
     D3D12_RESOURCE_BINDING_TIER      ResourceBindingTier;
     D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier;
     

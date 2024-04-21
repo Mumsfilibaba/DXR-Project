@@ -589,7 +589,12 @@ bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
 
 FString FVulkanRHI::RHIGetAdapterName() const
 {
-    VULKAN_ERROR_COND(PhysicalDevice != nullptr, "PhysicalDevice is not initialized properly");
+    if (!PhysicalDevice)
+    {
+        VULKAN_ERROR("PhysicalDevice is not initialized properly");
+        return FString();
+    }
+
     VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
     return FString(DeviceProperties.deviceName);
 }

@@ -4,6 +4,7 @@
 #include "VulkanViewport.h"
 #include "VulkanBuffer.h"
 #include "VulkanDevice.h"
+#include "Core/Misc/FrameProfiler.h"
 
 FBarrierBatcher::FBarrierBatcher(FVulkanCommandContext& InContext)
     : Context(InContext)
@@ -136,25 +137,35 @@ void FVulkanCommandContext::RHIEndFrame()
 
 void FVulkanCommandContext::ObtainCommandBuffer()
 {
-    // Retrieve a CommandPool if there are none
+    TRACE_FUNCTION_SCOPE();
+
     if (!CommandPool)
     {
         CommandPool = Queue.ObtainCommandPool();
-        CHECK(CommandPool != nullptr);
+        if (!CommandPool)
+        {
+            VULKAN_ERROR("Failed to Obtain CommandPool");
+            return;
+        }
     }
     
     // At this point we cannot have a valid CommandBuffer
-    CHECK(CommandBuffer == nullptr);
-    CommandBuffer = CommandPool->CreateBuffer();
-    CHECK(CommandBuffer != nullptr);
-    
-    // Begin to record to this CommandPool
-    if (!CommandBuffer->Begin())
+    if (!CommandBuffer)
     {
-        VULKAN_ERROR("Failed to Begin CommandBuffer");
-        DEBUG_BREAK();
+        CommandBuffer = CommandPool->CreateBuffer();
+        if (!CommandBuffer)
+        {
+            VULKAN_ERROR("Failed to Obtain CommandBuffer");
+            return;
+        }
+
+        // Begin to record to this CommandBuffer
+        if (!CommandBuffer->Begin())
+        {
+            VULKAN_ERROR("Failed to Begin CommandBuffer");
+        }
     }
-    
+
     if (!CommandPayload)
     {
         CommandPayload = new FVulkanCommandPayload(GetDevice(), Queue);
@@ -165,30 +176,28 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
 {
     CHECK(CommandBuffer != nullptr);
     
-    if (CommandBuffer->IsRecording())
-    {
-        // Flush barrier before we submit the CommandBuffer
-        BarrierBatcher.FlushBarriers();
+    // Flush barrier before we submit the CommandBuffer
+    BarrierBatcher.FlushBarriers();
 
+    const uint32 NumCommands = CommandBuffer->GetNumCommands();
+    if (NumCommands > 0)
+    {
         if (!CommandBuffer->End())
         {
             VULKAN_ERROR("Failed to End CommandBuffer");
-            DEBUG_BREAK();
         }
+
+        CommandPayload->AddCommandBuffer(CommandBuffer);
+        CommandBuffer = nullptr;
 
         if (bFlushPool)
         {
             CommandPayload->AddCommandPool(CommandPool);
             CommandPool = nullptr;
         }
-        
-        CommandPayload->AddCommandBuffer(CommandBuffer);
-        CommandBuffer = nullptr;
 
         for (FVulkanQuery* Query : Queries)
-        {
             CommandPayload->QueryPools.Add(Query->DetachQueryPool());
-        }
 
         Queries.Clear();
 

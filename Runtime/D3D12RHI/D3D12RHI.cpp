@@ -1,5 +1,4 @@
 #include "D3D12CommandList.h"
-#include "D3D12CommandAllocator.h"
 #include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Core.h"
@@ -38,6 +37,10 @@ FD3D12RHI::FD3D12RHI()
     : FRHI(ERHIType::D3D12)
     , Device(nullptr)
     , DirectContext(nullptr)
+    , ResourceOfflineDescriptorHeap(nullptr)
+    , RenderTargetOfflineDescriptorHeap(nullptr)
+    , DepthStencilOfflineDescriptorHeap(nullptr)
+    , SamplerOfflineDescriptorHeap(nullptr)
 {
     if (!GD3D12RHI)
     {
@@ -49,7 +52,23 @@ FD3D12RHI::~FD3D12RHI()
 {
     SAFE_DELETE(DirectContext);
 
-    SamplerStateMap.Clear();
+    // Delete all samplers
+    {
+        TScopedLock Lock(SamplerStateMapCS);
+        SamplerStateMap.Clear();
+    }
+
+    // Ensure all pending commands get's finished
+    while (!PendingSubmissions.IsEmpty())
+    {
+        ProcessPendingCommands();
+    }
+
+    // Delete all remaining resources
+    {
+        TScopedLock Lock(DeletionQueueCS);
+        FD3D12DeferredObject::ProcessItems(DeletionQueue);
+    }
 
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
@@ -875,4 +894,57 @@ bool FD3D12RHI::RHIQueryUAVFormatSupport(EFormat Format) const
     }
 
     return true;
+}
+
+void FD3D12RHI::EnqueueResourceDeletion(FRHIResource* Resource)
+{
+    if (Resource)
+    {
+        DeferDeletion(Resource);
+    }
+}
+    
+void FD3D12RHI::ProcessPendingCommands()
+{
+    bool bProcess = true;
+    while (bProcess)
+    {
+        FD3D12CommandPayload* CommandPayload = nullptr;
+        if (PendingSubmissions.Peek(CommandPayload))
+        {
+            CHECK(CommandPayload != nullptr);
+            if (!CommandPayload->SyncPoint.IsReached())
+            {
+                bProcess = false;
+                break;
+            }
+            else
+            {
+                // If we are finished we remove the item from the queue
+                PendingSubmissions.Dequeue();
+                CommandPayload->Finish();
+            }
+        }
+        else
+        {
+            bProcess = false;
+        }
+    }
+}
+
+void FD3D12RHI::SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue)
+{
+    CHECK(CommandPayload != nullptr);
+
+    if (!CommandPayload->IsEmpty())
+    {
+        if (bFlushDeletionQueue)
+        {
+            TScopedLock Lock(DeletionQueueCS);
+            CommandPayload->DeletionQueue = Move(DeletionQueue);
+        }
+
+        CommandPayload->SyncPoint = CommandPayload->CommandListManager->ExecuteCommandLists(CommandPayload->CommandLists.Data(), CommandPayload->CommandLists.Size(), false);
+        PendingSubmissions.Enqueue(CommandPayload);
+    }
 }

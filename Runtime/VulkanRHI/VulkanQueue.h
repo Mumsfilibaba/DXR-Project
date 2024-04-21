@@ -104,10 +104,10 @@ struct FVulkanCommandPayload
         return CommandBuffers.IsEmpty();
     }
 
-    FVulkanQueue&  Queue;
-    FVulkanFence*  Fence;
-    FVulkanDevice* Device;
-
+    FVulkanQueue&                 Queue;
+    FVulkanFence*                 Fence;
+    FVulkanDevice*                Device;
+    
     TArray<FVulkanCommandPool*>   CommandPools;
     TArray<FVulkanCommandBuffer*> CommandBuffers;
     TArray<FVulkanQueryPool*>     QueryPools;

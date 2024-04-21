@@ -60,8 +60,17 @@ bool FD3D12Viewport::Initialize()
         Desc.Height = uint16(ClientRect.bottom - ClientRect.top);
     }
 
-    D3D12_ERROR_COND(Desc.Width  != 0, "Viewport-width of zero is not supported");
-    D3D12_ERROR_COND(Desc.Height != 0, "Viewport-height of zero is not supported");
+    if (!Desc.Width)
+    {
+        D3D12_ERROR("Viewport width of zero is not supported");
+        return false;
+    }
+
+    if (!Desc.Height)
+    {
+        D3D12_ERROR("Viewport height of zero is not supported");
+        return false;
+    }
 
     DXGI_SWAP_CHAIN_DESC1 SwapChainDesc;
     FMemory::Memzero(&SwapChainDesc);

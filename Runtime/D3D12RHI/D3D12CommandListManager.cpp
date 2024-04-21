@@ -1,5 +1,4 @@
 #include "D3D12CommandListManager.h"
-#include "D3D12CommandAllocator.h"
 #include "D3D12Device.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
@@ -8,7 +7,6 @@ static TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
     "D3D12RHI.EnableGPUTimeout",
     "Enables or disables the GPU timeout on all ID3D12CommandQueues",
     true);
-
 
 FD3D12CommandListManager::FD3D12CommandListManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)
@@ -100,15 +98,11 @@ FD3D12CommandList* FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAllo
     else
     {
         AvailableCommandLists.Dequeue(CommandList);
-
-        // TODO: Enable when we handle fences better
-    #if 0
         if (!CommandList->Reset(CommandAllocator))
         {
             DEBUG_BREAK();
             return nullptr;
         }
-    #endif
     }
 
     return CommandList;
@@ -136,4 +130,73 @@ FD3D12FenceSyncPoint FD3D12CommandListManager::ExecuteCommandList(FD3D12CommandL
     }
 
     return FD3D12FenceSyncPoint(FenceManager.GetFence(), FenceValue);
+}
+
+FD3D12FenceSyncPoint FD3D12CommandListManager::ExecuteCommandLists(FD3D12CommandList* const* InCommandLists, uint32 NumCommandLists, bool bWaitForCompletion)
+{
+    CHECK(InCommandLists != nullptr);
+
+    TArray<ID3D12CommandList*> D3DCommandLists;
+    D3DCommandLists.Reserve(NumCommandLists);
+
+    for (uint32 Index = 0; Index < NumCommandLists; Index++)
+    {
+        D3DCommandLists.Add(InCommandLists[Index]->GetCommandList());
+    }
+
+    CommandQueue->ExecuteCommandLists(D3DCommandLists.Size(), D3DCommandLists.Data());
+
+    const uint64 FenceValue = FenceManager.SignalGPU(QueueType);
+    if (bWaitForCompletion)
+    {
+        FenceManager.WaitForFence(FenceValue);
+    }
+
+    return FD3D12FenceSyncPoint(FenceManager.GetFence(), FenceValue);
+}
+
+FD3D12CommandPayload::FD3D12CommandPayload(FD3D12Device* InDevice, FD3D12CommandListManager* InCommandListManager)
+    : CommandListManager(InCommandListManager)
+    , Device(InDevice)
+    , SyncPoint()
+    , CommandAllocators()
+    , CommandLists()
+    , Queries()
+    , DeletionQueue()
+{
+}
+
+FD3D12CommandPayload::~FD3D12CommandPayload()
+{
+}
+
+void FD3D12CommandPayload::Finish()
+{
+    // Delete all the resources that has been queued up for destruction
+    FD3D12DeferredObject::ProcessItems(DeletionQueue);
+    DeletionQueue.Clear();
+
+    // TODO: Here we want to update the Query objects with the data from the pools that just finished
+    //for (FD3D12Query* Query : Queries)
+        //Query->ResolveQueries();
+
+    Queries.Clear();
+        
+    // Recycle all the CommandLists
+    for (FD3D12CommandList* CommandList : CommandLists)
+        CommandListManager->RecycleCommandList(CommandList);
+
+    CommandLists.Clear();
+
+    // Recycle all the CommandAllocators
+    for (FD3D12CommandAllocator* CommandAllocator : CommandAllocators)
+    {
+        FD3D12CommandAllocatorManager* CommandAllocatorManager = Device->GetCommandAllocatorManager(CommandAllocator->GetQueueType());
+        CommandAllocatorManager->RecycleAllocator(CommandAllocator);
+    }
+    
+    CommandAllocators.Clear();
+    
+    // Destroy this instance after execution is finished
+    delete this;
 }

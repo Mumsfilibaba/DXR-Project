@@ -86,15 +86,14 @@ void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Res
 FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : IRHICommandContext()
     , FD3D12DeviceChild(InDevice)
-    , QueueType(InQueueType)
     , CommandList(nullptr)
     , CommandAllocator(nullptr)
-    , CommandAllocatorManager(InDevice, InQueueType)
+    , CommandPayload(nullptr)
     , ContextState(InDevice, *this)
-    , AssignedFenceValue(0)
-    , CommandContextCS()
-    , ResolveQueries()
+    , QueueType(InQueueType)
     , BarrierBatcher()
+    , ResolveQueries()
+    , CommandContextCS()
 {
 }
 
@@ -118,88 +117,117 @@ void FD3D12CommandContext::ObtainCommandList()
 {
     TRACE_FUNCTION_SCOPE();
 
+    FD3D12CommandAllocatorManager* CommandAllocatorManager = GetDevice()->GetCommandAllocatorManager(QueueType);
+    CHECK(CommandAllocatorManager != nullptr);
+
     if (!CommandAllocator)
     {
-        CommandAllocator = CommandAllocatorManager.ObtainAllocator();
+        CommandAllocator = CommandAllocatorManager->ObtainAllocator();
         if (!CommandAllocator)
         {
             D3D12_ERROR("Failed to Obtain CommandAllocator");
         }
     }
 
+    FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
+    CHECK(CommandListManager != nullptr);
+
     if (!CommandList)
     {
-        CommandList = GetDevice()->GetCommandListManager(QueueType)->ObtainCommandList(CommandAllocator, nullptr);
+        CommandList = CommandListManager->ObtainCommandList(CommandAllocator, nullptr);
         if (!CommandList)
         {
             D3D12_ERROR("Failed to initialize CommandList");
         }
     }
-    else if (AssignedFenceValue == 0)
-    {
-        if (!CommandList->IsReady())
-        {
-            if (!CommandList->Reset(CommandAllocator))
-            {
-                D3D12_ERROR("Failed to reset Commandlist");
-            }
-        }
-    }
 
-    if (FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType))
+    if (!CommandPayload)
     {
-        AssignedFenceValue = CommandListManager->GetFenceManager().GetCurrentValue() + 1;
-        CHECK(AssignedFenceValue != 0);
-    }
-    else
-    {
-        DEBUG_BREAK();
+        CommandPayload = new FD3D12CommandPayload(GetDevice(), CommandListManager);
     }
 }
 
-void FD3D12CommandContext::FinishCommandList()
+void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
 {
     TRACE_FUNCTION_SCOPE();
 
     FlushResourceBarriers();
 
+    // Ensure that any used queries get's resolved
     for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
-    {
         ResolveQueries[QueryIndex]->ResolveQueries(*this);
-    }
 
     ResolveQueries.Clear();
 
-    // Only execute if we have executed any commands
+    // Flush Commands
     const uint32 NumCommands = CommandList->GetNumCommands();
     if (NumCommands > 0)
     {
-        // Close CommandList
         if (!CommandList->Close())
         {
             D3D12_ERROR("Failed to close CommandList");
             return;
         }
 
-        // Execute and update fence-value
-        FD3D12FenceSyncPoint SyncPoint = GetDevice()->GetCommandListManager(QueueType)->ExecuteCommandList(CommandList, false);
+        CHECK(CommandPayload != nullptr);   
+        CommandPayload->AddCommandList(CommandList);
+        CommandList = nullptr;
 
-        // Release Allocator
-        CommandAllocatorManager.ReleaseAllocator(CommandAllocator);
-        CommandAllocator = nullptr;
+        CommandPayload->Queries = Move(ResolveQueries);
+
+        if (bFlushAllocator)
+        {
+            CommandPayload->AddCommandAllocator(CommandAllocator);
+            CommandAllocator = nullptr;
+        }
+
+        FD3D12RHI::GetRHI()->SubmitCommands(CommandPayload, true);
+        CommandPayload = nullptr;
     }
 
     // Ensure that the state will rebind the necessary state when we obtain a new CommandList
     ContextState.ResetStateForNewCommandList();
+}
 
-    // TODO: With multiple contexts this will not be safe
-    AssignedFenceValue = 0;
+void FD3D12CommandContext::RHIStartContext()
+{
+    // TODO: Remove lock, the command context itself should only be used from a single thread
+    // Lock to the thread that started the context
+    CommandContextCS.Lock();
+
+    // Reset the state
+    ContextState.ResetState();
+
+    // Process submitted commands
+    FD3D12RHI::GetRHI()->ProcessPendingCommands();
+
+    // Retrieve a new CommandList
+    ObtainCommandList();
+}
+
+void FD3D12CommandContext::RHIFinishContext()
+{
+    // Submit the CommandList
+    FinishCommandList(true);
+
+    // TODO: Remove lock, the command context itself should only be used from a single thread
+    // Unlock from the thread that started the context
+    CommandContextCS.Unlock();
 }
 
 void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SrcData)
 {
-    D3D12_ERROR_COND(Resource != nullptr, "Resource cannot be nullptr");
-    D3D12_ERROR_COND(SrcData != nullptr, "SourceData cannot be nullptr");
+    if (!Resource)
+    {
+        D3D12_ERROR("Resource cannot be nullptr");
+        return;
+    }
+
+    if (!SrcData)
+    {
+        D3D12_ERROR("SourceData cannot be nullptr");
+        return;
+    }
 
     if (!BufferRegion.Size)
     {
@@ -241,49 +269,35 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
         GetCommandList()->CopyBufferRegion(Resource->GetD3D12Resource(), BufferRegion.Offset, Allocation.Resource.Get(), Allocation.ResourceOffset, BufferRegion.Size);
 
         // Defer deletion of the upload buffer
-        GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Allocation.Resource.Get());
+        FD3D12RHI::GetRHI()->DeferDeletion(Allocation.Resource.Get());
     }
 
     // Defer deletion of the destination resource
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Resource);
-}
-
-void FD3D12CommandContext::RHIStartContext()
-{
-    // TODO: Remove lock, the command context itself should only be used from a single thread
-    // Lock to the thread that started the context
-    CommandContextCS.Lock();
-
-    // Reset the state
-    ContextState.ResetState();
-
-    // Retrieve a new CommandList
-    ObtainCommandList();
-}
-
-void FD3D12CommandContext::RHIFinishContext()
-{
-    // Submit the CommandList
-    FinishCommandList();
-
-    // TODO: Remove lock, the command context itself should only be used from a single thread
-    // Unlock from the thread that started the context
-    CommandContextCS.Unlock();
+    FD3D12RHI::GetRHI()->DeferDeletion(Resource);
 }
 
 void FD3D12CommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
 {
     FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
-    D3D12_ERROR_COND(D3D12Query != nullptr, "Query cannot be nullptr");
-    D3D12Query->BeginQuery(GetCommandList(), Index);
+    if (!D3D12Query)
+    {
+        D3D12_ERROR("Query cannot be nullptr");
+        return;
+    }
 
-    ResolveQueries.AddUnique(MakeSharedRef<FD3D12Query>(D3D12Query));
+    D3D12Query->BeginQuery(GetCommandList(), Index);
+    ResolveQueries.AddUnique(D3D12Query);
 }
 
 void FD3D12CommandContext::RHIEndTimeStamp(FRHIQuery* Query, uint32 Index)
 {
     FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
-    D3D12_ERROR_COND(D3D12Query != nullptr, "Query cannot be nullptr");
+    if (!D3D12Query)
+    {
+        D3D12_ERROR("Query cannot be nullptr");
+        return;
+    }
+
     D3D12Query->EndQuery(GetCommandList(), Index);
 }
 
@@ -292,7 +306,11 @@ void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& 
     FlushResourceBarriers();
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(RenderTargetView.Texture);
-    D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
+    if (!D3D12Texture)
+    {
+        D3D12_ERROR("Texture cannot be nullptr when clearing the surface");
+        return;
+    }
 
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRenderTargetView(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
@@ -304,7 +322,11 @@ void FD3D12CommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& 
     FlushResourceBarriers();
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(DepthStencilView.Texture);
-    D3D12_ERROR_COND(D3D12Texture != nullptr, "Texture cannot be nullptr when clearing the surface");
+    if (!D3D12Texture)
+    {
+        D3D12_ERROR("Texture cannot be nullptr when clearing the surface");
+        return;
+    }
 
     FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDepthStencilView(DepthStencilView);
     CHECK(D3D12DepthStencilView != nullptr);
@@ -313,12 +335,16 @@ void FD3D12CommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& 
 
 void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
-    D3D12_ERROR_COND(UnorderedAccessView != nullptr, "UnorderedAccessView cannot be nullptr when clearing the surface");
+    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
+    if (!D3D12UnorderedAccessView)
+    {
+        D3D12_ERROR("UnorderedAccessView cannot be nullptr when clearing the surface");
+        return;
+    }
+
+    FD3D12RHI::GetRHI()->DeferDeletion(D3D12UnorderedAccessView);
 
     FlushResourceBarriers();
-
-    FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, D3D12UnorderedAccessView);
 
     // Ensure there are enough allocators for a new descriptor
     FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
@@ -463,7 +489,11 @@ void FD3D12CommandContext::RHISetComputePipelineState(class FRHIComputePipelineS
 void FD3D12CommandContext::RHISet32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
     ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
 }
@@ -471,9 +501,13 @@ void FD3D12CommandContext::RHISet32BitShaderConstants(FRHIShader* Shader, const 
 void FD3D12CommandContext::RHISetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
     ContextState.SetSRV(D3D12ShaderResourceView, D3D12Shader->GetShaderVisibility(), ParameterIndex);
 }
@@ -481,9 +515,13 @@ void FD3D12CommandContext::RHISetShaderResourceView(FRHIShader* Shader, FRHIShad
 void FD3D12CommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex + InShaderResourceViews.Size() <= D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex + InShaderResourceViews.Size() <= D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
     {
         FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(InShaderResourceViews[Index]);
@@ -494,9 +532,13 @@ void FD3D12CommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const T
 void FD3D12CommandContext::RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
     FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
     ContextState.SetUAV(D3D12UnorderedAccessView, D3D12Shader->GetShaderVisibility(), ParameterIndex);
 }
@@ -504,9 +546,13 @@ void FD3D12CommandContext::RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUno
 void FD3D12CommandContext::RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex + InUnorderedAccessViews.Size() <= D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex + InUnorderedAccessViews.Size() <= D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
     {
         FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(InUnorderedAccessViews[Index]);
@@ -517,9 +563,13 @@ void FD3D12CommandContext::RHISetUnorderedAccessViews(FRHIShader* Shader, const 
 void FD3D12CommandContext::RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
     FD3D12ConstantBufferView* D3D12ConstantBufferView = nullptr;
     if (ConstantBuffer)
     {
@@ -533,9 +583,13 @@ void FD3D12CommandContext::RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* 
 void FD3D12CommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex + InConstantBuffers.Size() <= D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex + InConstantBuffers.Size() <= D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
     {
         FD3D12ConstantBufferView* D3D12ConstantBufferView = nullptr;
@@ -552,9 +606,13 @@ void FD3D12CommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArra
 void FD3D12CommandContext::RHISetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
     FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(SamplerState);
     ContextState.SetSampler(D3D12SamplerState, D3D12Shader->GetShaderVisibility(), ParameterIndex);
 }
@@ -562,9 +620,13 @@ void FD3D12CommandContext::RHISetSamplerState(FRHIShader* Shader, FRHISamplerSta
 void FD3D12CommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    CHECK(D3D12Shader != nullptr);
-    CHECK(ParameterIndex + InSamplerStates.Size() <= D3D12_DEFAULT_SAMPLER_STATE_COUNT);
+    if (!D3D12Shader)
+    {
+        D3D12_ERROR("Shader cannot be nullptr");
+        return;
+    }
 
+    CHECK(ParameterIndex + InSamplerStates.Size() <= D3D12_DEFAULT_SAMPLER_STATE_COUNT);
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
     {
         FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(InSamplerStates[Index]);
@@ -574,7 +636,11 @@ void FD3D12CommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArrayV
 
 void FD3D12CommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
+    if (!Dst || !Src)
+    {
+        D3D12_ERROR("Dst or Src cannot be nullptr");
+        return;
+    }
 
     FlushResourceBarriers();
 
@@ -584,11 +650,16 @@ void FD3D12CommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     const DXGI_FORMAT SrcFormat = D3D12Source->GetDXGIFormat();
 
     //TODO: For now texture must be the same format. I.e typeless does probably not work
-    D3D12_ERROR_COND(DstFormat == SrcFormat, "Dst and Src texture must have the same format");
+    if (DstFormat != SrcFormat)
+    {
+        D3D12_ERROR("Dst or Src must have the same formats");
+        return;
+    }
+
     GetCommandList()->ResolveSubresource(D3D12Destination->GetD3D12Resource()->GetD3D12Resource(), 0, D3D12Source->GetD3D12Resource()->GetD3D12Resource(), 0, DstFormat);
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Dst);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Src);
+    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
+    FD3D12RHI::GetRHI()->DeferDeletion(Src);
 }
 
 void FD3D12CommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
@@ -602,15 +673,27 @@ void FD3D12CommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion&
 
 void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch)
 {
-    D3D12_ERROR_COND(SrcData != nullptr, "SrcData cannot be nullptr");
+    if (!SrcData)
+    {
+        D3D12_ERROR("SrcData cannot be nullptr");
+        return;
+    }
 
     FlushResourceBarriers();
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
-    D3D12_ERROR_COND(D3D12Destination != nullptr, "Dst cannot be nullptr");
+    if (!D3D12Destination)
+    {
+        D3D12_ERROR("Dst cannot be nullptr");
+        return;
+    }
 
     FD3D12Resource* D3D12Resource = D3D12Destination->GetD3D12Resource();
-    D3D12_ERROR_COND(D3D12Resource != nullptr, "Resource cannot be nullptr");
+    if (!D3D12Resource)
+    {
+        D3D12_ERROR("Resource cannot be nullptr");
+        return;
+    }
 
     D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
 
@@ -660,13 +743,17 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
 
     GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Dst);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Allocation.Resource.Get());
+    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
+    FD3D12RHI::GetRHI()->DeferDeletion(Allocation.Resource.Get());
 }
 
 void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo)
 {
-    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
+    if (!Dst || !Src)
+    {
+        D3D12_ERROR("Dst or Src cannot be nullptr");
+        return;
+    }
 
     FlushResourceBarriers();
 
@@ -678,13 +765,17 @@ void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const
 
     GetCommandList()->CopyBufferRegion(D3D12Destination->GetD3D12Resource()->GetD3D12Resource(), CopyInfo.DstOffset, D3D12Source->GetD3D12Resource()->GetD3D12Resource(), CopyInfo.SrcOffset, CopyInfo.Size);
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Dst);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Src);
+    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
+    FD3D12RHI::GetRHI()->DeferDeletion(Src);
 }
 
 void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
+    if (!Dst || !Src)
+    {
+        D3D12_ERROR("Dst or Src cannot be nullptr");
+        return;
+    }
 
     FlushResourceBarriers();
 
@@ -696,13 +787,17 @@ void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     
     GetCommandList()->CopyResource(D3D12Destination->GetD3D12Resource()->GetD3D12Resource(), D3D12Source->GetD3D12Resource()->GetD3D12Resource());
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Dst);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Src);
+    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
+    FD3D12RHI::GetRHI()->DeferDeletion(Src);
 }
 
 void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& InCopyDesc)
 {
-    D3D12_ERROR_COND(Dst != nullptr && Src != nullptr, "Dst or Src cannot be nullptr");
+    if (!Dst || !Src)
+    {
+        D3D12_ERROR("Dst or Src cannot be nullptr");
+        return;
+    }
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
     CHECK(D3D12Destination != nullptr);
@@ -756,13 +851,16 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
         }
     }
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Dst);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Src);
+    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
+    FD3D12RHI::GetRHI()->DeferDeletion(Src);
 }
 
 void FD3D12CommandContext::RHIDestroyResource(FRHIResource* Resource)
 {
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, Resource);
+    if (Resource)
+    {
+        FD3D12RHI::GetRHI()->DeferDeletion(Resource);
+    }
 }
 
 void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
@@ -776,28 +874,36 @@ void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
 
 void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo)
 {
-    D3D12_ERROR_COND(RayTracingScene != nullptr, "RayTracingScene cannot be nullptr");
+    if (!RayTracingScene)
+    {
+        D3D12_ERROR("RayTracingScene cannot be nullptr");
+        return;
+    }
 
     FlushResourceBarriers();
 
     FD3D12RayTracingScene* D3D12RayTracingScene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
     D3D12RayTracingScene->Build(*this, BuildInfo);
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, RayTracingScene);
+    FD3D12RHI::GetRHI()->DeferDeletion(RayTracingScene);
 }
 
 void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo)
 {
-    D3D12_ERROR_COND(RayTracingGeometry != nullptr, "RayTracingGeometry cannot be nullptr");
+    if (!RayTracingGeometry)
+    {
+        D3D12_ERROR("RayTracingGeometry cannot be nullptr");
+        return;
+    }
 
     FlushResourceBarriers();
 
     FD3D12RayTracingGeometry* D3D12RayTracingGeometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
     D3D12RayTracingGeometry->Build(*this, BuildInfo);
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, BuildInfo.VertexBuffer);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, BuildInfo.IndexBuffer);
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, RayTracingGeometry);
+    FD3D12RHI::GetRHI()->DeferDeletion(BuildInfo.VertexBuffer);
+    FD3D12RHI::GetRHI()->DeferDeletion(BuildInfo.IndexBuffer);
+    FD3D12RHI::GetRHI()->DeferDeletion(RayTracingGeometry);
 }
 
 void FD3D12CommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)
@@ -1098,7 +1204,7 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
 
     FlushResourceBarriers();
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, StagingTexture.Get());
+    FD3D12RHI::GetRHI()->DeferDeletion(StagingTexture.Get());
 }
 
 void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -1109,7 +1215,7 @@ void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceA
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, D3D12Texture);
+    FD3D12RHI::GetRHI()->DeferDeletion(D3D12Texture);
 }
 
 void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -1120,7 +1226,7 @@ void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcce
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
     TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 
-    GetDevice()->GetDeferredDeletionQueue().DeferDeletion(AssignedFenceValue, D3D12Buffer);
+    FD3D12RHI::GetRHI()->DeferDeletion(D3D12Buffer);
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
@@ -1178,10 +1284,18 @@ void FD3D12CommandContext::RHIDispatch(uint32 ThreadGroupCountX, uint32 ThreadGr
 void FD3D12CommandContext::RHIDispatchRays(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
 {
     FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
-    D3D12_ERROR_COND(D3D12Scene != nullptr, "RayTracingScene cannot be nullptr");
+    if (!D3D12Scene)
+    {
+        D3D12_ERROR("RayTracingScene cannot be nullptr");
+        return;
+    }
 
     FD3D12RayTracingPipelineState* D3D12PipelineState = static_cast<FD3D12RayTracingPipelineState*>(PipelineState);
-    D3D12_ERROR_COND(D3D12PipelineState != nullptr, "PipelineState cannot be nullptr");
+    if (!D3D12PipelineState)
+    {
+        D3D12_ERROR("PipelineState cannot be nullptr");
+        return;
+    }
 
     FlushResourceBarriers();
 
@@ -1203,7 +1317,7 @@ void FD3D12CommandContext::RHIDispatchRays(FRHIRayTracingScene* RayTracingScene,
 void FD3D12CommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync)
 {
     // Ensure that commands are submitted
-    FinishCommandList();
+    FinishCommandList(true);
 
     FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
     D3D12Viewport->Present(bVerticalSync);
@@ -1224,7 +1338,7 @@ void FD3D12CommandContext::RHIClearState()
 
     if (CommandList)
     {
-        FinishCommandList();
+        FinishCommandList(true);
     }
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
@@ -1242,7 +1356,7 @@ void FD3D12CommandContext::RHIFlush()
 
     if (CommandList)
     {
-        FinishCommandList();
+        FinishCommandList(true);
     }
 
     FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);

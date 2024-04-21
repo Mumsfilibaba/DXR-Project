@@ -2,7 +2,6 @@
 #include "D3D12Fence.h"
 #include "D3D12RootSignature.h"
 #include "D3D12CommandList.h"
-#include "D3D12CommandAllocator.h"
 #include "D3D12Query.h"
 #include "D3D12Texture.h"
 #include "D3D12CommandContextState.h"
@@ -138,11 +137,10 @@ public:
         return reinterpret_cast<void*>(&CommandList);
     }
 
-public:
     bool Initialize();
 
     void ObtainCommandList();
-    void FinishCommandList();
+    void FinishCommandList(bool bFlushAllocator);
 
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
@@ -150,22 +148,6 @@ public:
     {
         CHECK(CommandList != nullptr);
         return *CommandList; 
-    }
-
-    FD3D12CommandAllocatorManager& GetCommandAllocatorManager()
-    {
-        return CommandAllocatorManager;
-    }
-
-    FD3D12CommandAllocator& GetCommandAllocator()
-    {
-        CHECK(CommandAllocator != nullptr);
-        return *CommandAllocator;
-    }
-    
-    uint32 GetCurrentBatchIndex() const
-    {
-        return 0;
     }
 
     void UnorderedAccessBarrier(FD3D12Resource* Resource)
@@ -180,29 +162,21 @@ public:
         BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
     }
 
-    void FlushResourceBarriers() 
+    void FlushResourceBarriers()
     { 
         BarrierBatcher.FlushBarriers(*CommandList);
     }
 
-    uint64 GetAssignedFenceValue() const
-    {
-        return AssignedFenceValue;
-    }
-
 private:
-    FD3D12CommandList*            CommandList;
-    FD3D12CommandAllocator*       CommandAllocator;
-    FD3D12CommandAllocatorManager CommandAllocatorManager;
-    FD3D12CommandContextState     ContextState;
-    ED3D12CommandQueueType        QueueType;
+    FD3D12CommandList*           CommandList;
+    FD3D12CommandAllocator*      CommandAllocator;
+    FD3D12CommandPayload*        CommandPayload;
+    FD3D12CommandContextState    ContextState;
+    ED3D12CommandQueueType       QueueType;
+    FD3D12ResourceBarrierBatcher BarrierBatcher;
+    TArray<FD3D12Query*>         ResolveQueries;
 
-    uint64 AssignedFenceValue;
-    
     bool bIsCapturing : 1;
-
-    FD3D12ResourceBarrierBatcher    BarrierBatcher;
-    TArray<FD3D12QueryRef> ResolveQueries;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection CommandContextCS;

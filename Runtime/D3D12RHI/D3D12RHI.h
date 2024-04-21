@@ -113,6 +113,18 @@ public:
         return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
     }
 
+    template<typename... ArgTypes>
+    void DeferDeletion(ArgTypes&&... Args)
+    {
+        TScopedLock Lock(DeletionQueueCS);
+        DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
+    }
+
+    void EnqueueResourceDeletion(FRHIResource* Resource);
+    
+    void ProcessPendingCommands();
+    void SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue);
+
     FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
@@ -141,16 +153,21 @@ private:
     FD3D12Device*         Device;
     FD3D12CommandContext* DirectContext;
 
-    FD3D12OfflineDescriptorHeap*  ResourceOfflineDescriptorHeap     = nullptr;
-    FD3D12OfflineDescriptorHeap*  RenderTargetOfflineDescriptorHeap = nullptr;
-    FD3D12OfflineDescriptorHeap*  DepthStencilOfflineDescriptorHeap = nullptr;
-    FD3D12OfflineDescriptorHeap*  SamplerOfflineDescriptorHeap      = nullptr;
+    FD3D12OfflineDescriptorHeap*  ResourceOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*  RenderTargetOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*  DepthStencilOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*  SamplerOfflineDescriptorHeap;
+
+    TArray<FD3D12DeferredObject>  DeletionQueue;
+    FCriticalSection              DeletionQueueCS;
 
     TMap<FRHISamplerStateDesc, FD3D12SamplerStateRef> SamplerStateMap;
-    FCriticalSection SamplerStateMapCS;
+    FCriticalSection                                  SamplerStateMapCS;
 
     FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;
     FD3D12ComputePipelineStateRef GenerateMipsTexCube_PSO;
+
+    TQueue<FD3D12CommandPayload*, EQueueType::MPSC> PendingSubmissions;
 
     static FD3D12RHI* GD3D12RHI;
 };

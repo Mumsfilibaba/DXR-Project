@@ -2,11 +2,69 @@
 #include "D3D12Resource.h"
 #include "D3D12RootSignature.h"
 #include "D3D12Descriptors.h"
-#include "D3D12CommandAllocator.h"
 #include "D3D12ResourceViews.h"
-#include "D3D12RefCounted.h"
+#include "D3D12Fence.h"
+#include "Core/Containers/Queue.h"
+#include "Core/Platform/CriticalSection.h"
 
 class FD3D12ComputePipelineState;
+
+class FD3D12CommandAllocator : public FD3D12DeviceChild
+{
+public:
+    FD3D12CommandAllocator(const FD3D12CommandAllocator&) = delete;
+    FD3D12CommandAllocator& operator=(const FD3D12CommandAllocator&) = delete;
+
+    FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    ~FD3D12CommandAllocator() = default;
+
+    bool Initialize();
+    bool Reset();
+
+    ID3D12CommandAllocator* GetD3D12Allocator() const
+    {
+        return Allocator.Get();
+    }
+
+    void SetDebugName(const FString& Name)
+    {
+        FStringWide WideName = CharToWide(Name);
+        Allocator->SetName(WideName.GetCString());
+    }
+
+    ED3D12CommandQueueType GetQueueType() const
+    {
+        return QueueType;
+    }
+
+private:
+    ED3D12CommandQueueType          QueueType;
+    TComPtr<ID3D12CommandAllocator> Allocator;
+};
+
+class FD3D12CommandAllocatorManager : public FD3D12DeviceChild
+{
+public:
+    FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
+    ~FD3D12CommandAllocatorManager();
+
+    FD3D12CommandAllocator* ObtainAllocator();
+    void RecycleAllocator(FD3D12CommandAllocator* InAllocator);
+
+    void DestroyAllocators();
+
+    ED3D12CommandQueueType GetQueueType() const
+    {
+        return QueueType;
+    }
+
+private:
+    ED3D12CommandQueueType          QueueType;
+    D3D12_COMMAND_LIST_TYPE         CommandListType;
+    TQueue<FD3D12CommandAllocator*> AvailableAllocators;
+    TArray<FD3D12CommandAllocator*> CommandAllocators;
+    FCriticalSection                CommandAllocatorsCS;
+};
 
 class FD3D12CommandList : public FD3D12DeviceChild
 {

@@ -111,7 +111,7 @@ void FD3D12Query::ResolveQueries(class FD3D12CommandContext& CommandContext)
     ID3D12CommandQueue* D3D12Queue = GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct);
     CHECK(D3D12Queue != nullptr);
 
-    uint32 ReadIndex = CommandContext.GetCurrentBatchIndex();
+    uint32 ReadIndex = 0;// CommandContext.GetCurrentBatchIndex();
     if (ReadIndex >= (uint32)ReadResources.Size())
     {
         if (!AllocateReadResource())

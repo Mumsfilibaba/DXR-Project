@@ -23,7 +23,6 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
     if (!Layout)
     {
         VULKAN_ERROR("PipelineLayout cannot be nullptr");
-        DEBUG_BREAK();
         return;
     }
 
@@ -82,7 +81,6 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 default:
                 {
                     VULKAN_ERROR("Unhandled DescriptorType");
-                    DEBUG_BREAK();
                     break;
                 }
             };
@@ -143,7 +141,6 @@ FVulkanDescriptorState::FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanP
                 default:
                 {
                     VULKAN_ERROR("Unhandled DescriptorType");
-                    DEBUG_BREAK();
                     break;
                 }
             };
@@ -189,7 +186,6 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceView* ShaderResourceVie
             default:
             {
                 VULKAN_ERROR("Invalid ShaderResourveView, probably uninitialized resource");
-                DEBUG_BREAK();
                 break;
             }
         };
@@ -223,7 +219,6 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
             default:
             {
                 VULKAN_ERROR("Invalid ShaderResourveView, probably uninitialized resource");
-                DEBUG_BREAK();
                 break;
             }
         };
@@ -303,7 +298,6 @@ void FVulkanDescriptorState::UpdateDescriptorSets()
         if (!DescriptorSetCache.FindOrCreateDescriptorSet(DescriptorPoolInfo, DSBuilder, DescriptorSetHandles[Index]))
         {
             VULKAN_ERROR("Failed to find or create DescriptorSet");
-            DEBUG_BREAK();
             return;
         }
     }
@@ -363,7 +357,6 @@ void FVulkanDescriptorState::ResetDescriptorBinding(uint32 DescriptorSetIndex, u
         default:
         {
             VULKAN_ERROR("Unhandled DescriptorType");
-            DEBUG_BREAK();
             break;
         }
     }

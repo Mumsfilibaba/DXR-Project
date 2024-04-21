@@ -106,7 +106,6 @@ public:
         return nullptr;
     }
 
-public:
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)
     {

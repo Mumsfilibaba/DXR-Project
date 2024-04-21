@@ -2,7 +2,6 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
-#include "D3D12CommandAllocator.h"
 #include "D3D12PipelineState.h"
 #include "DynamicD3D12.h"
 #include "Core/Windows/Windows.h"
@@ -367,7 +366,11 @@ bool FD3D12Adapter::Initialize()
 #else
     {
         HRESULT Result = Factory.GetAs<IDXGIFactory6>(Factory6.GetAddressOf());
-        D3D12_ERROR_COND(SUCCEEDED(Result), "[FD3D12Adapter]: Failed to Query IDXGIFactory6");
+        if (FAILED(Result))
+        {
+            D3D12_ERROR("[FD3D12Adapter]: Failed to Query IDXGIFactory6");
+            return false;
+        }
 
         const DXGI_GPU_PREFERENCE GPUPreference = CVarPreferDedicatedGPU.GetValue() ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
 
@@ -431,7 +434,6 @@ bool FD3D12Adapter::Initialize()
     return true;
 }
 
-
 FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     : GlobalResourceHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
     , GlobalSamplerHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
@@ -439,9 +441,10 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , DirectCommandListManager(this, ED3D12CommandQueueType::Direct)
     , CopyCommandListManager(this, ED3D12CommandQueueType::Copy)
     , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
+    , DirectCommandAllocatorManager(this, ED3D12CommandQueueType::Direct)
     , CopyCommandAllocatorManager(this, ED3D12CommandQueueType::Copy)
+    , ComputeCommandAllocatorManager(this, ED3D12CommandQueueType::Compute)
     , UploadAllocator(this)
-    , DeferredDeletionQueue(this)
     , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
     , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , Adapter(InAdapter)
@@ -480,13 +483,15 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 
 FD3D12Device::~FD3D12Device()
 {
-    DeferredDeletionQueue.WaitForOutstandingTasks();
-    DeferredDeletionQueue.Stop();
-    
-    // Destroy all commandlists before moving on
+    // Destroy all CommandLists
     DirectCommandListManager.DestroyCommandLists();
     ComputeCommandListManager.DestroyCommandLists();
     CopyCommandListManager.DestroyCommandLists();
+
+    // Destroy all CommandAllocators
+    DirectCommandAllocatorManager.DestroyAllocators();
+    CopyCommandAllocatorManager.DestroyAllocators();
+    ComputeCommandAllocatorManager.DestroyAllocators();
 
     // Report any live objects still hanging around
     if (Adapter->IsDebugLayerEnabled())
@@ -581,12 +586,6 @@ bool FD3D12Device::Initialize()
     {
         return false;
     } 
-
-    // Create DeferredDeletion-queue
-    if (!DeferredDeletionQueue.Initialize())
-    {
-        return false;
-    }
 
     // Check for Resource-Binding Tier
     {
@@ -788,19 +787,11 @@ bool FD3D12Device::CreateQueues()
     CHECK(Device != nullptr);
 
     if (!DirectCommandListManager.Initialize())
-    {
         return false;
-    }
-
     if (!CopyCommandListManager.Initialize())
-    {
         return false;
-    }
-
     if (!ComputeCommandListManager.Initialize())
-    {
         return false;
-    }
 
     return true;
 }
@@ -821,6 +812,29 @@ FD3D12CommandListManager* FD3D12Device::GetCommandListManager(ED3D12CommandQueue
     {
         CHECK(ComputeCommandListManager.GetQueueType() == ED3D12CommandQueueType::Compute);
         return &ComputeCommandListManager;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+FD3D12CommandAllocatorManager* FD3D12Device::GetCommandAllocatorManager(ED3D12CommandQueueType QueueType)
+{
+    if (QueueType == ED3D12CommandQueueType::Direct)
+    {
+        CHECK(DirectCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Direct);
+        return &DirectCommandAllocatorManager;
+    }
+    else if (QueueType == ED3D12CommandQueueType::Copy)
+    {
+        CHECK(CopyCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Copy);
+        return &CopyCommandAllocatorManager;
+    }
+    else if (QueueType == ED3D12CommandQueueType::Compute)
+    {
+        CHECK(ComputeCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Compute);
+        return &ComputeCommandAllocatorManager;
     }
     else
     {

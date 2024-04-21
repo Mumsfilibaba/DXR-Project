@@ -43,7 +43,7 @@ bool FD3D12LocalDescriptorHeap::Realloc()
     FD3D12OnlineDescriptorHeap& GlobalHeap = bSamplers ? GetDevice()->GetGlobalSamplerHeap() : GetDevice()->GetGlobalResourceHeap();
     if (Block)
     {
-        GlobalHeap.FreeBlockDeferred(Block, Context.GetAssignedFenceValue());
+        GlobalHeap.FreeBlockDeferred(Block);
         Block = nullptr;
         Heap.Reset();
     }

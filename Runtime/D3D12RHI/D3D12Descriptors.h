@@ -171,9 +171,8 @@ public:
     bool Initialize(uint32 InDescriptorCount, uint32 BlockSize);
 
     FD3D12OnlineDescriptorBlock* AllocateBlock();
-
     void RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock);
-    void FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock, uint64 FenceValue);
+    void FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);
 
     FD3D12DescriptorHeap* GetHeap() const
     { 
