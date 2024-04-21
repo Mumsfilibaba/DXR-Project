@@ -44,7 +44,7 @@ struct FVulkanDescriptorSetKey
         return !(*this == Other);
     }
 
-    friend uint64 HashType(const FVulkanDescriptorSetKey& Value)
+    friend uint64 GetHashForType(const FVulkanDescriptorSetKey& Value)
     {
         return Value.Hash;
     }
@@ -94,7 +94,7 @@ struct FVulkanDescriptorPoolInfo
         return !(*this == Other);
     }
 
-    friend uint64 HashType(const FVulkanDescriptorPoolInfo& Value)
+    friend uint64 GetHashForType(const FVulkanDescriptorPoolInfo& Value)
     {
         return Value.Hash;
     }

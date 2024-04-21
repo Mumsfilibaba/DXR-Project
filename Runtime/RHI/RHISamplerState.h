@@ -146,7 +146,7 @@ struct FRHISamplerStateInfo
         return !(*this == Other);
     }
 
-    friend uint64 HashType(const FRHISamplerStateInfo& Value)
+    friend uint64 GetHashForType(const FRHISamplerStateInfo& Value)
     {
         uint64 Hash = ToUnderlying(Value.AddressU);
         HashCombine(Hash, ToUnderlying(Value.AddressV));
@@ -157,7 +157,7 @@ struct FRHISamplerStateInfo
         HashCombine(Hash, Value.MinLOD);
         HashCombine(Hash, Value.MinLOD);
         HashCombine(Hash, Value.MaxLOD);
-        HashCombine(Hash, Value.BorderColor.GetHash());
+        HashCombine(Hash, GetHashForType(Value.BorderColor));
         return Hash;
     }
 

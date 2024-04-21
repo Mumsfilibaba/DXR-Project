@@ -49,15 +49,6 @@ struct FStencilState
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToUnderlying(StencilFailOp);
-        HashCombine(Hash, ToUnderlying(StencilDepthFailOp));
-        HashCombine(Hash, ToUnderlying(StencilDepthPassOp));
-        HashCombine(Hash, ToUnderlying(StencilFunc));
-        return Hash;
-    }
-
     bool operator==(const FStencilState& Other) const
     {
         return StencilFailOp == Other.StencilFailOp && StencilDepthFailOp == Other.StencilDepthFailOp && StencilDepthPassOp == Other.StencilDepthPassOp && StencilFunc == Other.StencilFunc;
@@ -66,6 +57,15 @@ struct FStencilState
     bool operator!=(const FStencilState& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FStencilState& Value)
+    {
+        uint64 Hash = ToUnderlying(Value.StencilFailOp);
+        HashCombine(Hash, ToUnderlying(Value.StencilDepthFailOp));
+        HashCombine(Hash, ToUnderlying(Value.StencilDepthPassOp));
+        HashCombine(Hash, ToUnderlying(Value.StencilFunc));
+        return Hash;
     }
 
     EStencilOp      StencilFailOp;
@@ -110,19 +110,6 @@ struct FRHIDepthStencilStateInitializer
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = static_cast<uint64>(bDepthWriteEnable);
-        HashCombine(Hash, ToUnderlying(DepthFunc));
-        HashCombine(Hash, bDepthEnable);
-        HashCombine(Hash, StencilReadMask);
-        HashCombine(Hash, StencilWriteMask);
-        HashCombine(Hash, bStencilEnable);
-        HashCombine(Hash, FrontFace.GetHash());
-        HashCombine(Hash, BackFace.GetHash());
-        return Hash;
-    }
-
     bool operator==(const FRHIDepthStencilStateInitializer& Other) const
     {
         return DepthFunc         == Other.DepthFunc
@@ -138,6 +125,19 @@ struct FRHIDepthStencilStateInitializer
     bool operator!=(const FRHIDepthStencilStateInitializer& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHIDepthStencilStateInitializer& Value)
+    {
+        uint64 Hash = static_cast<uint64>(Value.bDepthWriteEnable);
+        HashCombine(Hash, ToUnderlying(Value.DepthFunc));
+        HashCombine(Hash, Value.bDepthEnable);
+        HashCombine(Hash, Value.StencilReadMask);
+        HashCombine(Hash, Value.StencilWriteMask);
+        HashCombine(Hash, Value.bStencilEnable);
+        HashCombine(Hash, GetHashForType(Value.FrontFace));
+        HashCombine(Hash, GetHashForType(Value.BackFace));
+        return Hash;
     }
 
     EComparisonFunc DepthFunc;
@@ -240,22 +240,6 @@ struct FRHIRasterizerStateInitializer
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToUnderlying(FillMode);
-        HashCombine(Hash, ToUnderlying(CullMode));
-        HashCombine(Hash, bFrontCounterClockwise);
-        HashCombine(Hash, bDepthClipEnable);
-        HashCombine(Hash, bMultisampleEnable);
-        HashCombine(Hash, bAntialiasedLineEnable);
-        HashCombine(Hash, bEnableConservativeRaster);
-        HashCombine(Hash, ForcedSampleCount);
-        HashCombine(Hash, DepthBias);
-        HashCombine(Hash, DepthBiasClamp);
-        HashCombine(Hash, SlopeScaledDepthBias);
-        return Hash;
-    }
-
     bool operator==(const FRHIRasterizerStateInitializer& Other) const
     {
         return FillMode                  == Other.FillMode
@@ -274,6 +258,22 @@ struct FRHIRasterizerStateInitializer
     bool operator!=(const FRHIRasterizerStateInitializer& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHIRasterizerStateInitializer& Value)
+    {
+        uint64 Hash = ToUnderlying(Value.FillMode);
+        HashCombine(Hash, ToUnderlying(Value.CullMode));
+        HashCombine(Hash, Value.bFrontCounterClockwise);
+        HashCombine(Hash, Value.bDepthClipEnable);
+        HashCombine(Hash, Value.bMultisampleEnable);
+        HashCombine(Hash, Value.bAntialiasedLineEnable);
+        HashCombine(Hash, Value.bEnableConservativeRaster);
+        HashCombine(Hash, Value.ForcedSampleCount);
+        HashCombine(Hash, Value.DepthBias);
+        HashCombine(Hash, Value.DepthBiasClamp);
+        HashCombine(Hash, Value.SlopeScaledDepthBias);
+        return Hash;
     }
 
     EFillMode FillMode;
@@ -458,19 +458,6 @@ struct FRenderTargetBlendInfo
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToUnderlying(SrcBlend);
-        HashCombine(Hash, ToUnderlying(DstBlend));
-        HashCombine(Hash, ToUnderlying(BlendOp));
-        HashCombine(Hash, ToUnderlying(SrcBlendAlpha));
-        HashCombine(Hash, ToUnderlying(DstBlendAlpha));
-        HashCombine(Hash, ToUnderlying(BlendOpAlpha));
-        HashCombine(Hash, bBlendEnable);
-        HashCombine(Hash, ToUnderlying(ColorWriteMask));
-        return Hash;
-    }
-
     bool operator==(const FRenderTargetBlendInfo& Other) const
     {
         return SrcBlend       == Other.SrcBlend
@@ -486,6 +473,19 @@ struct FRenderTargetBlendInfo
     bool operator!=(const FRenderTargetBlendInfo& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRenderTargetBlendInfo& Value)
+    {
+        uint64 Hash = ToUnderlying(Value.SrcBlend);
+        HashCombine(Hash, ToUnderlying(Value.DstBlend));
+        HashCombine(Hash, ToUnderlying(Value.BlendOp));
+        HashCombine(Hash, ToUnderlying(Value.SrcBlendAlpha));
+        HashCombine(Hash, ToUnderlying(Value.DstBlendAlpha));
+        HashCombine(Hash, ToUnderlying(Value.BlendOpAlpha));
+        HashCombine(Hash, Value.bBlendEnable);
+        HashCombine(Hash, ToUnderlying(Value.ColorWriteMask));
+        return Hash;
     }
 
     EBlendType       SrcBlend;
@@ -510,19 +510,6 @@ struct FRHIBlendStateInitializer
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = 0;
-        for (uint32 Index = 0; Index < NumRenderTargets; ++Index)
-            HashCombine(Hash, RenderTargets[Index].GetHash());
-
-        HashCombine(Hash, ToUnderlying(LogicOp));
-        HashCombine(Hash, bLogicOpEnable);
-        HashCombine(Hash, bAlphaToCoverageEnable);
-        HashCombine(Hash, bIndependentBlendEnable);
-        return Hash;
-    }
-
     bool operator==(const FRHIBlendStateInitializer& Other) const
     {
         return NumRenderTargets == Other.NumRenderTargets
@@ -538,12 +525,25 @@ struct FRHIBlendStateInitializer
         return !(*this == Other);
     }
 
+    friend uint64 GetHashForType(const FRHIBlendStateInitializer& Value)
+    {
+        uint64 Hash = 0;
+        for (uint32 Index = 0; Index < Value.NumRenderTargets; ++Index)
+            HashCombine(Hash, GetHashForType(Value.RenderTargets[Index]));
+
+        HashCombine(Hash, ToUnderlying(Value.LogicOp));
+        HashCombine(Hash, Value.bLogicOpEnable);
+        HashCombine(Hash, Value.bAlphaToCoverageEnable);
+        HashCombine(Hash, Value.bIndependentBlendEnable);
+        return Hash;
+    }
+
     FRenderTargetBlendInfo RenderTargets[RHI_MAX_RENDER_TARGETS];
     uint8                  NumRenderTargets;
     ELogicOp               LogicOp;
 
-    bool bLogicOpEnable : 1;
-    bool bAlphaToCoverageEnable : 1;
+    bool bLogicOpEnable          : 1;
+    bool bAlphaToCoverageEnable  : 1;
     bool bIndependentBlendEnable : 1;
 };
 
@@ -588,7 +588,7 @@ struct FVertexInputElement
     }
 
     FVertexInputElement(
-        const FString& InSemantic,
+        const FString&    InSemantic,
         uint32            InSemanticIndex,
         EFormat           InFormat,
         uint16            InVertexStride,

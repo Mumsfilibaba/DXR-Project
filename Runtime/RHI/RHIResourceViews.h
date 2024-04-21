@@ -97,18 +97,6 @@ struct FRHITextureSRVDesc
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Texture);
-        HashCombine(Hash, MinLODClamp);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, FirstMipLevel);
-        HashCombine(Hash, NumMips);
-        HashCombine(Hash, FirstArraySlice);
-        HashCombine(Hash, NumSlices);
-        return Hash;
-    }
-
     bool operator==(const FRHITextureSRVDesc& Other) const
     {
         return Texture         == Other.Texture
@@ -123,6 +111,18 @@ struct FRHITextureSRVDesc
     bool operator!=(const FRHITextureSRVDesc& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHITextureSRVDesc& Value)
+    {
+        uint64 Hash = ToInteger(Value.Texture);
+        HashCombine(Hash, Value.MinLODClamp);
+        HashCombine(Hash, ToUnderlying(Value.Format));
+        HashCombine(Hash, Value.FirstMipLevel);
+        HashCombine(Hash, Value.NumMips);
+        HashCombine(Hash, Value.FirstArraySlice);
+        HashCombine(Hash, Value.NumSlices);
+        return Hash;
     }
 
     FRHITexture* Texture;
@@ -153,14 +153,6 @@ struct FRHIBufferSRVDesc
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Buffer);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, FirstElement);
-        HashCombine(Hash, NumElements);
-        return Hash;
-    }
 
     bool operator==(const FRHIBufferSRVDesc& Other) const
     {
@@ -170,6 +162,15 @@ struct FRHIBufferSRVDesc
     bool operator!=(const FRHIBufferSRVDesc& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHIBufferSRVDesc& Value)
+    {
+        uint64 Hash = ToInteger(Value.Buffer);
+        HashCombine(Hash, ToUnderlying(Value.Format));
+        HashCombine(Hash, Value.FirstElement);
+        HashCombine(Hash, Value.NumElements);
+        return Hash;
     }
 
     FRHIBuffer*      Buffer;
@@ -207,16 +208,6 @@ struct FRHITextureUAVDesc
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Texture);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, MipLevel);
-        HashCombine(Hash, FirstArraySlice);
-        HashCombine(Hash, NumSlices);
-        return Hash;
-    }
-
     bool operator==(const FRHITextureUAVDesc& Other) const
     {
         return Texture == Other.Texture && Format == Other.Format && MipLevel == Other.MipLevel && FirstArraySlice == Other.FirstArraySlice && NumSlices == Other.NumSlices;
@@ -225,6 +216,16 @@ struct FRHITextureUAVDesc
     bool operator!=(const FRHITextureUAVDesc& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHITextureUAVDesc& Value)
+    {
+        uint64 Hash = ToInteger(Value.Texture);
+        HashCombine(Hash, ToUnderlying(Value.Format));
+        HashCombine(Hash, Value.MipLevel);
+        HashCombine(Hash, Value.FirstArraySlice);
+        HashCombine(Hash, Value.NumSlices);
+        return Hash;
     }
 
     FRHITexture* Texture;
@@ -252,15 +253,6 @@ struct FRHIBufferUAVDesc
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Buffer);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, FirstElement);
-        HashCombine(Hash, NumElements);
-        return Hash;
-    }
-
     bool operator==(const FRHIBufferUAVDesc& Other) const
     {
         return Buffer == Other.Buffer && Format == Other.Format && FirstElement == Other.FirstElement && NumElements  == Other.NumElements;
@@ -269,6 +261,15 @@ struct FRHIBufferUAVDesc
     bool operator!=(const FRHIBufferUAVDesc& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHIBufferUAVDesc& Value)
+    {
+        uint64 Hash = ToInteger(Value.Buffer);
+        HashCombine(Hash, ToUnderlying(Value.Format));
+        HashCombine(Hash, Value.FirstElement);
+        HashCombine(Hash, Value.NumElements);
+        return Hash;
     }
 
     FRHIBuffer*      Buffer;
@@ -372,18 +373,6 @@ struct FRHIRenderTargetView
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Texture);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, ArrayIndex);
-        HashCombine(Hash, MipLevel);
-        HashCombine(Hash, ToUnderlying(LoadAction));
-        HashCombine(Hash, ToUnderlying(StoreAction));
-        HashCombine(Hash, ClearValue.GetHash());
-        return Hash;
-    }
-
     bool operator==(const FRHIRenderTargetView& Other) const
     {
         return Texture     == Other.Texture
@@ -398,6 +387,18 @@ struct FRHIRenderTargetView
     bool operator!=(const FRHIRenderTargetView& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHIRenderTargetView& Value)
+    {
+        uint64 Hash = ToInteger(Value.Texture);
+        HashCombine(Hash, ToUnderlying(Value.Format));
+        HashCombine(Hash, Value.ArrayIndex);
+        HashCombine(Hash, Value.MipLevel);
+        HashCombine(Hash, ToUnderlying(Value.LoadAction));
+        HashCombine(Hash, ToUnderlying(Value.StoreAction));
+        HashCombine(Hash, GetHashForType(Value.ClearValue));
+        return Hash;
     }
 
     FRHITexture*           Texture;
@@ -472,18 +473,6 @@ struct FRHIDepthStencilView
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = ToInteger(Texture);
-        HashCombine(Hash, ToUnderlying(Format));
-        HashCombine(Hash, ArrayIndex);
-        HashCombine(Hash, MipLevel);
-        HashCombine(Hash, ToUnderlying(LoadAction));
-        HashCombine(Hash, ToUnderlying(StoreAction));
-        HashCombine(Hash, ClearValue.GetHash());
-        return Hash;
-    }
-
     bool operator==(const FRHIDepthStencilView& Other) const
     {
         return Texture     == Other.Texture
@@ -498,6 +487,18 @@ struct FRHIDepthStencilView
     bool operator!=(const FRHIDepthStencilView& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend uint64 GetHashForType(const FRHIDepthStencilView& Value)
+    {
+        uint64 Hash = ToInteger(Value.Texture);
+        HashCombine(Hash, ToUnderlying(Value.Format));
+        HashCombine(Hash, Value.ArrayIndex);
+        HashCombine(Hash, Value.MipLevel);
+        HashCombine(Hash, ToUnderlying(Value.LoadAction));
+        HashCombine(Hash, ToUnderlying(Value.StoreAction));
+        HashCombine(Hash, GetHashForType(Value.ClearValue));
+        return Hash;
     }
 
     FRHITexture*           Texture;

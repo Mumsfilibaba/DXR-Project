@@ -41,9 +41,9 @@ struct FVertex
     FVector2 TexCoord;
 };
 
-inline uint64 HashType(const FVertex& Vertex)
+inline uint64 GetHashForType(const FVertex& Vertex)
 {
-    uint64 Hash = HashType(Vertex.Position);
+    uint64 Hash = GetHashForType(Vertex.Position);
     HashCombine<FVector3>(Hash, Vertex.Normal);
     HashCombine<FVector3>(Hash, Vertex.Tangent);
     HashCombine<FVector2>(Hash, Vertex.TexCoord);
@@ -79,9 +79,9 @@ struct FVertexMasked
     FVector2 TexCoord;
 };
 
-inline uint64 HashType(const FVertexMasked& Vertex)
+inline uint64 GetHashForType(const FVertexMasked& Vertex)
 {
-    uint64 Hash = HashType(Vertex.Position);
+    uint64 Hash = GetHashForType(Vertex.Position);
     HashCombine<FVector2>(Hash, Vertex.TexCoord);
     return Hash;
 }

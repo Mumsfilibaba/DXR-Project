@@ -209,7 +209,7 @@ struct FD3D12UniqueSamplerTable
 };
 
 // TODO: Add CRC32 here
-inline uint64 HashType(const FD3D12UniqueSamplerTable& Table)
+inline uint64 GetHashForType(const FD3D12UniqueSamplerTable& Table)
 {
     return HashIntegers<uint16, D3D12_DEFAULT_SAMPLER_STATE_COUNT>(Table.UniqueIDs);
 }
@@ -285,7 +285,7 @@ public:
 private:
     int32 GetHashedIndex(const KeyType& Entry) const
     {
-        const uint64 Hash  = HashType(Entry);
+        const uint64 Hash  = GetHashForType(Entry);
         const uint64 Index = Hash % Table.Size();
         return static_cast<int32>(Index);
     }

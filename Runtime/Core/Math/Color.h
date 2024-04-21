@@ -23,16 +23,6 @@ struct FColor
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = 0;
-        HashCombine(Hash, R);
-        HashCombine(Hash, G);
-        HashCombine(Hash, B);
-        HashCombine(Hash, A);
-        return Hash;
-    }
-
     FORCEINLINE uint8* Data()
     {
         return reinterpret_cast<uint8*>(this);
@@ -51,6 +41,16 @@ struct FColor
     bool operator!=(const FColor& RHS) const
     {
         return !(*this == RHS);
+    }
+
+    friend uint64 GetHashForType(const FColor& Value)
+    {
+        uint64 Hash = 0;
+        HashCombine(Hash, Value.R);
+        HashCombine(Hash, Value.G);
+        HashCombine(Hash, Value.B);
+        HashCombine(Hash, Value.A);
+        return Hash;
     }
 
     /** @brief - Red channel */
@@ -97,16 +97,6 @@ struct FFloatColor16
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = 0;
-        HashCombine(Hash, R);
-        HashCombine(Hash, G);
-        HashCombine(Hash, B);
-        HashCombine(Hash, A);
-        return Hash;
-    }
-
     FORCEINLINE uint16* Data()
     {
         return reinterpret_cast<uint16*>(this);
@@ -125,6 +115,16 @@ struct FFloatColor16
     bool operator!=(const FFloatColor16& RHS) const
     {
         return !(*this == RHS);
+    }
+
+    friend uint64 GetHashForType(const FFloatColor16& Value)
+    {
+        uint64 Hash = 0;
+        HashCombine(Hash, Value.R);
+        HashCombine(Hash, Value.G);
+        HashCombine(Hash, Value.B);
+        HashCombine(Hash, Value.A);
+        return Hash;
     }
 
     /** @brief - Red channel */
@@ -163,16 +163,6 @@ struct FFloatColor
     {
     }
 
-    uint64 GetHash() const
-    {
-        uint64 Hash = 0;
-        HashCombine(Hash, r);
-        HashCombine(Hash, g);
-        HashCombine(Hash, b);
-        HashCombine(Hash, a);
-        return Hash;
-    }
-
     bool operator==(const FFloatColor& RHS) const
     {
         return r == RHS.r && g == RHS.g && b == RHS.b && a == RHS.a;
@@ -181,6 +171,16 @@ struct FFloatColor
     bool operator!=(const FFloatColor& RHS) const
     {
         return !(*this == RHS);
+    }
+
+    friend uint64 GetHashForType(const FFloatColor& Value)
+    {
+        uint64 Hash = 0;
+        HashCombine(Hash, Value.r);
+        HashCombine(Hash, Value.g);
+        HashCombine(Hash, Value.b);
+        HashCombine(Hash, Value.a);
+        return Hash;
     }
 
     /** @brief - Red channel */

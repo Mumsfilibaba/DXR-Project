@@ -50,7 +50,7 @@ struct FVulkanFramebufferKey
         return !(*this == Other);
     }
 
-    friend uint64 HashType(const FVulkanFramebufferKey& Key)
+    friend uint64 GetHashForType(const FVulkanFramebufferKey& Key)
     {
         uint64 Hash = reinterpret_cast<uint64>(Key.RenderPass);
         HashCombine(Hash, Key.Width);

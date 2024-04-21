@@ -1653,7 +1653,7 @@ NODISCARD inline FString WideToChar(const FStringWide& WideString) noexcept
 
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-inline uint64 HashType(const FString& String)
+inline uint64 GetHashForType(const FString& String)
 {
     const CHAR* Key = String.GetCString();
 
@@ -1675,7 +1675,7 @@ inline uint64 HashType(const FString& String)
 }
 
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
-inline uint64 HashType(const FStringWide& String)
+inline uint64 GetHashForType(const FStringWide& String)
 {
     // TODO: Investigate how good is this for wide chars
     const WIDECHAR* Key = String.GetCString();

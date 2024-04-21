@@ -40,11 +40,6 @@ struct FR10G10B10A2
         return *reinterpret_cast<const uint32*>(this);
     }
 
-    uint64 GetHash() const 
-    {
-        return HashType(EncodeAsInteger());
-    }
-
     bool operator==(FR10G10B10A2 RHS) const
     {
         return EncodeAsInteger() == RHS.EncodeAsInteger();
@@ -53,6 +48,11 @@ struct FR10G10B10A2
     bool operator!=(FR10G10B10A2 RHS) const
     {
         return EncodeAsInteger() != RHS.EncodeAsInteger();
+    }
+
+    friend uint64 GetHashForType(FR10G10B10A2 Value) 
+    {
+        return GetHashForType(Value.EncodeAsInteger());
     }
 
     uint32 A : 2;
@@ -89,11 +89,6 @@ struct FRG16F
         return *reinterpret_cast<const uint32*>(this);
     }
 
-    uint64 GetHash() const
-    {
-        return HashType(EncodeAsInteger());
-    }
-
     bool operator==(FRG16F RHS) const
     {
         return EncodeAsInteger() == RHS.EncodeAsInteger();
@@ -102,6 +97,11 @@ struct FRG16F
     bool operator!=(FRG16F RHS) const
     {
         return EncodeAsInteger() != RHS.EncodeAsInteger();
+    }
+
+    friend uint64 GetHashForType(FRG16F Value) 
+    {
+        return GetHashForType(Value.EncodeAsInteger());
     }
 
     uint16 R;
@@ -142,11 +142,6 @@ struct FRGBA16F
         return *reinterpret_cast<const uint64*>(this); 
     }
 
-    uint64 GetHash() const
-    {
-        return HashType(EncodeAsInteger());
-    }
-
     bool operator==(FRGBA16F RHS) const
     {
         return EncodeAsInteger() == RHS.EncodeAsInteger();
@@ -155,6 +150,11 @@ struct FRGBA16F
     bool operator!=(FRGBA16F RHS) const
     {
         return EncodeAsInteger() != RHS.EncodeAsInteger();
+    }
+
+    friend uint64 GetHashForType(FRGBA16F Value) 
+    {
+        return GetHashForType(Value.EncodeAsInteger());
     }
 
     uint16 A;

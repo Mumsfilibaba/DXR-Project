@@ -27,7 +27,7 @@ struct FVulkanRenderPassKey
         return !(*this == Other);
     }
 
-    friend uint64 HashType(const FVulkanRenderPassKey& Key)
+    friend uint64 GetHashForType(const FVulkanRenderPassKey& Key)
     {
         uint64 Hash = Key.Key0;
         HashCombine(Hash, Key.Key1);

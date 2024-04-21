@@ -666,13 +666,6 @@ struct FDepthStencilValue
     {
     }
 
-    constexpr uint64 GetHash() const
-    {
-        uint64 Hash = Stencil;
-        HashCombine(Hash, Depth);
-        return Hash;
-    }
-
     constexpr bool operator==(const FDepthStencilValue& Other) const
     {
         return Depth == Other.Depth && Stencil && Other.Stencil;
@@ -681,6 +674,13 @@ struct FDepthStencilValue
     constexpr bool operator!=(const FDepthStencilValue& Other) const
     {
         return !(*this == Other);
+    }
+
+    friend constexpr uint64 GetHashForType(const FDepthStencilValue& Value)
+    {
+        uint64 Hash = Value.Stencil;
+        HashCombine(Hash, Value.Depth);
+        return Hash;
     }
 
     float  Depth;

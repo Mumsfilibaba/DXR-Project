@@ -5,7 +5,7 @@
 template<typename T>
 constexpr void HashCombine(uint64& OutHash, const T& Value)
 {
-    OutHash ^= HashType(Value) + 0x9e3779b9 + (OutHash << 6) + (OutHash >> 2);
+    OutHash ^= GetHashForType(Value) + 0x9e3779b9 + (OutHash << 6) + (OutHash >> 2);
 }
 
 template<typename T, const uint64 NumEntries>

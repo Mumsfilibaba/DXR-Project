@@ -107,7 +107,7 @@ struct FVulkanHashableSamplerCreateInfo
         return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableSamplerCreateInfo)) != 0;
     }
 
-    friend uint64 HashType(const FVulkanHashableSamplerCreateInfo& Value)
+    friend uint64 GetHashForType(const FVulkanHashableSamplerCreateInfo& Value)
     {
         return FCRC32::Generate(&Value, sizeof(Value));
     }

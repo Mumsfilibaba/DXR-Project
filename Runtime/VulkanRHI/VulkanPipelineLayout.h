@@ -29,7 +29,7 @@ struct FVulkanDescriptorSetLayoutInfo
         return !(*this == Other);
     }
     
-    friend uint64 HashType(const FVulkanDescriptorSetLayoutInfo& Value)
+    friend uint64 GetHashForType(const FVulkanDescriptorSetLayoutInfo& Value)
     {
         return Value.Hash;
     }
@@ -69,7 +69,7 @@ struct FVulkanDescriptorRemappingInfo
         return !(*this == Other);
     }
 
-    friend uint64 HashType(const FVulkanDescriptorRemappingInfo& Value)
+    friend uint64 GetHashForType(const FVulkanDescriptorRemappingInfo& Value)
     {
         return Value.Hash;
     }
@@ -125,11 +125,11 @@ struct FVulkanPipelineLayoutInfo
         {
             FVulkanDescriptorSetLayoutInfo& SetLayoutInfo = SetLayoutInfos[Index];
             SetLayoutInfo.GenerateHash();
-            HashCombine(Hash, HashType(SetLayoutInfo));
+            HashCombine(Hash, GetHashForType(SetLayoutInfo));
 
             FVulkanDescriptorRemappingInfo& SetLayoutRemap = SetLayoutRemappings[Index];
             SetLayoutRemap.GenerateHash();
-            HashCombine(Hash, HashType(SetLayoutRemap));
+            HashCombine(Hash, GetHashForType(SetLayoutRemap));
         }
 
         return Hash;
@@ -166,7 +166,7 @@ struct FVulkanPipelineLayoutInfo
         return !(*this == Other);
     }
     
-    friend uint64 HashType(const FVulkanPipelineLayoutInfo& Value)
+    friend uint64 GetHashForType(const FVulkanPipelineLayoutInfo& Value)
     {
         return Value.Hash;
     }

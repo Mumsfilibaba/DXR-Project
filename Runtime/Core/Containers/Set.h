@@ -18,7 +18,7 @@ private:
     {
         size_t operator()(const ElementType& Value) const
         {
-            return static_cast<size_t>(HashType(Value));
+            return static_cast<size_t>(GetHashForType(Value));
         }
     };
     
