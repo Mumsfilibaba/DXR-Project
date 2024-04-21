@@ -563,7 +563,7 @@ FRHIComputePipelineState* FVulkanRHI::RHICreateComputePipelineState(const FRHICo
     }
 }
 
-FRHIRayTracingPipelineState* FVulkanRHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
+FRHIRayTracingPipelineState* FVulkanRHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
 {
     return new FVulkanRayTracingPipelineState();
 }

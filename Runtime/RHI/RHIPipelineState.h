@@ -424,9 +424,9 @@ enum class EColorWriteFlags : uint8
 
 ENUM_CLASS_OPERATORS(EColorWriteFlags);
 
-struct FRenderTargetBlendDesc
+struct FRenderTargetBlendInfo
 {
-    FRenderTargetBlendDesc()
+    FRenderTargetBlendInfo()
         : SrcBlend(EBlendType::One)
         , DstBlend(EBlendType::Zero)
         , BlendOp(EBlendOp::Add)
@@ -438,7 +438,7 @@ struct FRenderTargetBlendDesc
     {
     }
 
-    FRenderTargetBlendDesc(
+    FRenderTargetBlendInfo(
         bool             bInBlendEnable,
         EBlendType       InSrcBlend,
         EBlendType       InDstBlend,
@@ -471,7 +471,7 @@ struct FRenderTargetBlendDesc
         return Hash;
     }
 
-    bool operator==(const FRenderTargetBlendDesc& Other) const
+    bool operator==(const FRenderTargetBlendInfo& Other) const
     {
         return SrcBlend       == Other.SrcBlend
             && DstBlend       == Other.DstBlend
@@ -483,7 +483,7 @@ struct FRenderTargetBlendDesc
             && ColorWriteMask == Other.ColorWriteMask;
     }
 
-    bool operator!=(const FRenderTargetBlendDesc& Other) const
+    bool operator!=(const FRenderTargetBlendInfo& Other) const
     {
         return !(*this == Other);
     }
@@ -497,7 +497,6 @@ struct FRenderTargetBlendDesc
     bool             bBlendEnable;
     EColorWriteFlags ColorWriteMask;
 };
-
 
 struct FRHIBlendStateInitializer
 {
@@ -539,7 +538,7 @@ struct FRHIBlendStateInitializer
         return !(*this == Other);
     }
 
-    FRenderTargetBlendDesc RenderTargets[FHardwareLimits::MAX_RENDER_TARGETS];
+    FRenderTargetBlendInfo RenderTargets[FHardwareLimits::MAX_RENDER_TARGETS];
     uint8                  NumRenderTargets;
     ELogicOp               LogicOp;
 
@@ -691,15 +690,10 @@ struct FGraphicsPipelineFormats
 
     bool operator==(const FGraphicsPipelineFormats& Other) const
     {
-        for (uint32 Index = 0; Index < NumRenderTargets; Index++)
-        {
-            if (RenderTargetFormats[Index] == Other.RenderTargetFormats[Index])
-            {
-                return false;
-            }
-        }
-
-        return NumRenderTargets == Other.NumRenderTargets && DepthStencilFormat == Other.DepthStencilFormat;
+        if (DepthStencilFormat == Other.DepthStencilFormat && NumRenderTargets == Other.NumRenderTargets)
+            return FMemory::Memcmp(RenderTargetFormats, Other.RenderTargetFormats, sizeof(RenderTargetFormats)) == 0;
+            
+        return false;
     }
 
     bool operator!=(const FGraphicsPipelineFormats& Other) const
@@ -708,7 +702,7 @@ struct FGraphicsPipelineFormats
     }
 
     EFormat RenderTargetFormats[FHardwareLimits::MAX_RENDER_TARGETS];
-    uint32  NumRenderTargets;
+    uint8   NumRenderTargets;
     EFormat DepthStencilFormat;
 };
 
@@ -824,23 +818,23 @@ struct FRHIGraphicsPipelineStateInitializer
     }
 
     // Weak reference to the VertexInputLayout being used
-    FRHIVertexInputLayout* VertexInputLayout;
+    FRHIVertexInputLayout*   VertexInputLayout;
 
     // Weak reference to the DepthStencilState being used
-    FRHIDepthStencilState* DepthStencilState;
+    FRHIDepthStencilState*   DepthStencilState;
 
     // Weak reference to the RasterizerState being used
-    FRHIRasterizerState* RasterizerState;
+    FRHIRasterizerState*     RasterizerState;
 
     // Weak reference to the BlendState being used
-    FRHIBlendState* BlendState;
+    FRHIBlendState*          BlendState;
 
-    uint32 SampleCount;
-    uint32 SampleQuality;
-    uint32 SampleMask;
+    uint32                   SampleCount;
+    uint32                   SampleQuality;
+    uint32                   SampleMask;
 
-    EPrimitiveTopology PrimitiveTopology;
-    bool               bPrimitiveRestartEnable;
+    EPrimitiveTopology       PrimitiveTopology;
+    bool                     bPrimitiveRestartEnable;
 
     FGraphicsPipelineShaders ShaderState;
     FGraphicsPipelineFormats PipelineFormats;
@@ -852,7 +846,6 @@ protected:
     FRHIGraphicsPipelineState()  = default;
     ~FRHIGraphicsPipelineState() = default;
 };
-
 
 struct FRHIComputePipelineStateInitializer
 {
@@ -885,7 +878,6 @@ protected:
     FRHIComputePipelineState() = default;
     virtual ~FRHIComputePipelineState() = default;
 };
-
 
 enum class ERayTracingHitGroupType : uint8
 {
@@ -920,11 +912,11 @@ struct FRHIRayTracingHitGroupInfo
     TArray<FRHIRayTracingShader*> Shaders;
 };
 
-struct FRHIRayTracingPipelineStateDesc
+struct FRHIRayTracingPipelineStateInitializer
 {
-    FRHIRayTracingPipelineStateDesc() = default;
+    FRHIRayTracingPipelineStateInitializer() = default;
 
-    FRHIRayTracingPipelineStateDesc(
+    FRHIRayTracingPipelineStateInitializer(
         const TArrayView<FRHIRayGenShader*>&          InRayGenShaders,
         const TArrayView<FRHIRayCallableShader*>&     InCallableShaders,
         const TArrayView<FRHIRayTracingHitGroupInfo>& InHitGroups,
@@ -942,7 +934,7 @@ struct FRHIRayTracingPipelineStateDesc
     {
     }
 
-    bool operator==(const FRHIRayTracingPipelineStateDesc& Other) const
+    bool operator==(const FRHIRayTracingPipelineStateInitializer& Other) const
     {
         return RayGenShaders           == Other.RayGenShaders
             && CallableShaders         == Other.CallableShaders
@@ -953,7 +945,7 @@ struct FRHIRayTracingPipelineStateDesc
             && MaxRecursionDepth       == Other.MaxRecursionDepth;
     }
 
-    bool operator!=(const FRHIRayTracingPipelineStateDesc& Other) const
+    bool operator!=(const FRHIRayTracingPipelineStateInitializer& Other) const
     {
         return !(*this == Other);
     }

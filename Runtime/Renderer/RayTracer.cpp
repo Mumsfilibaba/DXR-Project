@@ -58,7 +58,7 @@ bool FRayTracer::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIRayTracingPipelineStateDesc PSOInitializer;
+    FRHIRayTracingPipelineStateInitializer PSOInitializer;
     PSOInitializer.RayGenShaders           = { RayGenShader.Get() };
     PSOInitializer.MissShaders             = { RayMissShader.Get() };
     PSOInitializer.HitGroups               = { FRHIRayTracingHitGroupInfo("HitGroup", ERayTracingHitGroupType::Triangles, { RayClosestHitShader.Get() }) };

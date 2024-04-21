@@ -81,7 +81,7 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
 
     FRHIBlendStateInitializer BlendStateInitializer;
     BlendStateInitializer.NumRenderTargets = 1;
-    BlendStateInitializer.RenderTargets[0] = FRenderTargetBlendDesc(true, EBlendType::One, EBlendType::Zero);
+    BlendStateInitializer.RenderTargets[0] = FRenderTargetBlendInfo(true, EBlendType::One, EBlendType::Zero);
 
     FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
     if (!BlendState)

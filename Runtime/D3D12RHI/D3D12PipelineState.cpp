@@ -624,7 +624,7 @@ FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDev
 {
 }
 
-bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateDesc& Initializer)
+bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
     FD3D12RayTracingPipelineStateStream PipelineStream;
     TArray<FD3D12Shader*> Shaders;

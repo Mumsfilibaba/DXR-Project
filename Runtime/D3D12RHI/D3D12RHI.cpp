@@ -829,10 +829,10 @@ FRHIComputePipelineState* FD3D12RHI::RHICreateComputePipelineState(const FRHICom
     }
 }
 
-FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc)
+FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer)
 {
     FD3D12RayTracingPipelineStateRef NewPipelineState = new FD3D12RayTracingPipelineState(GetDevice());
-    if (!NewPipelineState->Initialize(InDesc))
+    if (!NewPipelineState->Initialize(InInitializer))
     {
         return nullptr;
     }

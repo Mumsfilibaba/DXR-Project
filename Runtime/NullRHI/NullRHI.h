@@ -173,7 +173,7 @@ public:
         return new FNullRHIComputePipelineState();
     }
 
-    virtual class FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) override final
+    virtual class FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final
     {
         return new FNullRHIRayTracingPipelineState();
     }

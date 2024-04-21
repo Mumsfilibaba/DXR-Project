@@ -277,7 +277,7 @@ FRHIComputePipelineState* FMetalRHI::RHICreateComputePipelineState(const FRHICom
     return new FMetalComputePipelineState();
 }
 
-FRHIRayTracingPipelineState* FMetalRHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Desc)
+FRHIRayTracingPipelineState* FMetalRHI::RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Desc)
 {
     return new FMetalRayTracingPipelineState();
 }

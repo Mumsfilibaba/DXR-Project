@@ -286,7 +286,7 @@ public:
      * @param InDesc - Info about the Ray-Tracing PipelineState
      * @return       - Returns the newly created PipelineState
      */
-    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& InDesc) = 0;
+    virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) = 0;
 
     /** @return - Returns a newly created Query-object */
     virtual FRHIQuery* RHICreateQuery() = 0;
@@ -471,7 +471,7 @@ FORCEINLINE FRHIComputePipelineState* RHICreateComputePipelineState(const FRHICo
     return GetRHI()->RHICreateComputePipelineState(Initializer);
 }
 
-FORCEINLINE FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateDesc& Initializer)
+FORCEINLINE FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& Initializer)
 {
     return GetRHI()->RHICreateRayTracingPipelineState(Initializer);
 }

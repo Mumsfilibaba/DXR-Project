@@ -111,7 +111,6 @@ struct FRHIAccelerationStructureInitializer
     EAccelerationStructureBuildFlags Flags{ EAccelerationStructureBuildFlags::None };
 };
 
-
 struct FRHIRayTracingGeometryDesc : public FRHIAccelerationStructureInitializer
 {
     FRHIRayTracingGeometryDesc()
@@ -162,7 +161,6 @@ struct FRHIRayTracingGeometryDesc : public FRHIAccelerationStructureInitializer
     EIndexFormat IndexFormat;
 };
 
-
 struct FRHIRayTracingSceneDesc : public FRHIAccelerationStructureInitializer
 {
     FRHIRayTracingSceneDesc() = default;
@@ -185,7 +183,6 @@ struct FRHIRayTracingSceneDesc : public FRHIAccelerationStructureInitializer
 
     TArray<FRHIRayTracingGeometryInstance> Instances;
 };
-
 
 class FRHIAccelerationStructure : public FRHIResource
 {
@@ -217,7 +214,6 @@ protected:
     EAccelerationStructureBuildFlags Flags;
 };
 
-
 class FRHIRayTracingGeometry : public FRHIAccelerationStructure
 {
 protected: 
@@ -231,7 +227,6 @@ protected:
 public:
     virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() override final { return this; }
 };
-
 
 class FRHIRayTracingScene : public FRHIAccelerationStructure
 {

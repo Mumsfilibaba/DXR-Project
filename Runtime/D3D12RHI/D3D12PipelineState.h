@@ -20,7 +20,6 @@ enum class ED3D12PipelineType
     RayTracing = 3,
 };
 
-
 class FD3D12VertexInputLayout : public FRHIVertexInputLayout
 {
 public:
@@ -314,7 +313,7 @@ public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
     virtual ~FD3D12RayTracingPipelineState() = default;
 
-    bool Initialize(const FRHIRayTracingPipelineStateDesc& Initializer);
+    bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
     virtual void SetDebugName(const FString& InName) override
     {
