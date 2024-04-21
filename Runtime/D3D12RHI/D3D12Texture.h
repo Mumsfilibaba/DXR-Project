@@ -11,7 +11,7 @@ typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
 class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild
 {
 public:
-    FD3D12Texture(FD3D12Device* InDevice, const FRHITextureDesc& InDesc);
+    FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12Texture() = default;
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
@@ -74,7 +74,7 @@ protected:
 class FD3D12BackBufferTexture : public FD3D12Texture
 {
 public:
-    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureDesc& InDesc);
+    FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12BackBufferTexture();
 
     virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }

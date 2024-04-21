@@ -278,13 +278,13 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     }
 
     // FXAA
-    FRHISamplerStateDesc SamplerInitializer;
-    SamplerInitializer.AddressU = ESamplerMode::Clamp;
-    SamplerInitializer.AddressV = ESamplerMode::Clamp;
-    SamplerInitializer.AddressW = ESamplerMode::Clamp;
-    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
+    FRHISamplerStateInfo SamplerInfo;
+    SamplerInfo.AddressU = ESamplerMode::Clamp;
+    SamplerInfo.AddressV = ESamplerMode::Clamp;
+    SamplerInfo.AddressW = ESamplerMode::Clamp;
+    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.FXAASampler = RHICreateSamplerState(SamplerInitializer);
+    FrameResources.FXAASampler = RHICreateSamplerState(SamplerInfo);
     if (!FrameResources.FXAASampler)
     {
         return false;

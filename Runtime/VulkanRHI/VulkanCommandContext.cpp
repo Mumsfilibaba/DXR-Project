@@ -878,15 +878,15 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     constexpr uint32 MaxCopies = 15;
     VkImageCopy ImageCopies[MaxCopies];
     
-    const FRHITextureDesc Desc = DstVulkanTexture->GetDesc();
-    for (uint32 MipLevel = 0; MipLevel < Desc.NumMipLevels; MipLevel++)
+    const FRHITextureInfo TextureInfo = DstVulkanTexture->GetInfo();
+    for (uint32 MipLevel = 0; MipLevel < TextureInfo.NumMipLevels; MipLevel++)
     {
         VkImageCopy& ImageCopy = ImageCopies[MipLevel];
         FMemory::Memzero(&ImageCopy, sizeof(ImageCopy));
     
-        ImageCopy.extent.width                  = FMath::Max<uint32>(Desc.Extent.x >> MipLevel, 1u);
-        ImageCopy.extent.height                 = FMath::Max<uint32>(Desc.Extent.y >> MipLevel, 1u);
-        ImageCopy.extent.depth                  = FMath::Max<uint32>(Desc.Extent.z >> MipLevel, 1u);
+        ImageCopy.extent.width                  = FMath::Max<uint32>(TextureInfo.Extent.x >> MipLevel, 1u);
+        ImageCopy.extent.height                 = FMath::Max<uint32>(TextureInfo.Extent.y >> MipLevel, 1u);
+        ImageCopy.extent.depth                  = FMath::Max<uint32>(TextureInfo.Extent.z >> MipLevel, 1u);
         ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
         ImageCopy.srcSubresource.mipLevel       = MipLevel;
         ImageCopy.srcSubresource.baseArrayLayer = 0;
@@ -909,7 +909,7 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
 
     BarrierBatcher.FlushBarriers();
 
-    GetCommandBuffer()->CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, Desc.NumMipLevels, ImageCopies);
+    GetCommandBuffer()->CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, TextureInfo.NumMipLevels, ImageCopies);
 }
 
 void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc)
@@ -1045,8 +1045,8 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
         return;
     }
 
-    FRHITextureDesc TextureDesc = VulkanTexture->GetDesc();
-    const uint32 MipLevelCount = TextureDesc.NumMipLevels;
+    FRHITextureInfo TextureInfo = VulkanTexture->GetInfo();
+    const uint32 MipLevelCount = TextureInfo.NumMipLevels;
     if (MipLevelCount < 2)
     {
         VULKAN_ERROR("MipLevels must be more than one in order to generate any Mips");
@@ -1062,7 +1062,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
     }
 
     VkImage    VulkanImage       = VulkanTexture->GetVkImage();
-    VkExtent2D SourceExtent      = { static_cast<uint32>(TextureDesc.Extent.x), static_cast<uint32>(TextureDesc.Extent.y) };
+    VkExtent2D SourceExtent      = { static_cast<uint32>(TextureInfo.Extent.x), static_cast<uint32>(TextureInfo.Extent.y) };
     VkExtent2D DestinationExtent = {};
     
     // Setup TransitionBarrier since these parameters will be the same for all MipLevels
@@ -1083,7 +1083,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
     // Flush barriers
     BarrierBatcher.FlushBarriers();
 
-    const uint32 NumArrayLayers = IsTextureCube(VulkanTexture->GetDimension()) ? TextureDesc.NumArraySlices * RHI_NUM_CUBE_FACES : TextureDesc.NumArraySlices;
+    const uint32 NumArrayLayers = IsTextureCube(VulkanTexture->GetDimension()) ? TextureInfo.NumArraySlices * RHI_NUM_CUBE_FACES : TextureInfo.NumArraySlices;
     for (uint32 Index = 1; Index < MipLevelCount; Index++)
     {
         DestinationExtent = { FMath::Max(SourceExtent.width / 2U, 1u), FMath::Max(SourceExtent.height / 2U, 1U) };

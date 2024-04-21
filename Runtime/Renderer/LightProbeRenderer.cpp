@@ -64,13 +64,13 @@ bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
         SpecularIrradianceGenPSO->SetDebugName("Specular IrradianceGen PSO");
     }
 
-    FRHISamplerStateDesc SamplerInitializer;
-    SamplerInitializer.AddressU = ESamplerMode::Wrap;
-    SamplerInitializer.AddressV = ESamplerMode::Wrap;
-    SamplerInitializer.AddressW = ESamplerMode::Wrap;
-    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
+    FRHISamplerStateInfo SamplerInfo;
+    SamplerInfo.AddressU = ESamplerMode::Wrap;
+    SamplerInfo.AddressV = ESamplerMode::Wrap;
+    SamplerInfo.AddressW = ESamplerMode::Wrap;
+    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    FrameResources.IrradianceSampler = RHICreateSamplerState(SamplerInitializer);
+    FrameResources.IrradianceSampler = RHICreateSamplerState(SamplerInfo);
     if (!FrameResources.IrradianceSampler)
     {
         return false;
@@ -159,8 +159,8 @@ bool FLightProbeRenderer::CreateSkyLightResources(FFrameResources& FrameResource
     FProxyLightProbe& Skylight = FrameResources.Skylight;
 
     // Generate global irradiance (From Skybox)
-    FRHITextureDesc LightProbeDesc = FRHITextureDesc::CreateTextureCube(FrameResources.LightProbeFormat, FrameResources.IrradianceProbeSize, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
-    Skylight.IrradianceMap = RHICreateTexture(LightProbeDesc);
+    FRHITextureInfo LightProbeInfo = FRHITextureInfo::CreateTextureCube(FrameResources.LightProbeFormat, FrameResources.IrradianceProbeSize, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    Skylight.IrradianceMap = RHICreateTexture(LightProbeInfo);
     if (!Skylight.IrradianceMap)
     {
         DEBUG_BREAK();
@@ -180,10 +180,10 @@ bool FLightProbeRenderer::CreateSkyLightResources(FFrameResources& FrameResource
     }
 
     const int32 SpecularIrradianceMiplevels = FMath::Max(FMath::Log2(FrameResources.SpecularIrradianceProbeSize), 1);
-    LightProbeDesc.Extent       = FIntVector3(FrameResources.SpecularIrradianceProbeSize, FrameResources.SpecularIrradianceProbeSize, 0);
-    LightProbeDesc.NumMipLevels = uint8(SpecularIrradianceMiplevels);
+    LightProbeInfo.Extent       = FIntVector3(FrameResources.SpecularIrradianceProbeSize, FrameResources.SpecularIrradianceProbeSize, 0);
+    LightProbeInfo.NumMipLevels = uint8(SpecularIrradianceMiplevels);
 
-    Skylight.SpecularIrradianceMap = RHICreateTexture(LightProbeDesc);
+    Skylight.SpecularIrradianceMap = RHICreateTexture(LightProbeInfo);
     if (!Skylight.SpecularIrradianceMap)
     {
         DEBUG_BREAK();

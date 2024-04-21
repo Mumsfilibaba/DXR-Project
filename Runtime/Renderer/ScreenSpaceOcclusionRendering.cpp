@@ -259,8 +259,8 @@ bool FScreenSpaceOcclusionPass::CreateResources(FFrameResources& FrameResources,
     Width  = Width / 2;
     Height = Height / 2;
 
-    FRHITextureDesc SSAOBufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags);
-    FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferDesc, EResourceAccess::NonPixelShaderResource);
+    FRHITextureInfo SSAOBufferInfo = FRHITextureInfo::CreateTexture2D(FrameResources.SSAOBufferFormat, Width, Height, 1, 1, Flags);
+    FrameResources.SSAOBuffer = RHICreateTexture(SSAOBufferInfo, EResourceAccess::NonPixelShaderResource);
     if (!FrameResources.SSAOBuffer)
     {
         DEBUG_BREAK();

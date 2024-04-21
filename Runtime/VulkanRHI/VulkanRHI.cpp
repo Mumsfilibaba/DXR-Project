@@ -192,9 +192,9 @@ void FVulkanRHI::RHIEndFrame()
     // NOTE: Empty for now
 }
 
-FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), InDesc);
+    FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), InTextureInfo);
     if (!NewTexture->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -218,27 +218,27 @@ FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceA
     }
 }
 
-FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)
+FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
 {
     TScopedLock Lock(SamplerStateMapCS);
 
     TSharedRef<FVulkanSamplerState> Result;
 
     // Check if there already is an existing sampler state with this description
-    if (TSharedRef<FVulkanSamplerState>* ExistingSamplerState = SamplerStateMap.Find(InDesc))
+    if (TSharedRef<FVulkanSamplerState>* ExistingSamplerState = SamplerStateMap.Find(InSamplerInfo))
     {
         Result = *ExistingSamplerState;
     }
     else
     {
-        Result = new FVulkanSamplerState(GetDevice(), InDesc);
+        Result = new FVulkanSamplerState(GetDevice(), InSamplerInfo);
         if (!Result->Initialize())
         {
             return nullptr;
         }
         else
         {
-            SamplerStateMap.Add(InDesc, Result);
+            SamplerStateMap.Add(InSamplerInfo, Result);
         }
     }
 

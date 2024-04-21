@@ -15,9 +15,9 @@ class FRHIBuffer;
 class FRHISamplerState;
 struct FRHIRayTracingGeometryInstance;
 
-typedef TSharedRef<class FRHIAccelerationStructure>  FRHIAccelerationStructureRef;
-typedef TSharedRef<class FRHIRayTracingScene>        FRHIRayTracingSceneRef;
-typedef TSharedRef<class FRHIRayTracingGeometry>     FRHIRayTracingGeometryRef;
+typedef TSharedRef<class FRHIAccelerationStructure> FRHIAccelerationStructureRef;
+typedef TSharedRef<class FRHIRayTracingScene>       FRHIRayTracingSceneRef;
+typedef TSharedRef<class FRHIRayTracingGeometry>    FRHIRayTracingGeometryRef;
 
 struct FRayPayload
 {
@@ -81,8 +81,7 @@ struct FRHIRayTracingGeometryInstance
     uint32                   HitGroupIndex = 0;
     ERayTracingInstanceFlags Flags         = ERayTracingInstanceFlags::None;
     uint32                   Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
-
-    FMatrix3x4 Transform;
+    FMatrix3x4               Transform;
 };
 
 struct FRHIAccelerationStructureInitializer

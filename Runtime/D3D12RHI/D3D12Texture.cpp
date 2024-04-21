@@ -2,8 +2,8 @@
 #include "D3D12Viewport.h"
 #include "D3D12RHI.h"
 
-FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureDesc& InDesc)
-    : FRHITexture(InDesc)
+FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo)
+    : FRHITexture(InTextureInfo)
     , FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
     , ShaderResourceView(nullptr)
@@ -18,33 +18,33 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     D3D12_RESOURCE_DESC ResourceDesc;
     FMemory::Memzero(&ResourceDesc);
 
-    ResourceDesc.Dimension        = ConvertTextureDimension(Desc.Dimension);
-    ResourceDesc.Flags            = ConvertTextureFlags(Desc.UsageFlags);
-    ResourceDesc.Format           = ConvertFormat(Desc.Format);
+    ResourceDesc.Dimension        = ConvertTextureDimension(Info.Dimension);
+    ResourceDesc.Flags            = ConvertTextureFlags(Info.UsageFlags);
+    ResourceDesc.Format           = ConvertFormat(Info.Format);
     ResourceDesc.Layout           = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    ResourceDesc.MipLevels        = static_cast<UINT16>(Desc.NumMipLevels);
+    ResourceDesc.MipLevels        = static_cast<UINT16>(Info.NumMipLevels);
     ResourceDesc.Alignment        = 0;
-    ResourceDesc.Width            = Desc.Extent.x;
-    ResourceDesc.Height           = Desc.Extent.y;
-    ResourceDesc.SampleDesc.Count = Desc.NumSamples;
+    ResourceDesc.Width            = Info.Extent.x;
+    ResourceDesc.Height           = Info.Extent.y;
+    ResourceDesc.SampleDesc.Count = Info.NumSamples;
     
-    if (Desc.IsTexture3D())
+    if (Info.IsTexture3D())
     {
-        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(Desc.Extent.z);
+        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(Info.Extent.z);
     }
     else 
     {
-        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(Desc.NumArraySlices);
+        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(Info.NumArraySlices);
     }
 
-    if (Desc.IsTextureCube() || Desc.IsTextureCubeArray())
+    if (Info.IsTextureCube() || Info.IsTextureCubeArray())
     {
         ResourceDesc.DepthOrArraySize = ResourceDesc.DepthOrArraySize * RHI_NUM_CUBE_FACES;
     }
 
-    if (Desc.NumSamples > 1)
+    if (Info.NumSamples > 1)
     {
-        const int32 Quality = GetDevice()->QueryMultisampleQuality(ResourceDesc.Format, Desc.NumSamples);
+        const int32 Quality = GetDevice()->QueryMultisampleQuality(ResourceDesc.Format, Info.NumSamples);
         ResourceDesc.SampleDesc.Quality = Quality - 1;
     }
     else
@@ -54,20 +54,20 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
 
     D3D12_CLEAR_VALUE* ClearValue = nullptr;
     D3D12_CLEAR_VALUE  D3D12ClearValue;
-    if (Desc.IsRenderTarget() || Desc.IsDepthStencil())
+    if (Info.IsRenderTarget() || Info.IsDepthStencil())
     {
         FMemory::Memzero(&D3D12ClearValue);
         ClearValue = &D3D12ClearValue;
 
-        D3D12ClearValue.Format = (Desc.ClearValue.Format != EFormat::Unknown) ? ConvertFormat(Desc.ClearValue.Format) : ResourceDesc.Format;
-        if (Desc.ClearValue.IsDepthStencilValue())
+        D3D12ClearValue.Format = (Info.ClearValue.Format != EFormat::Unknown) ? ConvertFormat(Info.ClearValue.Format) : ResourceDesc.Format;
+        if (Info.ClearValue.IsDepthStencilValue())
         {
-            D3D12ClearValue.DepthStencil.Depth   = Desc.ClearValue.AsDepthStencil().Depth;
-            D3D12ClearValue.DepthStencil.Stencil = Desc.ClearValue.AsDepthStencil().Stencil;
+            D3D12ClearValue.DepthStencil.Depth   = Info.ClearValue.AsDepthStencil().Depth;
+            D3D12ClearValue.DepthStencil.Stencil = static_cast<uint8>(Info.ClearValue.AsDepthStencil().Stencil);
         }
-        else if (Desc.ClearValue.IsColorValue())
+        else if (Info.ClearValue.IsColorValue())
         {
-            FMemory::Memcpy(D3D12ClearValue.Color, &Desc.ClearValue.ColorValue.r, sizeof(float[4]));
+            FMemory::Memcpy(D3D12ClearValue.Color, &Info.ClearValue.ColorValue.r, sizeof(float[4]));
         }
     }
 
@@ -88,44 +88,44 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         ViewDesc.Format                  = D3D12CastShaderResourceFormat(ResourceDesc.Format);
         ViewDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
-        if (Desc.IsTexture2D())
+        if (Info.IsTexture2D())
         {
             ViewDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
-            ViewDesc.Texture2D.MipLevels           = Desc.NumMipLevels;
+            ViewDesc.Texture2D.MipLevels           = Info.NumMipLevels;
             ViewDesc.Texture2D.MostDetailedMip     = 0;
             ViewDesc.Texture2D.ResourceMinLODClamp = 0.0f;
             ViewDesc.Texture2D.PlaneSlice          = 0;
         }
-        else if (Desc.IsTexture2DArray())
+        else if (Info.IsTexture2DArray())
         {
             ViewDesc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-            ViewDesc.Texture2DArray.MipLevels           = Desc.NumMipLevels;
+            ViewDesc.Texture2DArray.MipLevels           = Info.NumMipLevels;
             ViewDesc.Texture2DArray.MostDetailedMip     = 0;
             ViewDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
             ViewDesc.Texture2DArray.PlaneSlice          = 0;
-            ViewDesc.Texture2DArray.ArraySize           = Desc.NumArraySlices;
+            ViewDesc.Texture2DArray.ArraySize           = Info.NumArraySlices;
             ViewDesc.Texture2DArray.FirstArraySlice     = 0;
         }
-        else if (Desc.IsTextureCube())
+        else if (Info.IsTextureCube())
         {
             ViewDesc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            ViewDesc.TextureCube.MipLevels           = Desc.NumMipLevels;
+            ViewDesc.TextureCube.MipLevels           = Info.NumMipLevels;
             ViewDesc.TextureCube.MostDetailedMip     = 0;
             ViewDesc.TextureCube.ResourceMinLODClamp = 0.0f;
         }
-        else if (Desc.IsTextureCubeArray())
+        else if (Info.IsTextureCubeArray())
         {
             ViewDesc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-            ViewDesc.TextureCubeArray.MipLevels           = Desc.NumMipLevels;
+            ViewDesc.TextureCubeArray.MipLevels           = Info.NumMipLevels;
             ViewDesc.TextureCubeArray.MostDetailedMip     = 0;
             ViewDesc.TextureCubeArray.ResourceMinLODClamp = 0.0f;
             ViewDesc.TextureCubeArray.First2DArrayFace    = 0;
-            ViewDesc.TextureCubeArray.NumCubes            = Desc.NumArraySlices;
+            ViewDesc.TextureCubeArray.NumCubes            = Info.NumArraySlices;
         }
-        else if (Desc.IsTexture3D())
+        else if (Info.IsTexture3D())
         {
             ViewDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
-            ViewDesc.Texture3D.MipLevels           = Desc.NumMipLevels;
+            ViewDesc.Texture3D.MipLevels           = Info.NumMipLevels;
             ViewDesc.Texture3D.MostDetailedMip     = 0;
             ViewDesc.Texture3D.ResourceMinLODClamp = 0.0f;
         }
@@ -150,10 +150,10 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     }
 
     // TODO: Fix for other resources than Texture2D
-    const bool bIsTexture2D = Desc.IsTexture2D();
+    const bool bIsTexture2D = Info.IsTexture2D();
     if (bIsTexture2D)
     {
-        if (Desc.IsUnorderedAccess())
+        if (Info.IsUnorderedAccess())
         {
             D3D12_UNORDERED_ACCESS_VIEW_DESC ViewDesc;
             FMemory::Memzero(&ViewDesc);
@@ -189,12 +189,12 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         Context->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
 
         // Transfer all the miplevels
-        uint32 Width  = Desc.Extent.x;
-        uint32 Height = Desc.Extent.y;
-        for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
+        uint32 Width  = Info.Extent.x;
+        uint32 Height = Info.Extent.y;
+        for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
         {
             // TODO: This does not feel optimal
-            if (IsBlockCompressed(Desc.Format) && (!IsBlockCompressedAligned(Width) || !IsBlockCompressedAligned(Height)))
+            if (IsBlockCompressed(Info.Format) && (!IsBlockCompressedAligned(Width) || !IsBlockCompressedAligned(Height)))
             {
                 break;
             }
@@ -432,8 +432,8 @@ FString FD3D12Texture::GetDebugName() const
 }
 
 
-FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureDesc& InDesc)
-    : FD3D12Texture(InDevice, InDesc)
+FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureInfo& InTextureInfo)
+    : FD3D12Texture(InDevice, InTextureInfo)
     , Viewport(InViewport)
 {
 }
@@ -445,8 +445,8 @@ FD3D12BackBufferTexture::~FD3D12BackBufferTexture()
 
 void FD3D12BackBufferTexture::Resize(uint32 InWidth, uint32 InHeight)
 {
-    Desc.Extent.x = InWidth;
-    Desc.Extent.y = InHeight;
+    Info.Extent.x = InWidth;
+    Info.Extent.y = InHeight;
 }
 
 FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture()

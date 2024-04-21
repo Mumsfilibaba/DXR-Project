@@ -206,8 +206,8 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
     const ETextureUsageFlags Usage = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
     const FClearValue DepthClearValue(FrameResources.DepthBufferFormat, 1.0f, 0);
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
-    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FrameResources.DepthBufferFormat, Width, Height, 1, 1, Usage, DepthClearValue);
+    FrameResources.GBuffer[GBufferIndex_Depth] = RHICreateTexture(TextureInfo, EResourceAccess::PixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Depth])
     {
         FrameResources.GBuffer[GBufferIndex_Depth]->SetDebugName("GBuffer DepthStencil");
@@ -491,10 +491,10 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(FrameResources.AlbedoFormat, Width, Height, 1, 1, Usage);
 
     // Albedo
-    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Albedo] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Albedo])
     {
         FrameResources.GBuffer[GBufferIndex_Albedo]->SetDebugName("GBuffer Albedo");
@@ -505,9 +505,9 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Normal
-    TextureDesc.Format = FrameResources.NormalFormat;
+    TextureInfo.Format = FrameResources.NormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Normal] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Normal])
     {
         FrameResources.GBuffer[GBufferIndex_Normal]->SetDebugName("GBuffer Normal");
@@ -518,9 +518,9 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Material Properties
-    TextureDesc.Format = FrameResources.MaterialFormat;
+    TextureInfo.Format = FrameResources.MaterialFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Material] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Material])
     {
         FrameResources.GBuffer[GBufferIndex_Material]->SetDebugName("GBuffer Material");
@@ -531,9 +531,9 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // View Normal
-    TextureDesc.Format = FrameResources.ViewNormalFormat;
+    TextureInfo.Format = FrameResources.ViewNormalFormat;
 
-    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
     {
         FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetDebugName("GBuffer ViewNormal");
@@ -544,9 +544,9 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     // Velocity
-    TextureDesc.Format = FrameResources.VelocityFormat;
+    TextureInfo.Format = FrameResources.VelocityFormat;
 
-    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+    FrameResources.GBuffer[GBufferIndex_Velocity] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
     if (FrameResources.GBuffer[GBufferIndex_Velocity])
     {
         FrameResources.GBuffer[GBufferIndex_Velocity]->SetDebugName("GBuffer Velocity");
@@ -715,13 +715,13 @@ FTiledLightPass::~FTiledLightPass()
 
 bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
 {
-    FRHISamplerStateDesc SamplerInitializer;
-    SamplerInitializer.AddressU = ESamplerMode::Clamp;
-    SamplerInitializer.AddressV = ESamplerMode::Clamp;
-    SamplerInitializer.AddressW = ESamplerMode::Clamp;
-    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
+    FRHISamplerStateInfo SamplerInfo;
+    SamplerInfo.AddressU = ESamplerMode::Clamp;
+    SamplerInfo.AddressV = ESamplerMode::Clamp;
+    SamplerInfo.AddressW = ESamplerMode::Clamp;
+    SamplerInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
-    FrameResources.GBufferSampler = RHICreateSamplerState(SamplerInitializer);
+    FrameResources.GBufferSampler = RHICreateSamplerState(SamplerInfo);
     if (!FrameResources.GBufferSampler)
     {
         return false;
@@ -743,8 +743,8 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHITextureDesc LUTDesc = FRHITextureDesc::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccess);
-    FRHITextureRef StagingTexture = RHICreateTexture(LUTDesc, EResourceAccess::Common);
+    FRHITextureInfo LUTInfo = FRHITextureInfo::CreateTexture2D(LUTFormat, LUTSize, LUTSize, 1, 1, ETextureUsageFlags::UnorderedAccess);
+    FRHITextureRef StagingTexture = RHICreateTexture(LUTInfo, EResourceAccess::Common);
     if (!StagingTexture)
     {
         DEBUG_BREAK();
@@ -755,9 +755,9 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         StagingTexture->SetDebugName("Staging IntegrationLUT");
     }
 
-    LUTDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
+    LUTInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-    FrameResources.IntegrationLUT = RHICreateTexture(LUTDesc, EResourceAccess::Common);
+    FrameResources.IntegrationLUT = RHICreateTexture(LUTInfo, EResourceAccess::Common);
     if (!FrameResources.IntegrationLUT)
     {
         DEBUG_BREAK();
@@ -768,12 +768,12 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
         FrameResources.IntegrationLUT->SetDebugName("IntegrationLUT");
     }
 
-    SamplerInitializer.AddressU = ESamplerMode::Clamp;
-    SamplerInitializer.AddressV = ESamplerMode::Clamp;
-    SamplerInitializer.AddressW = ESamplerMode::Clamp;
-    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipPoint;
+    SamplerInfo.AddressU = ESamplerMode::Clamp;
+    SamplerInfo.AddressV = ESamplerMode::Clamp;
+    SamplerInfo.AddressW = ESamplerMode::Clamp;
+    SamplerInfo.Filter   = ESamplerFilter::MinMagMipPoint;
 
-    FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInitializer);
+    FrameResources.IntegrationLUTSampler = RHICreateSamplerState(SamplerInfo);
     if (!FrameResources.IntegrationLUTSampler)
     {
         DEBUG_BREAK();
@@ -944,8 +944,8 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
     }
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::RenderTarget | ETextureUsageFlags::ShaderResource;
-    FRHITextureDesc FinalTargetDesc = FRHITextureDesc::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage);
-    FrameResources.FinalTarget = RHICreateTexture(FinalTargetDesc, EResourceAccess::PixelShaderResource);
+    FRHITextureInfo FinalTargetInfo = FRHITextureInfo::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, Usage);
+    FrameResources.FinalTarget = RHICreateTexture(FinalTargetInfo, EResourceAccess::PixelShaderResource);
     if (FrameResources.FinalTarget)
     {
         FrameResources.FinalTarget->SetDebugName("Final Target");
@@ -1156,10 +1156,10 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
     const uint32 ReducedHeight = FMath::DivideByMultiple(Height, Alignment);
 
     const ETextureUsageFlags Usage = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, Usage);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R32G32_Float, ReducedWidth, ReducedHeight, 1, 1, Usage);
     for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
     {
-        FrameResources.ReducedDepthBuffer[Index] = RHICreateTexture(TextureDesc, EResourceAccess::NonPixelShaderResource);
+        FrameResources.ReducedDepthBuffer[Index] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
         if (FrameResources.ReducedDepthBuffer[Index])
         {
             FrameResources.ReducedDepthBuffer[Index]->SetDebugName("Reduced DepthStencil[" + TTypeToString<int32>::ToString(Index) + "]");

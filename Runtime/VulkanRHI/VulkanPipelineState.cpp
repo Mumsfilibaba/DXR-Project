@@ -50,7 +50,7 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
         for (int32 Index = 0; Index < VertexInputAttributeDescriptions.Size(); Index++)
         {
             VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];
-            if (Attribute.binding != CurrentBinding)
+            if (Attribute.binding != static_cast<uint32>(CurrentBinding))
             {
                 continue;
             }

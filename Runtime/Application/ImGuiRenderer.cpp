@@ -342,21 +342,21 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHISamplerStateDesc SamplerInitializer;
-    SamplerInitializer.AddressU = ESamplerMode::Clamp;
-    SamplerInitializer.AddressV = ESamplerMode::Clamp;
-    SamplerInitializer.AddressW = ESamplerMode::Clamp;
-    SamplerInitializer.Filter   = ESamplerFilter::MinMagMipLinear;
+    FRHISamplerStateInfo SamplerInfo;
+    SamplerInfo.AddressU = ESamplerMode::Clamp;
+    SamplerInfo.AddressV = ESamplerMode::Clamp;
+    SamplerInfo.AddressW = ESamplerMode::Clamp;
+    SamplerInfo.Filter   = ESamplerFilter::MinMagMipLinear;
 
-    LinearSampler = RHICreateSamplerState(SamplerInitializer);
+    LinearSampler = RHICreateSamplerState(SamplerInfo);
     if (!LinearSampler)
     {
         return false;
     }
 
-    SamplerInitializer.Filter = ESamplerFilter::MinMagMipPoint;
+    SamplerInfo.Filter = ESamplerFilter::MinMagMipPoint;
 
-    PointSampler = RHICreateSamplerState(SamplerInitializer);
+    PointSampler = RHICreateSamplerState(SamplerInfo);
     if (!PointSampler)
     {
         return false;

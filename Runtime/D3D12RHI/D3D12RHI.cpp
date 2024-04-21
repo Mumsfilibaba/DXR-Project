@@ -242,9 +242,9 @@ bool FD3D12RHI::Initialize()
     return true;
 }
 
-FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
+FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InDesc);
+    FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InTextureInfo);
     if (!NewTexture->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -268,14 +268,14 @@ FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAc
     }
 }
 
-FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& InDesc)
+FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
 {
     TScopedLock Lock(SamplerStateMapCS);
 
     FD3D12SamplerStateRef Result;
 
     // Check if there already is an existing sampler state with this description
-    if (FD3D12SamplerStateRef* ExistingSamplerState = SamplerStateMap.Find(InDesc))
+    if (FD3D12SamplerStateRef* ExistingSamplerState = SamplerStateMap.Find(InSamplerInfo))
     {
         Result = *ExistingSamplerState;
     }
@@ -284,26 +284,26 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateDesc& I
         D3D12_SAMPLER_DESC Desc;
         FMemory::Memzero(&Desc);
 
-        Desc.AddressU       = ConvertSamplerMode(InDesc.AddressU);
-        Desc.AddressV       = ConvertSamplerMode(InDesc.AddressV);
-        Desc.AddressW       = ConvertSamplerMode(InDesc.AddressW);
-        Desc.ComparisonFunc = ConvertComparisonFunc(InDesc.ComparisonFunc);
-        Desc.Filter         = ConvertSamplerFilter(InDesc.Filter);
-        Desc.MaxAnisotropy  = InDesc.MaxAnisotropy;
-        Desc.MaxLOD         = InDesc.MaxLOD;
-        Desc.MinLOD         = InDesc.MinLOD;
-        Desc.MipLODBias     = InDesc.MipLODBias;
+        Desc.AddressU       = ConvertSamplerMode(InSamplerInfo.AddressU);
+        Desc.AddressV       = ConvertSamplerMode(InSamplerInfo.AddressV);
+        Desc.AddressW       = ConvertSamplerMode(InSamplerInfo.AddressW);
+        Desc.ComparisonFunc = ConvertComparisonFunc(InSamplerInfo.ComparisonFunc);
+        Desc.Filter         = ConvertSamplerFilter(InSamplerInfo.Filter);
+        Desc.MaxAnisotropy  = InSamplerInfo.MaxAnisotropy;
+        Desc.MaxLOD         = InSamplerInfo.MaxLOD;
+        Desc.MinLOD         = InSamplerInfo.MinLOD;
+        Desc.MipLODBias     = InSamplerInfo.MipLODBias;
         
-        FMemory::Memcpy(Desc.BorderColor, &InDesc.BorderColor.r, sizeof(Desc.BorderColor));
+        FMemory::Memcpy(Desc.BorderColor, &InSamplerInfo.BorderColor.r, sizeof(Desc.BorderColor));
 
-        Result = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InDesc);
+        Result = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InSamplerInfo);
         if (!Result->CreateSampler(Desc))
         {
             return nullptr;
         }
         else
         {
-            SamplerStateMap.Add(InDesc, Result);
+            SamplerStateMap.Add(InSamplerInfo, Result);
         }
     }
 
@@ -362,8 +362,8 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
         return nullptr;
     }
 
-    const FRHITextureDesc& TextureDesc = D3D12Texture->GetDesc();
-    CHECK(TextureDesc.IsShaderResource());
+    const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
+    CHECK(TextureInfo.IsShaderResource());
     CHECK(InDesc.Format != EFormat::Unknown);
     CHECK(IsTypelessFormat(InDesc.Format) == false);
     
@@ -373,9 +373,9 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
     Desc.Format                  = ConvertFormat(InDesc.Format);
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     
-    if (TextureDesc.IsTexture2D())
+    if (TextureInfo.IsTexture2D())
     {
-        if (!TextureDesc.IsMultisampled())
+        if (!TextureInfo.IsMultisampled())
         {
             Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
             Desc.Texture2D.MostDetailedMip     = InDesc.FirstMipLevel;
@@ -388,9 +388,9 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
             Desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
         }
     }
-    else if (TextureDesc.IsTexture2DArray())
+    else if (TextureInfo.IsTexture2DArray())
     {
-        if (!TextureDesc.IsMultisampled())
+        if (!TextureInfo.IsMultisampled())
         {
             Desc.ViewDimension                      = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
             Desc.Texture2DArray.MostDetailedMip     = InDesc.FirstMipLevel;
@@ -407,14 +407,14 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
             Desc.Texture2DMSArray.ArraySize       = InDesc.NumSlices;
         }
     }
-    else if (TextureDesc.IsTextureCube())
+    else if (TextureInfo.IsTextureCube())
     {
         Desc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;
         Desc.TextureCube.MostDetailedMip     = InDesc.FirstMipLevel;
         Desc.TextureCube.MipLevels           = InDesc.NumMips;
         Desc.TextureCube.ResourceMinLODClamp = InDesc.MinLODClamp;
     }
-    else if (TextureDesc.IsTextureCubeArray())
+    else if (TextureInfo.IsTextureCubeArray())
     {
         Desc.ViewDimension                        = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
         Desc.TextureCubeArray.MostDetailedMip     = InDesc.FirstMipLevel;
@@ -423,7 +423,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
         Desc.TextureCubeArray.First2DArrayFace    = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
         Desc.TextureCubeArray.NumCubes            = InDesc.NumSlices;
     }
-    else if (TextureDesc.IsTexture3D())
+    else if (TextureInfo.IsTexture3D())
     {
         Desc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE3D;
         Desc.Texture3D.MostDetailedMip     = InDesc.FirstMipLevel;
@@ -511,8 +511,8 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
         return nullptr;
     }
 
-    const FRHITextureDesc& TextureDesc = Texture->GetDesc();
-    CHECK(TextureDesc.IsUnorderedAccess());
+    const FRHITextureInfo& TextureInfo = Texture->GetInfo();
+    CHECK(TextureInfo.IsUnorderedAccess());
     CHECK(InDesc.Format != EFormat::Unknown);
     CHECK(IsTypelessFormat(InDesc.Format) == false);
 
@@ -521,9 +521,9 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
 
     Desc.Format = ConvertFormat(InDesc.Format);
 
-    if (TextureDesc.IsTexture2D())
+    if (TextureInfo.IsTexture2D())
     {
-        if (!TextureDesc.IsMultisampled())
+        if (!TextureInfo.IsMultisampled())
         {
             Desc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
             Desc.Texture2D.MipSlice   = InDesc.MipLevel;
@@ -534,9 +534,9 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
             D3D12_ERROR("MultiSampled Textures is not supported");
         }
     }
-    else if (TextureDesc.IsTexture2DArray())
+    else if (TextureInfo.IsTexture2DArray())
     {
-        if (!TextureDesc.IsMultisampled())
+        if (!TextureInfo.IsMultisampled())
         {
             Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
             Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
@@ -549,7 +549,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
             D3D12_ERROR("MultiSampled Textures is not supported");
         }
     }
-    else if (TextureDesc.IsTextureCube() || TextureDesc.IsTextureCubeArray())
+    else if (TextureInfo.IsTextureCube() || TextureInfo.IsTextureCubeArray())
     {
         Desc.ViewDimension                  = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
         Desc.Texture2DArray.MipSlice        = InDesc.MipLevel;
@@ -557,7 +557,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
         Desc.Texture2DArray.FirstArraySlice = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
         Desc.Texture2DArray.ArraySize       = InDesc.NumSlices * RHI_NUM_CUBE_FACES;
     }
-    else if (TextureDesc.IsTexture3D())
+    else if (TextureInfo.IsTexture3D())
     {
         Desc.ViewDimension         = D3D12_UAV_DIMENSION_TEXTURE3D;
         Desc.Texture3D.FirstWSlice = InDesc.FirstArraySlice;

@@ -13,7 +13,7 @@ typedef TSharedRef<class FVulkanBackBufferTexture> FVulkanBackBufferTextureRef;
 class FVulkanTexture : public FRHITexture, public FVulkanDeviceChild
 {
 public:
-    FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureDesc& InDesc);
+    FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanTexture();
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
@@ -56,8 +56,8 @@ public:
     // TODO: Solve in a cleaner way and remove this function
     void Resize(uint32 InWidth, uint32 InHeight)
     {
-        Desc.Extent.x = InWidth;
-        Desc.Extent.y = InHeight;
+        Info.Extent.x = InWidth;
+        Info.Extent.y = InHeight;
     }
 
 protected:
@@ -77,7 +77,7 @@ protected:
 class FVulkanBackBufferTexture : public FVulkanTexture
 {
 public:
-    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureDesc& InDesc);
+    FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanBackBufferTexture();
 
     virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }

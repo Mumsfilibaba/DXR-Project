@@ -1046,7 +1046,7 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
     SrvDesc.Format                  = Desc.Format;
     SrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     
-    const bool bIsTextureCube = Texture->GetDesc().IsTextureCube();
+    const bool bIsTextureCube = Texture->GetInfo().IsTextureCube();
     if (bIsTextureCube)
     {
         SrvDesc.ViewDimension                   = D3D12_SRV_DIMENSION_TEXTURECUBE;

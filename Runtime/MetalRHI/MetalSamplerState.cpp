@@ -1,7 +1,7 @@
 #include "MetalSamplerState.h"
 #include "MetalDeviceContext.h"
 
-FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateDesc& InDesc)
+FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateInfo& InSamplerInfo)
     : FRHISamplerState(InDesc)
     , FMetalObject(InDeviceContext)
     , FMetalRefCounted()

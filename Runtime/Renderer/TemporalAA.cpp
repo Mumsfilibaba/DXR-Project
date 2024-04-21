@@ -54,8 +54,8 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
         }
     }
 
-    FRHISamplerStateDesc SamplerInitializer(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
-    LinearSampler = RHICreateSamplerState(SamplerInitializer);
+    FRHISamplerStateInfo SamplerInfo(ESamplerMode::Clamp, ESamplerFilter::MinMagMipLinear);
+    LinearSampler = RHICreateSamplerState(SamplerInfo);
     if (!LinearSampler)
     {
         DEBUG_BREAK();
@@ -140,12 +140,12 @@ bool FTemporalAA::ResizeResources(FRHICommandList& CommandList, FFrameResources&
 bool FTemporalAA::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     // TAA History-Buffer
-    FRHITextureDesc TAABufferDesc = FRHITextureDesc::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);
+    FRHITextureInfo TAABufferInfo = FRHITextureInfo::CreateTexture2D(FrameResources.FinalTargetFormat, Width, Height, 1, 1, ETextureUsageFlags::ShaderResource | ETextureUsageFlags::UnorderedAccess);
 
     uint32 Index = 0;
     for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
     {
-        TAABuffer = RHICreateTexture(TAABufferDesc, EResourceAccess::NonPixelShaderResource);
+        TAABuffer = RHICreateTexture(TAABufferInfo, EResourceAccess::NonPixelShaderResource);
         if (TAABuffer)
         {
             TAABuffer->SetDebugName(FString::CreateFormatted("TAA History-Buffer[%u]", Index++));

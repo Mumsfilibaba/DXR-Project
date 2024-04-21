@@ -73,9 +73,9 @@ constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
     }
 }
 
-struct FRHISamplerStateDesc
+struct FRHISamplerStateInfo
 {
-    FRHISamplerStateDesc()
+    FRHISamplerStateInfo()
         : AddressU(ESamplerMode::Clamp)
         , AddressV(ESamplerMode::Clamp)
         , AddressW(ESamplerMode::Clamp)
@@ -89,7 +89,7 @@ struct FRHISamplerStateDesc
     {
     }
 
-    FRHISamplerStateDesc(ESamplerMode InAddressMode, ESamplerFilter InFilter)
+    FRHISamplerStateInfo(ESamplerMode InAddressMode, ESamplerFilter InFilter)
         : AddressU(InAddressMode)
         , AddressV(InAddressMode)
         , AddressW(InAddressMode)
@@ -103,7 +103,7 @@ struct FRHISamplerStateDesc
     {
     }
 
-    FRHISamplerStateDesc(
+    FRHISamplerStateInfo(
         ESamplerMode       InAddressU,
         ESamplerMode       InAddressV,
         ESamplerMode       InAddressW,
@@ -127,7 +127,7 @@ struct FRHISamplerStateDesc
     {
     }
 
-    bool operator==(const FRHISamplerStateDesc& Other) const
+    bool operator==(const FRHISamplerStateInfo& Other) const
     {
         return AddressU       == Other.AddressU
             && AddressV       == Other.AddressV
@@ -141,12 +141,12 @@ struct FRHISamplerStateDesc
             && BorderColor    == Other.BorderColor;
     }
 
-    bool operator!=(const FRHISamplerStateDesc& Other) const
+    bool operator!=(const FRHISamplerStateInfo& Other) const
     {
         return !(*this == Other);
     }
 
-    friend uint64 HashType(const FRHISamplerStateDesc& Value)
+    friend uint64 HashType(const FRHISamplerStateInfo& Value)
     {
         uint64 Hash = ToUnderlying(Value.AddressU);
         HashCombine(Hash, ToUnderlying(Value.AddressV));
@@ -176,8 +176,8 @@ struct FRHISamplerStateDesc
 class FRHISamplerState : public FRHIResource
 {
 protected:
-    explicit FRHISamplerState(const FRHISamplerStateDesc& InDesc)
-        : Desc(InDesc)
+    explicit FRHISamplerState(const FRHISamplerStateInfo& InSamplerInfo)
+        : Info(InSamplerInfo)
     {
     }
 
@@ -186,8 +186,8 @@ protected:
 public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    const FRHISamplerStateDesc& GetDesc() const { return Desc; }
+    const FRHISamplerStateInfo& GetInfo() const { return Info; }
 
 protected:
-    FRHISamplerStateDesc Desc;
+    FRHISamplerStateInfo Info;
 };

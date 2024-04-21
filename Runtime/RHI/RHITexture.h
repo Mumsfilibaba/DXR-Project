@@ -38,9 +38,9 @@ struct IRHITextureData
     virtual void* GetMipData(uint32 MipLevel = 0)       const = 0;
 };
 
-struct FRHITextureDesc
+struct FRHITextureInfo
 {
-    static FRHITextureDesc CreateTexture2D(
+    static FRHITextureInfo CreateTexture2D(
         EFormat            InFormat,
         uint32             InWidth,
         uint32             InHeight,
@@ -49,7 +49,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(
+        return FRHITextureInfo(
             ETextureDimension::Texture2D,
             InFormat,
             FIntVector3(InWidth, InHeight, 0),
@@ -60,7 +60,7 @@ struct FRHITextureDesc
             InClearValue);
     }
 
-    static FRHITextureDesc CreateTexture2DArray(
+    static FRHITextureInfo CreateTexture2DArray(
         EFormat            InFormat,
         uint32             InWidth,
         uint32             InHeight,
@@ -70,7 +70,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(
+        return FRHITextureInfo(
             ETextureDimension::Texture2DArray,
             InFormat,
             FIntVector3(InWidth, InHeight, 0),
@@ -81,7 +81,7 @@ struct FRHITextureDesc
             InClearValue);
     }
 
-    static FRHITextureDesc CreateTextureCube(
+    static FRHITextureInfo CreateTextureCube(
         EFormat            InFormat,
         uint32             InExtent,
         uint32             InNumMipLevels,
@@ -89,7 +89,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(
+        return FRHITextureInfo(
             ETextureDimension::TextureCube,
             InFormat,
             FIntVector3(InExtent, InExtent, 0),
@@ -100,7 +100,7 @@ struct FRHITextureDesc
             InClearValue);
     }
 
-    static FRHITextureDesc CreateTextureCubeArray(
+    static FRHITextureInfo CreateTextureCubeArray(
         EFormat            InFormat,
         uint32             InExtent,
         uint32             InArraySlices,
@@ -109,7 +109,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(
+        return FRHITextureInfo(
             ETextureDimension::TextureCubeArray,
             InFormat,
             FIntVector3(InExtent, InExtent, 0),
@@ -120,7 +120,7 @@ struct FRHITextureDesc
             InClearValue);
     }
 
-    static FRHITextureDesc CreateTexture3D(
+    static FRHITextureInfo CreateTexture3D(
         EFormat            InFormat,
         uint32             InWidth,
         uint32             InHeight,
@@ -130,7 +130,7 @@ struct FRHITextureDesc
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureDesc(
+        return FRHITextureInfo(
             ETextureDimension::Texture3D,
             InFormat,
             FIntVector3(InWidth, InHeight, InDepth),
@@ -141,7 +141,7 @@ struct FRHITextureDesc
             InClearValue);
     }
 
-    FRHITextureDesc()
+    FRHITextureInfo()
         : Dimension(ETextureDimension::None)
         , Format(EFormat::Unknown)
         , UsageFlags(ETextureUsageFlags::None)
@@ -153,7 +153,7 @@ struct FRHITextureDesc
     {
     }
 
-    FRHITextureDesc(
+    FRHITextureInfo(
         ETextureDimension  InDimension,
         EFormat            InFormat,
         FIntVector3        InExtent,
@@ -186,7 +186,7 @@ struct FRHITextureDesc
     bool IsPresentable()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
     bool IsMultisampled()    const { return (NumSamples > 1); }
 
-    bool operator==(const FRHITextureDesc& Other) const
+    bool operator==(const FRHITextureInfo& Other) const
     {
         return Dimension      == Other.Dimension
             && Format         == Other.Format
@@ -198,7 +198,7 @@ struct FRHITextureDesc
             && ClearValue     == Other.ClearValue;
     }
 
-    bool operator!=(const FRHITextureDesc& Other) const
+    bool operator!=(const FRHITextureInfo& Other) const
     {
         return !(*this == Other);
     }
@@ -216,9 +216,9 @@ struct FRHITextureDesc
 class FRHITexture : public FRHIResource
 {
 protected:
-    explicit FRHITexture(const FRHITextureDesc& InDesc)
+    explicit FRHITexture(const FRHITextureInfo& InTextureInfo)
         : FRHIResource()
-        , Desc(InDesc)
+        , Info(InTextureInfo)
     {
     }
 
@@ -240,59 +240,59 @@ public:
 
     ETextureDimension GetDimension() const
     {
-        return Desc.Dimension;
+        return Info.Dimension;
     }
     
     EFormat GetFormat() const
     {
-        return Desc.Format;
+        return Info.Format;
     }
 
     ETextureUsageFlags GetFlags() const
     {
-        return Desc.UsageFlags;
+        return Info.UsageFlags;
     }
     
     const FIntVector3& GetExtent() const
     {
-        return Desc.Extent;
+        return Info.Extent;
     }
     
     uint32 GetWidth() const
     {
-        return Desc.Extent.x;
+        return Info.Extent.x;
     }
     
     uint32 GetHeight() const
     {
-        return Desc.Extent.y;
+        return Info.Extent.y;
     }
 
     uint32 GetDepth() const
     {
-        return Desc.Extent.z;
+        return Info.Extent.z;
     }
 
     uint32 GetNumArraySlices() const
     {
-        return Desc.NumArraySlices;
+        return Info.NumArraySlices;
     }
     
     uint32 GetNumMipLevels() const
     {
-        return Desc.NumMipLevels;
+        return Info.NumMipLevels;
     }
     
     uint32 GetNumSamples() const
     {
-        return Desc.NumSamples;
+        return Info.NumSamples;
     }
     
-    const FRHITextureDesc& GetDesc() const
+    const FRHITextureInfo& GetInfo() const
     {
-        return Desc;
+        return Info;
     }
 
 protected:
-    FRHITextureDesc Desc;
+    FRHITextureInfo Info;
 };

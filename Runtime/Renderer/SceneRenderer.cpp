@@ -254,7 +254,7 @@ bool FSceneRenderer::Initialize()
     }
 
     {
-        FRHISamplerStateDesc Initializer;
+        FRHISamplerStateInfo Initializer;
         Initializer.AddressU    = ESamplerMode::Border;
         Initializer.AddressV    = ESamplerMode::Border;
         Initializer.AddressW    = ESamplerMode::Border;
@@ -270,7 +270,7 @@ bool FSceneRenderer::Initialize()
     }
 
     {
-        FRHISamplerStateDesc Initializer;
+        FRHISamplerStateInfo Initializer;
         Initializer.AddressU       = ESamplerMode::Wrap;
         Initializer.AddressV       = ESamplerMode::Wrap;
         Initializer.AddressW       = ESamplerMode::Wrap;
@@ -310,13 +310,13 @@ bool FSceneRenderer::Initialize()
     {
         LightProbeRenderer.RenderSkyLightProbe(CommandList, Resources);
         
-        FRHITextureDesc IrradianceProbeDesc = Resources.Skylight.IrradianceMap->GetDesc();
-        IrradianceProbeDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
+        FRHITextureInfo IrradianceProbeInfo = Resources.Skylight.IrradianceMap->GetInfo();
+        IrradianceProbeInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-        FRHITextureDesc SpecularIrradianceProbeDesc = Resources.Skylight.SpecularIrradianceMap->GetDesc();
-        SpecularIrradianceProbeDesc.UsageFlags = ETextureUsageFlags::ShaderResource;
+        FRHITextureInfo SpecularIrradianceProbeInfo = Resources.Skylight.SpecularIrradianceMap->GetInfo();
+        SpecularIrradianceProbeInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
 
-        FRHITextureRef IrradianceMap = RHICreateTexture(IrradianceProbeDesc, EResourceAccess::CopyDest);
+        FRHITextureRef IrradianceMap = RHICreateTexture(IrradianceProbeInfo, EResourceAccess::CopyDest);
         if (!IrradianceMap)
         {
             DEBUG_BREAK();
@@ -327,7 +327,7 @@ bool FSceneRenderer::Initialize()
             IrradianceMap->SetDebugName("Irradiance Map");
         }
 
-        FRHITextureRef SpecularIrradianceMap = RHICreateTexture(SpecularIrradianceProbeDesc, EResourceAccess::CopyDest);
+        FRHITextureRef SpecularIrradianceMap = RHICreateTexture(SpecularIrradianceProbeInfo, EResourceAccess::CopyDest);
         if (!SpecularIrradianceMap)
         {
             DEBUG_BREAK();
@@ -914,8 +914,8 @@ bool FSceneRenderer::InitShadingImage()
     const uint32 Width  = Resources.MainViewport->GetWidth() / FHardwareSupport::ShadingRateImageTileSize;
     const uint32 Height = Resources.MainViewport->GetHeight() / FHardwareSupport::ShadingRateImageTileSize;
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
-    ShadingImage = RHICreateTexture(TextureDesc, EResourceAccess::ShadingRateSource);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    ShadingImage = RHICreateTexture(TextureInfo, EResourceAccess::ShadingRateSource);
     if (!ShadingImage)
     {
         DEBUG_BREAK();

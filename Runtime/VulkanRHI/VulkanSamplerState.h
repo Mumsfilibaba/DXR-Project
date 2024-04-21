@@ -9,7 +9,7 @@ typedef TSharedRef<class FVulkanSamplerState> FVulkanSamplerStateRef;
 class FVulkanSamplerState : public FRHISamplerState, public FVulkanDeviceChild
 {
 public:
-    FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateDesc& InDesc);
+    FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateInfo& InSamplerInfo);
     virtual ~FVulkanSamplerState();
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }

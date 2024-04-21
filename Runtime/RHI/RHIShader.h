@@ -20,11 +20,9 @@ typedef TSharedRef<class FRHIRayAnyHitShader>       FRHIRayAnyHitShaderRef;
 typedef TSharedRef<class FRHIRayIntersectionShader> FRHIRayIntersectionShaderRef;
 typedef TSharedRef<class FRHIRayCallableShader>     FRHIRayCallableShaderRef;
 
-
 enum class EShaderStage : uint8
 {
     Unknown         = 0,
-    
     // Graphics
     Vertex          = 1,
     Hull            = 2,
@@ -33,10 +31,8 @@ enum class EShaderStage : uint8
     Mesh            = 5,
     Amplification   = 6,
     Pixel           = 7,
-
     // Compute
     Compute         = 8,
-    
     // RayTracing
     RayGen          = 9,
     RayAnyHit       = 10,
@@ -67,7 +63,6 @@ constexpr const CHAR* ToString(EShaderStage ShaderStage)
         default:                            return "Unknown";
     }
 }
-
 
 class FRHIShader : public FRHIResource
 {

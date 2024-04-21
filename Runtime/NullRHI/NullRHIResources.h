@@ -11,8 +11,7 @@ struct FNullRHIBuffer : public FRHIBuffer
     {
     }
 
-    virtual void* GetRHIBaseBuffer() override final { return this; }
-    
+    virtual void* GetRHIBaseBuffer()         override final { return this; }
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
@@ -39,23 +38,20 @@ struct FNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
 class FNullRHITexture : public FRHITexture
 {
 public:
-    FNullRHITexture(const FRHITextureDesc& InDesc)
-        : FRHITexture(InDesc)
+    FNullRHITexture(const FRHITextureInfo& InTextureInfo)
+        : FRHITexture(InTextureInfo)
         , ShaderResourceView(new FNullRHIShaderResourceView(this))
         , UnorderedAccessView(new FNullRHIUnorderedAccessView(this))
     {
     }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(this); }
-    
+    virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(this); }
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
 
     virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return nullptr; }
-    
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
 private:
@@ -71,8 +67,7 @@ struct FNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
     {
     }
 
-    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
-
+    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 };
 
@@ -86,11 +81,10 @@ public:
     }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-    
+  
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
-    
+    virtual void* GetRHIBaseBVHBuffer()             override final { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(this); }
 
 private:
@@ -100,8 +94,8 @@ private:
 
 struct FNullRHISamplerState : public FRHISamplerState
 {
-    FNullRHISamplerState(const FRHISamplerStateDesc& InDesc)
-        : FRHISamplerState(InDesc)
+    FNullRHISamplerState(const FRHISamplerStateInfo& InSamplerInfo)
+        : FRHISamplerState(InSamplerInfo)
     {
     }
 
@@ -116,8 +110,8 @@ public:
         : FRHIViewport(InViewportInfo)
         , BackBuffer(nullptr)
     { 
-        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(Info.ColorFormat, Info.Width, Info.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
-        BackBuffer = new FNullRHITexture(BackBufferDesc);
+        FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(Info.ColorFormat, Info.Width, Info.Height, 1, 1, ETextureUsageFlags::Presentable | ETextureUsageFlags::RenderTarget);
+        BackBuffer = new FNullRHITexture(BackBufferInfo);
     }
 
     bool Resize(uint32 InWidth, uint32 InHeight)

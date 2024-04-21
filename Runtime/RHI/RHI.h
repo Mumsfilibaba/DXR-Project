@@ -88,7 +88,7 @@ public:
      * @param InInitialData  - Initial data of the texture
      * @return               - Returns the newly created texture
      */
-    virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) = 0;
+    virtual FRHITexture* RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) = 0;
 
     /**
      * @brief                - Creates a Buffer
@@ -104,7 +104,7 @@ public:
      * @param InDesc - Structure with information about the SamplerState
      * @return       - Returns the newly created SamplerState (Could be the same as a already created sampler state and a reference is added)
      */
-    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) = 0;
+    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) = 0;
 
     /**
      * @brief             - Create a new Viewport
@@ -336,9 +336,9 @@ FORCEINLINE FRHI* GetRHI()
     return GRHI;
 }
 
-FORCEINLINE FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr)
+FORCEINLINE FRHITexture* RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState = EResourceAccess::Common, const IRHITextureData* InInitialData = nullptr)
 {
-    return GetRHI()->RHICreateTexture(InDesc, InInitialState, InInitialData);
+    return GetRHI()->RHICreateTexture(InTextureInfo, InInitialState, InInitialData);
 }
 
 FORCEINLINE FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& Desc, EResourceAccess InitialAccess = EResourceAccess::Common, const void* InitialData = nullptr)
@@ -346,9 +346,9 @@ FORCEINLINE FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& Desc, EResourceAcc
     return GetRHI()->RHICreateBuffer(Desc, InitialAccess, InitialData);
 }
 
-FORCEINLINE FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& Initializer)
+FORCEINLINE FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
 {
-    return GetRHI()->RHICreateSamplerState(Initializer);
+    return GetRHI()->RHICreateSamplerState(InSamplerInfo);
 }
 
 FORCEINLINE FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Initializer)

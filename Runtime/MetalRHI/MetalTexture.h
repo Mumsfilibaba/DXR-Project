@@ -13,7 +13,7 @@ typedef TSharedRef<class FMetalTexture> FMetalTextureRef;
 class FMetalTexture : public FRHITexture, public FMetalObject, public FMetalRefCounted
 {
 public:
-    FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureDesc& InDesc);
+    FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo);
     virtual ~FMetalTexture();
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);

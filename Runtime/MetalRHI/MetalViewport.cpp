@@ -112,8 +112,8 @@ bool FMetalViewport::Initialize()
     // Create BackBuffer
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
 
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), Info.Width, Info.Height, 1, 1, Flags);
-    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferDesc);
+    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), Info.Width, Info.Height, 1, 1, Flags);
+    BackBuffer = new FMetalTexture(GetDeviceContext(), BackBufferInfo);
     BackBuffer->SetViewport(this);
     return true;
 }

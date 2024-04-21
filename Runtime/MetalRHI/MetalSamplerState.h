@@ -10,7 +10,7 @@ typedef TSharedRef<class FMetalSamplerState> FMetalSamplerStateRef;
 class FMetalSamplerState : public FRHISamplerState, public FMetalObject, public FMetalRefCounted
 {
 public:
-    FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateDesc& InDesc);
+    FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateInfo& InSamplerInfo);
     ~FMetalSamplerState();
 
     bool Initialize();

@@ -2,8 +2,8 @@
 
 FAtomicInt32 FD3D12SamplerStateIdentifier::NextIdentifier = 0;
 
-FD3D12SamplerState::FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateDesc& InInitializer)
-    : FRHISamplerState(InInitializer)
+FD3D12SamplerState::FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateInfo& InSamplerInfo)
+    : FRHISamplerState(InSamplerInfo)
     , FD3D12DeviceChild(InDevice)
     , Desc()
     , OfflineHeap(InOfflineHeap)

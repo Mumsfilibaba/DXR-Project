@@ -35,9 +35,9 @@ public:
     virtual void RHIBeginFrame() override final { }
     virtual void RHIEndFrame() override final { }
 
-    virtual FRHITexture* RHICreateTexture(const FRHITextureDesc& InDesc, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
+    virtual FRHITexture* RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
-    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateDesc& InDesc) override final;
+    virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final;
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportInfo& InViewportInfo) override final;
     virtual FRHIQuery* RHICreateQuery() override final;
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
@@ -154,7 +154,7 @@ private:
     TArray<FD3D12DeferredObject>  DeletionQueue;
     FCriticalSection              DeletionQueueCS;
 
-    TMap<FRHISamplerStateDesc, FD3D12SamplerStateRef> SamplerStateMap;
+    TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> SamplerStateMap;
     FCriticalSection                                  SamplerStateMapCS;
 
     FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;

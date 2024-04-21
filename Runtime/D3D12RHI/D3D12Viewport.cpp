@@ -212,13 +212,13 @@ bool FD3D12Viewport::Present(bool VerticalSync)
 
 bool FD3D12Viewport::RetriveBackBuffers()
 {
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     if (BackBuffers.Size() < static_cast<int32>(NumBackBuffers))
     {
         BackBuffers.Resize(NumBackBuffers);
         for (FD3D12TextureRef& Texture : BackBuffers)
         {
-            Texture = new FD3D12Texture(GetDevice(), BackBufferDesc);
+            Texture = new FD3D12Texture(GetDevice(), BackBufferInfo);
         }
     }
 
@@ -228,7 +228,7 @@ bool FD3D12Viewport::RetriveBackBuffers()
     }
     else
     {
-        BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferDesc);
+        BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo);
     }
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)

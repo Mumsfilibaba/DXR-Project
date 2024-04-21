@@ -44,8 +44,8 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
         NumMipsRHI = FMath::Max<uint32>(FMath::Log2(FMath::Max(Width, Height)), 1u);
     }
 
-    FRHITextureDesc TextureDesc = FRHITextureDesc::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResource);
-    TextureRHI = RHICreateTexture(TextureDesc, EResourceAccess::PixelShaderResource, TextureData);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResource);
+    TextureRHI = RHICreateTexture(TextureInfo, EResourceAccess::PixelShaderResource, TextureData);
     if (!TextureRHI)
     {
         DEBUG_BREAK();

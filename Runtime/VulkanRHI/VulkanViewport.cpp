@@ -43,8 +43,8 @@ bool FVulkanViewport::Initialize()
         return false;
     }
 
-    FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
-    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferDesc);
+    FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+    BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
     if (!BackBuffer)
     {
         VULKAN_ERROR("Failed to create BackBuffer");
@@ -109,7 +109,7 @@ bool FVulkanViewport::CreateSwapChain()
         const uint32 BackBufferWidth  = GetWidth();
         const uint32 BackBufferheight = GetHeight();
 
-        FRHITextureDesc BackBufferDesc = FRHITextureDesc::CreateTexture2D(GetColorFormat(), BackBufferWidth, BackBufferheight, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+        FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), BackBufferWidth, BackBufferheight, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
         for (uint32 Index = 0; Index < BufferCount; ++Index)
         {
             FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());
@@ -134,7 +134,7 @@ bool FVulkanViewport::CreateSwapChain()
                 return false;
             }
 
-            if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferDesc))
+            if (FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), BackBufferInfo))
             {
                 BackBuffers[Index] = NewTexture;
             }

@@ -606,16 +606,13 @@ constexpr const CHAR* ToString(EDescriptorType DescriptorType)
     }
 }
 
-
-class FRHIDescriptorHandle
+struct FRHIDescriptorHandle
 {
     enum : uint32
     {
-        // Be specific in order to cancel warnings about truncation
+        // NOTE: Be specific in order to cancel warnings about truncation
         InvalidHandle = ((1 << 24) - 1)
     };
-
-public:
 
     constexpr FRHIDescriptorHandle()
         : Data(0)
@@ -643,7 +640,6 @@ public:
         return Data != Other.Data;
     }
 
-private:
     union
     {
         struct

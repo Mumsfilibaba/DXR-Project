@@ -205,8 +205,8 @@ bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
     const FClearValue DepthClearValue(Resources.ShadowMapFormat, 1.0f, 0);
 
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
-    FRHITextureDesc PointLightDesc = FRHITextureDesc::CreateTextureCubeArray(Resources.ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
-    Resources.PointLightShadowMaps = RHICreateTexture(PointLightDesc, EResourceAccess::PixelShaderResource);
+    FRHITextureInfo PointLightInfo = FRHITextureInfo::CreateTextureCubeArray(Resources.ShadowMapFormat, Resources.PointLightShadowSize, Resources.MaxPointLightShadows, 1, 1, Flags, DepthClearValue);
+    Resources.PointLightShadowMaps = RHICreateTexture(PointLightInfo, EResourceAccess::PixelShaderResource);
     if (Resources.PointLightShadowMaps)
     {
         Resources.PointLightShadowMaps->SetDebugName("PointLight ShadowMaps");
@@ -649,10 +649,10 @@ bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
     const ETextureUsageFlags Flags = ETextureUsageFlags::DepthStencil | ETextureUsageFlags::ShaderResource;
 
     const FClearValue DepthClearValue(Resources.ShadowMapFormat, 1.0f, 0);
-    FRHITextureDesc CascadeInitializer = FRHITextureDesc::CreateTexture2D(Resources.ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, 1, 1, Flags, DepthClearValue);
+    FRHITextureInfo CascadeInfo = FRHITextureInfo::CreateTexture2D(Resources.ShadowMapFormat, Resources.CascadeSize, Resources.CascadeSize, 1, 1, Flags, DepthClearValue);
     for (uint32 CascadeIndex = 0; CascadeIndex < NUM_SHADOW_CASCADES; ++CascadeIndex)
     {
-        Resources.ShadowMapCascades[CascadeIndex] = RHICreateTexture(CascadeInitializer, EResourceAccess::NonPixelShaderResource);
+        Resources.ShadowMapCascades[CascadeIndex] = RHICreateTexture(CascadeInfo, EResourceAccess::NonPixelShaderResource);
         if (Resources.ShadowMapCascades[CascadeIndex])
         {
             const FString DebugName = FString::CreateFormatted("Shadow Map Cascade[%d]", CascadeIndex);
@@ -865,8 +865,8 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
 
-    FRHITextureDesc ShadowMaskDesc = FRHITextureDesc::CreateTexture2D(Resources.ShadowMaskFormat, Width, Height, 1, 1, Flags);
-    Resources.DirectionalShadowMask = RHICreateTexture(ShadowMaskDesc, EResourceAccess::NonPixelShaderResource);
+    FRHITextureInfo ShadowMaskInfo = FRHITextureInfo::CreateTexture2D(Resources.ShadowMaskFormat, Width, Height, 1, 1, Flags);
+    Resources.DirectionalShadowMask = RHICreateTexture(ShadowMaskInfo, EResourceAccess::NonPixelShaderResource);
     if (Resources.DirectionalShadowMask)
     {
         Resources.DirectionalShadowMask->SetDebugName("Directional Shadow Mask 0");
@@ -876,8 +876,8 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
         return false;
     }
 
-    FRHITextureDesc CascadeIndexBufferDesc = FRHITextureDesc::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
-    Resources.CascadeIndexBuffer = RHICreateTexture(CascadeIndexBufferDesc, EResourceAccess::NonPixelShaderResource);
+    FRHITextureInfo CascadeIndexBufferInfo = FRHITextureInfo::CreateTexture2D(EFormat::R8_Uint, Width, Height, 1, 1, Flags);
+    Resources.CascadeIndexBuffer = RHICreateTexture(CascadeIndexBufferInfo, EResourceAccess::NonPixelShaderResource);
     if (Resources.CascadeIndexBuffer)
     {
         Resources.CascadeIndexBuffer->SetDebugName("Cascade Index Debug Buffer");
