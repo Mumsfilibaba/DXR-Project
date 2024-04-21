@@ -6,8 +6,8 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FNullRHIBuffer : public FRHIBuffer
 {
-    FNullRHIBuffer(const FRHIBufferDesc& InDesc)
-        : FRHIBuffer(InDesc)
+    FNullRHIBuffer(const FRHIBufferInfo& InBufferInfo)
+        : FRHIBuffer(InBufferInfo)
     {
     }
 

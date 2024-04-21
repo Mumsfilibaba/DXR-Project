@@ -249,7 +249,7 @@ DECLARE_RHICOMMAND(FRHICommandSetVertexBuffers)
         {
             if (Buffer)
             {
-                CHECK(Buffer->GetDesc().IsVertexBuffer());
+                CHECK(Buffer->GetInfo().IsVertexBuffer());
             }
         }
     }
@@ -271,7 +271,7 @@ DECLARE_RHICOMMAND(FRHICommandSetIndexBuffer)
     { 
         if (InIndexBuffer)
         {
-            CHECK(InIndexBuffer->GetDesc().IsIndexBuffer());
+            CHECK(InIndexBuffer->GetInfo().IsIndexBuffer());
         }
     }
 
@@ -419,7 +419,7 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffer)
     {
         if (ConstantBuffer)
         {
-            CHECK(ConstantBuffer->GetDesc().IsConstantBuffer());
+            CHECK(ConstantBuffer->GetInfo().IsConstantBuffer());
         }
     }
 
@@ -444,7 +444,7 @@ DECLARE_RHICOMMAND(FRHICommandSetConstantBuffers)
         {
             if (Buffer)
             {
-                CHECK(Buffer->GetDesc().IsConstantBuffer());
+                CHECK(Buffer->GetInfo().IsConstantBuffer());
             }
         }
     }
@@ -673,8 +673,8 @@ DECLARE_RHICOMMAND(FRHICommandBuildRayTracingGeometry)
     { 
         CHECK(RayTracingGeometry != nullptr);
         CHECK(!BuildInfo.bUpdate || (BuildInfo.bUpdate && IsEnumFlagSet(RayTracingGeometry->GetFlags(), EAccelerationStructureBuildFlags::AllowUpdate)));
-        CHECK(BuildInfo.VertexBuffer && BuildInfo.VertexBuffer->GetDesc().IsVertexBuffer());
-        CHECK(BuildInfo.IndexBuffer  && BuildInfo.IndexBuffer->GetDesc().IsIndexBuffer());
+        CHECK(BuildInfo.VertexBuffer && BuildInfo.VertexBuffer->GetInfo().IsVertexBuffer());
+        CHECK(BuildInfo.IndexBuffer  && BuildInfo.IndexBuffer->GetInfo().IsIndexBuffer());
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)

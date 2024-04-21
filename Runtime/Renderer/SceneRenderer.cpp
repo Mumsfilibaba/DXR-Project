@@ -225,8 +225,8 @@ bool FSceneRenderer::Initialize()
         return false;
     }
 
-    FRHIBufferDesc CBDesc(sizeof(FCameraHLSL), sizeof(FCameraHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-    Resources.CameraBuffer = RHICreateBuffer(CBDesc, EResourceAccess::Common, nullptr);
+    FRHIBufferInfo CBInfo(sizeof(FCameraHLSL), sizeof(FCameraHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    Resources.CameraBuffer = RHICreateBuffer(CBInfo, EResourceAccess::Common, nullptr);
     if (!Resources.CameraBuffer)
     {
         LOG_ERROR("[Renderer]: Failed to create CameraBuffer");

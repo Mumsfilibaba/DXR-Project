@@ -7,7 +7,7 @@ typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 class FVulkanBuffer : public FRHIBuffer, public FVulkanDeviceChild
 {
 public:
-    FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc);
+    FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc);
     ~FVulkanBuffer();
 
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);

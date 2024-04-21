@@ -21,16 +21,16 @@ enum class EBufferUsageFlags : uint16
 
 ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 
-struct FRHIBufferDesc
+struct FRHIBufferInfo
 {
-    FRHIBufferDesc()
+    FRHIBufferInfo()
         : Size(0)
         , Stride(0)
         , UsageFlags(EBufferUsageFlags::None)
     {
     }
 
-    FRHIBufferDesc(uint64 InSize, uint32 InStride, EBufferUsageFlags InUsageFlags)
+    FRHIBufferInfo(uint64 InSize, uint32 InStride, EBufferUsageFlags InUsageFlags)
         : Size(InSize)
         , Stride(InStride)
         , UsageFlags(InUsageFlags)
@@ -47,12 +47,12 @@ struct FRHIBufferDesc
     bool IsIndexBuffer()     const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
     bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
 
-    bool operator==(const FRHIBufferDesc& Other) const
+    bool operator==(const FRHIBufferInfo& Other) const
     {
         return Size == Other.Size && Stride == Other.Stride && UsageFlags == Other.UsageFlags;
     }
 
-    bool operator!=(const FRHIBufferDesc& Other) const
+    bool operator!=(const FRHIBufferInfo& Other) const
     {
         return !(*this == Other);
     }
@@ -65,9 +65,9 @@ struct FRHIBufferDesc
 class FRHIBuffer : public FRHIResource
 {
 protected:
-    explicit FRHIBuffer(const FRHIBufferDesc& InDesc)
+    explicit FRHIBuffer(const FRHIBufferInfo& InBufferInfo)
         : FRHIResource()
-        , Desc(InDesc)
+        , Info(InBufferInfo)
     {
     }
 
@@ -85,24 +85,24 @@ public:
     
     uint64 GetSize() const
     {
-        return Desc.Size;
+        return Info.Size;
     }
     
     uint32 GetStride() const
     {
-        return Desc.Stride;
+        return Info.Stride;
     }
 
     EBufferUsageFlags GetFlags() const
     {
-        return Desc.UsageFlags;
+        return Info.UsageFlags;
     }
 
-    const FRHIBufferDesc& GetDesc() const
+    const FRHIBufferInfo& GetInfo() const
     {
-        return Desc;
+        return Info;
     }
 
 protected:
-    FRHIBufferDesc Desc;
+    FRHIBufferInfo Info;
 };

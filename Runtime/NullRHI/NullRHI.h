@@ -38,9 +38,9 @@ public:
         return new FNullRHITexture(InTextureInfo);
     }
 
-    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final
+    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final
     {
-        return new FNullRHIBuffer(InDesc);
+        return new FNullRHIBuffer(InBufferInfo);
     }
 
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final

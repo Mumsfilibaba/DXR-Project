@@ -97,7 +97,7 @@ public:
      * @param InInitialData  - Initial data of the buffer
      * @return               - Returns the newly created Buffer
      */
-    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) = 0;
+    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) = 0;
 
     /**
      * @brief        - Create a SamplerState
@@ -341,7 +341,7 @@ FORCEINLINE FRHITexture* RHICreateTexture(const FRHITextureInfo& InTextureInfo, 
     return GetRHI()->RHICreateTexture(InTextureInfo, InInitialState, InInitialData);
 }
 
-FORCEINLINE FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& Desc, EResourceAccess InitialAccess = EResourceAccess::Common, const void* InitialData = nullptr)
+FORCEINLINE FRHIBuffer* RHICreateBuffer(const FRHIBufferInfo& Desc, EResourceAccess InitialAccess = EResourceAccess::Common, const void* InitialData = nullptr)
 {
     return GetRHI()->RHICreateBuffer(Desc, InitialAccess, InitialData);
 }

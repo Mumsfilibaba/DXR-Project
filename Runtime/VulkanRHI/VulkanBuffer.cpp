@@ -6,7 +6,7 @@
 #include "Core/Math/Math.h"
 #include "Core/Templates/NumericLimits.h"
 
-FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferDesc& InBufferDesc)
+FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
     , FVulkanDeviceChild(InDevice)
     , Buffer(VK_NULL_HANDLE)
@@ -42,7 +42,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     BufferCreateInfo.pQueueFamilyIndices   = nullptr;
     BufferCreateInfo.queueFamilyIndexCount = 0;
     BufferCreateInfo.sharingMode           = VK_SHARING_MODE_EXCLUSIVE;
-    BufferCreateInfo.size                  = Desc.Size;
+    BufferCreateInfo.size                  = Info.Size;
 
     const VkPhysicalDeviceProperties& DeviceProperties = PhysicalDevice->GetProperties();
     RequiredAlignment = 1u;
@@ -52,14 +52,14 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     
     // VK_KHR_buffer_device_address (Core in 1.2)
     VkMemoryAllocateFlags AllocateFlags = 0;
-    if (FVulkanBufferDeviceAddressKHR::IsEnabled() && Desc.IsDefault())
+    if (FVulkanBufferDeviceAddressKHR::IsEnabled() && Info.IsDefault())
     {
         AllocateFlags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT;
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     }
 
     const bool bIsRayTracingSupported = GetDevice()->IsAccelerationStructuresSupported();
-    if (Desc.IsVertexBuffer())
+    if (Info.IsVertexBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
@@ -71,7 +71,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
 
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
-    if (Desc.IsIndexBuffer())
+    if (Info.IsIndexBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     #if VK_KHR_acceleration_structure
@@ -83,12 +83,12 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
 
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, 1LLU);
     }
-    if (Desc.IsConstantBuffer())
+    if (Info.IsConstantBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minUniformBufferOffsetAlignment);
     }
-    if (Desc.IsUnorderedAccess() || Desc.IsShaderResource())
+    if (Info.IsUnorderedAccess() || Info.IsShaderResource())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         RequiredAlignment = FMath::Max<VkDeviceSize>(RequiredAlignment, DeviceProperties.limits.minStorageBufferOffsetAlignment);
@@ -105,11 +105,11 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     }
     
     VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    if (Desc.IsDynamic())
+    if (Info.IsDynamic())
     {
         MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     }
-    else if (Desc.IsReadBack())
+    else if (Info.IsReadBack())
     {
         MemoryProperties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     }
@@ -124,7 +124,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
     
     if (InInitialData)
     {
-        if (Desc.IsDynamic())
+        if (Info.IsDynamic())
         {
             // Map buffer
             void* BufferData = MemoryManager.Map(MemoryAllocation);
@@ -135,7 +135,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
             }
 
             // Copy over relevant data
-            FMemory::Memcpy(BufferData, InInitialData, Desc.Size);
+            FMemory::Memcpy(BufferData, InInitialData, Info.Size);
             
             // Unmap buffer
             MemoryManager.Unmap(MemoryAllocation);
@@ -147,7 +147,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
 
             Context->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             
-            Context->RHIUpdateBuffer(this, FBufferRegion(0, Desc.Size), InInitialData);
+            Context->RHIUpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)

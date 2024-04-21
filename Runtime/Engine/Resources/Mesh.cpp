@@ -26,8 +26,8 @@ bool FMesh::Init(const FMeshData& Data)
 
     const EBufferUsageFlags BufferFlags = bRTOn ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
 
-    FRHIBufferDesc VBDesc(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, Data.Vertices.Data());
+    FRHIBufferInfo VBInfo(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    VertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, Data.Vertices.Data());
     if (!VertexBuffer)
     {
         return false;
@@ -45,8 +45,8 @@ bool FMesh::Init(const FMeshData& Data)
         ShadowVertices[Index] = Vertex.Position;
     }
 
-    VBDesc = FRHIBufferDesc(VertexCount * sizeof(FVector3), sizeof(FVector3), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    PosOnlyVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, ShadowVertices.Data());
+    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVector3), sizeof(FVector3), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    PosOnlyVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, ShadowVertices.Data());
     if (!PosOnlyVertexBuffer)
     {
         return false;
@@ -65,8 +65,8 @@ bool FMesh::Init(const FMeshData& Data)
         MaskedVertices[Index].TexCoord = Vertex.TexCoord;
     }
 
-    VBDesc = FRHIBufferDesc(VertexCount * sizeof(FVertexMasked), sizeof(FVertexMasked), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    MaskedVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, MaskedVertices.Data());
+    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexMasked), sizeof(FVertexMasked), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    MaskedVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, MaskedVertices.Data());
     if (!MaskedVertexBuffer)
     {
         return false;
@@ -99,8 +99,8 @@ bool FMesh::Init(const FMeshData& Data)
         InitialIndicies = Data.Indices.Data();
     }
 
-    FRHIBufferDesc IBDesc(IndexCount * GetStrideFromIndexFormat(IndexFormat), GetStrideFromIndexFormat(IndexFormat), BufferFlags | EBufferUsageFlags::IndexBuffer);
-    IndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, InitialIndicies);
+    FRHIBufferInfo IBInfo(IndexCount * GetStrideFromIndexFormat(IndexFormat), GetStrideFromIndexFormat(IndexFormat), BufferFlags | EBufferUsageFlags::IndexBuffer);
+    IndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, InitialIndicies);
     if (!IndexBuffer)
     {
         return false;

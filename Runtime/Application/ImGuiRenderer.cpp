@@ -455,9 +455,9 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
         }
 
         const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
-        FRHIBufferDesc VBDesc(sizeof(ImDrawVert) * NewVertexCount, sizeof(ImDrawVert), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+        FRHIBufferInfo VBInfo(sizeof(ImDrawVert) * NewVertexCount, sizeof(ImDrawVert), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
 
-        TSharedRef<FRHIBuffer> NewVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::GenericRead, nullptr);
         if (NewVertexBuffer)
         {
             NewVertexBuffer->SetDebugName("ImGui VertexBuffer");
@@ -478,9 +478,9 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
         }
 
         const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
-        FRHIBufferDesc IBDesc(sizeof(ImDrawIdx) * NewIndexCount, sizeof(ImDrawIdx), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+        FRHIBufferInfo IBInfo(sizeof(ImDrawIdx) * NewIndexCount, sizeof(ImDrawIdx), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
 
-        TSharedRef<FRHIBuffer> NewIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::GenericRead, nullptr);
+        TSharedRef<FRHIBuffer> NewIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::GenericRead, nullptr);
         if (NewIndexBuffer)
         {
             NewIndexBuffer->SetDebugName("ImGui IndexBuffer");

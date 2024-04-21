@@ -205,9 +205,9 @@ FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, 
     }
 }
 
-FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    FVulkanBufferRef NewBuffer = new FVulkanBuffer(GetDevice(), InDesc);
+    FVulkanBufferRef NewBuffer = new FVulkanBuffer(GetDevice(), InBufferInfo);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
     {
         return nullptr;

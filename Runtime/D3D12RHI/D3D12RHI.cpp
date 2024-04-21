@@ -255,9 +255,9 @@ FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
     }
 }
 
-FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    TSharedRef<FD3D12Buffer>  NewBuffer = new FD3D12Buffer(GetDevice(), InDesc);
+    TSharedRef<FD3D12Buffer>  NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -459,8 +459,8 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHIBufferS
         return nullptr;
     }
 
-    const FRHIBufferDesc& BufferDesc = D3D12Buffer->GetDesc();
-    CHECK(BufferDesc.IsShaderResource());
+    const FRHIBufferInfo& BufferInfo = D3D12Buffer->GetInfo();
+    CHECK(BufferInfo.IsShaderResource());
 
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -593,8 +593,8 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHIBuffe
         return nullptr;
     }
 
-    const FRHIBufferDesc& BufferDesc = D3D12Buffer->GetDesc();
-    CHECK(BufferDesc.IsUnorderedAccess());
+    const FRHIBufferInfo& BufferInfo = D3D12Buffer->GetInfo();
+    CHECK(BufferInfo.IsUnorderedAccess());
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);

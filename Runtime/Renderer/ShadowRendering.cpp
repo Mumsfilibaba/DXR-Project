@@ -179,8 +179,8 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
 
 bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
 {
-    FRHIBufferDesc PerShadowMapBufferDesc(sizeof(FPerShadowMapHLSL), sizeof(FPerShadowMapHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    PerShadowMapBuffer = RHICreateBuffer(PerShadowMapBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    FRHIBufferInfo PerShadowMapBufferInfo(sizeof(FPerShadowMapHLSL), sizeof(FPerShadowMapHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
+    PerShadowMapBuffer = RHICreateBuffer(PerShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerShadowMapBuffer)
     {
         DEBUG_BREAK();
@@ -367,8 +367,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     }
 
 
-    FRHIBufferDesc CascadeMatrixBufferDesc(sizeof(FCascadeMatricesHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatricesHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
-    Resources.CascadeMatrixBuffer = RHICreateBuffer(CascadeMatrixBufferDesc, EResourceAccess::UnorderedAccess, nullptr);
+    FRHIBufferInfo CascadeMatrixBufferInfo(sizeof(FCascadeMatricesHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatricesHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
+    Resources.CascadeMatrixBuffer = RHICreateBuffer(CascadeMatrixBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeMatrixBuffer)
     {
         DEBUG_BREAK();
@@ -395,8 +395,8 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    FRHIBufferDesc CascadeSplitsBufferDesc(sizeof(FCascadeSplitHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeSplitHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
-    Resources.CascadeSplitsBuffer = RHICreateBuffer(CascadeSplitsBufferDesc, EResourceAccess::UnorderedAccess, nullptr);
+    FRHIBufferInfo CascadeSplitsBufferInfo(sizeof(FCascadeSplitHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeSplitHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
+    Resources.CascadeSplitsBuffer = RHICreateBuffer(CascadeSplitsBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
     if (!Resources.CascadeSplitsBuffer)
     {
         DEBUG_BREAK();
@@ -623,8 +623,8 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
 
 bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
 {
-    FRHIBufferDesc PerCascadeBufferDesc(sizeof(FPerCascadeHLSL), sizeof(FPerCascadeHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    PerCascadeBuffer = RHICreateBuffer(PerCascadeBufferDesc, EResourceAccess::ConstantBuffer, nullptr);
+    FRHIBufferInfo PerCascadeBufferInfo(sizeof(FPerCascadeHLSL), sizeof(FPerCascadeHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
+    PerCascadeBuffer = RHICreateBuffer(PerCascadeBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
     if (!PerCascadeBuffer)
     {
         DEBUG_BREAK();

@@ -20,8 +20,8 @@ FMaterial::FMaterial(const FMaterialCreateInfo& InProperties)
 
 void FMaterial::Initialize()
 {
-    FRHIBufferDesc Desc(sizeof(FMaterialHLSL), sizeof(FMaterialHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    MaterialBuffer = RHICreateBuffer(Desc, EResourceAccess::ConstantBuffer, nullptr);
+    FRHIBufferInfo BufferInfo(sizeof(FMaterialHLSL), sizeof(FMaterialHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
+    MaterialBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
     if (MaterialBuffer)
     {
         MaterialBuffer->SetDebugName("MaterialBuffer");

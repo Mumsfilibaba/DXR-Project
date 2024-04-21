@@ -67,7 +67,7 @@ FRHITexture* FMetalRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
     }
 }
 
-FRHIBuffer* FMetalRHI::RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData)
+FRHIBuffer* FMetalRHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
     FMetalBufferRef NewBuffer = new FMetalBuffer(GetDeviceContext(), InDesc);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))

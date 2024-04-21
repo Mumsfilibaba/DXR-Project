@@ -133,8 +133,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         };
 
         {
-            FRHIBufferDesc VBDesc(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
-            AABBVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::Common, Vertices.Data());
+            FRHIBufferInfo VBInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+            AABBVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, Vertices.Data());
             if (!AABBVertexBuffer)
             {
                 DEBUG_BREAK();
@@ -166,8 +166,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         {
             AABBIndexCount = Indices.Size();
 
-            FRHIBufferDesc IBDesc(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
-            AABBIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::Common, Indices.Data());
+            FRHIBufferInfo IBInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+            AABBIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, Indices.Data());
             if (!AABBIndexBuffer)
             {
                 DEBUG_BREAK();
@@ -273,8 +273,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
 
         // VertexBuffer
         {
-            FRHIBufferDesc VBDesc(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
-            DbgSphereVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::Common, SphereMesh.Vertices.Data());
+            FRHIBufferInfo VBInfo(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+            DbgSphereVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, SphereMesh.Vertices.Data());
             if (!DbgSphereVertexBuffer)
             {
                 DEBUG_BREAK();
@@ -291,8 +291,8 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             TArray<uint16> SmallIndicies = FMeshFactory::ConvertSmallIndices(SphereMesh.Indices);
             DbgSphereIndexCount = SmallIndicies.Size();
 
-            FRHIBufferDesc IBDesc(SmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
-            DbgSphereIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::Common, SmallIndicies.Data());
+            FRHIBufferInfo IBInfo(SmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+            DbgSphereIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, SmallIndicies.Data());
             if (!DbgSphereIndexBuffer)
             {
                 DEBUG_BREAK();

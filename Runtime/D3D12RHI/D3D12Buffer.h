@@ -7,7 +7,7 @@
 class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild
 {
 public:
-    FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferDesc& InDesc);
+    FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo);
     ~FD3D12Buffer();
 
     bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);

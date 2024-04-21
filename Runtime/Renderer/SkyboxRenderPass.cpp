@@ -71,8 +71,8 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
 
     // VertexBuffer
-    FRHIBufferDesc VBDesc(SkyboxVertices.SizeInBytes(), SkyboxVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
-    SkyboxVertexBuffer = RHICreateBuffer(VBDesc, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
+    FRHIBufferInfo VBInfo(SkyboxVertices.SizeInBytes(), SkyboxVertices.Stride(), EBufferUsageFlags::Default | EBufferUsageFlags::VertexBuffer);
+    SkyboxVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, SkyboxVertices.Data());
     if (!SkyboxVertexBuffer)
     {
         return false;
@@ -83,8 +83,8 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
 
     // IndexBuffers
-    FRHIBufferDesc IBDesc(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
-    SkyboxIndexBuffer = RHICreateBuffer(IBDesc, EResourceAccess::IndexBuffer, SkyboxInitalIndicies);
+    FRHIBufferInfo IBInfo(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
+    SkyboxIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, SkyboxInitalIndicies);
     if (!SkyboxIndexBuffer)
     {
         return false;

@@ -33,7 +33,7 @@ public:
     virtual void RHIEndFrame() override final;
 
     virtual FRHITexture* RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) override final;
-    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferDesc& InDesc, EResourceAccess InInitialState, const void* InInitialData) override final;
+    virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final;
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final;
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportInfo& InViewportInfo) override final;
     virtual FRHIQuery* RHICreateQuery() override final;
