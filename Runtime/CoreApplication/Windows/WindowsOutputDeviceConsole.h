@@ -16,17 +16,11 @@ public:
     ~FWindowsOutputDeviceConsole();
 
     virtual void Show(bool bShow) override final;
-
     virtual bool IsVisible() const override final { return (ConsoleHandle != nullptr); }
-
     virtual void Log(const FString& Message) override final;
-    
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;
-
     virtual void Flush() override final;
-
     virtual void SetTitle(const FString& Title) override final;
-
     virtual void SetTextColor(EConsoleColor Color) override final;
 
 private:

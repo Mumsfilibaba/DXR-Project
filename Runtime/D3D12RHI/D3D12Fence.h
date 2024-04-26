@@ -11,7 +11,6 @@ public:
     ~FD3D12Fence();
 
     bool Initialize(uint64 InitalValue);
-
     bool WaitForValue(uint64 Value);
 
     uint64 GetCompletedValue() const
@@ -35,7 +34,6 @@ private:
     TComPtr<ID3D12Fence> Fence;
     HANDLE               Event;
 };
-
 
 struct FD3D12FenceSyncPoint
 {
@@ -61,7 +59,6 @@ struct FD3D12FenceSyncPoint
     uint64       FenceValue;
 };
 
-
 class FD3D12FenceManager : public FD3D12DeviceChild
 {
 public:
@@ -69,15 +66,11 @@ public:
     ~FD3D12FenceManager() = default;
 
     bool Initialize();
-
     uint64 SignalGPU(ED3D12CommandQueueType QueueType);
-
     void WaitGPU(ED3D12CommandQueueType QueueType);
     void WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue);
-
     void WaitForFence();
     void WaitForFence(uint64 InFenceValue);
-
     uint64 GetCompletedValue() const;
     
     FD3D12Fence* GetFence() const 

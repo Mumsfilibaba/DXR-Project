@@ -18,9 +18,7 @@ public:
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
     bool Initialize();
-
     bool Resize(uint32 Width, uint32 Height);
-    
     bool Present(bool VerticalSync);
 
     FD3D12Texture* GetCurrentBackBuffer() const 

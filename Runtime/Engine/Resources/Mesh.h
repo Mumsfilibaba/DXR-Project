@@ -10,14 +10,13 @@
 class ENGINE_API FMesh
 {
 public:
+    static TSharedPtr<FMesh> Create(const FMeshData& Data);
+    
     FMesh();
     ~FMesh() = default;
 
     bool Init(const FMeshData& Data);
-
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
-
-    static TSharedPtr<FMesh> Create(const FMeshData& Data);
 
 public:
     void CreateBoundingBox(const FMeshData& Data);

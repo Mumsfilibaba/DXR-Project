@@ -56,20 +56,18 @@ public:
     ~FVulkanPhysicalDevice();
 
     bool Initialize(const FVulkanPhysicalDeviceCreateInfo& AdapterDesc);
-
     uint32 FindMemoryTypeIndex(uint32 TypeFilter, VkMemoryPropertyFlags Properties);
-
     VkFormatProperties GetFormatProperties(VkFormat Format) const;
     
-    const VkPhysicalDeviceProperties&        GetProperties()        const { return DeviceProperties; }
-    const VkPhysicalDeviceFeatures&          GetFeatures()          const { return DeviceFeatures; }
-    const VkPhysicalDeviceMemoryProperties&  GetMemoryProperties()  const { return DeviceMemoryProperties; }
+    const VkPhysicalDeviceProperties& GetProperties() const { return DeviceProperties; }
+    const VkPhysicalDeviceFeatures& GetFeatures() const { return DeviceFeatures; }
+    const VkPhysicalDeviceMemoryProperties& GetMemoryProperties()  const { return DeviceMemoryProperties; }
     // Vulkan 1.1, Vulkan 1.2 features
-    const VkPhysicalDeviceProperties2&       GetProperties2()       const { return DeviceProperties2; }
-    const VkPhysicalDeviceFeatures2&         GetFeatures2()         const { return DeviceFeatures2; }
+    const VkPhysicalDeviceProperties2& GetProperties2() const { return DeviceProperties2; }
+    const VkPhysicalDeviceFeatures2& GetFeatures2() const { return DeviceFeatures2; }
     const VkPhysicalDeviceMemoryProperties2& GetMemoryProperties2() const { return DeviceMemoryProperties2; }
-    const VkPhysicalDeviceVulkan11Features&  GetFeaturesVulkan11()  const { return DeviceFeatures11; }
-    const VkPhysicalDeviceVulkan12Features&  GetFeaturesVulkan12()  const { return DeviceFeatures12; }
+    const VkPhysicalDeviceVulkan11Features& GetFeaturesVulkan11() const { return DeviceFeatures11; }
+    const VkPhysicalDeviceVulkan12Features& GetFeaturesVulkan12() const { return DeviceFeatures12; }
 
     // Extension Information
 #if VK_EXT_depth_clip_enable

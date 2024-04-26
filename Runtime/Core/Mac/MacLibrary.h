@@ -7,7 +7,6 @@
 struct CORE_API FMacLibrary final : public FGenericLibrary
 {
     static void* LoadDynamicLib(const CHAR* LibraryName);
-
     static void* GetLoadedHandle(const CHAR* LibraryName);
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)

@@ -4,9 +4,14 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct CORE_API FGenericEvent : public FRefCounted
+class CORE_API FGenericEvent : public FRefCounted
 {
-    virtual ~FGenericEvent() = default;
+public:
+    // Creates a new event
+    static FGenericEvent* Create(bool bManualReset);
+
+    // Return the event to the system for reuse if possible
+    static void Recycle(FGenericEvent* InEvent);
 
     /** @brief - Trigger the event */
     virtual void Trigger() { }
@@ -22,6 +27,12 @@ struct CORE_API FGenericEvent : public FRefCounted
 
     /** @brief - Check if the event needs a manual reset */
     virtual bool IsManualReset() const { return false; }
+
+protected:
+
+    // Protected, creation and destruction should be handled by the static functions
+    FGenericEvent() = default;
+    virtual ~FGenericEvent() = default;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

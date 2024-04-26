@@ -12,19 +12,16 @@ public:
     ~FVulkanSurface();
 
     bool Initialize();
-
     bool GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupportedFormats) const;
-    
     bool GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const;
-    
     bool GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) const;
 
-    FORCEINLINE const void* GetWindowHandle() const
+    const void* GetWindowHandle() const
     {
         return WindowHandle;
     }
 
-    FORCEINLINE VkSurfaceKHR GetVkSurface() const
+    VkSurfaceKHR GetVkSurface() const
     {
         return Surface;
     }

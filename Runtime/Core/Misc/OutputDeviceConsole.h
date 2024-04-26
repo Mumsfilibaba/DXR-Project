@@ -15,7 +15,7 @@ enum class EConsoleColor : uint8
 
 struct CORE_API FOutputDeviceConsole : public IOutputDevice
 {
-    FOutputDeviceConsole()          = default;
+    FOutputDeviceConsole() = default;
     virtual ~FOutputDeviceConsole() = default;
 
     virtual void Show(bool bShow)  = 0;

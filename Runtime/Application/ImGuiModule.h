@@ -21,24 +21,19 @@ public:
     }
 
     static void InitializeStyle();
-
     static void SetMainViewport(FViewport* InViewport);
 
     static FResponse OnGamepadButtonEvent(FKey Key, bool bIsDown);
     static FResponse OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, float Analog);
-
     static FResponse OnKeyEvent(FKey Key, FModifierKeyState ModifierKeyState, bool bIsDown);
     static FResponse OnKeyCharEvent(uint32 Character);
-
     static FResponse OnMouseMoveEvent(int32 x, int32 y);
     static FResponse OnMouseButtonEvent(FKey Key, bool bIsDown);
     static FResponse OnMouseScrollEvent(float ScrollDelta, bool bVertical);
     static FResponse OnMouseLeft();
-
     static FResponse OnWindowResize(void* PlatformHandle);
     static FResponse OnWindowMoved(void* PlatformHandle);
     static FResponse OnWindowClose(void* PlatformHandle);
-
     static FResponse OnFocusLost();
     static FResponse OnFocusGained();
 

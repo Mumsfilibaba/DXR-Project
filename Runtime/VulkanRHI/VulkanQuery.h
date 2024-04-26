@@ -17,7 +17,7 @@ public:
     FVulkanQuery(FVulkanDevice* InDevice);
     virtual ~FVulkanQuery();
 
-    virtual void   GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final;
+    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final;
     virtual uint64 GetFrequency() const override final;
 
     void BeginQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index);
@@ -52,7 +52,6 @@ public:
     bool Initialize();
     void Reset();
     void ResolveQueries();
-
     bool AllocateIndex(uint32 Index);
 
     VkQueryPool GetVkQueryPool() const
@@ -81,7 +80,6 @@ public:
 
     FVulkanQueryPool* ObtainQueryPool();
     void RecycleQueryPool(FVulkanQueryPool* InQueryPool);
-
     void ReleaseAll();
 
 private:

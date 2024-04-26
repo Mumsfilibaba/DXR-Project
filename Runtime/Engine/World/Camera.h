@@ -10,9 +10,7 @@ public:
     ~FCamera() = default;
 
     void Move(float x, float y, float z);
-
     void Rotate(float Pitch, float Yaw, float Roll);
-
     void UpdateMatrices();
 
     const FMatrix4& GetViewMatrix() const
@@ -109,12 +107,12 @@ private:
     FMatrix4 ViewProjectionInverse;
     FMatrix4 ViewProjectionNoTranslation;
 
-    float NearPlane;
-    float FarPlane;
-    float AspectRatio;
-    float Width;
-    float Height;
-    float FOV;
+    float    NearPlane;
+    float    FarPlane;
+    float    AspectRatio;
+    float    Width;
+    float    Height;
+    float    FOV;
 
     FVector3 Position;
     FVector3 Rotation;

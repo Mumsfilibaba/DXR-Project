@@ -2,6 +2,7 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
+#include "Core/Platform/PlatformThread.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 RHI_API FRHICommandExecutor GRHICommandExecutor;
@@ -11,8 +12,6 @@ static TAutoConsoleVariable<bool> CVarEnableRHIThread(
     "Enables the use of a separate Thread for executing RHI Commands",
     true);
 
-FRHIThread* FRHIThread::GInstance = nullptr;
-
 FRHIThread::FRHIThread()
     : Thread(nullptr)
     , WaitCS()
@@ -21,54 +20,21 @@ FRHIThread::FRHIThread()
 {
 }
 
+FRHIThread::~FRHIThread()
+{
+    CHECK(Thread != nullptr);
+    Thread->WaitForCompletion();
+    delete Thread;
+}
+
 bool FRHIThread::Startup()
 {
-    if (!GInstance)
-    {
-        GInstance = new FRHIThread();
-        if (!CVarEnableRHIThread.GetValue())
-        {
-            return true;
-        }
-
-        if (!GInstance->Create())
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-void FRHIThread::Shutdown()
-{
-    if (GInstance)
-    {
-        if (CVarEnableRHIThread.GetValue())
-        {
-            GInstance->Stop();
-        }
-
-        delete GInstance;
-        GInstance = nullptr;
-    }
-}
-
-FRHIThread& FRHIThread::Get()
-{
-    CHECK(GInstance != nullptr);
-    return *GInstance;
-}
-
-bool FRHIThread::Create()
-{
-    Thread = FPlatformThreadMisc::CreateThread(this);
+    Thread = FPlatformThread::Create(this, "RHIThread");
     if (!Thread)
     {
         return false;
     }
 
-    Thread->SetName("RHIThread");
     if (!Thread->Start())
     {
         return false;
@@ -91,12 +57,13 @@ int32 FRHIThread::Run()
         WaitCondition.Wait(WaitLock);
 
         FRHIThreadTask CurrentTask;
+
         {
             SCOPED_LOCK(TasksCS);
             
             if (!Tasks.IsEmpty())
             {
-                CurrentTask = ::Move(Tasks.FirstElement());
+                CurrentTask = Move(Tasks.FirstElement());
                 Tasks.RemoveAt(0);
             }
         }
@@ -120,11 +87,6 @@ void FRHIThread::Stop()
 
         bIsRunning = false;
         WaitCondition.NotifyAll();
-
-        CHECK(Thread != nullptr);
-        Thread->WaitForCompletion();
-
-        Thread.Reset();
     }
 }
 
@@ -132,14 +94,12 @@ void FRHIThread::Execute(FRHIThreadTask&& NewTask)
 {
     if (bIsRunning)
     {
-        // Set the work to execute
         {
             SCOPED_LOCK(TasksCS);
             Tasks.Emplace(Move(NewTask));
             NumSubmittedTasks++;
         }
 
-        // Then notify worker
         WaitCondition.NotifyAll();
     }
 }
@@ -162,14 +122,30 @@ FRHICommandExecutor::FRHICommandExecutor()
 
 bool FRHICommandExecutor::Initialize()
 {
+    if (!CVarEnableRHIThread.GetValue())
+    {
+        return true;
+    }
+
+    RHIThread = new FRHIThread();
+    if (!RHIThread->Startup())
+    {
+        LOG_ERROR("Failed to startup RHIThread");
+        return false;
+    }
+
     return true;
 }
 
 void FRHICommandExecutor::Release()
 {
-    if (FRHIThread::IsRunning())
+    if (CVarEnableRHIThread.GetValue())
     {
-        FRHIThread::Get().Stop();
+        if (RHIThread)
+        {
+            RHIThread->Stop();
+            delete RHIThread;
+        }
     }
 }
 
@@ -220,7 +196,7 @@ void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
             NewCommandList->ExchangeState(CommandList);
             NewCommandList->SetCommandContext(CommandContext);
 
-            FRHIThread::Get().Execute(FRHIThreadTask(NewCommandList));
+            RHIThread->Execute(FRHIThreadTask(NewCommandList));
         }
         else
         {
@@ -232,12 +208,12 @@ void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 
 void FRHICommandExecutor::WaitForOutstandingTasks()
 {
-    FRHIThread::Get().WaitForOutstandingTasks();
+    RHIThread->WaitForOutstandingTasks();
 }
 
 void FRHICommandExecutor::WaitForGPU()
 {
-    if (FRHIThread::IsRunning())
+    if (RHIThread)
     {
         WaitForOutstandingTasks();
     }

@@ -3,11 +3,6 @@
 #include "WindowsOutputDeviceConsole.h"
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
 
-TSharedPtr<FGenericApplication> FWindowsApplicationMisc::CreateApplication()
-{
-    return FWindowsApplication::CreateWindowsApplication();
-}
-
 FOutputDeviceConsole* FWindowsApplicationMisc::CreateOutputDeviceConsole()
 {
     return new FWindowsOutputDeviceConsole();

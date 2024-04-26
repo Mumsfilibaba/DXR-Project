@@ -6,23 +6,31 @@
 class FMacThread final : public FGenericThread
 {
 public:
-    FMacThread(FThreadInterface* InRunnable);
-    virtual ~FMacThread() = default;
+    static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
+    virtual ~FMacThread() = default;
+    
     virtual bool Start() override final;
+    virtual void Kill(bool bWaitUntilCompletion) override final;
+
+    virtual void Suspend() override final
+    {
+        // NOTE: Not supported on macOS
+    }
+
+    virtual void Resume() override final
+    {
+        // NOTE: Not supported on macOS
+    }
 
     virtual void WaitForCompletion() override final;
-
     virtual void* GetPlatformHandle() override final;
-
-    virtual FString GetName() const override final { return Name; }
-    
-    virtual void SetName(const FString& InName) override final;
 
 private:
     static void* ThreadRoutine(void* ThreadParameter);
 
-    FString   Name;
+    FMacThread(FRunnable* InRunnable);
+
     pthread_t Thread;
     bool      bIsRunning;
 };

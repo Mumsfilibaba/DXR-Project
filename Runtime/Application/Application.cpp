@@ -197,7 +197,7 @@ bool FApplication::Create()
     // Initialize the Input mappings
     FInputMapper::Get().Initialize();
 
-    PlatformApplication = FPlatformApplicationMisc::CreateApplication();
+    PlatformApplication = FPlatformApplication::Create();
     if (!PlatformApplication)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create FPlatformApplication");

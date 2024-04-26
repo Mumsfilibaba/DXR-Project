@@ -3,6 +3,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Optional.h"
+#include "Core/Platform/CriticalSection.h"
 
 class CORE_API FThreadManager
 {
@@ -14,8 +15,14 @@ public:
 
     static bool IsMainThread();
 
-    TSharedRef<FGenericThread> CreateThread(FThreadInterface* InRunnable);
-    TSharedRef<FGenericThread> GetThreadFromHandle(void* ThreadHandle);
+    // Register a thread this is called from the constructor of the FGenericThread
+    void RegisterThread(FGenericThread* InThread);
+
+    // Unregister a thread, this is called from the destructor of the FGenericThread
+    void UnregisterThread(FGenericThread* InThread);
+
+    // Retrieve a ThreadObject from a native ThreadHandle
+    FGenericThread* GetThreadFromHandle(void* ThreadHandle);
 
 private:
     friend class TOptional<FThreadManager>;
@@ -23,6 +30,7 @@ private:
     FThreadManager();
     ~FThreadManager();
 
-    TArray<TSharedRef<FGenericThread>> Threads;
-    void*  MainThread;
+    void*                   MainThreadHandle;
+    TArray<FGenericThread*> Threads;
+    FCriticalSection        ThreadsCS;
 };

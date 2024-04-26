@@ -50,7 +50,6 @@ public:
 
     FD3D12CommandAllocator* ObtainAllocator();
     void RecycleAllocator(FD3D12CommandAllocator* InAllocator);
-
     void DestroyAllocators();
 
     ED3D12CommandQueueType GetQueueType() const
@@ -95,7 +94,6 @@ public:
     ~FD3D12CommandList() = default;
     
     bool Initialize(D3D12_COMMAND_LIST_TYPE Type, FD3D12CommandAllocator* Allocator, ID3D12PipelineState* InitalPipeline);
-
     bool Reset(FD3D12CommandAllocator* Allocator);
     bool Close();
 

@@ -68,27 +68,20 @@ public:
     ~FVulkanCommandContextState() = default;
 
     bool Initialize();
-
     void BindGraphicsStates();
     void BindComputeState();
     void BindPushConstants(FVulkanPipelineLayout* PipelineLayout);
-    
     void ResetState();
     void ResetStateForNewCommandBuffer();
 
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState);
     void SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState);
-
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
     void SetScissorRects(VkRect2D* ScissorRects, uint32 NumScissorRects);
-
     void SetBlendFactor(const float BlendFactor[4]);
-
     void SetVertexBuffer(FVulkanBuffer* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FVulkanBuffer* IndexBuffer, VkIndexType IndexFormat);
-
     void SetPushConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
-
     void SetSRV(FVulkanShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);

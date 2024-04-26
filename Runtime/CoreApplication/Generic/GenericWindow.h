@@ -171,62 +171,36 @@ struct FGenericWindowInitializer
     FGenericWindow* ParentWindow;
 };
 
-
 class FGenericWindow : public FRefCounted
 {
 public:
     virtual ~FGenericWindow() = default;
 
     virtual bool Initialize(const FGenericWindowInitializer& InInitializer) { return true; }
-
     virtual void Show(bool bFocusOnActivate = true) { }
-
     virtual void Minimize() { }
-
     virtual void Maximize() { }
-
     virtual void Destroy() { }
-
     virtual void Restore() { }
-
     virtual void ToggleFullscreen() { }
-
     virtual bool IsActiveWindow() const { return false; }
-    
     virtual void SetWindowPos(int32 x, int32 y) { }
-    
     virtual bool IsValid() const { return false; }
-
     virtual bool IsMinimized() const { return false; }
-
     virtual bool IsMaximized() const { return false; }
-
     virtual bool IsChildWindow(const TSharedRef<FGenericWindow>& ParentWindow) const { return false; }
-
     virtual void SetWindowFocus() { }
-
     virtual void SetTitle(const FString& Title) { }
-    
     virtual void GetTitle(FString& OutTitle) const { }
-
     virtual void SetWindowOpacity(float Alpha) { }
-
     virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) { }
-
     virtual void GetWindowShape(FWindowShape& OutWindowShape) const { }
-
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const { }
-
     virtual float GetWindowDpiScale() const { return 0.0f; }
-
     virtual uint32 GetWidth() const { return 0; }
-
     virtual uint32 GetHeight() const { return 0; }
-
-    virtual void SetPlatformHandle(void* InPlatformHandle) { }
-    
+    virtual void SetPlatformHandle(void* InPlatformHandle) { }  
     virtual void* GetPlatformHandle() const { return nullptr; }
-
     virtual void SetStyle(FWindowStyle Style) { }
 
     FWindowStyle GetStyle() const 

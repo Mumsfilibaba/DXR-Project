@@ -16,21 +16,18 @@ public:
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-    virtual void* GetRHIBaseTexture()        override { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
+    virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
-
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
-
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
     FD3D12RenderTargetView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
     FD3D12DepthStencilView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
-
     void DestroyRenderTargetViews() { RenderTargetViews.Clear(); }
     void DestroyDepthStencilViews() { DepthStencilViews.Clear(); }
 
@@ -77,11 +74,10 @@ public:
     FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12BackBufferTexture();
 
-    virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
     void Resize(uint32 InWidth, uint32 InHeight);
-
     FD3D12Texture* GetCurrentBackBufferTexture();
 
     FD3D12Viewport* GetViewport() const

@@ -4,7 +4,7 @@
 #include "RHICommands.h"
 #include "RHIRayTracing.h"
 #include "Core/Memory/MemoryStack.h"
-#include "Core/Threading/ThreadInterface.h"
+#include "Core/Threading/Runnable.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Platform/ConditionVariable.h"
 #include "Core/Containers/ArrayView.h"
@@ -55,7 +55,6 @@ public:
         , CommandContext(nullptr)
         , Statistics()
         , NumCommands(0)
-        , bIsRenderPassActive(false)
     {
         CommandPointer = &FirstCommand;
     }
@@ -154,8 +153,6 @@ public:
         CommandContext = nullptr;
         NumCommands    = 0;
 
-        bIsRenderPassActive = false;
-
         Statistics.Reset();
         Memory.Reset();
     }
@@ -166,14 +163,10 @@ public:
         FMemory::Memswap(this, &Other, sizeof(FRHICommandList));
 
         if (CommandPointer == &Other.FirstCommand)
-        {
             CommandPointer = &FirstCommand;
-        }
 
         if (Other.CommandPointer == &FirstCommand)
-        {
             Other.CommandPointer = &Other.FirstCommand;
-        }
     }
 
     FORCEINLINE void SetCommandContext(IRHICommandContext* InCommandContext) noexcept
@@ -260,16 +253,12 @@ public:
 
     FORCEINLINE void BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) noexcept
     {
-        CHECK(bIsRenderPassActive == false);
         EmplaceCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
-        bIsRenderPassActive = true;
     }
 
     FORCEINLINE void EndRenderPass() noexcept
     {
-        CHECK(bIsRenderPassActive == true);
         EmplaceCommand<FRHICommandEndRenderPass>();
-        bIsRenderPassActive = false;
     }
 
     FORCEINLINE void SetViewport(const FViewportRegion& ViewportRegion) noexcept
@@ -535,16 +524,12 @@ public:
 
 private:
     FMemoryStack          Memory;
-
     // NOTE: Pointer to FirstCommand to avoid branching
     FRHICommand**         CommandPointer;
     FRHICommand*          FirstCommand;
     IRHICommandContext*   CommandContext;
-
     FRHICommandStatistics Statistics;
     uint32                NumCommands;
-
-    bool                  bIsRenderPassActive = false;
 };
 
 void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
@@ -555,54 +540,47 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 
 struct FRHIThreadTask : FNonCopyable
 {
-    FORCEINLINE FRHIThreadTask() noexcept
+    FRHIThreadTask() noexcept
         : CommandList(nullptr)
     {
     }
 
-    FORCEINLINE explicit FRHIThreadTask(FRHICommandList* InCommandList) noexcept
+    explicit FRHIThreadTask(FRHICommandList* InCommandList) noexcept
         : CommandList(InCommandList)
     {
     }
 
-    FORCEINLINE FRHIThreadTask(FRHIThreadTask&& Other) noexcept
+    FRHIThreadTask(FRHIThreadTask&& Other) noexcept
         : CommandList(Other.CommandList)
     {
         Other.CommandList = nullptr;
     }
 
-    FORCEINLINE ~FRHIThreadTask() noexcept
+    ~FRHIThreadTask() noexcept
     {
         SAFE_DELETE(CommandList);
     }
 
-    FORCEINLINE FRHIThreadTask& operator=(FRHIThreadTask&& RHS) noexcept
+    FRHIThreadTask& operator=(FRHIThreadTask&& RHS) noexcept
     {
         CommandList = RHS.CommandList;
         RHS.CommandList = nullptr;
         return *this;
     }
 
-    FORCEINLINE operator bool() const noexcept
+    operator bool() const noexcept
     {
-        return (CommandList != nullptr);
+        return CommandList != nullptr;
     }
 
     FRHICommandList* CommandList;
 };
 
-class RHI_API FRHIThread : public FThreadInterface, FNonCopyable
+class RHI_API FRHIThread : public FRunnable, FNonCopyable
 {
 public:
-    static bool Startup();
-    static void Shutdown();
-
-    static bool IsRunning()
-    { 
-        return GInstance != nullptr;
-    }
-
-    static FRHIThread& Get();
+    FRHIThread();
+    ~FRHIThread();
 
     virtual bool Start() override final;
 
@@ -610,30 +588,20 @@ public:
 
     virtual void Stop() override final;
 
-    void Execute(FRHIThreadTask&& NewTask);
+    bool Startup();
 
+    void Execute(FRHIThreadTask&& NewTask);
     void WaitForOutstandingTasks();
 
 private:
-    FRHIThread();
-    ~FRHIThread() = default;
-
-    bool Create();
-
-    TSharedRef<FGenericThread> Thread;
-
-    FCriticalSection   WaitCS;
-    FConditionVariable WaitCondition;
-
-    FAtomicInt64 NumSubmittedTasks;
-    FAtomicInt64 NumCompletedTasks;
-
+    FGenericThread*        Thread;
+    FAtomicInt64           NumSubmittedTasks;
+    FAtomicInt64           NumCompletedTasks;
     TArray<FRHIThreadTask> Tasks;
-    FCriticalSection TasksCS;
-
-    bool bIsRunning;
-
-    static FRHIThread* GInstance;
+    FCriticalSection       TasksCS;
+    FCriticalSection       WaitCS;
+    FConditionVariable     WaitCondition;
+    bool                   bIsRunning;
 };
 
 class RHI_API FRHICommandExecutor : FNonCopyable
@@ -654,28 +622,28 @@ public:
 
     void ExecuteCommandList(class FRHICommandList& CmdList);
 
-    FORCEINLINE void SetContext(IRHICommandContext* InCmdContext) 
+    void SetContext(IRHICommandContext* InCmdContext) 
     { 
         CommandContext = InCmdContext; 
     }
 
-    FORCEINLINE IRHICommandContext& GetContext()
+    IRHICommandContext& GetContext()
     {
         CHECK(CommandContext != nullptr);
         return *CommandContext;
     }
 
-    FORCEINLINE const FRHICommandStatistics& GetStatistics() const 
+    const FRHICommandStatistics& GetStatistics() const 
     { 
         return Statistics; 
     }
 
 private:
     TArray<FRHIResource*> DeletedResources;
-    FCriticalSection DeletedResourcesCS;
-
+    FCriticalSection      DeletedResourcesCS;
     FRHICommandStatistics Statistics;
-    IRHICommandContext* CommandContext;
+    IRHICommandContext*   CommandContext;
+    FRHIThread*           RHIThread;
 };
 
 extern RHI_API FRHICommandExecutor GRHICommandExecutor;

@@ -11,39 +11,29 @@ public:
     ~FD3D12CommandContextState() = default;
 
     bool Initialize();
-
     void BindGraphicsStates();
     void BindComputeState();
-
     void BindSamplers(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
     void BindResources(FD3D12RootSignature* InRootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding);
     void BindShaderConstants(FD3D12RootSignature* InRootSignature, EShaderVisibility ShaderStage);
-    
     void ResetState();
     void ResetStateResources();
     void ResetStateForNewCommandList();
 
     void SetGraphicsPipelineState(FD3D12GraphicsPipelineState* InGraphicsPipelineState);
     void SetComputePipelineState(FD3D12ComputePipelineState* InComputePipelineState);
-
     void SetRenderTargets(FD3D12RenderTargetView* const* RenderTargets, uint32 NumRenderTargets, FD3D12DepthStencilView* DepthStencil);
-
     void SetShadingRate(EShadingRate ShadingRate);
     void SetShadingRateImage(FD3D12Texture* ShadingRateImage);
-
     void SetViewports(D3D12_VIEWPORT* Viewports, uint32 NumViewports);
     void SetScissorRects(D3D12_RECT* ScissorRects, uint32 NumScissorRects);
-
     void SetBlendFactor(const float BlendFactor[4]);
-
     void SetVertexBuffer(FD3D12Buffer* VertexBuffer, uint32 VertexBufferSlot);
     void SetIndexBuffer(FD3D12Buffer* IndexBuffer, DXGI_FORMAT IndexFormat);
-
     void SetSRV(FD3D12ShaderResourceView* ShaderResourceView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetUAV(FD3D12UnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetCBV(FD3D12ConstantBufferView* ConstantBufferView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetSampler(FD3D12SamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
-
     void SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
 public:

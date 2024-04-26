@@ -21,12 +21,9 @@ public:
     virtual FRHITexture* GetBackBuffer() const override final;
 
     bool Initialize();
-
     bool Resize(uint32 InWidth, uint32 InHeight);
     bool Present(bool bVerticalSync);
-
-    void SetDebugName(const FString& InName);
-    
+    void SetDebugName(const FString& InName);    
     FVulkanTexture* GetCurrentBackBuffer();
     
     FVulkanTexture* GetBackBufferFromIndex(uint32 Index) const
@@ -53,7 +50,6 @@ public:
 private:
     bool CreateSwapChain();
     void DestroySwapChain();
-    
     bool AquireNextImage();
 
     void AdvanceSemaphoreIndex()

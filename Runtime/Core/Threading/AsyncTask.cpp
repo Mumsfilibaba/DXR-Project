@@ -44,7 +44,7 @@ bool FAsyncTaskBase::Launch(EQueuePriority Priority, bool bAsync)
     {
         if (!TaskCompleteEvent)
         {
-            TaskCompleteEvent = FPlatformThreadMisc::CreateEvent(true);
+            TaskCompleteEvent = FPlatformEvent::Create(true);
             if (!TaskCompleteEvent)
             {
                 return false;

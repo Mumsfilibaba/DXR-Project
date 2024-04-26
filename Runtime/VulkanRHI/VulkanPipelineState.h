@@ -167,10 +167,8 @@ public:
 
     bool Initialize();
     void Release();
-    
     bool CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
     bool CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline);
-
     bool SaveCacheData();
     
     VkPipelineCache GetVkPipelineCache() const

@@ -12,15 +12,11 @@ class FMacEvent final : public FGenericEvent
     };
 
 public:
-    FMacEvent();
-    ~FMacEvent();
-
-    bool Create(bool bInManualReset);
+    static FGenericEvent* Create(bool bManualReset);
+    static void Recycle(FGenericEvent* InEvent);
 
     virtual void Trigger() override final;
-
     virtual void Wait(uint64 Milliseconds) override final;
-
     virtual void Reset() override final;
 
     virtual bool IsManualReset() const override final 
@@ -29,6 +25,11 @@ public:
     }
 
 private:
+    FMacEvent();
+    ~FMacEvent();
+
+    bool Create(bool bInManualReset);
+
     FORCEINLINE void LockMutex()
     {
         const int32 Result = pthread_mutex_lock(&Mutex);
@@ -66,8 +67,7 @@ private:
 
     volatile ETriggerType Triggered;
     volatile int32        NumWaitingThreads;
-
-    pthread_mutex_t Mutex;
-    pthread_cond_t  Condition;
+    pthread_mutex_t       Mutex;
+    pthread_cond_t        Condition;
 };
 

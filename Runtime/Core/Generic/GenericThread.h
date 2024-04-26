@@ -3,21 +3,34 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Function.h"
-#include "Core/Threading/ThreadInterface.h"
+#include "Core/Threading/Runnable.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CORE_API FGenericThread : public FRefCounted
+class CORE_API FGenericThread
 {
 public:
-    FGenericThread(FThreadInterface* InRunnable)
-        : FRefCounted()
-        , Runnable(InRunnable)
-    {
-    }
+
+    // Creates a new thread
+    static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+
+    // Returns the thread-object for the current thread
+    static FGenericThread* GetThread();
+
+    /** @brief - Destructor */
+    virtual ~FGenericThread();
 
     /** @brief - Start the thread and start executing the entrypoint */
     virtual bool Start() { return true; }
+
+    /** @brief - Kills the thread if the platform support the feature */
+    virtual void Kill(bool bWaitUntilCompletion) { }
+
+    /** @brief - Suspends the thread if the platform support the feature */
+    virtual void Suspend() { }
+
+    /** @brief - Resumes the thread after being suspended if the platform support the feature */
+    virtual void Resume() { }
 
     /** @brief - Waits for the thread to finish */
     virtual void WaitForCompletion() { }
@@ -26,19 +39,28 @@ public:
     virtual void* GetPlatformHandle() { return nullptr; }
 
     /** @return - Returns the name of the thread */
-    virtual FString GetName() const { return ""; }
-
-    /** @brief - Set the name of the thread */
-    virtual void SetName(const FString& InName) { }
+    const FString& GetName() const
+    {
+        return ThreadName;
+    }
 
     /** @return - Returns a pointer to the interface currently running on the thread */
-    FThreadInterface* GetRunnable() const 
+    FRunnable* GetRunnable() const 
     { 
         return Runnable; 
     }
 
 protected:
-    FThreadInterface* Runnable;
+    FGenericThread(FRunnable* InRunnable, const CHAR* InThreadName);
+
+    // Returns and allocates a TLS slot for the local thread pointer
+    static uint32 AllocTLSSlot();
+
+    FRunnable* Runnable;
+    FString    ThreadName;
+
+    // Slot-Index for storing the current threads pointer
+    static uint32 TLSSlot;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

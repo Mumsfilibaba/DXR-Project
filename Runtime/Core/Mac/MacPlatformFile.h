@@ -14,19 +14,12 @@ public:
     virtual bool SeekFromStart(int64 InOffset) override final;
     virtual bool SeekFromCurrent(int64 InOffset) override final;
     virtual bool SeekFromEnd(int64 InOffset) override final;
-
     virtual int64 Size() const override final;
-
     virtual int64 Tell() const override final;
-
     virtual int32 Read(uint8* Dst, uint32 BytesToRead) override final;
-    
     virtual int32 Write(const uint8* Src, uint32 BytesToWrite) override final;
-
     virtual bool Truncate(int64 NewSize) override final;
-
     virtual bool IsValid() const override final;
-
     virtual void Close() override final;
 
 private:
@@ -38,9 +31,8 @@ struct CORE_API FMacPlatformFile final : public FGenericPlatformFile
 {
     static IFileHandle* OpenForRead(const FString& Filename);
     static IFileHandle* OpenForWrite(const FString& Filename, bool bTruncate = true);
-
+    static FString GetCurrentWorkingDirectory();
     static const CHAR* GetExecutablePath();
-    static FString     GetCurrentWorkingDirectory();
 
     static FORCEINLINE bool IsDirectory(const CHAR* Path)
     {

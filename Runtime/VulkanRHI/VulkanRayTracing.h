@@ -12,7 +12,7 @@ public:
     FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryDesc& InDesc);
     ~FVulkanRayTracingGeometry();
 
-    virtual void* GetRHIBaseBVHBuffer()             override final { return reinterpret_cast<void*>(GeometryBuffer); }
+    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GeometryBuffer); }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(Geometry); }
 
     virtual void SetDebugName(const FString& InName) override final;

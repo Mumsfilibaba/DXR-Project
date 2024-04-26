@@ -9,10 +9,6 @@
 
 struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
 {
-    static FGenericEvent* CreateEvent(bool bManualReset);
-    
-    static FGenericThread* CreateThread(FThreadInterface* InRunnable, bool bSuspended = true);
-
     static FORCEINLINE uint32 GetNumProcessors()
     {
         SYSTEM_INFO SystemInfo;

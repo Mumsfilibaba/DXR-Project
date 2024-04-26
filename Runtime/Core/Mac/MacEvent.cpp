@@ -3,6 +3,28 @@
 #include "Core/Templates/NumericLimits.h"
 
 #include <sys/time.h>
+#include <Foundation/Foundation.h>
+
+FGenericEvent* FMacEvent::Create(bool bManualReset)
+{
+    FMacEvent* NewEvent = new FMacEvent();
+    if (!NewEvent->Create(bManualReset))
+    {
+        delete NewEvent;
+        return nullptr;
+    }
+
+    return NewEvent;
+}
+
+void FMacEvent::Recycle(FGenericEvent* InEvent)
+{
+    FMacEvent* MacEvent = static_cast<FMacEvent*>(InEvent);
+    if (MacEvent)
+    {
+        delete MacEvent;
+    }
+}
 
 FMacEvent::FMacEvent()
     : bInitialized(false)

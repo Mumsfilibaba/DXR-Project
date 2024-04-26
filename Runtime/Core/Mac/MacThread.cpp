@@ -2,9 +2,19 @@
 #include "MacThreadMisc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
-FMacThread::FMacThread(FThreadInterface* InRunnable)
-    : FGenericThread(InRunnable)
-    , Name()
+FGenericThread* FMacThread::Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended)
+{
+    FMacThread* NewThread = new FMacThread(InRunnable, ThreadName);
+    if (!bSuspended)
+    {
+        NewThread->Start();
+    }
+
+    return NewThread;
+}
+
+FMacThread::FMacThread(FRunnable* InRunnable, const CHAR* ThreadName)
+    : FGenericThread(InRunnable, ThreadName)
     , Thread()
     , bIsRunning(false)
 { 
@@ -24,24 +34,22 @@ bool FMacThread::Start()
     }
 }
 
+void FMacThread::Kill(bool bWaitUntilCompletion)
+{
+    if (Runnable)
+    {
+        Runnable->Stop();
+    }
+
+    if (bWaitUntilCompletion)
+    {
+        ::pthread_join(Thread, nullptr);
+    }
+}
+
 void FMacThread::WaitForCompletion()
 {
     ::pthread_join(Thread, nullptr);
-}
-
-void FMacThread::SetName(const FString& InName)
-{
-    // The name can always be set from the current thread
-    const bool bCurrentThreadIsMyself = GetPlatformHandle() == FMacThreadMisc::GetThreadHandle();
-    if (bCurrentThreadIsMyself)
-    {
-        Name = InName;
-        ::pthread_setname_np(Name.GetCString());
-    }
-    else if (!bIsRunning)
-    {
-        Name = InName;
-    }
 }
 
 void* FMacThread::GetPlatformHandle()
@@ -56,13 +64,17 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
     FMacThread* CurrentThread = reinterpret_cast<FMacThread*>(ThreadParameter);
     if (CurrentThread)
     {
-        // Can only set the current thread's name
-        if (!CurrentThread->Name.IsEmpty())
+        // Ensure that this thread can be retrieved
+        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, CurrentThread);
+
+        // ThreadName can only be set from the running thread
+        if (!CurrentThread->ThreadName.IsEmpty())
         {
-            ::pthread_setname_np(CurrentThread->Name.GetCString());
+            const CHAR* ThreadName = CurrentThread->ThreadName.GetCString();
+            ::pthread_setname_np(ThreadName);
         }
 
-        if (FThreadInterface* Runnable = CurrentThread->GetRunnable())
+        if (FRunnable* Runnable = CurrentThread->GetRunnable())
         {
             if (Runnable->Start())
             {
@@ -71,6 +83,8 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
 
             Runnable->Destroy();
         }
+
+        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, nullptr);
     }
 
     ::pthread_exit(nullptr);

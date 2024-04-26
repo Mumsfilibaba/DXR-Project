@@ -1,23 +1,17 @@
 #include "ThreadManager.h"
-
 #include "Core/Platform/PlatformThreadMisc.h"
+#include "Core/Threading/ScopedLock.h"
 
 FThreadManager::FThreadManager()
     : Threads(0)
-    , MainThread(nullptr)
+    , MainThreadHandle(nullptr)
 {
 }
 
 FThreadManager::~FThreadManager()
 {
-    for (const auto& Thread : Threads)
-    {
-        Thread->WaitForCompletion();
-    }
-
     Threads.Clear();
-
-    MainThread = nullptr;
+    MainThreadHandle = nullptr;
 }
 
 static auto& GetThreadManagerInstance()
@@ -29,9 +23,9 @@ static auto& GetThreadManagerInstance()
 bool FThreadManager::Initialize()
 {
     FThreadManager& ThreadManager = FThreadManager::Get();
-    ThreadManager.MainThread = FPlatformThreadMisc::GetThreadHandle();
+    ThreadManager.MainThreadHandle = FPlatformThreadMisc::GetThreadHandle();
 
-    if (!ThreadManager.MainThread)
+    if (!ThreadManager.MainThreadHandle)
     {
         LOG_ERROR("Failed to retrieve the mainthread handle");
         return false;
@@ -52,7 +46,7 @@ bool FThreadManager::Release()
 bool FThreadManager::IsMainThread()
 {
     FThreadManager& ThreadManager = FThreadManager::Get();
-    return (ThreadManager.MainThread == FPlatformThreadMisc::GetThreadHandle());
+    return ThreadManager.MainThreadHandle == FPlatformThreadMisc::GetThreadHandle();
 }
 
 FThreadManager& FThreadManager::Get()
@@ -61,24 +55,22 @@ FThreadManager& FThreadManager::Get()
     return ThreadManager.GetValue();
 }
 
-TSharedRef<FGenericThread> FThreadManager::CreateThread(FThreadInterface* InRunnable)
+void FThreadManager::RegisterThread(FGenericThread* InThread)
 {
-    TSharedRef<FGenericThread> Thread = FPlatformThreadMisc::CreateThread(InRunnable);
-    if (Thread)
-    {
-        Threads.Add(Thread);
-        return Thread;
-    }
-    else
-    {
-        LOG_ERROR("Failed to create thread");
-        return nullptr;
-    }
+    TScopedLock Lock(ThreadsCS);
+    Threads.AddUnique(InThread);
+}
+void FThreadManager::UnregisterThread(FGenericThread* InThread)
+{
+    TScopedLock Lock(ThreadsCS);
+    Threads.Remove(InThread);
 }
 
-TSharedRef<FGenericThread> FThreadManager::GetThreadFromHandle(void* ThreadHandle)
+FGenericThread* FThreadManager::GetThreadFromHandle(void* ThreadHandle)
 {
-    for (const auto& Thread : Threads)
+    TScopedLock Lock(ThreadsCS);
+
+    for (FGenericThread* Thread : Threads)
     {
         if (Thread->GetPlatformHandle() == ThreadHandle)
         {
@@ -86,6 +78,6 @@ TSharedRef<FGenericThread> FThreadManager::GetThreadFromHandle(void* ThreadHandl
         }
     }
 
-    LOG_WARNING("No thread with the handle '%llu'", ThreadHandle);
+    LOG_WARNING("No thread registered with the handle '%llu'", ThreadHandle);
     return nullptr;
 }

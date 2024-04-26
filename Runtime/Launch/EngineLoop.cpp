@@ -183,13 +183,6 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-    // Startup RHI Thread
-    if (!FRHIThread::Startup())
-    {
-        LOG_ERROR("Failed to startup RHIThread");
-        return false;
-    }
-
     CoreDelegates::PostInitRHIDelegate.Broadcast();
 
     if (!FGPUProfiler::Initialize())
@@ -327,7 +320,6 @@ bool FEngineLoop::Release()
     FTextureFactory::Release();
 
     // Wait for RHI thread and shutdown RHI Layer
-    FRHIThread::Shutdown();
     RHIRelease();
 
     // Destroy the ShaderCompiler

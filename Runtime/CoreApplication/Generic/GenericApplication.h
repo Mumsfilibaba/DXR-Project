@@ -63,9 +63,7 @@ struct FDisplayInfo
 
     bool operator==(const FDisplayInfo& Other) const
     {
-        return PrimaryDisplayWidth  == Other.PrimaryDisplayWidth
-            && PrimaryDisplayHeight == Other.PrimaryDisplayHeight
-            && MonitorInfos         == Other.MonitorInfos;
+        return PrimaryDisplayWidth == Other.PrimaryDisplayWidth && PrimaryDisplayHeight == Other.PrimaryDisplayHeight && MonitorInfos == Other.MonitorInfos;
     }
 
     bool operator!=(const FDisplayInfo& Other) const
@@ -82,38 +80,23 @@ struct FDisplayInfo
 class COREAPPLICATION_API FGenericApplication
 {
 public:
-    FGenericApplication(const TSharedPtr<ICursor>& InCursor)
-        : Cursor(InCursor)
-        , MessageHandler(nullptr)
-    {
-    }
-
+    static TSharedPtr<FGenericApplication> Create();
+    
+    FGenericApplication(const TSharedPtr<ICursor>& InCursor);
     virtual ~FGenericApplication() = default;
 
     virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
-
     virtual void Tick(float Delta) { }
-
     virtual void UpdateGamepadDevices() { }
-
     virtual FInputDevice* GetInputDeviceInterface() { return nullptr; }
-
     virtual bool SupportsHighPrecisionMouse() const { return false; }
-
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
-
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
-    
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
-
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
-    
     virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
-    
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
-
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const { return nullptr; }
-
     virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)

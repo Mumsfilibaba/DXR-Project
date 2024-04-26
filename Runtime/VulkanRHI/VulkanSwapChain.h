@@ -27,42 +27,16 @@ public:
     ~FVulkanSwapChain();
 
     bool Initialize(const FVulkanSwapChainCreateInfo& CreateInfo);
-
     VkResult Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSemaphore);
-
     VkResult AquireNextImage(FVulkanSemaphore* AquireSemaphore);
-    
     bool GetSwapChainImages(VkImage* OutImages);
     
-    VkResult GetPresentResult() const
-    { 
-        return PresentResult; 
-    }
-
-    VkSwapchainKHR GetVkSwapChain() const
-    { 
-        return SwapChain; 
-    }
-    
-    VkExtent2D GetExtent() const
-    {
-        return Extent;
-    }
-
-    VkSurfaceFormatKHR GetVkSurfaceFormat() const
-    {
-        return Format;
-    }
-    
-    uint32 GetBufferCount() const
-    { 
-        return BufferCount; 
-    }
-
-    uint32 GetBufferIndex() const 
-    { 
-        return BufferIndex; 
-    }
+    VkResult GetPresentResult() const { return PresentResult; }
+    VkSwapchainKHR GetVkSwapChain() const { return SwapChain; }
+    VkExtent2D GetExtent() const { return Extent; }
+    VkSurfaceFormatKHR GetVkSurfaceFormat() const { return Format; }
+    uint32 GetBufferCount() const { return BufferCount; }
+    uint32 GetBufferIndex() const { return BufferIndex; }
 
 private:
     VkResult           PresentResult;

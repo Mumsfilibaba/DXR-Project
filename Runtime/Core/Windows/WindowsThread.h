@@ -5,29 +5,23 @@
 class CORE_API FWindowsThread final : public FGenericThread
 {
 public:
-    FWindowsThread(FThreadInterface* InRunnable, bool bSuspended);
+    static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
+
     virtual ~FWindowsThread();
-
-    bool Initialize();
-
-    virtual bool Start() override final;
-
-    virtual void WaitForCompletion() override final;
-
-    virtual void* GetPlatformHandle() override final;
-
-    virtual FString GetName() const override final
-    { 
-        return Name; 
-    }
     
-    virtual void SetName(const FString& InName) override final;
+    virtual bool Start() override final;
+    virtual void Kill(bool bWaitUntilCompletion) override final;
+    virtual void Suspend() override final;
+    virtual void Resume() override final;
+    virtual void WaitForCompletion() override final;
+    virtual void* GetPlatformHandle() override final;
 
 private:
     static DWORD WINAPI ThreadRoutine(LPVOID ThreadParameter);
 
-    HANDLE  Thread;
-    DWORD   hThreadID;
-    bool    bIsSuspended;
-    FString Name;
+    FWindowsThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended);
+
+    HANDLE Thread;
+    DWORD  hThreadID;
+    bool   bIsSuspended;
 };

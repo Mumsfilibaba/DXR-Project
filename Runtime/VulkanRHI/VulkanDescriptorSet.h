@@ -327,9 +327,7 @@ public:
     ~FVulkanDescriptorPool();
     
     bool Initialize(const FVulkanDescriptorPoolInfo& PoolInfo);
-
     bool AllocateDescriptorSet(const VkDescriptorSetAllocateInfo& DescriptorSetAllocateInfo, VkDescriptorSet* OutDescriptorSets);
-    
     void Reset();
 
     inline bool CanAllocateDescriptorSet()

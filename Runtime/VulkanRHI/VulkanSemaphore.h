@@ -18,7 +18,6 @@ public:
     ~FVulkanSemaphore();
 
     bool Initialize();
-
     bool SetDebugName(const FString& Name);
 
     FORCEINLINE VkSemaphore GetVkSemaphore() const

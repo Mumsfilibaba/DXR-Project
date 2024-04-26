@@ -152,7 +152,6 @@ class CORE_API FFileHelpers
 {
 public:
     static bool ReadFile(IFileHandle* File, TArray<uint8>& OutData);
-
     static bool ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText);
 
     static FORCEINLINE bool WriteTextFile(IFileHandle* File, const TArray<CHAR>& Text)

@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 
-struct FThreadInterface
+struct FRunnable
 {
-    virtual ~FThreadInterface() = default;
+    virtual ~FRunnable() = default;
 
     /** @return - Called before run and returns true if the thread should continue to run. */
     virtual bool Start() { return true; }

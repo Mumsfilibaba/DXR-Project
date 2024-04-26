@@ -266,7 +266,6 @@ public:
     ~FVulkanCommandBuffer();
 
     bool Initialize(VkCommandBufferLevel InLevel);
-
     bool Begin(VkCommandBufferUsageFlags Flags = 0);
     bool End();
 

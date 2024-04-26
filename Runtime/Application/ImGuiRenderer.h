@@ -44,16 +44,12 @@ public:
     ~FImGuiRenderer();
     
     bool Initialize();
-
     void Render(FRHICommandList& CmdList);
-
     void RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& ViewportData, bool bClear);
 
 private:
     void PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawData);
-
     void RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData);
-
     void SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& ViewportData);
     
     TArray<FDrawableTexture*>    RenderedImages;

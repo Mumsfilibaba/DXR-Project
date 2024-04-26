@@ -14,7 +14,6 @@ public:
     virtual ~FInputDevice() = default;
 
     virtual void UpdateDeviceState() = 0;
-
     virtual bool IsDeviceConnected() const = 0;
 
     void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)

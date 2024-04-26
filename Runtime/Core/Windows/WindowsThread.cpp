@@ -1,13 +1,19 @@
 #include "WindowsThread.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Utilities/StringUtilities.h"
+#include "Core/Platform/PlatformTLS.h"
 
-FWindowsThread::FWindowsThread(FThreadInterface* InRunnable, bool bSuspended)
-    : FGenericThread(InRunnable)
+FGenericThread* FWindowsThread::Create(FRunnable* Runnable, const CHAR* InThreadName, bool bSuspended)
+{
+    FWindowsThread* NewThread = new FWindowsThread(Runnable, InThreadName, bSuspended);
+    return NewThread;
+}
+
+FWindowsThread::FWindowsThread(FRunnable* InRunnable, const CHAR* InThreadName, bool bSuspended)
+    : FGenericThread(InRunnable, InThreadName)
     , Thread(0)
     , hThreadID(0)
     , bIsSuspended(bSuspended)
-    , Name()
 {
     DWORD Flags = 0;
     if (bIsSuspended)
@@ -46,36 +52,60 @@ bool FWindowsThread::Start()
     return true;
 }
 
+void FWindowsThread::Kill(bool bWaitUntilCompletion)
+{
+    if (Runnable)
+    {
+        Runnable->Stop();
+    }
+
+    if (bWaitUntilCompletion)
+    {
+        ::WaitForSingleObject(Thread, INFINITE);
+    }
+
+    ::CloseHandle(Thread);
+    Thread = 0;
+}
+
+void FWindowsThread::Suspend()
+{
+    ::SuspendThread(Thread);
+}
+
+void FWindowsThread::Resume()
+{
+    ::ResumeThread(Thread);
+}
+
 void FWindowsThread::WaitForCompletion()
 {
     ::WaitForSingleObject(Thread, INFINITE);
 }
 
-void FWindowsThread::SetName(const FString& InName)
-{
-    FStringWide WideName = CharToWide(InName);
-    ::SetThreadDescription(Thread, WideName.GetCString());
-    Name = InName;
-}
-
 void* FWindowsThread::GetPlatformHandle()
 {
-    return reinterpret_cast<void*>(static_cast<uintptr_t>(hThreadID));
+    SIZE_T Handle = static_cast<SIZE_T>(hThreadID);
+    return reinterpret_cast<void*>(Handle);
 }
 
 DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
 {
+    DWORD Result = DWORD(-1);
+
     FWindowsThread* CurrentThread = reinterpret_cast<FWindowsThread*>(ThreadParameter);
     if (CurrentThread)
     {
-        if (!CurrentThread->Name.IsEmpty())
+        // Ensure that this thread can be retrieved
+        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, CurrentThread);
+
+        if (!CurrentThread->ThreadName.IsEmpty())
         {
-            FStringWide WideName = CharToWide(CurrentThread->Name);
+            FStringWide WideName = CharToWide(CurrentThread->ThreadName);
             ::SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
         }
 
-        DWORD Result = DWORD(-1);
-        if (FThreadInterface* Runnable = CurrentThread->Runnable)
+        if (FRunnable* Runnable = CurrentThread->Runnable)
         {
             if (Runnable->Start())
             {
@@ -83,9 +113,10 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
             }
 
             Runnable->Destroy();
-            return Result;
         }
+        
+        FPlatformTLS::SetTLSValue(FGenericThread::TLSSlot, nullptr);
     }
 
-    return DWORD(-1);
+    return Result;
 }

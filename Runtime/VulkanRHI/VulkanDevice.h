@@ -148,16 +148,16 @@ public:
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
 
-    FVulkanRenderPassCache&       GetRenderPassCache()       { return RenderPassCache; }
-    FVulkanFramebufferCache&      GetFramebufferCache()      { return FramebufferCache; }
-    FVulkanMemoryManager&         GetMemoryManager()         { return MemoryManager; }
-    FVulkanUploadHeapAllocator&   GetUploadHeap()            { return UploadHeap; }
-    FVulkanFenceManager&          GetFenceManager()          { return FenceManager; }
+    FVulkanRenderPassCache& GetRenderPassCache() { return RenderPassCache; }
+    FVulkanFramebufferCache& GetFramebufferCache() { return FramebufferCache; }
+    FVulkanMemoryManager& GetMemoryManager() { return MemoryManager; }
+    FVulkanUploadHeapAllocator& GetUploadHeap() { return UploadHeap; }
+    FVulkanFenceManager& GetFenceManager() { return FenceManager; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return PipelineLayoutManager; }
-    FVulkanPipelineCache&         GetPipelineCache()         { return PipelineCache; }
-    FVulkanDescriptorSetCache&    GetDescriptorSetCache()    { return DescriptorSetCache; }
-    FVulkanDefaultResources&      GetDefaultResources()      { return DefaultResources; }
-    FVulkanQueryPoolManager&      GetQueryPoolManager()      { return QueryPoolManager; }
+    FVulkanPipelineCache& GetPipelineCache() { return PipelineCache; }
+    FVulkanDescriptorSetCache& GetDescriptorSetCache() { return DescriptorSetCache; }
+    FVulkanDefaultResources& GetDefaultResources() { return DefaultResources; }
+    FVulkanQueryPoolManager& GetQueryPoolManager() { return QueryPoolManager; }
 
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 

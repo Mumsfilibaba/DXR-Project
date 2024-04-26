@@ -152,6 +152,11 @@ static uint32 GetDPIFromNSScreen(NSScreen* Screen)
 
 FMacApplication* MacApplication = nullptr;
 
+TSharedPtr<FGenericApplication> FMacApplication::Create()
+{
+    return FMacApplication::CreateMacApplication();
+}
+
 TSharedPtr<FMacApplication> FMacApplication::CreateMacApplication()
 {
     // Create a new instance and set the the global instance

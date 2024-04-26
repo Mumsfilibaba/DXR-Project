@@ -32,7 +32,6 @@ public:
 
     bool GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection);
     bool GetLibraryReflection(FD3D12Shader* Shader, ID3D12LibraryReflection** Reflection);
-
     bool HasRootSignature(FD3D12Shader* Shader);
 
 private:
@@ -46,7 +45,6 @@ private:
         TArray<uint8>& Code);
 
     bool InternalGetReflection(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject);
-
     bool ValidateRayTracingShader(const TComPtr<IDxcBlob>& ShaderBlob, LPCWSTR Entrypoint);
 
 private:

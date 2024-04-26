@@ -59,7 +59,6 @@ public:
     ~FMaterial() = default;
 
     void Initialize();
-
     void BuildBuffer(class FRHICommandList& CommandList);
 
     bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
@@ -71,11 +70,9 @@ public:
     void SetAmbientOcclusion(float AO);
 
     void ForceForwardPass(bool bForceForwardRender);
-
     void EnableHeightMap(bool bEnableHeightMap);
     void EnableAlphaMask(bool bEnableAlphaMask);
     void EnableDoubleSided(bool bIsDoubleSided);
-
     void SetDebugName(const FString& InDebugName);
 
     bool HasAlphaMask() const { return (Properties.MaterialFlags & MaterialFlag_EnableAlpha) != MaterialFlag_None; }

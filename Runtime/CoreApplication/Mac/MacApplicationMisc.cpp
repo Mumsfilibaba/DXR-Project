@@ -9,11 +9,6 @@
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
-TSharedPtr<FGenericApplication> FMacApplicationMisc::CreateApplication()
-{
-    return FMacApplication::CreateMacApplication();
-}
-
 FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
 {
     return new FMacOutputDeviceConsole();

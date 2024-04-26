@@ -37,22 +37,14 @@ class FD3D12RootSignatureDescHelper
 public:
     FD3D12RootSignatureDescHelper(const FD3D12RootSignatureLayout& RootSignatureInfo);
 
-    const uint32 GetRootSignatureCost() const 
-    { 
-        return RootSignatureCost; 
-    }
-
-    const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const
-    { 
-        return Desc;
-    }
+    const uint32 GetRootSignatureCost() const { return RootSignatureCost; }
+    const D3D12_ROOT_SIGNATURE_DESC& GetDesc() const { return Desc; }
 
 private:
     static void InitDescriptorRange(D3D12_DESCRIPTOR_RANGE& OutRange, D3D12_DESCRIPTOR_RANGE_TYPE Type, uint32 NumDescriptors, uint32 BaseShaderRegister, uint32 RegisterSpace);
 
     void InsertDescriptorTable(D3D12_SHADER_VISIBILITY ShaderVisibility, const D3D12_DESCRIPTOR_RANGE* DescriptorRanges, uint32 NumDescriptorRanges);
     void Insert32BitConstantRange(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 Num32BitConstants, uint32 ShaderRegister, uint32 RegisterSpace);
-
     void InsertRootCBV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
     void InsertRootSRV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
     void InsertRootUAV(D3D12_SHADER_VISIBILITY ShaderVisibility, uint32 ShaderRegister, uint32 RegisterSpace);
@@ -133,9 +125,7 @@ public:
     ~FD3D12RootSignatureManager();
 
     bool Initialize();
-
     void ReleaseAll();
-
     FD3D12RootSignature* GetOrCreateRootSignature(const FD3D12RootSignatureLayout& ResourceCount);
 
 private:

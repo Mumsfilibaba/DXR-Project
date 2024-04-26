@@ -23,5 +23,5 @@ public:
 
 private:
     static TStaticArray<EKeyboardKeyName::Type, NumKeys> KeyCodeFromScanCodeTable;
-    static TStaticArray<uint16, NumKeys> ScanCodeFromKeyCodeTable;
+    static TStaticArray<uint16, NumKeys>                 ScanCodeFromKeyCodeTable;
 };

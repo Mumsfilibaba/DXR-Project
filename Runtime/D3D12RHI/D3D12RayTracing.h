@@ -28,7 +28,6 @@ public:
         const FRayTracingShaderResources& Resources);
 
     void CopyDescriptors();
-
     void Reset();
 
 private:
@@ -104,20 +103,17 @@ private:
     TSharedRef<FD3D12Buffer> IndexBuffer;
 };
 
-
 class FD3D12RayTracingScene : public FRHIRayTracingScene , public FD3D12AccelerationStructure
 {
 public:
     FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer);
     virtual ~FD3D12RayTracingScene() = default;
 
-    virtual void* GetRHIBaseBVHBuffer()             override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
@@ -132,11 +128,11 @@ public:
         const FRayTracingShaderResources* HitGroupResources,
         uint32                            NumHitGroupResources);
 
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE            GetRayGenShaderRecord() const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable()    const;
-    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable()      const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE GetRayGenShaderRecord() const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetMissShaderTable() const;
+    D3D12_GPU_VIRTUAL_ADDRESS_RANGE_AND_STRIDE GetHitGroupTable() const;
 
-    FD3D12Resource* GetInstanceuffer() const
+    FD3D12Resource* GetInstanceBuffer() const
     {
         return InstanceBuffer.Get();
     }

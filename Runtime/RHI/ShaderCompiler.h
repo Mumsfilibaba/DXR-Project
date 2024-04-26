@@ -57,9 +57,7 @@ class RHI_API FShaderCompiler
 public:
     static bool Create(FStringView AssetFolderPath);
     static void Destroy();
-    
     static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
-
     static FShaderCompiler& Get();
 
     bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
@@ -70,16 +68,11 @@ private:
     ~FShaderCompiler();
 
     bool Initialize();
-    
     bool Compile(const FString& ShaderSource, const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-
     bool PatchHLSLForSpirv(const FString& Entrypoint, FString& OutSource);
-    
     bool RecompileSpirv(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool ConvertSpirvToMetalShader(const FString& FilePath, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
-
     bool DumpContentToFile(const TArray<uint8>& OutByteCode, const FString& Filename);
-
     FString CreateArgString(const TArrayView<LPCWSTR> Args);
 
     void*                 DXCLib;

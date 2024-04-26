@@ -20,7 +20,6 @@ public:
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int32 Index) const { return FD3D12_CPU_DESCRIPTOR_HANDLE(StartHandleCPU, Index, HandleIncrementSize); }
     D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int32 Index) const { return FD3D12_GPU_DESCRIPTOR_HANDLE(StartHandleGPU, Index, HandleIncrementSize); }
-
     uint32 GetNumDescriptors()      const { return NumDescriptors; }
     uint32 GetHandleIncrementSize() const { return HandleIncrementSize; }
 
@@ -98,7 +97,6 @@ public:
     ~FD3D12OfflineDescriptorHeap() = default;
 
     bool Initialize();
-
     FD3D12OfflineDescriptor Allocate();
     void Free(FD3D12OfflineDescriptor& Descriptor);
 
@@ -169,7 +167,6 @@ public:
     ~FD3D12OnlineDescriptorHeap() = default;
 
     bool Initialize(uint32 InDescriptorCount, uint32 BlockSize);
-
     FD3D12OnlineDescriptorBlock* AllocateBlock();
     void RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock);
     void FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);

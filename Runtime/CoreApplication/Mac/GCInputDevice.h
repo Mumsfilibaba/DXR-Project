@@ -48,7 +48,6 @@ public:
     }
 
     void HandleControllerConnected(GCController* InController);
-    
     void HandleControllerDisconnected(GCController* InController);
     
 private:
@@ -59,5 +58,5 @@ private:
     TArray<GCController*> ConnectedGamepads;
     FGCGamepadState       GamepadStates[NUM_MAX_GAMEPADS];
 
-    bool bIsDeviceConnected;
+    bool                  bIsDeviceConnected;
 };

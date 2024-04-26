@@ -20,6 +20,11 @@ static TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
 
 COREAPPLICATION_API FWindowsApplication* WindowsApplication = nullptr;
 
+TSharedPtr<FGenericApplication> FWindowsApplication::Create()
+{
+    return FWindowsApplication::CreateWindowsApplication();
+}
+
 TSharedPtr<FWindowsApplication> FWindowsApplication::CreateWindowsApplication()
 {
     // Get the application instance

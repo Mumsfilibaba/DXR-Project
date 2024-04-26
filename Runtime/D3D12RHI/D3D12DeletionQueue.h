@@ -3,7 +3,7 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/AsyncTask.h"
-#include "Core/Threading/ThreadInterface.h"
+#include "Core/Threading/Runnable.h"
 #include "Core/Threading/AtomicInt.h"
 
 class FD3D12OnlineDescriptorHeap;

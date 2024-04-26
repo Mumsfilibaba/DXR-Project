@@ -9,11 +9,7 @@
 
 struct FMacThreadMisc final : public FGenericThreadMisc
 {
-    static FGenericEvent* CreateEvent(bool bManualReset);
-
-    static FGenericThread* CreateThread(FThreadInterface* InRunnable, bool bSuspended = true);
-
-    static uint32 GetNumProcessors()
+    static FORCEINLINE uint32 GetNumProcessors()
     {
         const NSUInteger NumProcessors = [NSProcessInfo processInfo].processorCount;
         return static_cast<uint32>(NumProcessors);

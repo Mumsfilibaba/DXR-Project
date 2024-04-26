@@ -31,7 +31,7 @@ public:
     }
 
 private:
-    static TStaticArray<EKeyboardKeyName::Type, NumKeys>                         KeyCodeFromScanCodeTable;
+    static TStaticArray<EKeyboardKeyName::Type, NumKeys>                 KeyCodeFromScanCodeTable;
     static TStaticArray<uint16, NumKeys>                                 ScanCodeFromKeyCodeTable;
     static TStaticArray<EMouseButtonName::Type, EMouseButtonName::Count> ButtonFromButtonIndex;
     static TStaticArray<uint8, EMouseButtonName::Count>                  ButtonIndexFromButton;

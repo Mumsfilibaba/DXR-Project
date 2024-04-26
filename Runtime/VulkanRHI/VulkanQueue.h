@@ -28,10 +28,8 @@ public:
 
     void AddWaitSemaphore(VkSemaphore Semaphore, VkPipelineStageFlags WaitStage);
     void AddSignalSemaphore(VkSemaphore Semaphore);
-    
     bool IsWaitingForSemaphore(VkSemaphore Semaphore) const { return WaitSemaphores.Contains(Semaphore); }
     bool IsSignalingSemaphore(VkSemaphore Semaphore)  const { return SignalSemaphores.Contains(Semaphore); }
-
     void WaitForCompletion();
 
     // Create empty submit that waits for the semaphores and waits for completion
@@ -42,20 +40,9 @@ public:
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), Name.GetCString(), Queue, VK_OBJECT_TYPE_QUEUE);
     }
 
-    VkQueue GetVkQueue() const
-    {
-        return Queue;
-    }
-
-    EVulkanCommandQueueType GetType() const
-    {
-        return QueueType;
-    }
-
-    uint32 GetQueueFamilyIndex() const
-    {
-        return QueueFamilyIndex;
-    }
+    VkQueue GetVkQueue() const { return Queue; }
+    EVulkanCommandQueueType GetType() const { return QueueType; }
+    uint32 GetQueueFamilyIndex() const { return QueueFamilyIndex; }
 
 private:
     VkQueue                      Queue;

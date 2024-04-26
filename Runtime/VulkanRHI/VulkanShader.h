@@ -196,7 +196,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanHullShader : public FRHIHullShader, public FVulkanShader
@@ -209,7 +209,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanDomainShader : public FRHIDomainShader, public FVulkanShader
@@ -222,7 +222,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanGeometryShader : public FRHIGeometryShader, public FVulkanShader
@@ -235,7 +235,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 class FVulkanPixelShader : public FRHIPixelShader, public FVulkanShader
@@ -248,7 +248,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 
@@ -278,7 +278,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
 
 class FVulkanRayAnyHitShader : public FRHIRayAnyHitShader, public FVulkanRayTracingShader
@@ -291,7 +291,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
 
 class FVulkanRayClosestHitShader : public FRHIRayClosestHitShader, public FVulkanRayTracingShader
@@ -305,7 +305,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
 
 class FVulkanRayMissShader : public FRHIRayMissShader, public FVulkanRayTracingShader
@@ -318,7 +318,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanRayTracingShader*>(this)); }
 };
 
 class FVulkanComputeShader : public FRHIComputeShader, public FVulkanShader
@@ -331,7 +331,7 @@ public:
     }
 
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&SpirvCode); }
-    virtual void* GetRHIBaseShader()   override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
+    virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FVulkanShader*>(this)); }
 };
 
 

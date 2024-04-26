@@ -10,7 +10,7 @@ struct FTimingQuery
 class FRHIQuery : public FRHIResource
 {
 protected:
-    FRHIQuery()          = default;
+    FRHIQuery() = default;
     virtual ~FRHIQuery() = default;
 
 public:

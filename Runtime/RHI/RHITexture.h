@@ -228,70 +228,26 @@ public:
     virtual void* GetRHIBaseTexture() { return nullptr; }
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
+    virtual FRHIShaderResourceView* GetShaderResourceView()  const { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
-
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
-
     virtual void SetDebugName(const FString& InName) { }
-
     virtual FString GetDebugName() const { return ""; }
 
-    ETextureDimension GetDimension() const
-    {
-        return Info.Dimension;
-    }
-    
-    EFormat GetFormat() const
-    {
-        return Info.Format;
-    }
+    ETextureDimension GetDimension() const { return Info.Dimension; }
+    EFormat GetFormat() const { return Info.Format; }
+    ETextureUsageFlags GetFlags() const { return Info.UsageFlags; }
+    const FIntVector3& GetExtent() const { return Info.Extent; }
 
-    ETextureUsageFlags GetFlags() const
-    {
-        return Info.UsageFlags;
-    }
+    uint32 GetWidth() const { return Info.Extent.x; }
+    uint32 GetHeight() const { return Info.Extent.y; }
+    uint32 GetDepth() const { return Info.Extent.z; }
+    uint32 GetNumArraySlices() const { return Info.NumArraySlices; }
+    uint32 GetNumMipLevels() const { return Info.NumMipLevels; }
+    uint32 GetNumSamples() const { return Info.NumSamples; }
     
-    const FIntVector3& GetExtent() const
-    {
-        return Info.Extent;
-    }
-    
-    uint32 GetWidth() const
-    {
-        return Info.Extent.x;
-    }
-    
-    uint32 GetHeight() const
-    {
-        return Info.Extent.y;
-    }
-
-    uint32 GetDepth() const
-    {
-        return Info.Extent.z;
-    }
-
-    uint32 GetNumArraySlices() const
-    {
-        return Info.NumArraySlices;
-    }
-    
-    uint32 GetNumMipLevels() const
-    {
-        return Info.NumMipLevels;
-    }
-    
-    uint32 GetNumSamples() const
-    {
-        return Info.NumSamples;
-    }
-    
-    const FRHITextureInfo& GetInfo() const
-    {
-        return Info;
-    }
+    const FRHITextureInfo& GetInfo() const { return Info; }
 
 protected:
     FRHITextureInfo Info;

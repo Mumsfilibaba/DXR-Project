@@ -11,7 +11,6 @@ public:
     ~FPointLight() = default;
 
     void SetPosition(const FVector3& InPosition);
-
     void SetShadowNearPlane(float InShadowNearPlane);
     void SetShadowFarPlane(float InShadowFarPlane);
 

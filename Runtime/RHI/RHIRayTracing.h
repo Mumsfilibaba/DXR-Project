@@ -196,12 +196,11 @@ protected:
     virtual ~FRHIAccelerationStructure() = default;
 
 public:
-    virtual class FRHIRayTracingScene*    GetRayTracingScene()    { return nullptr; }
+    virtual class FRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
     virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
 
-    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
+    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return nullptr; }
-
     virtual void SetDebugName(const FString& InName) { }
     virtual FString GetDebugName() const { return FString(); }
 
@@ -240,12 +239,9 @@ protected:
 
 public:
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-
     virtual FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
-
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
-
 
 struct FRayTracingShaderResources
 {

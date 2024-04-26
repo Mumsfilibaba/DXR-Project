@@ -66,7 +66,7 @@ public:
         return SuperClass;
     }
 
-    StaticClassFunctionType      GetStaticClassFunc()        const { return StaticClassFunc; }
+    StaticClassFunctionType GetStaticClassFunc() const { return StaticClassFunc; }
     StaticDefaultConstructorType GetDefaultConstructorFunc() const { return DefaultConstructorFunc; }
 
     uint64 GetSize()      const { return Size; }

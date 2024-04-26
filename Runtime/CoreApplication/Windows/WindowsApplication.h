@@ -47,50 +47,32 @@ class FWindowsWindow;
 class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 {
 public:
+    static TSharedPtr<FGenericApplication> Create();
+    static TSharedPtr<FWindowsApplication> CreateWindowsApplication();
+
     FWindowsApplication(HINSTANCE InInstance, HICON InIcon);
     virtual ~FWindowsApplication();
 
-    static TSharedPtr<FWindowsApplication> CreateWindowsApplication();
-
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
-
     virtual void Tick(float Delta) override final;
-    
     virtual void UpdateGamepadDevices() override final;
-
     virtual FInputDevice* GetInputDeviceInterface() override final;
-
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
-
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
-
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
-    
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
-
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
-
     virtual TSharedRef<FGenericWindow> GetCapture() const override final;
-
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
-
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const override final;
-
     virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
-
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
-public:
     TSharedRef<FWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
-
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
-
     void AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener);
-
     void RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener);
-
     bool IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& WindowsMessageListener) const;
-
     void CloseWindow(const TSharedRef<FWindowsWindow>& Window);
 
     HINSTANCE GetInstance() const 
@@ -100,42 +82,35 @@ public:
 
 private:
     static LRESULT StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-
     static BOOL EnumerateMonitorsProc(HMONITOR Monitor, HDC DeviceContext, LPRECT ClipRect, LPARAM Data);
 
     bool RegisterWindowClass();
-    
     bool RegisterRawInputDevices(HWND Window);
-
     bool UnregisterRawInputDevices();
-
     LRESULT ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-    
     LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
-
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
 private:
-    HICON     Icon;
-    HINSTANCE InstanceHandle;
-    
+    HICON                Icon;
+    HINSTANCE            InstanceHandle;
+    bool                 bIsTrackingMouse;
+    mutable bool         bHasDisplayInfoChanged;
+
     mutable FDisplayInfo DisplayInfo;
     FXInputDevice        XInputDevice;
+
+    TArray<FWindowsMessage>            Messages;
+    FCriticalSection                   MessagesCS;
     
-    bool         bIsTrackingMouse;
-    mutable bool bHasDisplayInfoChanged;
-
-    TArray<FWindowsMessage> Messages;
-    FCriticalSection MessagesCS;
-
     TArray<TSharedRef<FWindowsWindow>> Windows;
-    mutable FCriticalSection WindowsCS;
-
+    mutable FCriticalSection           WindowsCS;
+    
     TArray<TSharedRef<FWindowsWindow>> ClosedWindows;
-    FCriticalSection ClosedWindowsCS;
+    FCriticalSection                   ClosedWindowsCS;
 
     TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
-    mutable FCriticalSection WindowsMessageListenersCS;
+    mutable FCriticalSection                    WindowsMessageListenersCS;
 };
 
 extern COREAPPLICATION_API FWindowsApplication* WindowsApplication;

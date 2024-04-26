@@ -5,15 +5,23 @@
 class CORE_API FWindowsEvent final : public FGenericEvent
 {
 public:
-    FWindowsEvent()
-        : Event(nullptr)
-        , bManualReset(false)
-    {
+    static FGenericEvent* Create(bool bManualReset);
+    static void Recycle(FGenericEvent* InEvent);
+
+    virtual void Trigger() override final;
+    virtual void Wait(uint64 Milliseconds) override final;
+    virtual void Reset() override final;
+
+    virtual bool IsManualReset() const override final 
+    { 
+        return bManualReset;
     }
 
+private:
+    FWindowsEvent();
     ~FWindowsEvent();
 
-    bool Create(bool bInManualReset)
+    bool Initialize(bool bInManualReset)
     {
         Event = ::CreateEventA(nullptr, bInManualReset, FALSE, nullptr);
         if (!Event)
@@ -25,18 +33,6 @@ public:
         return true;
     }
 
-    virtual void Trigger() override final;
-
-    virtual void Wait(uint64 Milliseconds) override final;
-
-    virtual void Reset() override final;
-
-    virtual bool IsManualReset() const override final 
-    { 
-        return bManualReset;
-    }
-
-private:
     HANDLE Event;
     bool   bManualReset;
 };

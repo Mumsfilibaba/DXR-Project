@@ -27,7 +27,6 @@ public:
     ~FVulkanDescriptorSetCache();
 
     bool FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
-    
     void ReleaseDescriptorSets();
     void Release();
 

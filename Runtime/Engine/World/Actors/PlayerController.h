@@ -13,7 +13,6 @@ public:
     ~FPlayerController();
 
     virtual void SetupInputComponent();
-
     virtual void Tick(FTimespan DeltaTime) override;
 
     FInputComponent* GetInputComponent() const

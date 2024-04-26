@@ -4,6 +4,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
+#include "Core/Platform/PlatformThread.h"
 
 static TAutoConsoleVariable<int32> CVarNumTaskThreads(
     "Core.NumTaskThreads",
@@ -19,23 +20,30 @@ FTaskWorkerThread::FTaskWorkerThread()
 {
 }
 
+FTaskWorkerThread::~FTaskWorkerThread()
+{
+    if (Thread)
+    {
+        Thread->WaitForCompletion();
+        delete Thread;
+    }
+}
+
 bool FTaskWorkerThread::Create(const CHAR* InThreadName)
 {
-    Event = FPlatformThreadMisc::CreateEvent(false);
+    Event = FPlatformEvent::Create(false);
     if (!Event)
     {
         LOG_ERROR("[FTaskWorkerThread] Failed to Create Event");
         return false;
     }
 
-    Thread = FPlatformThreadMisc::CreateThread(this);
+    Thread = FPlatformThread::Create(this, InThreadName);
     if (!Thread)
     {
         LOG_ERROR("[FTaskWorkerThread] Failed to Create Thread");
         return false;
     }
-
-    Thread->SetName(InThreadName);
 
     if (!Thread->Start())
     {
@@ -101,15 +109,9 @@ int32 FTaskWorkerThread::Run()
 void FTaskWorkerThread::Stop()
 {
     bIsRunning = false;
-
     if (Event)
     {
         Event->Trigger();
-    }
-
-    if (Thread)
-    {
-        Thread->WaitForCompletion();
     }
 }
 

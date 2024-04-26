@@ -18,25 +18,10 @@ public:
     bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags InFlags, const VkImageSubresourceRange& InSubresourceRange);
     void DestroyView();
 
-    VkImage GetVkImage() const
-    {
-        return Image;
-    }
-    
-    VkImageView GetVkImageView() const
-    {
-        return ImageView;
-    }
-
-    const VkImageSubresourceRange& GetSubresourceRange() const
-    {
-        return SubresourceRange;
-    }
-    
-    VkFormat GetVkFormat() const
-    {
-        return Format;
-    }
+    VkImage GetVkImage() const { return Image; }
+    VkImageView GetVkImageView() const { return ImageView; }
+    const VkImageSubresourceRange& GetSubresourceRange() const { return SubresourceRange; }
+    VkFormat GetVkFormat() const { return Format; }
     
 private:
     VkImageSubresourceRange SubresourceRange;
@@ -74,9 +59,8 @@ public:
         return Type;
     }
 
-    VkImage     GetVkImage()     const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
+    VkImage GetVkImage() const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
     VkImageView GetVkImageView() const { return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE; }
-
     VkBuffer GetVkBuffer() const { return HasImageView() ? VK_NULL_HANDLE : BufferInfo.buffer; }
     
     const VkImageSubresourceRange& GetImageSubresourceRange() const { return ImageSubresourceRange; }
@@ -123,8 +107,7 @@ public:
     }
 
     VkBuffer GetVkBuffer() const { return HasImageView() ? VK_NULL_HANDLE : BufferInfo.buffer; }
-
-    VkImage     GetVkImage()     const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
+    VkImage GetVkImage() const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
     VkImageView GetVkImageView() const { return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE; }
     
     const VkImageSubresourceRange& GetImageSubresourceRange() const { return ImageSubresourceRange; }

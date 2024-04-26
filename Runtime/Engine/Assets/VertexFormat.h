@@ -24,10 +24,7 @@ struct FVertex
 
     bool operator==(const FVertex& Other) const
     {
-        return Position == Other.Position 
-            && Normal   == Other.Normal 
-            && Tangent  == Other.Tangent 
-            && TexCoord == Other.TexCoord;
+        return Position == Other.Position && Normal == Other.Normal && Tangent == Other.Tangent && TexCoord == Other.TexCoord;
     }
 
     bool operator!=(const FVertex& Other) const
@@ -35,21 +32,20 @@ struct FVertex
         return !(*this == Other);
     }
 
+    friend uint64 GetHashForType(const FVertex& Vertex)
+    {
+        uint64 Hash = GetHashForType(Vertex.Position);
+        HashCombine<FVector3>(Hash, Vertex.Normal);
+        HashCombine<FVector3>(Hash, Vertex.Tangent);
+        HashCombine<FVector2>(Hash, Vertex.TexCoord);
+        return Hash;
+    }
+
     FVector3 Position;
     FVector3 Normal;
     FVector3 Tangent;
     FVector2 TexCoord;
 };
-
-inline uint64 GetHashForType(const FVertex& Vertex)
-{
-    uint64 Hash = GetHashForType(Vertex.Position);
-    HashCombine<FVector3>(Hash, Vertex.Normal);
-    HashCombine<FVector3>(Hash, Vertex.Tangent);
-    HashCombine<FVector2>(Hash, Vertex.TexCoord);
-    return Hash;
-}
-
 
 struct FVertexMasked
 {
@@ -75,17 +71,16 @@ struct FVertexMasked
         return !(*this == Other);
     }
 
+    friend uint64 GetHashForType(const FVertexMasked& Vertex)
+    {
+        uint64 Hash = GetHashForType(Vertex.Position);
+        HashCombine<FVector2>(Hash, Vertex.TexCoord);
+        return Hash;
+    }
+
     FVector3 Position;
     FVector2 TexCoord;
 };
-
-inline uint64 GetHashForType(const FVertexMasked& Vertex)
-{
-    uint64 Hash = GetHashForType(Vertex.Position);
-    HashCombine<FVector2>(Hash, Vertex.TexCoord);
-    return Hash;
-}
-
 
 struct FVertexPacked
 {
@@ -107,10 +102,7 @@ struct FVertexPacked
 
     bool operator==(const FVertexPacked& Other) const
     {
-        return Position == Other.Position
-            && Normal   == Other.Normal
-            && Tangent  == Other.Tangent
-            && TexCoord == Other.TexCoord;
+        return Position == Other.Position && Normal == Other.Normal && Tangent == Other.Tangent && TexCoord == Other.TexCoord;
     }
 
     bool operator!=(const FVertexPacked& Other) const

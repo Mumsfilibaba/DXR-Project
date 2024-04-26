@@ -38,37 +38,22 @@ public:
     ~FViewport();
 
     bool InitializeRHI(const FViewportInitializer& Initializer);
-    
     void ReleaseRHI();
 
     virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
-
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
-    
     virtual FResponse OnKeyUp(const FKeyEvent& KeyEvent) override final;
-    
     virtual FResponse OnKeyChar(const FKeyEvent& KeyEvent) override final;
-
     virtual FResponse OnMouseMove(const FCursorEvent& MouseEvent) override final;
-    
     virtual FResponse OnMouseButtonDown(const FCursorEvent& MouseEvent) override final;
-    
     virtual FResponse OnMouseButtonUp(const FCursorEvent& MouseEvent) override final;
-    
     virtual FResponse OnMouseScroll(const FCursorEvent& MouseEvent) override final;
-    
     virtual FResponse OnMouseDoubleClick(const FCursorEvent& MouseEvent) override final;
-
 	virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
-    
     virtual FResponse OnWindowFocusLost(const FWindowEvent& WindowEvent) override final;
-    
     virtual FResponse OnWindowFocusGained(const FWindowEvent& WindowEvent) override final;
-    
     virtual FResponse OnMouseLeft(const FWindowEvent& WindowEvent) override final;
-    
     virtual FResponse OnMouseEntered(const FWindowEvent& WindowEvent) override final;
-	
     virtual FResponse OnWindowClosed(const FWindowEvent& WindowEvent) override final;
 
     FRHIViewportRef GetRHIViewport() const

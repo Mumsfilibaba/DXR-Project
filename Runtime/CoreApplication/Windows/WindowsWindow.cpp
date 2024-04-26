@@ -55,12 +55,6 @@ static FWindowsWindowStyle GetWindowsWindowStyle(FWindowStyle Style)
     return FWindowsWindowStyle(NewStyle, NewStyleEx);
 }
 
-const CHAR* FWindowsWindow::GetClassName()
-{
-    return "WindowClass";
-}
-
-
 FWindowsWindow::FWindowsWindow(FWindowsApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)
@@ -113,6 +107,7 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         nullptr,
         Instance,
         nullptr);
+        
     if (Window == 0)
     {
         LOG_ERROR("[FWindowsWindow]: FAILED to create window\n");

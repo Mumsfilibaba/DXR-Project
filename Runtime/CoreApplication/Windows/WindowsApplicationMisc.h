@@ -5,8 +5,6 @@
 
 struct COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplicationMisc
 {
-    static TSharedPtr<FGenericApplication> CreateApplication();
-
     static FOutputDeviceConsole* CreateOutputDeviceConsole();
 
     static FORCEINLINE void MessageBox(const FString& Title, const FString& Message)
@@ -20,6 +18,5 @@ struct COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplic
     }
 
     static void PumpMessages(bool bUntilEmpty);
-
     static FModifierKeyState GetModifierKeyState();
 };

@@ -2,6 +2,7 @@
 #include "TaskManager.h"
 #include "Core/Core.h"
 #include "Core/Platform/PlatformMisc.h"
+#include "Core/Platform/PlatformEvent.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Containers/PriorityQueue.h"
 
@@ -15,7 +16,6 @@ struct IAsyncTask
     /** @brief - Abandon this task, called by the task-queue if enqueued during shutdown */
     virtual void Abandon() = 0;
 };
-
 
 class CORE_API FAsyncTaskBase : public IAsyncTask
 {
@@ -38,7 +38,6 @@ public:
     bool Cancel();
 
     virtual void DoAsyncWork() override final;
-
     virtual void Abandon() override final;
 
     /**
@@ -89,27 +88,24 @@ private:
 
     FORCEINLINE void DestroyWaitEvent()
     {
-        TaskCompleteEvent.Reset();
+        FPlatformEvent::Recycle(TaskCompleteEvent);
     }
 
-    TSharedRef<FGenericEvent> TaskCompleteEvent;
-    FAtomicInt32              NumInvokations;
+    FGenericEvent* TaskCompleteEvent;
+    FAtomicInt32   NumInvokations;
 };
 
 struct FAbanbonableTask
 {
     bool CanAbandon() const { return true; }
-
     void Abandon() { }
 };
 
 struct FNonAbanbonableTask
 {
     bool CanAbandon() const { return false; }
-
     void Abandon() { }
 };
-
 
 template<typename TaskType>
 class TAsyncTask : public FAsyncTaskBase
@@ -221,12 +217,11 @@ private:
     TaskType Task;
 };
 
-
 template<typename LambdaType>
 class TAsyncLambda : public FNonAbanbonableTask
 {
 public:
-    FORCEINLINE TAsyncLambda(LambdaType&& InLambda)
+    TAsyncLambda(LambdaType&& InLambda)
         : Lambda(::Forward<LambdaType>(InLambda))
     {
     }
@@ -239,7 +234,6 @@ public:
 private:
     LambdaType Lambda;
 };
-
 
 template<typename LambdaType>
 inline void Async(LambdaType&& InLambda, EQueuePriority Priority = EQueuePriority::Normal, bool bExecuteAsync = true)

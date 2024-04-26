@@ -166,10 +166,9 @@ public:
     ~FD3D12Device();
 
     bool Initialize();
-
     int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    FD3D12CommandListManager*      GetCommandListManager(ED3D12CommandQueueType QueueType);
+    FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
     FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
 
     ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
@@ -178,20 +177,19 @@ public:
         return CommandListManager ? CommandListManager->GetD3D12CommandQueue() : nullptr;
     }
 
-    FD3D12UploadHeapAllocator&  GetUploadAllocator()      { return UploadAllocator; }
+    FD3D12UploadHeapAllocator& GetUploadAllocator() { return UploadAllocator; }
     FD3D12RootSignatureManager& GetRootSignatureManager() { return RootSignatureManager; }
-    
     FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return GlobalResourceHeap; }
-    FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap()  { return GlobalSamplerHeap; }
+    FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap() { return GlobalSamplerHeap; }
     
     const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
     const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
     const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }  
     const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
     
-    D3D_FEATURE_LEVEL                GetFeatureLevel()            const { return ActiveFeatureLevel; }
+    D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
     D3D12_VARIABLE_SHADING_RATE_TIER GetVariableShadingRateTier() const { return VariableShadingRateTier; }
-    D3D12_RESOURCE_BINDING_TIER      GetResourceBindingTier()     const { return ResourceBindingTier; }
+    D3D12_RESOURCE_BINDING_TIER GetResourceBindingTier() const { return ResourceBindingTier; }
 
     uint32 GetNodeMask()  const { return NodeMask; }
     uint32 GetNodeCount() const { return NodeCount; }

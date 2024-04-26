@@ -76,9 +76,7 @@ public:
     ~FVulkanFramebufferCache();
 
     VkFramebuffer GetFramebuffer(const FVulkanFramebufferKey& Key);
-
     void ReleaseAll();
-
     void OnReleaseImageView(VkImageView View);
     void OnReleaseRenderPass(VkRenderPass RenderPass);
 

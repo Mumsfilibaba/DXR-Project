@@ -210,7 +210,6 @@ public:
     ~FVulkanPipelineLayout();
 
     bool Initialize(const FVulkanPipelineLayoutInfo& LayoutInfo);
-
     void SetDebugName(const CHAR* InName);
 
     // Retrieve the DescriptorSetIndex and BindingIndex for a certain resource

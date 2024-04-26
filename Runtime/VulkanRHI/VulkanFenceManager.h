@@ -14,7 +14,6 @@ public:
     
     FVulkanFence* ObtainFence();
     void RecycleFence(FVulkanFence* InFence);
-    
     void ReleaseAll();
     
 private:

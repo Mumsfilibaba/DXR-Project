@@ -15,7 +15,6 @@ public:
 
     void SetTranslation(float x, float y, float z);
     void SetTranslation(const FVector3& InPosition);
-
     void SetScale(float x, float y, float z);
     void SetScale(const FVector3& InScale);
 

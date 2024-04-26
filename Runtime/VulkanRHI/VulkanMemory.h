@@ -70,13 +70,10 @@ public:
     ~FVulkanMemoryHeap();
 
     bool Initialize(uint64 InSizeInBytes);
-
     bool Allocate(FVulkanMemoryAllocation& OutAllocation, VkDeviceSize InSizeInBytes, VkDeviceSize Alignment, VkDeviceSize PageGranularity);
     bool Free(FVulkanMemoryAllocation& OutAllocation);
-
     void* Map(const FVulkanMemoryAllocation& OutAllocation);
-    void  Unmap(const FVulkanMemoryAllocation& OutAllocation);
-
+    void Unmap(const FVulkanMemoryAllocation& OutAllocation);
     void SetDebugName(const FString& InName);
 
     FORCEINLINE bool IsEmpty() const
@@ -107,8 +104,8 @@ public:
 private:
     bool IsAliasing(VkDeviceSize FirstBlockOffset, VkDeviceSize FirstBlockSize, VkDeviceSize SecondBlockOffset, VkDeviceSize PageGranularity);
 
-    bool ValidateNoOverlap()                      const;
-    bool ValidateChain()                          const;
+    bool ValidateNoOverlap() const;
+    bool ValidateChain() const;
     bool ValidateBlock(FVulkanMemoryBlock* Block) const;
 
     uint64                SizeInBytes;
@@ -137,19 +134,15 @@ public:
     ~FVulkanMemoryManager() = default;
     
     bool AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
-    bool AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
-    
+    bool AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation); 
     bool AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemory, const VkMemoryAllocateInfo& AllocateInfo);
     bool AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemory, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint32 MemoryIndex);
     bool AllocateMemoryFromHeap(FVulkanMemoryAllocation& OutAllocation, VkMemoryAllocateFlags AllocateFlags, uint64 SizeInBytes, uint64 Alignment, uint32 MemoryIndex);
-
     bool Free(FVulkanMemoryAllocation& OutAllocation);
     void FreeMemory(VkDeviceMemory& OutDeviceMemory);
-
-    void ReleaseMemoryHeaps();
-    
+    void ReleaseMemoryHeaps();  
     void* Map(const FVulkanMemoryAllocation& Allocation);
-    void  Unmap(const FVulkanMemoryAllocation& Allocation);
+    void Unmap(const FVulkanMemoryAllocation& Allocation);
     
 private:
     TArray<FVulkanMemoryHeap*> MemoryHeaps;
