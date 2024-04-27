@@ -5,8 +5,7 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 FMetalBuffer::FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferInfo& InBufferInfo)
     : FRHIBuffer(InBufferInfo)
-    , FMetalObject(DeviceContext)
-    , FMetalRefCounted()
+    , FMetalDeviceChild(DeviceContext)
     , Buffer(nil)
 {
 }

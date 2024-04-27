@@ -26,7 +26,7 @@
 
 FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInfo& ViewportInfo)
     : FRHIViewport(ViewportInfo)
-    , FMetalObject(InDeviceContext)
+    , FMetalDeviceChild(InDeviceContext)
     , BackBuffer(nullptr)
     , MetalView(nullptr)
     , MetalLayer(nullptr)

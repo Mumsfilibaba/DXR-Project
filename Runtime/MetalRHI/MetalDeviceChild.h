@@ -3,16 +3,16 @@
 
 class FMetalDeviceContext;
 
-class FMetalObject
+class FMetalDeviceChild
 {
 public:
-    FMetalObject(FMetalDeviceContext* InDeviceContext)
+    FMetalDeviceChild(FMetalDeviceContext* InDeviceContext)
         : DeviceContext(InDeviceContext)
     {
         CHECK(DeviceContext != nullptr);
     }
 
-    virtual ~FMetalObject()
+    virtual ~FMetalDeviceChild()
     {
         DeviceContext = nullptr;
     }

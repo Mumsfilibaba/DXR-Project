@@ -15,7 +15,7 @@ typedef TSharedRef<class FMetalViewport> FMetalViewportRef;
 @interface FMetalWindowView : FCocoaWindowView
 @end
 
-class FMetalViewport : public FRHIViewport, public FMetalObject
+class FMetalViewport : public FRHIViewport, public FMetalDeviceChild
 {
 public:
     FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInfo& ViewportInfo);

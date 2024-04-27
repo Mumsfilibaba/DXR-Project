@@ -1,14 +1,14 @@
 #pragma once
-#include "MetalObject.h"
+#include "MetalDeviceChild.h"
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalView : public FMetalObject
+class FMetalView : public FMetalDeviceChild
 {
 public:
     explicit FMetalView(FMetalDeviceContext* InDeviceContext)
-        : FMetalObject(InDeviceContext)
+        : FMetalDeviceChild(InDeviceContext)
     {
     }
 

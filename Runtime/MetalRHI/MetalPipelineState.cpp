@@ -2,7 +2,6 @@
 
 FMetalVertexInputLayout::FMetalVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
     : FRHIVertexInputLayout()
-    , FMetalRefCounted()
     , VertexDescriptor(nullptr)
 {
     VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
@@ -22,8 +21,7 @@ FMetalVertexInputLayout::FMetalVertexInputLayout(const FRHIVertexInputLayoutInit
 
 FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& InInitializer)
     : FRHIDepthStencilState()
-    , FMetalObject(DeviceContext)
-    , FMetalRefCounted()
+    , FMetalDeviceChild(DeviceContext)
     , DepthStencilState(nullptr)
     , Initializer(InInitializer)
 {
@@ -82,7 +80,6 @@ bool FMetalDepthStencilState::Initialize()
 
 FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
     : FRHIRasterizerState()
-    , FMetalRefCounted()
     , FillMode(ConvertFillMode(InInitializer.FillMode))
     , FrontFaceWinding(InInitializer.bFrontCounterClockwise ? MTLWindingCounterClockwise : MTLWindingClockwise)
     , Initializer(InInitializer)
@@ -92,7 +89,6 @@ FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInitialize
 
 FMetalBlendState::FMetalBlendState(const FRHIBlendStateInitializer& InInitializer)
     : FRHIBlendState()
-    , FMetalRefCounted()
     , Initializer(InInitializer)
 {
     for (int32 Index = 0; Index < InInitializer.NumRenderTargets; Index++)

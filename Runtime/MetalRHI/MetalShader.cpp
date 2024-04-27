@@ -1,7 +1,7 @@
 #include "MetalShader.h"
 
 FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVisibility)
-    : FMetalObject(InDevice)
+    : FMetalDeviceChild(InDevice)
     , Library(nil)
     , FunctionName(nil)
     , Visibility(InVisibility)

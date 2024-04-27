@@ -13,18 +13,11 @@ typedef TSharedRef<class FMetalGraphicsPipelineState>   FMetalGraphicsPipelineSt
 typedef TSharedRef<class FMetalComputePipelineState>    FMetalComputePipelineStateRef;
 typedef TSharedRef<class FMetalRayTracingPipelineState> FMetalRayTracingPipelineStateRef;
 
-
-class FMetalVertexInputLayout : public FRHIVertexInputLayout, public FMetalRefCounted
+class FMetalVertexInputLayout : public FRHIVertexInputLayout
 {
 public:
     FMetalVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
     virtual ~FMetalVertexInputLayout() = default;
-
-    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
     MTLVertexDescriptor* GetMTLVertexDescriptor() const 
     { 
@@ -35,20 +28,13 @@ private:
     MTLVertexDescriptor* VertexDescriptor;
 };
 
-
-class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalObject, public FMetalRefCounted
+class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalDeviceChild
 {
 public:
     FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& InInitializer);
     virtual ~FMetalDepthStencilState();
 
     bool Initialize();
-
-    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
     virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
     {
@@ -65,18 +51,11 @@ private:
     FRHIDepthStencilStateInitializer Initializer;
 };
 
-
-class FMetalRasterizerState : public FRHIRasterizerState, public FMetalRefCounted
+class FMetalRasterizerState : public FRHIRasterizerState
 {
 public:
     FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
     virtual ~FMetalRasterizerState() = default;
-
-    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
     virtual FRHIRasterizerStateInitializer GetInitializer() const override final
     {
@@ -89,18 +68,11 @@ public:
     const FRHIRasterizerStateInitializer Initializer;
 };
 
-
-class FMetalBlendState : public FRHIBlendState, public FMetalRefCounted
+class FMetalBlendState : public FRHIBlendState
 {
 public:
     FMetalBlendState(const FRHIBlendStateInitializer& InInitializer);
     virtual ~FMetalBlendState() = default;
-    
-    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
 
     virtual FRHIBlendStateInitializer GetInitializer() const
     {
@@ -124,7 +96,6 @@ public:
     const FRHIBlendStateInitializer Initializer;
 };
 
-
 struct FMetalResourceBinding
 {
     FMetalResourceBinding() = default;
@@ -137,12 +108,11 @@ struct FMetalResourceBinding
     uint8 Binding = 0;
 };
 
-
-class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalObject
+class FMetalGraphicsPipelineState : public FRHIGraphicsPipelineState, public FMetalDeviceChild
 {
 public:
     FMetalGraphicsPipelineState(FMetalDeviceContext* DeviceContext, const FRHIGraphicsPipelineStateInitializer& Initializer)
-        : FMetalObject(DeviceContext)
+        : FMetalDeviceChild(DeviceContext)
         , BlendState(nullptr)
         , DepthStencilState(nullptr)
         , RasterizerState(nullptr)
@@ -273,9 +243,7 @@ public:
         NSSafeRelease(PipelineState);
     }
 
-    virtual void SetDebugName(const FString& InName) override final {
-}
-
+    virtual void SetDebugName(const FString& InName) override final {}
     virtual FString GetDebugName() const override final { return ""; }
     
 public:
@@ -286,7 +254,6 @@ public:
     id<MTLRenderPipelineState> GetMTLPipelineState() const { return PipelineState; }
     
     uint32 GetNumBuffers(EShaderVisibility ShaderVisibility) const { return NumBuffers[ShaderVisibility]; }
-    
     uint32 GetBufferBinding(EShaderVisibility ShaderVisibility, uint32 BufferIndex) const { return BufferBindings[ShaderVisibility][BufferIndex]; }
     
 private:
@@ -312,9 +279,7 @@ public:
     FMetalComputePipelineState()  = default;
     ~FMetalComputePipelineState() = default;
 
-    virtual void SetDebugName(const FString& InName) override final {
-}
-
+    virtual void SetDebugName(const FString& InName) override final {}
     virtual FString GetDebugName() const override final { return ""; }
 };
 
@@ -325,9 +290,7 @@ public:
     FMetalRayTracingPipelineState()  = default;
     ~FMetalRayTracingPipelineState() = default;
 
-    virtual void SetDebugName(const FString& InName) override final {
-}
-
+    virtual void SetDebugName(const FString& InName) override final {}
     virtual FString GetDebugName() const override final { return ""; }
 };
 

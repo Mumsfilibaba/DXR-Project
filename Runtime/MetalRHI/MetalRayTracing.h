@@ -15,10 +15,9 @@ public:
 
     ~FMetalRayTracingGeometry() = default;
 
-    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
+    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 };
-
 
 class FMetalRayTracingScene : public FRHIRayTracingScene
 {
@@ -31,12 +30,12 @@ public:
 
     ~FMetalRayTracingScene() = default;
 
-    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-    virtual FRHIDescriptorHandle    GetBindlessHandle()     const override final{ return FRHIDescriptorHandle(); }
- 
-    virtual void* GetRHIBaseBVHBuffer()             override final { return nullptr; }
+    virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(this); }
 
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
+    virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
+ 
 private:
     TSharedRef<FMetalShaderResourceView> View;
 };

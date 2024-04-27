@@ -8,7 +8,7 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 FMetalCommandContext::FMetalCommandContext(FMetalDeviceContext* InDeviceContext)
-    : FMetalObject(InDeviceContext)
+    : FMetalDeviceChild(InDeviceContext)
     , IRHICommandContext()
     , CommandBuffer(nil)
     , GraphicsEncoder(nil)

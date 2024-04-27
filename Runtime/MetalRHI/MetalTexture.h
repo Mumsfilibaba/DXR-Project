@@ -1,6 +1,6 @@
 #pragma once
 #include "MetalViews.h"
-#include "MetalObject.h"
+#include "MetalDeviceChild.h"
 #include "MetalRefCounted.h"
 #include "RHI/RHIResources.h"
 
@@ -10,7 +10,7 @@ class FMetalViewport;
 
 typedef TSharedRef<class FMetalTexture> FMetalTextureRef;
 
-class FMetalTexture : public FRHITexture, public FMetalObject, public FMetalRefCounted
+class FMetalTexture : public FRHITexture, public FMetalDeviceChild
 {
 public:
     FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo);
@@ -18,26 +18,14 @@ public:
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-    virtual int32 AddRef() override final { return FMetalRefCounted::AddRef(); }
-    
-    virtual int32 Release() override final { return FMetalRefCounted::Release(); }
-    
-    virtual int32 GetRefCount() const override final { return FMetalRefCounted::GetRefCount(); }
-
     virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
-    
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return ShaderResourceView.Get(); }
-    
+    virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
-
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
-    
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
-
     virtual void SetDebugName(const FString& InName) override final;
-    
     virtual FString GetDebugName() const override final;
 
     id<MTLTexture> GetMTLTexture() const;

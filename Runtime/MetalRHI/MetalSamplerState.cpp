@@ -3,8 +3,7 @@
 
 FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateInfo& InSamplerInfo)
     : FRHISamplerState(InSamplerInfo)
-    , FMetalObject(InDeviceContext)
-    , FMetalRefCounted()
+    , FMetalDeviceChild(InDeviceContext)
     , SamplerState(nullptr)
 {
 }
