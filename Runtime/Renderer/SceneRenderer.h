@@ -86,9 +86,7 @@ public:
 
     bool Initialize();
     bool InitializeRenderPasses();
-
     void Tick(FScene* Scene);
-
     void ResizeResources(const FWindowEvent& Event);
 
     void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -135,6 +133,7 @@ private:
     FDebugRenderer              DebugRenderer;
 
     // RHI
+    FGenericEvent*              LastFrameFinishedEvent;
     FRHIQueryRef                TimestampQueries;
     FRHICommandList             CommandList;
     FRHICommandStatistics       FrameStatistics;

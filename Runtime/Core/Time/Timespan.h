@@ -1,12 +1,6 @@
 #pragma once
 #include "TimeUtilities.h"
-
 #include "Core/Core.h"
-
-#ifdef PLATFORM_COMPILER_MSVC
-    #pragma warning(push)
-    #pragma warning(disable : 4251)
-#endif
 
 class FTimespan
 {
@@ -141,7 +135,3 @@ public:
 private:
     uint64 TimespanNS = 0;
 };
-
-#ifdef PLATFORM_COMPILER_MSVC
-    #pragma warning(pop)
-#endif

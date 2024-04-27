@@ -4,7 +4,7 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CORE_API FGenericEvent : public FRefCounted
+class CORE_API FGenericEvent
 {
 public:
     // Creates a new event

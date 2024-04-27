@@ -12,10 +12,93 @@ static TAutoConsoleVariable<bool> CVarEnableRHIThread(
     "Enables the use of a separate Thread for executing RHI Commands",
     true);
 
+
+FRHICommandList::FRHICommandList() noexcept
+    : Memory()
+    , CommandPointer(nullptr)
+    , FirstCommand(nullptr)
+    , CommandContext(nullptr)
+    , FinishedEvent(nullptr)
+    , Statistics()
+    , NumCommands(0)
+{
+    CommandPointer = &FirstCommand;
+}
+
+FRHICommandList::~FRHICommandList() noexcept
+{
+    Reset();
+}
+
+void FRHICommandList::Execute() noexcept
+{
+    IRHICommandContext& CommandContextRef = GetCommandContext();
+    CommandContextRef.RHIStartContext();
+    ExecuteWithContext(CommandContextRef);
+    CommandContextRef.RHIFinishContext();
+}
+
+void FRHICommandList::ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept
+{
+    FRHICommand* CurrentCommand = FirstCommand;
+    while (CurrentCommand != nullptr)
+    {
+        FRHICommand* PreviousCommand = CurrentCommand;
+        CurrentCommand = CurrentCommand->NextCommand;
+        PreviousCommand->ExecuteAndRelease(InCommandContext);
+    }
+
+    FirstCommand = nullptr;
+
+    // Trigger event
+    if (FinishedEvent)
+    {
+        FinishedEvent->Trigger();
+        FinishedEvent = nullptr;
+    }
+
+    Reset();
+}
+
+void FRHICommandList::Reset() noexcept
+{
+    if (FirstCommand != nullptr)
+    {
+        // Call destructor on all commands that has not been executed
+        FRHICommand* Command = FirstCommand;
+        while (Command != nullptr)
+        {
+            FRHICommand* PreviousCommand = Command;
+            Command = Command->NextCommand;
+            PreviousCommand->~FRHICommand();
+        }
+
+        FirstCommand = nullptr;
+    }
+
+    CommandPointer = &FirstCommand;
+    CommandContext = nullptr;
+    NumCommands    = 0;
+
+    Statistics.Reset();
+    Memory.Reset();
+}
+
+void FRHICommandList::ExchangeState(FRHICommandList& Other) noexcept
+{
+    // This works fine in this case
+    FMemory::Memswap(this, &Other, sizeof(FRHICommandList));
+
+    if (CommandPointer == &Other.FirstCommand)
+        CommandPointer = &FirstCommand;
+
+    if (Other.CommandPointer == &FirstCommand)
+        Other.CommandPointer = &Other.FirstCommand;
+}
+
+
 FRHIThread::FRHIThread()
     : Thread(nullptr)
-    , WaitCS()
-    , WaitCondition()
     , bIsRunning(false)
 {
 }
@@ -53,26 +136,28 @@ int32 FRHIThread::Run()
 {
     while (bIsRunning)
     {
-        TScopedLock WaitLock(WaitCS);
-        WaitCondition.Wait(WaitLock);
-
-        FRHIThreadTask CurrentTask;
-
+        for(;;)
         {
-            SCOPED_LOCK(TasksCS);
-            
-            if (!Tasks.IsEmpty())
+            FRHICommandList* CommandList = nullptr;
+            if (!Tasks.Dequeue(CommandList))
             {
-                CurrentTask = Move(Tasks.FirstElement());
-                Tasks.RemoveAt(0);
+                break;
+            }
+
+            if (CommandList)
+            {
+                TRACE_FUNCTION_SCOPE();
+
+                CommandList->Execute();
+                delete CommandList;
+
+                NumCompletedTasks++;
             }
         }
 
-        if (CurrentTask)
+        while (NumCompletedTasks.Load() >= NumSubmittedTasks.Load())
         {
-            TRACE_FUNCTION_SCOPE();
-            CurrentTask.CommandList->Execute();
-            NumCompletedTasks++;
+            FPlatformThreadMisc::Pause();
         }
     }
 
@@ -84,23 +169,16 @@ void FRHIThread::Stop()
     if (bIsRunning)
     {
         WaitForOutstandingTasks();
-
         bIsRunning = false;
-        WaitCondition.NotifyAll();
     }
 }
 
-void FRHIThread::Execute(FRHIThreadTask&& NewTask)
+void FRHIThread::Execute(FRHICommandList* InCommandList)
 {
     if (bIsRunning)
     {
-        {
-            SCOPED_LOCK(TasksCS);
-            Tasks.Emplace(Move(NewTask));
-            NumSubmittedTasks++;
-        }
-
-        WaitCondition.NotifyAll();
+        Tasks.Enqueue(InCommandList);
+        NumSubmittedTasks++;
     }
 }
 
@@ -108,7 +186,6 @@ void FRHIThread::WaitForOutstandingTasks()
 {
     while (NumCompletedTasks.Load() < NumSubmittedTasks.Load())
     {
-        WaitCondition.NotifyAll();
         FPlatformThreadMisc::Pause();
     }
 }
@@ -195,8 +272,7 @@ void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
             FRHICommandList* NewCommandList = new FRHICommandList();
             NewCommandList->ExchangeState(CommandList);
             NewCommandList->SetCommandContext(CommandContext);
-
-            RHIThread->Execute(FRHIThreadTask(NewCommandList));
+            RHIThread->Execute(NewCommandList);
         }
         else
         {

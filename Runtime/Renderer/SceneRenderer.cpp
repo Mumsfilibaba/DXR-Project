@@ -3,6 +3,7 @@
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Time/Timespan.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Application/Application.h"
 #include "RHI/RHI.h"
@@ -145,6 +146,7 @@ FSceneRenderer::FSceneRenderer()
     , ShadingRateShader(nullptr)
     , TimestampQueries(nullptr)
     , FrameStatistics()
+    , LastFrameFinishedEvent(nullptr)
 {
 }
 
@@ -893,7 +895,20 @@ void FSceneRenderer::Tick(FScene* Scene)
     {
         TRACE_SCOPE("ExecuteCommandList");
 
-        GRHICommandExecutor.WaitForOutstandingTasks();
+        // Wait for the last frame to finish on the RHI thread
+        if (LastFrameFinishedEvent)
+        {
+            LastFrameFinishedEvent->Wait(FTimespan::Infinity());
+            FPlatformEvent::Recycle(LastFrameFinishedEvent);
+            LastFrameFinishedEvent = nullptr;
+        }
+
+        LastFrameFinishedEvent = FPlatformEvent::Create(false);
+        if (LastFrameFinishedEvent)
+        {
+            CommandList.SetEvent(LastFrameFinishedEvent);
+        }
+
         GRHICommandExecutor.ExecuteCommandList(CommandList);
         FrameStatistics = GRHICommandExecutor.GetStatistics();
     }

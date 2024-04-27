@@ -5,9 +5,11 @@
 #include "RHIRayTracing.h"
 #include "Core/Memory/MemoryStack.h"
 #include "Core/Threading/Runnable.h"
-#include "Core/Platform/PlatformThreadMisc.h"
+#include "Core/Platform/PlatformThread.h"
+#include "Core/Platform/PlatformEvent.h"
 #include "Core/Platform/ConditionVariable.h"
 #include "Core/Containers/ArrayView.h"
+#include "Core/Containers/Queue.h"
 
 struct FRHIRenderTargetView;
 struct FRHIDepthStencilView;
@@ -48,21 +50,13 @@ struct FRHICommandStatistics
 class RHI_API FRHICommandList : FNonCopyable
 {
 public:
-    FRHICommandList() noexcept
-        : Memory()
-        , CommandPointer(nullptr)
-        , FirstCommand(nullptr)
-        , CommandContext(nullptr)
-        , Statistics()
-        , NumCommands(0)
-    {
-        CommandPointer = &FirstCommand;
-    }
+    FRHICommandList() noexcept;
+    ~FRHICommandList() noexcept;
 
-    ~FRHICommandList() noexcept
-    {
-        Reset();
-    }
+    void Execute() noexcept;
+    void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept;
+    void Reset() noexcept;
+    void ExchangeState(FRHICommandList& Other) noexcept;
 
     FORCEINLINE void* Allocate(uint64 Size, uint32 Alignment) noexcept
     {
@@ -111,64 +105,6 @@ public:
         return new(Allocate(sizeof(T), alignof(T))) T(Forward<ArgTypes>(Args)...);
     }
 
-    FORCEINLINE void Execute() noexcept
-    {
-        IRHICommandContext& CommandContextRef = GetCommandContext();
-        CommandContextRef.RHIStartContext();
-        ExecuteWithContext(CommandContextRef);
-        CommandContextRef.RHIFinishContext();
-    }
-
-    FORCEINLINE void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept
-    {
-        FRHICommand* CurrentCommand = FirstCommand;
-        while (CurrentCommand != nullptr)
-        {
-            FRHICommand* PreviousCommand = CurrentCommand;
-            CurrentCommand = CurrentCommand->NextCommand;
-            PreviousCommand->ExecuteAndRelease(InCommandContext);
-        }
-
-        FirstCommand = nullptr;
-        Reset();
-    }
-
-    FORCEINLINE void Reset() noexcept
-    {
-        if (FirstCommand != nullptr)
-        {
-            // Call destructor on all commands that has not been executed
-            FRHICommand* Command = FirstCommand;
-            while (Command != nullptr)
-            {
-                FRHICommand* PreviousCommand = Command;
-                Command = Command->NextCommand;
-                PreviousCommand->~FRHICommand();
-            }
-
-            FirstCommand = nullptr;
-        }
-
-        CommandPointer = &FirstCommand;
-        CommandContext = nullptr;
-        NumCommands    = 0;
-
-        Statistics.Reset();
-        Memory.Reset();
-    }
-
-    FORCEINLINE void ExchangeState(FRHICommandList& Other) noexcept
-    {
-        // This works fine in this case
-        FMemory::Memswap(this, &Other, sizeof(FRHICommandList));
-
-        if (CommandPointer == &Other.FirstCommand)
-            CommandPointer = &FirstCommand;
-
-        if (Other.CommandPointer == &FirstCommand)
-            Other.CommandPointer = &Other.FirstCommand;
-    }
-
     FORCEINLINE void SetCommandContext(IRHICommandContext* InCommandContext) noexcept
     {
         CommandContext = InCommandContext;
@@ -178,6 +114,17 @@ public:
     {
         CHECK(CommandContext != nullptr);
         return *CommandContext;
+    }
+
+    FORCEINLINE void SetEvent(FGenericEvent* InEvent) noexcept
+    {
+        CHECK(InEvent != nullptr);
+        FinishedEvent = InEvent;
+    }
+
+    FORCEINLINE FGenericEvent* GetEvent() const noexcept
+    {
+        return FinishedEvent;
     }
 
     FORCEINLINE bool HasCommands() const noexcept
@@ -405,14 +352,7 @@ public:
     }
 
     // TODO: Refactor
-    FORCEINLINE void SetRayTracingBindings(
-        FRHIRayTracingScene*              RayTracingScene,
-        FRHIRayTracingPipelineState*      PipelineState,
-        const FRayTracingShaderResources* GlobalResource,
-        const FRayTracingShaderResources* RayGenLocalResources,
-        const FRayTracingShaderResources* MissLocalResources,
-        const FRayTracingShaderResources* HitGroupResources,
-        uint32                            NumHitGroupResources) noexcept
+    FORCEINLINE void SetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) noexcept
     {
         EmplaceCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
@@ -524,10 +464,10 @@ public:
 
 private:
     FMemoryStack          Memory;
-    // NOTE: Pointer to FirstCommand to avoid branching
-    FRHICommand**         CommandPointer;
+    FRHICommand**         CommandPointer; // NOTE: Pointer to FirstCommand to avoid branching
     FRHICommand*          FirstCommand;
     IRHICommandContext*   CommandContext;
+    FGenericEvent*        FinishedEvent;
     FRHICommandStatistics Statistics;
     uint32                NumCommands;
 };
@@ -538,44 +478,6 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
     CommandList->~FRHICommandList();
 }
 
-struct FRHIThreadTask : FNonCopyable
-{
-    FRHIThreadTask() noexcept
-        : CommandList(nullptr)
-    {
-    }
-
-    explicit FRHIThreadTask(FRHICommandList* InCommandList) noexcept
-        : CommandList(InCommandList)
-    {
-    }
-
-    FRHIThreadTask(FRHIThreadTask&& Other) noexcept
-        : CommandList(Other.CommandList)
-    {
-        Other.CommandList = nullptr;
-    }
-
-    ~FRHIThreadTask() noexcept
-    {
-        SAFE_DELETE(CommandList);
-    }
-
-    FRHIThreadTask& operator=(FRHIThreadTask&& RHS) noexcept
-    {
-        CommandList = RHS.CommandList;
-        RHS.CommandList = nullptr;
-        return *this;
-    }
-
-    operator bool() const noexcept
-    {
-        return CommandList != nullptr;
-    }
-
-    FRHICommandList* CommandList;
-};
-
 class RHI_API FRHIThread : public FRunnable, FNonCopyable
 {
 public:
@@ -583,25 +485,19 @@ public:
     ~FRHIThread();
 
     virtual bool Start() override final;
-
     virtual int32 Run() override final;
-
     virtual void Stop() override final;
 
     bool Startup();
-
-    void Execute(FRHIThreadTask&& NewTask);
+    void Execute(FRHICommandList* InCommandList);
     void WaitForOutstandingTasks();
 
 private:
-    FGenericThread*        Thread;
-    FAtomicInt64           NumSubmittedTasks;
-    FAtomicInt64           NumCompletedTasks;
-    TArray<FRHIThreadTask> Tasks;
-    FCriticalSection       TasksCS;
-    FCriticalSection       WaitCS;
-    FConditionVariable     WaitCondition;
-    bool                   bIsRunning;
+    FGenericThread* Thread;
+    FAtomicInt64    NumSubmittedTasks;
+    FAtomicInt64    NumCompletedTasks;
+    bool            bIsRunning;
+    TQueue<FRHICommandList*, EQueueType::MPSC> Tasks;
 };
 
 class RHI_API FRHICommandExecutor : FNonCopyable
@@ -612,14 +508,10 @@ public:
 
     bool Initialize();
     void Release();
-
     void Tick();
-
     void WaitForOutstandingTasks();
     void WaitForGPU();
-
     void EnqueueResourceDeletion(FRHIResource* InResource);
-
     void ExecuteCommandList(class FRHICommandList& CmdList);
 
     void SetContext(IRHICommandContext* InCmdContext) 

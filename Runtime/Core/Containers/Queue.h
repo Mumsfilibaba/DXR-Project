@@ -61,7 +61,6 @@ public:
         FNode* NextNode;
         if constexpr(QueueType == EQueueType::SPMC)
         {
-            FPlatformMisc::MemoryBarrier();
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
         else
@@ -82,7 +81,6 @@ public:
         FNode* PreviousTail;
         if constexpr (QueueType == EQueueType::SPMC)
         {
-            FPlatformMisc::MemoryBarrier();
             PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
         }
         else
@@ -105,7 +103,6 @@ public:
         FNode* NextNode;
         if constexpr(QueueType == EQueueType::SPMC)
         {
-            FPlatformMisc::MemoryBarrier();
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
         else
@@ -122,7 +119,6 @@ public:
         FNode* PreviousTail;
         if constexpr (QueueType == EQueueType::SPMC)
         {
-            FPlatformMisc::MemoryBarrier();
             PreviousTail = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail), NextNode));
         }
         else
@@ -145,8 +141,6 @@ public:
         FNode* TailToDequeue;
         if constexpr (QueueType != EQueueType::SPSC)
         {
-            FPlatformMisc::MemoryBarrier();
-            
             FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), Tail);
             TailToDequeue = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -220,8 +214,6 @@ public:
         FNode* PreviousHead;
         if constexpr (QueueType == EQueueType::MPSC)
         {
-            FPlatformMisc::MemoryBarrier();
-            
             PreviousHead = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Head), NewNode));
             FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&PreviousHead->NextNode), NewNode);
         }
