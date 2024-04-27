@@ -29,7 +29,7 @@ public:
 private:
     static void* ThreadRoutine(void* ThreadParameter);
 
-    FMacThread(FRunnable* InRunnable);
+    FMacThread(FRunnable* InRunnable, const CHAR* ThreadName);
 
     pthread_t Thread;
     bool      bIsRunning;

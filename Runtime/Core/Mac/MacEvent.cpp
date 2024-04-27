@@ -8,7 +8,7 @@
 FGenericEvent* FMacEvent::Create(bool bManualReset)
 {
     FMacEvent* NewEvent = new FMacEvent();
-    if (!NewEvent->Create(bManualReset))
+    if (!NewEvent->Initialize(bManualReset))
     {
         delete NewEvent;
         return nullptr;
@@ -63,7 +63,7 @@ FMacEvent::~FMacEvent()
     }
 }
 
-bool FMacEvent::Create(bool bInManualReset)
+bool FMacEvent::Initialize(bool bInManualReset)
 {
     CHECK(bInitialized == false);
     

@@ -23,7 +23,7 @@ FGenericThread* FGenericThread::GetThread()
 uint32 FGenericThread::AllocTLSSlot()
 {
     uint32 SlotIndex = FPlatformTLS::AllocTLSSlot();
-    if (SlotIndex == TLS_OUT_OF_INDEXES)
+    if (SlotIndex == CORE_INVALID_TLS_INDEX)
     {
         LOG_ERROR("Failed to allocate TLS slot");
         DEBUG_BREAK();

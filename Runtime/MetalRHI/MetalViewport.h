@@ -21,18 +21,14 @@ public:
     FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIViewportInfo& ViewportInfo);
     ~FMetalViewport();
 
-    bool Initialize();
-
     virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
 
+    bool Initialize();
     bool Resize(uint32 InWidth, uint32 InHeight);
-    
-    // TODO: This needs to be a command for Vulkan and Metal since we can be using the texture and present will change the resource
     bool Present(bool bVerticalSync);
 
     /** @return - Returns the current drawable, will release it during next call to present */
     id<CAMetalDrawable> GetDrawable();
-    
     id<MTLTexture> GetDrawableTexture();
     
     CAMetalLayer* GetMetalLayer() const
@@ -46,11 +42,10 @@ public:
     }
     
 private:
-    FMetalTextureRef      BackBuffer;
-    FMetalWindowView*     MetalView;
-    CAMetalLayer*         MetalLayer;
-    id<CAMetalDrawable>   Drawable;
-    TSharedRef<FMacEvent> MainThreadEvent;
+    FMetalTextureRef    BackBuffer;
+    FMetalWindowView*   MetalView;
+    CAMetalLayer*       MetalLayer;
+    id<CAMetalDrawable> Drawable;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

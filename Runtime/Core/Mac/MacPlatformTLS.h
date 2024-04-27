@@ -16,7 +16,7 @@ struct FMacPlatformTLS final : public FGenericPlatformTLS
         pthread_key_t Slot = 0;
         if (::pthread_key_create(&Slot, nullptr) != 0)
         {
-            // Same as FWindowsPlatformTLS
+            // NOTE: Same as FWindowsPlatformTLS
             Slot = TNumericLimits<uint32>::Max();
         }
 

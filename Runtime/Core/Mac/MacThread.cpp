@@ -2,7 +2,7 @@
 #include "MacThreadMisc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
-FGenericThread* FMacThread::Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended)
+FGenericThread* FMacThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
 {
     FMacThread* NewThread = new FMacThread(InRunnable, ThreadName);
     if (!bSuspended)

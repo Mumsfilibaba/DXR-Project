@@ -1,6 +1,6 @@
 #include "MetalViewport.h"
 #include "Core/Mac/MacRunLoop.h"
-#include "Core/Mac/MacThreadMisc.h"
+#include "Core/Platform/PlatformEvent.h"
 
 @implementation FMetalWindowView
 
@@ -31,7 +31,6 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
     , MetalView(nullptr)
     , MetalLayer(nullptr)
     , Drawable(nullptr)
-    , MainThreadEvent(nullptr)
 {
 }
 
@@ -101,13 +100,6 @@ bool FMetalViewport::Initialize()
 
     // Set the metallayer
     MetalLayer = NewMetalLayer;
-
-    // Create Event
-    MainThreadEvent = static_cast<FMacEvent*>(FMacThreadMisc::CreateEvent(false));
-    if (!MainThreadEvent)
-    {
-        return false;
-    }
 
     // Create BackBuffer
     const ETextureUsageFlags Flags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;

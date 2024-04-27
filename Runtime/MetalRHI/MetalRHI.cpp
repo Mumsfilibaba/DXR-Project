@@ -56,7 +56,7 @@ bool FMetalRHI::Initialize()
 
 FRHITexture* FMetalRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
-    FMetalTextureRef NewTexture = new FMetalTexture(GetDeviceContext(), InDesc);
+    FMetalTextureRef NewTexture = new FMetalTexture(GetDeviceContext(), InTextureInfo);
     if (!NewTexture->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -69,7 +69,7 @@ FRHITexture* FMetalRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
 
 FRHIBuffer* FMetalRHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    FMetalBufferRef NewBuffer = new FMetalBuffer(GetDeviceContext(), InDesc);
+    FMetalBufferRef NewBuffer = new FMetalBuffer(GetDeviceContext(), InBufferInfo);
     if (!NewBuffer->Initialize(InInitialState, InInitialData))
     {
         return nullptr;
@@ -82,7 +82,7 @@ FRHIBuffer* FMetalRHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EReso
 
 FRHISamplerState* FMetalRHI::RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo)
 {
-    FMetalSamplerStateRef NewSamplerState = new FMetalSamplerState(GetDeviceContext(), Desc);
+    FMetalSamplerStateRef NewSamplerState = new FMetalSamplerState(GetDeviceContext(), InSamplerInfo);
     if (!NewSamplerState->Initialize())
     {
         return nullptr;

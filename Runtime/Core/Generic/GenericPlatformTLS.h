@@ -2,6 +2,10 @@
 #include "Core/Core.h"
 #include "Core/Templates/NumericLimits.h"
 
+#ifndef CORE_INVALID_TLS_INDEX
+    #define CORE_INVALID_TLS_INDEX uint32(0xffffffff)
+#endif
+
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FGenericPlatformTLS
@@ -14,7 +18,7 @@ struct FGenericPlatformTLS
     /**
      * @return - Allocates and returns a new TLS slot
      */
-    static FORCEINLINE uint32 AllocTLSSlot() { return TNumericLimits<uint32>::Min(); }
+    static FORCEINLINE uint32 AllocTLSSlot() { return TNumericLimits<uint32>::Max(); }
 
     /**
      * @brief           - Set an allocated TLS value

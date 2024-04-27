@@ -2,7 +2,7 @@
 #include "MetalDeviceContext.h"
 
 FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, const FRHISamplerStateInfo& InSamplerInfo)
-    : FRHISamplerState(InDesc)
+    : FRHISamplerState(InSamplerInfo)
     , FMetalObject(InDeviceContext)
     , FMetalRefCounted()
     , SamplerState(nullptr)
@@ -19,17 +19,17 @@ bool FMetalSamplerState::Initialize()
     SCOPED_AUTORELEASE_POOL();
 
     MTLSamplerDescriptor* SamplerDesc = [[MTLSamplerDescriptor new] autorelease];
-    SamplerDesc.rAddressMode          = ConvertSamplerMode(Desc.AddressU);
-    SamplerDesc.sAddressMode          = ConvertSamplerMode(Desc.AddressV);
-    SamplerDesc.tAddressMode          = ConvertSamplerMode(Desc.AddressW);
-    SamplerDesc.minFilter             = ConvertSamplerFilterToMinFilter(Desc.Filter);
-    SamplerDesc.magFilter             = ConvertSamplerFilterToMagFilter(Desc.Filter);
-    SamplerDesc.mipFilter             = ConvertSamplerFilterToMipmapMode(Desc.Filter);
-    SamplerDesc.lodMinClamp           = Desc.MinLOD;
-    SamplerDesc.lodMaxClamp           = Desc.MaxLOD;
+    SamplerDesc.rAddressMode          = ConvertSamplerMode(Info.AddressU);
+    SamplerDesc.sAddressMode          = ConvertSamplerMode(Info.AddressV);
+    SamplerDesc.tAddressMode          = ConvertSamplerMode(Info.AddressW);
+    SamplerDesc.minFilter             = ConvertSamplerFilterToMinFilter(Info.Filter);
+    SamplerDesc.magFilter             = ConvertSamplerFilterToMagFilter(Info.Filter);
+    SamplerDesc.mipFilter             = ConvertSamplerFilterToMipmapMode(Info.Filter);
+    SamplerDesc.lodMinClamp           = Info.MinLOD;
+    SamplerDesc.lodMaxClamp           = Info.MaxLOD;
     SamplerDesc.lodAverage            = YES;
-    SamplerDesc.maxAnisotropy         = Desc.MaxAnisotropy;
-    SamplerDesc.compareFunction       = ConvertComparisonFunc(Desc.ComparisonFunc);
+    SamplerDesc.maxAnisotropy         = Info.MaxAnisotropy;
+    SamplerDesc.compareFunction       = ConvertComparisonFunc(Info.ComparisonFunc);
     SamplerDesc.borderColor           = MTLSamplerBorderColorOpaqueBlack;
     SamplerDesc.normalizedCoordinates = YES;
 

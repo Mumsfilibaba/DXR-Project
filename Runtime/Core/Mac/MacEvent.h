@@ -28,7 +28,7 @@ private:
     FMacEvent();
     ~FMacEvent();
 
-    bool Create(bool bInManualReset);
+    bool Initialize(bool bInManualReset);
 
     FORCEINLINE void LockMutex()
     {

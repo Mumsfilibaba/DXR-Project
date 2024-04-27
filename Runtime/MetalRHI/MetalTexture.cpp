@@ -4,7 +4,7 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITextureInfo& InTextureInfo)
-    : FRHITexture(InDesc)
+    : FRHITexture(InTextureInfo)
     , FMetalObject(InDeviceContext)
     , Texture(nil)
     , Viewport(nullptr)
@@ -22,34 +22,32 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     SCOPED_AUTORELEASE_POOL();
 
     MTLTextureDescriptor* TextureDescriptor = [[MTLTextureDescriptor new] autorelease];
-    TextureDescriptor.textureType               = GetMTLTextureType(Desc.Dimension, Desc.IsMultisampled());
-    TextureDescriptor.pixelFormat               = ConvertFormat(Desc.Format);
-    TextureDescriptor.usage                     = ConvertTextureFlags(Desc.UsageFlags);
+    TextureDescriptor.textureType               = GetMTLTextureType(Info.Dimension, Info.IsMultisampled());
+    TextureDescriptor.pixelFormat               = ConvertFormat(Info.Format);
+    TextureDescriptor.usage                     = ConvertTextureFlags(Info.UsageFlags);
     TextureDescriptor.allowGPUOptimizedContents = NO;
     TextureDescriptor.swizzle                   = MTLTextureSwizzleChannelsMake(MTLTextureSwizzleRed, MTLTextureSwizzleGreen, MTLTextureSwizzleBlue, MTLTextureSwizzleAlpha);
-    TextureDescriptor.mipmapLevelCount          = Desc.NumMipLevels;
-    TextureDescriptor.sampleCount               = Desc.NumSamples;
+    TextureDescriptor.mipmapLevelCount          = Info.NumMipLevels;
+    TextureDescriptor.sampleCount               = Info.NumSamples;
     TextureDescriptor.resourceOptions           = MTLResourceCPUCacheModeWriteCombined;
     TextureDescriptor.cpuCacheMode              = MTLCPUCacheModeWriteCombined;
     TextureDescriptor.storageMode               = MTLStorageModePrivate;
     TextureDescriptor.hazardTrackingMode        = MTLHazardTrackingModeDefault;
-    TextureDescriptor.width                     = Desc.Extent.x;
-    TextureDescriptor.height                    = Desc.Extent.y;
+    TextureDescriptor.width                     = Info.Extent.x;
+    TextureDescriptor.height                    = Info.Extent.y;
     
-    if (Desc.IsTexture3D())
+    if (Info.IsTexture3D())
     {
-        TextureDescriptor.depth       = Desc.Extent.z;
+        TextureDescriptor.depth       = Info.Extent.z;
         TextureDescriptor.arrayLength = 1;
     }
     else
     {
         TextureDescriptor.depth       = 1;
-        TextureDescriptor.arrayLength = FMath::Max(Desc.Extent.z, 1);
+        TextureDescriptor.arrayLength = FMath::Max(Info.Extent.z, 1);
     }
     
     id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
-    CHECK(Device != nil);
-
     id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
     if (!NewTexture)
     {
@@ -59,7 +57,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     SetDrawableTexture(NewTexture);
     
     // TODO: Fix upload for other resources than Texture2D
-    if (Desc.IsTexture2D())
+    if (Info.IsTexture2D())
     {
         if (InInitialData)
         {
@@ -73,7 +71,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                 
                 // Calculate total size of upload buffer
                 uint64 TotalTextureSize = 0;
-                for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
+                for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
                 {
                     TotalTextureSize += InInitialData->GetMipSlicePitch(Index);
                 }
@@ -83,13 +81,13 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                 uint8* StagingBufferContents = reinterpret_cast<uint8*>(StagingBuffer.contents);
                 
                 // Transfer all the mip-levels
-                uint32 Width        = Desc.Extent.x;
-                uint32 Height       = Desc.Extent.y;
+                uint32 Width        = Info.Extent.x;
+                uint32 Height       = Info.Extent.y;
                 uint64 SourceOffset = 0;
-                for (uint32 Index = 0; Index < Desc.NumMipLevels; ++Index)
+                for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
                 {
                     // TODO: This does not feel optimal
-                    if (IsBlockCompressed(Desc.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
+                    if (IsBlockCompressed(Info.Format) && ((Width % 4 != 0) || (Height % 4 != 0)))
                     {
                         break;
                     }
