@@ -51,11 +51,20 @@ FVulkanRHI::~FVulkanRHI()
     }
     
     // Delete all remaining resources
+    while (!DeletionQueue.IsEmpty())
     {
-        TScopedLock Lock(DeletionQueueCS);
-        FVulkanDeferredObject::ProcessItems(DeletionQueue);
+        TArray<FVulkanDeferredObject> Items;
+        {
+            TScopedLock Lock(DeletionQueueCS);
+            Items = Move(DeletionQueue);
+        }
+
+        FVulkanDeferredObject::ProcessItems(Items);
+
+        // NOTE: Objects could contain other objects, that now need to be flushed
+        GRHICommandExecutor.FlushGarbageCollection();
     }
-    
+
     SAFE_DELETE(GraphicsQueue);
     SAFE_DELETE(Device);
     SAFE_DELETE(PhysicalDevice);

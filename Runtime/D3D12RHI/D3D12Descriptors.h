@@ -164,9 +164,11 @@ class FD3D12OnlineDescriptorHeap : public FD3D12DeviceChild
 {
 public:
     FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, D3D12_DESCRIPTOR_HEAP_TYPE InType);
-    ~FD3D12OnlineDescriptorHeap() = default;
+    ~FD3D12OnlineDescriptorHeap();
 
     bool Initialize(uint32 InDescriptorCount, uint32 BlockSize);
+    void Release();
+
     FD3D12OnlineDescriptorBlock* AllocateBlock();
     void RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock);
     void FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);
@@ -187,11 +189,11 @@ public:
     }
 
 private:
-    D3D12_DESCRIPTOR_HEAP_TYPE Type;
-    uint32                     DescriptorCount;
-    uint32                     BlockSize;
-    
+    D3D12_DESCRIPTOR_HEAP_TYPE           Type;
+    uint32                               DescriptorCount;
+    uint32                               BlockSize;
     FD3D12DescriptorHeapRef              Heap;
-    TQueue<FD3D12OnlineDescriptorBlock*> BlockQueue;
+    TQueue<FD3D12OnlineDescriptorBlock*> AvailableBlockQueue;
+    TArray<FD3D12OnlineDescriptorBlock*> BlockQueue;
     FCriticalSection                     BlockQueueCS;
 };

@@ -9,6 +9,7 @@ FRHIResource::FRHIResource()
 
 FRHIResource::~FRHIResource()
 {
+    CHECK(StrongReferences.Load() == 0);
     CHECK(State.Load() == static_cast<int32>(EState::Deleted));
 }
 

@@ -66,6 +66,7 @@ public:
     ~FD3D12FenceManager() = default;
 
     bool Initialize();
+    void Release();
     uint64 SignalGPU(ED3D12CommandQueueType QueueType);
     void WaitGPU(ED3D12CommandQueueType QueueType);
     void WaitGPU(ED3D12CommandQueueType QueueType, uint64 InFenceValue);

@@ -12,7 +12,7 @@ class FD3D12Texture : public FRHITexture, public FD3D12DeviceChild
 {
 public:
     FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
-    virtual ~FD3D12Texture() = default;
+    virtual ~FD3D12Texture();
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 

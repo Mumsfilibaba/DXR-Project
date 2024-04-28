@@ -58,20 +58,31 @@ FD3D12RHI::~FD3D12RHI()
         SamplerStateMap.Clear();
     }
 
-    // Ensure all pending commands get's finished
+    // Ensure all pending commands finish
     while (!PendingSubmissions.IsEmpty())
     {
         ProcessPendingCommands();
     }
 
-    // Delete all remaining resources
-    {
-        TScopedLock Lock(DeletionQueueCS);
-        FD3D12DeferredObject::ProcessItems(DeletionQueue);
-    }
-
+    // Remove GenerateMips PSOs, these will be added to the deferred resources so reset them here
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
+
+    // Delete all remaining resources
+    while (!DeletionQueue.IsEmpty())
+    {
+        TArray<FD3D12DeferredObject> Items;
+        {
+            TScopedLock Lock(DeletionQueueCS);
+            Items = Move(DeletionQueue);
+        }
+
+        FD3D12DeferredObject::ProcessItems(Items);
+
+        // NOTE: Objects could contain other objects, that now need to be flushed
+        GRHICommandExecutor.FlushGarbageCollection();
+    }
+
 
     SAFE_DELETE(ResourceOfflineDescriptorHeap);
     SAFE_DELETE(RenderTargetOfflineDescriptorHeap);

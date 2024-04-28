@@ -15,12 +15,12 @@ public:
     virtual ~FD3D12UploadHeapAllocator();
 
     FD3D12UploadAllocation Allocate(uint64 Size, uint64 Alignment);
+    void Release();
 
 private:
     uint64                  BufferSize;
     uint64                  CurrentOffset;
     TComPtr<ID3D12Resource> Resource;
     uint8*                  MappedMemory;
-
     FCriticalSection        CriticalSection;
 };

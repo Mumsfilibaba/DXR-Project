@@ -15,6 +15,7 @@ public:
     ~FD3D12CommandListManager();
 
     bool Initialize();
+    void Release();
     void DestroyCommandLists();
     FD3D12CommandList* ObtainCommandList(FD3D12CommandAllocator* CommandAllocator, ID3D12PipelineState* InitialPipelineState);
     void RecycleCommandList(FD3D12CommandList* InCommandList);

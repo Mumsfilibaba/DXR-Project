@@ -113,8 +113,8 @@ private:
     bool InternalInit(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
     TComPtr<ID3D12RootSignature> RootSignature;
-    FShaderStage RootParameterMap[ShaderVisibility_Count];
-    int32        ConstantRootParameterIndex;
+    FShaderStage                 RootParameterMap[ShaderVisibility_Count];
+    int32                        ConstantRootParameterIndex;
 
 };
 

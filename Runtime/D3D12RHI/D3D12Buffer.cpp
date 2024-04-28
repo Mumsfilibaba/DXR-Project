@@ -10,7 +10,7 @@ FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBuffe
 
 FD3D12Buffer::~FD3D12Buffer()
 {
-    // NOTE: Empty for now
+    // NOTE: Left empty for debugging purposes
 }
 
 bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)

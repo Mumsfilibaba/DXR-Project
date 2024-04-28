@@ -13,6 +13,11 @@ FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTe
 {
 }
 
+FD3D12Texture::~FD3D12Texture()
+{
+    // NOTE: Left empty for debugging purposes
+}
+
 bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
 {
     D3D12_RESOURCE_DESC ResourceDesc;

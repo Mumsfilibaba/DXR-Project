@@ -172,6 +172,11 @@ FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, D
 {
 }
 
+FD3D12OnlineDescriptorHeap::~FD3D12OnlineDescriptorHeap()
+{
+    Release();
+}
+
 bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InBlockSize)
 {
     D3D12_DESCRIPTOR_HEAP_DESC Desc;
@@ -205,24 +210,36 @@ bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InB
     for (uint32 Index = 0; Index < NumBlocks; Index++)
     {
         FD3D12OnlineDescriptorBlock* NewBlock = new FD3D12OnlineDescriptorBlock(HandleOffset, BlockSize);
-        BlockQueue.Enqueue(NewBlock);
+        AvailableBlockQueue.Enqueue(NewBlock);
+        BlockQueue.Add(NewBlock);
         HandleOffset += BlockSize;
     }
 
     return true;
 }
 
+void FD3D12OnlineDescriptorHeap::Release()
+{
+    for (FD3D12OnlineDescriptorBlock* Block : BlockQueue)
+    {
+        delete Block;
+    }
+
+    BlockQueue.Clear();
+    Heap.Reset();
+}
+
 FD3D12OnlineDescriptorBlock* FD3D12OnlineDescriptorHeap::AllocateBlock()
 {
     TScopedLock Lock(BlockQueueCS);
 
-    if (BlockQueue.IsEmpty())
+    if (AvailableBlockQueue.IsEmpty())
     {
         return nullptr;
     }
 
     FD3D12OnlineDescriptorBlock* Block = nullptr;
-    if (!BlockQueue.Dequeue(Block))
+    if (!AvailableBlockQueue.Dequeue(Block))
     {
         return nullptr;
     }
@@ -233,7 +250,7 @@ FD3D12OnlineDescriptorBlock* FD3D12OnlineDescriptorHeap::AllocateBlock()
 void FD3D12OnlineDescriptorHeap::RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock)
 {
     TScopedLock Lock(BlockQueueCS);
-    BlockQueue.Enqueue(InBlock);
+    AvailableBlockQueue.Enqueue(InBlock);
 }
 
 void FD3D12OnlineDescriptorHeap::FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock)

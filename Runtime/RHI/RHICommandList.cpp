@@ -221,12 +221,15 @@ bool FRHICommandExecutor::Initialize()
 
 void FRHICommandExecutor::Release()
 {
+    FlushGarbageCollection();
+
     if (CVarEnableRHIThread.GetValue())
     {
         if (RHIThread)
         {
             RHIThread->Stop();
             delete RHIThread;
+            RHIThread = nullptr;
         }
     }
 }

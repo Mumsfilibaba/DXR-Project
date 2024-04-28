@@ -70,6 +70,11 @@ bool FD3D12FenceManager::Initialize()
     return true;
 }
 
+void FD3D12FenceManager::Release()
+{
+    Fence.Reset();
+}
+
 uint64 FD3D12FenceManager::SignalGPU(ED3D12CommandQueueType QueueType)
 {
     ++CurrentValue;

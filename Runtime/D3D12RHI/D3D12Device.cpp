@@ -484,14 +484,21 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 FD3D12Device::~FD3D12Device()
 {
     // Destroy all CommandLists
-    DirectCommandListManager.DestroyCommandLists();
-    ComputeCommandListManager.DestroyCommandLists();
-    CopyCommandListManager.DestroyCommandLists();
+    DirectCommandListManager.Release();
+    ComputeCommandListManager.Release();
+    CopyCommandListManager.Release();
 
     // Destroy all CommandAllocators
     DirectCommandAllocatorManager.DestroyAllocators();
     CopyCommandAllocatorManager.DestroyAllocators();
     ComputeCommandAllocatorManager.DestroyAllocators();
+
+    // Release Heaps
+    GlobalResourceHeap.Release();
+    GlobalSamplerHeap.Release();
+
+    UploadAllocator.Release();
+    RootSignatureManager.ReleaseAll();
 
     // Report any live objects still hanging around
     if (Adapter->IsDebugLayerEnabled())

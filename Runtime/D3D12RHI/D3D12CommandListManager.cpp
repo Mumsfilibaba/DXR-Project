@@ -62,6 +62,14 @@ bool FD3D12CommandListManager::Initialize()
     return true;
 }
 
+void FD3D12CommandListManager::Release()
+{
+    DestroyCommandLists();
+
+    FenceManager.Release();
+    CommandQueue.Reset();
+}
+
 void FD3D12CommandListManager::DestroyCommandLists()
 {
     TScopedLock Lock(CommandListsCS);
