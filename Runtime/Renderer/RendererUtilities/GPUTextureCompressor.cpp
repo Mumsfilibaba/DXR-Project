@@ -183,8 +183,6 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     CommandList.CopyTextureRegion(Output.Get(), CompressedTex.Get(), CopyDesc);
     CommandList.TransitionTexture(Output.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-    CommandList.DestroyResource(CompressedTex.Get());
-
     GRHICommandExecutor.ExecuteCommandList(CommandList);
     return true;
 }
@@ -297,8 +295,6 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
 
         CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
 
-        CommandList.DestroyResource(CompressedTexUAV.Get());
-
         CurrentFaceSize         = CurrentFaceSize / 2;
         CurrentFaceSizeInBlocks = CurrentFaceSizeInBlocks / 2;
     }
@@ -322,10 +318,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
 
     CommandList.TransitionTexture(Output.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
     CommandList.TransitionTexture(Source.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-
-    CommandList.DestroyResource(CompressedTex.Get());
-    CommandList.DestroyResource(Source.Get());
-
+    
     GRHICommandExecutor.ExecuteCommandList(CommandList);
     return true;
 }

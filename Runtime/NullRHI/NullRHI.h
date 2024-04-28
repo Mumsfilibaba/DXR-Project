@@ -178,6 +178,11 @@ public:
         return new FNullRHIRayTracingPipelineState();
     }
 
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final
+    {
+        delete Resource;
+    }
+
     virtual class FRHIQuery* RHICreateQuery() override final
     {
         return new FNullRHIQuery();

@@ -176,9 +176,6 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        CommandList.DestroyResource(StagingTexture.Get());
-        CommandList.DestroyResource(StagingTextureUAV.Get());
-
         GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 

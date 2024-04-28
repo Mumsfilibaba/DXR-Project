@@ -892,11 +892,6 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
 
 bool FShadowMaskRenderPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& Resources, uint32 Width, uint32 Height)
 {
-    if (Resources.DirectionalShadowMask)
-        CommandList.DestroyResource(Resources.DirectionalShadowMask.Get());
-    if (Resources.CascadeIndexBuffer)
-        CommandList.DestroyResource(Resources.CascadeIndexBuffer.Get());
-
     return CreateResources(Resources, Width, Height);
 }
 

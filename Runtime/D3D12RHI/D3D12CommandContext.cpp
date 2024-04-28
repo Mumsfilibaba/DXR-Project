@@ -271,9 +271,6 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
         // Defer deletion of the upload buffer
         FD3D12RHI::GetRHI()->DeferDeletion(Allocation.Resource.Get());
     }
-
-    // Defer deletion of the destination resource
-    FD3D12RHI::GetRHI()->DeferDeletion(Resource);
 }
 
 void FD3D12CommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
@@ -341,8 +338,6 @@ void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
         D3D12_ERROR("UnorderedAccessView cannot be nullptr when clearing the surface");
         return;
     }
-
-    FD3D12RHI::GetRHI()->DeferDeletion(D3D12UnorderedAccessView);
 
     FlushResourceBarriers();
 
@@ -657,9 +652,6 @@ void FD3D12CommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
     }
 
     GetCommandList()->ResolveSubresource(D3D12Destination->GetD3D12Resource()->GetD3D12Resource(), 0, D3D12Source->GetD3D12Resource()->GetD3D12Resource(), 0, DstFormat);
-
-    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
-    FD3D12RHI::GetRHI()->DeferDeletion(Src);
 }
 
 void FD3D12CommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)
@@ -743,7 +735,6 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
 
     GetCommandList()->CopyTextureRegion(&DestLocation, 0, 0, 0, &SourceLocation, nullptr);
 
-    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
     FD3D12RHI::GetRHI()->DeferDeletion(Allocation.Resource.Get());
 }
 
@@ -764,9 +755,6 @@ void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const
     CHECK(D3D12Source != nullptr);
 
     GetCommandList()->CopyBufferRegion(D3D12Destination->GetD3D12Resource()->GetD3D12Resource(), CopyInfo.DstOffset, D3D12Source->GetD3D12Resource()->GetD3D12Resource(), CopyInfo.SrcOffset, CopyInfo.Size);
-
-    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
-    FD3D12RHI::GetRHI()->DeferDeletion(Src);
 }
 
 void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
@@ -786,9 +774,6 @@ void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
     CHECK(D3D12Source != nullptr);
     
     GetCommandList()->CopyResource(D3D12Destination->GetD3D12Resource()->GetD3D12Resource(), D3D12Source->GetD3D12Resource()->GetD3D12Resource());
-
-    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
-    FD3D12RHI::GetRHI()->DeferDeletion(Src);
 }
 
 void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& InCopyDesc)
@@ -850,17 +835,6 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
             GetCommandList()->CopyTextureRegion(&DestLocation, DestPositionX, DestPositionY, DestPositionZ, &SourceLocation, &SourceBox);
         }
     }
-
-    FD3D12RHI::GetRHI()->DeferDeletion(Dst);
-    FD3D12RHI::GetRHI()->DeferDeletion(Src);
-}
-
-void FD3D12CommandContext::RHIDestroyResource(FRHIResource* Resource)
-{
-    if (Resource)
-    {
-        FD3D12RHI::GetRHI()->DeferDeletion(Resource);
-    }
 }
 
 void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
@@ -884,8 +858,6 @@ void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTraci
 
     FD3D12RayTracingScene* D3D12RayTracingScene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
     D3D12RayTracingScene->Build(*this, BuildInfo);
-
-    FD3D12RHI::GetRHI()->DeferDeletion(RayTracingScene);
 }
 
 void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo)
@@ -900,10 +872,6 @@ void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* Ra
 
     FD3D12RayTracingGeometry* D3D12RayTracingGeometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
     D3D12RayTracingGeometry->Build(*this, BuildInfo);
-
-    FD3D12RHI::GetRHI()->DeferDeletion(BuildInfo.VertexBuffer);
-    FD3D12RHI::GetRHI()->DeferDeletion(BuildInfo.IndexBuffer);
-    FD3D12RHI::GetRHI()->DeferDeletion(RayTracingGeometry);
 }
 
 void FD3D12CommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources)
@@ -1214,8 +1182,6 @@ void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceA
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
-
-    FD3D12RHI::GetRHI()->DeferDeletion(D3D12Texture);
 }
 
 void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
@@ -1225,8 +1191,6 @@ void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcce
 
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
     TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
-
-    FD3D12RHI::GetRHI()->DeferDeletion(D3D12Buffer);
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)

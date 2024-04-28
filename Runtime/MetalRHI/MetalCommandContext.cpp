@@ -363,10 +363,6 @@ void FMetalCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
 {
 }
 
-void FMetalCommandContext::RHIDestroyResource(class FRHIResource* Resource)
-{
-}
-
 void FMetalCommandContext::RHIDiscardContents(class FRHITexture* Texture)
 {
 }

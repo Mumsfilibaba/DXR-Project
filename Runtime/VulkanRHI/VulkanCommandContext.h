@@ -84,7 +84,6 @@ public:
     virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc) override final;
     virtual void RHICopyTexture(FRHITexture* Dst, FRHITexture* Src) override final;
     virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) override final;
-    virtual void RHIDestroyResource(class FRHIResource* Resource) override final;
     virtual void RHIDiscardContents(class FRHITexture* Texture) override final;
     virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* InRayTracingScene, const FRayTracingSceneBuildInfo& InBuildInfo) override final;
     virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* InRayTracingGeometry, const FRayTracingGeometryBuildInfo& InBuildInfo) override final;

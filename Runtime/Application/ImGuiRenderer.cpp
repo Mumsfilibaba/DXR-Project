@@ -449,11 +449,6 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
 
     if (!ViewportData->VertexBuffer || DrawData->TotalVtxCount > ViewportData->VertexCount)
     {
-        if (ViewportData->VertexBuffer)
-        {
-            CmdList.DestroyResource(ViewportData->VertexBuffer.ReleaseOwnership());
-        }
-
         const uint32 NewVertexCount = DrawData->TotalVtxCount + 50000;
         FRHIBufferInfo VBInfo(sizeof(ImDrawVert) * NewVertexCount, sizeof(ImDrawVert), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
 
@@ -472,11 +467,6 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
 
     if (!ViewportData->IndexBuffer || DrawData->TotalIdxCount > ViewportData->IndexCount)
     {
-        if (ViewportData->IndexBuffer)
-        {
-            CmdList.DestroyResource(ViewportData->IndexBuffer.ReleaseOwnership());
-        }
-
         const uint32 NewIndexCount = DrawData->TotalIdxCount + 100000;
         FRHIBufferInfo IBInfo(sizeof(ImDrawIdx) * NewIndexCount, sizeof(ImDrawIdx), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
 

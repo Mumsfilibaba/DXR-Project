@@ -111,8 +111,6 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFra
 
     CommandList.UnorderedAccessTextureBarrier(Skylight.IrradianceMap.Get());
 
-    CommandList.DestroyResource(Skylight.IrradianceMapUAV.Get());
-
     CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
     CommandList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
@@ -142,8 +140,6 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFra
 
         Width = FMath::Max<uint32>(Width / 2, 1U);
         Roughness += RoughnessDelta;
-
-        CommandList.DestroyResource(UnorderedAccessView);
     }
 
     CommandList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);

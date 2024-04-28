@@ -20,10 +20,9 @@ struct FVulkanDeferredObject
 
     FVulkanDeferredObject(FRHIResource* InResource)
         : Type(EType::RHIResource)
-        , Resource(InResource)
+        , RHIResource(InResource)
     {
         CHECK(InResource != nullptr);
-        InResource->AddRef();
     }
 
     FVulkanDeferredObject(FVulkanRefCounted* InResource)
@@ -37,7 +36,7 @@ struct FVulkanDeferredObject
     EType Type;
     union
     {
-        FRHIResource* Resource;
+        FRHIResource*      RHIResource;
         FVulkanRefCounted* VulkanResource;
     };
 };

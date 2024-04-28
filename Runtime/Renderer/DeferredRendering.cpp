@@ -222,9 +222,6 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
 
 bool FDepthPrePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    if (FrameResources.GBuffer[GBufferIndex_Depth])
-        CommandList.DestroyResource(FrameResources.FinalTarget.Get());
-
     return CreateResources(FrameResources, Width, Height);
 }
 
@@ -561,17 +558,6 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
 
 bool FDeferredBasePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    if (FrameResources.GBuffer[GBufferIndex_Albedo])
-        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Albedo].Get());
-    if (FrameResources.GBuffer[GBufferIndex_Normal])
-        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Normal].Get());
-    if (FrameResources.GBuffer[GBufferIndex_Material])
-        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Material].Get());
-    if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
-        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get());
-    if (FrameResources.GBuffer[GBufferIndex_Velocity])
-        CommandList.DestroyResource(FrameResources.GBuffer[GBufferIndex_Velocity].Get());
-
     return CreateResources(FrameResources, Width, Height);
 }
 
@@ -827,11 +813,6 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     CommandList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
 
     CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-
-    CommandList.DestroyResource(StagingTexture.Get());
-    CommandList.DestroyResource(BRDFShader.Get());
-    CommandList.DestroyResource(BRDFPipelineState.Get());
-
     GRHICommandExecutor.ExecuteCommandList(CommandList);
 
     // Tiled lightning
@@ -960,9 +941,6 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
 
 bool FTiledLightPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    if (FrameResources.FinalTarget)
-        CommandList.DestroyResource(FrameResources.FinalTarget.Get());
-
     return CreateResources(FrameResources, Width, Height);
 }
 
@@ -1175,9 +1153,6 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
 
 bool FDepthReducePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    for (int32 Index = 0; Index < FrameResources.NumReducedDepthBuffers; Index++)
-        CommandList.DestroyResource(FrameResources.ReducedDepthBuffer[Index].Get());
-
     return CreateResources(FrameResources, Width, Height);
 }
 

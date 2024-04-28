@@ -291,9 +291,6 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         VkPipelineStageFlags DstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
         Context->GetBarrierBatcher().AddImageMemoryBarrier(SrcStageMask, DstStageMask, 0, ImageBarrier);
 
-        // TODO: Refactor RHI resource deletion so that this is not necessary
-        FVulkanRHI::GetRHI()->DeferDeletion(this);
-
         Context->RHIFinishContext();
     }
     

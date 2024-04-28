@@ -66,10 +66,14 @@ public:
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final { return DirectContext; }
-
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
 
+    virtual IRHICommandContext* RHIObtainCommandContext() override final
+    {
+        return DirectContext;
+    }
+    
     virtual FString RHIGetAdapterName() const override final 
     { 
         CHECK(Adapter != nullptr);
@@ -112,8 +116,6 @@ public:
         TScopedLock Lock(DeletionQueueCS);
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
-
-    void EnqueueResourceDeletion(FRHIResource* Resource);
     
     void ProcessPendingCommands();
     void SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue);

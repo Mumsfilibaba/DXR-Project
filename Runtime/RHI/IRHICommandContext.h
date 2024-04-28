@@ -233,12 +233,6 @@ struct IRHICommandContext
     virtual void RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc) = 0;
 
     /**
-     * @brief          - Destroys a resource, this can be used to not having to deal with resource life time, the resource will be destroyed when the underlying command-list is completed.
-     * @param Resource - Resource to destroy
-     */
-    virtual void RHIDestroyResource(class FRHIResource* Resource) = 0;
-
-    /**
      * @brief         - Signal the driver that the contents can be discarded
      * @param Texture - Resource to discard contents of
      */
@@ -301,13 +295,9 @@ struct IRHICommandContext
     virtual void RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
     virtual void RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
     virtual void RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
-
     virtual void RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
-
     virtual void RHIDispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
-
     virtual void RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
-
     virtual void RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) = 0;
 
     /**

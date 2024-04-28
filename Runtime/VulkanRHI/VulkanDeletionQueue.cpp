@@ -10,8 +10,8 @@ void FVulkanDeferredObject::ProcessItems(const TArray<FVulkanDeferredObject>& It
         {
             case FVulkanDeferredObject::EType::RHIResource:
             {
-                CHECK(Item.Resource != nullptr);
-                Item.Resource->Release();
+                CHECK(Item.RHIResource != nullptr);
+                delete Item.RHIResource;
                 break;
             }
             case FVulkanDeferredObject::EType::VulkanResource:

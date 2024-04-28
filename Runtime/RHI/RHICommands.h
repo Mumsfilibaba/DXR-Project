@@ -616,21 +616,6 @@ DECLARE_RHICOMMAND(FRHICommandCopyTextureRegion)
     FTextureCopyInfo CopyInfo;
 };
 
-DECLARE_RHICOMMAND(FRHICommandDestroyResource)
-{
-    FORCEINLINE FRHICommandDestroyResource(FRHIResource* InResource)
-        : Resource(MakeSharedRef<FRHIResource>(InResource))
-    {
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.RHIDestroyResource(Resource.Get());
-    }
-
-    TSharedRef<FRHIResource> Resource;
-};
-
 DECLARE_RHICOMMAND(FRHICommandDiscardContents)
 {
     FORCEINLINE FRHICommandDiscardContents(FRHITexture* InTexture)

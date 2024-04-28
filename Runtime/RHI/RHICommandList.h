@@ -57,6 +57,7 @@ public:
     void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept;
     void Reset() noexcept;
     void ExchangeState(FRHICommandList& Other) noexcept;
+    void FlushGarbageCollection() noexcept;
 
     FORCEINLINE void* Allocate(uint64 Size, uint32 Alignment) noexcept
     {
@@ -331,11 +332,6 @@ public:
         EmplaceCommand<FRHICommandCopyTextureRegion>(Dst, Src, CopyTextureInfo);
     }
 
-    FORCEINLINE void DestroyResource(FRHIResource* Resource) noexcept
-    {
-        EmplaceCommand<FRHICommandDestroyResource>(Resource);
-    }
-
     FORCEINLINE void DiscardContents(FRHITexture* Texture) noexcept
     {
         EmplaceCommand<FRHICommandDiscardContents>(Texture);
@@ -511,8 +507,10 @@ public:
     void Tick();
     void WaitForOutstandingTasks();
     void WaitForGPU();
-    void EnqueueResourceDeletion(FRHIResource* InResource);
     void ExecuteCommandList(class FRHICommandList& CmdList);
+
+    void EnqueueResourceDeletion(FRHIResource* InResource);
+    void FlushGarbageCollection();
 
     void SetContext(IRHICommandContext* InCmdContext) 
     { 

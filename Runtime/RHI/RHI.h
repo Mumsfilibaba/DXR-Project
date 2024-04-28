@@ -294,6 +294,9 @@ public:
     /** @return - Returns a CommandContext */
     virtual IRHICommandContext* RHIObtainCommandContext() = 0;
 
+    /** @brief - Defers destruction of a RHI resource to the deferred deletion code */
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) = 0;
+
     /** @return - Returns the native Adapter */
     virtual void* RHIGetAdapter() { return nullptr; }
 

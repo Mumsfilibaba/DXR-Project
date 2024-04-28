@@ -96,6 +96,14 @@ void FRHICommandList::ExchangeState(FRHICommandList& Other) noexcept
         Other.CommandPointer = &Other.FirstCommand;
 }
 
+void FRHICommandList::FlushGarbageCollection() noexcept
+{
+    ExecuteLambda([]()
+    {
+        GRHICommandExecutor.FlushGarbageCollection();
+    });
+}
+
 
 FRHIThread::FRHIThread()
     : Thread(nullptr)
@@ -155,10 +163,7 @@ int32 FRHIThread::Run()
             }
         }
 
-        while (NumCompletedTasks.Load() >= NumSubmittedTasks.Load())
-        {
-            FPlatformThreadMisc::Pause();
-        }
+        FPlatformThreadMisc::Pause();
     }
 
     return 0;
@@ -239,28 +244,27 @@ void FRHICommandExecutor::EnqueueResourceDeletion(FRHIResource* InResource)
 
     if (InResource)
     {
-        InResource->AddRef();
         DeletedResources.Add(InResource);
+    }
+}
+
+void FRHICommandExecutor::FlushGarbageCollection()
+{
+    TScopedLock Lock(DeletedResourcesCS);
+
+    if (!DeletedResources.IsEmpty())
+    {
+        for (FRHIResource* Resource : DeletedResources)
+        {
+            GetRHI()->EnqueueResourceDeletion(Resource);
+        }
+
+        DeletedResources.Clear();
     }
 }
 
 void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 {
-    {
-        TScopedLock Lock(DeletedResourcesCS);
-
-        if (!DeletedResources.IsEmpty())
-        {
-            for (FRHIResource* Resource : DeletedResources)
-            {
-                CommandList.DestroyResource(Resource);
-                Resource->Release();
-            }
-
-            DeletedResources.Clear();
-        }
-    }
-
     if (CommandList.HasCommands())
     {
         Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();

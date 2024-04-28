@@ -27,7 +27,6 @@ struct FD3D12DeferredObject
         , RHIResource{InResource}
     {
         CHECK(InResource != nullptr);
-        InResource->AddRef();
     }
 
     FD3D12DeferredObject(ID3D12Resource* InResource)

@@ -63,11 +63,14 @@ public:
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final { return GraphicsCommandContext; }
-
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
-
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final;
     virtual FString RHIGetAdapterName() const override final;
+
+    virtual IRHICommandContext* RHIObtainCommandContext() override final
+    {
+        return GraphicsCommandContext;
+    }
 
     virtual void* RHIGetAdapter() override final 
     {
@@ -106,8 +109,6 @@ public:
         DeletionQueue.Emplace(Forward<ArgTypes>(Args)...);
     }
 
-    void EnqueueResourceDeletion(FRHIResource* Resource);
-    
     void ProcessPendingCommands();
     void SubmitCommands(FVulkanCommandPayload* CommandPayload, bool bFlushDeletionQueue);
 

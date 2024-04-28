@@ -603,7 +603,7 @@ void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
 {
     if (Resource)
     {
-        DeletionQueue.Emplace(Resource);
+        DeferDeletion(Resource);
     }
 }
 

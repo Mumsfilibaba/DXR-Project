@@ -10,15 +10,13 @@ class RHI_API FRHIResource : public IRefCounted
     {
         Unknown = 0,
         Alive,
-        Deleting,
         Deleted,
     };
 
-protected:
-    FRHIResource();
-    virtual ~FRHIResource() = default;
-
 public:
+    FRHIResource();
+    virtual ~FRHIResource();
+
     virtual int32 AddRef() override;
     virtual int32 Release() override;
 

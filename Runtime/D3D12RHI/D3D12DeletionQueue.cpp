@@ -10,10 +10,10 @@ void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Item
             case FD3D12DeferredObject::EType::RHIResource:
             {
                 CHECK(Item.RHIResource != nullptr);
-                Item.RHIResource->Release();
+                delete Item.RHIResource;
                 break;
             }
-            case  FD3D12DeferredObject::EType::Resource:
+            case FD3D12DeferredObject::EType::Resource:
             {
                 CHECK(Item.Resource != nullptr);
                 Item.Resource->Release();

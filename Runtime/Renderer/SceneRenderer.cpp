@@ -349,9 +349,6 @@ bool FSceneRenderer::Initialize()
         CommandList.TransitionTexture(IrradianceMap.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
         CommandList.TransitionTexture(SpecularIrradianceMap.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        CommandList.DestroyResource(Resources.Skylight.IrradianceMap.Get());
-        CommandList.DestroyResource(Resources.Skylight.SpecularIrradianceMap.Get());
-
         Resources.Skylight.IrradianceMap         = IrradianceMap;
         Resources.Skylight.SpecularIrradianceMap = SpecularIrradianceMap;
 
@@ -891,6 +888,8 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
     CommandList.EndFrame();
+
+    CommandList.FlushGarbageCollection();
 
     {
         TRACE_SCOPE("ExecuteCommandList");

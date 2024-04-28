@@ -129,11 +129,6 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
 
 bool FTemporalAA::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
-    {
-        CommandList.DestroyResource(TAABuffer.Get());
-    }
-
     return CreateResources(FrameResources, Width, Height);
 }
 

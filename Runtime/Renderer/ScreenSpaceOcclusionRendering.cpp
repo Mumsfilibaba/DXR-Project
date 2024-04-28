@@ -164,10 +164,6 @@ void FScreenSpaceOcclusionPass::Release()
 
 bool FScreenSpaceOcclusionPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
-    // Destroy the old resource
-    CommandList.DestroyResource(FrameResources.SSAOBuffer.Get());
-
-    // Create the new resources
     return CreateResources(FrameResources, Width, Height);
 }
 

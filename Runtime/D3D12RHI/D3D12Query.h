@@ -22,7 +22,6 @@ public:
 
     void BeginQuery(FD3D12CommandList& CommandList, uint32 Index);
     void EndQuery(FD3D12CommandList& CommandList, uint32 Index);
-
     void ResolveQueries(class FD3D12CommandContext& CmdContext);
 
     ID3D12QueryHeap* GetQueryHeap() const
