@@ -13,5 +13,6 @@ if IsPlatformWindows() then
         "Core",
         "CoreApplication",
         "RHI",
+        'Project',
     })
 end

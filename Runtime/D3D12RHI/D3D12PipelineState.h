@@ -26,27 +26,22 @@ public:
     FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
     virtual ~FD3D12VertexInputLayout() = default;
 
-    const D3D12_INPUT_ELEMENT_DESC* GetElementData() const
-    {
-        return ElementDesc.Data();
-    }
-
-    uint32 GetElementCount() const 
-    {
-        return ElementDesc.Size();
-    }
-
-    FORCEINLINE const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
+    const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
     {
         return Desc;
+    }
+
+    uint64 GetHash() const 
+    {
+        return Hash;
     }
 
 private:
     D3D12_INPUT_LAYOUT_DESC          Desc;
     TArray<FString>                  SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
+    uint64                           Hash;
 };
-
 
 class FD3D12DepthStencilState : public FRHIDepthStencilState
 {
@@ -54,21 +49,23 @@ public:
     FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
     virtual ~FD3D12DepthStencilState() = default;
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
-    {
-        return Initializer;
-    }
+    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final { return Initializer; }
 
-    FORCEINLINE const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
+    const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
     {
         return Desc;
+    }
+
+    uint64 GetHash() const
+    {
+        return Hash;
     }
 
 private:
     FRHIDepthStencilStateInitializer Initializer;
     D3D12_DEPTH_STENCIL_DESC         Desc;
+    uint64                           Hash;
 };
-
 
 class FD3D12RasterizerState : public FRHIRasterizerState
 {
@@ -76,21 +73,23 @@ public:
     FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
     virtual ~FD3D12RasterizerState() = default;
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
-    {
-        return Initializer;
-    }
+    virtual FRHIRasterizerStateInitializer GetInitializer() const override final { return Initializer; }
 
-    FORCEINLINE const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
+    const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
     {
         return Desc;
+    }
+
+    uint64 GetHash() const
+    {
+        return Hash;
     }
 
 private:
     FRHIRasterizerStateInitializer Initializer;
     D3D12_RASTERIZER_DESC          Desc;
+    uint64                         Hash;
 };
-
 
 class FD3D12BlendState : public FRHIBlendState
 {
@@ -98,21 +97,23 @@ public:
     FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer);
     virtual ~FD3D12BlendState() = default;
 
-    virtual FRHIBlendStateInitializer GetInitializer() const override final
-    {
-        return Initializer;
-    }
+    virtual FRHIBlendStateInitializer GetInitializer() const override final { return Initializer; }
 
-    FORCEINLINE const D3D12_BLEND_DESC& GetD3D12Desc() const
+    const D3D12_BLEND_DESC& GetD3D12Desc() const
     {
         return Desc;
+    }
+
+    uint64 GetHash() const
+    {
+        return Hash;
     }
 
 private:
     FRHIBlendStateInitializer Initializer;
     D3D12_BLEND_DESC          Desc;
+    uint64                    Hash;
 };
-
 
 class FD3D12PipelineStateCommon : public FD3D12DeviceChild
 {
@@ -135,9 +136,8 @@ public:
 protected:
     TComPtr<ID3D12PipelineState> PipelineState;
     FD3D12RootSignatureRef       RootSignature;
-    FString DebugName;
+    FString                      DebugName;
 };
-
 
 struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStream
 {
@@ -232,6 +232,25 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStre
     };
 };
 
+struct FD3D12GraphicsPipelineKey
+{
+    FD3D12ShaderHash                   VSHash = { };
+    FD3D12ShaderHash                   HSHash = { };
+    FD3D12ShaderHash                   DSHash = { };
+    FD3D12ShaderHash                   GSHash = { };
+    FD3D12ShaderHash                   PSHash = { };
+    uint64                             RootSignatureHash = 0;
+    uint64                             InputLayoutHash = 0;
+    uint64                             BlendStateHash = 0;
+    uint64                             DepthStencilHash = 0;
+    uint64                             RasterizerHash = 0;
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE      PrimitiveTopologyType = { };
+    D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IndexBufferStripCutValue = { };
+    DXGI_FORMAT                        DepthBufferFormat = { };
+    D3D12_RT_FORMAT_ARRAY              RenderTargetInfo = { };
+    DXGI_SAMPLE_DESC                   SampleDesc = { };
+};
+
 class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineStateCommon
 {
 public:
@@ -257,15 +276,13 @@ public:
     FORCEINLINE FD3D12PixelShader*    GetPixelShader()    const { return PixelShader.Get(); }
 
 private:
-    D3D12_PRIMITIVE_TOPOLOGY PrimitiveTopology;
-    
+    D3D12_PRIMITIVE_TOPOLOGY         PrimitiveTopology;
     TSharedRef<FD3D12VertexShader>   VertexShader;
     TSharedRef<FD3D12HullShader>     HullShader;
     TSharedRef<FD3D12DomainShader>   DomainShader;
     TSharedRef<FD3D12GeometryShader> GeometryShader;
     TSharedRef<FD3D12PixelShader>    PixelShader;
 };
-
 
 struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12ComputePipelineStream
 {
@@ -280,6 +297,12 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12ComputePipelineStrea
         D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type1 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS;
         D3D12_SHADER_BYTECODE ComputeShader = { };
     };
+};
+
+struct FD3D12ComputePipelineKey
+{
+    uint64           RootSignatureHash = 0;
+    FD3D12ShaderHash CSHash = { 0, 0 };
 };
 
 class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineStateCommon
@@ -300,7 +323,6 @@ public:
 private:
     TSharedRef<FD3D12ComputeShader> Shader;
 };
-
 
 struct FD3D12RayTracingShaderIdentifer
 {
@@ -349,4 +371,38 @@ private:
     FD3D12RootSignatureRef HitLocalRootSignature;
 
     TMap<FString, FD3D12RayTracingShaderIdentifer> ShaderIdentifers;
+};
+
+struct FD3D12PipelineDiskHeader
+{
+    CHAR   Magic[8]; // Always "D3D12PSO"
+    uint64 DataCRC;
+    uint64 DataSize;
+};
+
+class FD3D12PipelineStateManager : public FD3D12DeviceChild
+{
+public:
+    FD3D12PipelineStateManager(FD3D12Device* InDevice);
+    ~FD3D12PipelineStateManager();
+
+    bool Initialize();
+    bool CreateGraphicsPipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState);
+    bool CreateComputePipeline(const WIDECHAR* PipelineHash, const D3D12_PIPELINE_STATE_STREAM_DESC& PipelineStream, TComPtr<ID3D12PipelineState>& OutPipelineState);
+    bool SaveCacheData();
+    
+    ID3D12PipelineLibrary1* GetD3D12PipelineLibrary() const
+    {
+        return PipelineLibrary.Get();
+    }
+
+private:
+    bool LoadCacheFromFile();
+    void FreePipelineData();
+    
+    void*                           PipelineData;
+    uint64                          PipelineDataSize;
+    TComPtr<ID3D12PipelineLibrary1> PipelineLibrary;
+    FCriticalSection                PipelineLibraryCS;
+    bool                            bPipelineLibraryDirty;
 };

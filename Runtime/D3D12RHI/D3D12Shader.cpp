@@ -1,6 +1,7 @@
 #include "D3D12Shader.h"
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12RootSignature.h"
+#include "Core/Misc/CRC.h"
 
 static bool IsShaderResourceView(D3D_SHADER_INPUT_TYPE Type)
 {
@@ -41,9 +42,16 @@ FD3D12Shader::FD3D12Shader(FD3D12Device* InDevice, const TArray<uint8>& InCode, 
     , ByteCode()
     , ShaderVisibility(InShaderVisibility)
 {
+    // Copy ByteCode
     ByteCode.BytecodeLength  = InCode.SizeInBytes();
     ByteCode.pShaderBytecode = FMemory::Malloc(ByteCode.BytecodeLength);
     FMemory::Memcpy((void*)ByteCode.pShaderBytecode, InCode.Data(), ByteCode.BytecodeLength);
+
+    // The beginning of the DXIL has the following layout
+    //   * Bytes 0-3 are always set to the string "DXCB"
+    //   * Bytes 4-19 are a checksum
+    const uint8* CodeData = InCode.Data() + 4;
+    ByteCodeHash = *reinterpret_cast<const FD3D12ShaderHash*>(CodeData);
 }
 
 FD3D12Shader::~FD3D12Shader()
@@ -180,7 +188,6 @@ bool FD3D12Shader::GetShaderReflection(FD3D12Shader* Shader)
 
     return true;
 }
-
 
 bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShader* Shader)
 {

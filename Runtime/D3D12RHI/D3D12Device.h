@@ -1,9 +1,9 @@
 #pragma once
-#include "D3D12RefCounted.h"
 #include "D3D12Allocators.h"
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
 #include "D3D12SamplerState.h"
+#include "D3D12PipelineState.h"
 #include "D3D12CommandListManager.h"
 #include "Core/Containers/SharedRef.h"
 
@@ -27,6 +27,7 @@ typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 // Global variables that describe different features
 
 extern D3D12RHI_API bool GD3D12ForceBinding;
+extern D3D12RHI_API bool GD3D12SupportPipelineCache;
 
 extern D3D12RHI_API D3D12_RESOURCE_BINDING_TIER GD3D12ResourceBindingTier;
 extern D3D12RHI_API D3D12_RAYTRACING_TIER GD3D12RayTracingTier;
@@ -116,6 +117,7 @@ public:
     FD3D12OfflineDescriptorHeap& GetDepthStencilOfflineDescriptorHeap() { return *DepthStencilOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap& GetSamplerOfflineDescriptorHeap() { return *SamplerOfflineDescriptorHeap; }
     FD3D12DefaultDescriptors& GetDefaultDescriptors() { return DefaultDescriptors; }
+    FD3D12PipelineStateManager& GetPipelineStateManager() { return *PipelineStateManager; }
 
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
 
@@ -187,6 +189,8 @@ private:
     FD3D12CommandAllocatorManager* ComputeCommandAllocatorManager;
 
     FD3D12DefaultDescriptors       DefaultDescriptors;
+
+    FD3D12PipelineStateManager*           PipelineStateManager;
 
     D3D_FEATURE_LEVEL              MinFeatureLevel;
     D3D_FEATURE_LEVEL              ActiveFeatureLevel;

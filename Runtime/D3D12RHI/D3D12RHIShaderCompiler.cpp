@@ -176,13 +176,7 @@ FD3D12ShaderCompiler::~FD3D12ShaderCompiler()
     ::FreeLibrary(DxCompilerDLL);
 }
 
-bool FD3D12ShaderCompiler::CompileFromFile(
-    const FString& FilePath,
-    const FString& EntryPoint,
-    const TArray<FShaderDefine>* Defines,
-    EShaderStage ShaderStage,
-    EShaderModel ShaderModel,
-    TArray<uint8>& Code)
+bool FD3D12ShaderCompiler::CompileFromFile(const FString& FilePath, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
 {
     Code.Clear();
 
@@ -200,13 +194,7 @@ bool FD3D12ShaderCompiler::CompileFromFile(
     return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.GetCString(), WideEntrypoint.GetCString(), ShaderStage, ShaderModel, Defines, Code);
 }
 
-bool FD3D12ShaderCompiler::CompileShader(
-    const FString& ShaderSource,
-    const FString& EntryPoint,
-    const TArray<FShaderDefine>* Defines,
-    EShaderStage ShaderStage,
-    EShaderModel ShaderModel,
-    TArray<uint8>& Code)
+bool FD3D12ShaderCompiler::CompileShader(const FString& ShaderSource, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
 {
     FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
@@ -261,7 +249,7 @@ bool FD3D12ShaderCompiler::HasRootSignature(FD3D12Shader* Shader)
     return true;
 }
 
-bool FD3D12ShaderCompiler::Init()
+bool FD3D12ShaderCompiler::Initialize()
 {
     DxCompilerDLL = ::LoadLibrary("dxcompiler.dll");
     if (!DxCompilerDLL)
@@ -315,14 +303,7 @@ bool FD3D12ShaderCompiler::Init()
     return true;
 }
 
-bool FD3D12ShaderCompiler::InternalCompileFromSource(
-    IDxcBlob* SourceBlob,
-    LPCWSTR FilePath,
-    LPCWSTR Entrypoint,
-    EShaderStage ShaderStage,
-    EShaderModel ShaderModel,
-    const TArray<FShaderDefine>* Defines,
-    TArray<uint8>& Code)
+bool FD3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWSTR FilePath, LPCWSTR Entrypoint, EShaderStage ShaderStage, EShaderModel ShaderModel, const TArray<FShaderDefine>* Defines, TArray<uint8>& Code)
 {
     TArray<LPCWSTR> Args =
     {
@@ -360,12 +341,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(
     FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
 
     TComPtr<IDxcOperationResult> Result;
-    HRESULT hResult = DxCompiler->Compile(
-        SourceBlob, FilePath, Entrypoint,
-        TargetProfile,
-        Args.Data(), Args.Size(),
-        DxDefines.Data(), DxDefines.Size(),
-        DxIncludeHandler.Get(), &Result);
+    HRESULT hResult = DxCompiler->Compile(SourceBlob, FilePath, Entrypoint, TargetProfile, Args.Data(), Args.Size(), DxDefines.Data(), DxDefines.Size(), DxIncludeHandler.Get(), &Result);
     if (FAILED(hResult))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to Compile");
@@ -439,7 +415,7 @@ bool FD3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& Shader
     HRESULT Result = DxReflection->Load(ShaderBlob.Get());
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: Were not able to get reflect of shader");
+        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to get reflection of shader");
         return false;
     }
 
@@ -447,14 +423,14 @@ bool FD3D12ShaderCompiler::InternalGetReflection(const TComPtr<IDxcBlob>& Shader
     Result = DxReflection->FindFirstPartKind(DFCC_DXIL, &PartIndex);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: Were not able to get reflection of shader");
+        D3D12_ERROR("[FD3D12ShaderCompiler]: Shader does not contain valid DXIL part");
         return false;
     }
 
     Result = DxReflection->GetPartReflection(PartIndex, iid, ppvObject);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: Were not able to get reflection of shader");
+        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to get DXIL object");
         return false;
     }
 
@@ -475,7 +451,7 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
     HRESULT Result = LibaryReflection->GetDesc(&LibDesc);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: Were not able to validate ray tracing shader");
+        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to validate ray tracing shader");
         return false;
     }
 
@@ -490,7 +466,7 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
     Result = Function->GetDesc(&FuncDesc);
     if (FAILED(Result))
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: Were not able to validate ray tracing shader");
+        D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to validate ray tracing shader");
         return false;
     }
 

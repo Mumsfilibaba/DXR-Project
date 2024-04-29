@@ -17,7 +17,6 @@ enum EShaderVisibility : int32
     ShaderVisibility_Count = ShaderVisibility_Pixel + 1
 };
 
-
 enum EResourceType : int32
 {
     ResourceType_CBV     = 0,
@@ -27,7 +26,6 @@ enum EResourceType : int32
     ResourceType_Count   = ResourceType_Sampler + 1,
     ResourceType_Unknown = 5,
 };
-
 
 struct FShaderResourceRange
 {
@@ -57,7 +55,30 @@ struct FShaderResourceCount
     bool IsCompatible(const FShaderResourceCount& Other) const;
 
     FShaderResourceRange Ranges;
-    uint8 Num32BitConstants;
+    uint8                Num32BitConstants;
+};
+
+struct FD3D12ShaderHash
+{
+    // Hash retrieved from the shader ByteCode
+    uint64 Hash[2] = { 0, 0 };
+
+    friend uint64 GetHashForType(const FD3D12ShaderHash& Value)
+    {
+        uint64 Hash = Value.Hash[0];
+        HashCombine(Hash, Value.Hash[1]);
+        return Hash;
+    }
+
+    bool operator==(const FD3D12ShaderHash& Other) const
+    {
+        return Hash[0] == Other.Hash[0] && Hash[1] == Other.Hash[1];
+    }
+
+    bool operator!=(const FD3D12ShaderHash& Other) const
+    {
+        return Hash[0] != Other.Hash[0] || Hash[1] != Other.Hash[1];
+    }
 };
 
 class FD3D12Shader : public FD3D12DeviceChild
@@ -71,7 +92,6 @@ public:
     EShaderVisibility GetShaderVisibility() const { return ShaderVisibility; }
     const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
     const FShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
-
     D3D12_SHADER_BYTECODE GetByteCode() const { return ByteCode; }
     bool HasRootSignature() const { return bContainsRootSignature; }
     
@@ -85,15 +105,21 @@ public:
         return static_cast<uint64>(ByteCode.BytecodeLength);
     }
 
+    FORCEINLINE FD3D12ShaderHash GetHash() const
+    {
+        return ByteCodeHash;
+    }
+
 protected:
     template<typename TD3D12ReflectionInterface>
     static bool GetShaderResourceBindings(TD3D12ReflectionInterface* Reflection, FD3D12Shader* Shader, uint32 NumBoundResources);
 
     D3D12_SHADER_BYTECODE ByteCode;
+    FD3D12ShaderHash      ByteCodeHash;
     EShaderVisibility     ShaderVisibility;
     FShaderResourceCount  ResourceCount;
     FShaderResourceCount  RTLocalResourceCount;
-    bool bContainsRootSignature = false;
+    bool                  bContainsRootSignature = false;
 };
 
 

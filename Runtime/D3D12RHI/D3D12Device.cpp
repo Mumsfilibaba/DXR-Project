@@ -44,6 +44,7 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
 // Global variables that describe different features
 
 D3D12RHI_API bool GD3D12ForceBinding = false;
+D3D12RHI_API bool GD3D12SupportPipelineCache = false;
 
 D3D12RHI_API D3D12_RESOURCE_BINDING_TIER GD3D12ResourceBindingTier = D3D12_RESOURCE_BINDING_TIER_1;
 D3D12RHI_API D3D12_RAYTRACING_TIER GD3D12RayTracingTier = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
@@ -251,6 +252,7 @@ bool FD3D12Adapter::Initialize()
         {
             InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
             InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, false);
         }
         else
         {
@@ -451,6 +453,7 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , CopyCommandAllocatorManager(nullptr)
     , ComputeCommandAllocatorManager(nullptr)
     , UploadAllocator(nullptr)
+    , PipelineStateManager(nullptr)
     , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
     , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , Adapter(InAdapter)
@@ -489,6 +492,15 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 
 FD3D12Device::~FD3D12Device()
 {
+    // Flush PipelineCache
+    if (PipelineStateManager)
+    {
+        PipelineStateManager->SaveCacheData();
+
+        delete PipelineStateManager;
+        PipelineStateManager = nullptr;
+    }
+
     // Destroy the default resources
     DefaultDescriptors.DefaultCBV.Reset();
     DefaultDescriptors.DefaultSRV.Reset();
@@ -714,6 +726,19 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
+    // Create PipelineCache
+    PipelineStateManager = new FD3D12PipelineStateManager(this);
+    if (!PipelineStateManager->Initialize())
+    {
+        SAFE_DELETE(PipelineStateManager);
+        GD3D12SupportPipelineCache = false;
+        return false;
+    }
+    else
+    {
+        GD3D12SupportPipelineCache = true;
+    }
+
     return true;
 }
 
@@ -750,12 +775,13 @@ bool FD3D12Device::CreateDevice()
         {
             InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
             InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
 
             D3D12_MESSAGE_ID Hide[] =
             {
                 D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,
-                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE
+                D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,
+                D3D12_MESSAGE_ID_LOADPIPELINE_NAMENOTFOUND,
             };
 
             D3D12_INFO_QUEUE_FILTER Filter;

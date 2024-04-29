@@ -181,5 +181,5 @@ private:
     
     VkPipelineCache  PipelineCache;
     FCriticalSection PipelineCacheCS;
-    bool             bPipelineDirty;
+    bool             bPipelineCacheDirty;
 };

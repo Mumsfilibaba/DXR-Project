@@ -77,6 +77,15 @@ public:
     bool Initialize(const D3D12_ROOT_SIGNATURE_DESC& Desc);
     bool Initialize(const void* BlobWithRootSignature, uint64 BlobLengthInBytes);
 
+    void SetDebugName(const FString& Name)
+    {
+        FStringWide WideName = CharToWide(Name);
+        RootSignature->SetName(WideName.GetCString());
+    }
+
+    ID3D12RootSignature* GetD3D12RootSignature() const { return RootSignature.Get(); }
+    ID3D12RootSignature** GetD3D12RootSignatureAddress() { return RootSignature.GetAddressOf(); }
+
     int32 GetRootParameterIndex(EShaderVisibility Visibility, EResourceType Type) const
     {
         return static_cast<int32>(RootParameterMap[Visibility].RootParameterIndicies[Type]);
@@ -92,20 +101,9 @@ public:
         return ConstantRootParameterIndex;
     }
 
-    void SetDebugName(const FString& Name)
+    uint64 GetHash() const
     {
-        FStringWide WideName = CharToWide(Name);
-        RootSignature->SetName(WideName.GetCString());
-    }
-
-    ID3D12RootSignature* GetD3D12RootSignature() const
-    {
-        return RootSignature.Get();
-    }
-
-    ID3D12RootSignature** GetD3D12RootSignatureAddress()
-    {
-        return RootSignature.GetAddressOf();
+        return Hash;
     }
 
 private:
@@ -115,7 +113,7 @@ private:
     TComPtr<ID3D12RootSignature> RootSignature;
     FShaderStage                 RootParameterMap[ShaderVisibility_Count];
     int32                        ConstantRootParameterIndex;
-
+    uint64                       Hash;
 };
 
 class FD3D12RootSignatureManager : public FD3D12DeviceChild

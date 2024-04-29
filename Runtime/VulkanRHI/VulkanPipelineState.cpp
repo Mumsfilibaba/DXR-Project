@@ -9,7 +9,7 @@
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "VulkanRHI.PipelineCacheFileName",
     "FileName for the file storing the PipelineCache",
-    "VulkanPipelineCache.pipelinecache");
+    "PipelineCache.vkpsocache");
 
 FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
     : FRHIVertexInputLayout()
@@ -603,7 +603,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
 FVulkanPipelineCache::FVulkanPipelineCache(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , PipelineCache(VK_NULL_HANDLE)
-    , bPipelineDirty(false)
+    , bPipelineCacheDirty(false)
 {
 }
 
@@ -663,7 +663,7 @@ bool FVulkanPipelineCache::CreateGraphicsPipeline(const VkGraphicsPipelineCreate
     }
     else
     {
-        bPipelineDirty = true;
+        bPipelineCacheDirty = true;
         return true;
     }
 }
@@ -679,7 +679,7 @@ bool FVulkanPipelineCache::CreateComputePipeline(const VkComputePipelineCreateIn
     }
     else
     {
-        bPipelineDirty = true;
+        bPipelineCacheDirty = true;
         return true;
     }
 }
@@ -693,7 +693,7 @@ bool FVulkanPipelineCache::SaveCacheData()
     }
     
     // No changes has been made to the pipeline
-    if (!bPipelineDirty)
+    if (!bPipelineCacheDirty)
     {
         return true;
     }
@@ -723,14 +723,14 @@ bool FVulkanPipelineCache::SaveCacheData()
         Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &PipelineCacheSize, PipelineCacheData.Get());
         if (VULKAN_FAILED(Result))
         {
-            VULKAN_ERROR("Failed to retrieve size of PipelineCache");
+            VULKAN_ERROR("Failed to serielize PipelineCache");
             return false;
         }
         
         const int32 BytesWritten = CacheFile->Write(PipelineCacheData.Get(), static_cast<uint32>(PipelineCacheSize));
         if (BytesWritten != static_cast<int32>(PipelineCacheSize))
         {
-            VULKAN_ERROR("Failed to write PipelineCache");
+            VULKAN_ERROR("Failed to write PipelineCache to disk");
             return false;
         }
         else
@@ -739,7 +739,7 @@ bool FVulkanPipelineCache::SaveCacheData()
         }
     }
     
-    bPipelineDirty = false;
+    bPipelineCacheDirty = false;
     return true;
 }
 

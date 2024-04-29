@@ -30,7 +30,6 @@ enum class EShaderOutputLanguage : uint8
     SPIRV   = 3, // SPIR-V for VulkanRHI
 };
 
-
 struct FShaderDefine
 {
     FShaderDefine(const FString& InDefine)
@@ -48,7 +47,6 @@ struct FShaderDefine
     FString Define;
     FString Value;
 };
-
 
 struct FShaderCompileInfo;
 
@@ -81,7 +79,6 @@ private:
 
     static FShaderCompiler* GInstance;
 };
-
 
 struct FShaderCompileInfo
 {

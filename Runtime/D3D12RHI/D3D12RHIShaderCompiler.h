@@ -12,23 +12,10 @@ public:
     FD3D12ShaderCompiler();
     ~FD3D12ShaderCompiler();
 
-    bool Init();
+    bool Initialize();
 
-    bool CompileFromFile(
-        const FString& FilePath,
-        const FString& EntryPoint,
-        const TArray<FShaderDefine>* Defines,
-        EShaderStage ShaderStage,
-        EShaderModel ShaderModel,
-        TArray<uint8>& Code);
-
-    bool CompileShader(
-        const FString& ShaderSource,
-        const FString& EntryPoint,
-        const TArray<FShaderDefine>* Defines,
-        EShaderStage ShaderStage,
-        EShaderModel ShaderModel,
-        TArray<uint8>& Code);
+    bool CompileFromFile(const FString& FilePath, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code);
+    bool CompileShader(const FString& ShaderSource, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code);
 
     bool GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection);
     bool GetLibraryReflection(FD3D12Shader* Shader, ID3D12LibraryReflection** Reflection);
@@ -47,14 +34,12 @@ private:
     bool InternalGetReflection(const TComPtr<IDxcBlob>& ShaderBlob, REFIID iid, void** ppvObject);
     bool ValidateRayTracingShader(const TComPtr<IDxcBlob>& ShaderBlob, LPCWSTR Entrypoint);
 
-private:
     TComPtr<IDxcCompiler>            DxCompiler;
     TComPtr<IDxcLibrary>             DxLibrary;
     TComPtr<IDxcLinker>              DxLinker;
     TComPtr<IDxcIncludeHandler>      DxIncludeHandler;
     TComPtr<IDxcContainerReflection> DxReflection;
-
-    HMODULE DxCompilerDLL;
+    HMODULE                          DxCompilerDLL;
 };
 
 extern FD3D12ShaderCompiler* GD3D12ShaderCompiler;

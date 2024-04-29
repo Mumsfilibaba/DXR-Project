@@ -4,6 +4,7 @@
 #include "D3D12Shader.h"
 #include "DynamicD3D12.h"
 #include "D3D12RHI.h"
+#include "Core/Misc/CRC.h"
 
 static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 {
@@ -253,6 +254,7 @@ FD3D12RootSignature::FD3D12RootSignature(FD3D12Device* InDevice)
     , RootSignature(nullptr)
     , RootParameterMap()
     , ConstantRootParameterIndex(-1)
+    , Hash(0)
 {
     for (int32 CurrentStage = ShaderVisibility_All; CurrentStage < ShaderVisibility_Count; CurrentStage++)
     {
@@ -348,8 +350,11 @@ bool FD3D12RootSignature::InternalInit(const void* BlobWithRootSignature, uint64
         D3D12_ERROR("[FD3D12RootSignature]: FAILED to Create RootSignature");
         return false;
     }
-
-    return true;
+    else
+    {
+        Hash = FCRC32::Generate(BlobWithRootSignature, BlobLengthInBytes);
+        return true;
+    }
 }
 
 bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DBlob** OutBlob)
@@ -365,7 +370,6 @@ bool FD3D12RootSignature::Serialize(const D3D12_ROOT_SIGNATURE_DESC& Desc, ID3DB
 
     return true;
 }
-
 
 FD3D12RootSignatureManager::FD3D12RootSignatureManager(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)

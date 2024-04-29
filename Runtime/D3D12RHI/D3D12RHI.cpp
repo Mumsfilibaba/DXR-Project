@@ -115,7 +115,7 @@ bool FD3D12RHI::Initialize()
 
     // Initialize shader compiler
     GD3D12ShaderCompiler = new FD3D12ShaderCompiler();
-    if (!GD3D12ShaderCompiler->Init())
+    if (!GD3D12ShaderCompiler->Initialize())
     {
         return false;
     }

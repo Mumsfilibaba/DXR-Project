@@ -7,7 +7,6 @@ class PROJECT_API FProjectManager
 public:
     static bool Initialize();
     static void Release();
-
     static FProjectManager& Get();
 
     FStringView GetProjectName()       { return FStringView(ProjectName); }
