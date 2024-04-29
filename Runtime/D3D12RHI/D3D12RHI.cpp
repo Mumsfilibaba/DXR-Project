@@ -219,14 +219,13 @@ bool FD3D12RHI::Initialize()
     }
 
     // Initialize Hardware Support globals
-    FD3D12RayTracingDesc RayTracingDesc = GetDevice()->GetRayTracingDesc();
-    if (RayTracingDesc.IsSupported())
+    if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
     {
-        if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_1)
+        if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
         {
             GRHIRayTracingTier = ERayTracingTier::Tier1_1;
         }
-        else if (RayTracingDesc.Tier == D3D12_RAYTRACING_TIER_1_0)
+        else if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_0)
         {
             GRHIRayTracingTier = ERayTracingTier::Tier1;
         }
@@ -240,16 +239,30 @@ bool FD3D12RHI::Initialize()
     
     GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
 
-    FD3D12VariableRateShadingDesc VariableRateShadingDesc = GetDevice()->GetVariableRateShadingDesc();
-    switch (VariableRateShadingDesc.Tier)
+    switch (GD3D12VariableRateShadingTier)
     {
         case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED: GRHIShadingRateTier = EShadingRateTier::NotSupported; break;
         case D3D12_VARIABLE_SHADING_RATE_TIER_1:             GRHIShadingRateTier = EShadingRateTier::Tier1;        break;
         case D3D12_VARIABLE_SHADING_RATE_TIER_2:             GRHIShadingRateTier = EShadingRateTier::Tier2;        break;
     }
 
-    GRHISupportsVRS     = GRHIShadingRateTier != EShadingRateTier::NotSupported;
-    GRHIShadingRateImageTileSize = VariableRateShadingDesc.ShadingRateImageTileSize;
+    GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
+    if (GRHISupportsVRS)
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
+        FMemory::Memzero(&Features6);
+
+        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+        if (SUCCEEDED(Result))
+        {
+            GRHIShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+        }
+    }
+    else
+    {
+        GRHIShadingRateImageTileSize = 0;
+    }
+
     return true;
 }
 

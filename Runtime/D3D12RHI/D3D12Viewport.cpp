@@ -7,7 +7,7 @@ FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InC
     , FRHIViewport(InViewportInfo)
     , SwapChain(nullptr)
     , CommandContext(InCmdContext)
-    , BackBuffer(nullptr)
+    , BackBufferProxy(nullptr)
     , BackBuffers()
     , Hwnd(reinterpret_cast<HWND>(InViewportInfo.WindowHandle))
     , SwapChainWaitableObject(0)
@@ -35,7 +35,7 @@ FD3D12Viewport::~FD3D12Viewport()
         CloseHandle(SwapChainWaitableObject);
     }
 
-    BackBuffer->SetViewport(nullptr);
+    BackBufferProxy->SetViewport(nullptr);
 }
 
 bool FD3D12Viewport::Initialize()
@@ -222,13 +222,13 @@ bool FD3D12Viewport::RetriveBackBuffers()
         }
     }
 
-    if (BackBuffer)
+    if (BackBufferProxy)
     {
-        BackBuffer->Resize(GetWidth(), GetHeight());
+        BackBufferProxy->Resize(GetWidth(), GetHeight());
     }
     else
     {
-        BackBuffer = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo);
+        BackBufferProxy = new FD3D12BackBufferTexture(GetDevice(), this, BackBufferInfo);
     }
 
     for (uint32 Index = 0; Index < NumBackBuffers; ++Index)
@@ -247,7 +247,7 @@ bool FD3D12Viewport::RetriveBackBuffers()
 
     BackBufferIndex = SwapChain->GetCurrentBackBufferIndex();
 
-    if (FD3D12Texture* CurrentBackbuffer = BackBuffer->GetCurrentBackBufferTexture())
+    if (FD3D12Texture* CurrentBackbuffer = BackBufferProxy->GetCurrentBackBufferTexture())
     {
         return true;
     }

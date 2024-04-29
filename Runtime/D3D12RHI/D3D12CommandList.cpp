@@ -47,7 +47,10 @@ FD3D12CommandAllocatorManager::FD3D12CommandAllocatorManager(FD3D12Device* InDev
 
 FD3D12CommandAllocatorManager::~FD3D12CommandAllocatorManager()
 {
-    DestroyAllocators();
+    for (FD3D12CommandAllocator* CommandAllocator : CommandAllocators)
+    {
+        delete CommandAllocator;
+    }
 }
 
 FD3D12CommandAllocator* FD3D12CommandAllocatorManager::ObtainAllocator()
@@ -85,17 +88,6 @@ void FD3D12CommandAllocatorManager::RecycleAllocator(FD3D12CommandAllocator* InA
 
     TScopedLock Lock(CommandAllocatorsCS);
     AvailableAllocators.Enqueue(InAllocator);
-}
-
-void FD3D12CommandAllocatorManager::DestroyAllocators()
-{
-    for (FD3D12CommandAllocator* CommandAllocator : CommandAllocators)
-    {
-        delete CommandAllocator;
-    }
-
-    CommandAllocators.Clear();
-    AvailableAllocators.Clear();
 }
 
 FD3D12CommandList::FD3D12CommandList(FD3D12Device* InDevice)

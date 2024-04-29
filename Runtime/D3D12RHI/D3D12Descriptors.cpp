@@ -174,7 +174,10 @@ FD3D12OnlineDescriptorHeap::FD3D12OnlineDescriptorHeap(FD3D12Device* InDevice, D
 
 FD3D12OnlineDescriptorHeap::~FD3D12OnlineDescriptorHeap()
 {
-    Release();
+    for (FD3D12OnlineDescriptorBlock* Block : BlockQueue)
+    {
+        delete Block;
+    }
 }
 
 bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InBlockSize)
@@ -216,17 +219,6 @@ bool FD3D12OnlineDescriptorHeap::Initialize(uint32 InDescriptorCount, uint32 InB
     }
 
     return true;
-}
-
-void FD3D12OnlineDescriptorHeap::Release()
-{
-    for (FD3D12OnlineDescriptorBlock* Block : BlockQueue)
-    {
-        delete Block;
-    }
-
-    BlockQueue.Clear();
-    Heap.Reset();
 }
 
 FD3D12OnlineDescriptorBlock* FD3D12OnlineDescriptorHeap::AllocateBlock()

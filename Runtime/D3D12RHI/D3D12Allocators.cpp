@@ -17,7 +17,10 @@ FD3D12UploadHeapAllocator::FD3D12UploadHeapAllocator(FD3D12Device* InDevice)
 
 FD3D12UploadHeapAllocator::~FD3D12UploadHeapAllocator()
 {
-    Release();
+    BufferSize    = 0;
+    CurrentOffset = 0;
+    MappedMemory  = nullptr;
+    Resource      = nullptr;
 }
 
 FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 Alignment)
@@ -126,14 +129,4 @@ FD3D12UploadAllocation FD3D12UploadHeapAllocator::Allocate(uint64 Size, uint64 A
     }
 
     return Allocation;
-}
-
-void FD3D12UploadHeapAllocator::Release()
-{
-    Resource.Reset();
-
-    BufferSize    = 0;
-    CurrentOffset = 0;
-    MappedMemory  = nullptr;
-    Resource      = nullptr;
 }

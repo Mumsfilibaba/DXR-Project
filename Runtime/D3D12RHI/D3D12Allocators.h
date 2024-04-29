@@ -15,7 +15,6 @@ public:
     virtual ~FD3D12UploadHeapAllocator();
 
     FD3D12UploadAllocation Allocate(uint64 Size, uint64 Alignment);
-    void Release();
 
 private:
     uint64                  BufferSize;

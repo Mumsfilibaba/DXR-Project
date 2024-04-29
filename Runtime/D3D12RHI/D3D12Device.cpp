@@ -43,10 +43,13 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
 ////////////////////////////////////////////////////
 // Global variables that describe different features
 
-D3D12RHI_API bool GD3D12SupportsShadingRate      = false;
-D3D12RHI_API bool GD3D12SupportsShadingRateImage = false;
-D3D12RHI_API bool GD3D12ForceBinding             = false;
+D3D12RHI_API bool GD3D12ForceBinding = false;
 
+D3D12RHI_API D3D12_RESOURCE_BINDING_TIER GD3D12ResourceBindingTier = D3D12_RESOURCE_BINDING_TIER_1;
+D3D12RHI_API D3D12_RAYTRACING_TIER GD3D12RayTracingTier = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER GD3D12VariableRateShadingTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_MESH_SHADER_TIER GD3D12MeshShaderTier = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER GD3D12SamplerFeedbackTier = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
@@ -167,7 +170,6 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
 
     FPlatformApplicationMisc::MessageBox("Error", " [D3D12] Device Removed");
 }
-
 
 FD3D12Adapter::FD3D12Adapter()
     : AdapterIndex(0)
@@ -435,16 +437,16 @@ bool FD3D12Adapter::Initialize()
 }
 
 FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
-    : GlobalResourceHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-    , GlobalSamplerHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
-    , RootSignatureManager(this)
-    , DirectCommandListManager(this, ED3D12CommandQueueType::Direct)
-    , CopyCommandListManager(this, ED3D12CommandQueueType::Copy)
-    , ComputeCommandListManager(this, ED3D12CommandQueueType::Compute)
-    , DirectCommandAllocatorManager(this, ED3D12CommandQueueType::Direct)
-    , CopyCommandAllocatorManager(this, ED3D12CommandQueueType::Copy)
-    , ComputeCommandAllocatorManager(this, ED3D12CommandQueueType::Compute)
-    , UploadAllocator(this)
+    : GlobalResourceHeap(nullptr)
+    , GlobalSamplerHeap(nullptr)
+    , RootSignatureManager(nullptr)
+    , DirectCommandListManager(nullptr)
+    , CopyCommandListManager(nullptr)
+    , ComputeCommandListManager(nullptr)
+    , DirectCommandAllocatorManager(nullptr)
+    , CopyCommandAllocatorManager(nullptr)
+    , ComputeCommandAllocatorManager(nullptr)
+    , UploadAllocator(nullptr)
     , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
     , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , Adapter(InAdapter)
@@ -484,21 +486,22 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 FD3D12Device::~FD3D12Device()
 {
     // Destroy all CommandLists
-    DirectCommandListManager.Release();
-    ComputeCommandListManager.Release();
-    CopyCommandListManager.Release();
+    SAFE_DELETE(DirectCommandListManager);
+    SAFE_DELETE(ComputeCommandListManager);
+    SAFE_DELETE(CopyCommandListManager);
 
     // Destroy all CommandAllocators
-    DirectCommandAllocatorManager.DestroyAllocators();
-    CopyCommandAllocatorManager.DestroyAllocators();
-    ComputeCommandAllocatorManager.DestroyAllocators();
+    SAFE_DELETE(DirectCommandAllocatorManager);
+    SAFE_DELETE(CopyCommandAllocatorManager);
+    SAFE_DELETE(ComputeCommandAllocatorManager);
 
     // Release Heaps
-    GlobalResourceHeap.Release();
-    GlobalSamplerHeap.Release();
+    SAFE_DELETE(GlobalResourceHeap);
+    SAFE_DELETE(GlobalSamplerHeap);
 
-    UploadAllocator.Release();
-    RootSignatureManager.ReleaseAll();
+    // Release the rest of the managers
+    SAFE_DELETE(UploadAllocator);
+    SAFE_DELETE(RootSignatureManager);
 
     // Report any live objects still hanging around
     if (Adapter->IsDebugLayerEnabled())
@@ -554,7 +557,7 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    if (!CreateQueues())
+    if (!CreateCommandManagers())
     {
         return false;
     }
@@ -589,7 +592,8 @@ bool FD3D12Device::Initialize()
     }
 
     // Create RootSignatureManager
-    if (!RootSignatureManager.Initialize())
+    RootSignatureManager = new FD3D12RootSignatureManager(this);
+    if (!RootSignatureManager->Initialize())
     {
         return false;
     } 
@@ -602,8 +606,8 @@ bool FD3D12Device::Initialize()
         HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
         if (SUCCEEDED(Result))
         {
-            ResourceBindingTier = Features.ResourceBindingTier;
-            D3D12_INFO("[FD3D12Device] Using ResourceBinding Tier %d", ResourceBindingTier);
+            GD3D12ResourceBindingTier = Features.ResourceBindingTier;
+            D3D12_INFO("[FD3D12Device] Using ResourceBinding Tier %d", GD3D12ResourceBindingTier);
         }
     }
 
@@ -615,7 +619,7 @@ bool FD3D12Device::Initialize()
         HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
         if (SUCCEEDED(Result))
         {
-            RayTracingDesc.Tier = Features5.RaytracingTier;
+            GD3D12RayTracingTier = Features5.RaytracingTier;
         }
     }
 
@@ -627,17 +631,7 @@ bool FD3D12Device::Initialize()
         HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
         {
-            VariableRateShadingDesc.Tier = Features6.VariableShadingRateTier;
-            if (VariableRateShadingDesc.Tier == D3D12_VARIABLE_SHADING_RATE_TIER_1)
-            {
-                GD3D12SupportsShadingRate = true;
-            }
-            if (VariableRateShadingDesc.Tier == D3D12_VARIABLE_SHADING_RATE_TIER_2)
-            {
-                GD3D12SupportsShadingRateImage = true;
-            }
-
-            VariableRateShadingDesc.ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+            GD3D12VariableRateShadingTier = Features6.VariableShadingRateTier;
         }
     }
 
@@ -649,27 +643,30 @@ bool FD3D12Device::Initialize()
         HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
         if (SUCCEEDED(Result))
         {
-            MeshShadingDesc.Tier     = Features7.MeshShaderTier;
-            SamplerFeedbackDesc.Tier = Features7.SamplerFeedbackTier;
+            GD3D12MeshShaderTier      = Features7.MeshShaderTier;
+            GD3D12SamplerFeedbackTier = Features7.SamplerFeedbackTier;
         }
     }
 
-
     // Create DescriptorHeaps
     const uint32 ResourceDescriptorBlockSize = CVarResourceOnlineDescriptorBlockSize.GetValue();
-    if (!GlobalResourceHeap.Initialize(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, ResourceDescriptorBlockSize))
+    GlobalResourceHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    if (!GlobalResourceHeap->Initialize(D3D12_MAX_RESOURCE_ONLINE_DESCRIPTOR_COUNT, ResourceDescriptorBlockSize))
     {
         D3D12_ERROR("Failed to create global resource descriptor heap");
         return false;
     }
 
     const uint32 SamplerDescriptorBlockSize = CVarSamplerOnlineDescriptorBlockSize.GetValue();
-    if (!GlobalSamplerHeap.Initialize(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, SamplerDescriptorBlockSize))
+    GlobalSamplerHeap = new FD3D12OnlineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    if (!GlobalSamplerHeap->Initialize(D3D12_MAX_SAMPLER_ONLINE_DESCRIPTOR_COUNT, SamplerDescriptorBlockSize))
     {
         D3D12_ERROR("Failed to create global sampler descriptor heap");
         return false;
     }
 
+    // UploadAllocator
+    UploadAllocator = new FD3D12UploadHeapAllocator(this);
     return true;
 }
 
@@ -789,17 +786,23 @@ bool FD3D12Device::CreateDevice()
     return true;
 }
 
-bool FD3D12Device::CreateQueues()
+bool FD3D12Device::CreateCommandManagers()
 {
-    CHECK(Device != nullptr);
+    DirectCommandListManager = new FD3D12CommandListManager(this, ED3D12CommandQueueType::Direct);
+    if (!DirectCommandListManager->Initialize())
+        return false;
+ 
+    CopyCommandListManager = new FD3D12CommandListManager(this, ED3D12CommandQueueType::Copy);
+    if (!CopyCommandListManager->Initialize())
+        return false;
 
-    if (!DirectCommandListManager.Initialize())
-        return false;
-    if (!CopyCommandListManager.Initialize())
-        return false;
-    if (!ComputeCommandListManager.Initialize())
+    ComputeCommandListManager = new FD3D12CommandListManager(this, ED3D12CommandQueueType::Compute);
+    if (!ComputeCommandListManager->Initialize())
         return false;
 
+    DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
+    CopyCommandAllocatorManager    = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
+    ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
     return true;
 }
 
@@ -807,18 +810,18 @@ FD3D12CommandListManager* FD3D12Device::GetCommandListManager(ED3D12CommandQueue
 {
     if (QueueType == ED3D12CommandQueueType::Direct)
     {
-        CHECK(DirectCommandListManager.GetQueueType() == ED3D12CommandQueueType::Direct);
-        return &DirectCommandListManager;
+        CHECK(DirectCommandListManager->GetQueueType() == ED3D12CommandQueueType::Direct);
+        return DirectCommandListManager;
     }
     else if (QueueType == ED3D12CommandQueueType::Copy)
     {
-        CHECK(CopyCommandListManager.GetQueueType() == ED3D12CommandQueueType::Copy);
-        return &CopyCommandListManager;
+        CHECK(CopyCommandListManager->GetQueueType() == ED3D12CommandQueueType::Copy);
+        return CopyCommandListManager;
     }
     else if (QueueType == ED3D12CommandQueueType::Compute)
     {
-        CHECK(ComputeCommandListManager.GetQueueType() == ED3D12CommandQueueType::Compute);
-        return &ComputeCommandListManager;
+        CHECK(ComputeCommandListManager->GetQueueType() == ED3D12CommandQueueType::Compute);
+        return ComputeCommandListManager;
     }
     else
     {
@@ -830,23 +833,29 @@ FD3D12CommandAllocatorManager* FD3D12Device::GetCommandAllocatorManager(ED3D12Co
 {
     if (QueueType == ED3D12CommandQueueType::Direct)
     {
-        CHECK(DirectCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Direct);
-        return &DirectCommandAllocatorManager;
+        CHECK(DirectCommandAllocatorManager->GetQueueType() == ED3D12CommandQueueType::Direct);
+        return DirectCommandAllocatorManager;
     }
     else if (QueueType == ED3D12CommandQueueType::Copy)
     {
-        CHECK(CopyCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Copy);
-        return &CopyCommandAllocatorManager;
+        CHECK(CopyCommandAllocatorManager->GetQueueType() == ED3D12CommandQueueType::Copy);
+        return CopyCommandAllocatorManager;
     }
     else if (QueueType == ED3D12CommandQueueType::Compute)
     {
-        CHECK(ComputeCommandAllocatorManager.GetQueueType() == ED3D12CommandQueueType::Compute);
-        return &ComputeCommandAllocatorManager;
+        CHECK(ComputeCommandAllocatorManager->GetQueueType() == ED3D12CommandQueueType::Compute);
+        return ComputeCommandAllocatorManager;
     }
     else
     {
         return nullptr;
     }
+}
+
+ID3D12CommandQueue* FD3D12Device::GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
+{
+    FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
+    return CommandListManager ? CommandListManager->GetD3D12CommandQueue() : nullptr;
 }
 
 int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)

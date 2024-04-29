@@ -20,7 +20,12 @@ FD3D12CommandListManager::FD3D12CommandListManager(FD3D12Device* InDevice, ED3D1
 
 FD3D12CommandListManager::~FD3D12CommandListManager()
 {
-    DestroyCommandLists();
+    TScopedLock Lock(CommandListsCS);
+
+    for (FD3D12CommandList* CommandList : CommandLists)
+    {
+        delete CommandList;
+    }
 }
 
 bool FD3D12CommandListManager::Initialize()
@@ -60,27 +65,6 @@ bool FD3D12CommandListManager::Initialize()
     }
 
     return true;
-}
-
-void FD3D12CommandListManager::Release()
-{
-    DestroyCommandLists();
-
-    FenceManager.Release();
-    CommandQueue.Reset();
-}
-
-void FD3D12CommandListManager::DestroyCommandLists()
-{
-    TScopedLock Lock(CommandListsCS);
-
-    for (FD3D12CommandList* CommandList : CommandLists)
-    {
-        delete CommandList;
-    }
-
-    CommandLists.Clear();
-    AvailableCommandLists.Clear();
 }
 
 FD3D12CommandList* FD3D12CommandListManager::ObtainCommandList(FD3D12CommandAllocator* CommandAllocator, ID3D12PipelineState* InitialPipelineState)

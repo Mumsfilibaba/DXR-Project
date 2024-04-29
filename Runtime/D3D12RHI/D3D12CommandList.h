@@ -9,12 +9,9 @@
 
 class FD3D12ComputePipelineState;
 
-class FD3D12CommandAllocator : public FD3D12DeviceChild
+class FD3D12CommandAllocator : public FD3D12DeviceChild, FNonCopyable
 {
 public:
-    FD3D12CommandAllocator(const FD3D12CommandAllocator&) = delete;
-    FD3D12CommandAllocator& operator=(const FD3D12CommandAllocator&) = delete;
-
     FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
     ~FD3D12CommandAllocator() = default;
 
@@ -42,7 +39,7 @@ private:
     TComPtr<ID3D12CommandAllocator> Allocator;
 };
 
-class FD3D12CommandAllocatorManager : public FD3D12DeviceChild
+class FD3D12CommandAllocatorManager : public FD3D12DeviceChild, FNonCopyable
 {
 public:
     FD3D12CommandAllocatorManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
@@ -50,7 +47,6 @@ public:
 
     FD3D12CommandAllocator* ObtainAllocator();
     void RecycleAllocator(FD3D12CommandAllocator* InAllocator);
-    void DestroyAllocators();
 
     ED3D12CommandQueueType GetQueueType() const
     {
@@ -65,7 +61,7 @@ private:
     FCriticalSection                CommandAllocatorsCS;
 };
 
-class FD3D12CommandList : public FD3D12DeviceChild
+class FD3D12CommandList : public FD3D12DeviceChild, FNonCopyable
 {
     template<typename CommandListInterfaceType>
     struct FCommandList
@@ -87,9 +83,6 @@ class FD3D12CommandList : public FD3D12DeviceChild
     };
 
 public:
-    FD3D12CommandList(const FD3D12CommandList&) = delete;
-    FD3D12CommandList& operator=(const FD3D12CommandList&) = delete;
-
     FD3D12CommandList(FD3D12Device* InDevice);
     ~FD3D12CommandList() = default;
     

@@ -25,86 +25,13 @@ typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 ////////////////////////////////////////////////////
 // Global variables that describe different features
 
-extern D3D12RHI_API bool GD3D12SupportsShadingRate;
-extern D3D12RHI_API bool GD3D12SupportsShadingRateImage;
 extern D3D12RHI_API bool GD3D12ForceBinding;
 
-
-struct FD3D12RayTracingDesc
-{
-    FD3D12RayTracingDesc()
-        : Tier(D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
-    {
-    }
-
-    bool IsSupported() const
-    {
-        return Tier != D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
-    }
-
-    D3D12_RAYTRACING_TIER Tier;
-};
-
-
-struct FD3D12VariableRateShadingDesc
-{
-    FD3D12VariableRateShadingDesc()
-        : Tier(D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED)
-        , ShadingRateImageTileSize(0)
-    {
-    }
-
-    bool IsSupported() const 
-    {
-        return Tier != D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-    }
-
-    bool IsTier1() const
-    {
-        return Tier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
-    }
-
-    bool IsTier2() const
-    {
-        return Tier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
-    }
-
-    D3D12_VARIABLE_SHADING_RATE_TIER Tier;
-    uint32 ShadingRateImageTileSize;
-};
-
-
-struct FD3D12MeshShadingDesc
-{
-    FD3D12MeshShadingDesc()
-        : Tier(D3D12_MESH_SHADER_TIER_NOT_SUPPORTED)
-    {
-    }
-
-    bool IsSupported() const
-    {
-        return Tier != D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-    }
-
-    D3D12_MESH_SHADER_TIER Tier;
-};
-
-
-struct FD3D12SamplerFeedbackDesc
-{
-    FD3D12SamplerFeedbackDesc()
-        : Tier(D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED)
-    {
-    }
-
-    bool IsSupported() const
-    {
-        return Tier != D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-    }
-
-    D3D12_SAMPLER_FEEDBACK_TIER Tier;
-};
-
+extern D3D12RHI_API D3D12_RESOURCE_BINDING_TIER GD3D12ResourceBindingTier;
+extern D3D12RHI_API D3D12_RAYTRACING_TIER GD3D12RayTracingTier;
+extern D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER GD3D12VariableRateShadingTier;
+extern D3D12RHI_API D3D12_MESH_SHADER_TIER GD3D12MeshShaderTier;
+extern D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER GD3D12SamplerFeedbackTier;
 
 class FD3D12Adapter
 {
@@ -133,8 +60,7 @@ public:
         return AdapterIndex;
     }
 
-    FORCEINLINE IDXGIFactory2* GetDXGIFactory()  const { return Factory.Get(); }
-
+    FORCEINLINE IDXGIFactory2* GetDXGIFactory() const { return Factory.Get(); }
     FORCEINLINE IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
 #if WIN10_BUILD_17134
     FORCEINLINE IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
@@ -158,7 +84,6 @@ private:
     TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
 };
 
-
 class FD3D12Device
 {
 public:
@@ -166,30 +91,18 @@ public:
     ~FD3D12Device();
 
     bool Initialize();
-    int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
     FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
+    ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
+    int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
-    ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
-    {
-        FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
-        return CommandListManager ? CommandListManager->GetD3D12CommandQueue() : nullptr;
-    }
-
-    FD3D12UploadHeapAllocator& GetUploadAllocator() { return UploadAllocator; }
-    FD3D12RootSignatureManager& GetRootSignatureManager() { return RootSignatureManager; }
-    FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return GlobalResourceHeap; }
-    FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap() { return GlobalSamplerHeap; }
-    
-    const FD3D12RayTracingDesc&          GetRayTracingDesc()          const { return RayTracingDesc; }
-    const FD3D12VariableRateShadingDesc& GetVariableRateShadingDesc() const { return VariableRateShadingDesc; }
-    const FD3D12MeshShadingDesc&         GetMeshShadingDesc()         const { return MeshShadingDesc; }  
-    const FD3D12SamplerFeedbackDesc&     GetSamplerFeedbackDesc()     const { return SamplerFeedbackDesc; }
+    FD3D12UploadHeapAllocator& GetUploadAllocator() { return *UploadAllocator; }
+    FD3D12RootSignatureManager& GetRootSignatureManager() { return *RootSignatureManager; }
+    FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return *GlobalResourceHeap; }
+    FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap() { return *GlobalSamplerHeap; }
     
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
-    D3D12_VARIABLE_SHADING_RATE_TIER GetVariableShadingRateTier() const { return VariableShadingRateTier; }
-    D3D12_RESOURCE_BINDING_TIER GetResourceBindingTier() const { return ResourceBindingTier; }
 
     uint32 GetNodeMask()  const { return NodeMask; }
     uint32 GetNodeCount() const { return NodeCount; }
@@ -234,33 +147,25 @@ public:
 
 private:
     bool CreateDevice();
-    bool CreateQueues();
+    bool CreateCommandManagers();
 
-    FD3D12OnlineDescriptorHeap    GlobalResourceHeap;
-    FD3D12OnlineDescriptorHeap    GlobalSamplerHeap;
+    FD3D12Adapter*                 Adapter;
 
-    FD3D12UploadHeapAllocator     UploadAllocator;
-    FD3D12RootSignatureManager    RootSignatureManager;
+    FD3D12OnlineDescriptorHeap*    GlobalResourceHeap;
+    FD3D12OnlineDescriptorHeap*    GlobalSamplerHeap;
+    FD3D12UploadHeapAllocator*     UploadAllocator;
+    FD3D12RootSignatureManager*    RootSignatureManager;
 
-    FD3D12CommandListManager      DirectCommandListManager;
-    FD3D12CommandListManager      CopyCommandListManager;
-    FD3D12CommandListManager      ComputeCommandListManager;
+    FD3D12CommandListManager*      DirectCommandListManager;
+    FD3D12CommandListManager*      CopyCommandListManager;
+    FD3D12CommandListManager*      ComputeCommandListManager;
 
-    FD3D12CommandAllocatorManager DirectCommandAllocatorManager;
-    FD3D12CommandAllocatorManager CopyCommandAllocatorManager;
-    FD3D12CommandAllocatorManager ComputeCommandAllocatorManager;
+    FD3D12CommandAllocatorManager* DirectCommandAllocatorManager;
+    FD3D12CommandAllocatorManager* CopyCommandAllocatorManager;
+    FD3D12CommandAllocatorManager* ComputeCommandAllocatorManager;
 
-    FD3D12RayTracingDesc          RayTracingDesc;
-    FD3D12MeshShadingDesc         MeshShadingDesc;
-    FD3D12SamplerFeedbackDesc     SamplerFeedbackDesc;
-    FD3D12VariableRateShadingDesc VariableRateShadingDesc;
-    
-    D3D_FEATURE_LEVEL                MinFeatureLevel;
-    D3D_FEATURE_LEVEL                ActiveFeatureLevel;
-    D3D12_RESOURCE_BINDING_TIER      ResourceBindingTier;
-    D3D12_VARIABLE_SHADING_RATE_TIER VariableShadingRateTier;
-    
-    FD3D12Adapter* Adapter;
+    D3D_FEATURE_LEVEL              MinFeatureLevel;
+    D3D_FEATURE_LEVEL              ActiveFeatureLevel;
 
     TComPtr<ID3D12Device>  Device;
 #if WIN10_BUILD_14393

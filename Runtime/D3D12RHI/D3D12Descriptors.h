@@ -167,8 +167,6 @@ public:
     ~FD3D12OnlineDescriptorHeap();
 
     bool Initialize(uint32 InDescriptorCount, uint32 BlockSize);
-    void Release();
-
     FD3D12OnlineDescriptorBlock* AllocateBlock();
     void RecycleBlock(FD3D12OnlineDescriptorBlock* InBlock);
     void FreeBlockDeferred(FD3D12OnlineDescriptorBlock* InBlock);

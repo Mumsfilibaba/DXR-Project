@@ -136,7 +136,7 @@ void FD3D12CommandContextState::BindComputeState()
 
 void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
-    const D3D12_RESOURCE_BINDING_TIER ResourceBindingTier = GetDevice()->GetResourceBindingTier();
+    const D3D12_RESOURCE_BINDING_TIER ResourceBindingTier = GD3D12ResourceBindingTier;
     uint32 NumSamplers[ShaderVisibility_Count];
 
     constexpr int32 MaxTries = 4;
@@ -189,7 +189,7 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
 
 void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature, EShaderVisibility StartStage, EShaderVisibility EndStage, bool bForceBinding)
 {
-    const D3D12_RESOURCE_BINDING_TIER ResourceBindingTier = GetDevice()->GetResourceBindingTier();
+    const D3D12_RESOURCE_BINDING_TIER ResourceBindingTier = GD3D12ResourceBindingTier;
     uint32 NumCBVs[ShaderVisibility_Count];
     uint32 NumSRVs[ShaderVisibility_Count];
     uint32 NumUAVs[ShaderVisibility_Count];
@@ -346,8 +346,8 @@ void FD3D12CommandContextState::ResetState()
     GraphicsState.bBindScissorRects      = true;
     GraphicsState.bBindViewports         = true;
     GraphicsState.bBindRootSignature     = true;
-    GraphicsState.bBindShadingRate       = GD3D12SupportsShadingRate;
-    GraphicsState.bBindShadingRateImage  = GD3D12SupportsShadingRateImage;
+    GraphicsState.bBindShadingRate       = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
+    GraphicsState.bBindShadingRateImage  = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
     GraphicsState.bBindVertexBuffers     = true;
     GraphicsState.bBindShaderConstants   = true;
     GraphicsState.bBindPrimitiveTopology = true;
@@ -385,8 +385,8 @@ void FD3D12CommandContextState::ResetStateForNewCommandList()
     GraphicsState.bBindScissorRects      = true;
     GraphicsState.bBindViewports         = true;
     GraphicsState.bBindRootSignature     = true;
-    GraphicsState.bBindShadingRate       = GD3D12SupportsShadingRate;
-    GraphicsState.bBindShadingRateImage  = GD3D12SupportsShadingRateImage;
+    GraphicsState.bBindShadingRate       = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
+    GraphicsState.bBindShadingRateImage  = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
     GraphicsState.bBindVertexBuffers     = true;
     GraphicsState.bBindShaderConstants   = true;
     GraphicsState.bBindPrimitiveTopology = true;
@@ -496,7 +496,7 @@ void FD3D12CommandContextState::SetShadingRate(EShadingRate ShadingRate)
     if (GraphicsState.ShadingRate != D3DShadingRate)
     {
         GraphicsState.ShadingRate = D3DShadingRate;
-        GraphicsState.bBindShadingRate = GD3D12SupportsShadingRate;
+        GraphicsState.bBindShadingRate = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_1;
     }
 }
 
@@ -505,7 +505,7 @@ void FD3D12CommandContextState::SetShadingRateImage(FD3D12Texture* ShadingRateIm
     if (GraphicsState.ShadingRateImage != ShadingRateImage)
     {
         GraphicsState.ShadingRateImage = ShadingRateImage;
-        GraphicsState.bBindShadingRateImage = GD3D12SupportsShadingRateImage;
+        GraphicsState.bBindShadingRateImage = GD3D12VariableRateShadingTier >= D3D12_VARIABLE_SHADING_RATE_TIER_2;
     }
 }
 

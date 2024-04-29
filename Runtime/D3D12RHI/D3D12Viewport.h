@@ -15,7 +15,7 @@ public:
     FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo);
     virtual ~FD3D12Viewport();
 
-    virtual FRHITexture* GetBackBuffer() const override final { return BackBuffer.Get(); }
+    virtual FRHITexture* GetBackBuffer() const override final { return BackBufferProxy.Get(); }
 
     bool Initialize();
     bool Resize(uint32 Width, uint32 Height);
@@ -31,7 +31,7 @@ private:
 
     TComPtr<IDXGISwapChain3>   SwapChain;
     FD3D12CommandContext*      CommandContext;
-    FD3D12BackBufferTextureRef BackBuffer;
+    FD3D12BackBufferTextureRef BackBufferProxy;
     TArray<FD3D12TextureRef>   BackBuffers;
 
     HWND   Hwnd = 0;

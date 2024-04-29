@@ -8,15 +8,13 @@
 class FD3D12Device;
 class FD3D12Query;
 
-class FD3D12CommandListManager : public FD3D12DeviceChild
+class FD3D12CommandListManager : public FD3D12DeviceChild, FNonCopyable
 {
 public:
     FD3D12CommandListManager(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
     ~FD3D12CommandListManager();
 
     bool Initialize();
-    void Release();
-    void DestroyCommandLists();
     FD3D12CommandList* ObtainCommandList(FD3D12CommandAllocator* CommandAllocator, ID3D12PipelineState* InitialPipelineState);
     void RecycleCommandList(FD3D12CommandList* InCommandList);
     FD3D12FenceSyncPoint ExecuteCommandList(FD3D12CommandList* InCommandList, bool bWaitForCompletion);
