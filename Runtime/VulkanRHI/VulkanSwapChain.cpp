@@ -25,8 +25,20 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     FVulkanSurface* Surface = CreateInfo.Surface;
     CHECK(Surface != nullptr);
  
+    VkSurfaceCapabilitiesKHR Capabilities;
+    if (!Surface->GetCapabilities(Capabilities))
+    {
+        return false;
+    }
+
     TArray<VkSurfaceFormatKHR> SupportedFormats;
     if (!Surface->GetSupportedFormats(SupportedFormats))
+    {
+        return false;
+    }
+
+    TArray<VkPresentModeKHR> SupportedPresentModes;
+    if (!Surface->GetPresentModes(SupportedPresentModes))
     {
         return false;
     }
@@ -68,12 +80,6 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
         VULKAN_INFO("Selected format '%s' for SwapChain", ToString(SelectedFormat.format));
     }
 
-    TArray<VkPresentModeKHR> SupportedPresentModes;
-    if (!Surface->GetPresentModes(SupportedPresentModes))
-    {
-        return false;
-    }
-
     // TODO: Investigate Vulkan V-sync
     VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
     if (!CreateInfo.bVerticalSync)
@@ -101,12 +107,6 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     }
 
     VULKAN_INFO("Selected presentmode '%s' for SwapChain", ToString(SelectedPresentMode));
-
-    VkSurfaceCapabilitiesKHR Capabilities;
-    if (!Surface->GetCapabilities(Capabilities))
-    {
-        return false;
-    }
 
     // Determine the size of the SwapChain
     VkExtent2D CurrentExtent;
