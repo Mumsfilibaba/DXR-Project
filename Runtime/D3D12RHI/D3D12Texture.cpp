@@ -140,7 +140,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             return false;
         }
 
-        FD3D12ShaderResourceViewRef DefaultSRV = new FD3D12ShaderResourceView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
+        FD3D12ShaderResourceViewRef DefaultSRV = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
         if (!DefaultSRV->AllocateHandle())
         {
             return false;
@@ -169,7 +169,7 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             ViewDesc.Texture2D.MipSlice   = 0;
             ViewDesc.Texture2D.PlaneSlice = 0;
 
-            FD3D12UnorderedAccessViewRef DefaultUAV = new FD3D12UnorderedAccessView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap(), this);
+            FD3D12UnorderedAccessViewRef DefaultUAV = new FD3D12UnorderedAccessView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), this);
             if (!DefaultUAV->AllocateHandle())
             {
                 return false;
@@ -313,7 +313,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
         D3D12_ERROR("ResourceDimension (=%s) does not support RenderTargetViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12RenderTargetViewRef D3D12View = new FD3D12RenderTargetView(GetDevice(), FD3D12RHI::GetRHI()->GetRenderTargetOfflineDescriptorHeap());
+    FD3D12RenderTargetViewRef D3D12View = new FD3D12RenderTargetView(GetDevice(), GetDevice()->GetRenderTargetOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -401,7 +401,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
         D3D12_ERROR("ResourceDimension (=%s) does not support DepthStencilViews", ToString(ResourceDesc.Dimension));
     }
 
-    FD3D12DepthStencilViewRef D3D12View = new FD3D12DepthStencilView(GetDevice(), FD3D12RHI::GetRHI()->GetDepthStencilOfflineDescriptorHeap());
+    FD3D12DepthStencilViewRef D3D12View = new FD3D12DepthStencilView(GetDevice(), GetDevice()->GetDepthStencilOfflineDescriptorHeap());
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;

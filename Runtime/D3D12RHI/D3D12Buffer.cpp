@@ -50,7 +50,7 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
 
             if (Info.IsConstantBuffer())
             {
-                View = new FD3D12ConstantBufferView(GetDevice(), FD3D12RHI::GetRHI()->GetResourceOfflineDescriptorHeap());
+                View = new FD3D12ConstantBufferView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap());
                 if (!CreateCBV())
                 {
                     return false;

@@ -65,7 +65,7 @@ private:
 class FD3D12SamplerState : public FRHISamplerState, public FD3D12DeviceChild
 {
 public:
-    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InOfflineHeap, const FRHISamplerStateInfo& InSamplerInfo);
+    FD3D12SamplerState(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, const FRHISamplerStateInfo& InSamplerInfo);
     virtual ~FD3D12SamplerState();
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
@@ -89,7 +89,7 @@ public:
 
 private:
     D3D12_SAMPLER_DESC           Desc;
-    FD3D12OfflineDescriptorHeap* OfflineHeap;
+    FD3D12OfflineDescriptorHeap& OfflineHeap;
     FD3D12OfflineDescriptor      Descriptor;
     FD3D12SamplerStateIdentifier Identifier;
 };

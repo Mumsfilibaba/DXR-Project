@@ -37,10 +37,6 @@ FD3D12RHI::FD3D12RHI()
     : FRHI(ERHIType::D3D12)
     , Device(nullptr)
     , DirectContext(nullptr)
-    , ResourceOfflineDescriptorHeap(nullptr)
-    , RenderTargetOfflineDescriptorHeap(nullptr)
-    , DepthStencilOfflineDescriptorHeap(nullptr)
-    , SamplerOfflineDescriptorHeap(nullptr)
 {
     if (!GD3D12RHI)
     {
@@ -83,12 +79,6 @@ FD3D12RHI::~FD3D12RHI()
         GRHICommandExecutor.FlushGarbageCollection();
     }
 
-
-    SAFE_DELETE(ResourceOfflineDescriptorHeap);
-    SAFE_DELETE(RenderTargetOfflineDescriptorHeap);
-    SAFE_DELETE(DepthStencilOfflineDescriptorHeap);
-    SAFE_DELETE(SamplerOfflineDescriptorHeap);
-
     SAFE_DELETE(Device);
     SAFE_DELETE(Adapter);
 
@@ -119,31 +109,6 @@ bool FD3D12RHI::Initialize()
 
     Device = new FD3D12Device(Adapter);
     if (!Device->Initialize())
-    {
-        return false;
-    }
-
-    // Initialize Offline Descriptor heaps
-    ResourceOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-    if (!ResourceOfflineDescriptorHeap->Initialize())
-    {
-        return false;
-    }
-
-    RenderTargetOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    if (!RenderTargetOfflineDescriptorHeap->Initialize())
-    {
-        return false;
-    }
-
-    DepthStencilOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-    if (!DepthStencilOfflineDescriptorHeap->Initialize())
-    {
-        return false;
-    }
-
-    SamplerOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
-    if (!SamplerOfflineDescriptorHeap->Initialize())
     {
         return false;
     }
@@ -320,7 +285,7 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateInfo& I
         
         FMemory::Memcpy(Desc.BorderColor, &InSamplerInfo.BorderColor.r, sizeof(Desc.BorderColor));
 
-        Result = new FD3D12SamplerState(GetDevice(), SamplerOfflineDescriptorHeap, InSamplerInfo);
+        Result = new FD3D12SamplerState(GetDevice(), GetDevice()->GetSamplerOfflineDescriptorHeap(), InSamplerInfo);
         if (!Result->CreateSampler(Desc))
         {
             return nullptr;
@@ -455,7 +420,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
         Desc.Texture3D.ResourceMinLODClamp = InDesc.MinLODClamp;
     }
 
-    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, D3D12Texture);
+    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), D3D12Texture);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -507,7 +472,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHIBufferS
         Desc.Buffer.StructureByteStride = 0;
     }
 
-    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), ResourceOfflineDescriptorHeap, InDesc.Buffer);
+    FD3D12ShaderResourceViewRef D3D12View = new FD3D12ShaderResourceView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), InDesc.Buffer);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -589,7 +554,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
         Desc.Texture3D.MipSlice    = InDesc.MipLevel;
     }
 
-    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, InDesc.Texture);
+    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), InDesc.Texture);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;
@@ -640,7 +605,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHIBuffe
         Desc.Buffer.StructureByteStride = 0;
     }
 
-    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), ResourceOfflineDescriptorHeap, InDesc.Buffer);
+    FD3D12UnorderedAccessViewRef D3D12View = new FD3D12UnorderedAccessView(GetDevice(), GetDevice()->GetResourceOfflineDescriptorHeap(), InDesc.Buffer);
     if (!D3D12View->AllocateHandle())
     {
         return nullptr;

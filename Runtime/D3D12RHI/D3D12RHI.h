@@ -120,11 +120,6 @@ public:
     void ProcessPendingCommands();
     void SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue);
 
-    FD3D12OfflineDescriptorHeap* GetResourceOfflineDescriptorHeap()     const { return ResourceOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap* GetRenderTargetOfflineDescriptorHeap() const { return RenderTargetOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap* GetDepthStencilOfflineDescriptorHeap() const { return DepthStencilOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap* GetSamplerOfflineDescriptorHeap()      const { return SamplerOfflineDescriptorHeap; }
-
     FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D()   const { return GenerateMipsTex2D_PSO; }
     FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
     
@@ -144,25 +139,20 @@ public:
     }
 
 private:
-    FD3D12Adapter*        Adapter;
-    FD3D12Device*         Device;
-    FD3D12CommandContext* DirectContext;
-
-    FD3D12OfflineDescriptorHeap*  ResourceOfflineDescriptorHeap;
-    FD3D12OfflineDescriptorHeap*  RenderTargetOfflineDescriptorHeap;
-    FD3D12OfflineDescriptorHeap*  DepthStencilOfflineDescriptorHeap;
-    FD3D12OfflineDescriptorHeap*  SamplerOfflineDescriptorHeap;
+    FD3D12Adapter*                Adapter;
+    FD3D12Device*                 Device;
+    FD3D12CommandContext*         DirectContext;
 
     TArray<FD3D12DeferredObject>  DeletionQueue;
     FCriticalSection              DeletionQueueCS;
 
-    TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> SamplerStateMap;
-    FCriticalSection                                  SamplerStateMapCS;
-
     FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;
     FD3D12ComputePipelineStateRef GenerateMipsTexCube_PSO;
 
-    TQueue<FD3D12CommandPayload*, EQueueType::MPSC> PendingSubmissions;
+    TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   PendingSubmissions;
+
+    TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> SamplerStateMap;
+    FCriticalSection                                  SamplerStateMapCS;
 
     static FD3D12RHI* GD3D12RHI;
 };

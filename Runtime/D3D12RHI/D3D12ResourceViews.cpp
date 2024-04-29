@@ -2,13 +2,12 @@
 #include "D3D12Descriptors.h"
 #include "D3D12ResourceViews.h"
 
-FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
+FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
     : FD3D12DeviceChild(InDevice)
     , Resource(nullptr)
-    , Heap(InHeap)
+    , OfflineHeap(InOfflineHeap)
     , Descriptor()
 {
-    CHECK(Heap != nullptr);
 }
 
 FD3D12View::~FD3D12View()
@@ -18,20 +17,20 @@ FD3D12View::~FD3D12View()
 
 bool FD3D12View::AllocateHandle()
 {
-    Descriptor = Heap->Allocate();
+    Descriptor = OfflineHeap.Allocate();
     return Descriptor;
 }
 
 void FD3D12View::InvalidateAndFreeHandle()
 {
-    Heap->Free(Descriptor);
+    OfflineHeap.Free(Descriptor);
 }
 
-
-FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
-    : FD3D12View(InDevice, InHeap)
+FD3D12ConstantBufferView::FD3D12ConstantBufferView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
+    : FD3D12View(InDevice, InOfflineHeap)
     , Desc()
 {
+    CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D12_CONSTANT_BUFFER_VIEW_DESC& InDesc)
@@ -48,12 +47,12 @@ bool FD3D12ConstantBufferView::CreateView(FD3D12Resource* InResource, const D3D1
     return true;
 }
 
-
-FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
+FD3D12ShaderResourceView::FD3D12ShaderResourceView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
     : FRHIShaderResourceView(InResource)
-    , FD3D12View(InDevice, InHeap)
+    , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
 {
+    CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D12_SHADER_RESOURCE_VIEW_DESC& InDesc)
@@ -78,13 +77,13 @@ bool FD3D12ShaderResourceView::CreateView(FD3D12Resource* InResource, const D3D1
     return true;
 }
 
-
-FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap, FRHIResource* InResource)
+FD3D12UnorderedAccessView::FD3D12UnorderedAccessView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap, FRHIResource* InResource)
     : FRHIUnorderedAccessView(InResource)
-    , FD3D12View(InDevice, InHeap)
+    , FD3D12View(InDevice, InOfflineHeap)
     , Desc()
     , CounterResource(nullptr)
 {
+    CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD3D12Resource* InResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC& InDesc)
@@ -116,11 +115,11 @@ bool FD3D12UnorderedAccessView::CreateView(FD3D12Resource* InCounterResource, FD
     return true;
 }
 
-
-FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
-    : FD3D12View(InDevice, InHeap)
+FD3D12RenderTargetView::FD3D12RenderTargetView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
+    : FD3D12View(InDevice, InOfflineHeap)
     , Desc()
 {
+    CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
 bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_RENDER_TARGET_VIEW_DESC& InDesc)
@@ -145,11 +144,11 @@ bool FD3D12RenderTargetView::CreateView(FD3D12Resource* InResource, const D3D12_
     return true;
 }
 
-
-FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap* InHeap)
-    : FD3D12View(InDevice, InHeap)
+FD3D12DepthStencilView::FD3D12DepthStencilView(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
+    : FD3D12View(InDevice, InOfflineHeap)
     , Desc()
 {
+    CHECK(InOfflineHeap.GetType() == D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 }
 
 bool FD3D12DepthStencilView::CreateView(FD3D12Resource* InResource, const D3D12_DEPTH_STENCIL_VIEW_DESC& InDesc)

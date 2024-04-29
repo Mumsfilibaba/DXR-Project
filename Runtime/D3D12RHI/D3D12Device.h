@@ -3,6 +3,7 @@
 #include "D3D12Allocators.h"
 #include "D3D12Descriptors.h"
 #include "D3D12RootSignature.h"
+#include "D3D12SamplerState.h"
 #include "D3D12CommandListManager.h"
 #include "Core/Containers/SharedRef.h"
 
@@ -84,6 +85,15 @@ private:
     TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
 };
 
+struct FD3D12DefaultDescriptors
+{
+    FD3D12ConstantBufferViewRef  DefaultCBV;
+    FD3D12ShaderResourceViewRef  DefaultSRV;
+    FD3D12UnorderedAccessViewRef DefaultUAV;
+    FD3D12RenderTargetViewRef    DefaultRTV;
+    FD3D12SamplerStateRef        DefaultSampler;
+};
+
 class FD3D12Device
 {
 public:
@@ -101,7 +111,12 @@ public:
     FD3D12RootSignatureManager& GetRootSignatureManager() { return *RootSignatureManager; }
     FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return *GlobalResourceHeap; }
     FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap() { return *GlobalSamplerHeap; }
-    
+    FD3D12OfflineDescriptorHeap& GetResourceOfflineDescriptorHeap() { return *ResourceOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap& GetRenderTargetOfflineDescriptorHeap() { return *RenderTargetOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap& GetDepthStencilOfflineDescriptorHeap() { return *DepthStencilOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap& GetSamplerOfflineDescriptorHeap() { return *SamplerOfflineDescriptorHeap; }
+    FD3D12DefaultDescriptors& GetDefaultDescriptors() { return DefaultDescriptors; }
+
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
 
     uint32 GetNodeMask()  const { return NodeMask; }
@@ -148,11 +163,18 @@ public:
 private:
     bool CreateDevice();
     bool CreateCommandManagers();
+    bool CreateDefaultResources();
 
     FD3D12Adapter*                 Adapter;
 
     FD3D12OnlineDescriptorHeap*    GlobalResourceHeap;
     FD3D12OnlineDescriptorHeap*    GlobalSamplerHeap;
+
+    FD3D12OfflineDescriptorHeap*   ResourceOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*   RenderTargetOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*   DepthStencilOfflineDescriptorHeap;
+    FD3D12OfflineDescriptorHeap*   SamplerOfflineDescriptorHeap;
+
     FD3D12UploadHeapAllocator*     UploadAllocator;
     FD3D12RootSignatureManager*    RootSignatureManager;
 
@@ -163,6 +185,8 @@ private:
     FD3D12CommandAllocatorManager* DirectCommandAllocatorManager;
     FD3D12CommandAllocatorManager* CopyCommandAllocatorManager;
     FD3D12CommandAllocatorManager* ComputeCommandAllocatorManager;
+
+    FD3D12DefaultDescriptors       DefaultDescriptors;
 
     D3D_FEATURE_LEVEL              MinFeatureLevel;
     D3D_FEATURE_LEVEL              ActiveFeatureLevel;

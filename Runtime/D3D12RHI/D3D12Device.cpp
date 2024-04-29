@@ -439,6 +439,10 @@ bool FD3D12Adapter::Initialize()
 FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     : GlobalResourceHeap(nullptr)
     , GlobalSamplerHeap(nullptr)
+    , ResourceOfflineDescriptorHeap(nullptr)
+    , RenderTargetOfflineDescriptorHeap(nullptr)
+    , DepthStencilOfflineDescriptorHeap(nullptr)
+    , SamplerOfflineDescriptorHeap(nullptr)
     , RootSignatureManager(nullptr)
     , DirectCommandListManager(nullptr)
     , CopyCommandListManager(nullptr)
@@ -485,6 +489,13 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
 
 FD3D12Device::~FD3D12Device()
 {
+    // Destroy the default resources
+    DefaultDescriptors.DefaultCBV.Reset();
+    DefaultDescriptors.DefaultSRV.Reset();
+    DefaultDescriptors.DefaultUAV.Reset();
+    DefaultDescriptors.DefaultSampler.Reset();
+    DefaultDescriptors.DefaultRTV.Reset();
+
     // Destroy all CommandLists
     SAFE_DELETE(DirectCommandListManager);
     SAFE_DELETE(ComputeCommandListManager);
@@ -498,6 +509,10 @@ FD3D12Device::~FD3D12Device()
     // Release Heaps
     SAFE_DELETE(GlobalResourceHeap);
     SAFE_DELETE(GlobalSamplerHeap);
+    SAFE_DELETE(ResourceOfflineDescriptorHeap);
+    SAFE_DELETE(RenderTargetOfflineDescriptorHeap);
+    SAFE_DELETE(DepthStencilOfflineDescriptorHeap);
+    SAFE_DELETE(SamplerOfflineDescriptorHeap);
 
     // Release the rest of the managers
     SAFE_DELETE(UploadAllocator);
@@ -665,8 +680,40 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
+    // Initialize Offline Descriptor heaps
+    ResourceOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    if (!ResourceOfflineDescriptorHeap->Initialize())
+    {
+        return false;
+    }
+
+    RenderTargetOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    if (!RenderTargetOfflineDescriptorHeap->Initialize())
+    {
+        return false;
+    }
+
+    DepthStencilOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+    if (!DepthStencilOfflineDescriptorHeap->Initialize())
+    {
+        return false;
+    }
+
+    SamplerOfflineDescriptorHeap = new FD3D12OfflineDescriptorHeap(this, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
+    if (!SamplerOfflineDescriptorHeap->Initialize())
+    {
+        return false;
+    }
+
     // UploadAllocator
     UploadAllocator = new FD3D12UploadHeapAllocator(this);
+
+    // Initialize default descriptors/views
+    if (!CreateDefaultResources())
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -803,6 +850,111 @@ bool FD3D12Device::CreateCommandManagers()
     DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
     CopyCommandAllocatorManager    = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
     ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
+    return true;
+}
+
+bool FD3D12Device::CreateDefaultResources()
+{
+    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
+    FMemory::Memzero(&CBVDesc);
+
+    CBVDesc.BufferLocation = 0;
+    CBVDesc.SizeInBytes    = 0;
+
+    DefaultDescriptors.DefaultCBV = new FD3D12ConstantBufferView(this, GetResourceOfflineDescriptorHeap());
+    if (!DefaultDescriptors.DefaultCBV->AllocateHandle())
+    {
+        return false;
+    }
+
+    if (!DefaultDescriptors.DefaultCBV->CreateView(nullptr, CBVDesc))
+    {
+        return false;
+    }
+
+    D3D12_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
+    FMemory::Memzero(&UAVDesc);
+
+    UAVDesc.ViewDimension        = D3D12_UAV_DIMENSION_TEXTURE2D;
+    UAVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    UAVDesc.Texture2D.MipSlice   = 0;
+    UAVDesc.Texture2D.PlaneSlice = 0;
+
+    DefaultDescriptors.DefaultUAV = new FD3D12UnorderedAccessView(this, GetResourceOfflineDescriptorHeap(), nullptr);
+    if (!DefaultDescriptors.DefaultUAV->AllocateHandle())
+    {
+        return false;
+    }
+
+    if (!DefaultDescriptors.DefaultUAV->CreateView(nullptr, nullptr, UAVDesc))
+    {
+        return false;
+    }
+
+    D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
+    FMemory::Memzero(&SRVDesc);
+
+    SRVDesc.ViewDimension                 = D3D12_SRV_DIMENSION_TEXTURE2D;
+    SRVDesc.Format                        = DXGI_FORMAT_R8G8B8A8_UNORM;
+    SRVDesc.Shader4ComponentMapping       = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    SRVDesc.Texture2D.MipLevels           = 1;
+    SRVDesc.Texture2D.MostDetailedMip     = 0;
+    SRVDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    SRVDesc.Texture2D.PlaneSlice          = 0;
+
+    DefaultDescriptors.DefaultSRV = new FD3D12ShaderResourceView(this, GetResourceOfflineDescriptorHeap(), nullptr);
+    if (!DefaultDescriptors.DefaultSRV->AllocateHandle())
+    {
+        return false;
+    }
+
+    if (!DefaultDescriptors.DefaultSRV->CreateView(nullptr, SRVDesc))
+    {
+        return false;
+    }
+
+    D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
+    FMemory::Memzero(&RTVDesc);
+
+    RTVDesc.ViewDimension        = D3D12_RTV_DIMENSION_TEXTURE2D;
+    RTVDesc.Format               = DXGI_FORMAT_R8G8B8A8_UNORM;
+    RTVDesc.Texture2D.MipSlice   = 0;
+    RTVDesc.Texture2D.PlaneSlice = 0;
+
+    DefaultDescriptors.DefaultRTV = new FD3D12RenderTargetView(this, GetRenderTargetOfflineDescriptorHeap());
+    if (!DefaultDescriptors.DefaultRTV->AllocateHandle())
+    {
+        return false;
+    }
+
+    if (!DefaultDescriptors.DefaultRTV->CreateView(nullptr, RTVDesc))
+    {
+        return false;
+    }
+
+    D3D12_SAMPLER_DESC SamplerDesc;
+    FMemory::Memzero(&SamplerDesc);
+
+    SamplerDesc.AddressU       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    SamplerDesc.AddressV       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    SamplerDesc.AddressW       = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+    SamplerDesc.BorderColor[0] = 1.0f;
+    SamplerDesc.BorderColor[1] = 1.0f;
+    SamplerDesc.BorderColor[2] = 1.0f;
+    SamplerDesc.BorderColor[3] = 1.0f;
+    SamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+    SamplerDesc.Filter         = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+    SamplerDesc.MaxAnisotropy  = 1;
+    SamplerDesc.MaxLOD         = TNumericLimits<float>::Max();
+    SamplerDesc.MinLOD         = TNumericLimits<float>::Lowest();
+    SamplerDesc.MipLODBias     = 0.0f;
+
+    DefaultDescriptors.DefaultSampler = new FD3D12SamplerState(this, GetSamplerOfflineDescriptorHeap(), FRHISamplerStateInfo());
+    if (!DefaultDescriptors.DefaultSampler->CreateSampler(SamplerDesc))
+    {
+        return false;
+    }
+
     return true;
 }
 
