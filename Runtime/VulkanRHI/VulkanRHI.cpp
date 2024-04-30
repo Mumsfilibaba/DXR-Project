@@ -35,6 +35,27 @@ FVulkanRHI::FVulkanRHI()
 
 FVulkanRHI::~FVulkanRHI()
 {
+    const auto FlushDeletionQueue = [this]()
+    {
+        // Delete all remaining resources
+        while (!DeletionQueue.IsEmpty())
+        {
+            TArray<FVulkanDeferredObject> Items;
+            {
+                TScopedLock Lock(DeletionQueueCS);
+                Items = Move(DeletionQueue);
+            }
+
+            FVulkanDeferredObject::ProcessItems(Items);
+
+            // NOTE: Objects could contain other objects, that now need to be flushed
+            GRHICommandExecutor.FlushGarbageCollection();
+        }
+    };
+
+    // Flush before submitting since some objects needs the CommandContext
+    FlushDeletionQueue();
+
     // Delete the Default Context before we flush the submission queue..
     SAFE_DELETE(GraphicsCommandContext);
 
@@ -49,21 +70,9 @@ FVulkanRHI::~FVulkanRHI()
     {
         ProcessPendingCommands();
     }
-    
-    // Delete all remaining resources
-    while (!DeletionQueue.IsEmpty())
-    {
-        TArray<FVulkanDeferredObject> Items;
-        {
-            TScopedLock Lock(DeletionQueueCS);
-            Items = Move(DeletionQueue);
-        }
 
-        FVulkanDeferredObject::ProcessItems(Items);
-
-        // NOTE: Objects could contain other objects, that now need to be flushed
-        GRHICommandExecutor.FlushGarbageCollection();
-    }
+    // Then flush any potential remaining objects
+    FlushDeletionQueue();
 
     SAFE_DELETE(GraphicsQueue);
     SAFE_DELETE(Device);

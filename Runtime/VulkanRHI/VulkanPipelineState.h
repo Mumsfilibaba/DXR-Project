@@ -149,6 +149,13 @@ public:
     virtual ~FVulkanRayTracingPipelineState() = default;
 };
 
+struct FVulkanPipelineDataHeader
+{
+    CHAR   Magic[5];   // Always "VKPSO"
+    CHAR   Padding[3]; 
+    uint64 DataCRC;
+    uint64 DataSize;
+};
 
 struct FVulkanPipelineCacheHeader
 {

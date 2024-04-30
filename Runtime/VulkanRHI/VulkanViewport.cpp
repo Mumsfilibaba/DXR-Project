@@ -91,7 +91,7 @@ bool FVulkanViewport::CreateSwapChain()
         VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Info.Width, Info.Height, SwapChainExtent.width, SwapChainExtent.height);
         Info.Width  = static_cast<uint16>(SwapChainExtent.width);
         Info.Height = static_cast<uint16>(SwapChainExtent.height);
-        
+
         if (BackBuffer)
         {
             BackBuffer->ResizeBackBuffer(Info.Width, Info.Height);

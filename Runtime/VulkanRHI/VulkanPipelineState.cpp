@@ -688,7 +688,6 @@ bool FVulkanPipelineCache::SaveCacheData()
 {
     if (!VULKAN_CHECK_HANDLE(PipelineCache))
     {
-        VULKAN_WARNING("No valid PipelineCache created");
         return false;
     }
     
@@ -726,8 +725,22 @@ bool FVulkanPipelineCache::SaveCacheData()
             VULKAN_ERROR("Failed to serielize PipelineCache");
             return false;
         }
-        
-        const int32 BytesWritten = CacheFile->Write(PipelineCacheData.Get(), static_cast<uint32>(PipelineCacheSize));
+
+        FVulkanPipelineDataHeader DataHeader;
+        FMemory::Memzero(&DataHeader, sizeof(FVulkanPipelineDataHeader));
+
+        FMemory::Memcpy(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic));
+        DataHeader.DataCRC  = FCRC32::Generate(PipelineCacheData.Get(), PipelineCacheSize);
+        DataHeader.DataSize = PipelineCacheSize;
+
+        int32 BytesWritten = CacheFile->Write(reinterpret_cast<const uint8*>(&DataHeader), sizeof(FVulkanPipelineDataHeader));
+        if (BytesWritten != sizeof(FVulkanPipelineDataHeader))
+        {
+            VULKAN_ERROR("Failed to write PipelineDataHeader to disk");
+            return false;
+        }
+
+        BytesWritten = CacheFile->Write(PipelineCacheData.Get(), static_cast<uint32>(PipelineCacheSize));
         if (BytesWritten != static_cast<int32>(PipelineCacheSize))
         {
             VULKAN_ERROR("Failed to write PipelineCache to disk");
@@ -754,19 +767,50 @@ bool FVulkanPipelineCache::LoadCacheFromFile()
         VULKAN_WARNING("Failed to open PipelineCache-file");
         return false;
     }
-    
-    const int64 PipelineCacheSize = CacheFile->Size();
-    TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(PipelineCacheSize);
-    const int64 BytesRead = CacheFile->Read(PipelineCacheData.Get(), static_cast<uint32>(PipelineCacheSize));
-    if (PipelineCacheSize != BytesRead)
+
+    FVulkanPipelineDataHeader DataHeader;
+    int64 BytesRead = CacheFile->Read(reinterpret_cast<uint8*>(&DataHeader), sizeof(FVulkanPipelineDataHeader));
+    if (BytesRead != sizeof(FVulkanPipelineDataHeader))
+    {
+        VULKAN_WARNING("Something went wrong when reading PipelineCacheHeader");
+        return false;
+    }
+
+    // Validate that the file is valid
+    if (FMemory::Memcmp(DataHeader.Magic, "VKPSO", sizeof(DataHeader.Magic)) != 0)
+    {
+        VULKAN_WARNING("Invalid PipelineCacheHeader");
+        return false;
+    }
+
+    // NOTE: if the cache size is more than 1GB something is probably off
+    constexpr uint64 MaxCacheSize = 1024 * 1024 * 1024;
+    if (DataHeader.DataSize >= MaxCacheSize)
+    {
+        VULKAN_WARNING("Invalid PipelineCacheHeader");
+        return false;
+    }
+
+    // Load the data
+    TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(DataHeader.DataSize);
+    BytesRead = CacheFile->Read(PipelineCacheData.Get(), static_cast<uint32>(DataHeader.DataSize));
+    if (BytesRead != DataHeader.DataSize)
     {
         VULKAN_WARNING("Something went wrong when reading PipelineCache");
         return false;
     }
     
-    if (static_cast<uint64>(PipelineCacheSize) < sizeof(FVulkanPipelineCacheHeader))
+    if (static_cast<uint64>(DataHeader.DataSize) < sizeof(FVulkanPipelineCacheHeader))
     {
         VULKAN_WARNING("PipelineCache is smaller than PipelineCacheHeader");
+        return false;
+    }
+
+    // Validate the CRC
+    const uint32 DataCRC = FCRC32::Generate(PipelineCacheData.Get(), DataHeader.DataSize);
+    if (DataCRC != DataHeader.DataCRC)
+    {
+        VULKAN_WARNING("PipelineCacheData is invalid");
         return false;
     }
     
@@ -796,7 +840,7 @@ bool FVulkanPipelineCache::LoadCacheFromFile()
     
     CreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     CreateInfo.pInitialData    = PipelineCacheData.Get();
-    CreateInfo.initialDataSize = PipelineCacheSize;
+    CreateInfo.initialDataSize = DataHeader.DataSize;
 
     if (GetDevice()->IsPipelineCacheControlSupported())
     {
