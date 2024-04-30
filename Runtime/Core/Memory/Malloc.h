@@ -4,6 +4,7 @@
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Map.h"
+#include "Core/Threading/AtomicInt.h"
 
 struct FMalloc;
 
@@ -120,10 +121,9 @@ private:
     TMap<void*, FAllocationInfo> Allocations;
     FCriticalSection             AllocationsCS;
 
-	FMalloc* BaseMalloc;
-	bool     bTrackingEnabled;
+    FMalloc* BaseMalloc;
+    bool     bTrackingEnabled;
 };
-
 
 class CORE_API FMallocStackTraceTracker : public FMalloc
 {
@@ -140,36 +140,38 @@ class CORE_API FMallocStackTraceTracker : public FMalloc
     };
 
 public:
+    static void Enable();
+    static void Disable();
+
     FMallocStackTraceTracker(FMalloc* InBaseMalloc);
     ~FMallocStackTraceTracker();
 
     virtual void* Malloc(uint64 InSize) override final;
-
     virtual void* Realloc(void* InBlock, uint64 InSize) override final;
-
     virtual void Free(void* InBlock) override final;
-
     virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
-	void TrackAllocationMalloc(void* Block, uint64 Size);
-	void TrackAllocationFree(void* Block);
+    void TrackAllocationMalloc(void* Block, uint64 Size);
+    void TrackAllocationFree(void* Block);
 
     void EnableTracking() 
     { 
-        bTrackingEnabled = true;
+        bTrackingEnabled.Store(true);
     }
 
     void DisableTacking()
     { 
-        bTrackingEnabled = false;
+        bTrackingEnabled.Store(false);
     }
 
 private:
-	TMap<void*, FAllocationStackTrace> Allocations;
-	FCriticalSection                   AllocationsCS;
+    TMap<void*, FAllocationStackTrace> Allocations;
+    FCriticalSection                   AllocationsCS;
 
-	FMalloc* BaseMalloc;
-	bool     bTrackingEnabled;
+    FMalloc*    BaseMalloc;
+    FAtomicInt8 bTrackingEnabled;
+
+    static FMallocStackTraceTracker* GStackTraceTracker;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

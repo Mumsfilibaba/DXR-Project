@@ -260,7 +260,7 @@ struct FVulkanDescriptorWrites
     TArray<VkDescriptorImageInfo>  DescriptorImageInfos;
 };
 
-class FVulkanDescriptorState : public FVulkanDeviceChild
+class FVulkanDescriptorState : public FVulkanDeviceChild, FNonCopyable
 {
 public:
     FVulkanDescriptorState(FVulkanDevice* InDevice, FVulkanPipelineLayout* InLayout, const FVulkanDefaultResources& InDefaultResources);
@@ -317,12 +317,9 @@ private:
     const FVulkanDefaultResources&      DefaultResources;
 };
 
-class FVulkanDescriptorPool : public FVulkanDeviceChild
+class FVulkanDescriptorPool : public FVulkanDeviceChild, FNonCopyable
 {
 public:
-    FVulkanDescriptorPool(const FVulkanDescriptorPool&) = delete;
-    FVulkanDescriptorPool& operator=(const FVulkanDescriptorPool&) = delete;
-
     FVulkanDescriptorPool(FVulkanDevice* InDevice);
     ~FVulkanDescriptorPool();
     
@@ -337,6 +334,6 @@ public:
 
 private:
     VkDescriptorPool DescriptorPool;
-    int32           MaxDescriptorSets;
-    int32           NumDescriptorSets;
+    int32            MaxDescriptorSets;
+    int32            NumDescriptorSets;
 };

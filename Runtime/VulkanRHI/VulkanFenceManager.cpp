@@ -3,7 +3,7 @@
 
 FVulkanFenceManager::FVulkanFenceManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
-    , Fences()
+    , AvailableFences()
     , FencesCS()
 {
 }
@@ -15,30 +15,26 @@ FVulkanFenceManager::~FVulkanFenceManager()
 
 FVulkanFence* FVulkanFenceManager::ObtainFence()
 {
+    SCOPED_LOCK(FencesCS);
+
+    FVulkanFence* Fence = nullptr;
+    if (AvailableFences.Dequeue(Fence))
     {
-        SCOPED_LOCK(FencesCS);
-        
-        if (!Fences.IsEmpty())
-        {
-            FVulkanFence* Fence = Fences.LastElement();
-            Fences.Pop();
-            
-            // Reset the fence to not be signaled before we return it
-            Fence->Reset();
-            return Fence;
-        }
-    }
-    
-    FVulkanFence* Fence = new FVulkanFence(GetDevice());
-    if (!Fence->Initialize(false))
-    {
-        DEBUG_BREAK();
-        return nullptr;
-    }
-    else
-    {
+        // Reset the fence to not be signaled before we return it
+        Fence->Reset();
         return Fence;
     }
+    
+    FVulkanFence* NewFence = new FVulkanFence(GetDevice());
+    if (!NewFence->Initialize(false))
+    {
+        DEBUG_BREAK();
+        delete NewFence;
+        return nullptr;
+    }
+
+    Fences.Add(NewFence);
+    return NewFence;
 }
 
 void FVulkanFenceManager::RecycleFence(FVulkanFence* InFence)
@@ -46,7 +42,7 @@ void FVulkanFenceManager::RecycleFence(FVulkanFence* InFence)
     if (InFence)
     {
         SCOPED_LOCK(FencesCS);
-        Fences.Add(InFence);
+        AvailableFences.Enqueue(InFence);
     }
     else
     {
@@ -64,4 +60,5 @@ void FVulkanFenceManager::ReleaseAll()
     }
 
     Fences.Clear();
+    AvailableFences.Clear();
 }

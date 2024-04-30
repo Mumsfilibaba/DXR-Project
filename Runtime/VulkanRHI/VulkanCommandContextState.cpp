@@ -9,6 +9,22 @@ FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, 
 {
 }
 
+FVulkanCommandContextState::~FVulkanCommandContextState()
+{
+    for (auto DescriptorStatePair : ComputeState.DescriptorStates)
+    {
+        delete DescriptorStatePair.Second;
+    }
+
+    for (auto DescriptorStatePair : GraphicsState.DescriptorStates)
+    {
+        delete DescriptorStatePair.Second;
+    }
+
+    ComputeState.DescriptorStates.Clear();
+    GraphicsState.DescriptorStates.Clear();
+}
+
 bool FVulkanCommandContextState::Initialize()
 {
     ResetState();
@@ -129,20 +145,20 @@ void FVulkanCommandContextState::ResetState()
     FMemory::Memzero(GraphicsState.ScissorRects, sizeof(GraphicsState.ScissorRects));
     GraphicsState.NumScissorRects = 0;
     
-    GraphicsState.PipelineState          = nullptr;
+    GraphicsState.PipelineState = nullptr;
     GraphicsState.CurrentDescriptorState = nullptr;
-    GraphicsState.CurrentLayout          = nullptr;
-    GraphicsState.bBindIndexBuffer   = true;
-    GraphicsState.bBindBlendFactor   = true;
+    GraphicsState.CurrentLayout = nullptr;
+    GraphicsState.bBindIndexBuffer = true;
+    GraphicsState.bBindBlendFactor = true;
     GraphicsState.bBindPipelineState = true;
-    GraphicsState.bBindScissorRects  = true;
-    GraphicsState.bBindViewports     = true;
+    GraphicsState.bBindScissorRects = true;
+    GraphicsState.bBindViewports = true;
     GraphicsState.bBindVertexBuffers = true;
     GraphicsState.bBindPushConstants = true;
 
-    ComputeState.PipelineState          = nullptr;
+    ComputeState.PipelineState = nullptr;
     ComputeState.CurrentDescriptorState = nullptr;
-    ComputeState.CurrentLayout          = nullptr;
+    ComputeState.CurrentLayout = nullptr;
     ComputeState.bBindPipelineState = true;
     ComputeState.bBindPushConstants = true;
 }

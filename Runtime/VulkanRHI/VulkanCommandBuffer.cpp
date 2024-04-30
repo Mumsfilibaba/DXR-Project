@@ -133,11 +133,14 @@ FVulkanCommandBuffer* FVulkanCommandPool::CreateBuffer()
     if (AvailableCommandBuffers.IsEmpty())
     {
         FVulkanCommandBuffer* NewCommandBuffer = new FVulkanCommandBuffer(GetDevice(), this);
-        if (NewCommandBuffer->Initialize(VK_COMMAND_BUFFER_LEVEL_PRIMARY))
+        if (!NewCommandBuffer->Initialize(VK_COMMAND_BUFFER_LEVEL_PRIMARY))
         {
-            CommandBuffer = NewCommandBuffer;
+            DEBUG_BREAK();
+            delete NewCommandBuffer;
+            return nullptr;
         }
 
+        CommandBuffer = NewCommandBuffer;
         CommandBuffers.Add(NewCommandBuffer);
     }
     else

@@ -406,6 +406,16 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     }
 }
 
+FVulkanMemoryManager::~FVulkanMemoryManager()
+{
+    for (FVulkanMemoryHeap* Heap : MemoryHeaps)
+    {
+        delete Heap;
+    }
+
+    MemoryHeaps.Clear();
+}
+
 bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation)
 {
     // We can force dedicated allocations
@@ -762,15 +772,7 @@ bool FVulkanMemoryManager::Free(FVulkanMemoryAllocation& OutAllocation)
         const bool bResult = Page->Free(OutAllocation);
         if (Page->IsEmpty())
         {
-            for (auto it = MemoryHeaps.begin(); it != MemoryHeaps.end(); it++)
-            {
-                if (*it == Page)
-                {
-                    MemoryHeaps.RemoveAt(it.GetIndex());
-                    break;
-                }
-            }
-
+            MemoryHeaps.Remove(Page);
             SAFE_DELETE(Page);
         }
         

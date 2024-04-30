@@ -109,9 +109,10 @@ public:
 
 protected:
     // Pipeline Object is owned by this class
-    VkPipeline Pipeline;
+    VkPipeline             Pipeline;
     // Layout is NOT owned by this class and should not be deleted when the FVulkanPipeline is destroyed
     FVulkanPipelineLayout* PipelineLayout;
+    FString                DebugName;
 };
 
 class FVulkanGraphicsPipelineState : public FRHIGraphicsPipelineState, public FVulkanPipeline
@@ -166,11 +167,11 @@ struct FVulkanPipelineCacheHeader
     uint8  UUID[VK_UUID_SIZE];
 };
 
-class FVulkanPipelineCache : public FVulkanDeviceChild
+class FVulkanPipelineStateManager : public FVulkanDeviceChild
 {
 public:
-    FVulkanPipelineCache(FVulkanDevice* InDevice);
-    ~FVulkanPipelineCache();
+    FVulkanPipelineStateManager(FVulkanDevice* InDevice);
+    ~FVulkanPipelineStateManager();
 
     bool Initialize();
     void Release();

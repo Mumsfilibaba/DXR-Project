@@ -65,7 +65,7 @@ class FVulkanCommandContextState : public FVulkanDeviceChild, public FNonCopyAnd
 {
 public:
     FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext);
-    ~FVulkanCommandContextState() = default;
+    ~FVulkanCommandContextState();
 
     bool Initialize();
     void BindGraphicsStates();

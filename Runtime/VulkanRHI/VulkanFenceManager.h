@@ -2,6 +2,7 @@
 #include "VulkanDeviceChild.h"
 #include "VulkanLoader.h"
 #include "Core/Containers/Array.h"
+#include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 
 class FVulkanFence;
@@ -17,6 +18,7 @@ public:
     void ReleaseAll();
     
 private:
+    TQueue<FVulkanFence*> AvailableFences;
     TArray<FVulkanFence*> Fences;
     FCriticalSection      FencesCS;
 };

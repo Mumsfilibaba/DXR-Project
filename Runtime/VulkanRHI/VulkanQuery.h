@@ -3,6 +3,7 @@
 #include "RHI/RHIResources.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/BitArray.h"
+#include "Core/Containers/Queue.h"
 
 class FVulkanQueryPool;
 class FVulkanCommandBuffer;
@@ -74,7 +75,7 @@ private:
 
 class FVulkanQueryPoolManager : public FVulkanDeviceChild
 {
-public:   
+public:
     FVulkanQueryPoolManager(FVulkanDevice* InDevice);
     ~FVulkanQueryPoolManager();
 
@@ -83,6 +84,7 @@ public:
     void ReleaseAll();
 
 private:
+    TQueue<FVulkanQueryPool*> AvailableQueryPools;
     TArray<FVulkanQueryPool*> QueryPools;
     FCriticalSection          QueryPoolsCS;
 };

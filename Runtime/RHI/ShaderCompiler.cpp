@@ -6,6 +6,7 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Memory/Malloc.h"
 #include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
 

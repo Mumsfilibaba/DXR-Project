@@ -14,7 +14,6 @@ class FVulkanDescriptorSetCache : public FVulkanDeviceChild
         ~FCachedPool();
 
         bool AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet);
-        void ReleaseAll();
 
     private:
         FVulkanDescriptorPool*         CurrentDescriptorPool;

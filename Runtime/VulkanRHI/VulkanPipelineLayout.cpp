@@ -315,7 +315,7 @@ void FVulkanPipelineLayoutManager::Release()
         
         for (const auto& LayoutPair : Layouts)
         {
-            SAFE_DELETE(LayoutPair.Second);
+            delete LayoutPair.Second;
         }
         
         Layouts.Clear();

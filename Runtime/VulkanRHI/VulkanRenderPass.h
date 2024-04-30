@@ -67,7 +67,6 @@ public:
     ~FVulkanRenderPassCache();
 
     VkRenderPass GetRenderPass(const FVulkanRenderPassKey& Key);
-
     void ReleaseAll();
 
 private:

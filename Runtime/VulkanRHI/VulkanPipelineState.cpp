@@ -228,6 +228,7 @@ FVulkanPipeline::~FVulkanPipeline()
 void FVulkanPipeline::SetDebugName(const FString& InName)
 {
     FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Pipeline, VK_OBJECT_TYPE_PIPELINE);
+    DebugName = InName;
 }
 
 FVulkanGraphicsPipelineState::FVulkanGraphicsPipelineState(FVulkanDevice* InDevice)
@@ -503,7 +504,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     PipelineCreateInfo.basePipelineHandle  = VK_NULL_HANDLE;
     PipelineCreateInfo.basePipelineIndex   = -1;
 
-    FVulkanPipelineCache& PipelineCache = GetDevice()->GetPipelineCache();
+    FVulkanPipelineStateManager& PipelineCache = GetDevice()->GetPipelineStateManager();
     if (PipelineCache.CreateGraphicsPipeline(PipelineCreateInfo, Pipeline))
     {
         return true;
@@ -578,7 +579,7 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     PipelineCreateInfo.layout = PipelineLayout->GetVkPipelineLayout();
     PipelineCreateInfo.stage  = ShaderStageCreateInfo;
 
-    FVulkanPipelineCache& PipelineCache = GetDevice()->GetPipelineCache();
+    FVulkanPipelineStateManager& PipelineCache = GetDevice()->GetPipelineStateManager();
     if (PipelineCache.CreateComputePipeline(PipelineCreateInfo, Pipeline))
     {
         return true;
@@ -600,19 +601,19 @@ bool FVulkanComputePipelineState::Initialize(const FRHIComputePipelineStateIniti
     }
 }
 
-FVulkanPipelineCache::FVulkanPipelineCache(FVulkanDevice* InDevice)
+FVulkanPipelineStateManager::FVulkanPipelineStateManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , PipelineCache(VK_NULL_HANDLE)
     , bPipelineCacheDirty(false)
 {
 }
 
-FVulkanPipelineCache::~FVulkanPipelineCache()
+FVulkanPipelineStateManager::~FVulkanPipelineStateManager()
 {
     Release();
 }
 
-bool FVulkanPipelineCache::Initialize()
+bool FVulkanPipelineStateManager::Initialize()
 {
     if (LoadCacheFromFile())
     {
@@ -643,7 +644,7 @@ bool FVulkanPipelineCache::Initialize()
     }
 }
 
-void FVulkanPipelineCache::Release()
+void FVulkanPipelineStateManager::Release()
 {
     if (VULKAN_CHECK_HANDLE(PipelineCache))
     {
@@ -652,7 +653,7 @@ void FVulkanPipelineCache::Release()
     }
 }
 
-bool FVulkanPipelineCache::CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline)
+bool FVulkanPipelineStateManager::CreateGraphicsPipeline(const VkGraphicsPipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline)
 {
     TScopedLock Lock(PipelineCacheCS);
     
@@ -668,7 +669,7 @@ bool FVulkanPipelineCache::CreateGraphicsPipeline(const VkGraphicsPipelineCreate
     }
 }
 
-bool FVulkanPipelineCache::CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline)
+bool FVulkanPipelineStateManager::CreateComputePipeline(const VkComputePipelineCreateInfo& CreateInfo, VkPipeline& OutPipeline)
 {
     TScopedLock Lock(PipelineCacheCS);
     
@@ -684,7 +685,7 @@ bool FVulkanPipelineCache::CreateComputePipeline(const VkComputePipelineCreateIn
     }
 }
 
-bool FVulkanPipelineCache::SaveCacheData()
+bool FVulkanPipelineStateManager::SaveCacheData()
 {
     if (!VULKAN_CHECK_HANDLE(PipelineCache))
     {
@@ -756,7 +757,7 @@ bool FVulkanPipelineCache::SaveCacheData()
     return true;
 }
 
-bool FVulkanPipelineCache::LoadCacheFromFile()
+bool FVulkanPipelineStateManager::LoadCacheFromFile()
 {
     const FString PipelineCacheFilename = CVarPipelineCacheFileName.GetValue();
     const FString PipelineCacheFilepath = FString(FProjectManager::Get().GetAssetPath()) + '/' + PipelineCacheFilename;

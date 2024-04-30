@@ -25,7 +25,6 @@ static bool FilterExtensions(const VkExtensionProperties& ExtensionProperty)
     }
 }
 
-
 FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice* InAdapter)
     : Instance(InInstance)
     , PhysicalDevice(InAdapter)
@@ -36,7 +35,7 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , MemoryManager(this)
     , FenceManager(this)
     , PipelineLayoutManager(this)
-    , PipelineCache(this)
+    , PipelineStateManager(this)
     , DescriptorSetCache(this)
     , DefaultResources()
     , QueryPoolManager(this)
@@ -56,7 +55,7 @@ FVulkanDevice::~FVulkanDevice()
     {
         TScopedLock Lock(SamplerMapCS);
 
-        for (TPair<const FVulkanHashableSamplerCreateInfo&, VkSampler&> SamplerPair : SamplerMap)
+        for (const auto SamplerPair : SamplerMap)
         {
             if (VULKAN_CHECK_HANDLE(SamplerPair.Second))
             {
@@ -68,8 +67,8 @@ FVulkanDevice::~FVulkanDevice()
     }
 
     // Release the PipelineCache
-    PipelineCache.SaveCacheData();
-    PipelineCache.Release();
+    PipelineStateManager.SaveCacheData();
+    PipelineStateManager.Release();
     
     // Release DescriptorSetCache
     DescriptorSetCache.Release();
@@ -365,7 +364,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 bool FVulkanDevice::PostLoaderInitalize()
 {
     // Initialize PipelineCache
-    if (!PipelineCache.Initialize())
+    if (!PipelineStateManager.Initialize())
     {
         return false;
     }

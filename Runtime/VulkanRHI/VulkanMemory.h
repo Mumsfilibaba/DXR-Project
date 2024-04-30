@@ -112,15 +112,12 @@ private:
     VkMemoryAllocateFlags AllocationFlags;
     uint32                MemoryIndex;
     uint32                HeapIndex;
-
-    FVulkanMemoryBlock* Head;
-    uint8*              HostMemory;
-    VkDeviceMemory      DeviceMemory;
-    uint32              MappingCount;
-
-    FString             DebugName;
-
-    FCriticalSection    HeapCS;
+    FVulkanMemoryBlock*   Head;
+    uint8*                HostMemory;
+    VkDeviceMemory        DeviceMemory;
+    uint32                MappingCount;
+    FString               DebugName;
+    FCriticalSection      HeapCS;
 
 #ifdef DEBUG_BUILD
     TArray<FVulkanMemoryBlock*> AllBlocks;
@@ -131,7 +128,7 @@ class FVulkanMemoryManager : public FVulkanDeviceChild
 {
 public:
     FVulkanMemoryManager(FVulkanDevice* InDevice);
-    ~FVulkanMemoryManager() = default;
+    ~FVulkanMemoryManager();
     
     bool AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation);
     bool AllocateImageMemory(VkImage Image, VkMemoryPropertyFlags PropertyFlags, VkMemoryAllocateFlags AllocateFlags, bool bForceDedicatedAllocation, FVulkanMemoryAllocation& OutAllocation); 

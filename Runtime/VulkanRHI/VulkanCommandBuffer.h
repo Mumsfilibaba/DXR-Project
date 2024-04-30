@@ -27,12 +27,9 @@ struct FVulkanImageTransitionBarrier
     VkImageSubresourceRange SubresourceRange;
 };
 
-class FCommandBuffer
+class FCommandBuffer : FNonCopyable
 {
 public:
-    FCommandBuffer(const FCommandBuffer&) = delete;
-    FCommandBuffer& operator=(const FCommandBuffer&) = delete;
-    
     FORCEINLINE FCommandBuffer()
         : CommandBuffer(VK_NULL_HANDLE)
     {
@@ -256,12 +253,9 @@ private:
 
 class FVulkanCommandPool;
 
-class FVulkanCommandBuffer : public FVulkanDeviceChild
+class FVulkanCommandBuffer : public FVulkanDeviceChild, FNonCopyable
 {
 public:
-    FVulkanCommandBuffer(const FVulkanCommandBuffer&) = delete;
-    FVulkanCommandBuffer& operator=(const FVulkanCommandBuffer&) = delete;
-
     FVulkanCommandBuffer(FVulkanDevice* InDevice, FVulkanCommandPool* InOwnerPool);
     ~FVulkanCommandBuffer();
 
@@ -303,12 +297,9 @@ private:
     bool                 bIsRecording;
 };
 
-class FVulkanCommandPool : public FVulkanDeviceChild
+class FVulkanCommandPool : public FVulkanDeviceChild, FNonCopyable
 {
 public:
-    FVulkanCommandPool(const FVulkanCommandPool&) = delete;
-    FVulkanCommandPool& operator=(const FVulkanCommandPool&) = delete;
-
     FVulkanCommandPool(FVulkanDevice* InDevice, EVulkanCommandQueueType InType);
     ~FVulkanCommandPool();
 

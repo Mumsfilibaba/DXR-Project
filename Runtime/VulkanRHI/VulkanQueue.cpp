@@ -56,6 +56,7 @@ FVulkanCommandPool* FVulkanQueue::ObtainCommandPool()
     if (!CommandPool->Initialize())
     {
         DEBUG_BREAK();
+        delete CommandPool;
         return nullptr;
     }
 

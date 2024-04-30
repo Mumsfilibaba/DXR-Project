@@ -112,6 +112,9 @@ FVulkanCommandContext::~FVulkanCommandContext()
 {
     // Flush
     RHIFlush();
+
+    // Reset all state
+    ContextState.ResetState();
 }
 
 bool FVulkanCommandContext::Initialize()

@@ -46,6 +46,30 @@ FD3D12RHI::FD3D12RHI()
 
 FD3D12RHI::~FD3D12RHI()
 {
+    const auto FlushDeletionQueues = [this]()
+    {
+        // NOTE: Objects could contain other objects, that now need to be flushed
+        GRHICommandExecutor.FlushGarbageCollection();
+
+        while (!DeletionQueue.IsEmpty())
+        {
+            TArray<FD3D12DeferredObject> Items;
+            {
+                TScopedLock Lock(DeletionQueueCS);
+                Items = Move(DeletionQueue);
+            }
+
+            FD3D12DeferredObject::ProcessItems(Items);
+
+            // NOTE: Objects could contain other objects, that now need to be flushed
+            GRHICommandExecutor.FlushGarbageCollection();
+        }
+    };
+
+    // Flush any objects that might need the context...
+    FlushDeletionQueues();
+
+    // ...then delete the context
     SAFE_DELETE(DirectContext);
 
     // Delete all samplers
@@ -64,20 +88,8 @@ FD3D12RHI::~FD3D12RHI()
     GenerateMipsTex2D_PSO.Reset();
     GenerateMipsTexCube_PSO.Reset();
 
-    // Delete all remaining resources
-    while (!DeletionQueue.IsEmpty())
-    {
-        TArray<FD3D12DeferredObject> Items;
-        {
-            TScopedLock Lock(DeletionQueueCS);
-            Items = Move(DeletionQueue);
-        }
-
-        FD3D12DeferredObject::ProcessItems(Items);
-
-        // NOTE: Objects could contain other objects, that now need to be flushed
-        GRHICommandExecutor.FlushGarbageCollection();
-    }
+    // ... Finally, delete all remaining resources
+    FlushDeletionQueues();
 
     SAFE_DELETE(Device);
     SAFE_DELETE(Adapter);

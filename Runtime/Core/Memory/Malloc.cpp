@@ -132,25 +132,51 @@ void FMallocLeakTracker::TrackAllocationFree(void* Block)
     EnableTracking();
 }
 
+FMallocStackTraceTracker* FMallocStackTraceTracker::GStackTraceTracker = nullptr;
+
+void FMallocStackTraceTracker::Enable()
+{
+    if (GStackTraceTracker)
+    {
+        GStackTraceTracker->EnableTracking();
+    }
+}
+
+void FMallocStackTraceTracker::Disable()
+{
+    if (GStackTraceTracker)
+    {
+        GStackTraceTracker->DisableTacking();
+    }
+}
 
 FMallocStackTraceTracker::FMallocStackTraceTracker(FMalloc* InBaseMalloc)
     : Allocations()
     , AllocationsCS()
     , BaseMalloc(InBaseMalloc)
-    , bTrackingEnabled(true)
+    , bTrackingEnabled(1)
 {
+    if (!GStackTraceTracker)
+    {
+        GStackTraceTracker = this;
+    }
 }
 
 FMallocStackTraceTracker::~FMallocStackTraceTracker()
 {
     Allocations.~TMap<void*, FAllocationStackTrace>();
     BaseMalloc = nullptr;
+
+    if (GStackTraceTracker == this)
+    {
+        GStackTraceTracker = nullptr;
+    }
 }
 
 void* FMallocStackTraceTracker::Malloc(uint64 InSize)
 {
     void* Block = BaseMalloc->Malloc(InSize);
-    if (bTrackingEnabled)
+    if (bTrackingEnabled.Load())
     {
         TrackAllocationMalloc(Block, InSize);
     }
@@ -173,7 +199,7 @@ void* FMallocStackTraceTracker::Realloc(void* InBlock, uint64 InSize)
         return nullptr;
     }
 
-    if (bTrackingEnabled)
+    if (bTrackingEnabled.Load())
     {
         TrackAllocationMalloc(Block, InSize);
     }

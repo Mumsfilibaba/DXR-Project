@@ -4,12 +4,9 @@
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
 
-class FVulkanFence : public FVulkanDeviceChild
+class FVulkanFence : public FVulkanDeviceChild, FNonCopyable
 {
 public:
-    FVulkanFence(const FVulkanFence&) = delete;
-    FVulkanFence& operator=(const FVulkanFence&) = delete;
-
     FVulkanFence(FVulkanDevice* InDevice);
     ~FVulkanFence();
 

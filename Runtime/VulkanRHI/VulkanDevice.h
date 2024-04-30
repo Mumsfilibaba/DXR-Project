@@ -154,7 +154,7 @@ public:
     FVulkanUploadHeapAllocator& GetUploadHeap() { return UploadHeap; }
     FVulkanFenceManager& GetFenceManager() { return FenceManager; }
     FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return PipelineLayoutManager; }
-    FVulkanPipelineCache& GetPipelineCache() { return PipelineCache; }
+    FVulkanPipelineStateManager& GetPipelineStateManager() { return PipelineStateManager; }
     FVulkanDescriptorSetCache& GetDescriptorSetCache() { return DescriptorSetCache; }
     FVulkanDefaultResources& GetDefaultResources() { return DefaultResources; }
     FVulkanQueryPoolManager& GetQueryPoolManager() { return QueryPoolManager; }
@@ -207,7 +207,7 @@ private:
     FVulkanMemoryManager         MemoryManager;
     FVulkanFenceManager          FenceManager;
     FVulkanPipelineLayoutManager PipelineLayoutManager;
-    FVulkanPipelineCache         PipelineCache;
+    FVulkanPipelineStateManager  PipelineStateManager;
     FVulkanDescriptorSetCache    DescriptorSetCache;
     FVulkanDefaultResources      DefaultResources;
     FVulkanQueryPoolManager      QueryPoolManager;

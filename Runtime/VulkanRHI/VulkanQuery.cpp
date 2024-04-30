@@ -204,7 +204,7 @@ bool FVulkanQueryPool::AllocateIndex(uint32 Index)
 
 FVulkanQueryPoolManager::FVulkanQueryPoolManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
-    , QueryPools()
+    , AvailableQueryPools()
 {
 }
 
@@ -215,31 +215,31 @@ FVulkanQueryPoolManager::~FVulkanQueryPoolManager()
 
 FVulkanQueryPool* FVulkanQueryPoolManager::ObtainQueryPool()
 {
-    {
-        TScopedLock Lock(QueryPoolsCS);
+    TScopedLock Lock(QueryPoolsCS);
 
-        if (!QueryPools.IsEmpty())
-        {
-            FVulkanQueryPool* QueryPool = QueryPools.LastElement();
-            QueryPool->Reset();
-            QueryPools.Pop();
-            return QueryPool;
-        }
+    FVulkanQueryPool* QueryPool = nullptr;
+    if (AvailableQueryPools.Dequeue(QueryPool))
+    {
+        QueryPool->Reset();
+        return QueryPool;
     }
 
-    FVulkanQueryPool* QueryPool = new FVulkanQueryPool(GetDevice());
+    QueryPool = new FVulkanQueryPool(GetDevice());
     if (!QueryPool->Initialize())
     {
+        DEBUG_BREAK();
+        delete QueryPool;
         return nullptr;
     }
 
+    QueryPools.Add(QueryPool);
     return QueryPool;
 }
 
 void FVulkanQueryPoolManager::RecycleQueryPool(FVulkanQueryPool* InQueryPool)
 {
     TScopedLock Lock(QueryPoolsCS);
-    QueryPools.Add(InQueryPool);
+    AvailableQueryPools.Enqueue(InQueryPool);
 }
 
 void FVulkanQueryPoolManager::ReleaseAll()
@@ -252,4 +252,5 @@ void FVulkanQueryPoolManager::ReleaseAll()
     }
 
     QueryPools.Clear();
+    AvailableQueryPools.Clear();
 }

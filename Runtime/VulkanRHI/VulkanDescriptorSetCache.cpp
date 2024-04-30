@@ -11,7 +11,15 @@ FVulkanDescriptorSetCache::FCachedPool::FCachedPool(FVulkanDevice* InDevice, con
 
 FVulkanDescriptorSetCache::FCachedPool::~FCachedPool()
 {
-    ReleaseAll();
+    SAFE_DELETE(CurrentDescriptorPool);
+
+    // TODO: Look into putting the pools in the deferred deletion queue
+    for (FVulkanDescriptorPool* DescriptorPool : DescriptorPools)
+    {
+        delete DescriptorPool;
+    }
+
+    DescriptorPools.Clear();
 }
 
 bool FVulkanDescriptorSetCache::FCachedPool::AllocateDescriptorSet(VkDescriptorSetLayout SetLayout, VkDescriptorSet& OutDescriptorSet)
@@ -42,20 +50,6 @@ bool FVulkanDescriptorSetCache::FCachedPool::AllocateDescriptorSet(VkDescriptorS
     return CurrentDescriptorPool->AllocateDescriptorSet(AllocateInfo, &OutDescriptorSet);
 }
 
-void FVulkanDescriptorSetCache::FCachedPool::ReleaseAll()
-{
-    SAFE_DELETE(CurrentDescriptorPool);
-
-    // TODO: Look into putting the pools in the deferred deletion queue
-    for (FVulkanDescriptorPool* DescriptorPool : DescriptorPools)
-    {
-        delete DescriptorPool;
-    }
-
-    DescriptorPools.Clear();
-}
-
-
 FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , Caches()
@@ -83,7 +77,7 @@ void FVulkanDescriptorSetCache::Release()
     // Destroy all cached-pools
     for (auto CachedPools : Caches)
     {
-        SAFE_DELETE(CachedPools.Second);
+        delete CachedPools.Second;
     }
 
     Caches.Clear();
