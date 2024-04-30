@@ -1,7 +1,6 @@
 #include "VulkanRHI.h"
 #include "VulkanBuffer.h"
 #include "VulkanDevice.h"
-#include "VulkanPhysicalDevice.h"
 #include "VulkanCommandContext.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/NumericLimits.h"

@@ -1,7 +1,6 @@
 #pragma once
 #include "VulkanInstance.h"
 #include "VulkanDevice.h"
-#include "VulkanPhysicalDevice.h"
 #include "VulkanCommandContext.h"
 #include "VulkanQueue.h"
 #include "VulkanDeletionQueue.h"
