@@ -44,15 +44,15 @@ public:
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final;
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final;
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc)  override final;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) override final;
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final;
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc)  override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final;
     virtual FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode)   override final;
-    virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode)     override final;
-    virtual FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode)   override final;
+    virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final;
+    virtual FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) override final;
-    virtual FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode)    override final;
+    virtual FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) override final;
@@ -67,9 +67,17 @@ public:
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final { return CommandContext; }
-
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
+    
+    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final
+    {
+        // delete Resource;
+    }
+    
+    virtual IRHICommandContext* RHIObtainCommandContext() override final
+    {
+        return CommandContext;
+    }
 
     virtual FString RHIGetAdapterName() const override final 
     {

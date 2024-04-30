@@ -1,6 +1,7 @@
 #include "MacVulkanPlatform.h"
 #include "VulkanLoader.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Mac/MacRunLoop.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
 
 #include <QuartzCore/QuartzCore.h>
