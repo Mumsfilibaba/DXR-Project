@@ -57,7 +57,7 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     }
 
-    const bool bIsRayTracingSupported = GetDevice()->IsAccelerationStructuresSupported();
+    const bool bIsRayTracingSupported = GVulkanSupportsAccelerationStructures;
     if (Info.IsVertexBuffer())
     {
         BufferCreateInfo.usage |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;

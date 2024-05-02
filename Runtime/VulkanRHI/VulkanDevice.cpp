@@ -10,12 +10,16 @@
 ////////////////////////////////////////////////////
 // Global variables that describe different features
 
-VULKANRHI_API bool GVulkanForceBinding                    = false;
-VULKANRHI_API bool GVulkanForceDedicatedAllocations       = false;
-VULKANRHI_API bool GVulkanForceDedicatedImageAllocations  = GVulkanForceDedicatedAllocations || true;
+VULKANRHI_API bool GVulkanForceBinding = false;
+VULKANRHI_API bool GVulkanForceDedicatedAllocations = false;
+VULKANRHI_API bool GVulkanForceDedicatedImageAllocations = GVulkanForceDedicatedAllocations || true;
 VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations = GVulkanForceDedicatedAllocations || false;
-VULKANRHI_API bool GVulkanAllowNullDescriptors            = true;
+VULKANRHI_API bool GVulkanAllowNullDescriptors = true;
 
+VULKANRHI_API bool GVulkanSupportsDepthClip = false;
+VULKANRHI_API bool GVulkanSupportsConservativeRasterization = false;
+VULKANRHI_API bool GVulkanSupportsPipelineCacheControl = false;
+VULKANRHI_API bool GVulkanSupportsAccelerationStructures = false;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper
@@ -519,10 +523,6 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , DescriptorSetCache(this)
     , DefaultResources()
     , QueryPoolManager(this)
-    , bSupportsDepthClip(false)
-    , bSupportsConservativeRasterization(false)
-    , bSupportsPipelineCacheControl(false)
-    , bSupportsAccelerationStructures(false)
 {
 }
 
@@ -769,7 +769,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
             DepthClipEnableFeatures.depthClipEnable = VK_TRUE;
             DeviceFeatures2.features.depthClamp     = VK_TRUE;
             DeviceCreateHelper.AddNext(DepthClipEnableFeatures);
-            bSupportsDepthClip = true;
+            GVulkanSupportsDepthClip = true;
         }
     }
 #endif
@@ -777,7 +777,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 #if VK_EXT_conservative_rasterization
     if (IsExtensionEnabled(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME))
     {
-        bSupportsConservativeRasterization = true;
+        GVulkanSupportsConservativeRasterization = true;
     }
 #endif
 
@@ -792,7 +792,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
             PipelineCreationCacheControlFeatures.sType                        = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES_EXT;
             PipelineCreationCacheControlFeatures.pipelineCreationCacheControl = VK_TRUE;
             DeviceCreateHelper.AddNext(PipelineCreationCacheControlFeatures);
-            bSupportsPipelineCacheControl = true;
+            GVulkanSupportsPipelineCacheControl = true;
         }
     }
 #endif
@@ -808,7 +808,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
             AccelerationStructureFeatures.sType                 = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
             AccelerationStructureFeatures.accelerationStructure = VK_TRUE;
             DeviceCreateHelper.AddNext(AccelerationStructureFeatures);
-            bSupportsAccelerationStructures = true;
+            GVulkanSupportsAccelerationStructures = true;
         }
     }
 #endif

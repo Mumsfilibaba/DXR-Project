@@ -149,7 +149,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
     DepthClipStateCreateInfo.sType           = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT;
     DepthClipStateCreateInfo.depthClipEnable = InInitializer.bDepthClipEnable ? VK_TRUE : VK_FALSE;
     
-    if (GetDevice()->IsDepthClipSupported())
+    if (GVulkanSupportsDepthClip)
     {
         // NOTE: Since this feature is always enabled in D3D12, for now, we do the same in Vulkan
         // since the Depth-clipping is now controlled by a separate value as in D3D12
@@ -171,7 +171,7 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
         ConservativeStateCreateInfo.conservativeRasterizationMode = VK_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT;
     }
 
-    if (GetDevice()->IsConservativeRasterizationSupported())
+    if (GVulkanSupportsConservativeRasterization)
     {
         const VkPhysicalDeviceConservativeRasterizationPropertiesEXT& ConservativeRasterizationProperties = GetDevice()->GetPhysicalDevice()->GetConservativeRasterizationProperties();
         ConservativeStateCreateInfo.extraPrimitiveOverestimationSize = ConservativeRasterizationProperties.maxExtraPrimitiveOverestimationSize;
@@ -627,7 +627,7 @@ bool FVulkanPipelineStateManager::Initialize()
     CreateInfo.pInitialData    = nullptr;
     CreateInfo.initialDataSize = 0;
 
-    if (GetDevice()->IsPipelineCacheControlSupported())
+    if (GVulkanSupportsPipelineCacheControl)
     {
         CreateInfo.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT;
     }
@@ -843,7 +843,7 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     CreateInfo.pInitialData    = PipelineCacheData.Get();
     CreateInfo.initialDataSize = DataHeader.DataSize;
 
-    if (GetDevice()->IsPipelineCacheControlSupported())
+    if (GVulkanSupportsPipelineCacheControl)
     {
         CreateInfo.flags = VK_PIPELINE_CACHE_CREATE_EXTERNALLY_SYNCHRONIZED_BIT_EXT;
     }

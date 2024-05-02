@@ -29,6 +29,10 @@ extern VULKANRHI_API bool GVulkanForceDedicatedImageAllocations;
 extern VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations;
 extern VULKANRHI_API bool GVulkanAllowNullDescriptors;
 
+extern VULKANRHI_API bool GVulkanSupportsDepthClip;
+extern VULKANRHI_API bool GVulkanSupportsConservativeRasterization;
+extern VULKANRHI_API bool GVulkanSupportsPipelineCacheControl;
+extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
 
 enum class EVulkanCommandQueueType
 {
@@ -282,11 +286,6 @@ public:
     FVulkanQueryPoolManager& GetQueryPoolManager() { return QueryPoolManager; }
 
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
-
-    bool IsDepthClipSupported()                 const { return bSupportsDepthClip; }
-    bool IsConservativeRasterizationSupported() const { return bSupportsConservativeRasterization; }
-    bool IsPipelineCacheControlSupported()      const { return bSupportsPipelineCacheControl; }
-    bool IsAccelerationStructuresSupported()    const { return bSupportsAccelerationStructures; }
     
     bool IsLayerEnabled(const FString& LayerName)
     {
@@ -338,9 +337,4 @@ private:
 
     TMap<FVulkanHashableSamplerCreateInfo, VkSampler> SamplerMap;
     FCriticalSection                                  SamplerMapCS;
-
-    bool bSupportsDepthClip                 : 1;
-    bool bSupportsConservativeRasterization : 1;
-    bool bSupportsPipelineCacheControl      : 1;
-    bool bSupportsAccelerationStructures    : 1;
 };
