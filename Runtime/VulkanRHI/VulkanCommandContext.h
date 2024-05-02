@@ -14,28 +14,27 @@ class FBarrierBatcher
 {
     struct FBatch
     {
-        FBatch(VkPipelineStageFlags InSrcStageMask, VkPipelineStageFlags InDstStageMask, VkDependencyFlags InDependencyFlags)
-            : SrcStageMask(InSrcStageMask)
-            , DstStageMask(InDstStageMask)
+        FBatch(VkDependencyFlags InDependencyFlags)
+            : MemoryBarriers()
+            , BufferMemoryBarriers()
+            , ImageMemoryBarriers()
             , DependencyFlags(InDependencyFlags)
         {
         }
 
-        VkPipelineStageFlags          SrcStageMask;
-        VkPipelineStageFlags          DstStageMask;
-        VkDependencyFlags             DependencyFlags;
-        TArray<VkMemoryBarrier>       MemoryBarriers;
-        TArray<VkBufferMemoryBarrier> BufferMemoryBarriers;
-        TArray<VkImageMemoryBarrier>  ImageMemoryBarriers;
+        TArray<VkMemoryBarrier2>       MemoryBarriers;
+        TArray<VkBufferMemoryBarrier2> BufferMemoryBarriers;
+        TArray<VkImageMemoryBarrier2>  ImageMemoryBarriers;
+        VkDependencyFlags              DependencyFlags;
     };
 
 public:
     FBarrierBatcher(FVulkanCommandContext& InContext);
     ~FBarrierBatcher() = default;
 
-    void AddMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkMemoryBarrier& MemoryBarrier);
-    void AddBufferMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier& BufferMemoryBarrier);
-    void AddImageMemoryBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier& ImageMemoryBarrier);
+    void AddMemoryBarrier(VkDependencyFlags DependencyFlags, const VkMemoryBarrier2& InBarrier);
+    void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2& InBarrier);
+    void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2& InBarrier);
     void FlushBarriers();
 
 private:

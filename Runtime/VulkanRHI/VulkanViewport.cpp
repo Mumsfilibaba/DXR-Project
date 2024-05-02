@@ -170,26 +170,30 @@ bool FVulkanViewport::CreateSwapChain()
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
-        FVulkanImageTransitionBarrier TransitionBarrier;
-        TransitionBarrier.Image                           = Image;
-        TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
-        TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-        TransitionBarrier.DependencyFlags                 = 0;
-        TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
-        TransitionBarrier.DstAccessMask                   = VK_ACCESS_NONE;
-        TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        TransitionBarrier.SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-        TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
-        TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
-        TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-        TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+        VkImageMemoryBarrier2 ImageBarrier;
+        FMemory::Memzero(&ImageBarrier);
 
-        CommandContext->GetCommandBuffer()->ImageLayoutTransitionBarrier(TransitionBarrier);
+        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+        ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+        ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+        ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.image                           = Image;
+        ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+        ImageBarrier.dstAccessMask                   = VK_ACCESS_2_NONE;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+        ImageBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        ImageBarrier.subresourceRange.baseArrayLayer = 0;
+        ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        ImageBarrier.subresourceRange.baseMipLevel   = 0;
+        ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+        CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
         BackBuffers[Index++]->SetVkImage(Image);
     }
 
-    // If we are already recording then we just submit a commandbuffer and wait for it to complete
+    // If we are already recording then we just submit a CommandBuffer and wait for it to complete
     if (bWasRecording)
     {
         CommandContext->FinishCommandBuffer(false);

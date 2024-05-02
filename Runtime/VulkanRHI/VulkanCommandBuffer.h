@@ -2,31 +2,6 @@
 #include "VulkanFence.h"
 #include "Core/Containers/Queue.h"
 
-struct FVulkanBufferBarrier
-{
-    VkPipelineStageFlags SrcStageMask;
-    VkPipelineStageFlags DstStageMask;
-    VkDependencyFlags    DependencyFlags;
-    VkBuffer             Buffer;
-    VkAccessFlags        SrcAccessMask;
-    VkAccessFlags        DstAccessMask;
-    VkDeviceSize         Offset;
-    VkDeviceSize         Size;
-};
-
-struct FVulkanImageTransitionBarrier
-{
-    VkPipelineStageFlags    SrcStageMask;
-    VkPipelineStageFlags    DstStageMask;
-    VkDependencyFlags       DependencyFlags;
-    VkImage                 Image;
-    VkAccessFlags           SrcAccessMask;
-    VkAccessFlags           DstAccessMask;
-    VkImageLayout           PreviousLayout;
-    VkImageLayout           NewLayout;
-    VkImageSubresourceRange SubresourceRange;
-};
-
 class FCommandBuffer : FNonCopyable
 {
 public:
@@ -157,45 +132,10 @@ public:
     {
         vkCmdBlitImage(CommandBuffer, SrcImage, SrcImageLayout, DstImage, DstImageLayout, RegionCount, Regions, Filter);
     }
-    
-    FORCEINLINE void BufferMemoryPipelineBarrier(const FVulkanBufferBarrier& BufferBarrier)
-    {
-        VkBufferMemoryBarrier BufferMemoryBarrier;
-        FMemory::Memzero(&BufferMemoryBarrier);
-        
-        BufferMemoryBarrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-        BufferMemoryBarrier.srcAccessMask       = BufferBarrier.SrcAccessMask;
-        BufferMemoryBarrier.dstAccessMask       = BufferBarrier.DstAccessMask;
-        BufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        BufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        BufferMemoryBarrier.buffer              = BufferBarrier.Buffer;
-        BufferMemoryBarrier.offset              = BufferBarrier.Offset;
-        BufferMemoryBarrier.size                = BufferBarrier.Size;
-        
-        BufferMemoryPipelineBarrier(BufferBarrier.SrcStageMask, BufferBarrier.DstStageMask, BufferBarrier.DependencyFlags, 1, &BufferMemoryBarrier);
-    }
 
     FORCEINLINE void BufferMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 BufferMemoryBarrierCount, const VkBufferMemoryBarrier* BufferMemoryBarriers)
     {
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, 0, nullptr, BufferMemoryBarrierCount, BufferMemoryBarriers, 0, nullptr);
-    }
-
-    FORCEINLINE void ImageLayoutTransitionBarrier(const FVulkanImageTransitionBarrier& TransitionBarrier)
-    {
-        VkImageMemoryBarrier ImageMemoryBarrier;
-        FMemory::Memzero(&ImageMemoryBarrier);
-
-        ImageMemoryBarrier.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-        ImageMemoryBarrier.srcAccessMask       = TransitionBarrier.SrcAccessMask;
-        ImageMemoryBarrier.dstAccessMask       = TransitionBarrier.DstAccessMask;
-        ImageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        ImageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-        ImageMemoryBarrier.subresourceRange    = TransitionBarrier.SubresourceRange;
-        ImageMemoryBarrier.image               = TransitionBarrier.Image;
-        ImageMemoryBarrier.newLayout           = TransitionBarrier.NewLayout;
-        ImageMemoryBarrier.oldLayout           = TransitionBarrier.PreviousLayout;
-
-        ImageMemoryPipelineBarrier(TransitionBarrier.SrcStageMask, TransitionBarrier.DstStageMask, TransitionBarrier.DependencyFlags, 1, &ImageMemoryBarrier);
     }
 
     FORCEINLINE void ImageMemoryPipelineBarrier(VkPipelineStageFlags SrcStageMask, VkPipelineStageFlags DstStageMask, VkDependencyFlags DependencyFlags, uint32 ImageMemoryBarrierCount, const VkImageMemoryBarrier* ImageMemoryBarriers)
@@ -208,6 +148,13 @@ public:
         vkCmdPipelineBarrier(CommandBuffer, SrcStageMask, DstStageMask, DependencyFlags, MemoryBarrierCount, MemoryBarriers, BufferMemoryBarrierCount, BufferMemoryBarriers, ImageMemoryBarrierCount, ImageMemoryBarriers);
     }
     
+#if VK_KHR_synchronization2
+    FORCEINLINE void PipelineBarrier2(const VkDependencyInfo* DependencyInfo)
+    {
+        vkCmdPipelineBarrier2KHR(CommandBuffer, DependencyInfo);
+    }
+#endif
+
     FORCEINLINE void Draw(uint32 VertexCount, uint32 InstanceCount, uint32 FirstVertex, uint32 FirstInstance)
     {
         vkCmdDraw(CommandBuffer, VertexCount, InstanceCount, FirstVertex, FirstInstance);

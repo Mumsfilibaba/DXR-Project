@@ -363,6 +363,12 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     DeviceFeaturesHelper.AddNext(RayTracingPipelineFeatures);
 #endif
 
+#if VK_KHR_synchronization2
+    FMemory::Memzero(&Synchronization2Features);
+    Synchronization2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+    DeviceFeaturesHelper.AddNext(Synchronization2Features);
+#endif
+
     // Vulkan 1.1 features
     FMemory::Memzero(&DeviceFeatures11);
     DeviceFeatures11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
@@ -828,6 +834,31 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     }
 #endif
 
+#if VK_KHR_synchronization2
+    VkPhysicalDeviceSynchronization2Features Synchronization2Features;
+    if (IsExtensionEnabled(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))
+    {
+        const VkPhysicalDeviceSynchronization2Features& AvailableSynchronization2Features = GetPhysicalDevice()->GetSynchronization2Features();
+        if (AvailableSynchronization2Features.synchronization2)
+        {
+            FMemory::Memzero(&Synchronization2Features);
+            Synchronization2Features.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+            Synchronization2Features.synchronization2 = VK_TRUE;
+            DeviceCreateHelper.AddNext(Synchronization2Features);
+        }
+        else
+        {
+            VULKAN_ERROR("VK_KHR_synchronization2 is not available");
+            return false;
+        }
+    }
+    else
+    {
+        VULKAN_ERROR("VK_KHR_synchronization2 is not available");
+        return false;
+    }
+#endif
+
     Result = vkCreateDevice(PhysicalDevice->GetVkPhysicalDevice(), &DeviceCreateInfo, nullptr, &Device);
     if (VULKAN_FAILED(Result))
     {
@@ -937,44 +968,49 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
 
     VkImage DefaultImage = DefaultResources.NullImage;
 
-    FVulkanImageTransitionBarrier TransitionBarrier;
-    TransitionBarrier.Image                           = DefaultImage;
-    TransitionBarrier.DependencyFlags                 = 0;
-    TransitionBarrier.PreviousLayout                  = VK_IMAGE_LAYOUT_UNDEFINED;
-    TransitionBarrier.NewLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    TransitionBarrier.SrcAccessMask                   = VK_ACCESS_NONE;
-    TransitionBarrier.DstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
-    TransitionBarrier.SrcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-    TransitionBarrier.DstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    TransitionBarrier.SubresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
-    TransitionBarrier.SubresourceRange.baseArrayLayer = 0;
-    TransitionBarrier.SubresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-    TransitionBarrier.SubresourceRange.baseMipLevel   = 0;
-    TransitionBarrier.SubresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+    VkImageMemoryBarrier2 ImageBarrier;
+    FMemory::Memzero(&ImageBarrier);
 
-    CommandContext.GetCommandBuffer()->ImageLayoutTransitionBarrier(TransitionBarrier);
+    ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+    ImageBarrier.image                           = DefaultImage;
+    ImageBarrier.srcAccessMask                   = VK_ACCESS_2_NONE;
+    ImageBarrier.dstAccessMask                   = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VK_FORMAT_R8G8B8A8_UNORM);
+    ImageBarrier.subresourceRange.baseArrayLayer = 0;
+    ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+    ImageBarrier.subresourceRange.baseMipLevel   = 0;
+    ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+
+    CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
 
     VkBufferImageCopy BufferImageCopy;
     BufferImageCopy.bufferOffset                    = 0;
     BufferImageCopy.bufferRowLength                 = 0;
     BufferImageCopy.bufferImageHeight               = 0;
-    BufferImageCopy.imageSubresource.aspectMask     = TransitionBarrier.SubresourceRange.aspectMask;
+    BufferImageCopy.imageSubresource.aspectMask     = ImageBarrier.subresourceRange.aspectMask;
     BufferImageCopy.imageSubresource.mipLevel       = 0;
     BufferImageCopy.imageSubresource.baseArrayLayer = 0;
     BufferImageCopy.imageSubresource.layerCount     = 1;
     BufferImageCopy.imageOffset                     = { 0, 0, 0 };
     BufferImageCopy.imageExtent                     = { VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, VULKAN_DEFAULT_IMAGE_WIDTH_AND_HEIGHT, 1 };
 
+    CommandContext.GetBarrierBatcher().FlushBarriers();
     CommandContext.GetCommandBuffer()->CopyBufferToImage(DefaultBuffer, DefaultImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
 
-    TransitionBarrier.PreviousLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    TransitionBarrier.NewLayout      = VK_IMAGE_LAYOUT_GENERAL;
-    TransitionBarrier.SrcAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
-    TransitionBarrier.DstAccessMask  = VK_ACCESS_TRANSFER_WRITE_BIT;
-    TransitionBarrier.SrcStageMask   = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    TransitionBarrier.DstStageMask   = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+    ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+    ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    ImageBarrier.dstStageMask  = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 
-    CommandContext.GetCommandBuffer()->ImageLayoutTransitionBarrier(TransitionBarrier);
+    CommandContext.GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
     CommandContext.FinishCommandBuffer(true);
     return true;
 }

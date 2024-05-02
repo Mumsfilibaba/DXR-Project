@@ -214,10 +214,10 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
         Context->RHIStartContext();
         
-        VkImageMemoryBarrier ImageBarrier;
-        FMemory::Memzero(&ImageBarrier, sizeof(VkImageMemoryBarrier));
+        VkImageMemoryBarrier2 ImageBarrier;
+        FMemory::Memzero(&ImageBarrier);
 
-        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
         ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
@@ -225,15 +225,15 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         ImageBarrier.image                           = Image;
         ImageBarrier.srcAccessMask                   = VK_ACCESS_NONE;
         ImageBarrier.dstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_TRANSFER_BIT;
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-        VkPipelineStageFlags SrcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkPipelineStageFlags DstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        Context->GetBarrierBatcher().AddImageMemoryBarrier(SrcStageMask, DstStageMask, 0, ImageBarrier);
+        Context->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
 
         // Transfer all the miplevels
         uint32 Width  = Info.Extent.x;
@@ -246,7 +246,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
                 break;
             }
 
-            // If there is no data for this miplevel we break
+            // If there is no data for this mip-level we break
             void* Data = InInitialData->GetMipData(Index);
             if (!Data)
             {
@@ -270,10 +270,10 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
         Context->RHIStartContext();
 
-        VkImageMemoryBarrier ImageBarrier;
-        FMemory::Memzero(&ImageBarrier, sizeof(VkImageMemoryBarrier));
+        VkImageMemoryBarrier2 ImageBarrier;
+        FMemory::Memzero(&ImageBarrier);
 
-        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
         ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
         ImageBarrier.newLayout                       = ConvertResourceStateToImageLayout(InInitialAccess);
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
@@ -281,16 +281,15 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         ImageBarrier.image                           = Image;
         ImageBarrier.srcAccessMask                   = VK_ACCESS_NONE;
         ImageBarrier.dstAccessMask                   = VK_ACCESS_NONE;
+        ImageBarrier.srcStageMask                    = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        ImageBarrier.dstStageMask                    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(ImageCreateInfo.format);
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-        VkPipelineStageFlags SrcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-        VkPipelineStageFlags DstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-        Context->GetBarrierBatcher().AddImageMemoryBarrier(SrcStageMask, DstStageMask, 0, ImageBarrier);
-
+        Context->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
         Context->RHIFinishContext();
     }
     

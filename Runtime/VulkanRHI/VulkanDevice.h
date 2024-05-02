@@ -59,7 +59,7 @@ struct FVulkanPhysicalDeviceCreateInfo
     VkPhysicalDeviceFeatures         RequiredFeatures;
     VkPhysicalDeviceVulkan11Features RequiredFeatures11;
     VkPhysicalDeviceVulkan12Features RequiredFeatures12;
-    
+
     // TODO: Optional features that can be used so select the best adapter
 };
 
@@ -120,6 +120,9 @@ public:
 #if VK_KHR_ray_tracing_pipeline
     const VkPhysicalDeviceRayTracingPipelineFeaturesKHR& GetRayTracingPipelineFeatures() const { return RayTracingPipelineFeatures; }
 #endif
+#if VK_KHR_synchronization2
+    const VkPhysicalDeviceSynchronization2Features& GetSynchronization2Features() const { return Synchronization2Features; }
+#endif
 
     FVulkanInstance* GetInstance() const
     {
@@ -164,6 +167,9 @@ private:
 #endif
 #if VK_KHR_ray_tracing_pipeline
     VkPhysicalDeviceRayTracingPipelineFeaturesKHR RayTracingPipelineFeatures;
+#endif
+#if VK_KHR_synchronization2
+    VkPhysicalDeviceSynchronization2Features Synchronization2Features;
 #endif
 };
 

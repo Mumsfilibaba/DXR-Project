@@ -259,6 +259,9 @@ VULKAN_FUNCTION_DEFINITION(CmdInsertDebugUtilsLabelEXT);
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DEFINITION(CmdBuildAccelerationStructuresKHR);
 #endif
+#if VK_KHR_synchronization2
+VULKAN_FUNCTION_DEFINITION(CmdPipelineBarrier2KHR);
+#endif
 
 bool LoadDeviceFunctions(FVulkanDevice* Device)
 {
@@ -386,6 +389,13 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, AcquireNextImageKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, QueuePresentKHR);
         VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, GetSwapchainImagesKHR);
+    }
+#endif
+
+#if VK_KHR_synchronization2
+    if (Device->IsExtensionEnabled(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME))
+    {
+        VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdPipelineBarrier2KHR);
     }
 #endif
 

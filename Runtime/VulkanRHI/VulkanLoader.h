@@ -200,6 +200,7 @@ VULKAN_FUNCTION_DECLARATION(QueuePresentKHR);
 VULKAN_FUNCTION_DECLARATION(GetSwapchainImagesKHR);
 #endif
 
+
 VULKAN_FUNCTION_DECLARATION(CmdClearColorImage);
 VULKAN_FUNCTION_DECLARATION(CmdClearDepthStencilImage);
 VULKAN_FUNCTION_DECLARATION(CmdResolveImage);
@@ -228,6 +229,9 @@ VULKAN_FUNCTION_DECLARATION(CmdInsertDebugUtilsLabelEXT);
 #endif
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DECLARATION(CmdBuildAccelerationStructuresKHR);
+#endif
+#if VK_KHR_synchronization2
+VULKAN_FUNCTION_DECLARATION(CmdPipelineBarrier2KHR);
 #endif
 
 bool LoadDeviceFunctions(FVulkanDevice* Device);
