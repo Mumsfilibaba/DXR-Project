@@ -58,17 +58,17 @@ public:
     }
 
 protected:
-    VkImage                 Image;
-    VkFormat                Format;
-    FVulkanMemoryAllocation MemoryAllocation;
-    VkImageCreateInfo       CreateInfo;
-    
+    VkImage                       Image;
+    VkFormat                      Format;
+    FVulkanMemoryAllocation       MemoryAllocation;
+    VkImageCreateInfo             CreateInfo;
+
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
     TArray<FVulkanImageViewRef>   RenderTargetViews;
     TArray<FVulkanImageViewRef>   DepthStencilViews;
     
-    FString DebugName;
+    FString                       DebugName;
 };
 
 class FVulkanBackBufferTexture : public FVulkanTexture
@@ -77,7 +77,7 @@ public:
     FVulkanBackBufferTexture(FVulkanDevice* InDevice, FVulkanViewport* InViewport, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanBackBufferTexture();
 
-    virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkImage()); }
 
     void ResizeBackBuffer(int32 InWidth, int32 InHeight);

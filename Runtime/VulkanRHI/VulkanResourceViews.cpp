@@ -64,7 +64,7 @@ void FVulkanImageView::DestroyView()
     if (VULKAN_CHECK_HANDLE(ImageView))
     {
         // Ensure that the FrameBuffer gets released if it is using this ImageView
-        GetDevice()->GetFramebufferCache().OnReleaseImageView(ImageView);
+        GetDevice()->GetRenderPassCache().OnReleaseImageView(ImageView);
 
         // Destroy the actual view
         vkDestroyImageView(GetDevice()->GetVkDevice(), ImageView, nullptr);

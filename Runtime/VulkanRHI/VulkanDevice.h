@@ -3,7 +3,6 @@
 #include "VulkanLoader.h"
 #include "VulkanAllocators.h"
 #include "VulkanRenderPass.h"
-#include "VulkanFramebuffer.h"
 #include "VulkanMemory.h"
 #include "VulkanFenceManager.h"
 #include "VulkanPipelineLayout.h"
@@ -273,7 +272,6 @@ public:
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
 
     FVulkanRenderPassCache& GetRenderPassCache() { return RenderPassCache; }
-    FVulkanFramebufferCache& GetFramebufferCache() { return FramebufferCache; }
     FVulkanMemoryManager& GetMemoryManager() { return MemoryManager; }
     FVulkanUploadHeapAllocator& GetUploadHeap() { return UploadHeap; }
     FVulkanFenceManager& GetFenceManager() { return FenceManager; }
@@ -325,7 +323,6 @@ private:
     FVulkanPhysicalDevice*       PhysicalDevice;
     VkDevice                     Device;
     FVulkanRenderPassCache       RenderPassCache;
-    FVulkanFramebufferCache      FramebufferCache;
     FVulkanUploadHeapAllocator   UploadHeap;
     FVulkanMemoryManager         MemoryManager;
     FVulkanFenceManager          FenceManager;

@@ -4,11 +4,6 @@
 #include "VulkanRefCounted.h"
 #include "Core/Containers/SharedRef.h"
 
-// Undefine Windows-macros
-#ifdef CreateSemaphore
-    #undef CreateSemaphore
-#endif
-
 typedef TSharedRef<class FVulkanSemaphore> FVulkanSemaphoreRef;
 
 class FVulkanSemaphore : public FVulkanDeviceChild, public FVulkanRefCounted

@@ -35,7 +35,7 @@ struct FVulkanDescriptorSetLayoutInfo
     }
     
     TArray<VkDescriptorSetLayoutBinding> Bindings;
-    uint64 Hash;
+    uint64                               Hash;
 };
 
 struct FVulkanDescriptorRemappingInfo
@@ -75,7 +75,7 @@ struct FVulkanDescriptorRemappingInfo
     }
 
     TArray<FRemappingInfo> RemappingInfo;
-    uint64 Hash;
+    uint64                 Hash;
 };
 
 struct FPushConstantsInfo
@@ -179,8 +179,7 @@ struct FVulkanPipelineLayoutInfo
     
     // This structure contains information about global push constants in the pipeline
     FPushConstantsInfo ConstantsInfo;
-    
-    uint64 Hash;
+    uint64             Hash;
 };
 
 enum EResourceType
@@ -268,9 +267,8 @@ public:
     void Release();
 
 private:
-    TMap<FVulkanPipelineLayoutInfo, FVulkanPipelineLayout*> Layouts;
-    FCriticalSection LayoutsCS;
-
+    TMap<FVulkanPipelineLayoutInfo, FVulkanPipelineLayout*>     Layouts;
+    FCriticalSection                                            LayoutsCS;
     TMap<FVulkanDescriptorSetLayoutInfo, VkDescriptorSetLayout> SetLayouts;
-    FCriticalSection SetLayoutsCS;
+    FCriticalSection                                            SetLayoutsCS;
 };

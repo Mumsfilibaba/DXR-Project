@@ -183,7 +183,7 @@ protected:
     EShaderVisibility ShaderVisibility;
     
     TMap<uint32, TSharedRef<FVulkanShaderModule>> ShaderModules;
-    FCriticalSection ShaderModulesCS;
+    FCriticalSection                              ShaderModulesCS;
 };
 
 class FVulkanVertexShader : public FRHIVertexShader, public FVulkanShader

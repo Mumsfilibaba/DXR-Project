@@ -501,7 +501,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         CHECK(Height != TNumericLimits<uint32>::Max());
         FramebufferKey.Height = static_cast<uint16>(Height);
 
-        FrameBuffer = GetDevice()->GetFramebufferCache().GetFramebuffer(FramebufferKey);
+        FrameBuffer = GetDevice()->GetRenderPassCache().GetFramebuffer(FramebufferKey);
         if (!VULKAN_CHECK_HANDLE(FrameBuffer))
         {
             DEBUG_BREAK();

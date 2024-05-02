@@ -21,6 +21,7 @@
 #undef CreateFile
 #undef CreateThread
 #undef CreateEvent
+#undef CreateSemaphore
 
 #undef InterlockedAdd
 #undef InterlockedSub

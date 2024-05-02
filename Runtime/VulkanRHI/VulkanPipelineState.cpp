@@ -795,7 +795,7 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     // Load the data
     TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(DataHeader.DataSize);
     BytesRead = CacheFile->Read(PipelineCacheData.Get(), static_cast<uint32>(DataHeader.DataSize));
-    if (BytesRead != DataHeader.DataSize)
+    if (BytesRead != static_cast<int64>(DataHeader.DataSize))
     {
         VULKAN_WARNING("Something went wrong when reading PipelineCache");
         return false;

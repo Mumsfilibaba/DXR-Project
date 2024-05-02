@@ -511,7 +511,6 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     , PhysicalDevice(InAdapter)
     , Device(VK_NULL_HANDLE)
     , RenderPassCache(this)
-    , FramebufferCache(this)
     , UploadHeap(this)
     , MemoryManager(this)
     , FenceManager(this)
@@ -562,7 +561,6 @@ FVulkanDevice::~FVulkanDevice()
 
     // Ensure that all RenderPasses and FrameBuffers are destroyed
     RenderPassCache.ReleaseAll();
-    FramebufferCache.ReleaseAll();
 
     // Ensure that the upload allocator is released before we destroy the device
     UploadHeap.Release();
