@@ -288,7 +288,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         return;
     }
     
-    if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
+    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
     {
         // NOTE: Here the image is expected to be in a "RenderTargetState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
         VkImageMemoryBarrier2 ImageBarrier;
@@ -316,7 +316,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         VkClearColorValue VulkanClearColor;
         FMemory::Memcpy(VulkanClearColor.float32, ClearColor.Data(), sizeof(VulkanClearColor.float32));
 
-        VkImageSubresourceRange SubresourceRange = ImageView->GetSubresourceRange();
+        const VkImageSubresourceRange& SubresourceRange = ImageView->GetVkImageSubresourceRange();
         GetCommandBuffer()->ClearColorImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1, &SubresourceRange);
         
         // .. And transition back into "RenderTargetState"
@@ -342,7 +342,7 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
         return;
     }
 
-    if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
+    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
     {
         // NOTE: Here the image is expected to be in a "DepthStencilState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
         VkImageMemoryBarrier2 ImageBarrier;
@@ -371,7 +371,7 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
         DepthStenciLValue.depth   = Depth;
         DepthStenciLValue.stencil = Stencil;
         
-        VkImageSubresourceRange SubresourceRange = ImageView->GetSubresourceRange();
+        const VkImageSubresourceRange& SubresourceRange = ImageView->GetVkImageSubresourceRange();
         GetCommandBuffer()->ClearDepthStencilImage(ImageView->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &DepthStenciLValue, 1, &SubresourceRange);
         
         // .. And transition back into "DepthStencilState"
@@ -396,9 +396,10 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
     VkClearColorValue VulkanClearColor;
     FMemory::Memcpy(VulkanClearColor.float32, ClearColor.Data(), sizeof(VulkanClearColor.float32));
 
-    if (VulkanUnorderedAccessView->HasImageView())
+    const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
+    if (Type == FVulkanResourceView::EType::ImageView)
     {
-        VkImageSubresourceRange SubresourceRange = VulkanUnorderedAccessView->GetImageSubresourceRange();
+        const VkImageSubresourceRange& SubresourceRange = VulkanUnorderedAccessView->GetVkImageSubresourceRange();
         GetCommandBuffer()->ClearColorImage(VulkanUnorderedAccessView->GetVkImage(), VK_IMAGE_LAYOUT_GENERAL, &VulkanClearColor, 1, &SubresourceRange);
     }
     else
@@ -451,7 +452,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
                 FMemory::Memcpy(ClearValue.color.float32, &RenderTargetView.ClearValue.r, sizeof(ClearValue.color.float32));
 
                 // Get the image view
-                if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
+                if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
                 {
                     FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageView->GetVkImageView();
                 }
@@ -479,7 +480,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
             ClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
 
             // Get the image view
-            if (FVulkanImageView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
+            if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
             {
                 FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageView->GetVkImageView();
             }

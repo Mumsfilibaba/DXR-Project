@@ -20,6 +20,9 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& I
 
 FVulkanTexture::~FVulkanTexture()
 {
+    DestroyDepthStencilViews();
+    DestroyRenderTargetViews();
+
     // Check allocation in order to determine if this is a BackBuffer
     if (MemoryAllocation.IsValid() && VULKAN_CHECK_HANDLE(Image))
     {
@@ -177,7 +180,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         }
 
         FVulkanShaderResourceViewRef DefaultSRV = new FVulkanShaderResourceView(GetDevice(), this);
-        if (!DefaultSRV->CreateTextureView(ViewDesc))
+        if (!DefaultSRV->InitializeTextureSRV(ViewDesc))
         {
             return false;
         }
@@ -199,7 +202,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
             ViewDesc.NumSlices       = static_cast<uint16>(Info.NumArraySlices);
 
             FVulkanUnorderedAccessViewRef DefaultUAV = new FVulkanUnorderedAccessView(GetDevice(), this);
-            if (!DefaultUAV->CreateTextureView(ViewDesc))
+            if (!DefaultUAV->InitializeTextureUAV(ViewDesc))
             {
                 return false;
             }
@@ -296,7 +299,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     return true;
 }
 
-FVulkanImageView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView)
+FVulkanResourceView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView)
 {
     if (!VULKAN_CHECK_HANDLE(Image))
     {
@@ -311,7 +314,7 @@ FVulkanImageView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRenderTa
     const VkFormat VulkanFormat = ConvertFormat(RenderTargetView.Format);
     if (Subresource < static_cast<uint32>(RenderTargetViews.Size()))
     {
-        if (FVulkanImageView* ExistingView = RenderTargetViews[Subresource].Get())
+        if (FVulkanResourceView* ExistingView = RenderTargetViews[Subresource])
         {
             VULKAN_WARNING_COND(ExistingView->GetVkFormat() == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
             return ExistingView;
@@ -323,39 +326,50 @@ FVulkanImageView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRenderTa
     }
     
     // Create a new view
-    VkImageSubresourceRange SubresourceRange;
-    SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    SubresourceRange.baseArrayLayer = RenderTargetView.ArrayIndex;
-    SubresourceRange.layerCount     = 1;
-    SubresourceRange.baseMipLevel   = RenderTargetView.MipLevel;
-    SubresourceRange.levelCount     = 1;
+    VkImageViewCreateInfo ImageViewCreateInfo;
+    FMemory::Memzero(&ImageViewCreateInfo);
 
-    FVulkanImageViewRef NewImageView = new FVulkanImageView(GetDevice());
-    if (!NewImageView->CreateView(Image, VK_IMAGE_VIEW_TYPE_2D, VulkanFormat, 0, SubresourceRange))
+    ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    ImageViewCreateInfo.flags                           = 0;
+    ImageViewCreateInfo.format                          = VulkanFormat;
+    ImageViewCreateInfo.image                           = Image;
+    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
+    ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
+    ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
+    ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
+    ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    ImageViewCreateInfo.subresourceRange.baseArrayLayer = RenderTargetView.ArrayIndex;
+    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+    ImageViewCreateInfo.subresourceRange.baseMipLevel   = RenderTargetView.MipLevel;
+    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+
+    FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
+    if (!NewImageView->CreateImageView(ImageViewCreateInfo))
     {
         return nullptr;
     }
     
     RenderTargetViews[Subresource] = NewImageView;
-    return NewImageView.Get();
+    return NewImageView;
 }
 
-FVulkanImageView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView)
+FVulkanResourceView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView)
 {
     if (!VULKAN_CHECK_HANDLE(Image))
     {
         VULKAN_WARNING("Texture does not have a valid Image");
         return nullptr;
     } 
-    
+
     // Calculate the subresource for this view
     const uint32 Subresource = VulkanCalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
-    
+
     // Check for existing view and control the format of the view
     const VkFormat VulkanFormat = ConvertFormat(DepthStencilView.Format);
     if (Subresource < static_cast<uint32>(DepthStencilViews.Size()))
     {
-        if (FVulkanImageView* ExistingView = DepthStencilViews[Subresource].Get())
+        if (FVulkanResourceView* ExistingView = DepthStencilViews[Subresource])
         {
             VULKAN_WARNING_COND(ExistingView->GetVkFormat() == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
             return ExistingView;
@@ -365,30 +379,61 @@ FVulkanImageView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepthSte
     {
         DepthStencilViews.Resize(Subresource + 1);
     }
-    
-    // Create a new view
-    VkImageSubresourceRange SubresourceRange;
-    SubresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
-    SubresourceRange.baseArrayLayer = DepthStencilView.ArrayIndex;
-    SubresourceRange.layerCount     = 1;
-    SubresourceRange.baseMipLevel   = DepthStencilView.MipLevel;
-    SubresourceRange.levelCount     = 1;
 
-    FVulkanImageViewRef NewImageView = new FVulkanImageView(GetDevice());
-    if (!NewImageView->CreateView(Image, VK_IMAGE_VIEW_TYPE_2D, VulkanFormat, 0, SubresourceRange))
+    // Create a new view
+    VkImageViewCreateInfo ImageViewCreateInfo;
+    FMemory::Memzero(&ImageViewCreateInfo);
+
+    ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    ImageViewCreateInfo.flags                           = 0;
+    ImageViewCreateInfo.format                          = VulkanFormat;
+    ImageViewCreateInfo.image                           = Image;
+    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
+    ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
+    ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
+    ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
+    ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
+    ImageViewCreateInfo.subresourceRange.baseArrayLayer = DepthStencilView.ArrayIndex;
+    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
+    ImageViewCreateInfo.subresourceRange.baseMipLevel   = DepthStencilView.MipLevel;
+    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
+
+    FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
+    if (!NewImageView->CreateImageView(ImageViewCreateInfo))
     {
         return nullptr;
     }
-    
+
     DepthStencilViews[Subresource] = NewImageView;
-    return NewImageView.Get();
+    return NewImageView;
+}
+
+void FVulkanTexture::DestroyRenderTargetViews()
+{
+    for (FVulkanResourceView* ResourceView : RenderTargetViews)
+    {
+        delete ResourceView;
+    }
+
+    RenderTargetViews.Clear();
+}
+
+void FVulkanTexture::DestroyDepthStencilViews()
+{
+    for (FVulkanResourceView* ResourceView : DepthStencilViews)
+    {
+        delete ResourceView;
+    }
+
+    DepthStencilViews.Clear();
 }
 
 void FVulkanTexture::SetVkImage(VkImage InImage)
 {
+    DestroyRenderTargetViews();
+    DestroyDepthStencilViews();
     Image = InImage;
-    RenderTargetViews.Clear();
-    DepthStencilViews.Clear();
 
     // NOTE: Use the format in the description to set the native format if it is not set yet
     // this should only happen for BackBuffers

@@ -28,10 +28,10 @@ public:
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
-    FVulkanImageView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
-    FVulkanImageView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
-    void DestroyRenderTargetViews() { RenderTargetViews.Clear(); }
-    void DestroyDepthStencilViews() { DepthStencilViews.Clear(); }
+    FVulkanResourceView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
+    FVulkanResourceView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
+    void DestroyRenderTargetViews();
+    void DestroyDepthStencilViews();
 
     void SetVkImage(VkImage InImage);
     
@@ -65,8 +65,8 @@ protected:
 
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
-    TArray<FVulkanImageViewRef>   RenderTargetViews;
-    TArray<FVulkanImageViewRef>   DepthStencilViews;
+    TArray<FVulkanResourceView*>  RenderTargetViews;
+    TArray<FVulkanResourceView*>  DepthStencilViews;
     
     FString                       DebugName;
 };

@@ -1,126 +1,85 @@
 #pragma once
-#include "VulkanDeviceChild.h"
 #include "VulkanLoader.h"
-#include "VulkanRefCounted.h"
-#include "Core/Containers/SharedRef.h"
+#include "VulkanDeviceChild.h"
 #include "RHI/RHIResources.h"
 
-typedef TSharedRef<class FVulkanImageView>           FVulkanImageViewRef;
 typedef TSharedRef<class FVulkanShaderResourceView>  FVulkanShaderResourceViewRef;
 typedef TSharedRef<class FVulkanUnorderedAccessView> FVulkanUnorderedAccessViewRef;
 
-class FVulkanImageView : public FVulkanDeviceChild, public FVulkanRefCounted
-{
-public:
-    FVulkanImageView(FVulkanDevice* InDevice);
-    ~FVulkanImageView();
-
-    bool CreateView(VkImage InImage, VkImageViewType ViewType, VkFormat InFormat, VkImageViewCreateFlags InFlags, const VkImageSubresourceRange& InSubresourceRange);
-    void DestroyView();
-
-    VkImage GetVkImage() const { return Image; }
-    VkImageView GetVkImageView() const { return ImageView; }
-    const VkImageSubresourceRange& GetSubresourceRange() const { return SubresourceRange; }
-    VkFormat GetVkFormat() const { return Format; }
-    
-private:
-    VkImageSubresourceRange SubresourceRange;
-    VkImage                 Image;
-    VkImageView             ImageView;
-    VkFormat                Format;
-    VkImageViewCreateFlags  Flags;
-};
-
-class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanDeviceChild
+class FVulkanResourceView : public FVulkanDeviceChild
 {
 public:
     enum class EType
     {
         None = 0,
-        Texture,
+        ImageView,
         Buffer,
     };
 
+    FVulkanResourceView(FVulkanDevice* InDevice);
+    virtual ~FVulkanResourceView();
+
+    bool CreateImageView(const VkImageViewCreateInfo& CreateInfo);
+    bool CreateBufferView(VkBuffer InBuffer, VkDeviceSize InOffset, VkDeviceSize InRange);
+    void SetDebugName(const FString& InName);
+
+    EType GetType() const
+    {
+        return Type;
+    }
+
+    VkImage GetVkImage() const { return ImageInfo.Image; }
+    VkImageView GetVkImageView() const { return ImageInfo.ImageView; }
+    VkFormat GetVkFormat() const { return ImageInfo.Format; }
+    const VkImageSubresourceRange& GetVkImageSubresourceRange() const { return ImageInfo.SubresourceRange; }
+
+    VkBuffer GetVkBuffer() const { return BufferInfo.Buffer; }
+    VkDeviceSize GetOffset() const { return BufferInfo.Offset; }
+    VkDeviceSize GetRange() const { return BufferInfo.Range; }
+
+protected:
+    EType Type;
+    union
+    {
+        struct
+        {
+            VkBuffer     Buffer;
+            VkDeviceSize Offset;
+            VkDeviceSize Range;
+        } BufferInfo;
+
+        struct
+        {
+            VkImage                 Image;
+            VkImageView             ImageView;
+            VkImageViewType         ImageViewType;
+            VkFormat                Format;
+            VkImageViewCreateFlags  Flags;
+            VkImageSubresourceRange SubresourceRange;
+        } ImageInfo;
+    };
+};
+
+class FVulkanShaderResourceView : public FRHIShaderResourceView, public FVulkanResourceView
+{
+public:
     FVulkanShaderResourceView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanShaderResourceView() = default;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    bool CreateTextureView(const FRHITextureSRVDesc& InDesc);
-    bool CreateBufferView(const FRHIBufferSRVDesc& InDesc);
-
-    bool HasImageView() const
-    {
-        return ImageView != nullptr;
-    }
-
-    EType GetType() const
-    {
-        return Type;
-    }
-
-    VkImage GetVkImage() const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
-    VkImageView GetVkImageView() const { return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE; }
-    VkBuffer GetVkBuffer() const { return HasImageView() ? VK_NULL_HANDLE : BufferInfo.buffer; }
-    
-    const VkImageSubresourceRange& GetImageSubresourceRange() const { return ImageSubresourceRange; }
-    const VkDescriptorBufferInfo&  GetDescriptorBufferInfo()  const { return BufferInfo; }
-
-private:
-    // Easy way to keep track of the type of SRV
-    EType Type;
-
-    // Buffer ResourceView
-    VkDescriptorBufferInfo       BufferInfo;
-
-    // Texture ResourceView
-    TSharedRef<FVulkanImageView> ImageView;
-    VkImageSubresourceRange      ImageSubresourceRange;
+    bool InitializeTextureSRV(const FRHITextureSRVDesc& InDesc);
+    bool InitializeBufferSRV(const FRHIBufferSRVDesc& InDesc);
 };
 
-class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanDeviceChild
+class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanResourceView
 {
 public:
-    enum class EType
-    {
-        None = 0,
-        Texture,
-        Buffer,
-    };
-
     FVulkanUnorderedAccessView(FVulkanDevice* InDevice, FRHIResource* InResource);
     virtual ~FVulkanUnorderedAccessView() = default;
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    bool CreateTextureView(const FRHITextureUAVDesc& InDesc);
-    bool CreateBufferView(const FRHIBufferUAVDesc& InDesc);
-
-    bool HasImageView() const
-    {
-        return ImageView != nullptr;
-    }
-
-    EType GetType() const
-    {
-        return Type;
-    }
-
-    VkBuffer GetVkBuffer() const { return HasImageView() ? VK_NULL_HANDLE : BufferInfo.buffer; }
-    VkImage GetVkImage() const { return HasImageView() ? ImageView->GetVkImage() : VK_NULL_HANDLE; }
-    VkImageView GetVkImageView() const { return HasImageView() ? ImageView->GetVkImageView() : VK_NULL_HANDLE; }
-    
-    const VkImageSubresourceRange& GetImageSubresourceRange() const { return ImageSubresourceRange; }
-    const VkDescriptorBufferInfo&  GetDescriptorBufferInfo()  const { return BufferInfo; }
-
-private:
-    // Easy way to keep track of the type of SRV
-    EType Type;
-
-    // Buffer ResourceView
-    VkDescriptorBufferInfo       BufferInfo;
-
-    // Texture ResourceView
-    TSharedRef<FVulkanImageView> ImageView;
-    VkImageSubresourceRange      ImageSubresourceRange;
+    bool InitializeTextureUAV(const FRHITextureUAVDesc& InDesc);
+    bool InitializeBufferUAV(const FRHIBufferUAVDesc& InDesc);
 };
