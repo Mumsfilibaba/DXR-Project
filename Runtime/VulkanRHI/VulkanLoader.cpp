@@ -195,6 +195,9 @@ VULKAN_FUNCTION_DEFINITION(UpdateDescriptorSets);
 VULKAN_FUNCTION_DEFINITION(CreateSampler);
 VULKAN_FUNCTION_DEFINITION(DestroySampler);
 
+VULKAN_FUNCTION_DEFINITION(CreateBufferView);
+VULKAN_FUNCTION_DEFINITION(DestroyBufferView);
+
 #if VK_KHR_acceleration_structure
 VULKAN_FUNCTION_DEFINITION(CreateAccelerationStructureKHR);
 VULKAN_FUNCTION_DEFINITION(DestroyAccelerationStructureKHR);
@@ -345,6 +348,9 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateSampler);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroySampler);
+
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CreateBufferView);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, DestroyBufferView);
 
 #if VK_KHR_acceleration_structure
     if (Device->IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME))

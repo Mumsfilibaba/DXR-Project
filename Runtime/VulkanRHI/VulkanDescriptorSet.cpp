@@ -175,15 +175,14 @@ void FVulkanDescriptorState::SetSRV(FVulkanShaderResourceView* ShaderResourceVie
         {
             case FVulkanResourceView::EType::ImageView:
             {
-                DSBuilder.WriteSampledImage(BindingIndex, ShaderResourceView->GetVkImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                const FVulkanResourceView::FImageView& ImageViewInfo = ShaderResourceView->GetImageViewInfo();
+                DSBuilder.WriteSampledImage(BindingIndex, ImageViewInfo.ImageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
                 break; 
             }
-            case FVulkanResourceView::EType::Buffer:
+            case FVulkanResourceView::EType::StructuredBufferView:
             {
-                const VkBuffer     Buffer = ShaderResourceView->GetVkBuffer();
-                const VkDeviceSize Range  = ShaderResourceView->GetRange();
-                const VkDeviceSize Offset = ShaderResourceView->GetOffset();
-                DSBuilder.WriteStorageBuffer(BindingIndex, Buffer, Offset, Range);
+                const FVulkanResourceView::FStructuredBufferView& StructuredBufferView = ShaderResourceView->GetStructuredBufferInfo();
+                DSBuilder.WriteStorageBuffer(BindingIndex, StructuredBufferView.Buffer, StructuredBufferView.Offset, StructuredBufferView.Range);
                 break; 
             }
             default:
@@ -210,16 +209,15 @@ void FVulkanDescriptorState::SetUAV(FVulkanUnorderedAccessView* UnorderedAccessV
         {
             case FVulkanResourceView::EType::ImageView:
             {
-                DSBuilder.WriteStorageImage(BindingIndex, UnorderedAccessView->GetVkImageView(), VK_IMAGE_LAYOUT_GENERAL);
-                break; 
+                const FVulkanResourceView::FImageView& ImageViewInfo = UnorderedAccessView->GetImageViewInfo();
+                DSBuilder.WriteStorageImage(BindingIndex, ImageViewInfo.ImageView, VK_IMAGE_LAYOUT_GENERAL);
+                break;
             }
-            case FVulkanResourceView::EType::Buffer:
+            case FVulkanResourceView::EType::StructuredBufferView:
             {
-                const VkBuffer     Buffer = UnorderedAccessView->GetVkBuffer();
-                const VkDeviceSize Range  = UnorderedAccessView->GetRange();
-                const VkDeviceSize Offset = UnorderedAccessView->GetOffset();
-                DSBuilder.WriteStorageBuffer(BindingIndex, Buffer, Offset, Range);
-                break; 
+                const FVulkanResourceView::FStructuredBufferView& StructuredBufferView = UnorderedAccessView->GetStructuredBufferInfo();
+                DSBuilder.WriteStorageBuffer(BindingIndex, StructuredBufferView.Buffer, StructuredBufferView.Offset, StructuredBufferView.Range);
+                break;
             }
             default:
             {

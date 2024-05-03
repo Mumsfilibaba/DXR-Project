@@ -60,25 +60,27 @@ enum EBindingType : uint8
     BindingType_StorageBufferRead,
     BindingType_StorageBufferReadWrite,
     BindingType_Sampler,
-    BindingType_Count = BindingType_Sampler + 1,
+    BindingType_TexelBufferRead,
+    BindingType_TexelBufferReadWrite,
+    BindingType_Count = BindingType_TexelBufferReadWrite + 1,
 };
 
 inline const CHAR* ToString(EBindingType Binding)
 {
-    CHECK(Binding < BindingType_Count);
-    
     static constexpr const char* BindingTypeStrings[]
     {
         "SampledImage",
         "UniformBuffer",
         "StorageImage",
         "StorageBufferRead",
-        "StorageBufferRead",
+        "StorageBufferReadWrite",
         "Sampler",
+        "TexelBufferRead",
+        "TexelBufferReadWrite",
     };
     
     static_assert(ARRAY_COUNT(BindingTypeStrings) == BindingType_Count, "BindingTypeStrings is out of date");
-    return BindingTypeStrings[Binding];
+    return Binding < BindingType_Count ? BindingTypeStrings[Binding] : "Unknown BindingType";
 }
 
 inline VkDescriptorType GetDescriptorTypeFromBindingType(EBindingType BindingType)
@@ -90,20 +92,23 @@ inline VkDescriptorType GetDescriptorTypeFromBindingType(EBindingType BindingTyp
         VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
         // SRV Images
         VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-        // UAV Textures
+        // UAV Images
         VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-        // SRV
+        // SRV Buffers (StructuredBuffer, ByteAddressBuffer)
         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-        // UAV Buffers
+        // UAV Buffers (RWStructuredBuffer, RWByteAddressBuffer)
         VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
         // Samplers
         VK_DESCRIPTOR_TYPE_SAMPLER,
+        // SRV (Buffer)
+        VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
+        // UAV (Buffer)
+        VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
     };
 
     static_assert(ARRAY_COUNT(DescriptorTypes) == BindingType_Count, "The DescriptorTypes array is out of date");
     return DescriptorTypes[BindingType];
 }
-
 
 struct FVulkanShaderInfo
 {
@@ -162,7 +167,7 @@ public:
     // Creates a ShaderModule based on what DescriptorSetIndex we need to use
     TSharedRef<FVulkanShaderModule> GetOrCreateShaderModule(class FVulkanPipelineLayout* Layout);
 
-    // Patch the shader bindings based on the DescriptorSet-Index and recieve the new code with the patched bindings
+    // Patch the shader bindings based on the DescriptorSet-Index and receive the new code with the patched bindings
     bool PatchShaderBindings(FSpirvArray& OutSpirv, uint32 DescriptorSetIndex);
 
     EShaderVisibility GetShaderVisibility() const

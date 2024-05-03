@@ -316,7 +316,8 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRende
     {
         if (FVulkanResourceView* ExistingView = RenderTargetViews[Subresource])
         {
-            VULKAN_WARNING_COND(ExistingView->GetVkFormat() == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
+            const FVulkanResourceView::FImageView& ImageViewInfo = ExistingView->GetImageViewInfo();
+            VULKAN_WARNING_COND(ImageViewInfo.Format == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
             return ExistingView;
         }
     }
@@ -326,26 +327,8 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRende
     }
     
     // Create a new view
-    VkImageViewCreateInfo ImageViewCreateInfo;
-    FMemory::Memzero(&ImageViewCreateInfo);
-
-    ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    ImageViewCreateInfo.flags                           = 0;
-    ImageViewCreateInfo.format                          = VulkanFormat;
-    ImageViewCreateInfo.image                           = Image;
-    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-    ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
-    ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
-    ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
-    ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
-    ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    ImageViewCreateInfo.subresourceRange.baseArrayLayer = RenderTargetView.ArrayIndex;
-    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
-    ImageViewCreateInfo.subresourceRange.baseMipLevel   = RenderTargetView.MipLevel;
-    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
-
     FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
-    if (!NewImageView->CreateImageView(ImageViewCreateInfo))
+    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, RenderTargetView.ArrayIndex, 1, RenderTargetView.MipLevel, 1))
     {
         return nullptr;
     }
@@ -371,7 +354,8 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepth
     {
         if (FVulkanResourceView* ExistingView = DepthStencilViews[Subresource])
         {
-            VULKAN_WARNING_COND(ExistingView->GetVkFormat() == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
+            const FVulkanResourceView::FImageView& ImageViewInfo = ExistingView->GetImageViewInfo();
+            VULKAN_WARNING_COND(ImageViewInfo.Format == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
             return ExistingView;
         }
     }
@@ -381,26 +365,8 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepth
     }
 
     // Create a new view
-    VkImageViewCreateInfo ImageViewCreateInfo;
-    FMemory::Memzero(&ImageViewCreateInfo);
-
-    ImageViewCreateInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    ImageViewCreateInfo.flags                           = 0;
-    ImageViewCreateInfo.format                          = VulkanFormat;
-    ImageViewCreateInfo.image                           = Image;
-    ImageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-    ImageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
-    ImageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
-    ImageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
-    ImageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
-    ImageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
-    ImageViewCreateInfo.subresourceRange.baseArrayLayer = DepthStencilView.ArrayIndex;
-    ImageViewCreateInfo.subresourceRange.layerCount     = 1;
-    ImageViewCreateInfo.subresourceRange.baseMipLevel   = DepthStencilView.MipLevel;
-    ImageViewCreateInfo.subresourceRange.levelCount     = 1;
-
     FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
-    if (!NewImageView->CreateImageView(ImageViewCreateInfo))
+    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, DepthStencilView.ArrayIndex, 1, DepthStencilView.MipLevel, 1))
     {
         return nullptr;
     }
