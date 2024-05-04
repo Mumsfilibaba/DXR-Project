@@ -227,7 +227,7 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
         // is a valid CommandBuffer
         if (CommandContext->IsRecording())
         {
-            // TODO: What happens if we are in a renderpass?
+            // TODO: What happens if we are in a RenderPass?
             CommandContext->FinishCommandBuffer(false);
             CommandContext->GetCommandQueue().WaitForCompletion();
             CommandContext->ObtainCommandBuffer();
@@ -255,6 +255,7 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
 
 bool FVulkanViewport::Present(bool bVerticalSync)
 {
+    // TODO: Recreate SwapChain based on V-Sync
     UNREFERENCED_VARIABLE(bVerticalSync);
 
     if (bAquireNextImage)
@@ -328,7 +329,6 @@ bool FVulkanViewport::AquireNextImage()
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
 
-    // NOTE: For now we let suboptimal SwapChains pass
     VkResult Result = SwapChain->AquireNextImage(ImageSemaphore.Get());
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
