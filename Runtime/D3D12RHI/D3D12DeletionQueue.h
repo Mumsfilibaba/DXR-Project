@@ -53,17 +53,17 @@ struct FD3D12DeferredObject
         CHECK(InBlock != nullptr);
     }
 
-    EType Type;
+    EType const Type;
     union
     {
         struct 
         {
-            FD3D12OnlineDescriptorHeap*  Heap;
-            FD3D12OnlineDescriptorBlock* Block;
+            FD3D12OnlineDescriptorHeap* const  Heap;
+            FD3D12OnlineDescriptorBlock* const Block;
         } OnlineDescriptorBlock;
 
-        FRHIResource*   RHIResource;
-        FD3D12Resource* Resource;
-        ID3D12Resource* D3DResource;
+        FRHIResource* const   RHIResource;
+        FD3D12Resource* const Resource;
+        ID3D12Resource* const D3DResource;
     };
 };

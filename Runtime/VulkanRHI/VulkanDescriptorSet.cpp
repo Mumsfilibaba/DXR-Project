@@ -510,17 +510,6 @@ FVulkanDescriptorSetCache::FVulkanDescriptorSetCache(FVulkanDevice* InDevice)
 
 FVulkanDescriptorSetCache::~FVulkanDescriptorSetCache()
 {
-    Release();
-}
-
-void FVulkanDescriptorSetCache::ReleaseDescriptorSets()
-{
-    TScopedLock Lock(CacheCS);
-    DescriptorSets.Clear();
-}
-
-void FVulkanDescriptorSetCache::Release()
-{
     TScopedLock Lock(CacheCS);
     DescriptorSets.Clear();
 
@@ -531,6 +520,12 @@ void FVulkanDescriptorSetCache::Release()
     }
 
     Caches.Clear();
+}
+
+void FVulkanDescriptorSetCache::ReleaseCachedDescriptorSets()
+{
+    TScopedLock Lock(CacheCS);
+    DescriptorSets.Clear();
 }
 
 bool FVulkanDescriptorSetCache::FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet)

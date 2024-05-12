@@ -182,6 +182,16 @@ public:
         vkCmdWriteTimestamp(CommandBuffer, PipelineStage, QueryPool, Query);
     }
 
+    FORCEINLINE void BeginQuery(VkQueryPool QueryPool, uint32 Query, VkQueryControlFlags Flags)
+    {
+        vkCmdBeginQuery(CommandBuffer, QueryPool, Query, Flags);
+    }
+
+    FORCEINLINE void EndQuery(VkQueryPool QueryPool, uint32 Query)
+    {
+        vkCmdEndQuery(CommandBuffer, QueryPool, Query);
+    }
+
 #if VK_KHR_acceleration_structure
     FORCEINLINE void BuildAccelerationStructures(uint32 InfoCount, const VkAccelerationStructureBuildGeometryInfoKHR* Infos, const VkAccelerationStructureBuildRangeInfoKHR* const* BuildRangeInfos)
     {

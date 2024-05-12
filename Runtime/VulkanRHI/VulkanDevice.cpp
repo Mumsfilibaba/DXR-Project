@@ -520,16 +520,37 @@ FVulkanDevice::FVulkanDevice(FVulkanInstance* InInstance, FVulkanPhysicalDevice*
     : Instance(InInstance)
     , PhysicalDevice(InAdapter)
     , Device(VK_NULL_HANDLE)
-    , RenderPassCache(this)
-    , UploadHeap(this)
-    , MemoryManager(this)
-    , FenceManager(this)
-    , PipelineLayoutManager(this)
-    , PipelineStateManager(this)
-    , DescriptorSetCache(this)
-    , DefaultResources()
-    , QueryPoolManager(this)
+    , RenderPassCache(nullptr)
+    , UploadHeap(nullptr)
+    , MemoryManager(nullptr)
+    , FenceManager(nullptr)
+    , PipelineLayoutManager(nullptr)
+    , PipelineStateManager(nullptr)
+    , DescriptorSetCache(nullptr)
+    , TimingQueryPoolManager(nullptr)
+    , OcclusionQueryPoolManager(nullptr)
 {
+    // Release DescriptorSetCache
+    DescriptorSetCache = new FVulkanDescriptorSetCache(this);
+    
+    // Release all QueryPools
+    TimingQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Timestamp);
+    OcclusionQueryPoolManager = new FVulkanQueryPoolManager(this, EQueryType::Occlusion);
+
+    // Release all PipelineLayoutManager
+    PipelineLayoutManager = new FVulkanPipelineLayoutManager(this);
+
+    // Create RenderPassCache
+    RenderPassCache = new FVulkanRenderPassCache(this);
+
+    // Ensure that the upload allocator is released before we destroy the device
+    UploadHeap = new FVulkanUploadHeapAllocator(this);
+
+    // Release all Fences
+    FenceManager = new FVulkanFenceManager(this);
+    
+    // Release all heaps (Which will check for memory leaks)
+    MemoryManager = new FVulkanMemoryManager(this);
 }
 
 FVulkanDevice::~FVulkanDevice()
@@ -553,29 +574,33 @@ FVulkanDevice::~FVulkanDevice()
     }
 
     // Release the PipelineCache
-    PipelineStateManager.SaveCacheData();
-    PipelineStateManager.Release();
+    if (PipelineStateManager)
+    {
+        PipelineStateManager->SaveCacheData();
+        delete PipelineStateManager;
+    }
     
     // Release DescriptorSetCache
-    DescriptorSetCache.Release();
+    SAFE_DELETE(DescriptorSetCache);
     
     // Release all QueryPools
-    QueryPoolManager.ReleaseAll();
+    SAFE_DELETE(TimingQueryPoolManager);
+    SAFE_DELETE(OcclusionQueryPoolManager);
 
     // Release all PipelineLayoutManager
-    PipelineLayoutManager.Release();
+    SAFE_DELETE(PipelineLayoutManager);
 
     // Ensure that all RenderPasses and FrameBuffers are destroyed
-    RenderPassCache.ReleaseAll();
+    SAFE_DELETE(RenderPassCache);
 
     // Ensure that the upload allocator is released before we destroy the device
-    UploadHeap.Release();
+    SAFE_DELETE(UploadHeap);
 
     // Release all Fences
-    FenceManager.ReleaseAll();
+    SAFE_DELETE(FenceManager);
     
     // Release all heaps (Which will check for memory leaks)
-    MemoryManager.ReleaseMemoryHeaps();
+    SAFE_DELETE(MemoryManager);
     
     // Destroy the device here
     if (VULKAN_CHECK_HANDLE(Device))
@@ -873,8 +898,9 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
 
 bool FVulkanDevice::PostLoaderInitalize()
 {
-    // Initialize PipelineCache
-    if (!PipelineStateManager.Initialize())
+    // Initialize PipelineStateManager
+    PipelineStateManager = new FVulkanPipelineStateManager(this);
+    if (!PipelineStateManager->Initialize())
     {
         return false;
     }
@@ -1060,6 +1086,25 @@ bool FVulkanDevice::FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreate
 
     SamplerMap.Add(HashableCreateInfo, OutSampler);
     return true;
+}
+
+FVulkanQueryPoolManager* FVulkanDevice::GetQueryPoolManager(EQueryType QueryType)
+{
+    if (QueryType == EQueryType::Timestamp)
+    {
+        CHECK(TimingQueryPoolManager != nullptr);
+        return TimingQueryPoolManager;
+    }
+    else if (QueryType == EQueryType::Occlusion)
+    {
+        CHECK(OcclusionQueryPoolManager != nullptr);
+        return OcclusionQueryPoolManager;
+    }
+    else
+    {
+        DEBUG_BREAK();
+        return nullptr;
+    }
 }
 
 uint32 FVulkanDevice::GetQueueIndexFromType(EVulkanCommandQueueType Type) const

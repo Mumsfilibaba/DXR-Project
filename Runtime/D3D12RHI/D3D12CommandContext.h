@@ -50,11 +50,13 @@ public:
 
     virtual void RHIBeginFrame() override final { }
     virtual void RHIEndFrame() override final { }
+
     virtual void RHIStartContext() override final;
     virtual void RHIFinishContext() override final;
 
-    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) override final;
-    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) override final;
+    virtual void RHIBeginQuery(FRHIQuery* Query) override final;
+    virtual void RHIEndQuery(FRHIQuery* Query) override final;
+    virtual void RHIQueryTimestamp(FRHIQuery* Query) override final;
     virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
     virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
@@ -113,16 +115,20 @@ public:
     }
 
     bool Initialize();
-
     void ObtainCommandList();
     void FinishCommandList(bool bFlushAllocator);
-
     void UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SourceData);
 
     FD3D12CommandList& GetCommandList() 
     {
         CHECK(CommandList != nullptr);
         return *CommandList; 
+    }
+
+    FD3D12CommandPayload& GetCommandPayload()
+    {
+        CHECK(CommandPayload != nullptr);
+        return *CommandPayload;
     }
 
     void UnorderedAccessBarrier(FD3D12Resource* Resource)
@@ -147,9 +153,10 @@ private:
     FD3D12CommandAllocator*      CommandAllocator;
     FD3D12CommandPayload*        CommandPayload;
     FD3D12CommandContextState    ContextState;
-    ED3D12CommandQueueType       QueueType;
+    FD3D12QueryAllocator         TimingQueryAllocator;
+    FD3D12QueryAllocator         OcclusionQueryAllocator;
     FD3D12ResourceBarrierBatcher BarrierBatcher;
-    TArray<FD3D12Query*>         ResolveQueries;
+    ED3D12CommandQueueType       QueueType;
 
     bool bIsCapturing : 1;
 

@@ -33,10 +33,9 @@ private:
     FD3D12CommandContext*      CommandContext;
     FD3D12BackBufferTextureRef BackBufferProxy;
     TArray<FD3D12TextureRef>   BackBuffers;
-
-    HWND   Hwnd = 0;
-    HANDLE SwapChainWaitableObject = 0;
-    uint32 Flags           = 0;
-    uint32 NumBackBuffers  = 0;
-    uint32 BackBufferIndex = 0;
+    HWND                       Hwnd;
+    HANDLE                     SwapChainWaitableObject;
+    uint32                     Flags;
+    uint32                     NumBackBuffers;
+    uint32                     BackBufferIndex;
 };

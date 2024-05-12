@@ -5,36 +5,14 @@
 #include "Core/Containers/BitArray.h"
 #include "Core/Containers/Queue.h"
 
+#define VULKAN_INVALID_QUERY_INDEX (-1)
+
 class FVulkanQueryPool;
+class FVulkanQueryPoolManager;
 class FVulkanCommandBuffer;
+class FVulkanCommandContext;
 
-typedef TSharedRef<class FVulkanQuery> FVulkanQueryRef;
-
-class FVulkanQuery : public FRHIQuery, public FVulkanDeviceChild
-{
-    friend class FVulkanQueryPool;
-
-public:
-    FVulkanQuery(FVulkanDevice* InDevice);
-    virtual ~FVulkanQuery();
-
-    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final;
-    virtual uint64 GetFrequency() const override final;
-
-    void BeginQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index);
-    void EndQuery(FVulkanCommandBuffer& CommandBuffer, uint32 Index);
-
-    inline FVulkanQueryPool* DetachQueryPool()
-    {
-        FVulkanQueryPool* ReturnQueryPool = QueryPool;
-        QueryPool = nullptr;
-        return ReturnQueryPool;
-    }
-
-private:
-    FVulkanQueryPool* volatile QueryPool;
-    FVulkanQueryPool* volatile ResolvedQueryPool;
-};
+typedef TSharedRef<struct FVulkanQuery> FVulkanQueryRef;
 
 struct FVulkanTimingQuery
 {
@@ -42,18 +20,60 @@ struct FVulkanTimingQuery
     uint64 Availability;
 };
 
+struct FVulkanOcclusionQuery
+{
+    uint64 NumSamples;
+    uint64 Availability;
+};
+
+struct FVulkanQueryAllocation
+{
+    FVulkanQueryAllocation()
+        : QueryPool(nullptr)
+        , IndexInQueryPool(VULKAN_INVALID_QUERY_INDEX)
+        , Results(nullptr)
+    {
+    }
+
+    FVulkanQueryAllocation(FVulkanQueryPool* InQueryPool, int32 InIndexInQueryPool, uint64* InResults)
+        : QueryPool(InQueryPool)
+        , IndexInQueryPool(InIndexInQueryPool)
+        , Results(InResults)
+    {
+    }
+
+    bool IsValid() const
+    {
+        return QueryPool != nullptr && IndexInQueryPool != VULKAN_INVALID_QUERY_INDEX;
+    }
+
+    FVulkanQueryPool* QueryPool;
+    int32             IndexInQueryPool;
+    uint64*           Results;
+};
+
+struct FVulkanQuery : public FRHIQuery, public FVulkanDeviceChild
+{
+    FVulkanQuery(FVulkanDevice* InDevice, EQueryType InQueryType);
+    virtual ~FVulkanQuery() = default;
+
+    // QueryAllocation should only used on RHI Thread
+    FVulkanQueryAllocation QueryAllocation;
+    uint64                 Result;
+};
+
 class FVulkanQueryPool : public FVulkanDeviceChild
 {
-    friend class FVulkanQuery;
-
 public:
-    FVulkanQueryPool(FVulkanDevice* InDevice);
+    FVulkanQueryPool(FVulkanDevice* InDevice, FVulkanQueryPoolManager* InQueryPoolManager, EQueryType InQueryType);
     ~FVulkanQueryPool();
-    
+
     bool Initialize();
+    FVulkanQueryAllocation Allocate(uint64* InResults);
     void Reset();
     void ResolveQueries();
-    bool AllocateIndex(uint32 Index);
+    void SetDebugName(const FString& InName);
+    const FString& GetDebugName() const { return DebugName; }
 
     VkQueryPool GetVkQueryPool() const
     {
@@ -65,25 +85,53 @@ public:
         return NumQueries;
     }
 
+    FVulkanQueryPoolManager* GetQueryPoolManager() const
+    {
+        return QueryPoolManager;
+    }
+
+    EQueryType GetType() const 
+    {
+        return QueryType;
+    }
+    
 private:
-    VkQueryPool                QueryPool;
-    FBitArray                  UsedQueries;
-    TArray<FVulkanTimingQuery> QueryData;
-    FVulkanQuery*              RHIQuery;
-    uint32                     NumQueries;
+    FVulkanQueryPoolManager*       QueryPoolManager;
+    VkQueryPool                    QueryPool;
+    TArray<FVulkanQueryAllocation> QueryAllocations;
+    int32                          CurrentQueryIndex;
+    int32                          NumQueries;
+    EQueryType                     QueryType;
+    FString                        DebugName;
+};
+
+class FVulkanQueryAllocator : public FVulkanDeviceChild
+{
+public:
+    FVulkanQueryAllocator(FVulkanDevice* InDevice, FVulkanCommandContext& InContext, EQueryType InQueryType);
+    ~FVulkanQueryAllocator();
+
+    FVulkanQueryAllocation Allocate(uint64* InResults);
+    void PrepareForNewCommanBuffer();
+
+private:
+    FVulkanCommandContext&   Context; 
+    FVulkanQueryPool*        QueryPool;
+    EQueryType               QueryType;
+    FVulkanQueryPoolManager* QueryPoolManager;
 };
 
 class FVulkanQueryPoolManager : public FVulkanDeviceChild
 {
 public:
-    FVulkanQueryPoolManager(FVulkanDevice* InDevice);
+    FVulkanQueryPoolManager(FVulkanDevice* InDevice, EQueryType InQueryType);
     ~FVulkanQueryPoolManager();
 
     FVulkanQueryPool* ObtainQueryPool();
     void RecycleQueryPool(FVulkanQueryPool* InQueryPool);
-    void ReleaseAll();
 
 private:
+    EQueryType                QueryType;
     TQueue<FVulkanQueryPool*> AvailableQueryPools;
     TArray<FVulkanQueryPool*> QueryPools;
     FCriticalSection          QueryPoolsCS;

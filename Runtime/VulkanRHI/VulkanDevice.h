@@ -281,15 +281,15 @@ public:
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
 
-    FVulkanRenderPassCache& GetRenderPassCache() { return RenderPassCache; }
-    FVulkanMemoryManager& GetMemoryManager() { return MemoryManager; }
-    FVulkanUploadHeapAllocator& GetUploadHeap() { return UploadHeap; }
-    FVulkanFenceManager& GetFenceManager() { return FenceManager; }
-    FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return PipelineLayoutManager; }
-    FVulkanPipelineStateManager& GetPipelineStateManager() { return PipelineStateManager; }
-    FVulkanDescriptorSetCache& GetDescriptorSetCache() { return DescriptorSetCache; }
+    FVulkanQueryPoolManager* GetQueryPoolManager(EQueryType QueryType);
+    FVulkanRenderPassCache& GetRenderPassCache() { return *RenderPassCache; }
+    FVulkanMemoryManager& GetMemoryManager() { return *MemoryManager; }
+    FVulkanUploadHeapAllocator& GetUploadHeap() { return *UploadHeap; }
+    FVulkanFenceManager& GetFenceManager() { return *FenceManager; }
+    FVulkanPipelineLayoutManager& GetPipelineLayoutManager() { return *PipelineLayoutManager; }
+    FVulkanPipelineStateManager& GetPipelineStateManager() { return *PipelineStateManager; }
+    FVulkanDescriptorSetCache& GetDescriptorSetCache() { return *DescriptorSetCache; }
     FVulkanDefaultResources& GetDefaultResources() { return DefaultResources; }
-    FVulkanQueryPoolManager& GetQueryPoolManager() { return QueryPoolManager; }
 
     uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
     
@@ -324,18 +324,19 @@ public:
     }
 
 private:
-    FVulkanInstance*             Instance;
-    FVulkanPhysicalDevice*       PhysicalDevice;
-    VkDevice                     Device;
-    FVulkanRenderPassCache       RenderPassCache;
-    FVulkanUploadHeapAllocator   UploadHeap;
-    FVulkanMemoryManager         MemoryManager;
-    FVulkanFenceManager          FenceManager;
-    FVulkanPipelineLayoutManager PipelineLayoutManager;
-    FVulkanPipelineStateManager  PipelineStateManager;
-    FVulkanDescriptorSetCache    DescriptorSetCache;
-    FVulkanDefaultResources      DefaultResources;
-    FVulkanQueryPoolManager      QueryPoolManager;
+    FVulkanInstance*              Instance;
+    FVulkanPhysicalDevice*        PhysicalDevice;
+    VkDevice                      Device;
+    FVulkanRenderPassCache*       RenderPassCache;
+    FVulkanUploadHeapAllocator*   UploadHeap;
+    FVulkanMemoryManager*         MemoryManager;
+    FVulkanFenceManager*          FenceManager;
+    FVulkanPipelineLayoutManager* PipelineLayoutManager;
+    FVulkanPipelineStateManager*  PipelineStateManager;
+    FVulkanDescriptorSetCache*    DescriptorSetCache;
+    FVulkanQueryPoolManager*      TimingQueryPoolManager;
+    FVulkanQueryPoolManager*      OcclusionQueryPoolManager;
+    FVulkanDefaultResources       DefaultResources;
 
     TSet<FString>                        ExtensionNames;
     TSet<FString>                        LayerNames;

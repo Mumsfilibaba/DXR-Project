@@ -248,7 +248,31 @@ FVulkanPipelineLayoutManager::FVulkanPipelineLayoutManager(FVulkanDevice* InDevi
 
 FVulkanPipelineLayoutManager::~FVulkanPipelineLayoutManager()
 {
-    Release();
+    {
+        TScopedLock Lock(LayoutsCS);
+
+        for (const auto& LayoutPair : Layouts)
+        {
+            delete LayoutPair.Second;
+        }
+
+        Layouts.Clear();
+    }
+
+    {
+        TScopedLock Lock(SetLayoutsCS);
+
+        for (const auto& SetLayoutPair : SetLayouts)
+        {
+            if (VULKAN_CHECK_HANDLE(SetLayoutPair.Second))
+            {
+                vkDestroyDescriptorSetLayout(GetDevice()->GetVkDevice(), SetLayoutPair.Second, nullptr);
+                SetLayoutPair.Second = VK_NULL_HANDLE;
+            }
+        }
+
+        SetLayouts.Clear();
+    }
 }
 
 FVulkanPipelineLayout* FVulkanPipelineLayoutManager::FindOrCreateLayout(const FVulkanPipelineLayoutInfo& LayoutInfo)
@@ -305,34 +329,5 @@ VkDescriptorSetLayout FVulkanPipelineLayoutManager::FindOrCreateSetLayouts(const
     {
         SetLayouts.Add(SetLayoutInfo, NewSetLayout);
         return NewSetLayout;
-    }
-}
-
-void FVulkanPipelineLayoutManager::Release()
-{
-    {
-        TScopedLock Lock(LayoutsCS);
-        
-        for (const auto& LayoutPair : Layouts)
-        {
-            delete LayoutPair.Second;
-        }
-        
-        Layouts.Clear();
-    }
-    
-    {
-        TScopedLock Lock(SetLayoutsCS);
-
-        for (const auto& SetLayoutPair : SetLayouts)
-        {
-            if (VULKAN_CHECK_HANDLE(SetLayoutPair.Second))
-            {
-                vkDestroyDescriptorSetLayout(GetDevice()->GetVkDevice(), SetLayoutPair.Second, nullptr);
-                SetLayoutPair.Second = VK_NULL_HANDLE;
-            }
-        }
-        
-        SetLayouts.Clear();
     }
 }

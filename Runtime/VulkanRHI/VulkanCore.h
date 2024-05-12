@@ -226,6 +226,16 @@ constexpr VkImageLayout ConvertResourceStateToImageLayout(EResourceAccess Resour
     }
 }
 
+constexpr VkQueryType ConvertQueryType(EQueryType QueryType)
+{
+    switch (QueryType)
+    {
+        case EQueryType::Timestamp: return VK_QUERY_TYPE_TIMESTAMP;
+        case EQueryType::Occlusion: return VK_QUERY_TYPE_OCCLUSION;
+        default: return VK_QUERY_TYPE_MAX_ENUM; // NOTE Return invalid value
+    }
+}
+
 constexpr VkImageType ConvertTextureDimension(ETextureDimension TextureDimension)
 {
     switch (TextureDimension)

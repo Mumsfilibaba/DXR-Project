@@ -225,10 +225,11 @@ FVulkanCommandPayload::~FVulkanCommandPayload()
 
 void FVulkanCommandPayload::Submit()
 {
+    CHECK(CommandBuffers.IsEmpty() == false);
     FVulkanFenceManager& FenceManager = Device->GetFenceManager();
     Fence = FenceManager.ObtainFence();
     CHECK(Fence != nullptr);
-    CHECK(CommandBuffers.IsEmpty() == false);
+
     Queue.ExecuteCommandBuffer(CommandBuffers.Data(), CommandBuffers.Size(), Fence);
 }
 
@@ -239,11 +240,15 @@ void FVulkanCommandPayload::Finish()
     DeletionQueue.Clear();
 
     // Resolve queries
-    for (FVulkanQueryPool* Query : QueryPools)
-        Query->ResolveQueries();
+    for (FVulkanQueryPool* QueryPool : QueryPools)
+    {
+        FVulkanQueryPoolManager* QueryPoolManager = QueryPool->GetQueryPoolManager();
+        QueryPool->ResolveQueries();
+        QueryPoolManager->RecycleQueryPool(QueryPool);
+    }
 
     QueryPools.Clear();
-        
+
     // Recycle all the CommandBuffers before CommandPools to avoid needing to lock the CommandPools
     for (FVulkanCommandBuffer* CommandBuffer : CommandBuffers)
     {
@@ -255,7 +260,9 @@ void FVulkanCommandPayload::Finish()
 
     // Recycle all the CommandPool
     for (FVulkanCommandPool* CommandPool : CommandPools)
+    {
         Queue.RecycleCommandPool(CommandPool);
+    }
     
     CommandPools.Clear();
 

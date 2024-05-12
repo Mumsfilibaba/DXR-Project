@@ -178,14 +178,20 @@ public:
         return new FNullRHIRayTracingPipelineState();
     }
 
-    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final
+    virtual bool RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult) override final
+    {
+        OutResult = 0;
+        return true;
+    }
+
+    virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) override final
     {
         delete Resource;
     }
 
-    virtual class FRHIQuery* RHICreateQuery() override final
+    virtual class FRHIQuery* RHICreateQuery(EQueryType InQueryType) override final
     {
-        return new FNullRHIQuery();
+        return new FNullRHIQuery(InQueryType);
     }
 
     virtual struct IRHICommandContext* RHIObtainCommandContext() override final

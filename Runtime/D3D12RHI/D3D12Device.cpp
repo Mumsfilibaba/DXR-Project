@@ -446,9 +446,9 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , DepthStencilOfflineDescriptorHeap(nullptr)
     , SamplerOfflineDescriptorHeap(nullptr)
     , RootSignatureManager(nullptr)
-    , DirectCommandListManager(nullptr)
-    , CopyCommandListManager(nullptr)
-    , ComputeCommandListManager(nullptr)
+    , DirectQueue(nullptr)
+    , CopyQueue(nullptr)
+    , ComputeQueue(nullptr)
     , DirectCommandAllocatorManager(nullptr)
     , CopyCommandAllocatorManager(nullptr)
     , ComputeCommandAllocatorManager(nullptr)
@@ -488,6 +488,17 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , NodeMask(0)
     , NodeCount(0)
 {
+    // UploadAllocator
+    UploadAllocator = new FD3D12UploadHeapAllocator(this);
+
+    // Create CommandAllocatorManagers
+    DirectCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
+    CopyCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
+    ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
+
+    // Create QueryHeapManagers
+    TimingQueryHeapManager = new FD3D12QueryHeapManager(this, EQueryType::Timestamp);
+    OcclusionQueryHeapManager = new FD3D12QueryHeapManager(this, EQueryType::Occlusion);
 }
 
 FD3D12Device::~FD3D12Device()
@@ -508,10 +519,14 @@ FD3D12Device::~FD3D12Device()
     DefaultDescriptors.DefaultSampler.Reset();
     DefaultDescriptors.DefaultRTV.Reset();
 
+    // Destroy QueryHeapManagers
+    SAFE_DELETE(TimingQueryHeapManager);
+    SAFE_DELETE(OcclusionQueryHeapManager);
+
     // Destroy all CommandLists
-    SAFE_DELETE(DirectCommandListManager);
-    SAFE_DELETE(ComputeCommandListManager);
-    SAFE_DELETE(CopyCommandListManager);
+    SAFE_DELETE(DirectQueue);
+    SAFE_DELETE(ComputeQueue);
+    SAFE_DELETE(CopyQueue);
 
     // Destroy all CommandAllocators
     SAFE_DELETE(DirectCommandAllocatorManager);
@@ -717,9 +732,6 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    // UploadAllocator
-    UploadAllocator = new FD3D12UploadHeapAllocator(this);
-
     // Initialize default descriptors/views
     if (!CreateDefaultResources())
     {
@@ -861,21 +873,18 @@ bool FD3D12Device::CreateDevice()
 
 bool FD3D12Device::CreateCommandManagers()
 {
-    DirectCommandListManager = new FD3D12CommandListManager(this, ED3D12CommandQueueType::Direct);
-    if (!DirectCommandListManager->Initialize())
+    DirectQueue = new FD3D12Queue(this, ED3D12CommandQueueType::Direct);
+    if (!DirectQueue->Initialize())
         return false;
  
-    CopyCommandListManager = new FD3D12CommandListManager(this, ED3D12CommandQueueType::Copy);
-    if (!CopyCommandListManager->Initialize())
+    CopyQueue = new FD3D12Queue(this, ED3D12CommandQueueType::Copy);
+    if (!CopyQueue->Initialize())
         return false;
 
-    ComputeCommandListManager = new FD3D12CommandListManager(this, ED3D12CommandQueueType::Compute);
-    if (!ComputeCommandListManager->Initialize())
+    ComputeQueue = new FD3D12Queue(this, ED3D12CommandQueueType::Compute);
+    if (!ComputeQueue->Initialize())
         return false;
 
-    DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
-    CopyCommandAllocatorManager    = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
-    ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
     return true;
 }
 
@@ -984,22 +993,22 @@ bool FD3D12Device::CreateDefaultResources()
     return true;
 }
 
-FD3D12CommandListManager* FD3D12Device::GetCommandListManager(ED3D12CommandQueueType QueueType)
+FD3D12Queue* FD3D12Device::GetQueue(ED3D12CommandQueueType QueueType)
 {
     if (QueueType == ED3D12CommandQueueType::Direct)
     {
-        CHECK(DirectCommandListManager->GetQueueType() == ED3D12CommandQueueType::Direct);
-        return DirectCommandListManager;
+        CHECK(DirectQueue->GetQueueType() == ED3D12CommandQueueType::Direct);
+        return DirectQueue;
     }
     else if (QueueType == ED3D12CommandQueueType::Copy)
     {
-        CHECK(CopyCommandListManager->GetQueueType() == ED3D12CommandQueueType::Copy);
-        return CopyCommandListManager;
+        CHECK(CopyQueue->GetQueueType() == ED3D12CommandQueueType::Copy);
+        return CopyQueue;
     }
     else if (QueueType == ED3D12CommandQueueType::Compute)
     {
-        CHECK(ComputeCommandListManager->GetQueueType() == ED3D12CommandQueueType::Compute);
-        return ComputeCommandListManager;
+        CHECK(ComputeQueue->GetQueueType() == ED3D12CommandQueueType::Compute);
+        return ComputeQueue;
     }
     else
     {
@@ -1032,8 +1041,8 @@ FD3D12CommandAllocatorManager* FD3D12Device::GetCommandAllocatorManager(ED3D12Co
 
 ID3D12CommandQueue* FD3D12Device::GetD3D12CommandQueue(ED3D12CommandQueueType QueueType)
 {
-    FD3D12CommandListManager* CommandListManager = GetCommandListManager(QueueType);
-    return CommandListManager ? CommandListManager->GetD3D12CommandQueue() : nullptr;
+    FD3D12Queue* Queue = GetQueue(QueueType);
+    return Queue ? Queue->GetD3D12CommandQueue() : nullptr;
 }
 
 int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount)
@@ -1053,4 +1062,22 @@ int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCou
     }
 
     return static_cast<uint32>(Data.NumQualityLevels - 1);
+}
+
+FD3D12QueryHeapManager* FD3D12Device::GetQueryHeapManager(EQueryType QueryType)
+{
+    if (QueryType == EQueryType::Timestamp)
+    {
+        CHECK(TimingQueryHeapManager->GetQueryType() == EQueryType::Timestamp);
+        return TimingQueryHeapManager;
+    }
+    else if (QueryType == EQueryType::Occlusion)
+    {
+        CHECK(OcclusionQueryHeapManager->GetQueryType() == EQueryType::Occlusion);
+        return OcclusionQueryHeapManager;
+    }
+    else
+    {
+        return nullptr;
+    }
 }

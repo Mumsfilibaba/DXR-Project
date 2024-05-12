@@ -843,17 +843,9 @@ FRHIRayTracingPipelineState* FD3D12RHI::RHICreateRayTracingPipelineState(const F
     }
 }
 
-FRHIQuery* FD3D12RHI::RHICreateQuery()
+FRHIQuery* FD3D12RHI::RHICreateQuery(EQueryType InQueryType)
 {
-    FD3D12QueryRef NewQuery = new FD3D12Query(GetDevice());
-    if (!NewQuery->Initialize())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return NewQuery.ReleaseOwnership();
-    }
+    return new FD3D12Query(GetDevice(), InQueryType);
 }
 
 FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
@@ -897,7 +889,19 @@ bool FD3D12RHI::RHIQueryUAVFormatSupport(EFormat Format) const
     return true;
 }
 
-void FD3D12RHI::EnqueueResourceDeletion(FRHIResource* Resource)
+bool FD3D12RHI::RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult)
+{
+    FD3D12Query* D3D12Result = static_cast<FD3D12Query*>(Query);
+    if (!D3D12Result)
+    {
+        return false;
+    }
+
+    OutResult = D3D12Result->Result;
+    return true;
+}
+
+void FD3D12RHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
 {
     if (Resource)
     {
@@ -945,7 +949,7 @@ void FD3D12RHI::SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlush
             CommandPayload->DeletionQueue = Move(DeletionQueue);
         }
 
-        CommandPayload->SyncPoint = CommandPayload->CommandListManager->ExecuteCommandLists(CommandPayload->CommandLists.Data(), CommandPayload->CommandLists.Size(), false);
+        CommandPayload->SyncPoint = CommandPayload->Queue->ExecuteCommandLists(CommandPayload->CommandLists.Data(), CommandPayload->CommandLists.Size(), false);
         PendingSubmissions.Enqueue(CommandPayload);
     }
 }

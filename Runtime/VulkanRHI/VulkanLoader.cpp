@@ -256,6 +256,8 @@ VULKAN_FUNCTION_DEFINITION(CmdDispatch);
 VULKAN_FUNCTION_DEFINITION(CmdDraw);
 VULKAN_FUNCTION_DEFINITION(CmdDrawIndexed);
 VULKAN_FUNCTION_DEFINITION(CmdWriteTimestamp);
+VULKAN_FUNCTION_DEFINITION(CmdBeginQuery);
+VULKAN_FUNCTION_DEFINITION(CmdEndQuery);
 #if VK_EXT_debug_utils
 VULKAN_FUNCTION_DEFINITION(CmdInsertDebugUtilsLabelEXT);
 #endif
@@ -428,6 +430,8 @@ bool LoadDeviceFunctions(FVulkanDevice* Device)
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDraw);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdDrawIndexed);
     VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdWriteTimestamp);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdBeginQuery);
+    VULKAN_LOAD_DEVICE_FUNCTION(DeviceHandle, CmdEndQuery);
 
     // Initialize DedicatedAllocation extension helper
     FVulkanDedicatedAllocationKHR::Initialize(Device);

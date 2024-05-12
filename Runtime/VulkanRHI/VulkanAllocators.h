@@ -50,8 +50,7 @@ public:
     virtual ~FVulkanUploadHeapAllocator();
 
     FVulkanUploadAllocation Allocate(uint64 Size, uint64 Alignment);
-    void Release();
-    
+
 private:
     VkDeviceSize           BufferSize;
     VkDeviceSize           CurrentOffset;

@@ -10,7 +10,15 @@ FVulkanFenceManager::FVulkanFenceManager(FVulkanDevice* InDevice)
 
 FVulkanFenceManager::~FVulkanFenceManager()
 {
-    ReleaseAll();
+    SCOPED_LOCK(FencesCS);
+
+    for (FVulkanFence* Fence : Fences)
+    {
+        delete Fence;
+    }
+
+    Fences.Clear();
+    AvailableFences.Clear();
 }
 
 FVulkanFence* FVulkanFenceManager::ObtainFence()
@@ -48,17 +56,4 @@ void FVulkanFenceManager::RecycleFence(FVulkanFence* InFence)
     {
         LOG_WARNING("Trying to Recycle an invalid Fence");
     }
-}
-
-void FVulkanFenceManager::ReleaseAll()
-{
-    SCOPED_LOCK(FencesCS);
-
-    for (FVulkanFence* Fence : Fences)
-    {
-        delete Fence;
-    }
-
-    Fences.Clear();
-    AvailableFences.Clear();
 }

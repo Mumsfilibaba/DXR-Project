@@ -6,27 +6,22 @@
 FGPUProfiler FGPUProfiler::Instance;
 
 FGPUProfiler::FGPUProfiler()
-    : Timequeries(nullptr)
-    , FrameTime()
+    : FrameTime()
     , Samples()
     , bEnabled(false)
 {
 }
 
-bool FGPUProfiler::Initialize()
-{
-    Instance.Timequeries = RHICreateQuery();
-    if (!Instance.Timequeries)
-    {
-        return false;
-    }
-
-    return true;
-}
-
 void FGPUProfiler::Release()
 {
-    Instance.Timequeries.Reset();
+    FrameTime.BeginQuery.Reset();
+    FrameTime.EndQuery.Reset();
+
+    for (auto Sample : Samples)
+    {
+        Sample.Second.BeginQuery.Reset();
+        Sample.Second.EndQuery.Reset();
+    }
 }
 
 void FGPUProfiler::Enable()
@@ -41,16 +36,15 @@ void FGPUProfiler::Disable()
 
 void FGPUProfiler::Tick()
 {
-    if (Timequeries)
+    if (bEnabled && FrameTime.BeginQuery && FrameTime.EndQuery)
     {
-        FTimingQuery Query;
-        Timequeries->GetTimestampFromIndex(Query, FrameTime.TimeQueryIndex);
+        uint64 BeginQuery;
+        GetRHI()->RHIGetQueryResult(FrameTime.BeginQuery.Get(), BeginQuery);
+        uint64 EndQuery;
+        GetRHI()->RHIGetQueryResult(FrameTime.EndQuery.Get(), EndQuery);
 
-        const double Frequency = static_cast<double>(Timequeries->GetFrequency());
-        const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
-
-        // To milliseconds
-        double Duration = (DeltaTime / Frequency) * (1000.0);
+        const double DeltaTime = static_cast<double>(EndQuery - BeginQuery);
+        double Duration = DeltaTime / 1000000.0; // To milliseconds
         FrameTime.AddSample((float)Duration);
     }
 }
@@ -59,12 +53,10 @@ void FGPUProfiler::Reset()
 {
     FrameTime.Reset();
 
+    TScopedLock Lock(SamplesLock);
+    for (auto Sample : Samples)
     {
-        TScopedLock Lock(SamplesLock);
-        for (auto Sample : Samples)
-        {
-            Sample.Second.Reset();
-        }
+        Sample.Second.Reset();
     }
 }
 
@@ -76,75 +68,90 @@ void FGPUProfiler::GetGPUSamples(GPUProfileSamplesMap& OutSamples)
 
 void FGPUProfiler::BeginGPUFrame(FRHICommandList& CmdList)
 {
-    if (Timequeries && bEnabled)
+    if (bEnabled)
     {
-        CmdList.BeginTimeStamp(Timequeries.Get(), FrameTime.TimeQueryIndex);
+        if (!FrameTime.BeginQuery)
+            FrameTime.BeginQuery = RHICreateQuery(EQueryType::Timestamp);
+
+        CmdList.QueryTimestamp(FrameTime.BeginQuery.Get());
     }
 }
 
 void FGPUProfiler::EndGPUFrame(FRHICommandList& CmdList)
 {
-    if (Timequeries && bEnabled)
+    if (bEnabled)
     {
-        CmdList.EndTimeStamp(Timequeries.Get(), FrameTime.TimeQueryIndex);
+        if (!FrameTime.EndQuery)
+            FrameTime.EndQuery = RHICreateQuery(EQueryType::Timestamp);
+
+        CmdList.QueryTimestamp(FrameTime.EndQuery.Get());
     }
 }
 
 void FGPUProfiler::BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
-    if (Timequeries && bEnabled)
+    if (bEnabled)
     {
         const FString ScopeName = Name;
 
-        int32 TimeQueryIndex = -1;
-
+        FRHIQueryRef Query;
         {
             TScopedLock Lock(SamplesLock);
-            if (FGPUProfileSample* Entry = Samples.Find(ScopeName))
+
+            if (FGPUProfileSample* Sample = Samples.Find(ScopeName))
             {
-                TimeQueryIndex = Entry->TimeQueryIndex;
+                Query = Sample->BeginQuery;
             }
             else
             {
                 FGPUProfileSample& NewSample = Samples.Add(ScopeName);
-                NewSample.TimeQueryIndex = ++CurrentTimeQueryIndex;
-                TimeQueryIndex = NewSample.TimeQueryIndex;
+                Query = NewSample.BeginQuery = RHICreateQuery(EQueryType::Timestamp);
             }
         }
 
-        if (TimeQueryIndex >= 0)
+        if (Query)
         {
-            CmdList.BeginTimeStamp(Timequeries.Get(), TimeQueryIndex);
+            CmdList.QueryTimestamp(Query.Get());
+        }
+        else
+        {
+            DEBUG_BREAK();
         }
     }
 }
 
 void FGPUProfiler::EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name)
 {
-    if (Timequeries && bEnabled)
+    if (bEnabled)
     {
         const FString ScopeName = Name;
-
-        int32 TimeQueryIndex = -1;
 
         TScopedLock Lock(SamplesLock);
         if (FGPUProfileSample* Entry = Samples.Find(ScopeName))
         {
-            TimeQueryIndex = Entry->TimeQueryIndex;
-            CmdList.EndTimeStamp(Timequeries.Get(), TimeQueryIndex);
+            if (!Entry->EndQuery)
+                Entry->EndQuery = RHICreateQuery(EQueryType::Timestamp);
 
-            if (TimeQueryIndex >= 0)
+            if (Entry->EndQuery)
             {
-                FTimingQuery Query;
-                Timequeries->GetTimestampFromIndex(Query, TimeQueryIndex);
+                CmdList.QueryTimestamp(Entry->EndQuery.Get());
 
-                const double Frequency = static_cast<double>(Timequeries->GetFrequency());
-                const double DeltaTime = static_cast<double>(Query.End - Query.Begin);
+                uint64 BeginQuery;
+                GetRHI()->RHIGetQueryResult(Entry->BeginQuery.Get(), BeginQuery);
+                uint64 EndQuery;
+                GetRHI()->RHIGetQueryResult(Entry->EndQuery.Get(), EndQuery);
 
-                // To nanoseconds
-                const double Duration = (DeltaTime / Frequency) * (1000.0 * 1000.0 * 1000.0);
-                Entry->AddSample((float)Duration);
+                const double DeltaTime = static_cast<double>(EndQuery - BeginQuery);
+                Entry->AddSample((float)DeltaTime);
             }
+            else
+            {
+                DEBUG_BREAK();
+            }
+        }
+        else
+        {
+            DEBUG_BREAK();
         }
     }
 }

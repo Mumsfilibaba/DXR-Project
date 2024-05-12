@@ -259,7 +259,7 @@ void FRHICommandExecutor::FlushGarbageCollection()
     {
         for (FRHIResource* Resource : DeletedResources)
         {
-            GetRHI()->EnqueueResourceDeletion(Resource);
+            GetRHI()->RHIEnqueueResourceDeletion(Resource);
         }
 
         DeletedResources.Clear();

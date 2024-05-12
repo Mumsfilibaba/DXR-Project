@@ -37,7 +37,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugLayerCallback(VkDebugUtilsMessageSeverityFla
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-
 FVulkanInstance::FVulkanInstance()
     : DriverHandle(nullptr)
     , Instance(VK_NULL_HANDLE)

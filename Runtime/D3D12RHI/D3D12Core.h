@@ -106,7 +106,6 @@
 
 void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
 
-
 inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
@@ -135,13 +134,11 @@ inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
     return HeapProperties;
 }
 
-
 enum class ED3D12CommandQueueType
 {
     Direct  = 0,
     Compute = 1,
     Copy    = 2,
-
     Count
 };
 
@@ -169,6 +166,16 @@ constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType Queue
     return D3D12_COMMAND_LIST_TYPE(-1);
 }
 
+constexpr D3D12_QUERY_HEAP_TYPE ToQueryHeapType(EQueryType QueryType)
+{
+    switch (QueryType)
+    {
+        case EQueryType::Timestamp: return D3D12_QUERY_HEAP_TYPE_TIMESTAMP;
+        case EQueryType::Occlusion: return D3D12_QUERY_HEAP_TYPE_OCCLUSION;
+    }
+
+    return D3D12_QUERY_HEAP_TYPE(-1);
+}
 
 constexpr uint32 GetBufferAlignment(EBufferUsageFlags BufferFlags)
 {
@@ -998,7 +1005,6 @@ struct FD3D12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
         return *this;
     }
 };
-
 
 constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 {

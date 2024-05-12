@@ -22,7 +22,33 @@ FVulkanRenderPassCache::FVulkanRenderPassCache(FVulkanDevice* InDevice)
 
 FVulkanRenderPassCache::~FVulkanRenderPassCache()
 {
-    ReleaseAll();
+    {
+        SCOPED_LOCK(FramebuffersCS);
+
+        // Destroy all Framebuffers
+        for (auto Framebuffer : Framebuffers)
+        {
+            DestroyFramebuffer(GetDevice()->GetVkDevice(), Framebuffer.Second);
+        }
+
+        Framebuffers.Clear();
+    }
+
+    {
+        SCOPED_LOCK(RenderPassesCS);
+
+        // Destroy all RenderPasses
+        for (auto RenderPass : RenderPasses)
+        {
+            if (VULKAN_CHECK_HANDLE(RenderPass.Second))
+            {
+                vkDestroyRenderPass(GetDevice()->GetVkDevice(), RenderPass.Second, nullptr);
+            }
+        }
+
+        // Clear all
+        RenderPasses.Clear();
+    }
 }
 
 VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& Key)
@@ -174,7 +200,7 @@ void FVulkanRenderPassCache::OnReleaseImageView(VkImageView View)
     // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
     
-    // Find all framebuffers containing this renderpass
+    // Find all Framebuffers containing this RenderPass
     for (const FVulkanFramebufferKey& Key : Keys)
     {
         if (Key.ContainsImageView(View))
@@ -197,7 +223,7 @@ void FVulkanRenderPassCache::OnReleaseRenderPass(VkRenderPass RenderPass)
     // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
     
-    // Find all framebuffers containing this renderpass
+    // Find all Framebuffers containing this RenderPass
     for (const FVulkanFramebufferKey& Key : Keys)
     {
         if (Key.ContainsRenderPass(RenderPass))
@@ -210,36 +236,5 @@ void FVulkanRenderPassCache::OnReleaseRenderPass(VkRenderPass RenderPass)
             
             Framebuffers.Remove(Key);
         }
-    }
-}
-
-void FVulkanRenderPassCache::ReleaseAll()
-{
-    {
-        SCOPED_LOCK(FramebuffersCS);
-
-        // Destroy all framebuffers
-        for (auto Framebuffer : Framebuffers)
-        {
-            DestroyFramebuffer(GetDevice()->GetVkDevice(), Framebuffer.Second);
-        }
-
-        Framebuffers.Clear();
-    }
-
-    {
-        SCOPED_LOCK(RenderPassesCS);
-
-        // Destroy all RenderPasses
-        for (auto RenderPass : RenderPasses)
-        {
-            if (VULKAN_CHECK_HANDLE(RenderPass.Second))
-            {
-                vkDestroyRenderPass(GetDevice()->GetVkDevice(), RenderPass.Second, nullptr);
-            }
-        }
-
-        // Clear all
-        RenderPasses.Clear();
     }
 }

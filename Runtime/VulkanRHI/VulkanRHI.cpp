@@ -279,9 +279,9 @@ FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportInfo& InViewportIn
     }
 }
 
-FRHIQuery* FVulkanRHI::RHICreateQuery()
+FRHIQuery* FVulkanRHI::RHICreateQuery(EQueryType InQueryType)
 {
-    return new FVulkanQuery(Device);
+    return new FVulkanQuery(Device, InQueryType);
 }
 
 FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
@@ -608,6 +608,18 @@ bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
     return false;
 }
 
+bool FVulkanRHI::RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult)
+{
+    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    if (!VulkanQuery)
+    {
+        return false;
+    }
+
+    OutResult = VulkanQuery->Result;
+    return true;
+}
+
 FString FVulkanRHI::RHIGetAdapterName() const
 {
     if (!PhysicalDevice)
@@ -620,7 +632,7 @@ FString FVulkanRHI::RHIGetAdapterName() const
     return FString(DeviceProperties.deviceName);
 }
 
-void FVulkanRHI::EnqueueResourceDeletion(FRHIResource* Resource)
+void FVulkanRHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
 {
     if (Resource)
     {

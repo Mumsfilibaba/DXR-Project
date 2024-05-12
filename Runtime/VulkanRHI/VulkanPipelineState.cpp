@@ -610,7 +610,11 @@ FVulkanPipelineStateManager::FVulkanPipelineStateManager(FVulkanDevice* InDevice
 
 FVulkanPipelineStateManager::~FVulkanPipelineStateManager()
 {
-    Release();
+    if (VULKAN_CHECK_HANDLE(PipelineCache))
+    {
+        vkDestroyPipelineCache(GetDevice()->GetVkDevice(), PipelineCache, nullptr);
+        PipelineCache = VK_NULL_HANDLE;
+    }
 }
 
 bool FVulkanPipelineStateManager::Initialize()
@@ -641,15 +645,6 @@ bool FVulkanPipelineStateManager::Initialize()
     else
     {
         return true;
-    }
-}
-
-void FVulkanPipelineStateManager::Release()
-{
-    if (VULKAN_CHECK_HANDLE(PipelineCache))
-    {
-        vkDestroyPipelineCache(GetDevice()->GetVkDevice(), PipelineCache, nullptr);
-        PipelineCache = VK_NULL_HANDLE;
     }
 }
 

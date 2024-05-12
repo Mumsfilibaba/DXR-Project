@@ -264,8 +264,6 @@ public:
     // Find a DescriptorSetLayout that matches the layout info or create a new one
     VkDescriptorSetLayout FindOrCreateSetLayouts(const FVulkanDescriptorSetLayoutInfo& SetLayoutInfo);
 
-    void Release();
-
 private:
     TMap<FVulkanPipelineLayoutInfo, FVulkanPipelineLayout*>     Layouts;
     FCriticalSection                                            LayoutsCS;

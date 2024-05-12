@@ -19,6 +19,10 @@ static TAutoConsoleVariable<bool> CVarBasePassClearAllTargets(
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
     true);
 
+static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
+    "Renderer.BasePass.OcclusionCulling",
+    "Should occlusion culling be performed or not",
+    false);
 
 FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -297,8 +301,13 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
         }
 
-        for (const FProxySceneComponent* Component : Batch.Primitives)
+        for (FProxySceneComponent* Component : Batch.Primitives)
         {
+            if (!Component->OcclusionQuery)
+            {
+                Component->OcclusionQuery = RHICreateQuery(EQueryType::Occlusion);
+            }
+
             if (Material->HasAlphaMask() || Material->IsDoubleSided())
             {
                 CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
@@ -317,7 +326,9 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
             CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &TransformPerObject, 32);
 
+            CommandList.BeginQuery(Component->OcclusionQuery);
             CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+            CommandList.EndQuery(Component->OcclusionQuery);
         }
     }
 
@@ -666,10 +677,20 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         for (const FProxySceneComponent* Component : Batch.Primitives)
         {
+            if (CVarBasePassOcclusionCulling.GetValue() && Component->OcclusionQuery)
+            {
+                uint64 NumSamples;
+                GetRHI()->RHIGetQueryResult(Component->OcclusionQuery, NumSamples);
+                if (!NumSamples)
+                {
+                    continue;
+                }
+            }
+
             CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-            TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
+            TransformPerObject.Transform    = Component->CurrentActor->GetTransform().GetMatrix();
             TransformPerObject.TransformInv = Component->CurrentActor->GetTransform().GetMatrixInverse();
             CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &TransformPerObject, 32);
 

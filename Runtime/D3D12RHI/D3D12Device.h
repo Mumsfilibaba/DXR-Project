@@ -4,7 +4,7 @@
 #include "D3D12RootSignature.h"
 #include "D3D12SamplerState.h"
 #include "D3D12PipelineState.h"
-#include "D3D12CommandListManager.h"
+#include "D3D12Queue.h"
 #include "Core/Containers/SharedRef.h"
 
 #include <DXProgrammableCapture.h>
@@ -19,6 +19,7 @@ class FD3D12RootSignature;
 class FD3D12ComputePipelineState;
 class FD3D12OnlineDescriptorHeap;
 class FD3D12OfflineDescriptorHeap;
+class FD3D12QueryHeapManager;
 
 typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
@@ -102,12 +103,12 @@ public:
     ~FD3D12Device();
 
     bool Initialize();
-
-    FD3D12CommandListManager* GetCommandListManager(ED3D12CommandQueueType QueueType);
+    FD3D12Queue* GetQueue(ED3D12CommandQueueType QueueType);
     FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
     ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
     int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
+    FD3D12QueryHeapManager* GetQueryHeapManager(EQueryType QueryType);
     FD3D12UploadHeapAllocator& GetUploadAllocator() { return *UploadAllocator; }
     FD3D12RootSignatureManager& GetRootSignatureManager() { return *RootSignatureManager; }
     FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return *GlobalResourceHeap; }
@@ -120,7 +121,6 @@ public:
     FD3D12PipelineStateManager& GetPipelineStateManager() { return *PipelineStateManager; }
 
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
-
     uint32 GetNodeMask()  const { return NodeMask; }
     uint32 GetNodeCount() const { return NodeCount; }
 
@@ -167,7 +167,7 @@ private:
     bool CreateCommandManagers();
     bool CreateDefaultResources();
 
-    FD3D12Adapter*                 Adapter;
+    FD3D12Adapter* const           Adapter;
 
     FD3D12OnlineDescriptorHeap*    GlobalResourceHeap;
     FD3D12OnlineDescriptorHeap*    GlobalSamplerHeap;
@@ -180,17 +180,20 @@ private:
     FD3D12UploadHeapAllocator*     UploadAllocator;
     FD3D12RootSignatureManager*    RootSignatureManager;
 
-    FD3D12CommandListManager*      DirectCommandListManager;
-    FD3D12CommandListManager*      CopyCommandListManager;
-    FD3D12CommandListManager*      ComputeCommandListManager;
+    FD3D12Queue*                   DirectQueue;
+    FD3D12Queue*                   CopyQueue;
+    FD3D12Queue*                   ComputeQueue;
 
     FD3D12CommandAllocatorManager* DirectCommandAllocatorManager;
     FD3D12CommandAllocatorManager* CopyCommandAllocatorManager;
     FD3D12CommandAllocatorManager* ComputeCommandAllocatorManager;
 
+    FD3D12QueryHeapManager*        TimingQueryHeapManager;
+    FD3D12QueryHeapManager*        OcclusionQueryHeapManager;
+
     FD3D12DefaultDescriptors       DefaultDescriptors;
 
-    FD3D12PipelineStateManager*           PipelineStateManager;
+    FD3D12PipelineStateManager*    PipelineStateManager;
 
     D3D_FEATURE_LEVEL              MinFeatureLevel;
     D3D_FEATURE_LEVEL              ActiveFeatureLevel;

@@ -108,6 +108,8 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , CommandPool(nullptr)
     , CommandBuffer(nullptr)
     , CommandPayload(nullptr)
+    , TimestampQueryAllocator(InDevice, *this, EQueryType::Timestamp)
+    , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , BarrierBatcher(*this)
     , ContextState(InDevice, *this)
     , bIsRecording(false)
@@ -184,7 +186,7 @@ void FVulkanCommandContext::ObtainCommandBuffer()
 void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
 {
     CHECK(CommandBuffer != nullptr);
-    
+
     // Flush barrier before we submit the CommandBuffer
     BarrierBatcher.FlushBarriers();
 
@@ -205,15 +207,13 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
             CommandPool = nullptr;
         }
 
-        for (FVulkanQuery* Query : Queries)
-            CommandPayload->QueryPools.Add(Query->DetachQueryPool());
-
-        Queries.Clear();
+        TimestampQueryAllocator.PrepareForNewCommanBuffer();
+        OcclusionQueryAllocator.PrepareForNewCommanBuffer();
 
         FVulkanRHI::GetRHI()->SubmitCommands(CommandPayload, true);
         CommandPayload = nullptr;
     }
-    
+
     ContextState.ResetStateForNewCommandBuffer();
 }
 
@@ -251,32 +251,86 @@ void FVulkanCommandContext::RHIFinishContext()
     CommandContextCS.Unlock();
 }
 
-void FVulkanCommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
+void FVulkanCommandContext::RHIBeginQuery(FRHIQuery* Query)
 {
-    if (FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query))
+    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    if (!VulkanQuery)
     {
-        FVulkanCommandBuffer& CurrentCommandBuffer = GetCommandBuffer();
-        VulkanQuery->BeginQuery(CurrentCommandBuffer, Index);
-        Queries.AddUnique(VulkanQuery);
+        VULKAN_ERROR("Query cannot be nullptr");
+        return;
     }
-    else
+
+    const EQueryType QueryType = VulkanQuery->GetType();
+    if (QueryType == EQueryType::Timestamp)
     {
-        DEBUG_BREAK();
+        VULKAN_ERROR("RHIBeginQuery does not support a Query of type Timestamp");
+        return;
     }
+
+    FVulkanQueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&VulkanQuery->Result);
+    if (!QueryAllocation.IsValid())
+    {
+        VULKAN_ERROR("Failed to allocate Query");
+        return;
+    }
+
+    CHECK(QueryAllocation.QueryPool != nullptr);
+    GetCommandBuffer()->BeginQuery(QueryAllocation.QueryPool->GetVkQueryPool(), QueryAllocation.IndexInQueryPool, 0);
+    VulkanQuery->QueryAllocation = QueryAllocation;
 }
 
-void FVulkanCommandContext::RHIEndTimeStamp(FRHIQuery* Query, uint32 Index)  
+void FVulkanCommandContext::RHIEndQuery(FRHIQuery* Query)
 {
-    if (FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query))
+    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    if (!VulkanQuery)
     {
-        FVulkanCommandBuffer& CurrentCommandBuffer = GetCommandBuffer();
-        VulkanQuery->EndQuery(CurrentCommandBuffer, Index);
-        Queries.AddUnique(VulkanQuery);
+        VULKAN_ERROR("Query cannot be nullptr");
+        return;
     }
-    else
+
+    const EQueryType QueryType = VulkanQuery->GetType();
+    if (QueryType == EQueryType::Timestamp)
     {
-        DEBUG_BREAK();
+        VULKAN_ERROR("RHIEndQuery does not support a Query of type Timestamp");
+        return;
     }
+
+    if (!VulkanQuery->QueryAllocation.IsValid())
+    {
+        VULKAN_ERROR("No valid QueryAllocation, ensure that RHIBeginQuery was called correctly");
+        return;
+    }
+
+    CHECK(VulkanQuery->QueryAllocation.QueryPool != nullptr);
+    GetCommandBuffer()->EndQuery(VulkanQuery->QueryAllocation.QueryPool->GetVkQueryPool(), VulkanQuery->QueryAllocation.IndexInQueryPool);
+}
+
+void FVulkanCommandContext::RHIQueryTimestamp(FRHIQuery* Query)
+{
+    FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
+    if (!VulkanQuery)
+    {
+        VULKAN_ERROR("Query cannot be nullptr");
+        return;
+    }
+
+    const EQueryType QueryType = VulkanQuery->GetType();
+    if (QueryType != EQueryType::Timestamp)
+    {
+        VULKAN_ERROR("RHIQueryTimestamp only support a Query of type Timestamp");
+        return;
+    }
+
+    FVulkanQueryAllocation QueryAllocation = TimestampQueryAllocator.Allocate(&VulkanQuery->Result);
+    if (!QueryAllocation.IsValid())
+    {
+        VULKAN_ERROR("Failed to allocate Query");
+        return;
+    }
+
+    CHECK(QueryAllocation.QueryPool != nullptr);
+    GetCommandBuffer()->WriteTimestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, QueryAllocation.QueryPool->GetVkQueryPool(), QueryAllocation.IndexInQueryPool);
+    VulkanQuery->QueryAllocation = QueryAllocation;
 }
 
 void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
@@ -287,7 +341,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         VULKAN_ERROR("Trying to clear an RenderTargetView that is nullptr");
         return;
     }
-    
+
     if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
     {
         // NOTE: Here the image is expected to be in a "RenderTargetState" so we need to transition it to TransferDst, we then need to transition back when the clear is done

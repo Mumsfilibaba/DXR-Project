@@ -13,28 +13,43 @@ struct FRHIRayTracingGeometryInstance;
 
 struct IRHICommandContext
 {
-    /** @brief - Begin Frame on the RHIThread */
+    /** 
+     * @brief - Begin Frame on the RHIThread
+     */
     virtual void RHIBeginFrame() = 0;
     
-    /** @brief - End Frame on the RHIThread */
+    /**
+     * @brief - End Frame on the RHIThread
+     */
     virtual void RHIEndFrame() = 0;
 
-    virtual void RHIStartContext()  = 0;
+    /**
+     * @brief - Prepares the context to records commands
+     */
+    virtual void RHIStartContext() = 0;
+
+    /**
+     * @brief - Ends recording of commands for the context and submits the commandlists
+     */
     virtual void RHIFinishContext() = 0;
 
     /**
-     * @brief       - Begins the timestamp with the specified index in the Query 
-     * @param Query - Query object to work on
-     * @param Index - Query index within the query object to begin
-     */ 
-    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) = 0;
-    
-    /**
-     * @brief       - Ends the timestamp with the specified index in the Query
-     * @param Query - Query object to work on
-     * @param Index - Query index within the query object to end
+     * @brief       - Begins a query 
+     * @param Query - Query object to store the query in
      */
-    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) = 0;
+    virtual void RHIBeginQuery(FRHIQuery* Query) = 0;
+
+    /**
+     * @brief       - Ends a query
+     * @param Query - Query object to store the query in
+     */
+    virtual void RHIEndQuery(FRHIQuery* Query) = 0;
+
+    /**
+     * @brief       - Inserts a timestamp in the query 
+     * @param Query - Query object to store the query in
+     */ 
+    virtual void RHIQueryTimestamp(FRHIQuery* Query) = 0;
 
     /**
      * @brief                  - Clears a RenderTargetView with a specific color 

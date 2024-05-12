@@ -40,7 +40,7 @@ public:
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) override final;
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) override final;
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportInfo& InViewportInfo) override final;
-    virtual FRHIQuery* RHICreateQuery() override final;
+    virtual FRHIQuery* RHICreateQuery(EQueryType InQueryType) override final;
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final;
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final;
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final;
@@ -69,7 +69,13 @@ public:
 
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
     
-    virtual void EnqueueResourceDeletion(FRHIResource* Resource) override final
+    virtual bool RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult) override final
+    {
+        OutResult = 0;
+        return true;
+    }
+
+    virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) override final
     {
         // delete Resource;
     }

@@ -54,7 +54,7 @@ public:
     }
 
 private:
-    ED3D12CommandQueueType          QueueType;
+    ED3D12CommandQueueType const    QueueType;
     D3D12_COMMAND_LIST_TYPE         CommandListType;
     TQueue<FD3D12CommandAllocator*> AvailableAllocators;
     TArray<FD3D12CommandAllocator*> CommandAllocators;

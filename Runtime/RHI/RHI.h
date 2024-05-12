@@ -289,13 +289,21 @@ public:
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) = 0;
 
     /** @return - Returns a newly created Query-object */
-    virtual FRHIQuery* RHICreateQuery() = 0;
+    virtual FRHIQuery* RHICreateQuery(EQueryType InQueryType) = 0;
 
     /** @return - Returns a CommandContext */
     virtual IRHICommandContext* RHIObtainCommandContext() = 0;
 
+    /**
+     * @brief           - Get the result for a Query
+     * @param Query     - Query to get the result from
+     * @param OutResult - Variable to store the result in
+     * @return          - Returns true if result was retrieved successfully
+     */
+    virtual bool RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult) = 0;
+
     /** @brief - Defers destruction of a RHI resource to the deferred deletion code */
-    virtual void EnqueueResourceDeletion(FRHIResource* Resource) = 0;
+    virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) = 0;
 
     /** @return - Returns the native Adapter */
     virtual void* RHIGetAdapter() { return nullptr; }
@@ -479,9 +487,9 @@ FORCEINLINE FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const 
     return GetRHI()->RHICreateRayTracingPipelineState(Initializer);
 }
 
-FORCEINLINE class FRHIQuery* RHICreateQuery()
+FORCEINLINE class FRHIQuery* RHICreateQuery(EQueryType InQueryType)
 {
-    return GetRHI()->RHICreateQuery();
+    return GetRHI()->RHICreateQuery(InQueryType);
 }
 
 FORCEINLINE class FRHIViewport* RHICreateViewport(const FRHIViewportInfo& ViewportInfo)

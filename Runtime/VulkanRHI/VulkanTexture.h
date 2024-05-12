@@ -81,7 +81,6 @@ public:
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkImage()); }
 
     void ResizeBackBuffer(int32 InWidth, int32 InHeight);
-
     FVulkanTexture* GetCurrentBackBufferTexture();
     
     FVulkanViewport* GetViewport() const
@@ -130,8 +129,6 @@ FORCEINLINE VkImage GetVkImage(FRHITexture* Texture)
 struct FVulkanTextureHelper
 {
     static uint32 CalculateTextureRowPitch(VkFormat Format, uint32 Width);
-    
     static uint32 CalculateTextureNumRows(VkFormat Format, uint32 Height);
-    
     static uint64 CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height);
 };

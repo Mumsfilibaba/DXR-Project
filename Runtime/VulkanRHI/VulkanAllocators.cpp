@@ -90,6 +90,12 @@ FVulkanUploadHeapAllocator::FVulkanUploadHeapAllocator(FVulkanDevice* InDevice)
 
 FVulkanUploadHeapAllocator::~FVulkanUploadHeapAllocator()
 {
+    TScopedLock Lock(CriticalSection);
+
+    Buffer.Reset();
+
+    BufferSize = 0;
+    CurrentOffset = 0;
 }
 
 FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64 Alignment)
@@ -150,14 +156,4 @@ FVulkanUploadAllocation FVulkanUploadHeapAllocator::Allocate(uint64 Size, uint64
     }
 
     return Allocation;
-}
-
-void FVulkanUploadHeapAllocator::Release()
-{
-    TScopedLock Lock(CriticalSection);
-
-    Buffer.Reset();
-    
-    BufferSize    = 0;
-    CurrentOffset = 0;
 }

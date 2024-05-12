@@ -137,7 +137,6 @@ public:
     VkFramebuffer GetFramebuffer(const FVulkanFramebufferKey& Key);
     void OnReleaseImageView(VkImageView View);
     void OnReleaseRenderPass(VkRenderPass RenderPass);
-    void ReleaseAll();
 
 private:
     TMap<FVulkanRenderPassKey, VkRenderPass>   RenderPasses;

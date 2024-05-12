@@ -1,9 +1,7 @@
 #pragma once
 #include "Core/Containers/Map.h"
 #include "Core/Threading/Spinlock.h"
-
 #include "Renderer/RendererModule.h"
-
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 
@@ -37,9 +35,7 @@ struct FGPUProfileSample
     float GetAverage() const
     {
         if (SampleCount < 1)
-        {
             return 0.0f;
-        }
 
         float Average = 0.0f;
         for (int32 n = 0; n < SampleCount; n++)
@@ -64,29 +60,28 @@ struct FGPUProfileSample
 
     TStaticArray<float, NUM_GPU_PROFILER_SAMPLES> Samples;
 
-    float Max = TNumericLimits<float>::Lowest();
-    float Min = TNumericLimits<float>::Max();
-
-    int32 SampleCount = 0;
-    int32 CurrentSample = 0;
-    int32 TotalCalls = 0;
-
-    uint32 TimeQueryIndex = 0;
+    FRHIQueryRef BeginQuery;
+    FRHIQueryRef EndQuery;
+    float        Max = TNumericLimits<float>::Lowest();
+    float        Min = TNumericLimits<float>::Max();
+    int32        SampleCount;
+    int32        CurrentSample;
+    int32        TotalCalls;
 };
-
 
 using GPUProfileSamplesMap = TMap<FString, FGPUProfileSample>;
 
 class RENDERER_API FGPUProfiler
 {
 public:
-     /** @brief - Creates the profiler, requires the RHI to be initialized */
-    static bool Initialize();
 
-     /** @brief - Release the resources */
-    static void Release();
+    static FGPUProfiler& Get()
+    {
+        return Instance;
+    }
 
-    static FORCEINLINE FGPUProfiler& Get() { return Instance; }
+    /** @brief - Releases all query objects */
+    void Release();
 
      /** @brief - Enables the collection of samples (Resume) */
     void Enable();
@@ -115,7 +110,7 @@ public:
      /** @brief - End a GPU scope */
     void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
-    FORCEINLINE const FGPUProfileSample& GetGPUFrameTime() const
+    const FGPUProfileSample& GetGPUFrameTime() const
     {
         return FrameTime;
     }
@@ -123,14 +118,10 @@ public:
 private:
     FGPUProfiler();
 
-    FRHIQueryRef Timequeries;
-    uint32 CurrentTimeQueryIndex = 0;
-    
     FGPUProfileSample    FrameTime;
     GPUProfileSamplesMap Samples;
     FSpinLock            SamplesLock;
-
-    bool bEnabled;
+    bool                 bEnabled;
 
     static FGPUProfiler Instance;
 };

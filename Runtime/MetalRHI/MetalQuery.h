@@ -3,20 +3,11 @@
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class FMetalQuery : public FRHIQuery
+struct FMetalQuery : public FRHIQuery
 {
-public:
-    FMetalQuery()  = default;
-    ~FMetalQuery() = default;
-
-    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final
+    FMetalQuery(EQueryType InQueryType)
+        : FRHIQuery(InQueryType)
     {
-        OutQuery = FTimingQuery();
-    }
-
-    virtual uint64 GetFrequency() const override final
-    {
-        return 1;
     }
 };
 

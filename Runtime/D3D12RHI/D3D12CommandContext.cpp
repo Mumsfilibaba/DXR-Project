@@ -14,7 +14,6 @@
 #include "D3D12Viewport.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Misc/FrameProfiler.h"
-
 #include <pix.h>
 
 void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
@@ -82,7 +81,6 @@ void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Res
     Barriers.Emplace(Barrier);
 }
 
-
 FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : IRHICommandContext()
     , FD3D12DeviceChild(InDevice)
@@ -90,9 +88,10 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , CommandAllocator(nullptr)
     , CommandPayload(nullptr)
     , ContextState(InDevice, *this)
+    , TimingQueryAllocator(InDevice, *this, EQueryType::Timestamp)
+    , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , QueueType(InQueueType)
     , BarrierBatcher()
-    , ResolveQueries()
     , CommandContextCS()
 {
 }
@@ -129,12 +128,12 @@ void FD3D12CommandContext::ObtainCommandList()
         }
     }
 
-    FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    CHECK(CommandListManager != nullptr);
+    FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
+    CHECK(Queue != nullptr);
 
     if (!CommandList)
     {
-        CommandList = CommandListManager->ObtainCommandList(CommandAllocator, nullptr);
+        CommandList = Queue->ObtainCommandList(CommandAllocator, nullptr);
         if (!CommandList)
         {
             D3D12_ERROR("Failed to initialize CommandList");
@@ -143,7 +142,7 @@ void FD3D12CommandContext::ObtainCommandList()
 
     if (!CommandPayload)
     {
-        CommandPayload = new FD3D12CommandPayload(GetDevice(), CommandListManager);
+        CommandPayload = new FD3D12CommandPayload(GetDevice(), Queue);
     }
 }
 
@@ -153,27 +152,29 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
 
     FlushResourceBarriers();
 
-    // Ensure that any used queries get's resolved
-    for (int32 QueryIndex = 0; QueryIndex < ResolveQueries.Size(); ++QueryIndex)
-        ResolveQueries[QueryIndex]->ResolveQueries(*this);
-
-    ResolveQueries.Clear();
-
     // Flush Commands
     const uint32 NumCommands = CommandList->GetNumCommands();
     if (NumCommands > 0)
     {
+        // NOTE: This is fine since using a query requires a command to be issues
+        TimingQueryAllocator.PrepareForNewCommanBuffer();
+        OcclusionQueryAllocator.PrepareForNewCommanBuffer();
+
+        // Ensure that all QueryHeaps are resolved
+        for (FD3D12QueryHeap* QueryHeap : CommandPayload->QueryHeaps)
+        {
+            QueryHeap->ResolveQueries(GetCommandList());
+        }
+
         if (!CommandList->Close())
         {
             D3D12_ERROR("Failed to close CommandList");
             return;
         }
 
-        CHECK(CommandPayload != nullptr);   
+        CHECK(CommandPayload != nullptr);
         CommandPayload->AddCommandList(CommandList);
         CommandList = nullptr;
-
-        CommandPayload->Queries = Move(ResolveQueries);
 
         if (bFlushAllocator)
         {
@@ -273,7 +274,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
     }
 }
 
-void FD3D12CommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
+void FD3D12CommandContext::RHIBeginQuery(FRHIQuery* Query) 
 {
     FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
     if (!D3D12Query)
@@ -282,11 +283,26 @@ void FD3D12CommandContext::RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index)
         return;
     }
 
-    D3D12Query->BeginQuery(GetCommandList(), Index);
-    ResolveQueries.AddUnique(D3D12Query);
+    const EQueryType QueryType = D3D12Query->GetType();
+    if (QueryType == EQueryType::Timestamp)
+    {
+        D3D12_ERROR("RHIBeginQuery does not support a Query of type Timestamp");
+        return;
+    }
+
+    FD3D12QueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&D3D12Query->Result);
+    if (!QueryAllocation.IsValid())
+    {
+        D3D12_ERROR("Failed to allocate Query");
+        return;
+    }
+
+    CHECK(QueryAllocation.QueryHeap != nullptr);
+    GetCommandList()->BeginQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryPool);
+    D3D12Query->QueryAllocation = QueryAllocation;
 }
 
-void FD3D12CommandContext::RHIEndTimeStamp(FRHIQuery* Query, uint32 Index)
+void FD3D12CommandContext::RHIEndQuery(FRHIQuery* Query) 
 {
     FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
     if (!D3D12Query)
@@ -295,7 +311,50 @@ void FD3D12CommandContext::RHIEndTimeStamp(FRHIQuery* Query, uint32 Index)
         return;
     }
 
-    D3D12Query->EndQuery(GetCommandList(), Index);
+    const EQueryType QueryType = D3D12Query->GetType();
+    if (QueryType == EQueryType::Timestamp)
+    {
+        D3D12_ERROR("RHIEndQuery does not support a Query of type Timestamp");
+        return;
+    }
+
+    FD3D12QueryAllocation QueryAllocation = D3D12Query->QueryAllocation;
+    if (!QueryAllocation.IsValid())
+    {
+        D3D12_ERROR("Failed to allocate Query");
+        return;
+    }
+
+    CHECK(QueryAllocation.QueryHeap != nullptr);
+    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_OCCLUSION, QueryAllocation.IndexInQueryPool);
+}
+
+void FD3D12CommandContext::RHIQueryTimestamp(FRHIQuery* Query)
+{
+    FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
+    if (!D3D12Query)
+    {
+        D3D12_ERROR("Query cannot be nullptr");
+        return;
+    }
+
+    const EQueryType QueryType = D3D12Query->GetType();
+    if (QueryType != EQueryType::Timestamp)
+    {
+        D3D12_ERROR("RHIQueryTimestamp only support a Query of type Timestamp");
+        return;
+    }
+
+    FD3D12QueryAllocation QueryAllocation = TimingQueryAllocator.Allocate(&D3D12Query->Result);
+    if (!QueryAllocation.IsValid())
+    {
+        D3D12_ERROR("Failed to allocate Query");
+        return;
+    }
+
+    CHECK(QueryAllocation.QueryHeap != nullptr);
+    GetCommandList()->EndQuery(QueryAllocation.QueryHeap->GetD3D12QueryHeap(), D3D12_QUERY_TYPE_TIMESTAMP, QueryAllocation.IndexInQueryPool);
+    D3D12Query->QueryAllocation = QueryAllocation;
 }
 
 void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
@@ -1305,11 +1364,11 @@ void FD3D12CommandContext::RHIClearState()
         FinishCommandList(true);
     }
 
-    FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    CHECK(CommandListManager != nullptr);
+    FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
+    CHECK(Queue != nullptr);
 
-    CommandListManager->GetFenceManager().SignalGPU(QueueType);
-    CommandListManager->GetFenceManager().WaitForFence();
+    Queue->GetFenceManager().SignalGPU(QueueType);
+    Queue->GetFenceManager().WaitForFence();
 
     ContextState.ResetState();
 }
@@ -1323,11 +1382,11 @@ void FD3D12CommandContext::RHIFlush()
         FinishCommandList(true);
     }
 
-    FD3D12CommandListManager* CommandListManager = GetDevice()->GetCommandListManager(QueueType);
-    CHECK(CommandListManager != nullptr);
+    FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
+    CHECK(Queue != nullptr);
 
-    CommandListManager->GetFenceManager().SignalGPU(QueueType);
-    CommandListManager->GetFenceManager().WaitForFence();
+    Queue->GetFenceManager().SignalGPU(QueueType);
+    Queue->GetFenceManager().WaitForFence();
 }
 
 void FD3D12CommandContext::RHIInsertMarker(const FStringView& Message)

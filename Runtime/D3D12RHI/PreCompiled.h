@@ -4,7 +4,7 @@
 #include "D3D12RHI/D3D12Buffer.h"
 #include "D3D12RHI/D3D12CommandContext.h"
 #include "D3D12RHI/D3D12CommandList.h"
-#include "D3D12RHI/D3D12CommandListManager.h"
+#include "D3D12RHI/D3D12Queue.h"
 #include "D3D12RHI/D3D12Constants.h"
 #include "D3D12RHI/D3D12Core.h"
 #include "D3D12RHI/D3D12DeletionQueue.h"

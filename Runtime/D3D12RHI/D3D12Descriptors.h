@@ -35,15 +35,12 @@ public:
 
 private:
     TComPtr<ID3D12DescriptorHeap> Heap;
-
-    D3D12_CPU_DESCRIPTOR_HANDLE StartHandleCPU;
-    D3D12_GPU_DESCRIPTOR_HANDLE StartHandleGPU;
-
-    D3D12_DESCRIPTOR_HEAP_TYPE  Type;
-    D3D12_DESCRIPTOR_HEAP_FLAGS Flags;
-
-    uint32 NumDescriptors;
-    uint32 HandleIncrementSize;
+    D3D12_CPU_DESCRIPTOR_HANDLE   StartHandleCPU;
+    D3D12_GPU_DESCRIPTOR_HANDLE   StartHandleGPU;
+    D3D12_DESCRIPTOR_HEAP_TYPE    Type;
+    D3D12_DESCRIPTOR_HEAP_FLAGS   Flags;
+    uint32                        NumDescriptors;
+    uint32                        HandleIncrementSize;
 };
 
 
@@ -66,7 +63,6 @@ struct FD3D12DescriptorRange
     D3D12_CPU_DESCRIPTOR_HANDLE End   = { 0 };
 };
 
-
 struct FD3D12OfflineDescriptor
 {
     FD3D12OfflineDescriptor()
@@ -87,7 +83,7 @@ struct FD3D12OfflineDescriptor
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE Handle;
-    int32 HeapIndex;
+    int32                       HeapIndex;
 };
 
 class FD3D12OfflineDescriptorHeap : public FD3D12DeviceChild
@@ -118,9 +114,9 @@ public:
 private:
     bool AllocateHeap();
     
-    D3D12_DESCRIPTOR_HEAP_TYPE Type;
-    uint32 DescriptorSize;
-    uint32 NumDescriptors;
+    D3D12_DESCRIPTOR_HEAP_TYPE const Type;
+    uint32                           DescriptorSize;
+    uint32                           NumDescriptors;
 
     struct FOfflineHeap
     {
@@ -187,7 +183,7 @@ public:
     }
 
 private:
-    D3D12_DESCRIPTOR_HEAP_TYPE           Type;
+    D3D12_DESCRIPTOR_HEAP_TYPE const     Type;
     uint32                               DescriptorCount;
     uint32                               BlockSize;
     FD3D12DescriptorHeapRef              Heap;

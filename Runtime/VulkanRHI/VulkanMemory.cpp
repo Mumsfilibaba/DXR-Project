@@ -408,9 +408,9 @@ FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
 
 FVulkanMemoryManager::~FVulkanMemoryManager()
 {
-    for (FVulkanMemoryHeap* Heap : MemoryHeaps)
+    for (FVulkanMemoryHeap* MemoryPage : MemoryHeaps)
     {
-        delete Heap;
+        delete MemoryPage;
     }
 
     MemoryHeaps.Clear();
@@ -797,16 +797,6 @@ void FVulkanMemoryManager::FreeMemory(VkDeviceMemory& OutDeviceMemory)
     NumAllocations--;
     
     VULKAN_INFO("[FreeMemory] NumAllocations = %d/%d", NumAllocations.Load(), DeviceProperties.limits.maxMemoryAllocationCount);
-}
-
-void FVulkanMemoryManager::ReleaseMemoryHeaps()
-{
-    for (FVulkanMemoryHeap* MemoryPage : MemoryHeaps)
-    {
-        SAFE_DELETE(MemoryPage);
-    }
-
-    MemoryHeaps.Clear();
 }
 
 void* FVulkanMemoryManager::Map(const FVulkanMemoryAllocation& Allocation)

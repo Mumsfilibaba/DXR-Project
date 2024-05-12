@@ -11,12 +11,11 @@ struct FNullRHIBuffer : public FRHIBuffer
     {
     }
 
-    virtual void* GetRHIBaseBuffer()         override final { return this; }
+    virtual void* GetRHIBaseBuffer() override final { return this; }
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
 };
-
 
 struct FNullRHIShaderResourceView : public FRHIShaderResourceView
 {
@@ -34,7 +33,6 @@ struct FNullRHIUnorderedAccessView : public FRHIUnorderedAccessView
     }
 };
 
-
 class FNullRHITexture : public FRHITexture
 {
 public:
@@ -45,12 +43,11 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseTexture()        override final { return reinterpret_cast<void*>(this); }
+    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(this); }
     virtual void* GetRHIBaseResource() const override final { return nullptr; }
 
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const override final { return nullptr; }
+    virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
-
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
@@ -59,7 +56,6 @@ private:
     TSharedRef<FNullRHIUnorderedAccessView> UnorderedAccessView;
 };
 
-
 struct FNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
 {
     FNullRHIRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
@@ -67,7 +63,7 @@ struct FNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
     {
     }
 
-    virtual void* GetRHIBaseBVHBuffer()             { return nullptr; }
+    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
 };
 
@@ -81,16 +77,14 @@ public:
     }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
-  
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    virtual void* GetRHIBaseBVHBuffer()             override final { return nullptr; }
+    virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
     virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(this); }
 
 private:
     TSharedRef<FNullRHIShaderResourceView> View;
 };
-
 
 struct FNullRHISamplerState : public FRHISamplerState
 {
@@ -101,7 +95,6 @@ struct FNullRHISamplerState : public FRHISamplerState
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
-
 
 class FNullRHIViewport : public FRHIViewport
 {
@@ -127,21 +120,17 @@ private:
     TSharedRef<FNullRHITexture> BackBuffer;
 };
 
-
 struct FNullRHIQuery : public FRHIQuery
 {
-    FNullRHIQuery() = default;
-
-    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const override final { OutQuery = FTimingQuery(); }
-
-    virtual uint64 GetFrequency() const override final { return 1; }
+    FNullRHIQuery(EQueryType InQueryType)
+        : FRHIQuery(InQueryType)
+    {
+    }
 };
-
 
 struct FNullRHIInputLayoutState : public FRHIVertexInputLayout
 {
 };
-
 
 class FNullRHIDepthStencilState : public FRHIDepthStencilState
 {
@@ -161,7 +150,6 @@ private:
     FRHIDepthStencilStateInitializer Initializer;
 };
 
-
 class FNullRHIRasterizerState : public FRHIRasterizerState
 {
 public:
@@ -179,7 +167,6 @@ public:
 private:
     FRHIRasterizerStateInitializer Initializer;
 };
-
 
 struct FNullRHIBlendState : public FRHIBlendState
 {
@@ -199,16 +186,13 @@ private:
     FRHIBlendStateInitializer Initializer;
 };
 
-
 struct FNullRHIGraphicsPipelineState : public FRHIGraphicsPipelineState
 {
 };
 
-
 struct FNullRHIComputePipelineState : public FRHIComputePipelineState
 {
 };
-
 
 struct FNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
 {

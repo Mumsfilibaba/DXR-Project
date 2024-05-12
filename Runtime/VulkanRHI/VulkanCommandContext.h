@@ -53,9 +53,10 @@ public:
 
     virtual void RHIStartContext() override final;
     virtual void RHIFinishContext() override final;
-    
-    virtual void RHIBeginTimeStamp(FRHIQuery* Query, uint32 Index) override final;
-    virtual void RHIEndTimeStamp(FRHIQuery* Query, uint32 Index) override final;
+
+    virtual void RHIBeginQuery(FRHIQuery* Query) override final;
+    virtual void RHIEndQuery(FRHIQuery* Query) override final;
+    virtual void RHIQueryTimestamp(FRHIQuery* Query) override final;
     virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
     virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
@@ -113,9 +114,7 @@ public:
         return reinterpret_cast<void*>(&CommandBuffer);
     }
 
-public:
     bool Initialize();
-    
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool);
 
@@ -135,6 +134,11 @@ public:
         return BarrierBatcher;
     }
 
+    FVulkanCommandPayload& GetCommandPayload()
+    {
+        return *CommandPayload;
+    }
+
     bool IsRecording() const
     {
         return bIsRecording;
@@ -150,11 +154,10 @@ private:
     FVulkanCommandPool*        CommandPool;
     FVulkanCommandBuffer*      CommandBuffer;
     FVulkanCommandPayload*     CommandPayload;
-
+    FVulkanQueryAllocator      TimestampQueryAllocator;
+    FVulkanQueryAllocator      OcclusionQueryAllocator;
     FBarrierBatcher            BarrierBatcher;
     FVulkanCommandContextState ContextState;
-
-    TArray<FVulkanQuery*>      Queries;
 
     // Keeps track of the recording state of the context, i.e if RHIStartContext has been called
     bool bIsRecording;

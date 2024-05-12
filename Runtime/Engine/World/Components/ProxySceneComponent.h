@@ -15,5 +15,7 @@ public:
     uint32            NumIndices   = 0;
     EIndexFormat      IndexFormat  = EIndexFormat::Unknown;
 
+    class FRHIQuery*  OcclusionQuery = nullptr;
+
     class FRHIRayTracingGeometry* Geometry = nullptr;
 };

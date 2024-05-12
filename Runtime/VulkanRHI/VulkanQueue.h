@@ -20,7 +20,6 @@ public:
     ~FVulkanQueue();
 
     bool Initialize();
-
     FVulkanCommandPool* ObtainCommandPool();
     void RecycleCommandPool(FVulkanCommandPool* InCommandPool);
     bool ExecuteCommandBuffer(class FVulkanCommandBuffer* const* CommandBuffers, uint32 NumCommandBuffers, class FVulkanFence* Fence);
@@ -46,11 +45,9 @@ private:
     VkQueue                      Queue;
     uint32                       QueueFamilyIndex;
     EVulkanCommandQueueType      QueueType;
-
     TArray<VkSemaphore>          WaitSemaphores;
     TArray<VkPipelineStageFlags> WaitStages;
     TArray<VkSemaphore>          SignalSemaphores;
-
     TQueue<FVulkanCommandPool*>  AvailableCommandPools;
     TArray<FVulkanCommandPool*>  CommandPools;
     FCriticalSection             CommandPoolsCS;
@@ -63,15 +60,20 @@ struct FVulkanCommandPayload
 
     void Submit();
     void Finish();
-    
+
     void AddCommandPool(FVulkanCommandPool* InCommandPool)
     {
         CommandPools.Add(InCommandPool);
     }
-    
+
     void AddCommandBuffer(FVulkanCommandBuffer* InCommandBuffer)
     {
         CommandBuffers.Add(InCommandBuffer);
+    }
+
+    void AddQueryPool(FVulkanQueryPool* InQueryPool)
+    {
+        QueryPools.Add(InQueryPool);
     }
 
     bool IsExecutionFinished() const
@@ -83,7 +85,7 @@ struct FVulkanCommandPayload
         
         return false;
     }
-        
+
     bool IsEmpty() const
     {
         return CommandBuffers.IsEmpty();
@@ -92,7 +94,6 @@ struct FVulkanCommandPayload
     FVulkanQueue&                 Queue;
     FVulkanFence*                 Fence;
     FVulkanDevice*                Device;
-    
     TArray<FVulkanCommandPool*>   CommandPools;
     TArray<FVulkanCommandBuffer*> CommandBuffers;
     TArray<FVulkanQueryPool*>     QueryPools;

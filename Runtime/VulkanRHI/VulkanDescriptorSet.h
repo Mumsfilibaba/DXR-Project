@@ -361,8 +361,7 @@ public:
     ~FVulkanDescriptorSetCache();
 
     bool FindOrCreateDescriptorSet(const FVulkanDescriptorPoolInfo& PoolInfo, FVulkanDescriptorSetBuilder& DSBuilder, VkDescriptorSet& OutDescriptorSet);
-    void ReleaseDescriptorSets();
-    void Release();
+    void ReleaseCachedDescriptorSets();
 
 private:
     TMap<FVulkanDescriptorPoolInfo, FCachedPool*>  Caches;

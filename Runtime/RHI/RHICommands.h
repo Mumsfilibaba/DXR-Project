@@ -79,38 +79,49 @@ DECLARE_RHICOMMAND(FRHICommandEndFrame)
     }
 };
 
-DECLARE_RHICOMMAND(FRHICommandBeginTimeStamp)
+DECLARE_RHICOMMAND(FRHICommandBeginQuery)
 {
-    FORCEINLINE FRHICommandBeginTimeStamp(FRHIQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandBeginQuery(FRHIQuery* InQuery)
         : Query(InQuery)
-        , Index(InIndex)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.RHIBeginTimeStamp(Query, Index);
+        CommandContext.RHIBeginQuery(Query);
     }
 
     FRHIQuery* Query;
-    uint32     Index;
 };
 
-DECLARE_RHICOMMAND(FRHICommandEndTimeStamp)
+DECLARE_RHICOMMAND(FRHICommandEndQuery)
 {
-    FORCEINLINE FRHICommandEndTimeStamp(FRHIQuery* InQuery, uint32 InIndex)
+    FORCEINLINE FRHICommandEndQuery(FRHIQuery* InQuery)
         : Query(InQuery)
-        , Index(InIndex)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.RHIEndTimeStamp(Query, Index);
+        CommandContext.RHIEndQuery(Query);
     }
 
     FRHIQuery* Query;
-    uint32     Index;
+};
+
+DECLARE_RHICOMMAND(FRHICommandQueryTimestamp)
+{
+    FORCEINLINE FRHICommandQueryTimestamp(FRHIQuery* InQuery)
+        : Query(InQuery)
+    {
+    }
+
+    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
+    {
+        CommandContext.RHIQueryTimestamp(Query);
+    }
+
+    FRHIQuery* Query;
 };
 
 DECLARE_RHICOMMAND(FRHICommandClearRenderTargetView)

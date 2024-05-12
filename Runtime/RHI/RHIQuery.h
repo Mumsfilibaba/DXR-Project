@@ -1,19 +1,40 @@
 #pragma once
 #include "RHIResource.h"
 
-struct FTimingQuery
+enum class EQueryType
 {
-    uint64 Begin = 0;
-    uint64 End   = 0;
+    Unknown = 0,
+    Timestamp,
+    Occlusion,
 };
+
+constexpr const CHAR* ToString(EQueryType QueryType)
+{
+    switch (QueryType)
+    {
+        case EQueryType::Timestamp: return "Timestamp";
+        case EQueryType::Occlusion: return "Occlusion";
+        default:                    return "Unknown EQueryType";
+    }
+}
 
 class FRHIQuery : public FRHIResource
 {
 protected:
-    FRHIQuery() = default;
+    FRHIQuery(EQueryType InQuery)
+        : FRHIResource()
+        , Query(InQuery)
+    {
+    }
+
     virtual ~FRHIQuery() = default;
 
 public:
-    virtual void GetTimestampFromIndex(FTimingQuery& OutQuery, uint32 Index) const = 0;
-    virtual uint64 GetFrequency() const = 0;
+    EQueryType GetType() const
+    {
+        return Query;
+    }
+
+private:
+    EQueryType Query;
 };

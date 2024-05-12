@@ -185,11 +185,6 @@ bool FEngineLoop::PreInitialize()
 
     CoreDelegates::PostInitRHIDelegate.Broadcast();
 
-    if (!FGPUProfiler::Initialize())
-    {
-        LOG_ERROR("FGPUProfiler failed to be initialized");
-    }
-
     if (!FTextureFactory::Init())
     {
         return false;
@@ -295,7 +290,7 @@ bool FEngineLoop::Release()
     GRHICommandExecutor.WaitForGPU();
 
     // Release GPU profiler
-    FGPUProfiler::Release();
+    FGPUProfiler::Get().Release();
 
     // Release the Application. Protect against failed initialization where the global pointer was never initialized
     if (FApplication::IsInitialized())
