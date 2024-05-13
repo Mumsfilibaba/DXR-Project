@@ -24,14 +24,12 @@ static TAutoConsoleVariable<bool> CVarEnablePix(
     "Enables loading of PIX when creating device to capture frame's programmatically",
     false);
 
+FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
 FRHI* FD3D12RHIModule::CreateRHI()
 {
     return new FD3D12RHI();
 }
-
-
-FD3D12RHI* FD3D12RHI::GD3D12RHI = nullptr;
 
 FD3D12RHI::FD3D12RHI()
     : FRHI(ERHIType::D3D12)
