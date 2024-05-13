@@ -245,7 +245,7 @@ struct FFrameResources
     bool                       CascadeGenerationDataDirty;
     FRHIBufferRef              CascadeGenerationDataBuffer;
 
-    FRHITextureRef             ShadowMapCascades[4];
+    FRHITextureRef             ShadowMapCascades;
     FRHITextureRef             DirectionalShadowMask;
     FRHITextureRef             CascadeIndexBuffer;
 

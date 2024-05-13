@@ -772,26 +772,8 @@ void FSceneRenderer::Tick(FScene* Scene)
         EResourceAccess::NonPixelShaderResource);
 
     AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowMapCascades[0]->GetShaderResourceView()),
-        Resources.ShadowMapCascades[0],
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowMapCascades[1]->GetShaderResourceView()),
-        Resources.ShadowMapCascades[1],
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowMapCascades[2]->GetShaderResourceView()),
-        Resources.ShadowMapCascades[2],
-        EResourceAccess::NonPixelShaderResource,
-        EResourceAccess::NonPixelShaderResource);
-
-    AddDebugTexture(
-        MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowMapCascades[3]->GetShaderResourceView()),
-        Resources.ShadowMapCascades[3],
+        MakeSharedRef<FRHIShaderResourceView>(Resources.ShadowMapCascades->GetShaderResourceView()),
+        Resources.ShadowMapCascades,
         EResourceAccess::NonPixelShaderResource,
         EResourceAccess::NonPixelShaderResource);
 

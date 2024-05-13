@@ -16,6 +16,8 @@ FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTe
 FD3D12Texture::~FD3D12Texture()
 {
     // NOTE: Left empty for debugging purposes
+    DestroyDepthStencilViews();
+    DestroyRenderTargetViews();
 }
 
 bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
@@ -243,23 +245,51 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
     }
 
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
-    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, "Texture '%s' does not allow RenderTargetViews", Resource->GetDebugName().GetCString());
-
-    const uint32 Subresource = D3D12CalculateSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
+    if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_NONE)
+    {
+        D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", Resource->GetDebugName().GetCString());
+        return nullptr;
+    }
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(RenderTargetView.Format);
-    if (Subresource < static_cast<uint32>(RenderTargetViews.Size()))
+
+    FD3D12RenderTargetView* ExistingView = nullptr;
+    if (RenderTargetView.NumArraySlices > 1)
     {
-        if (FD3D12RenderTargetView* ExistingView = RenderTargetViews[Subresource].Get())
+        FD3D12HashableTextureView HashableView;
+        HashableView.ArrayIndex     = RenderTargetView.ArrayIndex;
+        HashableView.NumArraySlices = RenderTargetView.NumArraySlices;
+        HashableView.Format         = static_cast<uint8>(RenderTargetView.Format);
+        HashableView.MipLevel       = RenderTargetView.MipLevel;
+
+        if (FD3D12RenderTargetViewRef* ExistingViewRef = RenderTargetViewMap.Find(HashableView))
         {
-            D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = ExistingView->GetDesc();
-            D3D12_WARNING_COND(RTVDesc.Format == DXGIFormat, "A RenderTargetView for this subresource already exists with another format");
-            return ExistingView;
+            ExistingView = ExistingViewRef->Get();
         }
     }
     else
     {
-        RenderTargetViews.Resize(Subresource + 1);
+        const uint32 Subresource = D3D12CalculateSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
+        if (Subresource < static_cast<uint32>(RenderTargetViews.Size()))
+        {
+            ExistingView = RenderTargetViews[Subresource].Get();
+        }
+        else
+        {
+            RenderTargetViews.Resize(Subresource + 1);
+        }
+    }
+
+    if (ExistingView)
+    {
+        D3D12_RENDER_TARGET_VIEW_DESC RTVDesc = ExistingView->GetDesc();
+        if (RTVDesc.Format != DXGIFormat)
+        {
+            D3D12_WARNING("A RenderTargetView for this subresource already exists with another format");
+            DEBUG_BREAK();
+        }
+
+        return ExistingView;
     }
 
     D3D12_RENDER_TARGET_VIEW_DESC RTVDesc;
@@ -275,14 +305,14 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
             if (ResourceDesc.SampleDesc.Count > 1)
             {
                 RTVDesc.ViewDimension                    = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-                RTVDesc.Texture2DMSArray.ArraySize       = 1;
+                RTVDesc.Texture2DMSArray.ArraySize       = RenderTargetView.NumArraySlices;
                 RTVDesc.Texture2DMSArray.FirstArraySlice = RenderTargetView.ArrayIndex;
             }
             else
             {
                 RTVDesc.ViewDimension                  = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
                 RTVDesc.Texture2DArray.MipSlice        = RenderTargetView.MipLevel;
-                RTVDesc.Texture2DArray.ArraySize       = 1;
+                RTVDesc.Texture2DArray.ArraySize       = RenderTargetView.NumArraySlices;
                 RTVDesc.Texture2DArray.FirstArraySlice = RenderTargetView.ArrayIndex;
                 RTVDesc.Texture2DArray.PlaneSlice      = 0;
             }
@@ -306,7 +336,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
         RTVDesc.ViewDimension         = D3D12_RTV_DIMENSION_TEXTURE3D;
         RTVDesc.Texture3D.MipSlice    = RenderTargetView.MipLevel;
         RTVDesc.Texture3D.FirstWSlice = RenderTargetView.ArrayIndex;
-        RTVDesc.Texture3D.WSize       = 1;
+        RTVDesc.Texture3D.WSize       = RenderTargetView.NumArraySlices;
     }
     else
     {
@@ -323,11 +353,24 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
     {
         return nullptr;
     }
+
+    if (RenderTargetView.NumArraySlices > 1)
+    {
+        FD3D12HashableTextureView HashableView;
+        HashableView.ArrayIndex     = RenderTargetView.ArrayIndex;
+        HashableView.NumArraySlices = RenderTargetView.NumArraySlices;
+        HashableView.Format         = static_cast<uint8>(RenderTargetView.Format);
+        HashableView.MipLevel       = RenderTargetView.MipLevel;
+
+        RenderTargetViewMap.Add(HashableView, D3D12View);
+    }
     else
     {
+        const uint32 Subresource = D3D12CalculateSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
         RenderTargetViews[Subresource] = D3D12View;
-        return D3D12View.Get();
     }
+
+    return D3D12View.Get();
 }
 
 FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView)
@@ -340,30 +383,62 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     }
 
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
-    D3D12_ERROR_COND(ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, "Texture '%s' does not allow DepthStencilViews", Resource->GetDebugName().GetCString());
-
-    const uint32 Subresource = D3D12CalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
+    if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_NONE)
+    {
+        D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", Resource->GetDebugName().GetCString());
+        return nullptr;
+    }
 
     const DXGI_FORMAT DXGIFormat = ConvertFormat(DepthStencilView.Format);
-    if (Subresource < static_cast<uint32>(DepthStencilViews.Size()))
+
+    FD3D12DepthStencilView* ExistingView = nullptr;
+    if (DepthStencilView.NumArraySlices > 1)
     {
-        if (FD3D12DepthStencilView* ExistingView = DepthStencilViews[Subresource].Get())
+        FD3D12HashableTextureView HashableView;
+        HashableView.ArrayIndex     = DepthStencilView.ArrayIndex;
+        HashableView.NumArraySlices = DepthStencilView.NumArraySlices;
+        HashableView.Format         = static_cast<uint8>(DepthStencilView.Format);
+        HashableView.MipLevel       = DepthStencilView.MipLevel;
+
+        if (FD3D12DepthStencilViewRef* ExistingViewRef = DepthStencilViewMap.Find(HashableView))
         {
-            D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = ExistingView->GetDesc();
-            D3D12_WARNING_COND(DSVDesc.Format == DXGIFormat, "A DepthStencilView for this subresource already exists with another format");
-            return ExistingView;
+            ExistingView = ExistingViewRef->Get();
         }
     }
     else
     {
-        DepthStencilViews.Resize(Subresource + 1);
+        const uint32 Subresource = D3D12CalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
+        if (Subresource < static_cast<uint32>(DepthStencilViews.Size()))
+        {
+            ExistingView = DepthStencilViews[Subresource].Get();
+        }
+        else
+        {
+            DepthStencilViews.Resize(Subresource + 1);
+        }
+    }
+
+    if (ExistingView)
+    {
+        D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc = ExistingView->GetDesc();
+        if (DSVDesc.Format != DXGIFormat)
+        {
+            D3D12_WARNING("A DepthStencilView for this subresource already exists with another format");
+            DEBUG_BREAK();
+        }
+
+        return ExistingView;
     }
 
     D3D12_DEPTH_STENCIL_VIEW_DESC DSVDesc;
     FMemory::Memzero(&DSVDesc);
 
     DSVDesc.Format = ConvertFormat(DepthStencilView.Format);
-    D3D12_ERROR_COND(DSVDesc.Format != DXGI_FORMAT_UNKNOWN, "Unallowed format for DepthStencilViews");
+    if (DSVDesc.Format == DXGI_FORMAT_UNKNOWN)
+    {
+        D3D12_ERROR("Unallowed format for DepthStencilViews");
+        return nullptr;
+    }
 
     if (ResourceDesc.Dimension == D3D12_RESOURCE_DIMENSION_TEXTURE2D)
     {
@@ -372,14 +447,14 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
             if (ResourceDesc.SampleDesc.Count > 1)
             {
                 DSVDesc.ViewDimension                    = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-                DSVDesc.Texture2DMSArray.ArraySize       = 1;
+                DSVDesc.Texture2DMSArray.ArraySize       = DepthStencilView.NumArraySlices;
                 DSVDesc.Texture2DMSArray.FirstArraySlice = DepthStencilView.ArrayIndex;
             }
             else
             {
                 DSVDesc.ViewDimension                  = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
                 DSVDesc.Texture2DArray.MipSlice        = DepthStencilView.MipLevel;
-                DSVDesc.Texture2DArray.ArraySize       = 1;
+                DSVDesc.Texture2DArray.ArraySize       = DepthStencilView.NumArraySlices;
                 DSVDesc.Texture2DArray.FirstArraySlice = DepthStencilView.ArrayIndex;
             }
         }
@@ -411,11 +486,36 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     {
         return nullptr;
     }
+
+    if (DepthStencilView.NumArraySlices > 1)
+    {
+        FD3D12HashableTextureView HashableView;
+        HashableView.ArrayIndex     = DepthStencilView.ArrayIndex;
+        HashableView.NumArraySlices = DepthStencilView.NumArraySlices;
+        HashableView.Format         = static_cast<uint8>(DepthStencilView.Format);
+        HashableView.MipLevel       = DepthStencilView.MipLevel;
+
+        DepthStencilViewMap.Add(HashableView, D3D12View);
+    }
     else
     {
+        const uint32 Subresource = D3D12CalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, ResourceDesc.MipLevels, ResourceDesc.DepthOrArraySize);
         DepthStencilViews[Subresource] = D3D12View;
-        return D3D12View.Get();
     }
+
+    return D3D12View.Get();
+}
+
+void FD3D12Texture::DestroyRenderTargetViews()
+{
+    RenderTargetViews.Clear();
+    RenderTargetViewMap.Clear();
+}
+
+void FD3D12Texture::DestroyDepthStencilViews()
+{
+    DepthStencilViews.Clear();
+    DepthStencilViewMap.Clear();
 }
 
 void FD3D12Texture::SetDebugName(const FString& InName)
@@ -435,7 +535,6 @@ FString FD3D12Texture::GetDebugName() const
 
     return "";
 }
-
 
 FD3D12BackBufferTexture::FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureInfo& InTextureInfo)
     : FD3D12Texture(InDevice, InTextureInfo)

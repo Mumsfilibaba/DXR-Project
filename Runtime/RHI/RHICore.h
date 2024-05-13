@@ -55,3 +55,6 @@ extern RHI_API uint32          GRHIRayTracingMaxRecursionDepth;
 extern RHI_API bool             GRHISupportsVRS;
 extern RHI_API EShadingRateTier GRHIShadingRateTier;
 extern RHI_API uint32           GRHIShadingRateImageTileSize;
+
+// Geometry Shading Support
+extern RHI_API bool GRHISupportsGeometryShaders;

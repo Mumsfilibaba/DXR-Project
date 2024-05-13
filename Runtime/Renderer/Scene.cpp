@@ -22,14 +22,18 @@ FScene::~FScene()
 {
     // Primitives
     for (FProxySceneComponent* Component : Primitives)
+    {
         SAFE_DELETE(Component);
+    }
 
     Primitives.Clear();
 
     // Lights
     for (FScenePointLight* ScenePointLight : PointLights)
+    {
         SAFE_DELETE(ScenePointLight);
-    
+    }
+
     Lights.Clear();
     PointLights.Clear();
 
@@ -128,24 +132,34 @@ void FScene::UpdateVisibility()
     TRACE_SCOPE("UpdateVisibility - FrustumCulling");
 
     if (Primitives.Capacity() > Primitives.Size())
+    {
         Primitives.Shrink();
+    }
 
     if (VisiblePrimitives.Capacity() < Primitives.Capacity())
+    {
         VisiblePrimitives.Reserve(Primitives.Capacity());
+    }
 
     // Clear for this frame
     VisiblePrimitives.Clear();
 
     // Clear  DirectionalLight
     if (DirectionalLight)
+    {
         DirectionalLight->Primitives.Clear();
+    }
 
     // Clear PointLights
     for (int32 Index = 0; Index < PointLights.Size(); Index++)
     {
         FScenePointLight* ScenePointLight = PointLights[Index];
+        ScenePointLight->SinglePassPrimitives.Clear();
+
         for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
+        {
             ScenePointLight->Primitives[FaceIndex].Clear();
+        }
     }
 
     // Perform frustum culling
@@ -167,16 +181,28 @@ void FScene::UpdateVisibility()
 
         // Update the visibility DirectionalLight
         if (DirectionalLight)
+        {
             DirectionalLight->Primitives.Add(Component);
+        }
 
         // Update the visibility PointLights
         for (int32 Index = 0; Index < PointLights.Size(); Index++)
         {
             FScenePointLight* ScenePointLight = PointLights[Index];
+
+            bool bIsVisible = false;
             for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
             {
                 if (ScenePointLight->Frustums[FaceIndex].CheckAABB(Box))
+                {
                     ScenePointLight->Primitives[FaceIndex].Add(Component);
+                    bIsVisible = true;
+                }
+            }
+
+            if (bIsVisible)
+            {
+                ScenePointLight->SinglePassPrimitives.Add(Component);
             }
         }
     }
@@ -241,6 +267,31 @@ void FScene::UpdateBatches()
     for (int32 Index = 0; Index < PointLights.Size(); Index++)
     {
         FScenePointLight* ScenePointLight = PointLights[Index];
+
+        // Prepare for single-Pass rendering
+        MaterialToBatchIndex.Clear();
+        ScenePointLight->SinglePassMeshBatch.Clear();
+
+        for (FProxySceneComponent* Component : ScenePointLight->SinglePassPrimitives)
+        {
+            const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
+
+            int32 BatchIndex;
+            if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+            {
+                BatchIndex = *ExistingBatchIndex;
+            }
+            else
+            {
+                const int32 NewIndex = BatchIndex = ScenePointLight->SinglePassMeshBatch.Size();
+                ScenePointLight->SinglePassMeshBatch.Emplace(Component->Material);
+                MaterialToBatchIndex.Add(MaterialID, NewIndex);
+            }
+
+            ScenePointLight->SinglePassMeshBatch[BatchIndex].Primitives.Add(Component);
+        }
+
+        // Prepare for rendering each face
         for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
         {
             // Clear map for each CubeFace

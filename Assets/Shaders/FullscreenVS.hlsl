@@ -1,7 +1,7 @@
 struct FVSOutput
 {
     float2 TexCoord : TEXCOORD0;
-    float4 Position : SV_POSITION;
+    float4 Position : SV_Position;
 };
 
 FVSOutput Main(uint VertexID : SV_VertexID)

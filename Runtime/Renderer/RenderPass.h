@@ -9,6 +9,7 @@ struct FFrameResources;
 struct FPipelineStateInstance
 {
     FRHIVertexShaderRef          VertexShader;
+    FRHIGeometryShaderRef        GeometryShader;
     FRHIPixelShaderRef           PixelShader;
 
     FRHIVertexInputLayoutRef     InputLayout;

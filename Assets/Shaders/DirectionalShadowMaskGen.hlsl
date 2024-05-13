@@ -42,10 +42,7 @@ Texture2D<float>  DepthBuffer  : register(t2);
 Texture2D<float3> NormalBuffer : register(t3);
 
 // Shadow Cascades
-Texture2D<float> ShadowCascade0 : register(t4);
-Texture2D<float> ShadowCascade1 : register(t5);
-Texture2D<float> ShadowCascade2 : register(t6);
-Texture2D<float> ShadowCascade3 : register(t7);
+Texture2DArray<float> ShadowCascades : register(t4);
 
 // Output
 RWTexture2D<float> Output : register(u0);
@@ -101,29 +98,9 @@ float2 ComputeReceiverPlaneDepthBias(float3 TexCoordDX, float3 TexCoordDY)
     return BiasUV;
 }
 
-// TODO: Use a texture array for cascades
 float SampleCascade(uint CascadeIndex, float2 TexCoords)
 {
-    if (CascadeIndex == 0)
-    {
-        return ShadowCascade0.SampleLevel(Sampler, TexCoords, 0.0f);
-    }
-    else if (CascadeIndex == 1)
-    {
-        return ShadowCascade1.SampleLevel(Sampler, TexCoords, 0.0f);
-    }
-    else if (CascadeIndex == 2)
-    {
-        return ShadowCascade2.SampleLevel(Sampler, TexCoords, 0.0f);
-    }
-    else if (CascadeIndex == 3)
-    {
-        return ShadowCascade3.SampleLevel(Sampler, TexCoords, 0.0f);
-    }
-    else
-    {
-        return 1.0f;
-    }
+    return ShadowCascades.SampleLevel(Sampler, float3(TexCoords, CascadeIndex), 0.0f);
 }
 
 float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth, float PenumbraRadius, inout uint RandomSeed)

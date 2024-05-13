@@ -9,3 +9,6 @@ RHI_API uint32          GRHIRayTracingMaxRecursionDepth = 0;
 RHI_API bool             GRHISupportsVRS              = false;
 RHI_API EShadingRateTier GRHIShadingRateTier          = EShadingRateTier::NotSupported;
 RHI_API uint32           GRHIShadingRateImageTileSize = 0;
+
+// Geometry Shading Support
+RHI_API bool GRHISupportsGeometryShaders = false;

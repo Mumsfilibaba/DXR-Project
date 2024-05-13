@@ -957,8 +957,12 @@ bool FD3D12PipelineStateManager::Initialize()
     HRESULT hResult = Device1->CreatePipelineLibrary(nullptr, 0, IID_PPV_ARGS(&PipelineLibrary));
     if (FAILED(hResult))
     {
-        D3D12_ERROR("Failed to create PipelineLibrary");
+        D3D12_ERROR("Failed to create PipelineLibrary %d", hResult);
         return false;
+    }
+    else
+    {
+        D3D12_INFO("Created PipelineLibrary");
     }
     
     return true;

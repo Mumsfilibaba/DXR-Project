@@ -28,8 +28,8 @@ public:
 
     FD3D12RenderTargetView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
     FD3D12DepthStencilView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
-    void DestroyRenderTargetViews() { RenderTargetViews.Clear(); }
-    void DestroyDepthStencilViews() { DepthStencilViews.Clear(); }
+    void DestroyRenderTargetViews();
+    void DestroyDepthStencilViews();
 
     FD3D12Resource* GetD3D12Resource() const 
     { 
@@ -64,8 +64,9 @@ protected:
     FD3D12UnorderedAccessViewRef      UnorderedAccessView;
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
+    TMap<FD3D12HashableTextureView, FD3D12RenderTargetViewRef> RenderTargetViewMap;
+    TMap<FD3D12HashableTextureView, FD3D12DepthStencilViewRef> DepthStencilViewMap;
 };
-
 
 class FD3D12BackBufferTexture : public FD3D12Texture
 {
@@ -92,7 +93,6 @@ public:
 private:
     FD3D12Viewport* Viewport;
 };
-
 
 FORCEINLINE FD3D12Texture* GetD3D12Texture(FRHITexture* Texture)
 {

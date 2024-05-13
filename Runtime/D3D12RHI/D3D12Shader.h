@@ -122,7 +122,6 @@ protected:
     bool                  bContainsRootSignature = false;
 };
 
-
 class FD3D12VertexShader : public FRHIVertexShader, public FD3D12Shader
 {
 public:

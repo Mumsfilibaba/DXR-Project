@@ -49,6 +49,17 @@ struct FPerShadowMapHLSL
 
 MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
 
+struct FSinglePassPointLightBufferHLSL
+{
+    // 0-384
+    FMatrix4 LightProjections[RHI_NUM_CUBE_FACES];
+    // 384-400
+    FVector3 LightPosition;
+    float    LightFarPlane;
+};
+
+MARK_AS_REALLOCATABLE(FSinglePassPointLightBufferHLSL);
+
 struct FPerCascadeHLSL
 {
     // 0-16
@@ -78,6 +89,7 @@ public:
 private:
     TMap<int32, FPipelineStateInstance> MaterialPSOs;
     FRHIBufferRef PerShadowMapBuffer;
+    FRHIBufferRef SinglePassShadowMapBuffer;
 };
 
 class FCascadeGenerationPass : public FRenderPass

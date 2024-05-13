@@ -141,14 +141,12 @@ constexpr NewType* GetAsBytes(ClassType* Class) noexcept
     return reinterpret_cast<NewType*>(Class);
 }
 
-
 // Move an object by converting it into a r-value
 template<typename T>
 constexpr typename TRemoveReference<T>::Type&& Move(T&& Value) noexcept
 {
     return static_cast<typename TRemoveReference<T>::Type&&>(Value);
 }
-
 
 // Forward an object by converting it into a r-value from an l-value
 template<typename T>
@@ -164,7 +162,6 @@ constexpr T&& Forward(typename TRemoveReference<T>::Type&& Value) noexcept
     return static_cast<T&&>(Value);
 }
 
-
 // Swap Elements
 template<typename T>
 constexpr void Swap(T& LHS, T& RHS) noexcept requires(TNot<TIsConst<T>>::Value)
@@ -174,20 +171,17 @@ constexpr void Swap(T& LHS, T& RHS) noexcept requires(TNot<TIsConst<T>>::Value)
     RHS = Move(TempElement);
 }
 
-
-template<typename EnumType>
-constexpr typename TUnderlyingType<EnumType>::Type ToUnderlying(EnumType Value)
-{
-    return static_cast<typename TUnderlyingType<EnumType>::Type>(Value);
-}
-
-
 template<typename T>
 constexpr uintptr ToInteger(T Pointer) requires(TIsPointer<T>::Value)
 {
     return reinterpret_cast<uintptr>(Pointer);
 }
 
+template<typename EnumType>
+constexpr typename TUnderlyingType<EnumType>::Type ToUnderlying(EnumType Value)
+{
+    return static_cast<typename TUnderlyingType<EnumType>::Type>(Value);
+}
 
 template<typename T>
 inline T* AddressOf(T& Object) noexcept requires(TIsObject<T>::Value)

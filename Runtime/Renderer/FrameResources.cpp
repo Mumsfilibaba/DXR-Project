@@ -391,11 +391,7 @@ void FFrameResources::Release()
     CascadeGenerationDataBuffer.Reset();
 
     PointLightShadowMaps.Reset();
-
-    for (FRHITextureRef& ShadowMap : ShadowMapCascades)
-    {
-        ShadowMap.Reset();
-    }
+    ShadowMapCascades.Reset();
 
     Skylight.Release();
     LocalProbe.Release();

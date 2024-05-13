@@ -240,6 +240,8 @@ bool FD3D12RHI::Initialize()
         GRHIShadingRateImageTileSize = 0;
     }
 
+    // NOTE: Seems to always be supported in D3D12
+    GRHISupportsGeometryShaders = true;
     return true;
 }
 

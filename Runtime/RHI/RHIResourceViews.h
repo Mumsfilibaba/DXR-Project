@@ -134,7 +134,6 @@ struct FRHITextureSRVDesc
     uint16       NumSlices;
 };
 
-
 struct FRHIBufferSRVDesc
 {
     FRHIBufferSRVDesc()
@@ -153,10 +152,9 @@ struct FRHIBufferSRVDesc
     {
     }
 
-
     bool operator==(const FRHIBufferSRVDesc& Other) const
     {
-        return Buffer == Other.Buffer && Format == Other.Format && FirstElement == Other.FirstElement && NumElements  == Other.NumElements;
+        return Buffer == Other.Buffer && Format == Other.Format && FirstElement == Other.FirstElement && NumElements == Other.NumElements;
     }
 
     bool operator!=(const FRHIBufferSRVDesc& Other) const
@@ -333,6 +331,7 @@ struct FRHIRenderTargetView
         : Texture(nullptr)
         , ClearValue()
         , ArrayIndex(0)
+        , NumArraySlices(1)
         , Format(EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(EAttachmentLoadAction::DontCare)
@@ -348,6 +347,7 @@ struct FRHIRenderTargetView
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(0)
+        , NumArraySlices(1)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(InLoadAction)
@@ -366,6 +366,7 @@ struct FRHIRenderTargetView
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
+        , NumArraySlices(1)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
@@ -375,13 +376,14 @@ struct FRHIRenderTargetView
 
     bool operator==(const FRHIRenderTargetView& Other) const
     {
-        return Texture     == Other.Texture
-            && Format      == Other.Format
-            && ArrayIndex  == Other.ArrayIndex
-            && MipLevel    == Other.MipLevel
-            && LoadAction  == Other.LoadAction
-            && StoreAction == Other.StoreAction
-            && ClearValue  == Other.ClearValue;
+        return Texture        == Other.Texture
+            && Format         == Other.Format
+            && ArrayIndex     == Other.ArrayIndex
+            && NumArraySlices == Other.NumArraySlices
+            && MipLevel       == Other.MipLevel
+            && LoadAction     == Other.LoadAction
+            && StoreAction    == Other.StoreAction
+            && ClearValue     == Other.ClearValue;
     }
 
     bool operator!=(const FRHIRenderTargetView& Other) const
@@ -389,21 +391,10 @@ struct FRHIRenderTargetView
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FRHIRenderTargetView& Value)
-    {
-        uint64 Hash = ToInteger(Value.Texture);
-        HashCombine(Hash, ToUnderlying(Value.Format));
-        HashCombine(Hash, Value.ArrayIndex);
-        HashCombine(Hash, Value.MipLevel);
-        HashCombine(Hash, ToUnderlying(Value.LoadAction));
-        HashCombine(Hash, ToUnderlying(Value.StoreAction));
-        HashCombine(Hash, GetHashForType(Value.ClearValue));
-        return Hash;
-    }
-
     FRHITexture*           Texture;
     FFloatColor            ClearValue;
     uint16                 ArrayIndex;
+    uint16                 NumArraySlices;
     EFormat                Format;
     uint8                  MipLevel;
     EAttachmentLoadAction  LoadAction;
@@ -417,6 +408,7 @@ struct FRHIDepthStencilView
         , ClearValue()
         , Format(EFormat::Unknown)
         , ArrayIndex(0)
+        , NumArraySlices(1)
         , MipLevel(0)
         , LoadAction(EAttachmentLoadAction::DontCare)
         , StoreAction(EAttachmentStoreAction::DontCare)
@@ -424,7 +416,7 @@ struct FRHIDepthStencilView
     }
 
     explicit FRHIDepthStencilView(
-        FRHITexture* InTexture,
+        FRHITexture*              InTexture,
         EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
@@ -432,6 +424,7 @@ struct FRHIDepthStencilView
         , ClearValue(InClearValue)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
+        , NumArraySlices(1)
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -439,7 +432,7 @@ struct FRHIDepthStencilView
     }
 
     FRHIDepthStencilView(
-        FRHITexture* InTexture,
+        FRHITexture*              InTexture,
         uint16                    InArrayIndex,
         uint8                     InMipLevel,
         EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
@@ -449,6 +442,7 @@ struct FRHIDepthStencilView
         , ClearValue(InClearValue)
         , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(uint16(InArrayIndex))
+        , NumArraySlices(1)
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -456,7 +450,7 @@ struct FRHIDepthStencilView
     }
 
     FRHIDepthStencilView(
-        FRHITexture* InTexture,
+        FRHITexture*              InTexture,
         uint16                    InArrayIndex,
         uint8                     InMipLevel,
         EFormat                   InFormat,
@@ -467,6 +461,7 @@ struct FRHIDepthStencilView
         , ClearValue(InClearValue)
         , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
+        , NumArraySlices(1)
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -475,13 +470,14 @@ struct FRHIDepthStencilView
 
     bool operator==(const FRHIDepthStencilView& Other) const
     {
-        return Texture     == Other.Texture
-            && Format      == Other.Format
-            && ArrayIndex  == Other.ArrayIndex
-            && MipLevel    == Other.MipLevel
-            && LoadAction  == Other.LoadAction
-            && StoreAction == Other.StoreAction
-            && ClearValue  == Other.ClearValue;
+        return Texture        == Other.Texture
+            && Format         == Other.Format
+            && ArrayIndex     == Other.ArrayIndex
+            && NumArraySlices == Other.NumArraySlices
+            && MipLevel       == Other.MipLevel
+            && LoadAction     == Other.LoadAction
+            && StoreAction    == Other.StoreAction
+            && ClearValue     == Other.ClearValue;
     }
 
     bool operator!=(const FRHIDepthStencilView& Other) const
@@ -489,22 +485,11 @@ struct FRHIDepthStencilView
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FRHIDepthStencilView& Value)
-    {
-        uint64 Hash = ToInteger(Value.Texture);
-        HashCombine(Hash, ToUnderlying(Value.Format));
-        HashCombine(Hash, Value.ArrayIndex);
-        HashCombine(Hash, Value.MipLevel);
-        HashCombine(Hash, ToUnderlying(Value.LoadAction));
-        HashCombine(Hash, ToUnderlying(Value.StoreAction));
-        HashCombine(Hash, GetHashForType(Value.ClearValue));
-        return Hash;
-    }
-
     FRHITexture*           Texture;
     FDepthStencilValue     ClearValue;
-    EFormat                Format;
     uint16                 ArrayIndex;
+    uint16                 NumArraySlices;
+    EFormat                Format;
     uint8                  MipLevel;
     EAttachmentLoadAction  LoadAction;
     EAttachmentStoreAction StoreAction;

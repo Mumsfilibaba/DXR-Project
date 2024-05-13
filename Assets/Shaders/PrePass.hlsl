@@ -60,7 +60,7 @@ struct FVSOutput
     float3 TangentViewPos  : TANGENTVIEWPOS0;
     float3 TangentPosition : TANGENTPOSITION0;
 #endif
-    float4 Position : SV_POSITION;
+    float4 Position : SV_Position;
 };
 
 FVSOutput VSMain(FVSInput Input)
