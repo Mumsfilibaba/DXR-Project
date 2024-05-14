@@ -12,16 +12,14 @@ FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& I
     , MemoryAllocation()
     , ShaderResourceView(nullptr)
     , UnorderedAccessView(nullptr)
-    , RenderTargetViews()
-    , DepthStencilViews()
+    , ImageViews()
     , DebugName()
 {
 }
 
 FVulkanTexture::~FVulkanTexture()
 {
-    DestroyDepthStencilViews();
-    DestroyRenderTargetViews();
+    DestroyImageViews();
 
     // Check allocation in order to determine if this is a BackBuffer
     if (MemoryAllocation.IsValid() && VULKAN_CHECK_HANDLE(Image))
@@ -47,7 +45,6 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         return false;
     }
 
-    
     VkImageCreateInfo ImageCreateInfo;
     FMemory::Memzero(&ImageCreateInfo);
 
@@ -62,33 +59,31 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     ImageCreateInfo.samples               = SampleCount;
     ImageCreateInfo.tiling                = VK_IMAGE_TILING_OPTIMAL;
     ImageCreateInfo.initialLayout         = VK_IMAGE_LAYOUT_UNDEFINED;
-    
-    
+
     // NOTE: We store the format so that we have easy access to it later
     ImageCreateInfo.format = Format = ConvertFormat(Info.Format);
     if (IsTypelessFormat(Info.Format))
     {
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
     }
-    
+
     if (ImageCreateInfo.imageType == VK_IMAGE_TYPE_3D)
     {
+        ImageCreateInfo.arrayLayers = 1;
         ImageCreateInfo.extent.depth = Info.Extent.z;
-        ImageCreateInfo.arrayLayers  = 1;
     }
     else
     {
+        ImageCreateInfo.arrayLayers = Info.NumArraySlices;
         ImageCreateInfo.extent.depth = 1;
-        ImageCreateInfo.arrayLayers  = Info.NumArraySlices;
     }
     
     // Enable Texture-Cube views
     if (Info.IsTextureCube() || Info.IsTextureCubeArray())
     {
-        ImageCreateInfo.flags       |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+        ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
         ImageCreateInfo.arrayLayers  = Info.NumArraySlices * RHI_NUM_CUBE_FACES;
     }
-    
     
     // TODO: Look into abstracting these flags
     ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
@@ -110,7 +105,6 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
     }
 
-    
     VkResult Result = vkCreateImage(GetDevice()->GetVkDevice(), &ImageCreateInfo, nullptr, &Image);
     if (VULKAN_FAILED(Result))
     {
@@ -122,7 +116,6 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         CreateInfo = ImageCreateInfo;
     }
 
-    
     // NOTE: All textures are allocated as device local, maybe we want to move this into the AllocateImageMemory function
     const VkMemoryPropertyFlags MemoryProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     const VkMemoryAllocateFlags AllocateFlags    = 0;
@@ -299,45 +292,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
     return true;
 }
 
-FVulkanResourceView* FVulkanTexture::GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView)
-{
-    if (!VULKAN_CHECK_HANDLE(Image))
-    {
-        VULKAN_WARNING("Texture does not have a valid Image");
-        return nullptr;
-    }
-    
-    // Calculate the subresource for this view
-    const uint32 Subresource = VulkanCalculateSubresource(RenderTargetView.MipLevel, RenderTargetView.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
-    
-    // Check for existing view and control the format of the view
-    const VkFormat VulkanFormat = ConvertFormat(RenderTargetView.Format);
-    if (Subresource < static_cast<uint32>(RenderTargetViews.Size()))
-    {
-        if (FVulkanResourceView* ExistingView = RenderTargetViews[Subresource])
-        {
-            const FVulkanResourceView::FImageView& ImageViewInfo = ExistingView->GetImageViewInfo();
-            VULKAN_WARNING_COND(ImageViewInfo.Format == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
-            return ExistingView;
-        }
-    }
-    else
-    {
-        RenderTargetViews.Resize(Subresource + 1);
-    }
-    
-    // Create a new view
-    FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
-    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, RenderTargetView.ArrayIndex, 1, RenderTargetView.MipLevel, 1))
-    {
-        return nullptr;
-    }
-    
-    RenderTargetViews[Subresource] = NewImageView;
-    return NewImageView;
-}
-
-FVulkanResourceView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView)
+FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableImageView& ImageViewInfo)
 {
     if (!VULKAN_CHECK_HANDLE(Image))
     {
@@ -345,60 +300,111 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateDepthStencilView(const FRHIDepth
         return nullptr;
     } 
 
-    // Calculate the subresource for this view
-    const uint32 Subresource = VulkanCalculateSubresource(DepthStencilView.MipLevel, DepthStencilView.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
-
     // Check for existing view and control the format of the view
-    const VkFormat VulkanFormat = ConvertFormat(DepthStencilView.Format);
-    if (Subresource < static_cast<uint32>(DepthStencilViews.Size()))
+    const VkFormat VulkanFormat = ConvertFormat(static_cast<EFormat>(ImageViewInfo.Format));
+    const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
+
+    // Check for an existing view
+    FVulkanResourceView* ExistingView = nullptr;
+    if (ImageViewInfo.NumArraySlices > 1)
     {
-        if (FVulkanResourceView* ExistingView = DepthStencilViews[Subresource])
+        if (FVulkanResourceView** ImageView = ImageViewMap.Find(ImageViewInfo))
         {
-            const FVulkanResourceView::FImageView& ImageViewInfo = ExistingView->GetImageViewInfo();
-            VULKAN_WARNING_COND(ImageViewInfo.Format == VulkanFormat, "A RenderTargetView for this subresource already exists with another format");
-            return ExistingView;
+            ExistingView = *ImageView;
         }
     }
     else
     {
-        DepthStencilViews.Resize(Subresource + 1);
+        // Calculate the subresource for this view
+        const uint32 Subresource = VulkanCalculateSubresource(ImageViewInfo.MipLevel, ImageViewInfo.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
+        if (Subresource < static_cast<uint32>(ImageViews.Size()))
+        {
+            ExistingView = ImageViews[Subresource];
+        }
+        else
+        {
+            ImageViews.Resize(Subresource + 1);
+        }
+    }
+
+    if (ExistingView)
+    {
+        const FVulkanResourceView::FImageView& ExistingImageViewInfo = ExistingView->GetImageViewInfo();
+        if (ExistingImageViewInfo.Format != VulkanFormat)
+        {
+            VULKAN_WARNING("A ImageView for this subresource already exists with another format");
+        }
+
+        return ExistingView;
+    }
+
+    // Get the ImageViewType
+    VkImageViewType ImageViewType;
+    switch (Info.Dimension)
+    {
+        case ETextureDimension::Texture2D:
+        {
+            ImageViewType = VK_IMAGE_VIEW_TYPE_2D;
+            break;
+        }
+        case ETextureDimension::Texture2DArray:
+        case ETextureDimension::TextureCube:
+        case ETextureDimension::TextureCubeArray:
+        {
+            ImageViewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            break;
+        }
+        case ETextureDimension::Texture3D:
+        {
+            ImageViewType = VK_IMAGE_VIEW_TYPE_3D;
+            break;
+        }
+        default:
+        {
+            ImageViewType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+            break;
+        }
     }
 
     // Create a new view
     FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
-    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, DepthStencilView.ArrayIndex, 1, DepthStencilView.MipLevel, 1))
+    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, ImageViewType, ImageAspectFlags, ImageViewInfo.ArrayIndex, ImageViewInfo.NumArraySlices, ImageViewInfo.MipLevel, 1))
     {
         return nullptr;
     }
 
-    DepthStencilViews[Subresource] = NewImageView;
+    if (ImageViewInfo.NumArraySlices > 1)
+    {
+        ImageViewMap.Add(ImageViewInfo, NewImageView);
+    }
+    else
+    {
+        const uint32 Subresource = VulkanCalculateSubresource(ImageViewInfo.MipLevel, ImageViewInfo.ArrayIndex, 0, GetNumMipLevels(), GetNumArraySlices());
+        ImageViews[Subresource] = NewImageView;
+    }
+
     return NewImageView;
 }
 
-void FVulkanTexture::DestroyRenderTargetViews()
+void FVulkanTexture::DestroyImageViews()
 {
-    for (FVulkanResourceView* ResourceView : RenderTargetViews)
+    for (FVulkanResourceView* ImageView : ImageViews)
     {
-        delete ResourceView;
+        delete ImageView;
     }
 
-    RenderTargetViews.Clear();
-}
-
-void FVulkanTexture::DestroyDepthStencilViews()
-{
-    for (FVulkanResourceView* ResourceView : DepthStencilViews)
+    for (auto ImageViewPair : ImageViewMap)
     {
-        delete ResourceView;
+        delete ImageViewPair.Second;
     }
 
-    DepthStencilViews.Clear();
+    ImageViews.Clear();
+    ImageViewMap.Clear();
 }
 
 void FVulkanTexture::SetVkImage(VkImage InImage)
 {
-    DestroyRenderTargetViews();
-    DestroyDepthStencilViews();
+    DestroyImageViews();
     Image = InImage;
 
     // NOTE: Use the format in the description to set the native format if it is not set yet
@@ -452,7 +458,6 @@ FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture()
 {
     return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;
 }
-
 
 // FVulkanTextureHelper
 

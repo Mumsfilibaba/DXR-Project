@@ -21,40 +21,40 @@
 #endif
 
 #if !PRODUCTION_BUILD
-#define VULKAN_ERROR(...)                      \
-    do                                         \
-    {                                          \
+#define VULKAN_ERROR(...) \
+    do \
+    { \
         LOG_ERROR("[VulkanRHI] " __VA_ARGS__); \
-        DEBUG_BREAK();                         \
+        DEBUG_BREAK(); \
     } while (false)
 
 #define VULKAN_ERROR_COND(bCondition, ...) \
-    do                                     \
-    {                                      \
-        if (!(bCondition))                 \
-        {                                  \
-            VULKAN_ERROR(__VA_ARGS__);     \
-        }                                  \
+    do \
+    { \
+        if (!(bCondition)) \
+        { \
+            VULKAN_ERROR(__VA_ARGS__); \
+        } \
     } while (false)
 
-#define VULKAN_WARNING(...)                      \
-    do                                           \
-    {                                            \
+#define VULKAN_WARNING(...) \
+    do \
+    { \
         LOG_WARNING("[VulkanRHI] " __VA_ARGS__); \
     } while (false)
 
 #define VULKAN_WARNING_COND(bCondition, ...) \
-    do                                       \
-    {                                        \
-        if (!(bCondition))                   \
-        {                                    \
-            VULKAN_WARNING(__VA_ARGS__);     \
-        }                                    \
+    do \
+    { \
+        if (!(bCondition)) \
+        { \
+            VULKAN_WARNING(__VA_ARGS__); \
+        } \
     } while (false)
 
-#define VULKAN_INFO(...)                      \
-    do                                        \
-    {                                         \
+#define VULKAN_INFO(...) \
+    do \
+    { \
         LOG_INFO("[VulkanRHI] " __VA_ARGS__); \
     } while (false)
 
@@ -107,6 +107,46 @@ public:
 private:
     void* Next;
 };
+
+struct FVulkanHashableImageView
+{
+    FVulkanHashableImageView()
+        : ArrayIndex(0)
+        , NumArraySlices(1)
+        , Format(0)
+        , MipLevel(0)
+        , Padding(0)
+    {
+    }
+
+    bool operator==(const FVulkanHashableImageView& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableImageView)) == 0;
+    }
+
+    bool operator!=(const FVulkanHashableImageView& Other) const
+    {
+        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableImageView)) != 0;
+    }
+
+    friend uint64 GetHashForType(const FVulkanHashableImageView& Value)
+    {
+        uint64 Hash = Value.ArrayIndex;
+        HashCombine(Hash, Value.NumArraySlices);
+        HashCombine(Hash, Value.Format);
+        HashCombine(Hash, Value.MipLevel);
+        HashCombine(Hash, Value.Padding);
+        return Hash;
+    }
+
+    uint16 ArrayIndex;
+    uint16 NumArraySlices;
+    uint8  Format;
+    uint8  MipLevel;
+    uint16 Padding;
+};
+
+static_assert(sizeof(FVulkanHashableImageView) == sizeof(uint64), "FVulkanHashableImageView should be the same size as uint64");
 
 inline FString GetVersionAsString(uint32 VersionNumber)
 {

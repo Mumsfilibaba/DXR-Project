@@ -148,7 +148,14 @@ bool FVulkanRHI::Initialize()
     DeviceDesc.RequiredFeatures       = AdapterDesc.RequiredFeatures;
     DeviceDesc.RequiredFeatures11     = AdapterDesc.RequiredFeatures11;
     DeviceDesc.RequiredFeatures12     = AdapterDesc.RequiredFeatures12;
-    
+
+    // Enable GeometryShaders if the device supports them
+    const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
+    if (DeviceFeatures.geometryShader)
+    {
+        DeviceDesc.RequiredFeatures.geometryShader = VK_TRUE;
+    }
+
     Device = new FVulkanDevice(GetInstance(), GetAdapter());
     if (!Device->Initialize(DeviceDesc))
     {

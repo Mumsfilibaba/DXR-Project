@@ -205,23 +205,35 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVDesc& I
     switch(VulkanTexture->GetDimension())
     {
         case ETextureDimension::Texture2D:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
             break;
+        }
         case ETextureDimension::Texture2DArray:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             break;
+        }
         case ETextureDimension::TextureCube:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE;
             break;
+        }
         case ETextureDimension::TextureCubeArray:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
             break;
+        }
         case ETextureDimension::Texture3D:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
             break;
+        }
         default:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
             break;
+        }
     }
 
     uint32 BaseArrayLayer;
@@ -314,19 +326,27 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVDesc& 
     switch(VulkanTexture->GetDimension())
     {
         case ETextureDimension::Texture2D:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D;
             break;
+        }
         case ETextureDimension::Texture2DArray:
         case ETextureDimension::TextureCube:
         case ETextureDimension::TextureCubeArray:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
             break;
+        }
         case ETextureDimension::Texture3D:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_3D;
             break;
+        }
         default:
+        {
             VulkanImageType = VK_IMAGE_VIEW_TYPE_MAX_ENUM;
             break;
+        }
     }
 
     uint32 BaseArrayLayer;

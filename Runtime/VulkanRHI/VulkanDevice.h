@@ -28,6 +28,7 @@ extern VULKANRHI_API bool GVulkanForceDedicatedAllocations;
 extern VULKANRHI_API bool GVulkanForceDedicatedImageAllocations;
 extern VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations;
 extern VULKANRHI_API bool GVulkanAllowNullDescriptors;
+extern VULKANRHI_API bool GVulkanAllowGeometryShaders;
 
 extern VULKANRHI_API bool GVulkanSupportsDepthClip;
 extern VULKANRHI_API bool GVulkanSupportsConservativeRasterization;

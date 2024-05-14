@@ -15,6 +15,7 @@ VULKANRHI_API bool GVulkanForceDedicatedAllocations = false;
 VULKANRHI_API bool GVulkanForceDedicatedImageAllocations = GVulkanForceDedicatedAllocations || true;
 VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations = GVulkanForceDedicatedAllocations || false;
 VULKANRHI_API bool GVulkanAllowNullDescriptors = true;
+VULKANRHI_API bool GVulkanAllowGeometryShaders = false;
 
 VULKANRHI_API bool GVulkanSupportsDepthClip = false;
 VULKANRHI_API bool GVulkanSupportsConservativeRasterization = false;
@@ -968,6 +969,14 @@ bool FVulkanDevice::PostLoaderInitalize()
     }
 
     GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
+
+    // Update GeometryShader support
+    const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
+    if (GVulkanAllowGeometryShaders && DeviceFeatures.geometryShader)
+    {
+        GRHISupportsGeometryShaders = true;
+    }
+
     return true;
 }
 

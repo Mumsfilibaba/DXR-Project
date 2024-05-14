@@ -342,7 +342,13 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         return;
     }
 
-    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
+    FVulkanHashableImageView HashableImageView;
+    HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
+    HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
+    HashableImageView.Format         = static_cast<uint8>(RenderTargetView.Format);
+    HashableImageView.MipLevel       = RenderTargetView.MipLevel;
+
+    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
     {
         // NOTE: Here the image is expected to be in a "RenderTargetState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
         VkImageMemoryBarrier2 ImageBarrier;
@@ -396,7 +402,13 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
         return;
     }
 
-    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
+    FVulkanHashableImageView HashableImageView;
+    HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
+    HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
+    HashableImageView.Format         = static_cast<uint8>(DepthStencilView.Format);
+    HashableImageView.MipLevel       = DepthStencilView.MipLevel;
+
+    if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
     {
         // NOTE: Here the image is expected to be in a "DepthStencilState" so we need to transition it to TransferDst, we then need to transition back when the clear is done
         VkImageMemoryBarrier2 ImageBarrier;
@@ -505,8 +517,14 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
                 VkClearValue& ClearValue = ClearValues[NumClearValues++];
                 FMemory::Memcpy(ClearValue.color.float32, &RenderTargetView.ClearValue.r, sizeof(ClearValue.color.float32));
 
+                FVulkanHashableImageView HashableImageView;
+                HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
+                HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
+                HashableImageView.Format         = static_cast<uint8>(RenderTargetView.Format);
+                HashableImageView.MipLevel       = RenderTargetView.MipLevel;
+
                 // Get the image view
-                if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateRenderTargetView(RenderTargetView))
+                if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
                 {
                     const FVulkanResourceView::FImageView& ImageViewInfo = ImageView->GetImageViewInfo();
                     FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageViewInfo.ImageView;
@@ -529,13 +547,19 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
             RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
             RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
             RenderPassKey.DepthStencilActions.StoreAction = DepthStencilView.StoreAction;
-        
+
             VkClearValue& ClearValue = ClearValues[NumClearValues++];
             ClearValue.depthStencil.depth   = DepthStencilView.ClearValue.Depth;
             ClearValue.depthStencil.stencil = DepthStencilView.ClearValue.Stencil;
 
+            FVulkanHashableImageView HashableImageView;
+            HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
+            HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
+            HashableImageView.Format         = static_cast<uint8>(DepthStencilView.Format);
+            HashableImageView.MipLevel       = DepthStencilView.MipLevel;
+
             // Get the image view
-            if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateDepthStencilView(DepthStencilView))
+            if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
             {
                 const FVulkanResourceView::FImageView& ImageViewInfo = ImageView->GetImageViewInfo();
                 FramebufferKey.AttachmentViews[FramebufferKey.NumAttachmentViews++] = ImageViewInfo.ImageView;

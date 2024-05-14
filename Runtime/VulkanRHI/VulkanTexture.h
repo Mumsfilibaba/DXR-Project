@@ -28,10 +28,8 @@ public:
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
-    FVulkanResourceView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
-    FVulkanResourceView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);
-    void DestroyRenderTargetViews();
-    void DestroyDepthStencilViews();
+    FVulkanResourceView* GetOrCreateImageView(const FVulkanHashableImageView& RenderTargetView);
+    void DestroyImageViews();
 
     void SetVkImage(VkImage InImage);
     
@@ -59,16 +57,15 @@ public:
 
 protected:
     VkImage                       Image;
+    VkImageType                   ImageType;
     VkFormat                      Format;
     FVulkanMemoryAllocation       MemoryAllocation;
     VkImageCreateInfo             CreateInfo;
-
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
-    TArray<FVulkanResourceView*>  RenderTargetViews;
-    TArray<FVulkanResourceView*>  DepthStencilViews;
-    
+    TArray<FVulkanResourceView*>  ImageViews;
     FString                       DebugName;
+    TMap<FVulkanHashableImageView, FVulkanResourceView*> ImageViewMap;
 };
 
 class FVulkanBackBufferTexture : public FVulkanTexture
