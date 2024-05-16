@@ -86,6 +86,12 @@ struct FGenericVulkanPlatform
         #if VK_KHR_synchronization2
             VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
         #endif
+        #if VK_KHR_fragment_shading_rate
+            VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, 
+        #endif
+        #if VK_KHR_multiview
+            VK_KHR_MULTIVIEW_EXTENSION_NAME,
+        #endif
         #if VK_EXT_descriptor_indexing
             VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
         #endif
@@ -98,9 +104,6 @@ struct FGenericVulkanPlatform
         #if VK_EXT_descriptor_buffer
             VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
         #endif
-        #if VK_NV_ray_tracing_invocation_reorder
-            VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
-        #endif
         #if VK_EXT_depth_clip_enable
             VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME,
         #endif
@@ -110,11 +113,11 @@ struct FGenericVulkanPlatform
         #if VK_EXT_robustness2
             VK_EXT_ROBUSTNESS_2_EXTENSION_NAME,
         #endif
-        #if VK_KHR_fragment_shading_rate
-            VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME, 
-        #endif
         #if VK_EXT_pipeline_creation_cache_control
             VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME
+        #endif
+        #if VK_NV_ray_tracing_invocation_reorder
+            VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
         #endif
         };
     }

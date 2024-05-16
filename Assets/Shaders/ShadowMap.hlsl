@@ -21,11 +21,20 @@
     #define ENABLE_CASCADE_GS_INSTANCING (0)
 #endif
 
+#ifndef ENABLE_CASCADE_VIEW_INSTANCING
+    #define ENABLE_CASCADE_VIEW_INSTANCING (0)
+#endif
+
 #ifndef ENABLE_POINTLIGHT_GS_INSTANCING
     #define ENABLE_POINTLIGHT_GS_INSTANCING (0)
 #endif
 
+#ifndef ENABLE_POINTLIGHT_VIEW_INSTANCING
+    #define ENABLE_POINTLIGHT_VIEW_INSTANCING (0)
+#endif
+
 #define NUM_CUBE_FACES (6)
+#define NUM_CUBE_FACES_HALF (3)
 
 struct FPerCascade
 {
@@ -51,7 +60,6 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
     SamplerState MaterialSampler : register(s0);
-
 #if ENABLE_ALPHA_MASK
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     Texture2D<float4> AlphaMaskTex : register(t0);
@@ -59,15 +67,13 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
     Texture2D<float> AlphaMaskTex : register(t0);
 #endif
 #endif
-
 #if ENABLE_PARALLAX_MAPPING
     Texture2D<float> HeightMap : register(t1);
 #endif
 #endif
 
-/**
- * Cascade Shadow Generation
- */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Cascade Shadow Generation
 
 // VertexShader
 
@@ -91,7 +97,12 @@ struct FVSCascadeOutput
 #endif
 };
 
-FVSCascadeOutput Cascade_VSMain(FVSInput Input)
+FVSCascadeOutput Cascade_VSMain(
+    FVSInput Input 
+#if ENABLE_CASCADE_VIEW_INSTANCING
+    , uint ViewID : SV_ViewID
+#endif
+    )
 {
     FVSCascadeOutput Output;
 
@@ -103,7 +114,11 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
 #if ENABLE_CASCADE_GS_INSTANCING
     Output.Position = WorldPosition;
 #else
+#if ENABLE_CASCADE_VIEW_INSTANCING
+    const int CascadeIndex = min(ViewID, MAX_CASCADES - 1);
+#else
     const int CascadeIndex = min(PerCascadeBuffer.CascadeIndex, MAX_CASCADES - 1);
+#endif
     const float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
     Output.Position = mul(WorldPosition, LightViewProjection);
 #endif
@@ -180,9 +195,8 @@ void Cascade_PSMain(FPSCascadeInput Input)
 #endif
 }
 
-/**
- * Point Light Shadow Generation
- */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Point Light Shadow Generation
 
 // VertexShader
 
@@ -195,6 +209,15 @@ struct FSinglePassPointLightBuffer
 };
 
 ConstantBuffer<FSinglePassPointLightBuffer> PointLightBuffer : register(b0);
+#elif ENABLE_POINTLIGHT_VIEW_INSTANCING
+struct FTwoPassPointLightBuffer
+{
+    float4x4 LightProjections[NUM_CUBE_FACES_HALF];
+    float3   LightPosition;
+    float    LightFarPlane;
+};
+
+ConstantBuffer<FTwoPassPointLightBuffer> PointLightBuffer : register(b0);
 #else
 struct FPointLightBuffer
 {
@@ -217,7 +240,12 @@ struct FVSPointOutput
 #endif
 };
 
-FVSPointOutput Point_VSMain(FVSInput Input)
+FVSPointOutput Point_VSMain(
+    FVSInput Input
+#if ENABLE_POINTLIGHT_VIEW_INSTANCING
+    , uint ViewID : SV_ViewID
+#endif
+    )
 {
     FVSPointOutput Output = (FVSPointOutput)0;
 
@@ -227,7 +255,9 @@ FVSPointOutput Point_VSMain(FVSInput Input)
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     Output.TexCoord = Input.TexCoord;
 #endif
-#if !ENABLE_POINTLIGHT_GS_INSTANCING
+#if ENABLE_POINTLIGHT_VIEW_INSTANCING
+    Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[ViewID]);
+#elif !ENABLE_POINTLIGHT_GS_INSTANCING
     Output.Position = mul(WorldPosition, PointLightBuffer.LightProjection);
 #endif
     return Output;
@@ -314,9 +344,8 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
 }
 
 #if 0
-/**
- * Variance Shadow Generation
- */
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Variance Shadow Generation
 
 float4 VSM_VSMain(FVSInput Input) : SV_Position
 {

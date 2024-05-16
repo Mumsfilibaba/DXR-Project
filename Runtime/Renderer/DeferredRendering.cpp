@@ -237,7 +237,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
     GPU_TRACE_SCOPE(CommandList, "Depth Pre-Pass");
 
-    FRHIRenderPassDesc RenderPass;
+    FRHIBeginRenderPassInfo RenderPass;
     RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get());
 
     CommandList.BeginRenderPass(RenderPass);
@@ -585,7 +585,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
     const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
 
-    FRHIRenderPassDesc RenderPass;
+    FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets = 5;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
     RenderPass.RenderTargets[1] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);

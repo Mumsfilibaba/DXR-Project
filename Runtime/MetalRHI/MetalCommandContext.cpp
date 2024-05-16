@@ -81,7 +81,7 @@ void FMetalCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
 {
 }
 
-void FMetalCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassDesc)
+void FMetalCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -89,16 +89,16 @@ void FMetalCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
     
     CopyContext.FinishEncoder();
 
-    FMetalTexture* DSVTexture = GetMetalTexture(RenderPassDesc.DepthStencilView.Texture);
-    METAL_ERROR_COND((RenderPassDesc.NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
+    FMetalTexture* DSVTexture = GetMetalTexture(BeginRenderPassInfo.DepthStencilView.Texture);
+    METAL_ERROR_COND((BeginRenderPassInfo.NumRenderTargets > 0) || (DSVTexture != nullptr), "A RenderPass needs a valid RenderTargetView or DepthStencilView");
     
     MTLRenderPassDescriptor* RenderPassDescriptor = [MTLRenderPassDescriptor new];
     RenderPassDescriptor.defaultRasterSampleCount = 1;
     RenderPassDescriptor.renderTargetArrayLength  = 1;
     
-    for (uint32 Index = 0; Index < RenderPassDesc.NumRenderTargets; ++Index)
+    for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; ++Index)
     {
-        const FRHIRenderTargetView& RenderTargetView = RenderPassDesc.RenderTargets[Index];
+        const FRHIRenderTargetView& RenderTargetView = BeginRenderPassInfo.RenderTargets[Index];
         
         FMetalTexture* RTVTexture = GetMetalTexture(RenderTargetView.Texture);
         METAL_ERROR_COND(RTVTexture != nullptr, "Texture cannot be nullptr");
@@ -115,7 +115,7 @@ void FMetalCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
 
     if (DSVTexture)
     {
-        const FRHIDepthStencilView& DepthStencilView = RenderPassDesc.DepthStencilView;
+        const FRHIDepthStencilView& DepthStencilView = BeginRenderPassInfo.DepthStencilView;
         
         MTLRenderPassDepthAttachmentDescriptor* DepthAttachment = RenderPassDescriptor.depthAttachment;
         DepthAttachment.texture            = DSVTexture->GetMTLTexture();

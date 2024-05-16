@@ -5,6 +5,7 @@
 #include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
 #include "Core/Utilities/StringUtilities.h"
+#include "Core/Misc/CRC.h"
 
 typedef TSharedRef<class FD3D12VertexInputLayout>       FD3D12VertexInputLayoutRef;
 typedef TSharedRef<class FD3D12DepthStencilState>       FD3D12DepthStencilStateRef;
@@ -230,6 +231,34 @@ struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT) FD3D12GraphicsPipelineStre
         D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type14 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_IB_STRIP_CUT_VALUE;
         D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IndexBufferStripCutValue = { };
     };
+
+    struct alignas(D3D12_PIPELINE_STATE_STREAM_ALIGNMENT)
+    {
+        D3D12_PIPELINE_STATE_SUBOBJECT_TYPE Type15 = D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING;
+        D3D12_VIEW_INSTANCING_DESC ViewInstancingDesc = { };
+    };
+};
+
+struct FD3D12HashableViewInstanceDesc
+{
+    FD3D12HashableViewInstanceDesc()
+        : ViewInstanceCount(0)
+        , Flags(D3D12_VIEW_INSTANCING_FLAG_NONE)
+    {
+        FMemory::Memzero(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * D3D12_MAX_VIEW_INSTANCE_COUNT);
+    }
+
+    uint64 GenerateHash() const
+    {
+        uint64 Hash = ViewInstanceCount;
+        HashCombine(Hash, FCRC32::Generate(ViewInstanceLocations, sizeof(D3D12_VIEW_INSTANCE_LOCATION) * ViewInstanceCount));
+        HashCombine(Hash, Flags);
+        return Hash;
+    }
+
+    D3D12_VIEW_INSTANCE_LOCATION ViewInstanceLocations[D3D12_MAX_VIEW_INSTANCE_COUNT];
+    uint32                       ViewInstanceCount;
+    D3D12_VIEW_INSTANCING_FLAGS  Flags;
 };
 
 struct FD3D12GraphicsPipelineKey
@@ -244,6 +273,7 @@ struct FD3D12GraphicsPipelineKey
     uint64                             BlendStateHash = 0;
     uint64                             DepthStencilHash = 0;
     uint64                             RasterizerHash = 0;
+    uint64                             ViewInstancingHash = 0;
     D3D12_PRIMITIVE_TOPOLOGY_TYPE      PrimitiveTopologyType = { };
     D3D12_INDEX_BUFFER_STRIP_CUT_VALUE IndexBufferStripCutValue = { };
     DXGI_FORMAT                        DepthBufferFormat = { };
@@ -258,7 +288,7 @@ public:
     virtual ~FD3D12GraphicsPipelineState() = default;
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
-
+    
     virtual void SetDebugName(const FString& InName) override final
     {
         FD3D12PipelineStateCommon::SetDebugName(InName);
@@ -318,7 +348,10 @@ public:
         FD3D12PipelineStateCommon::SetDebugName(InName);
     }
 
-    FORCEINLINE FD3D12ComputeShader* GetComputeShader() const { return Shader.Get(); }
+    FORCEINLINE FD3D12ComputeShader* GetComputeShader() const
+    {
+        return Shader.Get();
+    }
 
 private:
     TSharedRef<FD3D12ComputeShader> Shader;
@@ -361,15 +394,13 @@ public:
     FORCEINLINE FD3D12RootSignature* GetHitLocalRootSignature()    const { return HitLocalRootSignature.Get(); }
 
 private:
-    TComPtr<ID3D12StateObject>           StateObject;
-    TComPtr<ID3D12StateObjectProperties> StateObjectProperties;
-
+    TComPtr<ID3D12StateObject>                     StateObject;
+    TComPtr<ID3D12StateObjectProperties>           StateObjectProperties;
+    FD3D12RootSignatureRef                         GlobalRootSignature;
     // TODO: There could be more than one root signature for locals
-    FD3D12RootSignatureRef GlobalRootSignature;
-    FD3D12RootSignatureRef RayGenLocalRootSignature;
-    FD3D12RootSignatureRef MissLocalRootSignature;
-    FD3D12RootSignatureRef HitLocalRootSignature;
-
+    FD3D12RootSignatureRef                         RayGenLocalRootSignature;
+    FD3D12RootSignatureRef                         MissLocalRootSignature;
+    FD3D12RootSignatureRef                         HitLocalRootSignature;
     TMap<FString, FD3D12RayTracingShaderIdentifer> ShaderIdentifers;
 };
 

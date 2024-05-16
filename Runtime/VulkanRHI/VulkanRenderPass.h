@@ -41,10 +41,12 @@ struct FVulkanRenderPassKey
         {
             EFormat                  DepthStencilFormat;
             FVulkanRenderPassActions DepthStencilActions;
-            
-            uint8 NumSamples       : 4;
-            uint8 NumRenderTargets : 4;
-            
+
+            uint8                    NumSamples       : 4;
+            uint8                    NumRenderTargets : 4;
+
+            FViewInstancingInfo      ViewInstancingInfo;
+
             EFormat                  RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
             FVulkanRenderPassActions RenderTargetActions[RHI_MAX_RENDER_TARGETS];
         };
@@ -115,7 +117,9 @@ struct FVulkanFramebufferKey
         HashCombine(Hash, Key.Height);
 
         for (uint32 Index = 0; Index < Key.NumAttachmentViews; Index++)
+        {
             HashCombine(Hash, Key.AttachmentViews[Index]);
+        }
 
         return Hash;
     }

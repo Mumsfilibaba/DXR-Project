@@ -21,6 +21,7 @@ VULKANRHI_API bool GVulkanSupportsDepthClip = false;
 VULKANRHI_API bool GVulkanSupportsConservativeRasterization = false;
 VULKANRHI_API bool GVulkanSupportsPipelineCacheControl = false;
 VULKANRHI_API bool GVulkanSupportsAccelerationStructures = false;
+VULKANRHI_API bool GVulkanSupportsMultiviews = false;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper
@@ -619,9 +620,9 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     }
 
     VkResult Result = VK_SUCCESS;
-    
+
     // TODO: Device layers
-    
+
     // Verify Extensions
     uint32 DeviceExtensionCount = 0;
     Result = vkEnumerateDeviceExtensionProperties(PhysicalDevice->GetVkPhysicalDevice(), nullptr, &DeviceExtensionCount, nullptr);
@@ -674,7 +675,6 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
         }
     }
 
-
     // Log enabled extensions and layers
     IConsoleVariable* VerboseVulkan = FConsoleManager::Get().FindConsoleVariable("VulkanRHI.VerboseLogging");
     if (VerboseVulkan && VerboseVulkan->GetBool())
@@ -695,7 +695,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
         VULKAN_ERROR("Failed to query queue indices");
         return false;
     }
-    
+
     VULKAN_INFO("QueueIndicies: Graphics=%d, Compute=%d, Copy=%d", QueueIndicies->GraphicsQueueIndex, QueueIndicies->ComputeQueueIndex, QueueIndicies->CopyQueueIndex);
 
     TArray<VkDeviceQueueCreateInfo> QueueCreateInfos;
@@ -712,7 +712,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     {
         VkDeviceQueueCreateInfo QueueCreateInfo;
         FMemory::Memzero(&QueueCreateInfo);
-        
+
         QueueCreateInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         QueueCreateInfo.pQueuePriorities = &DefaultQueuePriority;
         QueueCreateInfo.queueFamilyIndex = QueueFamiliy;
@@ -731,7 +731,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     DeviceCreateInfo.ppEnabledExtensionNames = EnabledExtensionNames.Data();
     DeviceCreateInfo.queueCreateInfoCount    = QueueCreateInfos.Size();
     DeviceCreateInfo.pQueueCreateInfos       = QueueCreateInfos.Data();
-    
+
     VkPhysicalDeviceFeatures2 DeviceFeatures2;
     FMemory::Memzero(&DeviceFeatures2);
     DeviceFeatures2.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -742,18 +742,22 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     {
         DeviceFeatures2.features.robustBufferAccess = VK_TRUE;
     }
-    
-    // Construct the pNext chain
-    FVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
-    DeviceCreateHelper.AddNext(DeviceFeatures2);
 
+    // Vulkan 1.1 Features
     VkPhysicalDeviceVulkan11Features DeviceFeaturesVulkan11 = DeviceDesc.RequiredFeatures11;
     DeviceFeaturesVulkan11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
-    DeviceCreateHelper.AddNext(DeviceFeaturesVulkan11);
-    
+
+    const VkPhysicalDeviceVulkan11Features& AvailableDeviceFeaturesVulkan11 = GetPhysicalDevice()->GetFeaturesVulkan11();
+    if (AvailableDeviceFeaturesVulkan11.multiview)
+    {
+        DeviceFeaturesVulkan11.multiview = VK_TRUE;
+        GVulkanSupportsMultiviews = true;
+    }
+
+    // Vulkan 1.2 Features
     VkPhysicalDeviceVulkan12Features DeviceFeaturesVulkan12 = DeviceDesc.RequiredFeatures12;
     DeviceFeaturesVulkan12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
-    
+
     // Enable 'bufferDeviceAddress' if available
     const VkPhysicalDeviceVulkan12Features& AvailableDeviceFeaturesVulkan12 = GetPhysicalDevice()->GetFeaturesVulkan12();
     if (AvailableDeviceFeaturesVulkan12.bufferDeviceAddress)
@@ -770,7 +774,11 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
     {
         DeviceFeaturesVulkan12.descriptorIndexing = VK_TRUE;
     }
-    
+
+    // Construct the pNext chain
+    FVulkanStructureHelper DeviceCreateHelper(DeviceCreateInfo);
+    DeviceCreateHelper.AddNext(DeviceFeatures2);
+    DeviceCreateHelper.AddNext(DeviceFeaturesVulkan11);
     DeviceCreateHelper.AddNext(DeviceFeaturesVulkan12);
 
     // Check and enable extension features
@@ -788,7 +796,7 @@ bool FVulkanDevice::Initialize(const FVulkanDeviceCreateInfo& DeviceDesc)
         DeviceCreateHelper.AddNext(Robustness2Features);
     }
 #endif
-    
+
 #if VK_EXT_depth_clip_enable
     VkPhysicalDeviceDepthClipEnableFeaturesEXT DepthClipEnableFeatures;
     if (IsExtensionEnabled(VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME))
@@ -906,22 +914,20 @@ bool FVulkanDevice::PostLoaderInitalize()
         return false;
     }
 
-    // Initialize hardware support globals
+    // Ray Tracing Support
     VkPhysicalDevice PhysicalDeviceHandle = GetPhysicalDevice()->GetVkPhysicalDevice();
     if (IsExtensionEnabled(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME) && IsExtensionEnabled(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
     {
         VkPhysicalDeviceProperties2 DeviceProperties2;
         FMemory::Memzero(&DeviceProperties2);
-
-        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
         DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
         VkPhysicalDeviceRayTracingPipelinePropertiesKHR RayTracingPipelineProperties;
         FMemory::Memzero(&RayTracingPipelineProperties);
-
-        DevicePropertiesHelper.AddNext(RayTracingPipelineProperties);
         RayTracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
 
+        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
+        DevicePropertiesHelper.AddNext(RayTracingPipelineProperties);
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
         // Check if RayQueries are supported, then the Tier is kind of like Tier 1.1 (Inline RayTracing in DXR)
@@ -943,20 +949,19 @@ bool FVulkanDevice::PostLoaderInitalize()
 
     GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
 
+    // Variable Rate Shading Support
     if (IsExtensionEnabled(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME))
     {
         VkPhysicalDeviceProperties2 DeviceProperties2;
         FMemory::Memzero(&DeviceProperties2);
-
-        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
         DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
         VkPhysicalDeviceFragmentShadingRatePropertiesKHR FragmentShadingRateProperties;
         FMemory::Memzero(&FragmentShadingRateProperties);
-
-        DevicePropertiesHelper.AddNext(FragmentShadingRateProperties);
         FragmentShadingRateProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
 
+        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
+        DevicePropertiesHelper.AddNext(FragmentShadingRateProperties);
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
         // TODO: Finish this part
@@ -970,11 +975,35 @@ bool FVulkanDevice::PostLoaderInitalize()
 
     GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
 
-    // Update GeometryShader support
+    // GeometryShader Support 
     const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
     if (GVulkanAllowGeometryShaders && DeviceFeatures.geometryShader)
     {
         GRHISupportsGeometryShaders = true;
+    }
+
+    // View Instancing Support
+    if (IsExtensionEnabled(VK_KHR_MULTIVIEW_EXTENSION_NAME))
+    {
+        VkPhysicalDeviceProperties2 DeviceProperties2;
+        FMemory::Memzero(&DeviceProperties2);
+        DeviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+
+        VkPhysicalDeviceMultiviewPropertiesKHR MultiviewProperties;
+        FMemory::Memzero(&MultiviewProperties);
+        MultiviewProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES_KHR;
+
+        FVulkanStructureHelper DevicePropertiesHelper(DeviceProperties2);
+        DevicePropertiesHelper.AddNext(MultiviewProperties);
+        vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
+
+        GRHIMaxViewInstanceCount = MultiviewProperties.maxMultiviewViewCount;
+        GRHISupportsViewInstancing = true;
+    }
+    else
+    {
+        GRHIMaxViewInstanceCount = 0;
+        GRHISupportsViewInstancing = false;
     }
 
     return true;

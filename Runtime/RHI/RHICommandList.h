@@ -204,9 +204,9 @@ public:
         EmplaceCommand<FRHICommandClearUnorderedAccessViewFloat>(UnorderedAccessView, ClearColor);
     }
 
-    FORCEINLINE void BeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) noexcept
+    FORCEINLINE void BeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo) noexcept
     {
-        EmplaceCommand<FRHICommandBeginRenderPass>(RenderPassInitializer);
+        EmplaceCommand<FRHICommandBeginRenderPass>(BeginRenderPassInfo);
     }
 
     FORCEINLINE void EndRenderPass() noexcept

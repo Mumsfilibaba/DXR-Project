@@ -475,7 +475,7 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
     }
 }
 
-void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
+void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
     VkClearValue ClearValues[RHI_MAX_RENDER_TARGETS + 1];
     FMemory::Memzero(ClearValues, sizeof(ClearValues));
@@ -487,7 +487,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     VkRenderPass  RenderPass  = VK_NULL_HANDLE;
     VkFramebuffer FrameBuffer = VK_NULL_HANDLE;
 
-    if (RenderPassInitializer.DepthStencilView.Texture || RenderPassInitializer.NumRenderTargets)
+    if (BeginRenderPassInfo.DepthStencilView.Texture || BeginRenderPassInfo.NumRenderTargets)
     {
         // TODO: Verify that the samples are all the same
         uint8 NumSamples = 0;
@@ -496,14 +496,14 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         Width  = TNumericLimits<uint32>::Max();
         Height = TNumericLimits<uint32>::Max();
 
-        // Check for each render-target-texture
         FVulkanRenderPassKey RenderPassKey;
-        RenderPassKey.NumRenderTargets = RenderPassInitializer.NumRenderTargets;
-    
         FVulkanFramebufferKey FramebufferKey;
-        for (uint32 Index = 0; Index < RenderPassInitializer.NumRenderTargets; Index++)
+        RenderPassKey.NumRenderTargets = BeginRenderPassInfo.NumRenderTargets;
+    
+        // RenderTargetViews
+        for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; Index++)
         {
-            const FRHIRenderTargetView& RenderTargetView = RenderPassInitializer.RenderTargets[Index];
+            const FRHIRenderTargetView& RenderTargetView = BeginRenderPassInfo.RenderTargets[Index];
             if (FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderTargetView.Texture))
             {
                 Width      = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
@@ -535,15 +535,15 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
                 CHECK(RenderTargetView.Texture == nullptr);
             }
         }
-    
-        // Check for depth-texture
-        if (FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderPassInitializer.DepthStencilView.Texture))
+
+        // DepthStencilView
+        const FRHIDepthStencilView& DepthStencilView = BeginRenderPassInfo.DepthStencilView;
+        if (FVulkanTexture* VulkanTexture = GetVulkanTexture(DepthStencilView.Texture))
         {
             Width      = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
             Height     = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
             NumSamples = FMath::Max<uint8>(static_cast<uint8>(VulkanTexture->GetNumSamples()), NumSamples);
 
-            const FRHIDepthStencilView& DepthStencilView = RenderPassInitializer.DepthStencilView;
             RenderPassKey.DepthStencilFormat              = DepthStencilView.Format;
             RenderPassKey.DepthStencilActions.LoadAction  = DepthStencilView.LoadAction;
             RenderPassKey.DepthStencilActions.StoreAction = DepthStencilView.StoreAction;
@@ -567,12 +567,19 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
         }
         else
         {
-            CHECK(RenderPassInitializer.DepthStencilView.Texture == nullptr);
+            CHECK(BeginRenderPassInfo.DepthStencilView.Texture == nullptr);
+        }
+
+        // Setup the number of samples in the DepthStencil/RenderTarget
+        RenderPassKey.NumSamples = NumSamples;
+
+        // Setup ViewInstancing
+        if (BeginRenderPassInfo.ViewInstancingInfo.NumArraySlices > 0)
+        {
+            RenderPassKey.ViewInstancingInfo = BeginRenderPassInfo.ViewInstancingInfo;
         }
 
         // Retrieve or create a RenderPass
-        RenderPassKey.NumSamples = NumSamples;
-
         RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
         if (!VULKAN_CHECK_HANDLE(RenderPass))
         {
@@ -611,6 +618,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderP
     RenderPassBeginInfo.pClearValues             = ClearValues;
 
     GetCommandBuffer()->BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    ContextState.SetViewInstanceInfo(BeginRenderPassInfo.ViewInstancingInfo);
 }
 
 void FVulkanCommandContext::RHIEndRenderPass()  

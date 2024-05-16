@@ -187,7 +187,6 @@ public:
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12Shader*>(this)); }
 };
 
-
 class FD3D12RayTracingShader : public FD3D12Shader
 {
 public:
@@ -207,7 +206,6 @@ protected:
     FString Identifier;
 };
 
-
 class FD3D12RayGenShader : public FRHIRayGenShader, public FD3D12RayTracingShader
 {
 public:
@@ -220,7 +218,6 @@ public:
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
-
 
 class FD3D12RayAnyHitShader : public FRHIRayAnyHitShader, public FD3D12RayTracingShader
 {
@@ -235,7 +232,6 @@ public:
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
-
 class FD3D12RayClosestHitShader : public FRHIRayClosestHitShader, public FD3D12RayTracingShader
 {
 public:
@@ -249,7 +245,6 @@ public:
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
 
-
 class FD3D12RayMissShader : public FRHIRayMissShader, public FD3D12RayTracingShader
 {
 public:
@@ -262,7 +257,6 @@ public:
     virtual void* GetRHIBaseResource() override final { return reinterpret_cast<void*>(&ByteCode); }
     virtual void* GetRHIBaseShader() override final { return reinterpret_cast<void*>(static_cast<FD3D12RayTracingShader*>(this)); }
 };
-
 
 class FD3D12ComputeShader : public FRHIComputeShader, public FD3D12Shader
 {

@@ -128,7 +128,7 @@ void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    FRHIRenderPassDesc RenderPass;
+    FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(FrameResources.BackBuffer, EAttachmentLoadAction::Load);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -327,7 +327,7 @@ void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& Fra
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    FRHIRenderPassDesc RenderPass;
+    FRHIBeginRenderPassInfo RenderPass;
     RenderPass.NumRenderTargets            = 1;
     RenderPass.RenderTargets[0]            = FRHIRenderTargetView(FrameResources.BackBuffer, EAttachmentLoadAction::Clear);
     RenderPass.RenderTargets[0].ClearValue = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f);

@@ -74,6 +74,7 @@ public:
     void ResetState();
     void ResetStateForNewCommandBuffer();
 
+    void SetViewInstanceInfo(const FViewInstancingInfo& InViewInstancingInfo);
     void SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState);
     void SetComputePipelineState(FVulkanComputePipelineState* InComputePipelineState);
     void SetViewports(VkViewport* Viewports, uint32 NumViewports);
@@ -86,14 +87,12 @@ public:
     void SetUAV(FVulkanUnorderedAccessView* UnorderedAccessView, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetUniformBuffer(FVulkanBuffer* UniformBuffer, EShaderVisibility ShaderStage, uint32 ResourceIndex);
     void SetSampler(FVulkanSamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
-    
-public:
+
     FORCEINLINE FVulkanCommandContext& GetContext()
     {
         return Context;
     }
 
-public:
     FORCEINLINE FVulkanGraphicsPipelineState* GetGraphicsPipelineState() const
     {
         return GraphicsState.PipelineState.Get();
@@ -138,6 +137,7 @@ private:
         FGraphicsState()
             : CurrentLayout(nullptr)
             , PipelineState(nullptr)
+            , ViewInstancingInfo()
             , DescriptorStates()
             , CurrentDescriptorState(nullptr)
             , NumViewports(0)
@@ -152,6 +152,7 @@ private:
 
         FVulkanPipelineLayout* CurrentLayout;
         FVulkanGraphicsPipelineStateRef PipelineState;
+        FViewInstancingInfo ViewInstancingInfo;
 
         TMap<FVulkanGraphicsPipelineState*, FVulkanDescriptorState*> DescriptorStates;
         FVulkanDescriptorState* CurrentDescriptorState;

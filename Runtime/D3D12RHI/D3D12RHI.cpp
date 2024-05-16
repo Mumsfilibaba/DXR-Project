@@ -238,8 +238,30 @@ bool FD3D12RHI::Initialize()
         GRHIShadingRateImageTileSize = 0;
     }
 
-    // NOTE: Seems to always be supported in D3D12
+    // GeometryShaders support
     GRHISupportsGeometryShaders = true;
+
+    // View-Instancing
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3;
+        FMemory::Memzero(&Features3);
+
+        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
+        if (SUCCEEDED(Result))
+        {
+            if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
+            {
+                GRHISupportsViewInstancing = true;
+                GRHIMaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
+            }
+        }
+        else
+        {
+            GRHISupportsViewInstancing = false;
+            GRHIMaxViewInstanceCount = 0;
+        }
+    }
+
     return true;
 }
 

@@ -127,6 +127,13 @@ public:
     {
         FVulkanPipeline::SetDebugName(InName);
     }
+
+    FORCEINLINE const FViewInstancingInfo& GetViewInstancingInfo() const
+    {
+        return ViewInstancingInfo;
+    }
+private:
+    FViewInstancingInfo ViewInstancingInfo;
 };
 
 class FVulkanComputePipelineState : public FRHIComputePipelineState, public FVulkanPipeline

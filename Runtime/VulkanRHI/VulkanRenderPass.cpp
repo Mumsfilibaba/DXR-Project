@@ -13,7 +13,6 @@ static void DestroyFramebuffer(VkDevice Device, VkFramebuffer Framebuffer)
     }
 }
 
-
 FVulkanRenderPassCache::FVulkanRenderPassCache(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , RenderPasses()
@@ -134,12 +133,40 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     // Create RenderPass
     VkRenderPassCreateInfo RenderPassCreateInfo;
     FMemory::Memzero(&RenderPassCreateInfo);
-    
+
     RenderPassCreateInfo.sType           = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     RenderPassCreateInfo.attachmentCount = Attachments.Size();
     RenderPassCreateInfo.pAttachments    = Attachments.Data();
     RenderPassCreateInfo.subpassCount    = 1;
     RenderPassCreateInfo.pSubpasses      = &Subpass;
+
+    uint32 ViewMask;
+    uint32 CorrelationMask;
+
+    VkRenderPassMultiviewCreateInfo MultiviewCreateInfo;
+    if (GVulkanSupportsMultiviews && Key.ViewInstancingInfo.NumArraySlices > 0)
+    {
+        ViewMask        = 0;
+        CorrelationMask = 0;
+
+        // Limit to the number of bits in a uint32
+        const uint32 NumViews = FMath::Min<uint32>(Key.ViewInstancingInfo.NumArraySlices, 32);
+        for (int32 Index = 0; Index < NumViews; Index++)
+        {
+            const uint32 BitIndex = FMath::Min<uint32>(Key.ViewInstancingInfo.StartRenderTargetArrayIndex + Index, 32);
+            ViewMask |= 1 << BitIndex;
+        }
+
+        FMemory::Memzero(&MultiviewCreateInfo);
+        MultiviewCreateInfo.sType                = VK_STRUCTURE_TYPE_RENDER_PASS_MULTIVIEW_CREATE_INFO;
+        MultiviewCreateInfo.subpassCount         = 1;
+        MultiviewCreateInfo.pViewMasks           = &ViewMask;
+        MultiviewCreateInfo.correlationMaskCount = 1;
+        MultiviewCreateInfo.pCorrelationMasks    = &CorrelationMask;
+
+        FVulkanStructureHelper RenderPassCreateHelper(RenderPassCreateInfo);
+        RenderPassCreateHelper.AddNext(MultiviewCreateInfo);
+    }
 
     VkRenderPass RenderPass = VK_NULL_HANDLE;
     VkResult Result = vkCreateRenderPass(GetDevice()->GetVkDevice(), &RenderPassCreateInfo, nullptr, &RenderPass);
@@ -169,7 +196,7 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
     //Create new Framebuffer
     VkFramebufferCreateInfo FramebufferCreateInfo;
     FMemory::Memzero(&FramebufferCreateInfo);
-    
+
     FramebufferCreateInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     FramebufferCreateInfo.renderPass      = FrameBufferKey.RenderPass;
     FramebufferCreateInfo.attachmentCount = FrameBufferKey.NumAttachmentViews;
@@ -196,10 +223,10 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
 void FVulkanRenderPassCache::OnReleaseImageView(VkImageView View)
 {
     SCOPED_LOCK(FramebuffersCS);
-    
+
     // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
-    
+
     // Find all Framebuffers containing this RenderPass
     for (const FVulkanFramebufferKey& Key : Keys)
     {
@@ -222,7 +249,7 @@ void FVulkanRenderPassCache::OnReleaseRenderPass(VkRenderPass RenderPass)
 
     // TODO: Iterate with an iterator instead
     TArray<FVulkanFramebufferKey> Keys = Framebuffers.GetKeys();
-    
+
     // Find all Framebuffers containing this RenderPass
     for (const FVulkanFramebufferKey& Key : Keys)
     {

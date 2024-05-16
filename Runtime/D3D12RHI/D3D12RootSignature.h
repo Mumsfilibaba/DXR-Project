@@ -29,7 +29,7 @@ struct FD3D12RootSignatureLayout
 
     FShaderResourceCount ResourceCounts[ShaderVisibility_Count];
     ERootSignatureType   Type;
-    bool bAllowInputAssembler;
+    bool                 bAllowInputAssembler;
 };
 
 class FD3D12RootSignatureDescHelper

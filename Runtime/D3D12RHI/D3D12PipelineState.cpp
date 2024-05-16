@@ -2,7 +2,6 @@
 #include "D3D12RHIShaderCompiler.h"
 #include "D3D12Device.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/CRC.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Project/ProjectManager.h"
 
@@ -10,7 +9,6 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "D3D12RHI.PipelineCacheFileName",
     "FileName for the file storing the PipelineCache",
     "PipelineCache.d3d12psocache");
-
 
 FD3D12VertexInputLayout::FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
     : FRHIVertexInputLayout()
@@ -385,6 +383,28 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         PipelineStream.RootSignature = RootSignature->GetD3D12RootSignature();
     }
 
+    // View Instancing
+    FD3D12HashableViewInstanceDesc ViewInstanceDesc;
+    PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
+
+    if (Initializer.ViewInstancingInfo.NumArraySlices > 0)
+    {
+        ViewInstanceDesc.ViewInstanceCount = FMath::Min<uint32>(Initializer.ViewInstancingInfo.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
+        for (int32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
+        {
+            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Initializer.ViewInstancingInfo.StartRenderTargetArrayIndex + Index;
+            ViewInstanceDesc.ViewInstanceLocations[Index].ViewportArrayIndex = 0;
+        }
+
+        PipelineStream.ViewInstancingDesc.pViewInstanceLocations = ViewInstanceDesc.ViewInstanceLocations;
+        PipelineStream.ViewInstancingDesc.ViewInstanceCount = ViewInstanceDesc.ViewInstanceCount;
+    }
+    else
+    {
+        PipelineStream.ViewInstancingDesc.pViewInstanceLocations = nullptr;
+        PipelineStream.ViewInstancingDesc.ViewInstanceCount = 0;
+    }
+
     // Create pipeline-state
     D3D12_PIPELINE_STATE_STREAM_DESC PipelineStreamDesc;
     FMemory::Memzero(&PipelineStreamDesc);
@@ -402,6 +422,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
         PipelineKey.IndexBufferStripCutValue = PipelineStream.IndexBufferStripCutValue;
         PipelineKey.DepthBufferFormat        = PipelineStream.DepthBufferFormat;
         PipelineKey.RenderTargetInfo         = PipelineStream.RenderTargetInfo;
+        PipelineKey.ViewInstancingHash       = ViewInstanceDesc.GenerateHash();
         PipelineKey.InputLayoutHash          = D3D12InputLayoutState ? D3D12InputLayoutState->GetHash() : 0;
         PipelineKey.RasterizerHash           = D3D12RasterizerState->GetHash();
         PipelineKey.DepthStencilHash         = D3D12DepthStencilState->GetHash();

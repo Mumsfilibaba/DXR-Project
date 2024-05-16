@@ -39,6 +39,7 @@ void FVulkanCommandContextState::BindGraphicsStates()
         return;
     }
 
+    CHECK(GraphicsState.ViewInstancingInfo == GraphicsState.PipelineState->GetViewInstancingInfo());
     FVulkanPipelineLayout* PipelineLayout = GraphicsState.PipelineState->GetPipelineLayout();
     CHECK(PipelineLayout != nullptr);
 
@@ -175,6 +176,11 @@ void FVulkanCommandContextState::ResetStateForNewCommandBuffer()
 
     ComputeState.bBindPipelineState = true;
     ComputeState.bBindPushConstants = true;
+}
+
+void FVulkanCommandContextState::SetViewInstanceInfo(const FViewInstancingInfo& InViewInstancingInfo)
+{
+    GraphicsState.ViewInstancingInfo = InViewInstancingInfo;
 }
 
 void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelineState* InGraphicsPipelineState)

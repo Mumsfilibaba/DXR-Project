@@ -752,6 +752,28 @@ struct FGraphicsPipelineShaders
     FRHIPixelShader*    PixelShader;
 };
 
+struct FViewInstancingInfo
+{
+    FViewInstancingInfo()
+        : StartRenderTargetArrayIndex(0)
+        , NumArraySlices(0)
+    {
+    }
+
+    bool operator==(const FViewInstancingInfo& Other) const 
+    {
+        return StartRenderTargetArrayIndex == Other.StartRenderTargetArrayIndex && NumArraySlices == Other.NumArraySlices;
+    }
+
+    bool operator!=(const FViewInstancingInfo& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    uint8 StartRenderTargetArrayIndex;
+    uint8 NumArraySlices;
+};
+
 struct FRHIGraphicsPipelineStateInitializer
 {
     inline static constexpr uint32 DefaultSampleMask = 0xffffffff;
@@ -766,6 +788,7 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleMask(DefaultSampleMask)
         , PrimitiveTopology(EPrimitiveTopology::TriangleList)
         , bPrimitiveRestartEnable(false)
+        , ViewInstancingInfo()
         , ShaderState()
         , PipelineFormats()
     {
@@ -792,6 +815,7 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleMask(InSampleMask)
         , PrimitiveTopology(InPrimitiveTopology)
         , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
+        , ViewInstancingInfo()
         , ShaderState(InShaderState)
         , PipelineFormats(InPipelineFormats)
     {
@@ -808,6 +832,7 @@ struct FRHIGraphicsPipelineStateInitializer
             && SampleMask              == Other.SampleMask
             && bPrimitiveRestartEnable == Other.bPrimitiveRestartEnable
             && PrimitiveTopology       == Other.PrimitiveTopology
+            && ViewInstancingInfo      == Other.ViewInstancingInfo
             && ShaderState             == Other.ShaderState
             && PipelineFormats         == Other.PipelineFormats;
     }
@@ -836,8 +861,11 @@ struct FRHIGraphicsPipelineStateInitializer
     EPrimitiveTopology       PrimitiveTopology;
     bool                     bPrimitiveRestartEnable;
 
+    FViewInstancingInfo      ViewInstancingInfo;
     FGraphicsPipelineShaders ShaderState;
     FGraphicsPipelineFormats PipelineFormats;
+
+
 };
 
 class FRHIGraphicsPipelineState : public FRHIPipelineState

@@ -559,7 +559,7 @@ constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
     }
 }
 
-enum class EShadingRate
+enum class EShadingRate : uint8
 {
     VRS_1x1 = 0x0,
     VRS_1x2 = 0x1,

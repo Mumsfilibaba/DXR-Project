@@ -182,17 +182,17 @@ DECLARE_RHICOMMAND(FRHICommandClearUnorderedAccessViewFloat)
 
 DECLARE_RHICOMMAND(FRHICommandBeginRenderPass)
 {
-    FRHICommandBeginRenderPass(const FRHIRenderPassDesc& InRenderPassDesc)
-        : RenderPassDesc(InRenderPassDesc)
+    FRHICommandBeginRenderPass(const FRHIBeginRenderPassInfo& InBeginRenderPassInfo)
+        : BeginRenderPassInfo(InBeginRenderPassInfo)
     {
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.RHIBeginRenderPass(RenderPassDesc);
+        CommandContext.RHIBeginRenderPass(BeginRenderPassInfo);
     }
 
-    FRHIRenderPassDesc RenderPassDesc;
+    FRHIBeginRenderPassInfo BeginRenderPassInfo;
 };
 
 DECLARE_RHICOMMAND(FRHICommandEndRenderPass)

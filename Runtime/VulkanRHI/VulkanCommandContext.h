@@ -60,7 +60,7 @@ public:
     virtual void RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor) override final;
     virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil) override final;
     virtual void RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) override final;
-    virtual void RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer) override final;
+    virtual void RHIBeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo) override final;
     virtual void RHIEndRenderPass() override final;
     virtual void RHISetViewport(const FViewportRegion& ViewportRegion) override final;
     virtual void RHISetScissorRect(const FScissorRegion& ScissorRegion) override final;

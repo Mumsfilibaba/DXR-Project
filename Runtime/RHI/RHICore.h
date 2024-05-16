@@ -58,3 +58,7 @@ extern RHI_API uint32           GRHIShadingRateImageTileSize;
 
 // Geometry Shading Support
 extern RHI_API bool GRHISupportsGeometryShaders;
+
+// View-Instancing
+extern RHI_API bool   GRHISupportsViewInstancing;
+extern RHI_API uint32 GRHIMaxViewInstanceCount;

@@ -384,7 +384,7 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
     PrepareDrawData(CmdList, DrawData);
 
     // Render to the main back buffer (Which we should just load)
-    FRHIRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(RHIViewport->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
+    FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHIViewport->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
     CmdList.BeginRenderPass(RenderPassDesc);
 
     // Draw the ImGui data
@@ -422,7 +422,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawDa
     PrepareDrawData(CmdList, DrawData);
 
     // Begin renderpass (All transfers has to be done before starting the renderpass)
-    FRHIRenderPassDesc RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
+    FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
     CmdList.BeginRenderPass(RenderPassDesc);
 
     // Draw the data

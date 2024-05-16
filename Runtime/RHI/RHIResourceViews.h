@@ -1,5 +1,6 @@
 #pragma once
 #include "RHIResource.h"
+#include "RHIPipelineState.h"
 #include "Core/Containers/StaticArray.h"
 
 enum class EBufferSRVFormat : uint32
@@ -495,29 +496,31 @@ struct FRHIDepthStencilView
     EAttachmentStoreAction StoreAction;
 };
 
-struct FRHIRenderPassDesc
+struct FRHIBeginRenderPassInfo
 {
     typedef TStaticArray<FRHIRenderTargetView, RHI_MAX_RENDER_TARGETS> FRenderTargetViews;
 
-    FRHIRenderPassDesc()
+    FRHIBeginRenderPassInfo()
         : ShadingRateTexture(nullptr)
         , DepthStencilView()
         , StaticShadingRate(EShadingRate::VRS_1x1)
         , NumRenderTargets(0)
         , RenderTargets()
+        , ViewInstancingInfo()
     {
     }
 
-    FRHIRenderPassDesc(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets)
+    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets)
         : ShadingRateTexture(nullptr)
         , DepthStencilView()
-        , StaticShadingRate(EShadingRate::VRS_1x1)
-        , NumRenderTargets(InNumRenderTargets)
         , RenderTargets(InRenderTargets)
+        , NumRenderTargets(InNumRenderTargets)
+        , StaticShadingRate(EShadingRate::VRS_1x1)
+        , ViewInstancingInfo()
     {
     }
 
-    FRHIRenderPassDesc(
+    FRHIBeginRenderPassInfo(
         const FRenderTargetViews& InRenderTargets,
         uint32                    InNumRenderTargets,
         FRHIDepthStencilView      InDepthStencilView,
@@ -525,29 +528,32 @@ struct FRHIRenderPassDesc
         EShadingRate              InStaticShadingRate  = EShadingRate::VRS_1x1)
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
-        , StaticShadingRate(InStaticShadingRate)
-        , NumRenderTargets(InNumRenderTargets)
         , RenderTargets(InRenderTargets)
+        , NumRenderTargets(InNumRenderTargets)
+        , StaticShadingRate(InStaticShadingRate)
+        , ViewInstancingInfo()
     {
     }
 
-    bool operator==(const FRHIRenderPassDesc& Other) const
+    bool operator==(const FRHIBeginRenderPassInfo& Other) const
     {
-        return NumRenderTargets   == Other.NumRenderTargets
-            && RenderTargets      == Other.RenderTargets
+        return ShadingRateTexture == Other.ShadingRateTexture
             && DepthStencilView   == Other.DepthStencilView
-            && ShadingRateTexture == Other.ShadingRateTexture
-            && StaticShadingRate  == Other.StaticShadingRate;
+            && RenderTargets      == Other.RenderTargets
+            && NumRenderTargets   == Other.NumRenderTargets
+            && StaticShadingRate  == Other.StaticShadingRate
+            && ViewInstancingInfo == Other.ViewInstancingInfo;
     }
 
-    bool operator!=(const FRHIRenderPassDesc& Other) const
+    bool operator!=(const FRHIBeginRenderPassInfo& Other) const
     {
         return !(*this == Other);
     }
 
     FRHITexture*         ShadingRateTexture;
     FRHIDepthStencilView DepthStencilView;
-    EShadingRate         StaticShadingRate;
-    uint32               NumRenderTargets;
     FRenderTargetViews   RenderTargets;
+    uint32               NumRenderTargets;
+    EShadingRate         StaticShadingRate;
+    FViewInstancingInfo  ViewInstancingInfo;
 };

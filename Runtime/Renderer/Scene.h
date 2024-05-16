@@ -49,6 +49,8 @@ struct FScenePointLight
     FShadowData                   ShadowData[RHI_NUM_CUBE_FACES];
     TArray<FMeshBatch>            SinglePassMeshBatch;
     TArray<FProxySceneComponent*> SinglePassPrimitives;
+    TArray<FMeshBatch>            TwoPassMeshBatches[2];
+    TArray<FProxySceneComponent*> TwoPassPrimitives[2];
 };
 
 struct FSceneDirectionalLight

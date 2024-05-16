@@ -401,7 +401,7 @@ bool FSandbox::Init()
 
     // Add PointLights
 #if LOAD_SPONZA
-    const float Intensity      = 100.0f;
+    const float Intensity = 100.0f;
     const float ShadowFarPlane = 40.0f;
     if (FPointLight* Light0 = NewObject<FPointLight>())
     {
@@ -427,7 +427,7 @@ bool FSandbox::Init()
     }
     if (FPointLight* Light2 = NewObject<FPointLight>())
     {
-        Light2->SetPosition(FVector3(16.5f, 10.0f, 0.0f));
+        Light2->SetPosition(FVector3(17.0f, 10.0f, 6.0f));
         Light2->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light2->SetShadowBias(0.001f);
         Light2->SetMaxShadowBias(0.009f);
@@ -438,7 +438,7 @@ bool FSandbox::Init()
     }
     if (FPointLight* Light3 = NewObject<FPointLight>())
     {
-        Light3->SetPosition(FVector3(-16.5f, 10.0f, 0.0f));
+        Light3->SetPosition(FVector3(-18.0f, 10.0f, 6.0f));
         Light3->SetColor(FVector3(1.0f, 1.0f, 1.0f));
         Light3->SetShadowBias(0.001f);
         Light3->SetMaxShadowBias(0.009f);
@@ -446,6 +446,28 @@ bool FSandbox::Init()
         Light3->SetIntensity(Intensity);
         Light3->SetShadowCaster(true);
         CurrentWorld->AddLight(Light3);
+    }
+    if (FPointLight* Light4 = NewObject<FPointLight>())
+    {
+        Light4->SetPosition(FVector3(17.0f, 10.0f, -7.0f));
+        Light4->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        Light4->SetShadowBias(0.001f);
+        Light4->SetMaxShadowBias(0.009f);
+        Light4->SetShadowFarPlane(ShadowFarPlane);
+        Light4->SetIntensity(Intensity);
+        Light4->SetShadowCaster(true);
+        CurrentWorld->AddLight(Light4);
+    }
+    if (FPointLight* Light5 = NewObject<FPointLight>())
+    {
+        Light5->SetPosition(FVector3(-18.0f, 10.0f, -7.0f));
+        Light5->SetColor(FVector3(1.0f, 1.0f, 1.0f));
+        Light5->SetShadowBias(0.001f);
+        Light5->SetMaxShadowBias(0.009f);
+        Light5->SetShadowFarPlane(ShadowFarPlane);
+        Light5->SetIntensity(Intensity);
+        Light5->SetShadowCaster(true);
+        CurrentWorld->AddLight(Light5);
     }
 #endif
 

@@ -24,11 +24,24 @@ static TAutoConsoleVariable<bool> CVarCSMEnableGeometryShaderInstancing(
     true,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<bool> CVarCSMEnableViewInstancing(
+    "Renderer.CSM.EnableViewInstancing",
+    "Enables view-instancing for Cascade rendering, enabling single-pass cascade drawing, which creates less overhead on the CPU",
+    true,
+    EConsoleVariableFlags::Default);
+
 static TAutoConsoleVariable<bool> CVarPointLightsEnableGeometryShaderInstancing(
     "Renderer.PointLights.EnableGeometryShaderInstancing",
     "Enables instancing in a geometry shader, enabling single-pass cube-map drawing, which creates less overhead on the CPU",
     true,
     EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarPointLightsEnableViewInstancing(
+    "Renderer.PointLights.EnableViewInstancing",
+    "Enables view-instancing for cube-map rendering, enabling two-pass cube-map drawing, which creates less overhead on the CPU",
+    true,
+    EConsoleVariableFlags::Default);
+
 
 FPointLightRenderPass::FPointLightRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -68,10 +81,23 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
         else
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
 
-        if (GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue())
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(1)");
-        else
+        const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
+        const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
+        if (bUseViewInstancing)
+        {
+            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VIEW_INSTANCING", "(1)");
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
+        }
+        else if (bUseGeometryShaders)
+        {
+            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VIEW_INSTANCING", "(0)");
+            ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(1)");
+        }
+        else
+        {
+            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VIEW_INSTANCING", "(0)");
+            ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
+        }
 
         FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
@@ -88,7 +114,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
             return;
         }
 
-        if (GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue())
+        if (bUseGeometryShaders)
         {
             CompileInfo = FShaderCompileInfo("Point_GSMain", EShaderModel::SM_6_2, EShaderStage::Geometry, ShaderDefines);
             if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
@@ -196,7 +222,12 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
         PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
         PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.ShadowMapFormat;
 
-        if (GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue())
+        if (bUseViewInstancing)
+        {
+            PSOInitializer.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
+            PSOInitializer.ViewInstancingInfo.NumArraySlices = RHI_NUM_CUBE_FACES / 2;
+        }
+        else if (bUseGeometryShaders)
         {
             PSOInitializer.ShaderState.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
@@ -243,6 +274,18 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
         SinglePassShadowMapBuffer->SetDebugName("Single-Pass ShadowMap Buffer");
     }
 
+    FRHIBufferInfo TwoPassShadowMapBufferInfo(sizeof(FTwoPassPointLightBufferHLSL), sizeof(FTwoPassPointLightBufferHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
+    TwoPassShadowMapBuffer = RHICreateBuffer(TwoPassShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    if (!TwoPassShadowMapBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        TwoPassShadowMapBuffer->SetDebugName("Two-Pass ShadowMap Buffer");
+    }
+
     return CreateResources(Resources);
 }
 
@@ -251,6 +294,7 @@ void FPointLightRenderPass::Release()
     MaterialPSOs.Clear();
     PerShadowMapBuffer.Reset();
     SinglePassShadowMapBuffer.Reset();
+    TwoPassShadowMapBuffer.Reset();
 }
 
 bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
@@ -288,7 +332,102 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         FMatrix4 Matrix;
     } ShadowPerObjectBuffer;
 
-    if (GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue())
+    const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
+    const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
+    if (bUseViewInstancing)
+    {
+        FTwoPassPointLightBufferHLSL TwoPassPointLightBuffer;
+        for (int32 LightIndex = 0; LightIndex < Scene->PointLights.Size(); ++LightIndex)
+        {
+            FScenePointLight* ScenePointLight = Scene->PointLights[LightIndex];
+
+            constexpr uint32 FacesPerPass = RHI_NUM_CUBE_FACES / 2;
+            for (int32 PassIndex = 0, FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex += FacesPerPass, PassIndex++)
+            {
+                FScenePointLight::FShadowData& Data0 = ScenePointLight->ShadowData[FaceIndex + 0];
+                TwoPassPointLightBuffer.LightProjections[0] = Data0.Matrix;
+
+                FScenePointLight::FShadowData& Data1 = ScenePointLight->ShadowData[FaceIndex + 1];
+                TwoPassPointLightBuffer.LightProjections[1] = Data1.Matrix;
+                
+                FScenePointLight::FShadowData& Data2 = ScenePointLight->ShadowData[FaceIndex + 2];
+                TwoPassPointLightBuffer.LightProjections[2] = Data2.Matrix;
+                TwoPassPointLightBuffer.LightPosition       = Data0.Position;
+                TwoPassPointLightBuffer.LightFarPlane       = Data0.FarPlane;
+
+                CommandList.TransitionBuffer(TwoPassShadowMapBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+                CommandList.UpdateBuffer(TwoPassShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FTwoPassPointLightBufferHLSL)), &TwoPassPointLightBuffer);
+                CommandList.TransitionBuffer(TwoPassShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+
+                FRHIBeginRenderPassInfo RenderPass;
+                RenderPass.DepthStencilView                               = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
+                RenderPass.DepthStencilView.ArrayIndex                    = LightIndex * RHI_NUM_CUBE_FACES + FaceIndex;
+                RenderPass.DepthStencilView.NumArraySlices                = FacesPerPass;
+                RenderPass.DepthStencilView.LoadAction                    = EAttachmentLoadAction::Clear;
+                RenderPass.DepthStencilView.ClearValue                    = FDepthStencilValue(1.0f, 0);
+                RenderPass.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
+                RenderPass.ViewInstancingInfo.NumArraySlices              = FacesPerPass;
+
+                CommandList.BeginRenderPass(RenderPass);
+
+                const uint32 PointLightShadowSize = Resources.PointLightShadowSize;
+                FViewportRegion ViewportRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 0.0f, 0.0f, 1.0f);
+                CommandList.SetViewport(ViewportRegion);
+
+                FScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
+                CommandList.SetScissorRect(ScissorRegion);
+
+                for (const FMeshBatch& Batch : ScenePointLight->TwoPassMeshBatches[PassIndex])
+                {
+                    FMaterial* Material = Batch.Material;
+                    FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                    if (!Instance)
+                    {
+                        DEBUG_BREAK();
+                    }
+
+                    FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
+                    CHECK(PipelineState  != nullptr);
+                    CommandList.SetGraphicsPipelineState(PipelineState);
+
+                    if (Material->HasAlphaMask())
+                    {
+                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                    }
+                    if (Material->HasHeightMap())
+                    {
+                        CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                    }
+
+                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
+                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
+
+                    for (FProxySceneComponent* Component : Batch.Primitives)
+                    {
+                        if (Material->HasHeightMap() || Material->HasAlphaMask())
+                        {
+                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                        }
+                        else
+                        {
+                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                        }
+
+                        CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
+
+                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
+                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+
+                        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                    }
+                }
+
+                CommandList.EndRenderPass();
+            }
+        }
+    }
+    else if (bUseGeometryShaders)
     {
         FSinglePassPointLightBufferHLSL SinglePassPointLightBuffer;
         for (int32 LightIndex = 0; LightIndex < Scene->PointLights.Size(); ++LightIndex)
@@ -306,7 +445,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             CommandList.UpdateBuffer(SinglePassShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FSinglePassPointLightBufferHLSL)), &SinglePassPointLightBuffer);
             CommandList.TransitionBuffer(SinglePassShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-            FRHIRenderPassDesc RenderPass;
+            FRHIBeginRenderPassInfo RenderPass;
             RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
             RenderPass.DepthStencilView.ArrayIndex     = LightIndex * RHI_NUM_CUBE_FACES;
             RenderPass.DepthStencilView.NumArraySlices = RHI_NUM_CUBE_FACES;
@@ -390,7 +529,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 CommandList.TransitionBuffer(PerShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
                 const uint32 ArrayIndex = (LightIndex * RHI_NUM_CUBE_FACES) + FaceIndex;
-                FRHIRenderPassDesc RenderPass;
+                FRHIBeginRenderPassInfo RenderPass;
                 RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get(), uint16(ArrayIndex), 0);
                 RenderPass.DepthStencilView.LoadAction = EAttachmentLoadAction::Clear;
                 RenderPass.DepthStencilView.ClearValue = FDepthStencilValue(1.0f, 0);
@@ -460,7 +599,6 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render PointLight ShadowMaps");
 }
-
 
 FCascadeGenerationPass::FCascadeGenerationPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -595,7 +733,6 @@ void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResourc
     CommandList.TransitionBuffer(Resources.CascadeSplitsBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
 }
 
-
 FCascadedShadowsRenderPass::FCascadedShadowsRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , MaterialPSOs()
@@ -634,10 +771,23 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
         else
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
 
-        if (GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue())
-            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(1)");
-        else
+        const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarCSMEnableViewInstancing.GetValue();
+        const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
+        if (bUseViewInstancing)
+        {
+            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(1)");
             ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
+        }
+        else if (bUseGeometryShaders)
+        {
+            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
+            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(1)");
+        }
+        else
+        {
+            ShaderDefines.Emplace("ENABLE_CASCADE_VIEW_INSTANCING", "(0)");
+            ShaderDefines.Emplace("ENABLE_CASCADE_GS_INSTANCING", "(0)");
+        }
 
         FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
         if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
@@ -654,7 +804,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             return;
         }
 
-        if (GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue())
+        if (bUseGeometryShaders)
         {
             CompileInfo = FShaderCompileInfo("Cascade_GSMain", EShaderModel::SM_6_2, EShaderStage::Geometry, ShaderDefines);
             if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
@@ -764,13 +914,19 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
         PSOInitializer.SampleMask               = FRHIGraphicsPipelineStateInitializer::DefaultSampleMask;
         PSOInitializer.ShaderState.VertexShader = NewPipelineStateInstance.VertexShader.Get();
         PSOInitializer.ShaderState.PixelShader  = NewPipelineStateInstance.PixelShader.Get();
-        if (GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue())
+
+        if (bUseViewInstancing)
+        {
+            PSOInitializer.ViewInstancingInfo.NumArraySlices = NUM_SHADOW_CASCADES;
+            PSOInitializer.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
+        }
+        else if (bUseGeometryShaders)
         {
             PSOInitializer.ShaderState.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
 
-        PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
         PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.ShadowMapFormat;
+        PSOInitializer.PipelineFormats.NumRenderTargets = 0;
 
         NewPipelineStateInstance.PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
         if (!NewPipelineStateInstance.PipelineState)
@@ -849,9 +1005,78 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
     if (Scene->DirectionalLight)
     {
-        if (GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue())
+        const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarCSMEnableViewInstancing.GetValue();
+        const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
+        if (bUseViewInstancing)
         {
-            FRHIRenderPassDesc RenderPass;
+            FRHIBeginRenderPassInfo RenderPass;
+            RenderPass.DepthStencilView                               = FRHIDepthStencilView(Resources.ShadowMapCascades.Get());
+            RenderPass.DepthStencilView.ArrayIndex                    = 0;
+            RenderPass.DepthStencilView.NumArraySlices                = NUM_SHADOW_CASCADES;
+            RenderPass.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
+            RenderPass.ViewInstancingInfo.NumArraySlices              = NUM_SHADOW_CASCADES;
+
+            CommandList.BeginRenderPass(RenderPass);
+
+            const float CascadeSize = static_cast<float>(Resources.CascadeSize);
+            FViewportRegion ViewportRegion(CascadeSize, CascadeSize, 0.0f, 0.0f, 0.0f, 1.0f);
+            CommandList.SetViewport(ViewportRegion);
+
+            FScissorRegion ScissorRegion(CascadeSize, CascadeSize, 0, 0);
+            CommandList.SetScissorRect(ScissorRegion);
+
+            FSceneDirectionalLight* SceneDirectionalLight = Scene->DirectionalLight;
+            for (const FMeshBatch& Batch : SceneDirectionalLight->MeshBatches)
+            {
+                FMaterial* Material = Batch.Material;
+
+                FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                if (!Instance)
+                {
+                    DEBUG_BREAK();
+                }
+
+                FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
+                CHECK(PipelineState != nullptr);
+                CommandList.SetGraphicsPipelineState(PipelineState);
+
+                CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
+
+                if (Material->HasAlphaMask())
+                {
+                    CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
+                }
+                if (Material->HasHeightMap())
+                {
+                    CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
+                }
+
+                for (const FProxySceneComponent* Component : Batch.Primitives)
+                {
+                    if (Material->HasHeightMap() || Material->HasAlphaMask())
+                    {
+                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                    }
+                    else
+                    {
+                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                    }
+
+                    CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
+
+                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
+                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+
+                    CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                }
+            }
+
+            CommandList.EndRenderPass();
+        }
+        else if (bUseGeometryShaders)
+        {
+            FRHIBeginRenderPassInfo RenderPass;
             RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.ShadowMapCascades.Get());
             RenderPass.DepthStencilView.ArrayIndex     = 0;
             RenderPass.DepthStencilView.NumArraySlices = NUM_SHADOW_CASCADES;
@@ -925,7 +1150,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
                 CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-                FRHIRenderPassDesc RenderPass;
+                FRHIBeginRenderPassInfo RenderPass;
                 RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowMapCascades.Get());
                 RenderPass.DepthStencilView.ArrayIndex = Index;
 

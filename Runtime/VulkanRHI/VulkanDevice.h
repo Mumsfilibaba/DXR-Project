@@ -34,6 +34,7 @@ extern VULKANRHI_API bool GVulkanSupportsDepthClip;
 extern VULKANRHI_API bool GVulkanSupportsConservativeRasterization;
 extern VULKANRHI_API bool GVulkanSupportsPipelineCacheControl;
 extern VULKANRHI_API bool GVulkanSupportsAccelerationStructures;
+extern VULKANRHI_API bool GVulkanSupportsMultiviews;
 
 enum class EVulkanCommandQueueType
 {
@@ -281,6 +282,7 @@ public:
 
     // Create or returns an already created sampler, this is to avoid creating duplicate samplers
     bool FindOrCreateSampler(const VkSamplerCreateInfo& SamplerCreateInfo, VkSampler& OutSampler);
+    uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
 
     FVulkanQueryPoolManager* GetQueryPoolManager(EQueryType QueryType);
     FVulkanRenderPassCache& GetRenderPassCache() { return *RenderPassCache; }
@@ -292,8 +294,6 @@ public:
     FVulkanDescriptorSetCache& GetDescriptorSetCache() { return *DescriptorSetCache; }
     FVulkanDefaultResources& GetDefaultResources() { return DefaultResources; }
 
-    uint32 GetQueueIndexFromType(EVulkanCommandQueueType Type) const;
-    
     bool IsLayerEnabled(const FString& LayerName)
     {
         return LayerNames.Find(LayerName) != nullptr;

@@ -425,16 +425,16 @@ void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
         0, nullptr);
 }
 
-void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassInitializer)
+void FD3D12CommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
     FlushResourceBarriers();
 
     FD3D12RenderTargetView* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
     FD3D12DepthStencilView* DepthStencilView = nullptr;
 
-    for (uint32 Index = 0; Index < RenderPassInitializer.NumRenderTargets; ++Index)
+    for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; ++Index)
     {
-        const FRHIRenderTargetView& CurrentRTV = RenderPassInitializer.RenderTargets[Index];
+        const FRHIRenderTargetView& CurrentRTV = BeginRenderPassInfo.RenderTargets[Index];
         if (FD3D12Texture* RenderTarget = GetD3D12Texture(CurrentRTV.Texture))
         {
             FD3D12RenderTargetView* CurrentRenderTargetView = RenderTarget->GetOrCreateRenderTargetView(CurrentRTV);
@@ -455,7 +455,7 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
         }
     }
 
-    const FRHIDepthStencilView& CurrentDSV = RenderPassInitializer.DepthStencilView;
+    const FRHIDepthStencilView& CurrentDSV = BeginRenderPassInfo.DepthStencilView;
     if (FD3D12Texture* DepthStencil = GetD3D12Texture(CurrentDSV.Texture))
     {
         FD3D12DepthStencilView* CurrentDepthStencilView = DepthStencil->GetOrCreateDepthStencilView(CurrentDSV);
@@ -476,12 +476,12 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPa
         DepthStencilView = nullptr;
     }
 
-    ContextState.SetRenderTargets(RenderTargetViews, RenderPassInitializer.NumRenderTargets, DepthStencilView);
+    ContextState.SetRenderTargets(RenderTargetViews, BeginRenderPassInfo.NumRenderTargets, DepthStencilView);
 
     // ShadingRate
-    FD3D12Texture* ShadingRateImage = GetD3D12Texture(RenderPassInitializer.ShadingRateTexture);
+    FD3D12Texture* ShadingRateImage = GetD3D12Texture(BeginRenderPassInfo.ShadingRateTexture);
     ContextState.SetShadingRateImage(ShadingRateImage);
-    ContextState.SetShadingRate(RenderPassInitializer.StaticShadingRate);
+    ContextState.SetShadingRate(BeginRenderPassInfo.StaticShadingRate);
 }
 
 void FD3D12CommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)

@@ -477,6 +477,12 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         RenderPassKey.RenderTargetFormats[Index] = Initializer.PipelineFormats.RenderTargetFormats[Index];
     }
 
+    if (Initializer.ViewInstancingInfo.NumArraySlices > 0)
+    {
+        RenderPassKey.ViewInstancingInfo = Initializer.ViewInstancingInfo;
+        ViewInstancingInfo = Initializer.ViewInstancingInfo;
+    }
+
     VkRenderPass RenderPass = GetDevice()->GetRenderPassCache().GetRenderPass(RenderPassKey);
     if (!VULKAN_CHECK_HANDLE(RenderPass))
     {

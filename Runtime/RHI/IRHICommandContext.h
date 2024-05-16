@@ -73,10 +73,10 @@ struct IRHICommandContext
     virtual void RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor) = 0;
 
     /**
-     * @brief                - Begins a new RenderPass
-     * @param RenderPassDesc - Description of RenderTargets and DepthStencils to bind for drawing
+     * @brief                     - Begins a new RenderPass
+     * @param BeginRenderPassInfo - Description of RenderTargets and DepthStencils to bind for drawing
      */
-    virtual void RHIBeginRenderPass(const FRHIRenderPassDesc& RenderPassDesc) = 0;
+    virtual void RHIBeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo) = 0;
 
     /**
      * @brief - Ends the current RenderPass

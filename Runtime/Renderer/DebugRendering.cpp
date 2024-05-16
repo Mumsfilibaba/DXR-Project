@@ -329,7 +329,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
     TRACE_SCOPE("AABB DebugPass");
 
-    FRHIRenderPassDesc RenderPass;
+    FRHIBeginRenderPassInfo RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
@@ -373,7 +373,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
 
     TRACE_SCOPE("PointLight DebugPass");
 
-    FRHIRenderPassDesc RenderPass;
+    FRHIBeginRenderPassInfo RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
     RenderPass.NumRenderTargets = 1;
     RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
