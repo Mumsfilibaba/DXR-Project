@@ -90,4 +90,5 @@ private:
     FRHIBufferRef                CubeVertexBuffer;
     FRHIBufferRef                CubeIndexBuffer;
     uint32                       CubeIndexCount;
+    EIndexFormat                 CubeIndexFormat;
 };

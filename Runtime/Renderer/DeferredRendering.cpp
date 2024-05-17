@@ -1257,7 +1257,7 @@ bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
 
     FRHIRasterizerStateInitializer RasterizerStateInitializer;
-    RasterizerStateInitializer.CullMode = ECullMode::Back;
+    RasterizerStateInitializer.CullMode = ECullMode::None;
 
     FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
     if (!RasterizerState)
@@ -1345,7 +1345,9 @@ bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
     else
     {
         CubeIndexBuffer->SetDebugName("Occlusion Cube IndexBuffer");
-        CubeIndexCount = Indices.Size();
+
+        CubeIndexCount  = Indices.Size();
+        CubeIndexFormat = EIndexFormat::uint16;
     }
 
     return true;
@@ -1392,14 +1394,27 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
             Component->CurrentOcclusionQuery = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
         }
 
-        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
-        CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
+        CommandList.SetVertexBuffers(MakeArrayView(&CubeVertexBuffer, 1), 0);
+        CommandList.SetIndexBuffer(CubeIndexBuffer.Get(), CubeIndexFormat);
 
-        TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
+        // Create Translation Matrix for BoundingBox
+        FAABB& Box = Component->Mesh->BoundingBox;
+
+        FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+        FVector3 Position = Box.GetCenter();
+
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
+        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
+        TransformMatrix = TransformMatrix.Transpose();
+        TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
+        TransformMatrix = TransformMatrix.Transpose();
+
+        TransformPerObject.Transform = TransformMatrix;
         CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, 32);
 
         CommandList.BeginQuery(Component->CurrentOcclusionQuery);
-        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+        CommandList.DrawIndexedInstanced(CubeIndexCount, 1, 0, 0, 0);
         CommandList.EndQuery(Component->CurrentOcclusionQuery);
 
         Component->CurrentOcclusionQueryIndex = (Component->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
