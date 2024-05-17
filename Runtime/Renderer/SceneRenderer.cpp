@@ -104,7 +104,7 @@ static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
 static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
     "Renderer.BasePass.OcclusionCulling",
     "Should occlusion culling be performed or not",
-    false);
+    true);
 
 FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {
