@@ -34,7 +34,7 @@ FRHI* FD3D12RHIModule::CreateRHI()
 FD3D12RHI::FD3D12RHI()
     : FRHI(ERHIType::D3D12)
     , Device(nullptr)
-    , DirectContext(nullptr)
+    , DirectCommandContext(nullptr)
 {
     if (!GD3D12RHI)
     {
@@ -64,22 +64,27 @@ FD3D12RHI::~FD3D12RHI()
         }
     };
 
+    // Flush the default context before flushing the submission queue
+    if (DirectCommandContext)
+    {
+        DirectCommandContext->RHIFlush();
+    }
+
+    while (!PendingSubmissions.IsEmpty())
+    {
+        ProcessPendingCommands();
+    }
+
     // Flush any objects that might need the context...
     FlushDeletionQueues();
 
     // ...then delete the context
-    SAFE_DELETE(DirectContext);
+    SAFE_DELETE(DirectCommandContext);
 
     // Delete all samplers
     {
         TScopedLock Lock(SamplerStateMapCS);
         SamplerStateMap.Clear();
-    }
-
-    // Ensure all pending commands finish
-    while (!PendingSubmissions.IsEmpty())
-    {
-        ProcessPendingCommands();
     }
 
     // Remove GenerateMips PSOs, these will be added to the deferred resources so reset them here
@@ -187,8 +192,8 @@ bool FD3D12RHI::Initialize()
     }
 
     // Initialize context
-    DirectContext = new FD3D12CommandContext(GetDevice(), ED3D12CommandQueueType::Direct);
-    if (!(DirectContext && DirectContext->Initialize()))
+    DirectCommandContext = new FD3D12CommandContext(GetDevice(), ED3D12CommandQueueType::Direct);
+    if (!(DirectCommandContext && DirectCommandContext->Initialize()))
     {
         return false;
     }
@@ -340,16 +345,16 @@ FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSce
     BuildInfo.NumInstances = InDesc.Instances.Size();
     BuildInfo.bUpdate      = false;
 
-    DirectContext->RHIStartContext();
+    DirectCommandContext->RHIStartContext();
 
     TSharedRef<FD3D12RayTracingScene> D3D12Scene = new FD3D12RayTracingScene(GetDevice(), InDesc);
-    if (!D3D12Scene->Build(*DirectContext, BuildInfo))
+    if (!D3D12Scene->Build(*DirectCommandContext, BuildInfo))
     {
         DEBUG_BREAK();
         D3D12Scene.Reset();
     }
 
-    DirectContext->RHIFinishContext();
+    DirectCommandContext->RHIFinishContext();
     return D3D12Scene.ReleaseOwnership();
 }
 
@@ -363,16 +368,16 @@ FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTrac
     BuildInfo.IndexFormat  = InDesc.IndexFormat;
     BuildInfo.bUpdate      = false;
 
-    DirectContext->RHIStartContext();
+    DirectCommandContext->RHIStartContext();
 
     TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InDesc);
-    if (!D3D12Geometry->Build(*DirectContext, BuildInfo))
+    if (!D3D12Geometry->Build(*DirectCommandContext, BuildInfo))
     {
         DEBUG_BREAK();
         D3D12Geometry.Reset();
     }
 
-    DirectContext->RHIFinishContext();
+    DirectCommandContext->RHIFinishContext();
     return D3D12Geometry.ReleaseOwnership();
 }
 
@@ -872,7 +877,7 @@ FRHIQuery* FD3D12RHI::RHICreateQuery(EQueryType InQueryType)
 
 FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
-    FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectContext, InViewportInfo);
+    FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectCommandContext, InViewportInfo);
     if (!Viewport->Initialize())
     {
         return nullptr;

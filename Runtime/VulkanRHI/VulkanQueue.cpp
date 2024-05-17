@@ -235,10 +235,6 @@ void FVulkanCommandPayload::Submit()
 
 void FVulkanCommandPayload::Finish()
 {
-    // Delete all the resources that has been queued up for destruction
-    FVulkanDeferredObject::ProcessItems(DeletionQueue);
-    DeletionQueue.Clear();
-
     // Resolve queries
     for (FVulkanQueryPool* QueryPool : QueryPools)
     {
@@ -270,7 +266,11 @@ void FVulkanCommandPayload::Finish()
     FVulkanFenceManager& FenceManager = Device->GetFenceManager();
     FenceManager.RecycleFence(Fence);
     Fence = nullptr;
-    
+
+    // Delete all the resources that has been queued up for destruction
+    FVulkanDeferredObject::ProcessItems(DeletionQueue);
+    DeletionQueue.Clear();
+
     // Destroy this instance after execution is finished
     delete this;
 }

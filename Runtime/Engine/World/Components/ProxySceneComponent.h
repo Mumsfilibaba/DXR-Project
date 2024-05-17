@@ -2,20 +2,29 @@
 #include "Core/Core.h"
 #include "RHI/RHITypes.h"
 
+class FRHIBuffer;
+class FRHIQuery;
+class FRHIRayTracingGeometry;
+
+#define NUM_OCCLUSION_QUERIES (6)
+
 class FProxySceneComponent
 {
 public:
-    class FMaterial*  Material     = nullptr;
-    class FMesh*      Mesh         = nullptr;
-    class FActor*     CurrentActor = nullptr;
+    FProxySceneComponent();
+    virtual ~FProxySceneComponent();
 
-    class FRHIBuffer* VertexBuffer = nullptr;
-    uint32            NumVertices  = 0;
-    class FRHIBuffer* IndexBuffer  = nullptr;
-    uint32            NumIndices   = 0;
-    EIndexFormat      IndexFormat  = EIndexFormat::Unknown;
+    class FMaterial* Material;
+    class FMesh*     Mesh;
+    class FActor*    CurrentActor;
 
-    class FRHIQuery*  OcclusionQuery = nullptr;
-
-    class FRHIRayTracingGeometry* Geometry = nullptr;
+    FRHIRayTracingGeometry* Geometry;
+    FRHIQuery*              CurrentOcclusionQuery;
+    FRHIQuery*              OcclusionQueries[NUM_OCCLUSION_QUERIES];
+    FRHIBuffer*             VertexBuffer;
+    FRHIBuffer*             IndexBuffer;
+    uint32                  NumVertices;
+    uint32                  NumIndices;
+    EIndexFormat            IndexFormat;
+    uint32                  CurrentOcclusionQueryIndex;
 };

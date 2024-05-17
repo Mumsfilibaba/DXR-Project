@@ -11,8 +11,6 @@ public:
     virtual ~FTonemapPass();
 
     bool Initialize(const FFrameResources& FrameResources);
-    void Release();
-
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:
@@ -27,8 +25,6 @@ public:
     virtual ~FFXAAPass();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:

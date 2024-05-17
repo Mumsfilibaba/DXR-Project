@@ -19,11 +19,6 @@ static TAutoConsoleVariable<bool> CVarBasePassClearAllTargets(
     "Set to true to clear all the GBuffer RenderTargets inside of the BasePass, otherwise only a few targets are cleared to save bandwidth",
     true);
 
-static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
-    "Renderer.BasePass.OcclusionCulling",
-    "Should occlusion culling be performed or not",
-    false);
-
 FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , MaterialPSOs()
@@ -32,7 +27,7 @@ FDepthPrePass::FDepthPrePass(FSceneRenderer* InRenderer)
 
 FDepthPrePass::~FDepthPrePass()
 {
-    Release();
+    MaterialPSOs.Clear();
 }
 
 void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
@@ -195,11 +190,6 @@ bool FDepthPrePass::Initialize(FFrameResources& FrameResources)
     return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
 }
 
-void FDepthPrePass::Release()
-{
-    MaterialPSOs.Clear();
-}
-
 bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     if (Width <= 0 && Height <= 0)
@@ -222,11 +212,6 @@ bool FDepthPrePass::CreateResources(FFrameResources& FrameResources, uint32 Widt
     }
 
     return true;
-}
-
-bool FDepthPrePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
-{
-    return CreateResources(FrameResources, Width, Height);
 }
 
 void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
@@ -303,9 +288,14 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         for (FProxySceneComponent* Component : Batch.Primitives)
         {
-            if (!Component->OcclusionQuery)
+            if (Component->CurrentOcclusionQuery)
             {
-                Component->OcclusionQuery = RHICreateQuery(EQueryType::Occlusion);
+                uint64 NumSamples;
+                GetRHI()->RHIGetQueryResult(Component->CurrentOcclusionQuery, NumSamples);
+                if (!NumSamples)
+                {
+                    continue;
+                }
             }
 
             if (Material->HasAlphaMask() || Material->IsDoubleSided())
@@ -326,9 +316,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
             CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &TransformPerObject, 32);
 
-            CommandList.BeginQuery(Component->OcclusionQuery);
             CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
-            CommandList.EndQuery(Component->OcclusionQuery);
         }
     }
 
@@ -336,7 +324,6 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Pre-Pass");
 }
-
 
 FDeferredBasePass::FDeferredBasePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -346,7 +333,7 @@ FDeferredBasePass::FDeferredBasePass(FSceneRenderer* InRenderer)
 
 FDeferredBasePass::~FDeferredBasePass()
 {
-    Release();
+    MaterialPSOs.Clear();
 }
 
 void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
@@ -486,11 +473,6 @@ bool FDeferredBasePass::Initialize(FFrameResources& FrameResources)
     return CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight);
 }
 
-void FDeferredBasePass::Release()
-{
-    MaterialPSOs.Clear();
-}
-
 bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     if (Width <= 0 && Height <= 0)
@@ -565,11 +547,6 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
     }
 
     return true;
-}
-
-bool FDeferredBasePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
-{
-    return CreateResources(FrameResources, Width, Height);
 }
 
 void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
@@ -677,10 +654,10 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         for (const FProxySceneComponent* Component : Batch.Primitives)
         {
-            if (CVarBasePassOcclusionCulling.GetValue() && Component->OcclusionQuery)
+            if (Component->CurrentOcclusionQuery)
             {
                 uint64 NumSamples;
-                GetRHI()->RHIGetQueryResult(Component->OcclusionQuery, NumSamples);
+                GetRHI()->RHIGetQueryResult(Component->CurrentOcclusionQuery, NumSamples);
                 if (!NumSamples)
                 {
                     continue;
@@ -703,7 +680,6 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Deferred BasePass");
 }
 
-
 FTiledLightPass::FTiledLightPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , TiledLightPassPSO(nullptr)
@@ -717,7 +693,12 @@ FTiledLightPass::FTiledLightPass(FSceneRenderer* InRenderer)
 
 FTiledLightPass::~FTiledLightPass()
 {
-    Release();
+    TiledLightPassPSO.Reset();
+    TiledLightShader.Reset();
+    TiledLightPassPSO_TileDebug.Reset();
+    TiledLightShader_TileDebug.Reset();
+    TiledLightPassPSO_CascadeDebug.Reset();
+    TiledLightShader_CascadeDebug.Reset();
 }
 
 bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
@@ -926,18 +907,6 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FTiledLightPass::Release()
-{
-    TiledLightPassPSO.Reset();
-    TiledLightShader.Reset();
-    
-    TiledLightPassPSO_TileDebug.Reset();
-    TiledLightShader_TileDebug.Reset();
-
-    TiledLightPassPSO_CascadeDebug.Reset();
-    TiledLightShader_CascadeDebug.Reset();
-}
-
 bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
 {
     if (Width <= 0 && Height <= 0)
@@ -958,11 +927,6 @@ bool FTiledLightPass::CreateResources(FFrameResources& FrameResources, uint32 Wi
     }
 
     return true;
-}
-
-bool FTiledLightPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
-{
-    return CreateResources(FrameResources, Width, Height);
 }
 
 void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources)
@@ -1056,7 +1020,6 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
 }
 
-
 FDepthReducePass::FDepthReducePass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , ReduceDepthInitalPSO(nullptr)
@@ -1068,7 +1031,10 @@ FDepthReducePass::FDepthReducePass(FSceneRenderer* InRenderer)
 
 FDepthReducePass::~FDepthReducePass()
 {
-    Release();
+    ReduceDepthInitalPSO.Reset();
+    ReduceDepthInitalShader.Reset();
+    ReduceDepthPSO.Reset();
+    ReduceDepthShader.Reset();
 }
 
 bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
@@ -1130,17 +1096,11 @@ bool FDepthReducePass::Initialize(FFrameResources& FrameResources)
     }
 
     if (!CreateResources(FrameResources, FrameResources.CurrentWidth, FrameResources.CurrentHeight))
+    {
         return false;
+    }
 
     return true;
-}
-
-void FDepthReducePass::Release()
-{
-    ReduceDepthInitalPSO.Reset();
-    ReduceDepthInitalShader.Reset();
-    ReduceDepthPSO.Reset();
-    ReduceDepthShader.Reset();
 }
 
 bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)
@@ -1170,11 +1130,6 @@ bool FDepthReducePass::CreateResources(FFrameResources& FrameResources, uint32 W
     }
 
     return true;
-}
-
-bool FDepthReducePass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
-{
-    return CreateResources(FrameResources, Width, Height);
 }
 
 void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
@@ -1239,4 +1194,218 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
     
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
+}
+
+FOcclusionPass::FOcclusionPass(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , VertexShader(nullptr)
+    , PipelineState(nullptr)
+    , CubeVertexBuffer(nullptr)
+    , CubeIndexBuffer(nullptr)
+    , CubeIndexCount(0)
+{
+}
+
+FOcclusionPass::~FOcclusionPass()
+{
+    VertexShader.Reset();
+    PipelineState.Reset();
+    CubeVertexBuffer.Reset();
+    CubeIndexBuffer.Reset();
+}
+
+bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
+{
+    TArray<uint8> ShaderCode;
+
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/OcclusionPass.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    VertexShader = RHICreateVertexShader(ShaderCode);
+    if (!VertexShader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIVertexInputLayoutInitializer InputLayout =
+    {
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+    };
+
+    FRHIVertexInputLayoutRef InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+    if (!InputLayoutState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIDepthStencilStateInitializer DepthStencilInitializer;
+    DepthStencilInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+    DepthStencilInitializer.bDepthEnable      = true;
+    DepthStencilInitializer.bDepthWriteEnable = false;
+
+    FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilInitializer);
+    if (!DepthStencilState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIRasterizerStateInitializer RasterizerStateInitializer;
+    RasterizerStateInitializer.CullMode = ECullMode::Back;
+
+    FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
+    if (!RasterizerState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIBlendStateInitializer BlendStateInitializer;
+    FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
+    if (!BlendState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIGraphicsPipelineStateInitializer PSOInitializer;
+    PSOInitializer.BlendState                         = BlendState.Get();
+    PSOInitializer.DepthStencilState                  = DepthStencilState.Get();
+    PSOInitializer.VertexInputLayout                  = InputLayoutState.Get();
+    PSOInitializer.RasterizerState                    = RasterizerState.Get();
+    PSOInitializer.ShaderState.VertexShader           = VertexShader.Get();
+    PSOInitializer.PrimitiveTopology                  = EPrimitiveTopology::TriangleList;
+    PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.DepthBufferFormat;
+
+    PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
+    if (!PipelineState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        PipelineState->SetDebugName("Occlusion Culling PipelineState");
+    }
+
+    TStaticArray<FVector3, 8> Vertices =
+    {
+        FVector3(-0.5f, -0.5f, -0.5f), // 0
+        FVector3( 0.5f, -0.5f, -0.5f), // 1
+        FVector3( 0.5f,  0.5f, -0.5f), // 2
+        FVector3(-0.5f,  0.5f, -0.5f), // 3
+        FVector3(-0.5f, -0.5f,  0.5f), // 4
+        FVector3( 0.5f, -0.5f,  0.5f), // 5
+        FVector3( 0.5f,  0.5f,  0.5f), // 6
+        FVector3(-0.5f,  0.5f,  0.5f)  // 7
+    };
+
+    FRHIBufferInfo VBInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+    CubeVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, Vertices.Data());
+    if (!CubeVertexBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        CubeVertexBuffer->SetDebugName("Occlusion Cube VertexBuffer");
+    }
+
+    // Create IndexBuffer
+    TStaticArray<uint16, 36> Indices =
+    {
+        // Front face
+        4, 5, 6, 4, 6, 7,
+        // Back face
+        0, 3, 2, 0, 2, 1,
+        // Left face
+        0, 4, 7, 0, 7, 3,
+        // Right face
+        1, 2, 6, 1, 6, 5,
+        // Top face
+        3, 7, 6, 3, 6, 2,
+        // Bottom face
+        0, 1, 5, 0, 5, 4
+    };
+
+    FRHIBufferInfo IBInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+    CubeIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, Indices.Data());
+    if (!CubeIndexBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        CubeIndexBuffer->SetDebugName("Occlusion Cube IndexBuffer");
+        CubeIndexCount = Indices.Size();
+    }
+
+    return true;
+}
+
+void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene)
+{
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Occlusion Pass");
+
+    TRACE_SCOPE("Occlusion Pass");
+
+    GPU_TRACE_SCOPE(CommandList, "Occlusion Pass");
+
+    FRHIBeginRenderPassInfo RenderPass;
+    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load, EAttachmentStoreAction::DontCare);
+
+    CommandList.BeginRenderPass(RenderPass);
+
+    const float RenderWidth  = float(FrameResources.CurrentWidth);
+    const float RenderHeight = float(FrameResources.CurrentHeight);
+
+    FViewportRegion ViewportRegion(RenderWidth, RenderHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
+
+    FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
+    CommandList.SetScissorRect(ScissorRegion);
+
+    struct FTransformBuffer
+    {
+        FMatrix4 Transform;
+        FMatrix4 TransformInv;
+    } TransformPerObject;
+    TransformPerObject.TransformInv = FMatrix4::Identity();
+
+    for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+    {
+        CommandList.SetGraphicsPipelineState(PipelineState.Get());
+        CommandList.SetConstantBuffer(VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
+        Component->CurrentOcclusionQuery = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
+        if (!Component->CurrentOcclusionQuery)
+        {
+            Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex] = RHICreateQuery(EQueryType::Occlusion);
+            Component->CurrentOcclusionQuery = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
+        }
+
+        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+        CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
+
+        TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
+        CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, 32);
+
+        CommandList.BeginQuery(Component->CurrentOcclusionQuery);
+        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+        CommandList.EndQuery(Component->CurrentOcclusionQuery);
+
+        Component->CurrentOcclusionQueryIndex = (Component->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
+    }
+
+    CommandList.EndRenderPass();
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Occlusion Pass");
 }

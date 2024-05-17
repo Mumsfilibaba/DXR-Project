@@ -115,6 +115,7 @@ private:
 
     FDepthPrePass*              DepthPrePass;
     FDeferredBasePass*          BasePass;
+    FOcclusionPass*             OcclusionPass;
     FDepthReducePass*           DepthReducePass;
     FTiledLightPass*            TiledLightPass;
     FPointLightRenderPass*      PointLightRenderPass;
@@ -127,10 +128,10 @@ private:
     FForwardPass*               ForwardPass;
     FFXAAPass*                  FXAAPass;
     FTonemapPass*               TonemapPass;
+    FLightProbeRenderer*        LightProbeRenderer;
+    FDebugRenderer*             DebugRenderer;
 
-    FLightProbeRenderer         LightProbeRenderer;
     FRayTracer                  RayTracer;
-    FDebugRenderer              DebugRenderer;
 
     // RHI
     FGenericEvent*              LastFrameFinishedEvent;

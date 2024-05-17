@@ -78,12 +78,8 @@ public:
     virtual ~FTemporalAA();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
-
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
 
 private:
     FRHIComputePipelineStateRef TemporalAAPSO;

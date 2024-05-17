@@ -12,11 +12,8 @@ public:
     virtual ~FRendererModule();
     
     virtual bool Load() override final;
-
     virtual bool Initialize() override final;
-
     virtual void Tick() override final;
-
     virtual void Release() override final;
 
     // Creates and adds a scene to the list of scenes

@@ -170,10 +170,6 @@ FD3D12CommandPayload::FD3D12CommandPayload(FD3D12Device* InDevice, FD3D12Queue* 
 
 void FD3D12CommandPayload::Finish()
 {
-    // Delete all the resources that has been queued up for destruction
-    FD3D12DeferredObject::ProcessItems(DeletionQueue);
-    DeletionQueue.Clear();
-
     for (FD3D12QueryHeap* QueryHeap : QueryHeaps)
     {
         FD3D12QueryHeapManager* QueryHeapManager = QueryHeap->GetQueryHeapManager();
@@ -199,6 +195,10 @@ void FD3D12CommandPayload::Finish()
     }
     
     CommandAllocators.Clear();
+
+    // Delete all the resources that has been queued up for destruction
+    FD3D12DeferredObject::ProcessItems(DeletionQueue);
+    DeletionQueue.Clear();
     
     // Destroy this instance after execution is finished
     delete this;

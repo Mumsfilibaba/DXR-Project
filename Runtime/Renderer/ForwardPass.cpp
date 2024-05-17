@@ -16,7 +16,9 @@ FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
 
 FForwardPass::~FForwardPass()
 {
-    Release();
+    PipelineState.Reset();
+    VShader.Reset();
+    PShader.Reset();
 }
 
 bool FForwardPass::Initialize(FFrameResources& FrameResources)
@@ -110,13 +112,6 @@ bool FForwardPass::Initialize(FFrameResources& FrameResources)
     }
 
     return true;
-}
-
-void FForwardPass::Release()
-{
-    PipelineState.Reset();
-    VShader.Reset();
-    PShader.Reset();
 }
 
 void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)

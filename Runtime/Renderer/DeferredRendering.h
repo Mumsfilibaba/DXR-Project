@@ -15,11 +15,7 @@ public:
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
     
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
-    
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
@@ -35,11 +31,7 @@ public:
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
-
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
@@ -53,11 +45,7 @@ public:
     virtual ~FTiledLightPass();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
-
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
 
 private:
@@ -76,11 +64,7 @@ public:
     virtual ~FDepthReducePass();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     bool CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height);
-    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height);
-
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
@@ -89,4 +73,21 @@ private:
 
     FRHIComputePipelineStateRef ReduceDepthPSO;
     FRHIComputeShaderRef        ReduceDepthShader;
+};
+
+class FOcclusionPass : public FRenderPass
+{
+public:
+    FOcclusionPass(FSceneRenderer* InRenderer);
+    virtual ~FOcclusionPass();
+
+    bool Initialize(FFrameResources& FrameResources);
+    void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
+
+private:
+    FRHIVertexShaderRef          VertexShader;
+    FRHIGraphicsPipelineStateRef PipelineState;
+    FRHIBufferRef                CubeVertexBuffer;
+    FRHIBufferRef                CubeIndexBuffer;
+    uint32                       CubeIndexCount;
 };

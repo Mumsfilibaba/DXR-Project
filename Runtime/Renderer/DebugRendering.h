@@ -8,15 +8,10 @@
 class FDebugRenderer : public FRenderPass
 {
 public:
-    FDebugRenderer(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-        , AABBIndexCount(0)
-        , DbgSphereIndexCount(0)
-    {
-    }
+    FDebugRenderer(FSceneRenderer* InRenderer);
+    virtual ~FDebugRenderer();
 
     bool Initialize(FFrameResources& Resources);
-    void Release();
 
     void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);

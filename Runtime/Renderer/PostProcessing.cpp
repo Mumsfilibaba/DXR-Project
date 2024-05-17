@@ -18,7 +18,8 @@ FTonemapPass::FTonemapPass(FSceneRenderer* InRenderer)
 
 FTonemapPass::~FTonemapPass()
 {
-    Release();
+    TonemapPSO.Reset();
+    TonemapShader.Reset();
 }
 
 bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
@@ -107,12 +108,6 @@ bool FTonemapPass::Initialize(const FFrameResources& FrameResources)
     return true;
 }
 
-void FTonemapPass::Release()
-{
-    TonemapPSO.Reset();
-    TonemapShader.Reset();
-}
-
 void FTonemapPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Tonemapping and BackBuffer-Blit");
@@ -159,7 +154,10 @@ FFXAAPass::FFXAAPass(FSceneRenderer* InRenderer)
 
 FFXAAPass::~FFXAAPass()
 {
-    Release();
+    FXAAPSO.Reset();
+    FXAAShader.Reset();
+    FXAADebugPSO.Reset();
+    FXAADebugShader.Reset();
 }
 
 bool FFXAAPass::Initialize(FFrameResources& FrameResources)
@@ -291,14 +289,6 @@ bool FFXAAPass::Initialize(FFrameResources& FrameResources)
     }
 
     return true;
-}
-
-void FFXAAPass::Release()
-{
-    FXAAPSO.Reset();
-    FXAAShader.Reset();
-    FXAADebugPSO.Reset();
-    FXAADebugShader.Reset();
 }
 
 void FFXAAPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)

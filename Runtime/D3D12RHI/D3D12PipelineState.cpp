@@ -390,7 +390,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     if (Initializer.ViewInstancingInfo.NumArraySlices > 0)
     {
         ViewInstanceDesc.ViewInstanceCount = FMath::Min<uint32>(Initializer.ViewInstancingInfo.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
-        for (int32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
+        for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
             ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Initializer.ViewInstancingInfo.StartRenderTargetArrayIndex + Index;
             ViewInstanceDesc.ViewInstanceLocations[Index].ViewportArrayIndex = 0;
@@ -1157,7 +1157,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
     PipelineDataSize = Header.DataSize;
 
     BytesRead = CacheFile->Read(reinterpret_cast<uint8*>(PipelineData), static_cast<uint32>(PipelineDataSize));
-    if (PipelineDataSize != BytesRead)
+    if (PipelineDataSize != static_cast<uint64>(BytesRead))
     {
         D3D12_WARNING("Something went wrong when reading PipelineCache");
         return false;

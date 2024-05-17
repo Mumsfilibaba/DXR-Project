@@ -10,6 +10,28 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 
+FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+    , AABBIndexCount(0)
+    , DbgSphereIndexCount(0)
+{
+}
+
+FDebugRenderer::~FDebugRenderer()
+{
+    AABBVertexBuffer.Reset();
+    AABBIndexBuffer.Reset();
+    AABBDebugPipelineState.Reset();
+    AABBVertexShader.Reset();
+    AABBPixelShader.Reset();
+
+    LightDebugPSO.Reset();
+    LightDebugVS.Reset();
+    LightDebugPS.Reset();
+    DbgSphereVertexBuffer.Reset();
+    DbgSphereIndexBuffer.Reset();
+}
+
 bool FDebugRenderer::Initialize(FFrameResources& Resources)
 {
     TArray<uint8> ShaderCode;
@@ -19,14 +41,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         {
             { "AABB_DEBUG", "(1)" }
         };
-        
+
+        FShaderCompileInfo CompileInfo("AABB_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, AABBDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            FShaderCompileInfo CompileInfo("AABB_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, AABBDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return false;
-            }
+            DEBUG_BREAK();
+            return false;
         }
 
         AABBVertexShader = RHICreateVertexShader(ShaderCode);
@@ -36,13 +56,11 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
+        CompileInfo = FShaderCompileInfo("AABB_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, AABBDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            FShaderCompileInfo CompileInfo("AABB_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, AABBDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return false;
-            }
+            DEBUG_BREAK();
+            return false;
         }
 
         AABBPixelShader = RHICreatePixelShader(ShaderCode);
@@ -125,25 +143,22 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             FVector3( 0.5f, -0.5f,  0.5f),
             FVector3(-0.5f,  0.5f,  0.5f),
             FVector3( 0.5f,  0.5f,  0.5f),
-
             FVector3( 0.5f, -0.5f, -0.5f),
             FVector3(-0.5f, -0.5f, -0.5f),
             FVector3( 0.5f,  0.5f, -0.5f),
             FVector3(-0.5f,  0.5f, -0.5f)
         };
 
+        FRHIBufferInfo VBInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+        AABBVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, Vertices.Data());
+        if (!AABBVertexBuffer)
         {
-            FRHIBufferInfo VBInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
-            AABBVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, Vertices.Data());
-            if (!AABBVertexBuffer)
-            {
-                DEBUG_BREAK();
-                return false;
-            }
-            else
-            {
-                AABBVertexBuffer->SetDebugName("AABB VertexBuffer");
-            }
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            AABBVertexBuffer->SetDebugName("AABB VertexBuffer");
         }
 
         // Create IndexBuffer
@@ -163,16 +178,17 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             2, 7,
         };
 
+        FRHIBufferInfo IBInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+        AABBIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, Indices.Data());
+        if (!AABBIndexBuffer)
         {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            AABBIndexBuffer->SetDebugName("AABB IndexBuffer");
             AABBIndexCount = Indices.Size();
-
-            FRHIBufferInfo IBInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
-            AABBIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, Indices.Data());
-            if (!AABBIndexBuffer)
-            {
-                DEBUG_BREAK();
-                return false;
-            }
         }
     }
 
@@ -181,14 +197,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         {
             { "POINTLIGHT_DEBUG", "(1)" }
         };
-        
+
+        FShaderCompileInfo CompileInfo("Light_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, PointLightDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            FShaderCompileInfo CompileInfo("Light_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, PointLightDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return false;
-            }
+            DEBUG_BREAK();
+            return false;
         }
 
         LightDebugVS = RHICreateVertexShader(ShaderCode);
@@ -198,13 +212,11 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
+        CompileInfo = FShaderCompileInfo("Light_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, PointLightDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
         {
-            FShaderCompileInfo CompileInfo("Light_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, PointLightDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
-            {
-                DEBUG_BREAK();
-                return false;
-            }
+            DEBUG_BREAK();
+            return false;
         }
 
         LightDebugPS = RHICreatePixelShader(ShaderCode);
@@ -272,55 +284,36 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         FMeshData SphereMesh = FMeshFactory::CreateSphere(1, 0.25f);
 
         // VertexBuffer
+        FRHIBufferInfo VBInfo(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+        DbgSphereVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, SphereMesh.Vertices.Data());
+        if (!DbgSphereVertexBuffer)
         {
-            FRHIBufferInfo VBInfo(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
-            DbgSphereVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, SphereMesh.Vertices.Data());
-            if (!DbgSphereVertexBuffer)
-            {
-                DEBUG_BREAK();
-                return false;
-            }
-            else
-            {
-                DbgSphereVertexBuffer->SetDebugName("Light Debug VertexBuffer");
-            }
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            DbgSphereVertexBuffer->SetDebugName("Light Debug VertexBuffer");
         }
 
         // Create IndexBuffer
-        {
-            TArray<uint16> SmallIndicies = FMeshFactory::ConvertSmallIndices(SphereMesh.Indices);
-            DbgSphereIndexCount = SmallIndicies.Size();
+        TArray<uint16> SmallIndicies = FMeshFactory::ConvertSmallIndices(SphereMesh.Indices);
+        DbgSphereIndexCount = SmallIndicies.Size();
 
-            FRHIBufferInfo IBInfo(SmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
-            DbgSphereIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, SmallIndicies.Data());
-            if (!DbgSphereIndexBuffer)
-            {
-                DEBUG_BREAK();
-                return false;
-            }
-            else
-            {
-                DbgSphereIndexBuffer->SetDebugName("Light Debug IndexBuffer");
-            }
+        FRHIBufferInfo IBInfo(SmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+        DbgSphereIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, SmallIndicies.Data());
+        if (!DbgSphereIndexBuffer)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            DbgSphereIndexBuffer->SetDebugName("Light Debug IndexBuffer");
         }
     }
 
     return true;
-}
-
-void FDebugRenderer::Release()
-{
-    AABBVertexBuffer.Reset();
-    AABBIndexBuffer.Reset();
-    AABBDebugPipelineState.Reset();
-    AABBVertexShader.Reset();
-    AABBPixelShader.Reset();
-
-    LightDebugPSO.Reset();
-    LightDebugVS.Reset();
-    LightDebugPS.Reset();
-    DbgSphereVertexBuffer.Reset();
-    DbgSphereIndexBuffer.Reset();
 }
 
 void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)

@@ -98,7 +98,7 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
 
 FD3D12CommandContext::~FD3D12CommandContext()
 {
-    RHIFlush();
+    // NOTE: Empty but defined for debug purposes
 }
 
 bool FD3D12CommandContext::Initialize()

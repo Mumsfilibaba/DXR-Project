@@ -23,7 +23,12 @@ FSkyboxRenderPass::FSkyboxRenderPass(FSceneRenderer* InRenderer)
 
 FSkyboxRenderPass::~FSkyboxRenderPass()
 {
-    Release();
+    PipelineState.Reset();
+    SkyboxVertexBuffer.Reset();
+    SkyboxIndexBuffer.Reset();
+    SkyboxSampler.Reset();
+    SkyboxVertexShader.Reset();
+    SkyboxPixelShader.Reset();
 }
 
 bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
@@ -95,38 +100,35 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
 
     // Create Texture Cube
+    const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
+    FTextureResource2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
+    if (!Panorama)
     {
-        const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-        FTextureResource2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
-        if (!Panorama)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            Panorama->SetDebugName(PanoramaSourceFilename);
-        }
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        Panorama->SetDebugName(PanoramaSourceFilename);
+    }
 
-        // Compress the Panorama
-        FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
+    // Compress the Panorama
+    FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
+    FRHITextureRef Skybox = FTextureFactory::CreateTextureCubeFromPanorma(PanoramaRHI.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
+    if (!Skybox)
+    {
+        return false;
+    }
+    else
+    {
+        Skybox->SetDebugName("Skybox Uncompressed");
+    }
 
-        FRHITextureRef Skybox = FTextureFactory::CreateTextureCubeFromPanorma(PanoramaRHI.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
-        if (!Skybox)
-        {
-            return false;
-        }
-        else
-        {
-            Skybox->SetDebugName("Skybox Uncompressed");
-        }
-
-        // Compress the CubeMap
-        TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
-        if (FrameResources.Skybox)
-        {
-            FrameResources.Skybox->SetDebugName("Skybox Compressed");
-        }
+    // Compress the CubeMap
+    TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
+    if (FrameResources.Skybox)
+    {
+        FrameResources.Skybox->SetDebugName("Skybox Compressed");
     }
 
     FRHISamplerStateInfo Initializer;
@@ -144,14 +146,12 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
 
     TArray<uint8> ShaderCode;
-    
+
+    FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     SkyboxVertexShader = RHICreateVertexShader(ShaderCode);
@@ -161,13 +161,11 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
+    CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Skybox.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     SkyboxPixelShader = RHICreatePixelShader(ShaderCode);
@@ -245,16 +243,6 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
 
     return true;
-}
-
-void FSkyboxRenderPass::Release()
-{
-    PipelineState.Reset();
-    SkyboxVertexBuffer.Reset();
-    SkyboxIndexBuffer.Reset();
-    SkyboxSampler.Reset();
-    SkyboxVertexShader.Reset();
-    SkyboxPixelShader.Reset();
 }
 
 void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene)

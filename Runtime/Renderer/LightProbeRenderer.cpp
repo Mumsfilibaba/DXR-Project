@@ -2,6 +2,19 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 
+FLightProbeRenderer::FLightProbeRenderer(FSceneRenderer* InRenderer)
+    : FRenderPass(InRenderer)
+{
+}
+
+FLightProbeRenderer::~FLightProbeRenderer()
+{
+    IrradianceGenPSO.Reset();
+    SpecularIrradianceGenPSO.Reset();
+    IrradianceGenShader.Reset();
+    SpecularIrradianceGenShader.Reset();
+}
+
 bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
 {
     if (!Compressor.Initialize())
@@ -15,13 +28,11 @@ bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
     }
 
     TArray<uint8> Code;
-    
+
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/IrradianceGen.hlsl", CompileInfo, Code))
-        {
-            LOG_ERROR("Failed to compile IrradianceGen Shader");
-        }
+        LOG_ERROR("Failed to compile IrradianceGen Shader");
     }
 
     IrradianceGenShader = RHICreateComputeShader(Code);
@@ -40,12 +51,10 @@ bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
         IrradianceGenPSO->SetDebugName("IrradianceGen PSO");
     }
 
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/SpecularIrradianceGen.hlsl", CompileInfo, Code))
-        {
-            LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
-        }
+        LOG_ERROR("Failed to compile SpecularIrradianceGen Shader");
     }
 
     SpecularIrradianceGenShader = RHICreateComputeShader(Code);
@@ -77,14 +86,6 @@ bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
     }
 
     return true;
-}
-
-void FLightProbeRenderer::Release()
-{
-    IrradianceGenPSO.Reset();
-    SpecularIrradianceGenPSO.Reset();
-    IrradianceGenShader.Reset();
-    SpecularIrradianceGenShader.Reset();
 }
 
 void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFrameResources& FrameResources)

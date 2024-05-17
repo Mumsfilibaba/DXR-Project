@@ -11,8 +11,6 @@ public:
     virtual ~FForwardPass();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources, FScene* Scene);
 
 private:

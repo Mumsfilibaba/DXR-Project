@@ -93,10 +93,7 @@ public:
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
     bool Initialize(FFrameResources& Resources);
-    void Release();
-
     bool CreateResources(FFrameResources& Resources);
-
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
@@ -113,8 +110,6 @@ public:
     virtual ~FCascadeGenerationPass();
 
     bool Initialize(FFrameResources& Resources);
-    void Release();
-
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources);
 
 private:
@@ -131,10 +126,7 @@ public:
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
     bool Initialize(FFrameResources& Resources);
-    void Release();
-
     bool CreateResources(FFrameResources& Resources);
-
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
@@ -149,11 +141,7 @@ public:
     virtual ~FShadowMaskRenderPass();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     bool CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height);
-    bool ResizeResources(FRHICommandList& CommandList, FFrameResources& Resources, uint32 Width, uint32 Height);
-
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
 
 private:

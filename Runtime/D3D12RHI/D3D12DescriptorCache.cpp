@@ -187,7 +187,7 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
 
         auto& CBVCache = Cache.ResourceViews[ShaderStage];
-        for (int32 Index = 0; Index < NumCBVs; Index++)
+        for (uint32 Index = 0; Index < NumCBVs; Index++)
         {
             if (FD3D12ConstantBufferView* ConstantBuffer = CBVCache[Index])
             {
@@ -242,7 +242,7 @@ void FD3D12DescriptorCache::SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT];
 
         auto& SRVCache = Cache.ResourceViews[ShaderStage];
-        for (int32 Index = 0; Index < NumSRVs; Index++)
+        for (uint32 Index = 0; Index < NumSRVs; Index++)
         {
             if (FD3D12ShaderResourceView* ShaderResourceView = SRVCache[Index])
             {
@@ -297,7 +297,7 @@ void FD3D12DescriptorCache::SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D1
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
 
         auto& UAVCache = Cache.ResourceViews[ShaderStage];
-        for (int32 Index = 0; Index < NumUAVs; Index++)
+        for (uint32 Index = 0; Index < NumUAVs; Index++)
         {
             if (FD3D12UnorderedAccessView* UnorderedAccessView = UAVCache[Index])
             {
@@ -352,7 +352,7 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
         FD3D12UniqueSamplerTable UniqueTable;
 
         auto& SamplerStates = Cache.SamplerStates[ShaderStage];
-        for (int32 Index = 0; Index < NumSamplers; Index++)
+        for (uint32 Index = 0; Index < NumSamplers; Index++)
         {
             if (FD3D12SamplerState* SamplerState = SamplerStates[Index])
             {
@@ -368,7 +368,7 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
         if (!CachedTable)
         {
             D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_SAMPLER_STATE_COUNT];
-            for (int32 Index = 0; Index < NumSamplers; Index++)
+            for (uint32 Index = 0; Index < NumSamplers; Index++)
             {
                 if (FD3D12SamplerState* SamplerState = SamplerStates[Index])
                 {

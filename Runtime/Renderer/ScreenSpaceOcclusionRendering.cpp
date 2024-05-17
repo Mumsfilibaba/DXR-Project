@@ -33,7 +33,12 @@ FScreenSpaceOcclusionPass::FScreenSpaceOcclusionPass(FSceneRenderer* InRenderer)
 
 FScreenSpaceOcclusionPass::~FScreenSpaceOcclusionPass()
 {
-    Release();
+    PipelineState.Reset();
+    BlurHorizontalPSO.Reset();
+    BlurVerticalPSO.Reset();
+    SSAOShader.Reset();
+    BlurHorizontalShader.Reset();
+    BlurVerticalShader.Reset();
 }
 
 bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
@@ -47,13 +52,12 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
     }
 
     TArray<uint8> ShaderCode;
+
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/SSAO.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     SSAOShader = RHICreateComputeShader(ShaderCode);
@@ -63,18 +67,16 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
+    FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
+    PipelineState = RHICreateComputePipelineState(PSOInitializer);
+    if (!PipelineState)
     {
-        FRHIComputePipelineStateInitializer PSOInitializer(SSAOShader.Get());
-        PipelineState = RHICreateComputePipelineState(PSOInitializer);
-        if (!PipelineState)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            PipelineState->SetDebugName("SSAO PipelineState");
-        }
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        PipelineState->SetDebugName("SSAO PipelineState");
     }
 
     TArray<FShaderDefine> Defines = 
@@ -82,13 +84,11 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         { "HORIZONTAL_PASS", "(1)" }
     };
 
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     BlurHorizontalShader = RHICreateComputeShader(ShaderCode);
@@ -98,32 +98,26 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
+    PSOInitializer.Shader = BlurHorizontalShader.Get();
+    BlurHorizontalPSO = RHICreateComputePipelineState(PSOInitializer);
+    if (!BlurHorizontalPSO)
     {
-        FRHIComputePipelineStateInitializer PSOInitializer;
-        PSOInitializer.Shader = BlurHorizontalShader.Get();
-
-        BlurHorizontalPSO = RHICreateComputePipelineState(PSOInitializer);
-        if (!BlurHorizontalPSO)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            BlurHorizontalPSO->SetDebugName("SSAO Horizontal Blur PSO");
-        }
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        BlurHorizontalPSO->SetDebugName("SSAO Horizontal Blur PSO");
     }
 
     Defines.Clear();
     Defines.Emplace("VERTICAL_PASS", "1");
 
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, MakeArrayView(Defines));
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, MakeArrayView(Defines));
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Blur.hlsl", CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     BlurVerticalShader = RHICreateComputeShader(ShaderCode);
@@ -133,38 +127,20 @@ bool FScreenSpaceOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    {
-        FRHIComputePipelineStateInitializer PSOInitializer;
-        PSOInitializer.Shader = BlurVerticalShader.Get();
+    PSOInitializer.Shader = BlurVerticalShader.Get();
 
-        BlurVerticalPSO = RHICreateComputePipelineState(PSOInitializer);
-        if (!BlurVerticalPSO)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            BlurVerticalPSO->SetDebugName("SSAO Vertical Blur PSO");
-        }
+    BlurVerticalPSO = RHICreateComputePipelineState(PSOInitializer);
+    if (!BlurVerticalPSO)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        BlurVerticalPSO->SetDebugName("SSAO Vertical Blur PSO");
     }
 
     return true;
-}
-
-void FScreenSpaceOcclusionPass::Release()
-{
-    PipelineState.Reset();
-    BlurHorizontalPSO.Reset();
-    BlurVerticalPSO.Reset();
-    SSAOShader.Reset();
-    BlurHorizontalShader.Reset();
-    BlurVerticalShader.Reset();
-}
-
-bool FScreenSpaceOcclusionPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
-{
-    return CreateResources(FrameResources, Width, Height);
 }
 
 void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)

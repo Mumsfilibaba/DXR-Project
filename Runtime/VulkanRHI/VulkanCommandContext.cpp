@@ -118,9 +118,6 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
 
 FVulkanCommandContext::~FVulkanCommandContext()
 {
-    // Flush
-    RHIFlush();
-
     // Reset all state
     ContextState.ResetState();
 }

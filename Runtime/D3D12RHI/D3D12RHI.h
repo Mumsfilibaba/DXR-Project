@@ -72,7 +72,7 @@ public:
 
     virtual IRHICommandContext* RHIObtainCommandContext() override final
     {
-        return DirectContext;
+        return DirectCommandContext;
     }
     
     virtual FString RHIGetAdapterName() const override final 
@@ -136,13 +136,13 @@ public:
 
     FD3D12CommandContext* ObtainCommandContext()
     {
-        return DirectContext;
+        return DirectCommandContext;
     }
 
 private:
     FD3D12Adapter*                Adapter;
     FD3D12Device*                 Device;
-    FD3D12CommandContext*         DirectContext;
+    FD3D12CommandContext*         DirectCommandContext;
 
     TArray<FD3D12DeferredObject>  DeletionQueue;
     FCriticalSection              DeletionQueueCS;

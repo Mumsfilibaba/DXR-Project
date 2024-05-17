@@ -56,22 +56,27 @@ FVulkanRHI::~FVulkanRHI()
         }
     };
 
+    // Flush the default context before flushing the submission queue
+    if (GraphicsCommandContext)
+    {
+        GraphicsCommandContext->RHIFlush();
+    }
+
+    while (!PendingSubmissions.IsEmpty())
+    {
+        ProcessPendingCommands();
+    }
+
     // Flush before submitting since some objects needs the CommandContext
     FlushDeletionQueue();
 
-    // Delete the Default Context before we flush the submission queue..
+    // Delete the Default Context
     SAFE_DELETE(GraphicsCommandContext);
 
     // Then delete all samplers
     {
         TScopedLock Lock(SamplerStateMapCS);
         SamplerStateMap.Clear();
-    }
-
-    //.. since the context will put objects into the Deferred Deletion Queue
-    while (!PendingSubmissions.IsEmpty())
-    {
-        ProcessPendingCommands();
     }
 
     // Then flush any potential remaining objects

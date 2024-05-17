@@ -12,7 +12,14 @@ FTemporalAA::FTemporalAA(FSceneRenderer* InRenderer)
 
 FTemporalAA::~FTemporalAA()
 {
-    Release();
+    for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
+    {
+        TAABuffer.Reset();
+    }
+
+    LinearSampler.Reset();
+    TemporalAAPSO.Reset();
+    TemporalAAShader.Reset();
 }
 
 bool FTemporalAA::Initialize(FFrameResources& FrameResources)
@@ -65,18 +72,6 @@ bool FTemporalAA::Initialize(FFrameResources& FrameResources)
     return true;
 }
 
-void FTemporalAA::Release()
-{
-    for (FRHITextureRef& TAABuffer : TAAHistoryBuffers)
-    {
-        TAABuffer.Reset();
-    }
-
-    LinearSampler.Reset();
-    TemporalAAPSO.Reset();
-    TemporalAAShader.Reset();
-}
-
 void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin TemporalAA");
@@ -125,11 +120,6 @@ void FTemporalAA::Execute(FRHICommandList& CommandList, FFrameResources& FrameRe
         EResourceAccess::NonPixelShaderResource);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End TemporalAA");
-}
-
-bool FTemporalAA::ResizeResources(FRHICommandList& CommandList, FFrameResources& FrameResources, uint32 Width, uint32 Height)
-{
-    return CreateResources(FrameResources, Width, Height);
 }
 
 bool FTemporalAA::CreateResources(FFrameResources& FrameResources, uint32 Width, uint32 Height)

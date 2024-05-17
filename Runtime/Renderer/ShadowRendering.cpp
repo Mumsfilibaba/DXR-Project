@@ -53,7 +53,10 @@ FPointLightRenderPass::FPointLightRenderPass(FSceneRenderer* InRenderer)
 
 FPointLightRenderPass::~FPointLightRenderPass()
 {
-    Release();
+    MaterialPSOs.Clear();
+    PerShadowMapBuffer.Reset();
+    SinglePassShadowMapBuffer.Reset();
+    TwoPassShadowMapBuffer.Reset();
 }
 
 void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
@@ -287,14 +290,6 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
     }
 
     return CreateResources(Resources);
-}
-
-void FPointLightRenderPass::Release()
-{
-    MaterialPSOs.Clear();
-    PerShadowMapBuffer.Reset();
-    SinglePassShadowMapBuffer.Reset();
-    TwoPassShadowMapBuffer.Reset();
 }
 
 bool FPointLightRenderPass::CreateResources(FFrameResources& Resources)
@@ -609,7 +604,8 @@ FCascadeGenerationPass::FCascadeGenerationPass(FSceneRenderer* InRenderer)
 
 FCascadeGenerationPass::~FCascadeGenerationPass()
 {
-    Release();
+    CascadeGen.Reset();
+    CascadeGenShader.Reset();
 }
 
 bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
@@ -643,7 +639,6 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     {
         CascadeGen->SetDebugName("CascadeGen PSO");
     }
-
 
     FRHIBufferInfo CascadeMatrixBufferInfo(sizeof(FCascadeMatricesHLSL) * NUM_SHADOW_CASCADES, sizeof(FCascadeMatricesHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::RWBuffer);
     Resources.CascadeMatrixBuffer = RHICreateBuffer(CascadeMatrixBufferInfo, EResourceAccess::UnorderedAccess, nullptr);
@@ -704,12 +699,6 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
     return true;
 }
 
-void FCascadeGenerationPass::Release()
-{
-    CascadeGen.Reset();
-    CascadeGenShader.Reset();
-}
-
 void FCascadeGenerationPass::Execute(FRHICommandList& CommandList, FFrameResources& Resources)
 {
     GPU_TRACE_SCOPE(CommandList, "Generate Cascade Matrices");
@@ -742,7 +731,8 @@ FCascadedShadowsRenderPass::FCascadedShadowsRenderPass(FSceneRenderer* InRendere
 
 FCascadedShadowsRenderPass::~FCascadedShadowsRenderPass()
 {
-    Release();
+    MaterialPSOs.Clear();
+    PerCascadeBuffer.Reset();
 }
 
 void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
@@ -959,12 +949,6 @@ bool FCascadedShadowsRenderPass::Initialize(FFrameResources& Resources)
     }
 
     return CreateResources(Resources);
-}
-
-void FCascadedShadowsRenderPass::Release()
-{
-    MaterialPSOs.Clear();
-    PerCascadeBuffer.Reset();
 }
 
 bool FCascadedShadowsRenderPass::CreateResources(FFrameResources& Resources)
@@ -1233,7 +1217,10 @@ FShadowMaskRenderPass::FShadowMaskRenderPass(FSceneRenderer* InRenderer)
 
 FShadowMaskRenderPass::~FShadowMaskRenderPass()
 {
-    Release();
+    DirectionalShadowMaskPSO.Reset();
+    DirectionalShadowMaskShader.Reset();
+    DirectionalShadowMaskPSO_Debug.Reset();
+    DirectionalShadowMaskShader_Debug.Reset();
 }
 
 bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
@@ -1305,14 +1292,6 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
     return true;
 }
 
-void FShadowMaskRenderPass::Release()
-{
-    DirectionalShadowMaskPSO.Reset();
-    DirectionalShadowMaskShader.Reset();
-    DirectionalShadowMaskPSO_Debug.Reset();
-    DirectionalShadowMaskShader_Debug.Reset();
-}
-
 bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height)
 {
     const ETextureUsageFlags Flags = ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource;
@@ -1340,11 +1319,6 @@ bool FShadowMaskRenderPass::CreateResources(FFrameResources& Resources, uint32 W
     }
 
     return true;
-}
-
-bool FShadowMaskRenderPass::ResizeResources(FRHICommandList& CommandList, FFrameResources& Resources, uint32 Width, uint32 Height)
-{
-    return CreateResources(Resources, Width, Height);
 }
 
 void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameResources& Resources)

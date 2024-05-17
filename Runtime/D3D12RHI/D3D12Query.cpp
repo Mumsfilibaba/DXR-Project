@@ -97,7 +97,7 @@ FD3D12QueryAllocation FD3D12QueryHeap::AllocateQueries(uint64* Results)
 
 void FD3D12QueryHeap::ResolveQueries(FD3D12CommandList& CommandList)
 {
-    D3D12_QUERY_TYPE QueryType;
+    D3D12_QUERY_TYPE QueryType = D3D12_QUERY_TYPE_TIMESTAMP;
     if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_TIMESTAMP)
     {
         QueryType = D3D12_QUERY_TYPE_TIMESTAMP;
@@ -105,10 +105,6 @@ void FD3D12QueryHeap::ResolveQueries(FD3D12CommandList& CommandList)
     else if (QueryHeapType == D3D12_QUERY_HEAP_TYPE_OCCLUSION)
     {
         QueryType = D3D12_QUERY_TYPE_OCCLUSION;
-    }
-    else
-    {
-        DEBUG_BREAK();
     }
 
     const uint32 NumUsedQueries = FMath::Min<int32>(CurrentQueryIndex, NumQueries);

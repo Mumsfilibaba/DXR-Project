@@ -8,21 +8,16 @@
 class FLightProbeRenderer : public FRenderPass
 {
 public:
-    FLightProbeRenderer(FSceneRenderer* InRenderer)
-        : FRenderPass(InRenderer)
-    {
-    }
+    FLightProbeRenderer(FSceneRenderer* InRenderer);
+    virtual ~FLightProbeRenderer();
 
     bool Initialize(FFrameResources& FrameResources);
-    void Release();
-
     void RenderSkyLightProbe(FRHICommandList& CommandList, FFrameResources& Resources);
 
 private:
     bool CreateSkyLightResources(FFrameResources& Resources);
 
     FGPUTextureCompressor       Compressor;
-
     FRHIComputePipelineStateRef IrradianceGenPSO;
     FRHIComputeShaderRef        IrradianceGenShader;
     FRHIComputePipelineStateRef SpecularIrradianceGenPSO;

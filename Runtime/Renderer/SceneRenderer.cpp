@@ -101,6 +101,11 @@ static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
     "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer",
     true);
 
+static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
+    "Renderer.BasePass.OcclusionCulling",
+    "Should occlusion culling be performed or not",
+    false);
+
 FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {
     if (!GEngine)
@@ -127,6 +132,7 @@ FSceneRenderer::FSceneRenderer()
     , HaltonState()
     , DepthPrePass(nullptr)
     , BasePass(nullptr)
+    , OcclusionPass(nullptr)
     , DepthReducePass(nullptr)
     , TiledLightPass(nullptr)
     , PointLightRenderPass(nullptr)
@@ -135,12 +141,12 @@ FSceneRenderer::FSceneRenderer()
     , ShadowMaskRenderPass(nullptr)
     , ScreenSpaceOcclusionPass(nullptr)
     , SkyboxRenderPass(nullptr)
-    , LightProbeRenderer(this)
+    , LightProbeRenderer(nullptr)
+    , DebugRenderer(nullptr)
     , TemporalAA(nullptr)
     , ForwardPass(nullptr)
     , TonemapPass(nullptr)
     , RayTracer(this)
-    , DebugRenderer(this)
     , ShadingImage(nullptr)
     , ShadingRatePipeline(nullptr)
     , ShadingRateShader(nullptr)
@@ -158,6 +164,7 @@ FSceneRenderer::~FSceneRenderer()
 
     SAFE_DELETE(DepthPrePass);
     SAFE_DELETE(BasePass);
+    SAFE_DELETE(OcclusionPass);
     SAFE_DELETE(DepthReducePass);
     SAFE_DELETE(TiledLightPass);
     SAFE_DELETE(PointLightRenderPass);
@@ -170,10 +177,10 @@ FSceneRenderer::~FSceneRenderer()
     SAFE_DELETE(ForwardPass);
     SAFE_DELETE(FXAAPass);
     SAFE_DELETE(TonemapPass);
+    SAFE_DELETE(LightProbeRenderer);
+    SAFE_DELETE(DebugRenderer);
 
-    LightProbeRenderer.Release();
     RayTracer.Release();
-    DebugRenderer.Release();
 
     Resources.Release();
 
@@ -290,16 +297,10 @@ bool FSceneRenderer::Initialize()
     if (!InitShadingImage())
         return false;
 
-    if (!DebugRenderer.Initialize(Resources))
-        return false;
-
     if (!Resources.Initialize())
         return false;
 
     if (!InitializeRenderPasses())
-        return false;
-
-    if (!LightProbeRenderer.Initialize(Resources))
         return false;
 
     if (false/*GRHISupportsRayTracing*/)
@@ -310,7 +311,7 @@ bool FSceneRenderer::Initialize()
 
     // Copy over the texture
     {
-        LightProbeRenderer.RenderSkyLightProbe(CommandList, Resources);
+        LightProbeRenderer->RenderSkyLightProbe(CommandList, Resources);
         
         FRHITextureInfo IrradianceProbeInfo = Resources.Skylight.IrradianceMap->GetInfo();
         IrradianceProbeInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
@@ -373,12 +374,20 @@ bool FSceneRenderer::Initialize()
 
 bool FSceneRenderer::InitializeRenderPasses()
 {
+    DebugRenderer = new FDebugRenderer(this);
+    if (!DebugRenderer->Initialize(Resources))
+        return false;
+
     DepthPrePass = new FDepthPrePass(this);
     if (!DepthPrePass->Initialize(Resources))
         return false;
 
     BasePass = new FDeferredBasePass(this);
     if (!BasePass->Initialize(Resources))
+        return false;
+
+    OcclusionPass = new FOcclusionPass(this);
+    if (!OcclusionPass->Initialize(Resources))
         return false;
 
     TiledLightPass = new FTiledLightPass(this);
@@ -429,6 +438,10 @@ bool FSceneRenderer::InitializeRenderPasses()
     if (!FXAAPass->Initialize(Resources))
         return false;
 
+    LightProbeRenderer = new FLightProbeRenderer(this);
+    if (!LightProbeRenderer->Initialize(Resources))
+        return false;
+
     return true;
 }
 
@@ -458,43 +471,43 @@ void FSceneRenderer::Tick(FScene* Scene)
             LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, NewWidth, NewHeight);
 
             // TODO: Resources should not require a CommandList to be released safely
-            if (!DepthPrePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!DepthPrePass->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!BasePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!BasePass->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!TiledLightPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!TiledLightPass->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!DepthReducePass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!DepthReducePass->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!ScreenSpaceOcclusionPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!ScreenSpaceOcclusionPass->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!ShadowMaskRenderPass->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!ShadowMaskRenderPass->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
             }
 
-            if (!TemporalAA->ResizeResources(CommandList, Resources, NewWidth, NewHeight))
+            if (!TemporalAA->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();
                 return;
@@ -630,6 +643,12 @@ void FSceneRenderer::Tick(FScene* Scene)
     if (CVarBasePassEnabled.GetValue())
     {
         BasePass->Execute(CommandList, Resources, Scene);
+    }
+
+    // Occlusion Pass
+    if (CVarBasePassOcclusionCulling.GetValue())
+    {
+        OcclusionPass->Execute(CommandList, Resources, Scene);
     }
 
     // Depth Reduce
@@ -796,13 +815,13 @@ void FSceneRenderer::Tick(FScene* Scene)
     // Debug PointLights
     if (CVarDrawPointLights.GetValue())
     {
-        DebugRenderer.RenderPointLights(CommandList, Resources, Scene);
+        DebugRenderer->RenderPointLights(CommandList, Resources, Scene);
     }
 
     // Debug AABBs
     if (CVarDrawAABBs.GetValue())
     {
-        DebugRenderer.RenderObjectAABBs(CommandList, Resources, Scene);
+        DebugRenderer->RenderObjectAABBs(CommandList, Resources, Scene);
     }
 
     // Temporal AA

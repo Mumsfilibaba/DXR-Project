@@ -54,15 +54,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 
         ImGui::NewLine();
 
-        ImGui::PlotHistogram(
-            "",
-            GPUFrameTime.Samples.Data(),
-            GPUFrameTime.SampleCount,
-            GPUFrameTime.CurrentSample,
-            nullptr,
-            0.0f,
-            ImGui_GetMaxLimit(Avg),
-            ImVec2(Width * 0.9825f, 80.0f));
+        ImGui::PlotHistogram("", GPUFrameTime.Samples.Data(), GPUFrameTime.SampleCount, GPUFrameTime.CurrentSample, nullptr, 0.0f, ImGui_GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
 
         ImGui::EndTable();
     }
@@ -124,9 +116,9 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
     //    ImGui::EndTable();
     //}
 
-    if (ImGui::BeginTable("Functions", 4, TableFlags))
+    if (ImGui::BeginTable("RenderPasses", 4, TableFlags))
     {
-        ImGui::TableSetupColumn("Trace Name");
+        ImGui::TableSetupColumn("Name");
         ImGui::TableSetupColumn("Avg");
         ImGui::TableSetupColumn("Min");
         ImGui::TableSetupColumn("Max");
@@ -137,18 +129,18 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
         {
             ImGui::TableNextRow();
 
-            float Avg = Sample.Second.GetAverage();
-            float Min = Sample.Second.Min;
-            float Max = Sample.Second.Max;
+            const float Avg = Sample.Second.GetAverage();
+            const float Min = Sample.Second.Min;
+            const float Max = Sample.Second.Max;
 
             ImGui::TableSetColumnIndex(0);
             ImGui::Text("%s", Sample.First.GetCString());
             ImGui::TableSetColumnIndex(1);
-            ImGui_PrintTime(Avg);
+            ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Avg));
             ImGui::TableSetColumnIndex(2);
-            ImGui_PrintTime(Min);
+            ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Min));
             ImGui::TableSetColumnIndex(3);
-            ImGui_PrintTime(Max);
+            ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Max));
         }
 
         Samples.Clear();
