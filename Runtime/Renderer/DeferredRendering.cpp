@@ -288,14 +288,9 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
         for (FProxySceneComponent* Component : Batch.Primitives)
         {
-            if (Component->CurrentOcclusionQuery)
+            if (Component->IsOccluded())
             {
-                uint64 NumSamples;
-                GetRHI()->RHIGetQueryResult(Component->CurrentOcclusionQuery, NumSamples);
-                if (!NumSamples)
-                {
-                    continue;
-                }
+                continue;
             }
 
             if (Material->HasAlphaMask() || Material->IsDoubleSided())
@@ -654,14 +649,9 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
         for (const FProxySceneComponent* Component : Batch.Primitives)
         {
-            if (Component->CurrentOcclusionQuery)
+            if (Component->IsOccluded())
             {
-                uint64 NumSamples;
-                GetRHI()->RHIGetQueryResult(Component->CurrentOcclusionQuery, NumSamples);
-                if (!NumSamples)
-                {
-                    continue;
-                }
+                continue;
             }
 
             CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
@@ -1382,30 +1372,38 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
     } TransformPerObject;
     TransformPerObject.TransformInv = FMatrix4::Identity();
 
+    CommandList.SetGraphicsPipelineState(PipelineState.Get());
+    CommandList.SetVertexBuffers(MakeArrayView(&CubeVertexBuffer, 1), 0);
+    CommandList.SetIndexBuffer(CubeIndexBuffer.Get(), CubeIndexFormat);
+    CommandList.SetConstantBuffer(VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
+
     for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
     {
-        CommandList.SetGraphicsPipelineState(PipelineState.Get());
-        CommandList.SetConstantBuffer(VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
-
+        // Create Query
+        Component->CurrentOcclusionQueryIndex = (Component->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
         Component->CurrentOcclusionQuery = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
+
         if (!Component->CurrentOcclusionQuery)
         {
-            Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex] = RHICreateQuery(EQueryType::Occlusion);
-            Component->CurrentOcclusionQuery = Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex];
-        }
+            FRHIQuery* NewOcclusionQuery = RHICreateQuery(EQueryType::Occlusion);
+            if (!NewOcclusionQuery)
+            {
+                continue;
+            }
 
-        CommandList.SetVertexBuffers(MakeArrayView(&CubeVertexBuffer, 1), 0);
-        CommandList.SetIndexBuffer(CubeIndexBuffer.Get(), CubeIndexFormat);
+            Component->OcclusionQueries[Component->CurrentOcclusionQueryIndex] = NewOcclusionQuery;
+            Component->CurrentOcclusionQuery = NewOcclusionQuery;
+        }
 
         // Create Translation Matrix for BoundingBox
         FAABB& Box = Component->Mesh->BoundingBox;
 
-        FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
-        FVector3 Position = Box.GetCenter();
-
+        FVector3 Scale             = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+        FVector3 Position          = Box.GetCenter();
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
         FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
+
         TransformMatrix = TransformMatrix.Transpose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
         TransformMatrix = TransformMatrix.Transpose();
@@ -1416,8 +1414,6 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
         CommandList.BeginQuery(Component->CurrentOcclusionQuery);
         CommandList.DrawIndexedInstanced(CubeIndexCount, 1, 0, 0, 0);
         CommandList.EndQuery(Component->CurrentOcclusionQuery);
-
-        Component->CurrentOcclusionQueryIndex = (Component->CurrentOcclusionQueryIndex + 1) % NUM_OCCLUSION_QUERIES;
     }
 
     CommandList.EndRenderPass();

@@ -1,4 +1,5 @@
 #include "ProxySceneComponent.h"
+#include "RHI/RHI.h"
 #include "RHI/RHIQuery.h"
 #include "Core/Memory/Memory.h"
 
@@ -14,6 +15,7 @@ FProxySceneComponent::FProxySceneComponent()
     , NumIndices(0)
     , IndexFormat(EIndexFormat::Unknown)
     , CurrentOcclusionQueryIndex(0)
+    , bIsOccluded(false)
 {
     FMemory::Memzero(OcclusionQueries, sizeof(OcclusionQueries));
 }
@@ -27,4 +29,34 @@ FProxySceneComponent::~FProxySceneComponent()
             Query->Release();
         }
     }
+}
+
+void FProxySceneComponent::UpdateOcclusion()
+{
+    if (!FrustumVisibility.bWasVisible)
+    {
+        bIsOccluded = false;
+        return;
+    }
+
+    if (!CurrentOcclusionQuery)
+    {
+        bIsOccluded = false;
+        return;
+    }
+
+    uint64 NumSamples;
+    if (!GetRHI()->RHIGetQueryResult(CurrentOcclusionQuery, NumSamples))
+    {
+        bIsOccluded = false;
+        return;
+    }
+
+    if (!NumSamples)
+    {
+        bIsOccluded = true;
+        return;
+    }
+
+    bIsOccluded = false;
 }
