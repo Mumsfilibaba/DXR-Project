@@ -1022,8 +1022,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
                 CHECK(PipelineState != nullptr);
-                CommandList.SetGraphicsPipelineState(PipelineState);
 
+                CommandList.SetGraphicsPipelineState(PipelineState);
                 CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
 
                 if (Material->HasAlphaMask())

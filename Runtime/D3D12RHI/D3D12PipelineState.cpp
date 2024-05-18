@@ -387,12 +387,13 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
     FD3D12HashableViewInstanceDesc ViewInstanceDesc;
     PipelineStream.ViewInstancingDesc.Flags = ViewInstanceDesc.Flags;
 
-    if (Initializer.ViewInstancingInfo.NumArraySlices > 0)
+    if (Initializer.ViewInstancingInfo.NumArraySlices)
     {
         ViewInstanceDesc.ViewInstanceCount = FMath::Min<uint32>(Initializer.ViewInstancingInfo.NumArraySlices, D3D12_MAX_VIEW_INSTANCE_COUNT);
         for (uint32 Index = 0; Index < ViewInstanceDesc.ViewInstanceCount; Index++)
         {
-            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Initializer.ViewInstancingInfo.StartRenderTargetArrayIndex + Index;
+            // NOTE: This does not work on NVIDIA for some reason, only way to work around this is by using the SV_RenderTargetArrayIndex
+            ViewInstanceDesc.ViewInstanceLocations[Index].RenderTargetArrayIndex = Initializer.ViewInstancingInfo.StartRenderTargetArrayIndex;
             ViewInstanceDesc.ViewInstanceLocations[Index].ViewportArrayIndex = 0;
         }
 

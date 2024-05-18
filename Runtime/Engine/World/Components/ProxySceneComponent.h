@@ -6,7 +6,7 @@ class FRHIBuffer;
 class FRHIQuery;
 class FRHIRayTracingGeometry;
 
-#define NUM_OCCLUSION_QUERIES (6)
+#define NUM_OCCLUSION_QUERIES (3)
 
 class FProxySceneComponent
 {

@@ -33,6 +33,10 @@
     #define ENABLE_POINTLIGHT_VIEW_INSTANCING (0)
 #endif
 
+#if SHADER_LANG == SHADER_LANG_HLSL
+    #define ENABLE_RENDER_TARGET_VIEW_INDEX (1)
+#endif
+
 #define NUM_CUBE_FACES (6)
 #define NUM_CUBE_FACES_HALF (3)
 
@@ -95,6 +99,12 @@ struct FVSCascadeOutput
 #else
     float4 Position : SV_Position;
 #endif
+
+// NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
+// and have the RenderTargetArrayIndex inside the PSO to be set to BaseLayer which then gets offset by using SV_RenderTargetArrayIndex
+#if ENABLE_CASCADE_VIEW_INSTANCING && ENABLE_RENDER_TARGET_VIEW_INDEX
+    uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;
+#endif
 };
 
 FVSCascadeOutput Cascade_VSMain(
@@ -116,6 +126,9 @@ FVSCascadeOutput Cascade_VSMain(
 #else
 #if ENABLE_CASCADE_VIEW_INSTANCING
     const int CascadeIndex = min(ViewID, MAX_CASCADES - 1);
+#if ENABLE_RENDER_TARGET_VIEW_INDEX
+    Output.RenderTargetArrayIndex = CascadeIndex;
+#endif
 #else
     const int CascadeIndex = min(PerCascadeBuffer.CascadeIndex, MAX_CASCADES - 1);
 #endif

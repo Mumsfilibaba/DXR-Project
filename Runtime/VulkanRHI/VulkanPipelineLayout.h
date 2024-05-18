@@ -250,6 +250,7 @@ private:
     TArray<FVulkanDescriptorRemappingInfo> SetLayoutRemappings;
     FPushConstantsInfo                     ConstantsInfo;
     FStageDescriptorMap                    DescriptorBindMap[ShaderVisibility_Count];
+    FString                                DebugName;
 };
 
 class FVulkanPipelineLayoutManager : public FVulkanDeviceChild

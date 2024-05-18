@@ -135,7 +135,11 @@ bool FVulkanPipelineLayout::Initialize(const FVulkanPipelineLayoutInfo& LayoutIn
 
 void FVulkanPipelineLayout::SetDebugName(const CHAR* InName)
 {
-    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName, LayoutHandle, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
+    if (InName)
+    {
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName, LayoutHandle, VK_OBJECT_TYPE_PIPELINE_LAYOUT);
+        DebugName = InName;
+    }
 }
 
 bool FVulkanPipelineLayout::GetDescriptorBinding(EShaderVisibility ShaderStage, EResourceType ResourceType, int32 ResourceIndex, uint32& OutDescriptorSetIndex, uint32& OutBinding)

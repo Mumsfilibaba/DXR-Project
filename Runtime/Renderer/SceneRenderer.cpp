@@ -101,10 +101,11 @@ static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
     "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer",
     true);
 
+// NOTE: Does not work that well atm
 static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
     "Renderer.BasePass.OcclusionCulling",
     "Should occlusion culling be performed or not",
-    true);
+    false);
 
 FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {

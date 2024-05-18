@@ -214,6 +214,9 @@ void FVulkanCommandContextState::SetGraphicsPipelineState(FVulkanGraphicsPipelin
             GraphicsState.CurrentLayout          = nullptr;
             GraphicsState.CurrentDescriptorState = nullptr;
         }
+
+        // NOTE: When we change PipelineLayout/PipelineState we need to ensure that PushConstants are also bound
+        GraphicsState.bBindPushConstants = true;
     }
 }
 
@@ -248,6 +251,9 @@ void FVulkanCommandContextState::SetComputePipelineState(FVulkanComputePipelineS
             ComputeState.CurrentLayout          = nullptr;
             ComputeState.CurrentDescriptorState = nullptr;
         }
+
+        // NOTE: When we change PipelineLayout/PipelineState we need to ensure that PushConstants are also bound
+        GraphicsState.bBindPushConstants = true;
     }
 }
 

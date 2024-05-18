@@ -353,7 +353,8 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     {
         // When not using HLSL, we want to emit SPIR-V
         CompileArgs.Emplace(L"-spirv");
-        
+        CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
+
         // NOTE: Change the entrypoint to be 'main', since this is always the entrypoint when we need to compile the
         // SPIRV into GLSL, and back to SPIRV. This happens when we change any bindings for resources.
         if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
@@ -577,7 +578,7 @@ bool FShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutS
         }
         
         // Create a view of the entrypoint name to ensure that we found the whole thing
-        // this is done in order to support entrypoints with spaces etc. between bracket
+        // this is done in order to support entry-points with spaces etc. between bracket
         // and actual entrypoint name.
         const int32 EntrypointLength = BracketPosition - Position;
         FStringView CurrentEntrypoint(OutSource.Data(), EntrypointLength, Position);
@@ -625,7 +626,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
         LOG_ERROR("[SPIRV-Cross Error] %s", Error);
     }, nullptr);
 
-    // The code size needs to be aligned to the elementsize
+    // The code size needs to be aligned to the element-size
     spvc_parsed_ir ParsedCode = nullptr;
     const int32 SpirvCodeSize = OutByteCode.Size() / sizeof(uint32);
     Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), SpirvCodeSize, &ParsedCode);
@@ -647,7 +648,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     // Modify options.
     spvc_compiler_options Options = nullptr;
     spvc_compiler_create_compiler_options(Compiler, &Options);
-    spvc_compiler_options_set_uint(Options, SPVC_COMPILER_OPTION_GLSL_VERSION, 450);
+    spvc_compiler_options_set_uint(Options, SPVC_COMPILER_OPTION_GLSL_VERSION, 460);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_FALSE);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_TRUE);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_VULKAN_SEMANTICS, SPVC_TRUE);
@@ -662,9 +663,9 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
         return false;
     }
 
-    // Create a new array (1 extra byte of slack for a null-terminator)
+    // Create a new array (1 extra byte for a null-terminator)
     const uint32 SourceLength = FCString::Strlen(NewSource);
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(NewSource), SourceLength * sizeof(CHAR), 1);
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(NewSource), (SourceLength + 1) * sizeof(uint8));
     NewShader[SourceLength] = 0;
 
     // Dump the metal file to disk
@@ -774,6 +775,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     // Transfer the SPIRV code into our format
     TArray<uint8> NewCode;
     NewCode.Resize(static_cast<int32>(ProgramSize) * sizeof(uint32));
+
     glslang_program_SPIRV_get(Program, reinterpret_cast<uint32*>(NewCode.Data()));
     OutByteCode = Move(NewCode);
     
@@ -810,7 +812,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
         LOG_ERROR("[SPIRV-Cross Error] %s", Error);
     }, nullptr);
 
-    // The code size needs to be aligned to the elementsize
+    // The code size needs to be aligned to the element-size
     constexpr uint32 ElementSize = sizeof(unsigned int) / sizeof(uint8);
     CHECK(OutByteCode.Size() % ElementSize == 0);
     const uint32 WordCount = OutByteCode.Size() / ElementSize;
@@ -844,8 +846,9 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
 
     // Create a new array
     const uint32 SourceLength = FCString::Strlen(MSLSource);
-    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), SourceLength * sizeof(const CHAR));
-    
+    TArray<uint8> NewShader(reinterpret_cast<const uint8*>(MSLSource), (SourceLength + 1) * sizeof(uint8));
+    NewShader[SourceLength] = 0;
+
     // Now we can destroy the context
     spvc_context_destroy(Context);
 
