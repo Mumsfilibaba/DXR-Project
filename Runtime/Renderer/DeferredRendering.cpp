@@ -1395,10 +1395,12 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
             Component->CurrentOcclusionQuery = NewOcclusionQuery;
         }
 
-        FVector3 Scale = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+        const FAABB& BoundingBox = Component->Mesh->BoundingBox;
+
+        FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
         Scale *= 1.2;
 
-        FVector3 Position          = Box.GetCenter();
+        FVector3 Position          = BoundingBox.GetCenter();
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
         FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
@@ -1410,7 +1412,7 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
         CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, 32);
 
         CommandList.BeginQuery(Component->CurrentOcclusionQuery);
-        CommandList.DrawIndexedInstanced(IndexCount, 1, 0, 0, 0);
+        CommandList.DrawIndexedInstanced(CubeIndexCount, 1, 0, 0, 0);
         CommandList.EndQuery(Component->CurrentOcclusionQuery);
     }
 
