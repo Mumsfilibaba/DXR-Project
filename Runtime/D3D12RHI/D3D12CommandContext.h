@@ -11,10 +11,8 @@
 class FD3D12ResourceBarrierBatcher
 {
 public:
-    FD3D12ResourceBarrierBatcher()
-        : Barriers()
-    {
-    }
+    FD3D12ResourceBarrierBatcher();
+    ~FD3D12ResourceBarrierBatcher();
 
     void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);

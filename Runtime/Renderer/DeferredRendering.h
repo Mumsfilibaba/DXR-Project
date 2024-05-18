@@ -87,8 +87,4 @@ public:
 private:
     FRHIVertexShaderRef          VertexShader;
     FRHIGraphicsPipelineStateRef PipelineState;
-    FRHIBufferRef                CubeVertexBuffer;
-    FRHIBufferRef                CubeIndexBuffer;
-    uint32                       CubeIndexCount;
-    EIndexFormat                 CubeIndexFormat;
 };

@@ -383,7 +383,10 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                     FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
                     CHECK(PipelineState  != nullptr);
+
                     CommandList.SetGraphicsPipelineState(PipelineState);
+                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
+                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
 
                     if (Material->HasAlphaMask())
                     {
@@ -394,9 +397,6 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                     }
-
-                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
-                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
 
                     for (FProxySceneComponent* Component : Batch.Primitives)
                     {
@@ -468,7 +468,10 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                 FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
                 CHECK(PipelineState  != nullptr);
+
                 CommandList.SetGraphicsPipelineState(PipelineState);
+                CommandList.SetConstantBuffer(Instance->GeometryShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
+                CommandList.SetConstantBuffer(Instance->PixelShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
 
                 if (Material->HasAlphaMask())
                 {
@@ -479,9 +482,6 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 {
                     CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                 }
-
-                CommandList.SetConstantBuffer(Instance->GeometryShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
-                CommandList.SetConstantBuffer(Instance->PixelShader.Get(), SinglePassShadowMapBuffer.Get(), 0);
 
                 for (FProxySceneComponent* Component : Batch.Primitives)
                 {
@@ -550,7 +550,10 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                     FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
                     CHECK(PipelineState  != nullptr);
+
                     CommandList.SetGraphicsPipelineState(PipelineState);
+                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerShadowMapBuffer.Get(), 0);
+                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                     if (Material->HasAlphaMask())
                     {
@@ -561,9 +564,6 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                     }
-
-                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerShadowMapBuffer.Get(), 0);
-                    CommandList.SetConstantBuffer(Instance->PixelShader.Get(), PerShadowMapBuffer.Get(), 0);
 
                     for (FProxySceneComponent* Component : Batch.Primitives)
                     {
@@ -1087,7 +1087,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
                 CHECK(PipelineState != nullptr);
+
                 CommandList.SetGraphicsPipelineState(PipelineState);
+                CommandList.SetShaderResourceView(Instance->GeometryShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
 
                 if (Material->HasAlphaMask())
                 {
@@ -1098,8 +1100,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                 }
-
-                CommandList.SetShaderResourceView(Instance->GeometryShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
 
                 for (const FProxySceneComponent* Component : Batch.Primitives)
                 {

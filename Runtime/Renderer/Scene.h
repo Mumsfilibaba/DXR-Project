@@ -10,6 +10,8 @@ class FMaterial;
 class FDirectionalLight;
 class FPointLight;
 
+extern bool GFreezeRendering;
+
 struct FMeshBatch
 {
     FMeshBatch(FMaterial* InMaterial)

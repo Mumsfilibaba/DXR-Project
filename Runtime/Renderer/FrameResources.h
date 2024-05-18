@@ -150,34 +150,36 @@ struct FProxyLightProbe
     TArray<FRHIUnorderedAccessView*>   WeakSpecularIrradianceMapUAVs;
 };
 
+struct FOcclusionVolume
+{
+    FRHIBufferRef VertexBuffer;
+    FRHIBufferRef IndexBuffer;
+    uint32        IndexCount;
+    EIndexFormat  IndexFormat;
+};
+
 struct FFrameResources
 {
-    FFrameResources()
-        : DirectionalLightDataDirty(true)
-        , CascadeSplitLambda(0.0f)
-        , CascadeGenerationDataDirty(true)
-        , BackBuffer(nullptr)
-    {
-    }
+    FFrameResources();
+    ~FFrameResources();
 
     bool Initialize();
     void Release();
-
     void BuildLightBuffers(FRHICommandList& CommandList, FScene* Scene);
 
-    const EFormat DepthBufferFormat  = EFormat::D32_Float;
-    const EFormat SSAOBufferFormat   = EFormat::R8_Unorm;
-    const EFormat FinalTargetFormat  = EFormat::R16G16B16A16_Float;
-    const EFormat RTOutputFormat     = EFormat::R16G16B16A16_Float;
-    const EFormat RenderTargetFormat = EFormat::R8G8B8A8_Unorm;
-    const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
-    const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
-    const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
-    const EFormat VelocityFormat     = EFormat::R16G16_Float;
-    const EFormat ShadowMaskFormat   = EFormat::R8_Unorm;
-    const EFormat ShadowMapFormat    = EFormat::D32_Float;
-    const EFormat LightProbeFormat   = EFormat::R11G11B10_Float;
+    const EFormat DepthBufferFormat   = EFormat::D32_Float;
+    const EFormat SSAOBufferFormat    = EFormat::R8_Unorm;
+    const EFormat FinalTargetFormat   = EFormat::R16G16B16A16_Float;
+    const EFormat RTOutputFormat      = EFormat::R16G16B16A16_Float;
+    const EFormat RenderTargetFormat  = EFormat::R8G8B8A8_Unorm;
+    const EFormat AlbedoFormat        = EFormat::R8G8B8A8_Unorm;
+    const EFormat MaterialFormat      = EFormat::R8G8B8A8_Unorm;
+    const EFormat NormalFormat        = EFormat::R10G10B10A2_Unorm;
+    const EFormat ViewNormalFormat    = EFormat::R10G10B10A2_Unorm;
+    const EFormat VelocityFormat      = EFormat::R16G16_Float;
+    const EFormat ShadowMaskFormat    = EFormat::R8_Unorm;
+    const EFormat ShadowMapFormat     = EFormat::D32_Float;
+    const EFormat LightProbeFormat    = EFormat::R11G11B10_Float;
     
     // Limits
     const uint32 MaxPointLights       = 256;
@@ -256,6 +258,9 @@ struct FFrameResources
     FRHIBufferRef              CascadeSplitsBuffer;
     FRHIShaderResourceViewRef  CascadeSplitsBufferSRV;
     FRHIUnorderedAccessViewRef CascadeSplitsBufferUAV;
+
+    // Occlusion Cube
+    FOcclusionVolume           OcclusionVolume;
 
     // SkyLight
     FProxyLightProbe           Skylight;

@@ -19,93 +19,127 @@
 static TAutoConsoleVariable<bool> CVarEnableSSAO(
     "Renderer.Feature.SSAO",
     "Enables Screen-Space Ambient Occlusion",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarEnableFXAA(
     "Renderer.Feature.FXAA",
     "Enables FXAA for Anti-Aliasing",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarEnableTemporalAA(
     "Renderer.Feature.TemporalAA",
     "Enables Temporal Anti-Aliasing",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarEnableVariableRateShading(
     "Renderer.Feature.VariableRateShading",
     "Enables VRS (Variable Rate Shading)",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarPrePassEnabled(
     "Renderer.Feature.PrePass",
     "Enables Pre-Pass",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarBasePassEnabled(
     "Renderer.Feature.BasePass",
     "Enables BasePass (Disabling this disables most rendering)",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarShadowsEnabled(
     "Renderer.Feature.Shadows",
     "Enables Rendering of ShadowMaps",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarShadowMaskEnabled(
     "Renderer.Feature.ShadowMask",
     "Enables Rendering of ShadowMask for SunShadows",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarPointLightShadowsEnabled(
     "Renderer.Feature.PointLightShadows",
     "Enables Rendering of PointLight ShadowMaps",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarSunShadowsEnabled(
     "Renderer.Feature.SunShadows",
     "Enables Rendering of SunLight/DirectionalLight ShadowMaps",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarSkyboxEnabled(
     "Renderer.Feature.Skybox",
     "Enables Rendering of the Skybox",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarDrawAABBs(
     "Renderer.Debug.DrawAABBs",
     "Draws all the objects bounding boxes (AABB)",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
+
+
+static TAutoConsoleVariable<bool> CVarDrawOcclusionVolumes(
+    "Renderer.Debug.DrawOcclusionVolumes",
+    "Draws all the objects bounding boxes that are used for occlusion culling",
+    false,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarDrawPointLights(
     "Renderer.Debug.DrawPointLights", 
     "Draws all the PointLights as spheres with the light-color",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarVSyncEnabled(
     "Renderer.Feature.VerticalSync",
     "Enables Vertical-Sync", 
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarFrustumCullEnabled(
     "Renderer.Feature.FrustumCulling",
     "Enables Frustum Culling (CPU) for the main scene and for all shadow frustums",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarRayTracingEnabled(
     "Renderer.Feature.RayTracing",
     "Enables Ray Tracing (Currently broken)",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
     "Renderer.PrePass.DepthReduce",
     "Set to true to reduce the DepthBuffer to find the Min- and Max Depth in the DepthBuffer",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 // NOTE: Does not work that well atm
 static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
     "Renderer.BasePass.OcclusionCulling",
     "Should occlusion culling be performed or not",
-    false);
+    true,
+    EConsoleVariableFlags::Default);
+
+static FAutoConsoleCommand CVarFreezeRendering(
+    "Renderer.FreezeRendering",
+    "Freezes the updating of Frustum and Occlusion culling",
+    FConsoleCommandDelegate::CreateLambda([]()
+    {
+        GFreezeRendering = !GFreezeRendering;
+    }));
+
 
 FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
 {
@@ -596,18 +630,21 @@ void FSceneRenderer::Tick(FScene* Scene)
     }
 
     // Update occlusion
-    if (CVarBasePassOcclusionCulling.GetValue())
+    if (!GFreezeRendering)
     {
-        for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+        if (CVarBasePassOcclusionCulling.GetValue())
         {
-            Component->UpdateOcclusion();
+            for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+            {
+                Component->UpdateOcclusion();
+            }
         }
-    }
-    else
-    {
-        for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+        else
         {
-            Component->bIsOccluded = false;
+            for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+            {
+                Component->NumFramesOccluded = 0;
+            }
         }
     }
 
@@ -756,7 +793,11 @@ void FSceneRenderer::Tick(FScene* Scene)
         // Directional Light
         if (CVarSunShadowsEnabled.GetValue())
         {
-            CascadeGenerationPass->Execute(CommandList, Resources);
+            if (!GFreezeRendering)
+            {
+                CascadeGenerationPass->Execute(CommandList, Resources);
+            }
+
             CascadedShadowsRenderPass->Execute(CommandList, Resources, Scene);
         }
     }
@@ -839,6 +880,12 @@ void FSceneRenderer::Tick(FScene* Scene)
     if (CVarDrawAABBs.GetValue())
     {
         DebugRenderer->RenderObjectAABBs(CommandList, Resources, Scene);
+    }
+
+    // Debug Occlusion Boxes
+    if (CVarDrawOcclusionVolumes.GetValue())
+    {
+        DebugRenderer->RenderOcclusionVolumes(CommandList, Resources, Scene);
     }
 
     // Temporal AA

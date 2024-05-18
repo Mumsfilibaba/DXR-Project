@@ -354,7 +354,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
             {
                 const uint32 Index = Shader->GetShaderVisibility();
                 RootSignatureLayout.ResourceCounts[Index] = Shader->GetResourceCount();
-                Num32BitConstants += RootSignatureLayout.ResourceCounts[Index].Num32BitConstants;
+                Num32BitConstants = FMath::Max<uint8>(RootSignatureLayout.ResourceCounts[Index].Num32BitConstants, Num32BitConstants);
                 RootSignatureLayout.ResourceCounts[Index].Num32BitConstants = 0;
             }
 

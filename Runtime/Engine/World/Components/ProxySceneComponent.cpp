@@ -15,7 +15,7 @@ FProxySceneComponent::FProxySceneComponent()
     , NumIndices(0)
     , IndexFormat(EIndexFormat::Unknown)
     , CurrentOcclusionQueryIndex(0)
-    , bIsOccluded(false)
+    , NumFramesOccluded(0)
 {
     FMemory::Memzero(OcclusionQueries, sizeof(OcclusionQueries));
 }
@@ -33,30 +33,38 @@ FProxySceneComponent::~FProxySceneComponent()
 
 void FProxySceneComponent::UpdateOcclusion()
 {
-    if (!FrustumVisibility.bWasVisible)
+    const auto CheckOcclusion = [this]()
     {
-        bIsOccluded = false;
-        return;
-    }
+        if (!FrustumVisibility.bWasVisible)
+        {
+            return false;
+        }
 
-    if (!CurrentOcclusionQuery)
+        if (!CurrentOcclusionQuery)
+        {
+            return false;
+        }
+
+        uint64 NumSamples;
+        if (!GetRHI()->RHIGetQueryResult(CurrentOcclusionQuery, NumSamples))
+        {
+            return false;
+        }
+
+        if (!NumSamples)
+        {
+            return true;
+        }
+
+        return false;
+    };
+
+    if (CheckOcclusion())
     {
-        bIsOccluded = false;
-        return;
+        NumFramesOccluded++;
     }
-
-    uint64 NumSamples;
-    if (!GetRHI()->RHIGetQueryResult(CurrentOcclusionQuery, NumSamples))
+    else
     {
-        bIsOccluded = false;
-        return;
+        NumFramesOccluded = 0;
     }
-
-    if (!NumSamples)
-    {
-        bIsOccluded = true;
-        return;
-    }
-
-    bIsOccluded = false;
 }

@@ -30,7 +30,7 @@ public:
 
     bool IsOccluded() const
     {
-        return bIsOccluded;
+        return NumFramesOccluded > NUM_OCCLUSION_QUERIES;
     }
 
     void UpdateFrustumVisbility(bool bIsVisible)
@@ -48,7 +48,7 @@ public:
     FRHIQuery*              CurrentOcclusionQuery;
     FRHIQuery*              OcclusionQueries[NUM_OCCLUSION_QUERIES];
     uint32                  CurrentOcclusionQueryIndex;
-    bool                    bIsOccluded;
+    uint32                  NumFramesOccluded;
     FFrustumVisibility      FrustumVisibility;
 
     // Geometry Objects

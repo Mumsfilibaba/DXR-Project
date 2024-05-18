@@ -12,19 +12,26 @@ public:
     virtual ~FDebugRenderer();
 
     bool Initialize(FFrameResources& Resources);
-
     void RenderObjectAABBs(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
+    void RenderOcclusionVolumes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
     void RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene);
 
 private:
+    // Object AABBS
     FRHIBufferRef                AABBVertexBuffer;
     FRHIBufferRef                AABBIndexBuffer;
     uint32                       AABBIndexCount;
 
-    FRHIGraphicsPipelineStateRef AABBDebugPipelineState;
+    FRHIGraphicsPipelineStateRef AABBPipelineState;
     FRHIVertexShaderRef          AABBVertexShader;
     FRHIPixelShaderRef           AABBPixelShader;
 
+    // Occlusion Volumes
+    FRHIGraphicsPipelineStateRef OcclusionVolumePSO;
+    FRHIVertexShaderRef          OcclusionVolumeVS;
+    FRHIPixelShaderRef           OcclusionVolumePS;
+
+    // PointLights
     FRHIGraphicsPipelineStateRef LightDebugPSO;
     FRHIVertexShaderRef          LightDebugVS;
     FRHIPixelShaderRef           LightDebugPS;

@@ -16,6 +16,15 @@
 #include "Core/Misc/FrameProfiler.h"
 #include <pix.h>
 
+FD3D12ResourceBarrierBatcher::FD3D12ResourceBarrierBatcher()
+    : Barriers()
+{
+}
+
+FD3D12ResourceBarrierBatcher::~FD3D12ResourceBarrierBatcher()
+{
+}
+
 void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
     CHECK(Resource != nullptr);

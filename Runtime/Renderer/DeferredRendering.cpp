@@ -1190,9 +1190,6 @@ FOcclusionPass::FOcclusionPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , VertexShader(nullptr)
     , PipelineState(nullptr)
-    , CubeVertexBuffer(nullptr)
-    , CubeIndexBuffer(nullptr)
-    , CubeIndexCount(0)
 {
 }
 
@@ -1200,8 +1197,6 @@ FOcclusionPass::~FOcclusionPass()
 {
     VertexShader.Reset();
     PipelineState.Reset();
-    CubeVertexBuffer.Reset();
-    CubeIndexBuffer.Reset();
 }
 
 bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
@@ -1284,62 +1279,6 @@ bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
         PipelineState->SetDebugName("Occlusion Culling PipelineState");
     }
 
-    TStaticArray<FVector3, 8> Vertices =
-    {
-        FVector3(-0.5f, -0.5f, -0.5f), // 0
-        FVector3( 0.5f, -0.5f, -0.5f), // 1
-        FVector3( 0.5f,  0.5f, -0.5f), // 2
-        FVector3(-0.5f,  0.5f, -0.5f), // 3
-        FVector3(-0.5f, -0.5f,  0.5f), // 4
-        FVector3( 0.5f, -0.5f,  0.5f), // 5
-        FVector3( 0.5f,  0.5f,  0.5f), // 6
-        FVector3(-0.5f,  0.5f,  0.5f)  // 7
-    };
-
-    FRHIBufferInfo VBInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
-    CubeVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::Common, Vertices.Data());
-    if (!CubeVertexBuffer)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        CubeVertexBuffer->SetDebugName("Occlusion Cube VertexBuffer");
-    }
-
-    // Create IndexBuffer
-    TStaticArray<uint16, 36> Indices =
-    {
-        // Front face
-        4, 5, 6, 4, 6, 7,
-        // Back face
-        0, 3, 2, 0, 2, 1,
-        // Left face
-        0, 4, 7, 0, 7, 3,
-        // Right face
-        1, 2, 6, 1, 6, 5,
-        // Top face
-        3, 7, 6, 3, 6, 2,
-        // Bottom face
-        0, 1, 5, 0, 5, 4
-    };
-
-    FRHIBufferInfo IBInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
-    CubeIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::Common, Indices.Data());
-    if (!CubeIndexBuffer)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        CubeIndexBuffer->SetDebugName("Occlusion Cube IndexBuffer");
-
-        CubeIndexCount  = Indices.Size();
-        CubeIndexFormat = EIndexFormat::uint16;
-    }
-
     return true;
 }
 
@@ -1373,8 +1312,8 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
     TransformPerObject.TransformInv = FMatrix4::Identity();
 
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
-    CommandList.SetVertexBuffers(MakeArrayView(&CubeVertexBuffer, 1), 0);
-    CommandList.SetIndexBuffer(CubeIndexBuffer.Get(), CubeIndexFormat);
+    CommandList.SetVertexBuffers(MakeArrayView(&FrameResources.OcclusionVolume.VertexBuffer, 1), 0);
+    CommandList.SetIndexBuffer(FrameResources.OcclusionVolume.IndexBuffer.Get(), FrameResources.OcclusionVolume.IndexFormat);
     CommandList.SetConstantBuffer(VertexShader.Get(), FrameResources.CameraBuffer.Get(), 0);
 
     for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
@@ -1398,21 +1337,22 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
         const FAABB& BoundingBox = Component->Mesh->BoundingBox;
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
-        Scale *= 1.2;
+        Scale.x = FMath::Max<float>(Scale.x, 0.005f);
+        Scale.y = FMath::Max<float>(Scale.y, 0.005f);
+        Scale.z = FMath::Max<float>(Scale.z, 0.005f);
 
-        FVector3 Position          = BoundingBox.GetCenter();
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
-        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
-
-        TransformMatrix = TransformMatrix.Transpose();
-        TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
-        TransformMatrix = TransformMatrix.Transpose();
+        FVector3 Position            = BoundingBox.GetCenter();
+        FMatrix4 TranslationMatrix   = FMatrix4::Translation(Position.x, Position.y, Position.z);
+        FMatrix4 ScaleMatrix         = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
+        TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
+        TransformPerObject.Transform = TransformPerObject.Transform.Transpose();
+        TransformPerObject.Transform = (ScaleMatrix * TranslationMatrix) * TransformPerObject.Transform;
+        TransformPerObject.Transform = TransformPerObject.Transform.Transpose();
 
         CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, 32);
 
         CommandList.BeginQuery(Component->CurrentOcclusionQuery);
-        CommandList.DrawIndexedInstanced(CubeIndexCount, 1, 0, 0, 0);
+        CommandList.DrawIndexedInstanced(FrameResources.OcclusionVolume.IndexCount, 1, 0, 0, 0);
         CommandList.EndQuery(Component->CurrentOcclusionQuery);
     }
 

@@ -82,7 +82,6 @@ bool FD3D12LocalDescriptorHeap::HasSpace(uint32 NumHandles) const
     return true;
 }
 
-
 FD3D12DescriptorCache::FD3D12DescriptorCache(FD3D12Device* InDevice, FD3D12CommandContext& InContext)
     : FD3D12DeviceChild(InDevice)
     , Context(InContext)
@@ -182,6 +181,11 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
         return;
     }
 
+    if (!NumCBVs)
+    {
+        return;
+    }
+
     if (Cache.IsDirty(ShaderStage) || GD3D12ForceBinding)
     {
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_CONSTANT_BUFFER_COUNT];
@@ -205,15 +209,36 @@ void FD3D12DescriptorCache::SetCBVs(FD3D12ConstantBufferCache& Cache, FD3D12Root
 
         const UINT DestRangeSize = NumCBVs;
         GetDevice()->GetD3D12Device()->CopyDescriptors(
-            1, 
-            &OnlineHandle, 
-            &DestRangeSize, 
+            1,
+            &OnlineHandle,
+            &DestRangeSize,
             NumCBVs,
-            OfflineHandles, 
+            OfflineHandles,
             nullptr,
             D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
         Cache.bDirty[ShaderStage] = false;
+    }
+    else
+    {
+        for (EShaderVisibility i = ShaderVisibility_All; i <= ShaderVisibility_Count; i = EShaderVisibility(i + 1))
+        {
+            for (EShaderVisibility j = ShaderVisibility_All; j <= ShaderVisibility_Count; j = EShaderVisibility(j + 1))
+            {
+                if (i != j)
+                {
+                    auto Handle0 = ConstantBufferCache.Handles[i];
+                    auto Handle1 = ConstantBufferCache.Handles[j];
+                    if (Handle0.ptr == Handle1.ptr)
+                    {
+                        if (Handle0.ptr != 0)
+                        {
+                            DEBUG_BREAK();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     D3D12_GPU_DESCRIPTOR_HANDLE GPUDescriptorHandle = ConstantBufferCache.Handles[ShaderStage];
@@ -233,6 +258,11 @@ void FD3D12DescriptorCache::SetSRVs(FD3D12ShaderResourceViewCache& Cache, FD3D12
 {
     int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_SRV);
     if (ParameterIndex < 0)
+    {
+        return;
+    }
+
+    if (!NumSRVs)
     {
         return;
     }
@@ -292,6 +322,11 @@ void FD3D12DescriptorCache::SetUAVs(FD3D12UnorderedAccessViewCache& Cache, FD3D1
         return;
     }
 
+    if (!NumUAVs)
+    {
+        return;
+    }
+
     if (Cache.IsDirty(ShaderStage) || GD3D12ForceBinding)
     {
         D3D12_CPU_DESCRIPTOR_HANDLE OfflineHandles[D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT];
@@ -343,6 +378,11 @@ void FD3D12DescriptorCache::SetSamplers(FD3D12SamplerStateCache& Cache, FD3D12Ro
 {
     int32 ParameterIndex = RootSignature->GetRootParameterIndex(ShaderStage, EResourceType::ResourceType_Sampler);
     if (ParameterIndex < 0)
+    {
+        return;
+    }
+
+    if (!NumSamplers)
     {
         return;
     }

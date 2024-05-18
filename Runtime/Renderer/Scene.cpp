@@ -7,6 +7,8 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
+extern bool GFreezeRendering = false;
+
 FScene::FScene(FWorld* InWorld)
     : IScene()
     , World(InWorld)
@@ -47,6 +49,11 @@ FScene::~FScene()
 
 void FScene::Tick()
 {
+    if (GFreezeRendering)
+    {
+        return;
+    }
+
     // Updates LightData
     UpdateLights();
 

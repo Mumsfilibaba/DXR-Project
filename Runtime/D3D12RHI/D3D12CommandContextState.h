@@ -36,7 +36,6 @@ public:
     void SetSampler(FD3D12SamplerState* SamplerState, EShaderVisibility ShaderStage, uint32 SamplerIndex);
     void SetShaderConstants(const uint32* ShaderConstants, uint32 NumShaderConstants);
 
-public:
     FORCEINLINE FD3D12CommandContext& GetContext()
     {
         return Context;
@@ -47,7 +46,6 @@ public:
         return CommonState.DescriptorCache;
     }
 
-public:
     FORCEINLINE FD3D12GraphicsPipelineState* GetGraphicsPipelineState() const
     {
         return GraphicsState.PipelineState.Get();
@@ -137,16 +135,15 @@ private:
 
         FD3D12GraphicsPipelineStateRef PipelineState;
 
-        float BlendFactor[4];
+        float                   BlendFactor[4];
 
-        D3D12_VIEWPORT Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32         NumViewports;
+        D3D12_VIEWPORT          Viewports[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                  NumViewports;
+        D3D12_RECT              ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
+        uint32                  NumScissorRects;
 
-        D3D12_RECT ScissorRects[D3D12_MAX_VIEWPORT_AND_SCISSORRECT_COUNT];
-        uint32     NumScissorRects;
-
-        FD3D12Texture*     ShadingRateImage;
-        D3D12_SHADING_RATE ShadingRate;
+        FD3D12Texture*          ShadingRateImage;
+        D3D12_SHADING_RATE      ShadingRate;
 
         FD3D12RenderTargetCache RTCache;
         FD3D12IndexBufferCache  IBCache;

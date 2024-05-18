@@ -70,6 +70,18 @@ static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
     return ClosestPowerOf2(Result);
 }
 
+FFrameResources::FFrameResources()
+    : DirectionalLightDataDirty(true)
+    , CascadeSplitLambda(0.0f)
+    , CascadeGenerationDataDirty(true)
+    , BackBuffer(nullptr)
+{
+}
+
+FFrameResources::~FFrameResources()
+{
+}
+
 bool FFrameResources::Initialize()
 {
     // Initialize the light-setup from CVars
@@ -78,96 +90,162 @@ bool FFrameResources::Initialize()
     IrradianceProbeSize         = ClampTextureSize(32, 512, CVarEnvironmentIrradianceProbeSize.GetValue());
     SpecularIrradianceProbeSize = ClampTextureSize(256, 1024, CVarEnvironmentSpecularIrradianceProbeSize.GetValue());
 
+    FRHIBufferInfo BufferInfo(sizeof(FDirectionalLightDataHLSL), sizeof(FDirectionalLightDataHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    DirectionalLightDataBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    if (!DirectionalLightDataBuffer)
     {
-        FRHIBufferInfo BufferInfo(sizeof(FDirectionalLightDataHLSL), sizeof(FDirectionalLightDataHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-        DirectionalLightDataBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
-        if (!DirectionalLightDataBuffer)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            DirectionalLightDataBuffer->SetDebugName("DirectionalLightData Buffer");
-        }
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        DirectionalLightDataBuffer->SetDebugName("DirectionalLightData Buffer");
     }
 
+    BufferInfo = FRHIBufferInfo(sizeof(FCascadeGenerationInfoHLSL), sizeof(FCascadeGenerationInfoHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    CascadeGenerationDataBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    if (!CascadeGenerationDataBuffer)
     {
-        FRHIBufferInfo BufferInfo(sizeof(FCascadeGenerationInfoHLSL), sizeof(FCascadeGenerationInfoHLSL), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-        CascadeGenerationDataBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
-        if (!CascadeGenerationDataBuffer)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            CascadeGenerationDataBuffer->SetDebugName("CascadeGenerationData Buffer");
-        }
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        CascadeGenerationDataBuffer->SetDebugName("CascadeGenerationData Buffer");
     }
 
-    {
-        PointLightsData.Reserve(MAX_LIGHTS_PER_TILE);
+    PointLightsData.Reserve(MAX_LIGHTS_PER_TILE);
 
-        FRHIBufferInfo BufferInfo(PointLightsData.CapacityInBytes(), PointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-        PointLightsBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
-        if (!PointLightsBuffer)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            PointLightsBuffer->SetDebugName("PointLights Buffer");
-        }
+    BufferInfo = FRHIBufferInfo(PointLightsData.CapacityInBytes(), PointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    PointLightsBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    if (!PointLightsBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        PointLightsBuffer->SetDebugName("PointLights Buffer");
     }
 
-    {
-        PointLightsPosRad.Reserve(MAX_LIGHTS_PER_TILE);
+    PointLightsPosRad.Reserve(MAX_LIGHTS_PER_TILE);
 
-        FRHIBufferInfo BufferInfo(PointLightsPosRad.CapacityInBytes(), PointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-        PointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
-        if (!PointLightsPosRadBuffer)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            PointLightsPosRadBuffer->SetDebugName("PointLights Position and Radius Buffer");
-        }
+    BufferInfo = FRHIBufferInfo(PointLightsPosRad.CapacityInBytes(), PointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    PointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    if (!PointLightsPosRadBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        PointLightsPosRadBuffer->SetDebugName("PointLights Position and Radius Buffer");
     }
 
-    {
-        ShadowCastingPointLightsData.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
+    ShadowCastingPointLightsData.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
 
-        FRHIBufferInfo BufferInfo(ShadowCastingPointLightsData.CapacityInBytes(), ShadowCastingPointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-        ShadowCastingPointLightsBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
-        if (!ShadowCastingPointLightsBuffer)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            ShadowCastingPointLightsBuffer->SetDebugName("ShadowCasting PointLights Buffer");
-        }
+    BufferInfo = FRHIBufferInfo(ShadowCastingPointLightsData.CapacityInBytes(), ShadowCastingPointLightsData.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    ShadowCastingPointLightsBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    if (!ShadowCastingPointLightsBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        ShadowCastingPointLightsBuffer->SetDebugName("ShadowCasting PointLights Buffer");
     }
 
-    {
-        ShadowCastingPointLightsPosRad.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
+    ShadowCastingPointLightsPosRad.Reserve(NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS);
 
-        FRHIBufferInfo BufferInfo(ShadowCastingPointLightsPosRad.CapacityInBytes(), ShadowCastingPointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
-        ShadowCastingPointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
-        if (!ShadowCastingPointLightsPosRadBuffer)
-        {
-            DEBUG_BREAK();
-            return false;
-        }
-        else
-        {
-            ShadowCastingPointLightsPosRadBuffer->SetDebugName("ShadowCastingPointLightsPosRadBuffer");
-        }
+    BufferInfo = FRHIBufferInfo(ShadowCastingPointLightsPosRad.CapacityInBytes(), ShadowCastingPointLightsPosRad.Stride(), EBufferUsageFlags::ConstantBuffer | EBufferUsageFlags::Default);
+    ShadowCastingPointLightsPosRadBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::ConstantBuffer, nullptr);
+    if (!ShadowCastingPointLightsPosRadBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        ShadowCastingPointLightsPosRadBuffer->SetDebugName("ShadowCastingPointLightsPosRadBuffer");
+    }
+
+    TStaticArray<FVector3, 16> Vertices =
+    {
+        FVector3(-0.5075f, -0.5075f, -0.5075f), // 0
+        FVector3( 0.5075f, -0.5075f, -0.5075f), // 1
+        FVector3( 0.5075f,  0.5075f, -0.5075f), // 2
+        FVector3(-0.5075f,  0.5075f, -0.5075f), // 3
+        FVector3(-0.5075f, -0.5075f,  0.5075f), // 4
+        FVector3( 0.5075f, -0.5075f,  0.5075f), // 5
+        FVector3( 0.5075f,  0.5075f,  0.5075f), // 6
+        FVector3(-0.5075f,  0.5075f,  0.5075f), // 7
+
+        FVector3(-0.4925f, -0.4925f, -0.4925f), // 8
+        FVector3( 0.4925f, -0.4925f, -0.4925f), // 9
+        FVector3( 0.4925f,  0.4925f, -0.4925f), // 10
+        FVector3(-0.4925f,  0.4925f, -0.4925f), // 11
+        FVector3(-0.4925f, -0.4925f,  0.4925f), // 12
+        FVector3( 0.4925f, -0.4925f,  0.4925f), // 13
+        FVector3( 0.4925f,  0.4925f,  0.4925f), // 14
+        FVector3(-0.4925f,  0.4925f,  0.4925f), // 15
+    };
+
+    BufferInfo = FRHIBufferInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
+    OcclusionVolume.VertexBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::Common, Vertices.Data());
+    if (!OcclusionVolume.VertexBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        OcclusionVolume.VertexBuffer->SetDebugName("Occlusion Cube VertexBuffer");
+    }
+
+    // Create IndexBuffer
+    TStaticArray<uint16, 72> Indices =
+    {
+        // Front face
+        4, 5, 6, 4, 6, 7,
+        // Back face
+        0, 3, 2, 0, 2, 1,
+        // Left face
+        0, 4, 7, 0, 7, 3,
+        // Right face
+        1, 2, 6, 1, 6, 5,
+        // Top face
+        3, 7, 6, 3, 6, 2,
+        // Bottom face
+        0, 1, 5, 0, 5, 4,
+
+        // Front face
+        12, 13, 14, 12, 14, 15,
+        // Back face
+        8, 11, 10, 8, 10, 9,
+        // Left face
+        8, 12, 15, 8, 15, 11,
+        // Right face
+        9, 10, 14, 9, 14, 13,
+        // Top face
+        11, 15, 14, 11, 14, 10,
+        // Bottom face
+        8, 9, 13, 8, 13, 12
+    };
+
+    BufferInfo = FRHIBufferInfo(Indices.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
+    OcclusionVolume.IndexBuffer = RHICreateBuffer(BufferInfo, EResourceAccess::Common, Indices.Data());
+    if (!OcclusionVolume.IndexBuffer)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        OcclusionVolume.IndexBuffer->SetDebugName("Occlusion Cube IndexBuffer");
+
+        OcclusionVolume.IndexCount  = Indices.Size();
+        OcclusionVolume.IndexFormat = EIndexFormat::uint16;
     }
 
     return true;
@@ -403,4 +481,7 @@ void FFrameResources::Release()
     CascadeSplitsBuffer.Reset();
     CascadeSplitsBufferSRV.Reset();
     CascadeSplitsBufferUAV.Reset();
+
+    OcclusionVolume.VertexBuffer.Reset();
+    OcclusionVolume.IndexBuffer.Reset();
 }

@@ -10,9 +10,14 @@ SHADER_CONSTANT_BLOCK_BEGIN
     float4x4 TransformMat;
 SHADER_CONSTANT_BLOCK_END
 
-float4 AABB_VSMain(float3 Position : POSITION0) : SV_Position
+struct FVSInput
 {
-    return mul(mul(float4(Position, 1.0f), Constants.TransformMat), CameraBuffer.ViewProjection);
+    float3 Position : POSITION0;
+};
+
+float4 AABB_VSMain(FVSInput Input) : SV_Position
+{
+    return mul(mul(float4(Input.Position, 1.0f), Constants.TransformMat), CameraBuffer.ViewProjection);
 }
 
 float4 AABB_PSMain() : SV_Target
@@ -48,6 +53,31 @@ float4 Light_VSMain(FVSInput Input) : SV_Position
 float4 Light_PSMain() : SV_Target
 {
     return float4(Constants.Color.rgb, 1.0f);
+}
+
+#endif
+
+// Occlusion Volume Debug
+#if OCCLUSION_VOLUME_DEBUG // NOTE: We need this define since the shader constant-block otherwise causes issues when compiling SPIR-V code
+
+SHADER_CONSTANT_BLOCK_BEGIN
+    float4x4 TransformMat;
+    float4   Color;
+SHADER_CONSTANT_BLOCK_END
+
+struct FVSInput
+{
+    float3 Position : POSITION0;
+};
+
+float4 OcclusionDebug_VSMain(FVSInput Input) : SV_Position
+{
+    return mul(mul(float4(Input.Position, 1.0f), Constants.TransformMat), CameraBuffer.ViewProjection);
+}
+
+float4 OcclusionDebug_PSMain() : SV_Target
+{
+    return float4(Constants.Color);
 }
 
 #endif

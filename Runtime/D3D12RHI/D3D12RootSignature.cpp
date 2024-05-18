@@ -92,7 +92,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
     
     for (uint32 ShaderStage = 0; ShaderStage < ShaderVisibility_Count; ++ShaderStage)
     {
-        bool bAddFlag = true;
+        bool bIsStageUsed = true;
 
         const FShaderResourceCount& ResourceCounts = RootSignatureInfo.ResourceCounts[ShaderStage];
         if (ResourceCounts.Ranges.NumCBVs > 0)
@@ -103,7 +103,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_CBV, ResourceCounts.Ranges.NumCBVs, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
-            bAddFlag = false;
+            bIsStageUsed = false;
         }
 
         if (ResourceCounts.Ranges.NumSRVs > 0)
@@ -114,7 +114,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SRV, ResourceCounts.Ranges.NumSRVs, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
-            bAddFlag = false;
+            bIsStageUsed = false;
         }
 
         if (ResourceCounts.Ranges.NumUAVs > 0)
@@ -125,7 +125,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_UAV, ResourceCounts.Ranges.NumUAVs, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
-            bAddFlag = false;
+            bIsStageUsed = false;
         }
 
         if (ResourceCounts.Ranges.NumSamplers > 0)
@@ -136,7 +136,7 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             InitDescriptorRange(DescriptorRanges[NumDescriptorRanges], D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, ResourceCounts.Ranges.NumSamplers, 0, Space);
             InsertDescriptorTable(GetD3D12ShaderVisibility(ShaderStage), &DescriptorRanges[NumDescriptorRanges], 1);
             NumDescriptorRanges++;
-            bAddFlag = false;
+            bIsStageUsed = false;
         }
 
         if (ResourceCounts.Num32BitConstants > 0)
@@ -145,10 +145,10 @@ FD3D12RootSignatureDescHelper::FD3D12RootSignatureDescHelper(const FD3D12RootSig
             CHECK(NumRootParameters < D3D12_MAX_ROOT_PARAMETERS);
 
             Insert32BitConstantRange(GetD3D12ShaderVisibility(ShaderStage), ResourceCounts.Num32BitConstants, 0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
-            bAddFlag = false;
+            bIsStageUsed = false;
         }
 
-        if (bAddFlag)
+        if (bIsStageUsed)
         {
             Desc.Flags |= RootSignatureFlags[ShaderStage];
         }

@@ -139,7 +139,9 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
     const D3D12_RESOURCE_BINDING_TIER ResourceBindingTier = GD3D12ResourceBindingTier;
     uint32 NumSamplers[ShaderVisibility_Count];
 
+    // NOTE: In case any of the descriptor heaps "roll-over" and we allocate a new heap, we clear the dirty states and need to recalculate the necessary descriptors
     constexpr int32 MaxTries = 4;
+
     uint32 NumSamplerDescriptors;
     for (int32 NumTries = 0; NumTries < MaxTries; NumTries++)
     {
@@ -177,6 +179,11 @@ void FD3D12CommandContextState::BindSamplers(FD3D12RootSignature* RootSignature,
     uint32 DescriptorHandleOffset = StartHandleOffset;
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
+        if (!NumSamplers[CurrentStage])
+        {
+            continue;
+        }
+
         if (bForceBinding || CommonState.SamplerStateCache.IsDirty(CurrentStage) || GD3D12ForceBinding)
         {
             CommonState.DescriptorCache.SetSamplers(CommonState.SamplerStateCache, RootSignature, CurrentStage, NumSamplers[CurrentStage], DescriptorHandleOffset);
@@ -211,6 +218,13 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
             else
             {
                 NumCBVs[CurrentStage] = ResourceRange.NumCBVs;
+                if (NumCBVs[CurrentStage])
+                {
+                    if (CurrentStage == ShaderVisibility_Domain || CurrentStage == ShaderVisibility_Hull)
+                    {
+                        DEBUG_BREAK();
+                    }
+                }
             }
 
             NumResourceDescriptors += NumCBVs[CurrentStage];
@@ -251,7 +265,7 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
             bDescriptorHeapRolledOver = true;
         }
 
-        // NOTE: If our DescriptorHeaps rolled over we want to finish up our current CommandList
+        // TODO: If our DescriptorHeaps rolled over we want to finish up our current CommandList
         if (bDescriptorHeapRolledOver)
         {
             ResetStateResources();
@@ -267,6 +281,11 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
     uint32 DescriptorHandleOffset = StartHandleOffset;
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
+        if (!NumCBVs[CurrentStage])
+        {
+            continue;
+        }
+
         if (bForceBinding || CommonState.ConstantBufferCache.IsDirty(CurrentStage) || GD3D12ForceBinding)
         {
             CommonState.DescriptorCache.SetCBVs(CommonState.ConstantBufferCache, RootSignature, CurrentStage, NumCBVs[CurrentStage], DescriptorHandleOffset);
@@ -276,6 +295,11 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
 
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
+        if (!NumSRVs[CurrentStage])
+        {
+            continue;
+        }
+
         if (bForceBinding || CommonState.ShaderResourceViewCache.IsDirty(CurrentStage) || GD3D12ForceBinding)
         {
             CommonState.DescriptorCache.SetSRVs(CommonState.ShaderResourceViewCache, RootSignature, CurrentStage, NumSRVs[CurrentStage], DescriptorHandleOffset);
@@ -285,6 +309,11 @@ void FD3D12CommandContextState::BindResources(FD3D12RootSignature* RootSignature
 
     for (EShaderVisibility CurrentStage = StartStage; CurrentStage <= EndStage; CurrentStage = EShaderVisibility(CurrentStage + 1))
     {
+        if (!NumUAVs[CurrentStage])
+        {
+            continue;
+        }
+
         if (bForceBinding || CommonState.UnorderedAccessViewCache.IsDirty(CurrentStage) || GD3D12ForceBinding)
         {
             CommonState.DescriptorCache.SetUAVs(CommonState.UnorderedAccessViewCache, RootSignature, CurrentStage, NumUAVs[CurrentStage], DescriptorHandleOffset);
@@ -598,7 +627,7 @@ void FD3D12CommandContextState::SetSRV(FD3D12ShaderResourceView* ShaderResourceV
     {
         SRVCache[ResourceIndex] = ShaderResourceView;
         CommonState.ShaderResourceViewCache.NumViews[ShaderStage] = FMath::Max<uint8>(CommonState.ShaderResourceViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
-        CommonState.ShaderResourceViewCache.bDirty[ShaderStage]   = true;
+        CommonState.ShaderResourceViewCache.bDirty[ShaderStage] = true;
     }
 }
 
@@ -609,7 +638,7 @@ void FD3D12CommandContextState::SetUAV(FD3D12UnorderedAccessView* UnorderedAcces
     {
         UAVCache[ResourceIndex] = UnorderedAccessView;
         CommonState.UnorderedAccessViewCache.NumViews[ShaderStage] = FMath::Max<uint8>(CommonState.UnorderedAccessViewCache.NumViews[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
-        CommonState.UnorderedAccessViewCache.bDirty[ShaderStage]   = true;
+        CommonState.UnorderedAccessViewCache.bDirty[ShaderStage] = true;
     }
 }
 
@@ -620,7 +649,7 @@ void FD3D12CommandContextState::SetCBV(FD3D12ConstantBufferView* ConstantBufferV
     {
         CBVCache[ResourceIndex] = ConstantBufferView;
         CommonState.ConstantBufferCache.NumBuffers[ShaderStage] = FMath::Max<uint8>(CommonState.ConstantBufferCache.NumBuffers[ShaderStage], static_cast<uint8>(ResourceIndex) + 1);
-        CommonState.ConstantBufferCache.bDirty[ShaderStage]     = true;
+        CommonState.ConstantBufferCache.bDirty[ShaderStage] = true;
     }
 }
 
@@ -631,7 +660,7 @@ void FD3D12CommandContextState::SetSampler(FD3D12SamplerState* SamplerState, ESh
     {
         SamplerCache[SamplerIndex] = SamplerState;
         CommonState.SamplerStateCache.NumSamplers[ShaderStage] = FMath::Max<uint8>(CommonState.SamplerStateCache.NumSamplers[ShaderStage], static_cast<uint8>(SamplerIndex) + 1);
-        CommonState.SamplerStateCache.bDirty[ShaderStage]      = true;
+        CommonState.SamplerStateCache.bDirty[ShaderStage] = true;
     }
 }
 
@@ -641,9 +670,9 @@ void FD3D12CommandContextState::SetShaderConstants(const uint32* ShaderConstants
     if (NumShaderConstants != ConstantCache.NumConstants || FMemory::Memcmp(ShaderConstants, ConstantCache.Constants, sizeof(uint32) * NumShaderConstants) != 0)
     {
         FMemory::Memcpy(ConstantCache.Constants, ShaderConstants, sizeof(uint32) * NumShaderConstants);
-        ConstantCache.NumConstants         = NumShaderConstants;
+        ConstantCache.NumConstants = NumShaderConstants;
         GraphicsState.bBindShaderConstants = true;
-        ComputeState.bBindShaderConstants  = true;
+        ComputeState.bBindShaderConstants = true;
     }
 }
 

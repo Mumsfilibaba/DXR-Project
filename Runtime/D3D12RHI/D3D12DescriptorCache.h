@@ -214,7 +214,6 @@ inline uint64 GetHashForType(const FD3D12UniqueSamplerTable& Table)
     return HashIntegers<uint16, D3D12_DEFAULT_SAMPLER_STATE_COUNT>(Table.UniqueIDs);
 }
 
-
 struct FD3D12SamplerStateCache : public FD3D12ResourceCache
 {
     FD3D12SamplerStateCache()
@@ -419,7 +418,6 @@ private:
     FD3D12DescriptorHandleCache ConstantBufferCache;
     FD3D12DescriptorHandleCache ShaderResourceViewCache;
     FD3D12DescriptorHandleCache UnorderedAccessViewCache;
-
     FD3D12DescriptorHandleCache SamplerDescriptorHandles;
     FD3D12SamplerLookupTable    SamplerCache;
 };

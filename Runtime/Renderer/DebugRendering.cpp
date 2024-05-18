@@ -21,7 +21,7 @@ FDebugRenderer::~FDebugRenderer()
 {
     AABBVertexBuffer.Reset();
     AABBIndexBuffer.Reset();
-    AABBDebugPipelineState.Reset();
+    AABBPipelineState.Reset();
     AABBVertexShader.Reset();
     AABBPixelShader.Reset();
 
@@ -126,15 +126,15 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
         PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
 
-        AABBDebugPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
-        if (!AABBDebugPipelineState)
+        AABBPipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!AABBPipelineState)
         {
             DEBUG_BREAK();
             return false;
         }
         else
         {
-            AABBDebugPipelineState->SetDebugName("Debug PipelineState");
+            AABBPipelineState->SetDebugName("Debug PipelineState");
         }
 
         TStaticArray<FVector3, 8> Vertices =
@@ -313,6 +313,116 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
     }
 
+    {
+        TArray<FShaderDefine> OcclusionDebugDefines =
+        {
+            { "OCCLUSION_VOLUME_DEBUG", "(1)" }
+        };
+
+        FShaderCompileInfo CompileInfo("OcclusionDebug_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, OcclusionDebugDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        OcclusionVolumeVS = RHICreateVertexShader(ShaderCode);
+        if (!OcclusionVolumeVS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        CompileInfo = FShaderCompileInfo("OcclusionDebug_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, OcclusionDebugDefines);
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Debug.hlsl", CompileInfo, ShaderCode))
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        OcclusionVolumePS = RHICreatePixelShader(ShaderCode);
+        if (!OcclusionVolumePS)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIVertexInputLayoutInitializer InputLayout =
+        {
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+        };
+
+        FRHIVertexInputLayoutRef InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+        if (!InputLayoutState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIDepthStencilStateInitializer DepthStencilStateInitializer;
+        DepthStencilStateInitializer.DepthFunc         = EComparisonFunc::LessEqual;
+        DepthStencilStateInitializer.bDepthEnable      = true;
+        DepthStencilStateInitializer.bDepthWriteEnable = false;
+
+        FRHIDepthStencilStateRef DepthStencilState = RHICreateDepthStencilState(DepthStencilStateInitializer);
+        if (!DepthStencilState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        RasterizerStateInitializer.CullMode = ECullMode::None;
+
+        FRHIRasterizerStateRef RasterizerState = RHICreateRasterizerState(RasterizerStateInitializer);
+        if (!RasterizerState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIBlendStateInitializer BlendStateInitializer;
+        BlendStateInitializer.bIndependentBlendEnable        = false;
+        BlendStateInitializer.NumRenderTargets               = 1;
+        BlendStateInitializer.RenderTargets[0].bBlendEnable  = true;
+        BlendStateInitializer.RenderTargets[0].SrcBlend      = EBlendType::SrcAlpha;
+        BlendStateInitializer.RenderTargets[0].SrcBlendAlpha = EBlendType::InvSrcAlpha;
+        BlendStateInitializer.RenderTargets[0].DstBlend      = EBlendType::InvSrcAlpha;
+        BlendStateInitializer.RenderTargets[0].DstBlendAlpha = EBlendType::Zero;
+        BlendStateInitializer.RenderTargets[0].BlendOpAlpha  = EBlendOp::Add;
+        BlendStateInitializer.RenderTargets[0].BlendOp       = EBlendOp::Add;
+
+        FRHIBlendStateRef BlendState = RHICreateBlendState(BlendStateInitializer);
+        if (!BlendState)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        FRHIGraphicsPipelineStateInitializer PSOInitializer;
+        PSOInitializer.BlendState                             = BlendState.Get();
+        PSOInitializer.DepthStencilState                      = DepthStencilState.Get();
+        PSOInitializer.VertexInputLayout                      = InputLayoutState.Get();
+        PSOInitializer.RasterizerState                        = RasterizerState.Get();
+        PSOInitializer.ShaderState.VertexShader               = OcclusionVolumeVS.Get();
+        PSOInitializer.ShaderState.PixelShader                = OcclusionVolumePS.Get();
+        PSOInitializer.PrimitiveTopology                      = EPrimitiveTopology::TriangleList;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[0] = Resources.FinalTargetFormat;
+        PSOInitializer.PipelineFormats.NumRenderTargets       = 1;
+        PSOInitializer.PipelineFormats.DepthStencilFormat     = Resources.DepthBufferFormat;
+
+        OcclusionVolumePSO = RHICreateGraphicsPipelineState(PSOInitializer);
+        if (!OcclusionVolumePSO)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+        else
+        {
+            OcclusionVolumePSO->SetDebugName("Occlusion Volume PipelineState");
+        }
+    }
+
     return true;
 }
 
@@ -329,15 +439,18 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
 
     CommandList.BeginRenderPass(RenderPass);
 
-    CommandList.SetGraphicsPipelineState(AABBDebugPipelineState.Get());
-
+    CommandList.SetGraphicsPipelineState(AABBPipelineState.Get());
     CommandList.SetConstantBuffer(AABBVertexShader.Get(), Resources.CameraBuffer.Get(), 0);
-
     CommandList.SetVertexBuffers(MakeArrayView(&AABBVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(AABBIndexBuffer.Get(), EIndexFormat::uint16);
 
     for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
     {
+        if (Component->IsOccluded())
+        {
+            continue;
+        }
+
         FAABB& Box = Component->Mesh->BoundingBox;
 
         FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
@@ -360,6 +473,59 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End AABB DebugPass");
 }
 
+void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
+{
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin Occlusion Volume DebugPass");
+
+    TRACE_SCOPE("Occlusion Volume DebugPass");
+
+    FRHIBeginRenderPassInfo RenderPass;
+    RenderPass.RenderTargets[0] = FRHIRenderTargetView(Resources.FinalTarget.Get(), EAttachmentLoadAction::Load);
+    RenderPass.NumRenderTargets = 1;
+    RenderPass.DepthStencilView = FRHIDepthStencilView(Resources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+
+    CommandList.BeginRenderPass(RenderPass);
+
+    CommandList.SetGraphicsPipelineState(OcclusionVolumePSO.Get());
+    CommandList.SetVertexBuffers(MakeArrayView(&Resources.OcclusionVolume.VertexBuffer, 1), 0);
+    CommandList.SetIndexBuffer(Resources.OcclusionVolume.IndexBuffer.Get(), Resources.OcclusionVolume.IndexFormat);
+
+    for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
+    {
+        struct FShaderData
+        {
+            FMatrix4 TransformMatrix;
+            FVector4 Color;
+        } ShaderData;
+
+        const FAABB& BoundingBox = Component->Mesh->BoundingBox;
+
+        FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
+        Scale.x = FMath::Max<float>(Scale.x, 0.005f);
+        Scale.y = FMath::Max<float>(Scale.y, 0.005f);
+        Scale.z = FMath::Max<float>(Scale.z, 0.005f);
+
+        FVector3 Position          = BoundingBox.GetCenter();
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
+
+        ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
+        ShaderData.TransformMatrix = ShaderData.TransformMatrix.Transpose();
+        ShaderData.TransformMatrix = (ScaleMatrix * TranslationMatrix) * ShaderData.TransformMatrix;
+        ShaderData.TransformMatrix = ShaderData.TransformMatrix.Transpose();
+        ShaderData.Color           = FVector4(0.8f, 0.8f, 0.8f, 0.5f);
+
+        CommandList.SetConstantBuffer(OcclusionVolumeVS.Get(), Resources.CameraBuffer.Get(), 0);
+        CommandList.Set32BitShaderConstants(OcclusionVolumeVS.Get(), &ShaderData, 20);
+
+        CommandList.DrawIndexedInstanced(Resources.OcclusionVolume.IndexCount, 1, 0, 0, 0);
+    }
+
+    CommandList.EndRenderPass();
+
+    INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Occlusion Volume DebugPass");
+}
+
 void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResources& Resources, FScene* Scene)
 {
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "Begin PointLight DebugPass");
@@ -374,9 +540,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
     CommandList.BeginRenderPass(RenderPass);
 
     CommandList.SetGraphicsPipelineState(LightDebugPSO.Get());
-
     CommandList.SetConstantBuffer(LightDebugVS.Get(), Resources.CameraBuffer.Get(), 0);
-
     CommandList.SetVertexBuffers(MakeArrayView(&DbgSphereVertexBuffer, 1), 0);
     CommandList.SetIndexBuffer(DbgSphereIndexBuffer.Get(), EIndexFormat::uint16);
 
