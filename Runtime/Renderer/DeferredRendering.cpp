@@ -1395,10 +1395,9 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
             Component->CurrentOcclusionQuery = NewOcclusionQuery;
         }
 
-            FVector3 Scale = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
-            Scale *= 1.2;
+        FVector3 Scale = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
+        Scale *= 1.2;
 
-        FVector3 Scale             = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         FVector3 Position          = Box.GetCenter();
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
         FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
