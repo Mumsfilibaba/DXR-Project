@@ -594,7 +594,23 @@ void FSceneRenderer::Tick(FScene* Scene)
             Material->BuildBuffer(CommandList);
         }
     }
-    
+
+    // Update occlusion
+    if (CVarBasePassOcclusionCulling.GetValue())
+    {
+        for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+        {
+            Component->UpdateOcclusion();
+        }
+    }
+    else
+    {
+        for (FProxySceneComponent* Component : Scene->VisiblePrimitives)
+        {
+            Component->bIsOccluded = false;
+        }
+    }
+
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Albedo].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Normal].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Material].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::RenderTarget);

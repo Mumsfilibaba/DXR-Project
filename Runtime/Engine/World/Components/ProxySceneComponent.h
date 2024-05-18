@@ -8,23 +8,54 @@ class FRHIRayTracingGeometry;
 
 #define NUM_OCCLUSION_QUERIES (3)
 
-class FProxySceneComponent
+struct FFrustumVisibility
+{
+    FFrustumVisibility()
+        : bIsVisible(false)
+        , bWasVisible(false)
+    {
+    }
+
+    bool bIsVisible  : 1;
+    bool bWasVisible : 1;
+};
+
+class ENGINE_API FProxySceneComponent
 {
 public:
     FProxySceneComponent();
     virtual ~FProxySceneComponent();
 
-    class FMaterial* Material;
-    class FMesh*     Mesh;
-    class FActor*    CurrentActor;
+    void UpdateOcclusion();
 
-    FRHIRayTracingGeometry* Geometry;
+    bool IsOccluded() const
+    {
+        return bIsOccluded;
+    }
+
+    void UpdateFrustumVisbility(bool bIsVisible)
+    {
+        FrustumVisibility.bWasVisible = FrustumVisibility.bIsVisible;
+        FrustumVisibility.bIsVisible = bIsVisible;
+    }
+
+    // Scene Objects
+    class FMaterial*        Material;
+    class FMesh*            Mesh;
+    class FActor*           CurrentActor;
+    
+    // Occlusion
     FRHIQuery*              CurrentOcclusionQuery;
     FRHIQuery*              OcclusionQueries[NUM_OCCLUSION_QUERIES];
+    uint32                  CurrentOcclusionQueryIndex;
+    bool                    bIsOccluded;
+    FFrustumVisibility      FrustumVisibility;
+
+    // Geometry Objects
+    FRHIRayTracingGeometry* Geometry;
     FRHIBuffer*             VertexBuffer;
     FRHIBuffer*             IndexBuffer;
     uint32                  NumVertices;
     uint32                  NumIndices;
     EIndexFormat            IndexFormat;
-    uint32                  CurrentOcclusionQueryIndex;
 };

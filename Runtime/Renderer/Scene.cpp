@@ -132,14 +132,10 @@ void FScene::UpdateVisibility()
     TRACE_SCOPE("UpdateVisibility - FrustumCulling");
 
     if (Primitives.Capacity() > Primitives.Size())
-    {
         Primitives.Shrink();
-    }
 
     if (VisiblePrimitives.Capacity() < Primitives.Capacity())
-    {
         VisiblePrimitives.Reserve(Primitives.Capacity());
-    }
 
     // Clear for this frame
     VisiblePrimitives.Clear();
@@ -183,7 +179,12 @@ void FScene::UpdateVisibility()
         FAABB Box(Top, Bottom);
         if (CameraFrustum.CheckAABB(Box))
         {
+            Component->UpdateFrustumVisbility(true);
             VisiblePrimitives.Add(Component);
+        }
+        else
+        {
+            Component->UpdateFrustumVisbility(false);
         }
 
         // Update the visibility DirectionalLight
