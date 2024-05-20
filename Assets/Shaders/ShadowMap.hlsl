@@ -121,6 +121,7 @@ FVSCascadeOutput Cascade_VSMain(
 #endif
 
     const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
+
 #if ENABLE_CASCADE_GS_INSTANCING
     Output.Position = WorldPosition;
 #else
@@ -251,6 +252,12 @@ struct FVSPointOutput
 #if !ENABLE_POINTLIGHT_GS_INSTANCING
     float4 Position : SV_Position;
 #endif
+
+// NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
+// and have the RenderTargetArrayIndex inside the PSO to be set to BaseLayer which then gets offset by using SV_RenderTargetArrayIndex
+#if ENABLE_POINTLIGHT_VIEW_INSTANCING && ENABLE_RENDER_TARGET_VIEW_INDEX
+    uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;
+#endif
 };
 
 FVSPointOutput Point_VSMain(
@@ -270,6 +277,9 @@ FVSPointOutput Point_VSMain(
 #endif
 #if ENABLE_POINTLIGHT_VIEW_INSTANCING
     Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[ViewID]);
+#if ENABLE_RENDER_TARGET_VIEW_INDEX
+    Output.RenderTargetArrayIndex = ViewID;
+#endif
 #elif !ENABLE_POINTLIGHT_GS_INSTANCING
     Output.Position = mul(WorldPosition, PointLightBuffer.LightProjection);
 #endif

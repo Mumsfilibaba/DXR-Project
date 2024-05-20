@@ -7,6 +7,7 @@ class FRHIQuery;
 class FRHIRayTracingGeometry;
 
 #define NUM_OCCLUSION_QUERIES (3)
+#define OCCLUSION_DELAY (6)
 
 struct FFrustumVisibility
 {
@@ -30,7 +31,7 @@ public:
 
     bool IsOccluded() const
     {
-        return NumFramesOccluded > NUM_OCCLUSION_QUERIES;
+        return NumFramesOccluded > OCCLUSION_DELAY;
     }
 
     void UpdateFrustumVisbility(bool bIsVisible)

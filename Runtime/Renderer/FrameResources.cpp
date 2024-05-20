@@ -172,23 +172,23 @@ bool FFrameResources::Initialize()
 
     TStaticArray<FVector3, 16> Vertices =
     {
-        FVector3(-0.5075f, -0.5075f, -0.5075f), // 0
-        FVector3( 0.5075f, -0.5075f, -0.5075f), // 1
-        FVector3( 0.5075f,  0.5075f, -0.5075f), // 2
-        FVector3(-0.5075f,  0.5075f, -0.5075f), // 3
-        FVector3(-0.5075f, -0.5075f,  0.5075f), // 4
-        FVector3( 0.5075f, -0.5075f,  0.5075f), // 5
-        FVector3( 0.5075f,  0.5075f,  0.5075f), // 6
-        FVector3(-0.5075f,  0.5075f,  0.5075f), // 7
+        FVector3(-0.515f, -0.515f, -0.515f), // 0
+        FVector3( 0.515f, -0.515f, -0.515f), // 1
+        FVector3( 0.515f,  0.515f, -0.515f), // 2
+        FVector3(-0.515f,  0.515f, -0.515f), // 3
+        FVector3(-0.515f, -0.515f,  0.515f), // 4
+        FVector3( 0.515f, -0.515f,  0.515f), // 5
+        FVector3( 0.515f,  0.515f,  0.515f), // 6
+        FVector3(-0.515f,  0.515f,  0.515f), // 7
 
-        FVector3(-0.4925f, -0.4925f, -0.4925f), // 8
-        FVector3( 0.4925f, -0.4925f, -0.4925f), // 9
-        FVector3( 0.4925f,  0.4925f, -0.4925f), // 10
-        FVector3(-0.4925f,  0.4925f, -0.4925f), // 11
-        FVector3(-0.4925f, -0.4925f,  0.4925f), // 12
-        FVector3( 0.4925f, -0.4925f,  0.4925f), // 13
-        FVector3( 0.4925f,  0.4925f,  0.4925f), // 14
-        FVector3(-0.4925f,  0.4925f,  0.4925f), // 15
+        FVector3(-0.485f, -0.485f, -0.485f), // 8
+        FVector3( 0.485f, -0.485f, -0.485f), // 9
+        FVector3( 0.485f,  0.485f, -0.485f), // 10
+        FVector3(-0.485f,  0.485f, -0.485f), // 11
+        FVector3(-0.485f, -0.485f,  0.485f), // 12
+        FVector3( 0.485f, -0.485f,  0.485f), // 13
+        FVector3( 0.485f,  0.485f,  0.485f), // 14
+        FVector3(-0.485f,  0.485f,  0.485f), // 15
     };
 
     BufferInfo = FRHIBufferInfo(Vertices.SizeInBytes(), sizeof(FVector3), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);

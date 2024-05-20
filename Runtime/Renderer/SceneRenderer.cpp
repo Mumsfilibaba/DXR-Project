@@ -125,11 +125,10 @@ static TAutoConsoleVariable<bool> CVarPrePassDepthReduce(
     true,
     EConsoleVariableFlags::Default);
 
-// NOTE: Does not work that well atm
 static TAutoConsoleVariable<bool> CVarBasePassOcclusionCulling(
     "Renderer.BasePass.OcclusionCulling",
     "Should occlusion culling be performed or not",
-    true,
+    false,
     EConsoleVariableFlags::Default);
 
 static FAutoConsoleCommand CVarFreezeRendering(
