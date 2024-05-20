@@ -426,7 +426,7 @@ void FFrameResources::Release()
 
     PointLightShadowSampler.Reset();
     IrradianceSampler.Reset();
-    DirectionalLightShadowSampler.Reset();
+    ShadowSamplerPointCmp.Reset();
 
     IntegrationLUT.Reset();
     IntegrationLUTSampler.Reset();

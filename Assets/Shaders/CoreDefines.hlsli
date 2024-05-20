@@ -19,5 +19,4 @@
         }; \
         ConstantBuffer<FShaderBlockConstants> Constants : register(b0, D3D12_SHADER_REGISTER_SPACE_32BIT_CONSTANTS);
 #endif
-
 #endif

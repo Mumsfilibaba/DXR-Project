@@ -297,15 +297,26 @@ bool FSceneRenderer::Initialize()
     }
 
     {
-        FRHISamplerStateInfo Initializer;
-        Initializer.AddressU    = ESamplerMode::Border;
-        Initializer.AddressV    = ESamplerMode::Border;
-        Initializer.AddressW    = ESamplerMode::Border;
-        Initializer.Filter      = ESamplerFilter::MinMagMipPoint;
-        Initializer.BorderColor = FFloatColor(1.0f, 1.0f, 1.0f, 1.0f);
+        FRHISamplerStateInfo SamplerStateInfo;
+        SamplerStateInfo.AddressU       = ESamplerMode::Clamp;
+        SamplerStateInfo.AddressV       = ESamplerMode::Clamp;
+        SamplerStateInfo.AddressW       = ESamplerMode::Clamp;
+        SamplerStateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipPoint;
+        SamplerStateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
+        SamplerStateInfo.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
+        SamplerStateInfo.MinLOD         = 0.0f;
 
-        Resources.DirectionalLightShadowSampler = RHICreateSamplerState(Initializer);
-        if (!Resources.DirectionalLightShadowSampler)
+        Resources.ShadowSamplerPointCmp = RHICreateSamplerState(SamplerStateInfo);
+        if (!Resources.ShadowSamplerPointCmp)
+        {
+            DEBUG_BREAK();
+            return false;
+        }
+
+        SamplerStateInfo.Filter = ESamplerFilter::Comparison_MinMagMipLinear;
+
+        Resources.ShadowSamplerLinearCmp = RHICreateSamplerState(SamplerStateInfo);
+        if (!Resources.ShadowSamplerLinearCmp)
         {
             DEBUG_BREAK();
             return false;
@@ -313,14 +324,15 @@ bool FSceneRenderer::Initialize()
     }
 
     {
-        FRHISamplerStateInfo Initializer;
-        Initializer.AddressU       = ESamplerMode::Wrap;
-        Initializer.AddressV       = ESamplerMode::Wrap;
-        Initializer.AddressW       = ESamplerMode::Wrap;
-        Initializer.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
-        Initializer.ComparisonFunc = EComparisonFunc::LessEqual;
+        FRHISamplerStateInfo SamplerStateInfo;
+        SamplerStateInfo.AddressU       = ESamplerMode::Wrap;
+        SamplerStateInfo.AddressV       = ESamplerMode::Wrap;
+        SamplerStateInfo.AddressW       = ESamplerMode::Wrap;
+        SamplerStateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
+        SamplerStateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
+        SamplerStateInfo.MinLOD         = 0.0f;
 
-        Resources.PointLightShadowSampler = RHICreateSamplerState(Initializer);
+        Resources.PointLightShadowSampler = RHICreateSamplerState(SamplerStateInfo);
         if (!Resources.PointLightShadowSampler)
         {
             DEBUG_BREAK();

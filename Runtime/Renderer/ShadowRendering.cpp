@@ -1360,7 +1360,8 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         CommandList.SetUnorderedAccessView(CurrentShadowMaskShader.Get(), Resources.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
     }
 
-    CommandList.SetSamplerState(CurrentShadowMaskShader.Get(), Resources.DirectionalLightShadowSampler.Get(), 0);
+    CommandList.SetSamplerState(CurrentShadowMaskShader.Get(), Resources.ShadowSamplerPointCmp.Get(), 0);
+    CommandList.SetSamplerState(CurrentShadowMaskShader.Get(), Resources.ShadowSamplerLinearCmp.Get(), 1);
 
     constexpr uint32 NumThreads = 16;
     const uint32 ThreadsX = FMath::DivideByMultiple(Resources.DirectionalShadowMask->GetWidth(), NumThreads);

@@ -7,11 +7,11 @@
 #include "Poisson.hlsli"
 
 /*
-* Calculate FPointLight Shadow
+* Calculate PointLight Shadow
 */
 
-#define POINT_LIGHT_SAMPLES 4
-#define OFFSET_SAMPLES      20
+#define POINT_LIGHT_SAMPLES (4)
+#define OFFSET_SAMPLES (20)
 
 static const float3 SampleOffsetDirections[OFFSET_SAMPLES] =
 {
@@ -72,18 +72,18 @@ float PointLightShadowFactor(in TextureCubeArray<float> ShadowMap, float Index, 
 }
 
 /*
-* Calculate FDirectionalLight Shadows
+* Calculate DirectionalLight Shadows
 */
 
-#define PCF_RANGE 2
+#define PCF_RANGE (2)
 #define PCF_WIDTH float((PCF_RANGE * 2) + 1)
 
-#define ENABLE_POISSON_FILTERING 0
-#define ENABLE_VSM               0
+#define ENABLE_POISSON_FILTERING (0)
+#define ENABLE_VSM (0)
 
 #if ENABLE_POISSON_FILTERING
-#define POISSON_SAMPLES       2
-#define TOTAL_POISSON_SAMPLES 16
+#define POISSON_SAMPLES (2)
+#define TOTAL_POISSON_SAMPLES (16)
 
 static const float2 PoissonDisk[16] =
 {

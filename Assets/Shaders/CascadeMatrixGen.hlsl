@@ -148,13 +148,7 @@ void Main(FComputeShaderInput Input)
     const float NewFarPlane  =  ExtentZ;
     
     // Projection Matrix
-    float4x4 ShadowProjection = OrtographicMatrix(
-        MinExtents.x,
-        MaxExtents.x,
-        MinExtents.y,
-        MaxExtents.y,
-        NewNearPlane,
-        NewFarPlane);
+    float4x4 ShadowProjection = OrtographicMatrix(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, NewNearPlane, NewFarPlane);
     
     // Stabilize cascades
     {
@@ -188,7 +182,7 @@ void Main(FComputeShaderInput Input)
         float4(LightRotationMatrix[0], 0.0f),
         float4(LightRotationMatrix[1], 0.0f),
         float4(LightRotationMatrix[2], 0.0f),
-        float4(ShadowEyePos          , 1.0f));
+        float4(ShadowEyePos, 1.0f));
 
     float4x4 InverseShadowProjection = InverseScaleTranslation(ShadowProjection);
     float4x4 InverseShadowMatrix     = mul(InverseShadowView, InverseShadowProjection);
@@ -228,6 +222,7 @@ void Main(FComputeShaderInput Input)
         float4(0.0f, -0.5f, 0.0f, 0.0f),
         float4(0.0f,  0.0f, 1.0f, 0.0f),
         float4(0.5f,  0.5f, 0.0f, 1.0f));
+        
     const float4x4 InverseTextureScaleBias = InverseScaleTranslation(TextureScaleBias);
 
     // Calculate the position of the lower corner of the cascade partition, in the UV space

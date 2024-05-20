@@ -2,11 +2,6 @@
 #define STRUCTS_HLSLI
 #include "CoreDefines.hlsli"
 
-// Common Structs
-
-#define NUM_SHADOW_CASCADES (4)
-#define NUM_FRUSTUM_PLANES (6)
-
 struct FComputeShaderInput
 {
     uint3 GroupID          : SV_GroupID;

@@ -2,54 +2,54 @@
 #define FILTER_FUNCTION_HLSLI
 #include "Constants.hlsli"
 
-#define GAUSSIAN_SIGMA (0.5f)
+#define GAUSSIAN_SIGMA 0.5
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Filter Functions
 
 float BoxFilter(float Sample)
 {
-    return (Sample <= 1.0f);
+    return Sample <= 1.0;
 }
 
 float TriangleFilter(float Sample)
 {
-    return saturate(1.0f - Sample);
+    return saturate(1.0 - Sample);
 }
 
 float GaussianFilter(float Sample)
 {
     const float Sigma = GAUSSIAN_SIGMA;
-    const float G = 1.0f / sqrt(2.0f * 3.14159f * Sigma * Sigma);
+    const float G = 1.0 / sqrt(2.0 * 3.14159 * Sigma * Sigma);
     return (G * exp(-(Sample * Sample) / (2 * Sigma * Sigma)));
 }
 
  float CubicFilter(float Sample, float B, float C)
 {
-    float y = 0.0f;
+    float y = 0.0;
 
     float Sample2 = Sample * Sample;
     float Sample3 = Sample * Sample * Sample;
-    if(Sample < 1.0f)
+    if(Sample < 1.0)
     {   
-        y = (12.0f - 9.0f * B - 6.0f * C) * Sample3 + (-18.0f + 12.0f * B + 6.0f * C) * Sample2 + (6.0f - 2.0f * B);
+        y = (12.0 - 9.0 * B - 6.0 * C) * Sample3 + (-18.0 + 12.0 * B + 6.0 * C) * Sample2 + (6.0 - 2.0 * B);
     }
-    else if (Sample <= 2.0f)
+    else if (Sample <= 2.0)
     {
-        y = (-B - 6.0f * C) * Sample3 + (6.0f * B + 30.0f * C) * Sample2 + (-12.0f * B - 48.0f * C) * Sample + (8.0f * B + 24.0f * C);
+        y = (-B - 6.0 * C) * Sample3 + (6.0 * B + 30.0 * C) * Sample2 + (-12.0 * B - 48.0 * C) * Sample + (8.0 * B + 24.0 * C);
     }
 
-    return y / 6.0f;
+    return y / 6.0;
 }
 
 float SincFilter(float Sample, float FilterRadius)
 {
     float s;
-    Sample *= FilterRadius * 2.0f;
+    Sample *= FilterRadius * 2.0;
 
-    if(Sample < 0.001f)
+    if(Sample < 0.001)
     {
-        s = 1.0f;
+        s = 1.0;
     }
     else
     {
@@ -99,9 +99,9 @@ float3 SampleTextureCatmullRom(Texture2D<float3> InTexture, SamplerState InLinea
     // Compute the Catmull-Rom weights using the fractional offset that we calculated earlier.
     // These equations are pre-expanded based on our knowledge of where the texels will be located,
     // which lets us avoid having to evaluate a piece-wise function.
-    float2 w0 = f * (-0.5f + f * (1.0f - 0.5f * f));
-    float2 w1 = 1.0f + f * f * (-2.5f + 1.5f * f);
-    float2 w2 = f * (0.5f + f * (2.0f - 1.5f * f));
+    float2 w0 = f * (-0.5f + f * (1.0 - 0.5f * f));
+    float2 w1 = 1.0 + f * f * (-2.5f + 1.5f * f);
+    float2 w2 = f * (0.5f + f * (2.0 - 1.5f * f));
     float2 w3 = f * f * (-0.5f + 0.5f * f);
 
     // Work out weighting factors and sampling offsets that will let us use bilinear filtering to
@@ -110,26 +110,26 @@ float3 SampleTextureCatmullRom(Texture2D<float3> InTexture, SamplerState InLinea
     float2 Offset12 = w2 / (w1 + w2);
 
     // Compute the final UV coordinates we'll use for sampling the texture
-    float2 TexPos0  = TexPos1 - 1.0f;
-    float2 TexPos3  = TexPos1 + 2.0f;
+    float2 TexPos0  = TexPos1 - 1.0;
+    float2 TexPos3  = TexPos1 + 2.0;
     float2 TexPos12 = TexPos1 + Offset12;
 
     TexPos0  /= TexSize;
     TexPos3  /= TexSize;
     TexPos12 /= TexSize;
 
-    float3 Result = 0.0f;
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos0.x , TexPos0.y), 0.0f) * w0.x  * w0.y;
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos12.x, TexPos0.y), 0.0f) * w12.x * w0.y;
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos3.x , TexPos0.y), 0.0f) * w3.x  * w0.y;
+    float3 Result = 0.0;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos0.x , TexPos0.y), 0.0) * w0.x  * w0.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos12.x, TexPos0.y), 0.0) * w12.x * w0.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos3.x , TexPos0.y), 0.0) * w3.x  * w0.y;
 
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos0.x , TexPos12.y), 0.0f) * w0.x  * w12.y;
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos12.x, TexPos12.y), 0.0f) * w12.x * w12.y;
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos3.x , TexPos12.y), 0.0f) * w3.x  * w12.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos0.x , TexPos12.y), 0.0) * w0.x  * w12.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos12.x, TexPos12.y), 0.0) * w12.x * w12.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos3.x , TexPos12.y), 0.0) * w3.x  * w12.y;
 
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos0.x , TexPos3.y), 0.0f) * w0.x  * w3.y;
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos12.x, TexPos3.y), 0.0f) * w12.x * w3.y;
-    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos3.x , TexPos3.y), 0.0f) * w3.x  * w3.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos0.x , TexPos3.y), 0.0) * w0.x  * w3.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos12.x, TexPos3.y), 0.0) * w12.x * w3.y;
+    Result += InTexture.SampleLevel(InLinearSampler, float2(TexPos3.x , TexPos3.y), 0.0) * w3.x  * w3.y;
     return Result;
 }
 

@@ -1,25 +1,25 @@
 #ifndef CONSTANTS_HLSLI
 #define CONSTANTS_HLSLI
-
 #include "CoreDefines.hlsli"
 
-// Common Constants
-
-#define PI     (3.14159265359)
-#define PI_2   (3.14159265359)
-#define INV_PI (1.0 / 3.14159265359)
-#define GAMMA  (2.2)
+#define PI (3.14159265359)
+#define PI_2 (3.14159265359)
+#define INV_PI (1.0 / PI)
+#define GAMMA (2.2)
 
 #define MIN_ROUGHNESS (0.0)
 #define MAX_ROUGHNESS (1.0)
-#define MIN_VALUE     (0.0000001)
-#define EPSILON       (0.0001)
-#define RAY_OFFSET    (0.02)
+#define MIN_VALUE (0.0000001)
+#define EPSILON (0.0001)
+#define RAY_OFFSET (0.02)
 
 #define FLT32_MAX (3.402823466e+38)
 #define FLT32_MIN (1.175494351e-38)        
 
 #define FLT32_EPSILON (1.192092896e-07)
+
+#define NUM_SHADOW_CASCADES (4)
+#define NUM_FRUSTUM_PLANES (6)
 
 #define SHADING_RATE_1x1 (0x0)
 #define SHADING_RATE_1x2 (0x1)
