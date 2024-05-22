@@ -868,6 +868,11 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
         }
 
         FRHIRasterizerStateInitializer RasterizerStateInitializer;
+        RasterizerStateInitializer.bEnableDepthBias     = true;
+        RasterizerStateInitializer.DepthBias            = 1.0f;
+        RasterizerStateInitializer.DepthBiasClamp       = 0.05f;
+        RasterizerStateInitializer.SlopeScaledDepthBias = 1.0f;
+
         if (MaterialFlags & MaterialFlag_DoubleSided)
         {
             RasterizerStateInitializer.CullMode = ECullMode::None;

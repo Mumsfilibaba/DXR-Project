@@ -10,18 +10,17 @@
     #define ENABLE_DEBUG 0
 #endif
 
-#define FILTER_MODE_PCF_GRID 1
-#define FILTER_MODE_PCF_POISSION_DISC 0
-
 // Soft shadows settings
-#define USE_GRID_PCF 1
-#define USE_HAMMERSLY 0
-#define USE_COMPARISON_SAMPLER 1
+#define FILTER_MODE_PCF_GRID 0
+#define FILTER_MODE_PCF_POISSION_DISC 1
 
-#define FILTER_SIZE 16
-#define MAX_FILTER_SIZE 16
-#define NUM_PCF_SAMPLES 16
-#define PCF_RADIUS 0.04
+// PCF grid settings
+#define FILTER_SIZE 64
+#define MAX_FILTER_SIZE 64
+
+// Poisson Disc Settings
+#define NUM_PCF_SAMPLES 128
+#define PCF_RADIUS 0.0032
 #define ROTATE_SAMPLES 0
 
 // Cascaded Shadow Mapping Settings
@@ -57,21 +56,14 @@ RWTexture2D<uint> CascadeIndexTex : register(u1);
 #endif
 
 // Samplers
-#if USE_COMPARISON_SAMPLER
 SamplerComparisonState ShadowSamplerPoint : register(s0);
 SamplerComparisonState ShadowSamplerLinear : register(s1);
-#else
-SamplerState ShadowSamplerPoint : register(s0);
-#endif
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // ShadowMap Helpers
 
-float2 GetPCFSample(uint Index)
+float2 GetPoissonSample(uint Index)
 {
-#if USE_HAMMERSLY
-    return (Hammersley2(Index, NUM_PCF_SAMPLES) * 2.0) - 1.0;
-#else
 #if (NUM_PCF_SAMPLES == 16)
     return PoissonDisk16[Index];
 #elif (NUM_PCF_SAMPLES == 32)
@@ -80,31 +72,14 @@ float2 GetPCFSample(uint Index)
     return PoissonDisk64[Index];
 #elif (NUM_PCF_SAMPLES == 128)
     return PoissonDisk128[Index];
-#endif
+#else
+    return 0.0;
 #endif
 }
 
 float2 RotatePoisson(float2 Sample, float Random0, float Random1)
 {
     return OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(Sample), Random0, Random1));
-}
-
-float3 GetShadowCoords(uint CascadeIndex, float3 World)
-{
-    float4 LightClipSpacePos = mul(float4(World, 1.0f), ShadowMatricesBuffer[CascadeIndex].ViewProj);
-    float3 ProjCoords = LightClipSpacePos.xyz / LightClipSpacePos.w;
-    ProjCoords.xy = (ProjCoords.xy * 0.5f) + 0.5f;
-    ProjCoords.y  = 1.0f - ProjCoords.y;
-    return ProjCoords;
-}
-
-float2 ComputeReceiverPlaneDepthBias(float3 TexCoordDX, float3 TexCoordDY)
-{
-    float2 BiasUV;
-    BiasUV.x = (TexCoordDY.y * TexCoordDX.z) - (TexCoordDX.y * TexCoordDY.z);
-    BiasUV.y = (TexCoordDX.x * TexCoordDY.z) - (TexCoordDY.x * TexCoordDX.z);
-    BiasUV  *= 1.0f / ((TexCoordDX.x * TexCoordDY.y) - (TexCoordDX.y * TexCoordDY.x));
-    return BiasUV;
 }
 
 float GetShadowMapSize()
@@ -116,11 +91,39 @@ float GetShadowMapSize()
     return (float)Width;
 }
 
-float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth, float PenumbraRadius, inout uint RandomSeed)
+float ShadowAmountPoissonDisc(uint CascadeIndex, float2 ShadowPosition, float BiasedDepth, inout uint RandomSeed)
 {
-#if USE_GRID_PCF
+    const float NumSamples = float(NUM_PCF_SAMPLES);
+
+    float Shadow = 0.0;
+    for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
+    {
+        float2 RandomDirection = GetPoissonSample(Sample);
+
+    #if ROTATE_SAMPLES
+        float Theta    = NextRandom(RandomSeed) * PI_2;
+        float CosTheta = cos(Theta);
+        float SinTheta = sin(Theta);
+
+        const float2x2 RandomRotationMatrix = float2x2(float2(CosTheta, -SinTheta), float2(SinTheta, CosTheta));
+        RandomDirection = mul(RandomDirection, RandomRotationMatrix);
+    #endif
+
+        RandomDirection *= PCF_RADIUS;
+        
+        const float2 CurrentTexCoords = ShadowPosition + RandomDirection;
+        const float Depth = ShadowCascades.SampleCmpLevelZero(ShadowSamplerPoint, float3(CurrentTexCoords, CascadeIndex), BiasedDepth);
+        Shadow += Depth;
+    }
+
+    Shadow = Shadow / NumSamples;
+    return saturate(Shadow);
+}
+
+float ShadowAmountGrid(uint CascadeIndex, float2 ShadowPosition, float BiasedDepth)
+{
     const float2 MaxFilterSize = float(MAX_FILTER_SIZE) / abs(ShadowSplitsBuffer[0].Scale.xy);
-    const float2 FilterSize    = clamp(min(float2(FILTER_SIZE, FILTER_SIZE), MaxFilterSize) * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy), 1.0, float(MAX_FILTER_SIZE));
+    const float2 FilterSize = clamp(min(float2(FILTER_SIZE, FILTER_SIZE), MaxFilterSize) * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy), 1.0, float(MAX_FILTER_SIZE));
 
     float Result = 0.0;
     
@@ -130,7 +133,7 @@ float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth
         const float ShadowMapSize = GetShadowMapSize();
         const float TexelSize     = 1.0 / ShadowMapSize;
 
-        const float2 ShadowTexel   = TexCoords.xy * ShadowMapSize;
+        const float2 ShadowTexel   = ShadowPosition * ShadowMapSize;
         const float2 TexelFraction = frac(ShadowTexel);
         const float2 FilterRadius  = FilterSize / 2.0;
 
@@ -153,8 +156,8 @@ float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth
             [loop]
             for (int SampleX = MinOffset.x; SampleX <= MaxOffset.x; ++SampleX)
             {
-                const float2 Offset           = float2(SampleX, SampleY) * TexelSize;
-                const float2 CurrentTexCoords = TexCoords + Offset;
+                const float2 Offset = float2(SampleX, SampleY) * TexelSize;
+                const float2 CurrentTexCoords = ShadowPosition + Offset;
 
                 float WeightX = 1.0;
                 if(SampleX == MinOffset.x)
@@ -167,18 +170,7 @@ float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth
                 }
 
                 const float Weight = WeightX * WeightY;
-
-                float Sample = 0.0;
-            #if USE_COMPARISON_SAMPLER
-                Sample = ShadowCascades.SampleCmpLevelZero(ShadowSamplerPoint, float3(CurrentTexCoords, CascadeIndex), BiasedDepth);
-            #else
-                const float Depth = ShadowCascades.SampleLevel(ShadowSamplerPoint, float3(CurrentTexCoords, CascadeIndex), 0.0f);
-                if (Depth <= BiasedDepth)
-                {
-                    Sample = 1.0;
-                }
-            #endif
-
+                const float Sample = ShadowCascades.SampleCmpLevelZero(ShadowSamplerPoint, float3(CurrentTexCoords, CascadeIndex), BiasedDepth);
                 Result += Sample * Weight;
             }
         }
@@ -188,59 +180,10 @@ float PCFDirectionalLight(uint CascadeIndex, float2 TexCoords, float BiasedDepth
     }
     else
     {
-    #if USE_COMPARISON_SAMPLER
-        Result = ShadowCascades.SampleCmpLevelZero(ShadowSamplerLinear, float3(TexCoords, CascadeIndex), BiasedDepth);
-    #else
-        const float Depth = ShadowCascades.SampleLevel(ShadowSamplerLinear, float3(TexCoords, CascadeIndex), 0.0f);
-        if (Depth <= BiasedDepth)
-        {
-            Result = 1.0;
-        }
-    #endif
+        Result = ShadowCascades.SampleCmpLevelZero(ShadowSamplerLinear, float3(ShadowPosition, CascadeIndex), BiasedDepth);
     }
 
-#if USE_COMPARISON_SAMPLER
     return saturate(Result);
-#else
-    return 1.0 - saturate(Result);
-#endif
-#else
-    float Shadow = 0.0;
-    const float NumSamples = float(NUM_PCF_SAMPLES);
-
-    for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
-    {
-        float2 RandomDirection = GetPCFSample(Sample);
-
-    #if ROTATE_SAMPLES
-        float Theta    = NextRandom(RandomSeed) * PI_2;
-        float CosTheta = cos(Theta);
-        float SinTheta = sin(Theta);
-
-        const float2x2 RandomRotationMatrix = float2x2(float2(CosTheta, -SinTheta), float2(SinTheta, CosTheta));
-        RandomDirection = mul(RandomDirection, RandomRotationMatrix);
-    #endif
-
-        RandomDirection *= PenumbraRadius;
-        
-    #if USE_COMPARISON_SAMPLER
-        const float Depth = SampleCascadeCmp(CascadeIndex, TexCoords + Offset, BiasedDepth);
-        Shadow += Depth;
-    #else
-        const float Depth = SampleCascade(CascadeIndex, TexCoords + Offset);
-        if (Depth < BiasedDepth)
-        {
-            Shadow += 1.0;
-        }
-    #endif
-    }
-
-#if USE_COMPARISON_SAMPLER
-    return saturate(Shadow / NumSamples);
-#else
-    return 1.0 - saturate(Shadow / NumSamples);
-#endif
-#endif
 }
 
 float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Normal, inout uint RandomSeed)
@@ -259,9 +202,13 @@ float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Norma
     const float BiasedDepth = ShadowPosition.z - ShadowBias;
 #endif
 
-    const float RadiusScale = ShadowSplitsBuffer[CascadeIndex].Scale.x;
-    const float Radius      = (PCF_RADIUS * RadiusScale);
-    return PCFDirectionalLight(CascadeIndex, ShadowPosition.xy, BiasedDepth, Radius, RandomSeed);
+#if FILTER_MODE_PCF_GRID
+    return ShadowAmountGrid(CascadeIndex, ShadowPosition.xy, BiasedDepth);
+#elif FILTER_MODE_PCF_POISSION_DISC
+    return ShadowAmountPoissonDisc(CascadeIndex, ShadowPosition.xy, BiasedDepth, RandomSeed);
+#else
+    return 1.0;
+#endif
 }
 
 float ComputeShadow(float3 WorldPosition, float3 Normal, float Depth, inout uint CascadeIndex, inout uint RandomSeed)
@@ -346,7 +293,7 @@ void Main(FComputeShaderInput Input)
     }
 
     const float  Depth         = DepthBuffer.Load(int3(Pixel, 0)); 
-    const float2 TexCoord      = (float2(Pixel) + Float2(0.5f)) / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
+    const float2 TexCoord      = (float2(Pixel) + 0.5) / float2(CameraBuffer.ViewportWidth, CameraBuffer.ViewportHeight);
     const float3 WorldPosition = PositionFromDepth(Depth, TexCoord, CameraBuffer.ViewProjectionInv);
     const float3 Normal        = UnpackNormal(GBufferNormal);
 

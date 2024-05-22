@@ -270,20 +270,24 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
     // Add asset-path to the filename
     const FString FilePath = AssetPath + '/' + Filename;
     
-    // Open the file
-    FFileHandleRef File = FPlatformFile::OpenForRead(FilePath);
-    if (!File)
-    {
-        LOG_ERROR("Failed to open file '%s'", Filename.GetCString());
-        return false;
-    }
-
-    // Read the full file as a text-file
+    // Store the ShaderFile in this array
     TArray<CHAR> Text;
-    if (!FFileHelpers::ReadTextFile(File.Get(), Text))
+
     {
-        LOG_ERROR("Failed to read file '%s'", Filename.GetCString());
-        return false;
+        // Open the file
+        FFileHandleRef File = FPlatformFile::OpenForRead(FilePath);
+        if (!File)
+        {
+            LOG_ERROR("Failed to open file '%s'", Filename.GetCString());
+            return false;
+        }
+
+        // Read the full file as a text-file
+        if (!FFileHelpers::ReadTextFile(File.Get(), Text))
+        {
+            LOG_ERROR("Failed to read file '%s'", Filename.GetCString());
+            return false;
+        }
     }
 
     // Compile the source
