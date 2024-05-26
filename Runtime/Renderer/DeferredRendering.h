@@ -19,7 +19,7 @@ public:
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    TMap<int32, FPipelineStateInstance> MaterialPSOs;
+    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
 };
 
 class FDeferredBasePass : public FRenderPass
@@ -35,7 +35,7 @@ public:
     void Execute(FRHICommandList& CommandList, FFrameResources& FrameResources, FScene* Scene);
 
 private:
-    TMap<int32, FPipelineStateInstance> MaterialPSOs;
+    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
 };
 
 class FTiledLightPass : public FRenderPass

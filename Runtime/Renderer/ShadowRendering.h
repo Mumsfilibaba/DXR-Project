@@ -72,7 +72,6 @@ struct FTwoPassPointLightBufferHLSL
 
 MARK_AS_REALLOCATABLE(FTwoPassPointLightBufferHLSL);
 
-
 struct FPerCascadeHLSL
 {
     // 0-16
@@ -97,10 +96,10 @@ public:
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
-    TMap<int32, FPipelineStateInstance> MaterialPSOs;
-    FRHIBufferRef                       PerShadowMapBuffer;
-    FRHIBufferRef                       SinglePassShadowMapBuffer;
-    FRHIBufferRef                       TwoPassShadowMapBuffer;
+    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
+    FRHIBufferRef                               PerShadowMapBuffer;
+    FRHIBufferRef                               SinglePassShadowMapBuffer;
+    FRHIBufferRef                               TwoPassShadowMapBuffer;
 };
 
 class FCascadeGenerationPass : public FRenderPass
@@ -130,8 +129,73 @@ public:
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
-    TMap<int32, FPipelineStateInstance> MaterialPSOs;
-    FRHIBufferRef PerCascadeBuffer;
+    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
+    FRHIBufferRef                               PerCascadeBuffer;
+};
+
+struct FDirectionalShadowSettingsHLSL
+{
+    float  FilterSize;
+    float  MaxFilterSize;
+    uint32 Padding0;
+    uint32 Padding1;
+};
+
+MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
+
+enum ECSMFilterFunction
+{
+    CSMFilterFunction_GridPCF = 0,
+    CSMFilterFunction_PoissonDiscPCF = 1,
+};
+
+struct FShadowMaskShaderCombination
+{
+    FShadowMaskShaderCombination()
+        : Hash(0)
+    {
+    }
+
+    bool operator==(const FShadowMaskShaderCombination& Other) const
+    {
+        return Hash == Other.Hash;
+    }
+
+    bool operator!=(const FShadowMaskShaderCombination& Other) const
+    {
+        return Hash == Other.Hash;
+    }
+
+    friend uint64 GetHashForType(const FShadowMaskShaderCombination& Value)
+    {
+        return Value.Hash;
+    }
+
+    union
+    {
+        struct
+        {
+            // Filter Function to use
+            uint64 FilterFunction : 2;
+
+            // Rotate the samples when using Poisson Disc
+            uint64 bRotateSamples : 1;
+
+            // DebugMode
+            uint64 bDebugMode : 1;
+
+            // Select cascade from projection instead of ViewZ
+            uint64 bSelectCascadeFromProjection : 1;
+
+            // BlendBetween cascades
+            uint64 bBlendCascades : 1;
+
+            // Number of Poisson samples
+            uint64 NumPoissonSamples : 8;
+        };
+
+        uint64 Hash;
+    };
 };
 
 class FShadowMaskRenderPass : public FRenderPass
@@ -143,10 +207,10 @@ public:
     bool Initialize(FFrameResources& FrameResources);
     bool CreateResources(FFrameResources& Resources, uint32 Width, uint32 Height);
     void Execute(FRHICommandList& CommandList, const FFrameResources& FrameResources);
+    bool RetrievePipelineState(const FShadowMaskShaderCombination& Combination, FComputePipelineStateInstance& OutPSO);
+    void RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination);
 
 private:
-    FRHIComputePipelineStateRef DirectionalShadowMaskPSO;
-    FRHIComputeShaderRef        DirectionalShadowMaskShader;
-    FRHIComputePipelineStateRef DirectionalShadowMaskPSO_Debug;
-    FRHIComputeShaderRef        DirectionalShadowMaskShader_Debug;
+    TMap<FShadowMaskShaderCombination, FComputePipelineStateInstance> PipelineStates;
+    FRHIBufferRef ShadowSettingsBuffer;
 };

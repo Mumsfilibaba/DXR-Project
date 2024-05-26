@@ -34,7 +34,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
 {
     const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
 
-    FPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(MaterialFlags);
+    FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedPrePassPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -62,7 +62,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             return;
         }
 
-        FPipelineStateInstance NewPipelineInstance;
+        FGraphicsPipelineStateInstance NewPipelineInstance;
         NewPipelineInstance.VertexShader = RHICreateVertexShader(ShaderCode);
         if (!NewPipelineInstance.VertexShader)
         {
@@ -253,7 +253,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             continue;
         }
 
-        FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+        FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
         if (!Instance)
         {
             DEBUG_BREAK();
@@ -335,7 +335,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
 {
     const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
 
-    FPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(MaterialFlags);
+    FGraphicsPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedBasePassPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -368,7 +368,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             return;
         }
 
-        FPipelineStateInstance NewPipelineInstance;
+        FGraphicsPipelineStateInstance NewPipelineInstance;
         NewPipelineInstance.VertexShader = RHICreateVertexShader(ShaderCode);
         if (!NewPipelineInstance.VertexShader)
         {
@@ -588,7 +588,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             continue;
         }
 
-        FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+        FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
         if (!Instance)
         {
             DEBUG_BREAK();

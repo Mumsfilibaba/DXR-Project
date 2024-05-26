@@ -6,7 +6,13 @@ class FMaterial;
 class FSceneRenderer;
 struct FFrameResources;
 
-struct FPipelineStateInstance
+struct FComputePipelineStateInstance
+{
+    FRHIComputeShaderRef        Shader;
+    FRHIComputePipelineStateRef PipelineState;
+};
+
+struct FGraphicsPipelineStateInstance
 {
     FRHIVertexShaderRef          VertexShader;
     FRHIGeometryShaderRef        GeometryShader;

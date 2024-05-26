@@ -42,6 +42,47 @@ static TAutoConsoleVariable<bool> CVarPointLightsEnableViewInstancing(
     true,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<int32> CVarCSMFilterFunction(
+    "Renderer.CSM.FilterFunction",
+    "Select function to use to filer Cascaded Shadow Maps. 0: Grid PCF 1: Poisson Disc PCF",
+    1,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<int32> CVarCSMFilterSize(
+    "Renderer.CSM.FilterSize",
+    "Size of the filter for the Cascaded Shadow Maps",
+    196,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<int32> CVarCSMMaxFilterSize(
+    "Renderer.CSM.MaxFilterSize",
+    "Maximum size of the filter for the Cascaded Shadow Maps",
+    512,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<int32> CVarNumPoissonDiscSamples(
+    "Renderer.CSM.NumPoissonDiscSamples",
+    "Number Poisson Samples to use when sampling the Cascaded Shadow Maps using a Poisson Disc",
+    128,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarCSMRotateSamples(
+    "Renderer.CSM.RotateSamples",
+    "Rotate Poisson samples before using them to sample the Cascades",
+    true,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarCSMBlendCascades(
+    "Renderer.CSM.BlendCascades",
+    "Blend between cascades",
+    true,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarCSMSelectCascadeFromProjection(
+    "Renderer.CSM.SelectCascadeFromProjection",
+    "Select what cascade to use based on projection",
+    true,
+    EConsoleVariableFlags::Default);
 
 FPointLightRenderPass::FPointLightRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -63,7 +104,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
 {
     const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
 
-    FPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(MaterialFlags);
+    FGraphicsPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedPointLightPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -109,7 +150,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
             return;
         }
 
-        FPipelineStateInstance NewPipelineStateInstance;
+        FGraphicsPipelineStateInstance NewPipelineStateInstance;
         NewPipelineStateInstance.VertexShader = RHICreateVertexShader(ShaderCode);
         if (!NewPipelineStateInstance.VertexShader)
         {
@@ -375,7 +416,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 for (const FMeshBatch& Batch : ScenePointLight->TwoPassMeshBatches[PassIndex])
                 {
                     FMaterial* Material = Batch.Material;
-                    FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
                     if (!Instance)
                     {
                         DEBUG_BREAK();
@@ -460,7 +501,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             {
                 FMaterial* Material = Batch.Material;
 
-                FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
                 if (!Instance)
                 {
                     DEBUG_BREAK();
@@ -542,7 +583,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 {
                     FMaterial* Material = Batch.Material;
 
-                    FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
                     if (!Instance)
                     {
                         DEBUG_BREAK();
@@ -740,7 +781,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
     // Cascaded shadow map
     const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
 
-    FPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(MaterialFlags);
+    FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedDirectionalLightPSO)
     {
         TArray<uint8>         ShaderCode;
@@ -786,7 +827,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             return;
         }
 
-        FPipelineStateInstance NewPipelineStateInstance;
+        FGraphicsPipelineStateInstance NewPipelineStateInstance;
         NewPipelineStateInstance.VertexShader = RHICreateVertexShader(ShaderCode);
         if (!NewPipelineStateInstance.VertexShader)
         {
@@ -1019,7 +1060,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             {
                 FMaterial* Material = Batch.Material;
 
-                FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
                 if (!Instance)
                 {
                     DEBUG_BREAK();
@@ -1084,7 +1125,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             {
                 FMaterial* Material = Batch.Material;
 
-                FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
                 if (!Instance)
                 {
                     DEBUG_BREAK();
@@ -1157,7 +1198,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     FMaterial* Material = Batch.Material;
 
-                    FPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
                     if (!Instance)
                     {
                         DEBUG_BREAK();
@@ -1213,19 +1254,13 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
 FShadowMaskRenderPass::FShadowMaskRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
-    , DirectionalShadowMaskPSO(nullptr)
-    , DirectionalShadowMaskShader(nullptr)
-    , DirectionalShadowMaskPSO_Debug(nullptr)
-    , DirectionalShadowMaskShader_Debug(nullptr)
+    , PipelineStates()
+    , ShadowSettingsBuffer(nullptr)
 {
 }
 
 FShadowMaskRenderPass::~FShadowMaskRenderPass()
 {
-    DirectionalShadowMaskPSO.Reset();
-    DirectionalShadowMaskShader.Reset();
-    DirectionalShadowMaskPSO_Debug.Reset();
-    DirectionalShadowMaskShader_Debug.Reset();
 }
 
 bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
@@ -1235,63 +1270,35 @@ bool FShadowMaskRenderPass::Initialize(FFrameResources& Resources)
         return false;
     }
 
-    TArray<uint8> ShaderCode;
+    FShadowMaskShaderCombination Combination;
+    RetrieveCurrentCombinationBasedOnCVar(Combination);
 
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+    FComputePipelineStateInstance Instance;
+    if (!RetrievePipelineState(Combination, Instance))
     {
-        DEBUG_BREAK();
         return false;
     }
 
-    DirectionalShadowMaskShader = RHICreateComputeShader(ShaderCode);
-    if (!DirectionalShadowMaskShader)
+    if (!Instance.Shader)
     {
-        DEBUG_BREAK();
         return false;
     }
 
-    FRHIComputePipelineStateInitializer MaskPSOInitializer(DirectionalShadowMaskShader.Get());
-    DirectionalShadowMaskPSO = RHICreateComputePipelineState(MaskPSOInitializer);
-    if (!DirectionalShadowMaskPSO)
+    if (!Instance.PipelineState)
     {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        DirectionalShadowMaskPSO->SetDebugName("Directional ShadowMask PSO");
-    }
-
-    TArray<FShaderDefine> Defines =
-    {
-        { "ENABLE_DEBUG", "(1)" },
-    };
-
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
-    {
-        DEBUG_BREAK();
         return false;
     }
 
-    DirectionalShadowMaskShader_Debug = RHICreateComputeShader(ShaderCode);
-    if (!DirectionalShadowMaskShader_Debug)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    MaskPSOInitializer = FRHIComputePipelineStateInitializer(DirectionalShadowMaskShader_Debug.Get());
-    DirectionalShadowMaskPSO_Debug = RHICreateComputePipelineState(MaskPSOInitializer);
-    if (!DirectionalShadowMaskPSO_Debug)
+    FRHIBufferInfo SettingsBufferInfo(sizeof(FDirectionalShadowSettingsHLSL), sizeof(FDirectionalShadowSettingsHLSL), EBufferUsageFlags::ConstantBuffer);
+    ShadowSettingsBuffer = RHICreateBuffer(SettingsBufferInfo, EResourceAccess::ConstantBuffer);
+    if (!ShadowSettingsBuffer)
     {
         DEBUG_BREAK();
         return false;
     }
     else
     {
-        DirectionalShadowMaskPSO_Debug->SetDebugName("Directional ShadowMask PSO Debug");
+        ShadowSettingsBuffer->SetDebugName("ShadowSettingsBuffer");
     }
 
     return true;
@@ -1334,39 +1341,54 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     GPU_TRACE_SCOPE(CommandList, "DirectionalLight Shadow Mask");
 
+    // Send the settings to the GPU
+    FDirectionalShadowSettingsHLSL ShadowSettings;
+    FMemory::Memzero(&ShadowSettings);
+
+    ShadowSettings.FilterSize    = FMath::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
+    ShadowSettings.MaxFilterSize = FMath::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
+
+    CommandList.TransitionBuffer(ShadowSettingsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
+    CommandList.UpdateBuffer(ShadowSettingsBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalShadowSettingsHLSL)), &ShadowSettings);
+    CommandList.TransitionBuffer(ShadowSettingsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
+
     CommandList.TransitionTexture(Resources.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
-    FRHIComputeShaderRef CurrentShadowMaskShader;
+    FShadowMaskShaderCombination Combination;
+    RetrieveCurrentCombinationBasedOnCVar(Combination);
+
+    FComputePipelineStateInstance PipelineStateInstance;
+    if (!RetrievePipelineState(Combination, PipelineStateInstance))
+    {
+        DEBUG_BREAK();
+        return;
+    }
+
     if (CVarCSMDebugCascades.GetValue())
     {
         CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-
-        CurrentShadowMaskShader = DirectionalShadowMaskShader_Debug;
-        CommandList.SetComputePipelineState(DirectionalShadowMaskPSO_Debug.Get());
-    }
-    else
-    {
-        CurrentShadowMaskShader = DirectionalShadowMaskShader;
-        CommandList.SetComputePipelineState(DirectionalShadowMaskPSO.Get());
     }
 
-    CommandList.SetConstantBuffer(CurrentShadowMaskShader.Get(), Resources.CameraBuffer.Get(), 0);
-    CommandList.SetConstantBuffer(CurrentShadowMaskShader.Get(), Resources.DirectionalLightDataBuffer.Get(), 1);
+    CommandList.SetComputePipelineState(PipelineStateInstance.PipelineState.Get());
 
-    CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
-    CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
-    CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 2);
-    CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 3);
-    CommandList.SetShaderResourceView(CurrentShadowMaskShader.Get(), Resources.ShadowMapCascades->GetShaderResourceView(), 4);
+    CommandList.SetConstantBuffer(PipelineStateInstance.Shader.Get(), Resources.CameraBuffer.Get(), 0);
+    CommandList.SetConstantBuffer(PipelineStateInstance.Shader.Get(), Resources.DirectionalLightDataBuffer.Get(), 1);
+    CommandList.SetConstantBuffer(PipelineStateInstance.Shader.Get(), ShadowSettingsBuffer.Get(), 2);
 
-    CommandList.SetUnorderedAccessView(CurrentShadowMaskShader.Get(), Resources.DirectionalShadowMask->GetUnorderedAccessView(), 0);
+    CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
+    CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.CascadeSplitsBufferSRV.Get(), 1);
+    CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.GBuffer[GBufferIndex_Depth]->GetShaderResourceView(), 2);
+    CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.GBuffer[GBufferIndex_Normal]->GetShaderResourceView(), 3);
+    CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.ShadowMapCascades->GetShaderResourceView(), 4);
+
+    CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.DirectionalShadowMask->GetUnorderedAccessView(), 0);
     if (CVarCSMDebugCascades.GetValue())
     {
-        CommandList.SetUnorderedAccessView(CurrentShadowMaskShader.Get(), Resources.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
+        CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
     }
 
-    CommandList.SetSamplerState(CurrentShadowMaskShader.Get(), Resources.ShadowSamplerPointCmp.Get(), 0);
-    CommandList.SetSamplerState(CurrentShadowMaskShader.Get(), Resources.ShadowSamplerLinearCmp.Get(), 1);
+    CommandList.SetSamplerState(PipelineStateInstance.Shader.Get(), Resources.ShadowSamplerPointCmp.Get(), 0);
+    CommandList.SetSamplerState(PipelineStateInstance.Shader.Get(), Resources.ShadowSamplerLinearCmp.Get(), 1);
 
     constexpr uint32 NumThreads = 16;
     const uint32 ThreadsX = FMath::DivideByMultiple(Resources.DirectionalShadowMask->GetWidth(), NumThreads);
@@ -1380,4 +1402,139 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render ShadowMasks");
+}
+
+bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombination& Combination, FComputePipelineStateInstance& OutPSO)
+{
+    if (FComputePipelineStateInstance* PipelineState = PipelineStates.Find(Combination))
+    {
+        OutPSO = *PipelineState;
+        return true;
+    }
+
+    TArray<uint8> ShaderCode;
+    TArray<FShaderDefine> Defines;
+
+    FString DebugName = "ShadowMask PSO (";
+    if (Combination.FilterFunction == CSMFilterFunction_GridPCF)
+    {
+        Defines.Emplace("FILTER_MODE_PCF_GRID", "1");
+        Defines.Emplace("FILTER_MODE_PCF_POISSION_DISC", "0");
+        DebugName += " GridPCF ";
+    }
+    else if (Combination.FilterFunction == CSMFilterFunction_PoissonDiscPCF)
+    {
+        Defines.Emplace("FILTER_MODE_PCF_GRID", "0");
+        Defines.Emplace("FILTER_MODE_PCF_POISSION_DISC", "1");
+        DebugName += " PoissonDiscPCF ";
+    }
+    else
+    {
+        Defines.Emplace("FILTER_MODE_PCF_GRID", "0");
+        Defines.Emplace("FILTER_MODE_PCF_POISSION_DISC", "0");
+    }
+
+    if (Combination.bDebugMode)
+    {
+        Defines.Emplace("ENABLE_DEBUG", "1");
+        DebugName += " Debug ";
+    }
+    else
+    {
+        Defines.Emplace("ENABLE_DEBUG", "0");
+    }
+
+    if (Combination.bRotateSamples)
+    {
+        Defines.Emplace("ROTATE_SAMPLES", "1");
+        DebugName += " RotateSamples ";
+    }
+    else
+    {
+        Defines.Emplace("ROTATE_SAMPLES", "0");
+    }
+
+    if (Combination.bSelectCascadeFromProjection)
+    {
+        Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "1");
+        DebugName += " CascadeFromProjection ";
+    }
+    else
+    {
+        Defines.Emplace("SELECT_CASCADE_FROM_PROJECTION", "0");
+    }
+
+    if (Combination.bBlendCascades)
+    {
+        Defines.Emplace("BLEND_CASCADES", "1");
+        DebugName += " BlendCascades ";
+    }
+    else
+    {
+        Defines.Emplace("BLEND_CASCADES", "0");
+    }
+
+    if (Combination.NumPoissonSamples <= 16)
+    {
+        Defines.Emplace("NUM_PCF_SAMPLES", "16");
+        DebugName += " NumPoissonSamples=16 ";
+    }
+    else if (Combination.NumPoissonSamples <= 32)
+    {
+        Defines.Emplace("NUM_PCF_SAMPLES", "32");
+        DebugName += " NumPoissonSamples=32 ";
+    }
+    else if (Combination.NumPoissonSamples <= 64)
+    {
+        Defines.Emplace("NUM_PCF_SAMPLES", "64");
+        DebugName += " NumPoissonSamples=64 ";
+    }
+    else if (Combination.NumPoissonSamples <= 128)
+    {
+        Defines.Emplace("NUM_PCF_SAMPLES", "128");
+        DebugName += " NumPoissonSamples=128 ";
+    }
+
+    DebugName += ")";
+
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FComputePipelineStateInstance PipelineStateInstance;
+    PipelineStateInstance.Shader = RHICreateComputeShader(ShaderCode);
+    if (!PipelineStateInstance.Shader)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    FRHIComputePipelineStateInitializer MaskPSOInitializer(PipelineStateInstance.Shader.Get());
+    PipelineStateInstance.PipelineState = RHICreateComputePipelineState(MaskPSOInitializer);
+    if (!PipelineStateInstance.PipelineState)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        PipelineStateInstance.PipelineState->SetDebugName(DebugName);
+    }
+
+    PipelineStates.Add(Combination, PipelineStateInstance);
+    OutPSO = PipelineStateInstance;
+    return true;
+}
+
+void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskShaderCombination& OutCombination)
+{
+    OutCombination.FilterFunction               = CVarCSMFilterFunction.GetValue();
+    OutCombination.bDebugMode                   = CVarCSMDebugCascades.GetValue();
+    OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
+    OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
+    OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
+    OutCombination.NumPoissonSamples            = CVarNumPoissonDiscSamples.GetValue();
 }

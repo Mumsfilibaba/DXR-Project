@@ -4,39 +4,77 @@
 #include "Poisson.hlsli"
 #include "Halton.hlsli"
 
-#define NUM_THREADS 16
+#ifndef NUM_THREADS
+    #define NUM_THREADS 16
+#endif
 
 #ifndef ENABLE_DEBUG
     #define ENABLE_DEBUG 0
 #endif
 
 // Soft shadows settings
-#define FILTER_MODE_PCF_GRID 0
-#define FILTER_MODE_PCF_POISSION_DISC 1
+#ifndef FILTER_MODE_PCF_GRID
+    #define FILTER_MODE_PCF_GRID 0
+#endif
+
+#ifndef FILTER_MODE_PCF_POISSION_DISC
+    #define FILTER_MODE_PCF_POISSION_DISC 1
+#endif
 
 // PCF grid settings
-#define FILTER_SIZE 64
-#define MAX_FILTER_SIZE 64
+#ifndef FILTER_SIZE
+    #define FILTER_SIZE 256
+#endif
+
+#ifndef MAX_FILTER_SIZE
+    #define MAX_FILTER_SIZE 512
+#endif
 
 // Poisson Disc Settings
-#define NUM_PCF_SAMPLES 128
-#define PCF_RADIUS 0.0032
-#define ROTATE_SAMPLES 0
+#ifndef NUM_PCF_SAMPLES
+    #define NUM_PCF_SAMPLES 128
+#endif
+
+#ifndef ROTATE_SAMPLES
+    #define ROTATE_SAMPLES 1
+#endif
 
 // Cascaded Shadow Mapping Settings
-#define SELECT_CASCADE_FROM_PROJECTION 1
-#define USE_RECEIVER_PLANE_DEPTH_BIAS 0
-#define BLEND_CASCADES 1
-#define CASCADE_FADE_FACTOR 0.1
+#ifndef SELECT_CASCADE_FROM_PROJECTION
+    #define SELECT_CASCADE_FROM_PROJECTION 1
+#endif
+
+#ifndef USE_RECEIVER_PLANE_DEPTH_BIAS
+    #define USE_RECEIVER_PLANE_DEPTH_BIAS 0
+#endif
+
+#ifndef BLEND_CASCADES
+    #define BLEND_CASCADES 1
+#endif
+
+#ifndef CASCADE_FADE_FACTOR
+    #define CASCADE_FADE_FACTOR 0.1
+#endif
+
 
 // Camera and Light
 #if SHADER_LANG == SHADER_LANG_MSL
-ConstantBuffer<FCamera>           CameraBuffer : register(b2);
+ConstantBuffer<FCamera> CameraBuffer : register(b2);
 ConstantBuffer<FDirectionalLight> LightBuffer  : register(b3);
 #else
-ConstantBuffer<FCamera>           CameraBuffer : register(b0);
-ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
+ConstantBuffer<FCamera> CameraBuffer : register(b0);
+ConstantBuffer<FDirectionalLight> LightBuffer : register(b1);
 #endif
+
+struct FDirectionalShadowSettings
+{
+    float FilterSize;
+    float MaxFilterSize;
+    uint  Padding0;
+    uint  Padding1;
+};
+
+ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
 
 // Shadow information
 StructuredBuffer<FCascadeSplit> ShadowSplitsBuffer : register(t1);
@@ -77,11 +115,6 @@ float2 GetPoissonSample(uint Index)
 #endif
 }
 
-float2 RotatePoisson(float2 Sample, float Random0, float Random1)
-{
-    return OneToMinusOne(CranleyPatterssonRotation(MinusOneToOne(Sample), Random0, Random1));
-}
-
 float GetShadowMapSize()
 {
     uint Width;
@@ -93,37 +126,49 @@ float GetShadowMapSize()
 
 float ShadowAmountPoissonDisc(uint CascadeIndex, float2 ShadowPosition, float BiasedDepth, inout uint RandomSeed)
 {
-    const float NumSamples = float(NUM_PCF_SAMPLES);
+    const float2 MaxFilterSize = SettingsBuffer.MaxFilterSize / abs(ShadowSplitsBuffer[0].Scale.xy);
+    const float2 FilterSize    = clamp(min(SettingsBuffer.FilterSize.xx, MaxFilterSize) * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy), 1.0, SettingsBuffer.MaxFilterSize);
 
-    float Shadow = 0.0;
-    for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
+    float Result = 0.0;
+    
+    [branch]
+    if (FilterSize.x > 1.0 || FilterSize.y > 1.0)
     {
-        float2 RandomDirection = GetPoissonSample(Sample);
-
     #if ROTATE_SAMPLES
         float Theta    = NextRandom(RandomSeed) * PI_2;
         float CosTheta = cos(Theta);
         float SinTheta = sin(Theta);
 
         const float2x2 RandomRotationMatrix = float2x2(float2(CosTheta, -SinTheta), float2(SinTheta, CosTheta));
-        RandomDirection = mul(RandomDirection, RandomRotationMatrix);
     #endif
 
-        RandomDirection *= PCF_RADIUS;
-        
-        const float2 CurrentTexCoords = ShadowPosition + RandomDirection;
-        const float Depth = ShadowCascades.SampleCmpLevelZero(ShadowSamplerPoint, float3(CurrentTexCoords, CascadeIndex), BiasedDepth);
-        Shadow += Depth;
+        const float  ShadowMapSize = GetShadowMapSize();
+        const float2 Radius = (FilterSize * 0.5) / ShadowMapSize;
+
+        for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
+        {
+            float2 RandomDirection = GetPoissonSample(Sample) * Radius;
+        #if ROTATE_SAMPLES
+            RandomDirection = mul(RandomDirection, RandomRotationMatrix);
+        #endif
+            Result += ShadowCascades.SampleCmpLevelZero(ShadowSamplerPoint, float3(ShadowPosition + RandomDirection, CascadeIndex), BiasedDepth);
+        }
+
+        Result = Result / float(NUM_PCF_SAMPLES);
+        return saturate(Result);
+    }
+    else
+    {
+        Result = ShadowCascades.SampleCmpLevelZero(ShadowSamplerLinear, float3(ShadowPosition, CascadeIndex), BiasedDepth);
     }
 
-    Shadow = Shadow / NumSamples;
-    return saturate(Shadow);
+    return saturate(Result);
 }
 
 float ShadowAmountGrid(uint CascadeIndex, float2 ShadowPosition, float BiasedDepth)
 {
-    const float2 MaxFilterSize = float(MAX_FILTER_SIZE) / abs(ShadowSplitsBuffer[0].Scale.xy);
-    const float2 FilterSize = clamp(min(float2(FILTER_SIZE, FILTER_SIZE), MaxFilterSize) * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy), 1.0, float(MAX_FILTER_SIZE));
+    const float2 MaxFilterSize = SettingsBuffer.MaxFilterSize / abs(ShadowSplitsBuffer[0].Scale.xy);
+    const float2 FilterSize    = clamp(min(SettingsBuffer.FilterSize.xx, MaxFilterSize) * abs(ShadowSplitsBuffer[CascadeIndex].Scale.xy), 1.0, SettingsBuffer.MaxFilterSize);
 
     float Result = 0.0;
     
@@ -214,11 +259,8 @@ float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Norma
 float ComputeShadow(float3 WorldPosition, float3 Normal, float Depth, inout uint CascadeIndex, inout uint RandomSeed)
 {
     // Calculate z-position in view-space
-    const float ViewPosZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
-
-#if SELECT_CASCADE_FROM_PROJECTION
+    const float  ViewPosZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
     const float3 ProjectionPosition = mul(float4(WorldPosition, 1.0), LightBuffer.ShadowMatrix).xyz;
-#endif
     
     // Find current cascade
     CascadeIndex = NUM_SHADOW_CASCADES - 1;
