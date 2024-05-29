@@ -20,9 +20,9 @@ enum EMaterialFlags : int32
 
 ENUM_CLASS_OPERATORS(EMaterialFlags);
 
-struct FMaterialCreateInfo
+struct FMaterialInfo
 {
-    FMaterialCreateInfo()
+    FMaterialInfo()
         : Albedo(1.0f)
         , Roughness(0.0f)
         , Metallic(0.0f)
@@ -55,7 +55,7 @@ struct FMaterialHLSL
 class ENGINE_API FMaterial
 {
 public:
-    FMaterial(const FMaterialCreateInfo& InProperties);
+    FMaterial(const FMaterialInfo& InMaterialInfo);
     ~FMaterial() = default;
 
     void Initialize();
@@ -75,15 +75,15 @@ public:
     void EnableDoubleSided(bool bIsDoubleSided);
     void SetDebugName(const FString& InDebugName);
 
-    bool HasAlphaMask() const { return (Properties.MaterialFlags & MaterialFlag_EnableAlpha) != MaterialFlag_None; }
-    bool HasHeightMap() const { return (Properties.MaterialFlags & MaterialFlag_EnableHeight) != MaterialFlag_None; }
-    bool HasNormalMap() const { return (Properties.MaterialFlags & MaterialFlag_EnableNormalMapping) != MaterialFlag_None; }
+    bool HasAlphaMask() const { return (MaterialInfo.MaterialFlags & MaterialFlag_EnableAlpha) != MaterialFlag_None; }
+    bool HasHeightMap() const { return (MaterialInfo.MaterialFlags & MaterialFlag_EnableHeight) != MaterialFlag_None; }
+    bool HasNormalMap() const { return (MaterialInfo.MaterialFlags & MaterialFlag_EnableNormalMapping) != MaterialFlag_None; }
 
-    bool IsDoubleSided()    const { return (Properties.MaterialFlags & MaterialFlag_DoubleSided) != MaterialFlag_None; }
-    bool IsPackedMaterial() const { return (Properties.MaterialFlags & (MaterialFlag_PackedDiffuseAlpha | MaterialFlag_PackedParams)) != MaterialFlag_None; }
+    bool IsDoubleSided()    const { return (MaterialInfo.MaterialFlags & MaterialFlag_DoubleSided) != MaterialFlag_None; }
+    bool IsPackedMaterial() const { return (MaterialInfo.MaterialFlags & (MaterialFlag_PackedDiffuseAlpha | MaterialFlag_PackedParams)) != MaterialFlag_None; }
 
-    bool ShouldRenderInPrePass()     const { return (Properties.MaterialFlags & MaterialFlag_ForceForwardPass) == MaterialFlag_None; }
-    bool ShouldRenderInForwardPass() const { return (Properties.MaterialFlags & MaterialFlag_ForceForwardPass) != MaterialFlag_None; }
+    bool ShouldRenderInPrePass()     const { return (MaterialInfo.MaterialFlags & MaterialFlag_ForceForwardPass) == MaterialFlag_None; }
+    bool ShouldRenderInForwardPass() const { return (MaterialInfo.MaterialFlags & MaterialFlag_ForceForwardPass) != MaterialFlag_None; }
 
     FRHISamplerState* GetMaterialSampler() const
     {
@@ -97,12 +97,17 @@ public:
 
     FRHIShaderResourceView* GetAlphaMaskSRV() const
     {
-        return (Properties.MaterialFlags & MaterialFlag_PackedDiffuseAlpha) != MaterialFlag_None ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
+        return (MaterialInfo.MaterialFlags & MaterialFlag_PackedDiffuseAlpha) != MaterialFlag_None ? AlbedoMap->GetShaderResourceView() : AlphaMask->GetShaderResourceView();
     }
 
     EMaterialFlags GetMaterialFlags() const 
     {
-        return Properties.MaterialFlags;
+        return MaterialInfo.MaterialFlags;
+    }
+
+    const FMaterialInfo& GetMaterialInfo() const
+    {
+        return MaterialInfo;
     }
 
 public:
@@ -117,7 +122,7 @@ public:
 
 private:
     FMaterialHLSL       MaterialData;
-    FMaterialCreateInfo Properties;
+    FMaterialInfo       MaterialInfo;
     bool                bMaterialBufferIsDirty;
 
     FRHIBufferRef       MaterialBuffer;

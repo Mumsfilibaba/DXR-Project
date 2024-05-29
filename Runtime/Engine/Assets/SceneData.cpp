@@ -17,7 +17,7 @@ void FSceneData::AddToWorld(FWorld* World)
     {
         for (const FMaterialData& MaterialData : Materials)
         {
-            FMaterialCreateInfo CreateInfo;
+            FMaterialInfo CreateInfo;
             CreateInfo.Albedo           = MaterialData.Diffuse;
             CreateInfo.AmbientOcclusion = MaterialData.AO;
             CreateInfo.Metallic         = MaterialData.Metallic;

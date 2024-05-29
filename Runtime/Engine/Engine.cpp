@@ -10,6 +10,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Widgets/ConsoleWidget.h"
 #include "Engine/Widgets/FrameProfilerWidget.h"
+#include "Engine/Widgets/InspectorWidget.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -177,7 +178,7 @@ bool FEngine::Init()
     BaseMaterialSampler = RHICreateSamplerState(SamplerInfo);
 
     // Base material
-    FMaterialCreateInfo MaterialDesc;
+    FMaterialInfo MaterialDesc;
     MaterialDesc.AmbientOcclusion = 1.0f;
     MaterialDesc.Metallic         = 0.0f;
     MaterialDesc.Roughness        = 1.0f;
@@ -215,6 +216,9 @@ bool FEngine::Init()
 
         ConsoleWidget = MakeShared<FConsoleWidget>();
         FApplication::Get().AddWidget(ConsoleWidget);
+
+        InspectorWidget = MakeShared<FInspectorWidget>();
+        FApplication::Get().AddWidget(InspectorWidget);
     }
 
     return true;

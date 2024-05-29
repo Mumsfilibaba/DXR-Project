@@ -11,7 +11,6 @@ static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
-
 void FGPUProfilerWindow::Paint()
 {
     if (CVarDrawGPUProfiler.GetValue())
@@ -160,6 +159,10 @@ void FGPUProfilerWindow::DrawWindow()
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
+    const ImGuiStyle& Style = FImGui::GetStyle();
+    ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ WindowBG.x, WindowBG.y, WindowBG.z, 0.8f });
+
     ImGui::SetNextWindowPos(ImVec2(DisplaySize.x * 0.5f, DisplaySize.y * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
@@ -170,7 +173,7 @@ void FGPUProfilerWindow::DrawWindow()
         ImGuiWindowFlags_NoSavedSettings;
 
     bool bTempDrawProfiler = CVarDrawGPUProfiler.GetValue();
-    if (ImGui::Begin("Profiler", &bTempDrawProfiler, Flags))
+    if (ImGui::Begin("GPU Profiler", &bTempDrawProfiler, Flags))
     {
         if (ImGui::Button("Start Profile"))
         {
@@ -196,6 +199,7 @@ void FGPUProfilerWindow::DrawWindow()
         ImGui::Separator();
     }
 
+    ImGui::PopStyleColor();
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();
     ImGui::PopStyleColor();

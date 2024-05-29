@@ -5,14 +5,16 @@
 #include "Application/Application.h"
 
 static TAutoConsoleVariable<bool> CVarDrawFps(
-    "Renderer.DrawFps",
+    "Engine.DrawFps",
     "Enable FPS counter in the top right corner",
-    true);
+    true,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarDrawFrameProfiler(
-    "Renderer.DrawFrameProfiler",
+    "Engine.DrawFrameProfiler",
     "Enables the FrameProfiler and displays the profiler window",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 void FFrameProfilerWidget::Paint()
 {

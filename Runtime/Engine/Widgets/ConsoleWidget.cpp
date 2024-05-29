@@ -56,6 +56,10 @@ void FConsoleWidget::Paint()
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
+    const ImGuiStyle& Style = FImGui::GetStyle();
+    ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ WindowBG.x, WindowBG.y, WindowBG.z, 0.8f });
+
     ImGui::SetNextWindowPos(MainViewportPos, ImGuiCond_Always, ImVec2(0.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, 0.0f), ImGuiCond_Always);
 
@@ -284,14 +288,7 @@ void FConsoleWidget::Paint()
             return This->TextCallback(Data);
         };
 
-        const bool bResult = ImGui::InputText(
-            "###Input",
-            TextBuffer.Data(),
-            TextBuffer.Size(),
-            InputFlags, 
-            Callback, 
-            reinterpret_cast<void*>(this));
-
+        const bool bResult = ImGui::InputText("###Input", TextBuffer.Data(), TextBuffer.Size(), InputFlags, Callback, reinterpret_cast<void*>(this));
         if (bResult && TextBuffer[0] != 0)
         {
             if (CandidatesIndex != -1)
@@ -300,7 +297,6 @@ void FConsoleWidget::Paint()
 
                 Candidates.Clear();
                 CandidatesIndex = -1;
-
                 bUpdateCursorPosition = true;
             }
             else
@@ -325,11 +321,12 @@ void FConsoleWidget::Paint()
 
         ImGui::PopStyleColor();
         ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-        ImGui::PopStyleColor();
-
     }
+
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
+    ImGui::PopStyleColor();
 
     ImGui::End();
 

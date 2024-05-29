@@ -30,11 +30,14 @@ end
 
 -- Generate build info headers
 function Glslang_GenerateBuildTimeHeaders()
+    LogInfo("            Generating BuildTime Headers for 'glslang'")
+
     -- NOTE: This requires python to be installed
     local GlslangPath      = JoinPath(GetEnginePath(), "Dependencies/glslang")
     local ScriptPath       = JoinPath(GlslangPath, "build_info.py")
     local TemplateFilePath = JoinPath(GlslangPath, "build_info.h.tmpl")
-    local OutputFilePath   = JoinPath(GlslangPath, "glslang/include/glslang/build_info.h")
+    local OutputFileDir    = JoinPath(GlslangPath, "glslang/include/glslang")
+    local OutputFilePath   = OutputFileDir .. "/build_info.h"
 
     -- Local variable to store the template file in
     local Template
@@ -42,15 +45,22 @@ function Glslang_GenerateBuildTimeHeaders()
     -- Load the template file
     local File = io.open(TemplateFilePath, "r")
     if File then
+        LogInfo("            Loaded template file '%s'", TemplateFilePath)
+
         Template = File:read("*a")
         File:close()
     else
-        LogError("Failed to open file '%s'", TemplateFilePath)
+        LogError("Failed to open template file '%s'", TemplateFilePath)
         return
     end
 
     local SoftwareVersion = Glslang_DeduceSoftwareVersion(GlslangPath)
-
+    LogInfo("            SoftwareVersion @major@ '%d'", SoftwareVersion.Major)
+    LogInfo("            SoftwareVersion @minor@ '%d'", SoftwareVersion.Minor)
+    LogInfo("            SoftwareVersion @patch@ '%d'", SoftwareVersion.Patch)
+    LogInfo("            SoftwareVersion @flavor@ '%s'", SoftwareVersion.Flavor)
+    LogInfo("            SoftwareVersion @date@ '%s'", SoftwareVersion.Date)
+    
     local Output = Template;
     Output = string.gsub(Output, "@major@", SoftwareVersion.Major)
     Output = string.gsub(Output, "@minor@", SoftwareVersion.Minor)
@@ -58,22 +68,36 @@ function Glslang_GenerateBuildTimeHeaders()
     Output = string.gsub(Output, "@flavor@", SoftwareVersion.Flavor)
     Output = string.gsub(Output, "@date@", SoftwareVersion.Date)
 
-    local File = io.open(OutputFilePath, "r")
-    if File then
-        local ExistingOutput = File:read("*a")
-        File:close()
+    if not os.isdir(OutputFileDir) then
+        LogInfo("            'build_info.h' does not exist yet, creating file...")
 
-        if Output == ExistingOutput then
+        local Success, Error = os.mkdir(OutputFileDir)
+        if not Success then
+            LogError("Failed to create output directory '%s': %s", OutputFileDir, Error)
             return
+        end
+    else
+        local File, Error = io.open(OutputFilePath, "r")
+        if File then
+            local ExistingOutput = File:read("*a")
+            File:close()
+    
+            if Output == ExistingOutput then
+                LogInfo("            'build_info.h' is equal to the generated one, skipping file creation")
+                return
+            end
+        else
+            LogInfo("            'build_info.h' does not exist yet, creating file...")
         end
     end
 
-    File = io.open(OutputFilePath, "w")
+    local File, Error = io.open(OutputFilePath, "w")
     if File then
         File:write(Output)
         File:close()
+        LogInfo("            ... finished creating 'build_info.h'")
     else
-        LogError("Failed to open file '%s'", OutputFilePath)
+        LogError("Failed to open output file '%s': %s", OutputFilePath, Error)
         return
     end
 end
@@ -683,7 +707,6 @@ function FWorkspaceRules(WorkspaceName)
                     }
 
                     Glslang_SetPlatformProperties()
-
                     Glslang_GenerateBuildTimeHeaders()
 
                     -- Links

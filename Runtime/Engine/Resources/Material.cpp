@@ -3,7 +3,7 @@
 #include "RHI/RHICommandList.h"
 #include "Engine/Engine.h"
 
-FMaterial::FMaterial(const FMaterialCreateInfo& InProperties)
+FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
     : AlbedoMap()
     , NormalMap()
     , RoughnessMap()
@@ -11,7 +11,7 @@ FMaterial::FMaterial(const FMaterialCreateInfo& InProperties)
     , AOMap()
     , MetallicMap()
     , MaterialData()
-    , Properties(InProperties)
+    , MaterialInfo(InMaterialInfo)
     , MaterialBuffer()
     , bMaterialBufferIsDirty(true)
     , DebugName()
@@ -32,10 +32,10 @@ void FMaterial::Initialize()
 
 void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 {
-    MaterialData.Albedo           = Properties.Albedo;
-    MaterialData.Metallic         = Properties.Metallic;
-    MaterialData.Roughness        = Properties.Roughness;
-    MaterialData.AmbientOcclusion = Properties.AmbientOcclusion;
+    MaterialData.Albedo           = MaterialInfo.Albedo;
+    MaterialData.Metallic         = MaterialInfo.Metallic;
+    MaterialData.Roughness        = MaterialInfo.Roughness;
+    MaterialData.AmbientOcclusion = MaterialInfo.AmbientOcclusion;
 
     CommandList.TransitionBuffer(MaterialBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(MaterialBuffer.Get(), FBufferRegion(0, sizeof(FMaterialHLSL)), &MaterialData);
@@ -45,56 +45,56 @@ void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 
 void FMaterial::SetAlbedo(const FVector3& Albedo)
 {
-    Properties.Albedo      = Albedo;
+    MaterialInfo.Albedo      = Albedo;
     bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetAlbedo(float r, float g, float b)
 {
-    Properties.Albedo      = FVector3(r, g, b);
+    MaterialInfo.Albedo      = FVector3(r, g, b);
     bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetMetallic(float Metallic)
 {
-    Properties.Metallic    = Metallic;
+    MaterialInfo.Metallic    = Metallic;
     bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetRoughness(float Roughness)
 {
-    Properties.Roughness   = Roughness;
+    MaterialInfo.Roughness   = Roughness;
     bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetAmbientOcclusion(float AmbientOcclusion)
 {
-    Properties.AmbientOcclusion = AmbientOcclusion;
+    MaterialInfo.AmbientOcclusion = AmbientOcclusion;
     bMaterialBufferIsDirty      = true;
 }
 
 void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
     if (bForceForwardRender)
-        Properties.MaterialFlags |= MaterialFlag_ForceForwardPass;
+        MaterialInfo.MaterialFlags |= MaterialFlag_ForceForwardPass;
 }
 
 void FMaterial::EnableHeightMap(bool bEnableHeightMap)
 {
     if (bEnableHeightMap)
-        Properties.MaterialFlags |= MaterialFlag_EnableHeight;
+        MaterialInfo.MaterialFlags |= MaterialFlag_EnableHeight;
 }
 
 void FMaterial::EnableAlphaMask(bool bEnableAlphaMask)
 {
     if (bEnableAlphaMask)
-        Properties.MaterialFlags |= MaterialFlag_EnableAlpha;
+        MaterialInfo.MaterialFlags |= MaterialFlag_EnableAlpha;
 }
 
 void FMaterial::EnableDoubleSided(bool bIsDoubleSided)
 {
     if (bIsDoubleSided)
-        Properties.MaterialFlags |= MaterialFlag_DoubleSided;
+        MaterialInfo.MaterialFlags |= MaterialFlag_DoubleSided;
 }
 
 void FMaterial::SetDebugName(const FString& InDebugName)

@@ -48,6 +48,9 @@ struct ENGINE_API FEngine
     /** @brief - Profiler Widget */
     TSharedPtr<class FFrameProfilerWidget> ProfilerWidget;
 
+    /** @brief - Scene Inspector Widget */
+    TSharedPtr<class FInspectorWidget> InspectorWidget;
+
     /** @brief - The current world */
     FWorld* World;
 

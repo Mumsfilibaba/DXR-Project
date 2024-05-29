@@ -471,12 +471,42 @@ void FImGui::InitializeStyle()
     ImGuiStyle& Style = ImGui::GetStyle();
     ImGui::StyleColorsDark();
 
-    // Padding
-    Style.FramePadding = ImVec2(6.0f, 4.0f);
-
     // Use AA for lines etc.
     Style.AntiAliasedLines = true;
     Style.AntiAliasedFill  = true;
+
+    Style.Colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.105f, 0.11f, 1.0f };
+
+    // Headers
+    Style.Colors[ImGuiCol_Header]        = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+    Style.Colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
+    Style.Colors[ImGuiCol_HeaderActive]  = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+    // Buttons
+    Style.Colors[ImGuiCol_Button]        = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+    Style.Colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
+    Style.Colors[ImGuiCol_ButtonActive]  = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+    // Frame BG
+    Style.Colors[ImGuiCol_FrameBg]        = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+    Style.Colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.305f, 0.31f, 1.0f };
+    Style.Colors[ImGuiCol_FrameBgActive]  = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+    // Tabs
+    Style.Colors[ImGuiCol_Tab]                = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+    Style.Colors[ImGuiCol_TabHovered]         = ImVec4{ 0.38f, 0.3805f, 0.381f, 1.0f };
+    Style.Colors[ImGuiCol_TabActive]          = ImVec4{ 0.28f, 0.2805f, 0.281f, 1.0f };
+    Style.Colors[ImGuiCol_TabUnfocused]       = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+    Style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.205f, 0.21f, 1.0f };
+
+    // Title
+    Style.Colors[ImGuiCol_TitleBg]          = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+    Style.Colors[ImGuiCol_TitleBgActive]    = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+    Style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
+
+#if 0 
+    // Padding
+    Style.FramePadding = ImVec2(6.0f, 4.0f);
 
     // Size
     Style.WindowBorderSize = 0.0f;
@@ -598,6 +628,7 @@ void FImGui::InitializeStyle()
     Style.Colors[ImGuiCol_TabActive].y = 0.25f;
     Style.Colors[ImGuiCol_TabActive].z = 0.25f;
     Style.Colors[ImGuiCol_TabActive].w = 1.0f;
+#endif
 }
 
 void FImGui::SetMainViewport(FViewport* InViewport)

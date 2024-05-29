@@ -27,23 +27,14 @@ void FRendererInfoWindow::Paint()
         const float Scale        = FrameBufferScale.x;
         const float ColumnWidth  = 105.0f * Scale;
 	    const float Width        = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
-	    const float Height       = WindowHeight * 0.8f;
+	    const float Height       = WindowHeight * 0.25f;
 
         ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
-        ImGui::SetNextWindowPos(ImVec2(MainViewportPos.x + WindowWidth, MainViewportPos.y + 10.0f * Scale), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(MainViewportPos.x + WindowWidth, MainViewportPos.y + 10.0f * Scale), ImGuiCond_Once, ImVec2(1.0f, 0.0f));
+        ImGui::SetNextWindowSize(ImVec2(Width, Height));
 
-        const ImGuiWindowFlags Flags =
-            ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoDecoration |
-            ImGuiWindowFlags_NoFocusOnAppearing |
-            ImGuiWindowFlags_NoSavedSettings |
-            ImGuiWindowFlags_NoDocking;
-
-        ImGui::Begin("Renderer Window", nullptr, Flags);
-
-        ImGui::Text("Renderer Status:");
-        ImGui::Separator();
+        const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
+        ImGui::Begin("Renderer Info", nullptr, Flags);
 
         ImGui::Columns(2, nullptr, false);
         ImGui::SetColumnWidth(0, ColumnWidth);

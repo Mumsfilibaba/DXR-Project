@@ -5,7 +5,7 @@
 #include "Core/Templates/NumericLimits.h"
 
 #include <imgui.h>
-#include <imgui_internal.h>
+//#include <imgui_internal.h>
 
 constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
@@ -13,6 +13,7 @@ constexpr float MAX_FRAMETIME_MS = 1000.0f / 30.0f;
 
 inline bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f)
 {
+#if 0
     ImGuiStyle& Style = ImGui::GetStyle();
 
     const float Size  = ImGui::CalcTextSize(Label).x + Style.FramePadding.x * 2.0f;
@@ -25,10 +26,13 @@ inline bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f)
     }
 
     return ImGui::Button(Label);
+#endif
+    return false;
 }
 
 inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f)
 {
+#if 0
     ImGui::PushID(Label.GetCString());
     ImGui::Columns(2, nullptr, false);
 
@@ -94,6 +98,7 @@ inline void DrawFloat3Control(const FString& Label, FVector3& OutValue, float Re
     ImGui::PopStyleVar();
     ImGui::Columns(1);
     ImGui::PopID();
+#endif
 }
 
 FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)

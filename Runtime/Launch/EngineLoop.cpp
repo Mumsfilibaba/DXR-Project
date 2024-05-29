@@ -1,8 +1,4 @@
 #include "EngineLoop.h"
-#if PROJECT_EDITOR
-#include "EditorEngine.h"
-#endif
-
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/TaskManager.h"
@@ -199,12 +195,7 @@ bool FEngineLoop::Initialize()
 {
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
-#if PROJECT_EDITOR
-    GEngine = FEditorEngine::Make();
-#else
     GEngine = new FEngine();
-#endif
-
     if (!GEngine->Init())
     {
         LOG_ERROR("Failed to initialize engine");

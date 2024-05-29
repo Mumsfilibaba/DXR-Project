@@ -87,6 +87,11 @@ public:
         return Size;
     }
 
+    static FORCEINLINE ImGuiStyle& GetStyle()
+    {
+        return ImGui::GetStyle();
+    }
+
 private:
     static ImGuiContext* Context;
 };
