@@ -10,7 +10,7 @@ struct FGenericThreadMisc
 {
     static FORCEINLINE void Release() { }
     static FORCEINLINE uint32 GetNumProcessors() { return 1; }
-    static FORCEINLINE void* GetThreadHandle() { return nullptr; }
+    static FORCEINLINE void* GetCurrentThreadHandle() { return nullptr; }
     static FORCEINLINE void Sleep(FTimespan Time) { }
 	static FORCEINLINE void Yield() { }
     static FORCEINLINE void Pause() { }

@@ -1,7 +1,7 @@
 #include "FrameProfilerWidget.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Stopwatch.h"
-#include "Application/WidgetUtilities.h"
+#include "Core/Threading/ThreadManager.h"
 #include "Application/Application.h"
 
 static TAutoConsoleVariable<bool> CVarDrawFps(
@@ -48,10 +48,7 @@ void FFrameProfilerWidget::DrawFPS()
         ImGuiWindowFlags_NoSavedSettings;
 
     ImGui::Begin("FPS Window", nullptr, Flags);
-
-    const FString FpsString = TTypeToString<int32>::ToString(FFrameProfiler::Get().GetFramesPerSecond());
-    ImGui::Text("%s", FpsString.GetCString());
-
+    ImGui::Text("%d", FFrameProfiler::Get().GetFramesPerSecond());
     ImGui::End();
 
     ImGui::PopStyleColor();
@@ -67,7 +64,7 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
 
-        const FProfileSample& CPUFrameTime = FFrameProfiler::Get().GetCPUFrameTime();
+        const FFrameProfilerFunctionInfo& CPUFrameTime = FFrameProfiler::Get().GetCPUFrameTime();
 
         float Avg = CPUFrameTime.GetAverage();
         float Min = CPUFrameTime.Min;
@@ -92,15 +89,35 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
 
         ImGui::NewLine();
 
-        ImGui::PlotHistogram(
-            "",
-            CPUFrameTime.Samples.Data(),
-            CPUFrameTime.SampleCount,
-            CPUFrameTime.CurrentSample,
-            nullptr,
-            0.0f,
-            ImGui_GetMaxLimit(Avg),
-            ImVec2(Width * 0.9825f, 80.0f));
+        const auto GetMaxLimit = [](float Num)
+        {
+            if (Num < 0.01f)
+            {
+                return 0.01f;
+            }
+            else if (Num < 0.1f)
+            {
+                return 0.1f;
+            }
+            else if (Num < 1.0f)
+            {
+                return 1.0f;
+            }
+            else if (Num < 10.0f)
+            {
+                return 10.0f;
+            }
+            else if (Num < 100.0f)
+            {
+                return 100.0f;
+            }
+            else
+            {
+                return 1000.0f;
+            }
+        };
+
+        ImGui::PlotHistogram("", CPUFrameTime.Samples.Data(), CPUFrameTime.SampleCount, CPUFrameTime.CurrentSample, nullptr, 0.0f, GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
 
         ImGui::EndTable();
     }
@@ -162,41 +179,71 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
     //    ImGui::EndTable();
     //}
 
-    if (ImGui::BeginTable("Functions", 5, TableFlags))
+    // Retrieve a copy of the CPU samples
+    FFrameProfiler::Get().GetFunctionInfo(ThreadInfos);
+
+    int32 ThreadIndex = 0;
+    for (const FFrameProfilerThreadInfo& ThreadInfo : ThreadInfos)
     {
-        ImGui::TableSetupColumn("Trace Name");
-        ImGui::TableSetupColumn("Total Calls");
-        ImGui::TableSetupColumn("Avg");
-        ImGui::TableSetupColumn("Min");
-        ImGui::TableSetupColumn("Max");
-        ImGui::TableHeadersRow();
-
-        // Retrieve a copy of the CPU samples
-        FFrameProfiler::Get().GetCPUSamples(Samples);
-        for (auto Sample : Samples)
+        FString ThreadName;
+        if (FThreadManager::Get().IsMainThread(ThreadInfo.ThreadHandle))
         {
-            ImGui::TableNextRow();
+            ThreadName = "MainThread";
+        }
+        else
+        {
+            FGenericThread* Thread = FThreadManager::Get().GetThreadFromHandle(ThreadInfo.ThreadHandle);
+            if (!Thread)
+            {
+                continue;
+            }
 
-            float Avg   = Sample.Second.GetAverage();
-            float Min   = Sample.Second.Min;
-            float Max   = Sample.Second.Max;
-            int32 Calls = Sample.Second.TotalCalls;
+            ThreadName = Thread->GetName();
 
-            ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Sample.First.GetCString());
-            ImGui::TableSetColumnIndex(1);
-            ImGui::Text("%d", Calls);
-            ImGui::TableSetColumnIndex(2);
-            ImGui_PrintTime(Avg);
-            ImGui::TableSetColumnIndex(3);
-            ImGui_PrintTime(Min);
-            ImGui::TableSetColumnIndex(4);
-            ImGui_PrintTime(Max);
+            if (ThreadName.IsEmpty())
+            {
+                ThreadName = FString::CreateFormatted("Thread%d", ThreadIndex);
+            }
         }
 
-        Samples.Clear();
+        if (ImGui::CollapsingHeader(ThreadName.GetCString(), ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            if (ImGui::BeginTable("Functions", 5, TableFlags | ImGuiTableFlags_Resizable))
+            {
+                ImGui::TableSetupColumn("Trace Name", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableSetupColumn("Total Calls");
+                ImGui::TableSetupColumn("Avg");
+                ImGui::TableSetupColumn("Min");
+                ImGui::TableSetupColumn("Max");
+                ImGui::TableHeadersRow();
 
-        ImGui::EndTable();
+                for (auto Sample : ThreadInfo.FunctionInfoMap)
+                {
+                    ImGui::TableNextRow();
+
+                    constexpr float MillisecondMultiplier = 1.0f / (1000.0f * 1000.0f);
+                    float Avg   = Sample.Second.GetAverage() * MillisecondMultiplier;
+                    float Min   = Sample.Second.Min * MillisecondMultiplier;
+                    float Max   = Sample.Second.Max * MillisecondMultiplier;
+                    int32 Calls = Sample.Second.TotalCalls;
+
+                    ImGui::TableSetColumnIndex(0);
+                    ImGui::Text("%s", Sample.First.GetCString());
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::Text("%d", Calls);
+                    ImGui::TableSetColumnIndex(2);
+                    ImGui::Text("Avg: %.4f ms", Avg);
+                    ImGui::TableSetColumnIndex(3);
+                    ImGui::Text("Min: %.4f ms", Min);
+                    ImGui::TableSetColumnIndex(4);
+                    ImGui::Text("Max: %.4f ms", Max);
+                }
+
+                ImGui::EndTable();
+            }
+        }
+
+        ThreadIndex++;
     }
 }
 
@@ -215,11 +262,7 @@ void FFrameProfilerWidget::DrawWindow()
     ImGui::SetNextWindowPos(ImVec2(Position.x + (Size.x * 0.5f), Position.y + (Size.y * 0.175f)), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
-    const ImGuiWindowFlags Flags =
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoFocusOnAppearing |
-        ImGuiWindowFlags_NoSavedSettings;
+    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings;
 
     bool bTempDrawProfiler = CVarDrawFrameProfiler.GetValue();
     if (ImGui::Begin("Profiler", &bTempDrawProfiler, Flags))

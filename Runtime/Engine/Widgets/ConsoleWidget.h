@@ -10,8 +10,7 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Application/Widget.h"
 #include "Application/ApplicationEventHandler.h"
-
-#include <imgui.h>
+#include "Application/ImGuiModule.h"
 
 struct FConsoleInputHandler final : public FInputPreProcessor
 {

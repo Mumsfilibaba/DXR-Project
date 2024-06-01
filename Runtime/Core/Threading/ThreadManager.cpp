@@ -23,7 +23,7 @@ static auto& GetThreadManagerInstance()
 bool FThreadManager::Initialize()
 {
     FThreadManager& ThreadManager = FThreadManager::Get();
-    ThreadManager.MainThreadHandle = FPlatformThreadMisc::GetThreadHandle();
+    ThreadManager.MainThreadHandle = FPlatformThreadMisc::GetCurrentThreadHandle();
 
     if (!ThreadManager.MainThreadHandle)
     {
@@ -46,7 +46,7 @@ bool FThreadManager::Release()
 bool FThreadManager::IsMainThread()
 {
     FThreadManager& ThreadManager = FThreadManager::Get();
-    return ThreadManager.MainThreadHandle == FPlatformThreadMisc::GetThreadHandle();
+    return ThreadManager.MainThreadHandle == FPlatformThreadMisc::GetCurrentThreadHandle();
 }
 
 FThreadManager& FThreadManager::Get()

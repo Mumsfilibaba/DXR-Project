@@ -1,9 +1,7 @@
 #include "TextureDebugger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Application/Application.h"
-#include "Application/WidgetUtilities.h"
-
-#include <imgui.h>
+#include "Application/ImGuiModule.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
     "Renderer.Debug.ViewRenderTargets",
@@ -84,7 +82,7 @@ void FRenderTargetDebugWindow::Paint()
             {
                 ImGui::NewLine();
 
-                if (ButtonCenteredOnLine("Close"))
+                if (FImGui::ButtonCenteredOnLine("Close"))
                 {
                     CVarDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }

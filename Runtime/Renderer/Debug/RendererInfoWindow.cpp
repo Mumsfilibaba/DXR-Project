@@ -3,8 +3,7 @@
 #include "RHI/RHI.h"
 #include "Application/Application.h"
 #include "Renderer/SceneRenderer.h"
-
-#include <imgui.h>
+#include "Application/ImGuiModule.h"
 
 static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
     "Renderer.DrawRendererInfo",

@@ -379,6 +379,14 @@ public:
     }
 
     /**
+     * @brief - Appends a default constructed element
+     */
+    FORCEINLINE ElementType& AddDefault() noexcept
+    {
+        return Emplace();
+    }
+
+    /**
      * @brief          - Constructs a new element at a specific position in the array
      * @param Position - Position of the new element
      * @param Args     - Arguments for the constructor of the element

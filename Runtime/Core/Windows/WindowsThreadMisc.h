@@ -16,10 +16,10 @@ struct CORE_API FWindowsThreadMisc final : public FGenericThreadMisc
         return static_cast<uint32>(SystemInfo.dwNumberOfProcessors);
     }
 
-    static FORCEINLINE void* GetThreadHandle()
+    static FORCEINLINE void* GetCurrentThreadHandle()
     {
-        DWORD CurrentHandle = GetCurrentThreadId();
-        return reinterpret_cast<void*>(static_cast<uintptr_t>(CurrentHandle));
+        UINT_PTR CurrentHandle = static_cast<UINT_PTR>(GetCurrentThreadId());
+        return reinterpret_cast<void*>(CurrentHandle);
     }
 
     static FORCEINLINE void Sleep(FTimespan Time)

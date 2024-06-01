@@ -1,10 +1,8 @@
 #include "GPUProfilerWindow.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Application/WidgetUtilities.h"
 #include "Application/Application.h"
-
-#include <imgui.h>
+#include "Application/ImGuiModule.h"
 
 static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Renderer.DrawGPUProfiler",
@@ -53,7 +51,35 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 
         ImGui::NewLine();
 
-        ImGui::PlotHistogram("", GPUFrameTime.Samples.Data(), GPUFrameTime.SampleCount, GPUFrameTime.CurrentSample, nullptr, 0.0f, ImGui_GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
+        const auto GetMaxLimit = [](float Num)
+        {
+            if (Num < 0.01f)
+            {
+                return 0.01f;
+            }
+            else if (Num < 0.1f)
+            {
+                return 0.1f;
+            }
+            else if (Num < 1.0f)
+            {
+                return 1.0f;
+            }
+            else if (Num < 10.0f)
+            {
+                return 10.0f;
+            }
+            else if (Num < 100.0f)
+            {
+                return 100.0f;
+            }
+            else
+            {
+                return 1000.0f;
+            }
+        };
+
+        ImGui::PlotHistogram("", GPUFrameTime.Samples.Data(), GPUFrameTime.SampleCount, GPUFrameTime.CurrentSample, nullptr, 0.0f, GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
 
         ImGui::EndTable();
     }

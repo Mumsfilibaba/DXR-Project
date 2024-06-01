@@ -15,11 +15,11 @@ public:
     typedef typename ArrayType::SizeType SizeType;
 
     TArrayIterator(const TArrayIterator&) = default;
-    TArrayIterator(TArrayIterator&&)      = default;
-    ~TArrayIterator()                     = default;
+    TArrayIterator(TArrayIterator&&) = default;
+    ~TArrayIterator() = default;
 
     TArrayIterator& operator=(const TArrayIterator&) = default;
-    TArrayIterator& operator=(TArrayIterator&&)      = default;
+    TArrayIterator& operator=(TArrayIterator&&) = default;
 
     static_assert(TIsSigned<SizeType>::Value, "TArrayIterator wants a signed SizeType");
 
@@ -212,14 +212,12 @@ private:
     SizeType                     Index;
 };
 
-
 template<typename ArrayType, typename ElementType>
 FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, TArrayIterator<ArrayType, ElementType>& Other) noexcept
 {
     TArrayIterator NewIterator(Other);
     return NewIterator += LHS;
 }
-
 
 template<typename ArrayType, typename ElementType>
 class TReverseArrayIterator
@@ -231,11 +229,11 @@ public:
     typedef typename ArrayType::SizeType SizeType;
 
     TReverseArrayIterator(const TReverseArrayIterator&) = default;
-    TReverseArrayIterator(TReverseArrayIterator&&)      = default;
-    ~TReverseArrayIterator()                            = default;
+    TReverseArrayIterator(TReverseArrayIterator&&) = default;
+    ~TReverseArrayIterator() = default;
 
     TReverseArrayIterator& operator=(const TReverseArrayIterator&) = default;
-    TReverseArrayIterator& operator=(TReverseArrayIterator&&)      = default;
+    TReverseArrayIterator& operator=(TReverseArrayIterator&&) = default;
 
     static_assert(TIsSigned<SizeType>::Value, "TReverseArrayIterator wants a signed SizeType");
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
@@ -429,14 +427,12 @@ private:
     SizeType                     Index;
 };
 
-
 template<typename ArrayType, typename ElementType>
 NODISCARD FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, TReverseArrayIterator<ArrayType, ElementType>& Other) noexcept
 {
     TReverseArrayIterator NewIterator(Other);
     return NewIterator += LHS;
 }
-
 
 template<typename BitArrayType, typename StorageType>
 class TBitArrayIterator
@@ -449,11 +445,11 @@ public:
     typedef TBitReference<ConstStorageType> ConstBitReferenceType;
 
     TBitArrayIterator(const TBitArrayIterator&) = default;
-    TBitArrayIterator(TBitArrayIterator&&)      = default;
-    ~TBitArrayIterator()                        = default;
+    TBitArrayIterator(TBitArrayIterator&&) = default;
+    ~TBitArrayIterator() = default;
 
     TBitArrayIterator& operator=(const TBitArrayIterator&) = default;
-    TBitArrayIterator& operator=(TBitArrayIterator&&)      = default;
+    TBitArrayIterator& operator=(TBitArrayIterator&&) = default;
 
     /**
      * @brief            - Constructor taking array and index of the iterator
@@ -587,7 +583,6 @@ private:
     uint32                          Index;
 };
 
-
 template<typename BitArrayType, typename StorageType>
 class TReverseBitArrayIterator
 {
@@ -599,11 +594,11 @@ public:
     typedef TBitReference<ConstStorageType> ConstBitReferenceType;
 
     TReverseBitArrayIterator(const TReverseBitArrayIterator&) = default;
-    TReverseBitArrayIterator(TReverseBitArrayIterator&&)      = default;
-    ~TReverseBitArrayIterator()                               = default;
+    TReverseBitArrayIterator(TReverseBitArrayIterator&&) = default;
+    ~TReverseBitArrayIterator() = default;
 
     TReverseBitArrayIterator& operator=(const TReverseBitArrayIterator&) = default;
-    TReverseBitArrayIterator& operator=(TReverseBitArrayIterator&&)      = default;
+    TReverseBitArrayIterator& operator=(TReverseBitArrayIterator&&) = default;
 
     /**
      * @brief            - Constructor taking array and index of the iterator
@@ -737,22 +732,22 @@ private:
     uint32                          Index;
 };
 
-
 template<typename MapType, typename KeyType, typename ValueType>
 class TMapIterator
 {
 public:
-    typedef typename MapType::BaseMapType::iterator   BaseIteratorType;
     typedef const typename TRemoveCV<KeyType>::Type   ConstKeyType;
     typedef const typename TRemoveCV<ValueType>::Type ConstValueType;
     typedef const typename TRemoveCV<MapType>::Type   ConstMapType;
 
+    typedef TConditional<TIsConst<MapType>::Value, typename MapType::BaseMapType::const_iterator, typename MapType::BaseMapType::iterator>::Type BaseIteratorType;
+
     TMapIterator(const TMapIterator&) = default;
-    TMapIterator(TMapIterator&&)      = default;
-    ~TMapIterator()                   = default;
+    TMapIterator(TMapIterator&&) = default;
+    ~TMapIterator() = default;
 
     TMapIterator& operator=(const TMapIterator&) = default;
-    TMapIterator& operator=(TMapIterator&&)      = default;
+    TMapIterator& operator=(TMapIterator&&) = default;
 
     explicit TMapIterator(MapType& InMap, BaseIteratorType InBaseIterator)
         : Map(InMap)
@@ -887,14 +882,14 @@ private:
     BaseIteratorType           BaseIterator;
 };
 
-
 template<typename SetType, typename ElementType>
 class TSetIterator
 {
 public:
-    typedef typename SetType::BaseSetType::iterator     BaseIteratorType;
     typedef const typename TRemoveCV<ElementType>::Type ConstElementType;
     typedef const typename TRemoveCV<SetType>::Type     ConstSetType;
+
+    typedef TConditional<TIsConst<SetType>::Value, typename SetType::BaseSetType::const_iterator, typename SetType::BaseSetType::iterator>::Type BaseIteratorType;
 
     TSetIterator(const TSetIterator&) = default;
     TSetIterator(TSetIterator&&)      = default;

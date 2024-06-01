@@ -1,8 +1,7 @@
 #include "EngineModule.h"
 #include "Core/Misc/CoreDelegates.h"
 #include "Application/Application.h"
-
-#include <imgui.h>
+#include "Application/ImGuiModule.h"
 
 IMPLEMENT_ENGINE_MODULE(FEngineModule, Engine);
 

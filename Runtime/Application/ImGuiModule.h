@@ -92,6 +92,15 @@ public:
         return ImGui::GetStyle();
     }
 
+public:
+    static bool ButtonCenteredOnLine(const CHAR* Label, float Alignment = 0.5f);
+    static void DrawFloat3Control(const CHAR* Label, FVector3& OutValue, float ResetValue = 0.0f, float ColumnWidth = 100.0f, float Speed = 0.01f);
+
+    static FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
+    {
+        return ImGui::ColorEdit3(Label, OutColor.Data(), Flags);
+    }
+
 private:
     static ImGuiContext* Context;
 };

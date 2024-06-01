@@ -15,7 +15,7 @@ struct FMacThreadMisc final : public FGenericThreadMisc
         return static_cast<uint32>(NumProcessors);
     }
 
-    static FORCEINLINE void* GetThreadHandle()
+    static FORCEINLINE void* GetCurrentThreadHandle()
     {
         pthread_t CurrentThread = ::pthread_self();
         return reinterpret_cast<void*>(CurrentThread);

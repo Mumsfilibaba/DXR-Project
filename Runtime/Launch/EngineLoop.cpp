@@ -120,7 +120,7 @@ bool FEngineLoop::PreInitialize()
     }
 
     // TODO: Use a separate profiler for booting the engine
-    FFrameProfiler::Enable();
+    FFrameProfiler::Get().Enable();
     TRACE_FUNCTION_SCOPE();
 
     // Initialize the engine config

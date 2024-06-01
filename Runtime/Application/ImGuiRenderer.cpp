@@ -121,6 +121,9 @@ FImGuiRenderer::~FImGuiRenderer()
     {
         FImGui::SetMainViewport(nullptr);
     }
+
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.BackendRendererUserData = nullptr;
 }
 
 bool FImGuiRenderer::Initialize()
