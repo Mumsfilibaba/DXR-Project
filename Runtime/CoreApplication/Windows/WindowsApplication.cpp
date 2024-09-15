@@ -8,8 +8,8 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
-#define WINDOWS_SCAN_CODE_MASK   (0x01ff)
-#define WINDOWS_KEY_REPEAT_MASK  (0x40000000)
+#define WINDOWS_SCAN_CODE_MASK (0x01ff)
+#define WINDOWS_KEY_REPEAT_MASK (0x40000000)
 #define WINDOWS_BACK_BUTTON_MASK (0x0001)
 
 static TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
@@ -28,7 +28,8 @@ TSharedPtr<FGenericApplication> FWindowsApplication::Create()
 TSharedPtr<FWindowsApplication> FWindowsApplication::CreateWindowsApplication()
 {
     // Get the application instance
-    HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0)); 
+    HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
+
     // TODO: Load icon resource here
     HICON Icon = ::LoadIcon(NULL, IDI_APPLICATION);
 
@@ -198,7 +199,7 @@ void FWindowsApplication::Tick(float)
     }
 }
 
-void FWindowsApplication::UpdateGamepadDevices()
+void FWindowsApplication::UpdateInputDevices()
 {
     XInputDevice.UpdateDeviceState();
 }
@@ -427,11 +428,6 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
         case WM_MOUSELEAVE:
         {
-            if (MessageWindow)
-            {
-                MessageHandler->OnWindowMouseLeft(MessageWindow);
-            }
-
             bIsTrackingMouse = false;
             break;
         }
@@ -501,8 +497,6 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 TrackEvent.dwFlags   = TME_LEAVE;
                 TrackEvent.hwndTrack = Window;
                 ::TrackMouseEvent(&TrackEvent);
-
-                MessageHandler->OnWindowMouseEntered(MessageWindow);
 
                 bIsTrackingMouse = true;
             }

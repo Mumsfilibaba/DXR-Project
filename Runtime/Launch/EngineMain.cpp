@@ -25,7 +25,6 @@ struct FDebuggerOutputDevice : public IOutputDevice
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-
 // EngineLoop
 FEngineLoop GEngineLoop;
 
@@ -54,12 +53,11 @@ FORCEINLINE bool EngineRelease()
     return GEngineLoop.Release();
 }
 
-
 int32 EngineMain(const CHAR* Args[], int32 NumArgs)
 {
-    struct FGenericMainGuard
+    struct FMainGuard
     {
-        ~FGenericMainGuard()
+        ~FMainGuard()
         {
             if (!EngineRelease())
             {
@@ -76,7 +74,7 @@ int32 EngineMain(const CHAR* Args[], int32 NumArgs)
 
     {
         // Make sure that the engine is released if the main function exits early
-        FGenericMainGuard GenericMainGuard;
+        FMainGuard MainGuard;
 
         // Only report the leaking to the debugger output device
         if (FPlatformMisc::IsDebuggerPresent())

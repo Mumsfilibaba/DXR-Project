@@ -306,7 +306,7 @@ void FMacApplication::Tick(float)
     }
 }
 
-void FMacApplication::UpdateGamepadDevices()
+void FMacApplication::UpdateInputDevices()
 {
     if (InputDevice)
     {
@@ -631,29 +631,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
 
                 break;
             }
-                
-            case NSEventTypeMouseEntered:
-            {
-                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
-                if (Window)
-                {
-                    MessageHandler->OnWindowMouseEntered(Window);
-                }
 
-                break;
-            }
-                
-            case NSEventTypeMouseExited:
-            {
-                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
-                if (Window)
-                {
-                    MessageHandler->OnWindowMouseLeft(Window);
-                }
-
-                break;
-            }
-                
             default:
             {
                 break;

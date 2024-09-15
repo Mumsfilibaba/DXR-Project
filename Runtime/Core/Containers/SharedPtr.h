@@ -148,7 +148,6 @@ namespace SharedPointerInternal
         ReferenceType StrongReferences;
     };
 
-
     template<typename DeleterType, bool bIsEmpty = TIsEmpty<DeleterType>::Value>
     struct TDeleterLocation : public DeleterType
     {
@@ -182,7 +181,6 @@ namespace SharedPointerInternal
     private:
         DeleterType Deleter;
     };
-
 
     // TPointerReferenceHandler is used to store the a pointer to the object together with the reference counter
     template<typename InObjectType, typename DeleterType, EThreadAccess InThreadAccess>
@@ -329,7 +327,7 @@ namespace SharedPointerInternal
 
         NODISCARD FORCEINLINE bool IsUnique() const
         {
-            return (ReferenceHandler != nullptr) && (ReferenceHandler->GetStrongReferenceCount() == 1u);
+            return ReferenceHandler != nullptr && ReferenceHandler->GetStrongReferenceCount() == 1u;
         }
         
         FSharedReference& operator=(const FSharedReference& Other) noexcept
@@ -378,7 +376,6 @@ namespace SharedPointerInternal
     private:
         FReferenceHandler<InThreadAccess>* ReferenceHandler{nullptr};
     };
-
 
     template<EThreadAccess InThreadAccess>
     class FWeakReference
@@ -448,7 +445,7 @@ namespace SharedPointerInternal
 
         NODISCARD FORCEINLINE bool IsUnique() const
         {
-            return (ReferenceHandler != nullptr) && (ReferenceHandler->GetStrongReferenceCount() == 1u); 
+            return ReferenceHandler != nullptr && ReferenceHandler->GetStrongReferenceCount() == 1u; 
         }
 
         FWeakReference& operator=(const FWeakReference& Other) noexcept
@@ -516,7 +513,6 @@ namespace SharedPointerInternal
         return new TObjectReferenceHandler<ObjectType, ThreadAccess>(::Forward<ArgTypes>(Args)...);
     }
 
-
     template<typename ObjectType, EThreadAccess ThreadAccess>
     struct TSharedReferenceProxy
     {
@@ -536,7 +532,6 @@ namespace SharedPointerInternal
         FReferenceHandler<ThreadAccess>* ReferenceHandler;
     };
 }
-
 
 template<typename InObjectType, EThreadAccess InThreadAccess = EThreadAccess::Safe>
 class TSharedPtr
@@ -573,7 +568,7 @@ public:
         : Object(InObject)
         , ReferenceHandler(SharedPointerInternal::CreateReferenceHandler<ThreadAccess, InObjectType>(InObject))
     {
-        EnableSharedFromThis(InObject);
+        EnableSharedFromThis(InObject, InObject);
     }
 
     /**
@@ -586,7 +581,7 @@ public:
         : Object(InObject)
         , ReferenceHandler(SharedPointerInternal::CreateReferenceHandlerWithDeleter<ThreadAccess>(InObject, ::Forward<DeleterType>(InDeleter)))
     {
-        EnableSharedFromThis(InObject);
+        EnableSharedFromThis(InObject, InObject);
     }
     
     /**
@@ -597,8 +592,8 @@ public:
         : Object(InProxy.Object)
         , ReferenceHandler(InProxy.ReferenceHandler)
     {
-        EnableSharedFromThis(InProxy.Object);
-        
+        EnableSharedFromThis(InProxy.Object, InProxy.Object);
+
         InProxy.Object           = nullptr;
         InProxy.ReferenceHandler = nullptr;
     }
@@ -692,7 +687,7 @@ public:
         : Object(Other.Release())
         , ReferenceHandler(SharedPointerInternal::CreateReferenceHandlerWithDeleter<ThreadAccess>(Object, ::Move(Other.GetDeleter())))
     {
-        EnableSharedFromThis(Object);
+        EnableSharedFromThis(Object, Object);
     }
 
     /**
@@ -742,7 +737,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Object != nullptr);
+        return Object != nullptr;
     }
 
     /**
@@ -879,12 +874,15 @@ public:
     }
 
 private:
-    FORCEINLINE void EnableSharedFromThis(ObjectType* InPointer) noexcept
+
+    constexpr void EnableSharedFromThis( ... ) { }
+
+    template<typename SharedFromThisType>
+    FORCEINLINE void EnableSharedFromThis(ObjectType* InObject, TSharedFromThis<SharedFromThisType, ThreadAccess>* InSharedFromThis) noexcept
     {
-        if constexpr(TIsBaseOf<TSharedFromThis<ObjectType, ThreadAccess>, ObjectType>::Value)
+        if (InSharedFromThis && !InSharedFromThis->WeakThisPointer)
         {
-            typedef typename TRemoveCV<ObjectType>::Type PureElementType;
-            InPointer->WeakThisPointer = TSharedPtr<PureElementType>(*this, static_cast<PureElementType*>(InPointer));
+            InSharedFromThis->WeakThisPointer = TSharedPtr<ObjectType>(*this, static_cast<ObjectType*>(InObject));
         }
     }
 
@@ -1031,7 +1029,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsExpired() const noexcept
     {
-        return (ReferenceHandler.GetStrongReferenceCount() < 1);
+        return ReferenceHandler.GetStrongReferenceCount() < 1;
     }
 
     /**
@@ -1049,7 +1047,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsUnique() const noexcept
     {
-        return (ReferenceHandler.GetStrongReferenceCount() == 1);
+        return ReferenceHandler.GetStrongReferenceCount() == 1;
     }
 
     /**
@@ -1058,7 +1056,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Object != nullptr) && !IsExpired();
+        return Object != nullptr && !IsExpired();
     }
 
     /**
@@ -1200,7 +1198,6 @@ private:
     SharedPointerInternal::FWeakReference<ThreadAccess> ReferenceHandler;
 };
 
-
 template<typename SharedType, EThreadAccess InThreadAccess = EThreadAccess::Safe>
 class TSharedFromThis
 {
@@ -1250,198 +1247,197 @@ private:
     mutable TWeakPtr<SharedType> WeakThisPointer;
 };
 
-
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() == RHS);
+    return LHS.Get() == RHS;
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS == RHS.Get());
+    return LHS == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() != RHS);
+    return LHS.Get() != RHS;
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(T* LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS != RHS.Get());
+    return LHS != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return LHS.Get() == nullptr;
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedPtr<T>& RHS) noexcept
 {
-    return (nullptr == RHS.Get());
+    return nullptr == RHS.Get();
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return LHS.Get() != nullptr;
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedPtr<T>& RHS) noexcept
 {
-    return (nullptr != RHS.Get());
+    return nullptr != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() == RHS);
+    return LHS.Get() == RHS;
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS == RHS.Get());
+    return LHS == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() != RHS);
+    return LHS.Get() != RHS;
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(T* LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS != RHS.Get());
+    return LHS != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return LHS.Get() == nullptr;
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator==(nullptr_type, const TWeakPtr<T>& RHS) noexcept
 {
-    return (nullptr == RHS.Get());
+    return nullptr == RHS.Get();
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return LHS.Get() != nullptr;
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TWeakPtr<T>& RHS) noexcept
 {
-    return (nullptr != RHS.Get());
+    return nullptr != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TSharedPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TUniquePtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 

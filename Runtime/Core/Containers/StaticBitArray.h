@@ -317,7 +317,21 @@ public:
      */
     NODISCARD constexpr bool operator==(const TStaticBitArray& Other) const noexcept
     {
-        return Capacity() == Other.Capacity() ? FMemory::Memcmp(Integers, Other.Integers, CapacityInBytes()) : false;
+        constexpr SizeType ThisCapacity = NumIntegers();
+        if (ThisCapacity != Other.NumIntegers())
+        {
+            return false;
+        }
+
+        for (SizeType Index = 0; Index < ThisCapacity; Index++)
+        {
+            if (Integers[Index] != Other.Integers[Index])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

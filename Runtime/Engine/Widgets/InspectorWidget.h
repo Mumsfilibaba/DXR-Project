@@ -1,11 +1,11 @@
 #pragma once
-#include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FInspectorWidget : public FWidget
+class FInspectorWidget : public IImGuiWidget
 {
 public:
-    virtual void Paint() override final;
+    virtual void Draw() override final;
 
 private:
 

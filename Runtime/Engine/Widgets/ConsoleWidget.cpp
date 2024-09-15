@@ -4,9 +4,11 @@
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Application/Application.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 FConsoleWidget::FConsoleWidget()
-    : FWidget()
+    : IImGuiWidget()
     , IOutputDevice()
     , InputHandler(MakeShared<FConsoleInputHandler>())
 {
@@ -18,7 +20,7 @@ FConsoleWidget::FConsoleWidget()
     if (FApplication::IsInitialized())
     {
         InputHandler->HandleKeyEventDelegate.BindRaw(this, &FConsoleWidget::HandleKeyPressedEvent);
-        FApplication::Get().AddInputPreProcessor(InputHandler, FInputPreProcessorAndPriority::MaxPriority);
+        FApplication::Get().RegisterInputHandler(InputHandler);
     }
 
     TextBuffer.Fill(0);
@@ -33,20 +35,20 @@ FConsoleWidget::~FConsoleWidget()
 
     if (FApplication::IsInitialized())
     {
-        FApplication::Get().RemoveInputHandler(InputHandler);
+        FApplication::Get().UnregisterInputHandler(InputHandler);
     }
 }
 
-void FConsoleWidget::Paint()
+void FConsoleWidget::Draw()
 {
     if (!bIsActive)
     {
         return;
     }
 
-    const ImVec2 MainViewportPos  = FImGui::GetMainViewportPos();
-    const ImVec2 MainViewportSize = FImGui::GetMainViewportSize();
-    const ImVec2 FrameBufferScale = FImGui::GetDisplayFramebufferScale();
+    const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
+    const ImVec2 MainViewportSize = ImGuiExtensions::GetMainViewportSize();
+    const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
     const float Scale  = FrameBufferScale.x;
     const float Width  = MainViewportSize.x;
@@ -56,7 +58,7 @@ void FConsoleWidget::Paint()
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    const ImGuiStyle& Style = FImGui::GetStyle();
+    const ImGuiStyle& Style = ImGui::GetStyle();
     ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ WindowBG.x, WindowBG.y, WindowBG.z, 0.8f });
 

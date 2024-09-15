@@ -1,5 +1,5 @@
 #include "ImGuiRenderer.h"
-#include "Application.h"
+#include "ImGuiExtensions.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Containers/Array.h"
@@ -9,7 +9,6 @@
 #include "RHI/RHIResources.h"
 #include "RHI/ShaderCompiler.h"
 #include "RendererCore/TextureFactory.h"
-
 #include <imgui.h>
 
 struct FVertexConstantBuffer
@@ -17,109 +16,32 @@ struct FVertexConstantBuffer
     float ViewProjectionMatrix[4][4];
 };
 
-static void ImGuiCreateWindow(ImGuiViewport* InViewport)
+// Forward declarations
+static void ImGuiCreateWindow(ImGuiViewport* InViewport);
+static void ImGuiDestroyWindow(ImGuiViewport* Viewport);
+static void ImGuiSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+static void ImGuiRenderWindow(ImGuiViewport* Viewport, void* CmdList);
+static void ImGuiSwapBuffers(ImGuiViewport* Viewport, void* CmdList);
+
+FImGuiRenderer::FImGuiRenderer()
+    : RenderedImages()
+    , FontTexture(nullptr)
+    , PipelineState(nullptr)
+    , PipelineStateNoBlending(nullptr)
+    , PShader(nullptr)
+    , VertexBuffer(nullptr)
+    , IndexBuffer(nullptr)
+    , LinearSampler(nullptr)
+    , PointSampler(nullptr)
 {
-    if (TSharedRef<FGenericWindow> Window = MakeSharedRef<FGenericWindow>(reinterpret_cast<FGenericWindow*>(InViewport->PlatformUserData)))
-    {
-        FRHIViewportInfo ViewportInfo;
-        ViewportInfo.WindowHandle = Window->GetPlatformHandle();
-        ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
-        ViewportInfo.Width        = static_cast<uint16>(InViewport->Size.x);
-        ViewportInfo.Height       = static_cast<uint16>(InViewport->Size.y);
-        
-        FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
-        if (NewViewport)
-        {
-            FViewportData* ViewportData = new FViewportData;
-            ViewportData->Viewport = NewViewport;
-
-            InViewport->RendererUserData = ViewportData;
-        }
-    }
 }
-
-static void ImGuiDestroyWindow(ImGuiViewport* Viewport)
-{
-    // The main viewport (owned by the application) will always have RendererUserData == NULL since we didn't create the data for it.
-    if (FViewportData* ViewportData = reinterpret_cast<FViewportData*>(Viewport->RendererUserData))
-    {
-        GRHICommandExecutor.WaitForGPU();
-        delete ViewportData;
-    }
-
-    Viewport->RendererUserData = nullptr;
-}
-
-static void ImGuiSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
-{
-    if (FViewportData* ViewportData = reinterpret_cast<FViewportData*>(Viewport->RendererUserData))
-    {
-        if (ViewportData->Viewport->GetWidth() != Size.x || ViewportData->Viewport->GetHeight() != Size.y)
-        {
-            ViewportData->bDidResize = true;
-            ViewportData->Width  = static_cast<uint16>(Size.x);
-            ViewportData->Height = static_cast<uint16>(Size.y);
-        }
-    }
-}
-
-static void ImGuiRenderWindow(ImGuiViewport* Viewport, void* CmdList)
-{
-    FRHICommandList* RHICmdList = reinterpret_cast<FRHICommandList*>(CmdList);
-    if (!RHICmdList)
-    {
-        return;
-    }
-
-    FViewportData* ViewportData = reinterpret_cast<FViewportData*>(Viewport->RendererUserData);
-    if (!ViewportData)
-    {
-        return;
-    }
-
-    if (FApplication::IsInitialized())
-    {
-        if (FImGuiRenderer* Renderer = FApplication::Get().GetRenderer())
-        {
-            if (ViewportData->bDidResize)
-            {
-                RHICmdList->ResizeViewport(ViewportData->Viewport.Get(), ViewportData->Width, ViewportData->Height);
-
-                ViewportData->bDidResize = false;
-                ViewportData->Width  = 0;
-                ViewportData->Height = 0;
-            }
-            
-            const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
-            Renderer->RenderViewport(*RHICmdList, Viewport->DrawData, *ViewportData, bClear);
-        }
-    }
-}
-
-static void ImGuiSwapBuffers(ImGuiViewport* Viewport, void* CmdList)
-{
-    bool bEnableVsync = false;
-    if (IConsoleVariable* CVarVSyncEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.VerticalSync"))
-    {
-        bEnableVsync = CVarVSyncEnabled->GetBool();
-    }
-
-    if (FViewportData* ViewportData = reinterpret_cast<FViewportData*>(Viewport->RendererUserData))
-    {
-        if (FRHICommandList* RHICmdList = reinterpret_cast<FRHICommandList*>(CmdList))
-        {
-            RHICmdList->PresentViewport(ViewportData->Viewport.Get(), bEnableVsync);
-        }
-    }
-}
-
 
 FImGuiRenderer::~FImGuiRenderer()
 {
     // Release the MainViewport
-    if (FImGui::IsMultiViewportEnabled())
+    if (ImGuiExtensions::IsMultiViewportEnabled())
     {
-        FImGui::SetMainViewport(nullptr);
+        // FImGui::SetMainViewport(nullptr);
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
@@ -130,7 +52,7 @@ bool FImGuiRenderer::Initialize()
 {
     // Start by initializing the functions for handling Viewports
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-    if (FImGui::IsMultiViewportEnabled())
+    if (ImGuiExtensions::IsMultiViewportEnabled())
     {
         PlatformState.Renderer_CreateWindow  = ImGuiCreateWindow;
         PlatformState.Renderer_DestroyWindow = ImGuiDestroyWindow;
@@ -370,7 +292,7 @@ bool FImGuiRenderer::Initialize()
 
 void FImGuiRenderer::Render(FRHICommandList& CmdList)
 {
-    TSharedPtr<FViewport> Viewport = FApplication::Get().GetMainViewport();
+    TSharedPtr<FViewport> Viewport; // = FApplication::Get().GetMainViewport();
     if (!Viewport)
     {
         return;
@@ -379,7 +301,7 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
     // Render ImgGui draw data
     ImGui::Render();
 
-    FRHIViewportRef RHIViewport = Viewport->GetRHIViewport();
+    FRHIViewportRef RHIViewport;//  = Viewport->GetRHIViewport();
     CHECK(RHIViewport != nullptr);
 
     // Prepare data before drawing
@@ -403,7 +325,7 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
         ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CmdList));
     }
 
-    for (FDrawableTexture* Image : RenderedImages)
+    for (FImGuiTexture* Image : RenderedImages)
     {
         CHECK(Image != nullptr);
 
@@ -416,7 +338,7 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
     RenderedImages.Clear();
 }
 
-void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& ViewportData, bool bClear)
+void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
 {
     FRHITexture* BackBuffer = ViewportData.Viewport->GetBackBuffer();
     CmdList.TransitionTexture(BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
@@ -424,7 +346,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawDa
     // Prepare data before drawing
     PrepareDrawData(CmdList, DrawData);
 
-    // Begin renderpass (All transfers has to be done before starting the renderpass)
+    // Begin render-pass (All transfers has to be done before starting the render-pass)
     FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
     CmdList.BeginRenderPass(RenderPassDesc);
 
@@ -444,7 +366,7 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
     }
 
     // Create and grow vertex/index buffers if needed
-    FViewportData* ViewportData = reinterpret_cast<FViewportData*>(DrawData->OwnerViewport->RendererUserData);
+    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(DrawData->OwnerViewport->RendererUserData);
     if (!ViewportData)
     {
         return;
@@ -516,7 +438,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
     }
 
     // Create and grow vertex/index buffers if needed
-    FViewportData* ViewportData = reinterpret_cast<FViewportData*>(DrawData->OwnerViewport->RendererUserData);
+    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(DrawData->OwnerViewport->RendererUserData);
     if (!ViewportData)
     {
         return;
@@ -559,7 +481,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                 if (TextureID)
                 {
                     // TODO: Change this so that the same code can be used for font texture and images
-                    FDrawableTexture* DrawableTexture = reinterpret_cast<FDrawableTexture*>(TextureID);
+                    FImGuiTexture* DrawableTexture = reinterpret_cast<FImGuiTexture*>(TextureID);
                     RenderedImages.Emplace(DrawableTexture);
 
                     if (DrawableTexture->BeforeState != EResourceAccess::PixelShaderResource)
@@ -636,7 +558,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
     }
 }
 
-void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FViewportData& Buffers)
+void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& Buffers)
 {
     // Setup Orthographic Projection matrix into our Constant-Buffer
     // The visible ImGui space lies from DrawData->DisplayPos (top left) to DrawData->DisplayPos+DrawData->DisplaySize (bottom right).
@@ -670,4 +592,94 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* Draw
     CmdList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
     CmdList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
+}
+
+void ImGuiCreateWindow(ImGuiViewport* InViewport)
+{
+    if (TSharedRef<FGenericWindow> Window = MakeSharedRef<FGenericWindow>(reinterpret_cast<FGenericWindow*>(InViewport->PlatformUserData)))
+    {
+        FRHIViewportInfo ViewportInfo;
+        ViewportInfo.WindowHandle = Window->GetPlatformHandle();
+        ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
+        ViewportInfo.Width        = static_cast<uint16>(InViewport->Size.x);
+        ViewportInfo.Height       = static_cast<uint16>(InViewport->Size.y);
+        
+        FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
+        if (NewViewport)
+        {
+            FImGuiViewport* ViewportData = new FImGuiViewport;
+            ViewportData->Viewport = NewViewport;
+
+            InViewport->RendererUserData = ViewportData;
+        }
+    }
+}
+
+void ImGuiDestroyWindow(ImGuiViewport* Viewport)
+{
+    // The main viewport (owned by the application) will always have RendererUserData == NULL since we didn't create the data for it.
+    if (FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData))
+    {
+        GRHICommandExecutor.WaitForGPU();
+        delete ViewportData;
+    }
+
+    Viewport->RendererUserData = nullptr;
+}
+
+void ImGuiSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
+{
+    if (FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData))
+    {
+        if (ViewportData->Viewport->GetWidth() != Size.x || ViewportData->Viewport->GetHeight() != Size.y)
+        {
+            ViewportData->bDidResize = true;
+            ViewportData->Width  = static_cast<uint16>(Size.x);
+            ViewportData->Height = static_cast<uint16>(Size.y);
+        }
+    }
+}
+
+void ImGuiRenderWindow(ImGuiViewport* Viewport, void* CmdList)
+{
+    FRHICommandList* RHICmdList = reinterpret_cast<FRHICommandList*>(CmdList);
+    if (!RHICmdList)
+    {
+        return;
+    }
+
+    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
+    if (!ViewportData)
+    {
+        return;
+    }
+
+    if (ViewportData->bDidResize)
+    {
+        RHICmdList->ResizeViewport(ViewportData->Viewport.Get(), ViewportData->Width, ViewportData->Height);
+
+        ViewportData->bDidResize = false;
+        ViewportData->Width      = 0;
+        ViewportData->Height     = 0;
+    }
+
+    // const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
+    // Renderer->RenderViewport(*RHICmdList, Viewport->DrawData, *ViewportData, bClear);
+}
+
+void ImGuiSwapBuffers(ImGuiViewport* Viewport, void* CmdList)
+{
+    bool bEnableVsync = false;
+    if (IConsoleVariable* CVarVSyncEnabled = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.VerticalSync"))
+    {
+        bEnableVsync = CVarVSyncEnabled->GetBool();
+    }
+
+    if (FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData))
+    {
+        if (FRHICommandList* RHICmdList = reinterpret_cast<FRHICommandList*>(CmdList))
+        {
+            RHICmdList->PresentViewport(ViewportData->Viewport.Get(), bEnableVsync);
+        }
+    }
 }

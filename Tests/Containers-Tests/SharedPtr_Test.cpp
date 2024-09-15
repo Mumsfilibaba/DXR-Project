@@ -49,14 +49,14 @@ public:
 struct FRefCountedTest : public IRefCounted
 {
 public:
-    virtual int32 AddRef() override
+    virtual int32 AddRef() const override
     {
         CHECK(StrongReferences.Load() > 0);
         ++StrongReferences;
         return StrongReferences.Load();
     }
 
-    virtual int32 Release() override
+    virtual int32 Release() const override
     {
         const int32 RefCount = --StrongReferences;
         CHECK(RefCount >= 0);
@@ -75,7 +75,7 @@ public:
     }
 
 private:
-    FAtomicInt32 StrongReferences = 1;
+    mutable FAtomicInt32 StrongReferences = 1;
 };
 
 

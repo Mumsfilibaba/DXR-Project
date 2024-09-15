@@ -39,9 +39,9 @@ public:
 
      /**
       * @brief           - Ticks all actors in the world, should be called once per frame
-      * @param DeltaTime - The time between this and the last tick
+      * @param DeltaTime - The time between this and the last tick in milliseconds
       */
-    void Tick(FTimespan DeltaTime);
+    void Tick(float DeltaTime);
 
     /**
      * @brief          - Adds a camera into the world 

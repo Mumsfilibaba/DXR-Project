@@ -17,8 +17,12 @@ public:
     FRHIResource();
     virtual ~FRHIResource();
 
-    virtual int32 AddRef() override;
-    virtual int32 Release() override;
+    FRHIResource(const FRHIResource&) = delete;
+    FRHIResource& operator=(const FRHIResource&) = delete;
+
+    virtual int32 AddRef() const override;
+
+    virtual int32 Release() const override;
 
     virtual int32 GetRefCount() const override
     {
@@ -26,6 +30,6 @@ public:
     }
 
 private:
-    FAtomicInt32 StrongReferences;
-    FAtomicInt32 State;
+    mutable FAtomicInt32 StrongReferences;
+    mutable FAtomicInt32 State;
 };

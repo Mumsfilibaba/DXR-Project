@@ -55,7 +55,7 @@ public:
 
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
     virtual void Tick(float Delta) override final;
-    virtual void UpdateGamepadDevices() override final;
+    virtual void UpdateInputDevices() override final;
     virtual FInputDevice* GetInputDeviceInterface() override final;
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
@@ -91,7 +91,6 @@ private:
     LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
-private:
     HICON                Icon;
     HINSTANCE            InstanceHandle;
     bool                 bIsTrackingMouse;

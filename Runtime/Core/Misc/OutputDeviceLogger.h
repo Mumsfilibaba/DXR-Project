@@ -25,9 +25,6 @@
 
 class CORE_API FOutputDeviceLogger : public IOutputDevice
 {
-    FOutputDeviceLogger();
-    ~FOutputDeviceLogger();
-
 public:
 
     /** @return - Returns the Logger singleton */
@@ -64,6 +61,9 @@ public:
     }
 
 private:
+    FOutputDeviceLogger();
+    ~FOutputDeviceLogger();
+
     TArray<IOutputDevice*> OutputDevices;
     FCriticalSection       OutputDevicesCS;
 };

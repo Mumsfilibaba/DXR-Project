@@ -1,15 +1,15 @@
 #include "GPUProfilerWindow.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Application/Application.h"
-#include "Application/ImGuiModule.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Renderer.DrawGPUProfiler",
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
-void FGPUProfilerWindow::Paint()
+void FGPUProfilerWindow::Draw()
 {
     if (CVarDrawGPUProfiler.GetValue())
     {
@@ -177,7 +177,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 void FGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const ImVec2 DisplaySize = FImGui::GetDisplaySize();
+    const ImVec2 DisplaySize = ImGuiExtensions::GetDisplaySize();
     const float Width  = FMath::Max<float>(DisplaySize.x * 0.6f, 400.0f);
     const float Height = DisplaySize.y * 0.75f;
 
@@ -185,7 +185,7 @@ void FGPUProfilerWindow::DrawWindow()
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    const ImGuiStyle& Style = FImGui::GetStyle();
+    const ImGuiStyle& Style = ImGui::GetStyle();
     ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ WindowBG.x, WindowBG.y, WindowBG.z, 0.8f });
 

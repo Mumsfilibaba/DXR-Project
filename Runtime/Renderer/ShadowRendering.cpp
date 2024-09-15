@@ -397,7 +397,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                 FRHIBeginRenderPassInfo RenderPass;
                 RenderPass.DepthStencilView                               = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
-                RenderPass.DepthStencilView.ArrayIndex                    = LightIndex * RHI_NUM_CUBE_FACES + FaceIndex;
+                RenderPass.DepthStencilView.ArrayIndex                    = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES + FaceIndex);
                 RenderPass.DepthStencilView.NumArraySlices                = FacesPerPass;
                 RenderPass.DepthStencilView.LoadAction                    = EAttachmentLoadAction::Clear;
                 RenderPass.DepthStencilView.ClearValue                    = FDepthStencilValue(1.0f, 0);
@@ -483,7 +483,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
             FRHIBeginRenderPassInfo RenderPass;
             RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
-            RenderPass.DepthStencilView.ArrayIndex     = LightIndex * RHI_NUM_CUBE_FACES;
+            RenderPass.DepthStencilView.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES);
             RenderPass.DepthStencilView.NumArraySlices = RHI_NUM_CUBE_FACES;
             RenderPass.DepthStencilView.LoadAction     = EAttachmentLoadAction::Clear;
             RenderPass.DepthStencilView.ClearValue     = FDepthStencilValue(1.0f, 0);
@@ -1174,7 +1174,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             for (uint32 Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
             {
                 FPerCascadeHLSL PerCascadeData;
-                PerCascadeData.CascadeIndex = Index;
+                PerCascadeData.CascadeIndex = static_cast<int32>(Index);;
 
                 CommandList.TransitionBuffer(PerCascadeBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
                 CommandList.UpdateBuffer(PerCascadeBuffer.Get(), FBufferRegion(0, sizeof(FPerCascadeHLSL)), &PerCascadeData);
@@ -1182,7 +1182,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                 FRHIBeginRenderPassInfo RenderPass;
                 RenderPass.DepthStencilView            = FRHIDepthStencilView(Resources.ShadowMapCascades.Get());
-                RenderPass.DepthStencilView.ArrayIndex = Index;
+                RenderPass.DepthStencilView.ArrayIndex = static_cast<uint16>(Index);
 
                 CommandList.BeginRenderPass(RenderPass);
 

@@ -100,7 +100,6 @@ private:
     static CORE_API FAtomicInt64 NextID;
 };
 
-
 struct IDelegateInstance
 {
     virtual ~IDelegateInstance() noexcept = default;
@@ -131,7 +130,6 @@ struct IDelegateInstance
      */
     virtual IDelegateInstance* Clone(void* Memory) const = 0;
 };
-
 
 template<typename ReturnType, typename... ArgTypes>
 class TDelegateInstance : public IDelegateInstance
@@ -171,7 +169,6 @@ protected:
     FDelegateHandle Handle;
 };
 
-
 template<typename FunctionType, typename... PayloadTypes>
 class TFunctionDelegateInstance;
 
@@ -184,7 +181,7 @@ class TFunctionDelegateInstance<ReturnType(ArgTypes...), PayloadTypes...> : publ
 public:
     TFunctionDelegateInstance(const TFunctionDelegateInstance&) = default;
 
-    FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction, PayloadTypes&&... InPayload)
+    FORCEINLINE TFunctionDelegateInstance(FunctionType InFunction, PayloadTypes... InPayload)
         : Super()
         , Function(InFunction)
         , Payload(Forward<PayloadTypes>(InPayload)...)
@@ -205,7 +202,6 @@ private:
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
     FunctionType Function;
 };
-
 
 template<typename ReturnType, typename... ArgTypes>
 class TFunctionDelegateInstance<ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
@@ -235,7 +231,6 @@ public:
 private:
     FunctionType Function;
 };
-
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename FunctionType, typename... PayloadTypes>
 class TMemberDelegateInstance;
@@ -275,15 +270,14 @@ public:
 
     virtual bool IsObjectBound(const void* Object) const override final
     {
-        return (GetBoundObject() == Object);
+        return GetBoundObject() == Object;
     }
 
 private:
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
-    InstanceType* This = nullptr;
+    InstanceType* This;
     FunctionType  Function;
 };
-
 
 template<bool IsConst, typename InstanceType, typename ClassType, typename ReturnType, typename... ArgTypes>
 class TMemberDelegateInstance<IsConst, InstanceType, ClassType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>
@@ -319,14 +313,13 @@ public:
 
     virtual bool IsObjectBound(const void* Object) const override final
     {
-        return (GetBoundObject() == Object);
+        return GetBoundObject() == Object;
     }
 
 private:
-    InstanceType* This = nullptr;
+    InstanceType* This;
     FunctionType  Function;
 };
-
 
 template<typename FunctorType, typename FunctionType, typename... PayloadTypes>
 class TLambdaDelegateInstance;
@@ -360,7 +353,6 @@ private:
     TTuple<typename TDecay<PayloadTypes>::Type...> Payload;
     FunctorType Functor;
 };
-
 
 template<typename FunctorType, typename ReturnType, typename... ArgTypes>
 class TLambdaDelegateInstance<FunctorType, ReturnType(ArgTypes...)> : public TDelegateInstance<ReturnType, ArgTypes...>

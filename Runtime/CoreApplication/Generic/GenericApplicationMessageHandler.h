@@ -81,21 +81,11 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnWindowMouseEntered(const TSharedRef<FGenericWindow>& Window)
-    {
-        return false;
-    }
-
-    virtual bool OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window)
-    {
-        return false;
-    }
-    
     virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window)
     {
         return false;
     }
-    
+
     virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window)
     {
         return false;

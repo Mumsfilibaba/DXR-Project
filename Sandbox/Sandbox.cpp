@@ -38,7 +38,7 @@ bool FSandbox::Init()
     MAYBE_UNUSED FMeshComponent* NewComponent = nullptr;
 
     // Store the Engine's world pointer 
-    FWorld* CurrentWorld = GEngine->World;
+    FWorld* CurrentWorld = GEngine->GetWorld();
 
     // Load Scene
     {

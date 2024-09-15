@@ -1,88 +1,42 @@
 #pragma once
 #include "IViewport.h"
-#include "ApplicationEventHandler.h"
-#include "Core/Containers/SharedRef.h"
-#include "Core/Containers/SharedPtr.h"
-#include "RHI/RHIResources.h"
+#include "Widget.h"
 
-class FGenericWindow;
-
-struct FViewportInitializer
-{
-    FViewportInitializer()
-        : Window(nullptr)
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    bool operator==(const FViewportInitializer& Other) const
-    {
-        return Window == Other.Window && Width == Other.Width && Height == Other.Height;
-    }
-
-    bool operator!=(const FViewportInitializer& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    FGenericWindow* Window;
-    int32           Width;
-    int32           Height;
-};
-
-class APPLICATION_API FViewport : public FApplicationEventHandler, public TSharedFromThis<FViewport>
+class APPLICATION_API FViewport : public FWidget
 {
 public:
-    FViewport();
-    ~FViewport();
+    struct FInitializer
+    {
+        TSharedPtr<IViewport> ViewportInterface;
+    };
 
-    bool InitializeRHI(const FViewportInitializer& Initializer);
-    void ReleaseRHI();
+    FViewport();
+    virtual ~FViewport();
+
+    void Initialize(const FInitializer& Initializer);
 
     virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
     virtual FResponse OnKeyUp(const FKeyEvent& KeyEvent) override final;
     virtual FResponse OnKeyChar(const FKeyEvent& KeyEvent) override final;
-    virtual FResponse OnMouseMove(const FCursorEvent& MouseEvent) override final;
-    virtual FResponse OnMouseButtonDown(const FCursorEvent& MouseEvent) override final;
-    virtual FResponse OnMouseButtonUp(const FCursorEvent& MouseEvent) override final;
-    virtual FResponse OnMouseScroll(const FCursorEvent& MouseEvent) override final;
-    virtual FResponse OnMouseDoubleClick(const FCursorEvent& MouseEvent) override final;
-	virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnWindowFocusLost(const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnWindowFocusGained(const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnMouseLeft(const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnMouseEntered(const FWindowEvent& WindowEvent) override final;
-    virtual FResponse OnWindowClosed(const FWindowEvent& WindowEvent) override final;
-
-    FRHIViewportRef GetRHIViewport() const
-    {
-        return RHIViewport;
-    }
-
-    TSharedRef<FGenericWindow> GetWindow() const
-    {
-        return Window;
-    }
+    virtual FResponse OnMouseMove(const FCursorEvent& CursorEvent) override final;
+    virtual FResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override final;
+    virtual FResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override final;
+    virtual FResponse OnMouseScroll(const FCursorEvent& CursorEvent) override final;
+    virtual FResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override final;
+    virtual FResponse OnMouseLeft(const FCursorEvent& CursorEvent) override final;
+    virtual FResponse OnMouseEntered(const FCursorEvent& CursorEvent) override final;
+    virtual FResponse OnFocusLost() override final;
+    virtual FResponse OnFocusGained() override final;
 
     void SetViewportInterface(const TSharedPtr<IViewport>& InViewportInterface)
     {
         ViewportInterface = InViewportInterface;
     }
 
-    TSharedPtr<IViewport> GetViewportInterface()
-    { 
-        return ViewportInterface;
-    }
-
-    TSharedPtr<const IViewport> GetViewportInterface() const
-    { 
-        return ViewportInterface;
-    }
+    TSharedPtr<IViewport>       GetViewportInterface()       { return ViewportInterface; }
+    TSharedPtr<const IViewport> GetViewportInterface() const { return ViewportInterface; }
 
 private:
-    FRHIViewportRef            RHIViewport;
-    TSharedRef<FGenericWindow> Window;
-    TSharedPtr<IViewport>      ViewportInterface;
+    TSharedPtr<IViewport> ViewportInterface;
 };

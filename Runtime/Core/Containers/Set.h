@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Utilities/HashUtilities.h"
+
 // TODO: Custom set implementation
 #include <unordered_set>
 

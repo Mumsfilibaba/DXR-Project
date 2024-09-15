@@ -41,7 +41,7 @@ FMacWindow::~FMacWindow()
 bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 {
     NSUInteger WindowStyle = 0;
-    if (InInitializer.Style != EWindowStyleFlag::None)
+    if (InInitializer.Style != EWindowStyleFlags::None)
     {
         WindowStyle = NSWindowStyleMaskTitled;
         if (InInitializer.Style.IsClosable())

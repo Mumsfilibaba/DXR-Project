@@ -8,11 +8,10 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Platform/CriticalSection.h"
-#include "Application/Widget.h"
-#include "Application/ApplicationEventHandler.h"
-#include "Application/ImGuiModule.h"
+#include "Application/InputHandler.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-struct FConsoleInputHandler final : public FInputPreProcessor
+struct FConsoleInputHandler final : public FInputHandler
 {
     DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
     FHandleKeyEventDelegate HandleKeyEventDelegate;
@@ -32,13 +31,13 @@ struct FConsoleInputHandler final : public FInputPreProcessor
     bool bConsoleToggled = false;
 };
 
-class FConsoleWidget final : public FWidget, public IOutputDevice
+class FConsoleWidget final : public IImGuiWidget, public IOutputDevice
 {
 public:
     FConsoleWidget();
     ~FConsoleWidget();
 
-    virtual void Paint() override final;
+    virtual void Draw() override final;
 
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;

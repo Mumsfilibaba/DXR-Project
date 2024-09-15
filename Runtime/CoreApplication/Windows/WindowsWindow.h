@@ -67,7 +67,7 @@ public:
         return reinterpret_cast<void*>(Window);
     }
 
-    virtual void SetStyle(FWindowStyle InStyle) override final;
+    virtual void SetStyle(EWindowStyleFlags InStyle) override final;
 
     FORCEINLINE HWND GetWindowHandle() const 
     { 

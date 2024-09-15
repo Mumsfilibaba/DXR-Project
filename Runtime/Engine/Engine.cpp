@@ -2,8 +2,11 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Modules/ModuleManager.h"
+#include "Core/Math/Math.h"
 #include "Project/ProjectManager.h"
 #include "Application/Application.h"
+#include "Application/Window.h"
+#include "Application/Viewport.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetLoaders/MeshImporter.h"
@@ -14,6 +17,7 @@
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 ENGINE_API FEngine* GEngine = nullptr;
 
@@ -27,31 +31,46 @@ static void ExitEngineFunc()
  
 static void ToggleFullScreenFunc()
 {
-    if (GEngine && GEngine->MainWindow)
-    {
-        EWindowMode WindowMode;// = GEngine->MainWindow->GetStyle();
-        if (WindowMode == EWindowMode::Fullscreen)
-        {
-            WindowMode = EWindowMode::Windowed;
-        }
-        else
-        {
-            WindowMode = EWindowMode::Fullscreen;
-        }
+    DEBUG_BREAK();
 
-        //GEngine->MainWindow->SetWindowMode(WindowMode);
-    }
+    //if (GEngine && GEngine->EngineWindow)
+    //{
+    //    EWindowMode WindowMode;// = GEngine->MainWindow->GetStyle();
+    //    if (WindowMode == EWindowMode::Fullscreen)
+    //    {
+    //        WindowMode = EWindowMode::Windowed;
+    //    }
+    //    else
+    //    {
+    //        WindowMode = EWindowMode::Fullscreen;
+    //    }
+
+    //    GEngine->MainWindow->SetWindowMode(WindowMode);
+    //}
 }
 
-static FAutoConsoleCommand GExit(
+static FAutoConsoleCommand CVarExit(
     "Engine.Exit",
     "Exits the engine",
     FConsoleCommandDelegate::CreateStatic(&ExitEngineFunc));
 
-static FAutoConsoleCommand GToggleFullscreen(
-    "MainViewport.ToggleFullscreen",
+static FAutoConsoleCommand CVarToggleFullscreen(
+    "Engine.ToggleFullscreen",
     "Toggles fullscreen on the main Viewport",
     FConsoleCommandDelegate::CreateStatic(&ToggleFullScreenFunc));
+
+static TAutoConsoleVariable<int32> CVarViewportWidth(
+    "Engine.ViewportWidth",
+    "Width of the main window",
+    2560,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<int32> CVarViewportHeight(
+    "Engine.ViewportHeight",
+    "Width of the main window",
+    1440,
+    EConsoleVariableFlags::Default);
+
 
 FEngine::FEngine()
     : World(nullptr)
@@ -63,65 +82,76 @@ FEngine::~FEngine()
     World = nullptr;
 }
 
-void FEngine::CreateMainWindow()
+bool FEngine::CreateEngineWindow()
 {
-    // TODO: This should be loaded from a config file
-    FGenericWindowInitializer WindowInitializer;
+    FWindow::FInitializer WindowInitializer;
     WindowInitializer.Title  = "Sandbox";
-    WindowInitializer.Width  = 2560;
-    WindowInitializer.Height = 1440;
-    
-    TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(WindowInitializer);
-    if (!Window)
-    {
-        DEBUG_BREAK();
-        return;
-    }
-    
-    MainWindow = Window;
+    WindowInitializer.Size.x = CVarViewportWidth.GetValue();
+    WindowInitializer.Size.y = CVarViewportHeight.GetValue();
+
+    EngineWindow = CreateWidget<FWindow>(WindowInitializer);
+
+    // Initialize and show the game-window
+    FApplication::Get().InitializeWindow(EngineWindow);
+    return true;
 }
 
-bool FEngine::CreateMainViewport()
+bool FEngine::CreateEngineViewport()
 {
-    if (!MainWindow)
+    if (!EngineWindow)
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "MainWindow is not initialized");
         return false;
     }
 
-    TSharedPtr<FViewport> Viewport = MakeShared<FViewport>();
-    if (!Viewport)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    
-    FViewportInitializer ViewportInitializer;
-    ViewportInitializer.Window = MainWindow.Get();
-    ViewportInitializer.Width  = MainWindow->GetWidth();
-    ViewportInitializer.Height = MainWindow->GetHeight();
-    
-    if (!Viewport->InitializeRHI(ViewportInitializer))
-    {
-        DEBUG_BREAK();
-        return false;
-    }
+    FViewport::FInitializer ViewportInitializer;
+    ViewportInitializer.ViewportInterface = nullptr;
 
-    // Set the main-viewport
-    MainViewport = Viewport;
+    EngineViewportWidget = CreateWidget<FViewport>(ViewportInitializer);
+    EngineViewportWidget->SetParentWidget(EngineWindow->AsWeakPtr());
 
-    // NOTE: We need to show the window before creating the viewport, since we could ask for a bigger window than what we actually can have Now we show the window
-    MainWindow->Show();
-    
-    FApplication::Get().RegisterMainViewport(MainViewport);
+    EngineWindow->SetOnWindowMoved(FOnWindowMoved::CreateRaw(this, &FEngine::OnEngineWindowMoved));
+    EngineWindow->SetOnWindowClosed(FOnWindowClosed::CreateRaw(this, &FEngine::OnEngineWindowClosed));
+    EngineWindow->SetContent(EngineViewportWidget);
     return true;
+}
+
+bool FEngine::CreateSceneViewport()
+{
+    if (!EngineViewportWidget)
+    {
+        return false;
+    }
+
+    // Create a SceneViewport
+    SceneViewport = MakeShared<FSceneViewport>(EngineViewportWidget);
+    if (!SceneViewport->InitializeRHI())
+    {
+        return false;
+    }
+
+    EngineViewportWidget->SetViewportInterface(SceneViewport);
+    return true;
+}
+
+void FEngine::OnEngineWindowClosed()
+{
+    RequestEngineExit("Window Closed");
+}
+
+void FEngine::OnEngineWindowMoved(const FIntVector2& NewScreenPosition)
+{
+    LOG_INFO("Window Moved x=%d y=%d", NewScreenPosition.x, NewScreenPosition.y);
 }
 
 bool FEngine::Init()
 {
-    CreateMainWindow();
+    if (!CreateEngineWindow())
+    {
+        return false;
+    }
 
-    if (!CreateMainViewport())
+    if (!CreateEngineViewport())
     {
         return false;
     }
@@ -203,22 +233,23 @@ bool FEngine::Init()
         }
     }
 
-    // Create a SceneViewport
-    SceneViewport = MakeShared<FSceneViewport>(MainViewport);
-    SceneViewport->SetWorld(World);
-    MainViewport->SetViewportInterface(SceneViewport);
+    // Create the scene viewport (Contains back-buffer etc.)
+    if (!CreateSceneViewport())
+    {
+        return false;
+    }
 
     // Create Widgets
-    if (FApplication::IsInitialized())
+    if (IImguiPlugin::IsEnabled())
     {
         ProfilerWidget = MakeShared<FFrameProfilerWidget>();
-        FApplication::Get().AddWidget(ProfilerWidget);
+        IImguiPlugin::Get().AddWidget(ProfilerWidget);
 
         ConsoleWidget = MakeShared<FConsoleWidget>();
-        FApplication::Get().AddWidget(ConsoleWidget);
+        IImguiPlugin::Get().AddWidget(ConsoleWidget);
 
         InspectorWidget = MakeShared<FInspectorWidget>();
-        FApplication::Get().AddWidget(InspectorWidget);
+        IImguiPlugin::Get().AddWidget(InspectorWidget);
     }
 
     return true;
@@ -238,7 +269,7 @@ bool FEngine::Start()
     return true;
 }
 
-void FEngine::Tick(FTimespan DeltaTime)
+void FEngine::Tick(float DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
@@ -250,15 +281,17 @@ void FEngine::Tick(FTimespan DeltaTime)
 
 void FEngine::Release()
 {
-    if (FApplication::IsInitialized())
+    // Destroy ImGui widgets
+    if (IImguiPlugin::IsEnabled())
     {
-        FApplication::Get().RemoveWidget(ProfilerWidget);
+        IImguiPlugin::Get().RemoveWidget(ProfilerWidget);
         ProfilerWidget.Reset();
 
-        FApplication::Get().RemoveWidget(ConsoleWidget);
+        IImguiPlugin::Get().RemoveWidget(ConsoleWidget);
         ConsoleWidget.Reset();
     }
 
+    // Destroy the World
     if (World)
     {
         SceneViewport->SetWorld(nullptr);
@@ -269,16 +302,24 @@ void FEngine::Release()
         }
 
         delete World;
+        World = nullptr;
     }
 
     FAssetManager::Release();
 
     FMeshImporter::Release();
 
-    MainViewport->ReleaseRHI();
+    DEBUG_BREAK();
+
+    // Release RHI resources
+    SceneViewport->ReleaseRHI();
+
+    // Reset widgets
+    EngineViewportWidget.Reset();
+    EngineWindow.Reset();
 }
 
 void FEngine::Exit()
 {
-    RequestEngineExit("Normal Exit");
+    // Empty for now
 }

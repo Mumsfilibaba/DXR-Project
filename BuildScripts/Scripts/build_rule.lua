@@ -62,7 +62,7 @@ function FBuildRules(InName)
         VectorExtensions = "SSE2",
         
         -- @brief - Language to compile
-        Language   = "C++",
+        Language = "C++",
 
         -- @brief - Language Version to compile
         CppVersion = "C++20",

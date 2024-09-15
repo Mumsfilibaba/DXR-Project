@@ -137,13 +137,12 @@ bool FD3D12RHI::Initialize()
 
     // Initialize GenerateMips Shaders and pipeline states 
     TArray<uint8> Code;
+
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
-        {
-            D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
-            return false;
-        }
+        D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
+        return false;
     }
 
     TSharedRef<FD3D12ComputeShader> Shader = new FD3D12ComputeShader(GetDevice(), Code);
@@ -164,13 +163,11 @@ bool FD3D12RHI::Initialize()
         GenerateMipsTex2D_PSO->SetDebugName("GenerateMipsTex2D Gen PSO");
     }
 
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
-        {
-            D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
-            return false;
-        }
+        D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
+        return false;
     }
 
     Shader = new FD3D12ComputeShader(GetDevice(), Code);
@@ -221,9 +218,21 @@ bool FD3D12RHI::Initialize()
 
     switch (GD3D12VariableRateShadingTier)
     {
-        case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED: GRHIShadingRateTier = EShadingRateTier::NotSupported; break;
-        case D3D12_VARIABLE_SHADING_RATE_TIER_1:             GRHIShadingRateTier = EShadingRateTier::Tier1;        break;
-        case D3D12_VARIABLE_SHADING_RATE_TIER_2:             GRHIShadingRateTier = EShadingRateTier::Tier2;        break;
+        case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
+        {
+            GRHIShadingRateTier = EShadingRateTier::NotSupported;
+            break;
+        }
+        case D3D12_VARIABLE_SHADING_RATE_TIER_1:
+        {
+            GRHIShadingRateTier = EShadingRateTier::Tier1;
+            break;
+        }
+        case D3D12_VARIABLE_SHADING_RATE_TIER_2:
+        {
+            GRHIShadingRateTier = EShadingRateTier::Tier2;
+            break;
+        }
     }
 
     GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
@@ -247,24 +256,22 @@ bool FD3D12RHI::Initialize()
     GRHISupportsGeometryShaders = true;
 
     // View-Instancing
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3;
-        FMemory::Memzero(&Features3);
+    D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3;
+    FMemory::Memzero(&Features3);
 
-        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
-        if (SUCCEEDED(Result))
+    HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
+    if (SUCCEEDED(Result))
+    {
+        if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
         {
-            if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
-            {
-                GRHISupportsViewInstancing = true;
-                GRHIMaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
-            }
+            GRHISupportsViewInstancing = true;
+            GRHIMaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
         }
-        else
-        {
-            GRHISupportsViewInstancing = false;
-            GRHIMaxViewInstanceCount = 0;
-        }
+    }
+    else
+    {
+        GRHISupportsViewInstancing = false;
+        GRHIMaxViewInstanceCount = 0;
     }
 
     return true;

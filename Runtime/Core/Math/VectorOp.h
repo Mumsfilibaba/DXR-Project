@@ -55,7 +55,6 @@ namespace NVectorOp
         return _mm_setzero_ps();
     }
 
-
     FORCEINLINE Int128 VECTORCALL LoadAligned(const int* Array) noexcept
     {
         return _mm_load_si128(reinterpret_cast<const __m128i*>(Array));
@@ -71,7 +70,6 @@ namespace NVectorOp
         return _mm_set1_epi32(Scalar);
     }
 
-
     FORCEINLINE Float128 VECTORCALL CastIntToFloat(Int128 A) noexcept
     {
         return _mm_castsi128_ps(A);
@@ -82,12 +80,10 @@ namespace NVectorOp
         return _mm_castps_si128(A);
     }
 
-
     FORCEINLINE void VECTORCALL StoreAligned(Float128 Register, float* Array) noexcept
     {
         return _mm_store_ps(Array, Register);
     }
-
 
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle(Float128 A) noexcept
@@ -119,7 +115,6 @@ namespace NVectorOp
         return _mm_unpackhi_ps(A, A);
     }
 
-    
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0011(Float128 A, Float128 B) noexcept
     {
@@ -138,7 +133,6 @@ namespace NVectorOp
         return _mm_movehl_ps(B, A);
     }
 
-    
     template<uint8 x, uint8 y, uint8 z, uint8 w>
     FORCEINLINE Float128 VECTORCALL Shuffle0101(Float128 A, Float128 B) noexcept
     {
@@ -158,12 +152,10 @@ namespace NVectorOp
         return _mm_unpackhi_ps(A, B);
     }
 
-
     FORCEINLINE float VECTORCALL GetX(Float128 Register) noexcept
     {
         return _mm_cvtss_f32(Register);
     }
-
 
     FORCEINLINE Float128 VECTORCALL Mul(Float128 A, Float128 B) noexcept
     {
@@ -211,7 +203,6 @@ namespace NVectorOp
         return _mm_rcp_ps(A);
     }
 
-
     FORCEINLINE Float128 VECTORCALL And(Float128 A, Float128 B) noexcept
     {
         return _mm_and_ps(A, B);
@@ -221,7 +212,6 @@ namespace NVectorOp
     {
         return _mm_or_ps(A, B);
     }
-
 
     FORCEINLINE bool VECTORCALL Equal(Float128 A, Float128 B) noexcept
     {
@@ -253,7 +243,6 @@ namespace NVectorOp
         return 0xf == (Mask & 0xf);
     }
 
-
     FORCEINLINE Float128 VECTORCALL Min(Float128 A, Float128 B) noexcept
     {
         return _mm_min_ps(A, B);
@@ -265,13 +254,11 @@ namespace NVectorOp
     }
 #endif
 
-
     template<typename T>
     FORCEINLINE Float128 VECTORCALL LoadAligned(const T* Object) noexcept
     {
         return LoadAligned(reinterpret_cast<const float*>(Object));
     }
-
 
     template<typename T>
     FORCEINLINE void VECTORCALL StoreAligned(Float128 Register, T* Object) noexcept
@@ -279,13 +266,11 @@ namespace NVectorOp
         StoreAligned(Register, reinterpret_cast<float*>(Object));
     }
 
-    
     template<uint8 i>
     FORCEINLINE Float128 VECTORCALL Broadcast(Float128 Register) noexcept
     {
         return Shuffle<i, i, i, i>(Register);
     }
-
 
     FORCEINLINE Float128 VECTORCALL Mul(const float* A, Float128 B) noexcept
     {
@@ -324,7 +309,6 @@ namespace NVectorOp
         return Mul(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-
     FORCEINLINE Float128 VECTORCALL Div(const float* A, Float128 B) noexcept
     {
         Float128 Temp = LoadAligned(A);
@@ -361,7 +345,6 @@ namespace NVectorOp
     {
         return Div(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
-
 
     FORCEINLINE Float128 VECTORCALL Add(const float* A, Float128 B) noexcept
     {
@@ -400,7 +383,6 @@ namespace NVectorOp
         return Add(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-
     FORCEINLINE Float128 VECTORCALL Sub(const float* A, Float128 B) noexcept
     {
         Float128 Temp = LoadAligned(A);
@@ -438,7 +420,6 @@ namespace NVectorOp
         return Sub(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
     }
 
-
     FORCEINLINE float VECTORCALL GetY(Float128 Register) noexcept
     {
         Float128 Temp = Broadcast<1>(Register);
@@ -456,7 +437,6 @@ namespace NVectorOp
         Float128 Temp = Broadcast<3>(Register);
         return GetX(Temp);
     }
-
 
     FORCEINLINE Float128 VECTORCALL Abs(Float128 A) noexcept
     {
@@ -551,7 +531,6 @@ namespace NVectorOp
         Sum = Add(Shf, Sum);
         return Broadcast<0>(Sum);
     }
-
 
     FORCEINLINE Float128 VECTORCALL Mat2Mul(Float128 A, Float128 B)
     {

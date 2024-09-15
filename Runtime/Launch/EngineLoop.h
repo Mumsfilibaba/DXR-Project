@@ -12,7 +12,6 @@ public:
     bool LoadCoreModules();
 
     bool PreInitialize();
-
     bool Initialize();
 
     void Tick();

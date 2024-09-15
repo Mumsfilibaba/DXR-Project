@@ -139,6 +139,7 @@ namespace EKeyboardKeyName
         PrintScreen        = 68,
         Pause              = 69,
 
+        First = Space,
         Last  = Menu,
         Count = Last + 1
     };
@@ -283,6 +284,7 @@ namespace EMouseButtonName
         Thumb1,
         Thumb2,
 
+        First = Left,
         Last  = Thumb2,
         Count = Last + 1
     };
@@ -306,26 +308,22 @@ namespace EGamepadButtonName
     enum Type : uint8
     {
         Unknown = 0,
-
         DPadUp,
         DPadDown,
         DPadLeft,
         DPadRight,
-
         FaceUp,
         FaceDown,
         FaceLeft,
         FaceRight,
-
         RightTrigger,
         LeftTrigger,
-
         RightShoulder,
         LeftShoulder,
-
         Start,
         Back,
 
+        First = DPadUp,
         Last  = Back,
         Count = Last + 1
     };
@@ -339,18 +337,14 @@ constexpr const CHAR* ToString(EGamepadButtonName::Type Button)
     case EGamepadButtonName::DPadDown:      return "DPadDown";
     case EGamepadButtonName::DPadLeft:      return "DPadLeft";
     case EGamepadButtonName::DPadRight:     return "DPadRight";
-
     case EGamepadButtonName::FaceUp:        return "FaceUp";
     case EGamepadButtonName::FaceDown:      return "FaceDown";
     case EGamepadButtonName::FaceLeft:      return "FaceLeft";
     case EGamepadButtonName::FaceRight:     return "FaceRight";
-
     case EGamepadButtonName::RightTrigger:  return "RightTrigger";
     case EGamepadButtonName::LeftTrigger:   return "LeftTrigger";
-
     case EGamepadButtonName::RightShoulder: return "RightShoulder";
     case EGamepadButtonName::LeftShoulder:  return "LeftShoulder";
-
     case EGamepadButtonName::Start:         return "Start";
     case EGamepadButtonName::Back:          return "Back";
     default:                                return "Unknown";
@@ -362,15 +356,14 @@ namespace EAnalogSourceName
     enum Type : uint8
     {
         Unknown = 0,
-        
         RightThumbX,
         RightThumbY,
         LeftThumbX,
         LeftThumbY,
-
         RightTrigger,
         LeftTrigger,
 
+        First = RightThumbX,
         Last  = LeftTrigger,
         Count = Last + 1
     };
@@ -384,7 +377,6 @@ constexpr const CHAR* ToString(EAnalogSourceName::Type AnalogSourceName)
     case EAnalogSourceName::RightThumbY:  return "RightThumbY";
     case EAnalogSourceName::LeftThumbX:   return "LeftThumbX";
     case EAnalogSourceName::LeftThumbY:   return "LeftThumbY";
-
     case EAnalogSourceName::RightTrigger: return "RightTrigger";
     case EAnalogSourceName::LeftTrigger:  return "LeftTrigger";
     default:                              return "Unknown";

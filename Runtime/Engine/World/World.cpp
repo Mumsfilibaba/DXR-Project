@@ -57,7 +57,7 @@ void FWorld::Start()
     }
 }
 
-void FWorld::Tick(FTimespan DeltaTime)
+void FWorld::Tick(float DeltaTime)
 {
     for (FActor* Actor : Actors)
     {

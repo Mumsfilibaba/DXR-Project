@@ -4,30 +4,30 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-static FWindowsWindowStyle GetWindowsWindowStyle(FWindowStyle Style)
+static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
 {
     // Determine the window style for WinAPI
     DWORD NewStyle = 0;
-    if (Style.Style != EWindowStyleFlag::None)
+    if (Style != EWindowStyleFlags::None)
     {
         NewStyle = WS_OVERLAPPED;
-        if (Style.IsTitled())
+        if ((Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_CAPTION;
         }
-        if (Style.IsClosable())
+        if ((Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_SYSMENU;
         }
-        if (Style.IsMinimizable())
+        if ((Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
         }
-        if (Style.IsMaximizable())
+        if ((Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
         }
-        if (Style.IsResizeable())
+        if ((Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_THICKFRAME;
         }
@@ -38,7 +38,7 @@ static FWindowsWindowStyle GetWindowsWindowStyle(FWindowStyle Style)
     }
 
     DWORD NewStyleEx;
-    if (Style.HasTaskBarIcon())
+    if ((Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
     {
         NewStyleEx = WS_EX_APPWINDOW;
     }
@@ -47,7 +47,7 @@ static FWindowsWindowStyle GetWindowsWindowStyle(FWindowStyle Style)
         NewStyleEx = WS_EX_TOOLWINDOW;
     }
 
-    if (Style.IsTopMost())
+    if ((Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
     {
         NewStyleEx |= WS_EX_TOPMOST;
     }
@@ -118,7 +118,7 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         // If the window has a sys-menu we check if the close-button should be active
         if (NewStyle.Style & WS_SYSMENU)
         {
-            if (!(InInitializer.Style.IsClosable()))
+            if ((InInitializer.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
             {
                 ::EnableMenuItem(::GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
             }
@@ -497,7 +497,7 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
     }
 }
 
-void FWindowsWindow::SetStyle(FWindowStyle InStyle)
+void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
 {
     if (IsValid())
     {

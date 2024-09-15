@@ -4,17 +4,20 @@
 
 class CORE_API FRefCounted : public IRefCounted
 {
-protected:
+public:
     FRefCounted();
     virtual ~FRefCounted();
 
-public:
-    virtual int32 AddRef()  override;
-    virtual int32 Release() override;
+    FRefCounted(const FRefCounted&) = delete;
+    FRefCounted& operator=(const FRefCounted&) = delete;
+
+    virtual int32 AddRef() const override;
+
+    virtual int32 Release() const override;
 
     virtual int32 GetRefCount() const override;
 
 private:
-    FAtomicInt32 NumRefs;
+    mutable FAtomicInt32 NumRefs;
 };
 

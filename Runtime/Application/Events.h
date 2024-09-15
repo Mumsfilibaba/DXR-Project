@@ -1,5 +1,5 @@
 #pragma once
-#include "Input/Keys.h"
+#include "Application/Input/Keys.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
 #include "CoreApplication/Generic/InputCodes.h"
@@ -33,7 +33,6 @@ private:
     uint32 bIsHandled : 1;
 };
 
-
 class FInputEvent
 {
 public:
@@ -55,7 +54,6 @@ public:
 private:
     FModifierKeyState ModifierKeys;
 };
-
 
 enum class EButtomEventType
 {
@@ -113,7 +111,7 @@ public:
         return Key;
     }
 
-    FIntVector2 GetCursorPos() const
+    const FIntVector2& GetCursorPos() const
     {
         return CursorPosition;
     }
@@ -140,7 +138,6 @@ private:
     bool        bIsVerticalScrollDelta : 1;
     bool        bIsDown                : 1;
 };
-
 
 class FKeyEvent : public FInputEvent
 {
@@ -218,7 +215,6 @@ private:
     uint32 bIsDown      : 1;
 };
 
-
 class FAnalogGamepadEvent : public FInputEvent
 {
 public:
@@ -257,67 +253,4 @@ private:
     EAnalogSourceName::Type AnalogSource;
     float                   AnalogValue;
     uint32                  GamepadIndex;
-};
-
-
-class FWindowEvent
-{
-public:
-    FWindowEvent()
-        : Window(nullptr)
-        , Position()
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow)
-        : Window(InWindow)
-        , Position()
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, const FIntVector2& InPosition)
-        : Window(InWindow)
-        , Position(InPosition)
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, int32 InWidth, int32 InHeight)
-        : Window(InWindow)
-        , Position()
-        , Width(InWidth)
-        , Height(InHeight)
-    {
-    }
-
-    TSharedRef<FGenericWindow> GetWindow() const
-    {
-        return Window;
-    }
-
-    int32 GetWidth() const
-    {
-        return Width;
-    }
-
-    int32 GetHeight() const
-    {
-        return Height;
-    }
-
-    FIntVector2 GetPosition() const
-    {
-        return Position;
-    }
-
-private:
-    TSharedRef<FGenericWindow> Window;
-    FIntVector2                Position;
-    int32                      Width;
-    int32                      Height;
 };

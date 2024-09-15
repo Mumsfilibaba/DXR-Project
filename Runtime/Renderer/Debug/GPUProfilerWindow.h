@@ -1,13 +1,13 @@
 #pragma once
 #include "GPUProfiler.h"
-#include "Application/Widget.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FGPUProfilerWindow : public FWidget
+class FGPUProfilerWindow : public IImGuiWidget
 {
 public:
 
      /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
-    virtual void Paint() override final;
+    virtual void Draw() override final;
 
     void DrawWindow();
     void DrawGPUData(float Width);

@@ -88,7 +88,6 @@ static TAutoConsoleVariable<bool> CVarDrawAABBs(
     false,
     EConsoleVariableFlags::Default);
 
-
 static TAutoConsoleVariable<bool> CVarDrawOcclusionVolumes(
     "Renderer.Debug.DrawOcclusionVolumes",
     "Draws all the objects bounding boxes that are used for occlusion culling",
@@ -138,23 +137,6 @@ static FAutoConsoleCommand CVarFreezeRendering(
     {
         GFreezeRendering = !GFreezeRendering;
     }));
-
-
-FResponse FRendererEventHandler::OnWindowResized(const FWindowEvent& WindowEvent)
-{
-    if (!GEngine)
-    {
-        return FResponse::Unhandled();
-    }
-
-    if (WindowEvent.GetWindow() != GEngine->MainWindow)
-    {
-        return FResponse::Unhandled();
-    }
-
-    Renderer->ResizeResources(WindowEvent);
-    return FResponse::Handled();
-}
 
 FSceneRenderer::FSceneRenderer()
     : TextureDebugger(nullptr)
@@ -227,43 +209,38 @@ FSceneRenderer::~FSceneRenderer()
 
     FrameStatistics.Reset();
 
-    if (FApplication::IsInitialized())
+    if (IImguiPlugin::IsEnabled())
     {
-        FApplication::Get().RemoveWidget(TextureDebugger);
+        IImguiPlugin::Get().RemoveWidget(TextureDebugger);
         TextureDebugger.Reset();
 
-        FApplication::Get().RemoveWidget(InfoWindow);
+        IImguiPlugin::Get().RemoveWidget(InfoWindow);
         InfoWindow.Reset();
 
-        FApplication::Get().RemoveWidget(GPUProfilerWindow);
+        IImguiPlugin::Get().RemoveWidget(GPUProfilerWindow);
         GPUProfilerWindow.Reset();
-
-        FApplication::Get().RemoveEventHandler(EventHandler);
-        EventHandler.Reset();
     }
 }
 
 bool FSceneRenderer::Initialize()
 {
-    if (!GEngine->MainViewport)
+    TSharedPtr<FSceneViewport> SceneViewport = GEngine->GetSceneViewport();
+    if (!SceneViewport)
     {
         DEBUG_BREAK();
         return false;
     }
     else
     {
-        Resources.MainViewport     = GEngine->MainViewport->GetRHIViewport();
+        Resources.MainViewport = SceneViewport->GetRHIViewport();
+
+        // Cache the BackBuffer
         Resources.BackBufferFormat = Resources.MainViewport->GetColorFormat();
-        Resources.CurrentWidth     = Resources.MainViewport->GetWidth();
-        Resources.CurrentHeight    = Resources.MainViewport->GetHeight();
+        Resources.CurrentWidth  = Resources.DesiredWidth  = Resources.MainViewport->GetWidth();
+        Resources.CurrentHeight = Resources.DesiredHeight = Resources.MainViewport->GetHeight();
     }
 
-    if (FApplication::IsInitialized())
-    {
-        EventHandler = MakeShared<FRendererEventHandler>(this);
-        FApplication::Get().AddEventHandler(EventHandler);
-    }
-    else
+    if (!FApplication::IsInitialized())
     {
         DEBUG_BREAK();
         return false;
@@ -404,16 +381,16 @@ bool FSceneRenderer::Initialize()
     }
 
     // Register Windows
-    if (FApplication::IsInitialized())
+    if (IImguiPlugin::IsEnabled())
     {
         TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
-        FApplication::Get().AddWidget(TextureDebugger);
+        IImguiPlugin::Get().AddWidget(TextureDebugger);
 
         InfoWindow = MakeShared<FRendererInfoWindow>(this);
-        FApplication::Get().AddWidget(InfoWindow);
+        IImguiPlugin::Get().AddWidget(InfoWindow);
 
         GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
-        FApplication::Get().AddWidget(GPUProfilerWindow);
+        IImguiPlugin::Get().AddWidget(GPUProfilerWindow);
     }
 
     return true;
@@ -505,13 +482,13 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     GRHICommandExecutor.Tick();
 
-    if (ResizeEvent)
+    if (Resources.DesiredWidth != Resources.CurrentWidth || Resources.DesiredHeight != Resources.CurrentHeight)
     {
         // Check if we resized and update the Viewport-size on the RHIThread
         FRHIViewport* Viewport = Resources.MainViewport.Get();
 
-        uint32 NewWidth  = ResizeEvent->GetWidth();
-        uint32 NewHeight = ResizeEvent->GetHeight();
+        uint32 NewWidth  = Resources.DesiredWidth;
+        uint32 NewHeight = Resources.DesiredHeight;
         if ((Resources.CurrentWidth != NewWidth || Resources.CurrentHeight != NewHeight) && NewWidth > 0 && NewHeight > 0)
         {
             CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
@@ -563,7 +540,6 @@ void FSceneRenderer::Tick(FScene* Scene)
 
         Resources.CurrentWidth  = NewWidth;
         Resources.CurrentHeight = NewHeight;
-        ResizeEvent.Reset();
     }
 
     CommandList.BeginExternalCapture();
@@ -950,7 +926,11 @@ void FSceneRenderer::Tick(FScene* Scene)
     #endif
 
         TRACE_SCOPE("Render UI");
-        FApplication::Get().DrawWindows(CommandList);
+
+        if (IImguiPlugin::IsEnabled())
+        {
+            IImguiPlugin::Get().TickRenderer(CommandList);
+        }
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End UI Render");
@@ -990,9 +970,10 @@ void FSceneRenderer::Tick(FScene* Scene)
     }
 }
 
-void FSceneRenderer::ResizeResources(const FWindowEvent& Event)
+void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 {
-    ResizeEvent.Emplace(Event);
+    Resources.DesiredWidth  = InWidth;
+    Resources.DesiredHeight = InHeight;
 }
 
 bool FSceneRenderer::InitShadingImage()

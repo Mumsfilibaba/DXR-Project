@@ -4,7 +4,8 @@
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Engine/World/Components/MeshComponent.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Application/ImGuiModule.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 static TAutoConsoleVariable<bool> CVarDrawSceneInspector(
     "Engine.DrawSceneinspector",
@@ -14,15 +15,15 @@ static TAutoConsoleVariable<bool> CVarDrawSceneInspector(
 
 void FInspectorWidget::DrawSceneInfo()
 {
-    constexpr float Width = 450.0f;
+    // constexpr float Width = 450.0f;
 
     FWindowShape WindowShape;
-    GEngine->MainWindow->GetWindowShape(WindowShape);
+    GEngine->GetEngineWindow()->GetPlatformWindow()->GetWindowShape(WindowShape);
 
     // Lights
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        for (FLight* CurrentLight : GEngine->World->GetLights())
+        for (FLight* CurrentLight : GEngine->GetWorld()->GetLights())
         {
             ImGui::PushID(CurrentLight);
 
@@ -43,7 +44,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::NextColumn();
 
                     FVector3 Color = CurrentPointLight->GetColor();
-                    if (FImGui::DrawColorEdit3("##Color", Color))
+                    if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
                     {
                         CurrentPointLight->SetColor(Color);
                     }
@@ -64,7 +65,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::SeparatorText("Transform");
 
                     FVector3 Translation = CurrentPointLight->GetPosition();
-                    FImGui::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
+                    ImGuiExtensions::DrawFloat3Control("Translation", Translation, 0.0f, ColumnWidth);
                     CurrentPointLight->SetPosition(Translation);
 
                     // Shadow Settings
@@ -143,7 +144,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::NextColumn();
 
                     FVector3 Color = CurrentDirectionalLight->GetColor();
-                    if (FImGui::DrawColorEdit3("##Color", Color))
+                    if (ImGuiExtensions::DrawColorEdit3("##Color", Color))
                     {
                         CurrentDirectionalLight->SetColor(Color);
                     }
@@ -208,7 +209,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::SeparatorText("Shadows");
 
                     FVector3 LookAt = CurrentDirectionalLight->GetLookAt();
-                    FImGui::DrawFloat3Control("LookAt", LookAt, 0.0f, ColumnWidth);
+                    ImGuiExtensions::DrawFloat3Control("LookAt", LookAt, 0.0f, ColumnWidth);
 
                     ImGui::Columns(2, nullptr, false);
                     ImGui::SetColumnWidth(0, ColumnWidth);
@@ -292,9 +293,9 @@ void FInspectorWidget::DrawSceneInfo()
     // Actors
     if (ImGui::CollapsingHeader("Actors", ImGuiTreeNodeFlags_None))
     {
-        ImGui::Text("Number of Actors: %d", GEngine->World->GetActors().Size());
+        ImGui::Text("Number of Actors: %d", GEngine->GetWorld()->GetActors().Size());
 
-        for (FActor* Actor : GEngine->World->GetActors())
+        for (FActor* Actor : GEngine->GetWorld()->GetActors())
         {
             ImGui::PushID(Actor);
 
@@ -304,14 +305,14 @@ void FInspectorWidget::DrawSceneInfo()
                 ImGui::SeparatorText("Transform");
 
                 FVector3 Translation = Actor->GetTransform().GetTranslation();
-                FImGui::DrawFloat3Control("Translation", Translation);
+                ImGuiExtensions::DrawFloat3Control("Translation", Translation);
                 Actor->GetTransform().SetTranslation(Translation);
 
                 // Rotation
                 FVector3 Rotation = Actor->GetTransform().GetRotation();
                 Rotation = FMath::ToDegrees(Rotation);
 
-                FImGui::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
+                ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
 
                 Rotation = FMath::ToRadians(Rotation);
 
@@ -320,7 +321,7 @@ void FInspectorWidget::DrawSceneInfo()
                 // Scale
                 FVector3 Scale0 = Actor->GetTransform().GetScale();
                 FVector3 Scale1 = Scale0;
-                FImGui::DrawFloat3Control("Scale", Scale0, 1.0f);
+                ImGuiExtensions::DrawFloat3Control("Scale", Scale0, 1.0f);
 
                 ImGui::SameLine();
 
@@ -365,7 +366,7 @@ void FInspectorWidget::DrawSceneInfo()
                         ImGui::NextColumn();
 
                         FMaterialInfo MaterialInfo = MeshComponent->GetMaterial()->GetMaterialInfo();
-                        if (FImGui::DrawColorEdit3("##Albedo", MaterialInfo.Albedo))
+                        if (ImGuiExtensions::DrawColorEdit3("##Albedo", MaterialInfo.Albedo))
                         {
                             MeshComponent->GetMaterial()->SetAlbedo(MaterialInfo.Albedo);
                         }
@@ -412,10 +413,10 @@ void FInspectorWidget::DrawSceneInfo()
     }
 }
 
-void FInspectorWidget::Paint()
+void FInspectorWidget::Draw()
 {
-    const uint32 WindowWidth  = GEngine->MainWindow->GetWidth();
-    const uint32 WindowHeight = GEngine->MainWindow->GetHeight();
+    const uint32 WindowWidth  = GEngine->GetEngineWindow()->GetWidth();
+    const uint32 WindowHeight = GEngine->GetEngineWindow()->GetHeight();
     const float Width  = FMath::Max(WindowWidth * 0.3f, 400.0f);
     const float Height = WindowHeight * 0.7f;
 

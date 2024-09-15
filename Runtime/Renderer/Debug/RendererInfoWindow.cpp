@@ -3,23 +3,34 @@
 #include "RHI/RHI.h"
 #include "Application/Application.h"
 #include "Renderer/SceneRenderer.h"
-#include "Application/ImGuiModule.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
     "Renderer.DrawRendererInfo",
     "Enables the drawing of the Renderer Info Window", 
     true);
 
-void FRendererInfoWindow::Paint()
+FRendererInfoWindow::FRendererInfoWindow(FSceneRenderer* InRenderer)
+    : IImGuiWidget()
+    , Renderer(InRenderer)
+{
+}
+
+FRendererInfoWindow::~FRendererInfoWindow()
+{
+}
+
+void FRendererInfoWindow::Draw()
 {
     if (CVarDrawRendererInfo.GetValue())
     {
         const FString AdapterName = RHIGetAdapterName();
 
-        const ImVec2 MainViewportPos  = FImGui::GetMainViewportPos();
-        const ImVec2 DisplaySize      = FImGui::GetDisplaySize();
+        const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
+        const ImVec2 DisplaySize      = ImGuiExtensions::GetDisplaySize();
         const ImVec2 TextSize         = ImGui::CalcTextSize(AdapterName.GetCString());
-        const ImVec2 FrameBufferScale = FImGui::GetDisplayFramebufferScale();
+        const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
         const float WindowWidth  = DisplaySize.x;
         const float WindowHeight = DisplaySize.y;

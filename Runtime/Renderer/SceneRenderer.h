@@ -13,7 +13,7 @@
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Application/Events.h"
-#include "Application/ApplicationEventHandler.h"
+#include "Application/InputHandler.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/World.h"
 #include "Engine/World/Camera.h"
@@ -64,20 +64,6 @@ struct FCameraHLSL
     float    Padding1       = 0.0f;
 };
 
-class FRendererEventHandler : public FApplicationEventHandler
-{
-public:
-    FRendererEventHandler(FSceneRenderer* InRenderer)
-        : Renderer(InRenderer)
-    {
-    }
-
-    virtual FResponse OnWindowResized(const FWindowEvent& WindowEvent) override final;
-
-private:
-    FSceneRenderer* Renderer;
-};
-
 class FSceneRenderer
 {
 public:
@@ -87,7 +73,7 @@ public:
     bool Initialize();
     bool InitializeRenderPasses();
     void Tick(FScene* Scene);
-    void ResizeResources(const FWindowEvent& Event);
+    void ResizeResources(uint32 InWidth, uint32 InHeight);
 
     void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
     {
@@ -143,12 +129,8 @@ private:
     FRHIComputePipelineStateRef ShadingRatePipeline;
     FRHIComputeShaderRef        ShadingRateShader;
 
-    // Event handling
-    TOptional<FWindowEvent>     ResizeEvent;
-
     // Widgets
     TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
     TSharedPtr<FRendererInfoWindow>      InfoWindow;
     TSharedPtr<FGPUProfilerWindow>       GPUProfilerWindow;
-    TSharedPtr<FRendererEventHandler>    EventHandler;
 };

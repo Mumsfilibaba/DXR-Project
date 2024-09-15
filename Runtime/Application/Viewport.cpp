@@ -1,55 +1,18 @@
 #include "Viewport.h"
-#include "CoreApplication/Generic/GenericWindow.h"
-#include "RHI/RHI.h"
-#include "RHI/RHIResources.h"
-
-DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 FViewport::FViewport()
-    : RHIViewport(nullptr)
-    , Window(nullptr)
-    , ViewportInterface(nullptr)
+    : FWidget()
+    , ViewportInterface(nullptr) 
 {
 }
 
 FViewport::~FViewport()
 {
-    CHECK(RHIViewport == nullptr);
 }
 
-bool FViewport::InitializeRHI(const FViewportInitializer& Initializer)
+void FViewport::Initialize(const FInitializer& Initializer)
 {
-    Window = MakeSharedRef<FGenericWindow>(Initializer.Window);
-    if (!Window)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    
-    FRHIViewportInfo ViewportInfo;
-    ViewportInfo.WindowHandle = Initializer.Window->GetPlatformHandle();
-    ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use rgba for all RHIs except Vulkan?
-    ViewportInfo.Width        = static_cast<uint16>(Initializer.Width);
-    ViewportInfo.Height       = static_cast<uint16>(Initializer.Height);
-    
-    FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
-    if (!NewViewport)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        RHIViewport = NewViewport;
-    }
-
-    return true;
-}
-
-void FViewport::ReleaseRHI()
-{
-    CHECK(RHIViewport->GetRefCount() == 1);
-    RHIViewport.Reset();
+    ViewportInterface = Initializer.ViewportInterface;
 }
 
 FResponse FViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
@@ -72,79 +35,47 @@ FResponse FViewport::OnKeyChar(const FKeyEvent& KeyEvent)
     return ViewportInterface ? ViewportInterface->OnKeyChar(KeyEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnMouseMove(const FCursorEvent& MouseEvent)
+FResponse FViewport::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnMouseMove(MouseEvent) : FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnMouseMove(CursorEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnMouseButtonDown(const FCursorEvent& MouseEvent)
+FResponse FViewport::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnMouseButtonDown(MouseEvent) : FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnMouseButtonDown(CursorEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnMouseButtonUp(const FCursorEvent& MouseEvent)
+FResponse FViewport::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnMouseButtonUp(MouseEvent) : FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnMouseButtonUp(CursorEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnMouseScroll(const FCursorEvent& MouseEvent)
+FResponse FViewport::OnMouseScroll(const FCursorEvent& CursorEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnMouseScroll(MouseEvent) : FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnMouseScroll(CursorEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnMouseDoubleClick(const FCursorEvent& MouseEvent)
+FResponse FViewport::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
 {
-    return ViewportInterface ? ViewportInterface->OnMouseDoubleClick(MouseEvent) : FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnMouseDoubleClick(CursorEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnWindowResized(const FWindowEvent& WindowEvent)
+FResponse FViewport::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
-    return FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnMouseLeft(CursorEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnWindowFocusLost(const FWindowEvent& WindowEvent)
+FResponse FViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
 {
-    if (WindowEvent.GetWindow() == Window)
-    {
-        return ViewportInterface ? ViewportInterface->OnFocusLost() : FResponse::Unhandled();
-    }
-
-    return FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnMouseEntered(CursorEvent) : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnWindowFocusGained(const FWindowEvent& WindowEvent)
+FResponse FViewport::OnFocusLost()
 {
-    if (WindowEvent.GetWindow() == Window)
-    {
-        return ViewportInterface ? ViewportInterface->OnFocusGained() : FResponse::Unhandled();
-    }
-
-    return FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnFocusLost() : FResponse::Unhandled();
 }
 
-FResponse FViewport::OnMouseLeft(const FWindowEvent& WindowEvent)
+FResponse FViewport::OnFocusGained()
 {
-    if (WindowEvent.GetWindow() == Window)
-    {
-        return ViewportInterface ? ViewportInterface->OnMouseLeft() : FResponse::Unhandled();
-    }
-
-    return FResponse::Unhandled();
+    return ViewportInterface ? ViewportInterface->OnFocusGained() : FResponse::Unhandled();
 }
-
-FResponse FViewport::OnMouseEntered(const FWindowEvent& WindowEvent)
-{
-    if (WindowEvent.GetWindow() == Window)
-    {
-        return ViewportInterface ? ViewportInterface->OnMouseEntered() : FResponse::Unhandled();
-    }
-
-    return FResponse::Unhandled();
-}
-
-FResponse FViewport::OnWindowClosed(const FWindowEvent& WindowEvent)
-{
-    return FResponse::Unhandled();
-}
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING

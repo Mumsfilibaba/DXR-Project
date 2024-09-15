@@ -18,6 +18,7 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "RendererCore/TextureFactory.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Launch);
 
@@ -34,58 +35,56 @@ FEngineLoop::~FEngineLoop()
 
 bool FEngineLoop::LoadCoreModules()
 {
-    FModuleManager& ModuleManager = FModuleManager::Get();
-
-    FModuleInterface* CoreModule = ModuleManager.LoadModule("Core");
+    FModuleInterface* CoreModule = FModuleManager::Get().LoadModule("Core");
     if (!CoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
+    FModuleInterface* CoreApplicationModule = FModuleManager::Get().LoadModule("CoreApplication");
     if (!CoreApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* ApplicationModule = ModuleManager.LoadModule("Application");
+    FModuleInterface* ApplicationModule = FModuleManager::Get().LoadModule("Application");
     if (!ApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* EngineModule = ModuleManager.LoadModule("Engine");
+    FModuleInterface* EngineModule = FModuleManager::Get().LoadModule("Engine");
     if (!EngineModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RHIModule = ModuleManager.LoadModule("RHI");
+    FModuleInterface* RHIModule = FModuleManager::Get().LoadModule("RHI");
     if (!RHIModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RendererCoreModule = ModuleManager.LoadModule("RendererCore");
+    FModuleInterface* RendererCoreModule = FModuleManager::Get().LoadModule("RendererCore");
     if (!RendererCoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RendererModule = ModuleManager.LoadModule("Renderer");
+    FModuleInterface* RendererModule = FModuleManager::Get().LoadModule("Renderer");
     if (!RendererModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* ProjectModule = ModuleManager.LoadModule("Project");
+    FModuleInterface* ProjectModule = FModuleManager::Get().LoadModule("Project");
     if (!ProjectModule)
     {
         DEBUG_BREAK();
@@ -94,7 +93,6 @@ bool FEngineLoop::LoadCoreModules()
 
     return true;
 }
-
 
 bool FEngineLoop::PreInitialize()
 {
@@ -112,7 +110,7 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-    // Load the Core-Modules
+    // Load all core-modules
     if (!LoadCoreModules())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to load Core-Modules");
@@ -130,10 +128,6 @@ bool FEngineLoop::PreInitialize()
         return false;
     }
 
-#if !PRODUCTION_BUILD
-    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
-#endif
-
     // ProjectManager
     if (!FProjectManager::Initialize())
     {
@@ -142,6 +136,7 @@ bool FEngineLoop::PreInitialize()
     }
 
 #if !PRODUCTION_BUILD
+    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
     LOG_INFO("ProjectName=%s", FProjectManager::Get().GetProjectName().GetCString());
     LOG_INFO("ProjectPath=%s", FProjectManager::Get().GetProjectPath().GetCString());
 #endif
@@ -160,20 +155,18 @@ bool FEngineLoop::PreInitialize()
 
     CoreDelegates::PostApplicationCreateDelegate.Broadcast();
 
-    // Initialize the Async-worker threads
+    // Initialize async-worker threads
     if (!FTaskManager::Initialize())
     {
         return false;
     }
 
-    // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
     if (!FShaderCompiler::Create(FProjectManager::Get().GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
         return false;
     }
 
-    // Initialize the RHI
     if (!RHIInitialize())
     {
         return false;
@@ -190,9 +183,17 @@ bool FEngineLoop::PreInitialize()
     return true;
 }
 
-
 bool FEngineLoop::Initialize()
 {
+    // Initialize ImGui (Currently Required)
+    IImguiPlugin* ImguiPlugin = FModuleManager::Get().LoadModule<IImguiPlugin>("ImGuiPlugin");
+    if (!ImguiPlugin)
+    {
+        LOG_ERROR("Failed to load ImGuiPlugin");
+        return false;
+    }
+
+    // Initialize the engine
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
     GEngine = new FEngine();
@@ -225,12 +226,12 @@ bool FEngineLoop::Initialize()
         CoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
     }
 
-    // Prepare Application for Rendering
-    if (FApplication::IsInitialized())
+    // Prepare ImGui for Rendering
+    if (IImguiPlugin::IsEnabled())
     {
-        if (!FApplication::Get().InitializeRenderer())
+        if (!IImguiPlugin::Get().InitializeRenderer())
         {
-            FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI layer for the Application");
+            FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI resources for ImGui");
             return false;
         }
     }
@@ -244,7 +245,6 @@ bool FEngineLoop::Initialize()
     return true;
 }
 
-
 void FEngineLoop::Tick()
 {
     TRACE_FUNCTION_SCOPE();
@@ -252,14 +252,17 @@ void FEngineLoop::Tick()
     // Tick the timer
     FrameTimer.Tick();
 
+    // DeltaTime
+    const FTimespan DeltaTime = FrameTimer.GetDeltaTime();
+
     // Poll inputs and handle events from the system
-    FApplication::Get().Tick(FrameTimer.GetDeltaTime());
+    FApplication::Get().Tick(DeltaTime.AsMilliseconds());
 
     // Tick all systems that have hooked into the EngineLoop::Tick
-    FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
+    FEngineLoopTicker::Get().Tick(DeltaTime);
 
     // Tick the engine (Actors etc.)
-    GEngine->Tick(FrameTimer.GetDeltaTime());
+    GEngine->Tick(DeltaTime.AsMilliseconds());
 
     // Tick Profiler
     FFrameProfiler::Get().Tick();
@@ -272,7 +275,6 @@ void FEngineLoop::Tick()
     RendererModule->Tick();
 }
 
-
 bool FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
@@ -283,12 +285,13 @@ bool FEngineLoop::Release()
     // Release GPU profiler
     FGPUProfiler::Get().Release();
 
-    // Release the Application. Protect against failed initialization where the global pointer was never initialized
-    if (FApplication::IsInitialized())
+    // Release ImGui
+    if (IImguiPlugin::IsEnabled())
     {
-        FApplication::Get().RegisterMainViewport(nullptr);
-        FApplication::Get().ReleaseRenderer();
+        IImguiPlugin::Get().ReleaseRenderer();
     }
+
+    // TODO: We need a main window, this should be de-registered here
 
     // Release the renderer
     IRendererModule* RendererModule = IRendererModule::Get();
@@ -298,6 +301,7 @@ bool FEngineLoop::Release()
     if (GEngine)
     {
         GEngine->Release();
+
         delete GEngine;
         GEngine = nullptr;
     }
@@ -308,10 +312,8 @@ bool FEngineLoop::Release()
     // Wait for RHI thread and shutdown RHI Layer
     RHIRelease();
 
-    // Destroy the ShaderCompiler
     FShaderCompiler::Destroy();
 
-    // Shutdown the Async-task system
     FTaskManager::Release();
 
     FApplication::Destroy();
@@ -324,6 +326,5 @@ bool FEngineLoop::Release()
 
     // Release all modules
     FModuleManager::Shutdown();
-
     return true;
 }

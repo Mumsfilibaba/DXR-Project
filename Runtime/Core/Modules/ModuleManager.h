@@ -41,7 +41,6 @@ struct FModuleInterface;
 typedef FModuleInterface* (*PFNLoadEngineModule)();
 typedef void* PlatformModule;
 
-
 struct FModuleInterface
 {
     virtual ~FModuleInterface() = default;
@@ -52,7 +51,6 @@ struct FModuleInterface
     /** @return - Returns true if the unload is successful */
     virtual bool Unload() { return true; }
 };
-
 
 class CORE_API FModuleManager
 {
@@ -246,7 +244,6 @@ protected:
     FCriticalSection          ModulesCS;
 };
 
-
 template<typename ModuleClassType>
 class TStaticModuleInitializer
 {
@@ -272,7 +269,6 @@ public:
         return new ModuleClassType();
     }
 };
-
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

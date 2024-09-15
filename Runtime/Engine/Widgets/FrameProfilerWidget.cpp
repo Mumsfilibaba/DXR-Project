@@ -2,7 +2,8 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Threading/ThreadManager.h"
-#include "Application/Application.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 static TAutoConsoleVariable<bool> CVarDrawFps(
     "Engine.DrawFps",
@@ -16,7 +17,7 @@ static TAutoConsoleVariable<bool> CVarDrawFrameProfiler(
     false,
     EConsoleVariableFlags::Default);
 
-void FFrameProfilerWidget::Paint()
+void FFrameProfilerWidget::Draw()
 {
     if (CVarDrawFps.GetValue())
     {
@@ -35,8 +36,8 @@ void FFrameProfilerWidget::DrawFPS()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.2f, 1.0f));
 
-    const ImVec2 Size     = FImGui::GetMainViewportSize();
-    const ImVec2 Position = FImGui::GetMainViewportPos();
+    const ImVec2 Size     = ImGuiExtensions::GetMainViewportSize();
+    const ImVec2 Position = ImGuiExtensions::GetMainViewportPos();
     ImGui::SetNextWindowPos(ImVec2(Position.x + Size.x, Position.y), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 
     const ImGuiWindowFlags Flags =
@@ -250,8 +251,8 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
 void FFrameProfilerWidget::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-	const ImVec2 Size     = FImGui::GetMainViewportSize();
-	const ImVec2 Position = FImGui::GetMainViewportPos();
+	const ImVec2 Size     = ImGuiExtensions::GetMainViewportSize();
+	const ImVec2 Position = ImGuiExtensions::GetMainViewportPos();
     const float Width  = FMath::Max<float>(Size.x * 0.6f, 400.0f);
     const float Height = Size.y * 0.75f;
 

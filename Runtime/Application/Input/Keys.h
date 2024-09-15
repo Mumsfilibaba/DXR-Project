@@ -1,5 +1,5 @@
 #pragma once
-#include "KeyNames.h"
+#include "Application/Input/KeyNames.h"
 
 class FKey
 {
