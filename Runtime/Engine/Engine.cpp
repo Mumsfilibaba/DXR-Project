@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Core/Misc/CoreDelegates.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Math/Math.h"
 #include "Project/ProjectManager.h"
@@ -73,7 +74,14 @@ static TAutoConsoleVariable<int32> CVarViewportHeight(
 
 
 FEngine::FEngine()
-    : World(nullptr)
+    : EngineWindow(nullptr)
+    , EngineViewportWidget(nullptr)
+    , SceneViewport(nullptr)
+    , ConsoleWidget(nullptr)
+    , ProfilerWidget(nullptr)
+    , InspectorWidget(nullptr)
+    , World(nullptr)
+    , GameModule(nullptr)
 {
 }
 
@@ -233,6 +241,18 @@ bool FEngine::Init()
         }
     }
 
+    const CHAR* GameModuleName = FProjectManager::Get().GetProjectModuleName().GetCString();
+    GameModule = FModuleManager::Get().LoadModule<FGameModule>(GameModuleName);
+    if (!GameModule)
+    {
+        LOG_ERROR("Failed to load Game-module, the application may not behave as intended");
+        return false;
+    }
+    else
+    {
+        CoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
+    }
+
     // Create the scene viewport (Contains back-buffer etc.)
     if (!CreateSceneViewport())
     {
@@ -305,11 +325,17 @@ void FEngine::Release()
         World = nullptr;
     }
 
+    // Unload the GameModule
+    if (GameModule)
+    {
+        const CHAR* GameModuleName = FProjectManager::Get().GetProjectModuleName().GetCString();
+        FModuleManager::Get().UnloadModule(GameModuleName);
+        GameModule = nullptr;
+    }
+
     FAssetManager::Release();
 
     FMeshImporter::Release();
-
-    DEBUG_BREAK();
 
     // Release RHI resources
     SceneViewport->ReleaseRHI();

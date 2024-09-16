@@ -78,6 +78,9 @@ private:
 
     /** @brief - The current world */
     FWorld* World;
+
+    /** @brief - The current Game-Module */
+    FGameModule* GameModule;
 };
 
 extern ENGINE_API FEngine* GEngine;

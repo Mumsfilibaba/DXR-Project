@@ -56,6 +56,9 @@ bool FRendererModule::Initialize()
 
 void FRendererModule::Tick()
 {
+    // Tick GPU-Profiler
+    FGPUProfiler::Get().Tick();
+
     for (FScene* Scene : Scenes)
     {
         // Performs frustum culling and updates visible primitives
@@ -71,6 +74,9 @@ void FRendererModule::Tick()
 
 void FRendererModule::Release()
 {
+    // Release GPU profiler
+    FGPUProfiler::Get().Release();
+
     if (Renderer)
     {
         delete Renderer;

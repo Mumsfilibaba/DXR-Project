@@ -151,7 +151,6 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         LOG_WARNING("Invalid CommandLine");
     }
 
-    // Load all core-modules
     if (!LoadCoreModules())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to load Core-Modules");
@@ -162,14 +161,12 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
     FFrameProfiler::Get().Enable();
     TRACE_FUNCTION_SCOPE();
 
-    // Initialize the engine config
     if (!FConfig::Initialize())
     {
         LOG_ERROR("Failed to initialize EngineConfig");
         return -1;
     }
 
-    // ProjectManager
     if (!FProjectManager::Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
@@ -234,7 +231,6 @@ int32 FEngineLoop::Init()
         return -1;
     }
 
-    // Initialize the engine
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
     GEngine = new FEngine();
@@ -246,7 +242,6 @@ int32 FEngineLoop::Init()
 
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
-    // Initialize renderer
     IRendererModule* RendererModule = IRendererModule::Get();
     if (!RendererModule->Initialize())
     {
@@ -255,17 +250,6 @@ int32 FEngineLoop::Init()
     }
 
     CoreDelegates::PreApplicationLoadedDelegate.Broadcast();
-
-    // Load application
-    GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().Data());
-    if (!GGameModule)
-    {
-        LOG_WARNING("Failed to load Game-module, the application may not behave as intended");
-    }
-    else
-    {
-        CoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
-    }
 
     // Prepare ImGui for Rendering
     if (IImguiPlugin::IsEnabled())
@@ -277,7 +261,6 @@ int32 FEngineLoop::Init()
         }
     }
 
-    // Final thing is to startup the engine
     if (!GEngine->Start())
     {
         return -1;
@@ -296,22 +279,15 @@ void FEngineLoop::Tick()
     // DeltaTime
     const FTimespan DeltaTime = FrameTimer.GetDeltaTime();
 
-    // Poll inputs and handle events from the system
     FApplication::Get().Tick(DeltaTime.AsMilliseconds());
 
     // Tick all systems that have hooked into the EngineLoop::Tick
     FEngineLoopTicker::Get().Tick(DeltaTime);
 
-    // Tick the engine (Actors etc.)
     GEngine->Tick(DeltaTime.AsMilliseconds());
 
-    // Tick Profiler
     FFrameProfiler::Get().Tick();
 
-    // Tick GPU-Profiler
-    FGPUProfiler::Get().Tick();
-
-    // Tick the renderer
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->Tick();
 }
@@ -323,22 +299,17 @@ void FEngineLoop::Release()
     // Wait for the last RHI commands to finish
     GRHICommandExecutor.WaitForGPU();
 
-    // Release GPU profiler
-    FGPUProfiler::Get().Release();
-
     // Release ImGui
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().ReleaseRenderer();
     }
 
-    // TODO: We need a main window, this should be de-registered here
-
     // Release the renderer
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->Release();
-    
-    // Release the Engine. Protect against failed initialization where the global pointer was never initialized
+
+    // Release the Engine (Protect against failed initialization where the global pointer was never initialized)
     if (GEngine)
     {
         GEngine->Release();
