@@ -16,23 +16,27 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA         (1)
-#define LOAD_BISTRO         (0)
-#define LOAD_SUN_TEMPLE     (0)
+#define LOAD_SPONZA (1)
+#define LOAD_BISTRO (0)
+#define LOAD_SUN_TEMPLE (0)
 #define LOAD_EMERALD_SQUARE (0)
 
-#define ENABLE_LIGHT_TEST   (0)
+#define ENABLE_LIGHT_TEST (0)
 #define ENABLE_MANY_SPHERES (0)
 
 IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
+FSandbox::FSandbox()
+    : FGameModule()
+{
+}
+
+FSandbox::~FSandbox()
+{
+}
+
 bool FSandbox::Init()
 {
-    if (!FGameModule::Init())
-    {
-        return false;
-    }
-
     // Initialize World
     MAYBE_UNUSED FActor*         NewActor     = nullptr;
     MAYBE_UNUSED FMeshComponent* NewComponent = nullptr;
@@ -522,7 +526,6 @@ bool FSandbox::Init()
     return true;
 }
 
-void FSandbox::Tick(FTimespan DeltaTime)
+void FSandbox::Tick(float DeltaTime)
 {
-    FGameModule::Tick(DeltaTime);
 }

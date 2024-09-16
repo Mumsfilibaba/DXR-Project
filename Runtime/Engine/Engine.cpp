@@ -241,11 +241,18 @@ bool FEngine::Init()
         }
     }
 
+    // Load GameModule
     const CHAR* GameModuleName = FProjectManager::Get().GetProjectModuleName().GetCString();
     GameModule = FModuleManager::Get().LoadModule<FGameModule>(GameModuleName);
     if (!GameModule)
     {
         LOG_ERROR("Failed to load Game-module, the application may not behave as intended");
+        return false;
+    }
+
+    if (!GameModule->Init())
+    {
+        LOG_ERROR("Failed to initialize GameModule");
         return false;
     }
     else
@@ -293,6 +300,8 @@ void FEngine::Tick(float DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
+    GameModule->Tick(DeltaTime);
+
     if (World)
     {
         World->Tick(DeltaTime);
@@ -328,6 +337,8 @@ void FEngine::Release()
     // Unload the GameModule
     if (GameModule)
     {
+        GameModule->Release();
+
         const CHAR* GameModuleName = FProjectManager::Get().GetProjectModuleName().GetCString();
         FModuleManager::Get().UnloadModule(GameModuleName);
         GameModule = nullptr;

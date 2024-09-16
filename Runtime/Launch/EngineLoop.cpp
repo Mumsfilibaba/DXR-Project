@@ -3,7 +3,6 @@
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/EngineConfig.h"
@@ -276,15 +275,10 @@ void FEngineLoop::Tick()
     // Tick the timer
     FrameTimer.Tick();
 
-    // DeltaTime
-    const FTimespan DeltaTime = FrameTimer.GetDeltaTime();
+    const float DeltaTime = FrameTimer.GetDeltaTime().AsMilliseconds();
+    FApplication::Get().Tick(DeltaTime);
 
-    FApplication::Get().Tick(DeltaTime.AsMilliseconds());
-
-    // Tick all systems that have hooked into the EngineLoop::Tick
-    FEngineLoopTicker::Get().Tick(DeltaTime);
-
-    GEngine->Tick(DeltaTime.AsMilliseconds());
+    GEngine->Tick(DeltaTime);
 
     FFrameProfiler::Get().Tick();
 

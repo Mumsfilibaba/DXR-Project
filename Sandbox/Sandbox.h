@@ -6,10 +6,10 @@
 class SANDBOX_API FSandbox : public FGameModule
 {
 public:
-    FSandbox()  = default;
-    ~FSandbox() = default;
+    FSandbox();
+    ~FSandbox();
 
     virtual bool Init() override;
 
-    virtual void Tick(FTimespan DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
 };
