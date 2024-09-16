@@ -14,7 +14,7 @@ FConsoleWidget::FConsoleWidget()
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
-        OutputDeviceManager->AddOutputDevice(this);
+        OutputDeviceManager->RegisterOutputDevice(this);
     }
 
     if (FApplication::IsInitialized())
@@ -30,7 +30,7 @@ FConsoleWidget::~FConsoleWidget()
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
-        OutputDeviceManager->RemoveOutputDevice(this);
+        OutputDeviceManager->UnregisterOutputDevice(this);
     }
 
     if (FApplication::IsInitialized())

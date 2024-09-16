@@ -3,44 +3,23 @@
 #include "Core/CoreGlobals.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Misc/CommandLine.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
-
-struct FDebuggerOutputDevice : public IOutputDevice
-{
-    virtual void Log(const FString& Message) 
-    {
-        FPlatformMisc::OutputDebugString(Message.GetCString());
-    }
-
-    virtual void Log(ELogSeverity Severity, const FString& Message)
-    {
-        Log(Message);
-    }
-};
-
-ENABLE_UNREFERENCED_VARIABLE_WARNING
-
 // EngineLoop
 FEngineLoop GEngineLoop;
 
-FORCEINLINE bool EngineLoadCoreModules()
+FORCEINLINE int32 EnginePreInit(const CHAR** Args, int32 NumArgs)
 {
-    return GEngineLoop.LoadCoreModules();
+    int32 ErrorCode = GEngineLoop.PreInit(Args, NumArgs);
+    return ErrorCode;
 }
 
-FORCEINLINE bool EnginePreInit()
+FORCEINLINE int32 EngineInit()
 {
-    return GEngineLoop.PreInitialize();
-}
-
-FORCEINLINE bool EngineInit()
-{
-    return GEngineLoop.Initialize();
+    int32 ErrorCode = GEngineLoop.Init();
+    return ErrorCode;
 }
 
 FORCEINLINE void EngineTick()
@@ -48,64 +27,41 @@ FORCEINLINE void EngineTick()
     GEngineLoop.Tick();
 }
 
-FORCEINLINE bool EngineRelease()
+FORCEINLINE void EngineRelease()
 {
-    return GEngineLoop.Release();
+    GEngineLoop.Release();
 }
 
 int32 EngineMain(const CHAR* Args[], int32 NumArgs)
 {
-    struct FMainGuard
+    // Make sure that the engine is released if the main function exits early
+    struct FEngineReleaseGuard
     {
-        ~FMainGuard()
+        ~FEngineReleaseGuard()
         {
-            if (!EngineRelease())
-            {
-                FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Release Failed");
-            }
-
-            // Only report the leaking to the debugger output device
-            if (FPlatformMisc::IsDebuggerPresent())
-            {
-                GMalloc->DumpAllocations(GDebugOutput);
-            }
+            EngineRelease();
         }
-    };
+    } EngineReleaseGuard;
 
+    int32 ErrorCode = EnginePreInit(Args, NumArgs);
+    if (ErrorCode != 0)
     {
-        // Make sure that the engine is released if the main function exits early
-        FMainGuard MainGuard;
-
-        // Only report the leaking to the debugger output device
-        if (FPlatformMisc::IsDebuggerPresent())
-        {
-            GDebugOutput = new FDebuggerOutputDevice();
-            FOutputDeviceLogger::Get()->AddOutputDevice(GDebugOutput);
-        }
-
-        if (!FCommandLine::Initialize(Args, NumArgs))
-        {
-            LOG_WARNING("Invalid CommandLine");
-        }
-
-        if (!EnginePreInit())
-        {
-            FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
-            return -1;
-        }
-
-        if (!EngineInit())
-        {
-            FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
-            return -1;
-        }
-
-        // Run loop
-        while (!IsEngineExitRequested())
-        {
-            EngineTick();
-        }
+        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::PreInit Failed");
+        return ErrorCode;
     }
 
-    return 0;
+    ErrorCode = EngineInit();
+    if (ErrorCode != 0)
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "FEngineLoop::Init Failed");
+        return ErrorCode;
+    }
+
+    // Run loop
+    while (!IsEngineExitRequested())
+    {
+        EngineTick();
+    }
+
+    return ErrorCode;
 }
