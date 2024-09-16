@@ -1,7 +1,7 @@
 #include "SceneViewport.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Application.h"
-#include "Application/Viewport.h"
+#include "Application/Widgets/Viewport.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "RHI/RHI.h"
 

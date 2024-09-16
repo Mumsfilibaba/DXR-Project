@@ -46,7 +46,7 @@ public:
     void Initialize(const FInitializer& Initializer);
 
     // Enables us to find out that this is a window
-    virtual bool IsWindowWidget() const override final { return true; }
+    virtual bool IsWindow() const override final { return true; }
 
     // Set a delegate that is called when the window gets closed
     void SetOnWindowClosed(const FOnWindowClosed& InOnWindowClosed);
@@ -95,7 +95,7 @@ public:
 
     // Set actual window content
     void SetContent(const TSharedPtr<FWidget>& InContent);
-    
+
     // Minimize the window
     void Minimize();
 

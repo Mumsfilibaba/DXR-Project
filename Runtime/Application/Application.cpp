@@ -1,8 +1,8 @@
 #include "Application.h"
-#include "Widget.h"
 #include "InputHandler.h"
 #include "Input/Keys.h"
 #include "Input/InputMapper.h"
+#include "Widgets/Widget.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Modules/ModuleManager.h"
@@ -846,7 +846,7 @@ TSharedPtr<FWindow> FApplication::FindWindowWidget(const TSharedPtr<FWidget>& In
     TWeakPtr<FWidget> ParentWidget = InWidget;
     while (ParentWidget)
     {
-        if (ParentWidget->IsWindowWidget())
+        if (ParentWidget->IsWindow())
         {
             break;
         }

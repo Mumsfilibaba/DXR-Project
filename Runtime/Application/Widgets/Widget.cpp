@@ -3,14 +3,12 @@
 FWidget::FWidget()
     : TSharedFromThis<FWidget>()
     , ParentWidget()
+    , Visibility(EVisibility::Visible)
+    , Bounds()
 {
 }
 
 FWidget::~FWidget()
-{
-}
-
-void FWidget::Tick()
 {
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 #include "InputHandler.h"
-#include "Window.h"
+#include "Widgets/Window.h"
 #include "Core/Containers/Set.h"
 #include "Core/Containers/Array.h"
 #include "CoreApplication/Generic/ICursor.h"
