@@ -9,14 +9,12 @@ FMovingBallComponent::FMovingBallComponent(const FObjectInitializer& ObjectIniti
 {
 }
 
-void FMovingBallComponent::Tick(FTimespan DeltaTime)
+void FMovingBallComponent::Tick(float DeltaTime)
 {
-    const float fDelta = float(DeltaTime.AsSeconds());
-
     FActor* Actor = GetActorOwner();
     
     FActorTransform& ActorTransform = Actor->GetTransform();
-    ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * fDelta, 0.0f));
+    ActorTransform.SetTranslation(ActorTransform.GetTranslation() + FVector3(0.0f, CurrentSpeed * DeltaTime, 0.0f));
 
     if (ActorTransform.GetTranslation().y >= 60.0f)
     {

@@ -88,9 +88,9 @@ public:
 
     /**
      * @brief           - Tick component, should be called once every frame
-     * @param DeltaTime - Time since the last call to tick
+     * @param DeltaTime - Time since the last call to tick in seconds
      */
-    virtual void Tick(FTimespan DeltaTime);
+    virtual void Tick(float DeltaTime);
 
     /**
      * @brief             - Add a new component to the actor 
@@ -192,13 +192,19 @@ public:
      * @brief  - Check if Start should be called on the component
      * @return - Returns true if the component's Start-method should be called
      */
-    bool IsStartable() const { return bIsStartable; }
+    bool IsStartable() const
+    {
+        return bIsStartable;
+    }
 
     /**
      * @brief  - Check if Tick should be called on the component
      * @return - Returns true if the component's Tick-method should be called
      */
-    bool IsTickable() const { return bIsTickable; }
+    bool IsTickable() const
+    {
+        return bIsTickable;
+    }
 
     void SetStartable(bool bInIsStartable)
     {

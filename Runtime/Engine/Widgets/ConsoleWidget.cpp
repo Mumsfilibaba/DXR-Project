@@ -17,10 +17,10 @@ FConsoleWidget::FConsoleWidget()
         OutputDeviceManager->RegisterOutputDevice(this);
     }
 
-    if (FApplication::IsInitialized())
+    if (FWindowedApplication::IsInitialized())
     {
         InputHandler->HandleKeyEventDelegate.BindRaw(this, &FConsoleWidget::HandleKeyPressedEvent);
-        FApplication::Get().RegisterInputHandler(InputHandler);
+        FWindowedApplication::Get().RegisterInputHandler(InputHandler);
     }
 
     TextBuffer.Fill(0);
@@ -33,9 +33,9 @@ FConsoleWidget::~FConsoleWidget()
         OutputDeviceManager->UnregisterOutputDevice(this);
     }
 
-    if (FApplication::IsInitialized())
+    if (FWindowedApplication::IsInitialized())
     {
-        FApplication::Get().UnregisterInputHandler(InputHandler);
+        FWindowedApplication::Get().UnregisterInputHandler(InputHandler);
     }
 }
 

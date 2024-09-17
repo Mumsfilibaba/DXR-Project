@@ -240,7 +240,7 @@ bool FSceneRenderer::Initialize()
         Resources.CurrentHeight = Resources.DesiredHeight = Resources.MainViewport->GetHeight();
     }
 
-    if (!FApplication::IsInitialized())
+    if (!FWindowedApplication::IsInitialized())
     {
         DEBUG_BREAK();
         return false;
@@ -558,20 +558,18 @@ void FSceneRenderer::Tick(FScene* Scene)
     CameraBuffer.ViewProjectionInv           = Camera->GetViewProjectionInverseMatrix();
     CameraBuffer.ViewProjectionUnjittered    = CameraBuffer.ViewProjection;
     CameraBuffer.ViewProjectionInvUnjittered = CameraBuffer.ViewProjectionInv;
-
-    CameraBuffer.View           = Camera->GetViewMatrix();
-    CameraBuffer.ViewInv        = Camera->GetViewInverseMatrix();
-    CameraBuffer.Projection     = Camera->GetProjectionMatrix();
-    CameraBuffer.ProjectionInv  = Camera->GetProjectionInverseMatrix();
-
-    CameraBuffer.Position       = Camera->GetPosition();
-    CameraBuffer.Forward        = Camera->GetForward();
-    CameraBuffer.Right          = Camera->GetRight();
-    CameraBuffer.NearPlane      = Camera->GetNearPlane();
-    CameraBuffer.FarPlane       = Camera->GetFarPlane();
-    CameraBuffer.AspectRatio    = Camera->GetAspectRatio();
-    CameraBuffer.ViewportWidth  = static_cast<float>(Resources.BackBuffer->GetWidth());
-    CameraBuffer.ViewportHeight = static_cast<float>(Resources.BackBuffer->GetHeight());
+    CameraBuffer.View                        = Camera->GetViewMatrix();
+    CameraBuffer.ViewInv                     = Camera->GetViewInverseMatrix();
+    CameraBuffer.Projection                  = Camera->GetProjectionMatrix();
+    CameraBuffer.ProjectionInv               = Camera->GetProjectionInverseMatrix();
+    CameraBuffer.Position                    = Camera->GetPosition();
+    CameraBuffer.Forward                     = Camera->GetForward();
+    CameraBuffer.Right                       = Camera->GetRight();
+    CameraBuffer.NearPlane                   = Camera->GetNearPlane();
+    CameraBuffer.FarPlane                    = Camera->GetFarPlane();
+    CameraBuffer.AspectRatio                 = Camera->GetAspectRatio();
+    CameraBuffer.ViewportWidth               = static_cast<float>(Resources.BackBuffer->GetWidth());
+    CameraBuffer.ViewportHeight              = static_cast<float>(Resources.BackBuffer->GetHeight());
 
     if (CVarEnableTemporalAA.GetValue())
     {

@@ -10,7 +10,7 @@ public:
     FMovingBallComponent(const FObjectInitializer& ObjectInitializer);
     ~FMovingBallComponent() = default;
 
-    virtual void Tick(FTimespan DeltaTime) override;
+    virtual void Tick(float DeltaTime) override;
 
     float Speed;
     float CurrentSpeed;

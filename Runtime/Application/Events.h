@@ -8,11 +8,6 @@
 
 class FResponse
 {
-    FResponse(bool bInIsHandled)
-        : bIsHandled(bInIsHandled)
-    {
-    }
-
 public:
     static FResponse Handled()
     {
@@ -30,7 +25,12 @@ public:
     }
 
 private:
-    uint32 bIsHandled : 1;
+    FResponse(bool bInIsHandled)
+        : bIsHandled(bInIsHandled)
+    {
+    }
+
+    uint8 bIsHandled : 1;
 };
 
 class FInputEvent
@@ -71,7 +71,7 @@ public:
         , Key(EKeys::Unknown)
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , bIsVerticalScrollDelta(false)
+        , bIsScrollVertical(false)
         , bIsDown(false)
     {
     }
@@ -81,7 +81,7 @@ public:
         , Key(EKeys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , bIsVerticalScrollDelta(false)
+        , bIsScrollVertical(false)
         , bIsDown(false)
     {
     }
@@ -91,17 +91,17 @@ public:
         , Key(InKey)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , bIsVerticalScrollDelta(false)
+        , bIsScrollVertical(false)
         , bIsDown(bInIsDown)
     {
     }
 
-    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsVerticalScrollDelta)
+    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
         : FInputEvent(InModifierKeys)
         , Key(EKeys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(InScrollDelta)
-        , bIsVerticalScrollDelta(bInIsVerticalScrollDelta)
+        , bIsScrollVertical(bInIsScrollVertical)
         , bIsDown(false)
     {
     }
@@ -121,9 +121,9 @@ public:
         return ScrollDelta;
     }
 
-    bool IsVerticalScrollDelta() const
+    bool IsScrollVertical() const
     {
-        return bIsVerticalScrollDelta;
+        return bIsScrollVertical;
     }
 
     bool IsDown() const
@@ -135,8 +135,8 @@ private:
     FKey        Key;
     FIntVector2 CursorPosition;
     float       ScrollDelta;
-    bool        bIsVerticalScrollDelta : 1;
-    bool        bIsDown                : 1;
+    bool        bIsScrollVertical : 1;
+    bool        bIsDown           : 1;
 };
 
 class FKeyEvent : public FInputEvent

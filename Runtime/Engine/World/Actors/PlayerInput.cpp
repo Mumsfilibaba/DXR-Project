@@ -37,13 +37,13 @@ static float GetAnalogDeadzone(EAnalogSourceName::Type Source)
 FPlayerInput::FPlayerInput()
     : KeyStates()
 {
-    if (FApplication::IsInitialized())
+    if (FWindowedApplication::IsInitialized())
     {
-        CursorInterface = FApplication::Get().GetCursor();
+        CursorInterface = FWindowedApplication::Get().GetCursor();
     }
 }
 
-void FPlayerInput::Tick(FTimespan Delta)
+void FPlayerInput::Tick(float DeltaTime)
 {
     TArray<FInputActionDelegate> InputActionsToCall;
  
@@ -59,7 +59,7 @@ void FPlayerInput::Tick(FTimespan Delta)
 
         if (KeyState.bIsDown && KeyState.bPreviousState)
         {
-            KeyState.TimePressed += static_cast<float>(Delta.AsMilliseconds());
+            KeyState.TimePressed += DeltaTime;
         }
 
         // Check all the actions mappings if they should be invoked

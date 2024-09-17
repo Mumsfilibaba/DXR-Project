@@ -160,7 +160,7 @@ void FWindow::Restore()
 
 bool FWindow::IsActive() const
 {
-    return FApplication::Get().GetFocusWindow().Get() == this;
+    return FWindowedApplication::Get().GetFocusWindow().Get() == this;
 }
 
 FIntVector2 FWindow::GetPosition() const

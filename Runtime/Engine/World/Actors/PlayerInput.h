@@ -104,13 +104,17 @@ public:
     FPlayerInput();
     ~FPlayerInput() = default;
 
-    void Tick(FTimespan Delta);
+    void Tick(float DeltaTime);
+    
     void EnableInput(FInputComponent* InputComponent);
     void ClearInputStates();
+    
     int32 AddActionKeyMapping(const FActionKeyMapping& ActionKeyMapping);
     int32 AddAxisMapping(const FAxisMapping& AxisMapping);
     int32 AddAxisKeyMapping(const FAxisKeyMapping& AxisKeyMapping);
+
     void SetCursorPosition(const FIntVector2& Postion);
+    
     void OnAxisEvent(EAnalogSourceName::Type AxisSource, float AxisValue);
     void OnKeyEvent(FKey Key, bool bIsDown, bool bIsRepeat);
 
@@ -133,8 +137,8 @@ public:
     }
 
     FIntVector2 GetCursorPosition() const;
-    FKeyState GetKeyState(FKey Key) const;
-    FAxisState GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
+    FKeyState   GetKeyState(FKey Key) const;
+    FAxisState  GetAnalogState(EAnalogSourceName::Type AnalogSource) const;
 
     TSharedPtr<ICursor> GetCursorInterface() const 
     { 

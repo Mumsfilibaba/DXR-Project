@@ -39,7 +39,7 @@ public:
 
      /**
       * @brief           - Ticks all actors in the world, should be called once per frame
-      * @param DeltaTime - The time between this and the last tick in milliseconds
+      * @param DeltaTime - The time between this and the last tick in seconds
       */
     void Tick(float DeltaTime);
 

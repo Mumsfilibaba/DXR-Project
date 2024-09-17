@@ -389,11 +389,11 @@ void FImGuiPlugin::Tick(float Delta)
                 MousePos.y = MousePos.y - WindowShape.Position.y;
             }
 
-            FApplication::Get().SetCursorScreenPosition(FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y)));
+            FWindowedApplication::Get().SetCursorScreenPosition(FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y)));
         }
         else if (!UIState.WantSetMousePos && !bIsTrackingMouse)
         {
-            FIntVector2 CursorPos = FApplication::Get().GetCursorScreenPosition();
+            FIntVector2 CursorPos = FWindowedApplication::Get().GetCursorScreenPosition();
             if (!ImGuiExtensions::IsMultiViewportEnabled())
             {
                 CursorPos.x = CursorPos.x - WindowShape.Position.x;
@@ -423,7 +423,7 @@ void FImGuiPlugin::Tick(float Delta)
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if (ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor)
         {
-            FApplication::Get().SetCursor(ECursor::None);
+            FWindowedApplication::Get().SetCursor(ECursor::None);
         }
         else
         {
@@ -441,12 +441,12 @@ void FImGuiPlugin::Tick(float Delta)
             case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
 
-            FApplication::Get().SetCursor(Cursor);
+            FWindowedApplication::Get().SetCursor(Cursor);
         }
     }
 
     UIState.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
-    if (FApplication::Get().IsGamePadConnected())
+    if (FWindowedApplication::Get().IsGamePadConnected())
     {
         UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     }

@@ -100,7 +100,7 @@ bool FEngine::CreateEngineWindow()
     EngineWindow = CreateWidget<FWindow>(WindowInitializer);
 
     // Initialize and show the game-window
-    FApplication::Get().InitializeWindow(EngineWindow);
+    FWindowedApplication::Get().InitializeWindow(EngineWindow);
     return true;
 }
 
@@ -136,6 +136,10 @@ bool FEngine::CreateSceneViewport()
     if (!SceneViewport->InitializeRHI())
     {
         return false;
+    }
+    else
+    {
+        SceneViewport->SetWorld(World);
     }
 
     EngineViewportWidget->SetViewportInterface(SceneViewport);

@@ -15,7 +15,7 @@ public:
     virtual ~FComponent() = default;
 
     virtual void Start() { }
-    virtual void Tick(FTimespan DeltaTime) { }
+    virtual void Tick(float DeltaTime) { }
 
     FActor* GetActorOwner() const
     {

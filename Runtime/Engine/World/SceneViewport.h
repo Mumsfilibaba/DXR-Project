@@ -9,8 +9,6 @@ public:
     FSceneViewport(const TWeakPtr<FViewport>& InViewport);
     ~FSceneViewport();
 
-public:
-
     // RHI Resource
     bool InitializeRHI();
     void ReleaseRHI();
@@ -46,7 +44,6 @@ public:
     virtual TSharedPtr<const FViewport> GetViewportWidget() const override { return Viewport.IsValid() ? TSharedPtr<const FViewport>(Viewport) : nullptr; }
 
 public:
-
     void SetWorld(FWorld* InWorld) 
     { 
         World = InWorld; 
@@ -64,7 +61,7 @@ public:
 
 private:
     TSharedRef<FGenericWindow> Window;
-    TWeakPtr<FViewport>  Viewport;
+    TWeakPtr<FViewport>        Viewport;
     TSharedRef<FRHIViewport>   RHIViewport;
     FWorld*                    World;
 };
