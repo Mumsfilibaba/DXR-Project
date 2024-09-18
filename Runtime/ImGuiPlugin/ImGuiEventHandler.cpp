@@ -1,7 +1,6 @@
-#include "ImGuiEventHandler.h"
+#include "ImGuiPlugin.h"
 #include "ImGuiExtensions.h"
 #include "Application/Input/InputMapper.h"
-#include <imgui.h>
 
 #define IMGUI_BUTTON_UNKNOWN -1
 #define IMGUI_BUTTON_THUMB1 3
@@ -192,67 +191,96 @@ static FORCEINLINE ImGuiKey GetImGuiGamepadAnalogSource(EAnalogSourceName::Type 
     }
 }
 
-FResponse FImGuiEventHandler::OnGamepadButtonEvent(FKey Key, bool bIsDown)
+bool FImGuiEventHandler::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogEvent)
 {
-    const EGamepadButtonName::Type Button = FInputMapper::Get().GetGamepadButtonNameFromKey(Key);
-    const ImGuiKey GamepadButton = GetImGuiGamepadButton(Button);
+    const bool bIsNegative = AnalogEvent.GetAnalogValue() < 0.0f;
+    const ImGuiKey GamepadButton = GetImGuiGamepadAnalogSource(AnalogEvent.GetAnalogSource(), bIsNegative);
     if (GamepadButton != ImGuiKey_None)
     {
-        ImGuiIO& UIState = ImGui::GetIO();
-        UIState.AddKeyEvent(GamepadButton, bIsDown);
-    }
-
-    return FResponse::Unhandled();
-}
-
-FResponse FImGuiEventHandler::OnGamepadAnalogEvent(EAnalogSourceName::Type AnalogSource, float Analog)
-{
-    const bool bIsNegative = Analog < 0.0f;
-    const ImGuiKey GamepadButton = GetImGuiGamepadAnalogSource(AnalogSource, bIsNegative);
-    if (GamepadButton != ImGuiKey_None)
-    {
-        const float Normalized = FMath::Abs<float>(Analog);
+        const float Normalized = FMath::Abs<float>(AnalogEvent.GetAnalogSource());
         
         ImGuiIO& UIState = ImGui::GetIO();
         UIState.AddKeyAnalogEvent(GamepadButton, Normalized > 0.10f, Normalized);
     }
 
-    return FResponse::Unhandled();
+    return false;
 }
 
-FResponse FImGuiEventHandler::OnKeyEvent(FKey InKey, FModifierKeyState ModifierKeyState, bool bIsDown)
+bool FImGuiEventHandler::OnKeyDown(const FKeyEvent& KeyEvent)
 {
-    const EKeyboardKeyName::Type KeyName = FInputMapper::Get().GetKeyboardKeyNameFromKey(InKey);
+    return ProcessKeyEvent(KeyEvent);
+}
 
-    // Update the UI-State
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddKeyEvent(ImGuiMod_Ctrl , ModifierKeyState.bIsCtrlDown  == 1);
-    UIState.AddKeyEvent(ImGuiMod_Shift, ModifierKeyState.bIsShiftDown == 1);
-    UIState.AddKeyEvent(ImGuiMod_Alt  , ModifierKeyState.bIsAltDown   == 1);
-    UIState.AddKeyEvent(ImGuiMod_Super, ModifierKeyState.bIsSuperDown == 1);
+bool FImGuiEventHandler::OnKeyUp(const FKeyEvent& KeyEvent)
+{
+    return ProcessKeyEvent(KeyEvent);
+}
 
-    const ImGuiKey Key = GetImGuiKeyboardKey(KeyName);
-    if (Key != ImGuiKey_None)
+bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
+{
+    const FKey Key = KeyEvent.GetKey();
+    if (Key.IsGamepadButton())
     {
-        UIState.AddKeyEvent(Key, bIsDown);
+        const EGamepadButtonName::Type Button = FInputMapper::Get().GetGamepadButtonNameFromKey(Key);
+
+        const ImGuiKey GamepadButton = GetImGuiGamepadButton(Button);
+        if (GamepadButton != ImGuiKey_None)
+        {
+            ImGuiIO& UIState = ImGui::GetIO();
+            UIState.AddKeyEvent(GamepadButton, KeyEvent.IsDown());
+        }
+    }
+    else if (Key.IsKeyboardKey())
+    {
+        const EKeyboardKeyName::Type KeyName = FInputMapper::Get().GetKeyboardKeyNameFromKey(Key);
+
+        ImGuiIO& UIState = ImGui::GetIO();
+        UIState.AddKeyEvent(ImGuiMod_Ctrl, KeyEvent.GetModifierKeys().bIsCtrlDown == 1);
+        UIState.AddKeyEvent(ImGuiMod_Shift, KeyEvent.GetModifierKeys().bIsShiftDown == 1);
+        UIState.AddKeyEvent(ImGuiMod_Alt, KeyEvent.GetModifierKeys().bIsAltDown == 1);
+        UIState.AddKeyEvent(ImGuiMod_Super, KeyEvent.GetModifierKeys().bIsSuperDown == 1);
+
+        const ImGuiKey TranslatedKey = GetImGuiKeyboardKey(KeyName);
+        if (TranslatedKey != ImGuiKey_None)
+        {
+            UIState.AddKeyEvent(TranslatedKey, KeyEvent.IsDown());
+        }
+
+        if (UIState.WantCaptureKeyboard)
+        {
+            return true;
+        }
     }
 
-    if (UIState.WantCaptureKeyboard)
-    {
-        return FResponse::Handled();
-    }
-
-    return FResponse::Unhandled();
+    return false;
 }
 
-FResponse FImGuiEventHandler::OnKeyCharEvent(uint32 Character)
+bool FImGuiEventHandler::ProcessMouseButtonEvent(const FCursorEvent& CursorEvent)
+{
+    const EMouseButtonName::Type ButtonName = FInputMapper::Get().GetMouseButtonNameFromKey(CursorEvent.GetKey());
+    const uint32 ButtonIndex = GetImGuiMouseButton(ButtonName);
+
+    ImGuiIO& UIState = ImGui::GetIO();
+    UIState.AddMouseButtonEvent(ButtonIndex, CursorEvent.IsDown());
+
+    if (UIState.WantCaptureMouse)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 {
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddInputCharacter(Character);
-    return FResponse::Unhandled();
+    UIState.AddInputCharacter(KeyTypedEvent.GetAnsiChar());
+    return false;
 }
 
-FResponse FImGuiEventHandler::OnMouseMoveEvent(int32 x, int32 y)
+bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     //if (!ImGuiExtensions::IsMultiViewportEnabled())
     //{
@@ -272,41 +300,36 @@ FResponse FImGuiEventHandler::OnMouseMoveEvent(int32 x, int32 y)
     //    Response = FImGuiEventHandler::OnMouseMoveEvent(x, y);
     //}
 
+    const FIntVector2 CursorPos = CursorEvent.GetCursorPos();
+
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddMousePosEvent(static_cast<float>(x), static_cast<float>(y));
-    return FResponse::Unhandled();
+    UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
+    return false;
 }
 
-FResponse FImGuiEventHandler::OnMouseButtonEvent(FKey InKey, bool bIsDown)
+bool FImGuiEventHandler::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
-    const EMouseButtonName::Type ButtonName = FInputMapper::Get().GetMouseButtonNameFromKey(InKey);
-    const uint32 ButtonIndex = GetImGuiMouseButton(ButtonName);
-
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddMouseButtonEvent(ButtonIndex, bIsDown);
-
-    if (UIState.WantCaptureMouse)
-    {
-        return FResponse::Handled();
-    }
-
-    return FResponse::Unhandled();
+    return ProcessMouseButtonEvent(CursorEvent);
 }
 
-FResponse FImGuiEventHandler::OnMouseScrollEvent(float ScrollDelta, bool bVertical)
+bool FImGuiEventHandler::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
-    // Update the UI-State
+    return ProcessMouseButtonEvent(CursorEvent);
+}
+
+bool FImGuiEventHandler::OnMouseScrolled(const FCursorEvent& CursorEvent)
+{
     ImGuiIO& UIState = ImGui::GetIO();
-    if (bVertical)
+    if (CursorEvent.IsScrollVertical())
     {
-        UIState.AddMouseWheelEvent(0.0f, ScrollDelta);
+        UIState.AddMouseWheelEvent(0.0f, CursorEvent.GetScrollDelta());
     }
     else
     {
-        UIState.AddMouseWheelEvent(ScrollDelta, 0.0f);
+        UIState.AddMouseWheelEvent(CursorEvent.GetScrollDelta(), 0.0f);
     }
 
-    return FResponse::Unhandled();
+    return false;
 }
 
 FResponse FImGuiEventHandler::OnWindowResize(void* PlatformHandle)

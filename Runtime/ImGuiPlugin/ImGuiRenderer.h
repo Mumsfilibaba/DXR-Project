@@ -1,16 +1,41 @@
 #pragma once
-#include "ImGuiPlugin.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "RHI/RHIShader.h"
+#include <imgui.h>
 
 struct ImDrawData;
 class FRHICommandList;
+
+struct FImGuiViewport
+{
+    FImGuiViewport()
+        : VertexBuffer(nullptr)
+        , IndexBuffer(nullptr)
+        , VertexCount(0)
+        , IndexCount(0)
+        , Viewport(nullptr)
+        , bDidResize(false)
+        , Width(0)
+        , Height(0)
+    {
+    }
+
+    FRHIBufferRef   VertexBuffer;
+    FRHIBufferRef   IndexBuffer;
+    int32           VertexCount;
+    int32           IndexCount;
+    FRHIViewportRef Viewport;
+    bool            bDidResize;
+    uint16          Width;
+    uint16          Height;
+};
 
 class FImGuiRenderer
 {
 public:
     FImGuiRenderer();
     ~FImGuiRenderer();
-    
+
     bool Initialize();
     void Render(FRHICommandList& CmdList);
     void RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear);

@@ -227,7 +227,7 @@ private:
     TArray<TSharedPtr<FWindow>>       Windows;
     FPath                             FocusPath;
     FPath                             TrackedWidgets;
-    TArray<TSharedPtr<FInputHandler>> InputPreProcessors;
+    TArray<TSharedPtr<FInputHandler>> InputHandlers;
 
     static TSharedPtr<FWindowedApplication> ApplicationInstance;
     static TSharedPtr<FGenericApplication>  PlatformApplication;

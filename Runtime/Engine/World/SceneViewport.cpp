@@ -110,6 +110,11 @@ FResponse FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
     return FResponse::Unhandled();
 }
 
+FResponse FSceneViewport::OnKeyChar(const FKeyEvent&)
+{
+    return FResponse::Unhandled();
+}
+
 FResponse FSceneViewport::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
@@ -170,6 +175,16 @@ FResponse FSceneViewport::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
     return FResponse::Unhandled();
 }
 
+FResponse FSceneViewport::OnMouseLeft(const FCursorEvent& CursorEvent)
+{
+    return FResponse::Unhandled();
+}
+
+FResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
+{
+    return FResponse::Unhandled();
+}
+
 FResponse FSceneViewport::OnFocusLost()
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
@@ -178,5 +193,10 @@ FResponse FSceneViewport::OnFocusLost()
         PlayerController->GetPlayerInput()->ClearInputStates();
     }
 
+    return FResponse::Unhandled();
+}
+
+FResponse FSceneViewport::OnFocusGained() 
+{
     return FResponse::Unhandled();
 }

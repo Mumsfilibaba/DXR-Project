@@ -273,6 +273,8 @@ bool FEngine::Init()
     // Create Widgets
     if (IImguiPlugin::IsEnabled())
     {
+        IImguiPlugin::Get().SetMainViewport(EngineViewportWidget);
+
         ProfilerWidget = MakeShared<FFrameProfilerWidget>();
         IImguiPlugin::Get().AddWidget(ProfilerWidget);
 
@@ -310,6 +312,11 @@ void FEngine::Tick(float DeltaTime)
     {
         World->Tick(DeltaTime);
     }
+
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().Tick(DeltaTime);
+    }
 }
 
 void FEngine::Release()
@@ -322,6 +329,8 @@ void FEngine::Release()
 
         IImguiPlugin::Get().RemoveWidget(ConsoleWidget);
         ConsoleWidget.Reset();
+
+        IImguiPlugin::Get().SetMainViewport(nullptr);
     }
 
     // Destroy the World

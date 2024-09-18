@@ -232,12 +232,10 @@ bool FSceneRenderer::Initialize()
     }
     else
     {
-        Resources.MainViewport = SceneViewport->GetRHIViewport();
-
-        // Cache the BackBuffer
+        Resources.MainViewport     = SceneViewport->GetViewportRHI();
         Resources.BackBufferFormat = Resources.MainViewport->GetColorFormat();
-        Resources.CurrentWidth  = Resources.DesiredWidth  = Resources.MainViewport->GetWidth();
-        Resources.CurrentHeight = Resources.DesiredHeight = Resources.MainViewport->GetHeight();
+        Resources.CurrentWidth     = Resources.DesiredWidth  = Resources.MainViewport->GetWidth();
+        Resources.CurrentHeight    = Resources.DesiredHeight = Resources.MainViewport->GetHeight();
     }
 
     if (!FWindowedApplication::IsInitialized())

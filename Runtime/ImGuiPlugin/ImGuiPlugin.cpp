@@ -5,6 +5,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Application.h"
+#include "Application/Widgets/Viewport.h"
 #include <imgui_internal.h>
 
 IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
@@ -42,7 +43,6 @@ FImGuiPlugin::FImGuiPlugin()
     , PluginImGuiIO(nullptr)
     , PluginImGuiContext(nullptr)
     , Widgets()
-    , Renderer(nullptr)
 {
 }
 
@@ -76,6 +76,7 @@ bool FImGuiPlugin::Load()
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasMouseCursors;         // We can honor GetMouseCursor() values
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasSetMousePos;          // We can honor io.WantSetMousePos requests
     PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_HasMouseHoveredViewport; // We can call io.AddMouseViewportEvent() with correct data
+    PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
 
     if (CVarImGuiEnableMultiViewports.GetValue())
     {
@@ -84,14 +85,10 @@ bool FImGuiPlugin::Load()
         PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasViewports;
     }
 
-    // Renderer Flags
-    PluginImGuiIO->BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
-
     // Register platform interface (will be coupled with a renderer interface)
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
     if (CVarImGuiEnableMultiViewports.GetValue())
     {
-        // Make sure that the Viewport is zeroed
         if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
         {
             Viewport->PlatformHandle        = nullptr;
@@ -308,11 +305,28 @@ bool FImGuiPlugin::Load()
     Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 #endif
 
+    if (FWindowedApplication::IsInitialized())
+    {
+        EventHandler = MakeShared<FImGuiEventHandler>();
+        FWindowedApplication::Get().RegisterInputHandler(EventHandler);
+    }
+    else
+    {
+        LOG_ERROR("Appliation is not initialized, delay plugin loading");
+        return false;
+    }
+
     return true;
 }
 
 bool FImGuiPlugin::Unload()
 {
+    if (FWindowedApplication::IsInitialized())
+    {
+        FWindowedApplication::Get().UnregisterInputHandler(EventHandler);
+        EventHandler = nullptr;
+    }
+
     if (CVarImGuiEnableMultiViewports.GetValue())
     {
         ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
@@ -340,9 +354,9 @@ bool FImGuiPlugin::Unload()
     return true;
 }
 
-bool FImGuiPlugin::InitializeRenderer()
+bool FImGuiPlugin::InitRenderer()
 {
-    Renderer = MakeUnique<FImGuiRenderer>();
+    Renderer = MakeShared<FImGuiRenderer>();
     if (!Renderer->Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ViewportRenderer ");
@@ -359,22 +373,24 @@ void FImGuiPlugin::ReleaseRenderer()
 
 void FImGuiPlugin::Tick(float Delta)
 {
-    TSharedPtr<FWindow> MainWindow; //GEngine->MainWindow;
+    TSharedPtr<FWindow> MainWindow = FWindowedApplication::Get().FindWindowWidget(MainViewport);
+    if (!MainWindow)
+    {
+        return;
+    }
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.DeltaTime               = Delta / 1000.0f;
     UIState.DisplaySize             = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
     UIState.FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDpiScale() : 1.0f;
     UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
-
-    // Retrieve the current active window
-    TSharedPtr<FWindow> ForegroundWindow;//  = FApplication::Get().GetForegroundWindow();
     
     // Update Mouse
+    TSharedPtr<FWindow> ForegroundWindow = FWindowedApplication::Get().GetFocusWindow();
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow->GetPlatformWindow().Get()) : nullptr;
 
     const bool bIsTrackingMouse = false;
-    const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || MainWindow->IsChildWindow(ForegroundWindow) || ForegroundViewport);
+    const bool bIsAppFocused    = ForegroundWindow && (ForegroundWindow == MainWindow || MainWindow->IsChildWindow(ForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
     {
         FWindowShape WindowShape;
@@ -451,7 +467,7 @@ void FImGuiPlugin::Tick(float Delta)
         UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     }
 
-    // Update all the UI windows
+    // Draw all ImGui widgets
     ImGui::NewFrame();
 
     Widgets.Foreach([](TSharedPtr<IImGuiWidget>& Widget)
@@ -480,29 +496,33 @@ void FImGuiPlugin::RemoveWidget(const TSharedPtr<IImGuiWidget>& InWidget)
     Widgets.Remove(InWidget);
 }
 
-void FImGuiPlugin::SetMainViewport(FViewport* InViewport)
+void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewport>& InViewport)
 {
+    if (MainViewport == InViewport)
+    {
+        return;
+    }
+
     if (ImGuiViewport* Viewport = ImGui::GetMainViewport())
     {
-        if (InViewport)
+        TSharedPtr<IViewport> ViewportInterface = InViewport ? InViewport->GetViewportInterface() : nullptr;
+        if (ViewportInterface)
         {
-            // Viewport is now created, make sure we get the initial information of the window
             Viewport->PlatformWindowCreated = true;
             Viewport->PlatformRequestMove   = true;
             Viewport->PlatformRequestResize = true;
 
-            // Set native handles
-            //TSharedRef<FGenericWindow> MainWindow = InViewport->GetWindow();
-            //Viewport->PlatformUserData = MainWindow.Get();
-            //Viewport->PlatformHandle   = Viewport->PlatformHandleRaw = MainWindow->GetPlatformHandle();
+            TSharedPtr<FWindow> MainWindow = FWindowedApplication::Get().FindWindowWidget(InViewport);
+            Viewport->PlatformUserData  = MainWindow.Get();
+            Viewport->PlatformHandle    = MainWindow->GetPlatformWindow().Get();
+            Viewport->PlatformHandleRaw = MainWindow->GetPlatformWindow()->GetPlatformHandle();
 
-            //FImGuiViewport* ViewportData = new FImGuiViewport();
-            //ViewportData->Viewport      = InViewport->GetRHIViewport();
-            //Viewport->RendererUserData  = ViewportData;
+            FImGuiViewport* ViewportData = new FImGuiViewport();
+            ViewportData->Viewport      = ViewportInterface->GetViewportRHI();
+            Viewport->RendererUserData  = ViewportData;
         }
         else
         {
-            // Delete any existing viewport
             if (Viewport->RendererUserData)
             {
                 FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
@@ -510,14 +530,16 @@ void FImGuiPlugin::SetMainViewport(FViewport* InViewport)
                 delete ViewportData;
             }
 
-            // Release platform information
-            Viewport->PlatformHandle        = Viewport->PlatformHandleRaw = nullptr;
+            Viewport->PlatformHandle        = nullptr;
+            Viewport->PlatformHandleRaw     = nullptr;
             Viewport->PlatformUserData      = nullptr;
             Viewport->PlatformWindowCreated = false;
             Viewport->PlatformRequestMove   = false;
             Viewport->PlatformRequestResize = false;
         }
     }
+
+    MainViewport = InViewport;
 }
 
 

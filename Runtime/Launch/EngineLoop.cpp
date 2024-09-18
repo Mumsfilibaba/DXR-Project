@@ -253,7 +253,7 @@ int32 FEngineLoop::Init()
     // Prepare ImGui for Rendering
     if (IImguiPlugin::IsEnabled())
     {
-        if (!IImguiPlugin::Get().InitializeRenderer())
+        if (!IImguiPlugin::Get().InitRenderer())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI resources for ImGui");
             return -1;
@@ -275,7 +275,7 @@ void FEngineLoop::Tick()
     // Tick the timer
     FrameTimer.Tick();
 
-    const float DeltaTime = FrameTimer.GetDeltaTime().AsSeconds();
+    const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
     FWindowedApplication::Get().Tick(DeltaTime);
 
     GEngine->Tick(DeltaTime);

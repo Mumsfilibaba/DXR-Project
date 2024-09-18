@@ -1,8 +1,10 @@
 #pragma once
 #include "Application/Events.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Containers/SharedRef.h"
 
 class FViewport;
+class FRHIViewport;
 
 struct IViewport
 {
@@ -22,8 +24,11 @@ struct IViewport
 	virtual FResponse OnFocusLost() = 0;
     virtual FResponse OnFocusGained() = 0;
 
+    virtual TSharedRef<FRHIViewport> GetViewportRHI() const = 0;
+
     virtual void SetViewportWidget(const TSharedPtr<FViewport>& InViewport) = 0;
 
     virtual TSharedPtr<FViewport>       GetViewportWidget()       = 0;
     virtual TSharedPtr<const FViewport> GetViewportWidget() const = 0;
+    
 };
