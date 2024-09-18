@@ -43,7 +43,7 @@ public:
     virtual void ReleaseRenderer() override final;
 
     virtual void Tick(float Delta) override final;
-    virtual void TickRenderer(FRHICommandList& CommandList) override final;
+    virtual void Draw(FRHICommandList& CommandList) override final;
 
     virtual void AddWidget(const TSharedPtr<IImGuiWidget>& InWidget) override final;
     virtual void RemoveWidget(const TSharedPtr<IImGuiWidget>& InWidget) override final;
@@ -61,3 +61,5 @@ private:
     TSharedPtr<FViewport>            MainViewport;
     TArray<TSharedPtr<IImGuiWidget>> Widgets;
 };
+
+extern FImGuiPlugin* GImGuiPlugin;

@@ -1,111 +1,11 @@
 #pragma once
-#include "InputHandler.h"
-#include "Widgets/Window.h"
 #include "Core/Containers/Set.h"
-#include "Core/Containers/Array.h"
 #include "CoreApplication/Generic/ICursor.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
-
-class FPath
-{
-public:
-    FPath()
-        : Filter(EVisibility::Visible)
-        , Widgets()
-    {
-    }
-
-    FPath(EVisibility InFilter)
-        : Filter(InFilter)
-        , Widgets()
-    {
-    }
-
-    void Add(EVisibility InVisibility, const TSharedPtr<FWidget>& InWidget)
-    {
-        CHECK(InWidget != nullptr);
-
-        if (AcceptVisbility(InVisibility))
-        {
-            Widgets.Add(InWidget);
-        }
-    }
-
-    void Insert(EVisibility InVisibility, const TSharedPtr<FWidget>& InWidget, int32 Position)
-    {
-        CHECK(InWidget != nullptr);
-
-        if (AcceptVisbility(InVisibility))
-        {
-            Widgets.Insert(Position, InWidget);
-        }
-    }
-
-    bool AcceptVisbility(EVisibility Visibility) const
-    {
-        return (Filter & Visibility) != EVisibility::None;
-    }
-
-    FORCEINLINE bool IsEmpty() const
-    {
-        return Widgets.IsEmpty();
-    }
-
-    FORCEINLINE bool Contains(const TSharedPtr<FWidget>& InWidget) const
-    {
-        return Widgets.Contains(InWidget);
-    }
-
-    FORCEINLINE void Remove(const TSharedPtr<FWidget>& InWidget)
-    {
-        Widgets.Remove(InWidget);
-    }
-
-    FORCEINLINE void RemoveAt(int32 Position)
-    {
-        Widgets.RemoveAt(Position);
-    }
-
-    FORCEINLINE int32 LastIndex() const
-    {
-        return Widgets.LastElementIndex();
-    }
-
-    FORCEINLINE int32 Size() const
-    {
-        return Widgets.Size();
-    }
-
-    EVisibility GetFilter() const
-    {
-        return Filter;
-    }
-
-    TArray<TSharedPtr<FWidget>>& GetWidgets()
-    {
-        return Widgets;
-    }
-
-    const TArray<TSharedPtr<FWidget>>& GetWidgets() const
-    {
-        return Widgets;
-    }
-
-    FORCEINLINE TSharedPtr<FWidget>& operator[](int32 Index)
-    {
-        return Widgets[Index];
-    }
-
-    FORCEINLINE const TSharedPtr<FWidget>& operator[](int32 Index) const
-    {
-        return Widgets[Index];
-    }
-
-private:
-    EVisibility                 Filter;
-    TArray<TSharedPtr<FWidget>> Widgets;
-};
+#include "Application/InputHandler.h"
+#include "Application/WidgetPath.h"
+#include "Application/Widgets/Window.h"
 
 class APPLICATION_API FWindowedApplication : public FGenericApplicationMessageHandler, public TSharedFromThis<FWindowedApplication>
 {
@@ -216,17 +116,16 @@ public:
     TSharedPtr<FWindow> FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const;
 
     // Returns a path of widgets that is currently under the cursor
-    void FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FPath& OutCursorPath);
+    void FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath);
 
 private:
-
     TSet<EKeyboardKeyName::Type>      PressedKeys;
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
     FDisplayInfo                      DisplayInfo;
     bool                              bIsTrackingMouse;
     TArray<TSharedPtr<FWindow>>       Windows;
-    FPath                             FocusPath;
-    FPath                             TrackedWidgets;
+    FWidgetPath                       FocusPath;
+    FWidgetPath                       TrackedWidgets;
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
 
     static TSharedPtr<FWindowedApplication> ApplicationInstance;

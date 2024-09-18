@@ -94,6 +94,7 @@ public:
         , bIsScrollVertical(false)
         , bIsDown(bInIsDown)
     {
+        CHECK(InKey.IsMouseButton());
     }
 
     FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)

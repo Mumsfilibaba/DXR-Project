@@ -285,47 +285,44 @@ bool FImGuiRenderer::Initialize()
 
 void FImGuiRenderer::Render(FRHICommandList& CmdList)
 {
-    ImGuiViewport* MainViewport = ImGui::GetMainViewport();
-    if (!MainViewport)
+    if (ImGuiViewport* MainViewport = ImGui::GetMainViewport())
     {
-        return;
-    }
+        FImGuiViewport* MainViewportData = reinterpret_cast<FImGuiViewport*>(MainViewport->RendererUserData);
+        CHECK(MainViewportData != nullptr);
 
-    FImGuiViewport* MainViewportData = reinterpret_cast<FImGuiViewport*>(MainViewport->RendererUserData);
-    CHECK(MainViewportData != nullptr);
+        ImGui::Render();
 
-    ImGui::Render();
+        FRHIViewportRef RHIViewport = MainViewportData->Viewport;
+        CHECK(RHIViewport != nullptr);
 
-    FRHIViewportRef RHIViewport = MainViewportData->Viewport;
-    CHECK(RHIViewport != nullptr);
+        ImDrawData* DrawData = ImGui::GetDrawData();
+        PrepareDrawData(CmdList, DrawData);
 
-    ImDrawData* DrawData = ImGui::GetDrawData();
-    PrepareDrawData(CmdList, DrawData);
+        // Render to the main Viewport
+        FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHIViewport->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
+        CmdList.BeginRenderPass(RenderPassDesc);
+        RenderDrawData(CmdList, DrawData);
+        CmdList.EndRenderPass();
 
-    // Render to the main Viewport
-    FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHIViewport->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
-    CmdList.BeginRenderPass(RenderPassDesc);
-    RenderDrawData(CmdList, DrawData);
-    CmdList.EndRenderPass();
-
-    ImGuiIO& IOState = ImGui::GetIO();
-    if (IOState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CmdList));
-    }
-
-    for (FImGuiTexture* Image : RenderedImages)
-    {
-        CHECK(Image != nullptr);
-
-        if (Image->AfterState != EResourceAccess::PixelShaderResource)
+        ImGuiIO& IOState = ImGui::GetIO();
+        if (IOState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
-            CmdList.TransitionTexture(Image->Texture.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CmdList));
         }
-    }
 
-    RenderedImages.Clear();
+        for (FImGuiTexture* Image : RenderedImages)
+        {
+            CHECK(Image != nullptr);
+
+            if (Image->AfterState != EResourceAccess::PixelShaderResource)
+            {
+                CmdList.TransitionTexture(Image->Texture.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
+            }
+        }
+
+        RenderedImages.Clear();
+    }
 }
 
 void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
@@ -540,23 +537,21 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* Draw
 {
     // Setup Orthographic Projection matrix into our Constant-Buffer
     // The visible ImGui space lies from DrawData->DisplayPos (top left) to DrawData->DisplayPos+DrawData->DisplaySize (bottom right).
-    FVertexConstantBuffer VertexConstantBuffer;
+    float L = DrawData->DisplayPos.x;
+    float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
+    float T = DrawData->DisplayPos.y;
+    float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
+
+    float Matrix[4][4] =
     {
-        float L = DrawData->DisplayPos.x;
-        float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
-        float T = DrawData->DisplayPos.y;
-        float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
+        { 2.0f / (R - L)   , 0.0f             , 0.0f, 0.0f },
+        { 0.0f             , 2.0f / (T - B)   , 0.0f, 0.0f },
+        { 0.0f             , 0.0f             , 0.5f, 0.0f },
+        { (R + L) / (L - R), (T + B) / (B - T), 0.5f, 1.0f },
+    };
 
-        float Matrix[4][4] =
-        {
-            { 2.0f / (R - L)   , 0.0f             , 0.0f, 0.0f },
-            { 0.0f             , 2.0f / (T - B)   , 0.0f, 0.0f },
-            { 0.0f             , 0.0f             , 0.5f, 0.0f },
-            { (R + L) / (L - R), (T + B) / (B - T), 0.5f, 1.0f },
-        };
-
-        FMemory::Memcpy(&VertexConstantBuffer.ViewProjectionMatrix, Matrix, sizeof(Matrix));
-    }
+    FVertexConstantBuffer VertexConstantBuffer;
+    FMemory::Memcpy(&VertexConstantBuffer.ViewProjectionMatrix, Matrix, sizeof(Matrix));
 
     FViewportRegion ViewportRegion(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 0.0f, 0.0f, 1.0f);
     CmdList.SetViewport(ViewportRegion);
@@ -591,7 +586,7 @@ void ImGuiCreateWindow(ImGuiViewport* InViewport)
 
 void ImGuiDestroyWindow(ImGuiViewport* Viewport)
 {
-    // The main viewport (owned by the application) will always have RendererUserData == NULL since we didn't create the data for it.
+    // The main viewport (owned by the application) will always have RendererUserData == nullptr, since we didn't create the data for it.
     if (FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData))
     {
         GRHICommandExecutor.WaitForGPU();

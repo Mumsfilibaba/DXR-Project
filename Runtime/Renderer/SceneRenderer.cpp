@@ -925,7 +925,7 @@ void FSceneRenderer::Tick(FScene* Scene)
 
         if (IImguiPlugin::IsEnabled())
         {
-            IImguiPlugin::Get().TickRenderer(CommandList);
+            IImguiPlugin::Get().Draw(CommandList);
         }
     }
 

@@ -22,21 +22,23 @@ static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
 
 // ImGui Forward declarations
 static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags Flags);
-static void PlatformCreateWindow(ImGuiViewport* Viewport);
-static void PlatformDestroyWindow(ImGuiViewport* Viewport);
-static void PlatformShowWindow(ImGuiViewport* Viewport);
-static void PlatformUpdateWindow(ImGuiViewport* Viewport);
-static ImVec2 PlatformGetWindowPos(ImGuiViewport* Viewport);
-static void PlatformSetWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
-static ImVec2 PlatformGetWindowSize(ImGuiViewport* Viewport);
-static void PlatformSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
-static void PlatformSetWindowFocus(ImGuiViewport* Viewport);
-static bool PlatformGetWindowFocus(ImGuiViewport* Viewport);
-static bool PlatformGetWindowMinimized(ImGuiViewport* Viewport);
-static void PlatformSetWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
-static void PlatformSetWindowAlpha(ImGuiViewport* Viewport, float Alpha);
-static float PlatformGetWindowDpiScale(ImGuiViewport* Viewport);
-static void PlatformOnChangedViewport(ImGuiViewport*);
+static void              PlatformCreateWindow(ImGuiViewport* Viewport);
+static void              PlatformDestroyWindow(ImGuiViewport* Viewport);
+static void              PlatformShowWindow(ImGuiViewport* Viewport);
+static void              PlatformUpdateWindow(ImGuiViewport* Viewport);
+static ImVec2            PlatformGetWindowPos(ImGuiViewport* Viewport);
+static void              PlatformSetWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
+static ImVec2            PlatformGetWindowSize(ImGuiViewport* Viewport);
+static void              PlatformSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+static void              PlatformSetWindowFocus(ImGuiViewport* Viewport);
+static bool              PlatformGetWindowFocus(ImGuiViewport* Viewport);
+static bool              PlatformGetWindowMinimized(ImGuiViewport* Viewport);
+static void              PlatformSetWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
+static void              PlatformSetWindowAlpha(ImGuiViewport* Viewport, float Alpha);
+static float             PlatformGetWindowDpiScale(ImGuiViewport* Viewport);
+static void              PlatformOnChangedViewport(ImGuiViewport*);
+
+FImGuiPlugin* GImGuiPlugin = nullptr;
 
 FImGuiPlugin::FImGuiPlugin()
     : IImguiPlugin()
@@ -316,6 +318,7 @@ bool FImGuiPlugin::Load()
         return false;
     }
 
+    GImGuiPlugin = this;
     return true;
 }
 
@@ -324,7 +327,7 @@ bool FImGuiPlugin::Unload()
     if (FWindowedApplication::IsInitialized())
     {
         FWindowedApplication::Get().UnregisterInputHandler(EventHandler);
-        EventHandler = nullptr;
+        EventHandler.Reset();
     }
 
     if (CVarImGuiEnableMultiViewports.GetValue())
@@ -351,6 +354,8 @@ bool FImGuiPlugin::Unload()
     UIState.BackendPlatformUserData = nullptr;
 
     ImGui::DestroyContext(PluginImGuiContext);
+
+    GImGuiPlugin = nullptr;
     return true;
 }
 
@@ -379,6 +384,10 @@ void FImGuiPlugin::Tick(float Delta)
         return;
     }
 
+    // Retrieve all windows necessary
+    TSharedRef<FGenericWindow> PlatformWindow   = MainWindow->GetPlatformWindow();
+    TSharedRef<FGenericWindow> ForegroundWindow = FWindowedApplication::Get().GetPlatformApplication()->GetForegroundWindow();
+
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.DeltaTime               = Delta / 1000.0f;
     UIState.DisplaySize             = ImVec2(static_cast<float>(MainWindow->GetWidth()), static_cast<float>(MainWindow->GetHeight()));
@@ -386,15 +395,14 @@ void FImGuiPlugin::Tick(float Delta)
     UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
     
     // Update Mouse
-    TSharedPtr<FWindow> ForegroundWindow = FWindowedApplication::Get().GetFocusWindow();
-    ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow->GetPlatformWindow().Get()) : nullptr;
+    ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
 
     const bool bIsTrackingMouse = false;
-    const bool bIsAppFocused    = ForegroundWindow && (ForegroundWindow == MainWindow || MainWindow->IsChildWindow(ForegroundWindow) || ForegroundViewport);
+    const bool bIsAppFocused    = ForegroundWindow && (ForegroundWindow == PlatformWindow || PlatformWindow->IsChildWindow(ForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
     {
         FWindowShape WindowShape;
-        ForegroundWindow->GetPlatformWindow()->GetWindowShape(WindowShape);
+        ForegroundWindow->GetWindowShape(WindowShape);
 
         if (UIState.WantSetMousePos)
         {
@@ -407,7 +415,7 @@ void FImGuiPlugin::Tick(float Delta)
 
             FWindowedApplication::Get().SetCursorScreenPosition(FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y)));
         }
-        else if (!UIState.WantSetMousePos && !bIsTrackingMouse)
+        else /* if (!UIState.WantSetMousePos && !bIsTrackingMouse) */
         {
             FIntVector2 CursorPos = FWindowedApplication::Get().GetCursorScreenPosition();
             if (!ImGuiExtensions::IsMultiViewportEnabled())
@@ -421,10 +429,9 @@ void FImGuiPlugin::Tick(float Delta)
     }
 
     ImGuiID MouseViewportID = 0;
-    TSharedPtr<FWindow> WindowUnderCursor; //  = FApplication::Get().GetWindowUnderCursor();
-    if (WindowUnderCursor)
+    if (TSharedRef<FGenericWindow> WindowUnderCursor = FWindowedApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
     {
-        if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor->GetPlatformWindow().Get()))
+        if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor.Get()))
         {
             MouseViewportID = Viewport->ID;
         }
@@ -478,7 +485,7 @@ void FImGuiPlugin::Tick(float Delta)
     ImGui::EndFrame();
 }
 
-void FImGuiPlugin::TickRenderer(FRHICommandList& CommandList)
+void FImGuiPlugin::Draw(FRHICommandList& CommandList)
 {
     if (Renderer)
     {

@@ -1,10 +1,11 @@
 #include "ImGuiPlugin.h"
 #include "ImGuiExtensions.h"
+#include "Application/Application.h"
 #include "Application/Input/InputMapper.h"
 
-#define IMGUI_BUTTON_UNKNOWN -1
-#define IMGUI_BUTTON_THUMB1 3
-#define IMGUI_BUTTON_THUMB2 4
+#define IMGUI_BUTTON_UNKNOWN (-1)
+#define IMGUI_BUTTON_THUMB1 (3)
+#define IMGUI_BUTTON_THUMB2 (4)
 
 static ImGuiMouseButton GImGuiMouseButtons[EMouseButtonName::Count] = 
 {
@@ -222,6 +223,7 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
     if (Key.IsGamepadButton())
     {
         const EGamepadButtonName::Type Button = FInputMapper::Get().GetGamepadButtonNameFromKey(Key);
+        CHECK(Button != EGamepadButtonName::Unknown);
 
         const ImGuiKey GamepadButton = GetImGuiGamepadButton(Button);
         if (GamepadButton != ImGuiKey_None)
@@ -233,6 +235,7 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
     else if (Key.IsKeyboardKey())
     {
         const EKeyboardKeyName::Type KeyName = FInputMapper::Get().GetKeyboardKeyNameFromKey(Key);
+        CHECK(KeyName != EKeyboardKeyName::Unknown);
 
         ImGuiIO& UIState = ImGui::GetIO();
         UIState.AddKeyEvent(ImGuiMod_Ctrl, KeyEvent.GetModifierKeys().bIsCtrlDown == 1);
@@ -258,7 +261,10 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
 bool FImGuiEventHandler::ProcessMouseButtonEvent(const FCursorEvent& CursorEvent)
 {
     const EMouseButtonName::Type ButtonName = FInputMapper::Get().GetMouseButtonNameFromKey(CursorEvent.GetKey());
-    const uint32 ButtonIndex = GetImGuiMouseButton(ButtonName);
+    CHECK(ButtonName != EMouseButtonName::Unknown);
+
+    const ImGuiMouseButton ButtonIndex = GetImGuiMouseButton(ButtonName);
+    CHECK(ButtonIndex >= 0);
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddMouseButtonEvent(ButtonIndex, CursorEvent.IsDown());
@@ -282,25 +288,23 @@ bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 
 bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
 {
-    //if (!ImGuiExtensions::IsMultiViewportEnabled())
-    //{
-    //    if (TSharedRef<FGenericWindow> Window = GetWindowUnderCursor())
-    //    {
-    //        FWindowShape WindowShape;
-    //        Window->GetWindowShape(WindowShape);
+    FIntVector2 CursorPos = CursorEvent.GetCursorPos();
+    if (!ImGuiExtensions::IsMultiViewportEnabled())
+    {
+        if (TSharedRef<FGenericWindow> Window = FWindowedApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
+        {
+            FWindowShape WindowShape;
+            Window->GetWindowShape(WindowShape);
 
-    //        x = x - WindowShape.Position.x;
-    //        y = y - WindowShape.Position.y;
-
-    //        Response = FImGuiEventHandler::OnMouseMoveEvent(x, y);
-    //    }
-    //}
-    //else
-    //{
-    //    Response = FImGuiEventHandler::OnMouseMoveEvent(x, y);
-    //}
-
-    const FIntVector2 CursorPos = CursorEvent.GetCursorPos();
+            CursorPos.x = CursorPos.x - WindowShape.Position.x;
+            CursorPos.y = CursorPos.y - WindowShape.Position.y;
+        }
+        else
+        {
+            CursorPos.x = -TNumericLimits<float>::Max();
+            CursorPos.y = -TNumericLimits<float>::Max();
+        }
+    }
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));

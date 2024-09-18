@@ -17,7 +17,7 @@ struct FEventDispatcher
     class FLeafLastPolicy
     {
     public:
-        FLeafLastPolicy(FPath& InWidgets)
+        FLeafLastPolicy(FWidgetPath& InWidgets)
             : Widgets(InWidgets)
             , Index(static_cast<int32>(InWidgets.LastIndex()))
         {
@@ -39,14 +39,14 @@ struct FEventDispatcher
         }
 
     private:
-        FPath& Widgets;
-        int32  Index;
+        FWidgetPath& Widgets;
+        int32        Index;
     };
 
     class FLeafFirstPolicy
     {
     public:
-        FLeafFirstPolicy(FPath& InWidgets)
+        FLeafFirstPolicy(FWidgetPath& InWidgets)
             : Widgets(InWidgets)
             , Index(0)
         {
@@ -68,14 +68,14 @@ struct FEventDispatcher
         }
 
     private:
-        FPath& Widgets;
-        int32  Index;
+        FWidgetPath& Widgets;
+        int32        Index;
     };
 
     class FDirectPolicy
     {
     public:
-        FDirectPolicy(FPath& InWidgets)
+        FDirectPolicy(FWidgetPath& InWidgets)
             : Widgets(InWidgets)
             , bIsProcessed(false)
         {
@@ -97,8 +97,8 @@ struct FEventDispatcher
         }
 
     private:
-        FPath& Widgets;
-        bool   bIsProcessed;
+        FWidgetPath& Widgets;
+        bool         bIsProcessed;
     };
 
     class FPreProcessPolicy
@@ -472,7 +472,7 @@ bool FWindowedApplication::OnMouseMove(int32 MouseX, int32 MouseY)
     }
 
     // Retrieve all the widgets under the cursor which should receive events
-    FPath CursorPath;
+    FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
 
     // Remove the widget from any widget which is not tracked
@@ -533,7 +533,7 @@ bool FWindowedApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModif
         return true;
     }
 
-    FPath CursorPath;
+    FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
 
     const bool bIsDragging = !PressedMouseButtons.IsEmpty();
@@ -582,7 +582,7 @@ bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& P
     // Add the button to the pressed buttons
     PressedMouseButtons.Remove(Button);
 
-    FPath CursorPath;
+    FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
 
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
@@ -616,7 +616,7 @@ bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int
         return true;
     }
 
-    FPath CursorPath;
+    FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
 
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
@@ -829,7 +829,7 @@ TSharedPtr<FWindow> FWindowedApplication::FindWindowWidget(const TSharedPtr<FWid
     return nullptr;
 }
 
-void FWindowedApplication::FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FPath& OutCursorPath)
+void FWindowedApplication::FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath)
 {
     TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor();
     if (!PlatformWindow)

@@ -63,13 +63,13 @@ static FAutoConsoleCommand CVarToggleFullscreen(
 static TAutoConsoleVariable<int32> CVarViewportWidth(
     "Engine.ViewportWidth",
     "Width of the main window",
-    2560,
+    1920,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarViewportHeight(
     "Engine.ViewportHeight",
     "Width of the main window",
-    1440,
+    1080,
     EConsoleVariableFlags::Default);
 
 
@@ -245,7 +245,7 @@ bool FEngine::Init()
         }
     }
 
-    // Load GameModule
+    // Load Game-Module
     const CHAR* GameModuleName = FProjectManager::Get().GetProjectModuleName().GetCString();
     GameModule = FModuleManager::Get().LoadModule<FGameModule>(GameModuleName);
     if (!GameModule)
@@ -321,7 +321,7 @@ void FEngine::Tick(float DeltaTime)
 
 void FEngine::Release()
 {
-    // Destroy ImGui widgets
+    // Destroy ImGui-Widgets
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().RemoveWidget(ProfilerWidget);

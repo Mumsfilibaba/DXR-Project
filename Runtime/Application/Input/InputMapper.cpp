@@ -52,17 +52,20 @@ FKey FInputMapper::GetGamepadKey(EGamepadButtonName::Type GamepadButton)
 EKeyboardKeyName::Type FInputMapper::GetKeyboardKeyNameFromKey(FKey Key)
 {
     const EKeyboardKeyName::Type KeyboardKeyName = static_cast<EKeyboardKeyName::Type>(Key.GetKeyName());
+    CHECK(KeyboardKeyName >= EKeyboardKeyName::First && KeyboardKeyName <= EKeyboardKeyName::Last);
     return KeyboardKeyName;
 }
 
 EMouseButtonName::Type FInputMapper::GetMouseButtonNameFromKey(FKey Key)
 {
-    const EMouseButtonName::Type MouseButtonName = static_cast<EMouseButtonName::Type>(Key.GetKeyName() - EKeyName::MouseButtonLeft);
+    const EMouseButtonName::Type MouseButtonName = static_cast<EMouseButtonName::Type>(EMouseButtonName::First + (Key.GetKeyName() - EKeyName::MouseButtonLeft));
+    CHECK(MouseButtonName >= EMouseButtonName::First && MouseButtonName <= EMouseButtonName::Last);
     return MouseButtonName;
 }
 
 EGamepadButtonName::Type FInputMapper::GetGamepadButtonNameFromKey(FKey Key)
 {
-    const EGamepadButtonName::Type GamepadButtonName = static_cast<EGamepadButtonName::Type>(Key.GetKeyName() - EKeyName::GamepadDPadUp);
+    const EGamepadButtonName::Type GamepadButtonName = static_cast<EGamepadButtonName::Type>(EGamepadButtonName::First + (Key.GetKeyName() - EKeyName::GamepadDPadUp));
+    CHECK(GamepadButtonName >= EKeyboardKeyName::First && GamepadButtonName <= EKeyboardKeyName::Last);
     return GamepadButtonName;
 }

@@ -64,7 +64,7 @@ struct IImguiPlugin : public FModuleInterface
     virtual void ReleaseRenderer() = 0;
 
     virtual void Tick(float Delta) = 0;
-    virtual void TickRenderer(FRHICommandList& CommandList) = 0;
+    virtual void Draw(FRHICommandList& CommandList) = 0;
 
     virtual void AddWidget(const TSharedPtr<IImGuiWidget>& InWidget) = 0;
     virtual void RemoveWidget(const TSharedPtr<IImGuiWidget>& InWidget) = 0;
