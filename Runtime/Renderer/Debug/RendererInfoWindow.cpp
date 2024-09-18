@@ -41,7 +41,7 @@ void FRendererInfoWindow::Draw()
 
         ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
         ImGui::SetNextWindowPos(ImVec2(MainViewportPos.x + WindowWidth, MainViewportPos.y + 10.0f * Scale), ImGuiCond_Once, ImVec2(1.0f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height));
+        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
         const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
         ImGui::Begin("Renderer Info", nullptr, Flags);
