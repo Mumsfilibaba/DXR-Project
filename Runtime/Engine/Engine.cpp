@@ -68,8 +68,8 @@ void FEngine::CreateMainWindow()
     // TODO: This should be loaded from a config file
     FGenericWindowInitializer WindowInitializer;
     WindowInitializer.Title  = "Sandbox";
-    WindowInitializer.Width  = 2560;
-    WindowInitializer.Height = 1440;
+    WindowInitializer.Width  = 1920;
+    WindowInitializer.Height = 1080;
     
     TSharedRef<FGenericWindow> Window = FApplication::Get().CreateWindow(WindowInitializer);
     if (!Window)

@@ -253,7 +253,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
 
             MainThread_AppendStringAndScroll(AttributedString);
             [AttributedString release];
-        }, NSDefaultRunLoopMode, true);
+        }, NSDefaultRunLoopMode, false);
 
         // Return the color the original
         Internal_SetConsoleColor(EConsoleColor::White);
