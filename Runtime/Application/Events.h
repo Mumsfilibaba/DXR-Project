@@ -97,6 +97,17 @@ public:
         CHECK(InKey.IsMouseButton());
     }
 
+    FCursorEvent(FKey InKey, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
+        : FInputEvent(InModifierKeys)
+        , Key(InKey)
+        , CursorPosition(InCursorPosition)
+        , ScrollDelta(0.0f)
+        , bIsScrollVertical(false)
+        , bIsDown(false)
+    {
+        CHECK(InKey.IsMouseButton());
+    }
+
     FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
         : FInputEvent(InModifierKeys)
         , Key(EKeys::Unknown)

@@ -158,10 +158,10 @@ struct FEventDispatcher
     }
 };
 
-TSharedPtr<FGenericApplication>  FWindowedApplication::PlatformApplication = nullptr;
-TSharedPtr<FWindowedApplication> FWindowedApplication::ApplicationInstance = nullptr;
+TSharedPtr<FGenericApplication>  FApplicationInterface::PlatformApplication = nullptr;
+TSharedPtr<FApplicationInterface> FApplicationInterface::ApplicationInstance = nullptr;
 
-FWindowedApplication::FWindowedApplication()
+FApplicationInterface::FApplicationInterface()
     : FocusPath()
     , InputHandlers()
     , Windows()
@@ -174,11 +174,11 @@ FWindowedApplication::FWindowedApplication()
     UpdateMonitorInfo();
 }
 
-FWindowedApplication::~FWindowedApplication()
+FApplicationInterface::~FApplicationInterface()
 {
 }
 
-bool FWindowedApplication::Create()
+bool FApplicationInterface::Create()
 {
     // Initialize the Input mappings
     FInputMapper::Get().Initialize();
@@ -190,12 +190,12 @@ bool FWindowedApplication::Create()
         return false;
     }
 
-    ApplicationInstance = MakeShared<FWindowedApplication>();
+    ApplicationInstance = MakeShared<FApplicationInterface>();
     PlatformApplication->SetMessageHandler(ApplicationInstance);
     return true;
 }
 
-void FWindowedApplication::Destroy()
+void FApplicationInterface::Destroy()
 {
     if (ApplicationInstance)
     {
@@ -210,7 +210,7 @@ void FWindowedApplication::Destroy()
     }
 }
 
-void FWindowedApplication::InitializeWindow(const TSharedPtr<FWindow>& InWindow)
+void FApplicationInterface::InitializeWindow(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {
@@ -248,7 +248,7 @@ void FWindowedApplication::InitializeWindow(const TSharedPtr<FWindow>& InWindow)
 
     FGenericWindowInitializer WindowInitializer;
     WindowInitializer.Title    = InWindow->GetTitle();
-    WindowInitializer.Position = InWindow->GetPosition();
+    WindowInitializer.Position = InWindow->GetScreenPosition();
     WindowInitializer.Style    = EWindowStyleFlags::Default;
     WindowInitializer.Width    = FMath::Clamp<int32>(MinWidth, MaxWidth, InWindow->GetWidth());
     WindowInitializer.Height   = FMath::Clamp<int32>(MinHeight, MaxHeight, InWindow->GetHeight());
@@ -259,10 +259,11 @@ void FWindowedApplication::InitializeWindow(const TSharedPtr<FWindow>& InWindow)
         Windows.Add(InWindow);
 
         PlatformWindow->Show(true);
+        PlatformWindow->SetWindowFocus();
     }
 }
 
-void FWindowedApplication::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWindow)
+void FApplicationInterface::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWindow)
 {
     if (DestroyedWindow)
     {
@@ -271,26 +272,30 @@ void FWindowedApplication::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWin
     }
 }
 
-void FWindowedApplication::Tick(float Delta)
+void FApplicationInterface::Tick(float Delta)
 {
-    // Run the message-loop
     PlatformApplication->Tick(Delta);
 
-    // Update any extra input devices
     UpdateInputDevices();
+
+    // Tick all the windows, which in turn ticks their children
+    for (const TSharedPtr<FWindow>& CurrentWindow : Windows)
+    {
+        CurrentWindow->Tick();
+    }
 }
 
-void FWindowedApplication::UpdateInputDevices()
+void FApplicationInterface::UpdateInputDevices()
 {
     PlatformApplication->UpdateInputDevices();
 }
 
-void FWindowedApplication::UpdateMonitorInfo()
+void FApplicationInterface::UpdateMonitorInfo()
 {
     PlatformApplication->GetDisplayInfo(DisplayInfo);
 }
 
-void FWindowedApplication::RegisterInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler)
+void FApplicationInterface::RegisterInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler)
 {
     if (NewInputHandler)
     {
@@ -298,7 +303,7 @@ void FWindowedApplication::RegisterInputHandler(const TSharedPtr<FInputHandler>&
     }
 }
 
-void FWindowedApplication::UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
+void FApplicationInterface::UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler)
 {
     if (InputHandler)
     {
@@ -306,31 +311,7 @@ void FWindowedApplication::UnregisterInputHandler(const TSharedPtr<FInputHandler
     }
 }
 
-bool FWindowedApplication::OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
-{
-    const FAnalogGamepadEvent AnalogGamepadEvent(AnalogSource, GamepadIndex, FPlatformApplicationMisc::GetModifierKeyState(), AnalogValue);
-
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), AnalogGamepadEvent,
-        [](const TSharedPtr<FInputHandler>& InputHandler, const FAnalogGamepadEvent& AnalogGamepadEvent)
-        {
-            return InputHandler->OnAnalogGamepadChange(AnalogGamepadEvent);
-        });
-    
-    if (Response.IsEventHandled())
-    {
-        return true;
-    }
-
-    Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(FocusPath), AnalogGamepadEvent,
-        [](const TSharedPtr<FWidget>& Widget, const FAnalogGamepadEvent& AnalogGamepadEvent)
-        {
-            return Widget->OnAnalogGamepadChange(AnalogGamepadEvent);
-        });
-    
-    return Response.IsEventHandled();
-}
-
-bool FWindowedApplication::OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
+bool FApplicationInterface::OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, false, false);
 
@@ -354,7 +335,7 @@ bool FWindowedApplication::OnGamepadButtonUp(EGamepadButtonName::Type Button, ui
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
+bool FApplicationInterface::OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, true);
 
@@ -378,7 +359,31 @@ bool FWindowedApplication::OnGamepadButtonDown(EGamepadButtonName::Type Button, 
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
+bool FApplicationInterface::OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
+{
+    const FAnalogGamepadEvent AnalogGamepadEvent(AnalogSource, GamepadIndex, FPlatformApplicationMisc::GetModifierKeyState(), AnalogValue);
+
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), AnalogGamepadEvent,
+        [](const TSharedPtr<FInputHandler>& InputHandler, const FAnalogGamepadEvent& AnalogGamepadEvent)
+        {
+            return InputHandler->OnAnalogGamepadChange(AnalogGamepadEvent);
+        });
+
+    if (Response.IsEventHandled())
+    {
+        return true;
+    }
+
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(FocusPath), AnalogGamepadEvent,
+        [](const TSharedPtr<FWidget>& Widget, const FAnalogGamepadEvent& AnalogGamepadEvent)
+        {
+            return Widget->OnAnalogGamepadChange(AnalogGamepadEvent);
+        });
+
+    return Response.IsEventHandled();
+}
+
+bool FApplicationInterface::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, false, false);
 
@@ -405,7 +410,7 @@ bool FWindowedApplication::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyS
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
+bool FApplicationInterface::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, bIsRepeat, true);
     
@@ -432,7 +437,7 @@ bool FWindowedApplication::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRep
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnKeyChar(uint32 Character)
+bool FApplicationInterface::OnKeyChar(uint32 Character)
 {
     const FKeyEvent KeyEvent(EKeys::Unknown, FPlatformApplicationMisc::GetModifierKeyState(), Character, false, true);
     
@@ -456,7 +461,7 @@ bool FWindowedApplication::OnKeyChar(uint32 Character)
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseMove(int32 MouseX, int32 MouseY)
+bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
 {
     const FCursorEvent CursorEvent(FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
     
@@ -512,7 +517,48 @@ bool FWindowedApplication::OnMouseMove(int32 MouseX, int32 MouseY)
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
+bool FApplicationInterface::OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+{
+    // Set the mouse capture when the mouse is pressed
+    PlatformApplication->SetCapture(PlatformWindow);
+    bIsTrackingMouse = true;
+
+    const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), FIntVector2(x, y), ModierKeyState, true);
+
+    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), CursorEvent,
+        [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
+        {
+            return InputHandler->OnMouseButtonDown(CursorEvent);
+        });
+
+    if (Response.IsEventHandled())
+    {
+        return true;
+    }
+
+    // Add the button to the pressed buttons
+    PressedMouseButtons.Remove(Button);
+
+    FWidgetPath CursorPath;
+    FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
+
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
+        [this](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
+        {
+            const FResponse Response = Widget->OnMouseButtonDown(CursorEvent);
+            if (Response.IsEventHandled() && !TrackedWidgets.Contains(Widget))
+            {
+                TrackedWidgets.Add(EVisibility::Visible, Widget);
+            }
+
+            return Response;
+        });
+
+    SetFocusWidgets(CursorPath);
+    return Response.IsEventHandled();
+}
+
+bool FApplicationInterface::OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModiferKeyState, int32 x, int32 y)
 {
     PressedMouseButtons.Remove(Button);
 
@@ -560,13 +606,9 @@ bool FWindowedApplication::OnMouseButtonUp(EMouseButtonName::Type Button, FModif
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+bool FApplicationInterface::OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
 {
-    // Set the mouse capture when the mouse is pressed
-    PlatformApplication->SetCapture(PlatformWindow);
-    bIsTrackingMouse = true;
-
-    const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), FIntVector2(x, y), ModierKeyState, true);
+    const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), FIntVector2(x, y), ModierKeyState);
 
     FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -588,20 +630,14 @@ bool FWindowedApplication::OnMouseButtonDown(const TSharedRef<FGenericWindow>& P
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
         [this](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
         {
-            const FResponse Response = Widget->OnMouseButtonDown(CursorEvent);
-            if (Response.IsEventHandled() && !TrackedWidgets.Contains(Widget))
-            {
-                TrackedWidgets.Add(EVisibility::Visible, Widget);
-            }
-
-            return Response;
+            return Widget->OnMouseDoubleClick(CursorEvent);
         });
 
-    FocusPath = CursorPath;
+    SetFocusWidgets(CursorPath);
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
+bool FApplicationInterface::OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
 {
     const FCursorEvent CursorEvent(FIntVector2(x, y), FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
@@ -628,80 +664,151 @@ bool FWindowedApplication::OnMouseScrolled(float WheelDelta, bool bVertical, int
     return Response.IsEventHandled();
 }
 
-bool FWindowedApplication::OnWindowResized(const TSharedRef<FGenericWindow>& PlatformWindow, uint32 Width, uint32 Height)
+bool FApplicationInterface::OnMouseEntered(const TSharedRef<FGenericWindow>& InWindow)
 {
+    TSharedPtr<ICursor> Cursor = GetCursor();
+    if (!Cursor)
+    {
+        return false;
+    }
+
+    const FCursorEvent CursorEvent(Cursor->GetPosition(), FPlatformApplicationMisc::GetModifierKeyState());
+
+    FWidgetPath CursorPath;
+    FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
+
+    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
+        [this](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
+        {
+            if (!TrackedWidgets.Contains(Widget))
+            {
+                TrackedWidgets.Add(EVisibility::Visible, Widget);
+                Widget->OnMouseEntered(CursorEvent);
+            }
+
+            return FResponse::Unhandled();
+        });
+
+    return Response.IsEventHandled();
+}
+
+bool FApplicationInterface::OnMouseLeft(const TSharedRef<FGenericWindow>& InWindow)
+{
+    TSharedPtr<ICursor> Cursor = GetCursor();
+    if (!Cursor)
+    {
+        return false;
+    }
+
+    const FCursorEvent CursorEvent(Cursor->GetPosition(), FPlatformApplicationMisc::GetModifierKeyState());
+
+    FWidgetPath CursorPath;
+    FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
+
+    FResponse Response = FResponse::Unhandled();
+
+    const bool bIsDragging = !PressedMouseButtons.IsEmpty();
+    for (int32 Index = 0; Index < TrackedWidgets.Size();)
+    {
+        const TSharedPtr<FWidget>& CurrentWidget = TrackedWidgets[Index];
+        if (!CursorPath.Contains(CurrentWidget) && !bIsDragging)
+        {
+            Response = CurrentWidget->OnMouseLeft(CursorEvent);
+            TrackedWidgets.RemoveAt(Index);
+        }
+        else
+        {
+            Index++;
+        }
+    }
+
+    return Response.IsEventHandled();
+}
+
+bool FApplicationInterface::OnHighPrecisionMouseInput(const TSharedRef<FGenericWindow>& Window, int32 x, uint32 y)
+{
+    return false;
+}
+
+bool FApplicationInterface::OnWindowResized(const TSharedRef<FGenericWindow>& PlatformWindow, uint32 Width, uint32 Height)
+{
+    bool bResult = false;
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         FIntVector2 NewScreenSize(Width, Height);
         Window->SetScreenSize(NewScreenSize);
-        return true;
+        bResult = true;
     }
-    else
-    {
-        return false;
-    }
+
+    return bResult;
 }
 
-bool FWindowedApplication::OnWindowMoved(const TSharedRef<FGenericWindow>& PlatformWindow, int32 x, int32 y)
+bool FApplicationInterface::OnWindowMoved(const TSharedRef<FGenericWindow>& PlatformWindow, int32 x, int32 y)
 {
+    bool bResult = false;
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         FIntVector2 NewScreenPosition(x, y);
         Window->SetScreenPosition(NewScreenPosition);
-        return true;
+        bResult = true;
     }
-    else
-    {
-        return false;
-    }
+
+    return bResult;
 }
 
-bool FWindowedApplication::OnWindowFocusLost(const TSharedRef<FGenericWindow>& PlatformWindow)
+bool FApplicationInterface::OnWindowFocusLost(const TSharedRef<FGenericWindow>& PlatformWindow)
 {
+    bool bResult = false;
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         Window->NotifyWindowActivationChanged(false);
-        return true;
+        bResult = true;
     }
-    else
-    {
-        return false;
-    }
+
+    SetFocusWidget(nullptr);
+    return bResult;
 }
 
-bool FWindowedApplication::OnWindowFocusGained(const TSharedRef<FGenericWindow>& PlatformWindow)
+bool FApplicationInterface::OnWindowFocusGained(const TSharedRef<FGenericWindow>& PlatformWindow)
 {
+    bool bResult = false;
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
+        TSharedPtr<FWidget> FocusWidget = Window->GetContent();
+        if (!FocusWidget)
+        {
+            FocusWidget = Window;
+        }
+
+        // Either set focus to the window, or to the content of the window if there are a 
+        SetFocusWidget(FocusWidget);
+
         Window->NotifyWindowActivationChanged(true);
-        return true;
+        bResult = true;
     }
-    else
-    {
-        return false;
-    }
+
+    return bResult;
 }
 
-bool FWindowedApplication::OnWindowClosed(const TSharedRef<FGenericWindow>& PlatformWindow)
+bool FApplicationInterface::OnWindowClosed(const TSharedRef<FGenericWindow>& PlatformWindow)
 {
+    bool bResult = false;
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         DestroyWindow(Window);
-        return true;
+        bResult = true;
     }
-    else
-    {
-        return false;
-    }
+
+    return bResult;
 }
 
-bool FWindowedApplication::OnMonitorChange()
+bool FApplicationInterface::OnMonitorChange()
 {
     UpdateMonitorInfo();
     return true;
 }
 
-bool FWindowedApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window)
+bool FApplicationInterface::EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window)
 { 
     if (Window)
     {
@@ -714,12 +821,12 @@ bool FWindowedApplication::EnableHighPrecisionMouseForWindow(const TSharedPtr<FW
     return false;
 }
 
-bool FWindowedApplication::SupportsHighPrecisionMouse() const 
+bool FApplicationInterface::SupportsHighPrecisionMouse() const 
 {
     return PlatformApplication->SupportsHighPrecisionMouse();
 }
 
-void FWindowedApplication::SetCursorScreenPosition(const FIntVector2& Position)
+void FApplicationInterface::SetCursorScreenPosition(const FIntVector2& Position)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -727,7 +834,7 @@ void FWindowedApplication::SetCursorScreenPosition(const FIntVector2& Position)
     }
 }
 
-FIntVector2 FWindowedApplication::GetCursorScreenPosition() const
+FIntVector2 FApplicationInterface::GetCursorScreenPosition() const
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -737,7 +844,7 @@ FIntVector2 FWindowedApplication::GetCursorScreenPosition() const
     return FIntVector2();
 }
 
-void FWindowedApplication::SetCursor(ECursor InCursor)
+void FApplicationInterface::SetCursor(ECursor InCursor)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -745,7 +852,7 @@ void FWindowedApplication::SetCursor(ECursor InCursor)
     }
 }
 
-void FWindowedApplication::ShowCursor(bool bIsVisible)
+void FApplicationInterface::ShowCursor(bool bIsVisible)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -753,7 +860,7 @@ void FWindowedApplication::ShowCursor(bool bIsVisible)
     }
 }
 
-bool FWindowedApplication::IsCursorVisibile() const
+bool FApplicationInterface::IsCursorVisibile() const
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
@@ -763,7 +870,7 @@ bool FWindowedApplication::IsCursorVisibile() const
     return false;
 }
 
-bool FWindowedApplication::IsGamePadConnected() const
+bool FApplicationInterface::IsGamePadConnected() const
 {
     if (FInputDevice* InputDevice = GetInputDeviceInterface())
     {
@@ -773,7 +880,7 @@ bool FWindowedApplication::IsGamePadConnected() const
     return false;
 }
 
-TSharedPtr<FWindow> FWindowedApplication::FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const
+TSharedPtr<FWindow> FApplicationInterface::FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const
 {
     if (!PlatformWindow)
     {
@@ -791,7 +898,7 @@ TSharedPtr<FWindow> FWindowedApplication::FindWindowFromGenericWindow(const TSha
     return nullptr;
 }
 
-void FWindowedApplication::OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
+void FApplicationInterface::OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication)
 {
     // Set a MessageHandler to avoid any potential nullptr access
     if (PlatformApplication)
@@ -808,7 +915,45 @@ void FWindowedApplication::OverridePlatformApplication(const TSharedPtr<FGeneric
     PlatformApplication = InPlatformApplication;
 }
 
-TSharedPtr<FWindow> FWindowedApplication::FindWindowWidget(const TSharedPtr<FWidget>& InWidget)
+void FApplicationInterface::SetFocusWidget(const TSharedPtr<FWidget>& FocusWidget)
+{
+    FWidgetPath NewFocusPath;
+    if (FocusWidget)
+    {
+        FocusWidget->FindParentWidgets(NewFocusPath);
+    }
+
+    SetFocusWidgets(NewFocusPath);
+}
+
+void FApplicationInterface::SetFocusWidgets(const FWidgetPath& NewFocusPath)
+{
+    // First we need to go through all the widgets that currently have focus and 
+    // notify widgets that is not in the new widget-path that they have lost focus
+    for (int32 Index = 0; Index < FocusPath.Size(); Index++)
+    {
+        const TSharedPtr<FWidget>& CurrentWidget = FocusPath[Index];
+        if (!NewFocusPath.Contains(CurrentWidget))
+        {
+            CurrentWidget->OnFocusLost();
+        }
+    }
+
+    // Then go through all the widgets in the new widget-path and notify them that 
+    // they have gained focus, as long as they are not a part of the old path
+    for (int32 Index = 0; Index < NewFocusPath.Size(); Index++)
+    {
+        const TSharedPtr<FWidget>& CurrentWidget = NewFocusPath[Index];
+        if (!FocusPath.Contains(CurrentWidget))
+        {
+            CurrentWidget->OnFocusGained();
+        }
+    }
+
+    FocusPath = NewFocusPath;
+}
+
+TSharedPtr<FWindow> FApplicationInterface::FindWindowWidget(const TSharedPtr<FWidget>& InWidget)
 {
     TWeakPtr<FWidget> ParentWidget = InWidget;
     while (ParentWidget)
@@ -829,23 +974,18 @@ TSharedPtr<FWindow> FWindowedApplication::FindWindowWidget(const TSharedPtr<FWid
     return nullptr;
 }
 
-void FWindowedApplication::FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath)
+void FApplicationInterface::FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath)
 {
-    TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor();
-    if (!PlatformWindow)
+    if (TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
-        return;
-    }
-
-    TSharedPtr<FWindow> CursorWindow = FindWindowFromGenericWindow(PlatformWindow);
-    if (CursorWindow)
-    {
-        OutCursorPath.Add(EVisibility::Visible, CursorWindow);
-        OutCursorPath.Add(EVisibility::Visible, CursorWindow->GetContent());
+        if (TSharedPtr<FWindow> CursorWindow = FindWindowFromGenericWindow(PlatformWindow))
+        {
+            CursorWindow->FindChildrenUnderCursor(CursorPosition, OutCursorPath);
+        }
     }
 }
 
-TSharedPtr<FWindow> FWindowedApplication::GetFocusWindow() const
+TSharedPtr<FWindow> FApplicationInterface::GetFocusWindow() const
 {
     if (TSharedRef<FGenericWindow> ActiveWindow = PlatformApplication->GetActiveWindow())
     {

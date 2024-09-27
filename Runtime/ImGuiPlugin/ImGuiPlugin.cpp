@@ -307,10 +307,10 @@ bool FImGuiPlugin::Load()
     Style.Colors[ImGuiCol_TabActive].w = 1.0f;
 #endif
 
-    if (FWindowedApplication::IsInitialized())
+    if (FApplicationInterface::IsInitialized())
     {
         EventHandler = MakeShared<FImGuiEventHandler>();
-        FWindowedApplication::Get().RegisterInputHandler(EventHandler);
+        FApplicationInterface::Get().RegisterInputHandler(EventHandler);
     }
     else
     {
@@ -324,9 +324,9 @@ bool FImGuiPlugin::Load()
 
 bool FImGuiPlugin::Unload()
 {
-    if (FWindowedApplication::IsInitialized())
+    if (FApplicationInterface::IsInitialized())
     {
-        FWindowedApplication::Get().UnregisterInputHandler(EventHandler);
+        FApplicationInterface::Get().UnregisterInputHandler(EventHandler);
         EventHandler.Reset();
     }
 
@@ -378,7 +378,7 @@ void FImGuiPlugin::ReleaseRenderer()
 
 void FImGuiPlugin::Tick(float Delta)
 {
-    TSharedPtr<FWindow> MainWindow = FWindowedApplication::Get().FindWindowWidget(MainViewport);
+    TSharedPtr<FWindow> MainWindow = FApplicationInterface::Get().FindWindowWidget(MainViewport);
     if (!MainWindow)
     {
         return;
@@ -386,7 +386,7 @@ void FImGuiPlugin::Tick(float Delta)
 
     // Retrieve all windows necessary
     TSharedRef<FGenericWindow> PlatformWindow   = MainWindow->GetPlatformWindow();
-    TSharedRef<FGenericWindow> ForegroundWindow = FWindowedApplication::Get().GetPlatformApplication()->GetForegroundWindow();
+    TSharedRef<FGenericWindow> ForegroundWindow = FApplicationInterface::Get().GetPlatformApplication()->GetForegroundWindow();
 
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.DeltaTime               = Delta / 1000.0f;
@@ -413,11 +413,11 @@ void FImGuiPlugin::Tick(float Delta)
                 MousePos.y = MousePos.y - WindowShape.Position.y;
             }
 
-            FWindowedApplication::Get().SetCursorScreenPosition(FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y)));
+            FApplicationInterface::Get().SetCursorScreenPosition(FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y)));
         }
         else /* if (!UIState.WantSetMousePos && !bIsTrackingMouse) */
         {
-            FIntVector2 CursorPos = FWindowedApplication::Get().GetCursorScreenPosition();
+            FIntVector2 CursorPos = FApplicationInterface::Get().GetCursorScreenPosition();
             if (!ImGuiExtensions::IsMultiViewportEnabled())
             {
                 CursorPos.x = CursorPos.x - WindowShape.Position.x;
@@ -429,7 +429,7 @@ void FImGuiPlugin::Tick(float Delta)
     }
 
     ImGuiID MouseViewportID = 0;
-    if (TSharedRef<FGenericWindow> WindowUnderCursor = FWindowedApplication::Get().GetPlatformApplication()->GetWindowUnderCursor())
+    if (TSharedRef<FGenericWindow> WindowUnderCursor = FApplicationInterface::Get().GetPlatformApplication()->GetWindowUnderCursor())
     {
         if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor.Get()))
         {
@@ -446,7 +446,7 @@ void FImGuiPlugin::Tick(float Delta)
         ImGuiMouseCursor ImguiCursor = ImGui::GetMouseCursor();
         if (ImguiCursor == ImGuiMouseCursor_None || UIState.MouseDrawCursor)
         {
-            FWindowedApplication::Get().SetCursor(ECursor::None);
+            FApplicationInterface::Get().SetCursor(ECursor::None);
         }
         else
         {
@@ -464,12 +464,12 @@ void FImGuiPlugin::Tick(float Delta)
             case ImGuiMouseCursor_NotAllowed: Cursor = ECursor::NotAllowed; break;
             }
 
-            FWindowedApplication::Get().SetCursor(Cursor);
+            FApplicationInterface::Get().SetCursor(Cursor);
         }
     }
 
     UIState.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
-    if (FWindowedApplication::Get().IsGamePadConnected())
+    if (FApplicationInterface::Get().IsGamePadConnected())
     {
         UIState.BackendFlags |= ImGuiBackendFlags_HasGamepad;
     }
@@ -519,7 +519,7 @@ void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewport>& InViewport)
             Viewport->PlatformRequestMove   = true;
             Viewport->PlatformRequestResize = true;
 
-            TSharedPtr<FWindow> MainWindow = FWindowedApplication::Get().FindWindowWidget(InViewport);
+            TSharedPtr<FWindow> MainWindow = FApplicationInterface::Get().FindWindowWidget(InViewport);
             Viewport->PlatformUserData  = MainWindow.Get();
             Viewport->PlatformHandle    = MainWindow->GetPlatformWindow().Get();
             Viewport->PlatformHandleRaw = MainWindow->GetPlatformWindow()->GetPlatformHandle();

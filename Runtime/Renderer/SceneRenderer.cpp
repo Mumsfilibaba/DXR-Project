@@ -238,7 +238,7 @@ bool FSceneRenderer::Initialize()
         Resources.CurrentHeight    = Resources.DesiredHeight = Resources.MainViewport->GetHeight();
     }
 
-    if (!FWindowedApplication::IsInitialized())
+    if (!FApplicationInterface::IsInitialized())
     {
         DEBUG_BREAK();
         return false;

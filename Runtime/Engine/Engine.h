@@ -57,6 +57,7 @@ private:
     // Engine events
     void OnEngineWindowClosed();
     void OnEngineWindowMoved(const FIntVector2& NewScreenPosition);
+    void OnEngineWindowResized(const FIntVector2& NewScreenSize);
 
     /** @brief - The main Window */
     TSharedPtr<FWindow> EngineWindow;

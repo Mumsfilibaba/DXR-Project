@@ -632,6 +632,27 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
                 break;
             }
 
+            case NSEventTypeMouseEntered:
+            {
+                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
+                if (Window)
+                {
+                    MessageHandler->OnMouseEntered(Window);
+                }
+                break;
+            }
+
+            case NSEventTypeMouseExited:
+            {
+                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
+                if (Window)
+                {
+                    MessageHandler->OnMouseLeft(Window);
+                }
+
+                break;
+            }
+
             default:
             {
                 break;

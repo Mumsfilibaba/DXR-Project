@@ -172,12 +172,14 @@ void FWindowsApplication::Tick(float)
 
     // TODO: Store the second TArray to save on allocations
     TArray<FWindowsMessage> ProcessableMessages;
-    if (!Messages.IsEmpty())
     {
         TScopedLock<FCriticalSection> Lock(MessagesCS);
-        ProcessableMessages.Append(Messages);
 
-        Messages.Clear();
+        if (!Messages.IsEmpty())
+        {
+            ProcessableMessages.Append(Messages);
+            Messages.Clear();
+        }
     }
 
     // Handle all the messages 
@@ -428,6 +430,11 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
         case WM_MOUSELEAVE:
         {
+            if (MessageWindow)
+            {
+                MessageHandler->OnMouseLeft(MessageWindow);
+            }
+
             bIsTrackingMouse = false;
             break;
         }
@@ -436,8 +443,8 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (MessageWindow)
             {
-                const uint16 Width  = LOWORD(lParam);
-                const uint16 Height = HIWORD(lParam);
+                const uint32 Width  = static_cast<uint32>(LOWORD(lParam));
+                const uint32 Height = static_cast<uint32>(HIWORD(lParam));
                 MessageHandler->OnWindowResized(MessageWindow, Width, Height);
             }
 
@@ -448,8 +455,8 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (MessageWindow)
             {
-                const uint16 x = LOWORD(lParam);
-                const uint16 y = HIWORD(lParam);
+                const uint32 x = static_cast<uint32>(LOWORD(lParam));
+                const uint32 y = static_cast<uint32>(HIWORD(lParam));
                 MessageHandler->OnWindowMoved(MessageWindow, x, y);
             }
 
@@ -485,9 +492,6 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
         case WM_MOUSEMOVE:
         {
-            const int32 x = GET_X_LPARAM(lParam);
-            const int32 y = GET_Y_LPARAM(lParam);
-
             if (!bIsTrackingMouse)
             {
                 TRACKMOUSEEVENT TrackEvent;
@@ -499,9 +503,17 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 ::TrackMouseEvent(&TrackEvent);
 
                 bIsTrackingMouse = true;
+
+                if (MessageWindow)
+                {
+                    MessageHandler->OnMouseEntered(MessageWindow);
+                }
             }
 
-            MessageHandler->OnMouseMove(x, y);
+            POINT CursorPos;
+            ::GetCursorPos(&CursorPos);
+
+            MessageHandler->OnMouseMove(CursorPos.x, CursorPos.y);
             break;
         }
 
@@ -541,9 +553,10 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 }
             }
 
-            const int32 x = GET_X_LPARAM(lParam);
-            const int32 y = GET_Y_LPARAM(lParam);
-            MessageHandler->OnMouseButtonDown(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
+            POINT CursorPos;
+            ::GetCursorPos(&CursorPos);
+
+            MessageHandler->OnMouseButtonDown(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), CursorPos.x, CursorPos.y);
             break;
         }
 
@@ -577,9 +590,10 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 }
             }
 
-            const int32 x = GET_X_LPARAM(lParam);
-            const int32 y = GET_Y_LPARAM(lParam);
-            MessageHandler->OnMouseButtonDoubleClick(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
+            POINT CursorPos;
+            ::GetCursorPos(&CursorPos);
+
+            MessageHandler->OnMouseButtonDoubleClick(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), CursorPos.x, CursorPos.y);
             break;
         }
 
@@ -612,23 +626,24 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                     Button = EMouseButtonName::Thumb2;
                 }
             }
+            
+            POINT CursorPos;
+            ::GetCursorPos(&CursorPos);
 
-            const int32 x = GET_X_LPARAM(lParam);
-            const int32 y = GET_Y_LPARAM(lParam);
-            MessageHandler->OnMouseButtonUp(Button, FPlatformApplicationMisc::GetModifierKeyState(), x, y);
+            MessageHandler->OnMouseButtonUp(Button, FPlatformApplicationMisc::GetModifierKeyState(), CursorPos.x, CursorPos.y);
             break;
         }
 
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
         {
-            const int32 x = GET_X_LPARAM(lParam);
-            const int32 y = GET_Y_LPARAM(lParam);
-
-            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
+            POINT CursorPos;
+            ::GetCursorPos(&CursorPos);
 
             const bool bIsVertical = (Message == WM_MOUSEWHEEL);
-            MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical, x, y);
+            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
+
+            MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical, CursorPos.x, CursorPos.y);
             break;
         }
 
@@ -651,7 +666,6 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
         default:
         {
-            // Nothing for now
             break;
         }
     }

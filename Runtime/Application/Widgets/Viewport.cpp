@@ -1,4 +1,5 @@
 #include "Viewport.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 FViewport::FViewport()
     : FWidget()
@@ -13,6 +14,16 @@ FViewport::~FViewport()
 void FViewport::Initialize(const FInitializer& Initializer)
 {
     ViewportInterface = Initializer.ViewportInterface;
+}
+
+void FViewport::Tick()
+{
+    TWeakPtr<FWidget> Parent = GetParentWidget();
+    if (Parent.IsValid())
+    {
+        const FRectangle& InScreenRectangle = Parent->GetScreenRectangle();
+        SetScreenRectangle(InScreenRectangle);
+    }
 }
 
 FResponse FViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)

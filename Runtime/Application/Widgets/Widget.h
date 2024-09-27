@@ -2,6 +2,8 @@
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
 
+class FWidgetPath;
+
 template<typename WidgetType>
 inline TSharedPtr<WidgetType> CreateWidget(const typename WidgetType::FInitializer& Initializer)
 {
@@ -32,6 +34,11 @@ struct FRectangle
     {
     }
 
+    bool EncapsualtesPoint(const FIntVector2& Point) const
+    {
+        return Point.x >= Position.x && Point.y >= Position.y && Point.x <= (Position.x + Width) && Point.y <= (Position.y + Height);
+    }
+
     bool operator==(const FRectangle& Other) const
     {
         return Width == Other.Width && Height == Other.Height && Position == Other.Position;
@@ -53,9 +60,8 @@ public:
     FWidget();
     virtual ~FWidget();
 
-    virtual void Tick() { }
-
-    virtual bool IsWindow() const { return false; }
+    virtual void Tick();
+    virtual bool IsWindow() const;
 
     virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent);
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent);
@@ -71,30 +77,35 @@ public:
     virtual FResponse OnFocusLost();
     virtual FResponse OnFocusGained();
 
-    bool IsVisible() const { return (Visibility & EVisibility::Visible) == EVisibility::None; }
+    virtual void FindParentWidgets(FWidgetPath& OutParentWidgets);
+    virtual void FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets);
 
-    void SetVisibility(EVisibility InVisibility) 
+    bool IsVisible() const 
     { 
-        Visibility = InVisibility;
+        return (Visibility & EVisibility::Visible) == EVisibility::None; 
     }
 
-    void SetParentWidget(const TWeakPtr<FWidget>& InParentWidget)
+    EVisibility GetVisibility() const
     {
-        ParentWidget = InParentWidget;
+        return Visibility;
     }
+
+    void SetVisibility(EVisibility InVisibility);
+    void SetParentWidget(const TWeakPtr<FWidget>& InParentWidget);
+    void SetScreenRectangle(const FRectangle& InBounds);
 
     TWeakPtr<FWidget> GetParentWidget() const
     {
         return ParentWidget;
     }
 
-    const FRectangle& GetBoundsRectangle() const
+    const FRectangle& GetScreenRectangle() const
     {
-        return Bounds;
+        return ScreenRectangle;
     }
 
 private:
-    TWeakPtr<FWidget> ParentWidget;
     EVisibility       Visibility;
-    FRectangle        Bounds;
+    FRectangle        ScreenRectangle;
+    TWeakPtr<FWidget> ParentWidget;
 };

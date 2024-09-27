@@ -35,7 +35,7 @@ bool FSceneViewport::InitializeRHI()
         ViewportWidget = Viewport.ToSharedPtr();
     }
 
-    TSharedPtr<FWindow> WindowWidget = FWindowedApplication::Get().FindWindowWidget(ViewportWidget);
+    TSharedPtr<FWindow> WindowWidget = FApplicationInterface::Get().FindWindowWidget(ViewportWidget);
     if (!WindowWidget)
     {
         return false;

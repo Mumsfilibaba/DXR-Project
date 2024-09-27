@@ -176,11 +176,6 @@ public:
      */
     void Reset(const ElementType* Elements, SizeType NumElements) noexcept
     {
-        if (NumElements <= 0)
-        {
-            return;
-        }
-
         if (Elements != Allocator.GetAllocation())
         {
             ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);

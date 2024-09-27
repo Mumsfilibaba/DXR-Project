@@ -184,7 +184,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-    if (!FWindowedApplication::Create())
+    if (!FApplicationInterface::Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
         return -1;
@@ -276,7 +276,7 @@ void FEngineLoop::Tick()
     FrameTimer.Tick();
 
     const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
-    FWindowedApplication::Get().Tick(DeltaTime);
+    FApplicationInterface::Get().Tick(DeltaTime);
 
     GEngine->Tick(DeltaTime);
 
@@ -322,7 +322,7 @@ void FEngineLoop::Release()
 
     FTaskManager::Release();
 
-    FWindowedApplication::Destroy();
+    FApplicationInterface::Destroy();
 
     FThreadManager::Release();
 

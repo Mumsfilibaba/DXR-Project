@@ -15,6 +15,8 @@ public:
 
     void Initialize(const FInitializer& Initializer);
 
+    virtual void Tick() override final;
+
     virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override final;
     virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override final;
     virtual FResponse OnKeyUp(const FKeyEvent& KeyEvent) override final;

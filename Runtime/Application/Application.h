@@ -7,7 +7,7 @@
 #include "Application/WidgetPath.h"
 #include "Application/Widgets/Window.h"
 
-class APPLICATION_API FWindowedApplication : public FGenericApplicationMessageHandler, public TSharedFromThis<FWindowedApplication>
+class APPLICATION_API FApplicationInterface : public FGenericApplicationMessageHandler, public TSharedFromThis<FApplicationInterface>
 {
 public:
 
@@ -22,26 +22,30 @@ public:
         return ApplicationInstance.IsValid();
     }
 
-    static FWindowedApplication& Get()
+    static FApplicationInterface& Get()
     {
         CHECK(ApplicationInstance.IsValid());
         return *ApplicationInstance;
     }
 
-    FWindowedApplication();
-    virtual ~FWindowedApplication();
+    FApplicationInterface();
+    virtual ~FApplicationInterface();
 
     // FGenericApplicationMessageHandler Interface
-    virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
     virtual bool OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex) override final;
     virtual bool OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat) override final;
+    virtual bool OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue) override final;
     virtual bool OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState) override final;
     virtual bool OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) override final;
     virtual bool OnKeyChar(uint32 Character) override final;
-    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 MouseX, int32 MouseY) override final;
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 MouseX, int32 MouseY) override final;
     virtual bool OnMouseMove(int32 MouseX, int32 MouseY) override final;
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 MouseX, int32 MouseY) override final;
+    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 MouseX, int32 MouseY) override final;
+    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
     virtual bool OnMouseScrolled(float WheelDelta, bool bVertical, int32 MouseX, int32 MouseY) override final;
+    virtual bool OnMouseEntered(const TSharedRef<FGenericWindow>& Window) override final;
+    virtual bool OnMouseLeft(const TSharedRef<FGenericWindow>& Window) override final;
+    virtual bool OnHighPrecisionMouseInput(const TSharedRef<FGenericWindow>& Window, int32 x, uint32 y) override final;
     virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override final;
     virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 MouseX, int32 MouseY) override final;
     virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override final;
@@ -109,6 +113,12 @@ public:
     // Get current window that has focus
     TSharedPtr<FWindow> GetFocusWindow() const;
 
+    // Sets the widget that should currently have focus
+    void SetFocusWidget(const TSharedPtr<FWidget>& FocusWidget);
+
+    // Sets the new widget-path which will now have focus
+    void SetFocusWidgets(const FWidgetPath& NewFocusPath);
+
     // Finds a window from a widget
     TSharedPtr<FWindow> FindWindowWidget(const TSharedPtr<FWidget>& InWidget);
     
@@ -128,6 +138,6 @@ private:
     FWidgetPath                       TrackedWidgets;
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
 
-    static TSharedPtr<FWindowedApplication> ApplicationInstance;
-    static TSharedPtr<FGenericApplication>  PlatformApplication;
+    static TSharedPtr<FApplicationInterface> ApplicationInstance;
+    static TSharedPtr<FGenericApplication>   PlatformApplication;
 };

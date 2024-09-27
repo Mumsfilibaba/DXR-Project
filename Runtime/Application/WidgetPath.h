@@ -17,6 +17,19 @@ public:
     {
     }
 
+    FWidgetPath(const FWidgetPath& Other)
+        : Filter(Other.Filter)
+        , Widgets(Other.Widgets)
+    {
+    }
+
+    FWidgetPath(FWidgetPath&& Other)
+        : Filter(Other.Filter)
+        , Widgets(Move(Other.Widgets))
+    {
+        Other.Filter = EVisibility::None;
+    }
+
     void Add(EVisibility InVisibility, const TSharedPtr<FWidget>& InWidget)
     {
         CHECK(InWidget != nullptr);
@@ -95,6 +108,29 @@ public:
     FORCEINLINE const TSharedPtr<FWidget>& operator[](int32 Index) const
     {
         return Widgets[Index];
+    }
+
+    FWidgetPath& operator=(const FWidgetPath& Other)
+    {
+        if (this != AddressOf(Other))
+        {
+            Filter  = Other.Filter;
+            Widgets = Other.Widgets;
+        }
+
+        return *this;
+    }
+
+    FWidgetPath& operator=(FWidgetPath&& Other)
+    {
+        if (this != AddressOf(Other))
+        {
+            Filter       = Other.Filter;
+            Other.Filter = EVisibility::None;
+            Widgets      = Move(Other.Widgets);
+        }
+
+        return *this;
     }
 
 private:

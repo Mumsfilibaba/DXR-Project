@@ -100,7 +100,7 @@ bool FEngine::CreateEngineWindow()
     EngineWindow = CreateWidget<FWindow>(WindowInitializer);
 
     // Initialize and show the game-window
-    FWindowedApplication::Get().InitializeWindow(EngineWindow);
+    FApplicationInterface::Get().InitializeWindow(EngineWindow);
     return true;
 }
 
@@ -120,6 +120,7 @@ bool FEngine::CreateEngineViewport()
 
     EngineWindow->SetOnWindowMoved(FOnWindowMoved::CreateRaw(this, &FEngine::OnEngineWindowMoved));
     EngineWindow->SetOnWindowClosed(FOnWindowClosed::CreateRaw(this, &FEngine::OnEngineWindowClosed));
+    EngineWindow->SetOnWindowResized(FOnWindowResized::CreateRaw(this, &FEngine::OnEngineWindowResized));
     EngineWindow->SetContent(EngineViewportWidget);
     return true;
 }
@@ -143,6 +144,10 @@ bool FEngine::CreateSceneViewport()
     }
 
     EngineViewportWidget->SetViewportInterface(SceneViewport);
+
+    // Make sure we have focus on the new viewport
+    FApplicationInterface::Get().SetFocusWidget(EngineViewportWidget);
+
     return true;
 }
 
@@ -153,7 +158,12 @@ void FEngine::OnEngineWindowClosed()
 
 void FEngine::OnEngineWindowMoved(const FIntVector2& NewScreenPosition)
 {
-    LOG_INFO("Window Moved x=%d y=%d", NewScreenPosition.x, NewScreenPosition.y);
+    // LOG_INFO("Window Moved x=%d y=%d", NewScreenPosition.x, NewScreenPosition.y);
+}
+
+void FEngine::OnEngineWindowResized(const FIntVector2& NewScreenSize)
+{
+    // LOG_INFO("Window Resized x=%d y=%d", NewScreenSize.x, NewScreenSize.y);
 }
 
 bool FEngine::Init()

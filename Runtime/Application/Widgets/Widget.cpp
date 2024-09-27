@@ -1,15 +1,25 @@
 #include "Widget.h"
+#include "Application/WidgetPath.h"
 
 FWidget::FWidget()
     : TSharedFromThis<FWidget>()
     , ParentWidget()
     , Visibility(EVisibility::Visible)
-    , Bounds()
+    , ScreenRectangle()
 {
 }
 
 FWidget::~FWidget()
 {
+}
+
+void FWidget::Tick()
+{
+}
+
+bool FWidget::IsWindow() const
+{
+    return false;
 }
 
 FResponse FWidget::OnAnalogGamepadChange(const FAnalogGamepadEvent&)
@@ -75,4 +85,37 @@ FResponse FWidget::OnFocusLost()
 FResponse FWidget::OnFocusGained()
 {
     return FResponse::Unhandled();
+}
+
+void FWidget::FindParentWidgets(FWidgetPath& OutRootPath)
+{
+    if (ParentWidget.IsValid())
+    {
+        ParentWidget->FindParentWidgets(OutRootPath);
+    }
+
+    OutRootPath.Add(Visibility, AsSharedPtr());
+}
+
+void FWidget::FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets)
+{
+    if (ScreenRectangle.EncapsualtesPoint(ScreenCursorPosition))
+    {
+        OutChildWidgets.Add(Visibility, AsSharedPtr());
+    }
+}
+
+void FWidget::SetVisibility(EVisibility InVisibility)
+{
+    Visibility = InVisibility;
+}
+
+void FWidget::SetParentWidget(const TWeakPtr<FWidget>& InParentWidget)
+{
+    ParentWidget = InParentWidget;
+}
+
+void FWidget::SetScreenRectangle(const FRectangle& InScreenRectangle)
+{
+    ScreenRectangle = InScreenRectangle;
 }

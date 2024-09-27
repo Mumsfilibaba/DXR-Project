@@ -37,9 +37,9 @@ static float GetAnalogDeadzone(EAnalogSourceName::Type Source)
 FPlayerInput::FPlayerInput()
     : KeyStates()
 {
-    if (FWindowedApplication::IsInitialized())
+    if (FApplicationInterface::IsInitialized())
     {
-        CursorInterface = FWindowedApplication::Get().GetCursor();
+        CursorInterface = FApplicationInterface::Get().GetCursor();
     }
 }
 
