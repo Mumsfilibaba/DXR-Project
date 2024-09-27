@@ -10,18 +10,18 @@
 ////////////////////////////////////////////////////
 // Global variables that describe different features
 
-VULKANRHI_API bool GVulkanForceBinding = false;
-VULKANRHI_API bool GVulkanForceDedicatedAllocations = false;
-VULKANRHI_API bool GVulkanForceDedicatedImageAllocations = GVulkanForceDedicatedAllocations || true;
+VULKANRHI_API bool GVulkanForceBinding                    = false;
+VULKANRHI_API bool GVulkanForceDedicatedAllocations       = false;
+VULKANRHI_API bool GVulkanForceDedicatedImageAllocations  = GVulkanForceDedicatedAllocations || true;
 VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations = GVulkanForceDedicatedAllocations || false;
-VULKANRHI_API bool GVulkanAllowNullDescriptors = true;
-VULKANRHI_API bool GVulkanAllowGeometryShaders = false;
+VULKANRHI_API bool GVulkanAllowNullDescriptors            = true;
+VULKANRHI_API bool GVulkanAllowGeometryShaders            = false;
 
-VULKANRHI_API bool GVulkanSupportsDepthClip = false;
+VULKANRHI_API bool GVulkanSupportsDepthClip                 = false;
 VULKANRHI_API bool GVulkanSupportsConservativeRasterization = false;
-VULKANRHI_API bool GVulkanSupportsPipelineCacheControl = false;
-VULKANRHI_API bool GVulkanSupportsAccelerationStructures = false;
-VULKANRHI_API bool GVulkanSupportsMultiviews = false;
+VULKANRHI_API bool GVulkanSupportsPipelineCacheControl      = false;
+VULKANRHI_API bool GVulkanSupportsAccelerationStructures    = false;
+VULKANRHI_API bool GVulkanSupportsMultiviews                = false;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper
