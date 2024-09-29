@@ -30,6 +30,8 @@ struct FImGuiEventHandler : public FInputHandler
 
 class FImGuiPlugin : public IImguiPlugin
 {
+    friend class FImGuiRenderer;
+
 public:
     FImGuiPlugin();
     virtual ~FImGuiPlugin();
@@ -54,12 +56,31 @@ public:
     virtual ImGuiContext* GetImGuiContext() const override final { return PluginImGuiContext; }
 
 private:
+    static void StaticPlatformCreateWindow(ImGuiViewport* Viewport);
+    static void StaticPlatformDestroyWindow(ImGuiViewport* Viewport);
+    static void StaticPlatformShowWindow(ImGuiViewport* Viewport);
+    static void StaticPlatformUpdateWindow(ImGuiViewport* Viewport);
+    static ImVec2 StaticPlatformGetWindowPos(ImGuiViewport* Viewport);
+    static void StaticPlatformSetWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
+    static ImVec2 StaticPlatformGetWindowSize(ImGuiViewport* Viewport);
+    static void StaticPlatformSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+    static void StaticPlatformSetWindowFocus(ImGuiViewport* Viewport);
+    static bool StaticPlatformGetWindowFocus(ImGuiViewport* Viewport);
+    static bool StaticPlatformGetWindowMinimized(ImGuiViewport* Viewport);
+    static void StaticPlatformSetWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
+    static void StaticPlatformSetWindowAlpha(ImGuiViewport* Viewport, float Alpha);
+    static float StaticPlatformGetWindowDpiScale(ImGuiViewport* Viewport);
+    static void StaticPlatformOnChangedViewport(ImGuiViewport*);
+
+    void UpdateMonitorInfo();
+
     ImGuiIO*                         PluginImGuiIO;
     ImGuiContext*                    PluginImGuiContext;
     TSharedPtr<FImGuiRenderer>       Renderer;
     TSharedPtr<FImGuiEventHandler>   EventHandler;
     TSharedPtr<FViewport>            MainViewport;
     TArray<TSharedPtr<IImGuiWidget>> Widgets;
+    FDelegateHandle                  OnMonitorConfigChangedDelegateHandle;
 };
 
 extern FImGuiPlugin* GImGuiPlugin;

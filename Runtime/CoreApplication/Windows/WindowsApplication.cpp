@@ -45,7 +45,6 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     , MessagesCS()
     , WindowsMessageListeners()
     , bIsTrackingMouse(false)
-    , bHasDisplayInfoChanged(true)
     , InstanceHandle(InInstanceHandle)
     , Icon(InIcon)
 {
@@ -266,16 +265,10 @@ TSharedRef<FGenericWindow> FWindowsApplication::GetForegroundWindow() const
     return GetWindowsWindowFromHWND(ForegroundWindow);
 }
 
-void FWindowsApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const
+void FWindowsApplication::QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const
 {
-    if (bHasDisplayInfoChanged)
-    {
-        ::EnumDisplayMonitors(nullptr, nullptr, FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(this));
-        DisplayInfo.MonitorInfos.Shrink();
-        bHasDisplayInfoChanged = false;
-    }
-
-    OutDisplayInfo = DisplayInfo;
+    ::EnumDisplayMonitors(nullptr, nullptr, FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(&OutDisplayInfo));
+    OutDisplayInfo.MonitorInfos.Shrink();
 }
 
 void FWindowsApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
@@ -360,11 +353,10 @@ LRESULT FWindowsApplication::StaticMessageProc(HWND Window, UINT Message, WPARAM
 
 BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, LPARAM Data)
 {
-    FWindowsApplication* InWindowsApplication = reinterpret_cast<FWindowsApplication*>(Data);
-    CHECK(InWindowsApplication != nullptr);
+    FDisplayInfo* DisplayInfo = reinterpret_cast<FDisplayInfo*>(Data);
+    CHECK(DisplayInfo != nullptr);
 
     MONITORINFOEX MonitorInfo;
-
     FMemory::Memzero(&MonitorInfo);
     MonitorInfo.cbSize = sizeof(MONITORINFOEX);
 
@@ -395,11 +387,11 @@ BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, L
 
     if (NewMonitorInfo.bIsPrimary)
     {
-        InWindowsApplication->DisplayInfo.PrimaryDisplayWidth  = NewMonitorInfo.MainSize.x;
-        InWindowsApplication->DisplayInfo.PrimaryDisplayHeight = NewMonitorInfo.MainSize.y;
+        DisplayInfo->PrimaryDisplayWidth  = NewMonitorInfo.MainSize.x;
+        DisplayInfo->PrimaryDisplayHeight = NewMonitorInfo.MainSize.y;
     }
 
-    InWindowsApplication->DisplayInfo.MonitorInfos.Add(NewMonitorInfo);
+    DisplayInfo->MonitorInfos.Add(NewMonitorInfo);
     return TRUE;
 }
 
@@ -659,8 +651,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
         case WM_DISPLAYCHANGE:
         {
-            bHasDisplayInfoChanged = true;
-            MessageHandler->OnMonitorChange();
+            MessageHandler->OnMonitorConfigurationChange();
             break;
         }
 

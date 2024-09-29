@@ -166,6 +166,7 @@ FApplicationInterface::FApplicationInterface()
     , InputHandlers()
     , Windows()
     , DisplayInfo()
+    , bIsMonitorInfoValid(false)
     , bIsTrackingMouse(false)
     , PressedKeys()
     , PressedMouseButtons()
@@ -292,7 +293,8 @@ void FApplicationInterface::UpdateInputDevices()
 
 void FApplicationInterface::UpdateMonitorInfo()
 {
-    PlatformApplication->GetDisplayInfo(DisplayInfo);
+    PlatformApplication->QueryDisplayInfo(DisplayInfo);
+    bIsMonitorInfoValid = true;
 }
 
 void FApplicationInterface::RegisterInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler)
@@ -802,9 +804,13 @@ bool FApplicationInterface::OnWindowClosed(const TSharedRef<FGenericWindow>& Pla
     return bResult;
 }
 
-bool FApplicationInterface::OnMonitorChange()
+bool FApplicationInterface::OnMonitorConfigurationChange()
 {
+    // First update the cached information...
     UpdateMonitorInfo();
+
+    // ... then notify listeners that the monitor configuration has changed
+    OnMonitorConfigChangedEvent.Broadcast();
     return true;
 }
 
@@ -983,6 +989,16 @@ void FApplicationInterface::FindWidgetsUnderCursor(const FIntVector2& CursorPosi
             CursorWindow->FindChildrenUnderCursor(CursorPosition, OutCursorPath);
         }
     }
+}
+
+void FApplicationInterface::GetDisplayInfo(FDisplayInfo& OutDisplayInfo)
+{
+    if (!bIsMonitorInfoValid)
+    {
+        UpdateMonitorInfo();
+    }
+
+    OutDisplayInfo = DisplayInfo;
 }
 
 TSharedPtr<FWindow> FApplicationInterface::GetFocusWindow() const

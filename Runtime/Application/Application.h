@@ -1,11 +1,14 @@
 #pragma once
 #include "Core/Containers/Set.h"
+#include "Core/Delegates/Event.h"
 #include "CoreApplication/Generic/ICursor.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 #include "Application/InputHandler.h"
 #include "Application/WidgetPath.h"
 #include "Application/Widgets/Window.h"
+
+DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplicationInterface);
 
 class APPLICATION_API FApplicationInterface : public FGenericApplicationMessageHandler, public TSharedFromThis<FApplicationInterface>
 {
@@ -51,7 +54,7 @@ public:
     virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override final;
     virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) override final;
     virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual bool OnMonitorChange() override final;
+    virtual bool OnMonitorConfigurationChange() override final;
 
     // Creates a platform window and adds the FWindow to the application's windows for event processing
     void InitializeWindow(const TSharedPtr<FWindow>& InWindow);
@@ -128,15 +131,23 @@ public:
     // Returns a path of widgets that is currently under the cursor
     void FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath);
 
+    // Retrieve cached display-info
+    void GetDisplayInfo(FDisplayInfo& OutDisplayInfo);
+
+    // Retrieve the monitor config changed event
+    FOnMonitorConfigChangedEvent& GetOnMonitorConfigChangedEvent() { return OnMonitorConfigChangedEvent; }
+
 private:
     TSet<EKeyboardKeyName::Type>      PressedKeys;
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
     FDisplayInfo                      DisplayInfo;
+    bool                              bIsMonitorInfoValid;
     bool                              bIsTrackingMouse;
     TArray<TSharedPtr<FWindow>>       Windows;
     FWidgetPath                       FocusPath;
     FWidgetPath                       TrackedWidgets;
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
+    FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
 
     static TSharedPtr<FApplicationInterface> ApplicationInstance;
     static TSharedPtr<FGenericApplication>   PlatformApplication;

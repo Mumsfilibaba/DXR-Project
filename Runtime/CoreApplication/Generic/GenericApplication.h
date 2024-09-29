@@ -96,7 +96,7 @@ public:
     virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const { return nullptr; }
-    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
+    virtual void QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 

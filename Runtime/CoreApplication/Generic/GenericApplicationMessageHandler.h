@@ -106,7 +106,7 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnMonitorChange()
+    virtual bool OnMonitorConfigurationChange()
     {
         return false;
     }
