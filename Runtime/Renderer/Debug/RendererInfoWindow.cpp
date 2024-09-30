@@ -12,13 +12,22 @@ static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
     true);
 
 FRendererInfoWindow::FRendererInfoWindow(FSceneRenderer* InRenderer)
-    : IImGuiWidget()
-    , Renderer(InRenderer)
+    : Renderer(InRenderer)
+    , ImGuiDelegateHandle()
 {
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRendererInfoWindow::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
 }
 
 FRendererInfoWindow::~FRendererInfoWindow()
 {
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
 }
 
 void FRendererInfoWindow::Draw()

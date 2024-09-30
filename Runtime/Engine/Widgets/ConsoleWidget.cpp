@@ -8,9 +8,20 @@
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
 FConsoleWidget::FConsoleWidget()
-    : IImGuiWidget()
-    , IOutputDevice()
+    : IOutputDevice()
     , InputHandler(MakeShared<FConsoleInputHandler>())
+    , ImGuiDelegateHandle()
+    , PopupSelectedText()
+    , Candidates()
+    , CandidatesIndex(-1)
+    , HistoryIndex(-1)
+    , Messages()
+    , MessagesCS()
+    , TextBuffer() 
+    , bUpdateCursorPosition(false)
+    , bIsActive(false)
+    , bCandidateSelectionChanged(false)
+    , bScrollDown(false)
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
@@ -21,6 +32,12 @@ FConsoleWidget::FConsoleWidget()
     {
         InputHandler->HandleKeyEventDelegate.BindRaw(this, &FConsoleWidget::HandleKeyPressedEvent);
         FApplicationInterface::Get().RegisterInputHandler(InputHandler);
+    }
+
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FConsoleWidget::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
     }
 
     TextBuffer.Fill(0);
@@ -36,6 +53,11 @@ FConsoleWidget::~FConsoleWidget()
     if (FApplicationInterface::IsInitialized())
     {
         FApplicationInterface::Get().UnregisterInputHandler(InputHandler);
+    }
+
+    if (IImguiPlugin::IsEnabled())
+    {
+         IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
     }
 }
 

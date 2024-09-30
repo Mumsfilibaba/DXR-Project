@@ -9,6 +9,25 @@ static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
+FGPUProfilerWindow::FGPUProfilerWindow()
+    : Samples()
+    , ImGuiDelegateHandle()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FGPUProfilerWindow::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
+}
+
+FGPUProfilerWindow::~FGPUProfilerWindow()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
+}
+
 void FGPUProfilerWindow::Draw()
 {
     if (CVarDrawGPUProfiler.GetValue())

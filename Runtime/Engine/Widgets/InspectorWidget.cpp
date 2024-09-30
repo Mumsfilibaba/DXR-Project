@@ -13,6 +13,47 @@ static TAutoConsoleVariable<bool> CVarDrawSceneInspector(
     false,
     EConsoleVariableFlags::Default);
 
+FInspectorWidget::FInspectorWidget()
+    : ImGuiDelegateHandle()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FInspectorWidget::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
+}
+
+FInspectorWidget::~FInspectorWidget()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
+}
+
+void FInspectorWidget::Draw()
+{
+    const uint32 WindowWidth  = GEngine->GetEngineWindow()->GetWidth();
+    const uint32 WindowHeight = GEngine->GetEngineWindow()->GetHeight();
+    const float Width  = FMath::Max(WindowWidth * 0.3f, 400.0f);
+    const float Height = WindowHeight * 0.7f;
+
+    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
+
+    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoSavedSettings;
+
+    bool DrawInspector = CVarDrawSceneInspector.GetValue();
+    if (ImGui::Begin("SceneInspector", &DrawInspector, Flags))
+    {
+        DrawSceneInfo();
+    }
+
+    ImGui::End();
+
+    CVarDrawSceneInspector->SetAsBool(DrawInspector, EConsoleVariableFlags::SetByCode);
+}
+
 void FInspectorWidget::DrawSceneInfo()
 {
     // constexpr float Width = 450.0f;
@@ -411,27 +452,4 @@ void FInspectorWidget::DrawSceneInfo()
             ImGui::PopID();
         }
     }
-}
-
-void FInspectorWidget::Draw()
-{
-    const uint32 WindowWidth  = GEngine->GetEngineWindow()->GetWidth();
-    const uint32 WindowHeight = GEngine->GetEngineWindow()->GetHeight();
-    const float Width  = FMath::Max(WindowWidth * 0.3f, 400.0f);
-    const float Height = WindowHeight * 0.7f;
-
-    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
-
-    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoSavedSettings;
-
-    bool DrawInspector = CVarDrawSceneInspector.GetValue();
-    if (ImGui::Begin("SceneInspector", &DrawInspector, Flags))
-    {
-        DrawSceneInfo();
-    }
-
-    ImGui::End();
-
-    CVarDrawSceneInspector->SetAsBool(DrawInspector, EConsoleVariableFlags::SetByCode);
 }

@@ -1,19 +1,19 @@
 #pragma once
 #include "MulticastDelegate.h"
 
-#define DECLARE_EVENT(NewEvent, OwnerType, ...)         \
-    class NewEvent : public TEvent<__VA_ARGS__>         \
-    {                                                   \
-        friend class OwnerType;                         \
-                                                        \
-        NewEvent(const NewEvent&) = default;            \
-        NewEvent(NewEvent&&) = default;                 \
-                                                        \
+#define DECLARE_EVENT(NewEvent, OwnerType, ...) \
+    class NewEvent : public TEvent<__VA_ARGS__> \
+    { \
+        friend class OwnerType; \
+      \
+        NewEvent(const NewEvent&) = default; \
+        NewEvent(NewEvent&&) = default; \
+      \
         NewEvent& operator=(const NewEvent&) = default; \
-        NewEvent& operator=(NewEvent&&) = default;      \
-                                                        \
-    public:                                             \
-        NewEvent() = default;                           \
+        NewEvent& operator=(NewEvent&&) = default; \
+      \
+    public: \
+        NewEvent() = default; \
     };
 
 template<typename... ArgTypes>

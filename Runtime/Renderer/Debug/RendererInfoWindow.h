@@ -3,15 +3,15 @@
 
 class FSceneRenderer;
 
-class FRendererInfoWindow : public IImGuiWidget
+class FRendererInfoWindow
 {
 public:
     FRendererInfoWindow(FSceneRenderer* InRenderer);
     ~FRendererInfoWindow();
      
-    /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
-    virtual void Draw() override final;
+    void Draw();
 
 private:
     FSceneRenderer* Renderer;
+    FDelegateHandle ImGuiDelegateHandle;
 };

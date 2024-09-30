@@ -45,7 +45,12 @@ FImGuiPlugin::FImGuiPlugin()
     : IImguiPlugin()
     , PluginImGuiIO(nullptr)
     , PluginImGuiContext(nullptr)
-    , Widgets()
+    , Renderer(nullptr)
+    , EventHandler(nullptr)
+    , MainWindow(nullptr)
+    , MainViewport(nullptr)
+    , DrawDelegates()
+    , OnMonitorConfigChangedDelegateHandle()
 {
 }
 
@@ -429,7 +434,6 @@ void FImGuiPlugin::Tick(float Delta)
             }
 
             UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
-            LOG_INFO("FImGuiPlugin::Tick CursorPos x:%d y:%d", CursorPos.x, CursorPos.y);
         }
     }
 
@@ -483,10 +487,7 @@ void FImGuiPlugin::Tick(float Delta)
     // Draw all ImGui widgets
     ImGui::NewFrame();
 
-    Widgets.Foreach([](TSharedPtr<IImGuiWidget>& Widget)
-    {
-        Widget->Draw();
-    });
+    DrawDelegates.Broadcast();
 
     ImGui::EndFrame();
 }
@@ -499,14 +500,14 @@ void FImGuiPlugin::Draw(FRHICommandList& CommandList)
     }
 }
 
-void FImGuiPlugin::AddWidget(const TSharedPtr<IImGuiWidget>& InWidget)
+FDelegateHandle FImGuiPlugin::AddDelegate(const FImGuiDelegate& Delegate)
 {
-    Widgets.AddUnique(InWidget);
+    return DrawDelegates.Add(Delegate);
 }
 
-void FImGuiPlugin::RemoveWidget(const TSharedPtr<IImGuiWidget>& InWidget)
+void FImGuiPlugin::RemoveDelegate(FDelegateHandle DelegateHandle)
 {
-    Widgets.Remove(InWidget);
+    DrawDelegates.Unbind(DelegateHandle);
 }
 
 void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewport>& InViewport)

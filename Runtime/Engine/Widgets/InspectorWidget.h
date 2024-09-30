@@ -2,13 +2,15 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FInspectorWidget : public IImGuiWidget
+class FInspectorWidget
 {
 public:
-    virtual void Draw() override final;
+    FInspectorWidget();
+    ~FInspectorWidget();
+
+    void Draw();
+    void DrawSceneInfo();
 
 private:
-
-    // Draws the scene info, should only be called from tick
-    void DrawSceneInfo();
+    FDelegateHandle ImGuiDelegateHandle;
 };

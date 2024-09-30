@@ -40,8 +40,8 @@ public:
     virtual void Tick(float Delta) override final;
     virtual void Draw(FRHICommandList& CommandList) override final;
 
-    virtual void AddWidget(const TSharedPtr<IImGuiWidget>& InWidget) override final;
-    virtual void RemoveWidget(const TSharedPtr<IImGuiWidget>& InWidget) override final;
+    virtual FDelegateHandle AddDelegate(const FImGuiDelegate& Delegate) override final;
+    virtual void RemoveDelegate(FDelegateHandle DelegateHandle) override final;
 
     virtual void SetMainViewport(const TSharedPtr<FViewport>& InViewport) override final;
 
@@ -67,14 +67,14 @@ private:
 
     void UpdateMonitorInfo();
 
-    ImGuiIO*                         PluginImGuiIO;
-    ImGuiContext*                    PluginImGuiContext;
-    TSharedPtr<FImGuiRenderer>       Renderer;
-    TSharedPtr<FImGuiEventHandler>   EventHandler;
-    TSharedPtr<FWindow>              MainWindow;
-    TSharedPtr<FViewport>            MainViewport;
-    TArray<TSharedPtr<IImGuiWidget>> Widgets;
-    FDelegateHandle                  OnMonitorConfigChangedDelegateHandle;
+    ImGuiIO*                       PluginImGuiIO;
+    ImGuiContext*                  PluginImGuiContext;
+    TSharedPtr<FImGuiRenderer>     Renderer;
+    TSharedPtr<FImGuiEventHandler> EventHandler;
+    TSharedPtr<FWindow>            MainWindow;
+    TSharedPtr<FViewport>          MainViewport;
+    FImGuiDrawMulticastDelegate    DrawDelegates;
+    FDelegateHandle                OnMonitorConfigChangedDelegateHandle;
 };
 
 extern FImGuiPlugin* GImGuiPlugin;

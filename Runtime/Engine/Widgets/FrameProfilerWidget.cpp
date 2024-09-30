@@ -17,6 +17,25 @@ static TAutoConsoleVariable<bool> CVarDrawFrameProfiler(
     false,
     EConsoleVariableFlags::Default);
 
+FFrameProfilerWidget::FFrameProfilerWidget()
+    : ThreadInfos()
+    , ImGuiDelegateHandle()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FFrameProfilerWidget::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
+}
+
+FFrameProfilerWidget::~FFrameProfilerWidget()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
+}
+
 void FFrameProfilerWidget::Draw()
 {
     if (CVarDrawFps.GetValue())

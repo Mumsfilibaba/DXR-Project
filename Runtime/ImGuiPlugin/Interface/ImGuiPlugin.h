@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Containers/SharedPtr.h"
+#include "Core/Delegates/MulticastDelegate.h"
 #include "RHI/RHIResources.h"
 
 struct ImGuiIO;
@@ -8,12 +9,8 @@ struct ImGuiContext;
 class FRHICommandList;
 class FViewport;
 
-struct IImGuiWidget
-{
-    virtual ~IImGuiWidget() = default;
-
-    virtual void Draw() = 0;
-};
+DECLARE_MULTICAST_DELEGATE(FImGuiDrawMulticastDelegate);
+typedef FImGuiDrawMulticastDelegate::FDelegate FImGuiDelegate;
 
 struct FImGuiTexture
 {
@@ -66,8 +63,8 @@ struct IImguiPlugin : public FModuleInterface
     virtual void Tick(float Delta) = 0;
     virtual void Draw(FRHICommandList& CommandList) = 0;
 
-    virtual void AddWidget(const TSharedPtr<IImGuiWidget>& InWidget) = 0;
-    virtual void RemoveWidget(const TSharedPtr<IImGuiWidget>& InWidget) = 0;
+    virtual FDelegateHandle AddDelegate(const FImGuiDelegate& Delegate) = 0;
+    virtual void RemoveDelegate(FDelegateHandle DelegateHandle) = 0;
 
     virtual void SetMainViewport(const TSharedPtr<FViewport>& InViewport) = 0;
 

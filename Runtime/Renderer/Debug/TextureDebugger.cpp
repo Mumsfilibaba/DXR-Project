@@ -9,13 +9,23 @@ static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
     false);
 
 FRenderTargetDebugWindow::FRenderTargetDebugWindow()
-    : IImGuiWidget()
+    : DebugTextures()
     , SelectedTextureIndex(0)
+    , ImGuiDelegateHandle()
 {
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRenderTargetDebugWindow::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
 }
 
 FRenderTargetDebugWindow::~FRenderTargetDebugWindow()
 {
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
 }
 
 void FRenderTargetDebugWindow::Draw()

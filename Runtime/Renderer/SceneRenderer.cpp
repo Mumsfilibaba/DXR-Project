@@ -211,13 +211,8 @@ FSceneRenderer::~FSceneRenderer()
 
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveWidget(TextureDebugger);
         TextureDebugger.Reset();
-
-        IImguiPlugin::Get().RemoveWidget(InfoWindow);
         InfoWindow.Reset();
-
-        IImguiPlugin::Get().RemoveWidget(GPUProfilerWindow);
         GPUProfilerWindow.Reset();
     }
 }
@@ -381,14 +376,9 @@ bool FSceneRenderer::Initialize()
     // Register Windows
     if (IImguiPlugin::IsEnabled())
     {
-        TextureDebugger = MakeShared<FRenderTargetDebugWindow>();
-        IImguiPlugin::Get().AddWidget(TextureDebugger);
-
-        InfoWindow = MakeShared<FRendererInfoWindow>(this);
-        IImguiPlugin::Get().AddWidget(InfoWindow);
-
+        TextureDebugger   = MakeShared<FRenderTargetDebugWindow>();
+        InfoWindow        = MakeShared<FRendererInfoWindow>(this);
         GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
-        IImguiPlugin::Get().AddWidget(GPUProfilerWindow);
     }
 
     return true;

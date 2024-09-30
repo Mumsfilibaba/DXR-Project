@@ -280,19 +280,13 @@ bool FEngine::Init()
         return false;
     }
 
-    // Create Widgets
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().SetMainViewport(EngineViewportWidget);
 
-        ProfilerWidget = MakeShared<FFrameProfilerWidget>();
-        IImguiPlugin::Get().AddWidget(ProfilerWidget);
-
-        ConsoleWidget = MakeShared<FConsoleWidget>();
-        IImguiPlugin::Get().AddWidget(ConsoleWidget);
-
+        ProfilerWidget  = MakeShared<FFrameProfilerWidget>();
+        ConsoleWidget   = MakeShared<FConsoleWidget>();
         InspectorWidget = MakeShared<FInspectorWidget>();
-        IImguiPlugin::Get().AddWidget(InspectorWidget);
     }
 
     return true;
@@ -331,14 +325,11 @@ void FEngine::Tick(float DeltaTime)
 
 void FEngine::Release()
 {
-    // Destroy ImGui-Widgets
     if (IImguiPlugin::IsEnabled())
     {
-        IImguiPlugin::Get().RemoveWidget(ProfilerWidget);
         ProfilerWidget.Reset();
-
-        IImguiPlugin::Get().RemoveWidget(ConsoleWidget);
         ConsoleWidget.Reset();
+        InspectorWidget.Reset();
 
         IImguiPlugin::Get().SetMainViewport(nullptr);
     }
