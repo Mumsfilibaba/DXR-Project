@@ -268,8 +268,16 @@ void FApplicationInterface::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWi
 {
     if (DestroyedWindow)
     {
+        TSharedRef<FGenericWindow> PlatformWindow = DestroyedWindow->GetPlatformWindow();
         DestroyedWindow->NotifyWindowDestroyed();
         Windows.Remove(DestroyedWindow);
+
+        if (PlatformWindow == PlatformApplication->GetCapture())
+        {
+            // Give capture back to the first window so that we'll still receive the MOUSEUP event.
+            TSharedPtr<FWindow> NextWindow = Windows[0];
+            PlatformApplication->SetCapture(NextWindow->GetPlatformWindow());
+        }
     }
 }
 

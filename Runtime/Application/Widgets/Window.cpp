@@ -91,6 +91,11 @@ void FWindow::SetOnWindowResized(const FOnWindowResized& InOnWindowResized)
 
 void FWindow::NotifyWindowDestroyed()
 {
+    if (PlatformWindow)
+    {
+        PlatformWindow->Destroy();
+    }
+
     OnWindowClosed.ExecuteIfBound();
 }
 

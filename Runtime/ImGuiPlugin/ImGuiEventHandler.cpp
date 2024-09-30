@@ -1,5 +1,6 @@
 #include "ImGuiPlugin.h"
 #include "ImGuiExtensions.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Application/Application.h"
 #include "Application/Input/InputMapper.h"
 
@@ -301,8 +302,8 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
         }
         else
         {
-            CursorPos.x = -TNumericLimits<float>::Max();
-            CursorPos.y = -TNumericLimits<float>::Max();
+            CursorPos.x = -TNumericLimits<int32>::Max();
+            CursorPos.y = -TNumericLimits<int32>::Max();
         }
     }
 
@@ -334,55 +335,4 @@ bool FImGuiEventHandler::OnMouseScrolled(const FCursorEvent& CursorEvent)
     }
 
     return false;
-}
-
-FResponse FImGuiEventHandler::OnWindowResize(void* PlatformHandle)
-{
-    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
-    {
-        Viewport->PlatformRequestResize = true;
-    }
-
-    return FResponse::Unhandled();
-}
-
-FResponse FImGuiEventHandler::OnWindowMoved(void* PlatformHandle) 
-{
-    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
-    {
-        Viewport->PlatformRequestMove = true;
-    }
-
-    return FResponse::Unhandled();
-}
-
-FResponse FImGuiEventHandler::OnFocusLost()
-{
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddFocusEvent(false);
-    return FResponse::Unhandled();
-}
-
-FResponse FImGuiEventHandler::OnFocusGained()
-{
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddFocusEvent(true);
-    return FResponse::Unhandled();
-}
-
-FResponse FImGuiEventHandler::OnMouseLeft()
-{
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddMousePosEvent(-TNumericLimits<float>::Max(), -TNumericLimits<float>::Max());
-    return FResponse::Unhandled();
-}
-
-FResponse FImGuiEventHandler::OnWindowClose(void* PlatformHandle)
-{
-    if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(PlatformHandle))
-    {
-        Viewport->PlatformRequestClose = true;
-    }
-
-    return FResponse::Unhandled();
 }

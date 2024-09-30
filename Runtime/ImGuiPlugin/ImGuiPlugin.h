@@ -19,13 +19,6 @@ struct FImGuiEventHandler : public FInputHandler
 
     bool ProcessKeyEvent(const FKeyEvent& KeyEvent);
     bool ProcessMouseButtonEvent(const FCursorEvent& CursorEvent);
-
-    FResponse OnMouseLeft();
-    FResponse OnWindowResize(void* PlatformHandle);
-    FResponse OnWindowMoved(void* PlatformHandle);
-    FResponse OnWindowClose(void* PlatformHandle);
-    FResponse OnFocusLost();
-    FResponse OnFocusGained();
 };
 
 class FImGuiPlugin : public IImguiPlugin
@@ -78,6 +71,7 @@ private:
     ImGuiContext*                    PluginImGuiContext;
     TSharedPtr<FImGuiRenderer>       Renderer;
     TSharedPtr<FImGuiEventHandler>   EventHandler;
+    TSharedPtr<FWindow>              MainWindow;
     TSharedPtr<FViewport>            MainViewport;
     TArray<TSharedPtr<IImGuiWidget>> Widgets;
     FDelegateHandle                  OnMonitorConfigChangedDelegateHandle;

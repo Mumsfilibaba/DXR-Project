@@ -554,37 +554,32 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* Draw
     CmdList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }
 
-void FImGuiRenderer::StaticCreateWindow(ImGuiViewport* InViewport)
+void FImGuiRenderer::StaticCreateWindow(ImGuiViewport* Viewport)
 {
-    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(InViewport->PlatformUserData);
+    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
-    if (TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow())
-    {
-        FRHIViewportInfo ViewportInfo;
-        ViewportInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
-        ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
-        ViewportInfo.Width        = static_cast<uint16>(InViewport->Size.x);
-        ViewportInfo.Height       = static_cast<uint16>(InViewport->Size.y);
+    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
+    CHECK(PlatformWindow != nullptr);
+    
+    FRHIViewportInfo ViewportInfo;
+    ViewportInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
+    ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
+    ViewportInfo.Width        = static_cast<uint16>(Viewport->Size.x);
+    ViewportInfo.Height       = static_cast<uint16>(Viewport->Size.y);
         
-        ViewportData->Viewport = RHICreateViewport(ViewportInfo);
-        if (ViewportData->Viewport)
-        {
-            InViewport->RendererUserData = InViewport->PlatformUserData;
-        }
+    ViewportData->Viewport = RHICreateViewport(ViewportInfo);
+    if (ViewportData->Viewport)
+    {
+        Viewport->RendererUserData = Viewport->PlatformUserData;
     }
 }
 
 void FImGuiRenderer::StaticDestroyWindow(ImGuiViewport* Viewport)
 {
-    // The main viewport (owned by the application) will always have RendererUserData == nullptr, since we didn't create the data for it.
-    if (FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData))
-    {
-        // GRHICommandExecutor.WaitForGPU();
-        // delete ViewportData;
-    }
-
-    // Viewport->RendererUserData = nullptr;
+    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
+    CHECK(ViewportData != nullptr);
+    Viewport->RendererUserData = nullptr;
 }
 
 void FImGuiRenderer::StaticSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
