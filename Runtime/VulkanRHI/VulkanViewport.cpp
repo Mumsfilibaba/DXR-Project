@@ -228,9 +228,7 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
         if (CommandContext->IsRecording())
         {
             // TODO: What happens if we are in a RenderPass?
-            CommandContext->FinishCommandBuffer(false);
-            CommandContext->GetCommandQueue().WaitForCompletion();
-            CommandContext->ObtainCommandBuffer();
+            CommandContext->SplitCommandBuffer(false, true);
         }
         else
         {

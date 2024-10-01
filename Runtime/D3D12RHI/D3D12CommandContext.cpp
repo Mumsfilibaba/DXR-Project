@@ -16,16 +16,16 @@
 #include "Core/Misc/FrameProfiler.h"
 #include <pix.h>
 
-FD3D12ResourceBarrierBatcher::FD3D12ResourceBarrierBatcher()
+FResourceBarrierBatcher::FResourceBarrierBatcher()
     : Barriers()
 {
 }
 
-FD3D12ResourceBarrierBatcher::~FD3D12ResourceBarrierBatcher()
+FResourceBarrierBatcher::~FResourceBarrierBatcher()
 {
 }
 
-void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
 {
     CHECK(Resource != nullptr);
 
@@ -65,7 +65,7 @@ void FD3D12ResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource
     }
 }
 
-void FD3D12ResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
+void FResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
 {
     CHECK(Resource != nullptr);
 
@@ -107,7 +107,6 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
 
 FD3D12CommandContext::~FD3D12CommandContext()
 {
-    // NOTE: Empty but defined for debug purposes
 }
 
 bool FD3D12CommandContext::Initialize()
@@ -166,8 +165,8 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
     if (NumCommands > 0)
     {
         // NOTE: This is fine since using a query requires a command to be issues
-        TimingQueryAllocator.PrepareForNewCommanBuffer();
-        OcclusionQueryAllocator.PrepareForNewCommanBuffer();
+        TimingQueryAllocator.PrepareForNewCommandList();
+        OcclusionQueryAllocator.PrepareForNewCommandList();
 
         // Ensure that all QueryHeaps are resolved
         for (FD3D12QueryHeap* QueryHeap : CommandPayload->QueryHeaps)
@@ -199,6 +198,34 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
     ContextState.ResetStateForNewCommandList();
 }
 
+void FD3D12CommandContext::SplitCommandList(bool bFlushAllocator, bool bWaitForQueue)
+{
+    FinishCommandList(bFlushAllocator);
+
+    if (bWaitForQueue)
+    {
+        FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
+        Queue->GetFenceManager().WaitForFence();
+    }
+    
+    ObtainCommandList();
+}
+
+void FD3D12CommandContext::SplitCommandListAndResetState(bool bFlushAllocator, bool bWaitForQueue)
+{
+    FinishCommandList(bFlushAllocator);
+
+    if (bWaitForQueue)
+    {
+        FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
+        Queue->GetFenceManager().WaitForFence();
+    }
+
+    ContextState.ResetState();
+
+    ObtainCommandList();
+}
+
 void FD3D12CommandContext::RHIStartContext()
 {
     // TODO: Remove lock, the command context itself should only be used from a single thread
@@ -213,12 +240,18 @@ void FD3D12CommandContext::RHIStartContext()
 
     // Retrieve a new CommandList
     ObtainCommandList();
+
+    // Starting recording commands
+    bIsRecording = true;
 }
 
 void FD3D12CommandContext::RHIFinishContext()
 {
     // Submit the CommandList
     FinishCommandList(true);
+
+    // Stopped recording commands
+    bIsRecording = false;
 
     // TODO: Remove lock, the command context itself should only be used from a single thread
     // Unlock from the thread that started the context
@@ -1367,10 +1400,11 @@ void FD3D12CommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Widt
 void FD3D12CommandContext::RHIClearState()
 {
     SCOPED_LOCK(CommandContextCS);
-
+ 
     if (CommandList)
     {
         FinishCommandList(true);
+        ObtainCommandList();
     }
 
     FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);
@@ -1389,6 +1423,7 @@ void FD3D12CommandContext::RHIFlush()
     if (CommandList)
     {
         FinishCommandList(true);
+        ObtainCommandList();
     }
 
     FD3D12Queue* Queue = GetDevice()->GetQueue(QueueType);

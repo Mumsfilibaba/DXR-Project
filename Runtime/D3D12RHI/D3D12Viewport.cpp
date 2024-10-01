@@ -140,7 +140,14 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
 {
     if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
     {
-        CommandContext->RHIClearState();
+        if (CommandContext->IsRecording())
+        {
+            CommandContext->SplitCommandListAndResetState(false, true);
+        }
+        else
+        {
+            CommandContext->RHIClearState();
+        }
 
         for (FD3D12TextureRef& Texture : BackBuffers)
         {

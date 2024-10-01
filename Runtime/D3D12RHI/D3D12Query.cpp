@@ -204,7 +204,7 @@ FD3D12QueryAllocation FD3D12QueryAllocator::Allocate(uint64* InResults)
     return QueryAllocation;
 }
 
-void FD3D12QueryAllocator::PrepareForNewCommanBuffer()
+void FD3D12QueryAllocator::PrepareForNewCommandList()
 {
     if (QueryHeap)
     {

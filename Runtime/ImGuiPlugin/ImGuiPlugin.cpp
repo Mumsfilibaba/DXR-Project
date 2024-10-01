@@ -342,26 +342,6 @@ bool FImGuiPlugin::Unload()
         FApplicationInterface::Get().GetOnMonitorConfigChangedEvent().Unbind(OnMonitorConfigChangedDelegateHandle);
     }
 
-    if (CVarImGuiEnableMultiViewports.GetValue())
-    {
-        ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
-        PlatformState.Platform_CreateWindow       = nullptr;
-        PlatformState.Platform_DestroyWindow      = nullptr;
-        PlatformState.Platform_ShowWindow         = nullptr;
-        PlatformState.Platform_SetWindowPos       = nullptr;
-        PlatformState.Platform_GetWindowPos       = nullptr;
-        PlatformState.Platform_SetWindowSize      = nullptr;
-        PlatformState.Platform_GetWindowSize      = nullptr;
-        PlatformState.Platform_SetWindowFocus     = nullptr;
-        PlatformState.Platform_GetWindowFocus     = nullptr;
-        PlatformState.Platform_GetWindowMinimized = nullptr;
-        PlatformState.Platform_SetWindowTitle     = nullptr;
-        PlatformState.Platform_SetWindowAlpha     = nullptr;
-        PlatformState.Platform_UpdateWindow       = nullptr;
-        PlatformState.Platform_GetWindowDpiScale  = nullptr;
-        PlatformState.Platform_OnChangedViewport  = nullptr;
-    }
-
     ImGuiIO& UIState = ImGui::GetIO();
     UIState.BackendPlatformUserData = nullptr;
 

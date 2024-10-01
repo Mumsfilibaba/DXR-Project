@@ -19,12 +19,12 @@ FMesh::FMesh()
 
 bool FMesh::Init(const FMeshData& Data)
 {
-    const bool bRTOn = GRHISupportsRayTracing;
+    const bool bEnableRayTracing = false; //GRHISupportsRayTracing ;
 
     VertexCount = static_cast<uint32>(Data.Vertices.Size());
     IndexCount  = static_cast<uint32>(Data.Indices.Size());
 
-    const EBufferUsageFlags BufferFlags = bRTOn ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
+    const EBufferUsageFlags BufferFlags = bEnableRayTracing ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
 
     FRHIBufferInfo VBInfo(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
     VertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, Data.Vertices.Data());
@@ -82,7 +82,7 @@ bool FMesh::Init(const FMeshData& Data)
     // Initial data
     const void* InitialIndicies = nullptr;
 
-    IndexFormat = IndexCount < TNumericLimits<uint16>::Max() && !bRTOn ? EIndexFormat::uint16 : EIndexFormat::uint32;
+    IndexFormat = IndexCount < TNumericLimits<uint16>::Max() && !bEnableRayTracing ? EIndexFormat::uint16 : EIndexFormat::uint32;
     if (IndexFormat == EIndexFormat::uint16)
     {
         NewIndicies.Reserve(Data.Indices.Size());
@@ -110,7 +110,7 @@ bool FMesh::Init(const FMeshData& Data)
         IndexBuffer->SetDebugName("IndexBuffer");
     }
 
-    if (bRTOn)
+    if (bEnableRayTracing)
     {
         FRHIRayTracingGeometryDesc GeometryInitializer(VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::None);
         RTGeometry = RHICreateRayTracingGeometry(GeometryInitializer);

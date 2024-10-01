@@ -117,6 +117,7 @@ public:
     bool Initialize();
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool);
+    void SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue);
 
     FVulkanQueue& GetCommandQueue() const
     {
@@ -160,7 +161,7 @@ private:
     FVulkanCommandContextState ContextState;
 
     // Keeps track of the recording state of the context, i.e if RHIStartContext has been called
-    bool bIsRecording;
+    bool bIsRecording : 1;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection CommandContextCS;

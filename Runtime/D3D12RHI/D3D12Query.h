@@ -98,7 +98,7 @@ public:
     ~FD3D12QueryAllocator();
 
     FD3D12QueryAllocation Allocate(uint64* InResults);
-    void PrepareForNewCommanBuffer();
+    void PrepareForNewCommandList();
 
 private:
     FD3D12CommandContext&   Context;

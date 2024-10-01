@@ -214,6 +214,18 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
     ContextState.ResetStateForNewCommandBuffer();
 }
 
+void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue)
+{
+    FinishCommandBuffer(bFlushPool);
+    
+    if (bWaitForQueue)
+    {
+        GetCommandQueue().WaitForCompletion();
+    }
+    
+    ObtainCommandBuffer();
+}
+
 void FVulkanCommandContext::RHIStartContext()
 {
     // TODO: Remove lock, the command context itself should only be used from a single thread
@@ -1412,11 +1424,12 @@ void FVulkanCommandContext::RHIClearState()
     if (CommandBuffer)
     {
         FinishCommandBuffer(true);
+        ObtainCommandBuffer();
     }
     
     Queue.WaitForCompletion();
     
-    // After work is finished we can clear the state
+    // After we know that all work on the Queue is finished we can clear the state
     ContextState.ResetState();
 }
 
@@ -1427,6 +1440,7 @@ void FVulkanCommandContext::RHIFlush()
     if (CommandBuffer)
     {
         FinishCommandBuffer(true);
+        ObtainCommandBuffer();
     }
 
     Queue.WaitForCompletion();
