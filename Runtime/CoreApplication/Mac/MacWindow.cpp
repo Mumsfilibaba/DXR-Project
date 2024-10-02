@@ -44,15 +44,15 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     if (InInitializer.Style != EWindowStyleFlags::None)
     {
         WindowStyle = NSWindowStyleMaskTitled;
-        if (InInitializer.Style.IsClosable())
+        if ((InInitializer.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskClosable;
         }
-        if (InInitializer.Style.IsResizeable())
+        if ((InInitializer.Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskResizable;
         }
-        if (InInitializer.Style.IsMinimizable())
+        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskMiniaturizable;
         }
@@ -105,25 +105,25 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         }
         
         
-        const NSWindowLevel WindowLevel = InInitializer.Style.IsTopMost() ? NSFloatingWindowLevel : NSNormalWindowLevel;
+        const NSWindowLevel WindowLevel = (InInitializer.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [Window setLevel:WindowLevel];
         
-        if (InInitializer.Style.IsTitled())
+        if ((InInitializer.Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
             Window.title = InInitializer.Title.GetNSString();
         }
         
-        if (!InInitializer.Style.IsMinimizable())
+        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) == EWindowStyleFlags::None)
         {
             [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
         }
-        if (!InInitializer.Style.IsMaximizable())
+        if ((InInitializer.Style & EWindowStyleFlags::Maximizable) == EWindowStyleFlags::None)
         {
             [[Window standardWindowButton:NSWindowZoomButton] setEnabled:NO];
         }
         
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-        if (InInitializer.Style.IsResizeable())
+        if ((InInitializer.Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
         {
             Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
         }
@@ -248,7 +248,7 @@ void FMacWindow::Restore()
 
 void FMacWindow::ToggleFullscreen()
 {
-    if (StyleParams.IsResizeable())
+    if ((StyleParams & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
     {
         ExecuteOnMainThread(^
         {
@@ -509,23 +509,23 @@ void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
     }
 }
 
-void FMacWindow::SetStyle(FWindowStyle InStyle)
+void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
 {
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
 
-        const NSWindowLevel WindowLevel = InStyle.IsTopMost() ? NSFloatingWindowLevel : NSNormalWindowLevel;
+        const NSWindowLevel WindowLevel = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [Window setLevel:WindowLevel];
         
-        const BOOL bMinimizable = InStyle.IsMinimizable() ? YES : NO;
+        const BOOL bMinimizable = (InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None ? YES : NO;
         [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:bMinimizable];
 
-        const BOOL bMaximizable = InStyle.IsMaximizable() ? YES : NO;
+        const BOOL bMaximizable = (InStyle & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None ? YES : NO;
         [[Window standardWindowButton:NSWindowZoomButton] setEnabled:bMaximizable];
         
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-        if (InStyle.IsResizeable())
+        if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
         {
             Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
         }

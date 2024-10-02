@@ -1,6 +1,6 @@
 #pragma once
 #include "BitCast.h"
-#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
 constexpr uint64 GetHashForType(bool bValue)
 {

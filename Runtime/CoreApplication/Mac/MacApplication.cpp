@@ -167,11 +167,9 @@ TSharedPtr<FMacApplication> FMacApplication::CreateMacApplication()
 
 FMacApplication::FMacApplication()
     : FGenericApplication(MakeShared<FMacCursor>())
-    , DisplayInfo()
     , Observer(nullptr)
     , InputDevice(FGCInputDevice::CreateGCInputDevice())
     , LastPressedButton(EMouseButtonName::Unknown)
-    , bHasDisplayInfoChanged(true)
     , Windows()
     , WindowsCS()
     , ClosedWindows()
@@ -532,7 +530,6 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
         }
         else if (NotificationName == NSApplicationDidChangeScreenParametersNotification)
         {
-            bHasDisplayInfoChanged = true;
             MessageHandler->OnMonitorConfigurationChange();
         }
     }
