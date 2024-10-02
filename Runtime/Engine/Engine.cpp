@@ -100,7 +100,7 @@ bool FEngine::CreateEngineWindow()
     EngineWindow = CreateWidget<FWindow>(WindowInitializer);
 
     // Initialize and show the game-window
-    FApplicationInterface::Get().InitializeWindow(EngineWindow);
+    FApplicationInterface::Get().CreateWindow(EngineWindow);
     return true;
 }
 

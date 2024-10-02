@@ -57,7 +57,7 @@ public:
     virtual bool OnMonitorConfigurationChange() override final;
 
     // Creates a platform window and adds the FWindow to the application's windows for event processing
-    void InitializeWindow(const TSharedPtr<FWindow>& InWindow);
+    void CreateWindow(const TSharedPtr<FWindow>& InWindow);
 
     // Destroys a window, invokes any callbacks belonging to the window and removes it from the application's list of windows
     void DestroyWindow(const TSharedPtr<FWindow>& InWindow);

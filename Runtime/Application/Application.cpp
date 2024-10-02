@@ -211,7 +211,7 @@ void FApplicationInterface::Destroy()
     }
 }
 
-void FApplicationInterface::InitializeWindow(const TSharedPtr<FWindow>& InWindow)
+void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {

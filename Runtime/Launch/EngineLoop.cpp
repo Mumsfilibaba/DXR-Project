@@ -312,6 +312,12 @@ void FEngineLoop::Release()
         GEngine = nullptr;
     }
 
+    // Unload ModuleManager
+    if (IImguiPlugin::IsEnabled())
+    {
+        FModuleManager::Get().UnloadModule("ImGuiPlugin");
+    }
+
     // Release all RHI resources
     FTextureFactory::Release();
 

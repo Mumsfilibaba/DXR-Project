@@ -591,7 +591,7 @@ void FImGuiPlugin::StaticPlatformCreateWindow(ImGuiViewport* Viewport)
     ViewportData->Window = CreateWidget<FWindow>(WindowInitializer);
     CHECK(ViewportData->Window != nullptr);
 
-    FApplicationInterface::Get().InitializeWindow(ViewportData->Window);
+    FApplicationInterface::Get().CreateWindow(ViewportData->Window);
 
     Viewport->PlatformHandle        = ViewportData->Window.Get();
     Viewport->PlatformHandleRaw     = ViewportData->Window->GetPlatformWindow()->GetPlatformHandle();
