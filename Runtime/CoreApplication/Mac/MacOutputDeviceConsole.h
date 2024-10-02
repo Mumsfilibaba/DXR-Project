@@ -24,9 +24,9 @@ private:
     void DestroyConsole();
     void DestroyResources();
     NSAttributedString* CreatePrintableString(const FString& String);
-    void Internal_SetConsoleColor(EConsoleColor Color);
-    void MainThread_AppendStringAndScroll(NSAttributedString* AttributedString);
-    int32 MainThread_GetLineCount() const;
+    void InternalSetConsoleColor(EConsoleColor Color);
+    void MainThreadAppendStringAndScroll(NSAttributedString* AttributedString);
+    int32 MainThreadGetLineCount() const;
         
     FCocoaConsoleWindow*     WindowHandle;
     mutable FCriticalSection WindowCS;

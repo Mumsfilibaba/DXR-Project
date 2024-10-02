@@ -60,7 +60,7 @@ void FMacCursor::SetCursor(ECursor Cursor)
         break;
     }
     
-    if (SelectedCursor)
+    if (!SelectedCursor)
     {
         SelectedCursor = [NSCursor arrowCursor];
     }

@@ -378,8 +378,6 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 
 void FWindowsWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
-    CHECK(Window != 0);
-
     if (IsValid())
     {
         POINT Position = { 0, 0 };

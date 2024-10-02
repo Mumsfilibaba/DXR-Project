@@ -7,15 +7,13 @@
 #include "Core/Mac/MacRunLoop.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-static CGFloat CocoaTransformY(CGFloat PosY)
-{
-    const CGRect DisplayBounds = CGDisplayBounds(CGMainDisplayID());
-    return DisplayBounds.size.height - PosY - 1;
-}
-
 static void ConvertNSRect(NSScreen* Screen, NSRect* Rect)
 {
-    // NOTE: NSScreen is a Objective-C object, which is why we can use '.' on the pointer
+    if (!Screen)
+    {
+        Screen = [NSScreen mainScreen];
+    }
+
     Rect->origin.y = Screen.frame.size.height - Rect->origin.y - Rect->size.height;
 }
 
@@ -66,53 +64,40 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-        
+
         CGFloat Width     = static_cast<CGFloat>(InInitializer.Width);
         CGFloat Height    = static_cast<CGFloat>(InInitializer.Height);
         CGFloat PositionX = static_cast<CGFloat>(InInitializer.Position.x);
         CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.y);
         
-        // Calculate the max size of the screen, then we clamp the size to this largest size
         NSScreen* MainScreen = [NSScreen mainScreen];
+        NSRect WindowRect = NSMakeRect(PositionX, PositionY, Width, Height);
+        ConvertNSRect(MainScreen, &WindowRect);
+
         if (MainScreen)
         {
-            NSRect ScreenRect = [MainScreen visibleFrame];
-            
-            const CGFloat MaxWidth      = ScreenRect.size.width;
-            const CGFloat MaxHeight     = ScreenRect.size.height;
-            const CGFloat ScreenOriginX = ScreenRect.origin.x;
-            const CGFloat ScreenOriginY = ScreenRect.origin.y;
-            
-            Width  = FMath::Min(Width, MaxWidth);
-            Height = FMath::Min(Height, MaxHeight);
-            
-            PositionX = FMath::Clamp(ScreenOriginX, ScreenOriginX + MaxWidth, PositionX);
-            PositionY = FMath::Clamp(ScreenOriginY, ScreenOriginY + MaxHeight, PositionY);
-        }
-        else
-        {
-            PositionY = CocoaTransformY(PositionY + Height - 1);
+            const NSRect ScreenRect = [MainScreen visibleFrame];
+            WindowRect.size.width  = FMath::Clamp(CGFloat(0), ScreenRect.size.width, WindowRect.size.width);
+            WindowRect.size.height = FMath::Clamp(CGFloat(0), ScreenRect.size.height, WindowRect.size.height);
+            WindowRect.origin.x    = FMath::Clamp(ScreenRect.origin.x, ScreenRect.origin.x + ScreenRect.size.width, WindowRect.origin.x);
+            WindowRect.origin.y    = FMath::Clamp(ScreenRect.origin.y, ScreenRect.origin.y + ScreenRect.size.height, WindowRect.origin.y);
         }
 
-        
-        // Create the actual window
-        const NSRect WindowRect = NSMakeRect(PositionX, PositionY, Width, Height);
         Window = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
         if (!Window)
         {
             LOG_ERROR("[FMacWindow]: Failed to create NSWindow");
             return;
         }
-        
-        
+
         const NSWindowLevel WindowLevel = (InInitializer.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [Window setLevel:WindowLevel];
-        
+
         if ((InInitializer.Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
             Window.title = InInitializer.Title.GetNSString();
         }
-        
+
         if ((InInitializer.Style & EWindowStyleFlags::Minimizable) == EWindowStyleFlags::None)
         {
             [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
@@ -121,7 +106,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         {
             [[Window standardWindowButton:NSWindowZoomButton] setEnabled:NO];
         }
-        
+
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
         if ((InInitializer.Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
         {
@@ -131,16 +116,12 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         {
             Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
         }
-        
+
         Window.collectionBehavior = Behavior;
-        
-        // Create a window-view
+
         WindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
-        
-        // Set a default background
+
         NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
-        
-        // Setting this to no disables any notifications about the window closing. Not documented.
         [Window setReleasedWhenClosed:NO];
         [Window setAcceptsMouseMovedEvents:YES];
         [Window setRestorable:NO];
@@ -149,18 +130,15 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         [Window setBackgroundColor:BackGroundColor];
         [Window setContentView:WindowView];
         [Window makeFirstResponder:WindowView];
-        
+
         [NSApp addWindowsItem:Window title:InInitializer.Title.GetNSString() filename:NO];
-        
-        // Disable tabbing mode
+
         if ([Window respondsToSelector:@selector(setTabbingMode:)])
         {
             [Window setTabbingMode:NSWindowTabbingModeDisallowed];
         }
-        
-        // Set styleflags
-        StyleParams = InInitializer.Style;
 
+        StyleParams = InInitializer.Style;
         bResult = true;
     }, NSDefaultRunLoopMode, true);
 
@@ -361,11 +339,11 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
     {
         SCOPED_AUTORELEASE_POOL();
 
-        NSRect Frame      = Window.frame;
-        NSRect WindowRect = NSMakeRect(x, y, Frame.size.width, Frame.size.height);
-        ConvertNSRect(Window.screen, &WindowRect);
-        [Window setFrameOrigin:WindowRect.origin];
-
+        NSRect WindowFrame = Window.frame;
+        WindowFrame = NSMakeRect(x, y, WindowFrame.size.width, WindowFrame.size.height);
+        ConvertNSRect(Window.screen, &WindowFrame);
+        [Window setFrameOrigin:WindowFrame.origin];
+        
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
@@ -386,18 +364,23 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-
-        NSRect Frame = Window.frame;
-        Frame.size.width  = Shape.Width;
-        Frame.size.height = Shape.Height;
-        [Window setFrame: Frame display: YES animate: YES];
+       
+        const NSRect ContentRect  = NSMakeRect(0, 0, Shape.Width, Shape.Height);
+        const NSRect CurrentFrame = Window.frame;
         
+        NSRect NewFrame = [Window frameRectForContentRect:ContentRect];
         if (bMove)
         {
-            NSRect WindowRect = NSMakeRect(Shape.Position.x, Shape.Position.y, Frame.size.width, Frame.size.height);
-            ConvertNSRect(Window.screen, &WindowRect);
-            [Window setFrameOrigin:WindowRect.origin];
+            NewFrame.origin.x = Shape.Position.x;
+            NewFrame.origin.y = Shape.Position.y;
+            ConvertNSRect(Window.screen, &NewFrame);
         }
+        else
+        {
+            NewFrame.origin = CurrentFrame.origin;
+        }
+
+        [Window setFrame: NewFrame display: YES animate: YES];
         
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -409,13 +392,15 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
+        
         ContentRect = [Window contentRectForFrameRect:Window.frame];
+        ConvertNSRect(Window.screen, &ContentRect);
     }, NSDefaultRunLoopMode, true);
 
     OutWindowShape.Width      = ContentRect.size.width;
     OutWindowShape.Height     = ContentRect.size.height;
     OutWindowShape.Position.x = ContentRect.origin.x;
-    OutWindowShape.Position.y = CocoaTransformY(ContentRect.origin.y + ContentRect.size.height - 1);
+    OutWindowShape.Position.y = ContentRect.origin.y;
 }
 
 uint32 FMacWindow::GetWidth() const
@@ -425,7 +410,7 @@ uint32 FMacWindow::GetWidth() const
     {
         SCOPED_AUTORELEASE_POOL();
 
-        const NSRect ContentRect = Window.contentView.frame;
+        const NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
         Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
 
@@ -439,7 +424,7 @@ uint32 FMacWindow::GetHeight() const
     {
         SCOPED_AUTORELEASE_POOL();
 
-        const NSRect ContentRect = Window.contentView.frame;
+        const NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
         Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
 

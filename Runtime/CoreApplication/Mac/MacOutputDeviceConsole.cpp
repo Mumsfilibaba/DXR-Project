@@ -40,7 +40,7 @@ void FMacOutputDeviceConsole::CreateConsole()
         }
         
         // Init the textcolor (Note: This needs to be made before the attributes array is created)
-        Internal_SetConsoleColor(EConsoleColor::White);
+        InternalSetConsoleColor(EConsoleColor::White);
         
         // Init the backgroundcolor
         if (!BackGroundColor)
@@ -204,7 +204,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
         {
             SCOPED_AUTORELEASE_POOL();
 
-            MainThread_AppendStringAndScroll(AttributedString);
+            MainThreadAppendStringAndScroll(AttributedString);
             [AttributedString release];
         }, NSDefaultRunLoopMode, false);
 
@@ -242,7 +242,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
         }
         
         // Set the requested text color
-        Internal_SetConsoleColor(NewColor);
+        InternalSetConsoleColor(NewColor);
 
         NSAttributedString* AttributedString = CreatePrintableString(Message);
         [AttributedString retain];
@@ -251,12 +251,12 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
         {
             SCOPED_AUTORELEASE_POOL();
 
-            MainThread_AppendStringAndScroll(AttributedString);
+            MainThreadAppendStringAndScroll(AttributedString);
             [AttributedString release];
         }, NSDefaultRunLoopMode, false);
 
         // Return the color the original
-        Internal_SetConsoleColor(EConsoleColor::White);
+        InternalSetConsoleColor(EConsoleColor::White);
 
         if(!MacApplication)
         {
@@ -313,10 +313,10 @@ void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
 void FMacOutputDeviceConsole::SetTextColor(EConsoleColor Color)
 {
     SCOPED_LOCK(WindowCS);
-    Internal_SetConsoleColor(Color);
+    InternalSetConsoleColor(Color);
 }
 
-void FMacOutputDeviceConsole::Internal_SetConsoleColor(EConsoleColor Color)
+void FMacOutputDeviceConsole::InternalSetConsoleColor(EConsoleColor Color)
 {
     SCOPED_AUTORELEASE_POOL();
             
@@ -369,7 +369,7 @@ NSAttributedString* FMacOutputDeviceConsole::CreatePrintableString(const FString
     return AttributedString;
 }
 
-int32 FMacOutputDeviceConsole::MainThread_GetLineCount() const
+int32 FMacOutputDeviceConsole::MainThreadGetLineCount() const
 {
     CHECK(WindowHandle != nil);
     
@@ -390,7 +390,7 @@ void FMacOutputDeviceConsole::OnWindowDidClose()
     DestroyResources();
 }
 
-void FMacOutputDeviceConsole::MainThread_AppendStringAndScroll(NSAttributedString* AttributedString)
+void FMacOutputDeviceConsole::MainThreadAppendStringAndScroll(NSAttributedString* AttributedString)
 {
     CHECK(WindowHandle != nil);
     
@@ -403,7 +403,7 @@ void FMacOutputDeviceConsole::MainThread_AppendStringAndScroll(NSAttributedStrin
     [Storage beginEditing];
     
     // Remove lines
-    NSUInteger LineCount  = MainThread_GetLineCount();
+    NSUInteger LineCount  = MainThreadGetLineCount();
     NSString*  TextString = TextView.string;
     if (LineCount >= MaxLineCount)
     {

@@ -119,6 +119,14 @@ static uint32 GetDPIFromNSScreen(NSScreen* Screen)
     return RoundedDPI;
 }
 
+static NSPoint GetCorrectedMouseLocation()
+{
+    NSScreen* Screen = [NSScreen mainScreen];
+    NSPoint MouseLocation = [NSEvent mouseLocation];
+    MouseLocation.y = Screen.frame.size.height - MouseLocation.y;
+    return MouseLocation;
+};
+
 @interface FMacApplicationObserver : NSObject
 
 - (void)onApplicationBecomeActive:(NSNotification*)InNotification;
@@ -378,6 +386,7 @@ void FMacApplication::QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const
         NewMonitorInfo.bIsPrimary         = [NSScreen mainScreen] == Screen;
         NewMonitorInfo.DisplayDPI         = GetDPIFromNSScreen(Screen);
         NewMonitorInfo.DisplayScaling     = Screen.backingScaleFactor;
+        
         // Convert the backingScaleFactor to a value similar to the one in windows that can be retreived via the 'GetScaleFactorForMonitor' function
         NewMonitorInfo.DisplayScaleFactor = static_cast<uint32>(FMath::Round(NewMonitorInfo.DisplayScaling * 100.0f));
 
@@ -535,13 +544,6 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
     }
     else if (Event.Event)
     {
-        const auto GetCorrectedMouseLocation = []()
-        {
-            const CGRect  DisplayBounds = CGDisplayBounds(CGMainDisplayID());
-            const NSPoint MouseLocation = [NSEvent mouseLocation];
-            return CGPointMake(MouseLocation.x, DisplayBounds.size.height - MouseLocation.y);
-        };
-        
         NSEvent* EventObject = Event.Event;
         switch(EventObject.type)
         {
