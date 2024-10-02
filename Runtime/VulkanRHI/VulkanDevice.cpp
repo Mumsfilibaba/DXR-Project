@@ -10,18 +10,18 @@
 ////////////////////////////////////////////////////
 // Global variables that describe different features
 
-VULKANRHI_API bool GVulkanForceBinding = false;
-VULKANRHI_API bool GVulkanForceDedicatedAllocations = false;
-VULKANRHI_API bool GVulkanForceDedicatedImageAllocations = GVulkanForceDedicatedAllocations || true;
+VULKANRHI_API bool GVulkanForceBinding                    = false;
+VULKANRHI_API bool GVulkanForceDedicatedAllocations       = false;
+VULKANRHI_API bool GVulkanForceDedicatedImageAllocations  = GVulkanForceDedicatedAllocations || true;
 VULKANRHI_API bool GVulkanForceDedicatedBufferAllocations = GVulkanForceDedicatedAllocations || false;
-VULKANRHI_API bool GVulkanAllowNullDescriptors = true;
-VULKANRHI_API bool GVulkanAllowGeometryShaders = false;
+VULKANRHI_API bool GVulkanAllowNullDescriptors            = true;
+VULKANRHI_API bool GVulkanAllowGeometryShaders            = false;
 
-VULKANRHI_API bool GVulkanSupportsDepthClip = false;
+VULKANRHI_API bool GVulkanSupportsDepthClip                 = false;
 VULKANRHI_API bool GVulkanSupportsConservativeRasterization = false;
-VULKANRHI_API bool GVulkanSupportsPipelineCacheControl = false;
-VULKANRHI_API bool GVulkanSupportsAccelerationStructures = false;
-VULKANRHI_API bool GVulkanSupportsMultiviews = false;
+VULKANRHI_API bool GVulkanSupportsPipelineCacheControl      = false;
+VULKANRHI_API bool GVulkanSupportsAccelerationStructures    = false;
+VULKANRHI_API bool GVulkanSupportsMultiviews                = false;
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
 // Helper
@@ -216,7 +216,10 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     // GPU selection
     TArray<VkPhysicalDevice> AcceptedAdapers;
     AcceptedAdapers.Reserve(Adapters.Size());
-    
+
+    TArray<VkPhysicalDevice> DiscreteAdapers;
+    DiscreteAdapers.Reserve(Adapters.Size());
+
     for (VkPhysicalDevice CurrentAdapter : Adapters)
     {
         VkPhysicalDeviceProperties AdapterProperties;
@@ -284,28 +287,36 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
         }
 
         // TODO: At this point we now the device is acceptable, now check for the most optional
-
         if (bIsAllExtensionsSupported)
         {
             AcceptedAdapers.Add(CurrentAdapter);
             if (AdapterProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
             {
-                PhysicalDevice = CurrentAdapter;
+                DiscreteAdapers.Add(CurrentAdapter);
             }
         }
     }
 
-    // If no discrete adapter is found, select the first accepted one
-    if (!VULKAN_CHECK_HANDLE(PhysicalDevice) && !AcceptedAdapers.IsEmpty())
+    // Select the first discrete-adapter we found
+    if (!DiscreteAdapers.IsEmpty())
     {
-        PhysicalDevice = AcceptedAdapers[0];
+        PhysicalDevice = DiscreteAdapers[0];
     }
     
-    // If there still is no physical-device, then we failed
-    if (!VULKAN_CHECK_HANDLE(PhysicalDevice))
+    // If no discrete adapter is found...
+    if (PhysicalDevice == VK_NULL_HANDLE)
     {
-        VULKAN_ERROR("Failed to find a suitable PhysicalDevice");
-        return false;
+        if (AcceptedAdapers.IsEmpty())
+        {
+            // ... we failed to find a suitable adapter
+            VULKAN_ERROR("Failed to find a suitable PhysicalDevice");
+            return false;
+        }
+        else
+        {
+            // ... select the first accepted one
+            PhysicalDevice = AcceptedAdapers[0];
+        }
     }
     
     // Retrieve and cache information about the physical-device

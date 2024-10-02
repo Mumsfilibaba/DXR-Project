@@ -101,7 +101,6 @@ bool FEngine::CreateEngineWindow()
 
     // Initialize and show the game-window
     FApplicationInterface::Get().CreateWindow(EngineWindow);
-    return true;
 }
 
 bool FEngine::CreateEngineViewport()
