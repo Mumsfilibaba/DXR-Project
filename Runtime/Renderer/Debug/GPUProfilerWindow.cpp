@@ -1,17 +1,34 @@
 #include "GPUProfilerWindow.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Application/WidgetUtilities.h"
-#include "Application/Application.h"
-
-#include <imgui.h>
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Renderer.DrawGPUProfiler",
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
-void FGPUProfilerWindow::Paint()
+FGPUProfilerWindow::FGPUProfilerWindow()
+    : Samples()
+    , ImGuiDelegateHandle()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FGPUProfilerWindow::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
+}
+
+FGPUProfilerWindow::~FGPUProfilerWindow()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
+}
+
+void FGPUProfilerWindow::Draw()
 {
     if (CVarDrawGPUProfiler.GetValue())
     {
@@ -53,7 +70,35 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 
         ImGui::NewLine();
 
-        ImGui::PlotHistogram("", GPUFrameTime.Samples.Data(), GPUFrameTime.SampleCount, GPUFrameTime.CurrentSample, nullptr, 0.0f, ImGui_GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
+        const auto GetMaxLimit = [](float Num)
+        {
+            if (Num < 0.01f)
+            {
+                return 0.01f;
+            }
+            else if (Num < 0.1f)
+            {
+                return 0.1f;
+            }
+            else if (Num < 1.0f)
+            {
+                return 1.0f;
+            }
+            else if (Num < 10.0f)
+            {
+                return 10.0f;
+            }
+            else if (Num < 100.0f)
+            {
+                return 100.0f;
+            }
+            else
+            {
+                return 1000.0f;
+            }
+        };
+
+        ImGui::PlotHistogram("", GPUFrameTime.Samples.Data(), GPUFrameTime.SampleCount, GPUFrameTime.CurrentSample, nullptr, 0.0f, GetMaxLimit(Avg), ImVec2(Width * 0.9825f, 80.0f));
 
         ImGui::EndTable();
     }
@@ -151,7 +196,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
 void FGPUProfilerWindow::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
-    const ImVec2 DisplaySize = FImGui::GetDisplaySize();
+    const ImVec2 DisplaySize = ImGuiExtensions::GetDisplaySize();
     const float Width  = FMath::Max<float>(DisplaySize.x * 0.6f, 400.0f);
     const float Height = DisplaySize.y * 0.75f;
 
@@ -159,7 +204,7 @@ void FGPUProfilerWindow::DrawWindow()
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    const ImGuiStyle& Style = FImGui::GetStyle();
+    const ImGuiStyle& Style = ImGui::GetStyle();
     ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ WindowBG.x, WindowBG.y, WindowBG.z, 0.8f });
 

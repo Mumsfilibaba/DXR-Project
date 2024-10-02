@@ -1,20 +1,17 @@
 #pragma once
-#include "Application/Widget.h"
-#include "Core/Containers/SharedRef.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 class FSceneRenderer;
 
-class FRendererInfoWindow : public FWidget
+class FRendererInfoWindow
 {
 public:
-    FRendererInfoWindow(FSceneRenderer* InRenderer)
-        : Renderer(InRenderer)
-    {
-    }
+    FRendererInfoWindow(FSceneRenderer* InRenderer);
+    ~FRendererInfoWindow();
      
-    /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
-    virtual void Paint() override final;
+    void Draw();
 
 private:
     FSceneRenderer* Renderer;
+    FDelegateHandle ImGuiDelegateHandle;
 };

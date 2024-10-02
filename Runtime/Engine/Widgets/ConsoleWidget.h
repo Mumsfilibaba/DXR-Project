@@ -8,12 +8,10 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Platform/CriticalSection.h"
-#include "Application/Widget.h"
-#include "Application/ApplicationEventHandler.h"
+#include "Application/InputHandler.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-#include <imgui.h>
-
-struct FConsoleInputHandler final : public FInputPreProcessor
+struct FConsoleInputHandler final : public FInputHandler
 {
     DECLARE_DELEGATE(FHandleKeyEventDelegate, const FKeyEvent&);
     FHandleKeyEventDelegate HandleKeyEventDelegate;
@@ -33,23 +31,23 @@ struct FConsoleInputHandler final : public FInputPreProcessor
     bool bConsoleToggled = false;
 };
 
-class FConsoleWidget final : public FWidget, public IOutputDevice
+class FConsoleWidget final : public IOutputDevice
 {
 public:
     FConsoleWidget();
     ~FConsoleWidget();
 
-    virtual void Paint() override final;
-
     virtual void Log(const FString& Message) override final;
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
+    void Draw();
+
 private:
     int32 TextCallback(struct ImGuiInputTextCallbackData* Data);
-
     void HandleKeyPressedEvent(const FKeyEvent& Event);
 
     TSharedPtr<FConsoleInputHandler> InputHandler;
+    FDelegateHandle                  ImGuiDelegateHandle;
 
     // Text to display in the input box when browsing through the history
     FString PopupSelectedText;
@@ -57,17 +55,16 @@ private:
     // The current candidates of registered console-objects
     TArray<TPair<IConsoleObject*, FString>> Candidates;
     int32 CandidatesIndex = -1;
+    int32 HistoryIndex    = -1;
 
     // Index in the history
     TArray<TPair<FString, ELogSeverity>> Messages;
-    FCriticalSection MessagesCS;
-
-    int32 HistoryIndex = -1;
+    FCriticalSection                     MessagesCS;
 
     TStaticArray<CHAR, 256> TextBuffer;
 
-    bool bUpdateCursorPosition      = false;
-    bool bIsActive                  = false;
-    bool bCandidateSelectionChanged = false;
-    bool bScrollDown                = false;
+    bool bUpdateCursorPosition;
+    bool bIsActive;
+    bool bCandidateSelectionChanged;
+    bool bScrollDown;
 };

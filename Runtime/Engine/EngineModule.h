@@ -7,5 +7,5 @@ public:
     virtual bool Load() override final;
 
 private:
-    FDelegateHandle PostApplicationCreateHandle;
+    FDelegateHandle PreEngineInitHandle;
 };

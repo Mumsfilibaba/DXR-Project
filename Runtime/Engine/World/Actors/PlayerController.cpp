@@ -32,11 +32,9 @@ void FPlayerController::SetupInputComponent()
     CHECK(InputComponent != nullptr);
 }
 
-void FPlayerController::Tick(FTimespan DeltaTime)
+void FPlayerController::Tick(float DeltaTime)
 {
-    // Call actor tick
     Super::Tick(DeltaTime);
 
-    // Update the PlayerInput
     PlayerInput->Tick(DeltaTime);
 }

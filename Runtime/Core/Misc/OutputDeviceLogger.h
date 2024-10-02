@@ -4,30 +4,27 @@
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
 
-#define LOG_ERROR(...)                                                                               \
-    do                                                                                               \
-    {                                                                                                \
+#define LOG_ERROR(...) \
+    do \
+    { \
         FOutputDeviceLogger::Get()->Log(ELogSeverity::Error, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
-#define LOG_WARNING(...)                                                                               \
-    do                                                                                                 \
-    {                                                                                                  \
+#define LOG_WARNING(...) \
+    do \
+    { \
         FOutputDeviceLogger::Get()->Log(ELogSeverity::Warning, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
-#define LOG_INFO(...)                                                                               \
-    do                                                                                              \
-    {                                                                                               \
+#define LOG_INFO(...) \
+    do \
+    { \
         FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
 
 class CORE_API FOutputDeviceLogger : public IOutputDevice
 {
-    FOutputDeviceLogger();
-    ~FOutputDeviceLogger();
-
 public:
 
     /** @return - Returns the Logger singleton */
@@ -42,7 +39,7 @@ public:
     /** @brief - Flush all output devices */
     virtual void Flush() override final;
 
-    void AddOutputDevice(IOutputDevice* InOutputDevice)
+    void RegisterOutputDevice(IOutputDevice* InOutputDevice)
     {
         if (this != InOutputDevice)
         {
@@ -54,7 +51,7 @@ public:
         }
     }
 
-    void RemoveOutputDevice(IOutputDevice* InOutputDevice)
+    void UnregisterOutputDevice(IOutputDevice* InOutputDevice)
     {
         if (this != InOutputDevice)
         {
@@ -64,6 +61,9 @@ public:
     }
 
 private:
+    FOutputDeviceLogger();
+    ~FOutputDeviceLogger();
+
     TArray<IOutputDevice*> OutputDevices;
     FCriticalSection       OutputDevicesCS;
 };

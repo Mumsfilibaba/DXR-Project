@@ -1,5 +1,4 @@
 #include "Stopwatch.h"
-
 #include "Core/Platform/PlatformTime.h"
 
 FStopwatch::FStopwatch()
@@ -10,7 +9,7 @@ FStopwatch::FStopwatch()
 
 void FStopwatch::Tick()
 {
-    const uint64 Now = FPlatformTime::QueryPerformanceCounter();    
+    const uint64 Now = FPlatformTime::QueryPerformanceCounter();
     uint64 Delta       = Now - LastTime;
     uint64 Nanoseconds = TimeUtilities::FromSeconds(Delta) / Frequency;
 

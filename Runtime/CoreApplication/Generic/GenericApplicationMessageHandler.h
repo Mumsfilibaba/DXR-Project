@@ -51,17 +51,27 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
-    {
-        return false;
-    }
-
     virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
     {
         return false;
     }
 
+    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    {
+        return false;
+    }
+
     virtual bool OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
+    {
+        return false;
+    }
+
+    virtual bool OnMouseEntered(const TSharedRef<FGenericWindow>& Window)
+    {
+        return false;
+    }
+
+    virtual bool OnMouseLeft(const TSharedRef<FGenericWindow>& Window)
     {
         return false;
     }
@@ -81,21 +91,11 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnWindowMouseEntered(const TSharedRef<FGenericWindow>& Window)
-    {
-        return false;
-    }
-
-    virtual bool OnWindowMouseLeft(const TSharedRef<FGenericWindow>& Window)
-    {
-        return false;
-    }
-    
     virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window)
     {
         return false;
     }
-    
+
     virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window)
     {
         return false;
@@ -106,7 +106,7 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnMonitorChange()
+    virtual bool OnMonitorConfigurationChange()
     {
         return false;
     }

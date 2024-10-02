@@ -2,9 +2,8 @@
 #include "Scene.h"
 #include "SceneRenderer.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Application/Application.h"
-
-#include <imgui.h>
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 IMPLEMENT_ENGINE_MODULE(FRendererModule, Renderer);
 
@@ -25,25 +24,17 @@ FRendererModule::~FRendererModule()
 
 bool FRendererModule::Load()
 {
-    PostApplicationCreateHandle = CoreDelegates::PostApplicationCreateDelegate.AddLambda([this]()
+    PreEngineInitHandle = CoreDelegates::PreEngineInitDelegate.AddLambda([this]()
     {
-        if (FImGui::IsInitialized())
+        if (IImguiPlugin::IsEnabled())
         {
-            ImGuiContext* NewImGuiContext     = FImGui::GetContext();
-            ImGuiContext* CurrentImGuiContext = ImGui::GetCurrentContext();
-            if (NewImGuiContext != CurrentImGuiContext)
-            {
-                ImGui::SetCurrentContext(NewImGuiContext);
-            }
+            ImGuiContext* Context = IImguiPlugin::Get().GetImGuiContext();
+            ImGui::SetCurrentContext(Context);
         }
         else
         {
             CHECK(false);
         }
-
-        FDelegateHandle Handle = PostApplicationCreateHandle;
-        PostApplicationCreateHandle = FDelegateHandle();
-        CoreDelegates::PostApplicationCreateDelegate.Unbind(Handle);
     });
 
     return true;
@@ -65,6 +56,9 @@ bool FRendererModule::Initialize()
 
 void FRendererModule::Tick()
 {
+    // Tick GPU-Profiler
+    FGPUProfiler::Get().Tick();
+
     for (FScene* Scene : Scenes)
     {
         // Performs frustum culling and updates visible primitives
@@ -80,6 +74,9 @@ void FRendererModule::Tick()
 
 void FRendererModule::Release()
 {
+    // Release GPU profiler
+    FGPUProfiler::Get().Release();
+
     if (Renderer)
     {
         delete Renderer;

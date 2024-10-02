@@ -10,14 +10,14 @@ FRefCounted::~FRefCounted()
     CHECK(NumRefs.Load() == 0);
 }
 
-int32 FRefCounted::AddRef()
+int32 FRefCounted::AddRef() const
 {
     CHECK(NumRefs.Load() > 0);
     ++NumRefs;
     return NumRefs.Load();
 }
 
-int32 FRefCounted::Release()
+int32 FRefCounted::Release() const
 {
     const int32 RefCount = --NumRefs;
     CHECK(RefCount >= 0);

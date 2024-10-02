@@ -283,6 +283,8 @@ struct FFrameResources
     // BackBuffer
     FRHIViewportRef MainViewport;
     EFormat         BackBufferFormat;
+    uint32          DesiredWidth;
+    uint32          DesiredHeight;
     uint32          CurrentWidth;
     uint32          CurrentHeight;
 };

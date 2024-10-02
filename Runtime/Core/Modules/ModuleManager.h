@@ -41,7 +41,6 @@ struct FModuleInterface;
 typedef FModuleInterface* (*PFNLoadEngineModule)();
 typedef void* PlatformModule;
 
-
 struct FModuleInterface
 {
     virtual ~FModuleInterface() = default;
@@ -52,7 +51,6 @@ struct FModuleInterface
     /** @return - Returns true if the unload is successful */
     virtual bool Unload() { return true; }
 };
-
 
 class CORE_API FModuleManager
 {
@@ -246,7 +244,6 @@ protected:
     FCriticalSection          ModulesCS;
 };
 
-
 template<typename ModuleClassType>
 class TStaticModuleInitializer
 {
@@ -273,42 +270,20 @@ public:
     }
 };
 
-
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-class CORE_API FGameModule : public FModuleInterface
+struct FGameModule : public FModuleInterface
 {
-public:
     virtual ~FGameModule() = default;
 
-    /** 
-     * @return - Returns true if the initialization is successful 
-     */
-    virtual bool Init();
+    /** @return - Returns true if the initialization is successful */
+    virtual bool Init() { return true; }
 
-    /**
-     * @brief           - Tick the application module
-     * @param DeltaTime - Time since last time the application was ticked
-     */
-    virtual void Tick(FTimespan Deltatime) { }
+    /** @brief - Tick the application module */
+    virtual void Tick(float DeltaTime) { }
 
-    /** 
-     * @return - Returns true if the release is successful 
-     */
-    virtual bool Release();
-
-    /** 
-     * @return - Returns true if the load is successful
-     */
-    virtual bool Load() override;
-
-    /**
-     * @return - Returns true if the unload is successful
-     */
-    virtual bool Unload() override;
-
-protected:
-    FDelegateHandle TickHandle;
+    /** @return - Returns true if the release is successful */
+    virtual void Release() { }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -88,7 +88,7 @@ void FActor::Start()
     }
 }
 
-void FActor::Tick(FTimespan DeltaTime)
+void FActor::Tick(float DeltaTime)
 {
     for (FComponent* Component : Components)
     {

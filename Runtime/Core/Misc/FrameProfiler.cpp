@@ -1,10 +1,38 @@
 #include "FrameProfiler.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 FFrameProfiler& FFrameProfiler::Get()
 {
     static FFrameProfiler Instance;
     return Instance;
+}
+
+void FFrameProfiler::Enable()
+{
+    bEnabled = true;
+}
+
+void FFrameProfiler::Disable()
+{
+    bEnabled = false;
+}
+
+FFrameProfiler::FFrameProfiler()
+    : CPUFrameTime()
+    , Clock()
+    , CurrentFps(0)
+    , Fps(0)
+    , bEnabled(true)
+    , CurrentSamples()
+    , CurrentSamplesLock()
+    , FunctionInfoTable()
+{
+    Frequency = FPlatformTime::QueryPerformanceFrequency();
+}
+
+FFrameProfiler::~FFrameProfiler()
+{
 }
 
 void FFrameProfiler::Tick()
@@ -20,81 +48,87 @@ void FFrameProfiler::Tick()
         Clock.Reset();
     }
 
-    if (bEnabled)
+    if (!bEnabled)
+    {
+        return;
+    }
+
+    // FrameTime
     {
         const double Delta = Clock.GetDeltaTime().AsMilliseconds();
-        CPUFrameTime.AddSample(float(Delta));
+        CPUFrameTime.AddSample(static_cast<float>(Delta));
     }
-}
 
-void FFrameProfiler::Enable()
-{
-    FFrameProfiler& Instance = FFrameProfiler::Get();
-    Instance.bEnabled = true;
-}
+    // Handle function samples
+    TArray<FFrameProfilerSample> Samples;
+    {
+        TScopedLock Lock(CurrentSamplesLock);
+        Samples = Move(CurrentSamples);
+    }
 
-void FFrameProfiler::Disable()
-{
-    FFrameProfiler& Instance = FFrameProfiler::Get();
-    Instance.bEnabled = false;
+    for (const FFrameProfilerSample& Sample : Samples)
+    {
+        int32 TableIndex;
+        if (int32* Index = ThreadHandleToIndexMap.Find(Sample.ThreadHandle))
+        {
+            TableIndex = *Index;
+        }
+        else
+        {
+            TableIndex = FunctionInfoTable.Size();
+            FunctionInfoTable.Emplace(Sample.ThreadHandle);
+            ThreadHandleToIndexMap.Add(Sample.ThreadHandle, TableIndex);
+        }
+
+        const FString ScopeName   = Sample.Name;
+        const uint64  Delta       = Sample.EndTimeStamp - Sample.StartTimeStamp;
+        const uint64  Nanoseconds = TimeUtilities::FromSeconds(Delta) / Frequency;
+
+        FFrameProfilerThreadInfo& ThreadInfo = FunctionInfoTable[TableIndex];
+        if (FFrameProfilerFunctionInfo* Entry = ThreadInfo.FunctionInfoMap.Find(ScopeName))
+        {
+            Entry->AddSample(static_cast<float>(Nanoseconds));
+        }
+        else
+        {
+            FFrameProfilerFunctionInfo& NewSample = ThreadInfo.FunctionInfoMap.Add(ScopeName);
+            NewSample.AddSample(static_cast<float>(Nanoseconds));
+        }
+    }
 }
 
 void FFrameProfiler::Reset()
 {
     CPUFrameTime.Reset();
 
+    for (FFrameProfilerThreadInfo& ThreadInfo : FunctionInfoTable)
     {
-        TScopedLock Lock(SamplesTableLock);
-        for (auto Sample : SamplesTable)
+        for (auto FunctionInfo : ThreadInfo.FunctionInfoMap)
         {
-            Sample.Second.Reset();
+            FunctionInfo.Second.Reset();
         }
     }
 }
 
-void FFrameProfiler::BeginTraceScope(const CHAR* Name)
+void FFrameProfiler::AddSample(const FFrameProfilerSample& InSample)
 {
     if (bEnabled)
     {
-        const FString ScopeName = Name;
-        
+        TScopedLock Lock(CurrentSamplesLock);
+
+        if (InSample.ThreadHandle)
         {
-            TScopedLock Lock(SamplesTableLock);
-            if (FProfileSample* Entry = SamplesTable.Find(ScopeName))
-            {
-                Entry->Begin();
-            }
-            else
-            {
-                FProfileSample& NewSample = SamplesTable.Add(ScopeName, FProfileSample());
-                NewSample.Begin();
-            }
+            CurrentSamples.Add(InSample);
+        }
+        else
+        {
+            LOG_WARNING("Sample does not have a valid ThreadID");
+            DEBUG_BREAK();
         }
     }
 }
 
-void FFrameProfiler::EndTraceScope(const CHAR* Name)
+void FFrameProfiler::GetFunctionInfo(TArray<FFrameProfilerThreadInfo>& OutFunctionThreadInfo)
 {
-    if (bEnabled)
-    {
-        const FString ScopeName = Name;
-        
-        {
-            TScopedLock Lock(SamplesTableLock);
-            if (FProfileSample* Entry = SamplesTable.Find(ScopeName))
-            {
-                Entry->End();
-            }
-            else
-            {
-                CHECK(false);
-            }
-        }
-    }
-}
-
-void FFrameProfiler::GetCPUSamples(ProfileSamplesMap& OutCPUSamples)
-{
-    TScopedLock Lock(SamplesTableLock);
-    OutCPUSamples = SamplesTable;
+    OutFunctionThreadInfo = FunctionInfoTable;
 }

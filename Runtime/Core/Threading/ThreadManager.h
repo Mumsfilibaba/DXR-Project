@@ -8,11 +8,10 @@
 class CORE_API FThreadManager
 {
 public:
-    static bool Initialize();
-    static bool Release();
-
     static FThreadManager& Get();
 
+    static bool Initialize();
+    static bool Release();
     static bool IsMainThread();
 
     // Register a thread this is called from the constructor of the FGenericThread
@@ -23,6 +22,18 @@ public:
 
     // Retrieve a ThreadObject from a native ThreadHandle
     FGenericThread* GetThreadFromHandle(void* ThreadHandle);
+
+    // Check if the thread-handle is for the main-thread
+    bool IsMainThread(void* ThreadHandle) const 
+    {
+        return MainThreadHandle == ThreadHandle;
+    }
+
+    // Retrieve the main-thread handle
+    void* GetMainThreadHandle() const
+    {
+        return MainThreadHandle;
+    }
 
 private:
     friend class TOptional<FThreadManager>;

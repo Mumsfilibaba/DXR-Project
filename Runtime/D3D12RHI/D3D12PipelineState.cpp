@@ -965,7 +965,7 @@ bool FD3D12PipelineStateManager::Initialize()
     {
         return true;
     }
-    
+
     // In case we allocated data, let's free it
     FreePipelineData();
 
@@ -986,7 +986,7 @@ bool FD3D12PipelineStateManager::Initialize()
     {
         D3D12_INFO("Created PipelineLibrary");
     }
-    
+
     return true;
 }
 
@@ -1077,10 +1077,10 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         D3D12_WARNING("Failed to open PipelineCache-file");
         return false;
     }
-    
+
     {
         TScopedLock Lock(PipelineLibraryCS);
-        
+
         SIZE_T PipelineCacheSize = PipelineLibrary->GetSerializedSize();
         TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(PipelineCacheSize);
         HRESULT hResult = PipelineLibrary->Serialize(PipelineCacheData.Get(), PipelineCacheSize);
@@ -1114,7 +1114,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
             D3D12_INFO("Saved PipelineCache to file '%s'", PipelineCacheFilepath.GetCString());
         }
     }
-    
+
     bPipelineLibraryDirty = false;
     return true;
 }

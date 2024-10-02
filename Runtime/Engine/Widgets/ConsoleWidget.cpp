@@ -4,21 +4,40 @@
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Application/Application.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 FConsoleWidget::FConsoleWidget()
-    : FWidget()
-    , IOutputDevice()
+    : IOutputDevice()
     , InputHandler(MakeShared<FConsoleInputHandler>())
+    , ImGuiDelegateHandle()
+    , PopupSelectedText()
+    , Candidates()
+    , CandidatesIndex(-1)
+    , HistoryIndex(-1)
+    , Messages()
+    , MessagesCS()
+    , TextBuffer() 
+    , bUpdateCursorPosition(false)
+    , bIsActive(false)
+    , bCandidateSelectionChanged(false)
+    , bScrollDown(false)
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
-        OutputDeviceManager->AddOutputDevice(this);
+        OutputDeviceManager->RegisterOutputDevice(this);
     }
 
-    if (FApplication::IsInitialized())
+    if (FApplicationInterface::IsInitialized())
     {
         InputHandler->HandleKeyEventDelegate.BindRaw(this, &FConsoleWidget::HandleKeyPressedEvent);
-        FApplication::Get().AddInputPreProcessor(InputHandler, FInputPreProcessorAndPriority::MaxPriority);
+        FApplicationInterface::Get().RegisterInputHandler(InputHandler);
+    }
+
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FConsoleWidget::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
     }
 
     TextBuffer.Fill(0);
@@ -28,25 +47,30 @@ FConsoleWidget::~FConsoleWidget()
 {
     if (FOutputDeviceLogger* OutputDeviceManager = FOutputDeviceLogger::Get())
     {
-        OutputDeviceManager->RemoveOutputDevice(this);
+        OutputDeviceManager->UnregisterOutputDevice(this);
     }
 
-    if (FApplication::IsInitialized())
+    if (FApplicationInterface::IsInitialized())
     {
-        FApplication::Get().RemoveInputHandler(InputHandler);
+        FApplicationInterface::Get().UnregisterInputHandler(InputHandler);
+    }
+
+    if (IImguiPlugin::IsEnabled())
+    {
+         IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
     }
 }
 
-void FConsoleWidget::Paint()
+void FConsoleWidget::Draw()
 {
     if (!bIsActive)
     {
         return;
     }
 
-    const ImVec2 MainViewportPos  = FImGui::GetMainViewportPos();
-    const ImVec2 MainViewportSize = FImGui::GetMainViewportSize();
-    const ImVec2 FrameBufferScale = FImGui::GetDisplayFramebufferScale();
+    const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
+    const ImVec2 MainViewportSize = ImGuiExtensions::GetMainViewportSize();
+    const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
     const float Scale  = FrameBufferScale.x;
     const float Width  = MainViewportSize.x;
@@ -56,7 +80,7 @@ void FConsoleWidget::Paint()
     ImGui::PushStyleColor(ImGuiCol_ResizeGripHovered, 0);
     ImGui::PushStyleColor(ImGuiCol_ResizeGripActive, 0);
 
-    const ImGuiStyle& Style = FImGui::GetStyle();
+    const ImGuiStyle& Style = ImGui::GetStyle();
     ImVec4 WindowBG = Style.Colors[ImGuiCol_WindowBg];
     ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ WindowBG.x, WindowBG.y, WindowBG.z, 0.8f });
 

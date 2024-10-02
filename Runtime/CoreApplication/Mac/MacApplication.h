@@ -68,14 +68,14 @@ public:
 
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
     virtual void Tick(float Delta) override final;
-    virtual void UpdateGamepadDevices() override final;
+    virtual void UpdateInputDevices() override final;
     virtual FInputDevice* GetInputDeviceInterface() override final;
     virtual bool SupportsHighPrecisionMouse() const override final;
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
-    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
+    virtual void QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
     TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
@@ -90,16 +90,12 @@ public:
 private:
     void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
     
-    mutable FDisplayInfo           DisplayInfo;
-
     // Observer that checks for monitor changes
     FMacApplicationObserver*       Observer;
 
     // InputDevice handling gamepads
     TSharedPtr<FGCInputDevice>     InputDevice;
-
     EMouseButtonName::Type         LastPressedButton;
-    mutable bool                   bHasDisplayInfoChanged;
 
     TArray<TSharedRef<FMacWindow>> Windows;
     mutable FCriticalSection       WindowsCS;

@@ -49,14 +49,13 @@ FSandboxPlayerController::FSandboxPlayerController(const FObjectInitializer& Ini
     }
 }
 
-void FSandboxPlayerController::Tick(FTimespan DeltaTime)
+void FSandboxPlayerController::Tick(float DeltaTime)
 {
     GetPlayerInput()->EnableInput(InputComponent);
 
     // NOTE: The input is handled here via the input component
     Super::Tick(DeltaTime);
 
-    const float Delta         = static_cast<float>(DeltaTime.AsSeconds());
     const float RotationSpeed = 45.0f;
     const float Deadzone      = 0.01f;
 
@@ -65,28 +64,28 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     
     if (FMath::Abs(RightThumbX.Value) > Deadzone)
     {
-        Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * Delta), 0.0f);
+        Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Right))
     {
-        Camera->Rotate(0.0f, FMath::ToRadians(RotationSpeed * Delta), 0.0f);
+        Camera->Rotate(0.0f, FMath::ToRadians(RotationSpeed * DeltaTime), 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Left))
     {
-        Camera->Rotate(0.0f, FMath::ToRadians(-RotationSpeed * Delta), 0.0f);
+        Camera->Rotate(0.0f, FMath::ToRadians(-RotationSpeed * DeltaTime), 0.0f);
     }
 
     if (FMath::Abs(RightThumbY.Value) > Deadzone)
     {
-        Camera->Rotate(FMath::ToRadians(-RightThumbY.Value * RotationSpeed * Delta), 0.0f, 0.0f);
+        Camera->Rotate(FMath::ToRadians(-RightThumbY.Value * RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Up))
     {
-        Camera->Rotate(FMath::ToRadians(-RotationSpeed * Delta), 0.0f, 0.0f);
+        Camera->Rotate(FMath::ToRadians(-RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::Down))
     {
-        Camera->Rotate(FMath::ToRadians(RotationSpeed * Delta), 0.0f, 0.0f);
+        Camera->Rotate(FMath::ToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
 
     float Acceleration = 15.0f;
@@ -135,10 +134,10 @@ void FSandboxPlayerController::Tick(FTimespan DeltaTime)
     }
 
     const float Deacceleration = -5.0f;
-    CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * Delta;
-    CameraSpeed = CameraSpeed + (CameraAcceleration * Delta);
+    CameraSpeed = CameraSpeed + (CameraSpeed * Deacceleration) * DeltaTime;
+    CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
 
-    const FVector3 Speed = CameraSpeed * Delta;
+    const FVector3 Speed = CameraSpeed * DeltaTime;
     Camera->Move(Speed.x, Speed.y, Speed.z);
     Camera->UpdateMatrices();
 }
@@ -147,15 +146,15 @@ void FSandboxPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 
-    InputComponent->BindAction("MoveForward"  , EActionState::Pressed, this, &FSandboxPlayerController::MoveForward);
+    InputComponent->BindAction("MoveForward", EActionState::Pressed, this, &FSandboxPlayerController::MoveForward);
     InputComponent->BindAction("MoveBackwards", EActionState::Pressed, this, &FSandboxPlayerController::MoveBackwards);
-    InputComponent->BindAction("MoveRight"    , EActionState::Pressed, this, &FSandboxPlayerController::MoveRight);
-    InputComponent->BindAction("MoveLeft"     , EActionState::Pressed, this, &FSandboxPlayerController::MoveLeft);
+    InputComponent->BindAction("MoveRight", EActionState::Pressed, this, &FSandboxPlayerController::MoveRight);
+    InputComponent->BindAction("MoveLeft", EActionState::Pressed, this, &FSandboxPlayerController::MoveLeft);
 
-    InputComponent->BindAction("RotateUp"   , EActionState::Pressed, this, &FSandboxPlayerController::RotateUp);
-    InputComponent->BindAction("RotateDown" , EActionState::Pressed, this, &FSandboxPlayerController::RotateDown);
+    InputComponent->BindAction("RotateUp", EActionState::Pressed, this, &FSandboxPlayerController::RotateUp);
+    InputComponent->BindAction("RotateDown", EActionState::Pressed, this, &FSandboxPlayerController::RotateDown);
     InputComponent->BindAction("RotateRight", EActionState::Pressed, this, &FSandboxPlayerController::RotateRight);
-    InputComponent->BindAction("RotateLeft" , EActionState::Pressed, this, &FSandboxPlayerController::RotateLeft);
+    InputComponent->BindAction("RotateLeft", EActionState::Pressed, this, &FSandboxPlayerController::RotateLeft);
 
     InputComponent->BindAction("Jump", EActionState::Released, this, &FSandboxPlayerController::Jump);
 

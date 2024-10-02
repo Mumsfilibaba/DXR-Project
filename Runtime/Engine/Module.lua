@@ -23,6 +23,7 @@ EngineModule.AddModuleDependencies(
     "RHI",
     "RendererCore",
     "Project",
+    "ImGuiPlugin",
 })
 
 EngineModule.AddLinkLibraries( 

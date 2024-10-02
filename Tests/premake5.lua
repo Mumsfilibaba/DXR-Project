@@ -113,15 +113,16 @@ workspace "EngineTests"
             "%{prj.name}/**.cpp",
             
             "../Runtime/Core/Misc/CoreGlobals.cpp",
-            "../Runtime/Core/Misc/CoreGlobals.cpp",
             "../Runtime/Core/Misc/OutputDeviceLogger.cpp",
             "../Runtime/Core/Memory/Memory.cpp",
             "../Runtime/Core/Memory/Malloc.cpp",
             "../Runtime/Core/RefCounted.cpp",
             "../Runtime/Core/Delegates/DelegateInstance.cpp",
+            "../Runtime/Core/Generic/GenericThread.cpp",
+            "../Runtime/Core/Generic/GenericPlatformStackTrace.cpp",
+            "../Runtime/Core/Threading/ThreadManager.cpp",
 
             -- TODO: Add Mac specifics
-            "../Runtime/Core/Generic/GenericPlatformStackTrace.cpp",
             "../Runtime/Core/Windows/WindowsPlatformStackTrace.cpp",
             "../Runtime/Core/Windows/WindowsThreadMisc.cpp",
             "../Runtime/Core/Windows/WindowsThread.cpp",

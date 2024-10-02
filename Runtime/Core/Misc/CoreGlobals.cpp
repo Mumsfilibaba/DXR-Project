@@ -15,7 +15,3 @@ void RequestEngineExit(const CHAR* ExitReason)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 CORE_API FMalloc* GMalloc = nullptr;
-
-CORE_API IOutputDevice* GDebugOutput = nullptr;
-
-CORE_API FGameModule* GGameModule  = nullptr;

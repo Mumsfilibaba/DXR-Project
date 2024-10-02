@@ -1,6 +1,7 @@
 #include "ThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 FThreadManager::FThreadManager()
     : Threads(0)
@@ -23,7 +24,7 @@ static auto& GetThreadManagerInstance()
 bool FThreadManager::Initialize()
 {
     FThreadManager& ThreadManager = FThreadManager::Get();
-    ThreadManager.MainThreadHandle = FPlatformThreadMisc::GetThreadHandle();
+    ThreadManager.MainThreadHandle = FPlatformThreadMisc::GetCurrentThreadHandle();
 
     if (!ThreadManager.MainThreadHandle)
     {
@@ -46,7 +47,7 @@ bool FThreadManager::Release()
 bool FThreadManager::IsMainThread()
 {
     FThreadManager& ThreadManager = FThreadManager::Get();
-    return ThreadManager.MainThreadHandle == FPlatformThreadMisc::GetThreadHandle();
+    return ThreadManager.MainThreadHandle == FPlatformThreadMisc::GetCurrentThreadHandle();
 }
 
 FThreadManager& FThreadManager::Get()

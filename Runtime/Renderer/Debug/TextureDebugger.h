@@ -1,15 +1,16 @@
 #pragma once
 #include "Core/Containers/SharedRef.h"
-#include "Application/DrawableTexture.h"
-#include "Application/Widget.h"
 #include "RHI/RHIResources.h"
+#include "ImGuiPlugin/ImGuiPlugin.h"
 
-class FRenderTargetDebugWindow : public FWidget
+class FRenderTargetDebugWindow
 {
 public:
+    FRenderTargetDebugWindow();
+    ~FRenderTargetDebugWindow();
 
-    /** @brief - Update the panel, for ImGui this is where the ImGui-Commands should be called */
-    virtual void Paint() override final;
+    /** @brief - Called from ImGuiPlugin. This is where the ImGui-Commands should be called */
+    void Draw();
 
      /** @brief - Add image for debug drawing */
     void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
@@ -20,6 +21,7 @@ public:
     }
 
 private:
-    TArray<FDrawableTexture> DebugTextures;
-    int32 SelectedTextureIndex = 0;
+    TArray<FImGuiTexture> DebugTextures;
+    int32                 SelectedTextureIndex;
+    FDelegateHandle       ImGuiDelegateHandle;
 };

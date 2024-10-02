@@ -1,14 +1,16 @@
 #pragma once
-#include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FInspectorWidget : public FWidget
+class FInspectorWidget
 {
 public:
-    virtual void Paint() override final;
+    FInspectorWidget();
+    ~FInspectorWidget();
+
+    void Draw();
+    void DrawSceneInfo();
 
 private:
-
-    // Draws the scene info, should only be called from tick
-    void DrawSceneInfo();
+    FDelegateHandle ImGuiDelegateHandle;
 };

@@ -3,24 +3,43 @@
 #include "RHI/RHI.h"
 #include "Application/Application.h"
 #include "Renderer/SceneRenderer.h"
-
-#include <imgui.h>
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
     "Renderer.DrawRendererInfo",
     "Enables the drawing of the Renderer Info Window", 
     true);
 
-void FRendererInfoWindow::Paint()
+FRendererInfoWindow::FRendererInfoWindow(FSceneRenderer* InRenderer)
+    : Renderer(InRenderer)
+    , ImGuiDelegateHandle()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRendererInfoWindow::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
+}
+
+FRendererInfoWindow::~FRendererInfoWindow()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
+}
+
+void FRendererInfoWindow::Draw()
 {
     if (CVarDrawRendererInfo.GetValue())
     {
         const FString AdapterName = RHIGetAdapterName();
 
-        const ImVec2 MainViewportPos  = FImGui::GetMainViewportPos();
-        const ImVec2 DisplaySize      = FImGui::GetDisplaySize();
+        const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
+        const ImVec2 DisplaySize      = ImGuiExtensions::GetDisplaySize();
         const ImVec2 TextSize         = ImGui::CalcTextSize(AdapterName.GetCString());
-        const ImVec2 FrameBufferScale = FImGui::GetDisplayFramebufferScale();
+        const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
         const float WindowWidth  = DisplaySize.x;
         const float WindowHeight = DisplaySize.y;
@@ -31,7 +50,7 @@ void FRendererInfoWindow::Paint()
 
         ImGui::SetNextWindowViewport(ImGui::GetMainViewport()->ID);
         ImGui::SetNextWindowPos(ImVec2(MainViewportPos.x + WindowWidth, MainViewportPos.y + 10.0f * Scale), ImGuiCond_Once, ImVec2(1.0f, 0.0f));
-        ImGui::SetNextWindowSize(ImVec2(Width, Height));
+        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
         const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
         ImGui::Begin("Renderer Info", nullptr, Flags);

@@ -170,8 +170,8 @@ bool TDelegate_Test()
     TEST_CHECK((Tuple != Tuple3) == false);
     TEST_CHECK((Tuple <= Tuple3) == true);
     TEST_CHECK((Tuple <  Tuple3) == false);
-    TEST_CHECK((Tuple >  Tuple3) == false);
-    TEST_CHECK((Tuple >= Tuple3) == true);
+    TEST_CHECK((Tuple>  Tuple3) == false);
+    TEST_CHECK((Tuple>= Tuple3) == true);
     
     TTuple<int32, float, double> Tuple4(5, 32.0f, 500.0);
     TTuple<int32, float, double> Tuple5(2, 22.0f, 100.0);
@@ -181,8 +181,8 @@ bool TDelegate_Test()
     TEST_CHECK((Tuple4 != Tuple5) == true);
     TEST_CHECK((Tuple4 <= Tuple5) == true);
     TEST_CHECK((Tuple4 <  Tuple5) == true);
-    TEST_CHECK((Tuple4 >  Tuple5) == false);
-    TEST_CHECK((Tuple4 >= Tuple5) == false);
+    TEST_CHECK((Tuple4>  Tuple5) == false);
+    TEST_CHECK((Tuple4>= Tuple5) == false);
 
     TTuple<float, float> PairTuple0(80.0f, 900.0f);
     TTuple<float, float> PairTuple1(50.0f, 100.0f);
@@ -223,7 +223,7 @@ bool TDelegate_Test()
     std::cout << std::endl << "----Testing Delegate----" << std::endl << std::endl;
 
     {
-        TDelegate<int32(int32) > Delegate;
+        TDelegate<int32(int32)> Delegate;
         TEST_CHECK(Delegate.IsBound()          == false);
         TEST_CHECK(Delegate.ExecuteIfBound(32) == false);
 
@@ -272,14 +272,14 @@ bool TDelegate_Test()
         Delegate.BindLambda(Lambda);
         Delegate.Execute(0);
 
-        TDelegate<int32(int32) > Delegate2 = Delegate;
+        TDelegate<int32(int32)> Delegate2 = Delegate;
         Delegate2.Execute(100);
 
         Delegate = Delegate2;
         Delegate.Execute(200);
 
         // Move
-        TDelegate<int32(int32) > Delegate3 = Move(Delegate2);
+        TDelegate<int32(int32)> Delegate3 = Move(Delegate2);
         Delegate3.Execute(300);
         Delegate2.ExecuteIfBound(400);
 
@@ -287,11 +287,11 @@ bool TDelegate_Test()
         Delegate.Execute(500);
 
         // Swap
-        TDelegate<int32(int32) > Static;
+        TDelegate<int32(int32)> Static;
         Static.BindLambda(StaticFunc);
         Static.Execute(1000);
 
-        TDelegate<int32(int32) > NotStatic;
+        TDelegate<int32(int32)> NotStatic;
         NotStatic.BindLambda(Lambda);
         NotStatic.Execute(2000);
 
@@ -301,32 +301,32 @@ bool TDelegate_Test()
 
         // Static Create functions with and without payload
         std::cout << std::endl << "Static Create functions with and without payload" << std::endl << std::endl;
-        TDelegate<int32(int32) > Lambda2 = TDelegate<int32(int32) >::CreateLambda(Lambda);
+        TDelegate<int32(int32)> Lambda2 = TDelegate<int32(int32)>::CreateLambda(Lambda);
         Lambda2.Execute(100);
         TDelegate<int32()> Lambda3 = TDelegate<int32()>::CreateLambda(Lambda, 200);
         Lambda3.Execute();
 
-        TDelegate<int32(int32) > Static2 = TDelegate<int32(int32) >::CreateStatic(StaticFunc);
+        TDelegate<int32(int32)> Static2 = TDelegate<int32(int32)>::CreateStatic(StaticFunc);
         Static2.Execute(100);
         TDelegate<int32()> Static3 = TDelegate<int32()>::CreateStatic(StaticFunc, 200);
         Static3.Execute();
 
-        TDelegate<int32(int32) > Member0 = TDelegate<int32(int32) >::CreateRaw(Base, &FBase::Func);
+        TDelegate<int32(int32)> Member0 = TDelegate<int32(int32)>::CreateRaw(Base, &FBase::Func);
         Member0.Execute(100);
         TDelegate<int32()> Member01 = TDelegate<int32()>::CreateRaw(Base, &FBase::Func, 200);
         Member01.Execute();
 
-        TDelegate<int32(int32) > Member1 = TDelegate<int32(int32) >::CreateRaw(Base, &FBase::ConstFunc);
+        TDelegate<int32(int32)> Member1 = TDelegate<int32(int32)>::CreateRaw(Base, &FBase::ConstFunc);
         Member1.Execute(100);
         TDelegate<int32()> Member11 = TDelegate<int32()>::CreateRaw(Base, &FBase::ConstFunc, 200);
         Member11.Execute();
 
-        TDelegate<int32(int32) > Member2 = TDelegate<int32(int32) >::CreateRaw(Base, &FDerived::Func);
+        TDelegate<int32(int32)> Member2 = TDelegate<int32(int32)>::CreateRaw(Base, &FDerived::Func);
         Member2.Execute(100);
         TDelegate<int32()> Member21 = TDelegate<int32()>::CreateRaw(Base, &FDerived::Func, 200);
         Member21.Execute();
 
-        TDelegate<int32(int32) > Member3 = TDelegate<int32(int32) >::CreateRaw(Base, &FDerived::ConstFunc);
+        TDelegate<int32(int32)> Member3 = TDelegate<int32(int32)>::CreateRaw(Base, &FDerived::ConstFunc);
         Member3.Execute(100);
 
         TDelegate<int32()> Member31 = TDelegate<int32()>::CreateRaw(Base, &FDerived::ConstFunc, 200);

@@ -46,7 +46,6 @@ struct FMonitorInfo
     
     int32       DisplayDPI;
     int32       DisplayScaleFactor;
-
     float       DisplayScaling;
 
     bool        bIsPrimary;
@@ -87,7 +86,7 @@ public:
 
     virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
     virtual void Tick(float Delta) { }
-    virtual void UpdateGamepadDevices() { }
+    virtual void UpdateInputDevices() { }
     virtual FInputDevice* GetInputDeviceInterface() { return nullptr; }
     virtual bool SupportsHighPrecisionMouse() const { return false; }
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
@@ -97,7 +96,7 @@ public:
     virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const { return nullptr; }
-    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
+    virtual void QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 

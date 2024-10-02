@@ -1,5 +1,4 @@
 #include "ModuleManager.h"
-#include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/ConsoleManager.h"
 
 static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
@@ -7,10 +6,9 @@ static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
     "Breaks when trying to retrieve a module that is not loaded",
     true);
 
-
 // This needs to be initialized with static variable behavior since we don't
 // know when FModuleManager::Get() is called from the TStaticModuleInitializers
-static auto& GetModuleManagerInstance()
+static TOptional<FModuleManager>& GetModuleManagerInstance()
 {
     static TOptional<FModuleManager> GInstance(InPlace);
     return GInstance;
@@ -18,13 +16,13 @@ static auto& GetModuleManagerInstance()
 
 FModuleManager& FModuleManager::Get()
 {
-    auto& ModuleManager = GetModuleManagerInstance();
+    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
     return ModuleManager.GetValue();
 }
 
 void FModuleManager::ReleaseAllLoadedModules()
 {
-    auto& ModuleManager = GetModuleManagerInstance();
+    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
     ModuleManager->ReleaseAllModules();
 }
 
@@ -32,7 +30,7 @@ void FModuleManager::Shutdown()
 {
     ReleaseAllLoadedModules();
 
-    auto& ModuleManager = GetModuleManagerInstance();
+    TOptional<FModuleManager>& ModuleManager = GetModuleManagerInstance();
     ModuleManager.Reset();
 }
 
@@ -246,9 +244,9 @@ FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModule
 {
     SCOPED_LOCK(StaticModuleDelegatesCS);
 
-    const auto Index = StaticModuleDelegates.FindWithPredicate([=](const FStaticModulePair& Element)
+    const int32 Index = StaticModuleDelegates.FindWithPredicate([=](const FStaticModulePair& Element)
     {
-        return (Element.First == ModuleName);
+        return Element.First == ModuleName;
     });
 
     if (StaticModuleDelegates.IsValidIndex(Index))
@@ -264,37 +262,10 @@ FModuleManager::FInitializeStaticModuleDelegate* FModuleManager::GetStaticModule
 
 int32 FModuleManager::GetModuleIndexUnlocked(const CHAR* ModuleName)
 {
-    const auto Index = Modules.FindWithPredicate([=](const FModuleData& Element)
+    const int32 Index = Modules.FindWithPredicate([=](const FModuleData& Element)
     {
         return Element.Name == ModuleName;
     });
 
     return static_cast<int32>(Index);
-}
-
-
-bool FGameModule::Init()
-{
-    FTickDelegate TickDelegate = FTickDelegate::CreateRaw(this, &FGameModule::Tick);
-    TickHandle = TickDelegate.GetHandle();
-
-    FEngineLoopTicker::Get().AddDelegate(TickDelegate);
-    return true;
-}
-
-bool FGameModule::Release()
-{
-    FEngineLoopTicker::Get().RemoveDelegate(TickHandle);
-    return true;
-}
-
-// TODO: Remove init and release? 
-bool FGameModule::Load()
-{
-    return Init();
-}
-
-bool FGameModule::Unload()
-{
-    return Release();
 }

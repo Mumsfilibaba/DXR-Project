@@ -7,11 +7,6 @@ include "../../BuildScripts/Scripts/Build_Module.lua"
 local ApplicationModule = FModuleBuildRules("Application")
 ApplicationModule.bUsePrecompiledHeaders = true
 
-ApplicationModule.AddSystemIncludes( 
-{
-    CreateExternalDependencyPath("imgui")
-})
-
 ApplicationModule.AddModuleDependencies( 
 {
     "Core",
@@ -19,9 +14,4 @@ ApplicationModule.AddModuleDependencies(
     "RHI",
     "RendererCore",
     "Project",
-})
-
-ApplicationModule.AddLinkLibraries( 
-{
-    "ImGui",
 })

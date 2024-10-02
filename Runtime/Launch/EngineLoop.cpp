@@ -3,12 +3,12 @@
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/CommandLine.h"
 #include "Project/ProjectManager.h"
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
@@ -18,74 +18,117 @@
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "RendererCore/TextureFactory.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Launch);
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
+struct FDebuggerOutputDevice : public IOutputDevice
+{
+    virtual void Log(const FString& Message)
+    {
+        FPlatformMisc::OutputDebugString(Message.GetCString());
+    }
+
+    virtual void Log(ELogSeverity Severity, const FString& Message)
+    {
+        FPlatformMisc::OutputDebugString(Message.GetCString());
+    }
+};
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING
+
+static TUniquePtr<FOutputDeviceConsole>  GConsoleWindow;
+static TUniquePtr<FDebuggerOutputDevice> GDebuggerOutputDevice;
+
+static bool InitializeOutputDevices()
+{
+    // Create the console window
+    GConsoleWindow = TUniquePtr<FOutputDeviceConsole>(FPlatformApplicationMisc::CreateOutputDeviceConsole());
+    if (GConsoleWindow)
+    {
+        GConsoleWindow->Show(true);
+        GConsoleWindow->SetTitle("DXR-Engine Output Console");
+        FOutputDeviceLogger::Get()->RegisterOutputDevice(GConsoleWindow.Get());
+    }
+    else
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
+        return false;
+    }
+
+    if (FPlatformMisc::IsDebuggerPresent())
+    {
+        GDebuggerOutputDevice = MakeUnique<FDebuggerOutputDevice>();
+        FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
+    }
+
+    return true;
+}
+
+
 FEngineLoop::FEngineLoop()
     : FrameTimer()
-    , ConsoleWindow(nullptr)
 {
 }
 
 FEngineLoop::~FEngineLoop()
-{ 
-    ConsoleWindow = nullptr;
+{
 }
 
 bool FEngineLoop::LoadCoreModules()
 {
-    FModuleManager& ModuleManager = FModuleManager::Get();
-
-    FModuleInterface* CoreModule = ModuleManager.LoadModule("Core");
+    FModuleInterface* CoreModule = FModuleManager::Get().LoadModule("Core");
     if (!CoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* CoreApplicationModule = ModuleManager.LoadModule("CoreApplication");
+    FModuleInterface* CoreApplicationModule = FModuleManager::Get().LoadModule("CoreApplication");
     if (!CoreApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* ApplicationModule = ModuleManager.LoadModule("Application");
+    FModuleInterface* ApplicationModule = FModuleManager::Get().LoadModule("Application");
     if (!ApplicationModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* EngineModule = ModuleManager.LoadModule("Engine");
+    FModuleInterface* EngineModule = FModuleManager::Get().LoadModule("Engine");
     if (!EngineModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RHIModule = ModuleManager.LoadModule("RHI");
+    FModuleInterface* RHIModule = FModuleManager::Get().LoadModule("RHI");
     if (!RHIModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RendererCoreModule = ModuleManager.LoadModule("RendererCore");
+    FModuleInterface* RendererCoreModule = FModuleManager::Get().LoadModule("RendererCore");
     if (!RendererCoreModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* RendererModule = ModuleManager.LoadModule("Renderer");
+    FModuleInterface* RendererModule = FModuleManager::Get().LoadModule("Renderer");
     if (!RendererModule)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FModuleInterface* ProjectModule = ModuleManager.LoadModule("Project");
+    FModuleInterface* ProjectModule = FModuleManager::Get().LoadModule("Project");
     if (!ProjectModule)
     {
         DEBUG_BREAK();
@@ -95,53 +138,42 @@ bool FEngineLoop::LoadCoreModules()
     return true;
 }
 
-
-bool FEngineLoop::PreInitialize()
+int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 {
-    // Create the console window
-    ConsoleWindow = FPlatformApplicationMisc::CreateOutputDeviceConsole();
-    if (ConsoleWindow)
+    if (!InitializeOutputDevices())
     {
-        FOutputDeviceLogger::Get()->AddOutputDevice(ConsoleWindow);  
-        ConsoleWindow->Show(true);
-        ConsoleWindow->SetTitle("DXR-Engine Output Console");
-    }
-    else
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize ConsoleWindow");
-        return false;
+        return -1;
     }
 
-    // Load the Core-Modules
+    if (!FCommandLine::Initialize(Args, NumArgs))
+    {
+        LOG_WARNING("Invalid CommandLine");
+    }
+
     if (!LoadCoreModules())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to load Core-Modules");
-        return false;
+        return -1;
     }
 
     // TODO: Use a separate profiler for booting the engine
-    FFrameProfiler::Enable();
+    FFrameProfiler::Get().Enable();
     TRACE_FUNCTION_SCOPE();
 
-    // Initialize the engine config
     if (!FConfig::Initialize())
     {
         LOG_ERROR("Failed to initialize EngineConfig");
-        return false;
+        return -1;
+    }
+
+    if (!FProjectManager::Initialize())
+    {
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
+        return -1;
     }
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
-#endif
-
-    // ProjectManager
-    if (!FProjectManager::Initialize())
-    {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to initialize Project");
-        return false;
-    }
-
-#if !PRODUCTION_BUILD
     LOG_INFO("ProjectName=%s", FProjectManager::Get().GetProjectName().GetCString());
     LOG_INFO("ProjectPath=%s", FProjectManager::Get().GetProjectPath().GetCString());
 #endif
@@ -149,101 +181,92 @@ bool FEngineLoop::PreInitialize()
     if (!FThreadManager::Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
-        return false;
+        return -1;
     }
 
-    if (!FApplication::Create())
+    if (!FApplicationInterface::Create())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to create Application");
-        return false;
+        return -1;
     }
 
     CoreDelegates::PostApplicationCreateDelegate.Broadcast();
 
-    // Initialize the Async-worker threads
+    // Initialize async-worker threads
     if (!FTaskManager::Initialize())
     {
-        return false;
+        return -1;
     }
 
-    // Initialize the ShaderCompiler before RHI since RHI might need to compile shaders
     if (!FShaderCompiler::Create(FProjectManager::Get().GetAssetPath()))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to Initializer ShaderCompiler");
-        return false;
+        return -1;
     }
 
-    // Initialize the RHI
     if (!RHIInitialize())
     {
-        return false;
+        return -1;
     }
 
     CoreDelegates::PostInitRHIDelegate.Broadcast();
 
     if (!FTextureFactory::Init())
     {
-        return false;
+        return -1;
     }
 
     CoreDelegates::PreInitFinishedDelegate.Broadcast();
-    return true;
+    return 0;
 }
 
-
-bool FEngineLoop::Initialize()
+int32 FEngineLoop::Init()
 {
+    // Initialize ImGui (Currently Required)
+    IImguiPlugin* ImguiPlugin = FModuleManager::Get().LoadModule<IImguiPlugin>("ImGuiPlugin");
+    if (!ImguiPlugin)
+    {
+        LOG_ERROR("Failed to load ImGuiPlugin");
+        return -1;
+    }
+
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
     GEngine = new FEngine();
     if (!GEngine->Init())
     {
         LOG_ERROR("Failed to initialize engine");
-        return false;
+        return -1;
     }
 
     CoreDelegates::PreEngineInitDelegate.Broadcast();
 
-    // Initialize renderer
     IRendererModule* RendererModule = IRendererModule::Get();
     if (!RendererModule->Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create Renderer");
-        return false;
+        return -1;
     }
 
     CoreDelegates::PreApplicationLoadedDelegate.Broadcast();
 
-    // Load application
-    GGameModule = FModuleManager::Get().LoadModule<FGameModule>(FProjectManager::Get().GetProjectModuleName().Data());
-    if (!GGameModule)
+    // Prepare ImGui for Rendering
+    if (IImguiPlugin::IsEnabled())
     {
-        LOG_WARNING("Failed to load Game-module, the application may not behave as intended");
-    }
-    else
-    {
-        CoreDelegates::PostGameModuleLoadedDelegate.Broadcast();
-    }
-
-    // Prepare Application for Rendering
-    if (FApplication::IsInitialized())
-    {
-        if (!FApplication::Get().InitializeRenderer())
+        if (!IImguiPlugin::Get().InitRenderer())
         {
-            FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI layer for the Application");
-            return false;
+            FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI resources for ImGui");
+            return -1;
         }
     }
 
-    // Final thing is to startup the engine
     if (!GEngine->Start())
     {
-        return false;
+        return -1;
     }
 
-    return true;
+    return 0;
 }
-
 
 void FEngineLoop::Tick()
 {
@@ -252,54 +275,47 @@ void FEngineLoop::Tick()
     // Tick the timer
     FrameTimer.Tick();
 
-    // Poll inputs and handle events from the system
-    FApplication::Get().Tick(FrameTimer.GetDeltaTime());
+    const float DeltaTime = static_cast<float>(FrameTimer.GetDeltaTime().AsSeconds());
+    FApplicationInterface::Get().Tick(DeltaTime);
 
-    // Tick all systems that have hooked into the EngineLoop::Tick
-    FEngineLoopTicker::Get().Tick(FrameTimer.GetDeltaTime());
+    GEngine->Tick(DeltaTime);
 
-    // Tick the engine (Actors etc.)
-    GEngine->Tick(FrameTimer.GetDeltaTime());
-
-    // Tick Profiler
     FFrameProfiler::Get().Tick();
 
-    // Tick GPU-Profiler
-    FGPUProfiler::Get().Tick();
-
-    // Tick the renderer
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->Tick();
 }
 
-
-bool FEngineLoop::Release()
+void FEngineLoop::Release()
 {
     TRACE_FUNCTION_SCOPE();
 
     // Wait for the last RHI commands to finish
     GRHICommandExecutor.WaitForGPU();
 
-    // Release GPU profiler
-    FGPUProfiler::Get().Release();
-
-    // Release the Application. Protect against failed initialization where the global pointer was never initialized
-    if (FApplication::IsInitialized())
+    // Release ImGui
+    if (IImguiPlugin::IsEnabled())
     {
-        FApplication::Get().RegisterMainViewport(nullptr);
-        FApplication::Get().ReleaseRenderer();
+        IImguiPlugin::Get().ReleaseRenderer();
     }
 
     // Release the renderer
     IRendererModule* RendererModule = IRendererModule::Get();
     RendererModule->Release();
-    
-    // Release the Engine. Protect against failed initialization where the global pointer was never initialized
+
+    // Release the Engine (Protect against failed initialization where the global pointer was never initialized)
     if (GEngine)
     {
         GEngine->Release();
+
         delete GEngine;
         GEngine = nullptr;
+    }
+
+    // Unload ModuleManager
+    if (IImguiPlugin::IsEnabled())
+    {
+        FModuleManager::Get().UnloadModule("ImGuiPlugin");
     }
 
     // Release all RHI resources
@@ -308,22 +324,21 @@ bool FEngineLoop::Release()
     // Wait for RHI thread and shutdown RHI Layer
     RHIRelease();
 
-    // Destroy the ShaderCompiler
     FShaderCompiler::Destroy();
 
-    // Shutdown the Async-task system
     FTaskManager::Release();
 
-    FApplication::Destroy();
+    FApplicationInterface::Destroy();
 
     FThreadManager::Release();
 
     FConfig::Release();
 
-    SAFE_DELETE(ConsoleWindow);
-
     // Release all modules
     FModuleManager::Shutdown();
 
-    return true;
+    if (FPlatformMisc::IsDebuggerPresent())
+    {
+        GMalloc->DumpAllocations(GDebuggerOutputDevice.Get());
+    }
 }

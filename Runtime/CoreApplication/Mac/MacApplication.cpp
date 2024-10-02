@@ -306,7 +306,7 @@ void FMacApplication::Tick(float)
     }
 }
 
-void FMacApplication::UpdateGamepadDevices()
+void FMacApplication::UpdateInputDevices()
 {
     if (InputDevice)
     {
@@ -364,14 +364,8 @@ TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
     return GetWindowFromNSWindow(WindowUnderCursor);
 }
 
-void FMacApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const
-{
-    if (!bHasDisplayInfoChanged)
-    {
-        OutDisplayInfo = DisplayInfo;
-        return;
-    }
-    
+void FMacApplication::QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const
+{   
     for (NSScreen* Screen in NSScreen.screens)
     {
         const NSRect ScreenFrame        = Screen.frame;
@@ -391,21 +385,15 @@ void FMacApplication::GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const
 
         if (NewMonitorInfo.bIsPrimary)
         {
-            DisplayInfo.PrimaryDisplayWidth  = NewMonitorInfo.MainSize.x;
-            DisplayInfo.PrimaryDisplayHeight = NewMonitorInfo.MainSize.y;
+            OutDisplayInfo.PrimaryDisplayWidth  = NewMonitorInfo.MainSize.x;
+            OutDisplayInfo.PrimaryDisplayHeight = NewMonitorInfo.MainSize.y;
         }
 
-        DisplayInfo.MonitorInfos.Add(NewMonitorInfo);
+        OutDisplayInfo.MonitorInfos.Add(NewMonitorInfo);
     }
     
     // Ensure that we don't waste any space
-    DisplayInfo.MonitorInfos.Shrink();
-    
-    // Ensure that we don't do the same calculations when calling GetMonitorInfo multiple times
-    bHasDisplayInfoChanged = false;
-    
-    // Return the DisplayInfo
-    OutDisplayInfo = DisplayInfo;
+    OutDisplayInfo.MonitorInfos.Shrink();
 }
 
 void FMacApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
@@ -545,7 +533,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
         else if (NotificationName == NSApplicationDidChangeScreenParametersNotification)
         {
             bHasDisplayInfoChanged = true;
-            MessageHandler->OnMonitorChange();
+            MessageHandler->OnMonitorConfigurationChange();
         }
     }
     else if (Event.Event)
@@ -631,29 +619,28 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& Event)
 
                 break;
             }
-                
+
             case NSEventTypeMouseEntered:
             {
                 TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
                 if (Window)
                 {
-                    MessageHandler->OnWindowMouseEntered(Window);
+                    MessageHandler->OnMouseEntered(Window);
                 }
-
                 break;
             }
-                
+
             case NSEventTypeMouseExited:
             {
                 TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(EventObject.window);
                 if (Window)
                 {
-                    MessageHandler->OnWindowMouseLeft(Window);
+                    MessageHandler->OnMouseLeft(Window);
                 }
 
                 break;
             }
-                
+
             default:
             {
                 break;

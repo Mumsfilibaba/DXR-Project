@@ -8,9 +8,11 @@ public:
     static FInputMapper& Get() { return Instance; }
 
     void Initialize();
+
     FKey GetKeyboardKey(EKeyboardKeyName::Type Key);
     FKey GetMouseKey(EMouseButtonName::Type MouseButton);
     FKey GetGamepadKey(EGamepadButtonName::Type GamepadButton);
+
     EKeyboardKeyName::Type GetKeyboardKeyNameFromKey(FKey Key);
     EMouseButtonName::Type GetMouseButtonNameFromKey(FKey Key);
     EGamepadButtonName::Type GetGamepadButtonNameFromKey(FKey Key);

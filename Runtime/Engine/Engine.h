@@ -7,8 +7,9 @@
 #include "Application/Application.h"
 #include "RHI/RHIResources.h"
 
-struct ENGINE_API FEngine
+class ENGINE_API FEngine
 {
+public:
     FEngine();
     virtual ~FEngine();
 
@@ -22,22 +23,47 @@ struct ENGINE_API FEngine
     virtual bool Start();
 
     /** @brief - Tick the engine */
-    virtual void Tick(FTimespan DeltaTime);
+    virtual void Tick(float DeltaTime);
     
     /** @brief - Exit the engine */
     virtual void Exit();
 
-    /** @brief - Creates the main window */
-    void CreateMainWindow();
+    /** @brief - A completely white texture */
+    FRHITextureRef BaseTexture;
 
-    /** @return - Returns true the main viewport could be initialized */
-    bool CreateMainViewport();
+    /** @brief - A completely flat normal map */
+    FRHITextureRef BaseNormal;
+
+    /** @brief - Base sampler used by all materials */
+    FRHISamplerStateRef BaseMaterialSampler;
+
+    /** @brief - Base material */
+    TSharedPtr<FMaterial> BaseMaterial;
+
+    // Returns the current world
+    FWorld* GetWorld() const { return World; }
+
+    // Returns the engine window
+    TSharedPtr<FWindow> GetEngineWindow() const { return EngineWindow; }
+
+    // Returns the SceneViewport
+    TSharedPtr<FSceneViewport> GetSceneViewport() const { return SceneViewport; }
+
+private:
+    bool CreateEngineWindow();
+    bool CreateEngineViewport();
+    bool CreateSceneViewport();
+
+    // Engine events
+    void OnEngineWindowClosed();
+    void OnEngineWindowMoved(const FIntVector2& NewScreenPosition);
+    void OnEngineWindowResized(const FIntVector2& NewScreenSize);
 
     /** @brief - The main Window */
-    TSharedRef<FGenericWindow> MainWindow; 
+    TSharedPtr<FWindow> EngineWindow;
 
     /** @brief - The main viewport */
-    TSharedPtr<FViewport> MainViewport;
+    TSharedPtr<FViewport> EngineViewportWidget;
 
     /** @brief - SceneViewport */
     TSharedPtr<FSceneViewport> SceneViewport;
@@ -54,17 +80,8 @@ struct ENGINE_API FEngine
     /** @brief - The current world */
     FWorld* World;
 
-    /** @brief - A completely white texture */
-    FRHITextureRef BaseTexture;
-
-    /** @brief - A completely flat normal map */
-    FRHITextureRef BaseNormal;
-
-    /** @brief - Base sampler used by all materials */
-    FRHISamplerStateRef BaseMaterialSampler;
-
-    /** @brief - Base material */
-    TSharedPtr<FMaterial> BaseMaterial;
+    /** @brief - The current Game-Module */
+    FGameModule* GameModule;
 };
 
 extern ENGINE_API FEngine* GEngine;

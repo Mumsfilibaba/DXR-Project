@@ -2,21 +2,16 @@
 #include "Delegate.h"
 #include "MulticastDelegateBase.h"
 
-#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...)                           \
-    /** The type of delegates that will be executed by the MulticastDelegate */ \
-    typedef TDelegate<void(__VA_ARGS__)> DelegateName##Type;                    \
-                                                                                \
-    class DelegateName                                                          \
-        : public TMulticastDelegate<__VA_ARGS__>                                \
-    {                                                                           \
+#define DECLARE_MULTICAST_DELEGATE(DelegateName, ...) \
+    class DelegateName \
+        : public TMulticastDelegate<__VA_ARGS__> \
+    { \
     };
 
 template<typename... ArgTypes>
 class TMulticastDelegate : public FMulticastDelegateBase
 {
     using Super = FMulticastDelegateBase;
-
-    using DelegateType = TDelegate<void(ArgTypes...)>;
 
     template<typename... PayloadTypes>
     using FunctionType = typename TFunctionType<void(ArgTypes..., PayloadTypes...)>::Type;
@@ -48,6 +43,11 @@ private:
 public:
 
     /**
+     * @brief - DelegateType that is used to bind delegates to this multicast-delegate
+     */
+    typedef TDelegate<void(ArgTypes...)> FDelegate; 
+
+    /**
      * @brief - Default constructor
      */
     FORCEINLINE TMulticastDelegate()
@@ -63,7 +63,7 @@ public:
     template<typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddStatic(FunctionType<PayloadTypes...> Function, PayloadTypes... Payload)
     {
-        return Super::AddDelegate(DelegateType::template CreateStatic<PayloadTypes...>(Function, Forward<PayloadTypes>(Payload)...));
+        return Super::AddDelegate(FDelegate::template CreateStatic<PayloadTypes...>(Function, Forward<PayloadTypes>(Payload)...));
     }
 
     /**
@@ -75,7 +75,7 @@ public:
     template<typename InstanceType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
-        return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
+        return Super::AddDelegate(FDelegate::template CreateRaw<InstanceType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
     /**
@@ -87,7 +87,7 @@ public:
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, MemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
-        return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, ClassType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
+        return Super::AddDelegate(FDelegate::template CreateRaw<InstanceType, ClassType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
     /**
@@ -99,7 +99,7 @@ public:
     template<typename InstanceType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<InstanceType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
-        return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
+        return Super::AddDelegate(FDelegate::template CreateRaw<InstanceType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
     /**
@@ -111,7 +111,7 @@ public:
     template<typename InstanceType, typename ClassType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddRaw(InstanceType* This, ConstMemberFunctionType<ClassType, PayloadTypes...> Function, PayloadTypes... Payload)
     {
-        return Super::AddDelegate(DelegateType::template CreateRaw<InstanceType, ClassType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
+        return Super::AddDelegate(FDelegate::template CreateRaw<InstanceType, ClassType, PayloadTypes...>(This, Function, Forward<PayloadTypes>(Payload)...));
     }
 
     /**
@@ -122,7 +122,7 @@ public:
     template<typename FunctorType, typename... PayloadTypes>
     FORCEINLINE FDelegateHandle AddLambda(FunctorType Functor, PayloadTypes... Payload)
     {
-        return Super::AddDelegate(DelegateType::template CreateLambda<FunctorType, PayloadTypes...>(Functor, Forward<PayloadTypes>(Payload)...));
+        return Super::AddDelegate(FDelegate::template CreateLambda<FunctorType, PayloadTypes...>(Functor, Forward<PayloadTypes>(Payload)...));
     }
 
     /**
@@ -130,7 +130,7 @@ public:
      * @param Delegate - Delegate to add
      * @return         - Returns the delegate-handle of the added delegate
      */
-    FORCEINLINE FDelegateHandle Add(const DelegateType& Delegate)
+    FORCEINLINE FDelegateHandle Add(const FDelegate& Delegate)
     {
         return Super::AddDelegate(Delegate);
     }
@@ -145,7 +145,7 @@ public:
 
         for (int32 Index = 0; Index < Delegates.Size(); Index++)
         {
-            const DelegateType& Delegate = static_cast<const DelegateType&>(Delegates[Index]);
+            const FDelegate& Delegate = static_cast<const FDelegate&>(Delegates[Index]);
 
             FDelegateHandle Handle = Delegate.GetHandle();
             if (Handle.IsValid())

@@ -13,7 +13,7 @@ FRHIResource::~FRHIResource()
     CHECK(State.Load() == static_cast<int32>(EState::Deleted));
 }
 
-int32 FRHIResource::AddRef()
+int32 FRHIResource::AddRef() const
 {
     CHECK(StrongReferences.Load() > 0);
     CHECK(State.Load() == static_cast<int32>(EState::Alive));
@@ -21,7 +21,7 @@ int32 FRHIResource::AddRef()
     return StrongReferences.Load();
 }
 
-int32 FRHIResource::Release()
+int32 FRHIResource::Release() const
 {
     CHECK(State.Load() == static_cast<int32>(EState::Alive));
     const int32 RefCount = --StrongReferences;
@@ -30,7 +30,7 @@ int32 FRHIResource::Release()
     if (RefCount < 1)
     {
         State = static_cast<int32>(EState::Deleted);
-        GRHICommandExecutor.EnqueueResourceDeletion(this);
+        GRHICommandExecutor.EnqueueResourceDeletion(const_cast<FRHIResource*>(this));
     }
 
     return RefCount;

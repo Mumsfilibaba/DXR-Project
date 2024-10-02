@@ -4,30 +4,30 @@
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-static FWindowsWindowStyle GetWindowsWindowStyle(FWindowStyle Style)
+static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
 {
     // Determine the window style for WinAPI
     DWORD NewStyle = 0;
-    if (Style.Style != EWindowStyleFlag::None)
+    if (Style != EWindowStyleFlags::None)
     {
         NewStyle = WS_OVERLAPPED;
-        if (Style.IsTitled())
+        if ((Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_CAPTION;
         }
-        if (Style.IsClosable())
+        if ((Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_SYSMENU;
         }
-        if (Style.IsMinimizable())
+        if ((Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_SYSMENU | WS_MINIMIZEBOX;
         }
-        if (Style.IsMaximizable())
+        if ((Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
         }
-        if (Style.IsResizeable())
+        if ((Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_THICKFRAME;
         }
@@ -38,7 +38,7 @@ static FWindowsWindowStyle GetWindowsWindowStyle(FWindowStyle Style)
     }
 
     DWORD NewStyleEx;
-    if (Style.HasTaskBarIcon())
+    if ((Style & EWindowStyleFlags::NoTaskBarIcon) == EWindowStyleFlags::None)
     {
         NewStyleEx = WS_EX_APPWINDOW;
     }
@@ -47,7 +47,7 @@ static FWindowsWindowStyle GetWindowsWindowStyle(FWindowStyle Style)
         NewStyleEx = WS_EX_TOOLWINDOW;
     }
 
-    if (Style.IsTopMost())
+    if ((Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
     {
         NewStyleEx |= WS_EX_TOPMOST;
     }
@@ -93,56 +93,44 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         ParentWindow = reinterpret_cast<HWND>(InInitializer.ParentWindow->GetPlatformHandle());
     }
 
+    const CHAR* Title     = InInitializer.Title.GetCString();
+    const CHAR* ClassName = FWindowsWindow::GetClassName();
+
     HINSTANCE Instance = Application->GetInstance();
-    Window = ::CreateWindowEx(
-        NewStyle.StyleEx,
-        FWindowsWindow::GetClassName(),
-        InInitializer.Title.GetCString(),
-        NewStyle.Style,
-        PositionX,
-        PositionY,
-        RealWidth,
-        RealHeight,
-        ParentWindow,
-        nullptr,
-        Instance,
-        nullptr);
-        
+    Window = ::CreateWindowEx(NewStyle.StyleEx, ClassName, Title, NewStyle.Style, PositionX, PositionY, RealWidth, RealHeight, ParentWindow, nullptr, Instance, nullptr);
     if (Window == 0)
     {
         LOG_ERROR("[FWindowsWindow]: FAILED to create window\n");
         return false;
     }
-    else
+
+    // If the window has a sys-menu we check if the close-button should be active
+    if (NewStyle.Style & WS_SYSMENU)
     {
-        // If the window has a sys-menu we check if the close-button should be active
-        if (NewStyle.Style & WS_SYSMENU)
+        if ((InInitializer.Style & EWindowStyleFlags::Closable) == EWindowStyleFlags::None)
         {
-            if (!(InInitializer.Style.IsClosable()))
-            {
-                ::EnableMenuItem(::GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
-            }
+            ::EnableMenuItem(::GetSystemMenu(Window, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
         }
-
-        StyleParams = InInitializer.Style;
-        Style       = NewStyle;
-
-        SetLastError(0);
-        LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-
-        DWORD LastError = GetLastError();
-        if (Result == 0 && LastError != 0)
-        {
-            LOG_ERROR("[FWindowsWindow]: FAILED to Setup window-data\n");
-            return false;
-        }
-
-        ::UpdateWindow(Window);
-
-        FWindowShape NewWindowShape(InInitializer.Width, InInitializer.Height, PositionX, PositionY);
-        SetWindowShape(NewWindowShape, true);
-        return true;
     }
+
+    StyleParams = InInitializer.Style;
+    Style       = NewStyle;
+
+    SetLastError(0);
+    LONG_PTR Result = SetWindowLongPtrA(Window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+    DWORD LastError = GetLastError();
+    if (Result == 0 && LastError != 0)
+    {
+        LOG_ERROR("[FWindowsWindow]: FAILED to Setup window-data\n");
+        return false;
+    }
+
+    ::UpdateWindow(Window);
+
+    FWindowShape NewWindowShape(InInitializer.Width, InInitializer.Height, PositionX, PositionY);
+    SetWindowShape(NewWindowShape, true);
+    return true;
 }
 
 void FWindowsWindow::Show(bool bFocusOnActivate)
@@ -323,12 +311,12 @@ void FWindowsWindow::SetWindowPos(int32 x, int32 y)
     {
         RECT BorderRect = { static_cast<LONG>(x), static_cast<LONG>(y), static_cast<LONG>(x), static_cast<LONG>(y) };
 
-#if PLATFORM_WINDOWS_10_ANNIVERSARY
+    #if PLATFORM_WINDOWS_10_ANNIVERSARY
         const uint32 WindowDPI = ::GetDpiForWindow(Window);
         ::AdjustWindowRectExForDpi(&BorderRect, Style.Style, false, Style.StyleEx, WindowDPI);
-#else
+    #else
         ::AdjustWindowRectEx(&BorderRect, Style.Style, false, Style.StyleEx);
-#endif
+    #endif
 
         ::SetWindowPos(Window, nullptr, BorderRect.left, BorderRect.top, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
     }
@@ -375,12 +363,12 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 
         // Calculate real window size, since the width and height describe the client- area
         RECT ClientRect = { 0, 0, static_cast<LONG>(Shape.Width), static_cast<LONG>(Shape.Height) };
-#if PLATFORM_WINDOWS_10_ANNIVERSARY
+    #if PLATFORM_WINDOWS_10_ANNIVERSARY
         const uint32 WindowDPI = ::GetDpiForWindow(Window);
         ::AdjustWindowRectExForDpi(&ClientRect, Style.Style, false, Style.StyleEx, WindowDPI);
-#else
+    #else
         ::AdjustWindowRectEx(&ClientRect, Style.Style, false, Style.StyleEx);
-#endif
+    #endif
 
         int32 RealWidth  = ClientRect.right  - ClientRect.left;
         int32 RealHeight = ClientRect.bottom - ClientRect.top;
@@ -497,7 +485,7 @@ void FWindowsWindow::SetPlatformHandle(void* InPlatformHandle)
     }
 }
 
-void FWindowsWindow::SetStyle(FWindowStyle InStyle)
+void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
 {
     if (IsValid())
     {

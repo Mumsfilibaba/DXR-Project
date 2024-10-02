@@ -1,21 +1,19 @@
 #pragma once
-#include "Application/Widget.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FFrameProfilerWidget : public FWidget
+class FFrameProfilerWidget
 {
 public:
-    virtual void Paint() override final;
+    FFrameProfilerWidget();
+    ~FFrameProfilerWidget();
 
-     /** @brief - Draw a simple FPS counter */
+    void Draw();
     void DrawFPS();
-
-     /** @brief - Draw the profiler window */
     void DrawWindow();
-
-     /** @brief - Draw the CPU data */
     void DrawCPUData(float Width);
 
 private:
-    ProfileSamplesMap Samples;
+    TArray<FFrameProfilerThreadInfo> ThreadInfos;
+    FDelegateHandle                  ImGuiDelegateHandle;
 };

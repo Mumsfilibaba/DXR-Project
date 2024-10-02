@@ -131,38 +131,39 @@ bool FVulkanRHI::Initialize()
         return false;
     }
 
-    FVulkanPhysicalDeviceCreateInfo AdapterDesc;
-    AdapterDesc.RequiredExtensionNames                     = FPlatformVulkan::GetRequiredDeviceExtensions();
-    AdapterDesc.OptionalExtensionNames                     = FPlatformVulkan::GetOptionalDeviceExtentions();
-    AdapterDesc.RequiredFeatures.samplerAnisotropy         = VK_TRUE;
-    AdapterDesc.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
-    AdapterDesc.RequiredFeatures.imageCubeArray            = VK_TRUE;
-    AdapterDesc.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
-    AdapterDesc.RequiredFeatures12.hostQueryReset          = VK_TRUE;
+    FVulkanPhysicalDeviceCreateInfo AdapterCreateInfo;
+    AdapterCreateInfo.RequiredExtensionNames                     = FPlatformVulkan::GetRequiredDeviceExtensions();
+    AdapterCreateInfo.OptionalExtensionNames                     = FPlatformVulkan::GetOptionalDeviceExtentions();
+    AdapterCreateInfo.RequiredFeatures.samplerAnisotropy         = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.imageCubeArray            = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures.depthBiasClamp            = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures11.shaderDrawParameters    = VK_TRUE;
+    AdapterCreateInfo.RequiredFeatures12.hostQueryReset          = VK_TRUE;
 
     PhysicalDevice = new FVulkanPhysicalDevice(GetInstance());
-    if (!PhysicalDevice->Initialize(AdapterDesc))
+    if (!PhysicalDevice->Initialize(AdapterCreateInfo))
     {
         VULKAN_ERROR("Failed to initialize VulkanPhyscicalDevice");
         return false;
     }
 
-    FVulkanDeviceCreateInfo DeviceDesc;
-    DeviceDesc.RequiredExtensionNames = AdapterDesc.RequiredExtensionNames;
-    DeviceDesc.OptionalExtensionNames = AdapterDesc.OptionalExtensionNames;
-    DeviceDesc.RequiredFeatures       = AdapterDesc.RequiredFeatures;
-    DeviceDesc.RequiredFeatures11     = AdapterDesc.RequiredFeatures11;
-    DeviceDesc.RequiredFeatures12     = AdapterDesc.RequiredFeatures12;
+    FVulkanDeviceCreateInfo DeviceCreateInfo;
+    DeviceCreateInfo.RequiredExtensionNames = AdapterCreateInfo.RequiredExtensionNames;
+    DeviceCreateInfo.OptionalExtensionNames = AdapterCreateInfo.OptionalExtensionNames;
+    DeviceCreateInfo.RequiredFeatures       = AdapterCreateInfo.RequiredFeatures;
+    DeviceCreateInfo.RequiredFeatures11     = AdapterCreateInfo.RequiredFeatures11;
+    DeviceCreateInfo.RequiredFeatures12     = AdapterCreateInfo.RequiredFeatures12;
 
     // Enable GeometryShaders if the device supports them
     const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
     if (DeviceFeatures.geometryShader)
     {
-        DeviceDesc.RequiredFeatures.geometryShader = VK_TRUE;
+        DeviceCreateInfo.RequiredFeatures.geometryShader = VK_TRUE;
     }
 
     Device = new FVulkanDevice(GetInstance(), GetAdapter());
-    if (!Device->Initialize(DeviceDesc))
+    if (!Device->Initialize(DeviceCreateInfo))
     {
         VULKAN_ERROR("Failed to initialize VulkanDevice");
         return false;

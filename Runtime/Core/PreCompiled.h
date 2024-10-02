@@ -136,7 +136,6 @@
 #include "Core/Misc/CoreDelegates.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/EngineConfig.h"
-#include "Core/Misc/EngineLoopTicker.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/OutputDevice.h"
 #include "Core/Misc/OutputDeviceConsole.h"

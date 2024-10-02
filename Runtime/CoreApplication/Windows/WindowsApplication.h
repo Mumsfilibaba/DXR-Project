@@ -55,7 +55,7 @@ public:
 
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
     virtual void Tick(float Delta) override final;
-    virtual void UpdateGamepadDevices() override final;
+    virtual void UpdateInputDevices() override final;
     virtual FInputDevice* GetInputDeviceInterface() override final;
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
@@ -65,7 +65,7 @@ public:
     virtual TSharedRef<FGenericWindow> GetCapture() const override final;
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const override final;
-    virtual void GetDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
+    virtual void QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
     TSharedRef<FWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
@@ -91,21 +91,16 @@ private:
     LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam);
     void HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
 
-private:
-    HICON                Icon;
-    HINSTANCE            InstanceHandle;
-    bool                 bIsTrackingMouse;
-    mutable bool         bHasDisplayInfoChanged;
-
-    mutable FDisplayInfo DisplayInfo;
-    FXInputDevice        XInputDevice;
+    HICON                              Icon;
+    HINSTANCE                          InstanceHandle;
+    bool                               bIsTrackingMouse;
+    FXInputDevice                      XInputDevice;
 
     TArray<FWindowsMessage>            Messages;
     FCriticalSection                   MessagesCS;
     
     TArray<TSharedRef<FWindowsWindow>> Windows;
     mutable FCriticalSection           WindowsCS;
-    
     TArray<TSharedRef<FWindowsWindow>> ClosedWindows;
     FCriticalSection                   ClosedWindowsCS;
 

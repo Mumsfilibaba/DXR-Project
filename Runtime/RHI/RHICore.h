@@ -46,6 +46,13 @@ inline const CHAR* ToString(EShadingRateTier Tier)
     }
 }
 
+// Geometry Shading Support
+extern RHI_API bool GRHISupportsGeometryShaders;
+
+// View-Instancing
+extern RHI_API bool   GRHISupportsViewInstancing;
+extern RHI_API uint32 GRHIMaxViewInstanceCount;
+
 // Hardware RayTracing
 extern RHI_API bool            GRHISupportsRayTracing;
 extern RHI_API ERayTracingTier GRHIRayTracingTier;
@@ -55,10 +62,3 @@ extern RHI_API uint32          GRHIRayTracingMaxRecursionDepth;
 extern RHI_API bool             GRHISupportsVRS;
 extern RHI_API EShadingRateTier GRHIShadingRateTier;
 extern RHI_API uint32           GRHIShadingRateImageTileSize;
-
-// Geometry Shading Support
-extern RHI_API bool GRHISupportsGeometryShaders;
-
-// View-Instancing
-extern RHI_API bool   GRHISupportsViewInstancing;
-extern RHI_API uint32 GRHIMaxViewInstanceCount;

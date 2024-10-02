@@ -1,6 +1,7 @@
 #pragma once
 #include "Array.h"
 #include "Core/Utilities/HashUtilities.h"
+
 // TODO: Custom map implementation
 #include <unordered_map>
 

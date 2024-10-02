@@ -37,7 +37,6 @@ inline const CHAR* ToString(ERHIType RenderLayerApi)
     }
 }
 
-
 /** @brief - Global pointer for the RHIInterface */
 extern RHI_API FRHI* GRHI;
 
@@ -58,7 +57,6 @@ struct RHI_API FRHIModule : public FModuleInterface
      */
     virtual FRHI* CreateRHI() { return nullptr; }
 };
-
 
 class RHI_API FRHI
 {

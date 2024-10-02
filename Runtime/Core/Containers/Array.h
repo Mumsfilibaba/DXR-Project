@@ -176,11 +176,6 @@ public:
      */
     void Reset(const ElementType* Elements, SizeType NumElements) noexcept
     {
-        if (NumElements <= 0)
-        {
-            return;
-        }
-
         if (Elements != Allocator.GetAllocation())
         {
             ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
@@ -376,6 +371,14 @@ public:
     FORCEINLINE void AddUninitialized() noexcept
     {
         AppendUninitialized(1);
+    }
+
+    /**
+     * @brief - Appends a default constructed element
+     */
+    FORCEINLINE ElementType& AddDefault() noexcept
+    {
+        return Emplace();
     }
 
     /**

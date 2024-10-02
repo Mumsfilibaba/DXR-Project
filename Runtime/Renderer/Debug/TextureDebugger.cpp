@@ -1,21 +1,39 @@
 #include "TextureDebugger.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Application/Application.h"
-#include "Application/WidgetUtilities.h"
-
-#include <imgui.h>
+#include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
     "Renderer.Debug.ViewRenderTargets",
     "Enables the Debug RenderTarget-viewer",
     false);
 
-void FRenderTargetDebugWindow::Paint()
+FRenderTargetDebugWindow::FRenderTargetDebugWindow()
+    : DebugTextures()
+    , SelectedTextureIndex(0)
+    , ImGuiDelegateHandle()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRenderTargetDebugWindow::Draw));
+        CHECK(ImGuiDelegateHandle.IsValid());
+    }
+}
+
+FRenderTargetDebugWindow::~FRenderTargetDebugWindow()
+{
+    if (IImguiPlugin::IsEnabled())
+    {
+        IImguiPlugin::Get().RemoveDelegate(ImGuiDelegateHandle);
+    }
+}
+
+void FRenderTargetDebugWindow::Draw()
 {
     if (CVarDrawTextureDebugger.GetValue())
     {
-        const ImVec2 MainViewportPos = FImGui::GetMainViewportPos();
-        const ImVec2 DisplaySize     = FImGui::GetMainViewportSize();
+        const ImVec2 MainViewportPos = ImGuiExtensions::GetMainViewportPos();
+        const ImVec2 DisplaySize     = ImGuiExtensions::GetMainViewportSize();
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
@@ -42,7 +60,7 @@ void FRenderTargetDebugWindow::Paint()
             // Draw Image (Clamped to the window size)
             if (!DebugTextures.IsEmpty())
             {
-                if (FDrawableTexture* CurrImage = &DebugTextures[ImageIndex])
+                if (FImGuiTexture* CurrImage = &DebugTextures[ImageIndex])
                 {
                     const float TexWidth       = float(CurrImage->Texture->GetWidth());
                     const float TexHeight      = float(CurrImage->Texture->GetHeight());
@@ -84,7 +102,7 @@ void FRenderTargetDebugWindow::Paint()
             {
                 ImGui::NewLine();
 
-                if (ButtonCenteredOnLine("Close"))
+                if (ImGuiExtensions::ButtonCenteredOnLine("Close"))
                 {
                     CVarDrawTextureDebugger->SetAsBool(false, EConsoleVariableFlags::SetByCode);
                 }
@@ -104,7 +122,7 @@ void FRenderTargetDebugWindow::Paint()
                     constexpr float MenuImageSize = 96.0f;
                     constexpr int32 FramePadding  = 0;
 
-                    FDrawableTexture* CurrImage = &DebugTextures[Index];
+                    FImGuiTexture* CurrImage = &DebugTextures[Index];
 
                     const float ImageRatio = float(CurrImage->Texture->GetWidth()) / float(CurrImage->Texture->GetHeight());
                     ImVec2 Size    = ImVec2(MenuImageSize * ImageRatio, MenuImageSize);

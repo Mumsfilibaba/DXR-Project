@@ -1,5 +1,5 @@
 #pragma once
-#include "Input/Keys.h"
+#include "Application/Input/Keys.h"
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
 #include "CoreApplication/Generic/InputCodes.h"
@@ -8,11 +8,6 @@
 
 class FResponse
 {
-    FResponse(bool bInIsHandled)
-        : bIsHandled(bInIsHandled)
-    {
-    }
-
 public:
     static FResponse Handled()
     {
@@ -30,9 +25,13 @@ public:
     }
 
 private:
-    uint32 bIsHandled : 1;
-};
+    FResponse(bool bInIsHandled)
+        : bIsHandled(bInIsHandled)
+    {
+    }
 
+    uint8 bIsHandled : 1;
+};
 
 class FInputEvent
 {
@@ -56,7 +55,6 @@ private:
     FModifierKeyState ModifierKeys;
 };
 
-
 enum class EButtomEventType
 {
     Unknown = 0,
@@ -73,7 +71,7 @@ public:
         , Key(EKeys::Unknown)
         , CursorPosition()
         , ScrollDelta(0.0f)
-        , bIsVerticalScrollDelta(false)
+        , bIsScrollVertical(false)
         , bIsDown(false)
     {
     }
@@ -83,7 +81,7 @@ public:
         , Key(EKeys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , bIsVerticalScrollDelta(false)
+        , bIsScrollVertical(false)
         , bIsDown(false)
     {
     }
@@ -93,17 +91,29 @@ public:
         , Key(InKey)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
-        , bIsVerticalScrollDelta(false)
+        , bIsScrollVertical(false)
         , bIsDown(bInIsDown)
     {
+        CHECK(InKey.IsMouseButton());
     }
 
-    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsVerticalScrollDelta)
+    FCursorEvent(FKey InKey, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
+        : FInputEvent(InModifierKeys)
+        , Key(InKey)
+        , CursorPosition(InCursorPosition)
+        , ScrollDelta(0.0f)
+        , bIsScrollVertical(false)
+        , bIsDown(false)
+    {
+        CHECK(InKey.IsMouseButton());
+    }
+
+    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
         : FInputEvent(InModifierKeys)
         , Key(EKeys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(InScrollDelta)
-        , bIsVerticalScrollDelta(bInIsVerticalScrollDelta)
+        , bIsScrollVertical(bInIsScrollVertical)
         , bIsDown(false)
     {
     }
@@ -113,7 +123,7 @@ public:
         return Key;
     }
 
-    FIntVector2 GetCursorPos() const
+    const FIntVector2& GetCursorPos() const
     {
         return CursorPosition;
     }
@@ -123,9 +133,9 @@ public:
         return ScrollDelta;
     }
 
-    bool IsVerticalScrollDelta() const
+    bool IsScrollVertical() const
     {
-        return bIsVerticalScrollDelta;
+        return bIsScrollVertical;
     }
 
     bool IsDown() const
@@ -137,10 +147,9 @@ private:
     FKey        Key;
     FIntVector2 CursorPosition;
     float       ScrollDelta;
-    bool        bIsVerticalScrollDelta : 1;
-    bool        bIsDown                : 1;
+    bool        bIsScrollVertical : 1;
+    bool        bIsDown           : 1;
 };
-
 
 class FKeyEvent : public FInputEvent
 {
@@ -218,7 +227,6 @@ private:
     uint32 bIsDown      : 1;
 };
 
-
 class FAnalogGamepadEvent : public FInputEvent
 {
 public:
@@ -257,67 +265,4 @@ private:
     EAnalogSourceName::Type AnalogSource;
     float                   AnalogValue;
     uint32                  GamepadIndex;
-};
-
-
-class FWindowEvent
-{
-public:
-    FWindowEvent()
-        : Window(nullptr)
-        , Position()
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow)
-        : Window(InWindow)
-        , Position()
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, const FIntVector2& InPosition)
-        : Window(InWindow)
-        , Position(InPosition)
-        , Width(0)
-        , Height(0)
-    {
-    }
-
-    FWindowEvent(const TSharedRef<FGenericWindow>& InWindow, int32 InWidth, int32 InHeight)
-        : Window(InWindow)
-        , Position()
-        , Width(InWidth)
-        , Height(InHeight)
-    {
-    }
-
-    TSharedRef<FGenericWindow> GetWindow() const
-    {
-        return Window;
-    }
-
-    int32 GetWidth() const
-    {
-        return Width;
-    }
-
-    int32 GetHeight() const
-    {
-        return Height;
-    }
-
-    FIntVector2 GetPosition() const
-    {
-        return Position;
-    }
-
-private:
-    TSharedRef<FGenericWindow> Window;
-    FIntVector2                Position;
-    int32                      Width;
-    int32                      Height;
 };

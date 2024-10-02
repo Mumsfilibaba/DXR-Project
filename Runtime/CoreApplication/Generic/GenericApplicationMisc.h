@@ -28,7 +28,6 @@ struct FModifierKeyState
 
     union
     {
-         /** @brief - Flags */
         struct
         {
             uint8 bIsCtrlDown     : 1;
@@ -39,7 +38,6 @@ struct FModifierKeyState
             uint8 bIsNumPadDown   : 1;
         };
 
-         /** @brief - Mask */
         uint8 ModifierMask = 0;
     };
 };

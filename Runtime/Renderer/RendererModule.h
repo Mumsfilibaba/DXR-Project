@@ -28,13 +28,9 @@ public:
     }
 
 private:
-
-    // SceneRenderer instance
     FSceneRenderer* Renderer;
-
-    // All scenes that has been allocated and will be rendered
     TArray<FScene*> Scenes;
 
     // Delegate that is called to properly initialize ImGui for this module
-    FDelegateHandle PostApplicationCreateHandle;
+    FDelegateHandle PreEngineInitHandle;
 };
