@@ -41,6 +41,7 @@
 
 - (void)performZoom:(id)Sender
 {
+    [super performZoom:Sender];
 }
 
 - (void)zoom:(id)Sender
@@ -51,14 +52,17 @@
 
 - (void)keyDown:(NSEvent*)Event
 {
+    [super keyDown:Event];
 }
 
 - (void)keyUp:(NSEvent*)Event
 {
+    [super keyUp:Event];
 }
 
-- (void) performClose:(id)sender
+- (void) performClose:(id)Sender
 {
+    [super performClose:Sender];
 }
 
 - (void) windowWillClose:(NSNotification*) Notification
