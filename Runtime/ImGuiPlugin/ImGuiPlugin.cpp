@@ -592,12 +592,9 @@ void FImGuiPlugin::StaticPlatformCreateWindow(ImGuiViewport* Viewport)
     CHECK(ViewportData->Window != nullptr);
 
     FApplicationInterface::Get().CreateWindow(ViewportData->Window);
-
-    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
-    PlatformWindow->SetStyle(WindowStyle);
-    
+   
     Viewport->PlatformHandle        = ViewportData->Window.Get();
-    Viewport->PlatformHandleRaw     = PlatformWindow->GetPlatformHandle();
+    Viewport->PlatformHandleRaw     = ViewportData->Window->GetPlatformWindow()->GetPlatformHandle();
     Viewport->PlatformRequestMove   = false;
     Viewport->PlatformRequestResize = false;
     Viewport->PlatformWindowCreated = true;
