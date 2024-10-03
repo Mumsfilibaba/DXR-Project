@@ -88,10 +88,13 @@ public:
     }
 
 private:
-    void ProcessDeferredEvent(const FDeferredMacEvent& Notification);
+    void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
     
     // Observer that checks for monitor changes
     FMacApplicationObserver*       Observer;
+
+    // We need to store this modifier-flag in order to handle modifier keys correctly
+    NSUInteger                     PreviousModifierFlags;
 
     // InputDevice handling gamepads
     TSharedPtr<FGCInputDevice>     InputDevice;

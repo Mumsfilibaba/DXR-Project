@@ -85,6 +85,14 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
     }
 }
 
+- (void) flagsChanged:(NSEvent*) Event
+{
+    if (MacApplication)
+    {
+        MacApplication->DeferEvent(Event);
+    }
+}
+
 - (void) mouseDown:(NSEvent*) Event
 {
     if (MacApplication)

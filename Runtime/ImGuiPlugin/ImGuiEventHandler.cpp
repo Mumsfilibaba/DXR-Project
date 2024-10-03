@@ -239,10 +239,10 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
         CHECK(KeyName != EKeyboardKeyName::Unknown);
 
         ImGuiIO& UIState = ImGui::GetIO();
-        UIState.AddKeyEvent(ImGuiMod_Ctrl, KeyEvent.GetModifierKeys().bIsCtrlDown == 1);
-        UIState.AddKeyEvent(ImGuiMod_Shift, KeyEvent.GetModifierKeys().bIsShiftDown == 1);
-        UIState.AddKeyEvent(ImGuiMod_Alt, KeyEvent.GetModifierKeys().bIsAltDown == 1);
-        UIState.AddKeyEvent(ImGuiMod_Super, KeyEvent.GetModifierKeys().bIsSuperDown == 1);
+        UIState.AddKeyEvent(ImGuiMod_Ctrl, KeyEvent.GetModifierKeys().IsCtrlDown());
+        UIState.AddKeyEvent(ImGuiMod_Shift, KeyEvent.GetModifierKeys().IsShiftDown());
+        UIState.AddKeyEvent(ImGuiMod_Alt, KeyEvent.GetModifierKeys().IsAltDown());
+        UIState.AddKeyEvent(ImGuiMod_Super, KeyEvent.GetModifierKeys().IsSuperDown());
 
         const ImGuiKey TranslatedKey = GetImGuiKeyboardKey(KeyName);
         if (TranslatedKey != ImGuiKey_None)

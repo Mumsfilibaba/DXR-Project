@@ -6,40 +6,64 @@
     #undef MessageBox
 #endif
 
-enum EModifierFlag : uint8
+enum class EModifierFlag : uint32
 {
-    ModifierFlag_None     = 0,
-    ModifierFlag_Ctrl     = FLAG(1),
-    ModifierFlag_Alt      = FLAG(2),
-    ModifierFlag_Shift    = FLAG(3),
-    ModifierFlag_CapsLock = FLAG(4),
-    ModifierFlag_Super    = FLAG(5),
-    ModifierFlag_NumLock  = FLAG(6),
+    None     = 0,
+    Ctrl     = FLAG(1),
+    Alt      = FLAG(2),
+    Shift    = FLAG(3),
+    CapsLock = FLAG(4),
+    Super    = FLAG(5),
+    NumLock  = FLAG(6),
 };
 
-struct FModifierKeyState
-{
-    FModifierKeyState() = default;
+ENUM_CLASS_OPERATORS(EModifierFlag);
 
-    FModifierKeyState(uint8 InModifierMask)
-        : ModifierMask(InModifierMask)
+class FModifierKeyState
+{
+public:
+    FModifierKeyState()
+    : Flags(EModifierFlag::None)
     {
     }
 
-    union
+    FModifierKeyState(EModifierFlag InFlags)
+        : Flags(InFlags)
     {
-        struct
-        {
-            uint8 bIsCtrlDown     : 1;
-            uint8 bIsAltDown      : 1;
-            uint8 bIsShiftDown    : 1;
-            uint8 bIsCapsLockDown : 1;
-            uint8 bIsSuperDown    : 1;
-            uint8 bIsNumPadDown   : 1;
-        };
+    }
 
-        uint8 ModifierMask = 0;
-    };
+    bool IsCtrlDown() const
+    {
+        return (Flags & EModifierFlag::Ctrl) != EModifierFlag::None;
+    }
+    
+    bool IsAltDown() const
+    {
+        return (Flags & EModifierFlag::Alt) != EModifierFlag::None;
+    }
+    
+    bool IsShiftDown() const
+    {
+        return (Flags & EModifierFlag::Shift) != EModifierFlag::None;
+    }
+    
+    bool IsCapsLockDown() const
+    {
+        return (Flags & EModifierFlag::CapsLock) != EModifierFlag::None;
+    }
+    
+    bool IsSuperDown() const
+    {
+        return (Flags & EModifierFlag::Super) != EModifierFlag::None;
+    }
+    
+    bool IsNumPadDown() const
+    {
+        return (Flags & EModifierFlag::NumLock) != EModifierFlag::None;
+    }
+    
+private:
+    EModifierFlag Flags;
 };
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

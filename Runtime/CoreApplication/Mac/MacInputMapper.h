@@ -29,6 +29,29 @@ public:
     {
         return static_cast<uint32>(ButtonIndexFromButton[Button]);
     }
+    
+    static NSUInteger TranslateKeyToModifierFlag(EKeyboardKeyName::Type KeyName)
+    {
+        switch (KeyName)
+        {
+            case EKeyboardKeyName::LeftShift:
+            case EKeyboardKeyName::RightShift:
+                return NSEventModifierFlagShift;
+            case EKeyboardKeyName::LeftControl:
+            case EKeyboardKeyName::RightControl:
+                return NSEventModifierFlagControl;
+            case EKeyboardKeyName::LeftAlt:
+            case EKeyboardKeyName::RightAlt:
+                return NSEventModifierFlagOption;
+            case EKeyboardKeyName::LeftSuper:
+            case EKeyboardKeyName::RightSuper:
+                return NSEventModifierFlagCommand;
+            case EKeyboardKeyName::CapsLock:
+                return NSEventModifierFlagCapsLock;
+        }
+
+        return 0;
+    }
 
 private:
     static TStaticArray<EKeyboardKeyName::Type, NumKeys>                 KeyCodeFromScanCodeTable;

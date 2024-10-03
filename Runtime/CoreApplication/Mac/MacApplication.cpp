@@ -176,6 +176,7 @@ TSharedPtr<FMacApplication> FMacApplication::CreateMacApplication()
 FMacApplication::FMacApplication()
     : FGenericApplication(MakeShared<FMacCursor>())
     , Observer(nullptr)
+    , PreviousModifierFlags(0)
     , InputDevice(FGCInputDevice::CreateGCInputDevice())
     , LastPressedButton(EMouseButtonName::Unknown)
     , Windows()
@@ -558,6 +559,43 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
                 MessageHandler->OnKeyDown(FPlatformInputMapper::GetKeyCodeFromScanCode(Event.keyCode), Event.ARepeat, FPlatformApplicationMisc::GetModifierKeyState());
                 break;
             }
+            
+            case NSEventTypeFlagsChanged:
+            {
+                const EKeyboardKeyName::Type KeyName = FPlatformInputMapper::GetKeyCodeFromScanCode(Event.keyCode);
+
+                const NSUInteger KeyFlag       = FMacInputMapper::TranslateKeyToModifierFlag(KeyName);
+                const NSUInteger ModifierFlags = [Event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
+
+                bool bIsDown;
+                if (KeyFlag & ModifierFlags)
+                {
+                    if (KeyFlag & PreviousModifierFlags)
+                    {
+                        bIsDown = false;
+                    }
+                    else
+                    {
+                        bIsDown = true;
+                    }
+                }
+                else
+                {
+                    bIsDown = false;
+                }
+                
+                if (bIsDown)
+                {
+                    MessageHandler->OnKeyDown(KeyName, false, FPlatformApplicationMisc::GetModifierKeyState());
+                }
+                else
+                {
+                    MessageHandler->OnKeyUp(KeyName, FPlatformApplicationMisc::GetModifierKeyState());
+                }
+                
+                PreviousModifierFlags = ModifierFlags;
+                break;
+            }
 
             case NSEventTypeLeftMouseUp:
             case NSEventTypeRightMouseUp:
@@ -613,7 +651,14 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
                     }
                     
                     const NSPoint CursorPosition = GetCorrectedMouseLocation();
-                    MessageHandler->OnMouseScrolled(int32(ScrollDeltaX), int32(ScrollDeltaY), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+                    if (FMath::Abs(ScrollDeltaX) > 0.0f)
+                    {
+                        MessageHandler->OnMouseScrolled(ScrollDeltaX, false, static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+                    }
+                    if (FMath::Abs(ScrollDeltaY) > 0.0f)
+                    {
+                        MessageHandler->OnMouseScrolled(ScrollDeltaY, true, static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+                    }
                 }
 
                 break;

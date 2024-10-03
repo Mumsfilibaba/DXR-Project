@@ -36,36 +36,31 @@ void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
 FModifierKeyState FWindowsApplicationMisc::GetModifierKeyState()
 {
-    uint8 ModifierMask = 0;
+    EModifierFlag ModifierFlags = EModifierFlag::None;
     if (GetKeyState(VK_CONTROL) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::ModifierFlag_Ctrl;
+        ModifierFlags |= EModifierFlag::Ctrl;
     }
-
     if (GetKeyState(VK_MENU) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::ModifierFlag_Alt;
+        ModifierFlags |= EModifierFlag::Alt;
     }
-
     if (GetKeyState(VK_SHIFT) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::ModifierFlag_Shift;
+        ModifierFlags |= EModifierFlag::Shift;
     }
-
-    if (GetKeyState(VK_CAPITAL) & 1)
+    if (GetKeyState(VK_CAPITAL) & 0x1)
     {
-        ModifierMask |= EModifierFlag::ModifierFlag_CapsLock;
+        ModifierFlags |= EModifierFlag::CapsLock;
     }
-
     if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000)
     {
-        ModifierMask |= EModifierFlag::ModifierFlag_Super;
+        ModifierFlags |= EModifierFlag::Super;
     }
-
-    if (GetKeyState(VK_NUMLOCK) & 1)
+    if (GetKeyState(VK_NUMLOCK) & 0x1)
     {
-        ModifierMask |= EModifierFlag::ModifierFlag_NumLock;
+        ModifierFlags |= EModifierFlag::NumLock;
     }
 
-    return FModifierKeyState(ModifierMask);
+    return FModifierKeyState(ModifierFlags);
 }

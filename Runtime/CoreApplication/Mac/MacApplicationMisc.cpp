@@ -46,31 +46,27 @@ FModifierKeyState FMacApplicationMisc::GetModifierKeyState()
     
     NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
 
-    uint32 Mask = 0;
+    EModifierFlag ModifierFlags = EModifierFlag::None;
     if (CurrentModifiers & NSEventModifierFlagControl)
     {
-        Mask |= EModifierFlag::ModifierFlag_Ctrl;
+        ModifierFlags |= EModifierFlag::Ctrl;
     }
-    
     if (CurrentModifiers & NSEventModifierFlagShift)
     {
-        Mask |= EModifierFlag::ModifierFlag_Shift;
+        ModifierFlags |= EModifierFlag::Shift;
     }
-    
     if (CurrentModifiers & NSEventModifierFlagOption)
     {
-        Mask |= EModifierFlag::ModifierFlag_Alt;
+        ModifierFlags |= EModifierFlag::Alt;
     }
-    
     if (CurrentModifiers & NSEventModifierFlagCommand)
     {
-        Mask |= EModifierFlag::ModifierFlag_Super;
+        ModifierFlags |= EModifierFlag::Super;
     }
-    
     if (CurrentModifiers & NSEventModifierFlagCapsLock)
     {
-        Mask |= EModifierFlag::ModifierFlag_CapsLock;
+        ModifierFlags |= EModifierFlag::CapsLock;
     }
-        
-    return FModifierKeyState(Mask);
+    
+    return FModifierKeyState(ModifierFlags);
 }
