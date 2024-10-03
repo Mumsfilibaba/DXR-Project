@@ -38,10 +38,11 @@ FMacWindow::~FMacWindow()
 
 bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 {
-    NSUInteger WindowStyle = 0;
+    NSWindowStyleMask WindowStyle = 0;
     if (InInitializer.Style != EWindowStyleFlags::None)
     {
-        WindowStyle = NSWindowStyleMaskTitled;
+        WindowStyle |= NSWindowStyleMaskTitled;
+
         if ((InInitializer.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskClosable;
@@ -98,11 +99,29 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             Window.title = InInitializer.Title.GetNSString();
         }
 
-        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) == EWindowStyleFlags::None)
+        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+        {
+            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:YES];
+        }
+        else
+        {
+            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:NO];
+        }
+        
+        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+        {
+            [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
+        }
+        else
         {
             [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
         }
-        if ((InInitializer.Style & EWindowStyleFlags::Maximizable) == EWindowStyleFlags::None)
+        
+        if ((InInitializer.Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
+        {
+            [[Window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
+        }
+        else
         {
             [[Window standardWindowButton:NSWindowZoomButton] setEnabled:NO];
         }
@@ -119,9 +138,8 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
         Window.collectionBehavior = Behavior;
 
-        WindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
-
         NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
+        WindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
         [Window setReleasedWhenClosed:NO];
         [Window setAcceptsMouseMovedEvents:YES];
         [Window setRestorable:NO];
@@ -137,7 +155,16 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         {
             [Window setTabbingMode:NSWindowTabbingModeDisallowed];
         }
-
+        
+        [Window setIsVisible:YES];
+        
+        const NSRect ContentRect  = NSMakeRect(0, 0, Width, Height);
+        NSRect NewFrame = [Window frameRectForContentRect:ContentRect];
+        NewFrame.origin.x = PositionX;
+        NewFrame.origin.y = PositionY;
+        ConvertNSRect(Window.screen, &NewFrame);
+        [Window setFrame: NewFrame display: YES animate: YES];
+       
         StyleParams = InInitializer.Style;
         bResult = true;
     }, NSDefaultRunLoopMode, true);
@@ -151,6 +178,8 @@ void FMacWindow::Show(bool bFocusOnActivate)
     {
         SCOPED_AUTORELEASE_POOL();
         
+        [Window setIsVisible:YES];
+
         if (bFocusOnActivate)
         {
             [Window orderFront:nil];
@@ -159,8 +188,6 @@ void FMacWindow::Show(bool bFocusOnActivate)
         {
             [Window makeKeyAndOrderFront:nil];
         }
-
-        [Window setIsVisible:YES];
 
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -200,7 +227,9 @@ void FMacWindow::Destroy()
     {
         SCOPED_AUTORELEASE_POOL();
         
-        [Window performClose:Window];
+        [Window close];
+        Window = nil;
+        
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
@@ -316,7 +345,8 @@ void FMacWindow::SetTitle(const FString& InTitle)
     __block NSString* Title = InTitle.GetNSString();
     ExecuteOnMainThread(^
     {
-        Window.title = Title;
+        [Window setTitle:Title];
+        [Window setMiniwindowTitle:Title];
     }, NSDefaultRunLoopMode, true);
 }
 
@@ -496,6 +526,29 @@ void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
 
 void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
 {
+    NSWindowStyleMask WindowStyle = 0;
+    if (InStyle != EWindowStyleFlags::None)
+    {
+        WindowStyle |= NSWindowStyleMaskTitled;
+
+        if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
+        {
+            WindowStyle |= NSWindowStyleMaskClosable;
+        }
+        if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+        {
+            WindowStyle |= NSWindowStyleMaskResizable;
+        }
+        if ((InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+        {
+            WindowStyle |= NSWindowStyleMaskMiniaturizable;
+        }
+    }
+    else
+    {
+        WindowStyle = NSWindowStyleMaskBorderless;
+    }
+    
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
@@ -503,11 +556,32 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         const NSWindowLevel WindowLevel = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [Window setLevel:WindowLevel];
         
-        const BOOL bMinimizable = (InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None ? YES : NO;
-        [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:bMinimizable];
-
-        const BOOL bMaximizable = (InStyle & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None ? YES : NO;
-        [[Window standardWindowButton:NSWindowZoomButton] setEnabled:bMaximizable];
+        if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
+        {
+            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:YES];
+        }
+        else
+        {
+            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:NO];
+        }
+        
+        if ((InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+        {
+            [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
+        }
+        else
+        {
+            [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
+        }
+        
+        if ((InStyle & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
+        {
+            [[Window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
+        }
+        else
+        {
+            [[Window standardWindowButton:NSWindowZoomButton] setEnabled:NO];
+        }
         
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
         if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
@@ -519,7 +593,8 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
             Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
         }
         
-        Window.collectionBehavior = Behavior;
+        [Window setStyleMask:WindowStyle];
+        [Window setCollectionBehavior:Behavior];
         
         // Set styleflags
         StyleParams = InStyle;

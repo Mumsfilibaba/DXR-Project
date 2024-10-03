@@ -39,32 +39,6 @@
     return YES;
 }
 
-- (void)performZoom:(id)Sender
-{
-    [super performZoom:Sender];
-}
-
-- (void)zoom:(id)Sender
-{
-    SCOPED_AUTORELEASE_POOL();
-    [super zoom:Sender];
-}
-
-- (void)keyDown:(NSEvent*)Event
-{
-    [super keyDown:Event];
-}
-
-- (void)keyUp:(NSEvent*)Event
-{
-    [super keyUp:Event];
-}
-
-- (void) performClose:(id)Sender
-{
-    [super performClose:Sender];
-}
-
 - (void) windowWillClose:(NSNotification*) Notification
 {
     @autoreleasepool

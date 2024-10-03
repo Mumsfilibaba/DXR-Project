@@ -53,7 +53,7 @@ private:
     static void StaticPlatformDestroyWindow(ImGuiViewport* Viewport);
     static void StaticPlatformShowWindow(ImGuiViewport* Viewport);
     static void StaticPlatformUpdateWindow(ImGuiViewport* Viewport);
-    static ImVec2 StaticPlatformGetWindowPos(ImGuiViewport* Viewport);
+    static ImVec2 StaticPlatformGetWindowPosition(ImGuiViewport* Viewport);
     static void StaticPlatformSetWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
     static ImVec2 StaticPlatformGetWindowSize(ImGuiViewport* Viewport);
     static void StaticPlatformSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);

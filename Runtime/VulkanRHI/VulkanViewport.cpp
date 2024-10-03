@@ -196,9 +196,7 @@ bool FVulkanViewport::CreateSwapChain()
     // If we are already recording then we just submit a CommandBuffer and wait for it to complete
     if (bWasRecording)
     {
-        CommandContext->FinishCommandBuffer(false);
-        CommandContext->GetCommandQueue().WaitForCompletion();
-        CommandContext->ObtainCommandBuffer();
+        CommandContext->SplitCommandBuffer(false, true);
     }
     else
     {

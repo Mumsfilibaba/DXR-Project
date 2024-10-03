@@ -101,6 +101,9 @@ public:
     // Checks if there is currently a game-pad connected
     bool IsGamePadConnected() const;
 
+    // Returns true if we are currently tracking the mouse in a drag-operation
+    bool IsTrackingCursor() const { return bIsTrackingCursor; }
+    
     // Overrides the current platform application
     void OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
     
@@ -142,7 +145,7 @@ private:
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
     FDisplayInfo                      DisplayInfo;
     bool                              bIsMonitorInfoValid;
-    bool                              bIsTrackingMouse;
+    bool                              bIsTrackingCursor;
     TArray<TSharedPtr<FWindow>>       Windows;
     FWidgetPath                       FocusPath;
     FWidgetPath                       TrackedWidgets;

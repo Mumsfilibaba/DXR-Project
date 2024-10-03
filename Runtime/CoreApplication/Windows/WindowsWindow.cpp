@@ -140,6 +140,9 @@ void FWindowsWindow::Show(bool bFocusOnActivate)
         if (bFocusOnActivate)
         {
             ::ShowWindow(Window, SW_SHOWNORMAL);
+            ::BringWindowToTop(Window);
+            ::SetForegroundWindow(Window);
+            ::SetFocus(Window);
         }
         else
         {

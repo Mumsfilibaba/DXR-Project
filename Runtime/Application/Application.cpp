@@ -167,7 +167,7 @@ FApplicationInterface::FApplicationInterface()
     , Windows()
     , DisplayInfo()
     , bIsMonitorInfoValid(false)
-    , bIsTrackingMouse(false)
+    , bIsTrackingCursor(false)
     , PressedKeys()
     , PressedMouseButtons()
 {
@@ -242,8 +242,8 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         }
     }
 
-    const uint32 MinWidth  = 640;
-    const uint32 MinHeight = 480;
+    const uint32 MinWidth  = 60;
+    const uint32 MinHeight = 20;
     const uint32 MaxWidth  = static_cast<uint32>(PrimaryDisplayWidth / DisplayScaling);
     const uint32 MaxHeight = static_cast<uint32>(PrimaryDisplayHeight / DisplayScaling);
 
@@ -260,7 +260,6 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         Windows.Add(InWindow);
 
         PlatformWindow->Show(true);
-        PlatformWindow->SetWindowFocus();
     }
 }
 
@@ -531,7 +530,7 @@ bool FApplicationInterface::OnMouseButtonDown(const TSharedRef<FGenericWindow>& 
 {
     // Set the mouse capture when the mouse is pressed
     PlatformApplication->SetCapture(PlatformWindow);
-    bIsTrackingMouse = true;
+    bIsTrackingCursor = true;
 
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), FIntVector2(x, y), ModierKeyState, true);
 
@@ -574,7 +573,7 @@ bool FApplicationInterface::OnMouseButtonUp(EMouseButtonName::Type Button, FModi
 
     // Remove the mouse capture if there is a capture
     PlatformApplication->SetCapture(nullptr);
-    bIsTrackingMouse = false;
+    bIsTrackingCursor = false;
 
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), FIntVector2(x, y), ModiferKeyState, false);
     

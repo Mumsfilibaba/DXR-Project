@@ -561,7 +561,7 @@ void FImGuiRenderer::StaticCreateWindow(ImGuiViewport* Viewport)
 
     TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
-    
+
     FRHIViewportInfo ViewportInfo;
     ViewportInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
     ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
@@ -571,6 +571,9 @@ void FImGuiRenderer::StaticCreateWindow(ImGuiViewport* Viewport)
     ViewportData->Viewport = RHICreateViewport(ViewportInfo);
     if (ViewportData->Viewport)
     {
+        ViewportData->Width  = static_cast<uint16>(Viewport->Size.x);
+        ViewportData->Height = static_cast<uint16>(Viewport->Size.y);
+        
         Viewport->RendererUserData = Viewport->PlatformUserData;
     }
 }
@@ -587,11 +590,11 @@ void FImGuiRenderer::StaticSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
     CHECK(ViewportData != nullptr);
 
-    if (ViewportData->Viewport->GetWidth() != Size.x || ViewportData->Viewport->GetHeight() != Size.y)
+    if (ViewportData->Width != Size.x || ViewportData->Height != Size.y)
     {
-        ViewportData->bDidResize = true;
         ViewportData->Width      = static_cast<uint16>(Size.x);
         ViewportData->Height     = static_cast<uint16>(Size.y);
+        ViewportData->bDidResize = true;
     }
 }
 
@@ -606,10 +609,7 @@ void FImGuiRenderer::StaticRenderWindow(ImGuiViewport* Viewport, void* CommandLi
     if (ViewportData->bDidResize)
     {
         RHICommandList->ResizeViewport(ViewportData->Viewport.Get(), ViewportData->Width, ViewportData->Height);
-
         ViewportData->bDidResize = false;
-        ViewportData->Width      = 0;
-        ViewportData->Height     = 0;
     }
 
     const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
