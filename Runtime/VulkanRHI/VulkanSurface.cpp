@@ -89,7 +89,7 @@ bool FVulkanSurface::GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupporte
     return true;
 }
 
-bool FVulkanSurface::GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const
+bool FVulkanSurface::GetSupportedPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 

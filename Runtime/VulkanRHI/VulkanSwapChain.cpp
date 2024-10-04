@@ -36,10 +36,22 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     {
         return false;
     }
+    
+    if (SupportedFormats.IsEmpty())
+    {
+        VULKAN_ERROR("No supported surface-formats");
+        return false;
+    }
 
     TArray<VkPresentModeKHR> SupportedPresentModes;
-    if (!Surface->GetPresentModes(SupportedPresentModes))
+    if (!Surface->GetSupportedPresentModes(SupportedPresentModes))
     {
+        return false;
+    }
+    
+    if (SupportedPresentModes.IsEmpty())
+    {
+        VULKAN_ERROR("No supported present-modes");
         return false;
     }
 
@@ -81,28 +93,50 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     }
 
     // TODO: Investigate Vulkan V-sync
-    VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    if (!CreateInfo.bVerticalSync)
+    const auto MatchPresentMode = [&](const VkPresentModeKHR& InPresentMode)
     {
         for (const VkPresentModeKHR& PresentMode : SupportedPresentModes)
         {
-            if (PresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+            if (PresentMode == InPresentMode)
             {
-                SelectedPresentMode = PresentMode;
-                break;
+                return true;
             }
         }
-
-        if (SelectedPresentMode == VK_PRESENT_MODE_FIFO_KHR)
+        
+        return false;
+    };
+    
+    VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    if (CreateInfo.bVerticalSync)
+    {
+        if (MatchPresentMode(VK_PRESENT_MODE_MAILBOX_KHR))
         {
-            for (const VkPresentModeKHR& PresentMode : SupportedPresentModes)
-            {
-                if (PresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-                {
-                    SelectedPresentMode = PresentMode;
-                    break;
-                }
-            }
+            SelectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+        }
+        else if (MatchPresentMode(VK_PRESENT_MODE_FIFO_KHR))
+        {
+            SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+        }
+        else if (MatchPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
+        {
+            SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+        }
+        else
+        {
+            VULKAN_WARNING("No VSync PresentMode is supported");
+            SelectedPresentMode = SupportedPresentModes[0];
+        }
+    }
+    else
+    {
+        if (MatchPresentMode(VK_PRESENT_MODE_IMMEDIATE_KHR))
+        {
+            SelectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+        }
+        else
+        {
+            VULKAN_WARNING("No Immediate PresentMode is supported");
+            SelectedPresentMode = SupportedPresentModes[0];
         }
     }
 

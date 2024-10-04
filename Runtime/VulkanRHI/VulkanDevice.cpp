@@ -1047,8 +1047,8 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     FMemory::Memzero(&ImageBarrier);
 
     ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-    ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.image                           = DefaultImage;
@@ -1078,8 +1078,8 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     CommandContext.GetBarrierBatcher().FlushBarriers();
     CommandContext.GetCommandBuffer()->CopyBufferToImage(DefaultBuffer, DefaultImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
 
-    ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_GENERAL;
     ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
     ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
     ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;

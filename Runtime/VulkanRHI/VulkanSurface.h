@@ -13,7 +13,7 @@ public:
 
     bool Initialize();
     bool GetSupportedFormats(TArray<VkSurfaceFormatKHR>& OutSupportedFormats) const;
-    bool GetPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const;
+    bool GetSupportedPresentModes(TArray<VkPresentModeKHR>& OutPresentModes) const;
     bool GetCapabilities(VkSurfaceCapabilitiesKHR& OutCapabilities) const;
 
     const void* GetWindowHandle() const

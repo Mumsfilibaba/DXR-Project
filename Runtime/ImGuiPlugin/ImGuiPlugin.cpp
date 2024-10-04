@@ -13,12 +13,14 @@ IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
 static TAutoConsoleVariable<bool> CVarImGuiEnableMultiViewports(
     "ImGui.EnableMultiViewports",
     "Enable multiple Viewports in ImGui",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
     "ImGui.UseWindowDPIScale",
     "Scale ImGui elements with the Window DPI scale",
-    false);
+    false,
+    EConsoleVariableFlags::Default);
 
 static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags Flags)
 {

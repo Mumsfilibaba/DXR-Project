@@ -5,7 +5,14 @@
 static TAutoConsoleVariable<int32> CVarBackbufferCount(
     "VulkanRHI.BackbufferCount",
     "The preferred number of backbuffers for the SwapChain",
-    NUM_BACK_BUFFERS);
+    NUM_BACK_BUFFERS,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarEnableVSync(
+    "VulkanRHI.EnableVSync",
+    "Enable V-Sync for SwapChains (Already created viewports does not change mode at the moment)",
+    true,
+    EConsoleVariableFlags::Default);
 
 FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo)
     : FRHIViewport(InViewportInfo)
@@ -64,7 +71,7 @@ bool FVulkanViewport::CreateSwapChain()
     SwapChainCreateInfo.Extent.width      = Info.Width;
     SwapChainCreateInfo.Extent.height     = Info.Height;
     SwapChainCreateInfo.Format            = GetColorFormat();
-    SwapChainCreateInfo.bVerticalSync     = false;
+    SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
 
     if (Info.Width == 0 || Info.Height == 0)
     {

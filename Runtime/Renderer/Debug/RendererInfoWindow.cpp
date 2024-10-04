@@ -63,6 +63,12 @@ void FRendererInfoWindow::Draw()
 
         ImGui::Text("%s", AdapterName.GetCString());
         ImGui::NextColumn();
+        
+        ImGui::Text("Render Resolution:");
+        ImGui::NextColumn();
+
+        ImGui::Text("%u x %d", Renderer->GetRenderWidth(), Renderer->GetRenderHeight());
+        ImGui::NextColumn();
 
         const FRHICommandStatistics& Statistics = Renderer->GetStatistics();
         ImGui::Text("DrawCalls: ");

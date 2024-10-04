@@ -90,6 +90,16 @@ public:
         return FrameStatistics;
     }
 
+    uint32 GetRenderWidth() const
+    {
+        return Resources.CurrentWidth;
+    }
+    
+    uint32 GetRenderHeight() const
+    {
+        return Resources.CurrentHeight;
+    }
+    
 private:
     bool InitShadingImage();
 
