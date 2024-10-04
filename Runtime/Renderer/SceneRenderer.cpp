@@ -459,6 +459,7 @@ bool FSceneRenderer::InitializeRenderPasses()
 
 void FSceneRenderer::Tick(FScene* Scene)
 {
+    TSharedPtr<FWindow> EngineWindow = GEngine->GetEngineWindow();
     Resources.BackBuffer = Resources.MainViewport->GetBackBuffer();
 
     // Clear the images that were debug-able last frame 
@@ -469,6 +470,10 @@ void FSceneRenderer::Tick(FScene* Scene)
     CommandList.BeginFrame();
 
     GRHICommandExecutor.Tick();
+    
+    const FIntVector2 CurrentSize = EngineWindow->GetScreenSize();
+    Resources.DesiredWidth  = CurrentSize.x;
+    Resources.DesiredHeight = CurrentSize.y;
 
     if (Resources.DesiredWidth != Resources.CurrentWidth || Resources.DesiredHeight != Resources.CurrentHeight)
     {

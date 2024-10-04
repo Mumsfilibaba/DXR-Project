@@ -250,6 +250,15 @@ void FWindow::SetWindowMode(EWindowMode InWindowMode)
 void FWindow::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow)
 {
     PlatformWindow = InPlatformWindow;
+    
+    if (PlatformWindow)
+    {
+        FWindowShape WindowShape;
+        PlatformWindow->GetWindowShape(WindowShape);
+        
+        ScreenSize     = FIntVector2(WindowShape.Width, WindowShape.Height);
+        ScreenPosition = WindowShape.Position;
+    }
 }
 
 void FWindow::SetWindowFocus()
