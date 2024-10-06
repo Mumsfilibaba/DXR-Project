@@ -8,6 +8,12 @@
 #include "Engine/Assets/AssetLoaders/FBXLoader.h"
 #include "Engine/Assets/AssetLoaders/OBJLoader.h"
 
+static TAutoConsoleVariable<bool> CVarEnableMeshCache(
+    "Engine.EnableMeshCache",
+    "Enable mesh-cache",
+    false,
+    EConsoleVariableFlags::Default);
+
 FMeshImporter::FMeshImporter()
     : Cache()
 {
@@ -22,16 +28,21 @@ FMeshImporter::~FMeshImporter()
 TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags Flags)
 {
     const FString Filename = FString(InFilename);
-    if (FString* MeshName = Cache.Find(Filename))
+    
+    const bool bEnableCache = CVarEnableMeshCache.GetValue();
+    if (bEnableCache)
     {
-        TSharedRef<FSceneData> ExistingMesh = LoadCustom(*MeshName);
-        if (ExistingMesh)
+        if (FString* MeshName = Cache.Find(Filename))
         {
-            return ExistingMesh;
-        }
+            TSharedRef<FSceneData> ExistingMesh = LoadCustom(*MeshName);
+            if (ExistingMesh)
+            {
+                return ExistingMesh;
+            }
 
-        Cache.Remove(Filename);
-        UpdateCacheFile();
+            Cache.Remove(Filename);
+            UpdateCacheFile();
+        }
     }
 
     if (Filename.EndsWith(".fbx", EStringCaseType::NoCase))
@@ -50,7 +61,12 @@ TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilena
         TSharedRef<FSceneData> Mesh = FFBXLoader::LoadFile(Filename, FBXFlags);
         if (Mesh)
         {
-            const auto Count = FMath::Max<int32>(Filename.Size() - 4, 0);
+            if (!bEnableCache)
+            {
+                return Mesh;
+            }
+            
+            const int32 Count = FMath::Max<int32>(Filename.Size() - 4, 0);
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
             
@@ -67,7 +83,12 @@ TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilena
         TSharedRef<FSceneData> Mesh = FOBJLoader::LoadFile(Filename, bReverseHandedness);
         if (Mesh)
         {
-            const auto Count = FMath::Max<int32>(Filename.Size() - 4, 0);
+            if (!bEnableCache)
+            {
+                return Mesh;
+            }
+            
+            const int32 Count = FMath::Max<int32>(Filename.Size() - 4, 0);
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
             

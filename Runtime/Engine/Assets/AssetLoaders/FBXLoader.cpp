@@ -60,7 +60,6 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
 
 TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags Flags) noexcept
 {
-
     FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
     if (!File)
     {
