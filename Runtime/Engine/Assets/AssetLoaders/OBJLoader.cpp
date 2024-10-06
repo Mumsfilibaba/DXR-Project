@@ -10,12 +10,8 @@
 
 #include <tiny_obj_loader.h>
 
-bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool ReverseHandedness)
+TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool ReverseHandedness)
 {
-    // Make sure to clear everything
-    OutScene.Models.Clear();
-    OutScene.Materials.Clear();
-
     // Load Scene File
     std::string                      Warning;
     std::string                      Error;
@@ -31,13 +27,16 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
     {
         LOG_ERROR("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
-        return false;
+        return nullptr;
     }
     
     if (!Warning.empty())
     {
         LOG_WARNING("[FOBJLoader]: Loaded '%s' with Warning: %s", Filename.GetCString(), Warning.c_str());
     }
+    
+    // Create new scene
+    TSharedRef<FSceneData> Scene = new FSceneData();
     
     // Create All Materials in scene
     int32 SceneMaterialIndex = 0;
@@ -66,7 +65,7 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
             MaterialData.Name = Mat.name.c_str();
         }
         
-        OutScene.Materials.Emplace(Move(MaterialData));
+        Scene->Materials.Emplace(Move(MaterialData));
         SceneMaterialIndex++;
     }
 
@@ -155,14 +154,14 @@ bool FOBJLoader::LoadFile(const FString& Filename, FSceneData& OutScene, bool Re
                 Data.Name = Shape.name.c_str();
             }
             
-            OutScene.Models.Emplace(Data);
+            Scene->Models.Emplace(Data);
             ShapeIndex++;
         }
     }
 
-    OutScene.Models.Shrink();
-    OutScene.Materials.Shrink();
+    Scene->Models.Shrink();
+    Scene->Materials.Shrink();
 
-    LOG_INFO("[FOBJLoader]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), OutScene.Models.Size(), OutScene.Materials.Size());
-    return true;
+    LOG_INFO("[FOBJLoader]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
+    return Scene;
 }

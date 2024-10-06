@@ -3,6 +3,6 @@
 
 struct FTextureImporterBase : public ITextureImporter
 {
-    virtual FTexture* ImportFromFile(const FStringView& FileName) override final;
+    virtual TSharedRef<FTexture> ImportFromFile(const FStringView& FileName) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };

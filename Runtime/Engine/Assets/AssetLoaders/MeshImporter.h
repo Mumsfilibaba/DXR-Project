@@ -4,19 +4,10 @@
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Engine/Assets/SceneData.h"
-
-enum class EMeshImportFlags : uint8
-{
-    None             = 0,
-    ApplyScaleFactor = BIT(1),
-    EnsureLeftHanded = BIT(2),
-    Default = EnsureLeftHanded
-};
-
-ENUM_CLASS_OPERATORS(EMeshImportFlags);
+#include "Engine/Assets/IMeshImporter.h"
 
 // TODO: Move to the AssetManager
-class ENGINE_API FMeshImporter
+class ENGINE_API FMeshImporter : public IMeshImporter
 {
     struct FCustomScene
     {
@@ -79,30 +70,22 @@ class ENGINE_API FMeshImporter
     };
 
 public:
-    static bool Initialize();
-    static void Release();
-
-    static FORCEINLINE FMeshImporter& Get()
-    {
-        CHECK(GInstance != nullptr);
-        return *GInstance;
-    }
-
-    bool LoadMesh(const FString& Filename, FSceneData& OutScene, EMeshImportFlags Flags = EMeshImportFlags::Default);
-
-private:
     FMeshImporter();
-    ~FMeshImporter() = default;
+    ~FMeshImporter();
+    
+    bool Initialize();
+    void Release();
+
+    virtual TSharedRef<FSceneData> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
+    virtual bool MatchExtenstion(const FStringView& FileName) override final;
+    
+    TSharedRef<FSceneData> LoadCustom(const FString& Filename);
 
     void LoadCacheFile();
     void UpdateCacheFile();
-
-    bool AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const FSceneData& Scene);
-
-    bool LoadCustom(const FString& Filename, FSceneData& OutScene);
-
+    bool AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const TSharedRef<FSceneData>& Scene);
+    
+private:
     // Maps the original path to the custom mesh format
     TMap<FString, FString> Cache;
-
-    static FMeshImporter* GInstance;
 };

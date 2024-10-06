@@ -58,16 +58,14 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     return FTextureResource2DRef();
 }
 
-bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFlags Flags) noexcept
+TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags Flags) noexcept
 {
-    OutScene.Models.Clear();
-    OutScene.Materials.Clear();
 
     FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
     if (!File)
     {
         LOG_ERROR("[FFBXLoader]: Failed to open '%s'", Filename.GetCString());
-        return false;
+        return nullptr;
     }
 
     // TODO: Utility to read in full file?
@@ -78,7 +76,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
     if (NumBytesRead <= 0)
     {
         LOG_ERROR("[FFBXLoader]: Failed to load '%s'", Filename.GetCString());
-        return false;
+        return nullptr;
     }
 
     ofbx::IScene* FBXScene = ofbx::load(FileContent.Data(), FileSize, (ofbx::u64)ofbx::LoadFlags::NONE);
@@ -86,7 +84,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
     {
         const CHAR* ErrorString = ofbx::getError();
         LOG_ERROR("[FFBXLoader]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
-        return false;
+        return nullptr;
     }
 
     // Estimate sizes to avoid to many allocations
@@ -106,8 +104,9 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
     UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
-    OutScene.Models.Reserve(FBXScene->getMeshCount());
-    OutScene.Materials.Reserve(MaterialCount);
+    TSharedRef<FSceneData> Scene = new FSceneData();
+    Scene->Models.Reserve(FBXScene->getMeshCount());
+    Scene->Materials.Reserve(MaterialCount);
 
     // Convert data
     const FString Path = ExtractPath(Filename);
@@ -144,8 +143,8 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
             MaterialData.Metallic  = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             // TODO: Other material properties
-            UniqueMaterials[CurrentMaterial->id] = OutScene.Materials.Size();
-            OutScene.Materials.Emplace(MaterialData);
+            UniqueMaterials[CurrentMaterial->id] = Scene->Materials.Size();
+            Scene->Materials.Emplace(MaterialData);
         }
 
         const FMatrix4 Matrix          = ToFloat4x4(CurrentMesh->getGlobalTransform());
@@ -270,7 +269,7 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
             {
                 LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
                 TempModelData.Name = CurrentMesh->name;
-                OutScene.Models.Emplace(TempModelData);
+                Scene->Models.Emplace(TempModelData);
             }
             else
             {
@@ -279,9 +278,9 @@ bool FFBXLoader::LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFla
         }
     }
 
-    OutScene.Models.Shrink();
-    OutScene.Materials.Shrink();
+    Scene->Models.Shrink();
+    Scene->Materials.Shrink();
 
     FBXScene->destroy();
-    return true;
+    return Scene;
 }

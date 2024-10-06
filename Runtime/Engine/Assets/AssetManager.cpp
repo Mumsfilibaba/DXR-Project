@@ -1,31 +1,39 @@
-#include "AssetManager.h"
-#include "TextureImporterBase.h"
-#include "TextureImporterDDS.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "RHI/RHICommandList.h"
+#include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/TextureImporterDDS.h"
+#include "Engine/Assets/TextureImporterBase.h"
+#include "Engine/Assets/AssetLoaders/MeshImporter.h"
 
 FAssetManager* FAssetManager::GInstance = nullptr;
 
 FAssetManager::FAssetManager()
-    : TextureMap()
+    : MeshImporters()
+    , MeshImportersCS()
+    , MeshesMap()
+    , Meshes()
+    , MeshesCS()
     , TextureImporters()
+    , TextureImportersCS()
+    , TextureMap()
     , Textures()
     , TexturesCS()
 {
-    TextureImporters.Emplace(new FTextureImporterBase());
-    TextureImporters.Emplace(new FTextureImporterDDS());
 }
 
 FAssetManager::~FAssetManager()
 {
-    for (ITextureImporter* Importer : TextureImporters)
     {
-        delete Importer;
+        SCOPED_LOCK(TextureImportersCS);
+        TextureImporters.Clear();
     }
 
-    TextureImporters.Clear();
+    {
+        SCOPED_LOCK(MeshImportersCS);
+        MeshImporters.Clear();
+    }
 }
 
 bool FAssetManager::Initialize()
@@ -33,6 +41,12 @@ bool FAssetManager::Initialize()
     if (!GInstance)
     {
         GInstance = new FAssetManager();
+        CHECK(GInstance != nullptr);
+        
+        GInstance->RegisterTextureImporter(MakeShared<FTextureImporterDDS>());
+        GInstance->RegisterTextureImporter(MakeShared<FTextureImporterBase>());
+        
+        GInstance->RegisterMeshImporter(MakeShared<FMeshImporter>());
         return true;
     }
 
@@ -54,7 +68,7 @@ FAssetManager& FAssetManager::Get()
     return *GInstance;
 }
 
-FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGenerateMips)
+TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bGenerateMips)
 {
     SCOPED_LOCK(TexturesCS);
 
@@ -62,19 +76,24 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     FString FinalPath = Filename;
     ConvertBackslashes(FinalPath);
     
-    if (uint32* TextureID = TextureMap.Find(FinalPath))
+    if (int32* TextureID = TextureMap.Find(FinalPath))
     {
-        const uint32 TextureIndex = *TextureID;
+        const int32 TextureIndex = *TextureID;
         return Textures[TextureIndex];
     }
 
-    FTextureResourceRef NewTexture;
-    for (ITextureImporter* Importer : TextureImporters)
+    TSharedRef<FTexture> NewTexture;
+    
     {
-        FStringView FileNameView(FinalPath);
-        if (Importer->MatchExtenstion(FileNameView))
+        SCOPED_LOCK(TextureImportersCS);
+        
+        for (TSharedPtr<ITextureImporter> Importer : TextureImporters)
         {
-            NewTexture = Importer->ImportFromFile(FileNameView);
+            FStringView FileNameView(FinalPath);
+            if (Importer->MatchExtenstion(FileNameView))
+            {
+                NewTexture = Importer->ImportFromFile(FileNameView);
+            }
         }
     }
 
@@ -98,21 +117,100 @@ FTextureResourceRef FAssetManager::LoadTexture(const FString& Filename, bool bGe
     LOG_INFO("[FAssetManager]: Loaded Texture '%s'", FinalPath.GetCString());
 
     // Set name 
-    NewTexture->SetDebugName(FinalPath);     // For the RHI
-    NewTexture->SetFilename(FinalPath); // For the AssetSystem
+    NewTexture->SetDebugName(FinalPath); // For the RHI
+    NewTexture->SetFilename(FinalPath);  // For the AssetSystem
 
     // Release the data after the texture is loaded
     NewTexture->ReleaseData();
 
     // Insert the new texture
-    const auto Index = Textures.Size();
+    const int32 Index = Textures.Size();
     Textures.Emplace(NewTexture);
     TextureMap.Add(FinalPath, Index);
     return NewTexture;
 }
 
+TSharedRef<FSceneData> FAssetManager::LoadMesh(const FString& Filename, EMeshImportFlags Flags)
+{
+    SCOPED_LOCK(MeshesCS);
+
+    // Convert backslashes
+    FString FinalPath = Filename;
+    ConvertBackslashes(FinalPath);
+    
+    if (int32* MeshID = MeshesMap.Find(FinalPath))
+    {
+        const int32 MeshIndex = *MeshID;
+        return Meshes[MeshIndex];
+    }
+    
+    TSharedRef<FSceneData> NewMesh;
+    
+    {
+        SCOPED_LOCK(MeshImportersCS);
+        
+        for (TSharedPtr<IMeshImporter> Importer : MeshImporters)
+        {
+            FStringView FileNameView(FinalPath);
+            if (Importer->MatchExtenstion(FileNameView))
+            {
+                NewMesh = Importer->ImportFromFile(FileNameView, Flags);
+            }
+        }
+    }
+    
+    if (!NewMesh)
+    {
+        LOG_ERROR("[FAssetManager]: Unsupported mesh format. Failed to load '%s'.", FinalPath.GetCString());
+        return nullptr;
+    }
+    
+    LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", FinalPath.GetCString());
+
+    // Insert the new texture
+    const int32 Index = Meshes.Size();
+    Meshes.Emplace(NewMesh);
+    MeshesMap.Add(FinalPath, Index);
+    return NewMesh;
+}
+
+void FAssetManager::UnloadMesh(const TSharedRef<FSceneData>& InMesh)
+{
+    SCOPED_LOCK(MeshesCS);
+        
+    Meshes.Remove(InMesh);
+    // TODO: Remove mesh from map
+}
+
 void FAssetManager::UnloadTexture(const FTextureResourceRef& Texture)
 {
     SCOPED_LOCK(TexturesCS);
+    
+    const FString& Filename = Texture->GetFilename();
+    TextureMap.Remove(Filename);
     Textures.Remove(Texture);
+}
+
+void FAssetManager::RegisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter)
+{
+    SCOPED_LOCK(TextureImportersCS);
+    TextureImporters.AddUnique(InImporter);
+}
+
+void FAssetManager::UnregisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter)
+{
+    SCOPED_LOCK(TextureImportersCS);
+    TextureImporters.Remove(InImporter);
+}
+
+void FAssetManager::RegisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter)
+{
+    SCOPED_LOCK(MeshImportersCS);
+    MeshImporters.AddUnique(InImporter);
+}
+
+void FAssetManager::UnregisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter)
+{
+    SCOPED_LOCK(MeshImportersCS);
+    MeshImporters.Remove(InImporter);
 }

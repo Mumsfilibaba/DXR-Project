@@ -1008,12 +1008,12 @@ bool FVulkanDevice::PostLoaderInitalize()
         DevicePropertiesHelper.AddNext(MultiviewProperties);
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
-        GRHIMaxViewInstanceCount = MultiviewProperties.maxMultiviewViewCount;
+        GRHIMaxViewInstanceCount   = MultiviewProperties.maxMultiviewViewCount;
         GRHISupportsViewInstancing = true;
     }
     else
     {
-        GRHIMaxViewInstanceCount = 0;
+        GRHIMaxViewInstanceCount   = 0;
         GRHISupportsViewInstancing = false;
     }
 

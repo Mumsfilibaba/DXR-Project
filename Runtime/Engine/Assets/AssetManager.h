@@ -1,6 +1,7 @@
 #pragma once
 #include "TextureResource.h"
 #include "ITextureImporter.h"
+#include "IMeshImporter.h"
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
 
@@ -17,26 +18,35 @@ public:
     /** @brief - Retrieve the AssetManager instance */
     static FAssetManager& Get();
 
-    /** 
-    * @brief          - Load a texture
-    * @param Filename - Filename relative to the AssetFolder
-    * @return         - Returns the loaded texture
-    */
-    FTextureResourceRef LoadTexture(const FString& Filename, bool bGenerateMips = true);
+    TSharedRef<FTexture> LoadTexture(const FString& Filename, bool bGenerateMips = true);
+    void UnloadTexture(const TSharedRef<FTexture>& Texture);
+    
+    TSharedRef<FSceneData> LoadMesh(const FString& Filename, EMeshImportFlags Flags = EMeshImportFlags::Default);
+    void UnloadMesh(const TSharedRef<FSceneData>& InMesh);
 
-    /** @brief - Unload the texture and release the AssetManager's reference to the texture */
-    void UnloadTexture(const FTextureResourceRef& Texture);
+    void RegisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter);
+    void UnregisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter);
+    
+    void RegisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter);
+    void UnregisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter);
 
 private:
     FAssetManager();
     ~FAssetManager();
+
+    // Meshes
+    TArray<TSharedPtr<IMeshImporter>>    MeshImporters;
+    FCriticalSection                     MeshImportersCS;
+    TMap<FString, int32>                 MeshesMap;
+    TArray<TSharedRef<FSceneData>>       Meshes;
+    FCriticalSection                     MeshesCS;
     
     // Textures
-    TMap<FString, uint32>       TextureMap;
-
-    TArray<ITextureImporter*>   TextureImporters;
-    TArray<FTextureResourceRef> Textures;
-    FCriticalSection            TexturesCS;
+    TArray<TSharedPtr<ITextureImporter>> TextureImporters;
+    FCriticalSection                     TextureImportersCS;
+    TMap<FString, int32>                 TextureMap;
+    TArray<TSharedRef<FTexture>>         Textures;
+    FCriticalSection                     TexturesCS;
 
     static FAssetManager* GInstance;
 };

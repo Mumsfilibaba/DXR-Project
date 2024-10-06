@@ -183,11 +183,6 @@ bool FEngine::Init()
         return false;
     }
 
-    if (!FMeshImporter::Initialize())
-    {
-        return false;
-    }
-
     // Create standard textures
     uint8 Pixels[4] = { 255, 255, 255, 255 };
 
@@ -358,9 +353,8 @@ void FEngine::Release()
         GameModule = nullptr;
     }
 
+    // Release all assets
     FAssetManager::Release();
-
-    FMeshImporter::Release();
 
     // Release RHI resources
     SceneViewport->ReleaseRHI();

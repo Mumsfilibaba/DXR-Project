@@ -1,11 +1,10 @@
 #pragma once
 #include "VertexFormat.h"
-#include "TextureResource.h"
-#include "Core/Core.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
 #include "Engine/EngineModule.h"
+#include "Engine/Assets/TextureResource.h"
 #include "Engine/Resources/Material.h"
 #include "RHI/RHITypes.h"
 
@@ -41,7 +40,6 @@ struct FMeshData
     TArray<FVertex> Vertices;
     TArray<uint32>  Indices;
 };
-
 
 struct FModelData
 {
@@ -100,8 +98,7 @@ struct FMaterialData
     EMaterialFlags MaterialFlags = MaterialFlag_None;
 };
 
-
-struct ENGINE_API FSceneData
+struct ENGINE_API FSceneData : public FResource
 {
     void AddToWorld(class FWorld* World);
 

@@ -5,5 +5,5 @@
 
 struct ENGINE_API FOBJLoader
 {
-    static bool LoadFile(const FString& Filename, FSceneData& OutScene, bool bReverseHandedness = false);
+    static TSharedRef<FSceneData> LoadFile(const FString& Filename, bool bReverseHandedness = false);
 };

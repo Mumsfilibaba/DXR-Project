@@ -7,7 +7,7 @@ IMPLEMENT_ENGINE_MODULE(FEngineModule, Engine);
 
 bool FEngineModule::Load()
 {
-    PreEngineInitHandle = CoreDelegates::PreEngineInitDelegate.AddLambda([this]()
+    PreEngineInitHandle = CoreDelegates::PreEngineInitDelegate.AddLambda([]()
     {
         if (IImguiPlugin::IsEnabled())
         {

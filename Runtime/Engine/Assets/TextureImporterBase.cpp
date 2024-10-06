@@ -74,8 +74,7 @@ static EFormat GetFloatFormat(int32 Channels)
     }
 }
 
-
-FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
+TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 {
     FFileHandleRef File = FPlatformFile::OpenForRead(FString(FileName));
     if (!File)
@@ -143,7 +142,7 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
     const int64 RowPitch   = Width * GetByteStrideFromFormat(Format);
     const int64 SlicePitch = RowPitch * Height;
 
-    FTexture2D* NewTexture = new FTexture2D(Format, Width, Height, 1);
+    TSharedRef<FTexture2D> NewTexture = new FTexture2D(Format, Width, Height, 1);
     NewTexture->CreateData();
 
     FTextureResourceData* TextureData = NewTexture->GetTextureResourceData();
@@ -153,13 +152,12 @@ FTexture* FTextureImporterBase::ImportFromFile(const FStringView& FileName)
 
 bool FTextureImporterBase::MatchExtenstion(const FStringView& FileName)
 {
-    return 
-        FileName.EndsWith(".jpeg", EStringCaseType::NoCase) ||
-        FileName.EndsWith(".jpg", EStringCaseType::NoCase) ||
-        FileName.EndsWith(".png", EStringCaseType::NoCase) ||
-        FileName.EndsWith(".bmp", EStringCaseType::NoCase) ||
-        FileName.EndsWith(".psd", EStringCaseType::NoCase) ||
-        FileName.EndsWith(".gif", EStringCaseType::NoCase) ||
-        FileName.EndsWith(".tga", EStringCaseType::NoCase) ||
-        FileName.EndsWith(".hdr", EStringCaseType::NoCase);
+    return FileName.EndsWith(".jpeg", EStringCaseType::NoCase)
+        || FileName.EndsWith(".jpg", EStringCaseType::NoCase)
+        || FileName.EndsWith(".png", EStringCaseType::NoCase)
+        || FileName.EndsWith(".bmp", EStringCaseType::NoCase)
+        || FileName.EndsWith(".psd", EStringCaseType::NoCase)
+        || FileName.EndsWith(".gif", EStringCaseType::NoCase)
+        || FileName.EndsWith(".tga", EStringCaseType::NoCase)
+        || FileName.EndsWith(".hdr", EStringCaseType::NoCase);
 }

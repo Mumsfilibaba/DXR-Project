@@ -17,5 +17,5 @@ ENUM_CLASS_OPERATORS(EFBXFlags);
 // TODO: Extend to save as well? 
 struct ENGINE_API FFBXLoader
 {
-    static bool LoadFile(const FString& Filename, FSceneData& OutScene, EFBXFlags Flags = EFBXFlags::Default) noexcept;
+    static TSharedRef<FSceneData> LoadFile(const FString& Filename, EFBXFlags Flags = EFBXFlags::Default) noexcept;
 };

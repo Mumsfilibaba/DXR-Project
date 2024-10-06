@@ -46,13 +46,11 @@ bool FSandbox::Init()
 
     // Load Scene
     {
-        FSceneData SceneData;
-
     #if LOAD_SPONZA
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
-        SceneData.Scale = 0.015f;
+        TSharedRef<FSceneData> Sponza = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"));
+        Sponza->Scale = 0.015f;
 
-        for (auto& Material : SceneData.Materials)
+        for (FMaterialData& Material : Sponza->Materials)
         {
             if (Material.AlphaMaskTexture)
             {
@@ -60,6 +58,7 @@ bool FSandbox::Init()
             }
         }
 
+        Sponza->AddToWorld(CurrentWorld);
     #elif LOAD_BISTRO
         FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
         for (auto& Material : SceneData.Materials)
@@ -103,8 +102,6 @@ bool FSandbox::Init()
             }
         }
     #endif
-
-        SceneData.AddToWorld(CurrentWorld);
     }
 
 #if LOAD_SPONZA
@@ -316,10 +313,8 @@ bool FSandbox::Init()
     MaterialInfo.Roughness        = 1.0f;
     MaterialInfo.MaterialFlags    = MaterialFlag_EnableNormalMapping;
 
-    FSceneData StreetLightData;
-    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
-
-    TSharedPtr<FMaterial> StreetLightMat = MakeShared<FMaterial>(MaterialInfo);
+    TSharedRef<FSceneData> StreetLightData = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
+    TSharedPtr<FMaterial>  StreetLightMat  = MakeShared<FMaterial>(MaterialInfo);
     StreetLightMat->AlbedoMap    = AlbedoMap->GetRHITexture();
     StreetLightMat->NormalMap    = NormalMap->GetRHITexture();
     StreetLightMat->RoughnessMap = RoughnessMap->GetRHITexture();
@@ -329,11 +324,11 @@ bool FSandbox::Init()
     StreetLightMat->SetDebugName("StreetLightMaterial");
 
     TArray<TSharedPtr<FMesh>> StreetLightMeshes;
-    StreetLightMeshes.Reserve(StreetLightData.Models.Size());
+    StreetLightMeshes.Reserve(StreetLightData->Models.Size());
 
-    for (int32 i = 0; i < StreetLightData.Models.Size(); i++)
+    for (int32 i = 0; i < StreetLightData->Models.Size(); i++)
     {
-        StreetLightMeshes.Add(FMesh::Create(StreetLightData.Models[i].Mesh));
+        StreetLightMeshes.Add(FMesh::Create(StreetLightData->Models[i].Mesh));
     }
 
     for (uint32 i = 0; i < 4; i++)
@@ -343,7 +338,7 @@ bool FSandbox::Init()
             NewActor = CurrentWorld->CreateActor();
             if (NewActor)
             {
-                NewActor->SetName("Street Light (" + StreetLightData.Models[MeshIndex].Name + ")" + TTypeToString<uint32>::ToString(i));
+                NewActor->SetName("Street Light (" + StreetLightData->Models[MeshIndex].Name + ")" + TTypeToString<uint32>::ToString(i));
                 NewActor->GetTransform().SetUniformScale(0.25f);
                 NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 
@@ -364,10 +359,8 @@ bool FSandbox::Init()
     MaterialInfo.Roughness        = 1.0f;
     MaterialInfo.MaterialFlags    = MaterialFlag_None;
 
-    FSceneData PillarData;
-    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
-
-    TSharedPtr<FMaterial> PillarMaterial = MakeShared<FMaterial>(MaterialInfo);
+    TSharedRef<FSceneData> PillarData     = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Pillar.obj"));
+    TSharedPtr<FMaterial>  PillarMaterial = MakeShared<FMaterial>(MaterialInfo);
     PillarMaterial->AlbedoMap    = GEngine->BaseTexture;
     PillarMaterial->RoughnessMap = GEngine->BaseTexture;
     PillarMaterial->AOMap        = GEngine->BaseTexture;
@@ -375,7 +368,7 @@ bool FSandbox::Init()
     PillarMaterial->Initialize();
     PillarMaterial->SetDebugName("PillarMaterial");
 
-    TSharedPtr<FMesh> Pillar = PillarData.HasModelData() ? FMesh::Create(PillarData.Models.FirstElement().Mesh) : nullptr;
+    TSharedPtr<FMesh> Pillar = PillarData->HasModelData() ? FMesh::Create(PillarData->Models.FirstElement().Mesh) : nullptr;
     for (uint32 i = 0; i < 8; i++)
     {
         NewActor = CurrentWorld->CreateActor();
