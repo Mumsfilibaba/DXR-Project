@@ -16,9 +16,9 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA (1)
+#define LOAD_SPONZA (0)
 #define LOAD_BISTRO (0)
-#define LOAD_SUN_TEMPLE (0)
+#define LOAD_SUN_TEMPLE (1)
 #define LOAD_EMERALD_SQUARE (0)
 
 #define ENABLE_LIGHT_TEST (0)
@@ -60,8 +60,8 @@ bool FSandbox::Init()
 
         Sponza->AddToWorld(CurrentWorld);
     #elif LOAD_BISTRO
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
+        TSharedRef<FSceneData> BistroInterior = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
+        for (FMaterialData& Material : BistroInterior->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
             if (Material.Name.Contains("DoubleSided"))
@@ -70,10 +70,10 @@ bool FSandbox::Init()
             }
         }
         
-        SceneData.AddToWorld(CurrentWorld);
+        BistroInterior->AddToWorld(CurrentWorld);
 
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
+        TSharedRef<FSceneData> BistroExterior = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
+        for (FMaterialData& Material : BistroExterior->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
             if (Material.Name.Contains("DoubleSided"))
@@ -81,9 +81,11 @@ bool FSandbox::Init()
                 Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
             }
         }
+        
+        BistroExterior->AddToWorld(CurrentWorld);
      #elif LOAD_SUN_TEMPLE
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
+        TSharedRef<FSceneData> SunTemple = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
+        for (FMaterialData& Material : SunTemple->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
             if (Material.Name.Contains("DoubleSided"))
@@ -91,9 +93,11 @@ bool FSandbox::Init()
                 Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
             }
         }
+        
+        SunTemple->AddToWorld(CurrentWorld);
      #elif LOAD_EMERALD_SQUARE
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
+        TSharedRef<FSceneData> EmeraldSquare_Day = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
+        for (FMaterialData& Material : EmeraldSquare_Day->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
             if (Material.Name.Contains("DoubleSided"))
@@ -101,6 +105,8 @@ bool FSandbox::Init()
                 Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
             }
         }
+        
+        EmeraldSquare_Day->AddToWorld(CurrentWorld);
     #endif
     }
 
