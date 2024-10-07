@@ -95,7 +95,7 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
     }
 
     // Array to store indices in when performing triangulation
-    TArray<int32> TempIndicies;
+    TArray<int32> PartitionIndicies;
 
     // Unique tables
     TMap<FVertex, uint32> UniqueVertices;
@@ -113,7 +113,7 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
     // Get the global settings
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
 
-    FModelData TempModelData;
+    FModelData ModelData;
     for (int32 MeshIdx = 0; MeshIdx < FBXScene->getMeshCount(); MeshIdx++)
     {
         const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIdx);
@@ -156,41 +156,42 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
         ofbx::Vec3Attributes Tangents  = GeometryData.getTangents();
         ofbx::Vec2Attributes TexCoords = GeometryData.getUVs();
 
-        TempModelData.Mesh.Indices.Reserve(Positions.count);
-        TempModelData.Mesh.Vertices.Reserve(Positions.values_count);
+        ModelData.Mesh.Indices.Reserve(Positions.count);
+        ModelData.Mesh.Vertices.Reserve(Positions.values_count);
         UniqueVertices.Reserve(Positions.values_count);
         
         // Go through each mesh partition and add it to the scene as a separate mesh
         for (int32 PartitionIdx = 0; PartitionIdx < GeometryData.getPartitionCount(); PartitionIdx++)
         {
             // Clear the mesh data every mesh-partition
-            TempModelData.Mesh.Clear();
+            ModelData.Mesh.Clear();
             UniqueVertices.Clear();
 
+            constexpr int32 NumIndiciesPerTriangle = 3;
             ofbx::GeometryPartition Partition = GeometryData.getPartition(PartitionIdx);
-            TempIndicies.Resize(Partition.max_polygon_triangles * 3);
+            PartitionIndicies.Resize(Partition.max_polygon_triangles * NumIndiciesPerTriangle);
 
             // Go through each polygon and add it to the mesh
             for (int32 PolygonIdx = 0; PolygonIdx < Partition.polygon_count; ++PolygonIdx)
             {
                 // Triangulate this polygon
                 const ofbx::GeometryPartition::Polygon& Polygon = Partition.polygons[PolygonIdx];
-                const int32 NumIndicies = ofbx::triangulate(GeometryData, Polygon, TempIndicies.Data());
+                const int32 NumIndicies = ofbx::triangulate(GeometryData, Polygon, PartitionIndicies.Data());
 
-                FVertex TempVertex;
+                FVertex Vertex;
                 for (int32 IndexIdx = 0; IndexIdx < NumIndicies; ++IndexIdx)
                 {
-                    const int32 VertexIdx = TempIndicies[IndexIdx];
+                    const int32 VertexIdx = PartitionIndicies[IndexIdx];
 
                     // Position
                     const ofbx::Vec3 OfbxPosition = Positions.get(VertexIdx);
                     const FVector3 Position(OfbxPosition.x, OfbxPosition.y, OfbxPosition.z);
-                    TempVertex.Position = Transform.Transform(Position);
+                    Vertex.Position = Transform.Transform(Position);
 
                     // Apply the scene scale
                     if ((Flags & EFBXFlags::ApplyScaleFactor) != EFBXFlags::None)
                     {
-                        TempVertex.Position *= GlobalSettings->UnitScaleFactor;
+                        Vertex.Position *= GlobalSettings->UnitScaleFactor;
                     }
 
                     // Normal
@@ -198,7 +199,7 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
                     {
                         const ofbx::Vec3 OfbxNormal = Normals.get(VertexIdx);
                         const FVector3 Normal(OfbxNormal.x, OfbxNormal.y, OfbxNormal.z);
-                        TempVertex.Normal = Transform.TransformNormal(Normal);
+                        Vertex.Normal = Transform.TransformNormal(Normal);
                     }
 
                     // Tangents
@@ -206,69 +207,69 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
                     {
                         const ofbx::Vec3 OfbxTangent = Tangents.get(VertexIdx);
                         const FVector3 Tangent(OfbxTangent.x, OfbxTangent.y, OfbxTangent.z);
-                        TempVertex.Tangent = Transform.TransformNormal(Tangent);
+                        Vertex.Tangent = Transform.TransformNormal(Tangent);
                     }
 
                     // TexCoords
                     if (TexCoords.values)
                     {
                         const ofbx::Vec2 OfbxTexCoord = TexCoords.get(VertexIdx);
-                        TempVertex.TexCoord = FVector2(OfbxTexCoord.x, OfbxTexCoord.y);
+                        Vertex.TexCoord = FVector2(OfbxTexCoord.x, OfbxTexCoord.y);
                     }
 
                     // Only push unique vertices
                     uint32 UniqueIndex = 0;
-                    if (!UniqueVertices.Contains(TempVertex))
+                    if (!UniqueVertices.Contains(Vertex))
                     {
-                        UniqueIndex = static_cast<uint32>(TempModelData.Mesh.Vertices.Size());
-                        UniqueVertices[TempVertex] = UniqueIndex;
-                        TempModelData.Mesh.Vertices.Add(TempVertex);
+                        UniqueIndex = static_cast<uint32>(ModelData.Mesh.Vertices.Size());
+                        UniqueVertices[Vertex] = UniqueIndex;
+                        ModelData.Mesh.Vertices.Add(Vertex);
                     }
                     else
                     {
-                        UniqueIndex = UniqueVertices[TempVertex];
+                        UniqueIndex = UniqueVertices[Vertex];
                     }
 
-                    TempModelData.Mesh.Indices.Emplace(UniqueIndex);
+                    ModelData.Mesh.Indices.Emplace(UniqueIndex);
                 }
             }
 
             if (!Tangents.values)
             {
-                FMeshUtilities::CalculateTangents(TempModelData.Mesh);
+                FMeshUtilities::CalculateTangents(ModelData.Mesh);
             }
 
             // Convert to left-handed
-            if ((Flags & EFBXFlags::EnsureLeftHanded) != EFBXFlags::None)
+            if ((Flags & EFBXFlags::ForceLeftHanded) != EFBXFlags::None)
             {
                 if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
                 {
-                    FMeshUtilities::ReverseHandedness(TempModelData.Mesh);
+                    FMeshUtilities::ReverseHandedness(ModelData.Mesh);
                 }
             }
 
             // Add material index to the mesh
-            TempModelData.MaterialIndex = INVALID_MATERIAL_INDEX;
+            ModelData.MaterialIndex = INVALID_MATERIAL_INDEX;
             if (PartitionIdx < CurrentMesh->getMaterialCount())
             {
                 const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(PartitionIdx);
                 if (UniqueMaterials.Contains(CurrentMaterial->id))
                 {
-                    TempModelData.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
+                    ModelData.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
                 }
             }
 
-            if (TempModelData.MaterialIndex == INVALID_MATERIAL_INDEX)
+            if (ModelData.MaterialIndex == INVALID_MATERIAL_INDEX)
             {
                 LOG_WARNING("Mesh '%s' has no material", CurrentMesh->name);
             }
 
             // Add the mesh to our scene
-            if (TempModelData.Mesh.Hasdata())
+            if (ModelData.Mesh.Hasdata())
             {
                 LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
-                TempModelData.Name = CurrentMesh->name;
-                Scene->Models.Emplace(TempModelData);
+                ModelData.Name = CurrentMesh->name;
+                Scene->Models.Emplace(ModelData);
             }
             else
             {

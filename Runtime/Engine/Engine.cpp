@@ -215,11 +215,11 @@ bool FEngine::Init()
     SamplerInfo.AddressU       = ESamplerMode::Wrap;
     SamplerInfo.AddressV       = ESamplerMode::Wrap;
     SamplerInfo.AddressW       = ESamplerMode::Wrap;
-    SamplerInfo.ComparisonFunc = EComparisonFunc::Never;
+    SamplerInfo.ComparisonFunc = EComparisonFunc::Always;
     SamplerInfo.Filter         = ESamplerFilter::Anistrotopic;
     SamplerInfo.MaxAnisotropy  = 16;
     SamplerInfo.MaxLOD         = TNumericLimits<float>::Max();
-    SamplerInfo.MinLOD         = TNumericLimits<float>::Lowest();
+    SamplerInfo.MinLOD         = 0.0f;
     SamplerInfo.MipLODBias     = 0.0f;
 
     BaseMaterialSampler = RHICreateSamplerState(SamplerInfo);

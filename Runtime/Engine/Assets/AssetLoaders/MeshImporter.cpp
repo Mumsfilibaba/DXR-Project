@@ -55,7 +55,7 @@ TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilena
         
         if ((Flags & EMeshImportFlags::EnsureLeftHanded) != EMeshImportFlags::None)
         {
-            FBXFlags |= EFBXFlags::EnsureLeftHanded;
+            FBXFlags |= EFBXFlags::ForceLeftHanded;
         }
 
         TSharedRef<FSceneData> Mesh = FFBXLoader::LoadFile(Filename, FBXFlags);

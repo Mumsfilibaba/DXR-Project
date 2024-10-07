@@ -7,9 +7,9 @@ enum class EFBXFlags : uint8
 {
     None             = 0,
     ApplyScaleFactor = BIT(1),
-    EnsureLeftHanded = BIT(2),
+    ForceLeftHanded  = BIT(2),
 
-    Default = EnsureLeftHanded
+    Default = ForceLeftHanded
 };
 
 ENUM_CLASS_OPERATORS(EFBXFlags);
