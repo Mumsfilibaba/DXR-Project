@@ -308,7 +308,8 @@ void FScene::UpdateBatches()
         const int32 NumMaterials = Component->GetNumMaterials();
         for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
         {
-            const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+            FMaterial* Material = Component->GetMaterial(MaterialIndex);
+            const uint64 MaterialID = reinterpret_cast<uint64>(Material);
 
             int32 BatchIndex;
             if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
@@ -318,7 +319,7 @@ void FScene::UpdateBatches()
             else
             {
                 BatchIndex = VisibleMeshBatches.Size();
-                VisibleMeshBatches.Emplace(Component->GetMaterial());
+                VisibleMeshBatches.Emplace(Material);
                 MaterialToBatchIndex.Add(MaterialID, BatchIndex);
             }
 
@@ -338,7 +339,8 @@ void FScene::UpdateBatches()
             const int32 NumMaterials = Component->GetNumMaterials();
             for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
             {
-                const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                FMaterial* Material = Component->GetMaterial(MaterialIndex);
+                const uint64 MaterialID = reinterpret_cast<uint64>(Material);
                 
                 int32 BatchIndex;
                 if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
@@ -348,7 +350,7 @@ void FScene::UpdateBatches()
                 else
                 {
                     BatchIndex = DirectionalLight->MeshBatches.Size();
-                    DirectionalLight->MeshBatches.Emplace(Component->GetMaterial());
+                    DirectionalLight->MeshBatches.Emplace(Material);
                     MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                 }
                 
@@ -371,7 +373,8 @@ void FScene::UpdateBatches()
             const int32 NumMaterials = Component->GetNumMaterials();
             for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
             {
-                const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                FMaterial* Material = Component->GetMaterial(MaterialIndex);
+                const uint64 MaterialID = reinterpret_cast<uint64>(Material);
                 
                 int32 BatchIndex;
                 if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
@@ -381,7 +384,7 @@ void FScene::UpdateBatches()
                 else
                 {
                     BatchIndex = ScenePointLight->SinglePassMeshBatch.Size();
-                    ScenePointLight->SinglePassMeshBatch.Emplace(Component->GetMaterial());
+                    ScenePointLight->SinglePassMeshBatch.Emplace(Material);
                     MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                 }
                 
@@ -402,7 +405,8 @@ void FScene::UpdateBatches()
                 const int32 NumMaterials = Component->GetNumMaterials();
                 for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
                 {
-                    const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                    FMaterial* Material = Component->GetMaterial(MaterialIndex);
+                    const uint64 MaterialID = reinterpret_cast<uint64>(Material);
                     
                     int32 BatchIndex;
                     if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
@@ -412,7 +416,7 @@ void FScene::UpdateBatches()
                     else
                     {
                         BatchIndex = MeshBatches.Size();
-                        MeshBatches.Emplace(Component->GetMaterial());
+                        MeshBatches.Emplace(Material);
                         MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                     }
                     
@@ -434,7 +438,8 @@ void FScene::UpdateBatches()
                 const int32 NumMaterials = Component->GetNumMaterials();
                 for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
                 {
-                    const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                    FMaterial* Material = Component->GetMaterial(MaterialIndex);
+                    const uint64 MaterialID = reinterpret_cast<uint64>(Material);
                     
                     int32 BatchIndex;
                     if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
@@ -444,7 +449,7 @@ void FScene::UpdateBatches()
                     else
                     {
                         BatchIndex = MeshBatches.Size();
-                        MeshBatches.Emplace(Component->GetMaterial());
+                        MeshBatches.Emplace(Material);
                         MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                     }
                     

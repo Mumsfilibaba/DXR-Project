@@ -40,7 +40,7 @@ public:
     void UpdateFrustumVisbility(bool bIsVisible)
     {
         FrustumVisibility.bWasVisible = FrustumVisibility.bIsVisible;
-        FrustumVisibility.bIsVisible = bIsVisible;
+        FrustumVisibility.bIsVisible  = bIsVisible;
     }
 
     FMaterial* GetMaterial(int32 Index = 0) const

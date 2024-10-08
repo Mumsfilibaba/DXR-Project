@@ -77,12 +77,15 @@ void FSceneData::AddToWorld(FWorld* World)
                 }
                 else
                 {
-                    for (int32 Index = 0; Index < ModelData.Mesh.Partitions.Size(); Index++)
+                    const int32 NumSubMeshes = ModelData.Mesh.Partitions.Size();
+                    for (int32 Index = 0; Index < NumSubMeshes; Index++)
                     {
                         const FMeshPartition& MeshPartition = ModelData.Mesh.Partitions[Index];
                         if (MeshPartition.MaterialIndex >= 0 && CreatedMaterials.Size() >= MeshPartition.MaterialIndex)
                         {
-                            MeshComponent->SetMaterial(CreatedMaterials[MeshPartition.MaterialIndex], Index);
+                            const TSharedPtr<FMaterial>& Material = CreatedMaterials[MeshPartition.MaterialIndex];
+                            MeshComponent->SetMaterial(Material, Index);
+                            CHECK(MeshComponent->GetMaterial(Index) == Material);
                         }
                         else
                         {

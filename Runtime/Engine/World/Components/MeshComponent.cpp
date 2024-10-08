@@ -23,6 +23,7 @@ FProxySceneComponent* FMeshComponent::CreateProxyComponent()
     NewComponent->CurrentActor = GetActorOwner();
     NewComponent->Mesh         = Mesh;
     NewComponent->Materials    = Materials;
+    CHECK(NewComponent->Materials == Materials);
     return NewComponent;
 }
 
