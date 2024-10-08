@@ -4,7 +4,7 @@
 #include "Core/Memory/Memory.h"
 
 FProxySceneComponent::FProxySceneComponent()
-    : Material(nullptr)
+    : Materials()
     , Mesh(nullptr)
     , CurrentActor(nullptr)
     , Geometry(nullptr)

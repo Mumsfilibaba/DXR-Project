@@ -7,16 +7,41 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-extern bool GFreezeRendering = false;
+bool GFreezeRendering = false;
+
+FMeshBatch::FMeshBatch(FMaterial* InMaterial)
+    : Material(InMaterial)
+    , Primitives()
+{
+}
+
+FMeshBatch::~FMeshBatch()
+{
+}
+
+void FMeshBatch::AddPrimitive(FProxySceneComponent* Primitive, int32 MaterialIndex)
+{
+    const FSubMesh& SubMesh = Primitive->Mesh->SubMeshes[MaterialIndex];
+    FMeshReference& MeshReference = Primitives.Emplace();
+    MeshReference.Primitive    = Primitive;
+    MeshReference.SubMeshIndex = MaterialIndex;
+    MeshReference.BaseVertex   = SubMesh.BaseVertex;
+    MeshReference.StartIndex   = SubMesh.StartIndex;
+    MeshReference.VertexCount  = SubMesh.VertexCount;
+    MeshReference.IndexCount   = SubMesh.IndexCount;
+}
 
 FScene::FScene(FWorld* InWorld)
     : IScene()
     , World(InWorld)
-    , Primitives()
-    , Lights()
-    , PointLights()
     , Camera(nullptr)
-    , DirectionalLight(nullptr)
+    , Primitives()
+    , VisiblePrimitives()
+    , VisibleMeshBatches()
+    , Lights()
+    , DirectionalLight()
+    , PointLights()
+    , Materials()
 {
 }
 
@@ -99,7 +124,11 @@ void FScene::AddProxyComponent(FProxySceneComponent* InComponent)
     if (InComponent)
     {
         Primitives.Add(InComponent);
-        Materials.AddUnique(InComponent->Material);
+        
+        for (int32 Index = 0; Index < InComponent->Materials.Size(); Index++)
+        {
+            Materials.AddUnique(InComponent->Materials[Index].Get());
+        }
     }
 }
 
@@ -139,10 +168,14 @@ void FScene::UpdateVisibility()
     TRACE_SCOPE("UpdateVisibility - FrustumCulling");
 
     if (Primitives.Capacity() > Primitives.Size())
+    {
         Primitives.Shrink();
+    }
 
     if (VisiblePrimitives.Capacity() < Primitives.Capacity())
+    {
         VisiblePrimitives.Reserve(Primitives.Capacity());
+    }
 
     // Clear for this frame
     VisiblePrimitives.Clear();
@@ -225,10 +258,11 @@ void FScene::UpdateVisibility()
 
             // Two-Pass
             {
-                bool bIsVisibleTwoPass = false;
+                constexpr int32 NumFacesPerPass = 3;
 
                 // First Pass
-                for (int32 FaceIndex = 0; FaceIndex < 3; FaceIndex++)
+                bool bIsVisibleTwoPass = false;
+                for (int32 FaceIndex = 0; FaceIndex < NumFacesPerPass; FaceIndex++)
                 {
                     if (ScenePointLight->Frustums[FaceIndex].CheckAABB(Box))
                     {
@@ -240,9 +274,10 @@ void FScene::UpdateVisibility()
                 {
                     ScenePointLight->TwoPassPrimitives[0].Add(Component);
                 }
-
+                
                 // Second Pass
-                for (int32 FaceIndex = 3; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
+                bIsVisibleTwoPass = false;
+                for (int32 FaceIndex = NumFacesPerPass; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
                 {
                     if (ScenePointLight->Frustums[FaceIndex].CheckAABB(Box))
                     {
@@ -270,21 +305,25 @@ void FScene::UpdateBatches()
     TMap<uint64, int32> MaterialToBatchIndex;
     for (FProxySceneComponent* Component : VisiblePrimitives)
     {
-        const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
-
-        int32 BatchIndex;
-        if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+        const int32 NumMaterials = Component->GetNumMaterials();
+        for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
         {
-            BatchIndex = *ExistingBatchIndex;
-        }
-        else
-        {
-            BatchIndex = VisibleMeshBatches.Size();
-            VisibleMeshBatches.Emplace(Component->Material);
-            MaterialToBatchIndex.Add(MaterialID, BatchIndex);
-        }
+            const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
 
-        VisibleMeshBatches[BatchIndex].Primitives.Add(Component);
+            int32 BatchIndex;
+            if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+            {
+                BatchIndex = *ExistingBatchIndex;
+            }
+            else
+            {
+                BatchIndex = VisibleMeshBatches.Size();
+                VisibleMeshBatches.Emplace(Component->GetMaterial());
+                MaterialToBatchIndex.Add(MaterialID, BatchIndex);
+            }
+
+            VisibleMeshBatches[BatchIndex].AddPrimitive(Component, MaterialIndex);
+        }
     }
 
     // Batch primitives for any DirectionalLight
@@ -296,21 +335,25 @@ void FScene::UpdateBatches()
 
         for (FProxySceneComponent* Component : DirectionalLight->Primitives)
         {
-            const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
-
-            int32 BatchIndex;
-            if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+            const int32 NumMaterials = Component->GetNumMaterials();
+            for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
             {
-                BatchIndex = *ExistingBatchIndex;
+                const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                
+                int32 BatchIndex;
+                if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+                {
+                    BatchIndex = *ExistingBatchIndex;
+                }
+                else
+                {
+                    BatchIndex = DirectionalLight->MeshBatches.Size();
+                    DirectionalLight->MeshBatches.Emplace(Component->GetMaterial());
+                    MaterialToBatchIndex.Add(MaterialID, BatchIndex);
+                }
+                
+                DirectionalLight->MeshBatches[BatchIndex].AddPrimitive(Component, MaterialIndex);
             }
-            else
-            {
-                BatchIndex = DirectionalLight->MeshBatches.Size();
-                DirectionalLight->MeshBatches.Emplace(Component->Material);
-                MaterialToBatchIndex.Add(MaterialID, BatchIndex);
-            }
-
-            DirectionalLight->MeshBatches[BatchIndex].Primitives.Add(Component);
         }
     }
 
@@ -325,34 +368,11 @@ void FScene::UpdateBatches()
 
         for (FProxySceneComponent* Component : ScenePointLight->SinglePassPrimitives)
         {
-            const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
-
-            int32 BatchIndex;
-            if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+            const int32 NumMaterials = Component->GetNumMaterials();
+            for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
             {
-                BatchIndex = *ExistingBatchIndex;
-            }
-            else
-            {
-                BatchIndex = ScenePointLight->SinglePassMeshBatch.Size();
-                ScenePointLight->SinglePassMeshBatch.Emplace(Component->Material);
-                MaterialToBatchIndex.Add(MaterialID, BatchIndex);
-            }
-
-            ScenePointLight->SinglePassMeshBatch[BatchIndex].Primitives.Add(Component);
-        }
-
-        // Prepare for two-Pass rendering
-        for (int32 PassIndex = 0; PassIndex < 2; PassIndex++)
-        {
-            TArray<FMeshBatch>& MeshBatches = ScenePointLight->TwoPassMeshBatches[PassIndex];
-            MeshBatches.Clear();
-            MaterialToBatchIndex.Clear();
-
-            for (FProxySceneComponent* Component : ScenePointLight->TwoPassPrimitives[PassIndex])
-            {
-                const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
-
+                const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                
                 int32 BatchIndex;
                 if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
                 {
@@ -360,39 +380,76 @@ void FScene::UpdateBatches()
                 }
                 else
                 {
-                    BatchIndex = MeshBatches.Size();
-                    MeshBatches.Emplace(Component->Material);
+                    BatchIndex = ScenePointLight->SinglePassMeshBatch.Size();
+                    ScenePointLight->SinglePassMeshBatch.Emplace(Component->GetMaterial());
                     MaterialToBatchIndex.Add(MaterialID, BatchIndex);
                 }
+                
+                ScenePointLight->SinglePassMeshBatch[BatchIndex].AddPrimitive(Component, MaterialIndex);
+            }
+        }
 
-                MeshBatches[BatchIndex].Primitives.Add(Component);
+        // Prepare for two-Pass rendering
+        for (int32 PassIndex = 0; PassIndex < 2; PassIndex++)
+        {
+            MaterialToBatchIndex.Clear();
+
+            TArray<FMeshBatch>& MeshBatches = ScenePointLight->TwoPassMeshBatches[PassIndex];
+            MeshBatches.Clear();
+
+            for (FProxySceneComponent* Component : ScenePointLight->TwoPassPrimitives[PassIndex])
+            {
+                const int32 NumMaterials = Component->GetNumMaterials();
+                for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
+                {
+                    const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                    
+                    int32 BatchIndex;
+                    if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+                    {
+                        BatchIndex = *ExistingBatchIndex;
+                    }
+                    else
+                    {
+                        BatchIndex = MeshBatches.Size();
+                        MeshBatches.Emplace(Component->GetMaterial());
+                        MaterialToBatchIndex.Add(MaterialID, BatchIndex);
+                    }
+                    
+                    MeshBatches[BatchIndex].AddPrimitive(Component, MaterialIndex);
+                }
             }
         }
 
         // Prepare for rendering each face
         for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
         {
+            MaterialToBatchIndex.Clear();
+
             TArray<FMeshBatch>& MeshBatches = ScenePointLight->MeshBatches[FaceIndex];
             MeshBatches.Clear();
-            MaterialToBatchIndex.Clear();
 
             for (FProxySceneComponent* Component : ScenePointLight->Primitives[FaceIndex])
             {
-                const uint64 MaterialID = reinterpret_cast<uint64>(Component->Material);
-
-                int32 BatchIndex;
-                if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+                const int32 NumMaterials = Component->GetNumMaterials();
+                for (int32 MaterialIndex = 0; MaterialIndex < NumMaterials; MaterialIndex++)
                 {
-                    BatchIndex = *ExistingBatchIndex;
+                    const uint64 MaterialID = reinterpret_cast<uint64>(Component->GetMaterial(MaterialIndex));
+                    
+                    int32 BatchIndex;
+                    if (int32* ExistingBatchIndex = MaterialToBatchIndex.Find(MaterialID))
+                    {
+                        BatchIndex = *ExistingBatchIndex;
+                    }
+                    else
+                    {
+                        BatchIndex = MeshBatches.Size();
+                        MeshBatches.Emplace(Component->GetMaterial());
+                        MaterialToBatchIndex.Add(MaterialID, BatchIndex);
+                    }
+                    
+                    MeshBatches[BatchIndex].AddPrimitive(Component, MaterialIndex);
                 }
-                else
-                {
-                    BatchIndex = MeshBatches.Size();
-                    MeshBatches.Emplace(Component->Material);
-                    MaterialToBatchIndex.Add(MaterialID, BatchIndex);
-                }
-
-                MeshBatches[BatchIndex].Primitives.Add(Component);
             }
         }
     }

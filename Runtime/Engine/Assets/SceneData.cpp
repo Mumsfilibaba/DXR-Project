@@ -62,16 +62,35 @@ void FSceneData::AddToWorld(FWorld* World)
             FMeshComponent* MeshComponent = NewObject<FMeshComponent>();
             if (MeshComponent)
             {
-                if (!CreatedMaterials.IsEmpty() && ModelData.MaterialIndex >= 0)
+                MeshComponent->SetMesh(FMesh::Create(ModelData.Mesh));
+
+                if (ModelData.Mesh.Partitions.IsEmpty())
                 {
-                    MeshComponent->SetMaterial(CreatedMaterials[ModelData.MaterialIndex]);
+                    if (!CreatedMaterials.IsEmpty())
+                    {
+                        MeshComponent->SetMaterial(CreatedMaterials[0]);
+                    }
+                    else
+                    {
+                        MeshComponent->SetMaterial(GEngine->BaseMaterial);
+                    }
                 }
                 else
                 {
-                    MeshComponent->SetMaterial(GEngine->BaseMaterial);
+                    for (int32 Index = 0; Index < ModelData.Mesh.Partitions.Size(); Index++)
+                    {
+                        const FMeshPartition& MeshPartition = ModelData.Mesh.Partitions[Index];
+                        if (MeshPartition.MaterialIndex >= 0 && CreatedMaterials.Size() >= MeshPartition.MaterialIndex)
+                        {
+                            MeshComponent->SetMaterial(CreatedMaterials[MeshPartition.MaterialIndex], Index);
+                        }
+                        else
+                        {
+                            MeshComponent->SetMaterial(GEngine->BaseMaterial, Index);
+                        }
+                    }
                 }
                 
-                MeshComponent->SetMesh(FMesh::Create(ModelData.Mesh));
                 NewActor->AddComponent(MeshComponent);
             }
         }

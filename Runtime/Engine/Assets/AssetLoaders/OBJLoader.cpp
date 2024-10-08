@@ -73,76 +73,90 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
     FModelData Data;
     TMap<FVertex, uint32> UniqueVertices;
     
+    constexpr uint32 NumIndiciesPerTriangle  = 3;
+    constexpr uint32 NumPositionsPerTriangle = 3;
+    constexpr uint32 NumNormalsPerTriangle   = 3;
+    constexpr uint32 NumTexCoordsPerTriangle = 2;
+
     int32 ShapeIndex = 0;
     for (const tinyobj::shape_t& Shape : Shapes)
     {
         // Start at index zero for each mesh and loop until all indices are processed
+        const uint32 IndexCount = static_cast<uint32>(Shape.mesh.indices.size());
+
+        // Start a new mesh
+        Data.Mesh.Clear();
+        Data.Mesh.Indices.Reserve(IndexCount);
+        UniqueVertices.Clear();
+
         uint32 CurrentIndex = 0;
-        uint32 IndexCount   = static_cast<uint32>(Shape.mesh.indices.size());
         while (CurrentIndex < IndexCount)
         {
-            // Start a new mesh
-            Data.Mesh.Clear();
-            UniqueVertices.Clear();
-
-            Data.Mesh.Indices.Reserve(IndexCount);
-
-            int32 Face = CurrentIndex / 3;
-
+            // Retrieve the matieralIndex
+            int32 Face = CurrentIndex / NumIndiciesPerTriangle;
             const int32 MaterialID = Shape.mesh.material_ids[Face];
+
+            // Create a new partition for the mesh
+            FMeshPartition& Partition = Data.Mesh.Partitions.Emplace();
+            Partition.BaseVertex = Data.Mesh.Vertices.Size();
+            Partition.StartIndex = Data.Mesh.Indices.Size();
+            
+            if (MaterialID >= 0)
+            {
+                Partition.MaterialIndex = MaterialID;
+            }
+            
+            // Retrieve all vertices/indicies for this partition
             for (; CurrentIndex < IndexCount; ++CurrentIndex)
             {
                 // Break if material is not the same
-                Face = CurrentIndex / 3;
+                Face = CurrentIndex / NumIndiciesPerTriangle;
                 if (Shape.mesh.material_ids[Face] != MaterialID)
                 {
                     break;
                 }
 
-                const tinyobj::index_t& Index = Shape.mesh.indices[CurrentIndex];
-
-                FVertex TempVertex;
-
                 // Normals and texcoords are optional, Positions are required
+                const tinyobj::index_t& Index = Shape.mesh.indices[CurrentIndex];
                 CHECK(Index.vertex_index >= 0);
 
-                auto PositionIndex = 3 * Index.vertex_index;
-                TempVertex.Position = FVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
+                FVertex Vertex;
+
+                const uint32 PositionIndex = NumPositionsPerTriangle * Index.vertex_index;
+                Vertex.Position = FVector3(Attributes.vertices[PositionIndex + 0], Attributes.vertices[PositionIndex + 1], Attributes.vertices[PositionIndex + 2]);
 
                 if (Index.normal_index >= 0)
                 {
-                    auto NormalIndex = 3 * Index.normal_index;
-                    TempVertex.Normal = FVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
-                    TempVertex.Normal.Normalize();
+                    const uint32 NormalIndex = NumNormalsPerTriangle * Index.normal_index;
+                    Vertex.Normal = FVector3(Attributes.normals[NormalIndex + 0], Attributes.normals[NormalIndex + 1], Attributes.normals[NormalIndex + 2]);
+                    Vertex.Normal.Normalize();
                 }
 
                 if (Index.texcoord_index >= 0)
                 {
-                    auto TexCoordIndex = 2 * Index.texcoord_index;
-                    TempVertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
+                    const uint32 TexCoordIndex = NumTexCoordsPerTriangle * Index.texcoord_index;
+                    Vertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
-                if (!UniqueVertices.Contains(TempVertex))
+                if (!UniqueVertices.Contains(Vertex))
                 {
-                    UniqueVertices[TempVertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
-                    Data.Mesh.Vertices.Add(TempVertex);
+                    UniqueVertices[Vertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
+                    Data.Mesh.Vertices.Add(Vertex);
                 }
 
-                Data.Mesh.Indices.Emplace(UniqueVertices[TempVertex]);
+                Data.Mesh.Indices.Emplace(UniqueVertices[Vertex]);
             }
 
+            // Set the number of vertices/indices for this partition
+            Partition.VertexCount = Data.Mesh.Vertices.Size() - Partition.BaseVertex;
+            Partition.IndexCount  = Data.Mesh.Indices.Size() - Partition.StartIndex;
+            
             // Calculate tangents and create mesh
             FMeshUtilities::CalculateTangents(Data.Mesh);
 
             if (ReverseHandedness)
             {
                 FMeshUtilities::ReverseHandedness(Data.Mesh);
-            }
-
-            // Add materialID
-            if (MaterialID >= 0)
-            {
-                Data.MaterialIndex = MaterialID;
             }
 
             if (Shape.name.empty())
@@ -153,10 +167,10 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
             {
                 Data.Name = Shape.name.c_str();
             }
-            
-            Scene->Models.Emplace(Data);
-            ShapeIndex++;
         }
+
+        Scene->Models.Emplace(Data);
+        ShapeIndex++;
     }
 
     Scene->Models.Shrink();

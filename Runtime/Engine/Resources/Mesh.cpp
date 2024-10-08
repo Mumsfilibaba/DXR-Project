@@ -137,6 +137,35 @@ bool FMesh::Init(const FMeshData& Data)
             return false;
         }
     }
+    
+    // Add submeshes
+    if (!Data.Partitions.IsEmpty())
+    {
+        SubMeshes.Reserve(Data.Partitions.Size());
+        
+        for (const FMeshPartition& MeshPartition : Data.Partitions)
+        {
+            FSubMesh NewSubMesh;
+            NewSubMesh.BaseVertex  = MeshPartition.BaseVertex;
+            NewSubMesh.VertexCount = MeshPartition.VertexCount;
+            NewSubMesh.StartIndex  = MeshPartition.StartIndex;
+            NewSubMesh.IndexCount  = MeshPartition.IndexCount;
+            
+            AddSubMesh(NewSubMesh);
+        }
+    }
+    else
+    {
+        SubMeshes.Reserve(1);
+        
+        FSubMesh NewSubMesh;
+        NewSubMesh.BaseVertex  = 0;
+        NewSubMesh.VertexCount = VertexCount;
+        NewSubMesh.StartIndex  = 0;
+        NewSubMesh.IndexCount  = IndexCount;
+        
+        AddSubMesh(NewSubMesh);
+    }
 
     CreateBoundingBox(Data);
     return true;

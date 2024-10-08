@@ -111,8 +111,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     for (const FProxySceneComponent* Component : Scene->Primitives)
     {
-        FMaterial* Material = Component->Material;
-        if (Component->Material->HasAlphaMask())
+        FMaterial* Material = Component->GetMaterial();
+        if (Material->HasAlphaMask())
         {
             continue;
         }
@@ -128,14 +128,14 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         const FMatrix3x4 TinyTransform = Component->CurrentActor->GetTransform().GetTinyMatrix();
 
         uint32 HitGroupIndex = 0;
-        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Component->Mesh))
+        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Component->Mesh.Get()))
         {
             HitGroupIndex = *ExistingIndex;
         }
         else
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
-            Resources.RTMeshToHitGroupIndex[Component->Mesh] = HitGroupIndex;
+            Resources.RTMeshToHitGroupIndex[Component->Mesh.Get()] = HitGroupIndex;
             
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";

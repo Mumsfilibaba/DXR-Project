@@ -844,10 +844,10 @@ void FSceneRenderer::Tick(FScene* Scene)
         EResourceAccess::PixelShaderResource);
 
     // Forward Pass
-    if (false/*!Resources.ForwardVisibleCommands.IsEmpty()*/)
-    {
-        ForwardPass->Execute(CommandList, Resources, Scene);
-    }
+    // if (!Resources.ForwardVisibleCommands.IsEmpty())
+    // {
+        // ForwardPass->Execute(CommandList, Resources, Scene);
+    // }
 
     // Debug PointLights
     if (CVarDrawPointLights.GetValue())

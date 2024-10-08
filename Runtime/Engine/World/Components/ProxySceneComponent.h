@@ -1,7 +1,10 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Containers/Array.h"
+#include "Core/Containers/SharedPtr.h"
 #include "RHI/RHITypes.h"
 
+class FMaterial;
 class FRHIBuffer;
 class FRHIQuery;
 class FRHIRayTracingGeometry;
@@ -40,10 +43,20 @@ public:
         FrustumVisibility.bIsVisible = bIsVisible;
     }
 
+    FMaterial* GetMaterial(int32 Index = 0) const
+    {
+        return (Materials.Size() > Index) ? Materials[Index].Get() : nullptr;
+    }
+    
+    int32 GetNumMaterials() const
+    {
+        return Materials.Size();
+    }
+    
     // Scene Objects
-    class FMaterial*        Material;
-    class FMesh*            Mesh;
-    class FActor*           CurrentActor;
+    class FActor*                 CurrentActor;
+    TSharedPtr<class FMesh>       Mesh;
+    TArray<TSharedPtr<FMaterial>> Materials;
     
     // Occlusion
     FRHIQuery*              CurrentOcclusionQuery;

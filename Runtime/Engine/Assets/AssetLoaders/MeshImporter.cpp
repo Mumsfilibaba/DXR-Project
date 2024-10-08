@@ -224,9 +224,9 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
             LOG_WARNING("Model has no name");
         }
         
-        CurrentModel.MaterialIndex = SceneModel.MaterialIndex;
         CurrentModel.NumVertices   = SceneModel.Mesh.GetVertexCount();
         CurrentModel.NumIndices    = SceneModel.Mesh.GetIndexCount();
+        CurrentModel.MaterialIndex = SceneModel.Mesh.Partitions[0].MaterialIndex;
 
         NumTotalVertices += CurrentModel.NumVertices;
         NumTotalIndices  += CurrentModel.NumIndices;
@@ -478,9 +478,7 @@ TSharedRef<FSceneData> FMeshImporter::LoadCustom(const FString& InFilename)
         MAYBE_UNUSED const int32 Length = FCString::Strlen(ModelHeaders[Index].Name);
         CHECK(Length < FCustomModel::MaxNameLength);
 
-        CurrentModel.Name          = ModelHeaders[Index].Name;
-        CurrentModel.MaterialIndex = ModelHeaders[Index].MaterialIndex;
-
+        CurrentModel.Name = ModelHeaders[Index].Name;
         LOG_INFO("Loaded Mesh '%s'", ModelHeaders[Index].Name);
 
         const int32 NumVertices = ModelHeaders[Index].NumVertices;
@@ -492,8 +490,6 @@ TSharedRef<FSceneData> FMeshImporter::LoadCustom(const FString& InFilename)
         CurrentModel.Mesh.Indices.Resize(NumIndices);
         FMemory::Memcpy(CurrentModel.Mesh.Indices.Data(), Indices, NumIndices * sizeof(uint32));
         Indices += NumIndices;
-
-        CurrentModel.MaterialIndex = ModelHeaders[Index].MaterialIndex;
     }
 
     Scene->Materials.Resize(SceneHeader->NumMaterials);

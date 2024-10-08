@@ -7,6 +7,22 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 
+struct FSubMesh
+{
+    FSubMesh()
+        : BaseVertex(0)
+        , VertexCount(0)
+        , StartIndex(0)
+        , IndexCount(0)
+    {
+    }
+    
+    uint32 BaseVertex;
+    uint32 VertexCount;
+    uint32 StartIndex;
+    uint32 IndexCount;
+};
+
 class ENGINE_API FMesh
 {
 public:
@@ -17,7 +33,17 @@ public:
 
     bool Init(const FMeshData& Data);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
+    
+    void AddSubMesh(const FSubMesh& InSubMesh)
+    {
+        SubMeshes.Add(InSubMesh);
+    }
 
+    int32 GetNumSubMeshes() const
+    {
+        return SubMeshes.Size();
+    }
+    
 public:
     void CreateBoundingBox(const FMeshData& Data);
 
@@ -31,10 +57,9 @@ public:
     
     FRHIRayTracingGeometryRef RTGeometry;
 
-    uint32       VertexCount;
-    
-    EIndexFormat IndexFormat;
-    uint32       IndexCount;
-
-    FAABB        BoundingBox;
+    TArray<FSubMesh>          SubMeshes;
+    EIndexFormat              IndexFormat;
+    uint32                    IndexCount;
+    uint32                    VertexCount;
+    FAABB                     BoundingBox;
 };

@@ -156,26 +156,33 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
         ofbx::Vec3Attributes Tangents  = GeometryData.getTangents();
         ofbx::Vec2Attributes TexCoords = GeometryData.getUVs();
 
+        const int32 PartitionCount = GeometryData.getPartitionCount();
         ModelData.Mesh.Indices.Reserve(Positions.count);
         ModelData.Mesh.Vertices.Reserve(Positions.values_count);
+        ModelData.Mesh.Partitions.Reserve(PartitionCount);
         UniqueVertices.Reserve(Positions.values_count);
         
+        // Clear the mesh data to start a new mesh
+        ModelData.Mesh.Clear();
+        UniqueVertices.Clear();
+
         // Go through each mesh partition and add it to the scene as a separate mesh
-        for (int32 PartitionIdx = 0; PartitionIdx < GeometryData.getPartitionCount(); PartitionIdx++)
+        for (int32 PartitionIdx = 0; PartitionIdx < PartitionCount; PartitionIdx++)
         {
-            // Clear the mesh data every mesh-partition
-            ModelData.Mesh.Clear();
-            UniqueVertices.Clear();
-
             constexpr int32 NumIndiciesPerTriangle = 3;
-            ofbx::GeometryPartition Partition = GeometryData.getPartition(PartitionIdx);
-            PartitionIndicies.Resize(Partition.max_polygon_triangles * NumIndiciesPerTriangle);
+            ofbx::GeometryPartition FbxPartition = GeometryData.getPartition(PartitionIdx);
+            PartitionIndicies.Resize(FbxPartition.max_polygon_triangles * NumIndiciesPerTriangle);
 
+            // Create a new partition for the mesh
+            FMeshPartition& Partition = ModelData.Mesh.Partitions.Emplace();
+            Partition.BaseVertex = ModelData.Mesh.Vertices.Size();
+            Partition.StartIndex = ModelData.Mesh.Indices.Size();
+            
             // Go through each polygon and add it to the mesh
-            for (int32 PolygonIdx = 0; PolygonIdx < Partition.polygon_count; ++PolygonIdx)
+            for (int32 PolygonIdx = 0; PolygonIdx < FbxPartition.polygon_count; ++PolygonIdx)
             {
                 // Triangulate this polygon
-                const ofbx::GeometryPartition::Polygon& Polygon = Partition.polygons[PolygonIdx];
+                const ofbx::GeometryPartition::Polygon& Polygon = FbxPartition.polygons[PolygonIdx];
                 const int32 NumIndicies = ofbx::triangulate(GeometryData, Polygon, PartitionIndicies.Data());
 
                 FVertex Vertex;
@@ -234,47 +241,52 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
                 }
             }
 
-            if (!Tangents.values)
-            {
-                FMeshUtilities::CalculateTangents(ModelData.Mesh);
-            }
-
-            // Convert to left-handed
-            if ((Flags & EFBXFlags::ForceLeftHanded) != EFBXFlags::None)
-            {
-                if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
-                {
-                    FMeshUtilities::ReverseHandedness(ModelData.Mesh);
-                }
-            }
+            // Set the number of vertices/indices for this partition
+            Partition.VertexCount = ModelData.Mesh.Vertices.Size() - Partition.BaseVertex;
+            Partition.IndexCount  = ModelData.Mesh.Indices.Size() - Partition.StartIndex;
 
             // Add material index to the mesh
-            ModelData.MaterialIndex = INVALID_MATERIAL_INDEX;
+            Partition.MaterialIndex = INVALID_MATERIAL_INDEX;
             if (PartitionIdx < CurrentMesh->getMaterialCount())
             {
                 const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(PartitionIdx);
                 if (UniqueMaterials.Contains(CurrentMaterial->id))
                 {
-                    ModelData.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
+                    Partition.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
                 }
             }
 
-            if (ModelData.MaterialIndex == INVALID_MATERIAL_INDEX)
+            if (Partition.MaterialIndex == INVALID_MATERIAL_INDEX)
             {
-                LOG_WARNING("Mesh '%s' has no material", CurrentMesh->name);
+                LOG_WARNING("Partition in Mesh '%s' has no material", CurrentMesh->name);
             }
+        }
+        
+        // If there are no tangents, then we calculate them
+        if (!Tangents.values)
+        {
+            FMeshUtilities::CalculateTangents(ModelData.Mesh);
+        }
+        
+        // Convert to left-handed
+        if ((Flags & EFBXFlags::ForceLeftHanded) != EFBXFlags::None)
+        {
+            if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
+            {
+                FMeshUtilities::ReverseHandedness(ModelData.Mesh);
+            }
+        }
 
-            // Add the mesh to our scene
-            if (ModelData.Mesh.Hasdata())
-            {
-                LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
-                ModelData.Name = CurrentMesh->name;
-                Scene->Models.Emplace(ModelData);
-            }
-            else
-            {
-                LOG_WARNING("Tried to load mesh without any data");
-            }
+        // Add the mesh to our scene
+        if (ModelData.Mesh.Hasdata())
+        {
+            LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
+            ModelData.Name = CurrentMesh->name;
+            Scene->Models.Emplace(ModelData);
+        }
+        else
+        {
+            LOG_WARNING("Tried to load mesh without any data");
         }
     }
 

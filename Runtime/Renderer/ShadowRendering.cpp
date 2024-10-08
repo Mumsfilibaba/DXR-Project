@@ -111,19 +111,31 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
         TArray<FShaderDefine> ShaderDefines;
 
         if (MaterialFlags & MaterialFlag_EnableHeight)
+        {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
+        }
         else
+        {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
+        }
 
         if (MaterialFlags & MaterialFlag_PackedDiffuseAlpha)
+        {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
+        }
         else
+        {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
+        }
 
         if (MaterialFlags & MaterialFlag_EnableAlpha)
+        {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
+        }
         else
+        {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
+        }
 
         const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
         const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
@@ -439,8 +451,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                     }
 
-                    for (FProxySceneComponent* Component : Batch.Primitives)
+                    for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
                     {
+                        FProxySceneComponent* Component = MeshReference.Primitive;
                         if (Material->HasHeightMap() || Material->HasAlphaMask())
                         {
                             CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
@@ -455,7 +468,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                         CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                        CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
                 }
 
@@ -524,8 +537,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                 }
 
-                for (FProxySceneComponent* Component : Batch.Primitives)
+                for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
                 {
+                    FProxySceneComponent* Component = MeshReference.Primitive;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
                         CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
@@ -540,7 +554,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                     CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                    CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                    CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
             }
 
@@ -606,8 +620,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                     }
 
-                    for (FProxySceneComponent* Component : Batch.Primitives)
+                    for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
                     {
+                        FProxySceneComponent* Component = MeshReference.Primitive;
                         if (Material->HasHeightMap() || Material->HasAlphaMask())
                         {
                             CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
@@ -622,7 +637,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                         CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                        CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
                 }
 
@@ -788,19 +803,31 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
         TArray<FShaderDefine> ShaderDefines;
 
         if (MaterialFlags & MaterialFlag_EnableHeight)
+        {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
+        }
         else
+        {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
+        }
 
         if (MaterialFlags & MaterialFlag_PackedDiffuseAlpha)
+        {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
+        }
         else
+        {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
+        }
 
         if (MaterialFlags & MaterialFlag_EnableAlpha)
+        {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
+        }
         else
+        {            
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
+        }
 
         const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarCSMEnableViewInstancing.GetValue();
         const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
@@ -1082,8 +1109,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                 }
 
-                for (const FProxySceneComponent* Component : Batch.Primitives)
+                for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
                 {
+                    FProxySceneComponent* Component = MeshReference.Primitive;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
                         CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
@@ -1098,7 +1126,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                     CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                    CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                    CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
             }
 
@@ -1147,8 +1175,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
                 }
 
-                for (const FProxySceneComponent* Component : Batch.Primitives)
+                for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
                 {
+                    FProxySceneComponent* Component = MeshReference.Primitive;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
                         CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
@@ -1163,7 +1192,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                     CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                    CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                    CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
             }
 
@@ -1221,8 +1250,9 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     CommandList.SetConstantBuffer(Instance->VertexShader.Get(), PerCascadeBuffer.Get(), 0);
                     CommandList.SetShaderResourceView(Instance->VertexShader.Get(), Resources.CascadeMatrixBufferSRV.Get(), 0);
 
-                    for (const FProxySceneComponent* Component : Batch.Primitives)
+                    for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
                     {
+                        FProxySceneComponent* Component = MeshReference.Primitive;
                         if (Material->HasHeightMap() || Material->HasAlphaMask())
                         {
                             CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
@@ -1237,7 +1267,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                         ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
                         CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
 
-                        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+                        CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
                 }
 

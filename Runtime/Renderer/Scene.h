@@ -14,14 +14,33 @@ extern bool GFreezeRendering;
 
 struct FMeshBatch
 {
-    FMeshBatch(FMaterial* InMaterial)
-        : Material(InMaterial)
-        , Primitives()
+    struct FMeshReference
     {
-    }
+        FMeshReference()
+            : Primitive(nullptr)
+            , SubMeshIndex(0)
+            , BaseVertex(0)
+            , VertexCount(0)
+            , StartIndex(0)
+            , IndexCount(0)
+        {
+        }
 
-    FMaterial*                    Material;
-    TArray<FProxySceneComponent*> Primitives;
+        FProxySceneComponent* Primitive;
+        int32                 SubMeshIndex;
+        uint32                BaseVertex;
+        uint32                VertexCount;
+        uint32                StartIndex;
+        uint32                IndexCount;
+    };
+
+    FMeshBatch(FMaterial* InMaterial);
+    ~FMeshBatch();
+    
+    void AddPrimitive(FProxySceneComponent* Primitive, int32 MaterialIndex);
+
+    FMaterial*             Material;
+    TArray<FMeshReference> Primitives;
 };
 
 struct FScenePointLight
@@ -100,25 +119,21 @@ public:
     void UpdateBatches();
 
     // World that is mirrored by this RendererScene
-    FWorld* World;
-
+    FWorld*  World;
     // TODO: Differ the Renderer's camera from the World's
     FCamera* Camera;
 
     // All Primitives in this scene
     TArray<FProxySceneComponent*> Primitives;
-
     // Visible Primitives (From the main camera's point of view)
     TArray<FProxySceneComponent*> VisiblePrimitives;
-
     // Batches of meshes that are visible (From the main camera's point of view)
-    TArray<FMeshBatch> VisibleMeshBatches;
+    TArray<FMeshBatch>            VisibleMeshBatches;
 
     // All Lights in the Scene
     TArray<FLight*>           Lights;
     FSceneDirectionalLight*   DirectionalLight;
     TArray<FScenePointLight*> PointLights;
-
     // All materials
-    TArray<FMaterial*> Materials;
+    TArray<FMaterial*>        Materials;
 };

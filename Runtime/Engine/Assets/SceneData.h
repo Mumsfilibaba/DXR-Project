@@ -8,12 +8,31 @@
 #include "Engine/Resources/Material.h"
 #include "RHI/RHITypes.h"
 
+struct FMeshPartition
+{
+    FMeshPartition()
+        : BaseVertex(0)
+        , VertexCount(0)
+        , StartIndex(0)
+        , IndexCount(0)
+        , MaterialIndex(-1)
+    {
+    }
+    
+    uint32 BaseVertex;
+    uint32 VertexCount;
+    uint32 StartIndex;
+    uint32 IndexCount;
+    int32  MaterialIndex;
+};
+
 struct FMeshData
 {
     void Clear()
     {
         Vertices.Clear();
         Indices.Clear();
+        Partitions.Clear();
     }
 
     bool Hasdata() const
@@ -25,6 +44,7 @@ struct FMeshData
     {
         Vertices.Shrink();
         Indices.Shrink();
+        Partitions.Shrink();
     }
 
     int32 GetVertexCount() const
@@ -37,8 +57,9 @@ struct FMeshData
         return Indices.Size();
     }
 
-    TArray<FVertex> Vertices;
-    TArray<uint32>  Indices;
+    TArray<FVertex>        Vertices;
+    TArray<uint32>         Indices;
+    TArray<FMeshPartition> Partitions;
 };
 
 struct FModelData
@@ -48,9 +69,6 @@ struct FModelData
 
     /** @brief - Model mesh data */
     FMeshData Mesh;
-
-    /** @brief - The Material index in the FSceneData Materials Array */
-    int32 MaterialIndex = -1;
 };
 
 struct FMaterialData
