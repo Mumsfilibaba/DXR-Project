@@ -105,19 +105,19 @@ public:
     }
 
 private:
-    FVulkanInstance        Instance;
-    FVulkanPhysicalDevice* PhysicalDevice;
-    FVulkanDevice*         Device;
-    FVulkanQueue*          GraphicsQueue;
-    FVulkanCommandContext* GraphicsCommandContext;
+    typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
+    typedef TQueue<FVulkanCommandPayload*, EQueueType::MPSC>            FCommandPayloadQueue;
 
+    FVulkanInstance               Instance;
+    FVulkanPhysicalDevice*        PhysicalDevice;
+    FVulkanDevice*                Device;
+    FVulkanQueue*                 GraphicsQueue;
+    FVulkanCommandContext*        GraphicsCommandContext;
     TArray<FVulkanDeferredObject> DeletionQueue;
     FCriticalSection              DeletionQueueCS;
-
-    TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> SamplerStateMap;
-    FCriticalSection SamplerStateMapCS;
-
-    TQueue<FVulkanCommandPayload*, EQueueType::MPSC> PendingSubmissions;
+    FSamplerStateMap              SamplerStateMap;
+    FCriticalSection              SamplerStateMapCS;
+    FCommandPayloadQueue          PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;
 };
