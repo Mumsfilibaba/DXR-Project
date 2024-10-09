@@ -17,14 +17,14 @@ struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 class VULKANRHI_API FVulkanRHI : public FRHI
 {
 public:
-    FVulkanRHI();
-    ~FVulkanRHI();
-
-    static FVulkanRHI* GetRHI() 
+    static FVulkanRHI* GetRHI()
     {
         CHECK(GVulkanRHI != nullptr);
-        return GVulkanRHI; 
+        return GVulkanRHI;
     }
+
+    FVulkanRHI();
+    ~FVulkanRHI();
 
     virtual bool Initialize() override final;
 

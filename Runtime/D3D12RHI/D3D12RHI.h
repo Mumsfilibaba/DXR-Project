@@ -21,14 +21,14 @@ struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
 class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
-    FD3D12RHI();
-    ~FD3D12RHI();
-    
     static FD3D12RHI* GetRHI() 
     {
         CHECK(GD3D12RHI != nullptr);
         return GD3D12RHI; 
     }
+
+    FD3D12RHI();
+    ~FD3D12RHI();
 
     virtual bool Initialize() override final;
 
@@ -88,7 +88,7 @@ public:
     void ProcessPendingCommands();
     void SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue);
 
-    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D() const { return GenerateMipsTex2D_PSO; }
+    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D()   const { return GenerateMipsTex2D_PSO; }
     FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
     
     FD3D12Adapter* GetAdapter() const
@@ -107,20 +107,19 @@ public:
     }
 
 private:
+    typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> FSamplerStateMap;
+    typedef TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   FCommandPayloadQueue;
+
     FD3D12Adapter*                Adapter;
     FD3D12Device*                 Device;
     FD3D12CommandContext*         DirectCommandContext;
-
     TArray<FD3D12DeferredObject>  DeletionQueue;
     FCriticalSection              DeletionQueueCS;
-
     FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;
     FD3D12ComputePipelineStateRef GenerateMipsTexCube_PSO;
-
-    TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   PendingSubmissions;
-
-    TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> SamplerStateMap;
-    FCriticalSection                                  SamplerStateMapCS;
+    FCommandPayloadQueue          PendingSubmissions;
+    FSamplerStateMap              SamplerStateMap;
+    FCriticalSection              SamplerStateMapCS;
 
     static FD3D12RHI* GD3D12RHI;
 };
