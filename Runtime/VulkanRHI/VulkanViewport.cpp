@@ -63,9 +63,12 @@ bool FVulkanViewport::Initialize()
 
 bool FVulkanViewport::CreateSwapChain()
 {
+    // Destroy the old swapchain if there are any
+    SwapChain = nullptr;
+    
     FVulkanSwapChainCreateInfo SwapChainCreateInfo;
     SwapChainCreateInfo.ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    SwapChainCreateInfo.PreviousSwapChain = GetSwapChain();
+    SwapChainCreateInfo.PreviousSwapChain = nullptr;
     SwapChainCreateInfo.Surface           = Surface.Get();
     SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
     SwapChainCreateInfo.Extent.width      = Info.Width;
@@ -241,7 +244,7 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
         }
         
         VULKAN_INFO("Swapchain Resize w=%d h=%d", InWidth, InHeight);
-
+       
         if (!CreateSwapChain())
         {
             VULKAN_WARNING("Resize FAILED");
