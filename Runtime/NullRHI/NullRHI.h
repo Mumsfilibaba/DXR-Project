@@ -158,9 +158,9 @@ public:
         return new FNullRHIBlendState(InInitializer);
     }
 
-    virtual class FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer) override final
+    virtual class FRHIVertexLayout* RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final
     {
-        return new FNullRHIInputLayoutState();
+        return new FNullRHIVertexLayout(InInitializerList);
     }
 
     virtual class FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final

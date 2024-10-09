@@ -195,7 +195,14 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
         {
             FProxySceneComponent* Component = MeshReference.Primitive;
 
-            CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
+            FRHIBuffer* VertexBuffers[] =
+            {
+                Component->Mesh->VertexPositionBuffer.Get(),
+                Component->Mesh->VertexNormalBuffer.Get(),
+                Component->Mesh->VertexTexCoordBuffer.Get(),
+            };
+            
+            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
             TransformPerObject.Transform    = Component->CurrentActor->GetTransform().GetMatrix();

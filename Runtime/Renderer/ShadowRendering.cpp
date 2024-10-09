@@ -195,24 +195,24 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
         }
 
         // Initialize standard input layout
-        FRHIVertexInputLayoutInitializer InputLayoutInitializer;
+        FRHIVertexLayoutInitializerList VertexElementList;
         if (MaterialFlags & (MaterialFlag_EnableHeight | MaterialFlag_EnableAlpha))
         {
-            InputLayoutInitializer =
+            VertexElementList =
             {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexMasked), 0, 0,  EVertexInputClass::Vertex, 0 },
-                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexMasked), 0, 12, EVertexInputClass::Vertex, 0 }
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
             };
         }
         else
         {
-            InputLayoutInitializer =
+            VertexElementList =
             {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
         }
 
-        NewPipelineStateInstance.InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+        NewPipelineStateInstance.InputLayout = RHICreateVertexLayout(VertexElementList);
         if (!NewPipelineStateInstance.InputLayout)
         {
             DEBUG_BREAK();
@@ -456,11 +456,22 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         FProxySceneComponent* Component = MeshReference.Primitive;
                         if (Material->HasHeightMap() || Material->HasAlphaMask())
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                            FRHIBuffer* VertexBuffers[] =
+                            {
+                                Component->Mesh->VertexPositionBuffer.Get(),
+                                Component->Mesh->VertexTexCoordBuffer.Get(),
+                            };
+                            
+                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
                         }
                         else
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                            FRHIBuffer* VertexBuffers[] =
+                            {
+                                Component->Mesh->VertexPositionBuffer.Get(),
+                            };
+                            
+                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                         }
 
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
@@ -542,11 +553,22 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     FProxySceneComponent* Component = MeshReference.Primitive;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                        FRHIBuffer* VertexBuffers[] =
+                        {
+                            Component->Mesh->VertexPositionBuffer.Get(),
+                            Component->Mesh->VertexTexCoordBuffer.Get(),
+                        };
+                        
+                        CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
                     }
                     else
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                        FRHIBuffer* VertexBuffers[] =
+                        {
+                            Component->Mesh->VertexPositionBuffer.Get(),
+                        };
+                        
+                        CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                     }
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
@@ -625,11 +647,22 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         FProxySceneComponent* Component = MeshReference.Primitive;
                         if (Material->HasHeightMap() || Material->HasAlphaMask())
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                            FRHIBuffer* VertexBuffers[] =
+                            {
+                                Component->Mesh->VertexPositionBuffer.Get(),
+                                Component->Mesh->VertexTexCoordBuffer.Get(),
+                            };
+                            
+                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
                         }
                         else
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                            FRHIBuffer* VertexBuffers[] =
+                            {
+                                Component->Mesh->VertexPositionBuffer.Get(),
+                            };
+                            
+                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                         }
 
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
@@ -899,24 +932,24 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
         }
 
         // Initialize standard input layout
-        FRHIVertexInputLayoutInitializer InputLayoutInitializer;
+        FRHIVertexLayoutInitializerList VertexElementList;
         if (MaterialFlags & (MaterialFlag_EnableHeight | MaterialFlag_EnableAlpha))
         {
-            InputLayoutInitializer =
+            VertexElementList =
             {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexMasked), 0, 0,  EVertexInputClass::Vertex, 0 },
-                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexMasked), 0, 12, EVertexInputClass::Vertex, 0 }
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
             };
         }
         else
         {
-            InputLayoutInitializer =
+            VertexElementList =
             {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
         }
 
-        NewPipelineStateInstance.InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+        NewPipelineStateInstance.InputLayout = RHICreateVertexLayout(VertexElementList);
         if (!NewPipelineStateInstance.InputLayout)
         {
             DEBUG_BREAK();
@@ -1114,11 +1147,22 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     FProxySceneComponent* Component = MeshReference.Primitive;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                        FRHIBuffer* VertexBuffers[] =
+                        {
+                            Component->Mesh->VertexPositionBuffer.Get(),
+                            Component->Mesh->VertexTexCoordBuffer.Get(),
+                        };
+                        
+                        CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
                     }
                     else
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                        FRHIBuffer* VertexBuffers[] =
+                        {
+                            Component->Mesh->VertexPositionBuffer.Get(),
+                        };
+                        
+                        CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                     }
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
@@ -1180,11 +1224,22 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     FProxySceneComponent* Component = MeshReference.Primitive;
                     if (Material->HasHeightMap() || Material->HasAlphaMask())
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                        FRHIBuffer* VertexBuffers[] =
+                        {
+                            Component->Mesh->VertexPositionBuffer.Get(),
+                            Component->Mesh->VertexTexCoordBuffer.Get(),
+                        };
+                        
+                        CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
                     }
                     else
                     {
-                        CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                        FRHIBuffer* VertexBuffers[] =
+                        {
+                            Component->Mesh->VertexPositionBuffer.Get(),
+                        };
+                        
+                        CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                     }
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
@@ -1255,11 +1310,22 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                         FProxySceneComponent* Component = MeshReference.Primitive;
                         if (Material->HasHeightMap() || Material->HasAlphaMask())
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                            FRHIBuffer* VertexBuffers[] =
+                            {
+                                Component->Mesh->VertexPositionBuffer.Get(),
+                                Component->Mesh->VertexTexCoordBuffer.Get(),
+                            };
+                            
+                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
                         }
                         else
                         {
-                            CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                            FRHIBuffer* VertexBuffers[] =
+                            {
+                                Component->Mesh->VertexPositionBuffer.Get(),
+                            };
+                            
+                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
                         }
 
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);

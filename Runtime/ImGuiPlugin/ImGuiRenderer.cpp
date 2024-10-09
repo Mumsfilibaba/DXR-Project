@@ -76,6 +76,13 @@ bool FImGuiRenderer::Initialize()
         FontTexture->SetDebugName("ImGui FontTexture");
     }
 
+    // struct ImDrawVert
+    // {
+    //     ImVec2  pos;
+    //     ImVec2  uv;
+    //     ImU32   col;
+    // };
+    
     const CHAR* VSSource =
         R"*(
         struct FShaderConstants
@@ -130,7 +137,7 @@ bool FImGuiRenderer::Initialize()
         DEBUG_BREAK();
         return false;
     }
-
+    
     const CHAR* PSSource =
         R"*(
         struct PS_INPUT
@@ -165,14 +172,14 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHIVertexInputLayoutInitializer InputLayoutInfo =
+    FRHIVertexLayoutInitializerList VertexElementList =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
+        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
-    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
+    FRHIVertexLayoutRef InputLayout = RHICreateVertexLayout(VertexElementList);
     if (!InputLayout)
     {
         DEBUG_BREAK();

@@ -833,9 +833,9 @@ FRHIBlendState* FD3D12RHI::RHICreateBlendState(const FRHIBlendStateInitializer& 
     return new FD3D12BlendState(InInitializer);
 }
 
-FRHIVertexInputLayout* FD3D12RHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
+FRHIVertexLayout* FD3D12RHI::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
-    return new FD3D12VertexInputLayout(InInitializer);
+    return new FD3D12VertexLayout(InInitializerList);
 }
 
 FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)

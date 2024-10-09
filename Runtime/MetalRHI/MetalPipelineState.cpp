@@ -1,13 +1,13 @@
 #include "MetalPipelineState.h"
 
-FMetalVertexInputLayout::FMetalVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
-    : FRHIVertexInputLayout()
+FMetalVertexLayout::FMetalVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+    : FRHIVertexLayout()
     , VertexDescriptor(nullptr)
 {
     VertexDescriptor = [MTLVertexDescriptor vertexDescriptor];
-    for (int32 Index = 0; Index < Initializer.Elements.Size(); ++Index)
+    for (int32 Index = 0; Index < InInitializerList.Size(); ++Index)
     {
-        const auto& Element = Initializer.Elements[Index];
+        const auto& Element = InInitializerList[Index];
         VertexDescriptor.attributes[Index].format      = ConvertVertexFormat(Element.Format);
         VertexDescriptor.attributes[Index].offset      = Element.ByteOffset;
         VertexDescriptor.attributes[Index].bufferIndex = Element.InputSlot;
@@ -18,6 +18,9 @@ FMetalVertexInputLayout::FMetalVertexInputLayout(const FRHIVertexInputLayoutInit
     }
 }
 
+FMetalVertexLayout::~FMetalVertexLayout()
+{
+}
 
 FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceContext, const FRHIDepthStencilStateInitializer& InInitializer)
     : FRHIDepthStencilState()
@@ -77,7 +80,6 @@ bool FMetalDepthStencilState::Initialize()
     return true;
 }
 
-
 FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
     : FRHIRasterizerState()
     , FillMode(ConvertFillMode(InInitializer.FillMode))
@@ -86,6 +88,9 @@ FMetalRasterizerState::FMetalRasterizerState(const FRHIRasterizerStateInitialize
 {
 }
 
+FMetalRasterizerState::~FMetalRasterizerState()
+{
+}
 
 FMetalBlendState::FMetalBlendState(const FRHIBlendStateInitializer& InInitializer)
     : FRHIBlendState()
@@ -102,4 +107,8 @@ FMetalBlendState::FMetalBlendState(const FRHIBlendStateInitializer& InInitialize
         ColorAttachments[Index].AlphaBlendOperation         = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
         ColorAttachments[Index].WriteMask                   = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
     }
+}
+
+FMetalBlendState::~FMetalBlendState()
+{
 }

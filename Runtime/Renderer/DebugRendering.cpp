@@ -70,12 +70,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexInputLayoutInitializer InputLayout =
+        FRHIVertexLayoutInitializerList VertexElementList =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        FRHIVertexInputLayoutRef InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+        FRHIVertexLayoutRef InputLayoutState = RHICreateVertexLayout(VertexElementList);
         if (!InputLayoutState)
         {
             DEBUG_BREAK();
@@ -347,12 +347,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexInputLayoutInitializer InputLayout =
+        FRHIVertexLayoutInitializerList VertexElementList =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        FRHIVertexInputLayoutRef InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+        FRHIVertexLayoutRef InputLayoutState = RHICreateVertexLayout(VertexElementList);
         if (!InputLayoutState)
         {
             DEBUG_BREAK();

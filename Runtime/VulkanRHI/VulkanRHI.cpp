@@ -566,9 +566,9 @@ FRHIBlendState* FVulkanRHI::RHICreateBlendState(const FRHIBlendStateInitializer&
     return new FVulkanBlendState(InInitializer);
 }
 
-FRHIVertexInputLayout* FVulkanRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
+FRHIVertexLayout* FVulkanRHI::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
-    return new FVulkanVertexInputLayout(InInitializer);
+    return new FVulkanVertexLayout(InInitializerList);
 }
 
 FRHIGraphicsPipelineState* FVulkanRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)

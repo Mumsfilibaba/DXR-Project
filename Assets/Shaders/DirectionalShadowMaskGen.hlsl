@@ -330,7 +330,7 @@ void Main(FComputeShaderInput Input)
     float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0));
     if (dot(GBufferNormal, GBufferNormal) == 0)
     {
-        Output[Pixel] = 1.0f;
+        Output[Pixel] = 1.0;
         return;
     }
 

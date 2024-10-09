@@ -29,7 +29,7 @@ public:
     static TSharedPtr<FMesh> Create(const FMeshData& Data);
     
     FMesh();
-    ~FMesh() = default;
+    ~FMesh();
 
     bool Init(const FMeshData& Data);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
@@ -48,18 +48,20 @@ public:
     void CreateBoundingBox(const FMeshData& Data);
 
     FRHIBufferRef             VertexBuffer;
-    FRHIBufferRef             PosOnlyVertexBuffer;
-    FRHIBufferRef             MaskedVertexBuffer;
     FRHIShaderResourceViewRef VertexBufferSRV;
-
+    FRHIBufferRef             VertexPositionBuffer;
+    FRHIShaderResourceViewRef VertexPositionBufferSRV;
+    FRHIBufferRef             VertexNormalBuffer;
+    FRHIShaderResourceViewRef VertexNormalBufferSRV;
+    FRHIBufferRef             VertexTexCoordBuffer;
+    FRHIShaderResourceViewRef VertexTexCoordBufferSRV;
     FRHIBufferRef             IndexBuffer;
     FRHIShaderResourceViewRef IndexBufferSRV;
-    
     FRHIRayTracingGeometryRef RTGeometry;
 
-    TArray<FSubMesh>          SubMeshes;
     EIndexFormat              IndexFormat;
     uint32                    IndexCount;
     uint32                    VertexCount;
     FAABB                     BoundingBox;
+    TArray<FSubMesh>          SubMeshes;
 };

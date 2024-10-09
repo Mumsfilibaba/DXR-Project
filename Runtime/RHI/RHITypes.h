@@ -36,7 +36,7 @@ typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
-typedef TSharedRef<class FRHIVertexInputLayout>       FRHIVertexInputLayoutRef;
+typedef TSharedRef<class FRHIVertexLayout>            FRHIVertexLayoutRef;
 typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateRef;
 typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
 typedef TSharedRef<class FRHIRayTracingPipelineState> FRHIRayTracingPipelineStateRef;

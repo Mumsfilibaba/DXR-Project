@@ -15,6 +15,11 @@ static TAutoConsoleVariable<bool> CVarShaderDebug(
     "Enable debug information in the Shaders",
     true);
 
+static TAutoConsoleVariable<bool> CVarVerboseShaderCompiler(
+    "RHI.ShaderCompiler.Verbose",
+    "Enable verbose logging in the ShaderCompiler",
+    false);
+
 enum class EDXCPart
 {
     Container               = DXC_FOURCC('D', 'X', 'B', 'C'),
@@ -243,14 +248,14 @@ bool FShaderCompiler::Initialize()
     DXCLib = FPlatformLibrary::LoadDynamicLib("dxcompiler");
     if (!DXCLib)
     {
-        LOG_ERROR("Failed to load 'dxcompiler'");
+        LOG_ERROR("[FShaderCompiler]: Failed to load 'dxcompiler'");
         return false;
     }
 
     DxcCreateInstanceFunc = FPlatformLibrary::LoadSymbol<DxcCreateInstanceProc>("DxcCreateInstance", DXCLib);
     if (!DxcCreateInstanceFunc)
     {
-        LOG_ERROR("Failed to load 'DxcCreateInstance'");
+        LOG_ERROR("[FShaderCompiler]: Failed to load 'DxcCreateInstance'");
         return false;
     }
 
@@ -278,14 +283,14 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
         FFileHandleRef File = FPlatformFile::OpenForRead(FilePath);
         if (!File)
         {
-            LOG_ERROR("Failed to open file '%s'", Filename.GetCString());
+            LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", Filename.GetCString());
             return false;
         }
 
         // Read the full file as a text-file
         if (!FFileHelpers::ReadTextFile(File.Get(), Text))
         {
-            LOG_ERROR("Failed to read file '%s'", Filename.GetCString());
+            LOG_ERROR("[FShaderCompiler]: Failed to read file '%s'", Filename.GetCString());
             return false;
         }
     }
@@ -365,7 +370,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         {
             if (!PatchHLSLForSpirv(CompileInfo.EntryPoint, Source))
             {
-                LOG_ERROR("Failed to patch HLSL for the SPIR-V backend");
+                LOG_ERROR("[FShaderCompiler]: Failed to patch HLSL for the SPIR-V backend");
                 DEBUG_BREAK();
                 return false;
             }
@@ -422,18 +427,22 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         }
     }
  
-    if (!FilePath.IsEmpty())
+    const bool bVerboseLogging = CVarVerboseShaderCompiler.GetValue();
+    if (bVerboseLogging)
     {
-        LOG_INFO("Compiling shader '%s', using the following defines:", FilePath.GetCString());
-    }
-    else
-    {
-        LOG_INFO("Compiling shader, using the following defines:");
-    }
+        if (!FilePath.IsEmpty())
+        {
+            LOG_INFO("[FShaderCompiler]: Compiling shader '%s', using the following defines:", FilePath.GetCString());
+        }
+        else
+        {
+            LOG_INFO("[FShaderCompiler]: Compiling shader, using the following defines:");
+        }
     
-    for (const DxcDefine& Define : DxcDefines)
-    {
-        LOG_INFO("    %S = %S", Define.Name, Define.Value);
+        for (const DxcDefine& Define : DxcDefines)
+        {
+            LOG_INFO("    %S = %S", Define.Name, Define.Value);
+        }
     }
     
     // Retrieve the shader target
@@ -501,14 +510,17 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         return false;
     }
 
-    if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
+    if (bVerboseLogging)
     {
-        const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", ArgumentsString.GetCString(), Output.GetCString());
-    }
-    else
-    {
-        LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s'.", ArgumentsString.GetCString());
+        if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
+        {
+            const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", ArgumentsString.GetCString(), Output.GetCString());
+        }
+        else
+        {
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s'.", ArgumentsString.GetCString());
+        }
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
@@ -525,7 +537,10 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
     if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
     {
-        LOG_INFO("[FShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
+        if (bVerboseLogging)
+        {
+            LOG_INFO("[FShaderCompiler]: Compiled Size (Before any transformations): %u Bytes", BlobSize);
+        }
 
         // TODO: Investigate why we need to recompile our SPIR-V when compiled from HLSL directly
         if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
@@ -545,19 +560,35 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
             }
         }
 
-        LOG_INFO("[FShaderCompiler]: Compiled Size (Final size): %u Bytes", OutByteCode.Size());
+        if (bVerboseLogging)
+        {
+            LOG_INFO("[FShaderCompiler]: Compiled Size (Final size): %u Bytes", OutByteCode.Size());
+        }
     }
-    else
+    else if (bVerboseLogging)
     {
         LOG_INFO("[FShaderCompiler]: Compiled Size: %u Bytes", BlobSize);
     }
     
     if (OutByteCode.IsEmpty())
     {
-        LOG_WARNING("Resulting bytecode is empty");
+        LOG_WARNING("[FShaderCompiler]: Resulting bytecode is empty");
         DEBUG_BREAK();
     }
 
+    // If verbose logging is turned off, atleast log that we successfully compiled the shader
+    if (!bVerboseLogging)
+    {
+        if (!FilePath.IsEmpty())
+        {
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader '%s'", FilePath.GetCString());
+        }
+        else
+        {
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader");
+        }
+    }
+    
     return true;
 }
 
@@ -607,13 +638,13 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
 {
     if (OutByteCode.IsEmpty())
     {
-        LOG_ERROR("No SPIR-V code supplied");
+        LOG_ERROR("[FShaderCompiler]: No SPIR-V code supplied");
         return false;
     }
     
     if (OutByteCode.Size() % sizeof(uint32) != 0)
     {
-        LOG_ERROR("SPIR-V code needs to be aligned to 4 bytes, ensure that valid SPIR-V code is supplied");
+        LOG_ERROR("[FShaderCompiler]: SPIR-V code needs to be aligned to 4 bytes, ensure that valid SPIR-V code is supplied");
         return false;
     }
     
@@ -621,7 +652,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     spvc_result Result = spvc_context_create(&Context);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to create SpvcContext");
+        LOG_ERROR("[FShaderCompiler]: Failed to create SpvcContext");
         return false;
     }
 
@@ -636,7 +667,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), SpirvCodeSize, &ParsedCode);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to parse Spirv");
+        LOG_ERROR("[FShaderCompiler]: Failed to parse Spirv");
         return false;
     }
 
@@ -644,7 +675,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     Result = spvc_context_create_compiler(Context, SPVC_BACKEND_GLSL, ParsedCode, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &Compiler);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to create SPIR-V compiler");
+        LOG_ERROR("[FShaderCompiler]: Failed to create SPIR-V compiler");
         return false;
     }
 
@@ -663,7 +694,7 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     Result = spvc_compiler_compile(Compiler, &NewSource);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to compile changes into GLSL");
+        LOG_ERROR("[FShaderCompiler]: Failed to compile changes into GLSL");
         return false;
     }
 
@@ -806,7 +837,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     spvc_result Result = spvc_context_create(&Context);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to create SpvcContext");
+        LOG_ERROR("[FShaderCompiler]: Failed to create SpvcContext");
         DEBUG_BREAK();
         return false;
     }
@@ -825,7 +856,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     Result = spvc_context_parse_spirv(Context, reinterpret_cast<const SpvId*>(OutByteCode.Data()), WordCount, &ParsedCode);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to parse Spirv");
+        LOG_ERROR("[FShaderCompiler]: Failed to parse Spirv");
         DEBUG_BREAK();
         return false;
     }
@@ -834,7 +865,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     Result = spvc_context_create_compiler(Context, SPVC_BACKEND_MSL, ParsedCode, SPVC_CAPTURE_MODE_TAKE_OWNERSHIP, &CompilerMSL);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to create MSL compiler");
+        LOG_ERROR("[FShaderCompiler]: Failed to create MSL compiler");
         DEBUG_BREAK();
         return false;
     }
@@ -843,7 +874,7 @@ bool FShaderCompiler::ConvertSpirvToMetalShader(const FString& FilePath, const F
     Result = spvc_compiler_compile(CompilerMSL, &MSLSource);
     if (Result != SPVC_SUCCESS)
     {
-        LOG_ERROR("Failed to create MSL");
+        LOG_ERROR("[FShaderCompiler]: Failed to create MSL");
         DEBUG_BREAK();
         return false;
     }
@@ -876,7 +907,7 @@ bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FSt
     FFileHandleRef Output = FPlatformFile::OpenForWrite(Filename);
     if (!Output)
     {
-        LOG_ERROR("Failed to open file '%s'", Filename.GetCString());
+        LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", Filename.GetCString());
         return false;
     }
 

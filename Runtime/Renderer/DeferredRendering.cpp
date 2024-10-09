@@ -144,13 +144,13 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
         else if (MaterialFlags & (MaterialFlag_PackedDiffuseAlpha | MaterialFlag_EnableAlpha))
         {
-            FRHIVertexInputLayoutInitializer InputLayoutInitializer =
+            FRHIVertexLayoutInitializerList VertexElementList =
             {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexMasked), 0, 0,  EVertexInputClass::Vertex, 0 },
-                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexMasked), 0, 12, EVertexInputClass::Vertex, 0 }
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 },
+                { "TEXCOORD", 0, EFormat::R32G32_Float,    sizeof(FVertexTexCoord), 1, 0, 1, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+            NewPipelineInstance.InputLayout = RHICreateVertexLayout(VertexElementList);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -159,12 +159,12 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
         else
         {
-            FRHIVertexInputLayoutInitializer InputLayoutInitializer =
+            FRHIVertexLayoutInitializerList VertexElementList =
             {
-                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+                { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVertexPosition), 0, 0, 0, EVertexInputClass::Vertex, 0 }
             };
 
-            NewPipelineInstance.InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+            NewPipelineInstance.InputLayout = RHICreateVertexLayout(VertexElementList);
             if (!NewPipelineInstance.InputLayout)
             {
                 DEBUG_BREAK();
@@ -308,15 +308,33 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
             if (Material->HasAlphaMask() || Material->IsDoubleSided())
             {
-                CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->MaskedVertexBuffer, 1), 0);
+                FRHIBuffer* VertexBuffers[] =
+                {
+                    Component->Mesh->VertexPositionBuffer.Get(),
+                    Component->Mesh->VertexTexCoordBuffer.Get(),
+                };
+                
+                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
             }
             else if (Material->HasHeightMap())
             {
-                CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->VertexBuffer, 1), 0);
+                FRHIBuffer* VertexBuffers[] =
+                {
+                    Component->Mesh->VertexPositionBuffer.Get(),
+                    Component->Mesh->VertexNormalBuffer.Get(),
+                    Component->Mesh->VertexTexCoordBuffer.Get(),
+                };
+                
+                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             }
             else
             {
-                CommandList.SetVertexBuffers(MakeArrayView(&Component->Mesh->PosOnlyVertexBuffer, 1), 0);
+                FRHIBuffer* VertexBuffers[] =
+                {
+                    Component->Mesh->VertexPositionBuffer.Get(),
+                };
+                
+                CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
             }
 
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
@@ -684,7 +702,14 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
                 continue;
             }
 
-            CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
+            FRHIBuffer* VertexBuffers[] =
+            {
+                Component->Mesh->VertexPositionBuffer.Get(),
+                Component->Mesh->VertexNormalBuffer.Get(),
+                Component->Mesh->VertexTexCoordBuffer.Get(),
+            };
+            
+            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
             TransformPerObject.Transform    = Component->CurrentActor->GetTransform().GetMatrix();
@@ -1247,12 +1272,12 @@ bool FOcclusionPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    FRHIVertexInputLayoutInitializer InputLayout =
+    FRHIVertexLayoutInitializerList VertexElementList =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
     };
 
-    FRHIVertexInputLayoutRef InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+    FRHIVertexLayoutRef InputLayoutState = RHICreateVertexLayout(VertexElementList);
     if (!InputLayoutState)
     {
         DEBUG_BREAK();

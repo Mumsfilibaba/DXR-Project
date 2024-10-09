@@ -176,12 +176,12 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
     
     // Initialize standard input layout
-    FRHIVertexInputLayoutInitializer InputLayoutInitializer =
+    FRHIVertexLayoutInitializerList VertexElementList =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
     };
 
-    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+    FRHIVertexLayoutRef InputLayout = RHICreateVertexLayout(VertexElementList);
     if (!InputLayout)
     {
         DEBUG_BREAK();

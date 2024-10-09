@@ -11,29 +11,25 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "PipelineCache.vkpsocache");
 
-FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
-    : FRHIVertexInputLayout()
+FVulkanVertexLayout::FVulkanVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+    : FRHIVertexLayout()
 {
-    const int32 NumAttributes = Initializer.Elements.Size();
-    VertexInputAttributeDescriptions.Reserve(NumAttributes);
-
-    // NOTE: The input struct on the ShaderSide, needs to match the CPU side struct for vertices
-    // otherwise we need to reflect the location from the vertex-shader and use the vertex-shader as 
-    // input, similar to D3D11 style input-layout
-    for (const FVertexInputElement& Element : Initializer.Elements)
+    // Create a binding for each input-slot
+    for (const FVertexElement& Element : InInitializerList)
     {
-        // Create a new unique binding for each input slot that we need
-        int32 CurrentBinding = -1;
+        // Search for a binding for this input slot
+        bool bCreateBinding = true;
         for (int32 Index = 0; Index < VertexInputBindingDescriptions.Size(); Index++)
         {
             if (VertexInputBindingDescriptions[Index].binding == Element.InputSlot)
             {
-                CurrentBinding = Index;
+                bCreateBinding = false;
                 break;
             }
         }
-
-        if (CurrentBinding < 0)
+        
+        // Check if binding does not exist, if not create a new binding
+        if (bCreateBinding)
         {
             VkVertexInputBindingDescription BindingDescription;
             BindingDescription.binding   = Element.InputSlot;
@@ -41,44 +37,25 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
             BindingDescription.inputRate = Element.InputClass == EVertexInputClass::Vertex ? VK_VERTEX_INPUT_RATE_VERTEX : VK_VERTEX_INPUT_RATE_INSTANCE;
             
             // Get the current binding for the attributes
-            CurrentBinding = VertexInputBindingDescriptions.Size();
             VertexInputBindingDescriptions.Add(BindingDescription);
         }
+    }
+    
+    VertexInputBindingDescriptions.Shrink();
 
-        // Find location for the element which turns into the variable index in the structure
-        uint32 Location = 0;
-        for (int32 Index = 0; Index < VertexInputAttributeDescriptions.Size(); Index++)
-        {
-            VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];
-            if (Attribute.binding != static_cast<uint32>(CurrentBinding))
-            {
-                continue;
-            }
+    const int32 NumElements = InInitializerList.Size();
+    VertexInputAttributeDescriptions.Resize(NumElements);
 
-            // Put this element after this existing attribute if the offset in the struct is larger than the existing one
-            if (Element.ByteOffset > Attribute.offset)
-            {
-                Location++;
-            }
-
-            // if this existing attribute has a larger offset than the new one increase the location of the existing attribute
-            if (Attribute.offset > Element.ByteOffset)
-            {
-                Attribute.location++;
-            }
-        }
-
-        // Fill in the attribute
-        VkVertexInputAttributeDescription VertexInputAttributeDescription;
-        VertexInputAttributeDescription.format   = ConvertFormat(Element.Format);
-        VertexInputAttributeDescription.offset   = Element.ByteOffset;
-        VertexInputAttributeDescription.binding  = CurrentBinding;
-        VertexInputAttributeDescription.location = Location;
-        VertexInputAttributeDescriptions.Add(VertexInputAttributeDescription);
+    // Create a input-attribute for each element
+    for (int32 Index = 0; Index < NumElements; Index++)
+    {
+        VkVertexInputAttributeDescription& Attribute = VertexInputAttributeDescriptions[Index];
+        Attribute.format   = ConvertFormat(InInitializerList[Index].Format);
+        Attribute.binding  = InInitializerList[Index].InputSlot;
+        Attribute.location = InInitializerList[Index].ShaderElementIndex;
+        Attribute.offset   = InInitializerList[Index].ByteOffset;
     }
 
-    VertexInputBindingDescriptions.Shrink();
-    
     // VertexInputStateCreateInfo
     FMemory::Memzero(&CreateInfo);
     CreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -94,6 +71,10 @@ FVulkanVertexInputLayout::FVulkanVertexInputLayout(const FRHIVertexInputLayoutIn
         CreateInfo.vertexAttributeDescriptionCount = VertexInputAttributeDescriptions.Size();
         CreateInfo.pVertexAttributeDescriptions    = VertexInputAttributeDescriptions.Data();
     }
+}
+
+FVulkanVertexLayout::~FVulkanVertexLayout()
+{
 }
 
 FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
@@ -115,6 +96,10 @@ FVulkanDepthStencilState::FVulkanDepthStencilState(const FRHIDepthStencilStateIn
     
     CreateInfo.front.compareMask = CreateInfo.back.compareMask = InInitializer.StencilReadMask;
     CreateInfo.front.writeMask   = CreateInfo.back.writeMask   = InInitializer.StencilWriteMask;
+}
+
+FVulkanDepthStencilState::~FVulkanDepthStencilState()
+{
 }
 
 FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FRHIRasterizerStateInitializer& InInitializer)
@@ -180,6 +165,10 @@ FVulkanRasterizerState::FVulkanRasterizerState(FVulkanDevice* InDevice, const FR
 #endif
 }
 
+FVulkanRasterizerState::~FVulkanRasterizerState()
+{
+}
+
 FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitializer)
     : FRHIBlendState()
     , Initializer(InInitializer)
@@ -204,6 +193,10 @@ FVulkanBlendState::FVulkanBlendState(const FRHIBlendStateInitializer& InInitiali
         BlendAttachmentStates[Index].alphaBlendOp        = ConvertBlendOp(InInitializer.RenderTargets[Index].BlendOpAlpha);
         BlendAttachmentStates[Index].colorWriteMask      = ConvertColorWriteFlags(InInitializer.RenderTargets[Index].ColorWriteMask);
     }
+}
+
+FVulkanBlendState::~FVulkanBlendState()
+{
 }
 
 FVulkanPipeline::FVulkanPipeline(FVulkanDevice* InDevice)
@@ -234,6 +227,10 @@ void FVulkanPipeline::SetDebugName(const FString& InName)
 FVulkanGraphicsPipelineState::FVulkanGraphicsPipelineState(FVulkanDevice* InDevice)
     : FRHIGraphicsPipelineState()
     , FVulkanPipeline(InDevice)
+{
+}
+
+FVulkanGraphicsPipelineState::~FVulkanGraphicsPipelineState()
 {
 }
 
@@ -371,7 +368,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
     
     // VertexInputStateCreateInfo
     VkPipelineVertexInputStateCreateInfo VertexInputStateCreateInfo;
-    if (FVulkanVertexInputLayout* VertexInputLayout = static_cast<FVulkanVertexInputLayout*>(Initializer.VertexInputLayout))
+    if (FVulkanVertexLayout* VertexInputLayout = static_cast<FVulkanVertexLayout*>(Initializer.VertexInputLayout))
     {
         VertexInputStateCreateInfo = VertexInputLayout->GetVkCreateInfo();
     }
@@ -535,6 +532,10 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
 FVulkanComputePipelineState::FVulkanComputePipelineState(FVulkanDevice* InDevice)
     : FRHIComputePipelineState()
     , FVulkanPipeline(InDevice)
+{
+}
+
+FVulkanComputePipelineState::~FVulkanComputePipelineState()
 {
 }
 

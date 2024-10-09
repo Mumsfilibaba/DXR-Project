@@ -1,10 +1,10 @@
 #pragma once
-#include "VertexFormat.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
 #include "Engine/EngineModule.h"
 #include "Engine/Assets/TextureResource.h"
+#include "Engine/Assets/VertexFormat.h"
 #include "Engine/Resources/Material.h"
 #include "RHI/RHITypes.h"
 

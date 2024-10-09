@@ -263,7 +263,7 @@ public:
      * @param InDesc - Info about a InputLayoutState
      * @return       - Returns the newly created InputLayoutState
      */
-    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InDesc) = 0;
+    virtual FRHIVertexLayout* RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) = 0;
 
     /**
      * @brief        - Create a Graphics PipelineState
@@ -450,9 +450,9 @@ FORCEINLINE FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& Shade
     return GetRHI()->RHICreateRayMissShader(ShaderCode);
 }
 
-FORCEINLINE FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
+FORCEINLINE FRHIVertexLayout* RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
-    return GetRHI()->RHICreateVertexInputLayout(Initializer);
+    return GetRHI()->RHICreateVertexLayout(InInitializerList);
 }
 
 FORCEINLINE FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& Initializer)

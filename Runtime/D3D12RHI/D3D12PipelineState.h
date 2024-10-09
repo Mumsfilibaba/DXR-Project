@@ -7,7 +7,7 @@
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/CRC.h"
 
-typedef TSharedRef<class FD3D12VertexInputLayout>       FD3D12VertexInputLayoutRef;
+typedef TSharedRef<class FD3D12VertexLayout>            FD3D12VertexLayoutRef;
 typedef TSharedRef<class FD3D12DepthStencilState>       FD3D12DepthStencilStateRef;
 typedef TSharedRef<class FD3D12GraphicsPipelineState>   FD3D12GraphicsPipelineStateRef;
 typedef TSharedRef<class FD3D12ComputePipelineState>    FD3D12ComputePipelineStateRef;
@@ -21,11 +21,16 @@ enum class ED3D12PipelineType
     RayTracing = 3,
 };
 
-class FD3D12VertexInputLayout : public FRHIVertexInputLayout
+class FD3D12VertexLayout : public FRHIVertexLayout
 {
 public:
-    FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
-    virtual ~FD3D12VertexInputLayout() = default;
+    FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList);
+    virtual ~FD3D12VertexLayout();
+
+    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    {
+        return InitializerList;
+    }
 
     const D3D12_INPUT_LAYOUT_DESC& GetDesc() const
     {
@@ -38,6 +43,7 @@ public:
     }
 
 private:
+    FRHIVertexLayoutInitializerList  InitializerList;
     D3D12_INPUT_LAYOUT_DESC          Desc;
     TArray<FString>                  SemanticNames;
     TArray<D3D12_INPUT_ELEMENT_DESC> ElementDesc;
@@ -48,9 +54,12 @@ class FD3D12DepthStencilState : public FRHIDepthStencilState
 {
 public:
     FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer);
-    virtual ~FD3D12DepthStencilState() = default;
+    virtual ~FD3D12DepthStencilState();
 
-    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final { return Initializer; }
+    virtual FRHIDepthStencilStateInitializer GetInitializer() const override final
+    {
+        return Initializer;
+    }
 
     const D3D12_DEPTH_STENCIL_DESC& GetD3D12Desc() const
     {
@@ -72,9 +81,12 @@ class FD3D12RasterizerState : public FRHIRasterizerState
 {
 public:
     FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
-    virtual ~FD3D12RasterizerState() = default;
+    virtual ~FD3D12RasterizerState();
 
-    virtual FRHIRasterizerStateInitializer GetInitializer() const override final { return Initializer; }
+    virtual FRHIRasterizerStateInitializer GetInitializer() const override final
+    {
+        return Initializer;
+    }
 
     const D3D12_RASTERIZER_DESC& GetD3D12Desc() const
     {
@@ -96,9 +108,12 @@ class FD3D12BlendState : public FRHIBlendState
 {
 public:
     FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer);
-    virtual ~FD3D12BlendState() = default;
+    virtual ~FD3D12BlendState();
 
-    virtual FRHIBlendStateInitializer GetInitializer() const override final { return Initializer; }
+    virtual FRHIBlendStateInitializer GetInitializer() const override final
+    {
+        return Initializer;
+    }
 
     const D3D12_BLEND_DESC& GetD3D12Desc() const
     {
@@ -120,7 +135,7 @@ class FD3D12PipelineStateCommon : public FD3D12DeviceChild
 {
 public:
     FD3D12PipelineStateCommon(FD3D12Device* InDevice);
-    virtual ~FD3D12PipelineStateCommon() = default;
+    virtual ~FD3D12PipelineStateCommon();
 
     void SetDebugName(const FString& InName);
 
@@ -285,7 +300,7 @@ class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3
 {
 public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
-    virtual ~FD3D12GraphicsPipelineState() = default;
+    virtual ~FD3D12GraphicsPipelineState();
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
     
@@ -339,7 +354,7 @@ class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D1
 {
 public:
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
-    virtual ~FD3D12ComputePipelineState() = default;
+    virtual ~FD3D12ComputePipelineState();
 
     bool Initialize();
 
@@ -366,7 +381,7 @@ class FD3D12RayTracingPipelineState : public FRHIRayTracingPipelineState, public
 {
 public:
     FD3D12RayTracingPipelineState(FD3D12Device* InDevice);
-    virtual ~FD3D12RayTracingPipelineState() = default;
+    virtual ~FD3D12RayTracingPipelineState();
 
     bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
 

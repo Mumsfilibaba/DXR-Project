@@ -5,15 +5,25 @@
 
 FMesh::FMesh()
     : VertexBuffer(nullptr)
-    , PosOnlyVertexBuffer(nullptr)
     , VertexBufferSRV(nullptr)
+    , VertexPositionBuffer(nullptr)
+    , VertexPositionBufferSRV(nullptr)
+    , VertexNormalBuffer(nullptr)
+    , VertexNormalBufferSRV(nullptr)
+    , VertexTexCoordBuffer(nullptr)
+    , VertexTexCoordBufferSRV(nullptr)
     , IndexBuffer(nullptr)
     , IndexBufferSRV(nullptr)
     , RTGeometry(nullptr)
-    , VertexCount(0)
     , IndexFormat(EIndexFormat::Unknown)
-    , IndexCount(0)
+    , IndexCount()
+    , VertexCount(0)
     , BoundingBox()
+    , SubMeshes()
+{
+}
+
+FMesh::~FMesh()
 {
 }
 
@@ -26,6 +36,7 @@ bool FMesh::Init(const FMeshData& Data)
 
     const EBufferUsageFlags BufferFlags = bEnableRayTracing ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
 
+    // Create VertexBuffer
     FRHIBufferInfo VBInfo(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
     VertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, Data.Vertices.Data());
     if (!VertexBuffer)
@@ -37,43 +48,61 @@ bool FMesh::Init(const FMeshData& Data)
         VertexBuffer->SetDebugName("VertexBuffer");
     }
 
-    // Create VertexBuffer with only positions
-    TArray<FVector3> ShadowVertices(VertexCount);
+    // Create VertexPositionBuffer
+    TArray<FVertexPosition> VertexPositions(VertexCount);
     for (uint32 Index = 0; Index < VertexCount; Index++)
     {
         const FVertex& Vertex = Data.Vertices[Index];
-        ShadowVertices[Index] = Vertex.Position;
+        VertexPositions[Index] = Vertex.Position;
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVector3), sizeof(FVector3), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    PosOnlyVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, ShadowVertices.Data());
-    if (!PosOnlyVertexBuffer)
+    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexPosition), sizeof(FVertexPosition), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    VertexPositionBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexPositions.Data());
+    if (!VertexPositionBuffer)
     {
         return false;
     }
     else
     {
-        PosOnlyVertexBuffer->SetDebugName("Position Only VertexBuffer");
+        VertexPositionBuffer->SetDebugName("VertexPositionBuffer");
     }
 
-    // Create VertexBuffer with only positions and texcoords
-    TArray<FVertexMasked> MaskedVertices(VertexCount);
+    // Create VertexNormalBuffer
+    TArray<FVertexNormal> VertexNormals(VertexCount);
     for (uint32 Index = 0; Index < VertexCount; Index++)
     {
         const FVertex& Vertex = Data.Vertices[Index];
-        MaskedVertices[Index].Position = Vertex.Position;
-        MaskedVertices[Index].TexCoord = Vertex.TexCoord;
+        VertexNormals[Index] = FVertexNormal(Vertex.Normal, Vertex.Tangent);
     }
 
-    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexMasked), sizeof(FVertexMasked), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    MaskedVertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, MaskedVertices.Data());
-    if (!MaskedVertexBuffer)
+    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexNormal), sizeof(FVertexNormal), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    VertexNormalBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexNormals.Data());
+    if (!VertexNormalBuffer)
     {
         return false;
     }
     else
     {
-        MaskedVertexBuffer->SetDebugName("Masked VertexBuffer");
+        VertexNormalBuffer->SetDebugName("VertexNormalBuffer");
+    }
+    
+    // Create VertexTexCoordBuffer
+    TArray<FVertexTexCoord> VertexTexCoords(VertexCount);
+    for (uint32 Index = 0; Index < VertexCount; Index++)
+    {
+        const FVertex& Vertex = Data.Vertices[Index];
+        VertexTexCoords[Index] = Vertex.TexCoord;
+    }
+
+    VBInfo = FRHIBufferInfo(VertexCount * sizeof(FVertexTexCoord), sizeof(FVertexTexCoord), BufferFlags | EBufferUsageFlags::VertexBuffer);
+    VertexTexCoordBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, VertexTexCoords.Data());
+    if (!VertexTexCoordBuffer)
+    {
+        return false;
+    }
+    else
+    {
+        VertexTexCoordBuffer->SetDebugName("VertexTexCoordBuffer");
     }
 
     // If we can get away with 16-bit indices, store them in this array
@@ -82,7 +111,7 @@ bool FMesh::Init(const FMeshData& Data)
     // Initial data
     const void* InitialIndicies = nullptr;
 
-    IndexFormat = IndexCount < TNumericLimits<uint16>::Max() && !bEnableRayTracing ? EIndexFormat::uint16 : EIndexFormat::uint32;
+    IndexFormat = (IndexCount < TNumericLimits<uint16>::Max()) && !bEnableRayTracing ? EIndexFormat::uint16 : EIndexFormat::uint32;
     if (IndexFormat == EIndexFormat::uint16)
     {
         NewIndicies.Reserve(Data.Indices.Size());
@@ -126,6 +155,27 @@ bool FMesh::Init(const FMeshData& Data)
         FRHIBufferSRVDesc SRVInitializer(VertexBuffer.Get(), 0, VertexCount);
         VertexBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!VertexBufferSRV)
+        {
+            return false;
+        }
+        
+        SRVInitializer = FRHIBufferSRVDesc(VertexPositionBuffer.Get(), 0, VertexCount);
+        VertexPositionBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        if (!VertexPositionBufferSRV)
+        {
+            return false;
+        }
+        
+        SRVInitializer = FRHIBufferSRVDesc(VertexNormalBuffer.Get(), 0, VertexCount);
+        VertexNormalBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        if (!VertexNormalBufferSRV)
+        {
+            return false;
+        }
+        
+        SRVInitializer = FRHIBufferSRVDesc(VertexTexCoordBuffer.Get(), 0, VertexCount);
+        VertexTexCoordBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        if (!VertexTexCoordBufferSRV)
         {
             return false;
         }

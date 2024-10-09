@@ -10,19 +10,19 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "PipelineCache.d3d12psocache");
 
-FD3D12VertexInputLayout::FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
-    : FRHIVertexInputLayout()
+FD3D12VertexLayout::FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+    : FRHIVertexLayout()
     , SemanticNames()
     , ElementDesc()
     , Desc()
     , Hash(0)
 {
-    const int32 NumElements = Initializer.Elements.Size();
+    const int32 NumElements = InInitializerList.Size();
     ElementDesc.Reserve(NumElements);
     SemanticNames.Reserve(NumElements);
 
     uint64 CalculatedHash = 0;
-    for (const FVertexInputElement& Element : Initializer.Elements)
+    for (const FVertexElement& Element : InInitializerList)
     {
         D3D12_INPUT_ELEMENT_DESC InputElementDesc;
         FMemory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
@@ -57,6 +57,10 @@ FD3D12VertexInputLayout::FD3D12VertexInputLayout(const FRHIVertexInputLayoutInit
     Hash                    = CalculatedHash;
 }
 
+FD3D12VertexLayout::~FD3D12VertexLayout()
+{
+}
+
 FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
     : FRHIDepthStencilState()
     , Initializer(InInitializer)
@@ -74,6 +78,10 @@ FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInit
     Desc.BackFace         = ConvertStencilState(InInitializer.BackFace);
 
     Hash = FCRC32::Generate(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
+}
+
+FD3D12DepthStencilState::~FD3D12DepthStencilState()
+{
 }
 
 FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
@@ -96,6 +104,10 @@ FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitialize
     Desc.ConservativeRaster    = InInitializer.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     Hash = FCRC32::Generate(&Desc, sizeof(D3D12_RASTERIZER_DESC));
+}
+
+FD3D12RasterizerState::~FD3D12RasterizerState()
+{
 }
 
 FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer)
@@ -126,6 +138,10 @@ FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInitializer& InInitialize
     Hash = FCRC32::Generate(&Desc, sizeof(D3D12_BLEND_DESC));
 }
 
+FD3D12BlendState::~FD3D12BlendState()
+{
+}
+
 FD3D12PipelineStateCommon::FD3D12PipelineStateCommon(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
 {
@@ -144,12 +160,16 @@ FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
 {
 }
 
+FD3D12GraphicsPipelineState::~FD3D12GraphicsPipelineState()
+{
+}
+
 bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
     FD3D12GraphicsPipelineStream PipelineStream;
 
     // InputLayout
-    FD3D12VertexInputLayout* D3D12InputLayoutState = static_cast<FD3D12VertexInputLayout*>(Initializer.VertexInputLayout);
+    FD3D12VertexLayout* D3D12InputLayoutState = static_cast<FD3D12VertexLayout*>(Initializer.VertexInputLayout);
     if (D3D12InputLayoutState)
     {
         PipelineStream.InputLayout = D3D12InputLayoutState->GetDesc();
@@ -470,6 +490,10 @@ FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, c
 {
 }
 
+FD3D12ComputePipelineState::~FD3D12ComputePipelineState()
+{
+}
+
 bool FD3D12ComputePipelineState::Initialize()
 {
     FD3D12ComputePipelineStream PipelineStream;
@@ -719,6 +743,10 @@ struct FD3D12RayTracingPipelineStateStream
 FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , StateObject(nullptr)
+{
+}
+
+FD3D12RayTracingPipelineState::~FD3D12RayTracingPipelineState()
 {
 }
 

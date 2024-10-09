@@ -573,27 +573,29 @@ constexpr const CHAR* ToString(EVertexInputClass BlendOp)
     }
 }
 
-struct FVertexInputElement
+struct FVertexElement
 {
-    FVertexInputElement()
+    FVertexElement()
         : Semantic("")
         , SemanticIndex(0)
         , Format(EFormat::Unknown)
         , VertexStride(0)
         , InputSlot(0)
         , ByteOffset(0)
+        , ShaderElementIndex(0)
         , InputClass(EVertexInputClass::Vertex)
         , InstanceStepRate(0)
     {
     }
 
-    FVertexInputElement(
+    FVertexElement(
         const FString&    InSemantic,
         uint32            InSemanticIndex,
         EFormat           InFormat,
         uint16            InVertexStride,
         uint32            InInputSlot,
         uint32            InByteOffset,
+        uint32            InShaderElementIndex,
         EVertexInputClass InInputClass,
         uint32            InInstanceStepRate)
         : Semantic(InSemantic)
@@ -602,70 +604,68 @@ struct FVertexInputElement
         , VertexStride(InVertexStride)
         , InputSlot(InInputSlot)
         , ByteOffset(InByteOffset)
+        , ShaderElementIndex(InShaderElementIndex)
         , InputClass(InInputClass)
         , InstanceStepRate(InInstanceStepRate)
     {
     }
 
-    bool operator==(const FVertexInputElement& Other) const
+    bool operator==(const FVertexElement& Other) const
     {
-        return Semantic         == Other.Semantic
-            && SemanticIndex    == Other.SemanticIndex
-            && Format           == Other.Format
-            && VertexStride     == Other.VertexStride
-            && InputSlot        == Other.InputSlot
-            && ByteOffset       == Other.ByteOffset
-            && InputClass       == Other.InputClass
-            && InstanceStepRate == Other.InstanceStepRate;
+        return Semantic           == Other.Semantic
+            && SemanticIndex      == Other.SemanticIndex
+            && Format             == Other.Format
+            && VertexStride       == Other.VertexStride
+            && InputSlot          == Other.InputSlot
+            && ByteOffset         == Other.ByteOffset
+            && ShaderElementIndex == Other.ShaderElementIndex
+            && InputClass         == Other.InputClass
+            && InstanceStepRate   == Other.InstanceStepRate;
     }
 
-    bool operator!=(const FVertexInputElement& Other) const
+    bool operator!=(const FVertexElement& Other) const
     {
         return !(*this == Other);
     }
 
-    FString           Semantic;
-    uint32            SemanticIndex;
-    EFormat           Format;
-    uint16            VertexStride;
-    uint32            InputSlot;
-    uint32            ByteOffset;
+    /** Semantic in the shader to match */
+    FString Semantic;
+    
+    /** Index of the semantic in the shader */
+    uint32 SemanticIndex;
+    
+    /** Format of this vertex-element */
+    EFormat Format;
+    
+    /** Stride for each vertex in the vertex-stream that this element is a part of */
+    uint16 VertexStride;
+    
+    /** Index of the vertex-stream that this element is a part of */
+    uint32 InputSlot;
+    
+    /** Offset within the vertex-structure that this element is a part of */
+    uint32 ByteOffset;
+    
+    /** Index of the element in the shader that this element matching */
+    uint32 ShaderElementIndex;
+    
+    /** How often this element should be updated */
     EVertexInputClass InputClass;
-    uint32            InstanceStepRate;
+    
+    /** How many elements to increment per instance */
+    uint32 InstanceStepRate;
 };
 
-struct FRHIVertexInputLayoutInitializer
-{
-    FRHIVertexInputLayoutInitializer() = default;
+typedef TArray<FVertexElement> FRHIVertexLayoutInitializerList;
 
-    FRHIVertexInputLayoutInitializer(const TArray<FVertexInputElement>& InElements)
-        : Elements(InElements)
-    {
-    }
-
-    FRHIVertexInputLayoutInitializer(std::initializer_list<FVertexInputElement> InList)
-        : Elements(InList)
-    {
-    }
-
-    bool operator==(const FRHIVertexInputLayoutInitializer& Other) const
-    {
-        return Elements == Other.Elements;
-    }
-
-    bool operator!=(const FRHIVertexInputLayoutInitializer& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    TArray<FVertexInputElement> Elements;
-};
-
-class FRHIVertexInputLayout : public FRHIResource
+class FRHIVertexLayout : public FRHIResource
 {
 protected:
-    FRHIVertexInputLayout() = default;
-    virtual ~FRHIVertexInputLayout() = default;
+    FRHIVertexLayout() = default;
+    virtual ~FRHIVertexLayout() = default;
+    
+public:
+    virtual FRHIVertexLayoutInitializerList GetInitializerList() const = 0;
 };
 
 class FRHIPipelineState : public FRHIResource
@@ -795,7 +795,7 @@ struct FRHIGraphicsPipelineStateInitializer
     }
 
     FRHIGraphicsPipelineStateInitializer(
-        FRHIVertexInputLayout*          InVertexInputLayout,
+        FRHIVertexLayout*          InVertexInputLayout,
         FRHIDepthStencilState*          InDepthStencilState,
         FRHIRasterizerState*            InRasterizerState,
         FRHIBlendState*                 InBlendState,
@@ -843,7 +843,7 @@ struct FRHIGraphicsPipelineStateInitializer
     }
 
     // Weak reference to the VertexInputLayout being used
-    FRHIVertexInputLayout*   VertexInputLayout;
+    FRHIVertexLayout*   VertexInputLayout;
 
     // Weak reference to the DepthStencilState being used
     FRHIDepthStencilState*   DepthStencilState;
