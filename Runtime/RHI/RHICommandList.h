@@ -481,6 +481,8 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 
 class RHI_API FRHIThread : public FRunnable, FNonCopyable
 {
+    typedef TQueue<FRHICommandList*, EQueueType::MPSC> FRHIThreadTaskQueue;
+    
 public:
     FRHIThread();
     ~FRHIThread();
@@ -494,18 +496,18 @@ public:
     void WaitForOutstandingTasks();
 
 private:
-    FGenericThread* Thread;
-    FAtomicInt64    NumSubmittedTasks;
-    FAtomicInt64    NumCompletedTasks;
-    bool            bIsRunning;
-    TQueue<FRHICommandList*, EQueueType::MPSC> Tasks;
+    FGenericThread*     Thread;
+    FRHIThreadTaskQueue Tasks;
+    FAtomicInt64        NumSubmittedTasks;
+    FAtomicInt64        NumCompletedTasks;
+    bool                bIsRunning;
 };
 
 class RHI_API FRHICommandExecutor : FNonCopyable
 {
 public:
     FRHICommandExecutor();
-    ~FRHICommandExecutor() = default;
+    ~FRHICommandExecutor();
 
     bool Initialize();
     void Release();

@@ -202,6 +202,10 @@ FRHICommandExecutor::FRHICommandExecutor()
 {
 }
 
+FRHICommandExecutor::~FRHICommandExecutor()
+{
+}
+
 bool FRHICommandExecutor::Initialize()
 {
     if (!CVarEnableRHIThread.GetValue())
