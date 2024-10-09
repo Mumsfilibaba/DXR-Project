@@ -312,18 +312,26 @@ bool FSceneRenderer::Initialize()
     }
 
     if (!InitShadingImage())
+    {
         return false;
+    }
 
     if (!Resources.Initialize())
+    {
         return false;
+    }
 
     if (!InitializeRenderPasses())
+    {
         return false;
+    }
 
     if (false/*GRHISupportsRayTracing*/)
     {
         if (!RayTracer.Initialize(Resources))
+        {
             return false;
+        }
     }
 
     // Copy over the texture
@@ -388,71 +396,105 @@ bool FSceneRenderer::InitializeRenderPasses()
 {
     DebugRenderer = new FDebugRenderer(this);
     if (!DebugRenderer->Initialize(Resources))
+    {
         return false;
+    }
 
     DepthPrePass = new FDepthPrePass(this);
     if (!DepthPrePass->Initialize(Resources))
+    {
         return false;
+    }
 
     BasePass = new FDeferredBasePass(this);
     if (!BasePass->Initialize(Resources))
+    {
         return false;
+    }
 
     OcclusionPass = new FOcclusionPass(this);
     if (!OcclusionPass->Initialize(Resources))
+    {
         return false;
+    }
 
     TiledLightPass = new FTiledLightPass(this);
     if (!TiledLightPass->Initialize(Resources))
+    {
         return false;
+    }
 
     DepthReducePass = new FDepthReducePass(this);
     if (!DepthReducePass->Initialize(Resources))
+    {
         return false;
+    }
 
     PointLightRenderPass = new FPointLightRenderPass(this);
     if (!PointLightRenderPass->Initialize(Resources))
+    {
         return false;
+    }
 
     CascadeGenerationPass = new FCascadeGenerationPass(this);
     if (!CascadeGenerationPass->Initialize(Resources))
+    {
         return false;
+    }
 
     CascadedShadowsRenderPass = new FCascadedShadowsRenderPass(this);
     if (!CascadedShadowsRenderPass->Initialize(Resources))
+    {
         return false;
+    }
 
     ShadowMaskRenderPass = new FShadowMaskRenderPass(this);
     if (!ShadowMaskRenderPass->Initialize(Resources))
+    {
         return false;
+    }
 
     ScreenSpaceOcclusionPass = new FScreenSpaceOcclusionPass(this);
     if (!ScreenSpaceOcclusionPass->Initialize(Resources))
+    {
         return false;
+    }
 
     SkyboxRenderPass = new FSkyboxRenderPass(this);
     if (!SkyboxRenderPass->Initialize(Resources))
+    {
         return false;
+    }
 
     TemporalAA = new FTemporalAA(this);
     if (!TemporalAA->Initialize(Resources))
+    {
         return false;
+    }
 
     ForwardPass = new FForwardPass(this);
     if (!ForwardPass->Initialize(Resources))
+    {
         return false;
+    }
 
     TonemapPass = new FTonemapPass(this);
     if (!TonemapPass->Initialize(Resources))
+    {
         return false;
+    }
 
     FXAAPass = new FFXAAPass(this);
     if (!FXAAPass->Initialize(Resources))
+    {
         return false;
+    }
 
     LightProbeRenderer = new FLightProbeRenderer(this);
     if (!LightProbeRenderer->Initialize(Resources))
+    {
         return false;
+    }
 
     return true;
 }

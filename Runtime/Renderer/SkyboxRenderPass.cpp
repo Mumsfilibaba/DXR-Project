@@ -112,7 +112,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         Panorama->SetDebugName(PanoramaSourceFilename);
     }
 
-    // Compress the Panorama
+    // Convert the Panorama into a cube-map
     FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
     FRHITextureRef Skybox = FTextureFactory::CreateTextureCubeFromPanorma(PanoramaRHI.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
     if (!Skybox)
@@ -123,6 +123,9 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     {
         Skybox->SetDebugName("Skybox Uncompressed");
     }
+    
+    // Unload the panorama
+    FAssetManager::Get().UnloadTexture(Panorama);
 
     // Compress the CubeMap
     TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);

@@ -405,7 +405,7 @@ bool FSandbox::Init()
 
     // Add PointLights
 #if LOAD_SPONZA
-    const float Intensity = 100.0f;
+    const float Intensity      = 100.0f;
     const float ShadowFarPlane = 40.0f;
     if (FPointLight* Light0 = NewObject<FPointLight>())
     {
@@ -516,11 +516,11 @@ bool FSandbox::Init()
         CurrentWorld->AddLight(Light4);
     }
 
-    if (FLightProbe* LightProbe = NewObject<FLightProbe>())
-    {
-        LightProbe->SetPosition(FVector3(0.0f));
-        CurrentWorld->AddLightProbe(LightProbe);
-    }
+    // if (FLightProbe* LightProbe = NewObject<FLightProbe>())
+    // {
+    //     LightProbe->SetPosition(FVector3(0.0f));
+    //     CurrentWorld->AddLightProbe(LightProbe);
+    // }
 
     LOG_INFO("Finished loading game");
     return true;
