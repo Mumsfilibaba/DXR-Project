@@ -942,7 +942,48 @@ void FD3D12RHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
         DeferDeletion(Resource);
     }
 }
-    
+
+FString FD3D12RHI::RHIGetAdapterName() const 
+{ 
+    CHECK(Adapter != nullptr);
+    return Adapter->GetDescription(); 
+}
+
+IRHICommandContext* FD3D12RHI::RHIObtainCommandContext()
+{
+    return DirectCommandContext;
+}
+
+void* FD3D12RHI::RHIGetAdapter() 
+{
+    CHECK(Adapter != nullptr);
+    return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
+}
+
+void* FD3D12RHI::RHIGetDevice()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12Device());
+}
+
+void* FD3D12RHI::RHIGetDirectCommandQueue()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
+}
+
+void* FD3D12RHI::RHIGetComputeCommandQueue()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Compute));
+}
+
+void* FD3D12RHI::RHIGetCopyCommandQueue()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
+}
+
 void FD3D12RHI::ProcessPendingCommands()
 {
     bool bProcess = true;

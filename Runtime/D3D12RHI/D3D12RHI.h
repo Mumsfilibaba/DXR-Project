@@ -69,47 +69,14 @@ public:
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
     virtual bool RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult) override final;
     virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) override final;
+    virtual FString RHIGetAdapterName() const override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final
-    {
-        return DirectCommandContext;
-    }
-    
-    virtual FString RHIGetAdapterName() const override final 
-    { 
-        CHECK(Adapter != nullptr);
-        return Adapter->GetDescription(); 
-    }
-
-    virtual void* RHIGetAdapter() override final 
-    {
-        CHECK(Adapter != nullptr);
-        return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
-    }
-
-    virtual void* RHIGetDevice() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12Device());
-    }
-
-    virtual void* RHIGetDirectCommandQueue() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
-    }
-
-    virtual void* RHIGetComputeCommandQueue() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Compute));
-    }
-
-    virtual void* RHIGetCopyCommandQueue() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
-    }
+    virtual IRHICommandContext* RHIObtainCommandContext() override final;
+    virtual void* RHIGetAdapter() override final;
+    virtual void* RHIGetDevice() override final;
+    virtual void* RHIGetDirectCommandQueue() override final;
+    virtual void* RHIGetComputeCommandQueue() override final;
+    virtual void* RHIGetCopyCommandQueue() override final;
 
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)

@@ -645,6 +645,44 @@ FString FVulkanRHI::RHIGetAdapterName() const
     return FString(DeviceProperties.deviceName);
 }
 
+IRHICommandContext* FVulkanRHI::RHIObtainCommandContext()
+{
+    CHECK(GraphicsCommandContext != nullptr);
+    return GraphicsCommandContext;
+}
+
+void* FVulkanRHI::RHIGetAdapter()
+{
+    CHECK(PhysicalDevice != nullptr);
+    return reinterpret_cast<void*>(PhysicalDevice->GetVkPhysicalDevice());
+}
+
+void* FVulkanRHI::RHIGetDevice()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetVkDevice());
+}
+
+void* FVulkanRHI::RHIGetDirectCommandQueue()
+{
+    CHECK(GraphicsQueue != nullptr);
+    return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
+}
+
+void* FVulkanRHI::RHIGetComputeCommandQueue()
+{
+    // TODO: Finish
+    CHECK(false);
+    return nullptr;
+}
+
+void* FVulkanRHI::RHIGetCopyCommandQueue()
+{
+    // TODO: Finish
+    CHECK(false);
+    return nullptr;
+}
+
 void FVulkanRHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
 {
     if (Resource)

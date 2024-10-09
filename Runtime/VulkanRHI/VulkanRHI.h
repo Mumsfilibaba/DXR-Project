@@ -67,40 +67,12 @@ public:
     virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) override final;
     virtual FString RHIGetAdapterName() const override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final
-    {
-        return GraphicsCommandContext;
-    }
-
-    virtual void* RHIGetAdapter() override final 
-    {
-        CHECK(PhysicalDevice != nullptr);
-        return reinterpret_cast<void*>(PhysicalDevice->GetVkPhysicalDevice());
-    }
-
-    virtual void* RHIGetDevice() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetVkDevice());
-    }
-
-    virtual void* RHIGetDirectCommandQueue() override final
-    {
-        CHECK(GraphicsQueue != nullptr);
-        return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
-    }
-
-    virtual void* RHIGetComputeCommandQueue() override final
-    {
-        // TODO: Finish
-        return nullptr;
-    }
-
-    virtual void* RHIGetCopyCommandQueue() override final
-    {
-        // TODO: Finish
-        return nullptr;
-    }
+    virtual IRHICommandContext* RHIObtainCommandContext() override final;
+    virtual void* RHIGetAdapter() override final;
+    virtual void* RHIGetDevice() override final;
+    virtual void* RHIGetDirectCommandQueue() override final;
+    virtual void* RHIGetComputeCommandQueue() override final;
+    virtual void* RHIGetCopyCommandQueue() override final;
 
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)
