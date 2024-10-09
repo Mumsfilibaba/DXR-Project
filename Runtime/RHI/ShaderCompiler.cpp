@@ -15,10 +15,15 @@ static TAutoConsoleVariable<bool> CVarShaderDebug(
     "Enable debug information in the Shaders",
     true);
 
-static TAutoConsoleVariable<bool> CVarVerboseShaderCompiler(
-    "RHI.ShaderCompiler.Verbose",
+static TAutoConsoleVariable<bool> CVarVerboseLogging(
+    "RHI.ShaderCompiler.VerboseLogging",
     "Enable verbose logging in the ShaderCompiler",
     false);
+
+static TAutoConsoleVariable<bool> CVarRecompileSPIRV(
+    "RHI.ShaderCompiler.RecompileSPIRV",
+    "When outputting SPIR-V force a recompile (This seems to solve some weird matrix issues)",
+    true);
 
 enum class EDXCPart
 {
@@ -39,24 +44,31 @@ enum class EDXCPart
     ShaderHash              = DXC_FOURCC('H', 'A', 'S', 'H'),
 };
 
-
 static LPCWSTR GetShaderStageString(EShaderStage Stage)
 {
     switch (Stage)
     {
         // Compute
-        case EShaderStage::Compute:         return L"cs";
+        case EShaderStage::Compute:
+            return L"cs";
 
         // Graphics
-        case EShaderStage::Vertex:          return L"vs";
-        case EShaderStage::Hull:            return L"hs";
-        case EShaderStage::Domain:          return L"ds";
-        case EShaderStage::Geometry:        return L"gs";
-        case EShaderStage::Pixel:           return L"ps";
+        case EShaderStage::Vertex:
+            return L"vs";
+        case EShaderStage::Hull:
+            return L"hs";
+        case EShaderStage::Domain:
+            return L"ds";
+        case EShaderStage::Geometry:
+            return L"gs";
+        case EShaderStage::Pixel:
+            return L"ps";
 
         // New Graphics Pipeline
-        case EShaderStage::Mesh:            return L"ms";
-        case EShaderStage::Amplification:   return L"as";
+        case EShaderStage::Mesh:
+            return L"ms";
+        case EShaderStage::Amplification:
+            return L"as";
 
         // Ray tracing
         case EShaderStage::RayGen:
@@ -64,9 +76,11 @@ static LPCWSTR GetShaderStageString(EShaderStage Stage)
         case EShaderStage::RayClosestHit:
         case EShaderStage::RayIntersection:
         case EShaderStage::RayCallable:
-        case EShaderStage::RayMiss:         return L"lib";
+        case EShaderStage::RayMiss:
+            return L"lib";
             
-        default:                            return L"xxx";
+        default:
+            return L"xxx";
     }
 }
 
@@ -102,7 +116,6 @@ static glslang_stage_t GetGlslangStage(EShaderStage ShaderStage)
         default: return glslang_stage_t(-1);
     }
 }
-
 
 class FShaderBlob final : public IDxcBlob
 {
@@ -173,7 +186,6 @@ private:
     SIZE_T Size;
     int32  References;
 };
-
 
 FShaderCompiler* FShaderCompiler::GInstance = nullptr;
 
@@ -427,7 +439,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         }
     }
  
-    const bool bVerboseLogging = CVarVerboseShaderCompiler.GetValue();
+    const bool bVerboseLogging = CVarVerboseLogging.GetValue();
     if (bVerboseLogging)
     {
         if (!FilePath.IsEmpty())
@@ -545,7 +557,8 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         // TODO: Investigate why we need to recompile our SPIR-V when compiled from HLSL directly
         if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
         {
-            if (!RecompileSpirv(FilePath, CompileInfo, OutByteCode))
+            const bool bRecompileSPIRV = CVarRecompileSPIRV.GetValue();
+            if (bRecompileSPIRV && !RecompileSpirv(FilePath, CompileInfo, OutByteCode))
             {
                 DEBUG_BREAK();
                 return false;
@@ -679,13 +692,12 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
         return false;
     }
 
-    // Compile the code to GLSL -> SPIR-V if we had to make any modifications
-    // Modify options.
+    // Compile the code to GLSL -> SPIR-V
     spvc_compiler_options Options = nullptr;
     spvc_compiler_create_compiler_options(Compiler, &Options);
     spvc_compiler_options_set_uint(Options, SPVC_COMPILER_OPTION_GLSL_VERSION, 460);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_FALSE);
-    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_TRUE);
+    spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_FALSE);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_VULKAN_SEMANTICS, SPVC_TRUE);
     spvc_compiler_install_compiler_options(Compiler, Options);
 
