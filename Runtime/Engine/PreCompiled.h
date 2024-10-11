@@ -1,6 +1,6 @@
 #pragma once
 #include "Engine/Assets/AssetLoaders/FBXLoader.h"
-#include "Engine/Assets/AssetLoaders/MeshImporter.h"
+#include "Engine/Assets/AssetLoaders/ModelImporter.h"
 #include "Engine/Assets/AssetLoaders/OBJLoader.h"
 
 #include "Engine/Assets/AssetManager.h"

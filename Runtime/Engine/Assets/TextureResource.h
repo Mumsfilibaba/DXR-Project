@@ -7,8 +7,8 @@
 class FTexture;
 class FTexture2D;
 
-typedef TSharedRef<FTexture>   FTextureResourceRef;
-typedef TSharedRef<FTexture2D> FTextureResource2DRef;
+typedef TSharedRef<FTexture>   FTextureRef;
+typedef TSharedRef<FTexture2D> FTexture2DRef;
 
 class ENGINE_API FTexture : public FResource
 {

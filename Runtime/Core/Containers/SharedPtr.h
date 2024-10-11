@@ -585,7 +585,7 @@ public:
     }
     
     /**
-     * @brief         - Constructor that initializes a new SharedPtr from TSharedReferenceProxy which is used my MakeShared
+     * @brief         - Constructor that initializes a new SharedPtr from TSharedReferenceProxy which is used my MakeSharedPtr
      * @param InProxy - Proxy container
      */
     FORCEINLINE explicit TSharedPtr(SharedPointerInternal::TSharedReferenceProxy<ObjectType, ThreadAccess>&& InProxy) noexcept
@@ -1442,21 +1442,21 @@ NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U
 
 
 template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe, typename... ArgTypes>
-NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeShared(ArgTypes&&... Args) noexcept requires(TNot<TIsArray<ObjectType>>::Value)
+NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr(ArgTypes&&... Args) noexcept requires(TNot<TIsArray<ObjectType>>::Value)
 {
     auto NewReferenceCounter = new SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>(::Forward<ArgTypes>(Args)...);
     return TSharedPtr<ObjectType, ThreadAccess>(SharedPointerInternal::TSharedReferenceProxy(NewReferenceCounter->GetObjectPointer(), NewReferenceCounter));
 }
 
 template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe>
-NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeShared() noexcept requires(TIsBoundedArray<ObjectType>::Value)
+NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr() noexcept requires(TIsBoundedArray<ObjectType>::Value)
 {
     auto NewReferenceCounter = new SharedPointerInternal::TObjectReferenceHandler<ObjectType, ThreadAccess>();
     return TSharedPtr<ObjectType, ThreadAccess>(SharedPointerInternal::TSharedReferenceProxy(NewReferenceCounter->GetObjectPointer(), NewReferenceCounter));
 }
 
 template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe>
-NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeShared(uint32 Size) noexcept requires(TIsUnboundedArray<ObjectType>::Value)
+NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr(uint32 Size) noexcept requires(TIsUnboundedArray<ObjectType>::Value)
 {
     typedef typename TRemoveExtent<ObjectType>::Type ConstructType;
     return TSharedPtr<ObjectType, ThreadAccess>(new ConstructType[Size]);

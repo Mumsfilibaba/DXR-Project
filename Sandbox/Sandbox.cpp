@@ -5,7 +5,6 @@
 #include <Core/Misc/OutputDeviceLogger.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
-#include <Engine/Assets/AssetLoaders/MeshImporter.h>
 #include <Engine/World/World.h>
 #include <Engine/World/Lights/PointLight.h>
 #include <Engine/World/Lights/DirectionalLight.h>
@@ -47,20 +46,23 @@ bool FSandbox::Init()
     // Load Scene
     {
     #if LOAD_SPONZA
-        TSharedRef<FSceneData> Sponza = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"));
-        Sponza->Scale = 0.015f;
+        TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"));
+        Sponza->SetUniformScale(0.015f);
 
-        for (FMaterialData& Material : Sponza->Materials)
+        const int32 NumMaterials = Sponza->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            if (Material.AlphaMaskTexture)
+            const TSharedPtr<FMaterial>& Material = Sponza->GetMaterial(Index);
+            if (Material->AlphaMask)
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided;
+                Material->EnableDoubleSided(true);
+                Material->EnableAlphaMask(true);
             }
         }
 
         Sponza->AddToWorld(CurrentWorld);
     #elif LOAD_BISTRO
-        TSharedRef<FSceneData> BistroInterior = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
+        TSharedRef<FSceneData> BistroInterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
         for (FMaterialData& Material : BistroInterior->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
@@ -72,7 +74,7 @@ bool FSandbox::Init()
         
         BistroInterior->AddToWorld(CurrentWorld);
 
-        TSharedRef<FSceneData> BistroExterior = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
+        TSharedRef<FSceneData> BistroExterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
         for (FMaterialData& Material : BistroExterior->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
@@ -84,7 +86,7 @@ bool FSandbox::Init()
         
         BistroExterior->AddToWorld(CurrentWorld);
      #elif LOAD_SUN_TEMPLE
-        TSharedRef<FSceneData> SunTemple = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
+        TSharedRef<FSceneData> SunTemple = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
         for (FMaterialData& Material : SunTemple->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
@@ -96,7 +98,7 @@ bool FSandbox::Init()
         
         SunTemple->AddToWorld(CurrentWorld);
      #elif LOAD_EMERALD_SQUARE
-        TSharedRef<FSceneData> EmeraldSquare_Day = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
+        TSharedRef<FSceneData> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
         for (FMaterialData& Material : EmeraldSquare_Day->Materials)
         {
             Material.MaterialFlags |= MaterialFlag_PackedParams;
@@ -113,7 +115,6 @@ bool FSandbox::Init()
 #if LOAD_SPONZA
     // Create Spheres
     FMeshData SphereMeshData = FMeshFactory::CreateSphere(3);
-
     TSharedPtr<FMesh> SphereMesh = FMesh::Create(SphereMeshData);
 
     constexpr float  SphereOffset   = 1.25f;
@@ -127,7 +128,7 @@ bool FSandbox::Init()
     FMaterialInfo MaterialInfo;
     MaterialInfo.Albedo           = FVector3(1.0f);
     MaterialInfo.AmbientOcclusion = 1.0f;
-    MaterialInfo.MaterialFlags    = MaterialFlag_None;
+    MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
     uint32 SphereIndex = 0;
     for (uint32 y = 0; y < SphereCountY; y++)
@@ -138,13 +139,13 @@ bool FSandbox::Init()
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
-                NewActor->SetName("Sphere[" + TTypeToString<uint32>::ToString(SphereIndex) + "]");
+                NewActor->SetName(FString::CreateFormatted("Sphere[%d]", SphereIndex));
                 SphereIndex++;
 
                 NewComponent = NewObject<FMeshComponent>();
                 if (NewComponent)
                 {
-                    TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialInfo);
+                    TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
                     NewMaterial->AlbedoMap    = GEngine->BaseTexture;
                     NewMaterial->RoughnessMap = GEngine->BaseTexture;
                     NewMaterial->AOMap        = GEngine->BaseTexture;
@@ -236,7 +237,6 @@ bool FSandbox::Init()
 
     // Create Other Meshes
     FMeshData CubeMeshData = FMeshFactory::CreateCube();
-
     NewActor = CurrentWorld->CreateActor();
     if (NewActor)
     {
@@ -247,25 +247,26 @@ bool FSandbox::Init()
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 1.0f;
-        MaterialInfo.MaterialFlags   |= MaterialFlag_EnableHeight | MaterialFlag_EnableNormalMapping;
+        MaterialInfo.MaterialFlags   |= EMaterialFlags::EnableHeight | EMaterialFlags::EnableNormalMapping;
 
         NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
-            FTextureResource2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
-            FTextureResource2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
-            FTextureResource2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
-            FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
-            FTextureResource2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
-            FTextureResource2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
+            FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
+            FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
+            FTexture2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
+            FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
+            FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
+            FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
             
-            TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialInfo);
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
             NewMaterial->NormalMap    = NormalMap->GetRHITexture();
             NewMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
             NewMaterial->HeightMap    = HeightMap->GetRHITexture();
             NewMaterial->AOMap        = AOMap->GetRHITexture();
             NewMaterial->MetallicMap  = MetallicMap->GetRHITexture();
+            
             NewMaterial->Initialize();
             NewMaterial->SetDebugName("GateMaterial");
 
@@ -288,16 +289,17 @@ bool FSandbox::Init()
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 0.5f;
-        MaterialInfo.MaterialFlags    = MaterialFlag_None;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
         NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
-            TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialInfo);
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = GEngine->BaseTexture;
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
             NewMaterial->Initialize();
             NewMaterial->SetDebugName("PlaneMaterial");
 
@@ -308,89 +310,89 @@ bool FSandbox::Init()
         }
     }
 
-    FTextureResource2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
-    FTextureResource2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
-    FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
-    FTextureResource2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
-
-    MaterialInfo.Albedo           = FVector3(1.0f);
-    MaterialInfo.AmbientOcclusion = 1.0f;
-    MaterialInfo.Metallic         = 1.0f;
-    MaterialInfo.Roughness        = 1.0f;
-    MaterialInfo.MaterialFlags    = MaterialFlag_EnableNormalMapping;
-
-    TSharedRef<FSceneData> StreetLightData = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
-    TSharedPtr<FMaterial>  StreetLightMat  = MakeShared<FMaterial>(MaterialInfo);
-    StreetLightMat->AlbedoMap    = AlbedoMap->GetRHITexture();
-    StreetLightMat->NormalMap    = NormalMap->GetRHITexture();
-    StreetLightMat->RoughnessMap = RoughnessMap->GetRHITexture();
-    StreetLightMat->AOMap        = GEngine->BaseTexture;
-    StreetLightMat->MetallicMap  = MetallicMap->GetRHITexture();
-    StreetLightMat->Initialize();
-    StreetLightMat->SetDebugName("StreetLightMaterial");
-
-    TArray<TSharedPtr<FMesh>> StreetLightMeshes;
-    StreetLightMeshes.Reserve(StreetLightData->Models.Size());
-
-    for (int32 i = 0; i < StreetLightData->Models.Size(); i++)
+    TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
+    if (StreetLightModel)
     {
-        const FModelData& ModelData = StreetLightData->Models[i];
-        StreetLightMeshes.Add(FMesh::Create(ModelData.Mesh));
-    }
+        FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
+        FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
+        FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
+        FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
+        
+        MaterialInfo.Albedo           = FVector3(1.0f);
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 1.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::EnableNormalMapping;
 
-    for (uint32 i = 0; i < 4; i++)
-    {
-        for (int32 MeshIndex = 0; MeshIndex < StreetLightMeshes.Size(); MeshIndex++)
+        TSharedPtr<FMaterial> StreetLightMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+        StreetLightMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
+        StreetLightMaterial->NormalMap    = NormalMap->GetRHITexture();
+        StreetLightMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
+        StreetLightMaterial->AOMap        = GEngine->BaseTexture;
+        StreetLightMaterial->MetallicMap  = MetallicMap->GetRHITexture();
+
+        StreetLightMaterial->Initialize();
+        StreetLightMaterial->SetDebugName("StreetLightMaterial");
+
+        const int32 NumMeshes = StreetLightModel->GetNumMeshes();
+        for (uint32 i = 0; i < 4; i++)
         {
-            NewActor = CurrentWorld->CreateActor();
-            if (NewActor)
+            for (int32 MeshIndex = 0; MeshIndex < NumMeshes; MeshIndex++)
             {
-                NewActor->SetName("Street Light (" + StreetLightData->Models[MeshIndex].Name + ")" + TTypeToString<uint32>::ToString(i));
-                NewActor->GetTransform().SetUniformScale(0.25f);
-                NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
-
-                NewComponent = NewObject<FMeshComponent>();
-                if (NewComponent)
+                NewActor = CurrentWorld->CreateActor();
+                if (NewActor)
                 {
-                    NewComponent->SetMesh(StreetLightMeshes[MeshIndex]);
-                    NewComponent->SetMaterial(StreetLightMat);
-                    NewActor->AddComponent(NewComponent);
+                    const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
+                    NewActor->SetName(FString::CreateFormatted("Street Light (%s) %d", Mesh->GetName().GetCString(), i));
+                    NewActor->GetTransform().SetUniformScale(0.25f);
+                    NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
+
+                    NewComponent = NewObject<FMeshComponent>();
+                    if (NewComponent)
+                    {
+                        NewComponent->SetMesh(Mesh);
+                        NewComponent->SetMaterial(StreetLightMaterial);
+                        NewActor->AddComponent(NewComponent);
+                    }
                 }
             }
         }
     }
 
-    MaterialInfo.Albedo           = FVector3(0.4f);
-    MaterialInfo.AmbientOcclusion = 1.0f;
-    MaterialInfo.Metallic         = 0.0f;
-    MaterialInfo.Roughness        = 1.0f;
-    MaterialInfo.MaterialFlags    = MaterialFlag_None;
-
-    TSharedRef<FSceneData> PillarData     = FAssetManager::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Pillar.obj"));
-    TSharedPtr<FMaterial>  PillarMaterial = MakeShared<FMaterial>(MaterialInfo);
-    PillarMaterial->AlbedoMap    = GEngine->BaseTexture;
-    PillarMaterial->RoughnessMap = GEngine->BaseTexture;
-    PillarMaterial->AOMap        = GEngine->BaseTexture;
-    PillarMaterial->MetallicMap  = GEngine->BaseTexture;
-    PillarMaterial->Initialize();
-    PillarMaterial->SetDebugName("PillarMaterial");
-
-    TSharedPtr<FMesh> Pillar = PillarData->HasModelData() ? FMesh::Create(PillarData->Models.FirstElement().Mesh) : nullptr;
-    for (uint32 i = 0; i < 8; i++)
+    TSharedRef<FModel> PillarModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Pillar.obj"));
+    if (PillarModel)
     {
-        NewActor = CurrentWorld->CreateActor();
-        if (NewActor)
-        {
-            NewActor->SetName("Pillar " + TTypeToString<uint32>::ToString(i));
-            NewActor->GetTransform().SetUniformScale(0.25f);
-            NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 0.0f, 60.0f);
+        MaterialInfo.Albedo           = FVector3(0.4f);
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 0.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-            NewComponent = NewObject<FMeshComponent>();
-            if (NewComponent)
+        TSharedPtr<FMaterial> PillarMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+        PillarMaterial->AlbedoMap    = GEngine->BaseTexture;
+        PillarMaterial->RoughnessMap = GEngine->BaseTexture;
+        PillarMaterial->AOMap        = GEngine->BaseTexture;
+        PillarMaterial->MetallicMap  = GEngine->BaseTexture;
+        PillarMaterial->Initialize();
+        PillarMaterial->SetDebugName("PillarMaterial");
+
+        TSharedPtr<FMesh> Pillar = PillarModel->GetMesh(0);
+        for (uint32 i = 0; i < 8; i++)
+        {
+            NewActor = CurrentWorld->CreateActor();
+            if (NewActor)
             {
-                NewComponent->SetMesh(Pillar);
-                NewComponent->SetMaterial(PillarMaterial);
-                NewActor->AddComponent(NewComponent);
+                NewActor->SetName(FString::CreateFormatted("Pillar %d", i));
+                NewActor->GetTransform().SetUniformScale(0.25f);
+                NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 0.0f, 60.0f);
+
+                NewComponent = NewObject<FMeshComponent>();
+                if (NewComponent)
+                {
+                    NewComponent->SetMesh(Pillar);
+                    NewComponent->SetMaterial(PillarMaterial);
+                    NewActor->AddComponent(NewComponent);
+                }
             }
         }
     }

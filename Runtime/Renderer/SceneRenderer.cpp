@@ -384,9 +384,9 @@ bool FSceneRenderer::Initialize()
     // Register Windows
     if (IImguiPlugin::IsEnabled())
     {
-        TextureDebugger   = MakeShared<FRenderTargetDebugWindow>();
-        InfoWindow        = MakeShared<FRendererInfoWindow>(this);
-        GPUProfilerWindow = MakeShared<FGPUProfilerWindow>();
+        TextureDebugger   = MakeSharedPtr<FRenderTargetDebugWindow>();
+        InfoWindow        = MakeSharedPtr<FRendererInfoWindow>(this);
+        GPUProfilerWindow = MakeSharedPtr<FGPUProfilerWindow>();
     }
 
     return true;

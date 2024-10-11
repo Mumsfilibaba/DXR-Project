@@ -77,7 +77,7 @@ void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
     if (bForceForwardRender)
     {
-        MaterialInfo.MaterialFlags |= MaterialFlag_ForceForwardPass;
+        MaterialInfo.MaterialFlags |= EMaterialFlags::ForceForwardPass;
     }
 }
 
@@ -85,7 +85,7 @@ void FMaterial::EnableHeightMap(bool bEnableHeightMap)
 {
     if (bEnableHeightMap)
     {
-        MaterialInfo.MaterialFlags |= MaterialFlag_EnableHeight;
+        MaterialInfo.MaterialFlags |= EMaterialFlags::EnableHeight;
     }
 }
 
@@ -93,7 +93,7 @@ void FMaterial::EnableAlphaMask(bool bEnableAlphaMask)
 {
     if (bEnableAlphaMask)
     {
-        MaterialInfo.MaterialFlags |= MaterialFlag_EnableAlpha;
+        MaterialInfo.MaterialFlags |= EMaterialFlags::EnableAlpha;
     }
 }
 
@@ -101,7 +101,7 @@ void FMaterial::EnableDoubleSided(bool bIsDoubleSided)
 {
     if (bIsDoubleSided)
     {
-        MaterialInfo.MaterialFlags |= MaterialFlag_DoubleSided;
+        MaterialInfo.MaterialFlags |= EMaterialFlags::DoubleSided;
     }
 }
 

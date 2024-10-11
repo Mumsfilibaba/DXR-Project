@@ -168,13 +168,13 @@ TSharedPtr<FGenericApplication> FMacApplication::Create()
 TSharedPtr<FMacApplication> FMacApplication::CreateMacApplication()
 {
     // Create a new instance and set the the global instance
-    TSharedPtr<FMacApplication> NewMacApplication = MakeShared<FMacApplication>();
+    TSharedPtr<FMacApplication> NewMacApplication = MakeSharedPtr<FMacApplication>();
     MacApplication = NewMacApplication.Get();
     return NewMacApplication;
 }
 
 FMacApplication::FMacApplication()
-    : FGenericApplication(MakeShared<FMacCursor>())
+    : FGenericApplication(MakeSharedPtr<FMacCursor>())
     , Observer(nullptr)
     , PreviousModifierFlags(0)
     , InputDevice(FGCInputDevice::CreateGCInputDevice())

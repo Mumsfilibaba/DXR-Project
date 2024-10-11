@@ -140,13 +140,13 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
 
-            if (Component->Mesh->VertexBufferSRV)
+            if (FRHIShaderResourceView* VertexBufferSRV = Component->Mesh->GetVertexBufferSRV(EVertexStream::Packed))
             {
-                HitGroupResources.AddShaderResourceView(Component->Mesh->VertexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(VertexBufferSRV);
             }
-            if (Component->Mesh->IndexBufferSRV)
+            if (FRHIShaderResourceView* IndexBufferSRV = Component->Mesh->GetIndexBufferSRV())
             {
-                HitGroupResources.AddShaderResourceView(Component->Mesh->IndexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(IndexBufferSRV);
             }
             
             Resources.RTHitGroupResources.Emplace(HitGroupResources);

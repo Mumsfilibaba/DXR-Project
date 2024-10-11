@@ -5,7 +5,7 @@
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/TextureImporterDDS.h"
 #include "Engine/Assets/TextureImporterBase.h"
-#include "Engine/Assets/AssetLoaders/MeshImporter.h"
+#include "Engine/Assets/AssetLoaders/ModelImporter.h"
 
 FAssetManager* FAssetManager::GInstance = nullptr;
 
@@ -43,10 +43,10 @@ bool FAssetManager::Initialize()
         GInstance = new FAssetManager();
         CHECK(GInstance != nullptr);
         
-        GInstance->RegisterTextureImporter(MakeShared<FTextureImporterDDS>());
-        GInstance->RegisterTextureImporter(MakeShared<FTextureImporterBase>());
+        GInstance->RegisterTextureImporter(MakeSharedPtr<FTextureImporterDDS>());
+        GInstance->RegisterTextureImporter(MakeSharedPtr<FTextureImporterBase>());
         
-        GInstance->RegisterMeshImporter(MakeShared<FMeshImporter>());
+        GInstance->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
         return true;
     }
 
@@ -130,7 +130,7 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
     return NewTexture;
 }
 
-TSharedRef<FSceneData> FAssetManager::LoadMesh(const FString& Filename, EMeshImportFlags Flags)
+TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImportFlags Flags)
 {
     SCOPED_LOCK(MeshesCS);
 
@@ -144,22 +144,22 @@ TSharedRef<FSceneData> FAssetManager::LoadMesh(const FString& Filename, EMeshImp
         return Meshes[MeshIndex];
     }
     
-    TSharedRef<FSceneData> NewMesh;
+    TSharedRef<FModel> NewModel;
     
     {
         SCOPED_LOCK(MeshImportersCS);
         
-        for (TSharedPtr<IMeshImporter> Importer : MeshImporters)
+        for (TSharedPtr<IModelImporter> Importer : MeshImporters)
         {
             FStringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
             {
-                NewMesh = Importer->ImportFromFile(FileNameView, Flags);
+                NewModel = Importer->ImportFromFile(FileNameView, Flags);
             }
         }
     }
     
-    if (!NewMesh)
+    if (!NewModel)
     {
         LOG_ERROR("[FAssetManager]: Unsupported mesh format. Failed to load '%s'.", FinalPath.GetCString());
         return nullptr;
@@ -169,20 +169,20 @@ TSharedRef<FSceneData> FAssetManager::LoadMesh(const FString& Filename, EMeshImp
 
     // Insert the new texture
     const int32 Index = Meshes.Size();
-    Meshes.Emplace(NewMesh);
+    Meshes.Emplace(NewModel);
     MeshesMap.Add(FinalPath, Index);
-    return NewMesh;
+    return NewModel;
 }
 
-void FAssetManager::UnloadMesh(const TSharedRef<FSceneData>& InMesh)
+void FAssetManager::UnloadModel(const TSharedRef<FModel>& InModel)
 {
     SCOPED_LOCK(MeshesCS);
         
-    Meshes.Remove(InMesh);
+    Meshes.Remove(InModel);
     // TODO: Remove mesh from map
 }
 
-void FAssetManager::UnloadTexture(const FTextureResourceRef& Texture)
+void FAssetManager::UnloadTexture(const FTextureRef& Texture)
 {
     SCOPED_LOCK(TexturesCS);
     
@@ -203,13 +203,13 @@ void FAssetManager::UnregisterTextureImporter(const TSharedPtr<ITextureImporter>
     TextureImporters.Remove(InImporter);
 }
 
-void FAssetManager::RegisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter)
+void FAssetManager::RegisterModelImporter(const TSharedPtr<IModelImporter>& InImporter)
 {
     SCOPED_LOCK(MeshImportersCS);
     MeshImporters.AddUnique(InImporter);
 }
 
-void FAssetManager::UnregisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter)
+void FAssetManager::UnregisterModelImporter(const TSharedPtr<IModelImporter>& InImporter)
 {
     SCOPED_LOCK(MeshImportersCS);
     MeshImporters.Remove(InImporter);

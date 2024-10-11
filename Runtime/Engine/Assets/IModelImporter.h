@@ -3,7 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedRef.h"
 
-struct FSceneData;
+struct FModel;
 
 enum class EMeshImportFlags : uint8
 {
@@ -16,11 +16,11 @@ enum class EMeshImportFlags : uint8
 
 ENUM_CLASS_OPERATORS(EMeshImportFlags);
 
-struct IMeshImporter
+struct IModelImporter
 {
-    virtual ~IMeshImporter() = default;
+    virtual ~IModelImporter() = default;
 
-    virtual TSharedRef<FSceneData> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) = 0;
+    virtual TSharedRef<FModel> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) = 0;
 
     /** @Return: Returns true if the FileName matches extension for this importer */
     virtual bool MatchExtenstion(const FStringView& FileName) = 0;

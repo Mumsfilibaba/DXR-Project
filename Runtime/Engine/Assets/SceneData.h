@@ -57,48 +57,42 @@ struct FMeshData
         return Indices.Size();
     }
 
+    /** @brief - Name of the mesh specified in the model-file */
+    FString Name;
+    
     TArray<FVertex>        Vertices;
     TArray<uint32>         Indices;
     TArray<FMeshPartition> Partitions;
 };
 
-struct FModelData
-{
-    /** @brief - Name of the mesh specified in the model-file */
-    FString Name;
-
-    /** @brief - Model mesh data */
-    FMeshData Mesh;
-};
-
-struct FMaterialData
+struct FImportedMaterial
 {
     /** @brief - Name of the material specified in the model-file */
     FString Name;
 
     /** @brief - Diffuse texture */
-    FTextureResource2DRef DiffuseTexture;
+    FTexture2DRef DiffuseTexture;
 
     /** @brief - Normal texture */
-    FTextureResource2DRef NormalTexture;
+    FTexture2DRef NormalTexture;
 
     /** @brief - Specular texture - Stores AO, Metallic, and Roughness in the same textures */
-    FTextureResource2DRef SpecularTexture;
+    FTexture2DRef SpecularTexture;
 
     /** @brief - Emissive texture */
-    FTextureResource2DRef EmissiveTexture;
+    FTexture2DRef EmissiveTexture;
 
     /** @brief - AO texture - Ambient Occlusion */
-    FTextureResource2DRef AOTexture;
+    FTexture2DRef AOTexture;
 
     /** @brief - Roughness texture*/
-    FTextureResource2DRef RoughnessTexture;
+    FTexture2DRef RoughnessTexture;
 
     /** @brief - Metallic Texture*/
-    FTextureResource2DRef MetallicTexture;
+    FTexture2DRef MetallicTexture;
 
     /** @brief - Metallic Texture*/
-    FTextureResource2DRef AlphaMaskTexture;
+    FTexture2DRef AlphaMaskTexture;
 
     /** @brief - Diffuse Parameter */
     FVector3 Diffuse;
@@ -113,10 +107,10 @@ struct FMaterialData
     float Metallic = 1.0f;
 
     /** @brief - Flags containing material-properties */
-    EMaterialFlags MaterialFlags = MaterialFlag_None;
+    EMaterialFlags MaterialFlags = EMaterialFlags::None;
 };
 
-struct ENGINE_API FSceneData : public FResource
+struct ENGINE_API FImportedModel
 {
     void AddToWorld(class FWorld* World);
 
@@ -135,8 +129,8 @@ struct ENGINE_API FSceneData : public FResource
         return !Materials.IsEmpty();
     }
 
-    TArray<FModelData>    Models;
-    TArray<FMaterialData> Materials;
+    TArray<FMeshData>         Models;
+    TArray<FImportedMaterial> Materials;
 
      /** @brief - A scale used to scale each actor when using add to scene */
     float Scale = 1.0f;

@@ -5,7 +5,7 @@
 #include "Engine/Resources/Mesh.h"
 #include "Engine/Resources/Material.h"
 
-void FSceneData::AddToWorld(FWorld* World)
+void FImportedModel::AddToWorld(FWorld* World)
 {
     if (!HasModelData())
     {
@@ -15,7 +15,7 @@ void FSceneData::AddToWorld(FWorld* World)
     TArray<TSharedPtr<FMaterial>> CreatedMaterials;
     if (!Materials.IsEmpty())
     {
-        for (const FMaterialData& MaterialData : Materials)
+        for (const FImportedMaterial& MaterialData : Materials)
         {
             FMaterialInfo CreateInfo;
             CreateInfo.Albedo           = MaterialData.Diffuse;
@@ -26,10 +26,10 @@ void FSceneData::AddToWorld(FWorld* World)
             
             if (MaterialData.NormalTexture)
             {
-                CreateInfo.MaterialFlags |= MaterialFlag_EnableNormalMapping;
+                CreateInfo.MaterialFlags |= EMaterialFlags::EnableNormalMapping;
             }
 
-            TSharedPtr<FMaterial> Material = MakeShared<FMaterial>(CreateInfo);
+            TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(CreateInfo);
             Material->AlbedoMap    = MaterialData.DiffuseTexture   ? MaterialData.DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
             Material->AOMap        = MaterialData.AOTexture        ? MaterialData.AOTexture->GetRHITexture()        : GEngine->BaseTexture;
             Material->SpecularMap  = MaterialData.SpecularTexture  ? MaterialData.SpecularTexture->GetRHITexture()  : GEngine->BaseTexture;
@@ -51,9 +51,9 @@ void FSceneData::AddToWorld(FWorld* World)
 
     CHECK(Materials.Size() == CreatedMaterials.Size());
 
-    for (const FModelData& ModelData : Models)
+    for (const FMeshData& ModelData : Models)
     {
-        if (ModelData.Mesh.Hasdata())
+        if (ModelData.Hasdata())
         {
             FActor* NewActor = World->CreateActor();
             NewActor->SetName(ModelData.Name);
@@ -62,9 +62,9 @@ void FSceneData::AddToWorld(FWorld* World)
             FMeshComponent* MeshComponent = NewObject<FMeshComponent>();
             if (MeshComponent)
             {
-                MeshComponent->SetMesh(FMesh::Create(ModelData.Mesh));
+                MeshComponent->SetMesh(FMesh::Create(ModelData));
 
-                if (ModelData.Mesh.Partitions.IsEmpty())
+                if (ModelData.Partitions.IsEmpty())
                 {
                     if (!CreatedMaterials.IsEmpty())
                     {
@@ -77,10 +77,10 @@ void FSceneData::AddToWorld(FWorld* World)
                 }
                 else
                 {
-                    const int32 NumSubMeshes = ModelData.Mesh.Partitions.Size();
+                    const int32 NumSubMeshes = ModelData.Partitions.Size();
                     for (int32 Index = 0; Index < NumSubMeshes; Index++)
                     {
-                        const FMeshPartition& MeshPartition = ModelData.Mesh.Partitions[Index];
+                        const FMeshPartition& MeshPartition = ModelData.Partitions[Index];
                         if (MeshPartition.MaterialIndex >= 0 && CreatedMaterials.Size() >= MeshPartition.MaterialIndex)
                         {
                             const TSharedPtr<FMaterial>& Material = CreatedMaterials[MeshPartition.MaterialIndex];

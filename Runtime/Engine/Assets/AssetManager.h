@@ -1,9 +1,10 @@
 #pragma once
-#include "TextureResource.h"
-#include "ITextureImporter.h"
-#include "IMeshImporter.h"
 #include "Core/Containers/Map.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Engine/Assets/TextureResource.h"
+#include "Engine/Assets/ITextureImporter.h"
+#include "Engine/Assets/IModelImporter.h"
+#include "Engine/Resources/Mesh.h"
 
 class ENGINE_API FAssetManager
 {
@@ -21,24 +22,24 @@ public:
     TSharedRef<FTexture> LoadTexture(const FString& Filename, bool bGenerateMips = true);
     void UnloadTexture(const TSharedRef<FTexture>& Texture);
     
-    TSharedRef<FSceneData> LoadMesh(const FString& Filename, EMeshImportFlags Flags = EMeshImportFlags::Default);
-    void UnloadMesh(const TSharedRef<FSceneData>& InMesh);
+    TSharedRef<FModel> LoadModel(const FString& Filename, EMeshImportFlags Flags = EMeshImportFlags::Default);
+    void UnloadModel(const TSharedRef<FModel>& InModel);
 
     void RegisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter);
     void UnregisterTextureImporter(const TSharedPtr<ITextureImporter>& InImporter);
     
-    void RegisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter);
-    void UnregisterMeshImporter(const TSharedPtr<IMeshImporter>& InImporter);
+    void RegisterModelImporter(const TSharedPtr<IModelImporter>& InImporter);
+    void UnregisterModelImporter(const TSharedPtr<IModelImporter>& InImporter);
 
 private:
     FAssetManager();
     ~FAssetManager();
 
     // Meshes
-    TArray<TSharedPtr<IMeshImporter>>    MeshImporters;
+    TArray<TSharedPtr<IModelImporter>>   MeshImporters;
     FCriticalSection                     MeshImportersCS;
     TMap<FString, int32>                 MeshesMap;
-    TArray<TSharedRef<FSceneData>>       Meshes;
+    TArray<TSharedRef<FModel>>           Meshes;
     FCriticalSection                     MeshesCS;
     
     // Textures

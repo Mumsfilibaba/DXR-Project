@@ -61,7 +61,7 @@ static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(
 
 TSharedPtr<FGCInputDevice> FGCInputDevice::CreateGCInputDevice()
 {
-    TSharedPtr<FGCInputDevice> NewInputDevice = MakeShared<FGCInputDevice>();
+    TSharedPtr<FGCInputDevice> NewInputDevice = MakeSharedPtr<FGCInputDevice>();
     return NewInputDevice;
 }
 

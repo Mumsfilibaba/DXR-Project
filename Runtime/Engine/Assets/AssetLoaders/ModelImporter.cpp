@@ -4,7 +4,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/AssetLoaders/MeshImporter.h"
+#include "Engine/Assets/AssetLoaders/ModelImporter.h"
 #include "Engine/Assets/AssetLoaders/FBXLoader.h"
 #include "Engine/Assets/AssetLoaders/OBJLoader.h"
 
@@ -14,18 +14,18 @@ static TAutoConsoleVariable<bool> CVarEnableMeshCache(
     false,
     EConsoleVariableFlags::Default);
 
-FMeshImporter::FMeshImporter()
+FModelImporter::FModelImporter()
     : Cache()
 {
     LoadCacheFile();
 }
 
-FMeshImporter::~FMeshImporter()
+FModelImporter::~FModelImporter()
 {
     UpdateCacheFile();
 }
 
-TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags Flags)
+TSharedRef<FModel> FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags Flags)
 {
     const FString Filename = FString(InFilename);
     
@@ -34,7 +34,7 @@ TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilena
     {
         if (FString* MeshName = Cache.Find(Filename))
         {
-            TSharedRef<FSceneData> ExistingMesh = LoadCustom(*MeshName);
+            TSharedRef<FModel> ExistingMesh = LoadCustom(*MeshName);
             if (ExistingMesh)
             {
                 return ExistingMesh;
@@ -58,21 +58,27 @@ TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilena
             FBXFlags |= EFBXFlags::ForceLeftHanded;
         }
 
-        TSharedRef<FSceneData> Mesh = FFBXLoader::LoadFile(Filename, FBXFlags);
-        if (Mesh)
+        TSharedPtr<FImportedModel> ImportedModel = FFBXLoader::LoadFile(Filename, FBXFlags);
+        if (ImportedModel)
         {
+            TSharedRef<FModel> Model = new FModel();
+            if (!Model->Init(ImportedModel))
+            {
+                return nullptr;
+            }
+            
             if (!bEnableCache)
             {
-                return Mesh;
+                return Model;
             }
             
             const int32 Count = FMath::Max<int32>(Filename.Size() - 4, 0);
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
             
-            if (AddCacheEntry(Filename, NewFileName, Mesh))
+            if (AddCacheEntry(Filename, NewFileName, ImportedModel))
             {
-                return Mesh;
+                return Model;
             }
         }
     }
@@ -80,21 +86,27 @@ TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilena
     {
         const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
         
-        TSharedRef<FSceneData> Mesh = FOBJLoader::LoadFile(Filename, bReverseHandedness);
-        if (Mesh)
+        TSharedPtr<FImportedModel> ImportedModel = FOBJLoader::LoadFile(Filename, bReverseHandedness);
+        if (ImportedModel)
         {
+            TSharedRef<FModel> Model = new FModel();
+            if (!Model->Init(ImportedModel))
+            {
+                return nullptr;
+            }
+            
             if (!bEnableCache)
             {
-                return Mesh;
+                return Model;
             }
             
             const int32 Count = FMath::Max<int32>(Filename.Size() - 4, 0);
             FString NewFileName = Filename.SubString(0, Count);
             NewFileName += ".dxrmesh";
             
-            if (AddCacheEntry(Filename, NewFileName, Mesh))
+            if (AddCacheEntry(Filename, NewFileName, ImportedModel))
             {
-                return Mesh;
+                return Model;
             }
         }
     }
@@ -102,12 +114,12 @@ TSharedRef<FSceneData> FMeshImporter::ImportFromFile(const FStringView& InFilena
     return nullptr;
 }
 
-bool FMeshImporter::MatchExtenstion(const FStringView& FileName)
+bool FModelImporter::MatchExtenstion(const FStringView& FileName)
 {
     return FileName.EndsWith(".fbx", EStringCaseType::NoCase) || FileName.EndsWith(".obj", EStringCaseType::NoCase);
 }
 
-void FMeshImporter::LoadCacheFile()
+void FModelImporter::LoadCacheFile()
 {
     TArray<CHAR> FileContents;
     {
@@ -177,7 +189,7 @@ void FMeshImporter::LoadCacheFile()
     }
 }
 
-void FMeshImporter::UpdateCacheFile()
+void FModelImporter::UpdateCacheFile()
 {
     FString FileContents;
     for (auto Entry : Cache)
@@ -200,11 +212,11 @@ void FMeshImporter::UpdateCacheFile()
     } 
 }
 
-bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const TSharedRef<FSceneData>& Scene)
+bool FModelImporter::AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const TSharedPtr<FImportedModel>& ImportedModel)
 {
     FCustomScene SceneHeader;
-    SceneHeader.NumModels    = Scene->Models.Size();
-    SceneHeader.NumMaterials = Scene->Materials.Size();
+    SceneHeader.NumModels    = ImportedModel->Models.Size();
+    SceneHeader.NumMaterials = ImportedModel->Materials.Size();
 
     TArray<FCustomModel> Models;
     Models.Resize(SceneHeader.NumModels);
@@ -216,7 +228,7 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
         FCustomModel& CurrentModel = Models[ModelIndex];
         FMemory::Memzero(CurrentModel.Name, FCustomModel::MaxNameLength);
         
-        const FModelData& SceneModel = Scene->Models[ModelIndex];
+        const FMeshData& SceneModel = ImportedModel->Models[ModelIndex];
         SceneModel.Name.CopyToBuffer(CurrentModel.Name, FCustomModel::MaxNameLength);
         
         if (FCString::Strlen(CurrentModel.Name) == 0)
@@ -224,9 +236,9 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
             LOG_WARNING("Model has no name");
         }
         
-        CurrentModel.NumVertices   = SceneModel.Mesh.GetVertexCount();
-        CurrentModel.NumIndices    = SceneModel.Mesh.GetIndexCount();
-        CurrentModel.MaterialIndex = SceneModel.Mesh.Partitions[0].MaterialIndex;
+        CurrentModel.NumVertices   = SceneModel.GetVertexCount();
+        CurrentModel.NumIndices    = SceneModel.GetIndexCount();
+        CurrentModel.MaterialIndex = SceneModel.Partitions[0].MaterialIndex;
 
         NumTotalVertices += CurrentModel.NumVertices;
         NumTotalIndices  += CurrentModel.NumIndices;
@@ -241,14 +253,14 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
     TArray<uint32> SceneIndicies;
     SceneIndicies.Reserve(int32(NumTotalIndices));
 
-    for (const FModelData& Model : Scene->Models)
+    for (const FMeshData& Model : ImportedModel->Models)
     {
-        SceneVertices.Append(Model.Mesh.Vertices);
-        SceneIndicies.Append(Model.Mesh.Indices);
+        SceneVertices.Append(Model.Vertices);
+        SceneIndicies.Append(Model.Indices);
     }
 
     int32 NumTextures = 0;
-    for (const FMaterialData& Material : Scene->Materials)
+    for (const FImportedMaterial& Material : ImportedModel->Materials)
     {
         if (Material.DiffuseTexture)
             NumTextures++;
@@ -285,7 +297,7 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
         FCustomMaterial& CustomMaterial = Materials[Index];
         FMemory::Memzero(&CustomMaterial, sizeof(FCustomMaterial));
 
-        const FMaterialData& CurrentMaterial = Scene->Materials[Index];
+        const FImportedMaterial& CurrentMaterial = ImportedModel->Materials[Index];
         if (CurrentMaterial.DiffuseTexture)
         {
             CurrentMaterial.DiffuseTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
@@ -370,7 +382,7 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
         CustomMaterial.AO            = CurrentMaterial.AO;
         CustomMaterial.Roughness     = CurrentMaterial.Roughness;
         CustomMaterial.Metallic      = CurrentMaterial.Metallic;
-        CustomMaterial.MaterialFlags = CurrentMaterial.MaterialFlags;
+        CustomMaterial.MaterialFlags = static_cast<int32>(CurrentMaterial.MaterialFlags);
     }
 
     {
@@ -413,7 +425,7 @@ bool FMeshImporter::AddCacheEntry(const FString& OriginalFile, const FString& Ne
     return true;
 }
 
-TSharedRef<FSceneData> FMeshImporter::LoadCustom(const FString& InFilename)
+TSharedRef<FModel> FModelImporter::LoadCustom(const FString& InFilename)
 {
     TArray<uint8> FileContents;
     
@@ -452,7 +464,7 @@ TSharedRef<FSceneData> FMeshImporter::LoadCustom(const FString& InFilename)
     FCustomMaterial* Materials = reinterpret_cast<FCustomMaterial*>(Textures + SceneHeader->NumTextures);
 
     // Load all textures
-    TArray<FTextureResourceRef> LoadedTextures;
+    TArray<FTextureRef> LoadedTextures;
     LoadedTextures.Resize(SceneHeader->NumTextures);
 
     for (int32 Index = 0; Index < SceneHeader->NumTextures; ++Index)
@@ -468,12 +480,12 @@ TSharedRef<FSceneData> FMeshImporter::LoadCustom(const FString& InFilename)
     }
 
     // Reconstruct the data
-    TSharedRef<FSceneData> Scene = new FSceneData();
-    Scene->Models.Resize(SceneHeader->NumModels);
+    TSharedPtr<FImportedModel> ImportedModel = MakeSharedPtr<FImportedModel>();
+    ImportedModel->Models.Resize(SceneHeader->NumModels);
     
     for (int32 Index = 0; Index < SceneHeader->NumModels; ++Index)
     {
-        FModelData& CurrentModel = Scene->Models[Index];
+        FMeshData& CurrentModel = ImportedModel->Models[Index];
         
         MAYBE_UNUSED const int32 Length = FCString::Strlen(ModelHeaders[Index].Name);
         CHECK(Length < FCustomModel::MaxNameLength);
@@ -482,21 +494,21 @@ TSharedRef<FSceneData> FMeshImporter::LoadCustom(const FString& InFilename)
         LOG_INFO("Loaded Mesh '%s'", ModelHeaders[Index].Name);
 
         const int32 NumVertices = ModelHeaders[Index].NumVertices;
-        CurrentModel.Mesh.Vertices.Resize(NumVertices);
-        FMemory::Memcpy(CurrentModel.Mesh.Vertices.Data(), Vertices, NumVertices * sizeof(FVertex));
+        CurrentModel.Vertices.Resize(NumVertices);
+        FMemory::Memcpy(CurrentModel.Vertices.Data(), Vertices, NumVertices * sizeof(FVertex));
         Vertices += NumVertices;
 
         const int32 NumIndices = ModelHeaders[Index].NumIndices;
-        CurrentModel.Mesh.Indices.Resize(NumIndices);
-        FMemory::Memcpy(CurrentModel.Mesh.Indices.Data(), Indices, NumIndices * sizeof(uint32));
+        CurrentModel.Indices.Resize(NumIndices);
+        FMemory::Memcpy(CurrentModel.Indices.Data(), Indices, NumIndices * sizeof(uint32));
         Indices += NumIndices;
     }
 
-    Scene->Materials.Resize(SceneHeader->NumMaterials);
+    ImportedModel->Materials.Resize(SceneHeader->NumMaterials);
     
     for (int32 Index = 0; Index < SceneHeader->NumMaterials; ++Index)
     {
-        FMaterialData& Material = Scene->Materials[Index];
+        FImportedMaterial& Material = ImportedModel->Materials[Index];
         if (Materials[Index].DiffuseTexIndex >= 0)
         {
             Material.DiffuseTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].DiffuseTexIndex]->GetTexture2D());
@@ -537,5 +549,13 @@ TSharedRef<FSceneData> FMeshImporter::LoadCustom(const FString& InFilename)
         Material.Metallic      = Materials[Index].Metallic;
     }
 
-    return Scene;
+    TSharedRef<FModel> Model = new FModel();
+    if (!Model->Init(ImportedModel))
+    {
+        return nullptr;
+    }
+    else
+    {
+        return Model;
+    }
 }

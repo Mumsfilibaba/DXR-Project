@@ -7,7 +7,7 @@ class FWidgetPath;
 template<typename WidgetType>
 inline TSharedPtr<WidgetType> CreateWidget(const typename WidgetType::FInitializer& Initializer)
 {
-    TSharedPtr<WidgetType> NewWidget = MakeShared<WidgetType>();
+    TSharedPtr<WidgetType> NewWidget = MakeSharedPtr<WidgetType>();
     if (NewWidget)
     {
         NewWidget->Initialize(Initializer);

@@ -102,15 +102,15 @@ FPointLightRenderPass::~FPointLightRenderPass()
 
 void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
-    const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
-
+    const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
+    
     FGraphicsPipelineStateInstance* CachedPointLightPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedPointLightPSO)
     {
         TArray<uint8>         ShaderCode;
         TArray<FShaderDefine> ShaderDefines;
 
-        if (MaterialFlags & MaterialFlag_EnableHeight)
+        if (Material->HasHeightMap())
         {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
         }
@@ -119,7 +119,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_PackedDiffuseAlpha)
+        if (Material->HasPackedDiffuseAlpha())
         {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
         }
@@ -128,7 +128,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_EnableAlpha)
+        if (Material->HasAlphaMask())
         {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
         }
@@ -137,7 +137,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
         }
 
-        const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
+        const bool bUseViewInstancing  = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
         const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
         if (bUseViewInstancing)
         {
@@ -196,7 +196,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
 
         // Initialize standard input layout
         FRHIVertexLayoutInitializerList VertexElementList;
-        if (MaterialFlags & (MaterialFlag_EnableHeight | MaterialFlag_EnableAlpha))
+        if (Material->SupportsPixelDiscard())
         {
             VertexElementList =
             {
@@ -239,7 +239,7 @@ void FPointLightRenderPass::InitializePipelineState(FMaterial* Material, const F
         }
 
         FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        if (MaterialFlags & MaterialFlag_DoubleSided)
+        if (Material->IsDoubleSided())
         {
             RasterizerStateInitializer.CullMode = ECullMode::None;
         }
@@ -428,7 +428,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 for (const FMeshBatch& Batch : ScenePointLight->TwoPassMeshBatches[PassIndex])
                 {
                     FMaterial* Material = Batch.Material;
-                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
                     if (!Instance)
                     {
                         DEBUG_BREAK();
@@ -458,8 +458,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                Component->Mesh->VertexPositionBuffer.Get(),
-                                Component->Mesh->VertexTexCoordBuffer.Get(),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                             };
                             
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -468,7 +468,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                Component->Mesh->VertexPositionBuffer.Get(),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
                             };
                             
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
@@ -524,8 +524,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
             for (const FMeshBatch& Batch : ScenePointLight->SinglePassMeshBatch)
             {
                 FMaterial* Material = Batch.Material;
-
-                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
                 if (!Instance)
                 {
                     DEBUG_BREAK();
@@ -555,8 +554,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            Component->Mesh->VertexPositionBuffer.Get(),
-                            Component->Mesh->VertexTexCoordBuffer.Get(),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -565,7 +564,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            Component->Mesh->VertexPositionBuffer.Get(),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
@@ -618,8 +617,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                 for (const FMeshBatch& Batch : ScenePointLight->MeshBatches[FaceIndex])
                 {
                     FMaterial* Material = Batch.Material;
-
-                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
                     if (!Instance)
                     {
                         DEBUG_BREAK();
@@ -649,8 +647,8 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                Component->Mesh->VertexPositionBuffer.Get(),
-                                Component->Mesh->VertexTexCoordBuffer.Get(),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                             };
                             
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -659,7 +657,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                Component->Mesh->VertexPositionBuffer.Get(),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
                             };
                             
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
@@ -827,7 +825,7 @@ FCascadedShadowsRenderPass::~FCascadedShadowsRenderPass()
 void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
     // Cascaded shadow map
-    const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
+    const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
 
     FGraphicsPipelineStateInstance* CachedDirectionalLightPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedDirectionalLightPSO)
@@ -835,7 +833,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
         TArray<uint8>         ShaderCode;
         TArray<FShaderDefine> ShaderDefines;
 
-        if (MaterialFlags & MaterialFlag_EnableHeight)
+        if (Material->HasHeightMap())
         {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
         }
@@ -844,7 +842,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_PackedDiffuseAlpha)
+        if (Material->HasPackedDiffuseAlpha())
         {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
         }
@@ -853,7 +851,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_EnableAlpha)
+        if (Material->HasAlphaMask())
         {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
         }
@@ -862,7 +860,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
         }
 
-        const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarCSMEnableViewInstancing.GetValue();
+        const bool bUseViewInstancing  = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarCSMEnableViewInstancing.GetValue();
         const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
         if (bUseViewInstancing)
         {
@@ -912,8 +910,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             }
         }
 
-        constexpr EMaterialFlags PSFlags = MaterialFlag_EnableHeight | MaterialFlag_PackedDiffuseAlpha | MaterialFlag_EnableAlpha;
-        const bool bWantPixelShader = (MaterialFlags & PSFlags) != MaterialFlag_None;
+        const bool bWantPixelShader = Material->HasHeightMap() || Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha();
         if (bWantPixelShader)
         {
             CompileInfo = FShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
@@ -933,7 +930,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
 
         // Initialize standard input layout
         FRHIVertexLayoutInitializerList VertexElementList;
-        if (MaterialFlags & (MaterialFlag_EnableHeight | MaterialFlag_EnableAlpha))
+        if (Material->SupportsPixelDiscard())
         {
             VertexElementList =
             {
@@ -974,7 +971,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
         RasterizerStateInitializer.DepthBiasClamp       = 0.05f;
         RasterizerStateInitializer.SlopeScaledDepthBias = 1.0f;
 
-        if (MaterialFlags & MaterialFlag_DoubleSided)
+        if (Material->IsDoubleSided())
         {
             RasterizerStateInitializer.CullMode = ECullMode::None;
         }
@@ -1119,8 +1116,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             for (const FMeshBatch& Batch : SceneDirectionalLight->MeshBatches)
             {
                 FMaterial* Material = Batch.Material;
-
-                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
                 if (!Instance)
                 {
                     DEBUG_BREAK();
@@ -1149,8 +1145,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            Component->Mesh->VertexPositionBuffer.Get(),
-                            Component->Mesh->VertexTexCoordBuffer.Get(),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -1159,7 +1155,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            Component->Mesh->VertexPositionBuffer.Get(),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
@@ -1196,8 +1192,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             for (const FMeshBatch& Batch : SceneDirectionalLight->MeshBatches)
             {
                 FMaterial* Material = Batch.Material;
-
-                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
                 if (!Instance)
                 {
                     DEBUG_BREAK();
@@ -1226,8 +1221,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            Component->Mesh->VertexPositionBuffer.Get(),
-                            Component->Mesh->VertexTexCoordBuffer.Get(),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -1236,7 +1231,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                     {
                         FRHIBuffer* VertexBuffers[] =
                         {
-                            Component->Mesh->VertexPositionBuffer.Get(),
+                            Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
                         };
                         
                         CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
@@ -1282,7 +1277,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                 {
                     FMaterial* Material = Batch.Material;
 
-                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(Material->GetMaterialFlags());
+                    FGraphicsPipelineStateInstance* Instance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
                     if (!Instance)
                     {
                         DEBUG_BREAK();
@@ -1312,8 +1307,8 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                Component->Mesh->VertexPositionBuffer.Get(),
-                                Component->Mesh->VertexTexCoordBuffer.Get(),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                             };
                             
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -1322,7 +1317,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
                         {
                             FRHIBuffer* VertexBuffers[] =
                             {
-                                Component->Mesh->VertexPositionBuffer.Get(),
+                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
                             };
                             
                             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);

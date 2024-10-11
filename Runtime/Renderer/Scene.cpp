@@ -21,7 +21,7 @@ FMeshBatch::~FMeshBatch()
 
 void FMeshBatch::AddPrimitive(FProxySceneComponent* Primitive, int32 MaterialIndex)
 {
-    const FSubMesh& SubMesh = Primitive->Mesh->SubMeshes[MaterialIndex];
+    const FSubMesh& SubMesh = Primitive->Mesh->GetSubMesh(MaterialIndex);
     FMeshReference& MeshReference = Primitives.Emplace();
     MeshReference.Primitive    = Primitive;
     MeshReference.SubMeshIndex = MaterialIndex;
@@ -127,6 +127,7 @@ void FScene::AddProxyComponent(FProxySceneComponent* InComponent)
         
         for (int32 Index = 0; Index < InComponent->Materials.Size(); Index++)
         {
+            CHECK(InComponent->Materials[Index] != nullptr);
             Materials.AddUnique(InComponent->Materials[Index].Get());
         }
     }
@@ -212,8 +213,9 @@ void FScene::UpdateVisibility()
         FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.Transpose();
 
-        const FVector3 Top    = TransformMatrix.Transform(Component->Mesh->BoundingBox.Top);
-        const FVector3 Bottom = TransformMatrix.Transform(Component->Mesh->BoundingBox.Bottom);
+        const FAABB& BoundingBox = Component->Mesh->GetAABB();
+        const FVector3 Top    = TransformMatrix.Transform(BoundingBox.Top);
+        const FVector3 Bottom = TransformMatrix.Transform(BoundingBox.Bottom);
 
         // Frustum cull the main view
         FAABB Box(Top, Bottom);

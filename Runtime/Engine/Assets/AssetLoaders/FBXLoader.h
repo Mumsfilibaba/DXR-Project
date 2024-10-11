@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/SharedPtr.h"
 #include "Engine/Assets/SceneData.h"
 
 enum class EFBXFlags : uint8
@@ -17,5 +18,5 @@ ENUM_CLASS_OPERATORS(EFBXFlags);
 // TODO: Extend to save as well? 
 struct ENGINE_API FFBXLoader
 {
-    static TSharedRef<FSceneData> LoadFile(const FString& Filename, EFBXFlags Flags = EFBXFlags::Default) noexcept;
+    static TSharedPtr<FImportedModel> LoadFile(const FString& Filename, EFBXFlags Flags = EFBXFlags::Default) noexcept;
 };

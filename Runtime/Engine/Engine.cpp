@@ -10,7 +10,6 @@
 #include "Application/Widgets/Viewport.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Widgets/ConsoleWidget.h"
 #include "Engine/Widgets/FrameProfilerWidget.h"
@@ -133,7 +132,7 @@ bool FEngine::CreateSceneViewport()
     }
 
     // Create a SceneViewport
-    SceneViewport = MakeShared<FSceneViewport>(EngineViewportWidget);
+    SceneViewport = MakeSharedPtr<FSceneViewport>(EngineViewportWidget);
     if (!SceneViewport->InitializeRHI())
     {
         return false;
@@ -231,7 +230,7 @@ bool FEngine::Init()
     MaterialDesc.Roughness        = 1.0f;
     MaterialDesc.Albedo           = FVector3(1.0f);
 
-    BaseMaterial = MakeShared<FMaterial>(MaterialDesc);
+    BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
     BaseMaterial->AlbedoMap    = GEngine->BaseTexture;
     BaseMaterial->NormalMap    = GEngine->BaseNormal;
     BaseMaterial->RoughnessMap = GEngine->BaseTexture;
@@ -279,9 +278,9 @@ bool FEngine::Init()
     {
         IImguiPlugin::Get().SetMainViewport(EngineViewportWidget);
 
-        ProfilerWidget  = MakeShared<FFrameProfilerWidget>();
-        ConsoleWidget   = MakeShared<FConsoleWidget>();
-        InspectorWidget = MakeShared<FInspectorWidget>();
+        ProfilerWidget  = MakeSharedPtr<FFrameProfilerWidget>();
+        ConsoleWidget   = MakeSharedPtr<FConsoleWidget>();
+        InspectorWidget = MakeSharedPtr<FInspectorWidget>();
     }
 
     return true;

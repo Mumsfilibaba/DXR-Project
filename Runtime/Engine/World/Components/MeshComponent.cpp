@@ -13,12 +13,12 @@ FMeshComponent::FMeshComponent(const FObjectInitializer& ObjectInitializer)
 FProxySceneComponent* FMeshComponent::CreateProxyComponent()
 {
     FProxySceneComponent* NewComponent = new FProxySceneComponent();
-    NewComponent->Geometry     = Mesh->RTGeometry.Get();
-    NewComponent->VertexBuffer = Mesh->VertexBuffer.Get();
-    NewComponent->NumVertices  = Mesh->VertexCount;
-    NewComponent->IndexBuffer  = Mesh->IndexBuffer.Get();
-    NewComponent->NumIndices   = Mesh->IndexCount;
-    NewComponent->IndexFormat  = Mesh->IndexFormat;
+    NewComponent->Geometry     = Mesh->GetRayTracingGeometry();
+    NewComponent->VertexBuffer = Mesh->GetVertexBuffer(EVertexStream::Packed);
+    NewComponent->NumVertices  = Mesh->GetVertexCount();
+    NewComponent->IndexBuffer  = Mesh->GetIndexBuffer();
+    NewComponent->NumIndices   = Mesh->GetIndexCount();
+    NewComponent->IndexFormat  = Mesh->GetIndexFormat();
 
     NewComponent->CurrentActor = GetActorOwner();
     NewComponent->Mesh         = Mesh;
@@ -60,5 +60,6 @@ void FMeshComponent::SetMaterial(const TSharedPtr<FMaterial>& InMaterial, int32 
         Materials.Resize(Index + 1);
     }
     
+    CHECK(InMaterial != nullptr);
     Materials[Index] = InMaterial;
 }

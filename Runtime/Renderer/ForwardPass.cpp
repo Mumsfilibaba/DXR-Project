@@ -197,9 +197,9 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
 
             FRHIBuffer* VertexBuffers[] =
             {
-                Component->Mesh->VertexPositionBuffer.Get(),
-                Component->Mesh->VertexNormalBuffer.Get(),
-                Component->Mesh->VertexTexCoordBuffer.Get(),
+                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                Component->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
             };
             
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);

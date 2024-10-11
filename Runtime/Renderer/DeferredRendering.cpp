@@ -32,7 +32,7 @@ FDepthPrePass::~FDepthPrePass()
 
 void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
-    const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
+    const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
 
     FGraphicsPipelineStateInstance* CachedPrePassPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedPrePassPSO)
@@ -40,7 +40,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         TArray<uint8>         ShaderCode;
         TArray<FShaderDefine> ShaderDefines;
 
-        if (MaterialFlags & MaterialFlag_EnableHeight)
+        if (Material->HasHeightMap())
         {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
         }
@@ -49,7 +49,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_PackedDiffuseAlpha)
+        if (Material->HasPackedDiffuseAlpha())
         {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
         }
@@ -58,7 +58,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_EnableAlpha)
+        if (Material->HasAlphaMask())
         {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
         }
@@ -82,8 +82,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             return;
         }
 
-        constexpr EMaterialFlags PSFlags = MaterialFlag_EnableHeight | MaterialFlag_PackedDiffuseAlpha | MaterialFlag_EnableAlpha;
-        const bool bWantPixelShader = (MaterialFlags & PSFlags) != MaterialFlag_None;
+        const bool bWantPixelShader = Material->HasHeightMap() || Material->HasPackedDiffuseAlpha() || Material->HasAlphaMask();
         if (bWantPixelShader)
         {
             CompileInfo = FShaderCompileInfo("PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
@@ -114,7 +113,7 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
         }
 
         FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        if (MaterialFlags & MaterialFlag_DoubleSided)
+        if (Material->IsDoubleSided())
         {
             RasterizerStateInitializer.CullMode = ECullMode::None;
         }
@@ -138,11 +137,11 @@ void FDepthPrePass::InitializePipelineState(FMaterial* Material, const FFrameRes
             return;
         }
 
-        if (MaterialFlags & MaterialFlag_EnableHeight)
+        if (Material->HasHeightMap())
         {
             NewPipelineInstance.InputLayout = FrameResources.MeshInputLayout;
         }
-        else if (MaterialFlags & (MaterialFlag_PackedDiffuseAlpha | MaterialFlag_EnableAlpha))
+        else if (Material->HasAlphaMask() || Material->HasPackedDiffuseAlpha())
         {
             FRHIVertexLayoutInitializerList VertexElementList =
             {
@@ -265,7 +264,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             continue;
         }
 
-        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(Material->GetMaterialFlags());
+        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
@@ -310,8 +309,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    Component->Mesh->VertexPositionBuffer.Get(),
-                    Component->Mesh->VertexTexCoordBuffer.Get(),
+                    Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
@@ -320,9 +319,9 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    Component->Mesh->VertexPositionBuffer.Get(),
-                    Component->Mesh->VertexNormalBuffer.Get(),
-                    Component->Mesh->VertexTexCoordBuffer.Get(),
+                    Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                    Component->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                    Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
@@ -331,7 +330,7 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
             {
                 FRHIBuffer* VertexBuffers[] =
                 {
-                    Component->Mesh->VertexPositionBuffer.Get(),
+                    Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
                 };
                 
                 CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
@@ -364,7 +363,7 @@ FDeferredBasePass::~FDeferredBasePass()
 
 void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources)
 {
-    const EMaterialFlags MaterialFlags = Material->GetMaterialFlags();
+    const int32 MaterialFlags = static_cast<int32>(Material->GetMaterialFlags());
 
     FGraphicsPipelineStateInstance* CachedBasePassPSO = MaterialPSOs.Find(MaterialFlags);
     if (!CachedBasePassPSO)
@@ -372,7 +371,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         TArray<uint8>         ShaderCode;
         TArray<FShaderDefine> ShaderDefines;
 
-        if (MaterialFlags & MaterialFlag_EnableHeight)
+        if (Material->HasHeightMap())
         {
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(1)");
         }
@@ -381,7 +380,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             ShaderDefines.Emplace("ENABLE_PARALLAX_MAPPING", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_EnableNormalMapping)
+        if (Material->HasNormalMap())
         {
             ShaderDefines.Emplace("ENABLE_NORMAL_MAPPING", "(1)");
         }
@@ -390,7 +389,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             ShaderDefines.Emplace("ENABLE_NORMAL_MAPPING", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_PackedDiffuseAlpha)
+        if (Material->HasPackedDiffuseAlpha())
         {
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(1)");
         }
@@ -399,7 +398,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
             ShaderDefines.Emplace("ENABLE_PACKED_MATERIAL_TEXTURE", "(0)");
         }
 
-        if (MaterialFlags & MaterialFlag_EnableAlpha)
+        if (Material->HasAlphaMask())
         {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
         }
@@ -450,7 +449,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         }
 
         FRHIRasterizerStateInitializer RasterizerStateInitializer;
-        if (MaterialFlags & MaterialFlag_DoubleSided)
+        if (Material->IsDoubleSided())
         {
             RasterizerStateInitializer.CullMode = ECullMode::None;
         }
@@ -635,7 +634,7 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             continue;
         }
 
-        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(Material->GetMaterialFlags());
+        FGraphicsPipelineStateInstance* PipelineInstance = MaterialPSOs.Find(static_cast<int32>(Material->GetMaterialFlags()));
         if (!PipelineInstance)
         {
             DEBUG_BREAK();
@@ -704,9 +703,9 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
 
             FRHIBuffer* VertexBuffers[] =
             {
-                Component->Mesh->VertexPositionBuffer.Get(),
-                Component->Mesh->VertexNormalBuffer.Get(),
-                Component->Mesh->VertexTexCoordBuffer.Get(),
+                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                Component->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
             };
             
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
@@ -1389,7 +1388,7 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
             Component->CurrentOcclusionQuery = NewOcclusionQuery;
         }
 
-        const FAABB& BoundingBox = Component->Mesh->BoundingBox;
+        const FAABB& BoundingBox = Component->Mesh->GetAABB();
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
         Scale.x = FMath::Max<float>(Scale.x, 0.005f);

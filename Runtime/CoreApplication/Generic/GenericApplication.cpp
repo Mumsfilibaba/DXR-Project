@@ -2,7 +2,7 @@
 
 TSharedPtr<FGenericApplication> FGenericApplication::Create()
 {
-    return MakeShared<FGenericApplication>(TSharedPtr<ICursor>(nullptr));
+    return MakeSharedPtr<FGenericApplication>(TSharedPtr<ICursor>(nullptr));
 }
 
 FGenericApplication::FGenericApplication(const TSharedPtr<ICursor>& InCursor)

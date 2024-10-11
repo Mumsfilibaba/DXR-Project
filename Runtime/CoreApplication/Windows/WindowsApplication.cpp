@@ -33,7 +33,7 @@ TSharedPtr<FWindowsApplication> FWindowsApplication::CreateWindowsApplication()
     // TODO: Load icon resource here
     HICON Icon = ::LoadIcon(NULL, IDI_APPLICATION);
 
-    TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeShared<FWindowsApplication>(AppInstanceHandle, Icon);
+    TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeSharedPtr<FWindowsApplication>(AppInstanceHandle, Icon);
     WindowsApplication = NewWindowsApplication.Get();
     return NewWindowsApplication;
 }

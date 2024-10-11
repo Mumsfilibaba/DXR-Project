@@ -55,10 +55,10 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
         return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     }
     
-    return FTextureResource2DRef();
+    return FTexture2DRef();
 }
 
-TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags Flags) noexcept
+TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags Flags) noexcept
 {
     FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
     if (!File)
@@ -103,7 +103,7 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
     UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
-    TSharedRef<FSceneData> Scene = new FSceneData();
+    TSharedPtr<FImportedModel> Scene = MakeSharedPtr<FImportedModel>();
     Scene->Models.Reserve(FBXScene->getMeshCount());
     Scene->Materials.Reserve(MaterialCount);
 
@@ -113,7 +113,7 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
     // Get the global settings
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
 
-    FModelData ModelData;
+    FMeshData ModelData;
     for (int32 MeshIdx = 0; MeshIdx < FBXScene->getMeshCount(); MeshIdx++)
     {
         const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIdx);
@@ -127,7 +127,7 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
 
             LOG_INFO("Loading Material '%s'", CurrentMaterial->name);
 
-            FMaterialData MaterialData;
+            FImportedMaterial MaterialData;
             MaterialData.Name = CurrentMaterial->name;
 
             MaterialData.DiffuseTexture  = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
@@ -157,13 +157,13 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
         ofbx::Vec2Attributes TexCoords = GeometryData.getUVs();
 
         const int32 PartitionCount = GeometryData.getPartitionCount();
-        ModelData.Mesh.Indices.Reserve(Positions.count);
-        ModelData.Mesh.Vertices.Reserve(Positions.values_count);
-        ModelData.Mesh.Partitions.Reserve(PartitionCount);
+        ModelData.Indices.Reserve(Positions.count);
+        ModelData.Vertices.Reserve(Positions.values_count);
+        ModelData.Partitions.Reserve(PartitionCount);
         UniqueVertices.Reserve(Positions.values_count);
         
         // Clear the mesh data to start a new mesh
-        ModelData.Mesh.Clear();
+        ModelData.Clear();
         UniqueVertices.Clear();
 
         // Go through each mesh partition and add it to the scene as a separate mesh
@@ -174,9 +174,9 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
             PartitionIndicies.Resize(FbxPartition.max_polygon_triangles * NumIndiciesPerTriangle);
 
             // Create a new partition for the mesh
-            FMeshPartition& Partition = ModelData.Mesh.Partitions.Emplace();
-            Partition.BaseVertex = ModelData.Mesh.Vertices.Size();
-            Partition.StartIndex = ModelData.Mesh.Indices.Size();
+            FMeshPartition& Partition = ModelData.Partitions.Emplace();
+            Partition.BaseVertex = ModelData.Vertices.Size();
+            Partition.StartIndex = ModelData.Indices.Size();
             
             // Go through each polygon and add it to the mesh
             for (int32 PolygonIdx = 0; PolygonIdx < FbxPartition.polygon_count; ++PolygonIdx)
@@ -228,22 +228,22 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
                     uint32 UniqueIndex = 0;
                     if (!UniqueVertices.Contains(Vertex))
                     {
-                        UniqueIndex = static_cast<uint32>(ModelData.Mesh.Vertices.Size());
+                        UniqueIndex = static_cast<uint32>(ModelData.Vertices.Size());
                         UniqueVertices[Vertex] = UniqueIndex;
-                        ModelData.Mesh.Vertices.Add(Vertex);
+                        ModelData.Vertices.Add(Vertex);
                     }
                     else
                     {
                         UniqueIndex = UniqueVertices[Vertex];
                     }
 
-                    ModelData.Mesh.Indices.Emplace(UniqueIndex);
+                    ModelData.Indices.Emplace(UniqueIndex);
                 }
             }
 
             // Set the number of vertices/indices for this partition
-            Partition.VertexCount = ModelData.Mesh.Vertices.Size() - Partition.BaseVertex;
-            Partition.IndexCount  = ModelData.Mesh.Indices.Size() - Partition.StartIndex;
+            Partition.VertexCount = ModelData.Vertices.Size() - Partition.BaseVertex;
+            Partition.IndexCount  = ModelData.Indices.Size() - Partition.StartIndex;
 
             // Add material index to the mesh
             Partition.MaterialIndex = INVALID_MATERIAL_INDEX;
@@ -265,7 +265,7 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
         // If there are no tangents, then we calculate them
         if (!Tangents.values)
         {
-            FMeshUtilities::CalculateTangents(ModelData.Mesh);
+            FMeshUtilities::CalculateTangents(ModelData);
         }
         
         // Convert to left-handed
@@ -273,12 +273,12 @@ TSharedRef<FSceneData> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags F
         {
             if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
             {
-                FMeshUtilities::ReverseHandedness(ModelData.Mesh);
+                FMeshUtilities::ReverseHandedness(ModelData);
             }
         }
 
         // Add the mesh to our scene
-        if (ModelData.Mesh.Hasdata())
+        if (ModelData.Hasdata())
         {
             LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
             ModelData.Name = CurrentMesh->name;

@@ -9,7 +9,7 @@
 
 FConsoleWidget::FConsoleWidget()
     : IOutputDevice()
-    , InputHandler(MakeShared<FConsoleInputHandler>())
+    , InputHandler(MakeSharedPtr<FConsoleInputHandler>())
     , ImGuiDelegateHandle()
     , PopupSelectedText()
     , Candidates()

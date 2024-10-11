@@ -191,7 +191,7 @@ bool FApplicationInterface::Create()
         return false;
     }
 
-    ApplicationInstance = MakeShared<FApplicationInterface>();
+    ApplicationInstance = MakeSharedPtr<FApplicationInterface>();
     PlatformApplication->SetMessageHandler(ApplicationInstance);
     return true;
 }
@@ -916,7 +916,7 @@ void FApplicationInterface::OverridePlatformApplication(const TSharedPtr<FGeneri
     // Set a MessageHandler to avoid any potential nullptr access
     if (PlatformApplication)
     {
-        PlatformApplication->SetMessageHandler(MakeShared<FGenericApplicationMessageHandler>());
+        PlatformApplication->SetMessageHandler(MakeSharedPtr<FGenericApplicationMessageHandler>());
     }
 
     if (InPlatformApplication)

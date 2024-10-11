@@ -451,8 +451,7 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
             continue;
         }
 
-        FAABB& Box = Component->Mesh->BoundingBox;
-
+        const FAABB& Box = Component->Mesh->GetAABB();
         FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         FVector3 Position = Box.GetCenter();
 
@@ -498,7 +497,7 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
             FVector4 Color;
         } ShaderData;
 
-        const FAABB& BoundingBox = Component->Mesh->BoundingBox;
+        const FAABB& BoundingBox = Component->Mesh->GetAABB();
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
         Scale.x = FMath::Max<float>(Scale.x, 0.005f);

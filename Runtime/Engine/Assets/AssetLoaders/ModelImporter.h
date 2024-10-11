@@ -4,10 +4,10 @@
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Engine/Assets/SceneData.h"
-#include "Engine/Assets/IMeshImporter.h"
+#include "Engine/Assets/IModelImporter.h"
 
 // TODO: Move to the AssetManager
-class ENGINE_API FMeshImporter : public IMeshImporter
+class ENGINE_API FModelImporter : public IModelImporter
 {
     struct FCustomScene
     {
@@ -70,20 +70,20 @@ class ENGINE_API FMeshImporter : public IMeshImporter
     };
 
 public:
-    FMeshImporter();
-    ~FMeshImporter();
+    FModelImporter();
+    ~FModelImporter();
     
     bool Initialize();
     void Release();
 
-    virtual TSharedRef<FSceneData> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
+    virtual TSharedRef<FModel> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
     
-    TSharedRef<FSceneData> LoadCustom(const FString& Filename);
+    TSharedRef<FModel> LoadCustom(const FString& Filename);
 
     void LoadCacheFile();
     void UpdateCacheFile();
-    bool AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const TSharedRef<FSceneData>& Scene);
+    bool AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const TSharedPtr<FImportedModel>& Scene);
     
 private:
     // Maps the original path to the custom mesh format

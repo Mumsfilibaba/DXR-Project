@@ -101,7 +101,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 
     // Create Texture Cube
     const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-    FTextureResource2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
+    FTexture2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
     if (!Panorama)
     {
         DEBUG_BREAK();

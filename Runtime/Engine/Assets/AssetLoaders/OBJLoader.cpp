@@ -10,7 +10,7 @@
 
 #include <tiny_obj_loader.h>
 
-TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool ReverseHandedness)
+TSharedPtr<FImportedModel> FOBJLoader::LoadFile(const FString& Filename, bool ReverseHandedness)
 {
     // Load Scene File
     std::string                      Warning;
@@ -36,14 +36,14 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
     }
     
     // Create new scene
-    TSharedRef<FSceneData> Scene = new FSceneData();
+    TSharedPtr<FImportedModel> Scene = MakeSharedPtr<FImportedModel>();
     
     // Create All Materials in scene
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
     {
         // Create new material with default properties
-        FMaterialData MaterialData;
+        FImportedMaterial MaterialData;
         MaterialData.MetallicTexture  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
         MaterialData.DiffuseTexture   = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
         MaterialData.RoughnessTexture = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
@@ -54,7 +54,7 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
         MaterialData.Metallic      = Mat.ambient[0];
         MaterialData.AO            = 1.0f;
         MaterialData.Roughness     = 1.0f;
-        MaterialData.MaterialFlags = MaterialFlag_None;
+        MaterialData.MaterialFlags = EMaterialFlags::None;
 
         if (Mat.name.empty())
         {
@@ -70,7 +70,7 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
     }
 
     // Construct Scene
-    FModelData Data;
+    FMeshData Data;
     TMap<FVertex, uint32> UniqueVertices;
     
     constexpr uint32 NumIndiciesPerTriangle  = 3;
@@ -85,8 +85,8 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
         const uint32 IndexCount = static_cast<uint32>(Shape.mesh.indices.size());
 
         // Start a new mesh
-        Data.Mesh.Clear();
-        Data.Mesh.Indices.Reserve(IndexCount);
+        Data.Clear();
+        Data.Indices.Reserve(IndexCount);
         UniqueVertices.Clear();
 
         uint32 CurrentIndex = 0;
@@ -97,9 +97,9 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
             const int32 MaterialID = Shape.mesh.material_ids[Face];
 
             // Create a new partition for the mesh
-            FMeshPartition& Partition = Data.Mesh.Partitions.Emplace();
-            Partition.BaseVertex = Data.Mesh.Vertices.Size();
-            Partition.StartIndex = Data.Mesh.Indices.Size();
+            FMeshPartition& Partition = Data.Partitions.Emplace();
+            Partition.BaseVertex = Data.Vertices.Size();
+            Partition.StartIndex = Data.Indices.Size();
             
             if (MaterialID >= 0)
             {
@@ -140,23 +140,23 @@ TSharedRef<FSceneData> FOBJLoader::LoadFile(const FString& Filename, bool Revers
 
                 if (!UniqueVertices.Contains(Vertex))
                 {
-                    UniqueVertices[Vertex] = static_cast<uint32>(Data.Mesh.Vertices.Size());
-                    Data.Mesh.Vertices.Add(Vertex);
+                    UniqueVertices[Vertex] = static_cast<uint32>(Data.Vertices.Size());
+                    Data.Vertices.Add(Vertex);
                 }
 
-                Data.Mesh.Indices.Emplace(UniqueVertices[Vertex]);
+                Data.Indices.Emplace(UniqueVertices[Vertex]);
             }
 
             // Set the number of vertices/indices for this partition
-            Partition.VertexCount = Data.Mesh.Vertices.Size() - Partition.BaseVertex;
-            Partition.IndexCount  = Data.Mesh.Indices.Size() - Partition.StartIndex;
+            Partition.VertexCount = Data.Vertices.Size() - Partition.BaseVertex;
+            Partition.IndexCount  = Data.Indices.Size() - Partition.StartIndex;
             
             // Calculate tangents and create mesh
-            FMeshUtilities::CalculateTangents(Data.Mesh);
+            FMeshUtilities::CalculateTangents(Data);
 
             if (ReverseHandedness)
             {
-                FMeshUtilities::ReverseHandedness(Data.Mesh);
+                FMeshUtilities::ReverseHandedness(Data);
             }
 
             if (Shape.name.empty())

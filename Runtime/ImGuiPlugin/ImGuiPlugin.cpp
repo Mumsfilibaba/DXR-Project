@@ -319,7 +319,7 @@ bool FImGuiPlugin::Load()
 
     if (FApplicationInterface::IsInitialized())
     {
-        EventHandler = MakeShared<FImGuiEventHandler>();
+        EventHandler = MakeSharedPtr<FImGuiEventHandler>();
         FApplicationInterface::Get().RegisterInputHandler(EventHandler);
 
         OnMonitorConfigChangedDelegateHandle = FApplicationInterface::Get().GetOnMonitorConfigChangedEvent().AddRaw(this, &FImGuiPlugin::UpdateMonitorInfo);
@@ -355,7 +355,7 @@ bool FImGuiPlugin::Unload()
 
 bool FImGuiPlugin::InitRenderer()
 {
-    Renderer = MakeShared<FImGuiRenderer>();
+    Renderer = MakeSharedPtr<FImGuiRenderer>();
     if (!Renderer->Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ViewportRenderer ");
