@@ -36,11 +36,11 @@ private:
     ~FAssetManager();
 
     // Meshes
-    TArray<TSharedPtr<IModelImporter>>   MeshImporters;
-    FCriticalSection                     MeshImportersCS;
-    TMap<FString, int32>                 MeshesMap;
-    TArray<TSharedRef<FModel>>           Meshes;
-    FCriticalSection                     MeshesCS;
+    TArray<TSharedPtr<IModelImporter>>   ModelImporters;
+    FCriticalSection                     ModelImportersCS;
+    TMap<FString, int32>                 ModelsMap;
+    TArray<TSharedRef<FModel>>           Models;
+    FCriticalSection                     ModelsCS;
     
     // Textures
     TArray<TSharedPtr<ITextureImporter>> TextureImporters;

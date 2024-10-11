@@ -10,11 +10,11 @@
 FAssetManager* FAssetManager::GInstance = nullptr;
 
 FAssetManager::FAssetManager()
-    : MeshImporters()
-    , MeshImportersCS()
-    , MeshesMap()
-    , Meshes()
-    , MeshesCS()
+    : ModelImporters()
+    , ModelImportersCS()
+    , ModelsMap()
+    , Models()
+    , ModelsCS()
     , TextureImporters()
     , TextureImportersCS()
     , TextureMap()
@@ -31,8 +31,8 @@ FAssetManager::~FAssetManager()
     }
 
     {
-        SCOPED_LOCK(MeshImportersCS);
-        MeshImporters.Clear();
+        SCOPED_LOCK(ModelImportersCS);
+        ModelImporters.Clear();
     }
 }
 
@@ -132,24 +132,24 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
 
 TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImportFlags Flags)
 {
-    SCOPED_LOCK(MeshesCS);
+    SCOPED_LOCK(ModelsCS);
 
     // Convert backslashes
     FString FinalPath = Filename;
     ConvertBackslashes(FinalPath);
     
-    if (int32* MeshID = MeshesMap.Find(FinalPath))
+    if (int32* MeshID = ModelsMap.Find(FinalPath))
     {
         const int32 MeshIndex = *MeshID;
-        return Meshes[MeshIndex];
+        return Models[MeshIndex];
     }
     
     TSharedRef<FModel> NewModel;
     
     {
-        SCOPED_LOCK(MeshImportersCS);
+        SCOPED_LOCK(ModelImportersCS);
         
-        for (TSharedPtr<IModelImporter> Importer : MeshImporters)
+        for (TSharedPtr<IModelImporter> Importer : ModelImporters)
         {
             FStringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
@@ -168,17 +168,17 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", FinalPath.GetCString());
 
     // Insert the new texture
-    const int32 Index = Meshes.Size();
-    Meshes.Emplace(NewModel);
-    MeshesMap.Add(FinalPath, Index);
+    const int32 Index = Models.Size();
+    Models.Emplace(NewModel);
+    ModelsMap.Add(FinalPath, Index);
     return NewModel;
 }
 
 void FAssetManager::UnloadModel(const TSharedRef<FModel>& InModel)
 {
-    SCOPED_LOCK(MeshesCS);
+    SCOPED_LOCK(ModelsCS);
         
-    Meshes.Remove(InModel);
+    Models.Remove(InModel);
     // TODO: Remove mesh from map
 }
 
@@ -205,12 +205,12 @@ void FAssetManager::UnregisterTextureImporter(const TSharedPtr<ITextureImporter>
 
 void FAssetManager::RegisterModelImporter(const TSharedPtr<IModelImporter>& InImporter)
 {
-    SCOPED_LOCK(MeshImportersCS);
-    MeshImporters.AddUnique(InImporter);
+    SCOPED_LOCK(ModelImportersCS);
+    ModelImporters.AddUnique(InImporter);
 }
 
 void FAssetManager::UnregisterModelImporter(const TSharedPtr<IModelImporter>& InImporter)
 {
-    SCOPED_LOCK(MeshImportersCS);
-    MeshImporters.Remove(InImporter);
+    SCOPED_LOCK(ModelImportersCS);
+    ModelImporters.Remove(InImporter);
 }
