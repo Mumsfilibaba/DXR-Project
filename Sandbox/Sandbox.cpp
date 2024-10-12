@@ -15,10 +15,10 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA (0)
+#define LOAD_SPONZA (1)
 #define LOAD_BISTRO (0)
 #define LOAD_SUN_TEMPLE (0)
-#define LOAD_EMERALD_SQUARE (1)
+#define LOAD_EMERALD_SQUARE (0)
 
 #define ENABLE_LIGHT_TEST (0)
 #define ENABLE_MANY_SPHERES (0)
@@ -170,8 +170,9 @@ bool FSandbox::Init()
                     NewMaterial->RoughnessMap = GEngine->BaseTexture;
                     NewMaterial->AOMap        = GEngine->BaseTexture;
                     NewMaterial->MetallicMap  = GEngine->BaseTexture;
+                    
                     NewMaterial->Initialize();
-                    NewMaterial->SetDebugName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
+                    NewMaterial->SetName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
 
                     NewComponent->SetMesh(SphereMesh);
                     NewComponent->SetMaterial(NewMaterial);
@@ -288,7 +289,7 @@ bool FSandbox::Init()
             NewMaterial->MetallicMap  = MetallicMap->GetRHITexture();
             
             NewMaterial->Initialize();
-            NewMaterial->SetDebugName("GateMaterial");
+            NewMaterial->SetName("GateMaterial");
 
             NewComponent->SetMesh(FMesh::Create(CubeMeshData));
             NewComponent->SetMaterial(NewMaterial);
@@ -321,7 +322,7 @@ bool FSandbox::Init()
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
             
             NewMaterial->Initialize();
-            NewMaterial->SetDebugName("PlaneMaterial");
+            NewMaterial->SetName("PlaneMaterial");
 
             NewComponent->SetMesh(FMesh::Create(FMeshFactory::CreatePlane(10, 10)));
             NewComponent->SetMaterial(NewMaterial);
@@ -352,7 +353,7 @@ bool FSandbox::Init()
         StreetLightMaterial->MetallicMap  = MetallicMap->GetRHITexture();
 
         StreetLightMaterial->Initialize();
-        StreetLightMaterial->SetDebugName("StreetLightMaterial");
+        StreetLightMaterial->SetName("StreetLightMaterial");
 
         const int32 NumMeshes = StreetLightModel->GetNumMeshes();
         for (uint32 i = 0; i < 4; i++)
@@ -393,8 +394,9 @@ bool FSandbox::Init()
         PillarMaterial->RoughnessMap = GEngine->BaseTexture;
         PillarMaterial->AOMap        = GEngine->BaseTexture;
         PillarMaterial->MetallicMap  = GEngine->BaseTexture;
+        
         PillarMaterial->Initialize();
-        PillarMaterial->SetDebugName("PillarMaterial");
+        PillarMaterial->SetName("PillarMaterial");
 
         TSharedPtr<FMesh> Pillar = PillarModel->GetMesh(0);
         for (uint32 i = 0; i < 8; i++)
