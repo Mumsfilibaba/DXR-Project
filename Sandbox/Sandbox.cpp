@@ -15,10 +15,10 @@
 // TODO: Custom random
 #include <random>
 
-#define LOAD_SPONZA (1)
+#define LOAD_SPONZA (0)
 #define LOAD_BISTRO (0)
 #define LOAD_SUN_TEMPLE (0)
-#define LOAD_EMERALD_SQUARE (0)
+#define LOAD_EMERALD_SQUARE (1)
 
 #define ENABLE_LIGHT_TEST (0)
 #define ENABLE_MANY_SPHERES (0)
@@ -55,57 +55,77 @@ bool FSandbox::Init()
             const TSharedPtr<FMaterial>& Material = Sponza->GetMaterial(Index);
             if (Material->AlphaMask)
             {
-                Material->EnableDoubleSided(true);
-                Material->EnableAlphaMask(true);
+                const EMaterialFlags Flags = EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided;
+                Material->SetMaterialFlags(Flags, true);
             }
         }
 
         Sponza->AddToWorld(CurrentWorld);
     #elif LOAD_BISTRO
-        TSharedRef<FSceneData> BistroInterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
-        for (FMaterialData& Material : BistroInterior->Materials)
+        TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
+        int32 NumMaterials = BistroInterior->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
+            const TSharedPtr<FMaterial>& Material = BistroInterior->GetMaterial(Index);
+
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
             }
+            
+            Material->SetMaterialFlags(Flags, true);
         }
         
         BistroInterior->AddToWorld(CurrentWorld);
 
-        TSharedRef<FSceneData> BistroExterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
-        for (FMaterialData& Material : BistroExterior->Materials)
+        TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
+        NumMaterials = BistroExterior->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
+            const TSharedPtr<FMaterial>& Material = BistroExterior->GetMaterial(Index);
+            
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
             }
+            
+            Material->SetMaterialFlags(Flags, true);
         }
         
         BistroExterior->AddToWorld(CurrentWorld);
      #elif LOAD_SUN_TEMPLE
-        TSharedRef<FSceneData> SunTemple = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
-        for (FMaterialData& Material : SunTemple->Materials)
+        TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
+        int32 NumMaterials = SunTemple->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
+            const TSharedPtr<FMaterial>& Material = SunTemple->GetMaterial(Index);
+
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
             }
+            
+            Material->SetMaterialFlags(Flags, true);
         }
         
         SunTemple->AddToWorld(CurrentWorld);
      #elif LOAD_EMERALD_SQUARE
-        TSharedRef<FSceneData> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
-        for (FMaterialData& Material : EmeraldSquare_Day->Materials)
+        TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
+        int32 NumMaterials = EmeraldSquare_Day->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
+            const TSharedPtr<FMaterial>& Material = EmeraldSquare_Day->GetMaterial(Index);
+
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
             }
+            
+            Material->SetMaterialFlags(Flags, true);
         }
         
         EmeraldSquare_Day->AddToWorld(CurrentWorld);

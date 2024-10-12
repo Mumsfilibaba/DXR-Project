@@ -357,7 +357,7 @@ bool FModel::Init(const TSharedPtr<FImportedModel>& ImportedModel)
         }
 
         Material->Initialize();
-        Material->SetDebugName(ImportedModel->Materials[Index].Name);
+        Material->SetName(ImportedModel->Materials[Index].Name);
         
         Materials.Add(Material);
     }

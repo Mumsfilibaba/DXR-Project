@@ -10,11 +10,15 @@ FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
     , HeightMap()
     , AOMap()
     , MetallicMap()
+    , Name()
     , MaterialData()
     , MaterialInfo(InMaterialInfo)
     , MaterialBuffer()
     , bMaterialBufferIsDirty(true)
-    , DebugName()
+{
+}
+
+FMaterial::~FMaterial()
 {
 }
 
@@ -73,6 +77,18 @@ void FMaterial::SetAmbientOcclusion(float AmbientOcclusion)
     bMaterialBufferIsDirty        = true;
 }
 
+void FMaterial::SetMaterialFlags(EMaterialFlags InFlags, bool bUpdateOnly)
+{
+    if (bUpdateOnly)
+    {
+        MaterialInfo.MaterialFlags |= InFlags;
+    }
+    else
+    {
+        MaterialInfo.MaterialFlags = InFlags;
+    }
+}
+
 void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
     if (bForceForwardRender)
@@ -105,7 +121,7 @@ void FMaterial::EnableDoubleSided(bool bIsDoubleSided)
     }
 }
 
-void FMaterial::SetDebugName(const FString& InDebugName)
+void FMaterial::SetName(const FString& InName)
 {
-    DebugName = InDebugName;
+    Name = InName;
 }

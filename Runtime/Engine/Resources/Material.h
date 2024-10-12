@@ -54,7 +54,7 @@ class ENGINE_API FMaterial
 {
 public:
     FMaterial(const FMaterialInfo& InMaterialInfo);
-    ~FMaterial() = default;
+    ~FMaterial();
 
     void Initialize();
     void BuildBuffer(class FRHICommandList& CommandList);
@@ -66,14 +66,15 @@ public:
     void SetMetallic(float Metallic);
     void SetRoughness(float Roughness);
     void SetAmbientOcclusion(float AO);
-
+    void SetMaterialFlags(EMaterialFlags InFlags, bool bUpdateOnly = false);
+    
     void ForceForwardPass(bool bForceForwardRender);
     
     void EnableHeightMap(bool bEnableHeightMap);
     void EnableAlphaMask(bool bEnableAlphaMask);
     void EnableDoubleSided(bool bIsDoubleSided);
     
-    void SetDebugName(const FString& InDebugName);
+    void SetName(const FString& InName);
 
     bool HasAlphaMask()          const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableAlpha) != EMaterialFlags::None; }
     bool HasHeightMap()          const { return (MaterialInfo.MaterialFlags & EMaterialFlags::EnableHeight) != EMaterialFlags::None; }
@@ -112,6 +113,11 @@ public:
     {
         return MaterialInfo;
     }
+    
+    const FString& GetName() const
+    {
+        return Name;
+    }
 
 public:
     FRHITextureRef AlbedoMap;
@@ -124,10 +130,10 @@ public:
     FRHITextureRef AlphaMask;
 
 private:
+    FString             Name;
     FMaterialHLSL       MaterialData;
     FMaterialInfo       MaterialInfo;
     bool                bMaterialBufferIsDirty;
     FRHIBufferRef       MaterialBuffer;
     FRHISamplerStateRef Sampler;
-    FString             DebugName;
 };

@@ -43,7 +43,7 @@ void FImportedModel::AddToWorld(FWorld* World)
             }
 
             Material->Initialize();
-            Material->SetDebugName(MaterialData.Name);
+            Material->SetName(MaterialData.Name);
 
             CreatedMaterials.Add(Material);
         }
