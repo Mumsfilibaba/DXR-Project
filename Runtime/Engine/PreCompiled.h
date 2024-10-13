@@ -1,17 +1,17 @@
 #pragma once
-#include "Engine/Assets/AssetLoaders/FBXLoader.h"
-#include "Engine/Assets/AssetLoaders/ModelImporter.h"
-#include "Engine/Assets/AssetLoaders/OBJLoader.h"
-
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/ITextureImporter.h"
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Assets/MeshUtilities.h"
 #include "Engine/Assets/SceneData.h"
-#include "Engine/Assets/TextureImporterBase.h"
-#include "Engine/Assets/TextureImporterDDS.h"
 #include "Engine/Assets/TextureResource.h"
 #include "Engine/Assets/VertexFormat.h"
+
+#include "Engine/Assets/AssetImporters/TextureImporterBase.h"
+#include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
+#include "Engine/Assets/AssetImporters/FBXImporter.h"
+#include "Engine/Assets/AssetImporters/OBJImporter.h"
+#include "Engine/Assets/AssetImporters/ModelImporter.h"
 
 #include "Engine/Core/ObjectClass.h"
 #include "Engine/Core/Object.h"

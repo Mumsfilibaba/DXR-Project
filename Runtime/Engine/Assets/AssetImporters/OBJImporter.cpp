@@ -1,4 +1,3 @@
-#include "OBJLoader.h"
 #include "Core/Math/MathCommon.h"
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
@@ -7,10 +6,11 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Engine/Assets/MeshUtilities.h"
 #include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/AssetImporters/OBJImporter.h"
 
 #include <tiny_obj_loader.h>
 
-TSharedPtr<FImportedModel> FOBJLoader::LoadFile(const FString& Filename, bool ReverseHandedness)
+TSharedRef<FModel> FOBJImporter::ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags)
 {
     // Load Scene File
     std::string                      Warning;
@@ -20,19 +20,20 @@ TSharedPtr<FImportedModel> FOBJLoader::LoadFile(const FString& Filename, bool Re
     tinyobj::attrib_t                Attributes;
 
     // Extract just the name of the file
-    FString MTLFiledir          = FFileHelpers::ExtractFilepath(Filename);
-    FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(Filename);
+    const FString Filename            = FString(InFileName);
+    const FString MTLFiledir          = FFileHelpers::ExtractFilepath(Filename);
+    const FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
     {
-        LOG_ERROR("[FOBJLoader]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
+        LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
         return nullptr;
     }
     
     if (!Warning.empty())
     {
-        LOG_WARNING("[FOBJLoader]: Loaded '%s' with Warning: %s", Filename.GetCString(), Warning.c_str());
+        LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", Filename.GetCString(), Warning.c_str());
     }
     
     // Create new scene
@@ -154,7 +155,8 @@ TSharedPtr<FImportedModel> FOBJLoader::LoadFile(const FString& Filename, bool Re
             // Calculate tangents and create mesh
             FMeshUtilities::CalculateTangents(Data);
 
-            if (ReverseHandedness)
+            const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
+            if (bReverseHandedness)
             {
                 FMeshUtilities::ReverseHandedness(Data);
             }
@@ -176,6 +178,19 @@ TSharedPtr<FImportedModel> FOBJLoader::LoadFile(const FString& Filename, bool Re
     Scene->Models.Shrink();
     Scene->Materials.Shrink();
 
-    LOG_INFO("[FOBJLoader]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
-    return Scene;
+    TSharedRef<FModel> Model = new FModel();
+    if (!Model->Init(Scene))
+    {
+        return nullptr;
+    }
+    else
+    {
+        LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
+        return Model;
+    }
+}
+
+bool FOBJImporter::MatchExtenstion(const FStringView& FileName)
+{
+    return FileName.EndsWith(".obj", EStringCaseType::NoCase);
 }

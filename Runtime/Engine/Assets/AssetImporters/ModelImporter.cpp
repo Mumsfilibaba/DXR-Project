@@ -4,9 +4,9 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/AssetLoaders/ModelImporter.h"
-#include "Engine/Assets/AssetLoaders/FBXLoader.h"
-#include "Engine/Assets/AssetLoaders/OBJLoader.h"
+#include "Engine/Assets/AssetImporters/ModelImporter.h"
+#include "Engine/Assets/AssetImporters/FBXImporter.h"
+#include "Engine/Assets/AssetImporters/OBJImporter.h"
 
 static TAutoConsoleVariable<bool> CVarEnableMeshCache(
     "Engine.EnableMeshCache",
@@ -53,12 +53,12 @@ TSharedRef<FModel> FModelImporter::ImportFromFile(const FStringView& InFilename,
             FBXFlags |= EFBXFlags::ApplyScaleFactor;
         }
         
-        if ((Flags & EMeshImportFlags::EnsureLeftHanded) != EMeshImportFlags::None)
+        if ((Flags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None)
         {
             FBXFlags |= EFBXFlags::ForceLeftHanded;
         }
 
-        TSharedPtr<FImportedModel> ImportedModel = FFBXLoader::LoadFile(Filename, FBXFlags);
+        TSharedPtr<FImportedModel> ImportedModel;// = FFBXImporter::LoadFile(Filename, FBXFlags);
         if (ImportedModel)
         {
             TSharedRef<FModel> Model = new FModel();
@@ -86,7 +86,7 @@ TSharedRef<FModel> FModelImporter::ImportFromFile(const FStringView& InFilename,
     {
         const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
         
-        TSharedPtr<FImportedModel> ImportedModel = FOBJLoader::LoadFile(Filename, bReverseHandedness);
+        TSharedPtr<FImportedModel> ImportedModel;//  = FOBJLoader::LoadFile(Filename, bReverseHandedness);
         if (ImportedModel)
         {
             TSharedRef<FModel> Model = new FModel();
@@ -116,7 +116,7 @@ TSharedRef<FModel> FModelImporter::ImportFromFile(const FStringView& InFilename,
 
 bool FModelImporter::MatchExtenstion(const FStringView& FileName)
 {
-    return FileName.EndsWith(".fbx", EStringCaseType::NoCase) || FileName.EndsWith(".obj", EStringCaseType::NoCase);
+    return false;
 }
 
 void FModelImporter::LoadCacheFile()

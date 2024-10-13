@@ -1,12 +1,12 @@
-#include "FBXLoader.h"
-#include "Engine/Assets/VertexFormat.h"
-#include "Engine/Assets/MeshUtilities.h"
-#include "Engine/Assets/AssetManager.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Engine/Assets/VertexFormat.h"
+#include "Engine/Assets/MeshUtilities.h"
+#include "Engine/Assets/AssetManager.h"
+#include "Engine/Assets/AssetImporters/FBXImporter.h"
 
 #include <ofbx.h>
 
@@ -58,12 +58,14 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     return FTexture2DRef();
 }
 
-TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFlags Flags) noexcept
+TSharedRef<FModel> FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags)
 {
+    const FString Filename = FString(InFilename);
+    
     FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
     if (!File)
     {
-        LOG_ERROR("[FFBXLoader]: Failed to open '%s'", Filename.GetCString());
+        LOG_ERROR("[FFBXImporter]: Failed to open '%s'", Filename.GetCString());
         return nullptr;
     }
 
@@ -74,7 +76,7 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
     const int32 NumBytesRead = File->Read(FileContent.Data(), FileSize);
     if (NumBytesRead <= 0)
     {
-        LOG_ERROR("[FFBXLoader]: Failed to load '%s'", Filename.GetCString());
+        LOG_ERROR("[FFBXImporter]: Failed to load '%s'", Filename.GetCString());
         return nullptr;
     }
 
@@ -82,10 +84,21 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
     if (!FBXScene)
     {
         const CHAR* ErrorString = ofbx::getError();
-        LOG_ERROR("[FFBXLoader]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
+        LOG_ERROR("[FFBXImporter]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
         return nullptr;
     }
 
+    EFBXFlags FBXFlags = EFBXFlags::None;
+    if ((InFlags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None)
+    {
+        FBXFlags |= EFBXFlags::ApplyScaleFactor;
+    }
+    
+    if ((InFlags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None)
+    {
+        FBXFlags |= EFBXFlags::ForceLeftHanded;
+    }
+    
     // Estimate sizes to avoid to many allocations
     uint32 MaterialCount = 0;
     for (int32 MeshIndex = 0; MeshIndex < FBXScene->getMeshCount(); ++MeshIndex)
@@ -125,7 +138,7 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
                 continue;
             }
 
-            LOG_INFO("Loading Material '%s'", CurrentMaterial->name);
+            LOG_INFO("[FFBXImporter] Loading Material '%s'", CurrentMaterial->name);
 
             FImportedMaterial MaterialData;
             MaterialData.Name = CurrentMaterial->name;
@@ -196,7 +209,7 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
                     Vertex.Position = Transform.Transform(Position);
 
                     // Apply the scene scale
-                    if ((Flags & EFBXFlags::ApplyScaleFactor) != EFBXFlags::None)
+                    if ((FBXFlags & EFBXFlags::ApplyScaleFactor) != EFBXFlags::None)
                     {
                         Vertex.Position *= GlobalSettings->UnitScaleFactor;
                     }
@@ -258,7 +271,7 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
 
             if (Partition.MaterialIndex == INVALID_MATERIAL_INDEX)
             {
-                LOG_WARNING("Partition in Mesh '%s' has no material", CurrentMesh->name);
+                LOG_WARNING("[FFBXImporter] Partition in Mesh '%s' has no material", CurrentMesh->name);
             }
         }
         
@@ -269,7 +282,7 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
         }
         
         // Convert to left-handed
-        if ((Flags & EFBXFlags::ForceLeftHanded) != EFBXFlags::None)
+        if ((FBXFlags & EFBXFlags::ForceLeftHanded) != EFBXFlags::None)
         {
             if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
             {
@@ -280,13 +293,13 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
         // Add the mesh to our scene
         if (ModelData.Hasdata())
         {
-            LOG_INFO("Loaded Mesh '%s'", CurrentMesh->name);
+            LOG_INFO("[FFBXImporter] Loaded Mesh '%s'", CurrentMesh->name);
             ModelData.Name = CurrentMesh->name;
             Scene->Models.Emplace(ModelData);
         }
         else
         {
-            LOG_WARNING("Tried to load mesh without any data");
+            LOG_WARNING("[FFBXImporter] Tried to load mesh without any data");
         }
     }
 
@@ -294,5 +307,20 @@ TSharedPtr<FImportedModel> FFBXLoader::LoadFile(const FString& Filename, EFBXFla
     Scene->Materials.Shrink();
 
     FBXScene->destroy();
-    return Scene;
+    
+    TSharedRef<FModel> Model = new FModel();
+    if (!Model->Init(Scene))
+    {
+        return nullptr;
+    }
+    else
+    {
+        LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
+        return Model;
+    }
+}
+
+bool FFBXImporter::MatchExtenstion(const FStringView& FileName)
+{
+    return FileName.EndsWith(".fbx", EStringCaseType::NoCase);
 }

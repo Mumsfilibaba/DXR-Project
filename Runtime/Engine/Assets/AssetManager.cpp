@@ -3,9 +3,11 @@
 #include "Core/Utilities/StringUtilities.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/TextureImporterDDS.h"
-#include "Engine/Assets/TextureImporterBase.h"
-#include "Engine/Assets/AssetLoaders/ModelImporter.h"
+#include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
+#include "Engine/Assets/AssetImporters/TextureImporterBase.h"
+#include "Engine/Assets/AssetImporters/ModelImporter.h"
+#include "Engine/Assets/AssetImporters/FBXImporter.h"
+#include "Engine/Assets/AssetImporters/OBJImporter.h"
 
 FAssetManager* FAssetManager::GInstance = nullptr;
 
@@ -43,9 +45,13 @@ bool FAssetManager::Initialize()
         GInstance = new FAssetManager();
         CHECK(GInstance != nullptr);
         
+        // Importers for textures
         GInstance->RegisterTextureImporter(MakeSharedPtr<FTextureImporterDDS>());
         GInstance->RegisterTextureImporter(MakeSharedPtr<FTextureImporterBase>());
         
+        // Importers for models
+        GInstance->RegisterModelImporter(MakeSharedPtr<FFBXImporter>());
+        GInstance->RegisterModelImporter(MakeSharedPtr<FOBJImporter>());
         GInstance->RegisterModelImporter(MakeSharedPtr<FModelImporter>());
         return true;
     }
