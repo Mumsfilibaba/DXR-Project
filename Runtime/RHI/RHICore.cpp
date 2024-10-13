@@ -16,3 +16,8 @@ RHI_API uint32          GRHIRayTracingMaxRecursionDepth = 0;
 RHI_API bool             GRHISupportsVRS              = false;
 RHI_API EShadingRateTier GRHIShadingRateTier          = EShadingRateTier::NotSupported;
 RHI_API uint32           GRHIShadingRateImageTileSize = 0;
+
+// Draw-Indirect
+RHI_API bool   GRHISupportDrawIndirect      = true;
+RHI_API bool   GRHISupportMultiDrawIndirect = false;
+RHI_API uint32 GRHIMaxDrawIndirectCount     = 0;

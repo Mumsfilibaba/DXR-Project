@@ -62,3 +62,8 @@ extern RHI_API uint32          GRHIRayTracingMaxRecursionDepth;
 extern RHI_API bool             GRHISupportsVRS;
 extern RHI_API EShadingRateTier GRHIShadingRateTier;
 extern RHI_API uint32           GRHIShadingRateImageTileSize;
+
+// Draw-Indirect
+extern RHI_API bool   GRHISupportDrawIndirect;
+extern RHI_API bool   GRHISupportMultiDrawIndirect;
+extern RHI_API uint32 GRHIMaxDrawIndirectCount;

@@ -953,10 +953,6 @@ bool FVulkanDevice::PostLoaderInitalize()
 
         GRHIRayTracingMaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
     }
-    else
-    {
-        GRHIRayTracingTier = ERayTracingTier::NotSupported;
-    }
 
     GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
 
@@ -977,18 +973,14 @@ bool FVulkanDevice::PostLoaderInitalize()
 
         // TODO: Finish this part
         GRHIShadingRateImageTileSize = 0;
-        GRHIShadingRateTier = EShadingRateTier::NotSupported;
-    }
-    else
-    {
-        GRHIShadingRateTier = EShadingRateTier::NotSupported;
+        GRHIShadingRateTier          = EShadingRateTier::NotSupported;
     }
 
     GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
 
     // GeometryShader Support 
-    const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
-    if (GVulkanAllowGeometryShaders && DeviceFeatures.geometryShader)
+    const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
+    if (GVulkanAllowGeometryShaders && PhysicalDeviceFeatures.geometryShader)
     {
         GRHISupportsGeometryShaders = true;
     }
@@ -1011,12 +1003,16 @@ bool FVulkanDevice::PostLoaderInitalize()
         GRHIMaxViewInstanceCount   = MultiviewProperties.maxMultiviewViewCount;
         GRHISupportsViewInstancing = true;
     }
-    else
-    {
-        GRHIMaxViewInstanceCount   = 0;
-        GRHISupportsViewInstancing = false;
-    }
 
+    // Draw-Indirect Support
+    const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
+    if (PhysicalDeviceFeatures.multiDrawIndirect)
+    {
+        GRHISupportMultiDrawIndirect = true;
+        GRHIMaxDrawIndirectCount     = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
+    }
+    
+    GRHISupportDrawIndirect = true;
     return true;
 }
 
