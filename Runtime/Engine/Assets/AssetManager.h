@@ -2,10 +2,10 @@
 #include "Core/Containers/Map.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Core/Platform/CriticalSection.h"
-#include "Engine/Assets/TextureResource.h"
 #include "Engine/Assets/ITextureImporter.h"
 #include "Engine/Assets/IModelImporter.h"
 #include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/TextureResource.h"
 
 struct FModelImporter;
 struct FModelSerializer;

@@ -4,7 +4,6 @@
 #include "Engine/Assets/MeshFactory.h"
 #include "Engine/Assets/MeshUtilities.h"
 #include "Engine/Assets/SceneData.h"
-#include "Engine/Assets/TextureResource.h"
 #include "Engine/Assets/VertexFormat.h"
 
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
@@ -16,8 +15,10 @@
 #include "Engine/Core/ObjectClass.h"
 #include "Engine/Core/Object.h"
 
+#include "Engine/Resources/Resource.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/TextureResource.h"
 
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Actors/PlayerInput.h"

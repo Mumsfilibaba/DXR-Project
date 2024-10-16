@@ -54,14 +54,14 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
 
         return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     }
-    
+
     return FTexture2DRef();
 }
 
 TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags)
 {
     const FString Filename = FString(InFilename);
-    
+
     FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
     if (!File)
     {
@@ -93,12 +93,12 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
     {
         FBXFlags |= EFBXFlags::ApplyScaleFactor;
     }
-    
+
     if ((InFlags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None)
     {
         FBXFlags |= EFBXFlags::ForceLeftHanded;
     }
-    
+
     // Estimate sizes to avoid to many allocations
     uint32 MaterialCount = 0;
     for (int32 MeshIndex = 0; MeshIndex < FBXScene->getMeshCount(); ++MeshIndex)
@@ -174,7 +174,7 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
         ModelData.Vertices.Reserve(Positions.values_count);
         ModelData.Partitions.Reserve(PartitionCount);
         UniqueVertices.Reserve(Positions.values_count);
-        
+
         // Clear the mesh data to start a new mesh
         ModelData.Clear();
         UniqueVertices.Clear();
@@ -190,7 +190,7 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
             FMeshPartition& Partition = ModelData.Partitions.Emplace();
             Partition.BaseVertex = ModelData.Vertices.Size();
             Partition.StartIndex = ModelData.Indices.Size();
-            
+
             // Go through each polygon and add it to the mesh
             for (int32 PolygonIdx = 0; PolygonIdx < FbxPartition.polygon_count; ++PolygonIdx)
             {
@@ -274,13 +274,13 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
                 LOG_WARNING("[FFBXImporter] Partition in Mesh '%s' has no material", CurrentMesh->name);
             }
         }
-        
+
         // If there are no tangents, then we calculate them
         if (!Tangents.values)
         {
             FMeshUtilities::CalculateTangents(ModelData);
         }
-        
+
         // Convert to left-handed
         if ((FBXFlags & EFBXFlags::ForceLeftHanded) != EFBXFlags::None)
         {
@@ -307,7 +307,7 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
     Scene->Materials.Shrink();
 
     FBXScene->destroy();
-    
+
     LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
     return Scene;
 }

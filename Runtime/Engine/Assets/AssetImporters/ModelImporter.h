@@ -25,7 +25,7 @@ namespace ModelFormat
     };
 
     static_assert(TAlignmentOf<FFileHeader>::Value == sizeof(uint64));
-    
+
     struct FModelHeader
     {
         int32 MeshDataOffset;     // Offset to where the MeshData starts
@@ -46,7 +46,7 @@ namespace ModelFormat
         int32 TextureDataOffset;  // Offset to where the TextureData starts
         int32 NumTextures;        // Number of Textures
     };
-    
+
     struct FMeshInfo
     {
         CHAR  Name[MODEL_FORMAT_MAX_NAME_LENGTH]; // Name of the mesh
@@ -60,7 +60,7 @@ namespace ModelFormat
         int32 FirstIndex;   // First Index in the IndexArray
         int32 NumIndices;   // Number of Indicies for this Mesh
     };
-    
+
     struct FSubMeshInfo
     {
         int32 BaseVertex;    // BaseOffset relative to the mesh
@@ -71,12 +71,12 @@ namespace ModelFormat
         
         int32 MaterialIndex; // Index into the MaterialArray in the file
     };
-    
+
     struct FTextureInfo
     {
         CHAR Filepath[MODEL_FORMAT_MAX_NAME_LENGTH];
     };
-    
+
     struct FMaterialInfo
     {
         // Texture-index reference a TextureHeader in the file
@@ -88,7 +88,7 @@ namespace ModelFormat
         int32    RoughnessTextureIdx;
         int32    MetallicTextureIdx;
         int32    AlphaMaskTextureIdx;
-        
+
         // Pure MaterialData
         FVector3 Diffuse;
         float    AO;
@@ -109,6 +109,6 @@ struct ENGINE_API FModelImporter : public IModelImporter
 struct ENGINE_API FModelSerializer
 {
     virtual ~FModelSerializer() = default;
-    
+
     bool Serialize(const FString& Filename, const TSharedPtr<FImportedModel>& Model);
 };

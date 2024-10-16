@@ -6,7 +6,7 @@
 #include "RHI/RHICommandList.h"
 #include "Engine/EngineModule.h"
 #include "Engine/Assets/MeshFactory.h"
-#include "Engine/Assets/Resource.h"
+#include "Engine/Resources/Resource.h"
 
 struct FSubMesh
 {
@@ -44,7 +44,7 @@ public:
     bool Init(const FMeshData& Data);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
     
-    FRHIBuffer* GetVertexBuffer(EVertexStream VertexStream)const;
+    FRHIBuffer* GetVertexBuffer(EVertexStream VertexStream) const;
     FRHIShaderResourceView* GetVertexBufferSRV(EVertexStream VertexStream) const;
     
     FRHIBuffer* GetIndexBuffer() const

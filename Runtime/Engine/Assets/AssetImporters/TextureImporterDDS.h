@@ -4,7 +4,7 @@
 struct FTextureImporterDDS : public ITextureImporter
 {
     virtual ~FTextureImporterDDS() = default;
-    
+
     virtual TSharedRef<FTexture> ImportFromFile(const FStringView& FileName) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };

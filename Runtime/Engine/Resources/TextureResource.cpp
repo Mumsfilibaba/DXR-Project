@@ -1,4 +1,4 @@
-#include "TextureResource.h"
+#include "Engine/Resources/TextureResource.h"
 #include "RendererCore/TextureFactory.h"
 #include "RHI/RHI.h"
 

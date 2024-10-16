@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/RHIResources.h"
 #include "Engine/EngineModule.h"
-#include "Engine/Assets/Resource.h"
+#include "Engine/Resources/Resource.h"
 #include "RendererCore/TextureResourceData.h"
 
 class FTexture;

@@ -1,8 +1,8 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Platform/PlatformMisc.h"
-#include "Engine/Assets/TextureResource.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
+#include "Engine/Resources/TextureResource.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC FMemory::Malloc

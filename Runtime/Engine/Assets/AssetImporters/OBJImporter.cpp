@@ -35,10 +35,10 @@ TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFil
     {
         LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", Filename.GetCString(), Warning.c_str());
     }
-    
+
     // Create new scene
     TSharedPtr<FImportedModel> Scene = MakeSharedPtr<FImportedModel>();
-    
+
     // Create All Materials in scene
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
@@ -73,7 +73,7 @@ TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFil
     // Construct Scene
     FMeshData Data;
     TMap<FVertex, uint32> UniqueVertices;
-    
+
     constexpr uint32 NumIndiciesPerTriangle  = 3;
     constexpr uint32 NumPositionsPerTriangle = 3;
     constexpr uint32 NumNormalsPerTriangle   = 3;
