@@ -220,7 +220,7 @@ namespace SPMCTest
         TArray<FGenericThread*> Consumers;
         for (int32 i = 0; i < NumConsumers; ++i)
         {
-            TUniquePtr<FConsumerThread>& Interface = ConsumerInterfaces.Add(MakeUnique<FConsumerThread>());
+            TUniquePtr<FConsumerThread>& Interface = ConsumerInterfaces.Add(MakeUniquePtr<FConsumerThread>());
             Consumers.Add(FPlatformThread::Create(Interface.Get(), "ConsumerThread", false));
         }
 

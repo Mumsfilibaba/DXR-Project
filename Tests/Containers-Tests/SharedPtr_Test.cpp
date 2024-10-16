@@ -285,7 +285,7 @@ bool TSharedPtr_Test()
         TSharedPtr<uint32[]> UintArr1 = WeakArr.ToSharedPtr();
         TEST_REF_COUNT(UintArr0, 2, 2);
 
-        TUniquePtr<uint32[]> UniqueUintArr = MakeUnique<uint32[]>(5);
+        TUniquePtr<uint32[]> UniqueUintArr = MakeUniquePtr<uint32[]>(5);
 
         std::cout << "----Testing Index operator----" << std::endl;
         WeakArr[0] = 5;
@@ -325,7 +325,7 @@ bool TSharedPtr_Test()
 
     std::cout << "----Testing Unique to Shared----" << std::endl;
     {
-        TUniquePtr<uint32> UniqueInt = MakeUnique<uint32>(5);
+        TUniquePtr<uint32> UniqueInt = MakeUniquePtr<uint32>(5);
         TEST_CHECK(UniqueInt != nullptr);
 
         TSharedPtr<uint32> UintPtr3 = TSharedPtr<uint32>(::Move(UniqueInt));
@@ -335,7 +335,7 @@ bool TSharedPtr_Test()
 
     std::cout << "----Testing UniquePtr (Scalar)----" << std::endl;
     {
-        TUniquePtr<uint32> Unique0 = MakeUnique<uint32>(5);
+        TUniquePtr<uint32> Unique0 = MakeUniquePtr<uint32>(5);
         TEST_CHECK(*Unique0 == 5);
         
         TUniquePtr<uint32> Unique1 = nullptr;
@@ -354,7 +354,7 @@ bool TSharedPtr_Test()
 
     std::cout << "----Testing UniquePtr (Array)----" << std::endl;
     {
-        TUniquePtr<uint32[]> Unique0 = MakeUnique<uint32[]>(5);
+        TUniquePtr<uint32[]> Unique0 = MakeUniquePtr<uint32[]>(5);
         TUniquePtr<uint32[]> Unique1 = nullptr;
         TUniquePtr<uint32[]> Unique2 = TUniquePtr<uint32[]>(new uint32[5]);
         Unique2.Reset(new uint32[15]);
@@ -376,7 +376,7 @@ bool TSharedPtr_Test()
         TArray<TUniquePtr<int32>> UniqueArray;
         for (uint32 i = 0; i < 200; i++)
         {
-            UniqueArray.Emplace(MakeUnique<int32>(i));
+            UniqueArray.Emplace(MakeUniquePtr<int32>(i));
         }
 
         TArray<TUniquePtr<int32>> UniqueArray2 = ::Move(UniqueArray);

@@ -721,7 +721,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
             return false;
         }
         
-        TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(PipelineCacheSize);
+        TUniquePtr<uint8[]> PipelineCacheData = MakeUniquePtr<uint8[]>(PipelineCacheSize);
         Result = vkGetPipelineCacheData(GetDevice()->GetVkDevice(), PipelineCache, &PipelineCacheSize, PipelineCacheData.Get());
         if (VULKAN_FAILED(Result))
         {
@@ -795,7 +795,7 @@ bool FVulkanPipelineStateManager::LoadCacheFromFile()
     }
 
     // Load the data
-    TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(DataHeader.DataSize);
+    TUniquePtr<uint8[]> PipelineCacheData = MakeUniquePtr<uint8[]>(DataHeader.DataSize);
     BytesRead = CacheFile->Read(PipelineCacheData.Get(), static_cast<uint32>(DataHeader.DataSize));
     if (BytesRead != static_cast<int64>(DataHeader.DataSize))
     {

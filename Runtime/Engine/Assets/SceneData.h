@@ -57,6 +57,11 @@ struct FMeshData
         return Indices.Size();
     }
 
+    int32 GetSubMeshCount() const
+    {
+        return Partitions.Size();
+    }
+    
     /** @brief - Name of the mesh specified in the model-file */
     FString Name;
     

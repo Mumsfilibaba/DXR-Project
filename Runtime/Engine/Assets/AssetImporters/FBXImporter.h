@@ -19,6 +19,6 @@ struct ENGINE_API FFBXImporter : public IModelImporter
 {
     virtual ~FFBXImporter() = default;
     
-    virtual TSharedRef<FModel> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
+    virtual TSharedPtr<FImportedModel> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };

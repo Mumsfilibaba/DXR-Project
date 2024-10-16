@@ -20,7 +20,6 @@ FRHI* FVulkanRHIModule::CreateRHI()
     return new FVulkanRHI();
 }
 
-
 FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 
 FVulkanRHI::FVulkanRHI()
@@ -156,10 +155,14 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures12     = AdapterCreateInfo.RequiredFeatures12;
 
     // Enable GeometryShaders if the device supports them
-    const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
-    if (DeviceFeatures.geometryShader)
+    const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
+    if (PhysicalDeviceFeatures.geometryShader)
     {
         DeviceCreateInfo.RequiredFeatures.geometryShader = VK_TRUE;
+    }
+    if (PhysicalDeviceFeatures.multiDrawIndirect)
+    {
+        DeviceCreateInfo.RequiredFeatures.multiDrawIndirect = VK_TRUE;
     }
 
     Device = new FVulkanDevice(GetInstance(), GetAdapter());

@@ -10,7 +10,7 @@
 
 #include <tiny_obj_loader.h>
 
-TSharedRef<FModel> FOBJImporter::ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags)
+TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags)
 {
     // Load Scene File
     std::string                      Warning;
@@ -178,16 +178,8 @@ TSharedRef<FModel> FOBJImporter::ImportFromFile(const FStringView& InFileName, E
     Scene->Models.Shrink();
     Scene->Materials.Shrink();
 
-    TSharedRef<FModel> Model = new FModel();
-    if (!Model->Init(Scene))
-    {
-        return nullptr;
-    }
-    else
-    {
-        LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
-        return Model;
-    }
+    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
+    return Scene;
 }
 
 bool FOBJImporter::MatchExtenstion(const FStringView& FileName)

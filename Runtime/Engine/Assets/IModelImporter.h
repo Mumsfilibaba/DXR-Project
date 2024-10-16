@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
-#include "Core/Containers/SharedRef.h"
+#include "Core/Containers/SharedPtr.h"
 
-struct FModel;
+struct FImportedModel;
 
 enum class EMeshImportFlags : uint8
 {
@@ -20,7 +20,7 @@ struct IModelImporter
 {
     virtual ~IModelImporter() = default;
 
-    virtual TSharedRef<FModel> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) = 0;
+    virtual TSharedPtr<FImportedModel> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) = 0;
 
     /** @Return: Returns true if the FileName matches extension for this importer */
     virtual bool MatchExtenstion(const FStringView& FileName) = 0;

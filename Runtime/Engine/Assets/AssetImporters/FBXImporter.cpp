@@ -58,7 +58,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     return FTexture2DRef();
 }
 
-TSharedRef<FModel> FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags)
+TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags)
 {
     const FString Filename = FString(InFilename);
     
@@ -308,16 +308,8 @@ TSharedRef<FModel> FFBXImporter::ImportFromFile(const FStringView& InFilename, E
 
     FBXScene->destroy();
     
-    TSharedRef<FModel> Model = new FModel();
-    if (!Model->Init(Scene))
-    {
-        return nullptr;
-    }
-    else
-    {
-        LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
-        return Model;
-    }
+    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
+    return Scene;
 }
 
 bool FFBXImporter::MatchExtenstion(const FStringView& FileName)

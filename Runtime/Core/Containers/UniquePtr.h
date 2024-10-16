@@ -560,14 +560,14 @@ NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<ElementType
 
 
 template<typename ElementType, typename... ArgTypes>
-NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUnique(ArgTypes&&... Args) noexcept requires(TNot<TIsArray<ElementType>>::Value)
+NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUniquePtr(ArgTypes&&... Args) noexcept requires(TNot<TIsArray<ElementType>>::Value)
 {
     ElementType* UniquePtr = new ElementType(Forward<ArgTypes>(Args)...);
     return TUniquePtr<ElementType>(UniquePtr);
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUnique(uint64 Size) noexcept requires(TIsArray<ElementType>::Value)
+NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUniquePtr(uint64 Size) noexcept requires(TIsArray<ElementType>::Value)
 {
     typedef typename TRemoveExtent<ElementType>::Type Type;
 

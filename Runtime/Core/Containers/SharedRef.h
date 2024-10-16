@@ -206,7 +206,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Object != nullptr);
+        return Object != nullptr;
     }
 
 public:
@@ -348,67 +348,65 @@ private:
     ElementType* Object{nullptr};
 };
 
-
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() == RHS);
+    return LHS.Get() == RHS;
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator==(ElementType* LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (LHS == RHS.Get());
+    return LHS == RHS.Get();
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, U* RHS) noexcept
 {
-    return (LHS.Get() != RHS);
+    return LHS.Get() != RHS;
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator!=(ElementType* LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (LHS != RHS.Get());
+    return LHS != RHS.Get();
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (LHS.Get() == RHS.Get());
+    return LHS.Get() == RHS.Get();
 }
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, const TSharedRef<U>& RHS) noexcept
 {
-    return (LHS.Get() != RHS.Get());
+    return LHS.Get() != RHS.Get();
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return LHS.Get() == nullptr;
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedRef<ElementType>& RHS) noexcept
 {
-    return (nullptr == RHS.Get());
+    return RHS.Get() == nullptr;
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return LHS.Get() != nullptr;
 }
 
 template<typename ElementType>
 NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedRef<ElementType>& RHS) noexcept
 {
-    return (nullptr != RHS.Get());
+    return RHS.Get() != nullptr;
 }
-
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE TSharedRef<ElementType> MakeSharedRef(U* InRefCountedObject)
@@ -421,7 +419,6 @@ NODISCARD FORCEINLINE TSharedRef<ElementType> MakeSharedRef(U* InRefCountedObjec
 
     return nullptr;
 }
-
 
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE TSharedRef<ElementType> StaticCastSharedRef(const TSharedRef<U>& Pointer)

@@ -60,7 +60,7 @@ static bool InitializeOutputDevices()
 
     if (FPlatformMisc::IsDebuggerPresent())
     {
-        GDebuggerOutputDevice = MakeUnique<FDebuggerOutputDevice>();
+        GDebuggerOutputDevice = MakeUniquePtr<FDebuggerOutputDevice>();
         FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 

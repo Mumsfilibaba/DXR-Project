@@ -1,7 +1,11 @@
+#include "Core/Utilities/StringUtilities.h"
+#include "Core/Platform/PlatformFile.h"
+#include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Utilities/StringUtilities.h"
+#include "Core/Misc/Parse.h"
 #include "RHI/RHICommandList.h"
+#include "Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/TextureImporterDDS.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
@@ -9,10 +13,154 @@
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
+static TAutoConsoleVariable<bool> CVarEnableAssetConversion(
+    "Engine.AssetManager.EnableAssetConversion",
+    "Enable conversion and serialization to the engine's custom format instead of loading from source",
+    true,
+    EConsoleVariableFlags::Default);
+
+static FString ReplaceExtension(const FString& Filename, const FString& NewExtension)
+{
+    const int32 Position = Filename.FindLastChar('.');
+    if (Position == FString::INVALID_INDEX)
+    {
+        return Filename;
+    }
+    
+    FString NewFilename = Filename.SubString(0, Position);
+    NewFilename += NewExtension;
+    return NewFilename;
+}
+
+FAssetRegistry::FAssetRegistry()
+    : RegistryMap()
+    , RegistryFilename()
+{
+    const FString AssetPath   = FString(FProjectManager::Get().GetAssetPath());
+    const FString ProjectName = FString(FProjectManager::Get().GetProjectName());
+    RegistryFilename = AssetPath + "/" + ProjectName + ".assetregistry";
+}
+
+FAssetRegistry::~FAssetRegistry()
+{
+}
+
+FString* FAssetRegistry::FindFile(const FString& SrcFilename)
+{
+    return RegistryMap.Find(SrcFilename);
+}
+
+void FAssetRegistry::AddEntry(const FString& SrcFilename, const FString& Filename)
+{
+    RegistryMap.Add(SrcFilename, Filename);
+    UpdateRegistryFile();
+}
+
+void FAssetRegistry::RemoveEntry(const FString& SrcFilename)
+{
+    RegistryMap.Remove(SrcFilename);
+    UpdateRegistryFile();
+}
+
+void FAssetRegistry::LoadRegistryFile()
+{
+    TArray<CHAR> FileContents;
+    {
+        FFileHandleRef File = FPlatformFile::OpenForRead(RegistryFilename);
+        if (!File)
+        {
+            return;
+        }
+
+        // Read the full file
+        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
+        {
+            return;
+        }
+    }
+
+    CHAR* Start = FileContents.Data();
+    while (Start && (*Start != '\0'))
+    {
+        // Skip newline chars
+        while (*Start == '\n')
+            ++Start;
+
+        CHAR* LineStart = Start;
+        FParse::ParseLine(&Start);
+
+        // End string at the end of line
+        if (*Start == '\n')
+        {
+            *(Start++) = '\0';
+        }
+
+        // Skip any spaces at the beginning of the line
+        FParse::ParseWhiteSpace(&LineStart);
+        
+        if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
+        {
+            *EqualSign = '\0';
+
+            CHAR* KeyEnd = EqualSign - 1;
+            while (*KeyEnd == ' ')
+                *(KeyEnd--) = '\0';
+
+            // The parsed key
+            CHAR* Key = LineStart;
+            LineStart = EqualSign + 1;
+            
+            FParse::ParseWhiteSpace(&LineStart);
+
+            // Find the end of the value
+            CHAR* Value    = LineStart;
+            CHAR* ValueEnd = FCString::Strchr(LineStart, ' ');
+
+            // Use line-end as backup
+            if (!ValueEnd)
+            {
+                ValueEnd = Start;
+            }
+
+            while (*ValueEnd == ' ')
+                *(ValueEnd--) = '\0';
+
+            FString NewValue      = Value;
+            FString OriginalValue = Key;
+            RegistryMap.Emplace(Move(OriginalValue), Move(NewValue));
+        }
+    }
+}
+
+void FAssetRegistry::UpdateRegistryFile()
+{
+    FString FileContents;
+    for (TMap<FString, FString>::IteratorType Iterator = RegistryMap.CreateIterator(); !Iterator.IsEnd(); Iterator++)
+    {
+        FileContents.AppendFormat("%s = %s\n", Iterator.GetKey().GetCString(), Iterator.GetValue().GetCString());
+    }
+
+    {
+        FFileHandleRef File = FPlatformFile::OpenForWrite(RegistryFilename);
+        if (!File)
+        {
+            return;
+        }
+
+        // Write the full file
+        if (!FFileHelpers::WriteTextFile(File.Get(), FileContents))
+        {
+            return;
+        }
+    }
+}
+
 FAssetManager* FAssetManager::GInstance = nullptr;
 
 FAssetManager::FAssetManager()
-    : ModelImporters()
+    : AssetRegistry(nullptr)
+    , ModelSerializer(nullptr)
+    , ModelImporters()
     , ModelImportersCS()
     , ModelsMap()
     , Models()
@@ -23,6 +171,11 @@ FAssetManager::FAssetManager()
     , Textures()
     , TexturesCS()
 {
+    AssetRegistry = MakeUniquePtr<FAssetRegistry>();
+    AssetRegistry->LoadRegistryFile();
+    
+    ModelImporter   = MakeUniquePtr<FModelImporter>();
+    ModelSerializer = MakeUniquePtr<FModelSerializer>();
 }
 
 FAssetManager::~FAssetManager()
@@ -95,10 +248,11 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
         
         for (TSharedPtr<ITextureImporter> Importer : TextureImporters)
         {
-            FStringView FileNameView(FinalPath);
+            const FStringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
             {
                 NewTexture = Importer->ImportFromFile(FileNameView);
+                break;
             }
         }
     }
@@ -149,34 +303,84 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
         const int32 MeshIndex = *MeshID;
         return Models[MeshIndex];
     }
+        
+    // Insert the a new model into the assetmanager
+    const auto InsertModel = [this](const FString& Filename, const TSharedPtr<FImportedModel>& InImportedModel)
+    {
+        if (!InImportedModel)
+        {
+            return TSharedRef<FModel>(nullptr);
+        }
+        
+        TSharedRef<FModel> NewModel = new FModel();
+        if (!NewModel->Init(InImportedModel))
+        {
+            return TSharedRef<FModel>(nullptr);
+        }
+        
+        const int32 Index = Models.Size();
+        Models.Emplace(NewModel);
+        ModelsMap.Add(Filename, Index);
+        return NewModel;
+    };
+
+    TSharedRef<FModel>         NewModel;
+    TSharedPtr<FImportedModel> NewImportedModel;
     
-    TSharedRef<FModel> NewModel;
+    // If we have enabled serialization then look up the cached model
+    const bool bEnableAssetConversion = CVarEnableAssetConversion.GetValue();
+    if (bEnableAssetConversion)
+    {
+        if (FString* ExistingPath = AssetRegistry->FindFile(FinalPath))
+        {
+            const FStringView FileNameView(*ExistingPath);
+            NewImportedModel = ModelImporter->ImportFromFile(FileNameView, Flags);
+            
+            NewModel = InsertModel(FinalPath, NewImportedModel);
+            if (NewModel)
+            {
+                LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", FinalPath.GetCString());
+                return NewModel;
+            }
+            else
+            {
+                AssetRegistry->RemoveEntry(FinalPath);
+            }
+        }
+    }
     
+    // If we did not load custom format, reload source file
     {
         SCOPED_LOCK(ModelImportersCS);
         
         for (TSharedPtr<IModelImporter> Importer : ModelImporters)
         {
-            FStringView FileNameView(FinalPath);
+            const FStringView FileNameView(FinalPath);
             if (Importer->MatchExtenstion(FileNameView))
             {
-                NewModel = Importer->ImportFromFile(FileNameView, Flags);
+                NewImportedModel = Importer->ImportFromFile(FileNameView, Flags);
+                break;
             }
         }
     }
     
+    NewModel = InsertModel(FinalPath, NewImportedModel);
     if (!NewModel)
     {
         LOG_ERROR("[FAssetManager]: Unsupported mesh format. Failed to load '%s'.", FinalPath.GetCString());
         return nullptr;
     }
     
+    if (bEnableAssetConversion)
+    {
+        const FString NewFilename = ReplaceExtension(FinalPath, ".dxrmesh");
+        if (ModelSerializer->Serialize(NewFilename, NewImportedModel))
+        {
+            AssetRegistry->AddEntry(FinalPath, NewFilename);
+        }
+    }
+    
     LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", FinalPath.GetCString());
-
-    // Insert the new texture
-    const int32 Index = Models.Size();
-    Models.Emplace(NewModel);
-    ModelsMap.Add(FinalPath, Index);
     return NewModel;
 }
 

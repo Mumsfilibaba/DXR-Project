@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
+#include "Core/Containers/Stream.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -151,6 +152,7 @@ struct CORE_API FGenericPlatformFile
 class CORE_API FFileHelpers
 {
 public:
+    static bool ReadFile(IFileHandle* File, FByteInputStream& OutData);
     static bool ReadFile(IFileHandle* File, TArray<uint8>& OutData);
     static bool ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText);
 

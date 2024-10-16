@@ -1110,7 +1110,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         TScopedLock Lock(PipelineLibraryCS);
 
         SIZE_T PipelineCacheSize = PipelineLibrary->GetSerializedSize();
-        TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(PipelineCacheSize);
+        TUniquePtr<uint8[]> PipelineCacheData = MakeUniquePtr<uint8[]>(PipelineCacheSize);
         HRESULT hResult = PipelineLibrary->Serialize(PipelineCacheData.Get(), PipelineCacheSize);
         if (FAILED(hResult))
         {

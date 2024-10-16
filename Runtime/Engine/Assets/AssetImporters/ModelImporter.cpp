@@ -1,561 +1,329 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
+#include "Core/Containers/Stream.h"
 #include "Core/Misc/Parse.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "Core/Misc/CRC.h"
 #include "Project/ProjectManager.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/ModelImporter.h"
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
-static TAutoConsoleVariable<bool> CVarEnableMeshCache(
-    "Engine.EnableMeshCache",
-    "Enable mesh-cache",
-    false,
-    EConsoleVariableFlags::Default);
-
-FModelImporter::FModelImporter()
-    : Cache()
+TSharedPtr<FImportedModel> FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags)
 {
-    LoadCacheFile();
-}
-
-FModelImporter::~FModelImporter()
-{
-    UpdateCacheFile();
-}
-
-TSharedRef<FModel> FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags Flags)
-{
-    const FString Filename = FString(InFilename);
+    FByteInputStream InputStream;
     
-    const bool bEnableCache = CVarEnableMeshCache.GetValue();
-    if (bEnableCache)
     {
-        if (FString* MeshName = Cache.Find(Filename))
+        const FString Filename = FString(InFilename);
+        FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
+        if (!File)
         {
-            TSharedRef<FModel> ExistingMesh = LoadCustom(*MeshName);
-            if (ExistingMesh)
-            {
-                return ExistingMesh;
-            }
+            return nullptr;
+        }
 
-            Cache.Remove(Filename);
-            UpdateCacheFile();
+        // Read the full file
+        if (!FFileHelpers::ReadFile(File.Get(), InputStream))
+        {
+            return nullptr;
         }
     }
 
-    if (Filename.EndsWith(".fbx", EStringCaseType::NoCase))
+    // 1) Read file-header
+    ModelFormat::FFileHeader FileHeader;
+    InputStream.Read(FileHeader);
+    
+    if (FMemory::Memcmp(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic)) != 0)
     {
-        EFBXFlags FBXFlags = EFBXFlags::None;
-        if ((Flags & EMeshImportFlags::ApplyScaleFactor) != EMeshImportFlags::None)
+        return nullptr;
+    }
+    
+    if (FileHeader.VersionMajor != MODEL_FORMAT_VERSION_MAJOR || FileHeader.VersionMinor != MODEL_FORMAT_VERSION_MINOR)
+    {
+        return nullptr;
+    }
+    
+    const uint64 DataSize = InputStream.Size() - sizeof(ModelFormat::FFileHeader);
+    if (FileHeader.DataSize != DataSize)
+    {
+        return nullptr;
+    }
+    
+    const uint64 DataCRC = FCRC32::Generate(InputStream.PeekData(), DataSize);
+    if (FileHeader.DataCRC != DataCRC)
+    {
+        return nullptr;
+    }
+    
+    // 2) Model Header
+    const ModelFormat::FModelHeader* ModelHeader = InputStream.PeekData<ModelFormat::FModelHeader>();
+
+    // Load MeshData
+    TSharedPtr<FImportedModel> ImportedModel = MakeSharedPtr<FImportedModel>();
+    ImportedModel->Models.Resize(ModelHeader->NumMeshes);
+
+    // 3) Mesh Headers
+    const ModelFormat::FMeshInfo*    MeshHeaders = InputStream.PeekData<ModelFormat::FMeshInfo>(ModelHeader->MeshDataOffset);
+    const ModelFormat::FSubMeshInfo* SubMeshData = InputStream.PeekData<ModelFormat::FSubMeshInfo>(ModelHeader->SubMeshDataOffset);
+
+    // 4) Geometry Buffers
+    const FVertex* VertexData = InputStream.PeekData<FVertex>(ModelHeader->VertexDataOffset);
+    const uint32*  IndexData  = InputStream.PeekData<uint32>(ModelHeader->IndexDataOffset);
+    
+    for (int32 MeshIdx = 0; MeshIdx < ModelHeader->NumMeshes; ++MeshIdx)
+    {
+        FMeshData& CurrentMesh = ImportedModel->Models[MeshIdx];
+        
+        const ModelFormat::FMeshInfo& MeshHeader = MeshHeaders[MeshIdx];
+        MAYBE_UNUSED const int32 Length = FCString::Strlen(MeshHeader.Name);
+        CHECK(Length < MODEL_FORMAT_MAX_NAME_LENGTH);
+
+        CurrentMesh.Name = MeshHeader.Name;
+        LOG_INFO("Loaded Mesh '%s'", MeshHeader.Name);
+
+        const ModelFormat::FSubMeshInfo* SubMeshes = SubMeshData + MeshHeader.FirstSubMesh;
+        CurrentMesh.Partitions.Reserve(MeshHeader.NumSubMeshes);
+        
+        const FVertex* Vertices = VertexData + MeshHeader.FirstVertex;
+        CurrentMesh.Vertices.Reset(Vertices, MeshHeader.NumVertices);
+        
+        const uint32* Indices = IndexData + MeshHeader.FirstIndex;
+        CurrentMesh.Indices.Reset(Indices, MeshHeader.NumIndices);
+
+        for (int32 SubMeshIdx = 0; SubMeshIdx < MeshHeader.NumSubMeshes; SubMeshIdx++)
         {
-            FBXFlags |= EFBXFlags::ApplyScaleFactor;
+            FMeshPartition& MeshPartition = CurrentMesh.Partitions.Emplace();
+            MeshPartition.BaseVertex    = SubMeshes[SubMeshIdx].BaseVertex;
+            MeshPartition.VertexCount   = SubMeshes[SubMeshIdx].NumVertices;
+            MeshPartition.StartIndex    = SubMeshes[SubMeshIdx].StartIndex;
+            MeshPartition.IndexCount    = SubMeshes[SubMeshIdx].NumIndicies;
+            MeshPartition.MaterialIndex = SubMeshes[SubMeshIdx].MaterialIndex;
+        }
+    }
+
+    // Load Textures
+    TArray<FTextureRef> LoadedTextures;
+    LoadedTextures.Resize(ModelHeader->NumTextures);
+
+    // 5) Textures
+    const ModelFormat::FTextureInfo* Textures = InputStream.PeekData<ModelFormat::FTextureInfo>(ModelHeader->TextureDataOffset);
+    for (int32 TextureIdx = 0; TextureIdx < ModelHeader->NumTextures; ++TextureIdx)
+    {
+        const FStringView FilenameView = Textures[TextureIdx].Filepath;
+        if (!FPlatformFile::IsFile(FilenameView.GetCString()))
+        {
+            LOG_ERROR("[FModelImporter] Stored file contains a invalid file reference, file will be reloaded from source");
+            return nullptr;
+        }
+
+        const FString Filename = FString(FilenameView);
+        LoadedTextures[TextureIdx] = FAssetManager::Get().LoadTexture(Filename);
+        if (!LoadedTextures[TextureIdx])
+        {
+            LOG_ERROR("[FModelImporter] Failed to load texture '%s'", Filename.GetCString());
+            return nullptr;
+        }
+    }
+    
+    // Retrieve a texture from the loaded texture and ensure it is valid
+    const auto RetrieveTexture = [&](int32 TextureIdx)
+    {
+        if (TextureIdx < 0 || TextureIdx >= LoadedTextures.Size())
+        {
+            return FTexture2DRef(nullptr);
         }
         
-        if ((Flags & EMeshImportFlags::ForceLeftHanded) != EMeshImportFlags::None)
+        if (const FTextureRef& Texture = LoadedTextures[TextureIdx])
         {
-            FBXFlags |= EFBXFlags::ForceLeftHanded;
+            return MakeSharedRef<FTexture2D>(Texture->GetTexture2D());
         }
-
-        TSharedPtr<FImportedModel> ImportedModel;// = FFBXImporter::LoadFile(Filename, FBXFlags);
-        if (ImportedModel)
-        {
-            TSharedRef<FModel> Model = new FModel();
-            if (!Model->Init(ImportedModel))
-            {
-                return nullptr;
-            }
-            
-            if (!bEnableCache)
-            {
-                return Model;
-            }
-            
-            const int32 Count = FMath::Max<int32>(Filename.Size() - 4, 0);
-            FString NewFileName = Filename.SubString(0, Count);
-            NewFileName += ".dxrmesh";
-            
-            if (AddCacheEntry(Filename, NewFileName, ImportedModel))
-            {
-                return Model;
-            }
-        }
-    }
-    else if (Filename.EndsWith(".obj", EStringCaseType::NoCase))
-    {
-        const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
         
-        TSharedPtr<FImportedModel> ImportedModel;//  = FOBJLoader::LoadFile(Filename, bReverseHandedness);
-        if (ImportedModel)
-        {
-            TSharedRef<FModel> Model = new FModel();
-            if (!Model->Init(ImportedModel))
-            {
-                return nullptr;
-            }
-            
-            if (!bEnableCache)
-            {
-                return Model;
-            }
-            
-            const int32 Count = FMath::Max<int32>(Filename.Size() - 4, 0);
-            FString NewFileName = Filename.SubString(0, Count);
-            NewFileName += ".dxrmesh";
-            
-            if (AddCacheEntry(Filename, NewFileName, ImportedModel))
-            {
-                return Model;
-            }
-        }
+        return FTexture2DRef(nullptr);
+    };
+
+    // Construct Materials
+    ImportedModel->Materials.Resize(ModelHeader->NumMaterials);
+
+    // 6) Materials
+    const ModelFormat::FMaterialInfo* Materials = InputStream.PeekData<ModelFormat::FMaterialInfo>(ModelHeader->MaterialDataOffset);
+    for (int32 Index = 0; Index < ModelHeader->NumMaterials; ++Index)
+    {
+        FImportedMaterial& Material = ImportedModel->Materials[Index];
+        Material.DiffuseTexture   = RetrieveTexture(Materials[Index].DiffuseTextureIdx);
+        Material.NormalTexture    = RetrieveTexture(Materials[Index].NormalTextureIdx);
+        Material.SpecularTexture  = RetrieveTexture(Materials[Index].SpecularTextureIdx);
+        Material.RoughnessTexture = RetrieveTexture(Materials[Index].RoughnessTextureIdx);
+        Material.AOTexture        = RetrieveTexture(Materials[Index].AmbientOcclusionTextureIdx);
+        Material.MetallicTexture  = RetrieveTexture(Materials[Index].MetallicTextureIdx);
+        Material.EmissiveTexture  = RetrieveTexture(Materials[Index].EmissiveTextureIdx);
+        Material.AlphaMaskTexture = RetrieveTexture(Materials[Index].AlphaMaskTextureIdx);
+        Material.MaterialFlags    = static_cast<EMaterialFlags>(Materials[Index].MaterialFlags);
+        Material.Diffuse          = Materials[Index].Diffuse;
+        Material.Roughness        = Materials[Index].Roughness;
+        Material.AO               = Materials[Index].AO;
+        Material.Metallic         = Materials[Index].Metallic;
     }
 
-    return nullptr;
+    return ImportedModel;
 }
 
 bool FModelImporter::MatchExtenstion(const FStringView& FileName)
 {
-    return false;
+    return FileName.EndsWith(".dxrmesh", EStringCaseType::NoCase);
 }
 
-void FModelImporter::LoadCacheFile()
+bool FModelSerializer::Serialize(const FString& Filename, const TSharedPtr<FImportedModel>& Model)
 {
-    TArray<CHAR> FileContents;
+    if (!Model)
     {
-        FFileHandleRef File = FPlatformFile::OpenForRead(FString(FProjectManager::Get().GetAssetPath()) + "/MeshCache.txt");
-        if (!File)
-        {
-            return;
-        }
+        return false;
+    }
 
-        // Read the full file
-        if (!FFileHelpers::ReadTextFile(File.Get(), FileContents))
-        {
-            return;
-        }
-    } 
+    ModelFormat::FModelHeader ModelHeader;
+    FMemory::Memzero(&ModelHeader, sizeof(ModelFormat::FModelHeader));
 
-    CHAR* Start = FileContents.Data();
-    while (Start && (*Start != '\0'))
-    {
-        // Skip newline chars
-        while (*Start == '\n')
-            ++Start;
-
-        CHAR* LineStart = Start;
-        FParse::ParseLine(&Start);
-
-        // End string at the end of line
-        if (*Start == '\n')
-        {
-            *(Start++) = '\0';
-        }
-
-        // Skip any spaces at the beginning of the line
-        FParse::ParseWhiteSpace(&LineStart);
+    FByteOutputStream OutputStream;
+    OutputStream.AddUninitialized<ModelFormat::FModelHeader>();
         
-        if (CHAR* EqualSign = FCString::Strchr(LineStart, '='))
+    // Count mesh-primitives and prepare headers
+    ModelHeader.NumMeshes      = Model->Models.Size();
+    ModelHeader.MeshDataOffset = OutputStream.AddUninitialized<ModelFormat::FMeshInfo>(ModelHeader.NumMeshes);
+    
+    int32 NumVertices  = 0;
+    int32 NumIndicies  = 0;
+    int32 NumSubMeshes = 0;
+    
+    int32 MeshDataOffset = ModelHeader.MeshDataOffset;
+    for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
+    {
+        const FMeshData& CurrentMesh = Model->Models[MeshIdx];
+        
+        ModelFormat::FMeshInfo Header;
+        FMemory::Memzero(&Header, sizeof(ModelFormat::FMeshInfo));
+        
+        Header.FirstVertex  = NumVertices;
+        Header.NumVertices  = CurrentMesh.GetVertexCount();
+        Header.FirstIndex   = NumIndicies;
+        Header.NumIndices   = CurrentMesh.GetIndexCount();
+        Header.FirstSubMesh = NumSubMeshes;
+        Header.NumSubMeshes = CurrentMesh.GetSubMeshCount();
+        
+        FCString::Strncpy(Header.Name, CurrentMesh.Name.GetCString(), MODEL_FORMAT_MAX_NAME_LENGTH);
+        MeshDataOffset += OutputStream.Write(Header, MeshDataOffset);
+        
+        NumVertices  += Header.NumVertices;
+        NumIndicies  += Header.NumIndices;
+        NumSubMeshes += Header.NumSubMeshes;
+    }
+
+    // Initialize the mesh-primitives
+    ModelHeader.VertexDataOffset  = OutputStream.AddUninitialized<FVertex>(NumVertices);
+    ModelHeader.NumVertices       = NumVertices;
+    ModelHeader.IndexDataOffset   = OutputStream.AddUninitialized<uint32>(NumIndicies);
+    ModelHeader.NumIndicies       = NumIndicies;
+    ModelHeader.SubMeshDataOffset = OutputStream.AddUninitialized<ModelFormat::FSubMeshInfo>(NumSubMeshes);
+    ModelHeader.NumSubMeshes      = NumSubMeshes;
+
+    int32 VertexDataOffset  = ModelHeader.VertexDataOffset;
+    int32 IndexDataOffset   = ModelHeader.IndexDataOffset;
+    int32 SubMeshDataOffset = ModelHeader.SubMeshDataOffset;
+    for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
+    {
+        const FMeshData& CurrentMesh = Model->Models[MeshIdx];
+        VertexDataOffset += OutputStream.Write(CurrentMesh.Vertices.Data(), CurrentMesh.Vertices.Size(), VertexDataOffset);
+        IndexDataOffset  += OutputStream.Write(CurrentMesh.Indices.Data(), CurrentMesh.Indices.Size(), IndexDataOffset);
+        
+        for (int32 SubMeshIdx = 0; SubMeshIdx < CurrentMesh.GetSubMeshCount(); SubMeshIdx++)
         {
-            *EqualSign = '\0';
-
-            CHAR* KeyEnd = EqualSign - 1;
-            while (*KeyEnd == ' ')
-                *(KeyEnd--) = '\0';
-
-            // The parsed key
-            CHAR* Key = LineStart;
-            LineStart = EqualSign + 1;
+            const FMeshPartition& MeshPartitions = CurrentMesh.Partitions[SubMeshIdx];
             
-            FParse::ParseWhiteSpace(&LineStart);
-
-            // Find the end of the value
-            CHAR* Value    = LineStart;
-            CHAR* ValueEnd = FCString::Strchr(LineStart, ' ');
-
-            // Use line-end as backup
-            if (!ValueEnd)
-            {
-                ValueEnd = Start;
-            }
-
-            while (*ValueEnd == ' ')
-                *(ValueEnd--) = '\0';
-
-            FString OriginalValue = Key;
-            FString NewValue      = Value;
-            Cache.Emplace(Move(OriginalValue), Move(NewValue));
+            // SubMesh vertices and indices are based on the mesh and not the model
+            ModelFormat::FSubMeshInfo SubMesh;
+            SubMesh.BaseVertex    = MeshPartitions.BaseVertex;
+            SubMesh.NumVertices   = MeshPartitions.VertexCount;
+            SubMesh.StartIndex    = MeshPartitions.StartIndex;
+            SubMesh.NumIndicies   = MeshPartitions.IndexCount;
+            SubMesh.MaterialIndex = MeshPartitions.MaterialIndex;
+            SubMeshDataOffset += OutputStream.Write(SubMesh, SubMeshDataOffset);
         }
     }
-}
+    
+    // Prepare material primitives
+    ModelHeader.NumMaterials       = Model->Materials.Size();
+    ModelHeader.MaterialDataOffset = OutputStream.AddUninitialized<ModelFormat::FMaterialInfo>(ModelHeader.NumMaterials);
+    
+    // Create a new TextureIndex
+    ModelHeader.TextureDataOffset = OutputStream.WriteOffset();
+    ModelHeader.NumTextures       = 0;
 
-void FModelImporter::UpdateCacheFile()
-{
-    FString FileContents;
-    for (auto Entry : Cache)
+    const auto CreateTextureIndex = [&](const FTexture2DRef& Texture)
     {
-        FileContents.AppendFormat("%s = %s\n", Entry.First.GetCString(), Entry.Second.GetCString());
-    }
-
-    {
-        FFileHandleRef File = FPlatformFile::OpenForWrite(FString(FProjectManager::Get().GetAssetPath()) + "/MeshCache.txt");
-        if (!File)
+        if (Texture)
         {
-            return;
+            ModelFormat::FTextureInfo TextureHeader;
+            FMemory::Memzero(&TextureHeader, sizeof(ModelFormat::FTextureInfo));
+            
+            Texture->GetFilename().CopyToBuffer(TextureHeader.Filepath, MODEL_FORMAT_MAX_NAME_LENGTH);
+            OutputStream.Add(TextureHeader);
+            
+            return ModelHeader.NumTextures++;
         }
-
-        // Write the full file
-        if (!FFileHelpers::WriteTextFile(File.Get(), FileContents))
+        else
         {
-            return;
+            return MODEL_FORMAT_INVALID_TEXTURE_ID;
         }
-    } 
-}
+    };
 
-bool FModelImporter::AddCacheEntry(const FString& OriginalFile, const FString& NewFile, const TSharedPtr<FImportedModel>& ImportedModel)
-{
-    FCustomScene SceneHeader;
-    SceneHeader.NumModels    = ImportedModel->Models.Size();
-    SceneHeader.NumMaterials = ImportedModel->Materials.Size();
-
-    TArray<FCustomModel> Models;
-    Models.Resize(SceneHeader.NumModels);
-
-    int64 NumTotalVertices = 0;
-    int64 NumTotalIndices  = 0;
-    for (int32 ModelIndex = 0; ModelIndex < SceneHeader.NumModels; ++ModelIndex)
+    // Serialize MaterialData
+    int32 MaterialDataOffset = ModelHeader.MaterialDataOffset;
+    for (int32 MaterialIdx = 0; MaterialIdx < ModelHeader.NumMaterials; MaterialIdx++)
     {
-        FCustomModel& CurrentModel = Models[ModelIndex];
-        FMemory::Memzero(CurrentModel.Name, FCustomModel::MaxNameLength);
+        const FImportedMaterial& CurrentMaterial = Model->Materials[MaterialIdx];
+
+        ModelFormat::FMaterialInfo Material;
+        FMemory::Memzero(&Material, sizeof(ModelFormat::FMaterialInfo));
+
+        Material.DiffuseTextureIdx          = CreateTextureIndex(CurrentMaterial.DiffuseTexture);
+        Material.NormalTextureIdx           = CreateTextureIndex(CurrentMaterial.NormalTexture);
+        Material.SpecularTextureIdx         = CreateTextureIndex(CurrentMaterial.SpecularTexture);
+        Material.EmissiveTextureIdx         = CreateTextureIndex(CurrentMaterial.EmissiveTexture);
+        Material.AmbientOcclusionTextureIdx = CreateTextureIndex(CurrentMaterial.AOTexture);
+        Material.RoughnessTextureIdx        = CreateTextureIndex(CurrentMaterial.RoughnessTexture);
+        Material.MetallicTextureIdx         = CreateTextureIndex(CurrentMaterial.MetallicTexture);
+        Material.AlphaMaskTextureIdx        = CreateTextureIndex(CurrentMaterial.AlphaMaskTexture);
+        Material.Diffuse                    = CurrentMaterial.Diffuse;
+        Material.AO                         = CurrentMaterial.AO;
+        Material.Roughness                  = CurrentMaterial.Roughness;
+        Material.Metallic                   = CurrentMaterial.Metallic;
+        Material.MaterialFlags              = static_cast<int32>(CurrentMaterial.MaterialFlags);
         
-        const FMeshData& SceneModel = ImportedModel->Models[ModelIndex];
-        SceneModel.Name.CopyToBuffer(CurrentModel.Name, FCustomModel::MaxNameLength);
-        
-        if (FCString::Strlen(CurrentModel.Name) == 0)
-        {
-            LOG_WARNING("Model has no name");
-        }
-        
-        CurrentModel.NumVertices   = SceneModel.GetVertexCount();
-        CurrentModel.NumIndices    = SceneModel.GetIndexCount();
-        CurrentModel.MaterialIndex = SceneModel.Partitions[0].MaterialIndex;
-
-        NumTotalVertices += CurrentModel.NumVertices;
-        NumTotalIndices  += CurrentModel.NumIndices;
+        MaterialDataOffset += OutputStream.Write(Material, MaterialDataOffset);
     }
-
-    SceneHeader.NumTotalVertices = NumTotalVertices;
-    SceneHeader.NumTotalIndices  = NumTotalIndices;
-
-    TArray<FVertex> SceneVertices;
-    SceneVertices.Reserve(int32(NumTotalVertices));
-
-    TArray<uint32> SceneIndicies;
-    SceneIndicies.Reserve(int32(NumTotalIndices));
-
-    for (const FMeshData& Model : ImportedModel->Models)
+   
+    OutputStream.Write(ModelHeader, 0);
+    
     {
-        SceneVertices.Append(Model.Vertices);
-        SceneIndicies.Append(Model.Indices);
-    }
-
-    int32 NumTextures = 0;
-    for (const FImportedMaterial& Material : ImportedModel->Materials)
-    {
-        if (Material.DiffuseTexture)
-            NumTextures++;
-        if (Material.NormalTexture)
-            NumTextures++;
-        if (Material.SpecularTexture)
-            NumTextures++;
-        if (Material.EmissiveTexture)
-            NumTextures++;
-        if (Material.AOTexture)
-            NumTextures++;
-        if (Material.RoughnessTexture)
-            NumTextures++;
-        if (Material.MetallicTexture)
-            NumTextures++;
-        if (Material.AlphaMaskTexture)
-            NumTextures++;
-    }
-
-    SceneHeader.NumTextures = NumTextures;
-
-    TArray<FTextureHeader> TextureNames;
-    TextureNames.Resize(NumTextures);
-
-    // Zero all names
-    FMemory::Memzero(TextureNames.Data(), TextureNames.SizeInBytes());
-
-    TArray<FCustomMaterial> Materials;
-    Materials.Resize(SceneHeader.NumMaterials);
-
-    int32 CurrentTexture = 0;
-    for (int32 Index = 0; Index < SceneHeader.NumMaterials; ++Index)
-    {
-        FCustomMaterial& CustomMaterial = Materials[Index];
-        FMemory::Memzero(&CustomMaterial, sizeof(FCustomMaterial));
-
-        const FImportedMaterial& CurrentMaterial = ImportedModel->Materials[Index];
-        if (CurrentMaterial.DiffuseTexture)
-        {
-            CurrentMaterial.DiffuseTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.DiffuseTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.DiffuseTexIndex = -1;
-        }
-
-        if (CurrentMaterial.NormalTexture)
-        {
-            CurrentMaterial.NormalTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.NormalTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.NormalTexIndex = -1;
-        }
-
-        if (CurrentMaterial.SpecularTexture)
-        {
-            CurrentMaterial.SpecularTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.SpecularTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.SpecularTexIndex = -1;
-        }
-
-        if (CurrentMaterial.EmissiveTexture)
-        {
-            CurrentMaterial.EmissiveTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.EmissiveTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.EmissiveTexIndex = -1;
-        }
-
-        if (CurrentMaterial.AOTexture)
-        {
-            CurrentMaterial.AOTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.AOTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.AOTexIndex = -1;
-        }
-
-        if (CurrentMaterial.RoughnessTexture)
-        {
-            CurrentMaterial.RoughnessTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.RoughnessTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.RoughnessTexIndex = -1;
-        }
-
-        if (CurrentMaterial.MetallicTexture)
-        {
-            CurrentMaterial.MetallicTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.MetallicTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.MetallicTexIndex = -1;
-        }
-
-        if (CurrentMaterial.AlphaMaskTexture)
-        {
-            CurrentMaterial.AlphaMaskTexture->GetFilename().CopyToBuffer(TextureNames[CurrentTexture].Filepath, FTextureHeader::MaxNameLength);
-            CustomMaterial.AlphaMaskTexIndex = CurrentTexture++;
-        }
-        else
-        {
-            CustomMaterial.AlphaMaskTexIndex = -1;
-        }
-
-        CustomMaterial.Diffuse       = CurrentMaterial.Diffuse;
-        CustomMaterial.AO            = CurrentMaterial.AO;
-        CustomMaterial.Roughness     = CurrentMaterial.Roughness;
-        CustomMaterial.Metallic      = CurrentMaterial.Metallic;
-        CustomMaterial.MaterialFlags = static_cast<int32>(CurrentMaterial.MaterialFlags);
-    }
-
-    {
-        FFileHandleRef File = FPlatformFile::OpenForWrite(NewFile);
+        FFileHandleRef File = FPlatformFile::OpenForWrite(Filename);
         if (!File)
         {
             return false;
         }
 
-        // 1) Header
-        File->Write(reinterpret_cast<const uint8*>(&SceneHeader), sizeof(FCustomScene));
+        ModelFormat::FFileHeader FileHeader;
+        FMemory::Memzero(&FileHeader, sizeof(ModelFormat::FFileHeader));
         
-        // 2) Model-Headers
-        CHECK(SceneHeader.NumModels > 0);
-        File->Write(reinterpret_cast<const uint8*>(Models.Data()), Models.SizeInBytes());
+        FMemory::Memcpy(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic));
+        FileHeader.DataCRC      = FCRC32::Generate(OutputStream.Data(), OutputStream.Size());
+        FileHeader.DataSize     = OutputStream.Size();
+        FileHeader.VersionMajor = MODEL_FORMAT_VERSION_MAJOR;
+        FileHeader.VersionMinor = MODEL_FORMAT_VERSION_MINOR;
         
-        // 3) All the vertices
-        CHECK(SceneHeader.NumTotalVertices > 0);
-        File->Write(reinterpret_cast<const uint8*>(SceneVertices.Data()), SceneVertices.SizeInBytes());
+        // 1) FileHeader
+        File->Write(reinterpret_cast<const uint8*>(&FileHeader), sizeof(ModelFormat::FFileHeader));
         
-        // 4) All the indices
-        CHECK(SceneHeader.NumTotalIndices > 0);
-        File->Write(reinterpret_cast<const uint8*>(SceneIndicies.Data()), SceneIndicies.SizeInBytes());
-        
-        // 5) All Textures
-        if (SceneHeader.NumTextures)
-        {
-            File->Write(reinterpret_cast<const uint8*>(TextureNames.Data()), TextureNames.SizeInBytes());
-        }
-        
-        // 6) All Materials
-        if (SceneHeader.NumMaterials)
-        {
-            File->Write(reinterpret_cast<const uint8*>(Materials.Data()), Materials.SizeInBytes());
-        }
+        // 2) Data
+        File->Write(OutputStream.Data(), OutputStream.Size());
     }
 
-    Cache.Add(OriginalFile, NewFile);
-    UpdateCacheFile();
     return true;
-}
-
-TSharedRef<FModel> FModelImporter::LoadCustom(const FString& InFilename)
-{
-    TArray<uint8> FileContents;
-    
-    {
-        FFileHandleRef File = FPlatformFile::OpenForRead(InFilename);
-        if (!File)
-        {
-            return nullptr;
-        }
-
-        // Read the full file
-        if (!FFileHelpers::ReadFile(File.Get(), FileContents))
-        {
-            return nullptr;
-        }
-    }
-
-    // 1) Scene Header
-    FCustomScene* SceneHeader = reinterpret_cast<FCustomScene*>(FileContents.Data());
-    CHECK(SceneHeader->NumModels <= FCustomScene::MaxModels);
-    CHECK(SceneHeader->NumMaterials <= FCustomScene::MaxMaterials);
-
-    // 2) Model Headers
-    FCustomModel* ModelHeaders = reinterpret_cast<FCustomModel*>(SceneHeader + 1);
-    
-    // 3) Vertices
-    FVertex* Vertices = reinterpret_cast<FVertex*>(ModelHeaders + SceneHeader->NumModels);
-    
-    // 4) Indices
-    uint32* Indices = reinterpret_cast<uint32*>(Vertices + SceneHeader->NumTotalVertices);
-    
-    // 5) Indices
-    FTextureHeader* Textures = reinterpret_cast<FTextureHeader*>(Indices + SceneHeader->NumTotalIndices);
-    
-    // 6) Materials
-    FCustomMaterial* Materials = reinterpret_cast<FCustomMaterial*>(Textures + SceneHeader->NumTextures);
-
-    // Load all textures
-    TArray<FTextureRef> LoadedTextures;
-    LoadedTextures.Resize(SceneHeader->NumTextures);
-
-    for (int32 Index = 0; Index < SceneHeader->NumTextures; ++Index)
-    {
-        const FString Filename = Textures[Index].Filepath;
-        if (!FPlatformFile::IsFile(Filename.GetCString()))
-        {
-            LOG_ERROR("Stored file contains a invalid file reference, file will be reloaded from source");
-            return nullptr;
-        }
-
-        LoadedTextures[Index] = FAssetManager::Get().LoadTexture(Filename);
-    }
-
-    // Reconstruct the data
-    TSharedPtr<FImportedModel> ImportedModel = MakeSharedPtr<FImportedModel>();
-    ImportedModel->Models.Resize(SceneHeader->NumModels);
-    
-    for (int32 Index = 0; Index < SceneHeader->NumModels; ++Index)
-    {
-        FMeshData& CurrentModel = ImportedModel->Models[Index];
-        
-        MAYBE_UNUSED const int32 Length = FCString::Strlen(ModelHeaders[Index].Name);
-        CHECK(Length < FCustomModel::MaxNameLength);
-
-        CurrentModel.Name = ModelHeaders[Index].Name;
-        LOG_INFO("Loaded Mesh '%s'", ModelHeaders[Index].Name);
-
-        const int32 NumVertices = ModelHeaders[Index].NumVertices;
-        CurrentModel.Vertices.Resize(NumVertices);
-        FMemory::Memcpy(CurrentModel.Vertices.Data(), Vertices, NumVertices * sizeof(FVertex));
-        Vertices += NumVertices;
-
-        const int32 NumIndices = ModelHeaders[Index].NumIndices;
-        CurrentModel.Indices.Resize(NumIndices);
-        FMemory::Memcpy(CurrentModel.Indices.Data(), Indices, NumIndices * sizeof(uint32));
-        Indices += NumIndices;
-    }
-
-    ImportedModel->Materials.Resize(SceneHeader->NumMaterials);
-    
-    for (int32 Index = 0; Index < SceneHeader->NumMaterials; ++Index)
-    {
-        FImportedMaterial& Material = ImportedModel->Materials[Index];
-        if (Materials[Index].DiffuseTexIndex >= 0)
-        {
-            Material.DiffuseTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].DiffuseTexIndex]->GetTexture2D());
-        }
-        if (Materials[Index].NormalTexIndex >= 0)
-        {
-            Material.NormalTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].NormalTexIndex]->GetTexture2D());
-        }
-        if (Materials[Index].SpecularTexIndex >= 0)
-        {
-            Material.SpecularTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].SpecularTexIndex]->GetTexture2D());
-        }
-        if (Materials[Index].RoughnessTexIndex >= 0)
-        {
-            Material.RoughnessTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].RoughnessTexIndex]->GetTexture2D());
-        }
-        if (Materials[Index].AOTexIndex >= 0)
-        {
-            Material.AOTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].AOTexIndex]->GetTexture2D());
-        }
-        if (Materials[Index].MetallicTexIndex >= 0)
-        {
-            Material.MetallicTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].MetallicTexIndex]->GetTexture2D());
-        }
-        if (Materials[Index].EmissiveTexIndex >= 0)
-        {
-            Material.EmissiveTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].EmissiveTexIndex]->GetTexture2D());
-        }
-        if (Materials[Index].AlphaMaskTexIndex >= 0)
-        {
-            Material.AlphaMaskTexture = MakeSharedRef<FTexture2D>(LoadedTextures[Materials[Index].AlphaMaskTexIndex]->GetTexture2D());
-        }
-
-        Material.MaterialFlags = static_cast<EMaterialFlags>(Materials[Index].MaterialFlags);
-        Material.Diffuse       = Materials[Index].Diffuse;
-        Material.Roughness     = Materials[Index].Roughness;
-        Material.AO            = Materials[Index].AO;
-        Material.Metallic      = Materials[Index].Metallic;
-    }
-
-    TSharedRef<FModel> Model = new FModel();
-    if (!Model->Init(ImportedModel))
-    {
-        return nullptr;
-    }
-    else
-    {
-        return Model;
-    }
 }

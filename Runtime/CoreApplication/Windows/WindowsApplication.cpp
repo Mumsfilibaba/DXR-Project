@@ -755,7 +755,7 @@ LRESULT FWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM w
     UINT Size = 0;
     ::GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, 0, &Size, sizeof(RAWINPUTHEADER));
 
-    TUniquePtr<uint8[]> Buffer = MakeUnique<uint8[]>(Size);
+    TUniquePtr<uint8[]> Buffer = MakeUniquePtr<uint8[]>(Size);
     if (::GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER)) != Size)
     {
         LOG_ERROR("[FWindowsApplication] GetRawInputData did not return correct size");

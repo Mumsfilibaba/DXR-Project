@@ -9,6 +9,6 @@ struct ENGINE_API FOBJImporter : public IModelImporter
 {
     virtual ~FOBJImporter() = default;
     
-    virtual TSharedRef<FModel> ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags) override final;
+    virtual TSharedPtr<FImportedModel> ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };
