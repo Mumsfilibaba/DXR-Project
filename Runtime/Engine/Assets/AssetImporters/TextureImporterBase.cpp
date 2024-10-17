@@ -2,7 +2,7 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
-#include "Engine/Resources/TextureResource.h"
+#include "Engine/Resources/Texture.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC FMemory::Malloc

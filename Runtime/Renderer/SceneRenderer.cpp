@@ -1,5 +1,3 @@
-#include "SceneRenderer.h"
-#include "Debug/GPUProfiler.h"
 #include "Core/Math/Frustum.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
@@ -8,11 +6,13 @@
 #include "Application/Application.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
-#include "Engine/Resources/Mesh.h"
 #include "Engine/Engine.h"
+#include "Engine/Resources/Model.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "RendererCore/TextureFactory.h"
+#include "Renderer/SceneRenderer.h"
+#include "Renderer/Debug/GPUProfiler.h"
 
 #define SUPPORT_VARIABLE_RATE_SHADING (0)
 

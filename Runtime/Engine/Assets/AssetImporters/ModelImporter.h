@@ -4,7 +4,7 @@
 #include "Core/Containers/Map.h"
 #include "Core/Utilities/StringUtilities.h"
 #include "Core/Templates/TypeTraits.h"
-#include "Engine/Assets/SceneData.h"
+#include "Engine/Assets/ModelCreateInfo.h"
 #include "Engine/Assets/IModelImporter.h"
 
 #define MODEL_FORMAT_VERSION_MAJOR (0)
@@ -102,7 +102,7 @@ struct ENGINE_API FModelImporter : public IModelImporter
 {
     virtual ~FModelImporter() = default;
 
-    virtual TSharedPtr<FImportedModel> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
+    virtual TSharedPtr<FModelCreateInfo> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };
 
@@ -110,5 +110,5 @@ struct ENGINE_API FModelSerializer
 {
     virtual ~FModelSerializer() = default;
 
-    bool Serialize(const FString& Filename, const TSharedPtr<FImportedModel>& Model);
+    bool Serialize(const FString& Filename, const TSharedPtr<FModelCreateInfo>& Model);
 };

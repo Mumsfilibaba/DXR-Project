@@ -4,13 +4,12 @@
 #include "Core/Threading/AsyncTask.h"
 #include "Core/Generic/GenericPlatformFile.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Engine/Assets/MeshUtilities.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
 #include <tiny_obj_loader.h>
 
-TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags)
+TSharedPtr<FModelCreateInfo> FOBJImporter::ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags)
 {
     // Load Scene File
     std::string                      Warning;
@@ -37,41 +36,40 @@ TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFil
     }
 
     // Create new scene
-    TSharedPtr<FImportedModel> Scene = MakeSharedPtr<FImportedModel>();
+    TSharedPtr<FModelCreateInfo> Model = MakeSharedPtr<FModelCreateInfo>();
 
     // Create All Materials in scene
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
     {
         // Create new material with default properties
-        FImportedMaterial MaterialData;
-        MaterialData.MetallicTexture  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
-        MaterialData.DiffuseTexture   = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
-        MaterialData.RoughnessTexture = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
-        MaterialData.NormalTexture    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
-        MaterialData.AlphaMaskTexture = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
-
-        MaterialData.Diffuse       = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
-        MaterialData.Metallic      = Mat.ambient[0];
-        MaterialData.AO            = 1.0f;
-        MaterialData.Roughness     = 1.0f;
-        MaterialData.MaterialFlags = EMaterialFlags::None;
+        FMaterialCreateInfo MaterialCreateInfo;
+        MaterialCreateInfo.Textures[EMaterialTexture::Metallic]  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.ambient_texname.c_str()));
+        MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]   = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.diffuse_texname.c_str()));
+        MaterialCreateInfo.Textures[EMaterialTexture::Roughness] = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.specular_highlight_texname.c_str()));
+        MaterialCreateInfo.Textures[EMaterialTexture::Normal]    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.bump_texname.c_str()));
+        MaterialCreateInfo.Textures[EMaterialTexture::AlphaMask] = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(MTLFiledir + '/' + Mat.alpha_texname.c_str()));
+        
+        MaterialCreateInfo.Diffuse       = FVector3(Mat.diffuse[0], Mat.diffuse[1], Mat.diffuse[2]);
+        MaterialCreateInfo.Metallic      = Mat.ambient[0];
+        MaterialCreateInfo.AmbientFactor = 1.0f;
+        MaterialCreateInfo.Roughness     = 1.0f;
+        MaterialCreateInfo.MaterialFlags = EMaterialFlags::None;
 
         if (Mat.name.empty())
         {
-            MaterialData.Name = FString::CreateFormatted("%s_material_%d", FilenameWithoutPath.GetCString(), SceneMaterialIndex);
+            MaterialCreateInfo.Name = FString::CreateFormatted("%s_material_%d", FilenameWithoutPath.GetCString(), SceneMaterialIndex);
         }
         else
         {
-            MaterialData.Name = Mat.name.c_str();
+            MaterialCreateInfo.Name = FString(Mat.name.c_str());
         }
         
-        Scene->Materials.Emplace(Move(MaterialData));
+        Model->Materials.Add(Move(MaterialCreateInfo));
         SceneMaterialIndex++;
     }
 
     // Construct Scene
-    FMeshData Data;
     TMap<FVertex, uint32> UniqueVertices;
 
     constexpr uint32 NumIndiciesPerTriangle  = 3;
@@ -86,8 +84,8 @@ TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFil
         const uint32 IndexCount = static_cast<uint32>(Shape.mesh.indices.size());
 
         // Start a new mesh
-        Data.Clear();
-        Data.Indices.Reserve(IndexCount);
+        FMeshCreateInfo MeshCreateInfo;
+        MeshCreateInfo.Indices.Reserve(IndexCount);
         UniqueVertices.Clear();
 
         uint32 CurrentIndex = 0;
@@ -98,13 +96,13 @@ TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFil
             const int32 MaterialID = Shape.mesh.material_ids[Face];
 
             // Create a new partition for the mesh
-            FMeshPartition& Partition = Data.Partitions.Emplace();
-            Partition.BaseVertex = Data.Vertices.Size();
-            Partition.StartIndex = Data.Indices.Size();
+            FSubMeshInfo SubMeshInfo;
+            SubMeshInfo.BaseVertex = MeshCreateInfo.Vertices.Size();
+            SubMeshInfo.StartIndex = MeshCreateInfo.Indices.Size();
             
             if (MaterialID >= 0)
             {
-                Partition.MaterialIndex = MaterialID;
+                SubMeshInfo.MaterialIndex = MaterialID;
             }
             
             // Retrieve all vertices/indicies for this partition
@@ -139,47 +137,51 @@ TSharedPtr<FImportedModel> FOBJImporter::ImportFromFile(const FStringView& InFil
                     Vertex.TexCoord = FVector2(Attributes.texcoords[TexCoordIndex + 0], Attributes.texcoords[TexCoordIndex + 1]);
                 }
 
-                if (!UniqueVertices.Contains(Vertex))
+                uint32 VertexIndex;
+                if (uint32* ExistingIndex = UniqueVertices.Find(Vertex))
                 {
-                    UniqueVertices[Vertex] = static_cast<uint32>(Data.Vertices.Size());
-                    Data.Vertices.Add(Vertex);
+                    VertexIndex = *ExistingIndex;
                 }
-
-                Data.Indices.Emplace(UniqueVertices[Vertex]);
+                else
+                {
+                    VertexIndex = static_cast<uint32>(MeshCreateInfo.Vertices.Size());
+                    UniqueVertices[Vertex] = VertexIndex;
+                    MeshCreateInfo.Vertices.Add(Vertex);
+                }
+                
+                MeshCreateInfo.Indices.Add(VertexIndex);
             }
 
             // Set the number of vertices/indices for this partition
-            Partition.VertexCount = Data.Vertices.Size() - Partition.BaseVertex;
-            Partition.IndexCount  = Data.Indices.Size() - Partition.StartIndex;
+            SubMeshInfo.VertexCount = MeshCreateInfo.Vertices.Size() - SubMeshInfo.BaseVertex;
+            SubMeshInfo.IndexCount  = MeshCreateInfo.Indices.Size() - SubMeshInfo.StartIndex;
+            MeshCreateInfo.SubMeshes.Add(SubMeshInfo);
             
             // Calculate tangents and create mesh
-            FMeshUtilities::CalculateTangents(Data);
+            MeshCreateInfo.CalculateTangents();
 
             const bool bReverseHandedness = ((Flags & EMeshImportFlags::Default) == EMeshImportFlags::None);
             if (bReverseHandedness)
             {
-                FMeshUtilities::ReverseHandedness(Data);
+                MeshCreateInfo.ReverseHandedness();
             }
 
             if (Shape.name.empty())
             {
-                Data.Name = FString::CreateFormatted("%s_%d", FilenameWithoutPath.GetCString(), ShapeIndex);
+                MeshCreateInfo.Name = FString::CreateFormatted("%s_%d", FilenameWithoutPath.GetCString(), ShapeIndex);
             }
             else
             {
-                Data.Name = Shape.name.c_str();
+                MeshCreateInfo.Name = Shape.name.c_str();
             }
         }
 
-        Scene->Models.Emplace(Data);
+        Model->Meshes.Add(Move(MeshCreateInfo));
         ShapeIndex++;
     }
 
-    Scene->Models.Shrink();
-    Scene->Materials.Shrink();
-
-    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
-    return Scene;
+    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Model->Meshes.Size(), Model->Materials.Size());
+    return Model;
 }
 
 bool FOBJImporter::MatchExtenstion(const FStringView& FileName)

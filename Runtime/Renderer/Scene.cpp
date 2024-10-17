@@ -4,7 +4,7 @@
 #include "Engine/World/World.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Engine/World/Lights/PointLight.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 
 bool GFreezeRendering = false;

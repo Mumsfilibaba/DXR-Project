@@ -5,8 +5,8 @@
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
 #include "Engine/EngineModule.h"
-#include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Resource.h"
+#include "Engine/Assets/ModelCreateInfo.h"
 
 struct FSubMesh
 {
@@ -36,12 +36,10 @@ enum class EVertexStream
 class ENGINE_API FMesh
 {
 public:
-    static TSharedPtr<FMesh> Create(const FMeshData& Data);
-    
     FMesh();
     ~FMesh();
 
-    bool Init(const FMeshData& Data);
+    bool Init(const FMeshCreateInfo& CreateInfo);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
     
     FRHIBuffer* GetVertexBuffer(EVertexStream VertexStream) const;
@@ -103,7 +101,7 @@ public:
     }
     
 private:
-    void CreateBoundingBox(const FMeshData& Data);
+    void CreateBoundingBox(const FMeshCreateInfo& CreateInfo);
 
     FString                   MeshName;
     FRHIBufferRef             VertexBuffer;
@@ -129,34 +127,34 @@ class ENGINE_API FModel : public FResource
 public:
     FModel();
     ~FModel();
-    
-    bool Init(const TSharedPtr<FImportedModel>& ImportedModel);
+
+    bool Init(const TSharedPtr<FModelCreateInfo>& CreateInfo);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
     void AddToWorld(class FWorld* World);
-    
+
     TSharedPtr<FMesh> GetMesh(int32 Index) const
     {
         return Meshes[Index];
     }
-    
+
     TSharedPtr<FMaterial> GetMaterial(int32 Index) const
     {
         return Materials[Index];
     }
-    
+
     int32 GetNumMeshes()    const { return Meshes.Size(); }
     int32 GetNumMaterials() const { return Materials.Size(); }
-    
+
     const FAABB& GetAABB() const
     {
         return BoundingBox;
     }
-    
+
     void SetUniformScale(float InUniformScale)
     {
         UniformScale = InUniformScale;
     }
-    
+
 private:
     TArray<TSharedPtr<FMesh>>     Meshes;
     TArray<TSharedPtr<FMaterial>> Materials;

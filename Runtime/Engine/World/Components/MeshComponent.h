@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Containers/Array.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Components/SceneComponent.h"
 

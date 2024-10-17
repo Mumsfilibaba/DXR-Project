@@ -46,25 +46,18 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     // Create a sphere used for the Skybox
     void* SkyboxInitalIndicies = nullptr;
     {
-        FMeshData SkyboxMesh = FMeshFactory::CreateSphere(0);
+        FMeshCreateInfo SkyboxMesh = FMeshFactory::CreateSphere(0);
         SkyboxIndexCount = SkyboxMesh.Indices.Size();
 
         // Indices
         SkyboxIndexFormat = SkyboxIndexCount < TNumericLimits<uint16>::Max() ? EIndexFormat::uint16 : EIndexFormat::uint32;
         if (SkyboxIndexFormat == EIndexFormat::uint16)
         {
-            SkyboxIndicies16.Reserve(SkyboxMesh.Indices.Size());
-            for (uint32 Index : SkyboxMesh.Indices)
-            {
-                SkyboxIndicies16.Emplace(uint16(Index));
-            }
-
-            SkyboxInitalIndicies = SkyboxIndicies16.Data();
+            SkyboxIndicies16 = SkyboxMesh.GetSmallIndices();
         }
         else
         {
             SkyboxIndicies32 = Move(SkyboxMesh.Indices);
-            SkyboxInitalIndicies = SkyboxIndicies32.Data();
         }
 
         // Vertices
@@ -89,7 +82,10 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 
     // IndexBuffers
     FRHIBufferInfo IBInfo(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
-    SkyboxIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, SkyboxInitalIndicies);
+    SkyboxIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
+        reinterpret_cast<void*>(SkyboxIndicies16.Data()) :
+        reinterpret_cast<void*>(SkyboxIndicies32.Data()));
+    
     if (!SkyboxIndexBuffer)
     {
         return false;

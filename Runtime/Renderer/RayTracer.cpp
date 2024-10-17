@@ -4,7 +4,7 @@
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Model.h"
 
 bool FRayTracer::Initialize(FFrameResources& Resources)
 {

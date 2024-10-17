@@ -1,7 +1,7 @@
-#include "Mesh.h"
+#include "Core/Templates/NumericLimits.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
-#include "Core/Templates/NumericLimits.h"
+#include "Engine/Resources/Model.h"
 
 FMesh::FMesh()
     : VertexBuffer(nullptr)
@@ -27,18 +27,18 @@ FMesh::~FMesh()
 {
 }
 
-bool FMesh::Init(const FMeshData& Data)
+bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 {
     const bool bEnableRayTracing = false; //GRHISupportsRayTracing ;
 
-    VertexCount = Data.Vertices.Size();
-    IndexCount  = Data.Indices.Size();
+    VertexCount = CreateInfo.Vertices.Size();
+    IndexCount  = CreateInfo.Indices.Size();
 
     const EBufferUsageFlags BufferFlags = bEnableRayTracing ? EBufferUsageFlags::ShaderResource | EBufferUsageFlags::Default : EBufferUsageFlags::Default;
 
     // Create VertexBuffer
     FRHIBufferInfo VBInfo(VertexCount * sizeof(FVertex), sizeof(FVertex), BufferFlags | EBufferUsageFlags::VertexBuffer);
-    VertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, Data.Vertices.Data());
+    VertexBuffer = RHICreateBuffer(VBInfo, EResourceAccess::VertexBuffer, CreateInfo.Vertices.Data());
     if (!VertexBuffer)
     {
         return false;
@@ -52,7 +52,7 @@ bool FMesh::Init(const FMeshData& Data)
     TArray<FVertexPosition> VertexPositions(VertexCount);
     for (int32 Index = 0; Index < VertexCount; Index++)
     {
-        const FVertex& Vertex = Data.Vertices[Index];
+        const FVertex& Vertex = CreateInfo.Vertices[Index];
         VertexPositions[Index] = Vertex.Position;
     }
 
@@ -71,7 +71,7 @@ bool FMesh::Init(const FMeshData& Data)
     TArray<FVertexNormal> VertexNormals(VertexCount);
     for (int32 Index = 0; Index < VertexCount; Index++)
     {
-        const FVertex& Vertex = Data.Vertices[Index];
+        const FVertex& Vertex = CreateInfo.Vertices[Index];
         VertexNormals[Index] = FVertexNormal(Vertex.Normal, Vertex.Tangent);
     }
 
@@ -90,7 +90,7 @@ bool FMesh::Init(const FMeshData& Data)
     TArray<FVertexTexCoord> VertexTexCoords(VertexCount);
     for (int32 Index = 0; Index < VertexCount; Index++)
     {
-        const FVertex& Vertex = Data.Vertices[Index];
+        const FVertex& Vertex = CreateInfo.Vertices[Index];
         VertexTexCoords[Index] = Vertex.TexCoord;
     }
 
@@ -114,9 +114,9 @@ bool FMesh::Init(const FMeshData& Data)
     IndexFormat = (IndexCount < TNumericLimits<uint16>::Max()) && !bEnableRayTracing ? EIndexFormat::uint16 : EIndexFormat::uint32;
     if (IndexFormat == EIndexFormat::uint16)
     {
-        NewIndicies.Reserve(Data.Indices.Size());
+        NewIndicies.Reserve(CreateInfo.Indices.Size());
 
-        for (uint32 Index : Data.Indices)
+        for (uint32 Index : CreateInfo.Indices)
         {
             NewIndicies.Emplace(uint16(Index));
         }
@@ -125,7 +125,7 @@ bool FMesh::Init(const FMeshData& Data)
     }
     else
     {
-        InitialIndicies = Data.Indices.Data();
+        InitialIndicies = CreateInfo.Indices.Data();
     }
 
     FRHIBufferInfo IBInfo(IndexCount * GetStrideFromIndexFormat(IndexFormat), GetStrideFromIndexFormat(IndexFormat), BufferFlags | EBufferUsageFlags::IndexBuffer);
@@ -189,11 +189,11 @@ bool FMesh::Init(const FMeshData& Data)
     }
     
     // Add submeshes
-    if (!Data.Partitions.IsEmpty())
+    if (!CreateInfo.SubMeshes.IsEmpty())
     {
-        SubMeshes.Reserve(Data.Partitions.Size());
+        SubMeshes.Reserve(CreateInfo.SubMeshes.Size());
         
-        for (const FMeshPartition& MeshPartition : Data.Partitions)
+        for (const FSubMeshInfo& MeshPartition : CreateInfo.SubMeshes)
         {
             FSubMesh NewSubMesh;
             NewSubMesh.BaseVertex    = MeshPartition.BaseVertex;
@@ -217,8 +217,8 @@ bool FMesh::Init(const FMeshData& Data)
         AddSubMesh(NewSubMesh);
     }
 
-    CreateBoundingBox(Data);
-    MeshName = Data.Name;
+    MeshName = CreateInfo.Name;
+    CreateBoundingBox(CreateInfo);
     return true;
 }
 
@@ -260,27 +260,14 @@ FRHIShaderResourceView* FMesh::GetVertexBufferSRV(EVertexStream VertexStream) co
     }
 }
 
-TSharedPtr<FMesh> FMesh::Create(const FMeshData& Data)
-{
-    TSharedPtr<FMesh> Result = MakeSharedPtr<FMesh>();
-    if (Result->Init(Data))
-    {
-        return Result;
-    }
-    else
-    {
-        return TSharedPtr<FMesh>();
-    }
-}
-
-void FMesh::CreateBoundingBox(const FMeshData& Data)
+void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
 {
     constexpr float Inf = TNumericLimits<float>::Infinity();
 
     FVector3 MinBounds = FVector3( Inf,  Inf,  Inf);
     FVector3 MaxBounds = FVector3(-Inf, -Inf, -Inf);
 
-    for (const FVertex& Vertex : Data.Vertices)
+    for (const FVertex& Vertex : CreateInfo.Vertices)
     {
         MinBounds = Min(MinBounds, Vertex.Position);
         MaxBounds = Max(MaxBounds, Vertex.Position);
@@ -302,17 +289,17 @@ FModel::~FModel()
 {
 }
 
-bool FModel::Init(const TSharedPtr<FImportedModel>& ImportedModel)
+bool FModel::Init(const TSharedPtr<FModelCreateInfo>& CreateInfo)
 {
-    UniformScale = ImportedModel->Scale;
+    UniformScale = CreateInfo->Scale;
     
-    const int32 NumMeshes = ImportedModel->Models.Size();
+    const int32 NumMeshes = CreateInfo->Meshes.Size();
     Meshes.Reserve(NumMeshes);
     
     for (int32 Index = 0; Index < NumMeshes; Index++)
     {
-        TSharedPtr<FMesh> Mesh = FMesh::Create(ImportedModel->Models[Index]);
-        if (!Mesh)
+        TSharedPtr<FMesh> Mesh = MakeSharedPtr<FMesh>();
+        if (!Mesh->Init(CreateInfo->Meshes[Index]))
         {
             return false;
         }
@@ -320,49 +307,55 @@ bool FModel::Init(const TSharedPtr<FImportedModel>& ImportedModel)
         Meshes.Add(Mesh);
     }
     
-    if (Meshes.Size() != ImportedModel->Models.Size())
+    if (Meshes.Size() != CreateInfo->Meshes.Size())
     {
         DEBUG_BREAK();
         return false;
     }
     
-    const int32 NumMaterials = ImportedModel->Materials.Size();
+    const int32 NumMaterials = CreateInfo->Materials.Size();
     Materials.Reserve(NumMaterials);
+    
+    const auto RetrieveRHITexture = [=](const TSharedPtr<FModelCreateInfo>& ModelCreateInfo, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
+    {
+        const FTexture2DRef Texture = ModelCreateInfo->Materials[MaterialIndex].Textures[MaterialTexture];
+        return Texture ? Texture->GetRHITexture() : GEngine->BaseTexture;
+    };
     
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
-        FMaterialInfo CreateInfo;
-        CreateInfo.Albedo           = ImportedModel->Materials[Index].Diffuse;
-        CreateInfo.AmbientOcclusion = ImportedModel->Materials[Index].AO;
-        CreateInfo.Metallic         = ImportedModel->Materials[Index].Metallic;
-        CreateInfo.Roughness        = ImportedModel->Materials[Index].Roughness;
-        CreateInfo.MaterialFlags    = ImportedModel->Materials[Index].MaterialFlags;
+        FMaterialInfo MaterialInfo;
+        MaterialInfo.Albedo           = CreateInfo->Materials[Index].Diffuse;
+        MaterialInfo.AmbientOcclusion = CreateInfo->Materials[Index].AmbientFactor;
+        MaterialInfo.Metallic         = CreateInfo->Materials[Index].Metallic;
+        MaterialInfo.Roughness        = CreateInfo->Materials[Index].Roughness;
+        MaterialInfo.MaterialFlags    = CreateInfo->Materials[Index].MaterialFlags;
         
-        if (ImportedModel->Materials[Index].NormalTexture)
+        if (CreateInfo->Materials[Index].Textures[EMaterialTexture::Normal])
         {
-            CreateInfo.MaterialFlags |= EMaterialFlags::EnableNormalMapping;
+            MaterialInfo.MaterialFlags |= EMaterialFlags::EnableNormalMapping;
         }
 
-        TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(CreateInfo);
-        Material->AlbedoMap    = ImportedModel->Materials[Index].DiffuseTexture   ? ImportedModel->Materials[Index].DiffuseTexture->GetRHITexture()   : GEngine->BaseTexture;
-        Material->AOMap        = ImportedModel->Materials[Index].AOTexture        ? ImportedModel->Materials[Index].AOTexture->GetRHITexture()        : GEngine->BaseTexture;
-        Material->SpecularMap  = ImportedModel->Materials[Index].SpecularTexture  ? ImportedModel->Materials[Index].SpecularTexture->GetRHITexture()  : GEngine->BaseTexture;
-        Material->MetallicMap  = ImportedModel->Materials[Index].MetallicTexture  ? ImportedModel->Materials[Index].MetallicTexture->GetRHITexture()  : GEngine->BaseTexture;
-        Material->RoughnessMap = ImportedModel->Materials[Index].RoughnessTexture ? ImportedModel->Materials[Index].RoughnessTexture->GetRHITexture() : GEngine->BaseTexture;
-        Material->AlphaMask    = ImportedModel->Materials[Index].AlphaMaskTexture ? ImportedModel->Materials[Index].AlphaMaskTexture->GetRHITexture() : GEngine->BaseTexture;
+        TSharedPtr<FMaterial> Material = MakeSharedPtr<FMaterial>(MaterialInfo);
+        Material->AlbedoMap    = RetrieveRHITexture(CreateInfo, EMaterialTexture::Diffuse, Index);
+        Material->AOMap        = RetrieveRHITexture(CreateInfo, EMaterialTexture::AmbientOcclusion, Index);
+        Material->SpecularMap  = RetrieveRHITexture(CreateInfo, EMaterialTexture::Specular, Index);
+        Material->MetallicMap  = RetrieveRHITexture(CreateInfo, EMaterialTexture::Metallic, Index);
+        Material->RoughnessMap = RetrieveRHITexture(CreateInfo, EMaterialTexture::Roughness, Index);
+        Material->AlphaMask    = RetrieveRHITexture(CreateInfo, EMaterialTexture::AlphaMask, Index);
 
-        if (ImportedModel->Materials[Index].NormalTexture)
+        if (CreateInfo->Materials[Index].Textures[EMaterialTexture::Normal])
         {
-            Material->NormalMap = ImportedModel->Materials[Index].NormalTexture->GetRHITexture();
+            Material->NormalMap = CreateInfo->Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
         }
 
         Material->Initialize();
-        Material->SetName(ImportedModel->Materials[Index].Name);
+        Material->SetName(CreateInfo->Materials[Index].Name);
         
         Materials.Add(Material);
     }
     
-    if (Materials.Size() != ImportedModel->Materials.Size())
+    if (Materials.Size() != CreateInfo->Materials.Size())
     {
         DEBUG_BREAK();
         return false;

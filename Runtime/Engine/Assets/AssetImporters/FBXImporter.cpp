@@ -4,7 +4,6 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Engine/Assets/VertexFormat.h"
-#include "Engine/Assets/MeshUtilities.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 
@@ -58,7 +57,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     return FTexture2DRef();
 }
 
-TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags)
+TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags)
 {
     const FString Filename = FString(InFilename);
 
@@ -116,9 +115,9 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
     UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
-    TSharedPtr<FImportedModel> Scene = MakeSharedPtr<FImportedModel>();
-    Scene->Models.Reserve(FBXScene->getMeshCount());
-    Scene->Materials.Reserve(MaterialCount);
+    TSharedPtr<FModelCreateInfo> ModelCreateInfo = MakeSharedPtr<FModelCreateInfo>();
+    ModelCreateInfo->Meshes.Reserve(FBXScene->getMeshCount());
+    ModelCreateInfo->Materials.Reserve(MaterialCount);
 
     // Convert data
     const FString Path = ExtractPath(Filename);
@@ -126,7 +125,6 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
     // Get the global settings
     const ofbx::GlobalSettings* GlobalSettings = FBXScene->getGlobalSettings();
 
-    FMeshData ModelData;
     for (int32 MeshIdx = 0; MeshIdx < FBXScene->getMeshCount(); MeshIdx++)
     {
         const ofbx::Mesh* CurrentMesh = FBXScene->getMesh(MeshIdx);
@@ -140,23 +138,23 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
 
             LOG_INFO("[FFBXImporter] Loading Material '%s'", CurrentMaterial->name);
 
-            FImportedMaterial MaterialData;
-            MaterialData.Name = CurrentMaterial->name;
+            FMaterialCreateInfo MaterialCreateInfo;
+            MaterialCreateInfo.Name = CurrentMaterial->name;
 
-            MaterialData.DiffuseTexture  = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
-            MaterialData.NormalTexture   = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
-            MaterialData.SpecularTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
-            MaterialData.EmissiveTexture = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
-            MaterialData.AOTexture       = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
+            MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]          = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::DIFFUSE);
+            MaterialCreateInfo.Textures[EMaterialTexture::Normal]           = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::NORMAL);
+            MaterialCreateInfo.Textures[EMaterialTexture::Specular]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::SPECULAR);
+            MaterialCreateInfo.Textures[EMaterialTexture::Emissive]         = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::EMISSIVE);
+            MaterialCreateInfo.Textures[EMaterialTexture::AmbientOcclusion] = LoadMaterialTexture(Path, CurrentMaterial, ofbx::Texture::TextureType::AMBIENT);
 
-            MaterialData.Diffuse   = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
-            MaterialData.AO        = 1.0f; // CurrentMaterial->getSpecularColor().r;
-            MaterialData.Roughness = 1.0f; // CurrentMaterial->getSpecularColor().g;
-            MaterialData.Metallic  = 1.0f; // CurrentMaterial->getSpecularColor().b;
+            MaterialCreateInfo.Diffuse       = FVector3(CurrentMaterial->getDiffuseColor().r, CurrentMaterial->getDiffuseColor().g, CurrentMaterial->getDiffuseColor().b);
+            MaterialCreateInfo.AmbientFactor = 1.0f; // CurrentMaterial->getSpecularColor().r;
+            MaterialCreateInfo.Roughness     = 1.0f; // CurrentMaterial->getSpecularColor().g;
+            MaterialCreateInfo.Metallic      = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             // TODO: Other material properties
-            UniqueMaterials[CurrentMaterial->id] = Scene->Materials.Size();
-            Scene->Materials.Emplace(MaterialData);
+            UniqueMaterials[CurrentMaterial->id] = ModelCreateInfo->Materials.Size();
+            ModelCreateInfo->Materials.Add(Move(MaterialCreateInfo));
         }
 
         const FMatrix4 Matrix          = ToFloat4x4(CurrentMesh->getGlobalTransform());
@@ -170,13 +168,14 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
         ofbx::Vec2Attributes TexCoords = GeometryData.getUVs();
 
         const int32 PartitionCount = GeometryData.getPartitionCount();
-        ModelData.Indices.Reserve(Positions.count);
-        ModelData.Vertices.Reserve(Positions.values_count);
-        ModelData.Partitions.Reserve(PartitionCount);
-        UniqueVertices.Reserve(Positions.values_count);
+        
+        FMeshCreateInfo MeshCreateInfo;
+        MeshCreateInfo.Indices.Reserve(Positions.count);
+        MeshCreateInfo.Vertices.Reserve(Positions.values_count);
+        MeshCreateInfo.SubMeshes.Resize(PartitionCount);
 
         // Clear the mesh data to start a new mesh
-        ModelData.Clear();
+        UniqueVertices.Reserve(Positions.values_count);
         UniqueVertices.Clear();
 
         // Go through each mesh partition and add it to the scene as a separate mesh
@@ -187,9 +186,9 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
             PartitionIndicies.Resize(FbxPartition.max_polygon_triangles * NumIndiciesPerTriangle);
 
             // Create a new partition for the mesh
-            FMeshPartition& Partition = ModelData.Partitions.Emplace();
-            Partition.BaseVertex = ModelData.Vertices.Size();
-            Partition.StartIndex = ModelData.Indices.Size();
+            FSubMeshInfo& SubMeshInfo = MeshCreateInfo.SubMeshes[PartitionIdx];
+            SubMeshInfo.BaseVertex = MeshCreateInfo.Vertices.Size();
+            SubMeshInfo.StartIndex = MeshCreateInfo.Indices.Size();
 
             // Go through each polygon and add it to the mesh
             for (int32 PolygonIdx = 0; PolygonIdx < FbxPartition.polygon_count; ++PolygonIdx)
@@ -239,37 +238,37 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
 
                     // Only push unique vertices
                     uint32 UniqueIndex = 0;
-                    if (!UniqueVertices.Contains(Vertex))
+                    if (uint32* ExistingIndex = UniqueVertices.Find(Vertex))
                     {
-                        UniqueIndex = static_cast<uint32>(ModelData.Vertices.Size());
-                        UniqueVertices[Vertex] = UniqueIndex;
-                        ModelData.Vertices.Add(Vertex);
+                        UniqueIndex = *ExistingIndex;
                     }
                     else
                     {
-                        UniqueIndex = UniqueVertices[Vertex];
+                        UniqueIndex = static_cast<uint32>(MeshCreateInfo.Vertices.Size());
+                        UniqueVertices[Vertex] = UniqueIndex;
+                        MeshCreateInfo.Vertices.Add(Vertex);
                     }
 
-                    ModelData.Indices.Emplace(UniqueIndex);
+                    MeshCreateInfo.Indices.Emplace(UniqueIndex);
                 }
             }
 
             // Set the number of vertices/indices for this partition
-            Partition.VertexCount = ModelData.Vertices.Size() - Partition.BaseVertex;
-            Partition.IndexCount  = ModelData.Indices.Size() - Partition.StartIndex;
+            SubMeshInfo.VertexCount = MeshCreateInfo.Vertices.Size() - SubMeshInfo.BaseVertex;
+            SubMeshInfo.IndexCount  = MeshCreateInfo.Indices.Size() - SubMeshInfo.StartIndex;
 
             // Add material index to the mesh
-            Partition.MaterialIndex = INVALID_MATERIAL_INDEX;
+            SubMeshInfo.MaterialIndex = INVALID_MATERIAL_INDEX;
             if (PartitionIdx < CurrentMesh->getMaterialCount())
             {
                 const ofbx::Material* CurrentMaterial = CurrentMesh->getMaterial(PartitionIdx);
-                if (UniqueMaterials.Contains(CurrentMaterial->id))
+                if (uint32* ExistingMaterialIndex = UniqueMaterials.Find(CurrentMaterial->id))
                 {
-                    Partition.MaterialIndex = UniqueMaterials[CurrentMaterial->id];
+                    SubMeshInfo.MaterialIndex = *ExistingMaterialIndex;
                 }
             }
 
-            if (Partition.MaterialIndex == INVALID_MATERIAL_INDEX)
+            if (SubMeshInfo.MaterialIndex == INVALID_MATERIAL_INDEX)
             {
                 LOG_WARNING("[FFBXImporter] Partition in Mesh '%s' has no material", CurrentMesh->name);
             }
@@ -278,7 +277,7 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
         // If there are no tangents, then we calculate them
         if (!Tangents.values)
         {
-            FMeshUtilities::CalculateTangents(ModelData);
+            MeshCreateInfo.CalculateTangents();
         }
 
         // Convert to left-handed
@@ -286,16 +285,16 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
         {
             if (GlobalSettings->CoordAxis == ofbx::CoordSystem_RightHanded)
             {
-                FMeshUtilities::ReverseHandedness(ModelData);
+                MeshCreateInfo.ReverseHandedness();
             }
         }
 
         // Add the mesh to our scene
-        if (ModelData.Hasdata())
+        if (!MeshCreateInfo.Vertices.IsEmpty())
         {
             LOG_INFO("[FFBXImporter] Loaded Mesh '%s'", CurrentMesh->name);
-            ModelData.Name = CurrentMesh->name;
-            Scene->Models.Emplace(ModelData);
+            MeshCreateInfo.Name = CurrentMesh->name;
+            ModelCreateInfo->Meshes.Add(Move(MeshCreateInfo));
         }
         else
         {
@@ -303,13 +302,13 @@ TSharedPtr<FImportedModel> FFBXImporter::ImportFromFile(const FStringView& InFil
         }
     }
 
-    Scene->Models.Shrink();
-    Scene->Materials.Shrink();
+    ModelCreateInfo->Meshes.Shrink();
+    ModelCreateInfo->Materials.Shrink();
 
     FBXScene->destroy();
 
-    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Scene->Models.Size(), Scene->Materials.Size());
-    return Scene;
+    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", Filename.GetCString(), ModelCreateInfo->Meshes.Size(), ModelCreateInfo->Materials.Size());
+    return ModelCreateInfo;
 }
 
 bool FFBXImporter::MatchExtenstion(const FStringView& FileName)

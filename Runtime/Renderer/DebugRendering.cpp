@@ -3,12 +3,12 @@
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Engine/Resources/Mesh.h"
+#include "RHI/RHI.h"
+#include "RHI/ShaderCompiler.h"
+#include "Engine/Resources/Model.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
-#include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
 
 FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -281,7 +281,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             LightDebugPSO->SetDebugName("Light Debug PipelineState");
         }
 
-        FMeshData SphereMesh = FMeshFactory::CreateSphere(1, 0.25f);
+        FMeshCreateInfo SphereMesh = FMeshFactory::CreateSphere(1, 0.25f);
 
         // VertexBuffer
         FRHIBufferInfo VBInfo(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
@@ -297,7 +297,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
 
         // Create IndexBuffer
-        TArray<uint16> SmallIndicies = FMeshFactory::ConvertSmallIndices(SphereMesh.Indices);
+        TArray<uint16> SmallIndicies = SphereMesh.GetSmallIndices();
         DbgSphereIndexCount = SmallIndicies.Size();
 
         FRHIBufferInfo IBInfo(SmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);

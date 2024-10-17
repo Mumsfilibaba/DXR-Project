@@ -134,8 +134,10 @@ bool FSandbox::Init()
 
 #if LOAD_SPONZA
     // Create Spheres
-    FMeshData SphereMeshData = FMeshFactory::CreateSphere(3);
-    TSharedPtr<FMesh> SphereMesh = FMesh::Create(SphereMeshData);
+    FMeshCreateInfo SphereMeshInfo = FMeshFactory::CreateSphere(3);
+    
+    TSharedPtr<FMesh> SphereMesh = MakeSharedPtr<FMesh>();
+    SphereMesh->Init(SphereMeshInfo);
 
     constexpr float  SphereOffset   = 1.25f;
     constexpr uint32 SphereCountX   = 8;
@@ -257,7 +259,6 @@ bool FSandbox::Init()
 #endif
 
     // Create Other Meshes
-    FMeshData CubeMeshData = FMeshFactory::CreateCube();
     NewActor = CurrentWorld->CreateActor();
     if (NewActor)
     {
@@ -291,7 +292,11 @@ bool FSandbox::Init()
             NewMaterial->Initialize();
             NewMaterial->SetName("GateMaterial");
 
-            NewComponent->SetMesh(FMesh::Create(CubeMeshData));
+            FMeshCreateInfo CubeMeshData = FMeshFactory::CreateCube();
+            TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
+            CubeMesh->Init(CubeMeshData);
+            
+            NewComponent->SetMesh(CubeMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
@@ -324,7 +329,11 @@ bool FSandbox::Init()
             NewMaterial->Initialize();
             NewMaterial->SetName("PlaneMaterial");
 
-            NewComponent->SetMesh(FMesh::Create(FMeshFactory::CreatePlane(10, 10)));
+            FMeshCreateInfo PlaneMeshData = FMeshFactory::CreatePlane(10, 10);
+            TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
+            PlaneMesh->Init(PlaneMeshData);
+            
+            NewComponent->SetMesh(PlaneMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);

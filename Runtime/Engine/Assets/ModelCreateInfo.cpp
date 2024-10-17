@@ -1,15 +1,285 @@
-#include "MeshFactory.h"
-#include "MeshUtilities.h"
-#include "Core/Math/MathCommon.h"
+#include "Engine/Engine.h"
+#include "Engine/World/World.h"
+#include "Engine/World/Components/MeshComponent.h"
+#include "Engine/Resources/Model.h"
+#include "Engine/Resources/Material.h"
+#include "Engine/Assets/ModelCreateInfo.h"
 
-FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
+TArray<uint16> FMeshCreateInfo::GetSmallIndices() const
 {
-    const float HalfWidth  = Width * 0.5f;
-    const float HalfHeight = Height * 0.5f;
-    const float HalfDepth  = Depth * 0.5f;
+    TArray<uint16> NewArray;
+    NewArray.Reserve(Indices.Size());
 
-    FMeshData Cube;
-    Cube.Vertices =
+    for (uint32 Index : Indices)
+    {
+        NewArray.Add(static_cast<uint16>(Index));
+    }
+
+    return NewArray;
+}
+
+void FMeshCreateInfo::Optimize(uint32 StartVertex)
+{
+    uint32 VertexCount = static_cast<uint32>(Vertices.Size());
+    uint32 IndexCount  = static_cast<uint32>(Indices.Size());
+
+    uint32 k = 0;
+    uint32 j = 0;
+    for (uint32 i = StartVertex; i < VertexCount; i++)
+    {
+        for (j = 0; j < VertexCount; j++)
+        {
+            if (Vertices[i] == Vertices[j])
+            {
+                if (i != j)
+                {
+                    Vertices.RemoveAt(i);
+                    VertexCount--;
+                    j--;
+
+                    for (k = 0; k < IndexCount; k++)
+                    {
+                        if (Indices[k] == i)
+                        {
+                            Indices[k] = j;
+                        }
+                        else if (Indices[k] > i)
+                        {
+                            Indices[k]--;
+                        }
+                    }
+
+                    i--;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void FMeshCreateInfo::CalculateHardNormals()
+{
+    CHECK(Indices.Size() % 3 == 0);
+
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        FVertex& Vertex0 = Vertices[Indices[i + 0]];
+        FVertex& Vertex1 = Vertices[Indices[i + 1]];
+        FVertex& Vertex2 = Vertices[Indices[i + 2]];
+
+        FVector3 Edge0  = Vertex2.Position - Vertex0.Position;
+        FVector3 Edge1  = Vertex1.Position - Vertex0.Position;
+        FVector3 Normal = Edge0.CrossProduct(Edge1);
+        Normal.Normalize();
+
+        Vertex0.Normal = Normal;
+        Vertex1.Normal = Normal;
+        Vertex2.Normal = Normal;
+    }
+}
+
+void FMeshCreateInfo::CalculateSoftNormals()
+{
+    CHECK(Indices.Size() % 3 == 0);
+
+    // TODO: Write better version. For now calculate the hard normals and then average all of them
+    CalculateHardNormals();
+
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        FVertex& Vertex0 = Vertices[Indices[i + 0]];
+        FVertex& Vertex1 = Vertices[Indices[i + 1]];
+        FVertex& Vertex2 = Vertices[Indices[i + 2]];
+
+        FVector3 Edge0  = Vertex2.Position - Vertex0.Position;
+        FVector3 Edge1  = Vertex1.Position - Vertex0.Position;
+        FVector3 Normal = Edge0.CrossProduct(Edge1);
+        Normal.Normalize();
+
+        // Average current and new normal
+        Vertex0.Normal = (Vertex0.Normal + Normal) * 0.5f;
+        Vertex0.Normal.Normalize();
+        Vertex1.Normal = (Vertex1.Normal + Normal) * 0.5f;
+        Vertex1.Normal.Normalize();
+        Vertex2.Normal = (Vertex2.Normal + Normal) * 0.5f;
+        Vertex2.Normal.Normalize();
+    }
+}
+
+void FMeshCreateInfo::CalculateTangents()
+{
+    CHECK(Indices.Size() % 3 == 0);
+
+    auto CalculateTangentFromVectors = [](FVertex& Vertex1, const FVertex& Vertex2, const FVertex& Vertex3)
+    {
+        FVector3 Edge1   = Vertex2.Position - Vertex1.Position;
+        FVector3 Edge2   = Vertex3.Position - Vertex1.Position;
+        FVector2 UVEdge1 = Vertex2.TexCoord - Vertex1.TexCoord;
+        FVector2 UVEdge2 = Vertex3.TexCoord - Vertex1.TexCoord;
+
+        const float RecipDenominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
+
+        FVector3 Tangent = RecipDenominator * ((UVEdge2.y * Edge1) - (UVEdge1.y * Edge2));
+        Tangent.Normalize();
+
+        Vertex1.Tangent = Tangent;
+    };
+
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        FVertex& Vertex1 = Vertices[Indices[i + 0]];
+        FVertex& Vertex2 = Vertices[Indices[i + 1]];
+        FVertex& Vertex3 = Vertices[Indices[i + 2]];
+
+        CalculateTangentFromVectors(Vertex1, Vertex2, Vertex3);
+        CalculateTangentFromVectors(Vertex2, Vertex3, Vertex1);
+        CalculateTangentFromVectors(Vertex3, Vertex1, Vertex2);
+    }
+}
+
+void FMeshCreateInfo::ReverseHandedness()
+{
+    CHECK(Indices.Size() % 3 == 0);
+
+    for (int32 i = 0; i < Indices.Size(); i += 3)
+    {
+        uint32 TempIndex = Indices[i + 1];
+        Indices[i + 1] = Indices[i + 2];
+        Indices[i + 2] = TempIndex;
+    }
+
+    for (int32 i = 0; i < Vertices.Size(); ++i)
+    {
+        Vertices[i].Position.z = Vertices[i].Position.z * -1.0f;
+        Vertices[i].Normal.z   = Vertices[i].Normal.z   * -1.0f;
+    }
+}
+
+void FMeshCreateInfo::Subdivide(uint32 Subdivisions)
+{
+    if (Subdivisions < 1)
+    {
+        return;
+    }
+
+    FVertex TempVertices[3];
+    uint32 IndexCount     = 0;
+    uint32 VertexCount    = 0;
+    uint32 OldVertexCount = 0;
+
+    Vertices.Reserve((Vertices.Size() * static_cast<uint32>(pow(2, Subdivisions))));
+    Indices.Reserve((Indices.Size() * static_cast<uint32>(pow(4, Subdivisions))));
+
+    for (uint32 i = 0; i < Subdivisions; i++)
+    {
+        OldVertexCount = uint32(Vertices.Size());
+        IndexCount     = uint32(Indices.Size());
+
+        CHECK(IndexCount % 3 == 0);
+
+        for (uint32 j = 0; j < IndexCount; j += 3)
+        {
+            // Calculate Position
+            FVector3 Position0 = Vertices[Indices[j]].Position;
+            FVector3 Position1 = Vertices[Indices[j + 1]].Position;
+            FVector3 Position2 = Vertices[Indices[j + 2]].Position;
+
+            FVector3 Position = Position0 + Position1;
+            TempVertices[0].Position = Position * 0.5f;
+
+            Position = Position0 + Position2;
+            TempVertices[1].Position = Position * 0.5f;
+
+            Position = Position1 + Position2;
+            TempVertices[2].Position = Position * 0.5f;
+
+            // Calculate TexCoord
+            FVector2 TexCoord0 = Vertices[Indices[j]].TexCoord;
+            FVector2 TexCoord1 = Vertices[Indices[j + 1]].TexCoord;
+            FVector2 TexCoord2 = Vertices[Indices[j + 2]].TexCoord;
+
+            FVector2 TexCoord = TexCoord0 + TexCoord1;
+            TempVertices[0].TexCoord = TexCoord * 0.5f;
+
+            TexCoord = TexCoord0 + TexCoord2;
+            TempVertices[1].TexCoord = TexCoord * 0.5f;
+
+            TexCoord = TexCoord1 + TexCoord2;
+            TempVertices[2].TexCoord = TexCoord * 0.5f;
+
+            // Calculate Normal
+            FVector3 Normal0 = Vertices[Indices[j]].Normal;
+            FVector3 Normal1 = Vertices[Indices[j + 1]].Normal;
+            FVector3 Normal2 = Vertices[Indices[j + 2]].Normal;
+
+            FVector3 Normal = Normal0 + Normal1;
+            Normal = Normal * 0.5f;
+            TempVertices[0].Normal = Normal.GetNormalized();
+
+            Normal = Normal0 + Normal2;
+            Normal = Normal * 0.5f;
+            TempVertices[1].Normal = Normal.GetNormalized();
+
+            Normal = Normal1 + Normal2;
+            Normal = Normal * 0.5f;
+            TempVertices[2].Normal = Normal.GetNormalized();
+
+            // Calculate Tangent
+            FVector3 Tangent0 = Vertices[Indices[j]].Tangent;
+            FVector3 Tangent1 = Vertices[Indices[j + 1]].Tangent;
+            FVector3 Tangent2 = Vertices[Indices[j + 2]].Tangent;
+
+            FVector3 Tangent = Tangent0 + Tangent1;
+            Tangent = Tangent * 0.5f;
+            TempVertices[0].Tangent = Tangent.GetNormalized();
+
+            Tangent = Tangent0 + Tangent2;
+            Tangent = Tangent * 0.5f;
+            TempVertices[1].Tangent = Tangent.GetNormalized();
+
+            Tangent = Tangent1 + Tangent2;
+            Tangent = Tangent * 0.5f;
+            TempVertices[2].Tangent = Tangent.GetNormalized();
+
+            // Add the new Vertices
+            Vertices.Emplace(TempVertices[0]);
+            Vertices.Emplace(TempVertices[1]);
+            Vertices.Emplace(TempVertices[2]);
+
+            // Add index of the new triangles
+            VertexCount = uint32(Vertices.Size());
+            Indices.Emplace(VertexCount - 3);
+            Indices.Emplace(VertexCount - 1);
+            Indices.Emplace(VertexCount - 2);
+
+            Indices.Emplace(VertexCount - 3);
+            Indices.Emplace(Indices[j + 1]);
+            Indices.Emplace(VertexCount - 1);
+
+            Indices.Emplace(VertexCount - 2);
+            Indices.Emplace(VertexCount - 1);
+            Indices.Emplace(Indices[j + 2]);
+
+            // Reassign the old indexes
+            Indices[j + 1] = VertexCount - 3;
+            Indices[j + 2] = VertexCount - 2;
+        }
+
+        Optimize(OldVertexCount);
+    }
+
+    Vertices.Shrink();
+    Indices.Shrink();
+}
+
+FMeshCreateInfo FMeshFactory::CreateCube(float Width, float Height, float Depth) noexcept
+{
+    const float HalfWidth  = Width  * 0.5f;
+    const float HalfHeight = Height * 0.5f;
+    const float HalfDepth  = Depth  * 0.5f;
+
+    FMeshCreateInfo CubeInfo;
+    CubeInfo.Vertices =
     {
         // FRONT FACE
         { FVector3(-HalfWidth,  HalfHeight, -HalfDepth), FVector3(0.0f,  0.0f, -1.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(0.0f, 0.0f) },
@@ -48,7 +318,7 @@ FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexc
         { FVector3( HalfWidth, -HalfHeight,  HalfDepth), FVector3(0.0f, -1.0f,  0.0f), FVector3(1.0f,  0.0f, 0.0f), FVector2(1.0f, 1.0f) },
     };
 
-    Cube.Indices =
+    CubeInfo.Indices =
     {
         // Front Face
         0, 1, 2,
@@ -75,12 +345,12 @@ FMeshData FMeshFactory::CreateCube(float Width, float Height, float Depth) noexc
         21, 23, 22
     };
 
-    return Cube;
+    return CubeInfo;
 }
 
-FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
+FMeshCreateInfo FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
 {
-    FMeshData Data;
+    FMeshCreateInfo PlaneInfo;
     if (Width < 1)
     {
         Width = 1;
@@ -90,8 +360,8 @@ FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         Height = 1;
     }
 
-    Data.Vertices.Resize((Width + 1) * (Height + 1));
-    Data.Indices.Resize((Width * Height) * 6);
+    PlaneInfo.Vertices.Resize((Width + 1) * (Height + 1));
+    PlaneInfo.Indices.Resize((Width * Height) * 6);
 
     // Size of each quad, size of the plane will always be between -0.5 and 0.5
     FVector2 QuadSize   = FVector2(1.0f / float(Width), 1.0f / float(Height));
@@ -102,11 +372,11 @@ FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         for (uint32 y = 0; y <= Height; y++)
         {
             int32 v = ((1 + Height) * x) + y;
-            Data.Vertices[v].Position = FVector3(0.5f - (QuadSize.x * x), 0.5f - (QuadSize.y * y), 0.0f);
+            PlaneInfo.Vertices[v].Position = FVector3(0.5f - (QuadSize.x * x), 0.5f - (QuadSize.y * y), 0.0f);
             // TODO: Fix vertices so normal is positive
-            Data.Vertices[v].Normal   = FVector3(0.0f, 0.0f, -1.0f);
-            Data.Vertices[v].Tangent  = FVector3(1.0f, 0.0f, 0.0f);
-            Data.Vertices[v].TexCoord = FVector2(0.0f + (UvQuadSize.x * x), 0.0f + (UvQuadSize.y * y));
+            PlaneInfo.Vertices[v].Normal   = FVector3(0.0f, 0.0f, -1.0f);
+            PlaneInfo.Vertices[v].Tangent  = FVector3(1.0f, 0.0f, 0.0f);
+            PlaneInfo.Vertices[v].TexCoord = FVector2(0.0f + (UvQuadSize.x * x), 0.0f + (UvQuadSize.y * y));
         }
     }
 
@@ -115,41 +385,41 @@ FMeshData FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         for (uint8 y = 0; y < Height; y++)
         {
             int32 quad = (Height * x) + y;
-            Data.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
-            Data.Indices[(quad * 6) + 1] = (Data.Indices[quad * 6] + 2 + (Height - 1));
-            Data.Indices[(quad * 6) + 2] = Data.Indices[(quad * 6) + 0] - 1;
-            Data.Indices[(quad * 6) + 3] = Data.Indices[(quad * 6) + 1];
-            Data.Indices[(quad * 6) + 4] = Data.Indices[(quad * 6) + 1] - 1;
-            Data.Indices[(quad * 6) + 5] = Data.Indices[(quad * 6) + 2];
+            PlaneInfo.Indices[(quad * 6) + 0] = (x * (1 + Height)) + y + 1;
+            PlaneInfo.Indices[(quad * 6) + 1] = (PlaneInfo.Indices[quad * 6] + 2 + (Height - 1));
+            PlaneInfo.Indices[(quad * 6) + 2] = PlaneInfo.Indices[(quad * 6) + 0] - 1;
+            PlaneInfo.Indices[(quad * 6) + 3] = PlaneInfo.Indices[(quad * 6) + 1];
+            PlaneInfo.Indices[(quad * 6) + 4] = PlaneInfo.Indices[(quad * 6) + 1] - 1;
+            PlaneInfo.Indices[(quad * 6) + 5] = PlaneInfo.Indices[(quad * 6) + 2];
         }
     }
 
-    Data.Vertices.Shrink();
-    Data.Indices.Shrink();
+    PlaneInfo.Vertices.Shrink();
+    PlaneInfo.Indices.Shrink();
 
-    return Data;
+    return PlaneInfo;
 }
 
-FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
+FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 {
-    FMeshData Sphere;
-    Sphere.Vertices.Resize(12);
+    FMeshCreateInfo SphereInfo;
+    SphereInfo.Vertices.Resize(12);
 
     const float t = (1.0f + FMath::Sqrt(5.0f)) / 2.0f;
-    Sphere.Vertices[0].Position  = FVector3(-1.0f,  t   ,  0.0f);
-    Sphere.Vertices[1].Position  = FVector3( 1.0f,  t   ,  0.0f);
-    Sphere.Vertices[2].Position  = FVector3(-1.0f, -t   ,  0.0f);
-    Sphere.Vertices[3].Position  = FVector3( 1.0f, -t   ,  0.0f);
-    Sphere.Vertices[4].Position  = FVector3( 0.0f, -1.0f,  t);
-    Sphere.Vertices[5].Position  = FVector3( 0.0f,  1.0f,  t);
-    Sphere.Vertices[6].Position  = FVector3( 0.0f, -1.0f, -t);
-    Sphere.Vertices[7].Position  = FVector3( 0.0f,  1.0f, -t);
-    Sphere.Vertices[8].Position  = FVector3( t   ,  0.0f, -1.0f);
-    Sphere.Vertices[9].Position  = FVector3( t   ,  0.0f,  1.0f);
-    Sphere.Vertices[10].Position = FVector3(-t   ,  0.0f, -1.0f);
-    Sphere.Vertices[11].Position = FVector3(-t   ,  0.0f,  1.0f);
+    SphereInfo.Vertices[0].Position  = FVector3(-1.0f,  t   ,  0.0f);
+    SphereInfo.Vertices[1].Position  = FVector3( 1.0f,  t   ,  0.0f);
+    SphereInfo.Vertices[2].Position  = FVector3(-1.0f, -t   ,  0.0f);
+    SphereInfo.Vertices[3].Position  = FVector3( 1.0f, -t   ,  0.0f);
+    SphereInfo.Vertices[4].Position  = FVector3( 0.0f, -1.0f,  t);
+    SphereInfo.Vertices[5].Position  = FVector3( 0.0f,  1.0f,  t);
+    SphereInfo.Vertices[6].Position  = FVector3( 0.0f, -1.0f, -t);
+    SphereInfo.Vertices[7].Position  = FVector3( 0.0f,  1.0f, -t);
+    SphereInfo.Vertices[8].Position  = FVector3( t   ,  0.0f, -1.0f);
+    SphereInfo.Vertices[9].Position  = FVector3( t   ,  0.0f,  1.0f);
+    SphereInfo.Vertices[10].Position = FVector3(-t   ,  0.0f, -1.0f);
+    SphereInfo.Vertices[11].Position = FVector3(-t   ,  0.0f,  1.0f);
 
-    Sphere.Indices =
+    SphereInfo.Indices =
     {
         0, 11, 5,
         0, 5,  1,
@@ -178,33 +448,32 @@ FMeshData FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) noexcept
 
     if (Subdivisions > 0)
     {
-        FMeshUtilities::Subdivide(Sphere, Subdivisions);
+        SphereInfo.Subdivide(Subdivisions);
     }
 
-    for (uint32 i = 0; i < static_cast<uint32>(Sphere.Vertices.Size()); i++)
+    for (uint32 i = 0; i < static_cast<uint32>(SphereInfo.Vertices.Size()); i++)
     {
         // Calculate the new position, normal and tangent
-        FVector3 Position = Sphere.Vertices[i].Position;
+        FVector3 Position = SphereInfo.Vertices[i].Position;
         Position.Normalize();
 
-        Sphere.Vertices[i].Normal = Position;
-        Sphere.Vertices[i].Position = Position * Radius;
+        SphereInfo.Vertices[i].Normal   = Position;
+        SphereInfo.Vertices[i].Position = Position * Radius;
 
         // Calculate UVs
-        Sphere.Vertices[i].TexCoord.y = (FMath::Asin(Sphere.Vertices[i].Position.y) / FMath::kPI_f) + 0.5f;
-        Sphere.Vertices[i].TexCoord.x = (FMath::Atan2(Sphere.Vertices[i].Position.z, Sphere.Vertices[i].Position.x) + FMath::kPI_f) / (2.0f * FMath::kPI_f);
+        SphereInfo.Vertices[i].TexCoord.y = (FMath::Asin(SphereInfo.Vertices[i].Position.y) / FMath::kPI_f) + 0.5f;
+        SphereInfo.Vertices[i].TexCoord.x = (FMath::Atan2(SphereInfo.Vertices[i].Position.z, SphereInfo.Vertices[i].Position.x) + FMath::kPI_f) / (2.0f * FMath::kPI_f);
     }
 
-    Sphere.Indices.Shrink();
-    Sphere.Vertices.Shrink();
+    SphereInfo.Indices.Shrink();
+    SphereInfo.Vertices.Shrink();
 
-    FMeshUtilities::CalculateTangents(Sphere);
-
-    return Sphere;
+    SphereInfo.CalculateTangents();
+    return SphereInfo;
 }
 
 // TODO: Finish
-FMeshData FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
+FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
 {
     UNREFERENCED_VARIABLE(Sides);
     UNREFERENCED_VARIABLE(Radius);
@@ -281,11 +550,11 @@ FMeshData FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noe
     return data;
     */
 
-    return FMeshData();
+    return FMeshCreateInfo();
 }
 
 // TODO: Finish
-FMeshData FMeshFactory::CreatePyramid() noexcept
+FMeshCreateInfo FMeshFactory::CreatePyramid() noexcept
 {
     /*
     FMeshData data;
@@ -373,11 +642,11 @@ FMeshData FMeshFactory::CreatePyramid() noexcept
     return data;
     */
 
-    return FMeshData();
+    return FMeshCreateInfo();
 }
 
 // TODO: Finish
-FMeshData FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
+FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
 {
     UNREFERENCED_VARIABLE(Sides);
     UNREFERENCED_VARIABLE(Radius);
@@ -483,18 +752,5 @@ FMeshData FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height)
     return data;
     */
 
-    return FMeshData();
-}
-
-TArray<uint16> FMeshFactory::ConvertSmallIndices(const TArray<uint32>& Indicies) noexcept
-{
-    TArray<uint16> NewArray;
-    NewArray.Reserve(Indicies.Size());
-
-    for (uint32 Index : Indicies)
-    {
-        NewArray.Emplace(uint16(Index));
-    }
-
-    return NewArray;
+    return FMeshCreateInfo();
 }

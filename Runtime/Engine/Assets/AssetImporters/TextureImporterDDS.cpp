@@ -1,7 +1,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "RHI/RHITypes.h"
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
-#include "Engine/Resources/TextureResource.h"
+#include "Engine/Resources/Texture.h"
 
 // NOTE: Since this warning comes from a ThirdParty library, we disable this warning for now
 DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING

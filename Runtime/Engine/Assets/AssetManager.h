@@ -4,8 +4,8 @@
 #include "Core/Platform/CriticalSection.h"
 #include "Engine/Assets/ITextureImporter.h"
 #include "Engine/Assets/IModelImporter.h"
-#include "Engine/Resources/Mesh.h"
-#include "Engine/Resources/TextureResource.h"
+#include "Engine/Resources/Model.h"
+#include "Engine/Resources/Texture.h"
 
 struct FModelImporter;
 struct FModelSerializer;

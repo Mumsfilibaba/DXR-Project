@@ -1,12 +1,12 @@
-#include "DeferredRendering.h"
-#include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
+#include "Renderer/DeferredRendering.h"
+#include "Renderer/Scene.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTileDebug(

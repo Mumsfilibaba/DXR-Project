@@ -1,6 +1,6 @@
-#include "Engine/Resources/TextureResource.h"
-#include "RendererCore/TextureFactory.h"
 #include "RHI/RHI.h"
+#include "RendererCore/TextureFactory.h"
+#include "Engine/Resources/Texture.h"
 
 FTexture2D::FTexture2D()
     : FTexture()

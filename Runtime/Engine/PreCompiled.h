@@ -1,9 +1,7 @@
 #pragma once
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Assets/ITextureImporter.h"
-#include "Engine/Assets/MeshFactory.h"
-#include "Engine/Assets/MeshUtilities.h"
-#include "Engine/Assets/SceneData.h"
+#include "Engine/Assets/ModelCreateInfo.h"
 #include "Engine/Assets/VertexFormat.h"
 
 #include "Engine/Assets/AssetImporters/TextureImporterBase.h"
@@ -17,8 +15,8 @@
 
 #include "Engine/Resources/Resource.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/Mesh.h"
-#include "Engine/Resources/TextureResource.h"
+#include "Engine/Resources/Model.h"
+#include "Engine/Resources/Texture.h"
 
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Actors/PlayerInput.h"
