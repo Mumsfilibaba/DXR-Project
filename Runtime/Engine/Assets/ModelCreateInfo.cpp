@@ -472,85 +472,86 @@ FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) no
     return SphereInfo;
 }
 
-// TODO: Finish
 FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Height) noexcept
 {
-    UNREFERENCED_VARIABLE(Sides);
-    UNREFERENCED_VARIABLE(Radius);
-    UNREFERENCED_VARIABLE(Height);
-
-    /*
-    FMeshData data;
-    // Num verts = (Sides*2)    (Bottom, since we need unique normals)
-    //            +  Sides    (1 MiddlePoint per side)
-    //            +  1        (One middlepoint on the underside)
-    size_t vertSize = size_t(sides) * 3 + 1;
-    data.Vertices.resize(vertSize);
-
-    // Num indices = (Sides*3*2) (Cap has 'sides' number of tris + sides tris for the sides, each tri has 3 verts)
-    size_t indexSize = size_t(sides) * 6;
-    data.Indices.resize(indexSize);
-
-    // Angle between verts
-    float angle = (pi<float>() * 2.0f) / float(sides);
-    float uOffset = 1.0f / float(sides - 1);
-
-    // CREATE VERTICES
-    data.Vertices[0].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
-    data.Vertices[0].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
-    data.Vertices[0].TexCoord = XMFLOAT2(0.25f, 0.25f);
-
-    size_t offset = size_t(sides) + 1;
-    size_t topOffset = offset + size_t(sides);
-    for (size_t i = 0; i < sides; i++)
+    if (Sides < 3)
     {
-        // BOTTOM CAP VERTICES
-        float x = FMath::Cos((pi<float>() / 2.0f) + (angle * i));
-        float z = FMath::Sin((pi<float>() / 2.0f) + (angle * i));
-
-        XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
-        data.Vertices[i + 1].Position = (pos * radius);
-        data.Vertices[i + 1].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
-        data.Vertices[i + 1].TexCoord = (XMFLOAT2(x + 1.0f, z + 1.0f) * 0.25f);
-
-        // BOTTOM SIDE VERTICES
-        XMFLOAT3 normal = normalize(pos + XMFLOAT3(0.0f, sin(atan(Height / radius)), 0.0f));
-        data.Vertices[offset + i].Position = data.Vertices[i + 1].Position;
-        data.Vertices[offset + i].Normal = normal;
-        data.Vertices[offset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 1.0f);
-
-        // TOP
-        data.Vertices[topOffset + i].Position = XMFLOAT3(0.0f, Height, 0.0f);
-        data.Vertices[topOffset + i].Normal = normal;
-        data.Vertices[topOffset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 0.25f);
+        // A cone must have at least 3 sides
+        return FMeshCreateInfo();
     }
 
-    // BOTTOM CAP INDICES
-    size_t index = 0;
-    for (uint32 i = 0; i < sides; i++)
+    FMeshCreateInfo MeshCreateInfo;
+
+    // Number of vertices: (Sides + 1) for the base (including center)
+    //                     + Sides for the side vertices
+    const uint32 NumVertices = Sides + 1 + Sides + 1;
+    MeshCreateInfo.Vertices.Resize(NumVertices);
+
+    // Number of indices: (Sides * 3) for the base cap
+    //                   + (Sides * 3) for the sides
+    const uint32 NumIndices = Sides * 3 + Sides * 3;
+    MeshCreateInfo.Indices.Resize(NumIndices);
+
+    // Angle between each side segment
+    const float Angle = (2.0f * FMath::kPI) / static_cast<float>(Sides);
+    
+    // Create the center vertex for the base cap
+    MeshCreateInfo.Vertices[0].Position = FVector3(0.0f, 0.0f, 0.0f);
+    MeshCreateInfo.Vertices[0].Normal   = FVector3(0.0f, -1.0f, 0.0f);
+    MeshCreateInfo.Vertices[0].TexCoord = FVector2(0.5f, 0.5f); // Center UV coordinates
+
+    // Create vertices for the base cap and sides
+    const uint32 Offset = Sides + 1;
+    for (uint32 i = 0; i < Sides; ++i)
     {
-        data.Indices[index + 0] = ((i + 1) % sides) + 10;
-        data.Indices[index + 1] = i + 1;
-        data.Indices[index + 2] = 0;
-        index += 3;
+        // Calculate the position of the current vertex on the base circle
+        const float x = Radius * cosf(Angle * i);
+        const float z = Radius * sinf(Angle * i);
+        const FVector3 BasePosition(x, 0.0f, z);
+
+        // Base vertex
+        MeshCreateInfo.Vertices[i + 1].Position = BasePosition;
+        MeshCreateInfo.Vertices[i + 1].Normal   = FVector3(0.0f, -1.0f, 0.0f); // Pointing downwards
+        MeshCreateInfo.Vertices[i + 1].TexCoord = FVector2((x / Radius + 1.0f) * 0.5f, (z / Radius + 1.0f) * 0.5f);
+
+        // Side vertex
+        MeshCreateInfo.Vertices[Offset + i].Position = BasePosition;
+        
+        FVector3 Normal(x, Radius / Height, z);
+        if (Normal.LengthSquared() > 0.0f) // Ensure normalization is safe
+        {
+            Normal.Normalize();
+        }
+        
+        MeshCreateInfo.Vertices[Offset + i].Normal   = Normal;
+        MeshCreateInfo.Vertices[Offset + i].TexCoord = FVector2(static_cast<float>(i) / static_cast<float>(Sides), 1.0f);
     }
 
-    // SIDES INDICES
-    for (uint32 i = 0; i < sides; i++)
+    // Apex vertex
+    MeshCreateInfo.Vertices[NumVertices - 1].Position = FVector3(0.0f, Height, 0.0f);
+    MeshCreateInfo.Vertices[NumVertices - 1].Normal   = FVector3(0.0f, 1.0f, 0.0f); // Pointing upwards
+    MeshCreateInfo.Vertices[NumVertices - 1].TexCoord = FVector2(0.5f, 0.0f);
+
+    // Create indices for the base cap
+    uint32 Index = 0;
+    for (uint32 i = 0; i < Sides; ++i)
     {
-        data.Indices[index + 0] = uint32(offset) + i;
-        data.Indices[index + 1] = uint32(offset) + ((i + 1) % sides);
-        data.Indices[index + 2] = uint32(topOffset) + i;
-        index += 3;
+        MeshCreateInfo.Indices[Index++] = 0;
+        MeshCreateInfo.Indices[Index++] = i + 1;
+        MeshCreateInfo.Indices[Index++] = ((i + 1) % Sides) + 1;
     }
 
-    //Get tangents
-    CalculateTangents(data);
+    // Create indices for the sides
+    for (uint32 i = 0; i < Sides; ++i)
+    {
+        MeshCreateInfo.Indices[Index++] = Offset + i;
+        MeshCreateInfo.Indices[Index++] = NumVertices - 1;
+        MeshCreateInfo.Indices[Index++] = Offset + ((i + 1) % Sides);
+    }
 
-    return data;
-    */
-
-    return FMeshCreateInfo();
+    // Calculate tangents for proper lighting and normal mapping
+    MeshCreateInfo.CalculateTangents();
+    return MeshCreateInfo;
 }
 
 // TODO: Finish

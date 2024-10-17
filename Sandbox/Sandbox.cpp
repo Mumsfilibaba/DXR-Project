@@ -339,6 +339,44 @@ bool FSandbox::Init()
             NewActor->AddComponent(NewComponent);
         }
     }
+    
+    NewActor = CurrentWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Cone");
+        NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(3.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 0.5f, 50.0f);
+
+        MaterialInfo.Albedo           = FVector3(0.0f, 1.0f, 0.0f);
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 0.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
+            NewMaterial->Initialize();
+            NewMaterial->SetName("ConeMaterial");
+
+            FMeshCreateInfo ConeMeshData = FMeshFactory::CreateCone(16, 0.5f);
+            
+            TSharedPtr<FMesh> ConeMesh = MakeSharedPtr<FMesh>();
+            ConeMesh->Init(ConeMeshData);
+            
+            NewComponent->SetMesh(ConeMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
 
     TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
     if (StreetLightModel)
