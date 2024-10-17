@@ -554,6 +554,86 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     return MeshCreateInfo;
 }
 
+FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, uint32 RingSegments, uint32 TubeSegments) noexcept
+{
+    if (RingSegments < 3 || TubeSegments < 3)
+    {
+        // A torus must have at least 3 segments for both the ring and the tube
+        return FMeshCreateInfo();
+    }
+
+    // Number of vertices and indices
+    const uint32 NumVertices = RingSegments * TubeSegments;
+    const uint32 NumIndices  = RingSegments * TubeSegments * 6;
+
+    FMeshCreateInfo MeshCreateInfo;
+    MeshCreateInfo.Vertices.Resize(NumVertices);
+    MeshCreateInfo.Indices.Resize(NumIndices);
+
+    // Step angles for each segment
+    const float RingStep = 2.0f * FMath::kPI / static_cast<float>(RingSegments);
+    const float TubeStep = 2.0f * FMath::kPI / static_cast<float>(TubeSegments);
+
+    // Create vertices
+    uint32 VertexIndex = 0;
+    for (uint32 i = 0; i < RingSegments; ++i)
+    {
+        const float RingAngle = i * RingStep;
+        const FVector3 RingCenter = FVector3(RingRadius * cosf(RingAngle), 0.0f, RingRadius * sinf(RingAngle));
+        for (uint32 j = 0; j < TubeSegments; ++j)
+        {
+            const float TubeAngle = j * TubeStep;
+            const float CosTube   = cosf(TubeAngle);
+            const float SinTube   = sinf(TubeAngle);
+
+            // Position of the vertex
+            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * cosf(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * sinf(RingAngle));
+            MeshCreateInfo.Vertices[VertexIndex].Position = Position;
+
+            // Normal vector
+            FVector3 Normal = FVector3(CosTube * cosf(RingAngle), SinTube, CosTube * sinf(RingAngle));
+            Normal.Normalize();
+            
+            MeshCreateInfo.Vertices[VertexIndex].Normal = Normal;
+
+            // Texture coordinates
+            float U = static_cast<float>(i) / static_cast<float>(RingSegments);
+            float V = static_cast<float>(j) / static_cast<float>(TubeSegments);
+            MeshCreateInfo.Vertices[VertexIndex].TexCoord = FVector2(U, V);
+
+            ++VertexIndex;
+        }
+    }
+
+    // Create indices with inverted winding order
+    uint32 Index = 0;
+    for (uint32 i = 0; i < RingSegments; ++i)
+    {
+        for (uint32 j = 0; j < TubeSegments; ++j)
+        {
+            // Calculate the indices for the four corners of this quad
+            uint32 Current  = i * TubeSegments + j;
+            uint32 NextRing = ((i + 1) % RingSegments) * TubeSegments + j;
+            uint32 NextTube = i * TubeSegments + (j + 1) % TubeSegments;
+            uint32 Diagonal = ((i + 1) % RingSegments) * TubeSegments + (j + 1) % TubeSegments;
+
+            // First triangle (inverted winding order)
+            MeshCreateInfo.Indices[Index++] = Current;
+            MeshCreateInfo.Indices[Index++] = NextTube;
+            MeshCreateInfo.Indices[Index++] = NextRing;
+
+            // Second triangle (inverted winding order)
+            MeshCreateInfo.Indices[Index++] = NextTube;
+            MeshCreateInfo.Indices[Index++] = Diagonal;
+            MeshCreateInfo.Indices[Index++] = NextRing;
+        }
+    }
+
+    // Calculate tangents for proper lighting and normal mapping
+    MeshCreateInfo.CalculateTangents();
+    return MeshCreateInfo;
+}
+
 // TODO: Finish
 FMeshCreateInfo FMeshFactory::CreatePyramid() noexcept
 {
