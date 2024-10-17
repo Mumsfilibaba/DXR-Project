@@ -102,7 +102,7 @@ struct ENGINE_API FModelImporter : public IModelImporter
 {
     virtual ~FModelImporter() = default;
 
-    virtual TSharedPtr<FModelCreateInfo> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) override final;
+    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelCreateInfo& OutCreateInfo) override final;
     virtual bool MatchExtenstion(const FStringView& FileName) override final;
 };
 
@@ -110,5 +110,5 @@ struct ENGINE_API FModelSerializer
 {
     virtual ~FModelSerializer() = default;
 
-    bool Serialize(const FString& Filename, const TSharedPtr<FModelCreateInfo>& Model);
+    bool Serialize(const FString& Filename, const FModelCreateInfo& ModelInfo);
 };

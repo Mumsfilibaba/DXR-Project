@@ -10,7 +10,7 @@
 #include "Engine/Assets/AssetImporters/FBXImporter.h"
 #include "Engine/Assets/AssetImporters/OBJImporter.h"
 
-TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags)
+bool FModelImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags, FModelCreateInfo& OutCreateInfo)
 {
     FByteInputStream InputStream;
 
@@ -19,13 +19,13 @@ TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& I
         FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
         if (!File)
         {
-            return nullptr;
+            return false;
         }
 
         // Read the full file
         if (!FFileHelpers::ReadFile(File.Get(), InputStream))
         {
-            return nullptr;
+            return false;
         }
     }
 
@@ -35,32 +35,31 @@ TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& I
 
     if (FMemory::Memcmp(FileHeader.Magic, "DXRMESH", sizeof(FileHeader.Magic)) != 0)
     {
-        return nullptr;
+        return false;
     }
 
     if (FileHeader.VersionMajor != MODEL_FORMAT_VERSION_MAJOR || FileHeader.VersionMinor != MODEL_FORMAT_VERSION_MINOR)
     {
-        return nullptr;
+        return false;
     }
 
     const uint64 DataSize = InputStream.Size() - sizeof(ModelFormat::FFileHeader);
     if (FileHeader.DataSize != DataSize)
     {
-        return nullptr;
+        return false;
     }
 
     const uint64 DataCRC = FCRC32::Generate(InputStream.PeekData(), DataSize);
     if (FileHeader.DataCRC != DataCRC)
     {
-        return nullptr;
+        return false;
     }
 
     // 2) Model Header
     const ModelFormat::FModelHeader* ModelHeader = InputStream.PeekData<ModelFormat::FModelHeader>();
 
     // Load MeshData
-    TSharedPtr<FModelCreateInfo> ModelCreateInfo = MakeSharedPtr<FModelCreateInfo>();
-    ModelCreateInfo->Meshes.Resize(ModelHeader->NumMeshes);
+    OutCreateInfo.Meshes.Resize(ModelHeader->NumMeshes);
 
     // 3) Mesh Headers
     const ModelFormat::FMeshInfo*    MeshHeaders = InputStream.PeekData<ModelFormat::FMeshInfo>(ModelHeader->MeshDataOffset);
@@ -72,7 +71,7 @@ TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& I
 
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader->NumMeshes; ++MeshIdx)
     {
-        FMeshCreateInfo& MeshCreateInfo = ModelCreateInfo->Meshes[MeshIdx];
+        FMeshCreateInfo& MeshCreateInfo = OutCreateInfo.Meshes[MeshIdx];
 
         const ModelFormat::FMeshInfo& MeshHeader = MeshHeaders[MeshIdx];
         MAYBE_UNUSED const int32 Length = FCString::Strlen(MeshHeader.Name);
@@ -113,7 +112,7 @@ TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& I
         if (!FPlatformFile::IsFile(FilenameView.GetCString()))
         {
             LOG_ERROR("[FModelImporter] Stored file contains a invalid file reference, file will be reloaded from source");
-            return nullptr;
+            return false;
         }
 
         const FString Filename = FString(FilenameView);
@@ -121,7 +120,7 @@ TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& I
         if (!LoadedTextures[TextureIdx])
         {
             LOG_ERROR("[FModelImporter] Failed to load texture '%s'", Filename.GetCString());
-            return nullptr;
+            return false;
         }
     }
     
@@ -142,13 +141,13 @@ TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& I
     };
 
     // Construct Materials
-    ModelCreateInfo->Materials.Resize(ModelHeader->NumMaterials);
+    OutCreateInfo.Materials.Resize(ModelHeader->NumMaterials);
 
     // 6) Materials
     const ModelFormat::FMaterialInfo* Materials = InputStream.PeekData<ModelFormat::FMaterialInfo>(ModelHeader->MaterialDataOffset);
     for (int32 Index = 0; Index < ModelHeader->NumMaterials; ++Index)
     {
-        FMaterialCreateInfo& MaterialCreateInfo = ModelCreateInfo->Materials[Index];
+        FMaterialCreateInfo& MaterialCreateInfo = OutCreateInfo.Materials[Index];
         MaterialCreateInfo.Textures[EMaterialTexture::Diffuse]          = RetrieveTexture(Materials[Index].DiffuseTextureIdx);
         MaterialCreateInfo.Textures[EMaterialTexture::Normal]           = RetrieveTexture(Materials[Index].NormalTextureIdx);
         MaterialCreateInfo.Textures[EMaterialTexture::Specular]         = RetrieveTexture(Materials[Index].SpecularTextureIdx);
@@ -165,7 +164,7 @@ TSharedPtr<FModelCreateInfo> FModelImporter::ImportFromFile(const FStringView& I
         MaterialCreateInfo.Metallic      = Materials[Index].Metallic;
     }
 
-    return ModelCreateInfo;
+    return true;
 }
 
 bool FModelImporter::MatchExtenstion(const FStringView& FileName)
@@ -173,13 +172,8 @@ bool FModelImporter::MatchExtenstion(const FStringView& FileName)
     return FileName.EndsWith(".dxrmesh", EStringCaseType::NoCase);
 }
 
-bool FModelSerializer::Serialize(const FString& Filename, const TSharedPtr<FModelCreateInfo>& Model)
+bool FModelSerializer::Serialize(const FString& Filename, const FModelCreateInfo& ModelInfo)
 {
-    if (!Model)
-    {
-        return false;
-    }
-
     ModelFormat::FModelHeader ModelHeader;
     FMemory::Memzero(&ModelHeader, sizeof(ModelFormat::FModelHeader));
 
@@ -187,7 +181,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const TSharedPtr<FMode
     OutputStream.AddUninitialized<ModelFormat::FModelHeader>();
 
     // Count mesh-primitives and prepare headers
-    ModelHeader.NumMeshes      = Model->Meshes.Size();
+    ModelHeader.NumMeshes      = ModelInfo.Meshes.Size();
     ModelHeader.MeshDataOffset = OutputStream.AddUninitialized<ModelFormat::FMeshInfo>(ModelHeader.NumMeshes);
 
     int32 NumVertices  = 0;
@@ -197,7 +191,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const TSharedPtr<FMode
     int32 MeshDataOffset = ModelHeader.MeshDataOffset;
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
     {
-        const FMeshCreateInfo& MeshCreateInfo = Model->Meshes[MeshIdx];
+        const FMeshCreateInfo& MeshCreateInfo = ModelInfo.Meshes[MeshIdx];
 
         ModelFormat::FMeshInfo Header;
         FMemory::Memzero(&Header, sizeof(ModelFormat::FMeshInfo));
@@ -230,7 +224,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const TSharedPtr<FMode
     int32 SubMeshDataOffset = ModelHeader.SubMeshDataOffset;
     for (int32 MeshIdx = 0; MeshIdx < ModelHeader.NumMeshes; ++MeshIdx)
     {
-        const FMeshCreateInfo& MeshCreateInfo = Model->Meshes[MeshIdx];
+        const FMeshCreateInfo& MeshCreateInfo = ModelInfo.Meshes[MeshIdx];
         VertexDataOffset += OutputStream.Write(MeshCreateInfo.Vertices.Data(), MeshCreateInfo.Vertices.Size(), VertexDataOffset);
         IndexDataOffset  += OutputStream.Write(MeshCreateInfo.Indices.Data(), MeshCreateInfo.Indices.Size(), IndexDataOffset);
 
@@ -250,7 +244,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const TSharedPtr<FMode
     }
 
     // Prepare material primitives
-    ModelHeader.NumMaterials       = Model->Materials.Size();
+    ModelHeader.NumMaterials       = ModelInfo.Materials.Size();
     ModelHeader.MaterialDataOffset = OutputStream.AddUninitialized<ModelFormat::FMaterialInfo>(ModelHeader.NumMaterials);
 
     // Create a new TextureIndex
@@ -279,7 +273,7 @@ bool FModelSerializer::Serialize(const FString& Filename, const TSharedPtr<FMode
     int32 MaterialDataOffset = ModelHeader.MaterialDataOffset;
     for (int32 MaterialIdx = 0; MaterialIdx < ModelHeader.NumMaterials; MaterialIdx++)
     {
-        const FMaterialCreateInfo& MaterialCreateInfo = Model->Materials[MaterialIdx];
+        const FMaterialCreateInfo& MaterialCreateInfo = ModelInfo.Materials[MaterialIdx];
 
         ModelFormat::FMaterialInfo Material;
         FMemory::Memzero(&Material, sizeof(ModelFormat::FMaterialInfo));

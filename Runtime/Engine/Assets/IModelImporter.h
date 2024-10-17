@@ -20,8 +20,6 @@ struct IModelImporter
 {
     virtual ~IModelImporter() = default;
 
-    virtual TSharedPtr<FModelCreateInfo> ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags) = 0;
-
-    /** @Return: Returns true if the FileName matches extension for this importer */
+    virtual bool ImportFromFile(const FStringView& Filename, EMeshImportFlags Flags, FModelCreateInfo& OutModelInfo) = 0;
     virtual bool MatchExtenstion(const FStringView& FileName) = 0;
 };

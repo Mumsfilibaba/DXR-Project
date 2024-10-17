@@ -289,17 +289,17 @@ FModel::~FModel()
 {
 }
 
-bool FModel::Init(const TSharedPtr<FModelCreateInfo>& CreateInfo)
+bool FModel::Init(const FModelCreateInfo& CreateInfo)
 {
-    UniformScale = CreateInfo->Scale;
+    UniformScale = CreateInfo.Scale;
     
-    const int32 NumMeshes = CreateInfo->Meshes.Size();
+    const int32 NumMeshes = CreateInfo.Meshes.Size();
     Meshes.Reserve(NumMeshes);
     
     for (int32 Index = 0; Index < NumMeshes; Index++)
     {
         TSharedPtr<FMesh> Mesh = MakeSharedPtr<FMesh>();
-        if (!Mesh->Init(CreateInfo->Meshes[Index]))
+        if (!Mesh->Init(CreateInfo.Meshes[Index]))
         {
             return false;
         }
@@ -307,31 +307,31 @@ bool FModel::Init(const TSharedPtr<FModelCreateInfo>& CreateInfo)
         Meshes.Add(Mesh);
     }
     
-    if (Meshes.Size() != CreateInfo->Meshes.Size())
+    if (Meshes.Size() != CreateInfo.Meshes.Size())
     {
         DEBUG_BREAK();
         return false;
     }
     
-    const int32 NumMaterials = CreateInfo->Materials.Size();
+    const int32 NumMaterials = CreateInfo.Materials.Size();
     Materials.Reserve(NumMaterials);
     
-    const auto RetrieveRHITexture = [=](const TSharedPtr<FModelCreateInfo>& ModelCreateInfo, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
+    const auto RetrieveRHITexture = [=](const FModelCreateInfo& ModelCreateInfo, EMaterialTexture::Type MaterialTexture, int32 MaterialIndex)
     {
-        const FTexture2DRef Texture = ModelCreateInfo->Materials[MaterialIndex].Textures[MaterialTexture];
+        const FTexture2DRef Texture = ModelCreateInfo.Materials[MaterialIndex].Textures[MaterialTexture];
         return Texture ? Texture->GetRHITexture() : GEngine->BaseTexture;
     };
     
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         FMaterialInfo MaterialInfo;
-        MaterialInfo.Albedo           = CreateInfo->Materials[Index].Diffuse;
-        MaterialInfo.AmbientOcclusion = CreateInfo->Materials[Index].AmbientFactor;
-        MaterialInfo.Metallic         = CreateInfo->Materials[Index].Metallic;
-        MaterialInfo.Roughness        = CreateInfo->Materials[Index].Roughness;
-        MaterialInfo.MaterialFlags    = CreateInfo->Materials[Index].MaterialFlags;
+        MaterialInfo.Albedo           = CreateInfo.Materials[Index].Diffuse;
+        MaterialInfo.AmbientOcclusion = CreateInfo.Materials[Index].AmbientFactor;
+        MaterialInfo.Metallic         = CreateInfo.Materials[Index].Metallic;
+        MaterialInfo.Roughness        = CreateInfo.Materials[Index].Roughness;
+        MaterialInfo.MaterialFlags    = CreateInfo.Materials[Index].MaterialFlags;
         
-        if (CreateInfo->Materials[Index].Textures[EMaterialTexture::Normal])
+        if (CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal])
         {
             MaterialInfo.MaterialFlags |= EMaterialFlags::EnableNormalMapping;
         }
@@ -344,18 +344,18 @@ bool FModel::Init(const TSharedPtr<FModelCreateInfo>& CreateInfo)
         Material->RoughnessMap = RetrieveRHITexture(CreateInfo, EMaterialTexture::Roughness, Index);
         Material->AlphaMask    = RetrieveRHITexture(CreateInfo, EMaterialTexture::AlphaMask, Index);
 
-        if (CreateInfo->Materials[Index].Textures[EMaterialTexture::Normal])
+        if (CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal])
         {
-            Material->NormalMap = CreateInfo->Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
+            Material->NormalMap = CreateInfo.Materials[Index].Textures[EMaterialTexture::Normal]->GetRHITexture();
         }
 
         Material->Initialize();
-        Material->SetName(CreateInfo->Materials[Index].Name);
+        Material->SetName(CreateInfo.Materials[Index].Name);
         
         Materials.Add(Material);
     }
     
-    if (Materials.Size() != CreateInfo->Materials.Size())
+    if (Materials.Size() != CreateInfo.Materials.Size())
     {
         DEBUG_BREAK();
         return false;

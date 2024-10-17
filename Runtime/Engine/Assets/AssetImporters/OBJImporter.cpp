@@ -9,7 +9,7 @@
 
 #include <tiny_obj_loader.h>
 
-TSharedPtr<FModelCreateInfo> FOBJImporter::ImportFromFile(const FStringView& InFileName, EMeshImportFlags Flags)
+bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags Flags, FModelCreateInfo& OutModelInfo)
 {
     // Load Scene File
     std::string                      Warning;
@@ -19,7 +19,7 @@ TSharedPtr<FModelCreateInfo> FOBJImporter::ImportFromFile(const FStringView& InF
     tinyobj::attrib_t                Attributes;
 
     // Extract just the name of the file
-    const FString Filename            = FString(InFileName);
+    const FString Filename            = FString(InFilename);
     const FString MTLFiledir          = FFileHelpers::ExtractFilepath(Filename);
     const FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(Filename);
     
@@ -27,7 +27,7 @@ TSharedPtr<FModelCreateInfo> FOBJImporter::ImportFromFile(const FStringView& InF
     if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
     {
         LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
-        return nullptr;
+        return false;
     }
     
     if (!Warning.empty())
@@ -35,10 +35,7 @@ TSharedPtr<FModelCreateInfo> FOBJImporter::ImportFromFile(const FStringView& InF
         LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", Filename.GetCString(), Warning.c_str());
     }
 
-    // Create new scene
-    TSharedPtr<FModelCreateInfo> Model = MakeSharedPtr<FModelCreateInfo>();
-
-    // Create All Materials in scene
+    // Create all Materials in scene
     int32 SceneMaterialIndex = 0;
     for (tinyobj::material_t& Mat : Materials)
     {
@@ -65,7 +62,7 @@ TSharedPtr<FModelCreateInfo> FOBJImporter::ImportFromFile(const FStringView& InF
             MaterialCreateInfo.Name = FString(Mat.name.c_str());
         }
         
-        Model->Materials.Add(Move(MaterialCreateInfo));
+        OutModelInfo.Materials.Add(Move(MaterialCreateInfo));
         SceneMaterialIndex++;
     }
 
@@ -176,12 +173,12 @@ TSharedPtr<FModelCreateInfo> FOBJImporter::ImportFromFile(const FStringView& InF
             }
         }
 
-        Model->Meshes.Add(Move(MeshCreateInfo));
+        OutModelInfo.Meshes.Add(Move(MeshCreateInfo));
         ShapeIndex++;
     }
 
-    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), Model->Meshes.Size(), Model->Materials.Size());
-    return Model;
+    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
+    return true;
 }
 
 bool FOBJImporter::MatchExtenstion(const FStringView& FileName)

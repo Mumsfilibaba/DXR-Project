@@ -57,7 +57,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
     return FTexture2DRef();
 }
 
-TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags)
+bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlags InFlags, FModelCreateInfo& OutModelInfo)
 {
     const FString Filename = FString(InFilename);
 
@@ -65,7 +65,7 @@ TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InF
     if (!File)
     {
         LOG_ERROR("[FFBXImporter]: Failed to open '%s'", Filename.GetCString());
-        return nullptr;
+        return false;
     }
 
     // TODO: Utility to read in full file?
@@ -76,15 +76,15 @@ TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InF
     if (NumBytesRead <= 0)
     {
         LOG_ERROR("[FFBXImporter]: Failed to load '%s'", Filename.GetCString());
-        return nullptr;
+        return false;
     }
 
-    ofbx::IScene* FBXScene = ofbx::load(FileContent.Data(), FileSize, (ofbx::u64)ofbx::LoadFlags::NONE);
+    ofbx::IScene* FBXScene = ofbx::load(FileContent.Data(), FileSize, static_cast<ofbx::u64>(ofbx::LoadFlags::NONE));
     if (!FBXScene)
     {
         const CHAR* ErrorString = ofbx::getError();
         LOG_ERROR("[FFBXImporter]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
-        return nullptr;
+        return false;
     }
 
     EFBXFlags FBXFlags = EFBXFlags::None;
@@ -115,9 +115,8 @@ TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InF
     UniqueMaterials.Reserve(MaterialCount);
 
     // Estimate resource count
-    TSharedPtr<FModelCreateInfo> ModelCreateInfo = MakeSharedPtr<FModelCreateInfo>();
-    ModelCreateInfo->Meshes.Reserve(FBXScene->getMeshCount());
-    ModelCreateInfo->Materials.Reserve(MaterialCount);
+    OutModelInfo.Meshes.Reserve(FBXScene->getMeshCount());
+    OutModelInfo.Materials.Reserve(MaterialCount);
 
     // Convert data
     const FString Path = ExtractPath(Filename);
@@ -153,8 +152,8 @@ TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InF
             MaterialCreateInfo.Metallic      = 1.0f; // CurrentMaterial->getSpecularColor().b;
 
             // TODO: Other material properties
-            UniqueMaterials[CurrentMaterial->id] = ModelCreateInfo->Materials.Size();
-            ModelCreateInfo->Materials.Add(Move(MaterialCreateInfo));
+            UniqueMaterials[CurrentMaterial->id] = OutModelInfo.Materials.Size();
+            OutModelInfo.Materials.Add(Move(MaterialCreateInfo));
         }
 
         const FMatrix4 Matrix          = ToFloat4x4(CurrentMesh->getGlobalTransform());
@@ -294,7 +293,7 @@ TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InF
         {
             LOG_INFO("[FFBXImporter] Loaded Mesh '%s'", CurrentMesh->name);
             MeshCreateInfo.Name = CurrentMesh->name;
-            ModelCreateInfo->Meshes.Add(Move(MeshCreateInfo));
+            OutModelInfo.Meshes.Add(Move(MeshCreateInfo));
         }
         else
         {
@@ -302,13 +301,13 @@ TSharedPtr<FModelCreateInfo> FFBXImporter::ImportFromFile(const FStringView& InF
         }
     }
 
-    ModelCreateInfo->Meshes.Shrink();
-    ModelCreateInfo->Materials.Shrink();
+    OutModelInfo.Meshes.Shrink();
+    OutModelInfo.Materials.Shrink();
 
     FBXScene->destroy();
 
-    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", Filename.GetCString(), ModelCreateInfo->Meshes.Size(), ModelCreateInfo->Materials.Size());
-    return ModelCreateInfo;
+    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", Filename.GetCString(), OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
+    return true;
 }
 
 bool FFBXImporter::MatchExtenstion(const FStringView& FileName)

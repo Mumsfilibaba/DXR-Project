@@ -128,7 +128,7 @@ public:
     FModel();
     ~FModel();
 
-    bool Init(const TSharedPtr<FModelCreateInfo>& CreateInfo);
+    bool Init(const FModelCreateInfo& CreateInfo);
     bool BuildAccelerationStructure(FRHICommandList& CommandList);
     void AddToWorld(class FWorld* World);
 
