@@ -3,7 +3,7 @@
 #include "Core/Containers/String.h"
 #include "Core/Containers/SharedPtr.h"
 
-class FModelCreateInfo;
+struct FModelCreateInfo;
 
 enum class EMeshImportFlags : uint8
 {
