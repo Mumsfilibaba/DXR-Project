@@ -1014,112 +1014,141 @@ FMeshCreateInfo FMeshFactory::CreatePyramid(float Width, float Depth, float Heig
     return MeshInfo;
 }
 
-// TODO: Finish
 FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float Height) noexcept
 {
-    UNREFERENCED_VARIABLE(Sides);
-    UNREFERENCED_VARIABLE(Radius);
-    UNREFERENCED_VARIABLE(Height);
+    FMeshCreateInfo MeshInfo;
 
-    /*
-    FMeshData data;
-    if (sides < 5)
-        sides = 5;
-    if (Height < 0.1f)
-        Height = 0.1f;
-    if (radius < 0.1f)
-        radius = 0.1f;
-
-    // Num verts = (Sides*2)    (Top, since we need unique normals)
-    //          + (Sides*2)    (Bottom)
-    //            + 2            (MiddlePoints)
-    size_t vertSize = size_t(sides) * 4 + 2;
-    data.Vertices.resize(vertSize);
-
-    // Num indices = (Sides*3*2) (Each cap has 'sides' number of tris, each tri has 3 verts)
-    //              + (Sides*6)    (Each side has 6 verts)
-    size_t indexSize = size_t(sides) * 12;
-    data.Indices.resize(indexSize);
-
-    // Angle between verts
-    float angle = (pi<float>() * 2.0f) / float(sides);
-    float uOffset = 1.0f / float(sides - 1);
-    float halfHeight = Height * 0.5f;
-
-    // CREATE VERTICES
-    data.Vertices[0].Position = XMFLOAT3(0.0f, halfHeight, 0.0f);
-    data.Vertices[0].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
-    data.Vertices[0].TexCoord = XMFLOAT2(0.25f, 0.25f);
-
-    size_t offset = size_t(sides) + 1;
-    data.Vertices[offset].Position = XMFLOAT3(0.0f, -halfHeight, 0.0f);
-    data.Vertices[offset].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
-    data.Vertices[offset].TexCoord = XMFLOAT2(0.75f, 0.25f);
-
-    size_t doubleOffset = offset * 2;
-    size_t trippleOffset = doubleOffset + size_t(sides);
-    for (size_t i = 0; i < sides; i++)
+    // Validate the number of sides
+    if (Sides < 3)
     {
-        // TOP CAP VERTICES
-        float x = FMath::Cos((pi<float>() / 2.0f) + (angle * i));
-        float z = FMath::Sin((pi<float>() / 2.0f) + (angle * i));
-        XMFLOAT3 pos = normalize(XMFLOAT3(x, 0.0f, z));
-        data.Vertices[i + 1].Position = (pos * radius) + XMFLOAT3(0.0f, halfHeight, 0.0f);
-        data.Vertices[i + 1].Normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
-        data.Vertices[i + 1].TexCoord = XMFLOAT2(x + 1.0f, z + 1.0f) * 0.25f;
-
-        // BOTTOM CAP VERTICES
-        data.Vertices[offset + i + 1].Position = data.Vertices[i + 1].Position - XMFLOAT3(0.0f, Height, 0.0f);
-        data.Vertices[offset + i + 1].Normal = XMFLOAT3(0.0f, -1.0f, 0.0f);
-        data.Vertices[offset + i + 1].TexCoord = data.Vertices[i + 1].TexCoord + XMFLOAT2(0.5f, 0.5f);
-
-        // TOP SIDE VERTICES
-        data.Vertices[doubleOffset + i].Position = data.Vertices[i + 1].Position;
-        data.Vertices[doubleOffset + i].Normal = pos;
-        data.Vertices[doubleOffset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 1.0f);
-
-        // BOTTOM SIDE VERTICES
-        data.Vertices[trippleOffset + i].Position = data.Vertices[offset + i + 1].Position;
-        data.Vertices[trippleOffset + i].Normal = pos;
-        data.Vertices[trippleOffset + i].TexCoord = XMFLOAT2(0.0f + (uOffset * i), 0.25f);
+        // A cylinder must have at least 3 sides
+        Sides = 3;
     }
 
-    // TOP CAP INDICES
-    size_t index = 0;
-    for (uint32 i = 0; i < sides; i++)
+    // Half height for positioning the cylinder centered at Y = 0
+    const float HalfHeight = Height / 2.0f;
+
+    // Angle increment per side
+    const float DeltaAngle = 2.0f * FMath::kPI_f / static_cast<float>(Sides);
+
+    // Generate vertices and indices for the top and bottom caps and the sides
+    uint32 BaseVertexIndex = 0;
+
+    // Generate top cap vertices
+    FVertex TopCenterVertex;
+    TopCenterVertex.Position = FVector3(0.0f, HalfHeight, 0.0f);
+    TopCenterVertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
+    TopCenterVertex.TexCoord = FVector2(0.5f, 0.5f); // Center of the texture
+    MeshInfo.Vertices.Add(TopCenterVertex);
+    BaseVertexIndex++;
+
+    for (uint32 i = 0; i < Sides; ++i)
     {
-        data.Indices[index + 0] = i + 1;
-        data.Indices[index + 1] = (i + 1) % (sides)+1;
-        data.Indices[index + 2] = 0;
-        index += 3;
+        const float Angle = i * DeltaAngle;
+        const float X     = Radius * cosf(Angle);
+        const float Z     = Radius * sinf(Angle);
+        
+        FVertex Vertex;
+        Vertex.Position = FVector3(X, HalfHeight, Z);
+        Vertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
+        Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f); // Map to [0,1]
+        MeshInfo.Vertices.Add(Vertex);
+        BaseVertexIndex++;
     }
 
-    // BOTTOM CAP INDICES
-    for (uint32 i = 0; i < sides; i++)
+    // Generate bottom cap vertices
+    const uint32 BottomCenterIndex = static_cast<uint32>(MeshInfo.Vertices.Size());
+    
+    FVertex BottomCenterVertex;
+    BottomCenterVertex.Position = FVector3(0.0f, -HalfHeight, 0.0f);
+    BottomCenterVertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
+    BottomCenterVertex.TexCoord = FVector2(0.5f, 0.5f);
+    MeshInfo.Vertices.Add(BottomCenterVertex);
+    BaseVertexIndex++;
+
+    for (uint32 i = 0; i < Sides; ++i)
     {
-        uint32 base = uint32(sides) + 1;
-        data.Indices[index + 0] = base + ((i + 1) % (sides)+1);
-        data.Indices[index + 1] = base + i + 1;
-        data.Indices[index + 2] = base;
-        index += 3;
+        const float Angle = i * DeltaAngle;
+        const float X     = Radius * cosf(Angle);
+        const float Z     = Radius * sinf(Angle);
+
+        FVertex Vertex;
+        Vertex.Position = FVector3(X, -HalfHeight, Z);
+        Vertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
+        Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f);
+        MeshInfo.Vertices.Add(Vertex);
+        
+        BaseVertexIndex++;
     }
 
-    // SIDES
-    for (uint32 i = 0; i < sides; i++)
+    // Generate side vertices
+    const uint32 SideStartIndex = static_cast<uint32>(MeshInfo.Vertices.Size());
+    for (uint32 i = 0; i <= Sides; ++i) // <= to wrap around
     {
-        uint32 base = (uint32(sides) + 1) * 2;
-        data.Indices[index + 0] = base + i + 1;
-        data.Indices[index + 1] = base + i;
-        data.Indices[index + 2] = base + i + sides;
-        data.Indices[index + 3] = base + ((i + 1) % sides);
-        data.Indices[index + 4] = (base + sides - 1) + ((i + 1) % sides);
-        data.Indices[index + 5] = (base + sides) + ((i + 1) % sides);
-        index += 6;
+        const float Angle = (i % Sides) * DeltaAngle;
+        const float X     = Radius * cosf(Angle);
+        const float Z     = Radius * sinf(Angle);
+        const float U     = static_cast<float>(i) / static_cast<float>(Sides); // Texture coordinate U
+
+        const FVector3 Normal = FVector3(X, 0.0f, Z).Normalize();
+
+        // Top vertex
+        FVertex TopVertex;
+        TopVertex.Position = FVector3(X, HalfHeight, Z);
+        TopVertex.Normal   = Normal;
+        TopVertex.TexCoord = FVector2(U, 0.0f); // V = 0 at the top
+        MeshInfo.Vertices.Add(TopVertex);
+
+        // Bottom vertex
+        FVertex BottomVertex;
+        BottomVertex.Position = FVector3(X, -HalfHeight, Z);
+        BottomVertex.Normal   = Normal;
+        BottomVertex.TexCoord = FVector2(U, 1.0f); // V = 1 at the bottom
+        MeshInfo.Vertices.Add(BottomVertex);
     }
 
-    CalculateTangents(data);
-    return data;
-    */
+    // Generate indices for the top cap
+    for (uint32 i = 0; i < Sides; ++i)
+    {
+        const uint32 CenterIndex = 0;
+        const uint32 CurrIndex   = i + 1;
+        const uint32 NextIndex   = (i + 1) % Sides + 1;
 
-    return FMeshCreateInfo();
+        MeshInfo.Indices.Add(CenterIndex);
+        MeshInfo.Indices.Add(NextIndex);
+        MeshInfo.Indices.Add(CurrIndex);
+    }
+
+    // Generate indices for the bottom cap
+    const uint32 BottomStartIndex        = BottomCenterIndex + 1;
+    const uint32 BottomCenterVertexIndex = BottomCenterIndex;
+    for (uint32 i = 0; i < Sides; ++i)
+    {
+        const uint32 CurrIndex = BottomStartIndex + i;
+        const uint32 NextIndex = BottomStartIndex + ((i + 1) % Sides);
+
+        MeshInfo.Indices.Add(BottomCenterVertexIndex);
+        MeshInfo.Indices.Add(CurrIndex);
+        MeshInfo.Indices.Add(NextIndex);
+    }
+
+    // Generate indices for the sides
+    const uint32 SideVertexCount = (Sides + 1) * 2; // Each side has two vertices (top and bottom)
+    for (uint32 i = 0; i < Sides; ++i)
+    {
+        const uint32 TopCurr    = SideStartIndex + i * 2;
+        const uint32 TopNext    = SideStartIndex + (i + 1) * 2;
+        const uint32 BottomCurr = TopCurr + 1;
+        const uint32 BottomNext = TopNext + 1;
+
+        MeshInfo.Indices.Add(TopCurr);
+        MeshInfo.Indices.Add(TopNext);
+        MeshInfo.Indices.Add(BottomCurr);
+
+        MeshInfo.Indices.Add(BottomCurr);
+        MeshInfo.Indices.Add(TopNext);
+        MeshInfo.Indices.Add(BottomNext);
+    }
+
+    return MeshInfo;
 }

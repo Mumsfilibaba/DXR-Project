@@ -366,7 +366,7 @@ bool FSandbox::Init()
             NewMaterial->Initialize();
             NewMaterial->SetName("ConeMaterial");
 
-            FMeshCreateInfo ConeMeshData = FMeshFactory::CreateCone(16, 0.5f);
+            FMeshCreateInfo ConeMeshData = FMeshFactory::CreateCone(32, 0.5f);
             
             TSharedPtr<FMesh> ConeMesh = MakeSharedPtr<FMesh>();
             ConeMesh->Init(ConeMeshData);
@@ -404,7 +404,7 @@ bool FSandbox::Init()
             NewMaterial->Initialize();
             NewMaterial->SetName("TorusMaterial");
 
-            FMeshCreateInfo TorusMeshData = FMeshFactory::CreateTorus();
+            FMeshCreateInfo TorusMeshData = FMeshFactory::CreateTorus(1.0f, 0.4f, 48, 32);
             
             TSharedPtr<FMesh> TorusMesh = MakeSharedPtr<FMesh>();
             TorusMesh->Init(TorusMeshData);
@@ -422,12 +422,13 @@ bool FSandbox::Init()
         NewActor->SetName("Teapot");
         NewActor->GetTransform().SetRotation(-FMath::kHalfPI_f, FMath::kHalfPI_f, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
-        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 40.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 37.5f);
 
-        MaterialInfo.Albedo           = FVector3(1.0f, 1.0f, 1.0f);
+        // Gold: 0.944, 0.776, 0.373
+        MaterialInfo.Albedo           = FVector3(0.944f, 0.776f, 0.373f);
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
-        MaterialInfo.Roughness        = 0.0f;
+        MaterialInfo.Roughness        = 0.2f;
         MaterialInfo.MaterialFlags    = EMaterialFlags::DoubleSided;
 
         NewComponent = NewObject<FMeshComponent>();
@@ -442,7 +443,7 @@ bool FSandbox::Init()
             NewMaterial->Initialize();
             NewMaterial->SetName("TeapotMaterial");
 
-            FMeshCreateInfo TeapotMeshData = FMeshFactory::CreateTeapot();
+            FMeshCreateInfo TeapotMeshData = FMeshFactory::CreateTeapot(12);
             
             TSharedPtr<FMesh> TeapotMesh = MakeSharedPtr<FMesh>();
             TeapotMesh->Init(TeapotMeshData);
@@ -460,7 +461,7 @@ bool FSandbox::Init()
         NewActor->SetName("Pyramid");
         NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
         NewActor->GetTransform().SetUniformScale(1.0f);
-        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 35.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 30.0f);
 
         MaterialInfo.Albedo           = FVector3(0.0f, 0.0f, 1.0f);
         MaterialInfo.AmbientOcclusion = 1.0f;
@@ -541,41 +542,41 @@ bool FSandbox::Init()
         }
     }
 
-    TSharedRef<FModel> PillarModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Pillar.obj"));
-    if (PillarModel)
+    MaterialInfo.Albedo           = FVector3(0.4f);
+    MaterialInfo.AmbientOcclusion = 1.0f;
+    MaterialInfo.Metallic         = 0.0f;
+    MaterialInfo.Roughness        = 1.0f;
+    MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+    TSharedPtr<FMaterial> CylinderMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+    CylinderMaterial->AlbedoMap    = GEngine->BaseTexture;
+    CylinderMaterial->RoughnessMap = GEngine->BaseTexture;
+    CylinderMaterial->AOMap        = GEngine->BaseTexture;
+    CylinderMaterial->MetallicMap  = GEngine->BaseTexture;
+    
+    CylinderMaterial->Initialize();
+    CylinderMaterial->SetName("CylinderMaterial");
+
+    FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(32, 0.4f, 5.0f);
+    
+    TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
+    CylinderMesh->Init(CylinderMeshData);
+    
+    for (uint32 i = 0; i < 8; i++)
     {
-        MaterialInfo.Albedo           = FVector3(0.4f);
-        MaterialInfo.AmbientOcclusion = 1.0f;
-        MaterialInfo.Metallic         = 0.0f;
-        MaterialInfo.Roughness        = 1.0f;
-        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
-
-        TSharedPtr<FMaterial> PillarMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
-        PillarMaterial->AlbedoMap    = GEngine->BaseTexture;
-        PillarMaterial->RoughnessMap = GEngine->BaseTexture;
-        PillarMaterial->AOMap        = GEngine->BaseTexture;
-        PillarMaterial->MetallicMap  = GEngine->BaseTexture;
-        
-        PillarMaterial->Initialize();
-        PillarMaterial->SetName("PillarMaterial");
-
-        TSharedPtr<FMesh> Pillar = PillarModel->GetMesh(0);
-        for (uint32 i = 0; i < 8; i++)
+        NewActor = CurrentWorld->CreateActor();
+        if (NewActor)
         {
-            NewActor = CurrentWorld->CreateActor();
-            if (NewActor)
-            {
-                NewActor->SetName(FString::CreateFormatted("Pillar %d", i));
-                NewActor->GetTransform().SetUniformScale(0.25f);
-                NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 0.0f, 60.0f);
+            NewActor->SetName(FString::CreateFormatted("Cylinder %d", i));
+            NewActor->GetTransform().SetUniformScale(1.0f);
+            NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 2.5f, 60.0f);
 
-                NewComponent = NewObject<FMeshComponent>();
-                if (NewComponent)
-                {
-                    NewComponent->SetMesh(Pillar);
-                    NewComponent->SetMaterial(PillarMaterial);
-                    NewActor->AddComponent(NewComponent);
-                }
+            NewComponent = NewObject<FMeshComponent>();
+            if (NewComponent)
+            {
+                NewComponent->SetMesh(CylinderMesh);
+                NewComponent->SetMaterial(CylinderMaterial);
+                NewActor->AddComponent(NewComponent);
             }
         }
     }
