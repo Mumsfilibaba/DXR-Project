@@ -110,6 +110,7 @@ bool FFrustum::CheckAABB(const FAABB& Box) const
             return false;
     }
 
+#if 0
     // Filter out false positive (Where one plane intersects large geometry)
     {
         int32 NumOutside = 0;
@@ -164,6 +165,7 @@ bool FFrustum::CheckAABB(const FAABB& Box) const
         if (NumOutside == 8)
             return false;
     }
+#endif
 
     return true;
 }

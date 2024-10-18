@@ -176,6 +176,15 @@ struct FMath
         return isinf(Float);
     }
 
+    static constexpr float CubicInterp(float p0, float p1, float p2, float p3, float t)
+    {
+        float a = p3 - p2 - p0 + p1;
+        float b = p0 - p1 - a;
+        float c = p2 - p0;
+        float d = p1;
+        return a * t * t * t + b * t * t + c * t + d;
+    }
+
     static constexpr uint32 BytesToNum32BitConstants(uint32 Bytes)
     {
         return Bytes / 4;

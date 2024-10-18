@@ -415,6 +415,44 @@ bool FSandbox::Init()
             NewActor->AddComponent(NewComponent);
         }
     }
+    
+    NewActor = CurrentWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Teapot");
+        NewActor->GetTransform().SetRotation(-FMath::kHalfPI_f, FMath::kHalfPI_f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(1.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 40.0f);
+
+        MaterialInfo.Albedo           = FVector3(1.0f, 1.0f, 1.0f);
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 1.0f;
+        MaterialInfo.Roughness        = 0.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::DoubleSided;
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
+            NewMaterial->Initialize();
+            NewMaterial->SetName("TeapotMaterial");
+
+            FMeshCreateInfo TeapotMeshData = FMeshFactory::CreateTeapot();
+            
+            TSharedPtr<FMesh> TeapotMesh = MakeSharedPtr<FMesh>();
+            TeapotMesh->Init(TeapotMeshData);
+            
+            NewComponent->SetMesh(TeapotMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
 
     TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
     if (StreetLightModel)

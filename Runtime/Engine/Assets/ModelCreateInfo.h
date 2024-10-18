@@ -112,7 +112,7 @@ struct ENGINE_API FMeshFactory
     static FMeshCreateInfo CreateSphere(uint32 Subdivisions = 0, float Radius = 0.5f) noexcept;
     static FMeshCreateInfo CreateCone(uint32 Sides = 5, float Radius = 0.5f, float Height = 1.0f) noexcept;
     static FMeshCreateInfo CreateTorus(float RingRadius = 1.0f, float TubeRadius = 0.3f, uint32 RingSegments = 32, uint32 TubeSegments = 16) noexcept;
-    //static FMeshCreateInfo createTeapot() noexcept;
+    static FMeshCreateInfo CreateTeapot(uint32 Tessellation = 10) noexcept;
     static FMeshCreateInfo CreatePyramid() noexcept;
     static FMeshCreateInfo CreateCylinder(uint32 Sides = 5, float Radius = 0.5f, float Height = 1.0f) noexcept;
 };
