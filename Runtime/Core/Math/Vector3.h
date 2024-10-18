@@ -51,7 +51,7 @@ public:
     }
 
      /** @brief - Normalized this vector */
-    inline void Normalize() noexcept
+    inline FVector3& Normalize() noexcept
     {
         const float fLengthSquared = LengthSquared();
         if (fLengthSquared != 0.0f)
@@ -61,6 +61,8 @@ public:
             y *= fRecipLength;
             z *= fRecipLength;
         }
+        
+        return *this;
     }
 
     /**
@@ -184,12 +186,14 @@ public:
      */
     inline FVector3 CrossProduct(const FVector3& Other) const noexcept
     {
-        return FVector3(
-            (y * Other.z) - (z * Other.y),
-            (z * Other.x) - (x * Other.z),
-            (x * Other.y) - (y * Other.x));
+        return FVector3((y * Other.z) - (z * Other.y), (z * Other.x) - (x * Other.z), (x * Other.y) - (y * Other.x));
     }
 
+    static FORCEINLINE FVector3 CrossProduct(const FVector3& First, const FVector3& Second)
+    {
+        return FVector3((First.y * Second.z - First.z * Second.y), (First.z * Second.x - First.x * Second.z), (First.x * Second.y - First.y * Second.x));
+    }
+    
     /**
      * @brief       - Returns the resulting vector after projecting this vector onto another.
      * @param Other - The vector to project onto

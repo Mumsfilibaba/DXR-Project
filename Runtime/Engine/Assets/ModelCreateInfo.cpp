@@ -482,13 +482,11 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
 
     FMeshCreateInfo MeshCreateInfo;
 
-    // Number of vertices: (Sides + 1) for the base (including center)
-    //                     + Sides for the side vertices
+    // Number of vertices: (Sides + 1) for the base (including center) + Sides for the side vertices
     const uint32 NumVertices = Sides + 1 + Sides + 1;
     MeshCreateInfo.Vertices.Resize(NumVertices);
 
-    // Number of indices: (Sides * 3) for the base cap
-    //                   + (Sides * 3) for the sides
+    // Number of indices: (Sides * 3) for the base cap + (Sides * 3) for the sides
     const uint32 NumIndices = Sides * 3 + Sides * 3;
     MeshCreateInfo.Indices.Resize(NumIndices);
 
@@ -505,8 +503,8 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
     for (uint32 i = 0; i < Sides; ++i)
     {
         // Calculate the position of the current vertex on the base circle
-        const float x = Radius * cosf(Angle * i);
-        const float z = Radius * sinf(Angle * i);
+        const float x = Radius * FMath::Cos<float>(Angle * i);
+        const float z = Radius * FMath::Sin<float>(Angle * i);
         const FVector3 BasePosition(x, 0.0f, z);
 
         // Base vertex
@@ -571,35 +569,35 @@ FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, ui
     MeshCreateInfo.Indices.Resize(NumIndices);
 
     // Step angles for each segment
-    const float RingStep = 2.0f * FMath::kPI / static_cast<float>(RingSegments);
-    const float TubeStep = 2.0f * FMath::kPI / static_cast<float>(TubeSegments);
+    const float RingStep = 2.0f * FMath::kPI_f / static_cast<float>(RingSegments);
+    const float TubeStep = 2.0f * FMath::kPI_f / static_cast<float>(TubeSegments);
 
     // Create vertices
     uint32 VertexIndex = 0;
     for (uint32 i = 0; i < RingSegments; ++i)
     {
         const float RingAngle = i * RingStep;
-        const FVector3 RingCenter = FVector3(RingRadius * cosf(RingAngle), 0.0f, RingRadius * sinf(RingAngle));
+        const FVector3 RingCenter = FVector3(RingRadius * FMath::Cos<float>(RingAngle), 0.0f, RingRadius * FMath::Sin<float>(RingAngle));
         for (uint32 j = 0; j < TubeSegments; ++j)
         {
             const float TubeAngle = j * TubeStep;
-            const float CosTube   = cosf(TubeAngle);
-            const float SinTube   = sinf(TubeAngle);
+            const float CosTube   = FMath::Cos<float>(TubeAngle);
+            const float SinTube   = FMath::Sin<float>(TubeAngle);
 
             // Position of the vertex
-            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * cosf(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * sinf(RingAngle));
+            FVector3 Position = RingCenter + FVector3(TubeRadius * CosTube * FMath::Cos<float>(RingAngle), TubeRadius * SinTube, TubeRadius * CosTube * FMath::Sin<float>(RingAngle));
             MeshCreateInfo.Vertices[VertexIndex].Position = Position;
 
             // Normal vector
-            FVector3 Normal = FVector3(CosTube * cosf(RingAngle), SinTube, CosTube * sinf(RingAngle));
+            FVector3 Normal = FVector3(CosTube * FMath::Cos<float>(RingAngle), SinTube, CosTube * FMath::Sin<float>(RingAngle));
             Normal.Normalize();
             
             MeshCreateInfo.Vertices[VertexIndex].Normal = Normal;
 
             // Texture coordinates
-            float U = static_cast<float>(i) / static_cast<float>(RingSegments);
-            float V = static_cast<float>(j) / static_cast<float>(TubeSegments);
-            MeshCreateInfo.Vertices[VertexIndex].TexCoord = FVector2(U, V);
+            const float u = static_cast<float>(i) / static_cast<float>(RingSegments);
+            const float v = static_cast<float>(j) / static_cast<float>(TubeSegments);
+            MeshCreateInfo.Vertices[VertexIndex].TexCoord = FVector2(u, v);
 
             ++VertexIndex;
         }
@@ -617,12 +615,12 @@ FMeshCreateInfo FMeshFactory::CreateTorus(float RingRadius, float TubeRadius, ui
             uint32 NextTube = i * TubeSegments + (j + 1) % TubeSegments;
             uint32 Diagonal = ((i + 1) % RingSegments) * TubeSegments + (j + 1) % TubeSegments;
 
-            // First triangle (inverted winding order)
+            // First triangle
             MeshCreateInfo.Indices[Index++] = Current;
             MeshCreateInfo.Indices[Index++] = NextTube;
             MeshCreateInfo.Indices[Index++] = NextRing;
 
-            // Second triangle (inverted winding order)
+            // Second triangle
             MeshCreateInfo.Indices[Index++] = NextTube;
             MeshCreateInfo.Indices[Index++] = Diagonal;
             MeshCreateInfo.Indices[Index++] = NextRing;
@@ -876,96 +874,144 @@ FMeshCreateInfo FMeshFactory::CreateTeapot(uint32 Tessellation) noexcept
     return MeshInfo;
 }
 
-// TODO: Finish
-FMeshCreateInfo FMeshFactory::CreatePyramid() noexcept
+FMeshCreateInfo FMeshFactory::CreatePyramid(float Width, float Depth, float Height) noexcept
 {
-    /*
-    FMeshData data;
-    data.Vertices.resize(16);
-    data.Indices.resize(18);
+    FMeshCreateInfo MeshInfo;
 
-    // FLOOR FACE (Seen from FRONT FACE)
-    data.Vertices[0].TexCoord = XMFLOAT2(0.33f, 0.33f);
-    data.Vertices[0].Position = XMFLOAT3(-0.5f, -0.5f, -0.5f);
-    data.Vertices[1].TexCoord = XMFLOAT2(0.66f, 0.33f);
-    data.Vertices[1].Position = XMFLOAT3(0.5f, -0.5f, -0.5f);
-    data.Vertices[2].TexCoord = XMFLOAT2(0.33f, 0.66f);
-    data.Vertices[2].Position = XMFLOAT3(-0.5f, -0.5f, 0.5f);
-    data.Vertices[3].TexCoord = XMFLOAT2(0.66f, 0.66f);
-    data.Vertices[3].Position = XMFLOAT3(0.5f, -0.5f, 0.5f);
+    float HalfWidth = Width / 2.0f;
+    float HalfDepth = Depth / 2.0f;
 
-    // TOP VERTICES
-    data.Vertices[4].Position =
-        data.Vertices[5].Position =
-        data.Vertices[6].Position =
-        data.Vertices[7].Position = XMFLOAT3(0.0f, 0.5f, 0.0f);
-    data.Vertices[4].TexCoord = XMFLOAT2(0.495f, 0.0f);
-    data.Vertices[5].TexCoord = XMFLOAT2(0.0f, 0.495f);
-    data.Vertices[6].TexCoord = XMFLOAT2(0.495f, 0.99f);
-    data.Vertices[7].TexCoord = XMFLOAT2(0.99f, 0.495f);
+    // Bottom vertices
+    FVertex v0;
+    v0.Position = FVector3(-HalfWidth, 0.0f, -HalfDepth); // Front-left
+    FVertex v1;
+    v1.Position = FVector3( HalfWidth, 0.0f, -HalfDepth); // Front-right
+    FVertex v2;
+    v2.Position = FVector3( HalfWidth, 0.0f,  HalfDepth); // Back-right
+    FVertex v3;
+    v3.Position = FVector3(-HalfWidth, 0.0f,  HalfDepth); // Back-left
 
-    // BACK
-    data.Vertices[8].TexCoord = XMFLOAT2(0.33f, 0.33f);
-    data.Vertices[8].Position = XMFLOAT3(-0.5f, -0.5f, -0.5f);
-    data.Vertices[9].TexCoord = XMFLOAT2(0.66f, 0.33f);
-    data.Vertices[9].Position = XMFLOAT3(0.5f, -0.5f, -0.5f);
+    // Apex vertex
+    FVertex v4;
+    v4.Position = FVector3(0.0f, Height, 0.0f); // Top center
 
-    // FRONT
-    data.Vertices[10].TexCoord = XMFLOAT2(0.33f, 0.66f);
-    data.Vertices[10].Position = XMFLOAT3(-0.5f, -0.5f, 0.5f);
-    data.Vertices[11].TexCoord = XMFLOAT2(0.66f, 0.66f);
-    data.Vertices[11].Position = XMFLOAT3(0.5f, -0.5f, 0.5f);
+    // Base normal
+    FVector3 BaseNormal = FVector3(0.0f, -1.0f, 0.0f);
 
-    // LEFT
-    data.Vertices[12].TexCoord = XMFLOAT2(0.33f, 0.33f);
-    data.Vertices[12].Position = XMFLOAT3(-0.5f, -0.5f, -0.5f);
-    data.Vertices[13].TexCoord = XMFLOAT2(0.33f, 0.66f);
-    data.Vertices[13].Position = XMFLOAT3(-0.5f, -0.5f, 0.5f);
+    // Side normals (calculated for each face)
+    FVector3 Normal0 = FVector3::CrossProduct(v4.Position - v0.Position, v1.Position - v0.Position).Normalize();
+    FVector3 Normal1 = FVector3::CrossProduct(v4.Position - v1.Position, v2.Position - v1.Position).Normalize();
+    FVector3 Normal2 = FVector3::CrossProduct(v4.Position - v2.Position, v3.Position - v2.Position).Normalize();
+    FVector3 Normal3 = FVector3::CrossProduct(v4.Position - v3.Position, v0.Position - v3.Position).Normalize();
 
-    // RIGHT
-    data.Vertices[14].TexCoord = XMFLOAT2(0.66f, 0.33f);
-    data.Vertices[14].Position = XMFLOAT3(0.5f, -0.5f, -0.5f);
-    data.Vertices[15].TexCoord = XMFLOAT2(0.66f, 0.66f);
-    data.Vertices[15].Position = XMFLOAT3(0.5f, -0.5f, 0.5f);
+    // Assign normals to the base vertices
+    v0.Normal = BaseNormal;
+    v1.Normal = BaseNormal;
+    v2.Normal = BaseNormal;
+    v3.Normal = BaseNormal;
 
-    // FLOOR FACE
-    data.Indices[0] = 2;
-    data.Indices[1] = 1;
-    data.Indices[2] = 0;
-    data.Indices[3] = 2;
-    data.Indices[4] = 3;
-    data.Indices[5] = 1;
+    // Assign texture coordinates for the base
+    v0.TexCoord = FVector2(0.0f, 0.0f);
+    v1.TexCoord = FVector2(1.0f, 0.0f);
+    v2.TexCoord = FVector2(1.0f, 1.0f);
+    v3.TexCoord = FVector2(0.0f, 1.0f);
 
-    // BACK FACE
-    data.Indices[6] = 8;
-    data.Indices[7] = 9;
-    data.Indices[8] = 4;
+    // Add base vertices to the mesh
+    uint32 BaseIndex = static_cast<uint32>(MeshInfo.Vertices.Size());
+    MeshInfo.Vertices.Add(v0); // Index 0
+    MeshInfo.Vertices.Add(v1); // Index 1
+    MeshInfo.Vertices.Add(v2); // Index 2
+    MeshInfo.Vertices.Add(v3); // Index 3
 
-    // LEFT FACE
-    data.Indices[9] = 13;
-    data.Indices[10] = 12;
-    data.Indices[11] = 5;
+    // Add indices for the base (two triangles)
+    MeshInfo.Indices.Add(BaseIndex + 0);
+    MeshInfo.Indices.Add(BaseIndex + 1);
+    MeshInfo.Indices.Add(BaseIndex + 2);
 
-    // FRONT FACE
-    data.Indices[12] = 11;
-    data.Indices[13] = 10;
-    data.Indices[14] = 6;
+    MeshInfo.Indices.Add(BaseIndex + 0);
+    MeshInfo.Indices.Add(BaseIndex + 2);
+    MeshInfo.Indices.Add(BaseIndex + 3);
 
-    // RIGHT FACE
-    data.Indices[15] = 14;
-    data.Indices[16] = 15;
-    data.Indices[17] = 7;
+    // Side 1 (v0, v1, v4)
+    FVertex s0v0 = v0;
+    FVertex s0v1 = v1;
+    FVertex s0v4 = v4;
+    s0v0.Normal   = Normal0;
+    s0v1.Normal   = Normal0;
+    s0v4.Normal   = Normal0;
+    s0v0.TexCoord = FVector2(0.0f, 0.0f);
+    s0v1.TexCoord = FVector2(1.0f, 0.0f);
+    s0v4.TexCoord = FVector2(0.5f, 1.0f);
 
-    data.Indices.shrink_to_fit();
-    data.Vertices.shrink_to_fit();
+    const uint32 Side0Index = static_cast<uint32>(MeshInfo.Vertices.Size());
+    MeshInfo.Vertices.Add(s0v0);
+    MeshInfo.Vertices.Add(s0v1);
+    MeshInfo.Vertices.Add(s0v4);
 
-    CalculateHardNormals(data);
-    CalculateTangents(data);
+    MeshInfo.Indices.Add(Side0Index + 0);
+    MeshInfo.Indices.Add(Side0Index + 2);
+    MeshInfo.Indices.Add(Side0Index + 1);
 
-    return data;
-    */
+    // Side 2 (v1, v2, v4)
+    FVertex s1v0 = v1;
+    FVertex s1v1 = v2;
+    FVertex s1v4 = v4;
+    s1v0.Normal   = Normal1;
+    s1v1.Normal   = Normal1;
+    s1v4.Normal   = Normal1;
+    s1v0.TexCoord = FVector2(0.0f, 0.0f);
+    s1v1.TexCoord = FVector2(1.0f, 0.0f);
+    s1v4.TexCoord = FVector2(0.5f, 1.0f);
 
-    return FMeshCreateInfo();
+    const uint32 Side1Index = static_cast<uint32>(MeshInfo.Vertices.Size());
+    MeshInfo.Vertices.Add(s1v0);
+    MeshInfo.Vertices.Add(s1v1);
+    MeshInfo.Vertices.Add(s1v4);
+
+    MeshInfo.Indices.Add(Side1Index + 0);
+    MeshInfo.Indices.Add(Side1Index + 2);
+    MeshInfo.Indices.Add(Side1Index + 1);
+
+    // Side 3 (v2, v3, v4)
+    FVertex s2v0 = v2;
+    FVertex s2v1 = v3;
+    FVertex s2v4 = v4;
+    s2v0.Normal   = Normal2;
+    s2v1.Normal   = Normal2;
+    s2v4.Normal   = Normal2;
+    s2v0.TexCoord = FVector2(0.0f, 0.0f);
+    s2v1.TexCoord = FVector2(1.0f, 0.0f);
+    s2v4.TexCoord = FVector2(0.5f, 1.0f);
+
+    const uint32 Side2Index = static_cast<uint32>(MeshInfo.Vertices.Size());
+    MeshInfo.Vertices.Add(s2v0);
+    MeshInfo.Vertices.Add(s2v1);
+    MeshInfo.Vertices.Add(s2v4);
+
+    MeshInfo.Indices.Add(Side2Index + 0);
+    MeshInfo.Indices.Add(Side2Index + 2);
+    MeshInfo.Indices.Add(Side2Index + 1);
+
+    // Side 4 (v3, v0, v4)
+    FVertex s3v0 = v3;
+    FVertex s3v1 = v0;
+    FVertex s3v4 = v4;
+    s3v0.Normal   = Normal3;
+    s3v1.Normal   = Normal3;
+    s3v4.Normal   = Normal3;
+    s3v0.TexCoord = FVector2(0.0f, 0.0f);
+    s3v1.TexCoord = FVector2(1.0f, 0.0f);
+    s3v4.TexCoord = FVector2(0.5f, 1.0f);
+
+    const uint32 Side3Index = static_cast<uint32>(MeshInfo.Vertices.Size());
+    MeshInfo.Vertices.Add(s3v0);
+    MeshInfo.Vertices.Add(s3v1);
+    MeshInfo.Vertices.Add(s3v4);
+
+    MeshInfo.Indices.Add(Side3Index + 0);
+    MeshInfo.Indices.Add(Side3Index + 2);
+    MeshInfo.Indices.Add(Side3Index + 1);
+    return MeshInfo;
 }
 
 // TODO: Finish

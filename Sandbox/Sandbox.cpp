@@ -453,6 +453,44 @@ bool FSandbox::Init()
             NewActor->AddComponent(NewComponent);
         }
     }
+    
+    NewActor = CurrentWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Pyramid");
+        NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(1.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 35.0f);
+
+        MaterialInfo.Albedo           = FVector3(0.0f, 0.0f, 1.0f);
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 0.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
+            NewMaterial->Initialize();
+            NewMaterial->SetName("PyramidMaterial");
+
+            FMeshCreateInfo PyramidMeshData = FMeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f);
+            
+            TSharedPtr<FMesh> PyramidMesh = MakeSharedPtr<FMesh>();
+            PyramidMesh->Init(PyramidMeshData);
+            
+            NewComponent->SetMesh(PyramidMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
 
     TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
     if (StreetLightModel)
