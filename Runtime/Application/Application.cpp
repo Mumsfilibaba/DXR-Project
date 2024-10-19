@@ -250,7 +250,7 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
     FGenericWindowInitializer WindowInitializer;
     WindowInitializer.Title    = InWindow->GetTitle();
     WindowInitializer.Position = InWindow->GetScreenPosition();
-    WindowInitializer.Style    = EWindowStyleFlags::Default;
+    WindowInitializer.Style    = InWindow->GetStyle();
     WindowInitializer.Width    = FMath::Clamp<int32>(MinWidth, MaxWidth, InWindow->GetWidth());
     WindowInitializer.Height   = FMath::Clamp<int32>(MinHeight, MaxHeight, InWindow->GetHeight());
 

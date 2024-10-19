@@ -11,7 +11,7 @@ FWindow::FWindow()
     , PlatformWindow(nullptr)
     , ScreenPosition()
     , ScreenSize()
-    , WindowMode(EWindowMode::Windowed)
+    , StyleFlags(EWindowStyleFlags::None)
 {
 }
 
@@ -24,7 +24,7 @@ void FWindow::Initialize(const FInitializer& Initializer)
     Title          = Initializer.Title;
     ScreenPosition = Initializer.Position;
     ScreenSize     = Initializer.Size;
-    WindowMode     = Initializer.WindowMode;
+    StyleFlags     = Initializer.StyleFlags;
 }
 
 void FWindow::Tick()
@@ -227,24 +227,16 @@ void FWindow::SetTitle(const FString& InTitle)
     }
 }
 
-void FWindow::SetWindowMode(EWindowMode InWindowMode)
+void FWindow::SetStyle(EWindowStyleFlags InStyleFlags)
 {
     if (PlatformWindow)
     {
-        EWindowStyleFlags StyleFlags = EWindowStyleFlags::None;
-        if (InWindowMode == EWindowMode::Windowed)
+        if (StyleFlags != InStyleFlags)
         {
-            StyleFlags = EWindowStyleFlags::Default;
+            PlatformWindow->SetStyle(InStyleFlags);
+            StyleFlags = InStyleFlags;
         }
-        else
-        {
-            DEBUG_BREAK();
-        }
-
-        PlatformWindow->SetStyle(StyleFlags);
     }
-
-    WindowMode = InWindowMode;
 }
 
 void FWindow::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow)

@@ -11,14 +11,6 @@ DECLARE_DELEGATE(FOnWindowResized, const FIntVector2&);
 DECLARE_DELEGATE(FOnWindowClosed);
 DECLARE_DELEGATE(FOnWindowActivationChanged);
 
-enum class EWindowMode : uint8
-{
-    None       = 0,
-    Windowed   = 1,
-    Borderless = 2,
-    Fullscreen = 3,
-};
-
 class APPLICATION_API FWindow : public FWidget
 {
 public:
@@ -28,14 +20,14 @@ public:
             : Title()
             , Size()
             , Position()
-            , WindowMode(EWindowMode::Windowed)
+            , StyleFlags(EWindowStyleFlags::Default)
         {
         }
 
-        FString     Title;
-        FIntVector2 Size;
-        FIntVector2 Position;
-        EWindowMode WindowMode;
+        FString           Title;
+        FIntVector2       Size;
+        FIntVector2       Position;
+        EWindowStyleFlags StyleFlags;
     };
 
     FWindow();
@@ -81,7 +73,7 @@ public:
     float GetWindowDpiScale() const;
 
     void SetTitle(const FString& InTitle);
-    void SetWindowMode(EWindowMode InWindowMode);
+    void SetStyle(EWindowStyleFlags InStyleFlags);
     void SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow);
     void SetWindowFocus();
     void SetWindowOpacity(float Alpha);
@@ -94,9 +86,9 @@ public:
         return Title;
     }
 
-    EWindowMode GetWindowMode() const
+    EWindowStyleFlags GetStyle() const
     {
-        return WindowMode;
+        return StyleFlags;
     }
 
 private:
@@ -110,5 +102,5 @@ private:
     TSharedPtr<FWidget>         Overlay;
     TSharedPtr<FWidget>         Content;
     TSharedRef<FGenericWindow>  PlatformWindow;
-    EWindowMode                 WindowMode;
+    EWindowStyleFlags           StyleFlags;
 };

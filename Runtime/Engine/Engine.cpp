@@ -92,10 +92,11 @@ FEngine::~FEngine()
 bool FEngine::CreateEngineWindow()
 {
     FWindow::FInitializer WindowInitializer;
-    WindowInitializer.Title  = "Sandbox";
-    WindowInitializer.Size.x = CVarViewportWidth.GetValue();
-    WindowInitializer.Size.y = CVarViewportHeight.GetValue();
-
+    WindowInitializer.Title      = "Sandbox";
+    WindowInitializer.Size.x     = CVarViewportWidth.GetValue();
+    WindowInitializer.Size.y     = CVarViewportHeight.GetValue();
+    WindowInitializer.StyleFlags = EWindowStyleFlags::Default;
+    
     EngineWindow = CreateWidget<FWindow>(WindowInitializer);
 
     // Initialize and show the game-window

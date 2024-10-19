@@ -472,7 +472,6 @@ void FImGuiPlugin::Tick(float Delta)
     TSharedPtr<FWindow>        ForegroundWindow         = FApplicationInterface::Get().GetFocusWindow();
     TSharedRef<FGenericWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
     
-    const bool bIsTrackingMouse = FApplicationInterface::Get().IsTrackingCursor();
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || PlatformWindow->IsChildWindow(PlatformForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
@@ -481,6 +480,7 @@ void FImGuiPlugin::Tick(float Delta)
         CHECK(PlatformForegroundWindow != nullptr);
         PlatformForegroundWindow->GetWindowShape(WindowShape);
 
+        const bool bIsTrackingMouse = FApplicationInterface::Get().IsTrackingCursor();
         if (UIState.WantSetMousePos)
         {
             ImVec2 MousePos = UIState.MousePos;
@@ -675,7 +675,7 @@ void FImGuiPlugin::StaticPlatformCreateWindow(ImGuiViewport* Viewport)
     WindowInitializer.Title      = "ImGui Window";
     WindowInitializer.Size       = FIntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
     WindowInitializer.Position   = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
-    WindowInitializer.WindowMode = EWindowMode::Windowed;
+    WindowInitializer.StyleFlags = WindowStyle;
 
     ViewportData->Window = CreateWidget<FWindow>(WindowInitializer);
     CHECK(ViewportData->Window != nullptr);
@@ -712,8 +712,6 @@ void FImGuiPlugin::StaticPlatformCreateWindow(ImGuiViewport* Viewport)
             Viewport->PlatformRequestClose = true;
         }
     }));
-    
-    PlatformWindow->SetStyle(WindowStyle);
 }
 
 void FImGuiPlugin::StaticPlatformDestroyWindow(ImGuiViewport* Viewport)
