@@ -395,21 +395,20 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
     {
         SCOPED_AUTORELEASE_POOL();
        
-        const NSRect ContentRect  = NSMakeRect(0, 0, Shape.Width, Shape.Height);
-        const NSRect CurrentFrame = Window.frame;
-        
-        NSRect NewFrame = [Window frameRectForContentRect:ContentRect];
+        NSRect NewContentRect;
         if (bMove)
         {
-            NewFrame.origin.x = Shape.Position.x;
-            NewFrame.origin.y = Shape.Position.y;
-            ConvertNSRect(Window.screen, &NewFrame);
+            NewContentRect = NSMakeRect(Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height);
         }
         else
         {
-            NewFrame.origin = CurrentFrame.origin;
+            NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
+            ConvertNSRect(Window.screen, &ContentRect);
+            NewContentRect = NSMakeRect(ContentRect.origin.x, ContentRect.origin.y, Shape.Width, Shape.Height);
         }
 
+        ConvertNSRect(Window.screen, &NewContentRect);
+        const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[Window styleMask]];
         [Window setFrame: NewFrame display: YES animate: YES];
         
         FPlatformApplicationMisc::PumpMessages(true);
@@ -486,8 +485,9 @@ float FMacWindow::GetWindowDpiScale() const
         const NSRect Points = WindowView.frame;
         const NSRect Pixels = [WindowView convertRectToBacking:Points];
 
-        const CGFloat ScaleX = static_cast<CGFloat>(Pixels.size.width / Points.size.width);
-        const CGFloat ScaleY = static_cast<CGFloat>(Pixels.size.height / Points.size.height);
+        MAYBE_UNUSED const CGFloat ScaleY = static_cast<CGFloat>(Pixels.size.height / Points.size.height);
+        MAYBE_UNUSED const CGFloat ScaleX = static_cast<CGFloat>(Pixels.size.width / Points.size.width);
+        
         CHECK(ScaleX == ScaleY);
         Scale = ScaleX;
     }, NSDefaultRunLoopMode, true);
