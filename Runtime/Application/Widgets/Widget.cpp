@@ -3,9 +3,9 @@
 
 FWidget::FWidget()
     : TSharedFromThis<FWidget>()
-    , ParentWidget()
     , Visibility(EVisibility::Visible)
     , ScreenRectangle()
+    , ParentWidget()
 {
 }
 

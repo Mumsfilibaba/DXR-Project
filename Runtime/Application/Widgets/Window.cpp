@@ -6,11 +6,15 @@
 FWindow::FWindow()
     : FWidget()
     , Title()
+    , OnWindowClosed()
+    , OnWindowMoved()
+    , OnWindowResized()
+    , OnWindowActivationChanged()
+    , ScreenPosition()
+    , ScreenSize()
     , Overlay()
     , Content()
     , PlatformWindow(nullptr)
-    , ScreenPosition()
-    , ScreenSize()
     , StyleFlags(EWindowStyleFlags::None)
 {
 }
@@ -99,7 +103,7 @@ void FWindow::NotifyWindowDestroyed()
     OnWindowClosed.ExecuteIfBound();
 }
 
-void FWindow::NotifyWindowActivationChanged(bool bIsActive)
+void FWindow::NotifyWindowActivationChanged(bool)
 {
 }
 

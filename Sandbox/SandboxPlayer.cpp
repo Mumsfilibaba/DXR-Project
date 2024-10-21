@@ -161,7 +161,7 @@ void FSandboxPlayerController::SetupInputComponent()
     InputComponent->BindAxis("MoveForwardAxis", this, &FSandboxPlayerController::MoveForwardAxis);
 }
 
-void FSandboxPlayerController::MoveForwardAxis(float Value)
+void FSandboxPlayerController::MoveForwardAxis(float)
 {
     // LOG_INFO("MoveForwardAxis %.4f", Value);
 }

@@ -529,7 +529,6 @@ void FSceneRenderer::Tick(FScene* Scene)
             CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
             LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, NewWidth, NewHeight);
 
-            // TODO: Resources should not require a CommandList to be released safely
             if (!DepthPrePass->CreateResources(Resources, NewWidth, NewHeight))
             {
                 DEBUG_BREAK();

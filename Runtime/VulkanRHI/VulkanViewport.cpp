@@ -263,24 +263,27 @@ bool FVulkanViewport::Present(bool bVerticalSync)
 {
     // TODO: Recreate SwapChain based on V-Sync
     UNREFERENCED_VARIABLE(bVerticalSync);
-
+   
+    VkResult Result;
     if (bAquireNextImage)
     {
-        if (!AquireNextImage())
+        Result = AquireNextImage();
+        if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
         {
             return false;
         }
     }
-    
+
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
-    VkResult Result = SwapChain->Present(CommandContext->GetCommandQueue(), RenderSemaphore.Get());
-    if (Result == VK_ERROR_OUT_OF_DATE_KHR)
+    Result = SwapChain->Present(CommandContext->GetCommandQueue(), RenderSemaphore.Get());
+    if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
     {
         VULKAN_INFO("Swapchain OutOfDate");
         CommandContext->GetCommandQueue().FlushWaitSemaphoresAndWait();
 
         if (!CreateSwapChain())
         {
+            LOG_WARNING("FVulkanViewport::Present CreateSwapChain Failed");
             return false;
         }
     }
@@ -314,8 +317,10 @@ FVulkanTexture* FVulkanViewport::GetCurrentBackBuffer()
 {
     if (bAquireNextImage)
     {
-        if (!AquireNextImage())
+        VkResult Result = AquireNextImage();
+        if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
         {
+            VULKAN_WARNING("FVulkanViewport::GetCurrentBackBuffer SwapChain is OutOfDate");
             return nullptr;
         }
         
@@ -330,7 +335,7 @@ FRHITexture* FVulkanViewport::GetBackBuffer() const
     return BackBuffer.Get();
 }
 
-bool FVulkanViewport::AquireNextImage()
+VkResult FVulkanViewport::AquireNextImage()
 {
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
@@ -339,14 +344,13 @@ bool FVulkanViewport::AquireNextImage()
     if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
     {
         VULKAN_ERROR("Failed to aquire SwapChain image");
-        return false;
+        return Result;
     }
 
-    // TOOD: Maybe change this, if maybe is not always desirable to always have a wait/signal
     CommandContext->GetCommandQueue().AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
     CommandContext->GetCommandQueue().AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
 
     // Update the BackBuffer index
     BackBufferIndex = SwapChain->GetBufferIndex();
-    return true;
+    return Result;
 }

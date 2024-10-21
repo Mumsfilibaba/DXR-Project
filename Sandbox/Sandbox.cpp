@@ -712,6 +712,6 @@ bool FSandbox::Init()
     return true;
 }
 
-void FSandbox::Tick(float DeltaTime)
+void FSandbox::Tick(float)
 {
 }

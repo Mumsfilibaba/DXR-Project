@@ -50,7 +50,7 @@ public:
 private:
     bool CreateSwapChain();
     void DestroySwapChain();
-    bool AquireNextImage();
+    VkResult AquireNextImage();
 
     void AdvanceSemaphoreIndex()
     {

@@ -5,8 +5,6 @@
 
 class COREAPPLICATION_API FMacInputMapper final : public EGenericInputMapper
 {
-    inline static constexpr uint32 NumKeys = 256;
-
 public:
     static void Initialize();
     
@@ -48,12 +46,14 @@ public:
                 return NSEventModifierFlagCommand;
             case EKeyboardKeyName::CapsLock:
                 return NSEventModifierFlagCapsLock;
+            default:
+                return 0;
         }
-
-        return 0;
     }
 
 private:
+    inline static constexpr uint32 NumKeys = 256;
+    
     static TStaticArray<EKeyboardKeyName::Type, NumKeys>                 KeyCodeFromScanCodeTable;
     static TStaticArray<uint16, NumKeys>                                 ScanCodeFromKeyCodeTable;
     static TStaticArray<EMouseButtonName::Type, EMouseButtonName::Count> ButtonFromButtonIndex;

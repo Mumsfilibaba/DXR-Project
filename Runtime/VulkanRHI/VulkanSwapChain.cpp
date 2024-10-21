@@ -252,5 +252,12 @@ VkResult FVulkanSwapChain::Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSe
 VkResult FVulkanSwapChain::AquireNextImage(FVulkanSemaphore* AquireSemaphore)
 {
     VkSemaphore CurrentImageSemaphore = AquireSemaphore ? AquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
-    return vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, CurrentImageSemaphore, VK_NULL_HANDLE, &BufferIndex);
+    
+    VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, CurrentImageSemaphore, VK_NULL_HANDLE, &BufferIndex);
+    if (Result != VK_SUCCESS)
+    {
+        LOG_WARNING("vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+    }
+    
+    return Result;
 }

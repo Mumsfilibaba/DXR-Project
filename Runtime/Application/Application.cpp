@@ -158,18 +158,20 @@ struct FEventDispatcher
     }
 };
 
-TSharedPtr<FGenericApplication>  FApplicationInterface::PlatformApplication = nullptr;
+TSharedPtr<FGenericApplication>   FApplicationInterface::PlatformApplication = nullptr;
 TSharedPtr<FApplicationInterface> FApplicationInterface::ApplicationInstance = nullptr;
 
 FApplicationInterface::FApplicationInterface()
-    : FocusPath()
-    , InputHandlers()
-    , Windows()
+    : PressedKeys()
+    , PressedMouseButtons()
     , DisplayInfo()
     , bIsMonitorInfoValid(false)
     , bIsTrackingCursor(false)
-    , PressedKeys()
-    , PressedMouseButtons()
+    , Windows()
+    , FocusPath()
+    , TrackedWidgets()
+    , InputHandlers()
+    , OnMonitorConfigChangedEvent()
 {
     // Init monitor information
     UpdateMonitorInfo();
@@ -637,7 +639,7 @@ bool FApplicationInterface::OnMouseButtonDoubleClick(const TSharedRef<FGenericWi
     FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
 
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
-        [this](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
+        [](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
         {
             return Widget->OnMouseDoubleClick(CursorEvent);
         });

@@ -14,6 +14,9 @@ struct FGenericVulkanPlatform
         #if VK_KHR_device_group_creation
             VK_KHR_DEVICE_GROUP_CREATION_EXTENSION_NAME,
         #endif
+        #if VK_EXT_surface_maintenance1
+            VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME,
+        #endif
         };
     }
     
@@ -118,6 +121,9 @@ struct FGenericVulkanPlatform
         #endif
         #if VK_NV_ray_tracing_invocation_reorder
             VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME,
+        #endif
+        #if VK_EXT_swapchain_maintenance1
+            VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME,
         #endif
         };
     }

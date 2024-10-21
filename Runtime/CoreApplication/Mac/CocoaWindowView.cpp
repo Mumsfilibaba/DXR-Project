@@ -271,7 +271,10 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
     {
         FrameBufferWidth  = FrameBufferRect.size.width;
         FrameBufferHeight = FrameBufferRect.size.height;
+
+    #if 0
         LOG_INFO("viewDidChangeBackingProperties FrameBufferSize: w=%.4f, h=%.4f", FrameBufferWidth, FrameBufferHeight);
+    #endif
     }
 }
 
