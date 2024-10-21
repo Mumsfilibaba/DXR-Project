@@ -8,6 +8,8 @@
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/SharedRef.h"
 
+#define VULKAN_INVALID_BACK_BUFFER_INDEX (-1)
+
 typedef TSharedRef<class FVulkanViewport> FVulkanViewportRef;
 
 class FVulkanCommandContext;
@@ -68,8 +70,7 @@ private:
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> ImageSemaphores;
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> RenderSemaphores;
 
-    uint32 SemaphoreIndex;
-    uint32 BackBufferIndex;
-    bool   bAquireNextImage;
+    int32 SemaphoreIndex;
+    int32 BackBufferIndex;
 };
 

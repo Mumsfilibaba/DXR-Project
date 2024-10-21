@@ -25,9 +25,7 @@ FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext*
     , BackBuffers()
     , ImageSemaphores()
     , RenderSemaphores()
-    , SemaphoreIndex(0)
-    , BackBufferIndex(0)
-    , bAquireNextImage(false)
+    , BackBufferIndex(VULKAN_INVALID_BACK_BUFFER_INDEX)
 {
 }
 
@@ -153,6 +151,9 @@ bool FVulkanViewport::CreateSwapChain()
                 return false;
             }
         }
+        
+        // Set a valid semaphore index
+        SemaphoreIndex = 0;
     }
 
     // Retrieve the images
@@ -160,7 +161,7 @@ bool FVulkanViewport::CreateSwapChain()
     SwapChain->GetSwapChainImages(SwapChainImages.Data());
 
     // If we are already recording, we just need to ensure that we have a CommandBuffer
-    bool bWasRecording = CommandContext->IsRecording();
+    const bool bWasRecording = CommandContext->IsRecording();
     if (bWasRecording)
     {
         // We might already have a CommandBuffer
@@ -173,9 +174,6 @@ bool FVulkanViewport::CreateSwapChain()
     {
         CommandContext->RHIStartContext();
     }
-
-    // We always needs to acquire the next image after we have created a swapchain
-    bAquireNextImage = true;
 
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
@@ -264,12 +262,13 @@ bool FVulkanViewport::Present(bool bVerticalSync)
     // TODO: Recreate SwapChain based on V-Sync
     UNREFERENCED_VARIABLE(bVerticalSync);
    
-    VkResult Result;
-    if (bAquireNextImage)
+    VkResult Result = VK_SUCCESS;
+    if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
         Result = AquireNextImage();
         if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
         {
+            LOG_WARNING("FVulkanViewport::Present AquireNextImage Failed");
             return false;
         }
     }
@@ -289,7 +288,7 @@ bool FVulkanViewport::Present(bool bVerticalSync)
     }
 
     AdvanceSemaphoreIndex();
-    bAquireNextImage = true;
+    BackBufferIndex = VULKAN_INVALID_BACK_BUFFER_INDEX;
     return true;
 }
 
@@ -315,7 +314,7 @@ void FVulkanViewport::SetDebugName(const FString& InName)
 
 FVulkanTexture* FVulkanViewport::GetCurrentBackBuffer()
 {
-    if (bAquireNextImage)
+    if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
         VkResult Result = AquireNextImage();
         if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
@@ -323,11 +322,9 @@ FVulkanTexture* FVulkanViewport::GetCurrentBackBuffer()
             VULKAN_WARNING("FVulkanViewport::GetCurrentBackBuffer SwapChain is OutOfDate");
             return nullptr;
         }
-        
-        bAquireNextImage = false;
     }
     
-    return BackBuffers[SemaphoreIndex].Get();
+    return BackBuffers[BackBufferIndex].Get();
 }
 
 FRHITexture* FVulkanViewport::GetBackBuffer() const
