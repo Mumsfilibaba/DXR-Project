@@ -163,7 +163,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         NewFrame.origin.x = PositionX;
         NewFrame.origin.y = PositionY;
         ConvertNSRect(Window.screen, &NewFrame);
-        [Window setFrame: NewFrame display: YES animate: YES];
+        [Window setFrame: NewFrame display: YES];
        
         StyleParams = InInitializer.Style;
         bResult = true;
@@ -409,7 +409,7 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 
         ConvertNSRect(Window.screen, &NewContentRect);
         const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[Window styleMask]];
-        [Window setFrame: NewFrame display: YES animate: YES];
+        [Window setFrame: NewFrame display: YES];
         
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);

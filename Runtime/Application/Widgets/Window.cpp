@@ -109,8 +109,11 @@ void FWindow::NotifyWindowActivationChanged(bool)
 
 void FWindow::SetScreenPosition(const FIntVector2& NewPosition)
 {
-    ScreenPosition = NewPosition;
-    OnWindowMoved.ExecuteIfBound(ScreenPosition);
+    if (ScreenPosition != NewPosition)
+    {
+        ScreenPosition = NewPosition;
+        OnWindowMoved.ExecuteIfBound(NewPosition);
+    }
 }
 
 void FWindow::SetScreenSize(const FIntVector2& NewSize)

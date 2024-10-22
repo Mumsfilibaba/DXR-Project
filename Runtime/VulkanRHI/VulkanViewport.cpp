@@ -43,7 +43,7 @@ bool FVulkanViewport::Initialize()
         return false;
     }
 
-    if (!CreateSwapChain())
+    if (!CreateSwapChain(GetWidth(), GetHeight()))
     {
         return false;
     }
@@ -59,22 +59,19 @@ bool FVulkanViewport::Initialize()
     return true;
 }
 
-bool FVulkanViewport::CreateSwapChain()
+bool FVulkanViewport::CreateSwapChain(uint32 InWidth, uint32 InHeight)
 {
-    // Destroy the old swapchain if there are any
-    SwapChain = nullptr;
-    
     FVulkanSwapChainCreateInfo SwapChainCreateInfo;
     SwapChainCreateInfo.ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    SwapChainCreateInfo.PreviousSwapChain = nullptr;
+    SwapChainCreateInfo.PreviousSwapChain = SwapChain.Get();
     SwapChainCreateInfo.Surface           = Surface.Get();
     SwapChainCreateInfo.BufferCount       = CVarBackbufferCount.GetValue();
-    SwapChainCreateInfo.Extent.width      = Info.Width;
-    SwapChainCreateInfo.Extent.height     = Info.Height;
+    SwapChainCreateInfo.Extent.width      = InWidth;
+    SwapChainCreateInfo.Extent.height     = InHeight;
     SwapChainCreateInfo.Format            = GetColorFormat();
     SwapChainCreateInfo.bVerticalSync     = CVarEnableVSync.GetValue();
 
-    if (Info.Width == 0 || Info.Height == 0)
+    if (InWidth == 0 || InHeight == 0)
     {
         VULKAN_ERROR("Viewport Width or Height of zero is not supported");
         return false;
@@ -94,7 +91,7 @@ bool FVulkanViewport::CreateSwapChain()
 
     // Update the description if the requested image size was not supported
     VkExtent2D SwapChainExtent = SwapChain->GetExtent();
-    if (Info.Width != SwapChainExtent.width || Info.Height != SwapChainExtent.height)
+    if (InWidth != SwapChainExtent.width || InHeight != SwapChainExtent.height)
     {
         VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Info.Width, Info.Height, SwapChainExtent.width, SwapChainExtent.height);
         Info.Width  = static_cast<uint16>(SwapChainExtent.width);
@@ -114,8 +111,8 @@ bool FVulkanViewport::CreateSwapChain()
         RenderSemaphores.Resize(BufferCount);
         BackBuffers.Resize(BufferCount);
 
-        const uint32 BackBufferWidth  = GetWidth();
-        const uint32 BackBufferheight = GetHeight();
+        const uint32 BackBufferWidth  = InWidth;
+        const uint32 BackBufferheight = InHeight;
 
         FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), BackBufferWidth, BackBufferheight, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
         for (uint32 Index = 0; Index < BufferCount; ++Index)
@@ -243,7 +240,7 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
         
         VULKAN_INFO("Swapchain Resize w=%d h=%d", InWidth, InHeight);
        
-        if (!CreateSwapChain())
+        if (!CreateSwapChain(InWidth, InHeight))
         {
             VULKAN_WARNING("Resize FAILED");
             return false;
@@ -280,7 +277,7 @@ bool FVulkanViewport::Present(bool bVerticalSync)
         VULKAN_INFO("Swapchain OutOfDate");
         CommandContext->GetCommandQueue().FlushWaitSemaphoresAndWait();
 
-        if (!CreateSwapChain())
+        if (!CreateSwapChain(GetWidth(), GetHeight()))
         {
             LOG_WARNING("FVulkanViewport::Present CreateSwapChain Failed");
             return false;
@@ -298,8 +295,6 @@ void FVulkanViewport::SetDebugName(const FString& InName)
     if (SwapChain)
     {
         FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), SwapChain->GetVkSwapChain(), VK_OBJECT_TYPE_SWAPCHAIN_KHR);
-
-        // Name the proxy
         BackBuffer->SetDebugName("BackBuffer Proxy");
 
         // Name all the images

@@ -666,8 +666,8 @@ void FVulkanCommandContext::RHISetScissorRect(const FScissorRegion& ScissorRegio
 {
     VkRect2D ScissorRect;
     ScissorRect.offset.x      = static_cast<int32_t>(ScissorRegion.PositionX);
-    ScissorRect.extent.width  = static_cast<int32_t>(ScissorRegion.Width);
     ScissorRect.offset.y      = static_cast<int32_t>(ScissorRegion.PositionY);
+    ScissorRect.extent.width  = static_cast<int32_t>(ScissorRegion.Width);
     ScissorRect.extent.height = static_cast<int32_t>(ScissorRegion.Height);
     
     ContextState.SetScissorRects(&ScissorRect, 1);

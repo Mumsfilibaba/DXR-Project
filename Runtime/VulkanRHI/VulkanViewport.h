@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    bool CreateSwapChain();
+    bool CreateSwapChain(uint32 InWidth, uint32 InHeight);
     void DestroySwapChain();
     VkResult AquireNextImage();
 

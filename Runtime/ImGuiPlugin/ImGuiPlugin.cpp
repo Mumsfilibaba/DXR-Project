@@ -555,9 +555,7 @@ void FImGuiPlugin::Tick(float Delta)
 
     // Draw all ImGui widgets
     ImGui::NewFrame();
-
     DrawDelegates.Broadcast();
-
     ImGui::EndFrame();
 }
 
@@ -685,8 +683,8 @@ void FImGuiPlugin::StaticPlatformCreateWindow(ImGuiViewport* Viewport)
     TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     Viewport->PlatformHandle        = ViewportData->Window.Get();
     Viewport->PlatformHandleRaw     = PlatformWindow->GetPlatformHandle();
-    Viewport->PlatformRequestMove   = true;
-    Viewport->PlatformRequestResize = true;
+    Viewport->PlatformRequestMove   = false;
+    Viewport->PlatformRequestResize = false;
     Viewport->PlatformWindowCreated = true;
 
     ViewportData->Window->SetOnWindowResized(FOnWindowResized::CreateLambda([PlatformHandle = Viewport->PlatformHandle](const FIntVector2&)
@@ -725,6 +723,7 @@ void FImGuiPlugin::StaticPlatformDestroyWindow(ImGuiViewport* Viewport)
     Viewport->PlatformHandle        = nullptr;
     Viewport->PlatformHandleRaw     = nullptr;
     Viewport->PlatformWindowCreated = false;
+    
     delete ViewportData;
 }
 
@@ -763,13 +762,13 @@ void FImGuiPlugin::StaticPlatformUpdateWindow(ImGuiViewport* Viewport)
         {
             PlatformWindow->SetWindowFocus();
         }
-        
+    
         const FWindowShape WindowShape(static_cast<uint32>(Viewport->Size.x), static_cast<uint32>(Viewport->Size.y), static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
         PlatformWindow->SetWindowShape(WindowShape, true);
+        
+        Viewport->PlatformRequestMove   = true;
+        Viewport->PlatformRequestResize = true;
     }
-    
-    Viewport->PlatformRequestMove   = true;
-    Viewport->PlatformRequestResize = true;
 }
 
 ImVec2 FImGuiPlugin::StaticPlatformGetWindowPosition(ImGuiViewport* Viewport)

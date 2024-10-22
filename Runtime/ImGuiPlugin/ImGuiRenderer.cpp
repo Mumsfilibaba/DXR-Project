@@ -292,11 +292,12 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
         FImGuiViewport* MainViewportData = reinterpret_cast<FImGuiViewport*>(MainViewport->RendererUserData);
         CHECK(MainViewportData != nullptr);
 
-        ImGui::Render();
-
         FRHIViewportRef RHIViewport = MainViewportData->Viewport;
         CHECK(RHIViewport != nullptr);
 
+        // Render
+        ImGui::Render();
+        
         ImDrawData* DrawData = ImGui::GetDrawData();
         PrepareDrawData(CmdList, DrawData);
 
@@ -409,7 +410,10 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
 
 void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
 {
-    if (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f)
+    int32 FramebufferWidth  = static_cast<int32>(DrawData->DisplaySize.x * DrawData->FramebufferScale.x);
+    int32 FramebufferHeight = static_cast<int32>(DrawData->DisplaySize.y * DrawData->FramebufferScale.y);
+    
+    if (FramebufferWidth <= 0 || FramebufferHeight <= 0)
     {
         return;
     }
@@ -424,6 +428,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
     int32 GlobalIndexOffset  = 0;
 
     ImVec2 ClipOffset = DrawData->DisplayPos;
+    ImVec2 ClipScale  = DrawData->FramebufferScale;
+    
     for (int32 Index = 0; Index < DrawData->CmdListsCount; ++Index)
     {
         // TODO: This should probably be handled differently
@@ -505,19 +511,38 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                     CmdList.SetShaderResourceView(PShader.Get(), View, 0);
                 }
 
-                // Project Scissor/Clipping rectangles into Framebuffer space
-                ImVec2 ClipMin(DrawCommand->ClipRect.x - ClipOffset.x, DrawCommand->ClipRect.y - ClipOffset.y);
-                ImVec2 ClipMax(DrawCommand->ClipRect.z - ClipOffset.x, DrawCommand->ClipRect.w - ClipOffset.y);
+                // Project scissor/clipping rectangles into framebuffer space
+                ImVec2 ClipMin((DrawCommand->ClipRect.x - ClipOffset.x) * ClipScale.x, (DrawCommand->ClipRect.y - ClipOffset.y) * ClipScale.y);
+                ImVec2 ClipMax((DrawCommand->ClipRect.z - ClipOffset.x) * ClipScale.x, (DrawCommand->ClipRect.w - ClipOffset.y) * ClipScale.y);
+
+                if (ClipMin.x < 0.0f)
+                {
+                    ClipMin.x = 0.0f;
+                }
+                if (ClipMin.y < 0.0f)
+                {
+                    ClipMin.y = 0.0f;
+                }
+                
+                if (ClipMax.x > FramebufferWidth)
+                {
+                    ClipMax.x = static_cast<float>(FramebufferWidth);
+                }
+                if (ClipMax.y > FramebufferHeight)
+                {
+                    ClipMax.y = static_cast<float>(FramebufferHeight);
+                }
+                
                 if (ClipMax.x <= ClipMin.x || ClipMax.y <= ClipMin.y)
                 {
                     continue;
                 }
-
+                
                 const FScissorRegion ScissorRegion(
-                    DrawCommand->ClipRect.z - ClipOffset.x,
-                    DrawCommand->ClipRect.w - ClipOffset.y,
-                    DrawCommand->ClipRect.x - ClipOffset.x,
-                    DrawCommand->ClipRect.y - ClipOffset.y);
+                    ClipMax.x - ClipMin.x,
+                    ClipMax.y - ClipMin.y,
+                    ClipMin.x,
+                    ClipMin.y);
                 CmdList.SetScissorRect(ScissorRegion);
 
                 CmdList.DrawIndexedInstanced(DrawCommand->ElemCount, 1, DrawCommand->IdxOffset + GlobalIndexOffset, DrawCommand->VtxOffset + GlobalVertexOffset, 0);
@@ -531,12 +556,15 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
 
 void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& Buffers)
 {
+    int32 FramebufferWidth  = static_cast<int32>(DrawData->DisplaySize.x * DrawData->FramebufferScale.x);
+    int32 FramebufferHeight = static_cast<int32>(DrawData->DisplaySize.y * DrawData->FramebufferScale.y);
+    
     // Setup Orthographic Projection matrix into our Constant-Buffer
     // The visible ImGui space lies from DrawData->DisplayPos (top left) to DrawData->DisplayPos+DrawData->DisplaySize (bottom right).
     float L = DrawData->DisplayPos.x;
-    float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
+    float R = DrawData->DisplayPos.x + FramebufferWidth;
     float T = DrawData->DisplayPos.y;
-    float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
+    float B = DrawData->DisplayPos.y + FramebufferHeight;
 
     float Matrix[4][4] =
     {
@@ -549,7 +577,7 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* Draw
     FVertexConstantBuffer VertexConstantBuffer;
     FMemory::Memcpy(&VertexConstantBuffer.ViewProjectionMatrix, Matrix, sizeof(Matrix));
 
-    FViewportRegion ViewportRegion(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(FramebufferWidth, FramebufferHeight, 0.0f, 0.0f, 0.0f, 1.0f);
     CmdList.SetViewport(ViewportRegion);
 
     const EIndexFormat IndexFormat = sizeof(ImDrawIdx) == 2 ? EIndexFormat::uint16 : EIndexFormat::uint32;
@@ -599,8 +627,6 @@ void FImGuiRenderer::StaticSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
 
     if (ViewportData->Width != Size.x || ViewportData->Height != Size.y)
     {
-        ViewportData->Width      = static_cast<uint16>(Size.x);
-        ViewportData->Height     = static_cast<uint16>(Size.y);
         ViewportData->bDidResize = true;
     }
 }
@@ -613,12 +639,21 @@ void FImGuiRenderer::StaticRenderWindow(ImGuiViewport* Viewport, void* CommandLi
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
     CHECK(ViewportData != nullptr);
 
+    FRHIViewport* RHIViewport = ViewportData->Viewport.Get();
     if (ViewportData->bDidResize)
     {
-        RHICommandList->ResizeViewport(ViewportData->Viewport.Get(), ViewportData->Width, ViewportData->Height);
+        FIntVector2 WindowSize = ViewportData->Window->GetScreenSize();
+        LOG_INFO("StaticRenderWindow: ViewportSize(w=%.4f h=%.4f)", Viewport->Size.x, Viewport->Size.y);
+        LOG_INFO("StaticRenderWindow: RHIViewportSize(w=%d h=%d)", RHIViewport->GetWidth(), RHIViewport->GetHeight());
+        LOG_INFO("StaticRenderWindow: WindowSize(w=%d h=%d)", WindowSize.x, WindowSize.y);
+
+        RHICommandList->ResizeViewport(RHIViewport, Viewport->Size.x, Viewport->Size.y);
+        
+        ViewportData->Width      = static_cast<uint16>(Viewport->Size.x);
+        ViewportData->Height     = static_cast<uint16>(Viewport->Size.y);
         ViewportData->bDidResize = false;
     }
-
+    
     const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
     GImGuiPlugin->Renderer->RenderViewport(*RHICommandList, Viewport->DrawData, *ViewportData, bClear);
 }
