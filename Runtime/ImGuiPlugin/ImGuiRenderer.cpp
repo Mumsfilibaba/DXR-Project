@@ -620,15 +620,8 @@ void FImGuiRenderer::StaticDestroyWindow(ImGuiViewport* Viewport)
     Viewport->RendererUserData = nullptr;
 }
 
-void FImGuiRenderer::StaticSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
+void FImGuiRenderer::StaticSetWindowSize(ImGuiViewport*, ImVec2)
 {
-    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
-    CHECK(ViewportData != nullptr);
-
-    if (ViewportData->Width != Size.x || ViewportData->Height != Size.y)
-    {
-        ViewportData->bDidResize = true;
-    }
 }
 
 void FImGuiRenderer::StaticRenderWindow(ImGuiViewport* Viewport, void* CommandList)
@@ -639,19 +632,11 @@ void FImGuiRenderer::StaticRenderWindow(ImGuiViewport* Viewport, void* CommandLi
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
     CHECK(ViewportData != nullptr);
 
-    FRHIViewport* RHIViewport = ViewportData->Viewport.Get();
-    if (ViewportData->bDidResize)
+    const ImVec2 ViewportSize = Viewport->Size;
+    if (static_cast<uint16>(ViewportSize.x) != ViewportData->Width || static_cast<uint16>(ViewportSize.y) != ViewportData->Height)
     {
-        FIntVector2 WindowSize = ViewportData->Window->GetScreenSize();
-        LOG_INFO("StaticRenderWindow: ViewportSize(w=%.4f h=%.4f)", Viewport->Size.x, Viewport->Size.y);
-        LOG_INFO("StaticRenderWindow: RHIViewportSize(w=%d h=%d)", RHIViewport->GetWidth(), RHIViewport->GetHeight());
-        LOG_INFO("StaticRenderWindow: WindowSize(w=%d h=%d)", WindowSize.x, WindowSize.y);
-
-        RHICommandList->ResizeViewport(RHIViewport, Viewport->Size.x, Viewport->Size.y);
-        
-        ViewportData->Width      = static_cast<uint16>(Viewport->Size.x);
-        ViewportData->Height     = static_cast<uint16>(Viewport->Size.y);
-        ViewportData->bDidResize = false;
+        ViewportData->Width  = static_cast<uint16>(Viewport->Size.x);
+        ViewportData->Height = static_cast<uint16>(Viewport->Size.y);
     }
     
     const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;

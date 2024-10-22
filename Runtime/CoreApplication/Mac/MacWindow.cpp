@@ -167,6 +167,8 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
        
         StyleParams = InInitializer.Style;
         bResult = true;
+        
+        FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 
     return bResult;
@@ -260,7 +262,9 @@ void FMacWindow::ToggleFullscreen()
         ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
+            
             [Window toggleFullScreen:Window];
+            FPlatformApplicationMisc::PumpMessages(true);
         }, NSDefaultRunLoopMode, true);
     }
 }
@@ -271,7 +275,9 @@ bool FMacWindow::IsActiveWindow() const
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
+        
         bIsKeyWindow = Window.isKeyWindow;
+        FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 
     return bIsKeyWindow;
@@ -288,7 +294,9 @@ bool FMacWindow::IsMinimized() const
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
+        
         bIsMinimized = Window.miniaturized;
+        FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 
     return bIsMinimized;
@@ -334,7 +342,9 @@ void FMacWindow::SetWindowFocus()
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
+        
         [Window makeKeyAndOrderFront:Window];
+        FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
 
@@ -347,6 +357,8 @@ void FMacWindow::SetTitle(const FString& InTitle)
     {
         [Window setTitle:Title];
         [Window setMiniwindowTitle:Title];
+    
+        FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
 
@@ -439,7 +451,8 @@ uint32 FMacWindow::GetWidth() const
     {
         SCOPED_AUTORELEASE_POOL();
 
-        const NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
+        NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
+        ConvertNSRect(Window.screen, &ContentRect);
         Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
 
@@ -453,7 +466,8 @@ uint32 FMacWindow::GetHeight() const
     {
         SCOPED_AUTORELEASE_POOL();
 
-        const NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
+        NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
+        ConvertNSRect(Window.screen, &ContentRect);
         Size = ContentRect.size;
     }, NSDefaultRunLoopMode, true);
 
@@ -598,5 +612,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         
         // Set styleflags
         StyleParams = InStyle;
+        
+        FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }

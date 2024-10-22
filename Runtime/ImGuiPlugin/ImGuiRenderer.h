@@ -17,7 +17,6 @@ struct FImGuiViewport
         , IndexBuffer(nullptr)
         , VertexCount(0)
         , IndexCount(0)
-        , bDidResize(false)
         , Width(0)
         , Height(0)
     {
@@ -29,7 +28,6 @@ struct FImGuiViewport
     FRHIBufferRef       IndexBuffer;
     int32               VertexCount;
     int32               IndexCount;
-    bool                bDidResize;
     uint16              Width;
     uint16              Height;
 };
