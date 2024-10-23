@@ -5,6 +5,11 @@
 #include "Core/Math/Math.h"
 #include "Core/Templates/NumericLimits.h"
 
+FVulkanBuffer* FVulkanBuffer::ResourceCast(FRHIBuffer* Buffer)
+{
+    return static_cast<FVulkanBuffer*>(Buffer);
+}
+
 FVulkanBuffer::FVulkanBuffer(FVulkanDevice* InDevice, const FRHIBufferInfo& InBufferDesc)
     : FRHIBuffer(InBufferDesc)
     , FVulkanDeviceChild(InDevice)
@@ -28,7 +33,7 @@ FVulkanBuffer::~FVulkanBuffer()
     MemoryManager.Free(MemoryAllocation);
 }
 
-bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)
+bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
     FVulkanPhysicalDevice* PhysicalDevice = GetDevice()->GetPhysicalDevice();
 
@@ -141,20 +146,19 @@ bool FVulkanBuffer::Initialize(EResourceAccess InInitialAccess, const void* InIn
         }
         else
         {
-            FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
-            Context->RHIStartContext();
+            InCommandContext->RHIStartContext();
 
-            Context->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            InCommandContext->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
             
-            Context->RHIUpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->RHIUpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
-                Context->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+                InCommandContext->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
-            Context->RHIFinishContext();
+            InCommandContext->RHIFinishContext();
         }
     }
     

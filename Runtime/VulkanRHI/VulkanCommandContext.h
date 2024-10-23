@@ -10,6 +10,13 @@ class FVulkanDevice;
 class FVulkanBuffer;
 class FVulkanCommandContext;
 
+enum class ECommandContextPhase
+{
+    Finished = 0,
+    Recording,
+    InsideRenderPass,
+};
+
 class FBarrierBatcher
 {
     struct FBatch
@@ -36,6 +43,11 @@ public:
     void AddBufferMemoryBarrier(VkDependencyFlags DependencyFlags, const VkBufferMemoryBarrier2& InBarrier);
     void AddImageMemoryBarrier(VkDependencyFlags DependencyFlags, const VkImageMemoryBarrier2& InBarrier);
     void FlushBarriers();
+    
+    bool HasPendingBarriers() const
+    {
+        return !Batches.IsEmpty();
+    }
 
 private:
     FVulkanCommandContext& Context;
@@ -140,10 +152,8 @@ public:
         return *CommandPayload;
     }
 
-    bool IsRecording() const
-    {
-        return bIsRecording;
-    }
+    bool IsRecording() const { return ContextPhase >= ECommandContextPhase::Recording; }
+    bool IsInsideRenderPass() const { return ContextPhase == ECommandContextPhase::InsideRenderPass; }
     
     bool NeedsCommandBuffer() const
     {
@@ -158,10 +168,8 @@ private:
     FVulkanQueryAllocator      TimestampQueryAllocator;
     FVulkanQueryAllocator      OcclusionQueryAllocator;
     FBarrierBatcher            BarrierBatcher;
+    ECommandContextPhase       ContextPhase;
     FVulkanCommandContextState ContextState;
-
-    // Keeps track of the recording state of the context, i.e if RHIStartContext has been called
-    bool bIsRecording : 1;
 
     // TODO: The whole CommandContext should only be used from one thread at a time
     FCriticalSection CommandContextCS;

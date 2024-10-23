@@ -14,13 +14,15 @@ static TAutoConsoleVariable<bool> CVarEnableVSync(
     true,
     EConsoleVariableFlags::Default);
 
-FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo)
+// Recreate the SwapChain when it's reported to be suboptimal when aquiring next image
+static constexpr bool GVulkanRecreateSuboptimalSwapChainOnAquire = true;
+
+FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, const FRHIViewportInfo& InViewportInfo)
     : FRHIViewport(InViewportInfo)
     , FVulkanDeviceChild(InDevice)
     , WindowHandle(InViewportInfo.WindowHandle)
     , Surface(nullptr)
     , SwapChain(nullptr)
-    , CommandContext(InCmdContext)
     , BackBuffer(nullptr)
     , BackBuffers()
     , ImageSemaphores()
@@ -31,22 +33,36 @@ FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext*
 
 FVulkanViewport::~FVulkanViewport()
 {
-    DestroySwapChain();
+    FVulkanCommandContext* InCommandContext = FVulkanRHI::GetRHI()->ObtainCommandContext();
+    DestroySwapChain(InCommandContext);
 }
 
-bool FVulkanViewport::Initialize()
+bool FVulkanViewport::Initialize(FVulkanCommandContext* InCommandContext)
 {
-    Surface = new FVulkanSurface(GetDevice(), CommandContext->GetCommandQueue(), WindowHandle);
+    if (!InCommandContext)
+    {
+        VULKAN_ERROR("CommandContext cannot be nullptr");
+        return false;
+    }
+    
+    Surface = new FVulkanSurface(GetDevice(), InCommandContext->GetCommandQueue(), WindowHandle);
     if (!Surface->Initialize())
     {
         VULKAN_ERROR("Failed to create Surface");
         return false;
     }
+    
+    // We need to start the context since that locks it to this thread
+    InCommandContext->RHIStartContext();
 
-    if (!CreateSwapChain(GetWidth(), GetHeight()))
+    if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
     {
         return false;
     }
+    
+    // Unlock the context from this thread
+    InCommandContext->RHIFinishContext();
+    InCommandContext->RHIFlush();
 
     FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), GetWidth(), GetHeight(), 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
     BackBuffer = new FVulkanBackBufferTexture(GetDevice(), this, BackBufferInfo);
@@ -59,7 +75,7 @@ bool FVulkanViewport::Initialize()
     return true;
 }
 
-bool FVulkanViewport::CreateSwapChain(uint32 InWidth, uint32 InHeight)
+bool FVulkanViewport::CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
     FVulkanSwapChainCreateInfo SwapChainCreateInfo;
     SwapChainCreateInfo.ColorSpace        = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
@@ -157,21 +173,10 @@ bool FVulkanViewport::CreateSwapChain(uint32 InWidth, uint32 InHeight)
     TArray<VkImage> SwapChainImages(SwapChain->GetBufferCount());
     SwapChain->GetSwapChainImages(SwapChainImages.Data());
 
-    // If we are already recording, we just need to ensure that we have a CommandBuffer
-    const bool bWasRecording = CommandContext->IsRecording();
-    if (bWasRecording)
-    {
-        // We might already have a CommandBuffer
-        if (CommandContext->NeedsCommandBuffer())
-        {
-            CommandContext->ObtainCommandBuffer();
-        }
-    }
-    else
-    {
-        CommandContext->RHIStartContext();
-    }
-
+    // Ensure we are recording
+    CHECK(InCommandContext->IsRecording());
+    CHECK(!InCommandContext->NeedsCommandBuffer());
+    
     int32 Index = 0;
     for (VkImage Image : SwapChainImages)
     {
@@ -194,55 +199,39 @@ bool FVulkanViewport::CreateSwapChain(uint32 InWidth, uint32 InHeight)
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-        CommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
         BackBuffers[Index++]->SetVkImage(Image);
     }
 
-    // If we are already recording then we just submit a CommandBuffer and wait for it to complete
-    if (bWasRecording)
-    {
-        CommandContext->SplitCommandBuffer(false, true);
-    }
-    else
-    {
-        CommandContext->RHIFinishContext();
-        CommandContext->RHIFlush();
-    }
-    
+    InCommandContext->SplitCommandBuffer(false, false);
     return true;
 }
 
-void FVulkanViewport::DestroySwapChain()
+void FVulkanViewport::DestroySwapChain(FVulkanCommandContext* InCommandContext)
 {
     // Ensure that all work is completed
-    CommandContext->GetCommandQueue().WaitForCompletion();
+    InCommandContext->GetCommandQueue().WaitForCompletion();
 
     // Destroy the swapchain
     SwapChain.Reset();
 }
 
-bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
+bool FVulkanViewport::Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
     if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
     {
-        // Ensure that all work is completed, if this function is called from a RHICommandList
-        // the we do this "manually" since the context is already started and we need to ensure that there
-        // is a valid CommandBuffer
-        if (CommandContext->IsRecording())
-        {
-            // TODO: What happens if we are in a RenderPass?
-            CommandContext->SplitCommandBuffer(false, true);
-        }
-        else
-        {
-            CommandContext->RHIClearState();
-        }
+        CHECK(!InCommandContext->IsInsideRenderPass());
+        CHECK(InCommandContext->IsRecording());
         
-        VULKAN_INFO("Swapchain Resize w=%d h=%d", InWidth, InHeight);
-       
-        if (!CreateSwapChain(InWidth, InHeight))
+        // Ensure that all work is completed, if this function is called from
+        // a RHICommandList the we do this "manually" since the context is already
+        // started and we need to ensure that there is a valid CommandBuffer
+        InCommandContext->SplitCommandBuffer(false, true);
+        VULKAN_INFO("FVulkanViewport::Resize w=%d h=%d", InWidth, InHeight);
+               
+        if (!CreateSwapChain(InCommandContext, InWidth, InHeight))
         {
-            VULKAN_WARNING("Resize FAILED");
+            VULKAN_WARNING("FVulkanViewport::Resize FAILED");
             return false;
         }
 
@@ -254,7 +243,7 @@ bool FVulkanViewport::Resize(uint32 InWidth, uint32 InHeight)
     return true;
 }
 
-bool FVulkanViewport::Present(bool bVerticalSync)
+bool FVulkanViewport::Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync)
 {
     // TODO: Recreate SwapChain based on V-Sync
     UNREFERENCED_VARIABLE(bVerticalSync);
@@ -262,22 +251,35 @@ bool FVulkanViewport::Present(bool bVerticalSync)
     VkResult Result = VK_SUCCESS;
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
-        Result = AquireNextImage();
+        Result = AquireNextImage(InCommandContext);
+        if (Result == VK_SUBOPTIMAL_KHR)
+        {
+            LOG_WARNING("FVulkanViewport::Present [AquireNextImage] SwapChain is Suboptimal");
+        }
+        
         if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
         {
-            LOG_WARNING("FVulkanViewport::Present AquireNextImage Failed");
+            LOG_WARNING("FVulkanViewport::Present [AquireNextImage] SwapChain is OutOfDate");
             return false;
         }
     }
 
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
-    Result = SwapChain->Present(CommandContext->GetCommandQueue(), RenderSemaphore.Get());
+    Result = SwapChain->Present(InCommandContext->GetCommandQueue(), RenderSemaphore.Get());
     if (Result == VK_ERROR_OUT_OF_DATE_KHR || Result == VK_SUBOPTIMAL_KHR)
     {
-        VULKAN_INFO("Swapchain OutOfDate");
-        CommandContext->GetCommandQueue().FlushWaitSemaphoresAndWait();
+        if (Result == VK_SUBOPTIMAL_KHR)
+        {
+            VULKAN_INFO("FVulkanViewport::Present [Present] SwapChain is Suboptimal");
+        }
+        else
+        {
+            VULKAN_INFO("FVulkanViewport::Present [Present] SwapChain is OutOfDate");
+        }
+        
+        InCommandContext->SplitCommandBuffer(false, true);
 
-        if (!CreateSwapChain(GetWidth(), GetHeight()))
+        if (!CreateSwapChain(InCommandContext, GetWidth(), GetHeight()))
         {
             LOG_WARNING("FVulkanViewport::Present CreateSwapChain Failed");
             return false;
@@ -307,11 +309,19 @@ void FVulkanViewport::SetDebugName(const FString& InName)
     }
 }
 
-FVulkanTexture* FVulkanViewport::GetCurrentBackBuffer()
+FVulkanTexture* FVulkanViewport::GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext)
 {
     if (BackBufferIndex == VULKAN_INVALID_BACK_BUFFER_INDEX)
     {
-        VkResult Result = AquireNextImage();
+        VkResult Result = AquireNextImage(InCommandContext);
+        if (GVulkanRecreateSuboptimalSwapChainOnAquire)
+        {
+            if (Result == VK_SUBOPTIMAL_KHR)
+            {
+                VULKAN_WARNING("FVulkanViewport::GetCurrentBackBuffer SwapChain is Suboptimal");
+            }
+        }
+        
         if (Result != VK_SUCCESS && Result != VK_SUBOPTIMAL_KHR)
         {
             VULKAN_WARNING("FVulkanViewport::GetCurrentBackBuffer SwapChain is OutOfDate");
@@ -327,7 +337,7 @@ FRHITexture* FVulkanViewport::GetBackBuffer() const
     return BackBuffer.Get();
 }
 
-VkResult FVulkanViewport::AquireNextImage()
+VkResult FVulkanViewport::AquireNextImage(FVulkanCommandContext* InCommandContext)
 {
     FVulkanSemaphoreRef RenderSemaphore = RenderSemaphores[SemaphoreIndex];
     FVulkanSemaphoreRef ImageSemaphore  = ImageSemaphores[SemaphoreIndex];
@@ -339,8 +349,8 @@ VkResult FVulkanViewport::AquireNextImage()
         return Result;
     }
 
-    CommandContext->GetCommandQueue().AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-    CommandContext->GetCommandQueue().AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
+    InCommandContext->GetCommandQueue().AddWaitSemaphore(ImageSemaphore->GetVkSemaphore(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+    InCommandContext->GetCommandQueue().AddSignalSemaphore(RenderSemaphore->GetVkSemaphore());
 
     // Update the BackBuffer index
     BackBufferIndex = SwapChain->GetBufferIndex();

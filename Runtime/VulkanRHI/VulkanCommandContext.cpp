@@ -6,6 +6,8 @@
 #include "VulkanDevice.h"
 #include "Core/Misc/FrameProfiler.h"
 
+static constexpr bool GVulkanEnableNegativeViewportHeight = true;
+
 FBarrierBatcher::FBarrierBatcher(FVulkanCommandContext& InContext)
     : Context(InContext)
     , Batches()
@@ -96,6 +98,7 @@ void FBarrierBatcher::FlushBarriers()
         DependencyInfo.pBufferMemoryBarriers    = Batch.BufferMemoryBarriers.Data();
         DependencyInfo.bufferMemoryBarrierCount = Batch.BufferMemoryBarriers.Size();
 
+        CHECK(!Context.IsInsideRenderPass());
         Context.GetCommandBuffer()->PipelineBarrier2(&DependencyInfo);
     }
 
@@ -111,8 +114,8 @@ FVulkanCommandContext::FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQue
     , TimestampQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
     , BarrierBatcher(*this)
+    , ContextPhase(ECommandContextPhase::Finished)
     , ContextState(InDevice, *this)
-    , bIsRecording(false)
 {
 }
 
@@ -216,7 +219,10 @@ void FVulkanCommandContext::FinishCommandBuffer(bool bFlushPool)
 
 void FVulkanCommandContext::SplitCommandBuffer(bool bFlushPool, bool bWaitForQueue)
 {
-    FinishCommandBuffer(bFlushPool);
+    if (CommandBuffer)
+    {
+        FinishCommandBuffer(bFlushPool);
+    }
     
     if (bWaitForQueue)
     {
@@ -233,8 +239,8 @@ void FVulkanCommandContext::RHIStartContext()
     CommandContextCS.Lock();
 
     // Update state
-    CHECK(bIsRecording == false);
-    bIsRecording = true;
+    CHECK(ContextPhase == ECommandContextPhase::Finished);
+    ContextPhase = ECommandContextPhase::Recording;
 
     // Reset the state
     ContextState.ResetState();
@@ -252,8 +258,8 @@ void FVulkanCommandContext::RHIFinishContext()
     FinishCommandBuffer(true);
 
     // Update state
-    CHECK(bIsRecording == true);
-    bIsRecording = false;
+    CHECK(ContextPhase == ECommandContextPhase::Recording);
+    ContextPhase = ECommandContextPhase::Finished;
 
     // TODO: Remove lock, the command context itself should only be used from a single thread
     // Unlock from the thread that started the context
@@ -344,7 +350,7 @@ void FVulkanCommandContext::RHIQueryTimestamp(FRHIQuery* Query)
 
 void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
 {
-    FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderTargetView.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, RenderTargetView.Texture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR("Trying to clear an RenderTargetView that is nullptr");
@@ -404,7 +410,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
 
 void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
 {
-    FVulkanTexture* VulkanTexture = GetVulkanTexture(DepthStencilView.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, DepthStencilView.Texture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR("Trying to clear an DepthStencilView that is nullptr");
@@ -513,7 +519,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
         for (uint32 Index = 0; Index < BeginRenderPassInfo.NumRenderTargets; Index++)
         {
             const FRHIRenderTargetView& RenderTargetView = BeginRenderPassInfo.RenderTargets[Index];
-            if (FVulkanTexture* VulkanTexture = GetVulkanTexture(RenderTargetView.Texture))
+            if (FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, RenderTargetView.Texture))
             {
                 Width      = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
                 Height     = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
@@ -547,7 +553,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
 
         // DepthStencilView
         const FRHIDepthStencilView& DepthStencilView = BeginRenderPassInfo.DepthStencilView;
-        if (FVulkanTexture* VulkanTexture = GetVulkanTexture(DepthStencilView.Texture))
+        if (FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, DepthStencilView.Texture))
         {
             Width      = FMath::Min<uint32>(VulkanTexture->GetWidth(), Width);
             Height     = FMath::Min<uint32>(VulkanTexture->GetHeight(), Height);
@@ -626,21 +632,24 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
     RenderPassBeginInfo.clearValueCount          = NumClearValues;
     RenderPassBeginInfo.pClearValues             = ClearValues;
 
+    CHECK(ContextPhase == ECommandContextPhase::Recording);
     GetCommandBuffer()->BeginRenderPass(&RenderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    ContextPhase = ECommandContextPhase::InsideRenderPass;
+    
     ContextState.SetViewInstanceInfo(BeginRenderPassInfo.ViewInstancingInfo);
 }
 
 void FVulkanCommandContext::RHIEndRenderPass()  
 {
+    CHECK(ContextPhase == ECommandContextPhase::InsideRenderPass);
     GetCommandBuffer()->EndRenderPass();
+    ContextPhase = ECommandContextPhase::Recording;
 }
 
 void FVulkanCommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)
 {
-    static bool bNegativeViewport = true;
-    
     VkViewport Viewport;
-    if (bNegativeViewport)
+    if (GVulkanEnableNegativeViewportHeight)
     {
         Viewport.width    =  ViewportRegion.Width;
         Viewport.height   = -ViewportRegion.Height;
@@ -806,7 +815,7 @@ void FVulkanCommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArray
 
 void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)     
 {
-    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(Dst);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(Dst);
     if (!VulkanBuffer)
     {
         VULKAN_WARNING("Buffer is nullptr");
@@ -873,7 +882,7 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
 
 void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) 
 {
-    FVulkanTexture* VulkanTexture = GetVulkanTexture(Dst);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, Dst);
     if (!VulkanTexture)
     {
         VULKAN_WARNING("Texture is nullptr");
@@ -920,10 +929,10 @@ void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureR
 
 void FVulkanCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    FVulkanTexture* SrcVulkanTexture = GetVulkanTexture(Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
     
-    FVulkanTexture* DstVulkanTexture = GetVulkanTexture(Dst);
+    FVulkanTexture* DstVulkanTexture = FVulkanTexture::ResourceCast(this, Dst);
     CHECK(DstVulkanTexture != nullptr);
     
     CHECK(SrcVulkanTexture->GetWidth()  == DstVulkanTexture->GetWidth());
@@ -952,10 +961,10 @@ void FVulkanCommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src
 
 void FVulkanCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc)
 {
-    FVulkanBuffer* SrcVulkanBuffer = GetVulkanBuffer(Src);
+    FVulkanBuffer* SrcVulkanBuffer = FVulkanBuffer::ResourceCast(Src);
     CHECK(SrcVulkanBuffer != nullptr);
     
-    FVulkanBuffer* DstVulkanBuffer = GetVulkanBuffer(Dst);
+    FVulkanBuffer* DstVulkanBuffer = FVulkanBuffer::ResourceCast(Dst);
     CHECK(DstVulkanBuffer != nullptr);
 
     VkBufferCopy BufferCopy;
@@ -970,10 +979,10 @@ void FVulkanCommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, cons
 
 void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    FVulkanTexture* SrcVulkanTexture = GetVulkanTexture(Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
     
-    FVulkanTexture* DstVulkanTexture = GetVulkanTexture(Dst);
+    FVulkanTexture* DstVulkanTexture = FVulkanTexture::ResourceCast(this, Dst);
     CHECK(DstVulkanTexture != nullptr);
     
     CHECK(SrcVulkanTexture->GetWidth()        == DstVulkanTexture->GetWidth());
@@ -1021,10 +1030,10 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
 
 void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& CopyDesc)
 {
-    FVulkanTexture* SrcVulkanTexture = GetVulkanTexture(Src);
+    FVulkanTexture* SrcVulkanTexture = FVulkanTexture::ResourceCast(this, Src);
     CHECK(SrcVulkanTexture != nullptr);
     
-    FVulkanTexture* DstVulkanTexture = GetVulkanTexture(Dst);
+    FVulkanTexture* DstVulkanTexture = FVulkanTexture::ResourceCast(this, Dst);
     CHECK(DstVulkanTexture != nullptr);
     
     constexpr uint32 MaxCopies = 15;
@@ -1235,7 +1244,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
 
 void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
-    FVulkanTexture* VulkanTexture = GetVulkanTexture(Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, Texture);
     if (!VulkanTexture)
     {
         VULKAN_WARNING("Texture is nullptr");
@@ -1264,13 +1273,15 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         ImageBarrier.subresourceRange.baseMipLevel   = 0;
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
+        
+        CHECK(!IsInsideRenderPass());
         BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
     }
 }
 
 void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)   
 {
-    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(Buffer);
     if (!VulkanBuffer)
     {
         VULKAN_WARNING("Buffer is nullptr");
@@ -1291,12 +1302,13 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
     BufferBarrier.offset              = 0;
     BufferBarrier.size                = VK_WHOLE_SIZE;
 
+    CHECK(!IsInsideRenderPass());
     BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
-    FVulkanTexture* VulkanTexture = GetVulkanTexture(Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, Texture);
     if (!VulkanTexture)
     {
         VULKAN_WARNING("Texture is nullptr");
@@ -1322,12 +1334,13 @@ void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Textur
     ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
     ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
+    CHECK(!IsInsideRenderPass());
     BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
 }
 
 void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)   
 {
-    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(Buffer);
     if (!VulkanBuffer)
     {
         VULKAN_WARNING("Buffer is nullptr");
@@ -1348,20 +1361,23 @@ void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
     BufferBarrier.offset              = 0;
     BufferBarrier.size                = VK_WHOLE_SIZE;
 
+    CHECK(!IsInsideRenderPass());
     BarrierBatcher.AddBufferMemoryBarrier(0, BufferBarrier);
 }
 
 void FVulkanCommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)
 {
-    BarrierBatcher.FlushBarriers();
-
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
+    
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->Draw(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void FVulkanCommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
-    BarrierBatcher.FlushBarriers();
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
 
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->DrawIndexed(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
@@ -1369,7 +1385,8 @@ void FVulkanCommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexL
 
 void FVulkanCommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
-    BarrierBatcher.FlushBarriers();
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
 
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->Draw(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
@@ -1377,7 +1394,8 @@ void FVulkanCommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint
 
 void FVulkanCommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
-    BarrierBatcher.FlushBarriers();
+    CHECK(IsInsideRenderPass());
+    CHECK(!BarrierBatcher.HasPendingBarriers());
 
     ContextState.BindGraphicsStates();
     GetCommandBuffer()->DrawIndexed(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
@@ -1406,7 +1424,7 @@ void FVulkanCommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVer
     FinishCommandBuffer(false);
 
     FVulkanViewport* VulkanViewport = static_cast<FVulkanViewport*>(Viewport);
-    VulkanViewport->Present(bVerticalSync);
+    VulkanViewport->Present(this, bVerticalSync);
 
     ObtainCommandBuffer();
 }
@@ -1414,17 +1432,20 @@ void FVulkanCommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVer
 void FVulkanCommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
 {
     FVulkanViewport* VulkanViewport = static_cast<FVulkanViewport*>(Viewport);
-    VulkanViewport->Resize(Width, Height);
+    VulkanViewport->Resize(this, Width, Height);
 }
 
 void FVulkanCommandContext::RHIClearState()
 {
     SCOPED_LOCK(CommandContextCS);
 
-    if (CommandBuffer)
+    if (IsRecording())
     {
-        FinishCommandBuffer(true);
-        ObtainCommandBuffer();
+        if (CommandBuffer)
+        {
+            FinishCommandBuffer(true);
+            ObtainCommandBuffer();
+        }
     }
     
     Queue.WaitForCompletion();
@@ -1436,11 +1457,14 @@ void FVulkanCommandContext::RHIClearState()
 void FVulkanCommandContext::RHIFlush()
 {
     SCOPED_LOCK(CommandContextCS);
-
-    if (CommandBuffer)
+    
+    if (IsRecording())
     {
-        FinishCommandBuffer(true);
-        ObtainCommandBuffer();
+        if (CommandBuffer)
+        {
+            FinishCommandBuffer(true);
+            ObtainCommandBuffer();
+        }
     }
 
     Queue.WaitForCompletion();

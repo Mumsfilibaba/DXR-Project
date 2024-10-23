@@ -4,6 +4,88 @@
 #include "VulkanCommandContext.h"
 #include "Core/Templates/NumericLimits.h"
 
+uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
+{
+    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    if (bIsBlockCompressed)
+    {
+        const uint32 BlockSize = GetVkFormatBlockSize(Format);
+        CHECK(BlockSize != 0);
+        
+        Width = FMath::Max<uint32>(1, (Width + 3) / 4);
+        return Width * BlockSize;
+    }
+    else
+    {
+        const uint32 PixelSize = GetVkFormatByteStride(Format);
+        CHECK(PixelSize != 0);
+        return Width * PixelSize;
+    }
+}
+
+uint32 FVulkanTextureHelper::CalculateTextureNumRows(VkFormat Format, uint32 Height)
+{
+    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    return bIsBlockCompressed ? FMath::AlignUp<uint32>(1, (Height + 3) / 4) : Height;
+}
+
+uint64 FVulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
+{
+    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
+    if (bIsBlockCompressed)
+    {
+        const uint32 BlockSize = GetVkFormatBlockSize(Format);
+        CHECK(BlockSize != 0);
+        
+        Width  = FMath::Max<uint32>(1, (Width + 3) / 4);
+        Height = FMath::Max<uint32>(1, (Height + 3) / 4);
+        return Width * Height * BlockSize;
+    }
+    else
+    {
+        const uint32 PixelSize = GetVkFormatByteStride(Format);
+        CHECK(PixelSize != 0);
+        return Width * Height * PixelSize;
+    }
+}
+
+FVulkanTexture* FVulkanTexture::ResourceCast(FRHITexture* Texture)
+{
+    FVulkanTexture* VulkanTexture = nullptr;
+    if (Texture)
+    {
+        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
+        {
+            VulkanTexture = static_cast<FVulkanBackBufferTexture*>(Texture);
+        }
+        else
+        {
+            VulkanTexture = static_cast<FVulkanTexture*>(Texture);
+        }
+    }
+    
+    return VulkanTexture;
+}
+
+FVulkanTexture* FVulkanTexture::ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture)
+{
+    FVulkanTexture* VulkanTexture = nullptr;
+    if (Texture)
+    {
+        if (IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::Presentable))
+        {
+            FVulkanBackBufferTexture* BackBuffer = static_cast<FVulkanBackBufferTexture*>(Texture);
+            VulkanTexture = BackBuffer->GetCurrentBackBufferTexture(InCommandContext);
+        }
+        else
+        {
+            VulkanTexture = static_cast<FVulkanTexture*>(Texture);
+        }
+    }
+
+    return VulkanTexture;
+}
+
 FVulkanTexture::FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo)
     : FRHITexture(InTextureInfo)
     , FVulkanDeviceChild(InDevice)
@@ -36,7 +118,7 @@ FVulkanTexture::~FVulkanTexture()
     }
 }
 
-bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
+bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
 {
     const VkSampleCountFlagBits SampleCount = ConvertSampleCount(Info.NumSamples);
     if (SampleCount < VK_SAMPLE_COUNT_1_BIT)
@@ -204,11 +286,11 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         }
     }
     
+    CHECK(InCommandContext != nullptr);
     if (InInitialData)
     {
         // TODO: Support other types than texture 2D
-        FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
-        Context->RHIStartContext();
+        InCommandContext->RHIStartContext();
         
         VkImageMemoryBarrier2 ImageBarrier;
         FMemory::Memzero(&ImageBarrier);
@@ -229,7 +311,7 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-        Context->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
 
         // Transfer all the miplevels
         uint32 Width  = Info.Extent.x;
@@ -250,21 +332,20 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
             }
             
             FTextureRegion2D TextureRegion(Width, Height);
-            Context->RHIUpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
+            InCommandContext->RHIUpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InInitialData->GetMipRowPitch(Index)));
 
             Width  = Width / 2;
             Height = Height / 2;
         }
 
         // NOTE: Transition into InitialAccess
-        Context->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
-        Context->RHIFinishContext();
+        InCommandContext->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
+        InCommandContext->RHIFinishContext();
     }
     else
     {
         // NOTE: Transition the texture into the expected ImageLayout
-        FVulkanCommandContext* Context = FVulkanRHI::GetRHI()->ObtainCommandContext();
-        Context->RHIStartContext();
+        InCommandContext->RHIStartContext();
 
         VkImageMemoryBarrier2 ImageBarrier;
         FMemory::Memzero(&ImageBarrier);
@@ -285,8 +366,8 @@ bool FVulkanTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextu
         ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
         ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
 
-        Context->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
-        Context->RHIFinishContext();
+        InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
+        InCommandContext->RHIFinishContext();
     }
     
     return true;
@@ -454,54 +535,7 @@ void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
     }
 }
 
-FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture()
+FVulkanTexture* FVulkanBackBufferTexture::GetCurrentBackBufferTexture(FVulkanCommandContext* InCommandContext)
 {
-    return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;
-}
-
-// FVulkanTextureHelper
-
-uint32 FVulkanTextureHelper::CalculateTextureRowPitch(VkFormat Format, uint32 Width)
-{
-    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
-    if (bIsBlockCompressed)
-    {
-        const uint32 BlockSize = GetVkFormatBlockSize(Format);
-        CHECK(BlockSize != 0);
-        
-        Width = FMath::Max<uint32>(1, (Width + 3) / 4);
-        return Width * BlockSize;
-    }
-    else
-    {
-        const uint32 PixelSize = GetVkFormatByteStride(Format);
-        CHECK(PixelSize != 0);
-        return Width * PixelSize;
-    }
-}
-
-uint32 FVulkanTextureHelper::CalculateTextureNumRows(VkFormat Format, uint32 Height)
-{
-    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
-    return bIsBlockCompressed ? FMath::AlignUp<uint32>(1, (Height + 3) / 4) : Height;
-}
-
-uint64 FVulkanTextureHelper::CalculateTextureUploadSize(VkFormat Format, uint32 Width, uint32 Height)
-{
-    const bool bIsBlockCompressed = VkFormatIsBlockCompressed(Format);
-    if (bIsBlockCompressed)
-    {
-        const uint32 BlockSize = GetVkFormatBlockSize(Format);
-        CHECK(BlockSize != 0);
-        
-        Width  = FMath::Max<uint32>(1, (Width + 3) / 4);
-        Height = FMath::Max<uint32>(1, (Height + 3) / 4);
-        return Width * Height * BlockSize;
-    }
-    else
-    {
-        const uint32 PixelSize = GetVkFormatByteStride(Format);
-        CHECK(PixelSize != 0);
-        return Width * Height * PixelSize;
-    }
+    return Viewport ? Viewport->GetCurrentBackBuffer(InCommandContext) : nullptr;
 }

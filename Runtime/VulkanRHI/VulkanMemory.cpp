@@ -53,13 +53,13 @@ FVulkanMemoryHeap::~FVulkanMemoryHeap()
     if (MappingCount > 0)
     {
         vkUnmapMemory(VulkanDevice, DeviceMemory);
-        DeviceMemory = VK_NULL_HANDLE;
         HostMemory   = nullptr;
         MappingCount = 0;
     }
 
     FVulkanMemoryManager& MemoryManager = GetDevice()->GetMemoryManager();
     MemoryManager.FreeMemory(DeviceMemory);
+    DeviceMemory = VK_NULL_HANDLE;
 }
 
 bool FVulkanMemoryHeap::Initialize(uint64 InSizeInBytes)

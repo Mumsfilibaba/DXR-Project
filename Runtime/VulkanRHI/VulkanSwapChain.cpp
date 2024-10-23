@@ -1,5 +1,7 @@
 #include "VulkanSwapChain.h"
 
+static constexpr bool GVulkanReportSwapChainAquireImageNonSuccessResult = true;
+
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , PresentResult(VK_SUCCESS)
@@ -254,9 +256,12 @@ VkResult FVulkanSwapChain::AquireNextImage(FVulkanSemaphore* AquireSemaphore)
     VkSemaphore CurrentImageSemaphore = AquireSemaphore ? AquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
     
     VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, CurrentImageSemaphore, VK_NULL_HANDLE, &BufferIndex);
-    if (Result != VK_SUCCESS)
+    if (GVulkanReportSwapChainAquireImageNonSuccessResult)
     {
-        LOG_WARNING("vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+        if (Result != VK_SUCCESS)
+        {
+            LOG_WARNING("vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+        }
     }
     
     return Result;

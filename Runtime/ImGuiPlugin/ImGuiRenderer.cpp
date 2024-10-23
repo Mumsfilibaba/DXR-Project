@@ -635,8 +635,11 @@ void FImGuiRenderer::StaticRenderWindow(ImGuiViewport* Viewport, void* CommandLi
     const ImVec2 ViewportSize = Viewport->Size;
     if (static_cast<uint16>(ViewportSize.x) != ViewportData->Width || static_cast<uint16>(ViewportSize.y) != ViewportData->Height)
     {
-        ViewportData->Width  = static_cast<uint16>(Viewport->Size.x);
-        ViewportData->Height = static_cast<uint16>(Viewport->Size.y);
+        ViewportData->Width  = static_cast<uint16>(ViewportSize.x);
+        ViewportData->Height = static_cast<uint16>(ViewportSize.y);
+
+        FRHIViewport* RHIViewport = ViewportData->Viewport.Get();
+        RHICommandList->ResizeViewport(RHIViewport, ViewportData->Width, ViewportData->Height);
     }
     
     const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
