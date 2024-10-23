@@ -175,7 +175,7 @@ static ImGuiKey GImGuiGamepadKeys[EGamepadButtonName::Count] =
 
 static FORCEINLINE ImGuiKey GetImGuiGamepadButton(EGamepadButtonName::Type Button)
 {
-    CHECK(Button >= EKeyboardKeyName::First && Button <= EKeyboardKeyName::Last);
+    CHECK(Button >= EGamepadButtonName::First && Button <= EGamepadButtonName::Last);
     return GImGuiGamepadKeys[Button];
 }
 

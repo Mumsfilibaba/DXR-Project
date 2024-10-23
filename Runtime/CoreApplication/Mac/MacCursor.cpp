@@ -16,7 +16,6 @@
 + (id)_windowResizeEastWestCursor;
 @end
 
-
 void FMacCursor::SetCursor(ECursor Cursor)
 {
     NSCursor* SelectedCursor = nullptr;

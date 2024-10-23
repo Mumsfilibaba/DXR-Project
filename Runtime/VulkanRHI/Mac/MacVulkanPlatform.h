@@ -3,9 +3,6 @@
 #include "CoreApplication/Mac/CocoaWindowView.h"
 #include "VulkanRHI/Generic/GenericVulkanPlatform.h"
 
-@interface FMetalWindowView : FCocoaWindowView
-@end
-
 struct FMacVulkanPlatform : public FGenericVulkanPlatform
 {
     static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceExtensions()

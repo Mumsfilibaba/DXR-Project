@@ -446,17 +446,17 @@ void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
     }
 }
 
-void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
+void FMacApplication::DeferEvent(NSObject* EventObject)
 {
     SCOPED_AUTORELEASE_POOL();
     
-    if (EventOrNotificationObject)
+    if (EventObject)
     {
         FDeferredMacEvent NewDeferredEvent;
         
-        if ([EventOrNotificationObject isKindOfClass:[NSEvent class]])
+        if ([EventObject isKindOfClass:[NSEvent class]])
         {
-            NSEvent* Event = reinterpret_cast<NSEvent*>(EventOrNotificationObject);
+            NSEvent* Event = reinterpret_cast<NSEvent*>(EventObject);
             NewDeferredEvent.Event = [Event retain];
             
             NSWindow* Window = Event.window;
@@ -466,9 +466,9 @@ void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
                 NewDeferredEvent.Window   = [EventWindow retain];
             }
         }
-        else if ([EventOrNotificationObject isKindOfClass:[NSNotification class]])
+        else if ([EventObject isKindOfClass:[NSNotification class]])
         {
-            NSNotification* Notification = reinterpret_cast<NSNotification*>(EventOrNotificationObject);
+            NSNotification* Notification = reinterpret_cast<NSNotification*>(EventObject);
             NewDeferredEvent.NotificationName = [Notification.name retain];
             
             NSObject* NotificationObject = Notification.object;
@@ -476,15 +476,11 @@ void FMacApplication::DeferEvent(NSObject* EventOrNotificationObject)
             {
                 FCocoaWindow* EventWindow = reinterpret_cast<FCocoaWindow*>(NotificationObject);
                 NewDeferredEvent.Window   = [EventWindow retain];
-                
-                const NSRect ContentRect  = EventWindow.contentView.frame;
-                NewDeferredEvent.Size     = ContentRect.size;
-                NewDeferredEvent.Position = ContentRect.origin;
             }
         }
-        else if ([EventOrNotificationObject isKindOfClass:[NSString class]])
+        else if ([EventObject isKindOfClass:[NSString class]])
         {
-            NSString* Characters = reinterpret_cast<NSString*>(EventOrNotificationObject);
+            NSString* Characters = reinterpret_cast<NSString*>(EventObject);
             
             NSUInteger Count = Characters.length;
             for (NSUInteger Index = 0; Index < Count; Index++)
@@ -509,26 +505,39 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
     SCOPED_AUTORELEASE_POOL();
     
     TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(DeferredEvent.Window);
-    
     if (DeferredEvent.NotificationName)
     {
-        NSNotificationName NotificationName = DeferredEvent.NotificationName;
+        const auto OnWindowResized = [this](const TSharedRef<FMacWindow> Window, const FDeferredMacEvent& DeferredEvent)
+        {
+            const NSRect ContentRect = DeferredEvent.Window.contentView.frame;
+            MessageHandler->OnWindowResized(Window, uint16(ContentRect.size.width), uint16(ContentRect.size.height));
+        };
         
+        NSNotificationName NotificationName = DeferredEvent.NotificationName;
         if (NotificationName == NSWindowDidMoveNotification)
         {
-            MessageHandler->OnWindowMoved(Window, int16(DeferredEvent.Position.x), int16(DeferredEvent.Position.y));
+            const NSRect ContentRect = DeferredEvent.Window.contentView.frame;
+            MessageHandler->OnWindowMoved(Window, int16(ContentRect.origin.x), int16(ContentRect.origin.y));
         }
         else if (NotificationName == NSWindowDidResizeNotification)
         {
-            MessageHandler->OnWindowResized(Window, uint16(DeferredEvent.Size.width), uint16(DeferredEvent.Size.height));
+            OnWindowResized(Window, DeferredEvent);
         }
         else if (NotificationName == NSWindowDidMiniaturizeNotification)
         {
-            MessageHandler->OnWindowResized(Window, uint16(DeferredEvent.Size.width), uint16(DeferredEvent.Size.height));
+            OnWindowResized(Window, DeferredEvent);
         }
-        else if (NotificationName == NSWindowDidDeminiaturizeNotification)
+        else if (NotificationName == NSWindowDidMiniaturizeNotification)
         {
-            MessageHandler->OnWindowResized(Window, uint16(DeferredEvent.Size.width), uint16(DeferredEvent.Size.height));
+            OnWindowResized(Window, DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidEnterFullScreenNotification)
+        {
+            OnWindowResized(Window, DeferredEvent);
+        }
+        else if (NotificationName == NSWindowDidExitFullScreenNotification)
+        {
+            OnWindowResized(Window, DeferredEvent);
         }
         else if (NotificationName == NSWindowDidBecomeMainNotification)
         {
@@ -627,10 +636,10 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
                 break;
             }
 
+            case NSEventTypeMouseMoved:
             case NSEventTypeLeftMouseDragged:
             case NSEventTypeOtherMouseDragged:
             case NSEventTypeRightMouseDragged:
-            case NSEventTypeMouseMoved:
             {
                 const NSPoint CursorPosition = GetCorrectedMouseLocation();
                 MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));

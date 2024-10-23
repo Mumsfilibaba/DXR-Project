@@ -538,11 +538,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
                     continue;
                 }
                 
-                const FScissorRegion ScissorRegion(
-                    ClipMax.x - ClipMin.x,
-                    ClipMax.y - ClipMin.y,
-                    ClipMin.x,
-                    ClipMin.y);
+                const FScissorRegion ScissorRegion(ClipMax.x - ClipMin.x, ClipMax.y - ClipMin.y, ClipMin.x, ClipMin.y);
                 CmdList.SetScissorRect(ScissorRegion);
 
                 CmdList.DrawIndexedInstanced(DrawCommand->ElemCount, 1, DrawCommand->IdxOffset + GlobalIndexOffset, DrawCommand->VtxOffset + GlobalVertexOffset, 0);
@@ -606,8 +602,8 @@ void FImGuiRenderer::StaticCreateWindow(ImGuiViewport* Viewport)
     ViewportData->Viewport = RHICreateViewport(ViewportInfo);
     if (ViewportData->Viewport)
     {
-        ViewportData->Width  = static_cast<uint16>(Viewport->Size.x);
-        ViewportData->Height = static_cast<uint16>(Viewport->Size.y);
+        ViewportData->Width  = ViewportInfo.Width;
+        ViewportData->Height = ViewportInfo.Height;
         
         Viewport->RendererUserData = Viewport->PlatformUserData;
     }

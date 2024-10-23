@@ -10,9 +10,10 @@
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
+        CachedWidth  = ContentRect.size.width;
+        CachedHeight = ContentRect.size.height;
+        
         // NOTE: Setting self.delegate = self does not work in here
-        [super setOpaque:YES];
-        [super setRestorable:NO];
         [super disableSnapshotRestoration];
     }
     
@@ -55,9 +56,21 @@
 
 - (void) windowDidResize:(NSNotification*) Notification
 {
-    if (MacApplication)
+    const NSRect ContentRect = [self contentRectForFrameRect:self.frame];
+
+    const CGFloat Width  = ContentRect.size.width;
+    const CGFloat Height = ContentRect.size.height;
+    if (Width != CachedWidth || Height != CachedHeight)
     {
-        MacApplication->DeferEvent(Notification);
+        // Width and height have not changed, send the event
+        if (MacApplication)
+        {
+            MacApplication->DeferEvent(Notification);
+        }
+    
+        // Width or height has changed, update cached values
+        CachedWidth  = Width;
+        CachedHeight = Height;
     }
 }
 

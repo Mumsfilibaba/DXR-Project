@@ -6,27 +6,6 @@
 
 #include <QuartzCore/QuartzCore.h>
 
-@implementation FMetalWindowView
-
-- (instancetype)initWithFrame:(NSRect)frameRect
-{
-    self = [super initWithFrame:frameRect];
-    CHECK(self != nil);
-    return self;
-}
-
-- (BOOL)isOpaque
-{
-    return YES;
-}
-
-- (BOOL)mouseDownCanMoveWindow
-{
-    return YES;
-}
-
-@end
-
 #if VK_KHR_surface
 VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHandle, VkSurfaceKHR* OutSurface)
 {
@@ -66,12 +45,9 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
         }
 
         // Create a new MetalWindowView instead of the standard CocoaView (Use the same frame)
-        FMetalWindowView* MetalView = [[FMetalWindowView alloc] initWithFrame:CocoaWindow.contentView.frame];
-        [MetalView setLayer:MetalLayer];
-        [MetalView setWantsLayer:YES];
-
-        [CocoaWindow setContentView:MetalView];
-        [CocoaWindow makeFirstResponder:MetalView];
+        FCocoaWindowView* CocoaWindowView = CocoaWindow.contentView;
+        [CocoaWindowView setLayer:MetalLayer];
+        [CocoaWindowView setWantsLayer:YES];
         bResult = true;
     }, NSDefaultRunLoopMode, true);
     

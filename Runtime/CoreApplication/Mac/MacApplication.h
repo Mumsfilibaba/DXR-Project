@@ -18,8 +18,6 @@ struct FDeferredMacEvent
         : NotificationName(nil)
         , Event(nil)
         , Window(nil)
-        , Size()
-        , Position()
         , Character(uint32(-1))
     {
     }
@@ -28,8 +26,6 @@ struct FDeferredMacEvent
         : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
         , Event(Other.Event ? [Other.Event retain] : nil)
         , Window(Other.Window ? [Other.Window retain] : nil)
-        , Size(Other.Size)
-        , Position(Other.Position)
         , Character(Other.Character)
     {
     }
@@ -46,11 +42,7 @@ struct FDeferredMacEvent
 
     NSNotificationName NotificationName;
     NSEvent*           Event;
-    
     FCocoaWindow*      Window;
-    CGSize             Size;
-    CGPoint            Position;
-
     uint32             Character;
 };
 

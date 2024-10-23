@@ -138,12 +138,21 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
         Window.collectionBehavior = Behavior;
 
+        if ((InInitializer.Style & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
+        {
+            [Window setOpaque:NO];
+            [Window setHasShadow:NO];
+        }
+        else
+        {
+            [Window setHasShadow: YES];
+        }
+        
         NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
         WindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
         [Window setReleasedWhenClosed:NO];
         [Window setAcceptsMouseMovedEvents:YES];
         [Window setRestorable:NO];
-        [Window setHasShadow: YES];
         [Window setDelegate:Window];
         [Window setBackgroundColor:BackGroundColor];
         [Window setContentView:WindowView];
@@ -495,15 +504,7 @@ float FMacWindow::GetWindowDpiScale() const
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-
-        const NSRect Points = WindowView.frame;
-        const NSRect Pixels = [WindowView convertRectToBacking:Points];
-
-        MAYBE_UNUSED const CGFloat ScaleY = static_cast<CGFloat>(Pixels.size.height / Points.size.height);
-        MAYBE_UNUSED const CGFloat ScaleX = static_cast<CGFloat>(Pixels.size.width / Points.size.width);
-        
-        CHECK(ScaleX == ScaleY);
-        Scale = ScaleX;
+        Scale = Window.backingScaleFactor;
     }, NSDefaultRunLoopMode, true);
 
     return static_cast<float>(Scale);
@@ -569,7 +570,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
 
         const NSWindowLevel WindowLevel = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
         [Window setLevel:WindowLevel];
-        
+
         if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
             [[Window standardWindowButton:NSWindowCloseButton] setEnabled:YES];
@@ -578,7 +579,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         {
             [[Window standardWindowButton:NSWindowCloseButton] setEnabled:NO];
         }
-        
+
         if ((InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
             [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
@@ -587,7 +588,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         {
             [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
         }
-        
+
         if ((InStyle & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
         {
             [[Window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
@@ -596,7 +597,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         {
             [[Window standardWindowButton:NSWindowZoomButton] setEnabled:NO];
         }
-        
+
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
         if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
         {
@@ -606,13 +607,23 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         {
             Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
         }
-        
+
+        if ((InStyle & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
+        {
+            [Window setOpaque:NO];
+            [Window setHasShadow:NO];
+        }
+        else
+        {
+            [Window setHasShadow: YES];
+        }
+
         [Window setStyleMask:WindowStyle];
         [Window setCollectionBehavior:Behavior];
-        
+
         // Set styleflags
         StyleParams = InStyle;
-        
+
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }

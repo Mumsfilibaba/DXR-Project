@@ -19,8 +19,9 @@ enum class EWindowStyleFlags : uint16
     Resizeable    = FLAG(5),
     NoTaskBarIcon = FLAG(6),
     TopMost       = FLAG(7),
+    Opaque        = FLAG(8),
 
-    Default = Titled | Maximizable | Minimizable | Resizeable | Closable
+    Default = Titled | Maximizable | Minimizable | Resizeable | Closable | Opaque
 };
 
 ENUM_CLASS_OPERATORS(EWindowStyleFlags);

@@ -4,4 +4,9 @@
 class FMacApplication;
 
 @interface FCocoaWindow : NSWindow<NSWindowDelegate>
+{
+    CGFloat CachedWidth;
+    CGFloat CachedHeight;
+}
+
 @end

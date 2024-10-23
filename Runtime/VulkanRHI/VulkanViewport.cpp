@@ -270,11 +270,11 @@ bool FVulkanViewport::Present(FVulkanCommandContext* InCommandContext, bool bVer
     {
         if (Result == VK_SUBOPTIMAL_KHR)
         {
-            VULKAN_INFO("FVulkanViewport::Present [Present] SwapChain is Suboptimal");
+            VULKAN_INFO("FVulkanViewport::Present [Present] SwapChain is Suboptimal");
         }
         else
         {
-            VULKAN_INFO("FVulkanViewport::Present [Present] SwapChain is OutOfDate");
+            VULKAN_INFO("FVulkanViewport::Present [Present] SwapChain is OutOfDate");
         }
         
         InCommandContext->SplitCommandBuffer(false, true);
