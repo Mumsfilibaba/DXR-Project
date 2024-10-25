@@ -75,27 +75,15 @@ FGCInputDevice::FGCInputDevice()
     
     // Add an observer for new controller connections
     Observer = [[FGCConnectionObserver alloc] initWithInputDevice:this];
-    [[NSNotificationCenter defaultCenter] addObserver:Observer
-                                             selector:@selector(handleControllerConnect:)
-                                                 name:GCControllerDidConnectNotification
-                                               object:nil];
-
-    [[NSNotificationCenter defaultCenter] addObserver:Observer
-                                             selector:@selector(handleControllerDisconnect:)
-                                                 name:GCControllerDidDisconnectNotification
-                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(handleControllerConnect:) name:GCControllerDidConnectNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(handleControllerDisconnect:) name:GCControllerDidDisconnectNotification object:nil];
 }
 
 FGCInputDevice::~FGCInputDevice()
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:Observer
-                                                    name:GCControllerDidConnectNotification
-                                                  object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:Observer name:GCControllerDidConnectNotification object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:Observer name:GCControllerDidDisconnectNotification object:nil];
 
-    [[NSNotificationCenter defaultCenter] removeObserver:Observer
-                                                    name:GCControllerDidDisconnectNotification
-                                                  object:nil];
-    
     NSSafeRelease(Observer);
 }
 

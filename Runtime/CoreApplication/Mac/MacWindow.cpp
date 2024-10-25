@@ -1,13 +1,12 @@
 #include "MacWindow.h"
 #include "CocoaWindow.h"
-#include "CocoaWindowView.h"
 #include "Core/Mac/Mac.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacRunLoop.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-static void ConvertNSRect(NSScreen* Screen, NSRect* Rect)
+void FMacWindow::ConvertNSRect(NSScreen* Screen, NSRect* Rect)
 {
     if (!Screen)
     {
@@ -15,6 +14,12 @@ static void ConvertNSRect(NSScreen* Screen, NSRect* Rect)
     }
 
     Rect->origin.y = Screen.frame.size.height - Rect->origin.y - Rect->size.height;
+}
+
+TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)
+{
+    TSharedRef<FMacWindow> NewWindow = new FMacWindow(InApplication);
+    return NewWindow;
 }
 
 FMacWindow::FMacWindow(FMacApplication* InApplication)
@@ -335,7 +340,7 @@ bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) co
         for (NSWindow* ChildWindow in Window.childWindows)
         {
             FCocoaWindow* CocoaWindow = NSClassCast<FCocoaWindow>(ChildWindow);
-            if (CocoaWindow && CocoaWindow == MacChildWindow->GetWindow())
+            if (CocoaWindow && CocoaWindow == MacChildWindow->GetCocoaWindow())
             {
                 bIsChildWindow = true;
                 break;

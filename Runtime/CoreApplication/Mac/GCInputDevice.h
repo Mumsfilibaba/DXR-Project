@@ -35,10 +35,10 @@ struct FGCGamepadState
 class FGCInputDevice : public FInputDevice
 {
 public:
+    static TSharedPtr<FGCInputDevice> CreateGCInputDevice();
+
     FGCInputDevice();
     virtual ~FGCInputDevice();
-
-    static TSharedPtr<FGCInputDevice> CreateGCInputDevice();
     
     virtual void UpdateDeviceState() override final;
 
@@ -54,9 +54,7 @@ private:
     void ProcessInputState(GCExtendedGamepad* InGamepad, uint32 GamepadIndex);
 
     FGCConnectionObserver* Observer;
-    
-    TArray<GCController*> ConnectedGamepads;
-    FGCGamepadState       GamepadStates[NUM_MAX_GAMEPADS];
-
-    bool                  bIsDeviceConnected;
+    TArray<GCController*>  ConnectedGamepads;
+    FGCGamepadState        GamepadStates[NUM_MAX_GAMEPADS];
+    bool                   bIsDeviceConnected;
 };

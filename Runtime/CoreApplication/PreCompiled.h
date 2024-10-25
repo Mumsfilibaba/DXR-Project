@@ -19,7 +19,6 @@
 #elif PLATFORM_MACOS
 #include "CoreApplication/Mac/CocoaConsoleWindow.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
-#include "CoreApplication/Mac/CocoaWindowView.h"
 #include "CoreApplication/Mac/GCInputDevice.h"
 #include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/MacApplicationMisc.h"

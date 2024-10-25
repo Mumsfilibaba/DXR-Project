@@ -52,8 +52,12 @@ class FMacWindow;
 class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
 public:
+    static FString GetMonitorNameFromNSScreen(NSScreen* Screen);
+    static uint32  GetDPIFromNSScreen(NSScreen* Screen);
+    static NSPoint GetCorrectedMouseLocation();
+    
+    static TSharedPtr<FMacApplication>     CreateMacApplication();
     static TSharedPtr<FGenericApplication> Create();
-    static TSharedPtr<FMacApplication> CreateMacApplication();
     
     FMacApplication();
     virtual ~FMacApplication();
@@ -70,6 +74,14 @@ public:
     virtual void QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
+    void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
+    void OnMouseMoveEvent();
+    void OnMouseButtonEvent(const FDeferredMacEvent& DeferredEvent);
+    void OnMouseScrollEvent(const FDeferredMacEvent& DeferredEvent);
+    void OnKeyEvent(const FDeferredMacEvent& DeferredEvent);
+    void OnWindowResized(const FDeferredMacEvent& DeferredEvent);
+    void OnWindowMoved(const FDeferredMacEvent& DeferredEvent);
+    
     TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
     void CloseWindow(const TSharedRef<FMacWindow>& Window);
     void DeferEvent(NSObject* EventOrNotificationObject);
@@ -80,7 +92,6 @@ public:
     }
 
 private:
-    void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
     
     // Observer that checks for monitor changes
     FMacApplicationObserver*       Observer;

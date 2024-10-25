@@ -6,7 +6,6 @@
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
-#include "CoreApplication/Mac/CocoaWindowView.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

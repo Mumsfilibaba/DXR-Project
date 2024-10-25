@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreApplication/Mac/MacWindow.h"
-#include "CoreApplication/Mac/CocoaWindowView.h"
+#include "CoreApplication/Mac/CocoaWindow.h"
 #include "VulkanRHI/Generic/GenericVulkanPlatform.h"
 
 struct FMacVulkanPlatform : public FGenericVulkanPlatform

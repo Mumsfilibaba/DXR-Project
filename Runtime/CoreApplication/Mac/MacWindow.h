@@ -4,13 +4,16 @@
 
 @class FCocoaWindow;
 @class FCocoaWindowView;
+@class NSScreen;
 
 class FMacApplication;
 
 class COREAPPLICATION_API FMacWindow final : public FGenericWindow
 {
 public:
-    FMacWindow(FMacApplication* InApplication);
+    static void ConvertNSRect(NSScreen* Screen, NSRect* Rect);
+    
+    static TSharedRef<FMacWindow> Create(FMacApplication* InApplication);
     ~FMacWindow();
     
     virtual bool Initialize(const FGenericWindowInitializer& InInitializer) override final;
@@ -36,27 +39,36 @@ public:
     virtual float GetWindowDpiScale() const override final;
     virtual uint32 GetWidth() const override final;
     virtual uint32 GetHeight() const override final;
+    virtual void SetStyle(EWindowStyleFlags InStyle) override final;
     virtual void SetPlatformHandle(void* InPlatformHandle) override final;
 
     virtual void* GetPlatformHandle() const override final
     {
         return reinterpret_cast<void*>(Window);
     }
-
-    virtual void SetStyle(EWindowStyleFlags InStyle) override final;
     
-    FCocoaWindow* GetWindow() const 
-    { 
-        return Window; 
+    FCocoaWindow* GetCocoaWindow() const
+    {
+        return Window;
     }
 
-    FMacApplication* GetApplication() const 
-    { 
+    FMacApplication* GetApplication() const
+    {
         return Application;
     }
     
 private:
+    FMacWindow(FMacApplication* InApplication);
+
     FMacApplication*  Application;
     FCocoaWindow*     Window;
     FCocoaWindowView* WindowView;
+    
+    struct
+    {
+        int32 Width;
+        int32 Height;
+        int32 PositionX;
+        int32 PositionY;
+    } CachedShape;
 };
