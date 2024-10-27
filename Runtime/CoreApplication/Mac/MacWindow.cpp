@@ -437,9 +437,11 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
 
         if (CocoaWindow)
         {
-            NSRect WindowFrame = CocoaWindow.frame;
-            WindowFrame = NSMakeRect(x, y, WindowFrame.size.width, WindowFrame.size.height);
-            ConvertNSRect(CocoaWindow.screen, &WindowFrame);
+            const NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+            NSRect NewContentRect = NSMakeRect(x, y, ContentRect.size.width, ContentRect.size.height);
+            ConvertNSRect(CocoaWindow.screen, &NewContentRect);
+            
+            const NSRect WindowFrame = [CocoaWindow frameRectForContentRect:NewContentRect];
             [CocoaWindow setFrameOrigin:WindowFrame.origin];
         }
         
