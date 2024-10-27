@@ -10,8 +10,8 @@ FWindow::FWindow()
     , OnWindowMovedDelegate()
     , OnWindowResizedDelegate()
     , OnWindowActivationChangedDelegate()
-    , ScreenPosition()
-    , ScreenSize()
+    , CachedPosition()
+    , CachedSize()
     , Overlay()
     , Content()
     , PlatformWindow(nullptr)
@@ -26,17 +26,17 @@ FWindow::~FWindow()
 void FWindow::Initialize(const FInitializer& Initializer)
 {
     Title          = Initializer.Title;
-    ScreenPosition = Initializer.Position;
-    ScreenSize     = Initializer.Size;
+    CachedPosition = Initializer.Position;
+    CachedSize     = Initializer.Size;
     StyleFlags     = Initializer.StyleFlags;
 }
 
 void FWindow::Tick()
 {
     FRectangle NewBounds;
-    NewBounds.Position = ScreenPosition;
-    NewBounds.Width    = ScreenSize.x;
-    NewBounds.Height   = ScreenSize.y;
+    NewBounds.Position = CachedPosition;
+    NewBounds.Width    = CachedSize.x;
+    NewBounds.Height   = CachedSize.y;
     SetScreenRectangle(NewBounds);
 
     if (Content)
@@ -110,7 +110,7 @@ void FWindow::OnWindowActivationChanged(bool)
 
 void FWindow::OnWindowMoved(const FIntVector2& InPosition)
 {
-    if (ScreenPosition != InPosition)
+    if (CachedPosition != InPosition)
     {
         // Set the cached position
         SetCachedPosition(InPosition);
@@ -122,7 +122,7 @@ void FWindow::OnWindowMoved(const FIntVector2& InPosition)
 
 void FWindow::OnWindowResize(const FIntVector2& InSize)
 {
-    if (ScreenSize != InSize)
+    if (CachedSize != InSize)
     {
         // Set the cached size
         SetCachedSize(InSize);
@@ -134,7 +134,7 @@ void FWindow::OnWindowResize(const FIntVector2& InSize)
 
 void FWindow::MoveTo(const FIntVector2& InPosition)
 {
-    if (ScreenPosition != InPosition)
+    if (CachedPosition != InPosition)
     {
         // Set the cached position
         SetCachedPosition(InPosition);
@@ -152,7 +152,7 @@ void FWindow::MoveTo(const FIntVector2& InPosition)
 
 void FWindow::Resize(const FIntVector2& InSize)
 {
-    if (ScreenSize != InSize)
+    if (CachedSize != InSize)
     {
         // Set the cached size
         SetCachedSize(InSize);
@@ -171,32 +171,32 @@ void FWindow::Resize(const FIntVector2& InSize)
 
 void FWindow::SetCachedSize(const FIntVector2& InSize)
 {
-    ScreenSize = InSize;
+    CachedSize = InSize;
 }
 
 void FWindow::SetCachedPosition(const FIntVector2& InPosition)
 {
-    ScreenPosition = InPosition;
+    CachedPosition = InPosition;
 }
 
 FIntVector2 FWindow::GetCachedPosition() const
 {
-    return ScreenPosition;
+    return CachedPosition;
 }
 
 FIntVector2 FWindow::GetCachedSize() const
 {
-    return ScreenSize;
+    return CachedSize;
 }
 
 uint32 FWindow::GetWidth() const
 {
-    return static_cast<uint32>(ScreenSize.x);
+    return static_cast<uint32>(CachedSize.x);
 }
 
 uint32 FWindow::GetHeight() const
 {
-    return static_cast<uint32>(ScreenSize.y);
+    return static_cast<uint32>(CachedSize.y);
 }
 
 TSharedPtr<FWidget> FWindow::GetOverlay() const
@@ -309,8 +309,8 @@ void FWindow::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWind
         FWindowShape WindowShape;
         PlatformWindow->GetWindowShape(WindowShape);
         
-        ScreenSize     = FIntVector2(WindowShape.Width, WindowShape.Height);
-        ScreenPosition = WindowShape.Position;
+        CachedSize     = FIntVector2(WindowShape.Width, WindowShape.Height);
+        CachedPosition = WindowShape.Position;
     }
 }
 

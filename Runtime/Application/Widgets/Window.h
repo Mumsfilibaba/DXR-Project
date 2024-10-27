@@ -102,8 +102,8 @@ private:
     FOnWindowMoved              OnWindowMovedDelegate;
     FOnWindowResized            OnWindowResizedDelegate;
     FOnWindowActivationChanged  OnWindowActivationChangedDelegate;
-    FIntVector2                 ScreenPosition;
-    FIntVector2                 ScreenSize;
+    FIntVector2                 CachedPosition;
+    FIntVector2                 CachedSize;
     TSharedPtr<FWidget>         Overlay;
     TSharedPtr<FWidget>         Content;
     TSharedRef<FGenericWindow>  PlatformWindow;

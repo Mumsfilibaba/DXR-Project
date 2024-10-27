@@ -14,7 +14,7 @@ void FMacWindow::ConvertNSRect(NSScreen* Screen, NSRect* Rect)
     }
 
     const CGFloat CocoaPositionY = Screen.frame.size.height - Rect->origin.y;
-    Rect->origin.y =  CocoaPositionY - Rect->size.height + 1;
+    Rect->origin.y = CocoaPositionY - Rect->size.height + 1;
 }
 
 TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)

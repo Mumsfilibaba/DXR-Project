@@ -753,7 +753,7 @@ bool FApplicationInterface::OnWindowMoved(const TSharedRef<FGenericWindow>& Plat
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         FIntVector2 NewScreenPosition(x, y);
-        Window->MoveTo(NewScreenPosition);
+        Window->OnWindowMoved(NewScreenPosition);
         bResult = true;
     }
 
