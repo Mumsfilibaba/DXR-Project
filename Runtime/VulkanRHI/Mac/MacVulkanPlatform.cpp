@@ -48,6 +48,7 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
         FCocoaWindowView* CocoaWindowView = CocoaWindow.contentView;
         [CocoaWindowView setLayer:MetalLayer];
         [CocoaWindowView setWantsLayer:YES];
+        
         bResult = true;
     }, NSDefaultRunLoopMode, true);
     

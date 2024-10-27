@@ -58,9 +58,6 @@ void FInspectorWidget::DrawSceneInfo()
 {
     // constexpr float Width = 450.0f;
 
-    FWindowShape WindowShape;
-    GEngine->GetEngineWindow()->GetPlatformWindow()->GetWindowShape(WindowShape);
-
     // Lights
     if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen))
     {

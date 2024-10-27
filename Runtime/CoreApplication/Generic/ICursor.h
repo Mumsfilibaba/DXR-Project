@@ -32,7 +32,7 @@ struct ICursor
       * @param x - New x-position of the cursor
       * @param y - New y-position of the cursor
       */
-    virtual void SetPosition(int32 x, int32 y) const = 0;
+    virtual void SetPosition(int32 x, int32 y) = 0;
 
      /**
       * @brief  - Retrieve the cursor position of a window

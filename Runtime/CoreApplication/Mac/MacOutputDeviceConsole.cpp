@@ -407,9 +407,10 @@ void FMacOutputDeviceConsole::MainThreadAppendStringAndScroll(NSAttributedString
     NSString*  TextString = TextView.string;
     if (LineCount >= MaxLineCount)
     {
-        NSUInteger LineIndex;
         NSUInteger NumberOfLines = 0;
         NSUInteger StringLength  = TextString.length;
+
+        NSUInteger LineIndex;
         for (LineIndex = 0; LineIndex < StringLength; NumberOfLines++)
         {
             LineIndex = NSMaxRange([TextString lineRangeForRange:NSMakeRange(LineIndex, 0)]);

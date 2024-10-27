@@ -42,14 +42,15 @@ public:
     virtual bool OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState) override final;
     virtual bool OnKeyChar(uint32 Character) override final;
     virtual bool OnMouseMove(int32 MouseX, int32 MouseY) override final;
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 MouseX, int32 MouseY) override final;
-    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 MouseX, int32 MouseY) override final;
-    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y) override final;
-    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical, int32 MouseX, int32 MouseY) override final;
-    virtual bool OnMouseEntered(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual bool OnMouseLeft(const TSharedRef<FGenericWindow>& Window) override final;
-    virtual bool OnHighPrecisionMouseInput(const TSharedRef<FGenericWindow>& Window, int32 x, uint32 y) override final;
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState) override final;
+    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState) override final;
+    virtual bool OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState) override final;
+    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical) override final;
+    virtual bool OnMouseEntered() override final;
+    virtual bool OnMouseLeft() override final;
+    virtual bool OnHighPrecisionMouseInput(int32 x, uint32 y) override final;
     virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override final;
+    virtual bool OnWindowResizing(const TSharedRef<FGenericWindow>& Window) override final;
     virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 MouseX, int32 MouseY) override final;
     virtual bool OnWindowFocusLost(const TSharedRef<FGenericWindow>& Window) override final;
     virtual bool OnWindowFocusGained(const TSharedRef<FGenericWindow>& Window) override final;
@@ -84,10 +85,10 @@ public:
     bool SupportsHighPrecisionMouse() const;
 
     // Sets the global cursor position on the screen
-    void SetCursorScreenPosition(const FIntVector2& Position);
+    void SetCursorPosition(const FIntVector2& Position);
 
     // Retrieves the global cursor position
-    FIntVector2 GetCursorScreenPosition() const;
+    FIntVector2 GetCursorPosition() const;
 
     // Set the cursor type
     void SetCursor(ECursor Cursor);
@@ -130,7 +131,13 @@ public:
     
     // Returns the window that has the specified platform window
     TSharedPtr<FWindow> FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const;
+    
+    // Returns the window that is currently under the cursor
+    TSharedPtr<FWindow> FindWindowUnderCursor() const;
 
+    // Returns a path of widgets that is currently under the cursor
+    void FindWidgetsUnderCursor(FWidgetPath& OutCursorPath);
+    
     // Returns a path of widgets that is currently under the cursor
     void FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath);
 

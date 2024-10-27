@@ -6,10 +6,10 @@
 FWindow::FWindow()
     : FWidget()
     , Title()
-    , OnWindowClosed()
-    , OnWindowMoved()
-    , OnWindowResized()
-    , OnWindowActivationChanged()
+    , OnWindowClosedDelegate()
+    , OnWindowMovedDelegate()
+    , OnWindowResizedDelegate()
+    , OnWindowActivationChangedDelegate()
     , ScreenPosition()
     , ScreenSize()
     , Overlay()
@@ -80,57 +80,111 @@ void FWindow::FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, F
 
 void FWindow::SetOnWindowClosed(const FOnWindowClosed& InOnWindowClosed)
 {
-    OnWindowClosed = InOnWindowClosed;
+    OnWindowClosedDelegate = InOnWindowClosed;
 }
 
 void FWindow::SetOnWindowMoved(const FOnWindowMoved& InOnWindowMoved)
 {
-    OnWindowMoved = InOnWindowMoved;
+    OnWindowMovedDelegate = InOnWindowMoved;
 }
 
 void FWindow::SetOnWindowResized(const FOnWindowResized& InOnWindowResized)
 {
-    OnWindowResized = InOnWindowResized;
+    OnWindowResizedDelegate = InOnWindowResized;
 }
 
-void FWindow::NotifyWindowDestroyed()
+void FWindow::OnWindowDestroyed()
 {
     if (PlatformWindow)
     {
         PlatformWindow->Destroy();
     }
 
-    OnWindowClosed.ExecuteIfBound();
+    OnWindowClosedDelegate.ExecuteIfBound();
 }
 
-void FWindow::NotifyWindowActivationChanged(bool)
+void FWindow::OnWindowActivationChanged(bool)
 {
+    OnWindowActivationChangedDelegate.ExecuteIfBound();
 }
 
-void FWindow::SetScreenPosition(const FIntVector2& NewPosition)
+void FWindow::OnWindowMoved(const FIntVector2& InPosition)
 {
-    if (ScreenPosition != NewPosition)
+    if (ScreenPosition != InPosition)
     {
-        ScreenPosition = NewPosition;
-        OnWindowMoved.ExecuteIfBound(NewPosition);
+        // Set the cached position
+        SetCachedPosition(InPosition);
+        
+        // Notify that this window was resized
+        OnWindowMovedDelegate.ExecuteIfBound(InPosition);
     }
 }
 
-void FWindow::SetScreenSize(const FIntVector2& NewSize)
+void FWindow::OnWindowResize(const FIntVector2& InSize)
 {
-    if (ScreenSize != NewSize)
+    if (ScreenSize != InSize)
     {
-        ScreenSize = NewSize;
-        OnWindowResized.ExecuteIfBound(NewSize);
+        // Set the cached size
+        SetCachedSize(InSize);
+        
+        // Notify that this window got resized
+        OnWindowResizedDelegate.ExecuteIfBound(InSize);
     }
 }
 
-FIntVector2 FWindow::GetScreenPosition() const
+void FWindow::MoveTo(const FIntVector2& InPosition)
+{
+    if (ScreenPosition != InPosition)
+    {
+        // Set the cached position
+        SetCachedPosition(InPosition);
+        
+        // Notify that this window was resized
+        OnWindowMovedDelegate.ExecuteIfBound(InPosition);
+        
+        // Set the actual size of the platform window
+        if (PlatformWindow)
+        {
+            PlatformWindow->SetWindowPos(InPosition.x, InPosition.y);
+        }
+    }
+}
+
+void FWindow::Resize(const FIntVector2& InSize)
+{
+    if (ScreenSize != InSize)
+    {
+        // Set the cached size
+        SetCachedSize(InSize);
+        
+        // Notify that this window got resized
+        OnWindowResizedDelegate.ExecuteIfBound(InSize);
+        
+        // Set the actual size of the platform window
+        if (PlatformWindow)
+        {
+            FWindowShape WindowShape(InSize.x, InSize.y);
+            PlatformWindow->SetWindowShape(WindowShape, false);
+        }
+    }
+}
+
+void FWindow::SetCachedSize(const FIntVector2& InSize)
+{
+    ScreenSize = InSize;
+}
+
+void FWindow::SetCachedPosition(const FIntVector2& InPosition)
+{
+    ScreenPosition = InPosition;
+}
+
+FIntVector2 FWindow::GetCachedPosition() const
 {
     return ScreenPosition;
 }
 
-FIntVector2 FWindow::GetScreenSize() const
+FIntVector2 FWindow::GetCachedSize() const
 {
     return ScreenSize;
 }
@@ -260,7 +314,7 @@ void FWindow::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWind
     }
 }
 
-void FWindow::SetWindowFocus()
+void FWindow::SetFocus()
 {
     if (PlatformWindow)
     {
@@ -268,7 +322,7 @@ void FWindow::SetWindowFocus()
     }
 }
 
-void FWindow::SetWindowOpacity(float Alpha)
+void FWindow::SetOpacity(float Alpha)
 {
     if (PlatformWindow)
     {

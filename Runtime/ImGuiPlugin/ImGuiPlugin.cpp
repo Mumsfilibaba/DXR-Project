@@ -6,6 +6,8 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Application.h"
 #include "Application/Widgets/Viewport.h"
+#include "RHI/RHICommandList.h"
+
 #include <imgui_internal.h>
 
 IMPLEMENT_ENGINE_MODULE(FImGuiPlugin, ImGuiPlugin);
@@ -476,9 +478,7 @@ void FImGuiPlugin::Tick(float Delta)
     const bool bIsAppFocused = ForegroundWindow && (ForegroundWindow == MainWindow || PlatformWindow->IsChildWindow(PlatformForegroundWindow) || ForegroundViewport);
     if (bIsAppFocused)
     {
-        FWindowShape WindowShape;
-        CHECK(PlatformForegroundWindow != nullptr);
-        PlatformForegroundWindow->GetWindowShape(WindowShape);
+        const FIntVector2 ForegroundWindowPosition = ForegroundWindow->GetCachedPosition();
 
         const bool bIsTrackingMouse = FApplicationInterface::Get().IsTrackingCursor();
         if (UIState.WantSetMousePos)
@@ -486,20 +486,20 @@ void FImGuiPlugin::Tick(float Delta)
             ImVec2 MousePos = UIState.MousePos;
             if (!ImGuiExtensions::IsMultiViewportEnabled())
             {
-                MousePos.x = MousePos.x - WindowShape.Position.x;
-                MousePos.y = MousePos.y - WindowShape.Position.y;
+                MousePos.x = MousePos.x - ForegroundWindowPosition.x;
+                MousePos.y = MousePos.y - ForegroundWindowPosition.y;
             }
 
             const FIntVector2 CursorPos = FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y));
-            FApplicationInterface::Get().SetCursorScreenPosition(CursorPos);
+            FApplicationInterface::Get().SetCursorPosition(CursorPos);
         }
-        else if (!UIState.WantSetMousePos && !bIsTrackingMouse)
+        else if (!bIsTrackingMouse)
         {
-            FIntVector2 CursorPos = FApplicationInterface::Get().GetCursorScreenPosition();
+            FIntVector2 CursorPos = FApplicationInterface::Get().GetCursorPosition();
             if (!ImGuiExtensions::IsMultiViewportEnabled())
             {
-                CursorPos.x = CursorPos.x - WindowShape.Position.x;
-                CursorPos.y = CursorPos.y - WindowShape.Position.y;
+                CursorPos.x = CursorPos.x - ForegroundWindowPosition.x;
+                CursorPos.y = CursorPos.y - ForegroundWindowPosition.y;
             }
 
             UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
@@ -507,8 +507,7 @@ void FImGuiPlugin::Tick(float Delta)
     }
 
     ImGuiID MouseViewportID = 0;
-    TSharedPtr<FGenericApplication> PlatformApplication = FApplicationInterface::Get().GetPlatformApplication();
-    if (TSharedPtr<FWindow> WindowUnderCursor = FApplicationInterface::Get().FindWindowFromGenericWindow(PlatformApplication->GetWindowUnderCursor()))
+    if (TSharedPtr<FWindow> WindowUnderCursor = FApplicationInterface::Get().FindWindowUnderCursor())
     {
         if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor.Get()))
         {
@@ -717,12 +716,16 @@ void FImGuiPlugin::StaticPlatformDestroyWindow(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
+    // Wait for the GPU to finish with the current frame before resizing
+    GRHICommandExecutor.WaitForGPU();
+    
     FApplicationInterface::Get().DestroyWindow(ViewportData->Window);
 
     Viewport->PlatformUserData      = nullptr;
     Viewport->PlatformHandle        = nullptr;
     Viewport->PlatformHandleRaw     = nullptr;
     Viewport->PlatformWindowCreated = false;
+    Viewport->PlatformRequestClose  = false;
     
     delete ViewportData;
 }
@@ -758,6 +761,8 @@ void FImGuiPlugin::StaticPlatformUpdateWindow(ImGuiViewport* Viewport)
     {
         PlatformWindow->SetStyle(WindowStyle);
 
+        // NOTE: This seem to be more specific for windows
+    #if PLATFORM_WINDOWS
         if ((WindowStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
         {
             PlatformWindow->SetWindowFocus();
@@ -765,6 +770,7 @@ void FImGuiPlugin::StaticPlatformUpdateWindow(ImGuiViewport* Viewport)
     
         const FWindowShape WindowShape(static_cast<uint32>(Viewport->Size.x), static_cast<uint32>(Viewport->Size.y), static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
         PlatformWindow->SetWindowShape(WindowShape, true);
+    #endif
         
         Viewport->PlatformRequestMove   = true;
         Viewport->PlatformRequestResize = true;
@@ -776,23 +782,17 @@ ImVec2 FImGuiPlugin::StaticPlatformGetWindowPosition(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
-    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
-    CHECK(PlatformWindow != nullptr);
-
-    FWindowShape WindowShape;
-    PlatformWindow->GetWindowShape(WindowShape);
-    return ImVec2(static_cast<float>(WindowShape.Position.x), static_cast<float>(WindowShape.Position.y));
+    const FIntVector2 Position = ViewportData->Window->GetCachedPosition();
+    return ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 }
 
 void FImGuiPlugin::StaticPlatformSetWindowPosition(ImGuiViewport* Viewport, ImVec2 Position)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
-
-    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
-    CHECK(PlatformWindow != nullptr);
-
-    PlatformWindow->SetWindowPos(static_cast<int32>(Position.x), static_cast<int32>(Position.y));
+    
+    ViewportData->Window->MoveTo(FIntVector2(static_cast<int32>(Position.x), static_cast<int32>(Position.y)));
+    Viewport->PlatformRequestMove = false;
 }
 
 ImVec2 FImGuiPlugin::StaticPlatformGetWindowSize(ImGuiViewport* Viewport)
@@ -800,24 +800,20 @@ ImVec2 FImGuiPlugin::StaticPlatformGetWindowSize(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
-    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
-    CHECK(PlatformWindow != nullptr);
-
-    FWindowShape WindowShape;
-    PlatformWindow->GetWindowShape(WindowShape);
-    return ImVec2(static_cast<float>(WindowShape.Width), static_cast<float>(WindowShape.Height));
+    const FIntVector2 Size = ViewportData->Window->GetCachedSize();
+    return ImVec2(static_cast<float>(Size.x), static_cast<float>(Size.y));
 }
 
 void FImGuiPlugin::StaticPlatformSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
-
-    TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
-    CHECK(PlatformWindow != nullptr);
-
-    const FWindowShape WindowShape(static_cast<uint32>(Size.x), static_cast<uint32>(Size.y));
-    PlatformWindow->SetWindowShape(WindowShape, false);
+    
+    // Wait for the GPU to finish with the current frame before resizing
+    GRHICommandExecutor.WaitForGPU();
+    
+    ViewportData->Window->Resize(FIntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y)));
+    Viewport->PlatformRequestResize = false;
 }
 
 void FImGuiPlugin::StaticPlatformSetWindowFocus(ImGuiViewport* Viewport)
@@ -856,7 +852,7 @@ void FImGuiPlugin::StaticPlatformSetWindowAlpha(ImGuiViewport* Viewport, float A
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
-    ViewportData->Window->SetWindowOpacity(Alpha);
+    ViewportData->Window->SetOpacity(Alpha);
 }
 
 float FImGuiPlugin::StaticPlatformGetWindowDpiScale(ImGuiViewport* Viewport)

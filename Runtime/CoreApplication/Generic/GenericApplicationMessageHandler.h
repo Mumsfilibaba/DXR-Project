@@ -46,42 +46,47 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonDown(const TSharedRef<FGenericWindow>& PlatformWindow, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState)
     {
         return false;
     }
 
-    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonUp(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState)
     {
         return false;
     }
 
-    virtual bool OnMouseButtonDoubleClick(const TSharedRef<FGenericWindow>& Window, EMouseButtonName::Type Button, FModifierKeyState ModierKeyState, int32 x, int32 y)
+    virtual bool OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState)
     {
         return false;
     }
 
-    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical, int32 x, int32 y)
+    virtual bool OnMouseScrolled(float WheelDelta, bool bVertical)
     {
         return false;
     }
 
-    virtual bool OnMouseEntered(const TSharedRef<FGenericWindow>& Window)
+    virtual bool OnMouseEntered()
     {
         return false;
     }
 
-    virtual bool OnMouseLeft(const TSharedRef<FGenericWindow>& Window)
+    virtual bool OnMouseLeft()
     {
         return false;
     }
 
-    virtual bool OnHighPrecisionMouseInput(const TSharedRef<FGenericWindow>& Window, int32 x, uint32 y)
+    virtual bool OnHighPrecisionMouseInput(int32 x, uint32 y)
     {
         return false;
     }
 
     virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height)
+    {
+        return false;
+    }
+    
+    virtual bool OnWindowResizing(const TSharedRef<FGenericWindow>& Window)
     {
         return false;
     }

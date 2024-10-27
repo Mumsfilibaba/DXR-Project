@@ -44,12 +44,12 @@ public:
 
     virtual void* GetPlatformHandle() const override final
     {
-        return reinterpret_cast<void*>(Window);
+        return reinterpret_cast<void*>(CocoaWindow);
     }
     
     FCocoaWindow* GetCocoaWindow() const
     {
-        return Window;
+        return CocoaWindow;
     }
 
     FMacApplication* GetApplication() const
@@ -61,14 +61,6 @@ private:
     FMacWindow(FMacApplication* InApplication);
 
     FMacApplication*  Application;
-    FCocoaWindow*     Window;
-    FCocoaWindowView* WindowView;
-    
-    struct
-    {
-        int32 Width;
-        int32 Height;
-        int32 PositionX;
-        int32 PositionY;
-    } CachedShape;
+    FCocoaWindow*     CocoaWindow;
+    FCocoaWindowView* CocoaWindowView;
 };

@@ -30,7 +30,7 @@ public:
     virtual FResponse OnFocusLost() override;
     virtual FResponse OnFocusGained() override;
 
-    virtual TSharedRef<FRHIViewport> GetViewportRHI() const
+    virtual TSharedRef<FRHIViewport> GetViewportRHI() const override
     {
         return RHIViewport;
     }
@@ -67,7 +67,6 @@ public:
     }
 
 private:
-    TSharedRef<FGenericWindow> Window;
     TWeakPtr<FViewport>        Viewport;
     TSharedRef<FRHIViewport>   RHIViewport;
     FWorld*                    World;

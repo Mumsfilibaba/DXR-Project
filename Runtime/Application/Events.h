@@ -76,6 +76,16 @@ public:
     {
     }
 
+    FCursorEvent(const FModifierKeyState& InModifierKeys)
+        : FInputEvent(InModifierKeys)
+        , Key(EKeys::Unknown)
+        , CursorPosition()
+        , ScrollDelta(0.0f)
+        , bIsScrollVertical(false)
+        , bIsDown(false)
+    {
+    }
+    
     FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InModifierKeys)
         , Key(EKeys::Unknown)
@@ -86,21 +96,10 @@ public:
     {
     }
 
-    FCursorEvent(FKey InKey, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, bool bInIsDown)
+    FCursorEvent(FKey InKey, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InModifierKeys)
         , Key(InKey)
-        , CursorPosition(InCursorPosition)
-        , ScrollDelta(0.0f)
-        , bIsScrollVertical(false)
-        , bIsDown(bInIsDown)
-    {
-        CHECK(InKey.IsMouseButton());
-    }
-
-    FCursorEvent(FKey InKey, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
-        : FInputEvent(InModifierKeys)
-        , Key(InKey)
-        , CursorPosition(InCursorPosition)
+        , CursorPosition()
         , ScrollDelta(0.0f)
         , bIsScrollVertical(false)
         , bIsDown(false)
@@ -108,10 +107,21 @@ public:
         CHECK(InKey.IsMouseButton());
     }
 
-    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
+    FCursorEvent(FKey InKey, const FModifierKeyState& InModifierKeys, bool bInIsDown)
+        : FInputEvent(InModifierKeys)
+        , Key(InKey)
+        , CursorPosition()
+        , ScrollDelta(0.0f)
+        , bIsScrollVertical(false)
+        , bIsDown(bInIsDown)
+    {
+        CHECK(InKey.IsMouseButton());
+    }
+
+    FCursorEvent(const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
         : FInputEvent(InModifierKeys)
         , Key(EKeys::Unknown)
-        , CursorPosition(InCursorPosition)
+        , CursorPosition()
         , ScrollDelta(InScrollDelta)
         , bIsScrollVertical(bInIsScrollVertical)
         , bIsDown(false)

@@ -56,10 +56,10 @@ public:
     static uint32  GetDPIFromNSScreen(NSScreen* Screen);
     static NSPoint GetCorrectedMouseLocation();
     
-    static TSharedPtr<FMacApplication>     CreateMacApplication();
     static TSharedPtr<FGenericApplication> Create();
+    static TSharedPtr<FMacApplication> CreateMacApplication();
     
-    FMacApplication();
+    FMacApplication(const TSharedPtr<FMacCursor>& InCursor);
     virtual ~FMacApplication();
 
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
@@ -74,18 +74,23 @@ public:
     virtual void QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const override final;
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
 
+    void DeferEvent(NSObject* EventObject);
     void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
-    void OnMouseMoveEvent();
+    NSEvent* OnNSEvent(NSEvent* Event);
+    void OnMouseMoveEvent(const FDeferredMacEvent& DeferredEvent);
     void OnMouseButtonEvent(const FDeferredMacEvent& DeferredEvent);
     void OnMouseScrollEvent(const FDeferredMacEvent& DeferredEvent);
     void OnKeyEvent(const FDeferredMacEvent& DeferredEvent);
     void OnWindowResized(const FDeferredMacEvent& DeferredEvent);
     void OnWindowMoved(const FDeferredMacEvent& DeferredEvent);
     
-    TSharedRef<FMacWindow> GetWindowFromNSWindow(NSWindow* Window) const;
-    void CloseWindow(const TSharedRef<FMacWindow>& Window);
-    void DeferEvent(NSObject* EventOrNotificationObject);
+    void OnWindowDestroyed(const TSharedRef<FMacWindow>& Window);
+    void OnWindowWillResize(const TSharedRef<FMacWindow>& Window);
 
+    FCocoaWindow* FindNSWindowUnderCursor() const;
+    TSharedRef<FMacWindow> FindWindowFromNSWindow(NSWindow* Window) const;
+    void CloseWindow(const TSharedRef<FMacWindow>& Window);
+    
     FMacApplicationObserver* GetApplicationObserver() const
     {
         return Observer;
@@ -95,18 +100,27 @@ private:
     
     // Observer that checks for monitor changes
     FMacApplicationObserver*       Observer;
-
+    id                             GlobalMouseMovedEventMonitor;
+    id                             LocalEventMonitor;
+    
     // We need to store this modifier-flag in order to handle modifier keys correctly
     NSUInteger                     PreviousModifierFlags;
+    EMouseButtonName::Type         LastPressedButton;
 
     // InputDevice handling gamepads
     TSharedPtr<FGCInputDevice>     InputDevice;
-    EMouseButtonName::Type         LastPressedButton;
-
+    TSharedPtr<FMacCursor>         MacCursor;
+    
+    FCocoaWindow*                  WindowUnderCursor;
+    
     TArray<TSharedRef<FMacWindow>> Windows;
     mutable FCriticalSection       WindowsCS;
+    
+    TArray<FCocoaWindow*>          ClosedCocoaWindows;
+    FCriticalSection               ClosedCocoaWindowsCS;
     TArray<TSharedRef<FMacWindow>> ClosedWindows;
     FCriticalSection               ClosedWindowsCS;
+    
     TArray<FDeferredMacEvent>      DeferredEvents;
     FCriticalSection               DeferredEventsCS;
 };

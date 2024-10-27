@@ -44,14 +44,19 @@ public:
     void SetOnWindowMoved(const FOnWindowMoved& InOnWindowMoved);
     void SetOnWindowResized(const FOnWindowResized& InOnWindowResized);
 
-    void NotifyWindowDestroyed();
-    void NotifyWindowActivationChanged(bool bIsActive);
+    void OnWindowDestroyed();
+    void OnWindowActivationChanged(bool bIsActive);
+    void OnWindowMoved(const FIntVector2& InPosition);
+    void OnWindowResize(const FIntVector2& InSize);
 
-    void SetScreenPosition(const FIntVector2& NewPosition);
-    void SetScreenSize(const FIntVector2& NewSize);
+    void MoveTo(const FIntVector2& InPosition);
+    void Resize(const FIntVector2& InSize);
+    
+    void SetCachedPosition(const FIntVector2& InPosition);
+    void SetCachedSize(const FIntVector2& InSize);
 
-    FIntVector2 GetScreenPosition() const;
-    FIntVector2 GetScreenSize() const;
+    FIntVector2 GetCachedSize() const;
+    FIntVector2 GetCachedPosition() const;
 
     uint32 GetWidth() const;
     uint32 GetHeight() const;
@@ -75,8 +80,8 @@ public:
     void SetTitle(const FString& InTitle);
     void SetStyle(EWindowStyleFlags InStyleFlags);
     void SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow);
-    void SetWindowFocus();
-    void SetWindowOpacity(float Alpha);
+    void SetFocus();
+    void SetOpacity(float Alpha);
 
     TSharedRef<FGenericWindow>       GetPlatformWindow()       { return PlatformWindow; }
     TSharedRef<const FGenericWindow> GetPlatformWindow() const { return PlatformWindow; }
@@ -93,10 +98,10 @@ public:
 
 private:
     FString                     Title;
-    FOnWindowClosed             OnWindowClosed;
-    FOnWindowMoved              OnWindowMoved;
-    FOnWindowResized            OnWindowResized;
-    FOnWindowActivationChanged  OnWindowActivationChanged;
+    FOnWindowClosed             OnWindowClosedDelegate;
+    FOnWindowMoved              OnWindowMovedDelegate;
+    FOnWindowResized            OnWindowResizedDelegate;
+    FOnWindowActivationChanged  OnWindowActivationChangedDelegate;
     FIntVector2                 ScreenPosition;
     FIntVector2                 ScreenSize;
     TSharedPtr<FWidget>         Overlay;

@@ -13,7 +13,8 @@ void FMacWindow::ConvertNSRect(NSScreen* Screen, NSRect* Rect)
         Screen = [NSScreen mainScreen];
     }
 
-    Rect->origin.y = Screen.frame.size.height - Rect->origin.y - Rect->size.height;
+    const CGFloat CocoaPositionY = Screen.frame.size.height - Rect->origin.y;
+    Rect->origin.y =  CocoaPositionY - Rect->size.height + 1;
 }
 
 TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)
@@ -25,8 +26,8 @@ TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)
 FMacWindow::FMacWindow(FMacApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)
-    , Window(nullptr)
-    , WindowView(nullptr)
+    , CocoaWindow(nullptr)
+    , CocoaWindowView(nullptr)
 {
 }
 
@@ -35,9 +36,7 @@ FMacWindow::~FMacWindow()
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-        
-        NSSafeRelease(Window);
-        NSSafeRelease(WindowView);
+        NSSafeRelease(CocoaWindowView);
     }, NSDefaultRunLoopMode, true);
 }
 
@@ -89,46 +88,46 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             WindowRect.origin.y    = FMath::Clamp(ScreenRect.origin.y, ScreenRect.origin.y + ScreenRect.size.height, WindowRect.origin.y);
         }
 
-        Window = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
-        if (!Window)
+        CocoaWindow = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
+        if (!CocoaWindow)
         {
             LOG_ERROR("[FMacWindow]: Failed to create NSWindow");
             return;
         }
 
         const NSWindowLevel WindowLevel = (InInitializer.Style & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
-        [Window setLevel:WindowLevel];
+        [CocoaWindow setLevel:WindowLevel];
 
         if ((InInitializer.Style & EWindowStyleFlags::Titled) != EWindowStyleFlags::None)
         {
-            Window.title = InInitializer.Title.GetNSString();
+            CocoaWindow.title = InInitializer.Title.GetNSString();
         }
 
-        if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+        if ((InInitializer.Style & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
         {
-            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:YES];
+            [[CocoaWindow standardWindowButton:NSWindowCloseButton] setEnabled:YES];
         }
         else
         {
-            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:NO];
+            [[CocoaWindow standardWindowButton:NSWindowCloseButton] setEnabled:NO];
         }
         
         if ((InInitializer.Style & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
         {
-            [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
+            [[CocoaWindow standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
         }
         else
         {
-            [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
+            [[CocoaWindow standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
         }
         
         if ((InInitializer.Style & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
         {
-            [[Window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
+            [[CocoaWindow standardWindowButton:NSWindowZoomButton] setEnabled:YES];
         }
         else
         {
-            [[Window standardWindowButton:NSWindowZoomButton] setEnabled:NO];
+            [[CocoaWindow standardWindowButton:NSWindowZoomButton] setEnabled:NO];
         }
 
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
@@ -141,43 +140,44 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
         }
 
-        Window.collectionBehavior = Behavior;
+        CocoaWindow.collectionBehavior = Behavior;
 
         if ((InInitializer.Style & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
         {
-            [Window setOpaque:NO];
-            [Window setHasShadow:NO];
+            [CocoaWindow setOpaque:NO];
+            [CocoaWindow setHasShadow:NO];
         }
         else
         {
-            [Window setHasShadow: YES];
+            [CocoaWindow setHasShadow: YES];
         }
         
         NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
-        WindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
-        [Window setReleasedWhenClosed:NO];
-        [Window setAcceptsMouseMovedEvents:YES];
-        [Window setRestorable:NO];
-        [Window setDelegate:Window];
-        [Window setBackgroundColor:BackGroundColor];
-        [Window setContentView:WindowView];
-        [Window makeFirstResponder:WindowView];
+        CocoaWindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
+        
+        [CocoaWindow setReleasedWhenClosed:NO];
+        [CocoaWindow setAcceptsMouseMovedEvents:YES];
+        [CocoaWindow setRestorable:NO];
+        [CocoaWindow setDelegate:CocoaWindow];
+        [CocoaWindow setBackgroundColor:BackGroundColor];
+        [CocoaWindow setContentView:CocoaWindowView];
+        [CocoaWindow makeFirstResponder:CocoaWindowView];
 
-        [NSApp addWindowsItem:Window title:InInitializer.Title.GetNSString() filename:NO];
+        [NSApp addWindowsItem:CocoaWindow title:InInitializer.Title.GetNSString() filename:NO];
 
-        if ([Window respondsToSelector:@selector(setTabbingMode:)])
+        if ([CocoaWindow respondsToSelector:@selector(setTabbingMode:)])
         {
-            [Window setTabbingMode:NSWindowTabbingModeDisallowed];
+            [CocoaWindow setTabbingMode:NSWindowTabbingModeDisallowed];
         }
         
-        [Window setIsVisible:YES];
+        [CocoaWindow setIsVisible:YES];
         
         const NSRect ContentRect  = NSMakeRect(0, 0, Width, Height);
-        NSRect NewFrame = [Window frameRectForContentRect:ContentRect];
+        NSRect NewFrame = [CocoaWindow frameRectForContentRect:ContentRect];
         NewFrame.origin.x = PositionX;
         NewFrame.origin.y = PositionY;
-        ConvertNSRect(Window.screen, &NewFrame);
-        [Window setFrame: NewFrame display: YES];
+        ConvertNSRect(CocoaWindow.screen, &NewFrame);
+        [CocoaWindow setFrame: NewFrame display: YES];
        
         StyleParams = InInitializer.Style;
         bResult = true;
@@ -194,15 +194,18 @@ void FMacWindow::Show(bool bFocusOnActivate)
     {
         SCOPED_AUTORELEASE_POOL();
         
-        [Window setIsVisible:YES];
+        if (CocoaWindow)
+        {
+            [CocoaWindow setIsVisible:YES];
 
-        if (bFocusOnActivate)
-        {
-            [Window orderFront:nil];
-        }
-        else
-        {
-            [Window makeKeyAndOrderFront:nil];
+            if (bFocusOnActivate)
+            {
+                [CocoaWindow orderFront:nil];
+            }
+            else
+            {
+                [CocoaWindow makeKeyAndOrderFront:nil];
+            }
         }
 
         FPlatformApplicationMisc::PumpMessages(true);
@@ -215,7 +218,11 @@ void FMacWindow::Minimize()
     {
         SCOPED_AUTORELEASE_POOL();
         
-        [Window miniaturize:Window];
+        if (CocoaWindow)
+        {
+            [CocoaWindow miniaturize:CocoaWindow];
+        }
+        
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
@@ -226,12 +233,15 @@ void FMacWindow::Maximize()
     {
         SCOPED_AUTORELEASE_POOL();
         
-        if (Window.miniaturized)
+        if (CocoaWindow)
         {
-            [Window deminiaturize:Window];
-        }
+            if (CocoaWindow.miniaturized)
+            {
+                [CocoaWindow deminiaturize:CocoaWindow];
+            }
 
-        [Window zoom:Window];
+            [CocoaWindow zoom:CocoaWindow];
+        }
 
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -239,15 +249,14 @@ void FMacWindow::Maximize()
 
 void FMacWindow::Destroy()
 {
-    ExecuteOnMainThread(^
+    if (CocoaWindow)
     {
         SCOPED_AUTORELEASE_POOL();
         
-        [Window close];
-        Window = nil;
-        
-        FPlatformApplicationMisc::PumpMessages(true);
-    }, NSDefaultRunLoopMode, true);
+        TSharedRef<FMacWindow> ThisWindow = MakeSharedRef<FMacWindow>(this);
+        Application->OnWindowDestroyed(ThisWindow);
+        CocoaWindow = nullptr;
+    }
 }
 
 void FMacWindow::Restore()
@@ -256,13 +265,16 @@ void FMacWindow::Restore()
     {
         SCOPED_AUTORELEASE_POOL();
         
-        if (Window.miniaturized)
+        if (CocoaWindow)
         {
-            [Window deminiaturize:Window];
-        }
-        else if (Window.zoomed)
-        {
-            [Window zoom:Window];
+            if (CocoaWindow.miniaturized)
+            {
+                [CocoaWindow deminiaturize:CocoaWindow];
+            }
+            else if (CocoaWindow.zoomed)
+            {
+                [CocoaWindow zoom:CocoaWindow];
+            }
         }
     
         FPlatformApplicationMisc::PumpMessages(true);
@@ -277,7 +289,11 @@ void FMacWindow::ToggleFullscreen()
         {
             SCOPED_AUTORELEASE_POOL();
             
-            [Window toggleFullScreen:Window];
+            if (CocoaWindow)
+            {
+                [CocoaWindow toggleFullScreen:CocoaWindow];
+            }
+            
             FPlatformApplicationMisc::PumpMessages(true);
         }, NSDefaultRunLoopMode, true);
     }
@@ -285,13 +301,16 @@ void FMacWindow::ToggleFullscreen()
 
 bool FMacWindow::IsActiveWindow() const
 {
-    __block bool bIsKeyWindow;
+    __block bool bIsKeyWindow = false;
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
         
-        bIsKeyWindow = Window.isKeyWindow;
-        FPlatformApplicationMisc::PumpMessages(true);
+        if (CocoaWindow)
+        {
+            bIsKeyWindow = CocoaWindow.isKeyWindow;
+        }
+        
     }, NSDefaultRunLoopMode, true);
 
     return bIsKeyWindow;
@@ -299,18 +318,21 @@ bool FMacWindow::IsActiveWindow() const
 
 bool FMacWindow::IsValid() const
 {
-   return Window != nullptr;
+   return CocoaWindow != nullptr;
 }
 
 bool FMacWindow::IsMinimized() const
 {
-    __block bool bIsMinimized;
+    __block bool bIsMinimized = false;
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
         
-        bIsMinimized = Window.miniaturized;
-        FPlatformApplicationMisc::PumpMessages(true);
+        if (CocoaWindow)
+        {
+            bIsMinimized = CocoaWindow.miniaturized;
+        }
+        
     }, NSDefaultRunLoopMode, true);
 
     return bIsMinimized;
@@ -318,11 +340,16 @@ bool FMacWindow::IsMinimized() const
 
 bool FMacWindow::IsMaximized() const
 {
-    __block bool bIsMaximized;
+    __block bool bIsMaximized = false;
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-        bIsMaximized = Window.zoomed;
+        
+        if (CocoaWindow)
+        {
+            bIsMaximized = CocoaWindow.zoomed;
+        }
+        
     }, NSDefaultRunLoopMode, true);
 
     return bIsMaximized;
@@ -337,13 +364,16 @@ bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) co
     {
         SCOPED_AUTORELEASE_POOL();
 
-        for (NSWindow* ChildWindow in Window.childWindows)
+        if (CocoaWindow)
         {
-            FCocoaWindow* CocoaWindow = NSClassCast<FCocoaWindow>(ChildWindow);
-            if (CocoaWindow && CocoaWindow == MacChildWindow->GetCocoaWindow())
+            for (NSWindow* ChildWindow in CocoaWindow.childWindows)
             {
-                bIsChildWindow = true;
-                break;
+                FCocoaWindow* CocoaWindow = NSClassCast<FCocoaWindow>(ChildWindow);
+                if (CocoaWindow && CocoaWindow == MacChildWindow->GetCocoaWindow())
+                {
+                    bIsChildWindow = true;
+                    break;
+                }
             }
         }
     }, NSDefaultRunLoopMode, true);
@@ -357,7 +387,11 @@ void FMacWindow::SetWindowFocus()
     {
         SCOPED_AUTORELEASE_POOL();
         
-        [Window makeKeyAndOrderFront:Window];
+        if (CocoaWindow)
+        {
+            [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
+        }
+        
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
@@ -369,9 +403,12 @@ void FMacWindow::SetTitle(const FString& InTitle)
     __block NSString* Title = InTitle.GetNSString();
     ExecuteOnMainThread(^
     {
-        [Window setTitle:Title];
-        [Window setMiniwindowTitle:Title];
-    
+        if (CocoaWindow)
+        {
+            [CocoaWindow setTitle:Title];
+            [CocoaWindow setMiniwindowTitle:Title];
+        }
+        
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
@@ -383,7 +420,10 @@ void FMacWindow::GetTitle(FString& OutTitle) const
     __block NSString* Title;
     ExecuteOnMainThread(^
     {
-        Title = Window.title;
+        if (CocoaWindow)
+        {
+            Title = CocoaWindow.title;
+        }
     }, NSDefaultRunLoopMode, true);
 
     OutTitle = FString(Title);
@@ -395,10 +435,13 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
     {
         SCOPED_AUTORELEASE_POOL();
 
-        NSRect WindowFrame = Window.frame;
-        WindowFrame = NSMakeRect(x, y, WindowFrame.size.width, WindowFrame.size.height);
-        ConvertNSRect(Window.screen, &WindowFrame);
-        [Window setFrameOrigin:WindowFrame.origin];
+        if (CocoaWindow)
+        {
+            NSRect WindowFrame = CocoaWindow.frame;
+            WindowFrame = NSMakeRect(x, y, WindowFrame.size.width, WindowFrame.size.height);
+            ConvertNSRect(CocoaWindow.screen, &WindowFrame);
+            [CocoaWindow setFrameOrigin:WindowFrame.origin];
+        }
         
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -410,7 +453,11 @@ void FMacWindow::SetWindowOpacity(float Alpha)
     {
         SCOPED_AUTORELEASE_POOL();
 
-        Window.alphaValue = Alpha;
+        if (CocoaWindow)
+        {
+            CocoaWindow.alphaValue = Alpha;
+        }
+        
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
 }
@@ -421,21 +468,24 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
     {
         SCOPED_AUTORELEASE_POOL();
        
-        NSRect NewContentRect;
-        if (bMove)
+        if (CocoaWindow)
         {
-            NewContentRect = NSMakeRect(Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height);
+            NSRect NewContentRect;
+            if (bMove)
+            {
+                NewContentRect = NSMakeRect(Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height);
+            }
+            else
+            {
+                NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+                ConvertNSRect(CocoaWindow.screen, &ContentRect);
+                NewContentRect = NSMakeRect(ContentRect.origin.x, ContentRect.origin.y, Shape.Width, Shape.Height);
+            }
+            
+            ConvertNSRect(CocoaWindow.screen, &NewContentRect);
+            const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[CocoaWindow styleMask]];
+            [CocoaWindow setFrame: NewFrame display: YES];
         }
-        else
-        {
-            NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
-            ConvertNSRect(Window.screen, &ContentRect);
-            NewContentRect = NSMakeRect(ContentRect.origin.x, ContentRect.origin.y, Shape.Width, Shape.Height);
-        }
-
-        ConvertNSRect(Window.screen, &NewContentRect);
-        const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[Window styleMask]];
-        [Window setFrame: NewFrame display: YES];
         
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -443,13 +493,16 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 
 void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
-    __block NSRect ContentRect;
+    __block NSRect ContentRect = NSMakeRect(0, 0, 0, 0);
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
         
-        ContentRect = [Window contentRectForFrameRect:Window.frame];
-        ConvertNSRect(Window.screen, &ContentRect);
+        if (CocoaWindow)
+        {
+            ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+            ConvertNSRect(CocoaWindow.screen, &ContentRect);
+        }
     }, NSDefaultRunLoopMode, true);
 
     OutWindowShape.Width      = ContentRect.size.width;
@@ -460,14 +513,17 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 
 uint32 FMacWindow::GetWidth() const
 {
-    __block NSSize Size;
+    __block NSSize Size = NSMakeSize(0, 0);
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
 
-        NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
-        ConvertNSRect(Window.screen, &ContentRect);
-        Size = ContentRect.size;
+        if (CocoaWindow)
+        {
+            NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+            ConvertNSRect(CocoaWindow.screen, &ContentRect);
+            Size = ContentRect.size;
+        }
     }, NSDefaultRunLoopMode, true);
 
     return uint32(Size.width);
@@ -475,14 +531,17 @@ uint32 FMacWindow::GetWidth() const
 
 uint32 FMacWindow::GetHeight() const
 {
-    __block NSSize Size;
+    __block NSSize Size = NSMakeSize(0, 0);
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
 
-        NSRect ContentRect = [Window contentRectForFrameRect:Window.frame];
-        ConvertNSRect(Window.screen, &ContentRect);
-        Size = ContentRect.size;
+        if (CocoaWindow)
+        {
+            NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
+            ConvertNSRect(CocoaWindow.screen, &ContentRect);
+            Size = ContentRect.size;
+        }
     }, NSDefaultRunLoopMode, true);
 
     return uint32(Size.height);
@@ -490,13 +549,16 @@ uint32 FMacWindow::GetHeight() const
 
 void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 {
-    __block NSRect Frame;
+    __block NSRect Frame = NSMakeRect(0, 0, 0, 0);
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
 
-        NSScreen* Screen = Window.screen;
-        Frame = Screen.frame;
+        if (CocoaWindow)
+        {
+            NSScreen* Screen = CocoaWindow ? CocoaWindow.screen : [NSScreen mainScreen];
+            Frame = Screen.frame;
+        }
     }, NSDefaultRunLoopMode, true);
 
     OutWidth  = Frame.size.width;
@@ -505,11 +567,14 @@ void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 
 float FMacWindow::GetWindowDpiScale() const
 {
-    __block CGFloat Scale;
+    __block CGFloat Scale = 1.0f;
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-        Scale = Window.backingScaleFactor;
+        if (CocoaWindow)
+        {
+            Scale = CocoaWindow.backingScaleFactor;
+        }
     }, NSDefaultRunLoopMode, true);
 
     return static_cast<float>(Scale);
@@ -528,8 +593,8 @@ void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
             {
                 if (FCocoaWindowView* NewWindowView = NSClassCast<FCocoaWindowView>(NewWindow.contentView))
                 {
-                    Window     = NewWindow;
-                    WindowView = NewWindowView;
+                    CocoaWindow     = NewWindow;
+                    CocoaWindowView = NewWindowView;
                 }
                 else
                 {
@@ -573,61 +638,64 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
     {
         SCOPED_AUTORELEASE_POOL();
 
-        const NSWindowLevel WindowLevel = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
-        [Window setLevel:WindowLevel];
-
-        if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
+        if (CocoaWindow)
         {
-            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:YES];
+            const NSWindowLevel WindowLevel = (InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None ? NSFloatingWindowLevel : NSNormalWindowLevel;
+            [CocoaWindow setLevel:WindowLevel];
+            
+            if ((InStyle & EWindowStyleFlags::Closable) != EWindowStyleFlags::None)
+            {
+                [[CocoaWindow standardWindowButton:NSWindowCloseButton] setEnabled:YES];
+            }
+            else
+            {
+                [[CocoaWindow standardWindowButton:NSWindowCloseButton] setEnabled:NO];
+            }
+            
+            if ((InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
+            {
+                [[CocoaWindow standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
+            }
+            else
+            {
+                [[CocoaWindow standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
+            }
+            
+            if ((InStyle & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
+            {
+                [[CocoaWindow standardWindowButton:NSWindowZoomButton] setEnabled:YES];
+            }
+            else
+            {
+                [[CocoaWindow standardWindowButton:NSWindowZoomButton] setEnabled:NO];
+            }
+            
+            NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
+            if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+            {
+                Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
+            }
+            else
+            {
+                Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
+            }
+            
+            if ((InStyle & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
+            {
+                [CocoaWindow setOpaque:NO];
+                [CocoaWindow setHasShadow:NO];
+            }
+            else
+            {
+                [CocoaWindow setHasShadow: YES];
+            }
+            
+            [CocoaWindow setStyleMask:WindowStyle];
+            [CocoaWindow setCollectionBehavior:Behavior];
+            
+            // Set styleflags
+            StyleParams = InStyle;
         }
-        else
-        {
-            [[Window standardWindowButton:NSWindowCloseButton] setEnabled:NO];
-        }
-
-        if ((InStyle & EWindowStyleFlags::Minimizable) != EWindowStyleFlags::None)
-        {
-            [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:YES];
-        }
-        else
-        {
-            [[Window standardWindowButton:NSWindowMiniaturizeButton] setEnabled:NO];
-        }
-
-        if ((InStyle & EWindowStyleFlags::Maximizable) != EWindowStyleFlags::None)
-        {
-            [[Window standardWindowButton:NSWindowZoomButton] setEnabled:YES];
-        }
-        else
-        {
-            [[Window standardWindowButton:NSWindowZoomButton] setEnabled:NO];
-        }
-
-        NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-        if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
-        {
-            Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
-        }
-        else
-        {
-            Behavior |= NSWindowCollectionBehaviorFullScreenAuxiliary;
-        }
-
-        if ((InStyle & EWindowStyleFlags::Opaque) == EWindowStyleFlags::None)
-        {
-            [Window setOpaque:NO];
-            [Window setHasShadow:NO];
-        }
-        else
-        {
-            [Window setHasShadow: YES];
-        }
-
-        [Window setStyleMask:WindowStyle];
-        [Window setCollectionBehavior:Behavior];
-
-        // Set styleflags
-        StyleParams = InStyle;
 
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);

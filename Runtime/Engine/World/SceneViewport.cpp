@@ -7,7 +7,6 @@
 
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
     : IViewport()
-    , Window(nullptr)
     , Viewport(InViewport)
     , RHIViewport(nullptr)
     , World(nullptr)
@@ -41,21 +40,12 @@ bool FSceneViewport::InitializeRHI()
         return false;
     }
 
-    Window = WindowWidget->GetPlatformWindow();
-    if (!Window)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    FWindowShape WindowShape;
-    Window->GetWindowShape(WindowShape);
-
+    const FIntVector2 WindowSize = WindowWidget->GetCachedSize();
     FRHIViewportInfo ViewportInfo;
-    ViewportInfo.WindowHandle = Window->GetPlatformHandle();
+    ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
     ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use RGBA for all RHIs except Vulkan?
-    ViewportInfo.Width        = static_cast<uint16>(WindowShape.Width);
-    ViewportInfo.Height       = static_cast<uint16>(WindowShape.Height);
+    ViewportInfo.Width        = static_cast<uint16>(WindowSize.x);
+    ViewportInfo.Height       = static_cast<uint16>(WindowSize.y);
 
     FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
     if (!NewViewport)

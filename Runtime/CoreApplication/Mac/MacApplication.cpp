@@ -166,18 +166,24 @@ TSharedPtr<FGenericApplication> FMacApplication::Create()
 
 TSharedPtr<FMacApplication> FMacApplication::CreateMacApplication()
 {
+    TSharedPtr<FMacCursor> Cursor = MakeSharedPtr<FMacCursor>();
+    
     // Create a new instance and set the the global instance
-    TSharedPtr<FMacApplication> NewMacApplication = MakeSharedPtr<FMacApplication>();
+    TSharedPtr<FMacApplication> NewMacApplication = MakeSharedPtr<FMacApplication>(Cursor);
     MacApplication = NewMacApplication.Get();
     return NewMacApplication;
 }
 
-FMacApplication::FMacApplication()
-    : FGenericApplication(MakeSharedPtr<FMacCursor>())
+FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
+    : FGenericApplication(InCursor)
     , Observer(nullptr)
+    , GlobalMouseMovedEventMonitor(nil)
+    , LocalEventMonitor(nil)
     , PreviousModifierFlags(0)
-    , InputDevice(FGCInputDevice::CreateGCInputDevice())
     , LastPressedButton(EMouseButtonName::Unknown)
+    , InputDevice(FGCInputDevice::CreateGCInputDevice())
+    , MacCursor(InCursor)
+    , WindowUnderCursor(nil)
     , Windows()
     , WindowsCS()
     , ClosedWindows()
@@ -236,10 +242,26 @@ FMacApplication::FMacApplication()
         NSApp.windowsMenu  = WindowMenu;
         NSApp.servicesMenu = ServiceMenu;
 
+        // Add observer for different application events
         Observer = [FMacApplicationObserver new];
         [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(onApplicationBecomeActive:) name:NSApplicationDidBecomeActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(onApplicationBecomeInactive:) name:NSApplicationDidResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:Observer selector:@selector(displaysDidChange:) name:NSApplicationDidChangeScreenParametersNotification object:nil];
+        
+        // Add event-monitors
+        LocalEventMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskAny handler:^(NSEvent* Event)
+                             {
+            return OnNSEvent(Event);
+        }];
+
+        GlobalMouseMovedEventMonitor = [NSEvent addGlobalMonitorForEventsMatchingMask:NSEventMaskMouseMoved handler:^(NSEvent* Event)
+        {
+            DeferEvent(Event);
+        }];
+        
+        // Find the current window that is under the cursor
+        FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
+        WindowUnderCursor = [NewWindowUnderCursor retain];
         
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -247,19 +269,34 @@ FMacApplication::FMacApplication()
 
 FMacApplication::~FMacApplication()
 {
-    @autoreleasepool
+    ExecuteOnMainThread(^
     {
+        // Release EventObserver
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidBecomeActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidChangeScreenParametersNotification object:nil];
-
         NSSafeRelease(Observer);
-        Windows.Clear();
-
-        if (this == MacApplication)
+        
+        // Release EventMonitors
+        if (GlobalMouseMovedEventMonitor)
         {
-            MacApplication = nullptr;
+            [NSEvent removeMonitor:GlobalMouseMovedEventMonitor];
         }
+        if (LocalEventMonitor)
+        {
+            [NSEvent removeMonitor:LocalEventMonitor];
+        }
+        
+        // Release CursorWindow
+        [WindowUnderCursor release];
+        WindowUnderCursor = nil;
+    }, NSDefaultRunLoopMode, true);
+
+    Windows.Clear();
+
+    if (this == MacApplication)
+    {
+        MacApplication = nullptr;
     }
 }
 
@@ -278,30 +315,55 @@ void FMacApplication::Tick(float)
 
     FPlatformApplicationMisc::PumpMessages(true);
 
-    TArray<FDeferredMacEvent> ProcessableEvents;
+    // Process Events
+    TArray<FDeferredMacEvent> LocalDeferredEvents;
     if (!DeferredEvents.IsEmpty())
     {
         TScopedLock Lock(DeferredEventsCS);
-
-        ::Swap(ProcessableEvents, DeferredEvents);
+        LocalDeferredEvents = Move(DeferredEvents);
         DeferredEvents.Clear();
     }
     
-    for (const FDeferredMacEvent& CurrentEvent : ProcessableEvents)
+    for (const FDeferredMacEvent& CurrentEvent : LocalDeferredEvents)
     {
         ProcessDeferredEvent(CurrentEvent);
     }
     
+    // Close Windows
+    TArray<TSharedRef<FMacWindow>> LocalClosedWindows;
     if (!ClosedWindows.IsEmpty())
     {
         TScopedLock Lock(ClosedWindowsCS);
-        
-        for (const TSharedRef<FMacWindow>& Window : ClosedWindows)
-        {
-            MessageHandler->OnWindowClosed(Window);
-        }
-        
+        LocalClosedWindows = Move(ClosedWindows);
         ClosedWindows.Clear();
+    }
+    
+    for (const TSharedRef<FMacWindow>& Window : LocalClosedWindows)
+    {
+        MessageHandler->OnWindowClosed(Window);
+    }
+
+    // Close CocoaWindows that has been closed
+    TArray<FCocoaWindow*> LocalClosedCocoaWindows;
+    if (!ClosedCocoaWindows.IsEmpty())
+    {
+        TScopedLock Lock(ClosedCocoaWindowsCS);
+        LocalClosedCocoaWindows = Move(ClosedCocoaWindows);
+        ClosedCocoaWindows.Clear();
+    }
+    
+    if (!LocalClosedCocoaWindows.IsEmpty())
+    {
+        ExecuteOnMainThread(^
+        {
+            SCOPED_AUTORELEASE_POOL();
+            
+            for (FCocoaWindow* CocoaWindow : LocalClosedCocoaWindows)
+            {
+                [CocoaWindow close];
+                [CocoaWindow release];
+            }
+        }, NSDefaultRunLoopMode, true);
     }
 }
 
@@ -348,19 +410,12 @@ TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
         return [NSApp keyWindow];
     }, NSDefaultRunLoopMode);
     
-    return GetWindowFromNSWindow(KeyWindow);
+    return FindWindowFromNSWindow(KeyWindow);
 }
 
 TSharedRef<FGenericWindow> FMacApplication::GetWindowUnderCursor() const
 {
-    NSWindow* WindowUnderCursor = ExecuteOnMainThreadAndReturn(^
-    {
-        SCOPED_AUTORELEASE_POOL();
-        const NSInteger WindowNumber = [NSWindow windowNumberAtPoint:[NSEvent mouseLocation] belowWindowWithWindowNumber:0];
-        return [NSApp windowWithWindowNumber:WindowNumber];
-    }, NSDefaultRunLoopMode);
-    
-    return GetWindowFromNSWindow(WindowUnderCursor);
+    return FindWindowFromNSWindow(WindowUnderCursor);
 }
 
 void FMacApplication::QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const
@@ -406,7 +461,21 @@ void FMacApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMess
     }
 }
 
-TSharedRef<FMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) const
+FCocoaWindow* FMacApplication::FindNSWindowUnderCursor() const
+{
+    SCOPED_AUTORELEASE_POOL();
+    
+    // Find the WindowNumber for the window currently under the cursor
+    const NSInteger WindowNumber = [NSWindow windowNumberAtPoint:[NSEvent mouseLocation] belowWindowWithWindowNumber:0];
+    
+    // Find the NSWindow with that WindowNumber
+    const NSWindow* Window = [NSApp windowWithWindowNumber:WindowNumber];
+    
+    // Return the Window if it is a CocoaWindow
+    return (Window && [Window isKindOfClass:[FCocoaWindow class]]) ? reinterpret_cast<FCocoaWindow*>(Window) : nil;
+}
+
+TSharedRef<FMacWindow> FMacApplication::FindWindowFromNSWindow(NSWindow* Window) const
 {
     if (Window && [Window isKindOfClass:[FCocoaWindow class]])
     {
@@ -427,14 +496,10 @@ TSharedRef<FMacWindow> FMacApplication::GetWindowFromNSWindow(NSWindow* Window) 
 
 void FMacApplication::CloseWindow(const TSharedRef<FMacWindow>& Window)
 {
+    TScopedLock Lock(ClosedWindowsCS);
+    if (!ClosedWindows.Contains(Window))
     {
-        TScopedLock Lock(ClosedWindowsCS);
         ClosedWindows.Emplace(Window);
-    }
-    
-    {
-        TScopedLock Lock(WindowsCS);
-        Windows.Remove(Window);
     }
 }
 
@@ -442,6 +507,16 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
 {
     SCOPED_AUTORELEASE_POOL();
     
+    // Find the current window that is under the cursor
+    FCocoaWindow* NewWindowUnderCursor = FindNSWindowUnderCursor();
+    if (WindowUnderCursor != NewWindowUnderCursor)
+    {
+        // Objective-C should handle nil objects here
+        [WindowUnderCursor release];
+        WindowUnderCursor = [NewWindowUnderCursor retain];
+    }
+    
+    // Handle EventObject (NSEvent, NSNotification, or NSString)
     if (EventObject)
     {
         FDeferredMacEvent NewDeferredEvent;
@@ -493,7 +568,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
 {
     SCOPED_AUTORELEASE_POOL();
     
-    TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(DeferredEvent.Window);
+    TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
     if (DeferredEvent.NotificationName)
     {
         NSNotificationName NotificationName = DeferredEvent.NotificationName;
@@ -562,7 +637,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
             case NSEventTypeOtherMouseDragged:
             case NSEventTypeRightMouseDragged:
             {
-                OnMouseMoveEvent();
+                OnMouseMoveEvent(DeferredEvent);
                 break;
             }
                
@@ -574,20 +649,20 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
 
             case NSEventTypeMouseEntered:
             {
-                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(DeferredEvent.Event.window);
+                TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Event.window);
                 if (Window)
                 {
-                    MessageHandler->OnMouseEntered(Window);
+                    MessageHandler->OnMouseEntered();
                 }
                 break;
             }
 
             case NSEventTypeMouseExited:
             {
-                TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(DeferredEvent.Event.window);
+                TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Event.window);
                 if (Window)
                 {
-                    MessageHandler->OnMouseLeft(Window);
+                    MessageHandler->OnMouseLeft();
                 }
 
                 break;
@@ -605,29 +680,50 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
     }
 }
 
-void FMacApplication::OnMouseMoveEvent()
+NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
+{
+    NSEvent* ReturnEvent = Event;
+    DeferEvent(Event);
+    
+    switch(Event.type)
+    {
+        case NSEventTypeKeyDown:
+        case NSEventTypeKeyUp:
+            ReturnEvent = nil;
+            break;
+            
+        default:
+            break;
+    }
+    
+    return ReturnEvent;
+}
+
+void FMacApplication::OnMouseMoveEvent(const FDeferredMacEvent&)
 {
     const NSPoint CursorPosition = GetCorrectedMouseLocation();
+
+    // Update the global cursor position
+    MacCursor->UpdateCursorPosition(FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y)));
+
     MessageHandler->OnMouseMove(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
 
 void FMacApplication::OnMouseButtonEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    const NSPoint CursorPosition = GetCorrectedMouseLocation();
     const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(DeferredEvent.Event.buttonNumber));
-
     if (DeferredEvent.Event.type == NSEventTypeLeftMouseDown ||
         DeferredEvent.Event.type == NSEventTypeRightMouseDown ||
         DeferredEvent.Event.type == NSEventTypeOtherMouseDown)
     {
-        TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(DeferredEvent.Window);
         if (LastPressedButton == CurrentMouseButton && DeferredEvent.Event.clickCount % 2 == 0)
         {
-            MessageHandler->OnMouseButtonDoubleClick(Window, CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+            MessageHandler->OnMouseButtonDoubleClick(CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState());
         }
         else
         {
-            MessageHandler->OnMouseButtonDown(Window, CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+            TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
+            MessageHandler->OnMouseButtonDown(Window, CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState());
         }
         
         // Save the mousebutton to handle double-click events
@@ -635,7 +731,7 @@ void FMacApplication::OnMouseButtonEvent(const FDeferredMacEvent& DeferredEvent)
     }
     else
     {
-        MessageHandler->OnMouseButtonUp(CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState(), static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+        MessageHandler->OnMouseButtonUp(CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState());
     }
 }
 
@@ -651,14 +747,13 @@ void FMacApplication::OnMouseScrollEvent(const FDeferredMacEvent& DeferredEvent)
             ScrollDeltaY *= 0.1;
         }
         
-        const NSPoint CursorPosition = GetCorrectedMouseLocation();
         if (FMath::Abs(ScrollDeltaX) > 0.0f)
         {
-            MessageHandler->OnMouseScrolled(ScrollDeltaX, false, static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+            MessageHandler->OnMouseScrolled(ScrollDeltaX, false);
         }
         if (FMath::Abs(ScrollDeltaY) > 0.0f)
         {
-            MessageHandler->OnMouseScrolled(ScrollDeltaY, true, static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
+            MessageHandler->OnMouseScrolled(ScrollDeltaY, true);
         }
     }
 }
@@ -669,6 +764,7 @@ void FMacApplication::OnKeyEvent(const FDeferredMacEvent& DeferredEvent)
     
     bool bIsRepeat  = false;
     bool bIsKeyDown = false;
+    
     if (DeferredEvent.Event.type == NSEventTypeKeyDown)
     {
         bIsRepeat  = DeferredEvent.Event.ARepeat;
@@ -678,6 +774,7 @@ void FMacApplication::OnKeyEvent(const FDeferredMacEvent& DeferredEvent)
     {
         const NSUInteger KeyFlag       = FMacInputMapper::TranslateKeyToModifierFlag(KeyName);
         const NSUInteger ModifierFlags = [DeferredEvent.Event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
+        
         if (KeyFlag & ModifierFlags)
         {
             if (KeyFlag & PreviousModifierFlags)
@@ -710,16 +807,44 @@ void FMacApplication::OnKeyEvent(const FDeferredMacEvent& DeferredEvent)
 
 void FMacApplication::OnWindowResized(const FDeferredMacEvent& DeferredEvent)
 {
-    TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(DeferredEvent.Window);
+    TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
     
-    const NSRect ContentRect = DeferredEvent.Window.contentView.frame;
+    // Start by giving other systems a chance to prepare for a window-resize
+    MessageHandler->OnWindowResizing(Window);
+    
+    NSRect ContentRect = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
+    FMacWindow::ConvertNSRect(DeferredEvent.Window.screen, &ContentRect);
+    
+    // Actual notify about a window-resize
     MessageHandler->OnWindowResized(Window, uint16(ContentRect.size.width), uint16(ContentRect.size.height));
 }
 
 void FMacApplication::OnWindowMoved(const FDeferredMacEvent& DeferredEvent)
 {
-    TSharedRef<FMacWindow> Window = GetWindowFromNSWindow(DeferredEvent.Window);
+    TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
     
-    const NSRect ContentRect = DeferredEvent.Window.contentView.frame;
+    NSRect ContentRect = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
+    FMacWindow::ConvertNSRect(DeferredEvent.Window.screen, &ContentRect);
+    
     MessageHandler->OnWindowMoved(Window, int16(ContentRect.origin.x), int16(ContentRect.origin.y));
+}
+
+void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)
+{
+    FCocoaWindow* CocoaWindow = Window->GetCocoaWindow();
+    if (CocoaWindow && !ClosedCocoaWindows.Contains(CocoaWindow))
+    {
+        TScopedLock Lock(ClosedCocoaWindowsCS);
+        ClosedCocoaWindows.Add(CocoaWindow);
+    }
+    
+    {
+        TScopedLock Lock(ClosedCocoaWindowsCS);
+        Windows.Remove(Window);
+    }
+}
+
+void FMacApplication::OnWindowWillResize(const TSharedRef<FMacWindow>& Window)
+{
+    MessageHandler->OnWindowResizing(Window);
 }

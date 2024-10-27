@@ -11,10 +11,8 @@ class FMacOutputDeviceConsole;
     FMacOutputDeviceConsole* ConsoleWindow;
 }
 
-// Instance
 - (instancetype)init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
 
-// Static
 + (NSString*)convertStringWithArgs:(const CHAR*)Format Args : (va_list)Args;
 
 @end
