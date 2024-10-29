@@ -48,22 +48,38 @@ public:
     virtual ImGuiIO*      GetImGuiIO()      const override final { return PluginImGuiIO; }
     virtual ImGuiContext* GetImGuiContext() const override final { return PluginImGuiContext; }
 
+    void OnCreatePlatformWindow(ImGuiViewport* Viewport);
+    void OnDestroyPlatformWindow(ImGuiViewport* Viewport);
+    void OnShowPlatformWindow(ImGuiViewport* Viewport);
+    void OnUpdatePlatformWindow(ImGuiViewport* Viewport);
+    ImVec2 OnGetPlatformWindowPosition(ImGuiViewport* Viewport);
+    void OnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
+    ImVec2 OnGetPlatformWindowSize(ImGuiViewport* Viewport);
+    void OnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+    void OnSetPlatformWindowFocus(ImGuiViewport* Viewport);
+    bool OnGetPlatformWindowFocus(ImGuiViewport* Viewport);
+    bool OnGetPlatformWindowMinimized(ImGuiViewport* Viewport);
+    void OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
+    void OnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
+    float OnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
+    void OnPlatformChangedViewport(ImGuiViewport* Viewport);
+    
 private:
-    static void StaticPlatformCreateWindow(ImGuiViewport* Viewport);
-    static void StaticPlatformDestroyWindow(ImGuiViewport* Viewport);
-    static void StaticPlatformShowWindow(ImGuiViewport* Viewport);
-    static void StaticPlatformUpdateWindow(ImGuiViewport* Viewport);
-    static ImVec2 StaticPlatformGetWindowPosition(ImGuiViewport* Viewport);
-    static void StaticPlatformSetWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
-    static ImVec2 StaticPlatformGetWindowSize(ImGuiViewport* Viewport);
-    static void StaticPlatformSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
-    static void StaticPlatformSetWindowFocus(ImGuiViewport* Viewport);
-    static bool StaticPlatformGetWindowFocus(ImGuiViewport* Viewport);
-    static bool StaticPlatformGetWindowMinimized(ImGuiViewport* Viewport);
-    static void StaticPlatformSetWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
-    static void StaticPlatformSetWindowAlpha(ImGuiViewport* Viewport, float Alpha);
-    static float StaticPlatformGetWindowDpiScale(ImGuiViewport* Viewport);
-    static void StaticPlatformOnChangedViewport(ImGuiViewport*);
+    static void StaticOnCreatePlatformWindow(ImGuiViewport* Viewport);
+    static void StaticOnDestroyPlatformWindow(ImGuiViewport* Viewport);
+    static void StaticOnShowPlatformWindow(ImGuiViewport* Viewport);
+    static void StaticOnUpdatePlatformWindow(ImGuiViewport* Viewport);
+    static ImVec2 StaticOnGetPlatformWindowPosition(ImGuiViewport* Viewport);
+    static void StaticOnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
+    static ImVec2 StaticOnGetPlatformWindowSize(ImGuiViewport* Viewport);
+    static void StaticOnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+    static void StaticOnSetPlatformWindowFocus(ImGuiViewport* Viewport);
+    static bool StaticOnGetPlatformWindowFocus(ImGuiViewport* Viewport);
+    static bool StaticOnGetPlatformWindowMinimized(ImGuiViewport* Viewport);
+    static void StaticOnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
+    static void StaticOnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
+    static float StaticOnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
+    static void StaticOnPlatformChangedViewport(ImGuiViewport* Viewport);
 
     void UpdateMonitorInfo();
 

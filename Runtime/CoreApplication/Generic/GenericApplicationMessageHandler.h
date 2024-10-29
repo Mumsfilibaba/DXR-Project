@@ -41,7 +41,7 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnMouseMove(int32 x, int32 y)
+    virtual bool OnMouseMove(int32 MouseX, int32 MouseY)
     {
         return false;
     }
@@ -76,7 +76,7 @@ struct FGenericApplicationMessageHandler
         return false;
     }
 
-    virtual bool OnHighPrecisionMouseInput(int32 x, uint32 y)
+    virtual bool OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
     {
         return false;
     }

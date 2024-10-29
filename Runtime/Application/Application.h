@@ -48,7 +48,7 @@ public:
     virtual bool OnMouseScrolled(float WheelDelta, bool bVertical) override final;
     virtual bool OnMouseEntered() override final;
     virtual bool OnMouseLeft() override final;
-    virtual bool OnHighPrecisionMouseInput(int32 x, uint32 y) override final;
+    virtual bool OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY) override final;
     virtual bool OnWindowResized(const TSharedRef<FGenericWindow>& Window, uint32 Width, uint32 Height) override final;
     virtual bool OnWindowResizing(const TSharedRef<FGenericWindow>& Window) override final;
     virtual bool OnWindowMoved(const TSharedRef<FGenericWindow>& Window, int32 MouseX, int32 MouseY) override final;

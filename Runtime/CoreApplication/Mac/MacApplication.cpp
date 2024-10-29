@@ -811,22 +811,52 @@ void FMacApplication::OnWindowResized(const FDeferredMacEvent& DeferredEvent)
     
     // Start by giving other systems a chance to prepare for a window-resize
     MessageHandler->OnWindowResizing(Window);
+ 
+    // When entering fullscreen the window size is the full frame
+    NSRect ContentFrame;
+    if (DeferredEvent.NotificationName == NSWindowDidEnterFullScreenNotification)
+    {
+        ContentFrame = [DeferredEvent.Window frame];
+    }
+    else
+    {
+        ContentFrame = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
+    }
+
+    // Convert the coordinates to the generic ones that are expected
+    FMacWindow::ConvertNSRect(DeferredEvent.Window.screen, &ContentFrame);
+
+    // Window can move sometimes when resized so send and event about it
+    const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
+    const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
-    NSRect ContentRect = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
-    FMacWindow::ConvertNSRect(DeferredEvent.Window.screen, &ContentRect);
+    const FIntVector2 CachedPosition = Window->GetCachedPosition();
+    if (CachedPosition.x != PositionX || CachedPosition.y != PositionY)
+    {
+        MessageHandler->OnWindowMoved(Window, PositionX, PositionY);
+        Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
+    }
     
     // Actual notify about a window-resize
-    MessageHandler->OnWindowResized(Window, uint16(ContentRect.size.width), uint16(ContentRect.size.height));
+    MessageHandler->OnWindowResized(Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
 }
 
 void FMacApplication::OnWindowMoved(const FDeferredMacEvent& DeferredEvent)
 {
     TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
     
-    NSRect ContentRect = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
-    FMacWindow::ConvertNSRect(DeferredEvent.Window.screen, &ContentRect);
+    NSRect ContentFrame = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
+    FMacWindow::ConvertNSRect(DeferredEvent.Window.screen, &ContentFrame);
     
-    MessageHandler->OnWindowMoved(Window, int16(ContentRect.origin.x), int16(ContentRect.origin.y));
+    const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
+    const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
+    
+    const FIntVector2 CachedPosition = Window->GetCachedPosition();
+    if (CachedPosition.x != PositionX || CachedPosition.y != PositionY)
+    {
+        MessageHandler->OnWindowMoved(Window, PositionX, PositionY);
+        Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
+    }
 }
 
 void FMacApplication::OnWindowDestroyed(const TSharedRef<FMacWindow>& Window)

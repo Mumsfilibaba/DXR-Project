@@ -111,22 +111,22 @@ bool FImGuiPlugin::Load()
             Viewport->PlatformUserData      = nullptr;
             Viewport->RendererUserData      = nullptr;
         }
-
-        PlatformState.Platform_CreateWindow       = &FImGuiPlugin::StaticPlatformCreateWindow;
-        PlatformState.Platform_DestroyWindow      = &FImGuiPlugin::StaticPlatformDestroyWindow;
-        PlatformState.Platform_ShowWindow         = &FImGuiPlugin::StaticPlatformShowWindow;
-        PlatformState.Platform_SetWindowPos       = &FImGuiPlugin::StaticPlatformSetWindowPosition;
-        PlatformState.Platform_GetWindowPos       = &FImGuiPlugin::StaticPlatformGetWindowPosition;
-        PlatformState.Platform_SetWindowSize      = &FImGuiPlugin::StaticPlatformSetWindowSize;
-        PlatformState.Platform_GetWindowSize      = &FImGuiPlugin::StaticPlatformGetWindowSize;
-        PlatformState.Platform_SetWindowFocus     = &FImGuiPlugin::StaticPlatformSetWindowFocus;
-        PlatformState.Platform_GetWindowFocus     = &FImGuiPlugin::StaticPlatformGetWindowFocus;
-        PlatformState.Platform_GetWindowMinimized = &FImGuiPlugin::StaticPlatformGetWindowMinimized;
-        PlatformState.Platform_SetWindowTitle     = &FImGuiPlugin::StaticPlatformSetWindowTitle;
-        PlatformState.Platform_SetWindowAlpha     = &FImGuiPlugin::StaticPlatformSetWindowAlpha;
-        PlatformState.Platform_UpdateWindow       = &FImGuiPlugin::StaticPlatformUpdateWindow;
-        PlatformState.Platform_GetWindowDpiScale  = &FImGuiPlugin::StaticPlatformGetWindowDpiScale;
-        PlatformState.Platform_OnChangedViewport  = &FImGuiPlugin::StaticPlatformOnChangedViewport;
+        
+        PlatformState.Platform_CreateWindow       = &FImGuiPlugin::StaticOnCreatePlatformWindow;
+        PlatformState.Platform_DestroyWindow      = &FImGuiPlugin::StaticOnDestroyPlatformWindow;
+        PlatformState.Platform_ShowWindow         = &FImGuiPlugin::StaticOnShowPlatformWindow;
+        PlatformState.Platform_SetWindowPos       = &FImGuiPlugin::StaticOnSetPlatformWindowPosition;
+        PlatformState.Platform_GetWindowPos       = &FImGuiPlugin::StaticOnGetPlatformWindowPosition;
+        PlatformState.Platform_SetWindowSize      = &FImGuiPlugin::StaticOnSetPlatformWindowSize;
+        PlatformState.Platform_GetWindowSize      = &FImGuiPlugin::StaticOnGetPlatformWindowSize;
+        PlatformState.Platform_SetWindowFocus     = &FImGuiPlugin::StaticOnSetPlatformWindowFocus;
+        PlatformState.Platform_GetWindowFocus     = &FImGuiPlugin::StaticOnGetPlatformWindowFocus;
+        PlatformState.Platform_GetWindowMinimized = &FImGuiPlugin::StaticOnGetPlatformWindowMinimized;
+        PlatformState.Platform_SetWindowTitle     = &FImGuiPlugin::StaticOnSetPlatformWindowTitle;
+        PlatformState.Platform_SetWindowAlpha     = &FImGuiPlugin::StaticOnSetPlatformWindowAlpha;
+        PlatformState.Platform_UpdateWindow       = &FImGuiPlugin::StaticOnUpdatePlatformWindow;
+        PlatformState.Platform_GetWindowDpiScale  = &FImGuiPlugin::StaticOnGetPlatformWindowDpiScale;
+        PlatformState.Platform_OnChangedViewport  = &FImGuiPlugin::StaticOnPlatformChangedViewport;
     }
     else
     {
@@ -648,8 +648,7 @@ void FImGuiPlugin::UpdateMonitorInfo()
         }
     }
 }
-
-void FImGuiPlugin::StaticPlatformCreateWindow(ImGuiViewport* Viewport)
+void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
 {
     CHECK(Viewport->PlatformUserData == nullptr);
 
@@ -711,13 +710,13 @@ void FImGuiPlugin::StaticPlatformCreateWindow(ImGuiViewport* Viewport)
     }));
 }
 
-void FImGuiPlugin::StaticPlatformDestroyWindow(ImGuiViewport* Viewport)
+void FImGuiPlugin::OnDestroyPlatformWindow(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
     // Wait for the GPU to finish with the current frame before resizing
-    GRHICommandExecutor.WaitForGPU();
+    GRHICommandExecutor.WaitForCommands();
     
     FApplicationInterface::Get().DestroyWindow(ViewportData->Window);
 
@@ -730,7 +729,7 @@ void FImGuiPlugin::StaticPlatformDestroyWindow(ImGuiViewport* Viewport)
     delete ViewportData;
 }
 
-void FImGuiPlugin::StaticPlatformShowWindow(ImGuiViewport* Viewport)
+void FImGuiPlugin::OnShowPlatformWindow(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
@@ -748,7 +747,7 @@ void FImGuiPlugin::StaticPlatformShowWindow(ImGuiViewport* Viewport)
     }
 }
 
-void FImGuiPlugin::StaticPlatformUpdateWindow(ImGuiViewport* Viewport)
+void FImGuiPlugin::OnUpdatePlatformWindow(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
@@ -761,7 +760,7 @@ void FImGuiPlugin::StaticPlatformUpdateWindow(ImGuiViewport* Viewport)
     {
         PlatformWindow->SetStyle(WindowStyle);
 
-        // NOTE: This seem to be more specific for windows
+        // TODO: This seem to be more specific for windows
     #if PLATFORM_WINDOWS
         if ((WindowStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
         {
@@ -777,7 +776,7 @@ void FImGuiPlugin::StaticPlatformUpdateWindow(ImGuiViewport* Viewport)
     }
 }
 
-ImVec2 FImGuiPlugin::StaticPlatformGetWindowPosition(ImGuiViewport* Viewport)
+ImVec2 FImGuiPlugin::OnGetPlatformWindowPosition(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
@@ -786,7 +785,7 @@ ImVec2 FImGuiPlugin::StaticPlatformGetWindowPosition(ImGuiViewport* Viewport)
     return ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
 }
 
-void FImGuiPlugin::StaticPlatformSetWindowPosition(ImGuiViewport* Viewport, ImVec2 Position)
+void FImGuiPlugin::OnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
@@ -795,7 +794,7 @@ void FImGuiPlugin::StaticPlatformSetWindowPosition(ImGuiViewport* Viewport, ImVe
     Viewport->PlatformRequestMove = false;
 }
 
-ImVec2 FImGuiPlugin::StaticPlatformGetWindowSize(ImGuiViewport* Viewport)
+ImVec2 FImGuiPlugin::OnGetPlatformWindowSize(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
@@ -804,19 +803,19 @@ ImVec2 FImGuiPlugin::StaticPlatformGetWindowSize(ImGuiViewport* Viewport)
     return ImVec2(static_cast<float>(Size.x), static_cast<float>(Size.y));
 }
 
-void FImGuiPlugin::StaticPlatformSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
+void FImGuiPlugin::OnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     
     // Wait for the GPU to finish with the current frame before resizing
-    GRHICommandExecutor.WaitForGPU();
+    GRHICommandExecutor.WaitForCommands();
     
     ViewportData->Window->Resize(FIntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y)));
     Viewport->PlatformRequestResize = false;
 }
 
-void FImGuiPlugin::StaticPlatformSetWindowFocus(ImGuiViewport* Viewport)
+void FImGuiPlugin::OnSetPlatformWindowFocus(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
@@ -827,41 +826,131 @@ void FImGuiPlugin::StaticPlatformSetWindowFocus(ImGuiViewport* Viewport)
     PlatformWindow->SetWindowFocus();
 }
 
-bool FImGuiPlugin::StaticPlatformGetWindowFocus(ImGuiViewport* Viewport)
+bool FImGuiPlugin::OnGetPlatformWindowFocus(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     return ViewportData->Window->IsActive();
 }
 
-bool FImGuiPlugin::StaticPlatformGetWindowMinimized(ImGuiViewport* Viewport)
+bool FImGuiPlugin::OnGetPlatformWindowMinimized(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     return ViewportData->Window->IsMinimized();
 }
 
-void FImGuiPlugin::StaticPlatformSetWindowTitle(ImGuiViewport* Viewport, const CHAR* Title)
+void FImGuiPlugin::OnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
-    return ViewportData->Window->SetTitle(Title);
+    ViewportData->Window->SetTitle(Title);
 }
 
-void FImGuiPlugin::StaticPlatformSetWindowAlpha(ImGuiViewport* Viewport, float Alpha)
+void FImGuiPlugin::OnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     ViewportData->Window->SetOpacity(Alpha);
 }
 
-float FImGuiPlugin::StaticPlatformGetWindowDpiScale(ImGuiViewport* Viewport)
+float FImGuiPlugin::OnGetPlatformWindowDpiScale(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     return ViewportData->Window->GetWindowDpiScale();
 }
 
-void FImGuiPlugin::StaticPlatformOnChangedViewport(ImGuiViewport*)
+void FImGuiPlugin::OnPlatformChangedViewport(ImGuiViewport*)
 {
+}
+
+void FImGuiPlugin::StaticOnCreatePlatformWindow(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnCreatePlatformWindow(Viewport);
+}
+
+void FImGuiPlugin::StaticOnDestroyPlatformWindow(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnDestroyPlatformWindow(Viewport);
+}
+
+void FImGuiPlugin::StaticOnShowPlatformWindow(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnShowPlatformWindow(Viewport);
+}
+
+void FImGuiPlugin::StaticOnUpdatePlatformWindow(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnUpdatePlatformWindow(Viewport);
+}
+
+ImVec2 FImGuiPlugin::StaticOnGetPlatformWindowPosition(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    return GImGuiPlugin->OnGetPlatformWindowPosition(Viewport);
+}
+
+void FImGuiPlugin::StaticOnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnSetPlatformWindowPosition(Viewport, Position);
+}
+
+ImVec2 FImGuiPlugin::StaticOnGetPlatformWindowSize(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    return GImGuiPlugin->OnGetPlatformWindowSize(Viewport);
+}
+
+void FImGuiPlugin::StaticOnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnSetPlatformWindowSize(Viewport, Size);
+}
+
+void FImGuiPlugin::StaticOnSetPlatformWindowFocus(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnSetPlatformWindowFocus(Viewport);
+}
+
+bool FImGuiPlugin::StaticOnGetPlatformWindowFocus(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    return GImGuiPlugin->OnGetPlatformWindowFocus(Viewport);
+}
+
+bool FImGuiPlugin::StaticOnGetPlatformWindowMinimized(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    return GImGuiPlugin->OnGetPlatformWindowMinimized(Viewport);
+}
+
+void FImGuiPlugin::StaticOnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnSetPlatformWindowTitle(Viewport, Title);
+}
+
+void FImGuiPlugin::StaticOnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnSetPlatformWindowAlpha(Viewport, Alpha);
+}
+
+float FImGuiPlugin::StaticOnGetPlatformWindowDpiScale(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    return GImGuiPlugin->OnGetPlatformWindowDpiScale(Viewport);
+}
+
+void FImGuiPlugin::StaticOnPlatformChangedViewport(ImGuiViewport* Viewport)
+{
+    CHECK(GImGuiPlugin != nullptr);
+    GImGuiPlugin->OnPlatformChangedViewport(Viewport);
 }

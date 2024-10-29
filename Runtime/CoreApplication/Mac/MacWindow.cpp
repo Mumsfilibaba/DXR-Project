@@ -152,6 +152,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             [CocoaWindow setHasShadow: YES];
         }
         
+        // Create Window-View
         NSColor* BackGroundColor = [NSColor colorWithSRGBRed:0.15f green:0.15f blue:0.15f alpha:1.0f];
         CocoaWindowView = [[FCocoaWindowView alloc] initWithFrame:WindowRect];
         
@@ -170,17 +171,10 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
             [CocoaWindow setTabbingMode:NSWindowTabbingModeDisallowed];
         }
         
-        [CocoaWindow setIsVisible:YES];
-        
-        const NSRect ContentRect  = NSMakeRect(0, 0, Width, Height);
-        NSRect NewFrame = [CocoaWindow frameRectForContentRect:ContentRect];
-        NewFrame.origin.x = PositionX;
-        NewFrame.origin.y = PositionY;
-        ConvertNSRect(CocoaWindow.screen, &NewFrame);
-        [CocoaWindow setFrame: NewFrame display: YES];
-       
+        // Store the cached position and initialization params
+        Position    = FIntVector2(static_cast<int32>(WindowRect.origin.x), static_cast<int32>(WindowRect.origin.y));
         StyleParams = InInitializer.Style;
-        bResult = true;
+        bResult     = true;
         
         FPlatformApplicationMisc::PumpMessages(true);
     }, NSDefaultRunLoopMode, true);
@@ -443,6 +437,9 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
             
             const NSRect WindowFrame = [CocoaWindow frameRectForContentRect:NewContentRect];
             [CocoaWindow setFrameOrigin:WindowFrame.origin];
+            
+            // Cache the position
+            Position = FIntVector2(static_cast<int32>(WindowFrame.origin.x), static_cast<int32>(WindowFrame.origin.y));
         }
         
         FPlatformApplicationMisc::PumpMessages(true);
@@ -487,6 +484,9 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
             ConvertNSRect(CocoaWindow.screen, &NewContentRect);
             const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[CocoaWindow styleMask]];
             [CocoaWindow setFrame: NewFrame display: YES];
+            
+            // Cache the position
+            Position = FIntVector2(static_cast<int32>(NewFrame.origin.x), static_cast<int32>(NewFrame.origin.y));
         }
         
         FPlatformApplicationMisc::PumpMessages(true);

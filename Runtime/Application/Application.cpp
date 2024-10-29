@@ -486,7 +486,7 @@ bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
     {
         return true;
     }
-
+    
     // Retrieve all the widgets under the cursor which should receive events
     FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
@@ -724,7 +724,7 @@ bool FApplicationInterface::OnMouseLeft()
     return Response.IsEventHandled();
 }
 
-bool FApplicationInterface::OnHighPrecisionMouseInput(int32 x, uint32 y)
+bool FApplicationInterface::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
 {
     return false;
 }

@@ -512,7 +512,7 @@ public:
     bool Initialize();
     void Release();
     void Tick();
-    void WaitForOutstandingTasks();
+    void WaitForCommands();
     void WaitForGPU();
     void ExecuteCommandList(class FRHICommandList& CmdList);
 

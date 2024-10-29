@@ -57,10 +57,21 @@ public:
         return Application;
     }
     
+    void SetCachedPosition(const FIntVector2& InPosition)
+    {
+        Position = InPosition;
+    }
+    
+    const FIntVector2& GetCachedPosition() const
+    {
+        return Position;
+    }
+    
 private:
     FMacWindow(FMacApplication* InApplication);
 
     FMacApplication*  Application;
     FCocoaWindow*     CocoaWindow;
     FCocoaWindowView* CocoaWindowView;
+    FIntVector2       Position;
 };
