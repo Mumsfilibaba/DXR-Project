@@ -133,11 +133,11 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     return true;
 }
 
-void FWindowsWindow::Show(bool bFocusOnActivate)
+void FWindowsWindow::Show(bool bFocus)
 {
     if (IsValid())
     {
-        if (bFocusOnActivate)
+        if (bFocus)
         {
             ::ShowWindow(Window, SW_SHOWNORMAL);
             ::BringWindowToTop(Window);

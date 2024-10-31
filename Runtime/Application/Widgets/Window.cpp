@@ -219,6 +219,14 @@ void FWindow::SetContent(const TSharedPtr<FWidget>& InContent)
     Content = InContent;
 }
 
+void FWindow::Show(bool bFocus)
+{
+    if (PlatformWindow)
+    {
+        PlatformWindow->Show(bFocus);
+    }
+}
+
 void FWindow::Minimize()
 {
     if (PlatformWindow)

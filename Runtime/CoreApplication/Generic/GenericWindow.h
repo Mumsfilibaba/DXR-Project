@@ -90,7 +90,7 @@ public:
     virtual ~FGenericWindow() = default;
 
     virtual bool Initialize(const FGenericWindowInitializer& InInitializer) { return true; }
-    virtual void Show(bool bFocusOnActivate = true) { }
+    virtual void Show(bool bFocus = true) { }
     virtual void Minimize() { }
     virtual void Maximize() { }
     virtual void Destroy() { }

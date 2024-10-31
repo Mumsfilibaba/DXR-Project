@@ -182,7 +182,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     return bResult;
 }
 
-void FMacWindow::Show(bool bFocusOnActivate)
+void FMacWindow::Show(bool bFocus)
 {
     ExecuteOnMainThread(^
     {
@@ -192,7 +192,7 @@ void FMacWindow::Show(bool bFocusOnActivate)
         {
             [CocoaWindow setIsVisible:YES];
 
-            if (bFocusOnActivate)
+            if (bFocus)
             {
                 [CocoaWindow orderFront:nil];
             }

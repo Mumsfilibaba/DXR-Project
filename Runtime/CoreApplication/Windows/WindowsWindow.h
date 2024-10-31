@@ -38,7 +38,7 @@ public:
     ~FWindowsWindow();
 
     virtual bool Initialize(const FGenericWindowInitializer& InInitializer) override final;
-    virtual void Show(bool bFocusOnActivate) override final;
+    virtual void Show(bool bFocus) override final;
     virtual void Minimize() override final;
     virtual void Maximize() override final;
     virtual void Destroy() override final;

@@ -65,6 +65,13 @@ public:
     void OnPlatformChangedViewport(ImGuiViewport* Viewport);
     
 private:
+    static FORCEINLINE FImGuiPlugin* Get()
+    {
+        FImGuiPlugin* ImGuiPlugin = reinterpret_cast<FImGuiPlugin*>(ImGui::GetIO().BackendPlatformUserData);
+        CHECK(ImGuiPlugin != nullptr);
+        return ImGuiPlugin;
+    }
+    
     static void StaticOnCreatePlatformWindow(ImGuiViewport* Viewport);
     static void StaticOnDestroyPlatformWindow(ImGuiViewport* Viewport);
     static void StaticOnShowPlatformWindow(ImGuiViewport* Viewport);
@@ -80,7 +87,7 @@ private:
     static void StaticOnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
     static float StaticOnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
     static void StaticOnPlatformChangedViewport(ImGuiViewport* Viewport);
-
+    
     void UpdateMonitorInfo();
 
     ImGuiIO*                       PluginImGuiIO;
@@ -92,5 +99,3 @@ private:
     FImGuiDrawMulticastDelegate    DrawDelegates;
     FDelegateHandle                OnMonitorConfigChangedDelegateHandle;
 };
-
-extern FImGuiPlugin* GImGuiPlugin;

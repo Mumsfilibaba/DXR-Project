@@ -67,6 +67,7 @@ public:
     void SetOverlay(const TSharedPtr<FWidget>& InOverlay);
     void SetContent(const TSharedPtr<FWidget>& InContent);
 
+    void Show(bool bFocus = true);
     void Minimize();
     void Maximize();
     void Restore();

@@ -39,19 +39,32 @@ public:
     ~FImGuiRenderer();
 
     bool Initialize();
-    void Render(FRHICommandList& CmdList);
-    void RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear);
-
+    void Render(FRHICommandList& CommandList);
+    void RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear);
+    
+    void OnCreateWindow(ImGuiViewport* InViewport);
+    void OnDestroyWindow(ImGuiViewport* Viewport);
+    void OnSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+    void OnRenderWindow(ImGuiViewport* Viewport, void* CommandList);
+    void OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList);
+    
 private:
-    static void StaticCreateWindow(ImGuiViewport* InViewport);
-    static void StaticDestroyWindow(ImGuiViewport* Viewport);
-    static void StaticSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
-    static void StaticRenderWindow(ImGuiViewport* Viewport, void* CmdList);
-    static void StaticSwapBuffers(ImGuiViewport* Viewport, void* CmdList);
+    static FORCEINLINE FImGuiRenderer* Get()
+    {
+        FImGuiRenderer* ImGuiRenderer = reinterpret_cast<FImGuiRenderer*>(ImGui::GetIO().BackendRendererUserData);
+        CHECK(ImGuiRenderer != nullptr);
+        return ImGuiRenderer;
+    }
+    
+    static void StaticOnCreateWindow(ImGuiViewport* InViewport);
+    static void StaticOnDestroyWindow(ImGuiViewport* Viewport);
+    static void StaticOnSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
+    static void StaticOnRenderWindow(ImGuiViewport* Viewport, void* CommandList);
+    static void StaticOnSwapBuffers(ImGuiViewport* Viewport, void* CommandList);
 
-    void PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawData);
-    void RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData);
-    void SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& ViewportData);
+    void PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
+    void RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
+    void SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData);
     
     TArray<FImGuiTexture*>       RenderedImages;
     FRHITextureRef               FontTexture;
