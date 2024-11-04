@@ -12,37 +12,22 @@
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 
+// FEventDispatcher is a helper class that dispatches events with a specified dispatch policy.
+// Policies include FLeafFirstPolicy, FLeafLastPolicy, and FDirectPolicy, which can be described
+// as follows:
+//  - FLeafFirstPolicy: Send the event to the first widget first and then send the events
+//    along the widget path until a widget handles the event. In practice, this means
+//    that the window will receive the event first and then propagate to the rest of the widgets.
+//  - FLeafLastPolicy: Send the event to the last widget first and then send the events
+//    backward along the widget path until a widget handles the event. In practice, this means
+//    that the window will receive the event last.
+//  - FDirectPolicy: Send the events only to the first widget in the widget path. In practice,
+//    this means that the window receives the event, and then the propagation stops there. This
+//    policy gives a single widget the chance to process the event and stops even if the widget
+//    does not handle the event.
+
 struct FEventDispatcher
 {
-    class FLeafLastPolicy
-    {
-    public:
-        FLeafLastPolicy(FWidgetPath& InWidgets)
-            : Widgets(InWidgets)
-            , Index(static_cast<int32>(InWidgets.LastIndex()))
-        {
-        }
-
-        bool ShouldProcess() const
-        {
-            return Index > 0 && !Widgets.IsEmpty();
-        }
-
-        void Next()
-        {
-            Index--;
-        }
-        
-        const TSharedPtr<FWidget>& GetWidget() const
-        {
-            return Widgets[Index];
-        }
-
-    private:
-        FWidgetPath& Widgets;
-        int32        Index;
-    };
-
     class FLeafFirstPolicy
     {
     public:
@@ -60,6 +45,35 @@ struct FEventDispatcher
         void Next()
         {
             Index++;
+        }
+
+        const TSharedPtr<FWidget>& GetWidget() const
+        {
+            return Widgets[Index];
+        }
+
+    private:
+        FWidgetPath& Widgets;
+        int32        Index;
+    };
+
+    class FLeafLastPolicy
+    {
+    public:
+        FLeafLastPolicy(FWidgetPath& InWidgets)
+            : Widgets(InWidgets)
+            , Index(static_cast<int32>(InWidgets.LastIndex()))
+        {
+        }
+
+        bool ShouldProcess() const
+        {
+            return Index >= 0 && !Widgets.IsEmpty(); // Corrected from Index > 0
+        }
+
+        void Next()
+        {
+            Index--;
         }
 
         const TSharedPtr<FWidget>& GetWidget() const
@@ -101,6 +115,28 @@ struct FEventDispatcher
         bool         bIsProcessed;
     };
 
+    template<typename PolicyType, typename EventType, typename PredicateType>
+    static FResponse Dispatch(PolicyType Policy, const EventType& Event, PredicateType&& Predicate)
+    {
+        FResponse Response = FResponse::Unhandled();
+        for (; !Response.IsEventHandled() && Policy.ShouldProcess(); Policy.Next())
+        {
+            Response = Predicate(Policy.GetWidget(), Event);
+        }
+
+        return Response;
+    }
+};
+
+// FEventPreProcessor is a helper class for pre-processing input events. This allows input handlers
+// to be notified about events before they are sent to the correct widgets. Events can have
+// different policies that decide in what order they are pre-processed. Currently, the policy is:
+//  - FPreProcessPolicy: Goes through the InputHandler array in order. This means that the
+//    InputHandlers are looped through in order until an InputHandler returns that it has
+//    handled the event.
+
+struct FEventPreProcessor
+{
     class FPreProcessPolicy
     {
     public:
@@ -130,8 +166,8 @@ struct FEventDispatcher
         int32 Index;
     };
 
-    template<typename EventType, typename PedicateType>
-    static FResponse PreProcess(FPreProcessPolicy Policy, const EventType& Event, PedicateType&& Predicate)
+    template<typename EventType, typename PredicateType>
+    static FResponse PreProcess(FPreProcessPolicy Policy, const EventType& Event, PredicateType&& Predicate)
     {
         FResponse Response = FResponse::Unhandled();
         for (; Policy.ShouldProcess(); Policy.Next())
@@ -139,19 +175,8 @@ struct FEventDispatcher
             if (Predicate(Policy.GetPreProcessor(), Event))
             {
                 Response = FResponse::Handled();
+                break;
             }
-        }
-
-        return Response;
-    }
-
-    template<typename PolicyType, typename EventType, typename PedicateType>
-    static FResponse Dispatch(PolicyType Policy, const EventType& Event, PedicateType&& Predicate)
-    {
-        FResponse Response = FResponse::Unhandled();
-        for (; !Response.IsEventHandled() && Policy.ShouldProcess(); Policy.Next())
-        {
-            Response = Predicate(Policy.GetWidget(), Event);
         }
 
         return Response;
@@ -160,26 +185,6 @@ struct FEventDispatcher
 
 TSharedPtr<FGenericApplication>   FApplicationInterface::PlatformApplication = nullptr;
 TSharedPtr<FApplicationInterface> FApplicationInterface::ApplicationInstance = nullptr;
-
-FApplicationInterface::FApplicationInterface()
-    : PressedKeys()
-    , PressedMouseButtons()
-    , DisplayInfo()
-    , bIsMonitorInfoValid(false)
-    , bIsTrackingCursor(false)
-    , Windows()
-    , FocusPath()
-    , TrackedWidgets()
-    , InputHandlers()
-    , OnMonitorConfigChangedEvent()
-{
-    // Init monitor information
-    UpdateMonitorInfo();
-}
-
-FApplicationInterface::~FApplicationInterface()
-{
-}
 
 bool FApplicationInterface::Create()
 {
@@ -213,15 +218,37 @@ void FApplicationInterface::Destroy()
     }
 }
 
+FApplicationInterface::FApplicationInterface()
+    : PressedKeys()
+    , PressedMouseButtons()
+    , MonitorInfos()
+    , bIsMonitorInfoValid(false)
+    , bIsTrackingCursor(false)
+    , Windows()
+    , FocusPath()
+    , TrackedWidgets()
+    , InputHandlers()
+    , OnMonitorConfigChangedEvent()
+{
+    // Init monitor information
+    UpdateMonitorInfo();
+}
+
+FApplicationInterface::~FApplicationInterface()
+{
+}
+
 void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
 {
     if (!InWindow)
     {
+        LOG_WARNING("Trying to register a null window");
         return;
     }
 
     if (Windows.Contains(InWindow))
     {
+        LOG_WARNING("Window is already registered");
         return;
     }
 
@@ -231,27 +258,36 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
 
-    const float PrimaryDisplayWidth  = static_cast<float>(DisplayInfo.PrimaryDisplayWidth);
-    const float PrimaryDisplayHeight = static_cast<float>(DisplayInfo.PrimaryDisplayHeight);
-
-    float DisplayScaling = 1.0f;
-    for (const FMonitorInfo& MonitorInfo : DisplayInfo.MonitorInfos)
+    // Find the primary monitor
+    int32 PrimaryMonitorIndex = -1;
+    for (int32 Index = 0; Index < MonitorInfos.Size(); Index++)
     {
+        const FMonitorInfo& MonitorInfo = MonitorInfos[Index];
         if (MonitorInfo.bIsPrimary)
         {
-            DisplayScaling = MonitorInfo.DisplayScaling;
+            PrimaryMonitorIndex = Index;
             break;
         }
     }
+    
+    if (PrimaryMonitorIndex < 0)
+    {
+        LOG_WARNING("No primary monitor detected");
+        return;
+    }
+    
+    // Calculate the maximum position and size of the new window
+    const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
 
-    const uint32 MinWidth  = 60;
-    const uint32 MinHeight = 20;
-    const uint32 MaxWidth  = static_cast<uint32>(PrimaryDisplayWidth / DisplayScaling);
-    const uint32 MaxHeight = static_cast<uint32>(PrimaryDisplayHeight / DisplayScaling);
+    const uint32 MinWidth  = 0;
+    const uint32 MinHeight = 0;
+    
+    const uint32 MaxWidth  = static_cast<uint32>(MonitorInfo.WorkSize.x);
+    const uint32 MaxHeight = static_cast<uint32>(MonitorInfo.WorkSize.y);
 
     FGenericWindowInitializer WindowInitializer;
     WindowInitializer.Title    = InWindow->GetTitle();
-    WindowInitializer.Position = InWindow->GetCachedPosition();
+    WindowInitializer.Position = InWindow->GetPosition();
     WindowInitializer.Style    = InWindow->GetStyle();
     WindowInitializer.Width    = FMath::Clamp<int32>(MinWidth, MaxWidth, InWindow->GetWidth());
     WindowInitializer.Height   = FMath::Clamp<int32>(MinHeight, MaxHeight, InWindow->GetHeight());
@@ -302,8 +338,11 @@ void FApplicationInterface::UpdateInputDevices()
 
 void FApplicationInterface::UpdateMonitorInfo()
 {
-    PlatformApplication->QueryDisplayInfo(DisplayInfo);
-    bIsMonitorInfoValid = true;
+    if (!bIsMonitorInfoValid)
+    {
+        PlatformApplication->QueryMonitorInfo(MonitorInfos);
+        bIsMonitorInfoValid = true;
+    }
 }
 
 void FApplicationInterface::RegisterInputHandler(const TSharedPtr<FInputHandler>& NewInputHandler)
@@ -326,7 +365,7 @@ bool FApplicationInterface::OnGamepadButtonUp(EGamepadButtonName::Type Button, u
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, false, false);
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyUp(KeyEvent);
@@ -350,7 +389,7 @@ bool FApplicationInterface::OnGamepadButtonDown(EGamepadButtonName::Type Button,
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, true);
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyDown(KeyEvent);
@@ -374,7 +413,7 @@ bool FApplicationInterface::OnAnalogGamepadChange(EAnalogSourceName::Type Analog
 {
     const FAnalogGamepadEvent AnalogGamepadEvent(AnalogSource, GamepadIndex, FPlatformApplicationMisc::GetModifierKeyState(), AnalogValue);
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), AnalogGamepadEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), AnalogGamepadEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FAnalogGamepadEvent& AnalogGamepadEvent)
         {
             return InputHandler->OnAnalogGamepadChange(AnalogGamepadEvent);
@@ -398,7 +437,7 @@ bool FApplicationInterface::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKey
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, false, false);
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyUp(KeyEvent);
@@ -425,7 +464,7 @@ bool FApplicationInterface::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRe
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, bIsRepeat, true);
     
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyDown(KeyEvent);
@@ -452,7 +491,7 @@ bool FApplicationInterface::OnKeyChar(uint32 Character)
 {
     const FKeyEvent KeyEvent(EKeys::Unknown, FPlatformApplicationMisc::GetModifierKeyState(), Character, false, true);
     
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyChar(KeyEvent);
@@ -476,7 +515,7 @@ bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
 {
     const FCursorEvent CursorEvent(FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseMove(CursorEvent);
@@ -536,7 +575,7 @@ bool FApplicationInterface::OnMouseButtonDown(const TSharedRef<FGenericWindow>& 
 
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseButtonDown(CursorEvent);
@@ -579,7 +618,7 @@ bool FApplicationInterface::OnMouseButtonUp(EMouseButtonName::Type Button, FModi
 
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModiferKeyState, false);
     
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseButtonUp(CursorEvent);
@@ -621,7 +660,7 @@ bool FApplicationInterface::OnMouseButtonDoubleClick(EMouseButtonName::Type Butt
 {
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseButtonDown(CursorEvent);
@@ -652,7 +691,7 @@ bool FApplicationInterface::OnMouseScrolled(float WheelDelta, bool bVertical)
 {
     const FCursorEvent CursorEvent(FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
-    FResponse Response = FEventDispatcher::PreProcess(FEventDispatcher::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseScrolled(CursorEvent);
@@ -726,7 +765,29 @@ bool FApplicationInterface::OnMouseLeft()
 
 bool FApplicationInterface::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
 {
-    return false;
+    const FCursorEvent CursorEvent(FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
+
+    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
+        [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
+        {
+            return InputHandler->OnHighPrecisionMouseInput(CursorEvent);
+        });
+
+    if (Response.IsEventHandled())
+    {
+        return true;
+    }
+
+    FWidgetPath CursorPath;
+    FindWidgetsUnderCursor(CursorPath);
+
+    Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
+        [](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
+        {
+            return Widget->OnHighPrecisionMouseInput(CursorEvent);
+        });
+
+    return Response.IsEventHandled();
 }
 
 bool FApplicationInterface::OnWindowResized(const TSharedRef<FGenericWindow>& PlatformWindow, uint32 Width, uint32 Height)
@@ -742,7 +803,7 @@ bool FApplicationInterface::OnWindowResized(const TSharedRef<FGenericWindow>& Pl
     return bResult;
 }
 
-bool FApplicationInterface::OnWindowResizing(const TSharedRef<FGenericWindow>& Window)
+bool FApplicationInterface::OnWindowResizing(const TSharedRef<FGenericWindow>&)
 {
     return false;
 }
@@ -797,6 +858,7 @@ bool FApplicationInterface::OnWindowFocusGained(const TSharedRef<FGenericWindow>
 bool FApplicationInterface::OnWindowClosed(const TSharedRef<FGenericWindow>& PlatformWindow)
 {
     bool bResult = false;
+    
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         DestroyWindow(Window);
@@ -808,7 +870,10 @@ bool FApplicationInterface::OnWindowClosed(const TSharedRef<FGenericWindow>& Pla
 
 bool FApplicationInterface::OnMonitorConfigurationChange()
 {
-    // First update the cached information...
+    // Invalidate the cached monitor-information
+    bIsMonitorInfoValid = false;
+    
+    // First update the cached monitor-information...
     UpdateMonitorInfo();
 
     // ... then notify listeners that the monitor configuration has changed
@@ -1011,14 +1076,15 @@ void FApplicationInterface::FindWidgetsUnderCursor(const FIntVector2& CursorPosi
     }
 }
 
-void FApplicationInterface::GetDisplayInfo(FDisplayInfo& OutDisplayInfo)
+void FApplicationInterface::GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo)
 {
     if (!bIsMonitorInfoValid)
     {
         UpdateMonitorInfo();
     }
 
-    OutDisplayInfo = DisplayInfo;
+    // Copy the monitor-array
+    OutMonitorInfo = MonitorInfos;
 }
 
 TSharedPtr<FWindow> FApplicationInterface::GetFocusWindow() const

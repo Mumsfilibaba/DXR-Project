@@ -66,6 +66,6 @@ EMouseButtonName::Type FInputMapper::GetMouseButtonNameFromKey(FKey Key)
 EGamepadButtonName::Type FInputMapper::GetGamepadButtonNameFromKey(FKey Key)
 {
     const EGamepadButtonName::Type GamepadButtonName = static_cast<EGamepadButtonName::Type>(EGamepadButtonName::First + (Key.GetKeyName() - EKeyName::GamepadDPadUp));
-    CHECK(GamepadButtonName >= EKeyboardKeyName::First && GamepadButtonName <= EKeyboardKeyName::Last);
+    CHECK(GamepadButtonName >= EGamepadButtonName::First && GamepadButtonName <= EGamepadButtonName::Last);
     return GamepadButtonName;
 }

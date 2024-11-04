@@ -81,6 +81,11 @@ FResponse FViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
     return ViewportInterface ? ViewportInterface->OnMouseEntered(CursorEvent) : FResponse::Unhandled();
 }
 
+FResponse FViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
+{
+    return ViewportInterface ? ViewportInterface->OnHighPrecisionMouseInput(CursorEvent) : FResponse::Unhandled();
+}
+
 FResponse FViewport::OnFocusLost()
 {
     return ViewportInterface ? ViewportInterface->OnFocusLost() : FResponse::Unhandled();

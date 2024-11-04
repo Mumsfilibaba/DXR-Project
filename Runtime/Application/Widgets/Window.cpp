@@ -113,7 +113,7 @@ void FWindow::OnWindowMoved(const FIntVector2& InPosition)
     if (CachedPosition != InPosition)
     {
         // Set the cached position
-        SetCachedPosition(InPosition);
+        SetPosition(InPosition);
         
         // Notify that this window was resized
         OnWindowMovedDelegate.ExecuteIfBound(InPosition);
@@ -125,7 +125,7 @@ void FWindow::OnWindowResize(const FIntVector2& InSize)
     if (CachedSize != InSize)
     {
         // Set the cached size
-        SetCachedSize(InSize);
+        SetSize(InSize);
         
         // Notify that this window got resized
         OnWindowResizedDelegate.ExecuteIfBound(InSize);
@@ -137,7 +137,7 @@ void FWindow::MoveTo(const FIntVector2& InPosition)
     if (CachedPosition != InPosition)
     {
         // Set the cached position
-        SetCachedPosition(InPosition);
+        SetPosition(InPosition);
         
         // Notify that this window was resized
         OnWindowMovedDelegate.ExecuteIfBound(InPosition);
@@ -155,7 +155,7 @@ void FWindow::Resize(const FIntVector2& InSize)
     if (CachedSize != InSize)
     {
         // Set the cached size
-        SetCachedSize(InSize);
+        SetSize(InSize);
         
         // Notify that this window got resized
         OnWindowResizedDelegate.ExecuteIfBound(InSize);
@@ -169,24 +169,24 @@ void FWindow::Resize(const FIntVector2& InSize)
     }
 }
 
-void FWindow::SetCachedSize(const FIntVector2& InSize)
+void FWindow::SetSize(const FIntVector2& InSize)
 {
     CachedSize = InSize;
 }
 
-void FWindow::SetCachedPosition(const FIntVector2& InPosition)
+void FWindow::SetPosition(const FIntVector2& InPosition)
 {
     CachedPosition = InPosition;
 }
 
-FIntVector2 FWindow::GetCachedPosition() const
-{
-    return CachedPosition;
-}
-
-FIntVector2 FWindow::GetCachedSize() const
+FIntVector2 FWindow::GetSize() const
 {
     return CachedSize;
+}
+
+FIntVector2 FWindow::GetPosition() const
+{
+    return CachedPosition;
 }
 
 uint32 FWindow::GetWidth() const

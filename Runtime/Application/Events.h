@@ -232,6 +232,7 @@ public:
 private:
     FKey   Key;
     uint32 Character;
+    
     uint32 GamepadIndex : 30;
     uint32 bIsRepeat    : 1;
     uint32 bIsDown      : 1;

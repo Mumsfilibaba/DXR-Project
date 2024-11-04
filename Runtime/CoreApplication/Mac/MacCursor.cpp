@@ -5,15 +5,15 @@
 
 #include <AppKit/AppKit.h>
 
-/**
- * These cursors are available but not documented
- * See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
- */
+// These cursors are available but not documented
+// See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 @interface NSCursor()
+
 + (id)_windowResizeNorthWestSouthEastCursor;
 + (id)_windowResizeNorthEastSouthWestCursor;
 + (id)_windowResizeNorthSouthCursor;
 + (id)_windowResizeEastWestCursor;
+
 @end
 
 FMacCursor::FMacCursor()
@@ -99,7 +99,8 @@ FIntVector2 FMacCursor::GetPosition() const
         return CurrentPosition;
     }
     
-    const NSPoint CursorPosition = FMacApplication::GetCorrectedMouseLocation();
+    const NSPoint MouseLocation  = [NSEvent mouseLocation];
+    const NSPoint CursorPosition = FMacApplication::ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
     return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
 

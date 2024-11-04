@@ -51,31 +51,6 @@ struct FMonitorInfo
     bool        bIsPrimary;
 };
 
-struct FDisplayInfo
-{
-    FDisplayInfo()
-        : PrimaryDisplayWidth(0)
-        , PrimaryDisplayHeight(0)
-        , MonitorInfos()
-    {
-    }
-
-    bool operator==(const FDisplayInfo& Other) const
-    {
-        return PrimaryDisplayWidth == Other.PrimaryDisplayWidth && PrimaryDisplayHeight == Other.PrimaryDisplayHeight && MonitorInfos == Other.MonitorInfos;
-    }
-
-    bool operator!=(const FDisplayInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    int32 PrimaryDisplayWidth;
-    int32 PrimaryDisplayHeight;
-
-    TArray<FMonitorInfo> MonitorInfos;
-};
-
 class COREAPPLICATION_API FGenericApplication
 {
 public:
@@ -96,7 +71,7 @@ public:
     virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
     virtual TSharedRef<FGenericWindow> GetForegroundWindow() const { return nullptr; }
-    virtual void QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const { }
+    virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const { }
 
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 

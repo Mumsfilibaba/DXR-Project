@@ -2,7 +2,7 @@
 #include "ImGuiRenderer.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Application/InputHandler.h"
+#include "Application/Application.h"
 
 struct FImGuiEventHandler : public FInputHandler
 {
@@ -48,6 +48,8 @@ public:
     virtual ImGuiIO*      GetImGuiIO()      const override final { return PluginImGuiIO; }
     virtual ImGuiContext* GetImGuiContext() const override final { return PluginImGuiContext; }
 
+    void UpdateMonitorInfo();
+
     void OnCreatePlatformWindow(ImGuiViewport* Viewport);
     void OnDestroyPlatformWindow(ImGuiViewport* Viewport);
     void OnShowPlatformWindow(ImGuiViewport* Viewport);
@@ -65,30 +67,6 @@ public:
     void OnPlatformChangedViewport(ImGuiViewport* Viewport);
     
 private:
-    static FORCEINLINE FImGuiPlugin* Get()
-    {
-        FImGuiPlugin* ImGuiPlugin = reinterpret_cast<FImGuiPlugin*>(ImGui::GetIO().BackendPlatformUserData);
-        CHECK(ImGuiPlugin != nullptr);
-        return ImGuiPlugin;
-    }
-    
-    static void StaticOnCreatePlatformWindow(ImGuiViewport* Viewport);
-    static void StaticOnDestroyPlatformWindow(ImGuiViewport* Viewport);
-    static void StaticOnShowPlatformWindow(ImGuiViewport* Viewport);
-    static void StaticOnUpdatePlatformWindow(ImGuiViewport* Viewport);
-    static ImVec2 StaticOnGetPlatformWindowPosition(ImGuiViewport* Viewport);
-    static void StaticOnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position);
-    static ImVec2 StaticOnGetPlatformWindowSize(ImGuiViewport* Viewport);
-    static void StaticOnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
-    static void StaticOnSetPlatformWindowFocus(ImGuiViewport* Viewport);
-    static bool StaticOnGetPlatformWindowFocus(ImGuiViewport* Viewport);
-    static bool StaticOnGetPlatformWindowMinimized(ImGuiViewport* Viewport);
-    static void StaticOnSetPlatformWindowTitle(ImGuiViewport* Viewport, const CHAR* Title);
-    static void StaticOnSetPlatformWindowAlpha(ImGuiViewport* Viewport, float Alpha);
-    static float StaticOnGetPlatformWindowDpiScale(ImGuiViewport* Viewport);
-    static void StaticOnPlatformChangedViewport(ImGuiViewport* Viewport);
-    
-    void UpdateMonitorInfo();
 
     ImGuiIO*                       PluginImGuiIO;
     ImGuiContext*                  PluginImGuiContext;
@@ -96,6 +74,9 @@ private:
     TSharedPtr<FImGuiEventHandler> EventHandler;
     TSharedPtr<FWindow>            MainWindow;
     TSharedPtr<FViewport>          MainViewport;
+    TArray<FMonitorInfo>           MonitorInfos;
     FImGuiDrawMulticastDelegate    DrawDelegates;
     FDelegateHandle                OnMonitorConfigChangedDelegateHandle;
 };
+
+extern FImGuiPlugin* GImGuiPlugin;

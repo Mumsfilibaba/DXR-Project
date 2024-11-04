@@ -22,11 +22,6 @@ COREAPPLICATION_API FWindowsApplication* WindowsApplication = nullptr;
 
 TSharedPtr<FGenericApplication> FWindowsApplication::Create()
 {
-    return FWindowsApplication::CreateWindowsApplication();
-}
-
-TSharedPtr<FWindowsApplication> FWindowsApplication::CreateWindowsApplication()
-{
     // Get the application instance
     HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
 
@@ -265,7 +260,7 @@ TSharedRef<FGenericWindow> FWindowsApplication::GetForegroundWindow() const
     return GetWindowsWindowFromHWND(ForegroundWindow);
 }
 
-void FWindowsApplication::QueryDisplayInfo(FDisplayInfo& OutDisplayInfo) const
+void FWindowsApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const
 {
     ::EnumDisplayMonitors(nullptr, nullptr, FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(&OutDisplayInfo));
     OutDisplayInfo.MonitorInfos.Shrink();

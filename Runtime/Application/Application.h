@@ -14,23 +14,27 @@ class APPLICATION_API FApplicationInterface : public FGenericApplicationMessageH
 {
 public:
 
-    // Creates the application instance
+    // Create the ApplicationInterface instance and the PlatformApplication instance
     static bool Create();
 
-    // Destroys the application instance
+    // Destroy the ApplicationInterface instance and the PlatformApplication instance
     static void Destroy();
 
-    static bool IsInitialized() 
+    // Returns true if the ApplicationInterface instance is created
+    static bool FORCEINLINE IsInitialized()
     {
         return ApplicationInstance.IsValid();
     }
 
-    static FApplicationInterface& Get()
+    // Retrieve a reference to the ApplicationInterface instance. Before the pointer is dereferenced, the function 
+    // checks that the pointer is initialized.
+    static FORCEINLINE FApplicationInterface& Get()
     {
         CHECK(ApplicationInstance.IsValid());
         return *ApplicationInstance;
     }
-
+    
+public:
     FApplicationInterface();
     virtual ~FApplicationInterface();
 
@@ -57,6 +61,8 @@ public:
     virtual bool OnWindowClosed(const TSharedRef<FGenericWindow>& Window) override final;
     virtual bool OnMonitorConfigurationChange() override final;
 
+public:
+    
     // Creates a platform window and adds the FWindow to the application's windows for event processing
     void CreateWindow(const TSharedPtr<FWindow>& InWindow);
 
@@ -142,7 +148,7 @@ public:
     void FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath);
 
     // Retrieve cached display-info
-    void GetDisplayInfo(FDisplayInfo& OutDisplayInfo);
+    void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);
 
     // Retrieve the monitor config changed event
     FOnMonitorConfigChangedEvent& GetOnMonitorConfigChangedEvent() { return OnMonitorConfigChangedEvent; }
@@ -150,7 +156,7 @@ public:
 private:
     TSet<EKeyboardKeyName::Type>      PressedKeys;
     TSet<EMouseButtonName::Type>      PressedMouseButtons;
-    FDisplayInfo                      DisplayInfo;
+    TArray<FMonitorInfo>              MonitorInfos;
     bool                              bIsMonitorInfoValid;
     bool                              bIsTrackingCursor;
     TArray<TSharedPtr<FWindow>>       Windows;

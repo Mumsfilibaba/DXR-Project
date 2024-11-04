@@ -5,6 +5,8 @@
 #include "Engine/World/Actors/PlayerInput.h"
 #include "RHI/RHI.h"
 
+DISABLE_UNREFERENCED_VARIABLE_WARNING
+
 FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
     : IViewport()
     , Viewport(InViewport)
@@ -40,7 +42,7 @@ bool FSceneViewport::InitializeRHI()
         return false;
     }
 
-    const FIntVector2 WindowSize = WindowWidget->GetCachedSize();
+    const FIntVector2 WindowSize = WindowWidget->GetSize();
     FRHIViewportInfo ViewportInfo;
     ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
     ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use RGBA for all RHIs except Vulkan?
@@ -175,6 +177,11 @@ FResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
     return FResponse::Unhandled();
 }
 
+FResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
+{
+    return FResponse::Unhandled();
+}
+
 FResponse FSceneViewport::OnFocusLost()
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
@@ -190,3 +197,5 @@ FResponse FSceneViewport::OnFocusGained()
 {
     return FResponse::Unhandled();
 }
+
+ENABLE_UNREFERENCED_VARIABLE_WARNING

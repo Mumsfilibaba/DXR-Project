@@ -77,6 +77,11 @@ FResponse FWidget::OnMouseEntered(const FCursorEvent&)
     return FResponse::Unhandled();
 }
 
+FResponse FWidget::OnHighPrecisionMouseInput(const FCursorEvent&)
+{
+    return FResponse::Unhandled();
+}
+
 FResponse FWidget::OnFocusLost()
 {
     return FResponse::Unhandled();

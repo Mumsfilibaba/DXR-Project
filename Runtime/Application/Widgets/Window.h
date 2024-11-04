@@ -52,11 +52,11 @@ public:
     void MoveTo(const FIntVector2& InPosition);
     void Resize(const FIntVector2& InSize);
     
-    void SetCachedPosition(const FIntVector2& InPosition);
-    void SetCachedSize(const FIntVector2& InSize);
+    void SetSize(const FIntVector2& InSize);
+    void SetPosition(const FIntVector2& InPosition);
 
-    FIntVector2 GetCachedSize() const;
-    FIntVector2 GetCachedPosition() const;
+    FIntVector2 GetSize() const;
+    FIntVector2 GetPosition() const;
 
     uint32 GetWidth() const;
     uint32 GetHeight() const;

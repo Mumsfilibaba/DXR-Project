@@ -74,6 +74,7 @@ public:
     virtual FResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent);
     virtual FResponse OnMouseLeft(const FCursorEvent& CursorEvent);
     virtual FResponse OnMouseEntered(const FCursorEvent& CursorEvent);
+    virtual FResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent);
     virtual FResponse OnFocusLost();
     virtual FResponse OnFocusGained();
 

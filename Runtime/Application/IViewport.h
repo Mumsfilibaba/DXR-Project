@@ -21,6 +21,7 @@ struct IViewport
     virtual FResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) = 0;
     virtual FResponse OnMouseLeft(const FCursorEvent& CursorEvent) = 0;
     virtual FResponse OnMouseEntered(const FCursorEvent& CursorEvent) = 0;
+    virtual FResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent) = 0;
 	virtual FResponse OnFocusLost() = 0;
     virtual FResponse OnFocusGained() = 0;
 

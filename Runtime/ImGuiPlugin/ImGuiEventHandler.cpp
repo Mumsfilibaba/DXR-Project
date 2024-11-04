@@ -290,6 +290,7 @@ bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     FIntVector2 CursorPos = CursorEvent.GetCursorPos();
+    
     if (!ImGuiExtensions::IsMultiViewportEnabled())
     {
         if (TSharedRef<FGenericWindow> Window = FApplicationInterface::Get().GetPlatformApplication()->GetWindowUnderCursor())

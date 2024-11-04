@@ -27,6 +27,7 @@ public:
     virtual FResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override;
     virtual FResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
     virtual FResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent) override;
     virtual FResponse OnFocusLost() override;
     virtual FResponse OnFocusGained() override;
 

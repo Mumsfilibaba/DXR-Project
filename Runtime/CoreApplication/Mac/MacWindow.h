@@ -11,8 +11,6 @@ class FMacApplication;
 class COREAPPLICATION_API FMacWindow final : public FGenericWindow
 {
 public:
-    static void ConvertNSRect(NSScreen* Screen, NSRect* Rect);
-    
     static TSharedRef<FMacWindow> Create(FMacApplication* InApplication);
     ~FMacWindow();
     
