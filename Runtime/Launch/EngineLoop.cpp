@@ -253,7 +253,7 @@ int32 FEngineLoop::Init()
     // Prepare ImGui for Rendering
     if (IImguiPlugin::IsEnabled())
     {
-        if (!IImguiPlugin::Get().InitRenderer())
+        if (!IImguiPlugin::Get().InitializeRHI())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI resources for ImGui");
             return -1;
@@ -292,12 +292,6 @@ void FEngineLoop::Release()
 
     // Wait for the last RHI commands to finish
     GRHICommandExecutor.WaitForGPU();
-
-    // Release ImGui
-    if (IImguiPlugin::IsEnabled())
-    {
-        IImguiPlugin::Get().ReleaseRenderer();
-    }
 
     // Release the renderer
     IRendererModule* RendererModule = IRendererModule::Get();

@@ -34,8 +34,8 @@ public:
     virtual bool Unload() override final;
 
     // IImguiPlugin Interface
-    virtual bool InitRenderer() override final;
-    virtual void ReleaseRenderer() override final;
+    virtual bool InitializeRHI() override final;
+    virtual void ReleaseRHI() override final;
 
     virtual void Tick(float Delta) override final;
     virtual void Draw(FRHICommandList& CommandList) override final;

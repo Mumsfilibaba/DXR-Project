@@ -18,6 +18,8 @@ struct FVertexConstantBuffer
     float ViewProjectionMatrix[4][4];
 };
 
+FImGuiRenderer* GImGuiRenderer = nullptr;
+
 FImGuiRenderer::FImGuiRenderer()
     : RenderedImages()
     , FontTexture(nullptr)
@@ -29,24 +31,50 @@ FImGuiRenderer::FImGuiRenderer()
     , LinearSampler(nullptr)
     , PointSampler(nullptr)
 {
+    CHECK(GImGuiRenderer == nullptr);
+    GImGuiRenderer = this;
 }
 
 FImGuiRenderer::~FImGuiRenderer()
 {
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.BackendRendererUserData = nullptr;
+    CHECK(GImGuiRenderer == this);
+    GImGuiRenderer = nullptr;
 }
 
-bool FImGuiRenderer::Initialize()
+bool FImGuiRenderer::InitializeRHI()
 {
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
     if (ImGuiExtensions::IsMultiViewportEnabled())
     {
-        PlatformState.Renderer_CreateWindow  = &FImGuiRenderer::StaticOnCreateWindow;
-        PlatformState.Renderer_DestroyWindow = &FImGuiRenderer::StaticOnDestroyWindow;
-        PlatformState.Renderer_SetWindowSize = &FImGuiRenderer::StaticOnSetWindowSize;
-        PlatformState.Renderer_RenderWindow  = &FImGuiRenderer::StaticOnRenderWindow;
-        PlatformState.Renderer_SwapBuffers   = &FImGuiRenderer::StaticOnSwapBuffers;
+        PlatformState.Renderer_CreateWindow = [](ImGuiViewport* Viewport)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnCreateWindow(Viewport);
+        };
+
+        PlatformState.Renderer_DestroyWindow = [](ImGuiViewport* Viewport)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnDestroyWindow(Viewport);
+        };
+
+        PlatformState.Renderer_SetWindowSize = [](ImGuiViewport* Viewport, ImVec2 Size)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnSetWindowSize(Viewport, Size);
+        };
+
+        PlatformState.Renderer_RenderWindow = [](ImGuiViewport* Viewport, void* CommandList)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnRenderWindow(Viewport, CommandList);
+        };
+
+        PlatformState.Renderer_SwapBuffers = [](ImGuiViewport* Viewport, void* CommandList)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnSwapBuffers(Viewport, CommandList);
+        };
     }
     else
     {
@@ -272,6 +300,19 @@ bool FImGuiRenderer::Initialize()
     }
 
     return true;
+}
+
+void FImGuiRenderer::ReleaseRHI()
+{
+    // Release all RHI textures
+    FontTexture.Reset();
+    PipelineState.Reset();
+    PipelineStateNoBlending.Reset();
+    PShader.Reset();
+    VertexBuffer.Reset();
+    IndexBuffer.Reset();
+    LinearSampler.Reset();
+    PointSampler.Reset();
 }
 
 void FImGuiRenderer::Render(FRHICommandList& CommandList)
@@ -649,29 +690,4 @@ void FImGuiRenderer::OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
     }
 
     RHICommandList->PresentViewport(ViewportData->Viewport.Get(), bEnableVsync);
-}
-
-void FImGuiRenderer::StaticOnCreateWindow(ImGuiViewport* Viewport)
-{
-    FImGuiRenderer::Get()->OnCreateWindow(Viewport);
-}
-
-void FImGuiRenderer::StaticOnDestroyWindow(ImGuiViewport* Viewport)
-{
-    FImGuiRenderer::Get()->OnDestroyWindow(Viewport);
-}
-
-void FImGuiRenderer::StaticOnSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
-{
-    FImGuiRenderer::Get()->OnSetWindowSize(Viewport, Size);
-}
-
-void FImGuiRenderer::StaticOnRenderWindow(ImGuiViewport* Viewport, void* CommandList)
-{
-    FImGuiRenderer::Get()->OnRenderWindow(Viewport, CommandList);
-}
-
-void FImGuiRenderer::StaticOnSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
-{
-    FImGuiRenderer::Get()->OnSwapBuffers(Viewport, CommandList);
 }

@@ -38,7 +38,9 @@ public:
     FImGuiRenderer();
     ~FImGuiRenderer();
 
-    bool Initialize();
+    bool InitializeRHI();
+    void ReleaseRHI();
+    
     void Render(FRHICommandList& CommandList);
     void RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear);
     
@@ -49,19 +51,6 @@ public:
     void OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList);
     
 private:
-    static FORCEINLINE FImGuiRenderer* Get()
-    {
-        FImGuiRenderer* ImGuiRenderer = reinterpret_cast<FImGuiRenderer*>(ImGui::GetIO().BackendRendererUserData);
-        CHECK(ImGuiRenderer != nullptr);
-        return ImGuiRenderer;
-    }
-    
-    static void StaticOnCreateWindow(ImGuiViewport* InViewport);
-    static void StaticOnDestroyWindow(ImGuiViewport* Viewport);
-    static void StaticOnSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size);
-    static void StaticOnRenderWindow(ImGuiViewport* Viewport, void* CommandList);
-    static void StaticOnSwapBuffers(ImGuiViewport* Viewport, void* CommandList);
-
     void PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData);
     void SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData);
@@ -76,3 +65,5 @@ private:
     FRHISamplerStateRef          LinearSampler;
     FRHISamplerStateRef          PointSampler;
 };
+
+extern FImGuiRenderer* GImGuiRenderer;

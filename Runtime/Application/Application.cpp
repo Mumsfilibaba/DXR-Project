@@ -15,12 +15,13 @@ IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 // FEventDispatcher is a helper class that dispatches events with a specified dispatch policy.
 // Policies include FLeafFirstPolicy, FLeafLastPolicy, and FDirectPolicy, which can be described
 // as follows:
-//  - FLeafFirstPolicy: Send the event to the first widget first and then send the events
+//  - FLeafFirstPolicy: Send the event to the top-level widget first and then send the events
 //    along the widget path until a widget handles the event. In practice, this means
-//    that the window will receive the event first and then propagate to the rest of the widgets.
+//    that the window will receive the event last, and the leaf child-widget will receive the
+//    event first.
 //  - FLeafLastPolicy: Send the event to the last widget first and then send the events
 //    backward along the widget path until a widget handles the event. In practice, this means
-//    that the window will receive the event last.
+//    that the window will receive the event first and then propagate to the rest of the widgets.
 //  - FDirectPolicy: Send the events only to the first widget in the widget path. In practice,
 //    this means that the window receives the event, and then the propagation stops there. This
 //    policy gives a single widget the chance to process the event and stops even if the widget
@@ -28,10 +29,39 @@ IMPLEMENT_ENGINE_MODULE(FModuleInterface, Application);
 
 struct FEventDispatcher
 {
-    class FLeafFirstPolicy
+    class FLeafFirstPolicy : public FNonCopyAndNonMovable
     {
     public:
         FLeafFirstPolicy(FWidgetPath& InWidgets)
+        : Widgets(InWidgets)
+        , Index(static_cast<int32>(InWidgets.LastIndex()))
+        {
+        }
+        
+        bool ShouldProcess() const
+        {
+            return Index >= 0 && !Widgets.IsEmpty(); // Corrected from Index > 0
+        }
+        
+        void Next()
+        {
+            Index--;
+        }
+        
+        const TSharedPtr<FWidget>& GetWidget() const
+        {
+            return Widgets[Index];
+        }
+        
+    private:
+        FWidgetPath& Widgets;
+        int32        Index;
+    };
+
+    class FLeafLastPolicy : public FNonCopyAndNonMovable
+    {
+    public:
+        FLeafLastPolicy(FWidgetPath& InWidgets)
             : Widgets(InWidgets)
             , Index(0)
         {
@@ -57,36 +87,7 @@ struct FEventDispatcher
         int32        Index;
     };
 
-    class FLeafLastPolicy
-    {
-    public:
-        FLeafLastPolicy(FWidgetPath& InWidgets)
-            : Widgets(InWidgets)
-            , Index(static_cast<int32>(InWidgets.LastIndex()))
-        {
-        }
-
-        bool ShouldProcess() const
-        {
-            return Index >= 0 && !Widgets.IsEmpty(); // Corrected from Index > 0
-        }
-
-        void Next()
-        {
-            Index--;
-        }
-
-        const TSharedPtr<FWidget>& GetWidget() const
-        {
-            return Widgets[Index];
-        }
-
-    private:
-        FWidgetPath& Widgets;
-        int32        Index;
-    };
-
-    class FDirectPolicy
+    class FDirectPolicy : public FNonCopyAndNonMovable
     {
     public:
         FDirectPolicy(FWidgetPath& InWidgets)
@@ -137,7 +138,7 @@ struct FEventDispatcher
 
 struct FEventPreProcessor
 {
-    class FPreProcessPolicy
+    class FPreProcessPolicy : public FNonCopyAndNonMovable
     {
     public:
         FPreProcessPolicy(TArray<TSharedPtr<FInputHandler>>& InInputPreProcessors)

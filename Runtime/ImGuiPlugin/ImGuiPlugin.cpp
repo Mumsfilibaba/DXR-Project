@@ -122,77 +122,91 @@ bool FImGuiPlugin::Load()
 
         PlatformState.Platform_CreateWindow = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnCreatePlatformWindow(Viewport);
         };
         
         PlatformState.Platform_DestroyWindow = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnDestroyPlatformWindow(Viewport);
         };
 
         PlatformState.Platform_ShowWindow = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnShowPlatformWindow(Viewport);
         };
 
         PlatformState.Platform_SetWindowPos = [](ImGuiViewport* Viewport, ImVec2 Position)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnSetPlatformWindowPosition(Viewport, Position);
         };
 
         PlatformState.Platform_GetWindowPos = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             return GImGuiPlugin->OnGetPlatformWindowPosition(Viewport);
         };
 
         PlatformState.Platform_SetWindowSize = [](ImGuiViewport* Viewport, ImVec2 Size)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnSetPlatformWindowSize(Viewport, Size);
         };
 
         PlatformState.Platform_GetWindowSize = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             return GImGuiPlugin->OnGetPlatformWindowSize(Viewport);
         };
 
         PlatformState.Platform_SetWindowFocus = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnSetPlatformWindowFocus(Viewport);
         };
 
         PlatformState.Platform_GetWindowFocus = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             return GImGuiPlugin->OnGetPlatformWindowFocus(Viewport);
         };
 
         PlatformState.Platform_GetWindowMinimized = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             return GImGuiPlugin->OnGetPlatformWindowMinimized(Viewport);
         };
 
         PlatformState.Platform_SetWindowTitle = [](ImGuiViewport* Viewport, const CHAR* Title)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnSetPlatformWindowTitle(Viewport, Title);
         };
 
         PlatformState.Platform_SetWindowAlpha = [](ImGuiViewport* Viewport, float Alpha)
         {
-    
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnSetPlatformWindowAlpha(Viewport, Alpha);
         };
 
         PlatformState.Platform_UpdateWindow = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnUpdatePlatformWindow(Viewport);
         };
 
         PlatformState.Platform_GetWindowDpiScale = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             return GImGuiPlugin->OnGetPlatformWindowDpiScale(Viewport);
         };
 
         PlatformState.Platform_OnChangedViewport = [](ImGuiViewport* Viewport)
         {
+            CHECK(GImGuiPlugin != nullptr);
             GImGuiPlugin->OnPlatformChangedViewport(Viewport);
         };
     }
@@ -502,9 +516,14 @@ bool FImGuiPlugin::Unload()
 
     // Reset the backend pointer ...
     PluginImGuiIO->BackendPlatformUserData = nullptr;
-
+    PluginImGuiIO->BackendRendererUserData = nullptr;
+    
     // ... then destroy the context, this needs to happen in this order to avoid any asserts
     ImGui::DestroyContext(PluginImGuiContext);
+    
+    // Release the renderer here since the renderer could call functions withing the DestroyContext function
+    // if there is still an open window.
+    ReleaseRHI();
     
     // Reset the global instance
     GImGuiPlugin = nullptr;
@@ -516,21 +535,25 @@ bool FImGuiPlugin::Unload()
 }
 
 
-bool FImGuiPlugin::InitRenderer()
+bool FImGuiPlugin::InitializeRHI()
 {
     Renderer = MakeSharedPtr<FImGuiRenderer>();
-    if (!Renderer->Initialize())
+    if (!Renderer->InitializeRHI())
     {
-        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ViewportRenderer ");
+        FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ImGuiRenderer");
         return false;
     }
 
     return true;
 }
 
-void FImGuiPlugin::ReleaseRenderer()
+void FImGuiPlugin::ReleaseRHI()
 {
-    Renderer.Reset();
+    if (Renderer)
+    {
+        Renderer->ReleaseRHI();
+        Renderer.Reset();
+    }
 }
 
 void FImGuiPlugin::Tick(float Delta)
