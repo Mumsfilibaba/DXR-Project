@@ -277,21 +277,39 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
     
-    // Calculate the maximum position and size of the new window
-    const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
-
-    const uint32 MinWidth  = 0;
-    const uint32 MinHeight = 0;
-    
-    const uint32 MaxWidth  = static_cast<uint32>(MonitorInfo.WorkSize.x);
-    const uint32 MaxHeight = static_cast<uint32>(MonitorInfo.WorkSize.y);
 
     FGenericWindowInitializer WindowInitializer;
     WindowInitializer.Title    = InWindow->GetTitle();
-    WindowInitializer.Position = InWindow->GetPosition();
     WindowInitializer.Style    = InWindow->GetStyle();
-    WindowInitializer.Width    = FMath::Clamp<int32>(MinWidth, MaxWidth, InWindow->GetWidth());
-    WindowInitializer.Height   = FMath::Clamp<int32>(MinHeight, MaxHeight, InWindow->GetHeight());
+    WindowInitializer.Position = InWindow->GetPosition();
+    
+    // Calculate the maximum position and size of the new window
+    const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
+    if (MonitorInfo.WorkPosition.x > WindowInitializer.Position.x)
+    {
+        WindowInitializer.Position.x = MonitorInfo.WorkPosition.x;
+    }
+    if (MonitorInfo.WorkPosition.y > WindowInitializer.Position.y)
+    {
+        WindowInitializer.Position.y = MonitorInfo.WorkPosition.y;
+    }
+    
+    WindowInitializer.Width  = InWindow->GetWidth();
+    WindowInitializer.Height = InWindow->GetHeight();
+    
+    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.WorkSize.x + MonitorInfo.WorkSize.x);
+    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.WorkSize.y + MonitorInfo.WorkSize.y);
+    const uint32 WindowEndX = WindowInitializer.Position.x + WindowInitializer.Width;
+    const uint32 WindowEndY = WindowInitializer.Position.y + WindowInitializer.Height;
+    
+    if (WindowEndX > ScreenEndX)
+    {
+        WindowInitializer.Width = ScreenEndX - WindowInitializer.Position.x;
+    }
+    if (WindowEndY > ScreenEndY)
+    {
+        WindowInitializer.Height = ScreenEndY - WindowInitializer.Position.y;
+    }
 
     if (PlatformWindow->Initialize(WindowInitializer))
     {
