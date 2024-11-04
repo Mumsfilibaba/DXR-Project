@@ -200,7 +200,7 @@ void FWindowsApplication::UpdateInputDevices()
     XInputDevice.UpdateDeviceState();
 }
 
-FInputDevice* FWindowsApplication::GetInputDeviceInterface()
+FInputDevice* FWindowsApplication::GetInputDevice()
 {
     return &XInputDevice;
 }

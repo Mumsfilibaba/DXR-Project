@@ -67,7 +67,7 @@ public:
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
     virtual void Tick(float Delta) override final;
     virtual void UpdateInputDevices() override final;
-    virtual FInputDevice* GetInputDeviceInterface() override final;
+    virtual FInputDevice* GetInputDevice() override final;
     virtual bool SupportsHighPrecisionMouse() const override final;
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;

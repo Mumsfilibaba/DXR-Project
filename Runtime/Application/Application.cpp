@@ -277,13 +277,12 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
         return;
     }
     
-
     FGenericWindowInitializer WindowInitializer;
     WindowInitializer.Title    = InWindow->GetTitle();
     WindowInitializer.Style    = InWindow->GetStyle();
     WindowInitializer.Position = InWindow->GetPosition();
     
-    // Calculate the maximum position and size of the new window
+    // Calculate the maximum position and size of the new window so that if fits in the main monitor bounds.
     const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
     if (MonitorInfo.WorkPosition.x > WindowInitializer.Position.x)
     {
@@ -547,7 +546,7 @@ bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
     
     // Retrieve all the widgets under the cursor which should receive events
     FWidgetPath CursorPath;
-    FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
+    FindWidgetsContainingPoint(CursorEvent.GetCursorPos(), CursorPath);
 
     // Remove the widget from any widget which is not tracked
     const bool bIsDragging = !PressedMouseButtons.IsEmpty();
@@ -964,7 +963,7 @@ bool FApplicationInterface::IsCursorVisibile() const
 
 bool FApplicationInterface::IsGamePadConnected() const
 {
-    if (FInputDevice* InputDevice = GetInputDeviceInterface())
+    if (FInputDevice* InputDevice = GetInputDevice())
     {
         return InputDevice->IsDeviceConnected();
     }
@@ -1080,17 +1079,17 @@ void FApplicationInterface::FindWidgetsUnderCursor(FWidgetPath& OutCursorPath)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
-        FindWidgetsUnderCursor(Cursor->GetPosition(), OutCursorPath);
+        FindWidgetsContainingPoint(Cursor->GetPosition(), OutCursorPath);
     }
 }
 
-void FApplicationInterface::FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath)
+void FApplicationInterface::FindWidgetsContainingPoint(const FIntVector2& Point, FWidgetPath& OutCursorPath)
 {
     if (TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
         if (TSharedPtr<FWindow> CursorWindow = FindWindowFromGenericWindow(PlatformWindow))
         {
-            CursorWindow->FindChildrenUnderCursor(CursorPosition, OutCursorPath);
+            CursorWindow->FindChildrenUnderCursor(Point, OutCursorPath);
         }
     }
 }

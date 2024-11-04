@@ -63,19 +63,24 @@ public:
 
 public:
     
-    // Creates a platform window and adds the FWindow to the application's windows for event processing
+    // Adds a new window. Adding a window means that it will be processed each frame within FApplicationInstance::Tick.
+    // This function also creates and displays a platform-window based on the info set in the FWindow.
     void CreateWindow(const TSharedPtr<FWindow>& InWindow);
 
-    // Destroys a window, invokes any callbacks belonging to the window and removes it from the application's list of windows
+    // Destroys a window. It also destroys the platform-window which will stop displaying the window.
     void DestroyWindow(const TSharedPtr<FWindow>& InWindow);
 
-    // Pumps the event queue and updates input etc.
+    // Updates all windows, pumps the message queue and input devices. This function will ensure that the application
+    // moves forward and handles all the events that the platform has sent to the application since the last call to
+    // FApplicationInterface::Tick.
     void Tick(float Delta);
 
-    // Update any extra input device (Such as a controller that might be connected)
+    // Updates and game-controller that might be conntected and any other device that does not go through the standard
+    // platform message-pump. Might support plugins for different input devices in the future.
     void UpdateInputDevices();
 
-    // Updates the stored monitor information
+    // This will update the monitor information. It will query the information from the platform if the platform has
+    // notified the application that the monitor-setup has changed.
     void UpdateMonitorInfo();
 
     // Registers a new input-handler
@@ -84,41 +89,43 @@ public:
     // Unregisters a input-handler
     void UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
 
-    // Enables high-precision mouse input for the window
+    // Enables high-precision mouse input for the FWindow. This essentallu enables input via the FWidget::OnHighPrecisionMouseInput
+    // function to be called for the selected FWindow if the platform supports HighPrecisionMouse (On windows this is raw-input).
     bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window);
 
-    // Checks if the application can support high-precision mouse input
+    // Returns true if the application support high-precision mouse input (On windows this corresponds to raw-input)
     bool SupportsHighPrecisionMouse() const;
 
-    // Sets the global cursor position on the screen
+    // Set the global cursor position
     void SetCursorPosition(const FIntVector2& Position);
 
-    // Retrieves the global cursor position
+    // Retrieve the global cursor position
     FIntVector2 GetCursorPosition() const;
 
-    // Set the cursor type
+    // Set the cursor type, basically the cursor-face
     void SetCursor(ECursor Cursor);
 
     // Shows or hides the cursor
     void ShowCursor(bool bIsVisible);
 
-    // Checks if the cursor is currently visible
+    // Returns true if the cursor is currently visible
     bool IsCursorVisibile() const;
 
-    // Checks if there is currently a game-pad connected
+    // Returns true if there is currently a gamepad connected. Returns false if there is no valid FInputDevice Interface
     bool IsGamePadConnected() const;
 
-    // Returns true if we are currently tracking the mouse in a drag-operation
+    // Returns true if we are currently tracking a mouse drag-operation. This happens when we press-down the left
+    // mousebutton and this function will return true until the mousebutton is released.
     bool IsTrackingCursor() const { return bIsTrackingCursor; }
     
-    // Overrides the current platform application
+    // Overrides the current platform application with a new FGenericApplication instance
     void OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
     
-    // Returns the current platform application
+    // Returns the current platform application, current FGenericApplication instance
     TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
 
-    // Returns the current input device interface
-    FInputDevice* GetInputDeviceInterface() const { return PlatformApplication->GetInputDeviceInterface(); }
+    // Returns the current FInputDevice interface
+    FInputDevice* GetInputDevice() const { return PlatformApplication->GetInputDevice(); }
 
     // Returns the cursor interface
     TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->Cursor; }
@@ -126,16 +133,20 @@ public:
     // Get current window that has focus
     TSharedPtr<FWindow> GetFocusWindow() const;
 
-    // Sets the widget that should currently have focus
+    // Sets the widget that should currently have focus. This function will first find a widget-path until it finds the 
+    // lowest level window. Then it will set the focus to this found widget-path. In practise this means that it will 
+    // set the focus to the specified widget, all it's parent widgets, and finally the window containing these widgets.
     void SetFocusWidget(const TSharedPtr<FWidget>& FocusWidget);
 
-    // Sets the new widget-path which will now have focus
+    // Sets the new widget-path which will now have focus. All these widgets  will after a call to this function recieve 
+    // key events (including gamepad events).
     void SetFocusWidgets(const FWidgetPath& NewFocusPath);
 
-    // Finds a window from a widget
+    // Finds the lowest level window that contains this widget. This function will find a path to the lowest level window
+    // and then returns that window.
     TSharedPtr<FWindow> FindWindowWidget(const TSharedPtr<FWidget>& InWidget);
     
-    // Returns the window that has the specified platform window
+    // Returns the window that corresponds the specified platform window
     TSharedPtr<FWindow> FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const;
     
     // Returns the window that is currently under the cursor
@@ -144,8 +155,8 @@ public:
     // Returns a path of widgets that is currently under the cursor
     void FindWidgetsUnderCursor(FWidgetPath& OutCursorPath);
     
-    // Returns a path of widgets that is currently under the cursor
-    void FindWidgetsUnderCursor(const FIntVector2& CursorPosition, FWidgetPath& OutCursorPath);
+    // Returns a path of widgets that is currently surrounding a certain point
+    void FindWidgetsContainingPoint(const FIntVector2& Point, FWidgetPath& OutCursorPath);
 
     // Retrieve cached display-info
     void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);

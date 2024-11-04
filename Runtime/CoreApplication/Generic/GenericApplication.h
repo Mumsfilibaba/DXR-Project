@@ -62,7 +62,7 @@ public:
     virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
     virtual void Tick(float Delta) { }
     virtual void UpdateInputDevices() { }
-    virtual FInputDevice* GetInputDeviceInterface() { return nullptr; }
+    virtual FInputDevice* GetInputDevice() { return nullptr; }
     virtual bool SupportsHighPrecisionMouse() const { return false; }
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }

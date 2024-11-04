@@ -289,7 +289,7 @@ void FMacApplication::UpdateInputDevices()
     }
 }
 
-FInputDevice* FMacApplication::GetInputDeviceInterface()
+FInputDevice* FMacApplication::GetInputDevice()
 {
     return InputDevice.Get();
 }
