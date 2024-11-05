@@ -63,20 +63,20 @@ public:
     virtual void Tick();
     virtual bool IsWindow() const;
 
-    virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent);
-    virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent);
-    virtual FResponse OnKeyUp(const FKeyEvent& KeyEvent);
-    virtual FResponse OnKeyChar(const FKeyEvent& KeyEvent);
-    virtual FResponse OnMouseMove(const FCursorEvent& CursorEvent);
-    virtual FResponse OnMouseButtonDown(const FCursorEvent& CursorEvent);
-    virtual FResponse OnMouseButtonUp(const FCursorEvent& CursorEvent);
-    virtual FResponse OnMouseScroll(const FCursorEvent& CursorEvent);
-    virtual FResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent);
-    virtual FResponse OnMouseLeft(const FCursorEvent& CursorEvent);
-    virtual FResponse OnMouseEntered(const FCursorEvent& CursorEvent);
-    virtual FResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent);
-    virtual FResponse OnFocusLost();
-    virtual FResponse OnFocusGained();
+    virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent);
+    virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent);
+    virtual FEventResponse OnKeyUp(const FKeyEvent& KeyEvent);
+    virtual FEventResponse OnKeyChar(const FKeyEvent& KeyEvent);
+    virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent);
+    virtual FEventResponse OnFocusLost();
+    virtual FEventResponse OnFocusGained();
 
     virtual void FindParentWidgets(FWidgetPath& OutParentWidgets);
     virtual void FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets);

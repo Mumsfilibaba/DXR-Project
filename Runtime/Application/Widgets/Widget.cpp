@@ -22,74 +22,74 @@ bool FWidget::IsWindow() const
     return false;
 }
 
-FResponse FWidget::OnAnalogGamepadChange(const FAnalogGamepadEvent&)
+FEventResponse FWidget::OnAnalogGamepadChange(const FAnalogGamepadEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnKeyDown(const FKeyEvent&)
+FEventResponse FWidget::OnKeyDown(const FKeyEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnKeyUp(const FKeyEvent&)
+FEventResponse FWidget::OnKeyUp(const FKeyEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnKeyChar(const FKeyEvent&)
+FEventResponse FWidget::OnKeyChar(const FKeyEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnMouseMove(const FCursorEvent&)
+FEventResponse FWidget::OnMouseMove(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnMouseButtonDown(const FCursorEvent&)
+FEventResponse FWidget::OnMouseButtonDown(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnMouseButtonUp(const FCursorEvent&)
+FEventResponse FWidget::OnMouseButtonUp(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnMouseScroll(const FCursorEvent&)
+FEventResponse FWidget::OnMouseScroll(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnMouseDoubleClick(const FCursorEvent&)
+FEventResponse FWidget::OnMouseDoubleClick(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnMouseLeft(const FCursorEvent&)
+FEventResponse FWidget::OnMouseLeft(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnMouseEntered(const FCursorEvent&)
+FEventResponse FWidget::OnMouseEntered(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnHighPrecisionMouseInput(const FCursorEvent&)
+FEventResponse FWidget::OnHighPrecisionMouseInput(const FCursorEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnFocusLost()
+FEventResponse FWidget::OnFocusLost()
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FWidget::OnFocusGained()
+FEventResponse FWidget::OnFocusGained()
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
 void FWidget::FindParentWidgets(FWidgetPath& OutRootPath)

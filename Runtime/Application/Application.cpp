@@ -117,9 +117,9 @@ struct FEventDispatcher
     };
 
     template<typename PolicyType, typename EventType, typename PredicateType>
-    static FResponse Dispatch(PolicyType Policy, const EventType& Event, PredicateType&& Predicate)
+    static FEventResponse Dispatch(PolicyType Policy, const EventType& Event, PredicateType&& Predicate)
     {
-        FResponse Response = FResponse::Unhandled();
+        FEventResponse Response = FEventResponse::Unhandled();
         for (; !Response.IsEventHandled() && Policy.ShouldProcess(); Policy.Next())
         {
             Response = Predicate(Policy.GetWidget(), Event);
@@ -168,14 +168,14 @@ struct FEventPreProcessor
     };
 
     template<typename EventType, typename PredicateType>
-    static FResponse PreProcess(FPreProcessPolicy Policy, const EventType& Event, PredicateType&& Predicate)
+    static FEventResponse PreProcess(FPreProcessPolicy Policy, const EventType& Event, PredicateType&& Predicate)
     {
-        FResponse Response = FResponse::Unhandled();
+        FEventResponse Response = FEventResponse::Unhandled();
         for (; Policy.ShouldProcess(); Policy.Next())
         {
             if (Predicate(Policy.GetPreProcessor(), Event))
             {
-                Response = FResponse::Handled();
+                Response = FEventResponse::Handled();
                 break;
             }
         }
@@ -383,7 +383,7 @@ bool FApplicationInterface::OnGamepadButtonUp(EGamepadButtonName::Type Button, u
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, false, false);
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyUp(KeyEvent);
@@ -407,7 +407,7 @@ bool FApplicationInterface::OnGamepadButtonDown(EGamepadButtonName::Type Button,
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, true);
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyDown(KeyEvent);
@@ -431,7 +431,7 @@ bool FApplicationInterface::OnAnalogGamepadChange(EAnalogSourceName::Type Analog
 {
     const FAnalogGamepadEvent AnalogGamepadEvent(AnalogSource, GamepadIndex, FPlatformApplicationMisc::GetModifierKeyState(), AnalogValue);
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), AnalogGamepadEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), AnalogGamepadEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FAnalogGamepadEvent& AnalogGamepadEvent)
         {
             return InputHandler->OnAnalogGamepadChange(AnalogGamepadEvent);
@@ -455,7 +455,7 @@ bool FApplicationInterface::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKey
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, false, false);
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyUp(KeyEvent);
@@ -482,7 +482,7 @@ bool FApplicationInterface::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRe
 {
     const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, bIsRepeat, true);
     
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyDown(KeyEvent);
@@ -509,7 +509,7 @@ bool FApplicationInterface::OnKeyChar(uint32 Character)
 {
     const FKeyEvent KeyEvent(EKeys::Unknown, FPlatformApplicationMisc::GetModifierKeyState(), Character, false, true);
     
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
         {
             return InputHandler->OnKeyChar(KeyEvent);
@@ -533,7 +533,7 @@ bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
 {
     const FCursorEvent CursorEvent(FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseMove(CursorEvent);
@@ -573,7 +573,7 @@ bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
                 Widget->OnMouseEntered(CursorEvent);
             }
 
-            return FResponse::Unhandled();
+            return FEventResponse::Unhandled();
         });
 
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
@@ -593,7 +593,7 @@ bool FApplicationInterface::OnMouseButtonDown(const TSharedRef<FGenericWindow>& 
 
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseButtonDown(CursorEvent);
@@ -613,7 +613,7 @@ bool FApplicationInterface::OnMouseButtonDown(const TSharedRef<FGenericWindow>& 
     Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
         [this](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
         {
-            const FResponse Response = Widget->OnMouseButtonDown(CursorEvent);
+            const FEventResponse Response = Widget->OnMouseButtonDown(CursorEvent);
             if (Response.IsEventHandled() && !TrackedWidgets.Contains(Widget))
             {
                 TrackedWidgets.Add(EVisibility::Visible, Widget);
@@ -636,7 +636,7 @@ bool FApplicationInterface::OnMouseButtonUp(EMouseButtonName::Type Button, FModi
 
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModiferKeyState, false);
     
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseButtonUp(CursorEvent);
@@ -678,7 +678,7 @@ bool FApplicationInterface::OnMouseButtonDoubleClick(EMouseButtonName::Type Butt
 {
     const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseButtonDown(CursorEvent);
@@ -709,7 +709,7 @@ bool FApplicationInterface::OnMouseScrolled(float WheelDelta, bool bVertical)
 {
     const FCursorEvent CursorEvent(FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnMouseScrolled(CursorEvent);
@@ -739,7 +739,7 @@ bool FApplicationInterface::OnMouseEntered()
     FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorPath);
 
-    FResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
+    FEventResponse Response = FEventDispatcher::Dispatch(FEventDispatcher::FLeafFirstPolicy(CursorPath), CursorEvent,
         [this](const TSharedPtr<FWidget>& Widget, const FCursorEvent& CursorEvent)
         {
             if (!TrackedWidgets.Contains(Widget))
@@ -748,7 +748,7 @@ bool FApplicationInterface::OnMouseEntered()
                 Widget->OnMouseEntered(CursorEvent);
             }
 
-            return FResponse::Unhandled();
+            return FEventResponse::Unhandled();
         });
 
     return Response.IsEventHandled();
@@ -761,7 +761,7 @@ bool FApplicationInterface::OnMouseLeft()
     FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorPath);
 
-    FResponse Response = FResponse::Unhandled();
+    FEventResponse Response = FEventResponse::Unhandled();
 
     const bool bIsDragging = !PressedMouseButtons.IsEmpty();
     for (int32 Index = 0; Index < TrackedWidgets.Size();)
@@ -785,7 +785,7 @@ bool FApplicationInterface::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY
 {
     const FCursorEvent CursorEvent(FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
 
-    FResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
+    FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
         {
             return InputHandler->OnHighPrecisionMouseInput(CursorEvent);
@@ -811,6 +811,7 @@ bool FApplicationInterface::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY
 bool FApplicationInterface::OnWindowResized(const TSharedRef<FGenericWindow>& PlatformWindow, uint32 Width, uint32 Height)
 {
     bool bResult = false;
+    
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         FIntVector2 NewScreenSize(Width, Height);
@@ -829,6 +830,7 @@ bool FApplicationInterface::OnWindowResizing(const TSharedRef<FGenericWindow>&)
 bool FApplicationInterface::OnWindowMoved(const TSharedRef<FGenericWindow>& PlatformWindow, int32 x, int32 y)
 {
     bool bResult = false;
+    
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         FIntVector2 NewScreenPosition(x, y);
@@ -842,6 +844,7 @@ bool FApplicationInterface::OnWindowMoved(const TSharedRef<FGenericWindow>& Plat
 bool FApplicationInterface::OnWindowFocusLost(const TSharedRef<FGenericWindow>& PlatformWindow)
 {
     bool bResult = false;
+    
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         Window->OnWindowActivationChanged(false);
@@ -855,6 +858,7 @@ bool FApplicationInterface::OnWindowFocusLost(const TSharedRef<FGenericWindow>& 
 bool FApplicationInterface::OnWindowFocusGained(const TSharedRef<FGenericWindow>& PlatformWindow)
 {
     bool bResult = false;
+    
     if (TSharedPtr<FWindow> Window = FindWindowFromGenericWindow(PlatformWindow))
     {
         TSharedPtr<FWidget> FocusWidget = Window->GetContent();

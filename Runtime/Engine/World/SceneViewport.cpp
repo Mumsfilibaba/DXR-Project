@@ -69,120 +69,120 @@ void FSceneViewport::ReleaseRHI()
     RHIViewport.Reset();
 }
 
-FResponse FSceneViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
+FEventResponse FSceneViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         PlayerController->GetPlayerInput()->OnAxisEvent(AnalogGamepadEvent.GetAnalogSource(), AnalogGamepadEvent.GetAnalogValue());
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
+FEventResponse FSceneViewport::OnKeyDown(const FKeyEvent& KeyEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown(), KeyEvent.IsRepeat());
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
+FEventResponse FSceneViewport::OnKeyUp(const FKeyEvent& KeyEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         PlayerController->GetPlayerInput()->OnKeyEvent(KeyEvent.GetKey(), KeyEvent.IsDown(), KeyEvent.IsRepeat());
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnKeyChar(const FKeyEvent&)
+FEventResponse FSceneViewport::OnKeyChar(const FKeyEvent&)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnMouseMove(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
         // PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnMouseButtonDown(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnMouseButtonDown(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
         PlayerController->GetPlayerInput()->OnKeyEvent(CursorEvent.GetKey(), CursorEvent.IsDown(), false);
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnMouseButtonUp(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnMouseButtonUp(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
         PlayerController->GetPlayerInput()->OnKeyEvent(CursorEvent.GetKey(), CursorEvent.IsDown(), false);
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnMouseScroll(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnMouseScroll(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
         // PlayerController->GetPlayerInput()->OnCursorEvent(CursorEvent);
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnMouseDoubleClick(const FCursorEvent& CursorEvent)
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
         // NOTE: Just send to the first player-controller for now
         PlayerController->GetPlayerInput()->OnKeyEvent(CursorEvent.GetKey(), true, false);
-        return FResponse::Handled();
+        return FEventResponse::Handled();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnMouseLeft(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnMouseLeft(const FCursorEvent& CursorEvent)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnMouseEntered(const FCursorEvent& CursorEvent)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
+FEventResponse FSceneViewport::OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnFocusLost()
+FEventResponse FSceneViewport::OnFocusLost()
 {
     if (FPlayerController* PlayerController = GetFirstPlayerController())
     {
@@ -190,12 +190,12 @@ FResponse FSceneViewport::OnFocusLost()
         PlayerController->GetPlayerInput()->ClearInputStates();
     }
 
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
-FResponse FSceneViewport::OnFocusGained() 
+FEventResponse FSceneViewport::OnFocusGained() 
 {
-    return FResponse::Unhandled();
+    return FEventResponse::Unhandled();
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

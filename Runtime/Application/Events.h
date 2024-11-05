@@ -6,17 +6,17 @@
 #include "CoreApplication/Generic/GenericWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-class FResponse
+class FEventResponse
 {
 public:
-    static FResponse Handled()
+    static FEventResponse Handled()
     {
-        return FResponse(true);
+        return FEventResponse(true);
     }
 
-    static FResponse Unhandled()
+    static FEventResponse Unhandled()
     {
-        return FResponse(false);
+        return FEventResponse(false);
     }
 
     bool IsEventHandled() const
@@ -25,7 +25,7 @@ public:
     }
 
 private:
-    FResponse(bool bInIsHandled)
+    FEventResponse(bool bInIsHandled)
         : bIsHandled(bInIsHandled)
     {
     }
