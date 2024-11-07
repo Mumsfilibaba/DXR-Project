@@ -3,6 +3,7 @@
 #include "Application/Events.h"
 #include "Application/InputHandler.h"
 #include "Application/IViewport.h"
+#include "Application/WidgetPath.h"
 #include "Application/Input/KeyNames.h"
 #include "Application/Input/Keys.h"
 #include "Application/Input/InputMapper.h"

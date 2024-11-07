@@ -4,6 +4,15 @@
 
 class FWidgetPath;
 
+enum class EVisibility
+{
+    None    = 0,
+    Hidden  = BIT(1),
+    Visible = BIT(2),
+};
+
+ENUM_CLASS_OPERATORS(EVisibility);
+
 template<typename WidgetType>
 inline TSharedPtr<WidgetType> CreateWidget(const typename WidgetType::FInitializer& Initializer)
 {
@@ -15,15 +24,6 @@ inline TSharedPtr<WidgetType> CreateWidget(const typename WidgetType::FInitializ
 
     return NewWidget;
 }
-
-enum class EVisibility
-{
-    None    = 0,
-    Hidden  = BIT(1),
-    Visible = BIT(2),
-};
-
-ENUM_CLASS_OPERATORS(EVisibility);
 
 struct FRectangle
 {
@@ -60,9 +60,14 @@ public:
     FWidget();
     virtual ~FWidget();
 
+    // Update the widget. This updates the current bounds based on the parent widget etc.
     virtual void Tick();
+    
+    // Helper function to check if the widget is a window. This only returns true of FWindow, and false for
+    // all other widget-types.
     virtual bool IsWindow() const;
 
+    // EventHandling
     virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent);
     virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent);
     virtual FEventResponse OnKeyUp(const FKeyEvent& KeyEvent);
@@ -78,10 +83,15 @@ public:
     virtual FEventResponse OnFocusLost();
     virtual FEventResponse OnFocusGained();
 
+    // Adds all parent widgets to a FWidgetPath. This function adds the first parent-widget (Should be a FWindow)
+    // following the childwidget. This results in the widget being called being at the last position in the FWidgetPath.
     virtual void FindParentWidgets(FWidgetPath& OutParentWidgets);
-    virtual void FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets);
+    
+    // This function adds all child-widgets to this widget that also is under the specified position. 
+    virtual void FindChildrenContainingPoint(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets);
 
-    bool IsVisible() const 
+    // Returns true if the visibility is set to true
+    bool IsVisible() const
     { 
         return (Visibility & EVisibility::Visible) == EVisibility::None; 
     }
@@ -93,20 +103,20 @@ public:
 
     void SetVisibility(EVisibility InVisibility);
     void SetParentWidget(const TWeakPtr<FWidget>& InParentWidget);
-    void SetScreenRectangle(const FRectangle& InBounds);
+    void SetContentRectangle(const FRectangle& InContentRectangle);
 
     TWeakPtr<FWidget> GetParentWidget() const
     {
         return ParentWidget;
     }
 
-    const FRectangle& GetScreenRectangle() const
+    const FRectangle& GetContentRectangle() const
     {
-        return ScreenRectangle;
+        return ContentRectangle;
     }
 
 private:
     EVisibility       Visibility;
-    FRectangle        ScreenRectangle;
+    FRectangle        ContentRectangle;
     TWeakPtr<FWidget> ParentWidget;
 };

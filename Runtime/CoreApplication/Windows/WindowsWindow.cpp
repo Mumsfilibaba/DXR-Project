@@ -412,7 +412,7 @@ void FWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) cons
     }
 }
 
-float FWindowsWindow::GetWindowDpiScale() const
+float FWindowsWindow::GetWindowDPIScale() const
 {
     if (IsValid())
     {

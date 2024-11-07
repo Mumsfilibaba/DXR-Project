@@ -21,8 +21,8 @@ void FViewport::Tick()
     TWeakPtr<FWidget> Parent = GetParentWidget();
     if (Parent.IsValid())
     {
-        const FRectangle& InScreenRectangle = Parent->GetScreenRectangle();
-        SetScreenRectangle(InScreenRectangle);
+        const FRectangle& InContentRectangle = Parent->GetContentRectangle();
+        SetContentRectangle(InContentRectangle);
     }
 }
 

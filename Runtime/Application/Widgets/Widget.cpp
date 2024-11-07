@@ -4,7 +4,7 @@
 FWidget::FWidget()
     : TSharedFromThis<FWidget>()
     , Visibility(EVisibility::Visible)
-    , ScreenRectangle()
+    , ContentRectangle()
     , ParentWidget()
 {
 }
@@ -102,9 +102,9 @@ void FWidget::FindParentWidgets(FWidgetPath& OutRootPath)
     OutRootPath.Add(Visibility, AsSharedPtr());
 }
 
-void FWidget::FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets)
+void FWidget::FindChildrenContainingPoint(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets)
 {
-    if (ScreenRectangle.EncapsualtesPoint(ScreenCursorPosition))
+    if (ContentRectangle.EncapsualtesPoint(ScreenCursorPosition))
     {
         OutChildWidgets.Add(Visibility, AsSharedPtr());
     }
@@ -120,7 +120,7 @@ void FWidget::SetParentWidget(const TWeakPtr<FWidget>& InParentWidget)
     ParentWidget = InParentWidget;
 }
 
-void FWidget::SetScreenRectangle(const FRectangle& InScreenRectangle)
+void FWidget::SetContentRectangle(const FRectangle& InContentRectangle)
 {
-    ScreenRectangle = InScreenRectangle;
+    ContentRectangle = InContentRectangle;
 }

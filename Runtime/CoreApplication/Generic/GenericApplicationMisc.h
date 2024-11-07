@@ -23,7 +23,7 @@ class FModifierKeyState
 {
 public:
     FModifierKeyState()
-    : Flags(EModifierFlag::None)
+        : Flags(EModifierFlag::None)
     {
     }
 

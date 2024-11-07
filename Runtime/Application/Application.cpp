@@ -381,7 +381,7 @@ void FApplicationInterface::UnregisterInputHandler(const TSharedPtr<FInputHandle
 
 bool FApplicationInterface::OnGamepadButtonUp(EGamepadButtonName::Type Button, uint32 GamepadIndex)
 {
-    const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, false, false);
+    const FKeyEvent KeyEvent(EInputEventType::GamepadButtonUp, FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, false, false);
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
@@ -405,7 +405,7 @@ bool FApplicationInterface::OnGamepadButtonUp(EGamepadButtonName::Type Button, u
 
 bool FApplicationInterface::OnGamepadButtonDown(EGamepadButtonName::Type Button, uint32 GamepadIndex, bool bIsRepeat)
 {
-    const FKeyEvent KeyEvent(FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, true);
+    const FKeyEvent KeyEvent(EInputEventType::GamepadButtonDown, FInputMapper::Get().GetGamepadKey(Button), FPlatformApplicationMisc::GetModifierKeyState(), 0, GamepadIndex, bIsRepeat, true);
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
@@ -429,7 +429,7 @@ bool FApplicationInterface::OnGamepadButtonDown(EGamepadButtonName::Type Button,
 
 bool FApplicationInterface::OnAnalogGamepadChange(EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float AnalogValue)
 {
-    const FAnalogGamepadEvent AnalogGamepadEvent(AnalogSource, GamepadIndex, FPlatformApplicationMisc::GetModifierKeyState(), AnalogValue);
+    const FAnalogGamepadEvent AnalogGamepadEvent(EInputEventType::GamepadAnalogSourceChanged, AnalogSource, GamepadIndex, FPlatformApplicationMisc::GetModifierKeyState(), AnalogValue);
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), AnalogGamepadEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FAnalogGamepadEvent& AnalogGamepadEvent)
@@ -453,7 +453,7 @@ bool FApplicationInterface::OnAnalogGamepadChange(EAnalogSourceName::Type Analog
 
 bool FApplicationInterface::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKeyState ModierKeyState)
 {
-    const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, false, false);
+    const FKeyEvent KeyEvent(EInputEventType::KeyUp, FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, false, false);
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
@@ -480,7 +480,7 @@ bool FApplicationInterface::OnKeyUp(EKeyboardKeyName::Type KeyCode, FModifierKey
 
 bool FApplicationInterface::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRepeat, FModifierKeyState ModierKeyState)
 {
-    const FKeyEvent KeyEvent(FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, bIsRepeat, true);
+    const FKeyEvent KeyEvent(EInputEventType::KeyDown, FInputMapper::Get().GetKeyboardKey(KeyCode), ModierKeyState, bIsRepeat, true);
     
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
@@ -507,7 +507,7 @@ bool FApplicationInterface::OnKeyDown(EKeyboardKeyName::Type KeyCode, bool bIsRe
 
 bool FApplicationInterface::OnKeyChar(uint32 Character)
 {
-    const FKeyEvent KeyEvent(EKeys::Unknown, FPlatformApplicationMisc::GetModifierKeyState(), Character, false, true);
+    const FKeyEvent KeyEvent(EInputEventType::KeyChar, EKeys::Unknown, FPlatformApplicationMisc::GetModifierKeyState(), Character, false, true);
     
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), KeyEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FKeyEvent& KeyEvent)
@@ -531,7 +531,7 @@ bool FApplicationInterface::OnKeyChar(uint32 Character)
 
 bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
 {
-    const FCursorEvent CursorEvent(FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::MouseMoved, FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -546,7 +546,7 @@ bool FApplicationInterface::OnMouseMove(int32 MouseX, int32 MouseY)
     
     // Retrieve all the widgets under the cursor which should receive events
     FWidgetPath CursorPath;
-    FindWidgetsContainingPoint(CursorEvent.GetCursorPos(), CursorPath);
+    FindWidgetsUnderCursor(CursorEvent.GetCursorPos(), CursorPath);
 
     // Remove the widget from any widget which is not tracked
     const bool bIsDragging = !PressedMouseButtons.IsEmpty();
@@ -591,7 +591,7 @@ bool FApplicationInterface::OnMouseButtonDown(const TSharedRef<FGenericWindow>& 
     PlatformApplication->SetCapture(PlatformWindow);
     bIsTrackingCursor = true;
 
-    const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
+    const FCursorEvent CursorEvent(EInputEventType::MouseButtonDown, FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -634,7 +634,7 @@ bool FApplicationInterface::OnMouseButtonUp(EMouseButtonName::Type Button, FModi
     PlatformApplication->SetCapture(nullptr);
     bIsTrackingCursor = false;
 
-    const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModiferKeyState, false);
+    const FCursorEvent CursorEvent(EInputEventType::MouseButtonUp, FInputMapper::Get().GetMouseKey(Button), ModiferKeyState, false);
     
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -676,7 +676,7 @@ bool FApplicationInterface::OnMouseButtonUp(EMouseButtonName::Type Button, FModi
 
 bool FApplicationInterface::OnMouseButtonDoubleClick(EMouseButtonName::Type Button, FModifierKeyState ModierKeyState)
 {
-    const FCursorEvent CursorEvent(FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
+    const FCursorEvent CursorEvent(EInputEventType::MouseButtonDoubleClick, FInputMapper::Get().GetMouseKey(Button), ModierKeyState, true);
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -707,7 +707,7 @@ bool FApplicationInterface::OnMouseButtonDoubleClick(EMouseButtonName::Type Butt
 
 bool FApplicationInterface::OnMouseScrolled(float WheelDelta, bool bVertical)
 {
-    const FCursorEvent CursorEvent(FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
+    const FCursorEvent CursorEvent(EInputEventType::MouseScrolled, FPlatformApplicationMisc::GetModifierKeyState(), WheelDelta, bVertical);
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -734,7 +734,7 @@ bool FApplicationInterface::OnMouseScrolled(float WheelDelta, bool bVertical)
 
 bool FApplicationInterface::OnMouseEntered()
 {
-    const FCursorEvent CursorEvent(FPlatformApplicationMisc::GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::MouseEntered, FPlatformApplicationMisc::GetModifierKeyState());
 
     FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorPath);
@@ -756,7 +756,7 @@ bool FApplicationInterface::OnMouseEntered()
 
 bool FApplicationInterface::OnMouseLeft()
 {
-    const FCursorEvent CursorEvent(FPlatformApplicationMisc::GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::MouseLeft, FPlatformApplicationMisc::GetModifierKeyState());
 
     FWidgetPath CursorPath;
     FindWidgetsUnderCursor(CursorPath);
@@ -783,7 +783,7 @@ bool FApplicationInterface::OnMouseLeft()
 
 bool FApplicationInterface::OnHighPrecisionMouseInput(int32 MouseX, int32 MouseY)
 {
-    const FCursorEvent CursorEvent(FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
+    const FCursorEvent CursorEvent(EInputEventType::HighPrecisionMouse, FIntVector2(MouseX, MouseY), FPlatformApplicationMisc::GetModifierKeyState());
 
     FEventResponse Response = FEventPreProcessor::PreProcess(FEventPreProcessor::FPreProcessPolicy(InputHandlers), CursorEvent,
         [](const TSharedPtr<FInputHandler>& InputHandler, const FCursorEvent& CursorEvent)
@@ -1083,17 +1083,17 @@ void FApplicationInterface::FindWidgetsUnderCursor(FWidgetPath& OutCursorPath)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
-        FindWidgetsContainingPoint(Cursor->GetPosition(), OutCursorPath);
+        FindWidgetsUnderCursor(Cursor->GetPosition(), OutCursorPath);
     }
 }
 
-void FApplicationInterface::FindWidgetsContainingPoint(const FIntVector2& Point, FWidgetPath& OutCursorPath)
+void FApplicationInterface::FindWidgetsUnderCursor(const FIntVector2& Point, FWidgetPath& OutCursorPath)
 {
     if (TSharedRef<FGenericWindow> PlatformWindow = PlatformApplication->GetWindowUnderCursor())
     {
         if (TSharedPtr<FWindow> CursorWindow = FindWindowFromGenericWindow(PlatformWindow))
         {
-            CursorWindow->FindChildrenUnderCursor(Point, OutCursorPath);
+            CursorWindow->FindChildrenContainingPoint(Point, OutCursorPath);
         }
     }
 }

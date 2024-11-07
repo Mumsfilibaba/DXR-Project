@@ -34,7 +34,7 @@ public:
     virtual void SetWindowShape(const FWindowShape& Shape, bool bMove) override final;
     virtual void GetWindowShape(FWindowShape& OutWindowShape) const override final;
     virtual void GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const override final;
-    virtual float GetWindowDpiScale() const override final;
+    virtual float GetWindowDPIScale() const override final;
     virtual uint32 GetWidth() const override final;
     virtual uint32 GetHeight() const override final;
     virtual void SetStyle(EWindowStyleFlags InStyle) override final;

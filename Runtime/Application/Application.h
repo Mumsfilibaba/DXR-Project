@@ -155,8 +155,8 @@ public:
     // Returns a path of widgets that is currently under the cursor
     void FindWidgetsUnderCursor(FWidgetPath& OutCursorPath);
     
-    // Returns a path of widgets that is currently surrounding a certain point
-    void FindWidgetsContainingPoint(const FIntVector2& Point, FWidgetPath& OutCursorPath);
+    // Returns a path of widgets that is currently under the cursor and contains the current mouse pointer. 
+    void FindWidgetsUnderCursor(const FIntVector2& Point, FWidgetPath& OutCursorPath);
 
     // Retrieve cached display-info
     void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);

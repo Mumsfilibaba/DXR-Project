@@ -544,7 +544,7 @@ void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
     OutHeight = Frame.size.height;
 }
 
-float FMacWindow::GetWindowDpiScale() const
+float FMacWindow::GetWindowDPIScale() const
 {
     __block CGFloat Scale = 1.0f;
     ExecuteOnMainThread(^
