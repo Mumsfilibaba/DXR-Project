@@ -31,12 +31,12 @@ private:
     FCocoaConsoleWindow*     WindowHandle;
     mutable FCriticalSection WindowCS;
 
-    NSTextView*              TextView;
-    NSScrollView*            ScrollView;
-    NSMutableArray*          Attributes;
-    NSMutableArray*          AttributeNames;
-    NSFont*                  Font;
-    NSColor*                 TextColor;
-    NSColor*                 BackGroundColor;
-    NSDictionary*            StringAttributes;
+    NSTextView*     TextView;
+    NSScrollView*   ScrollView;
+    NSMutableArray* Attributes;
+    NSMutableArray* AttributeNames;
+    NSFont*         Font;
+    NSColor*        TextColor;
+    NSColor*        BackGroundColor;
+    NSDictionary*   StringAttributes;
 };

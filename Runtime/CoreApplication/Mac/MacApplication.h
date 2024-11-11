@@ -123,14 +123,23 @@ public:
     // Calculate the DPI for the specified NSScreen
     static uint32 MonitorDPIFromScreen(NSScreen* Screen);
 
-    // Finds a NSScreen based on a position
+    // Finds a NSScreen based on a position in the Cocoa coordinate-system
     static NSScreen* FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY);
+    
+    // Finds a NSScreen based on a position in the Engine coordinate-system
+    static NSScreen* FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY);
 
-    // Converts a NSPoint specified in Cococa coordinate-system and converts it into the coordinate-system that the engine expectes.
+    // Converts a NSPoint specified in Cocoa coordinate-system and converts it into the coordinate-system that the engine expectes.
     static NSPoint ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY);
     
+    // Converts a NSPoint specified in the Engine coordinate-system and converts it into the coordinate-system that Cocoa expectes.
+    static NSPoint ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY);
+    
     // Converts a rectangle from Engine coordinate-system into the Cocoa coordinate-system.
-    static NSRect ConvertNSRect(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
+    static NSRect ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
+    
+    // Converts a rectangle from Cocoa coordinate-system into the Engine coordinate-system.
+    static NSRect ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
     
 private:
 

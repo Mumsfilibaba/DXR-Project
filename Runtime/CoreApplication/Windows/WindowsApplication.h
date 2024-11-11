@@ -7,6 +7,9 @@
 #include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericApplication.h"
 
+class FGenericWindow;
+class FWindowsWindow;
+
 // On windows we defer messages to handle all events at once. This is due to some functions causes events
 // to get sent directly to the window-procedure. By deferring the messages, we can handle all events at a
 // single point.
@@ -42,9 +45,6 @@ struct IWindowsMessageListener
     // See https://docs.microsoft.com/en-us/windows/win32/learnwin32/writing-the-window-procedure
     virtual LRESULT MessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam) = 0;
 };
-
-class FGenericWindow;
-class FWindowsWindow;
 
 class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 {

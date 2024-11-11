@@ -745,7 +745,7 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
     }
 
     // Convert the coordinates to the generic ones that are expected
-    ContentFrame = FMacApplication::ConvertNSRect(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
+    ContentFrame = FMacApplication::ConvertEngineRectToCocoa(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
 
     // Window can move sometimes when resized so send and event about it
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
@@ -767,7 +767,7 @@ void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
     
     // We always retrieve the contentRect in order to find out where the position are
     NSRect ContentFrame = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
-    ContentFrame = FMacApplication::ConvertNSRect(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
+    ContentFrame = FMacApplication::ConvertEngineRectToCocoa(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
     
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
@@ -937,13 +937,44 @@ NSScreen* FMacApplication::FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat P
     return Screen;
 }
 
+NSScreen* FMacApplication::FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY)
+{
+    NSArray* ScreensArray = [NSScreen screens];
+    
+    // Since EngineX and EngineY are relative to the screen's top-left corner, we need to find the
+    // screen that matches these coordinates.
+    NSScreen* Screen = nil;
+    for (NSScreen* CurrentScreen in ScreensArray)
+    {
+        NSRect ScreenFrame = [CurrentScreen frame];
+        
+        // Screen's size
+        CGFloat ScreenWidth  = ScreenFrame.size.width;
+        CGFloat ScreenHeight = ScreenFrame.size.height;
+        
+        // Check if the engine point falls within this screen's bounds
+        if (PositionX >= 0 && PositionX <= ScreenWidth && PositionY >= 0 && PositionY <= ScreenHeight)
+        {
+            Screen = CurrentScreen;
+            break;
+        }
+    }
+    
+    // If no screen is found, default to the main screen
+    if (!Screen)
+    {
+        Screen = [NSScreen mainScreen];
+    }
+    
+    return Screen;
+}
+
 NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY)
 {
     NSScreen* Screen = FindScreenFromCocoaPoint(PositionX, PositionY);
-    
-    NSRect ScreenFrame = [Screen frame];
-    
+        
     // Adjust the point's coordinates relative to the screen (in points)
+    const NSRect ScreenFrame = [Screen frame];
     CGFloat RelativeX = PositionX - ScreenFrame.origin.x;
     CGFloat RelativeY = PositionY - ScreenFrame.origin.y;
     
@@ -955,11 +986,28 @@ NSPoint FMacApplication::ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat Po
     return ConvertedPoint;
 }
 
-NSRect FMacApplication::ConvertNSRect(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
+NSPoint FMacApplication::ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY)
 {
-    NSScreen* Screen = FindScreenFromCocoaPoint(PositionX, PositionY);
+    NSScreen* Screen = FindScreenFromEnginePoint(PositionX, PositionY);
+    
+    // Convert the engine point to Cocoa's coordinate system
+    const NSRect ScreenFrame = [Screen frame];
+    CGFloat RelativeX = ScreenFrame.origin.x + PositionX;
+    CGFloat RelativeY = ScreenFrame.origin.y + (ScreenFrame.size.height - PositionY);
+    
+    // Create the converted point
+    NSPoint CocoaPoint = NSMakePoint(RelativeX, RelativeY);
+    return CocoaPoint;
+}
 
-    CGFloat CocoaPositionY = Screen.frame.size.height - PositionY;
-    CocoaPositionY = CocoaPositionY - Height + 1;
-    return NSMakeRect(PositionX, CocoaPositionY, Width, Height);
+NSRect FMacApplication::ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
+{
+    const NSPoint Position = ConvertEnginePointToCocoa(PositionX, PositionY);
+    return NSMakeRect(Position.x, Position.y - Height + 1.0f, Width, Height);
+}
+
+NSRect FMacApplication::ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY)
+{
+    const NSPoint Position = ConvertCocoaPointToEngine(PositionX, PositionY);
+    return NSMakeRect(Position.x, Position.y - Height + 1.0f, Width, Height);
 }

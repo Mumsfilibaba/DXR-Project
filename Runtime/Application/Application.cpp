@@ -284,20 +284,20 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
     
     // Calculate the maximum position and size of the new window so that if fits in the main monitor bounds.
     const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
-    if (MonitorInfo.WorkPosition.x > WindowInitializer.Position.x)
+    if (MonitorInfo.MainPosition.x > WindowInitializer.Position.x)
     {
-        WindowInitializer.Position.x = MonitorInfo.WorkPosition.x;
+        WindowInitializer.Position.x = MonitorInfo.MainPosition.x;
     }
-    if (MonitorInfo.WorkPosition.y > WindowInitializer.Position.y)
+    if (MonitorInfo.MainPosition.y > WindowInitializer.Position.y)
     {
-        WindowInitializer.Position.y = MonitorInfo.WorkPosition.y;
+        WindowInitializer.Position.y = MonitorInfo.MainPosition.y;
     }
     
     WindowInitializer.Width  = InWindow->GetWidth();
     WindowInitializer.Height = InWindow->GetHeight();
     
-    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.WorkSize.x + MonitorInfo.WorkSize.x);
-    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.WorkSize.y + MonitorInfo.WorkSize.y);
+    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.MainPosition.x + MonitorInfo.MainSize.x);
+    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.MainPosition.y + MonitorInfo.MainSize.y);
     const uint32 WindowEndX = WindowInitializer.Position.x + WindowInitializer.Width;
     const uint32 WindowEndY = WindowInitializer.Position.y + WindowInitializer.Height;
     

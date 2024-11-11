@@ -64,7 +64,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         CGFloat PositionX = static_cast<CGFloat>(InInitializer.Position.x);
         CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.y);
 
-        const NSRect WindowRect = FMacApplication::ConvertNSRect(Width, Height, PositionX, PositionY);
+        const NSRect WindowRect = FMacApplication::ConvertEngineRectToCocoa(Width, Height, PositionX, PositionY);
         CocoaWindow = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
         if (!CocoaWindow)
         {
@@ -410,7 +410,7 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
         {
             const NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
             NSRect NewContentRect = NSMakeRect(x, y, ContentRect.size.width, ContentRect.size.height);
-            NewContentRect = FMacApplication::ConvertNSRect(NewContentRect.size.width, NewContentRect.size.height, NewContentRect.origin.x, NewContentRect.origin.y);
+            NewContentRect = FMacApplication::ConvertEngineRectToCocoa(NewContentRect.size.width, NewContentRect.size.height, NewContentRect.origin.x, NewContentRect.origin.y);
             
             const NSRect WindowFrame = [CocoaWindow frameRectForContentRect:NewContentRect];
             [CocoaWindow setFrameOrigin:WindowFrame.origin];
@@ -454,11 +454,11 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
             else
             {
                 NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
-                ContentRect = FMacApplication::ConvertNSRect(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
+                ContentRect = FMacApplication::ConvertCocoaRectToEngine(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
                 NewContentRect = NSMakeRect(ContentRect.origin.x, ContentRect.origin.y, Shape.Width, Shape.Height);
             }
             
-            NewContentRect = FMacApplication::ConvertNSRect(NewContentRect.size.width, NewContentRect.size.height, NewContentRect.origin.x, NewContentRect.origin.y);
+            NewContentRect = FMacApplication::ConvertEngineRectToCocoa(NewContentRect.size.width, NewContentRect.size.height, NewContentRect.origin.x, NewContentRect.origin.y);
             const NSRect NewFrame = [NSWindow frameRectForContentRect:NewContentRect styleMask:[CocoaWindow styleMask]];
             [CocoaWindow setFrame: NewFrame display: YES];
             
@@ -480,7 +480,7 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
         if (CocoaWindow)
         {
             ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
-            ContentRect = FMacApplication::ConvertNSRect(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
+            ContentRect = FMacApplication::ConvertCocoaRectToEngine(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
         }
     }, NSDefaultRunLoopMode, true);
 
@@ -500,7 +500,7 @@ uint32 FMacWindow::GetWidth() const
         if (CocoaWindow)
         {
             NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
-            ContentRect = FMacApplication::ConvertNSRect(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
+            ContentRect = FMacApplication::ConvertCocoaRectToEngine(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
             Size = ContentRect.size;
         }
     }, NSDefaultRunLoopMode, true);
@@ -518,7 +518,7 @@ uint32 FMacWindow::GetHeight() const
         if (CocoaWindow)
         {
             NSRect ContentRect = [CocoaWindow contentRectForFrameRect:CocoaWindow.frame];
-            ContentRect = FMacApplication::ConvertNSRect(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
+            ContentRect = FMacApplication::ConvertCocoaRectToEngine(ContentRect.size.width, ContentRect.size.height, ContentRect.origin.x, ContentRect.origin.y);
             Size = ContentRect.size;
         }
     }, NSDefaultRunLoopMode, true);

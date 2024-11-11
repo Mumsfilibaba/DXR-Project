@@ -11,7 +11,12 @@ class FMacApplication;
 class COREAPPLICATION_API FMacWindow final : public FGenericWindow
 {
 public:
+    
+    // Creates a new FMacWindow and returns a smart pointer that controls the window instead
+    // of creating a new raw pointer.
     static TSharedRef<FMacWindow> Create(FMacApplication* InApplication);
+    
+public:
     ~FMacWindow();
     
     virtual bool Initialize(const FGenericWindowInitializer& InInitializer) override final;
@@ -55,6 +60,8 @@ public:
         return Application;
     }
     
+    // Sets the cached window position. This is used in order to avoid sending multiple events
+    // that reports the same position.
     void SetCachedPosition(const FIntVector2& InPosition)
     {
         Position = InPosition;
