@@ -7,7 +7,6 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     : IFileHandle()
     , FileHandle(InFileHandle)

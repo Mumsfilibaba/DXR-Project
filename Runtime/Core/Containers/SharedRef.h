@@ -7,6 +7,7 @@ template<typename ElementType>
 class TSharedRef
 {
 public:
+
     template<typename OtherType>
     friend class TSharedRef;
 

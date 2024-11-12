@@ -6,15 +6,15 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach.h>
 
-#define LOAD_FUNCTION(Function, LibraryHandle)                                                        \
-    do                                                                                                \
-    {                                                                                                 \
+#define LOAD_FUNCTION(Function, LibraryHandle) \
+    do \
+    { \
         Function = FPlatformLibrary::LoadSymbol<decltype(Function)>(#Function, LibraryHandle); \
-        if (!Function)                                                                                \
-        {                                                                                             \
-            LOG_ERROR("Failed to load '%s'", #Function);                                              \
-            return false;                                                                             \
-        }                                                                                             \
+        if (!Function) \
+        { \
+            LOG_ERROR("Failed to load '%s'", #Function); \
+            return false;  \
+        } \
     } while(false)
 
 // Based on https://github.com/mountainstorm/CoreSymbolication

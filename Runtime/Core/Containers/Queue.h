@@ -25,7 +25,7 @@ class TQueue
     };
 
 public:
-    TQueue(const TQueue&)            = delete;
+    TQueue(const TQueue&) = delete;
     TQueue& operator=(const TQueue&) = delete;
 
     /**

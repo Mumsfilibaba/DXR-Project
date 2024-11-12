@@ -74,12 +74,6 @@ struct FGenericPlatformString
     }
 
     template<typename... ArgTypes>
-    static FORCEINLINE int32 Sprintf(CHAR* Buffer, const CHAR* Format, ArgTypes&&... Args) noexcept
-    {
-        return static_cast<int32>(::sprintf(Buffer, Format, Forward<ArgTypes>(Args)...));
-    }
-
-    template<typename... ArgTypes>
     static FORCEINLINE int32 Snprintf(CHAR* Buffer, TSIZE BufferSize, const CHAR* Format, ArgTypes&&... Args) noexcept
     {
         return static_cast<int32>(::snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...));

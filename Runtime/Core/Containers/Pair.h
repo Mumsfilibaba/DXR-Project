@@ -5,9 +5,9 @@
 template<typename FirstType, typename SecondType>
 struct TPair
 {
-    TPair()             = default;
+    TPair() = default;
     TPair(const TPair&) = default;
-    TPair(TPair&&)      = default;
+    TPair(TPair&&) = default;
 
     /**
      * @brief          - Create a new instance of a pair
@@ -153,7 +153,6 @@ NODISCARD inline bool operator>(const TPair<FirstType, SecondType>& LHS, const T
 {
     return LHS.First > RHS.First && LHS.Second > RHS.Second;
 }
-
 
 template<typename FirstType, typename SecondType>
 NODISCARD inline TPair<FirstType, SecondType> MakePair(const FirstType& First, const SecondType& Second) noexcept

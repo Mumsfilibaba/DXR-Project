@@ -8,10 +8,11 @@ class TUniquePtr : private DeleterType // Using inheritance instead of compositi
     using Super = DeleterType;
 
 public:
+
     template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
 
-    TUniquePtr(const TUniquePtr& Other)                     = delete;
+    TUniquePtr(const TUniquePtr& Other) = delete;
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /** @brief - Default constructor */
@@ -256,7 +257,6 @@ private:
     ElementType* Object{nullptr};
 };
 
-
 template<typename ElementType, typename DeleterType>
 class TUniquePtr<ElementType[], DeleterType> : private DeleterType
 {
@@ -268,7 +268,7 @@ public:
     template<typename OtherType, typename OtherDeleterType>
     friend class TUniquePtr;
 
-    TUniquePtr(const TUniquePtr& Other)                     = delete;
+    TUniquePtr(const TUniquePtr& Other) = delete;
     TUniquePtr& operator=(const TUniquePtr& Other) noexcept = delete;
 
     /** @brief - Default constructor */
@@ -392,7 +392,7 @@ public:
     {
         return (Object != nullptr);
     }
-    
+
     /**
      * @return - Returns this as a reference as a DeleterType
      */
@@ -497,7 +497,6 @@ private:
     ElementType* Object{nullptr};
 };
 
-
 template<typename ElementType, typename U>
 NODISCARD FORCEINLINE bool operator==(const TUniquePtr<ElementType>& LHS, U* RHS) noexcept
 {
@@ -557,7 +556,6 @@ NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<ElementType
 {
     return nullptr != RHS.Get();
 }
-
 
 template<typename ElementType, typename... ArgTypes>
 NODISCARD FORCEINLINE TUniquePtr<ElementType> MakeUniquePtr(ArgTypes&&... Args) noexcept requires(TNot<TIsArray<ElementType>>::Value)

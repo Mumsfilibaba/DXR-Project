@@ -11,7 +11,6 @@ namespace TupleInternal
     template<typename WantedType, typename... Types>
     struct TTupleGetByElement;
 
-    
     template<uint32 Index, typename ValueType>
     struct TTupleLeaf
     {
@@ -47,7 +46,6 @@ namespace TupleInternal
         ValueType Value;
     };
 
-    
     template<uint32 Index, typename ValueType>
     struct TTupleLeaf<Index, ValueType&>
     {
@@ -81,7 +79,6 @@ namespace TupleInternal
         ValueType Value;
     };
 
-    
     template<uint32 Iteration, uint32 Index, typename... Types>
     struct TTupleGetByIndexHelper;
 
@@ -115,7 +112,6 @@ namespace TupleInternal
     {
     };
 
-
     template<uint32 Iteration, typename WantedType, typename... Types>
     struct TTupleGetByElementHelper;
 
@@ -148,7 +144,6 @@ namespace TupleInternal
     struct TTupleGetByElement : public TTupleGetByElementHelper<0, WantedType, Types...>
     {
     };
-
 
     template<typename Indices, typename... Types>
     class TTupleStorage;
@@ -232,7 +227,6 @@ namespace TupleInternal
         }
     };
 
-
     template<typename FirstType, typename SecondType>
     class TTupleStorage<TIntegerSequence<uint32, 0, 1>, FirstType, SecondType>
     {
@@ -270,7 +264,6 @@ namespace TupleInternal
                 return Tuple.Second;
             }
         };
-
 
         template<typename T, bool IsFirstType>
         struct TGetByElement;
@@ -394,7 +387,6 @@ namespace TupleInternal
         SecondType Second;
     };
 
-
     template<uint32 Index>
     struct TTupleComparators
     {
@@ -484,7 +476,6 @@ public:
     }
 };
 
-
 template<typename... FirstTypes, typename... SecondTypes>
 NODISCARD inline bool operator==(const TTuple<FirstTypes...>& LHS, const TTuple<SecondTypes...>& RHS)
 {
@@ -520,7 +511,6 @@ NODISCARD inline bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<
 {
     return TupleInternal::TTupleComparators<sizeof...(FirstTypes)>::IsLessThan(LHS, RHS) == false;
 }
-
 
 template<uint32 SearchForIndex, typename... Types>
 NODISCARD inline auto& TupleGetByIndex(const TTuple<Types...>& Tuple) noexcept

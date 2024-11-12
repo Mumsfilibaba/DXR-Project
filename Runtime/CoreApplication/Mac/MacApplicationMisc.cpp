@@ -31,7 +31,7 @@ void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Messag
 
 void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
-    PumpMessagesApplicationThread(bUntilEmpty);
+    PumpMessagesAppThread(bUntilEmpty);
 
     ExecuteOnMainThread(^
     {

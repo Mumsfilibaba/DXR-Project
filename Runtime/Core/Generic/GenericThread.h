@@ -17,6 +17,8 @@ public:
     // Returns the thread-object for the current thread
     static FGenericThread* GetThread();
 
+public:
+
     /** @brief - Destructor */
     virtual ~FGenericThread();
 

@@ -31,9 +31,9 @@ namespace SharedPointerInternal
         typedef typename TConditional<ThreadAccess == EThreadAccess::Safe, FAtomicInt32, int32>::Type ReferenceType;
 
         FReferenceHandler(const FReferenceHandler&) = delete;
-        FReferenceHandler(FReferenceHandler&&)      = delete;
+        FReferenceHandler(FReferenceHandler&&) = delete;
         FReferenceHandler& operator=(const FReferenceHandler&) = delete;
-        FReferenceHandler& operator=(FReferenceHandler&&)      = delete;
+        FReferenceHandler& operator=(FReferenceHandler&&) = delete;
 
         // NOTE: Default constructor initializes references to zero, this means that the Weak-Reference
         // counter needs to be decreased when releasing a strong reference 
@@ -190,9 +190,9 @@ namespace SharedPointerInternal
 
     public:
         TPointerReferenceHandler(const TPointerReferenceHandler&) = delete;
-        TPointerReferenceHandler(TPointerReferenceHandler&&)      = delete;
+        TPointerReferenceHandler(TPointerReferenceHandler&&) = delete;
         TPointerReferenceHandler& operator=(const TPointerReferenceHandler&) = delete;
-        TPointerReferenceHandler& operator=(TPointerReferenceHandler&&)      = delete;
+        TPointerReferenceHandler& operator=(TPointerReferenceHandler&&) = delete;
 
         TPointerReferenceHandler(ObjectType* InObject, DeleterType&& Deleter)
             : FReferenceHandler<InThreadAccess>()
@@ -224,9 +224,9 @@ namespace SharedPointerInternal
     
     public:
         TObjectReferenceHandler(const TObjectReferenceHandler&) = delete;
-        TObjectReferenceHandler(TObjectReferenceHandler&&)      = delete;
+        TObjectReferenceHandler(TObjectReferenceHandler&&) = delete;
         TObjectReferenceHandler& operator=(const TObjectReferenceHandler&) = delete;
-        TObjectReferenceHandler& operator=(TObjectReferenceHandler&&)      = delete;
+        TObjectReferenceHandler& operator=(TObjectReferenceHandler&&) = delete;
 
         template<typename... ArgTypes>
         explicit TObjectReferenceHandler(ArgTypes... Args)
@@ -537,7 +537,7 @@ template<typename InObjectType, EThreadAccess InThreadAccess = EThreadAccess::Sa
 class TSharedPtr
 {
 public:
-    using SizeType   = int32;
+    using SIZETYPE   = int32;
     using ObjectType = typename TRemoveExtent<InObjectType>::Type;
 
     template<typename OtherObjectType, EThreadAccess OtherThreadAccess>
@@ -791,7 +791,7 @@ public:
       * @brief  - Retrieve element at a certain index
       * @return - Return the element at the index
       */
-    NODISCARD FORCEINLINE ObjectType& operator[](SizeType Index) const noexcept requires(TIsArray<InObjectType>::Value)
+    NODISCARD FORCEINLINE ObjectType& operator[](SIZETYPE Index) const noexcept requires(TIsArray<InObjectType>::Value)
     {
         CHECK(IsValid());
         return Object[Index];
@@ -890,12 +890,11 @@ private:
     SharedPointerInternal::FSharedReference<ThreadAccess> ReferenceHandler;
 };
 
-
 template<typename InObjectType, EThreadAccess InThreadAccess = EThreadAccess::Safe>
 class TWeakPtr
 {
 public:
-    using SizeType   = int32;
+    using SIZETYPE   = int32;
     using ObjectType = typename TRemoveExtent<InObjectType>::Type;
 
     template<typename OtherObjectType, EThreadAccess ThreadAccess>
@@ -908,7 +907,7 @@ public:
 
     /** @brief - Default constructor */
     TWeakPtr() = default;
-    
+
     /**
      * @brief - Constructor taking a nullptr
      */
@@ -1111,7 +1110,7 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the retrieved element
      */
-    NODISCARD FORCEINLINE ObjectType& operator[](SizeType Index) const noexcept requires(TIsUnboundedArray<InObjectType>::Value)
+    NODISCARD FORCEINLINE ObjectType& operator[](SIZETYPE Index) const noexcept requires(TIsUnboundedArray<InObjectType>::Value)
     {
         CHECK(IsValid());
         return Object[Index];
@@ -1440,7 +1439,6 @@ NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<T>& LHS, const TWeakPtr<U
     return LHS.Get() != RHS.Get();
 }
 
-
 template<typename ObjectType, EThreadAccess ThreadAccess = EThreadAccess::Safe, typename... ArgTypes>
 NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr(ArgTypes&&... Args) noexcept requires(TNot<TIsArray<ObjectType>>::Value)
 {
@@ -1461,7 +1459,6 @@ NODISCARD FORCEINLINE TSharedPtr<ObjectType> MakeSharedPtr(uint32 Size) noexcept
     typedef typename TRemoveExtent<ObjectType>::Type ConstructType;
     return TSharedPtr<ObjectType, ThreadAccess>(new ConstructType[Size]);
 }
-
 
 template<typename ToType, typename FromType>
 NODISCARD FORCEINLINE TSharedPtr<ToType> StaticCastSharedPtr(const TSharedPtr<FromType>& Object) noexcept requires(TIsArray<ToType>::Value == TIsArray<FromType>::Value)

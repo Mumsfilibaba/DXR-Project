@@ -1,6 +1,5 @@
 #include "MacRunLoop.h"
 #include "ScopedAutoreleasePool.h"
-
 #include "Core/RefCounted.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
@@ -12,19 +11,17 @@
 #include <AppKit/AppKit.h>
 #include <Foundation/Foundation.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-#define APPLICATION_THREAD_STACK_SIZE (128 * 1024 * 1024)
+#define APP_THREAD_STACK_SIZE (128 * 1024 * 1024)
 
 static NSThread* GApplicationThread = nil;
 
 class FRunLoopSourceContext;
 
+// Use a NSObject since we want the source to be CFRunLoopSourceContext for lifetime-handling 
 @interface FRunLoopSource : NSObject
 {
-    // Use a NSObject since we want the source to be CFRunLoopSourceContext for lifetime-handling 
-
 @private
     FRunLoopSourceContext* Context;
 
@@ -40,8 +37,8 @@ class FRunLoopSourceContext;
 - (void)cancelFrom:(CFRunLoopRef)InRunLoop inMode:(CFStringRef)InMode;
 
 - (void)perform;
-@end
 
+@end
 
 struct FRunLoopTask
 {
@@ -60,7 +57,6 @@ struct FRunLoopTask
     NSArray*         RunLoopModes;
     dispatch_block_t Block;
 };
-
 
 /** @brief - Manager for a RunLoop for a certain Thread */
 class FRunLoopSourceContext : public FRefCounted
@@ -278,7 +274,6 @@ private:
 FRunLoopSourceContext* FRunLoopSourceContext::MainThreadContext;
 FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
-
 /** @brief - Interface for the RunLoopSource */
 @implementation FRunLoopSource
 
@@ -336,11 +331,10 @@ FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
 @end
 
-
 /** @brief - Extend NSThread in order to check for the ApplicationThread in a similar way as the MainThread */
-@implementation NSThread (FApplicationThread)
+@implementation NSThread (FAppThread)
 
-+(NSThread*) applicationThread
++(NSThread*) appThread
 {
     if (!GApplicationThread)
     {
@@ -350,13 +344,13 @@ FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
     return GApplicationThread;
 }
 
-+(BOOL) isApplicationThread
++(BOOL) isAppThread
 {
-    const BOOL bIsAppThread = [[NSThread currentThread] isApplicationThread];
+    const BOOL bIsAppThread = [[NSThread currentThread] isAppThread];
     return bIsAppThread;
 }
 
--(BOOL) isApplicationThread
+-(BOOL) isAppThread
 {
     const BOOL bIsAppThread = self == GApplicationThread;
     return bIsAppThread;
@@ -364,9 +358,8 @@ FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
 @end
 
-
 /** @brief - Create a subclass for the ApplicationThread */
-@implementation FApplicationThread
+@implementation FAppThread
 
 -(id) init
 {
@@ -434,17 +427,16 @@ FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
 @end
 
-
 /** @brief - Interface for starting up the ApplicationThread */
-bool SetupApplicationThread(id Delegate, SEL ApplicationThreadEntry)
+bool SetupAppThread(id Delegate, SEL AppThreadEntry)
 {
     [[NSProcessInfo processInfo] disableSuddenTermination];
-    
+
     FRunLoopSourceContext::RegisterMainThreadRunLoop();
 
-#if APPLICATION_THREAD_ENABLED
-    FApplicationThread* ApplicationThread = [[FApplicationThread alloc] initWithTarget:Delegate selector:ApplicationThreadEntry object:nil];
-    [ApplicationThread setStackSize:APPLICATION_THREAD_STACK_SIZE];
+#if APP_THREAD_ENABLED
+    FAppThread* ApplicationThread = [[FAppThread alloc] initWithTarget:Delegate selector:AppThreadEntry object:nil];
+    [ApplicationThread setStackSize:APP_THREAD_STACK_SIZE];
     [ApplicationThread start];
 #else
     [Delegate performSelector:ApplicationThreadEntry withObject:nil];
@@ -453,27 +445,26 @@ bool SetupApplicationThread(id Delegate, SEL ApplicationThreadEntry)
         [NSApp replyToApplicationShouldTerminate:YES];
     }
 #endif
+
     return true;
 }
 
-
 /** @brief - Interface for closing down the ApplicationThread */
-void ShutdownApplicationThread()
+void ShutdownAppThread()
 {
     [GApplicationThread release];
 }
 
-
 /** @brief - Interface for running the current thread's runloop */
-void PumpMessagesApplicationThread(bool bUntilEmpty)
+void PumpMessagesAppThread(bool bUntilEmpty)
 {
     SCOPED_AUTORELEASE_POOL();
-    
-#if APPLICATION_THREAD_ENABLED
+
+#if APP_THREAD_ENABLED
     CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, false);
 #else
     CHECK(NSApp != nil);
-    
+
     do
     {
         NSEvent* Event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate distantPast] inMode:NSDefaultRunLoopMode dequeue:YES];
@@ -481,7 +472,7 @@ void PumpMessagesApplicationThread(bool bUntilEmpty)
         {
             break;
         }
-        
+
         // Prevent to send event from invalid windows
         if ([Event windowNumber] == 0 || [Event window] != nil)
         {
@@ -491,12 +482,11 @@ void PumpMessagesApplicationThread(bool bUntilEmpty)
 #endif
 }
 
-
 /** @brief - Interface for executing a block on either Main- or ApplicationThread */
 void ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     dispatch_block_t CopiedBlock = Block_copy(Block);
-    
+
     if (FPlatformThreadMisc::IsMainThread())
     {
         // If already on mainthread, execute Block here
@@ -506,7 +496,7 @@ void ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Bloc
     {
         // Otherwise schedule Block on main thread
         SCOPED_AUTORELEASE_POOL();
-        
+
         NSArray* ScheduleModes = @[NSDefaultRunLoopMode, NSModalPanelRunLoopMode, NSEventTrackingRunLoopMode];
         if (bWaitUntilFinished)
         {
@@ -516,16 +506,16 @@ void ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Bloc
                 CopiedBlock();
                 dispatch_semaphore_signal(WaitSemaphore);
             });
-            
+
             SourceContext.ScheduleBlock(WaitableBlock, ScheduleModes);
-            
+
             do
             {
                 CFStringRef CurrentMode = (CFStringRef)WaitMode;
                 SourceContext.WakeUp();
                 SourceContext.RunInMode(CurrentMode);
             } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 100000ull)));
-            
+
             Block_release(WaitableBlock);
             dispatch_release(WaitSemaphore);
         }
@@ -535,7 +525,7 @@ void ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Bloc
             SourceContext.WakeUp();
         }
     }
-    
+
     Block_release(CopiedBlock);
 }
 

@@ -36,7 +36,6 @@
         return ToUnderlying((EnumMask) & (EnumFlag)) != 0; \
     }
 
-
 enum EInPlace
 {
     InPlace = 0
@@ -54,7 +53,6 @@ struct TInPlaceIndex
     explicit TInPlaceIndex() = default;
 };
 
-
 template<typename ReturnType, typename... ArgTypes>
 struct TCallableWrapper
 {
@@ -67,7 +65,6 @@ struct TCallableWrapper<ReturnType, void>
     typedef ReturnType(*Type)(void);
 };
 
-
 template<typename FunctionType>
 struct TFunctionType;
 
@@ -76,7 +73,6 @@ struct TFunctionType<ReturnType(ArgTypes...)>
 {
     typedef ReturnType(*Type)(ArgTypes...);
 };
-
 
 template<bool IsConst, typename ClassType, typename FunctionType>
 struct TMemberFunctionType;
@@ -93,7 +89,6 @@ struct TMemberFunctionType<true, ClassType, ReturnType(ArgTypes...)>
     typedef ReturnType(ClassType::* Type)(ArgTypes...) const;
 };
 
-
 template<int32 InSize, int32 InAlignment>
 struct TAlignedBytes
 {
@@ -103,37 +98,35 @@ struct TAlignedBytes
 template<typename T>
 using TTypeAlignedBytes = TAlignedBytes<sizeof(T), TAlignmentOf<T>::Value>;
 
-
 struct FNonCopyable
 {
-    FNonCopyable()  = default;
+    FNonCopyable() = default;
     ~FNonCopyable() = default;
 
-    FNonCopyable(const FNonCopyable&)            = delete;
+    FNonCopyable(const FNonCopyable&) = delete;
     FNonCopyable& operator=(const FNonCopyable&) = delete;
 };
 
 struct FNonMovable
 {
-    FNonMovable()  = default;
+    FNonMovable() = default;
     ~FNonMovable() = default;
 
-    FNonMovable(const FNonMovable&)            = delete;
+    FNonMovable(const FNonMovable&) = delete;
     FNonMovable& operator=(const FNonMovable&) = delete;
 };
 
 struct FNonCopyAndNonMovable
 {
-    FNonCopyAndNonMovable()  = default;
+    FNonCopyAndNonMovable() = default;
     ~FNonCopyAndNonMovable() = default;
 
-    FNonCopyAndNonMovable(const FNonCopyAndNonMovable&)            = delete;
+    FNonCopyAndNonMovable(const FNonCopyAndNonMovable&) = delete;
     FNonCopyAndNonMovable& operator=(const FNonCopyAndNonMovable&) = delete;
 
-    FNonCopyAndNonMovable(FNonCopyAndNonMovable&&)            = delete;
+    FNonCopyAndNonMovable(FNonCopyAndNonMovable&&) = delete;
     FNonCopyAndNonMovable& operator=(FNonCopyAndNonMovable&&) = delete;
 };
-
 
 template<typename NewType, typename ClassType>
 constexpr NewType* GetAsBytes(ClassType* Class) noexcept
@@ -195,14 +188,11 @@ inline T* AddressOf(T& Object) noexcept requires(TNot<TIsObject<T>>::Value)
     return &Object;
 }
 
-
 template<typename T>
 typename TAddReference<T>::RValue DeclVal() noexcept;
 
-
 template<typename... Packs>
 inline void ExpandPacks(Packs&&...) { }
-
 
 template<typename T, uint32 NumElements>
 constexpr bool CompareArrays(const T(&LHS)[NumElements], const T(&RHS)[NumElements])

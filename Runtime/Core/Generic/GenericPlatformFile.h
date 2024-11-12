@@ -40,7 +40,6 @@ struct IFileHandle
     virtual void Close() = 0;
 };
 
-
 class FFileHandleRef
 { 
 public:

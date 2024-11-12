@@ -8,9 +8,9 @@
 template<typename ElementType, int32 NUM_ELEMENTS>
 struct TStaticArray
 {
-    typedef int32 SizeType;
+    typedef int32 SIZETYPE;
 
-    static_assert(TIsSigned<SizeType>::Value, "TStaticArray only supports a SizeType that's signed");
+    static_assert(TIsSigned<SIZETYPE>::Value, "TStaticArray only supports a SIZETYPE that's signed");
     static_assert(NUM_ELEMENTS > 0, "TStaticArray does not support a zero element count");
 
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
@@ -18,10 +18,7 @@ struct TStaticArray
     typedef TReverseArrayIterator<TStaticArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticArray, const ElementType> ReverseConstIteratorType;
 
-    enum : SizeType 
-    {
-        INVALID_INDEX = -1
-    };
+    inline static constexpr SIZETYPE INVALID_INDEX = SIZETYPE(~0);
 
 public:
 
@@ -39,7 +36,7 @@ public:
      * @brief  - Checks if an index is a valid index
      * @return - Returns true if the index is valid
      */
-    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const noexcept
     {
         return (Index >= 0) && (Index < NUM_ELEMENTS);
     }
@@ -103,13 +100,13 @@ public:
      * @param Element - Element to search for
      * @return        - The index of the element if found or -1 if not
      */
-    NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& Element) const noexcept
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
             if (Element == *Current)
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SIZETYPE>(Current - Start);
             }
         }
 
@@ -122,13 +119,13 @@ public:
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const noexcept
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SIZETYPE>(Current - Start);
             }
         }
 
@@ -140,14 +137,14 @@ public:
      * @param Element - Element to search for
      * @return        - The index of the element if found or -1 if not
      */
-    NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& Element) const noexcept
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Element == *Current)
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SIZETYPE>(Current - Start);
             }
         }
 
@@ -160,14 +157,14 @@ public:
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const noexcept
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
             {
-                return static_cast<SizeType>(Current - Start);
+                return static_cast<SIZETYPE>(Current - Start);
             }
         }
 
@@ -213,7 +210,7 @@ public:
      * @param FirstIndex  - Index to the first element to Swap
      * @param SecondIndex - Index to the second element to Swap
      */
-    FORCEINLINE void Swap(SizeType FirstIndex, SizeType SecondIndex) noexcept
+    FORCEINLINE void Swap(SIZETYPE FirstIndex, SIZETYPE SecondIndex) noexcept
     {
         CHECK(IsValidIndex(FirstIndex));
         CHECK(IsValidIndex(SecondIndex));
@@ -245,7 +242,7 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the element at the index
      */
-    NODISCARD FORCEINLINE ElementType& operator[](SizeType Index) noexcept
+    NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index) noexcept
     {
         CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
@@ -256,7 +253,7 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the element at the index
      */
-    NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const noexcept
     {
         CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
@@ -290,7 +287,7 @@ public:
      * @brief  - Retrieve the last index that can be used to retrieve an element from the array
      * @return - Returns a the index to the last element of the array
      */
-    NODISCARD constexpr SizeType LastElementIndex() const noexcept
+    NODISCARD constexpr SIZETYPE LastElementIndex() const noexcept
     {
         return NUM_ELEMENTS - 1;
     }
@@ -299,7 +296,7 @@ public:
      * @brief  - Returns the size of the container
      * @return - The current size of the container
      */
-    NODISCARD constexpr SizeType Size() const noexcept
+    NODISCARD constexpr SIZETYPE Size() const noexcept
     {
         return NUM_ELEMENTS;
     }
@@ -308,7 +305,7 @@ public:
      * @brief  - Returns the size of the container in bytes
      * @return - The current size of the container in bytes
      */
-    NODISCARD constexpr SizeType SizeInBytes() const noexcept
+    NODISCARD constexpr SIZETYPE SizeInBytes() const noexcept
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }
@@ -317,7 +314,7 @@ public:
      * @brief  - Returns the capacity of the container
      * @return - The current capacity of the container
      */
-    NODISCARD constexpr SizeType Capacity() const noexcept
+    NODISCARD constexpr SIZETYPE Capacity() const noexcept
     {
         return NUM_ELEMENTS;
     }
@@ -326,50 +323,37 @@ public:
      * @brief  - Returns the capacity of the container in bytes
      * @return - The current capacity of the container in bytes
      */
-    NODISCARD constexpr SizeType CapacityInBytes() const noexcept
+    NODISCARD constexpr SIZETYPE CapacityInBytes() const noexcept
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }
 
-public: // Iterators
+public:
 
-    /**
-     * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
-     */
+    // Iterators
     NODISCARD FORCEINLINE IteratorType Iterator() noexcept
     {
         return IteratorType(*this, 0);
     }
 
-    /**
-     * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
-     */
     NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
     {
         return ConstIteratorType(*this, 0);
     }
 
-    /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
-     */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
     {
         return ReverseIteratorType(*this, NUM_ELEMENTS);
     }
 
-    /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
-     */
     NODISCARD  ReverseConstIteratorType ConstReverseIterator() const noexcept
     {
         return ReverseConstIteratorType(*this, NUM_ELEMENTS);
     }
 
-public: // STL Iterators
+public:
+
+    // STL Iterators
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
 

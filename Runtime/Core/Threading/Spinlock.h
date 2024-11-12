@@ -8,8 +8,8 @@ class FSpinLock
 {
     enum
     {
-        State_Unlocked = 0,
-        State_Locked   = 1,
+        STATE_UNLOCKED = 0,
+        STATE_LOCKED   = 1,
     };
 
 public:
@@ -20,7 +20,7 @@ public:
 
     /** @brief - Default constructor */
     FORCEINLINE FSpinLock() noexcept
-        : State(State_Unlocked)
+        : State(STATE_UNLOCKED)
     {
     }
 
@@ -31,12 +31,12 @@ public:
         for (;;)
         {
             // When the previous value is unlocked => success
-            if (State.Exchange(State_Locked) == State_Unlocked)
+            if (State.Exchange(STATE_LOCKED) == STATE_UNLOCKED)
             {
                 break;
             }
 
-            while (State.RelaxedLoad() == State_Locked)
+            while (State.RelaxedLoad() == STATE_LOCKED)
             {
                 FPlatformThreadMisc::Pause();
             }
@@ -47,13 +47,13 @@ public:
     FORCEINLINE bool TryLock() noexcept
     {
         // The first relaxed load is in order to prevent unnecessary cache misses when trying to lock in a loop: See Lock
-        return (State.RelaxedLoad() == State_Unlocked) && (State.Exchange(State_Locked) == State_Unlocked);
+        return (State.RelaxedLoad() == STATE_UNLOCKED) && (State.Exchange(STATE_LOCKED) == STATE_UNLOCKED);
     }
 
     /** @brief - Unlock CriticalSection for other threads */
     FORCEINLINE void Unlock() noexcept
     {
-        State.Store(State_Unlocked);
+        State.Store(STATE_UNLOCKED);
     }
 
 private:

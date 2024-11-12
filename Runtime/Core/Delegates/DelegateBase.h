@@ -4,11 +4,8 @@
 
 class FDelegateBase
 {
-    enum
-    {
-        // TODO: Look into padding so we can use larger structs?
-        InlineBytes = 32
-    };
+    // TODO: Look into padding so we can use larger structs?
+    inline static constexpr uint32 InlineBytes = 32;
 
 public:
 

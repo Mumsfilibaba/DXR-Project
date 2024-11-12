@@ -21,7 +21,6 @@
     #endif
 #endif
 
-
 #ifndef FORCEINLINE
     #ifndef DEBUG_BUILD
         #define FORCEINLINE __attribute__((always_inline)) inline
@@ -30,31 +29,25 @@
     #endif
 #endif
 
-
 #ifndef ALIGN_AS
     #define ALIGN_AS(Alignment) __attribute__((aligned(Alignment)))
 #endif
-
 
 #ifndef NOINLINE
     #define NOINLINE __attribute__ ((noinline))
 #endif
 
-
 #ifndef VECTORCALL
     #define VECTORCALL // Does not seem to be supported
 #endif
-
 
 #ifndef RESTRICT
     #define RESTRICT __restrict
 #endif
 
-
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 #endif
-
 
 #ifndef MODULE_EXPORT
     #define MODULE_EXPORT __attribute__((visibility("default")))
@@ -63,7 +56,6 @@
 #ifndef MODULE_IMPORT
     #define MODULE_IMPORT __attribute__((visibility("default")))
 #endif
-
 
 #ifndef DEBUG_BREAK
     #if !PRODUCTION_BUILD

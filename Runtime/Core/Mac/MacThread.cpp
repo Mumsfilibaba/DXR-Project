@@ -16,7 +16,6 @@ FGenericThread* FMacThread::Create(FRunnable* InRunnable, const CHAR* ThreadName
 FMacThread::FMacThread(FRunnable* InRunnable, const CHAR* ThreadName)
     : FGenericThread(InRunnable, ThreadName)
     , Thread()
-    , bIsRunning(false)
 { 
 }
 

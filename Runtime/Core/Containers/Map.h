@@ -14,7 +14,6 @@ class TMap
 public:
     typedef InKeyType   KeyType;
     typedef InValueType ValueType;
-    typedef int32       SizeType;
 
 private:
     struct FHasher
@@ -29,6 +28,10 @@ public:
     typedef std::unordered_map<KeyType, ValueType, FHasher>          BaseMapType;
     typedef TMapIterator<TMap, KeyType, ValueType>                   IteratorType;
     typedef TMapIterator<const TMap, const KeyType, const ValueType> ConstIteratorType;
+
+    typedef int32 SIZETYPE;
+
+public:
 
     /** @brief - Default constructor */
     TMap() = default;
@@ -236,12 +239,12 @@ public:
         return Element != BaseMap.end();
     }
 
-    NODISCARD SizeType Count(const KeyType& Key)
+    NODISCARD SIZETYPE Count(const KeyType& Key)
     {
-        return static_cast<SizeType>(BaseMap.count(Key));
+        return static_cast<SIZETYPE>(BaseMap.count(Key));
     }
     
-    void Reserve(SizeType InCapacity)
+    void Reserve(SIZETYPE InCapacity)
     {
         BaseMap.reserve(InCapacity);
     }
@@ -256,14 +259,14 @@ public:
         return BaseMap.empty();
     }
 
-    NODISCARD SizeType Size() const
+    NODISCARD SIZETYPE Size() const
     {
-        return static_cast<SizeType>(BaseMap.size());
+        return static_cast<SIZETYPE>(BaseMap.size());
     }
     
-    NODISCARD SizeType Capacity() const
+    NODISCARD SIZETYPE Capacity() const
     {
-        return static_cast<SizeType>(BaseMap.max_size());
+        return static_cast<SIZETYPE>(BaseMap.max_size());
     }
 
     NODISCARD TArray<KeyType> GetKeys() const
@@ -292,7 +295,9 @@ public:
         return Values;
     }
 
-public: // Iterators
+public:
+
+    // Iterators
     NODISCARD IteratorType CreateIterator()
     {
         return TMapIterator<TMap, KeyType, ValueType>(*this, BaseMap.begin());
@@ -308,7 +313,9 @@ public: // Iterators
         return TMapIterator<TMap, const KeyType, const ValueType>(*this, BaseMap.begin());
     }
 
-public: // STL Iterators
+public:
+
+    // STL Iterators
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return TMapIterator<TMap, KeyType, ValueType>(*this, BaseMap.begin()); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return TMapIterator<const TMap, const KeyType, const ValueType>(*this, BaseMap.begin()); }
     

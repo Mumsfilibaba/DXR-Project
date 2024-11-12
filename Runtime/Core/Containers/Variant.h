@@ -36,7 +36,6 @@ class TVariant
         inline static constexpr TypeIndexType Value = TVariantIndexHelper<0, WantedType, Types...>::Value;
     };
 
-
     template<TypeIndexType CurrentIndex, TypeIndexType Index, typename... OtherTypes>
     struct TVariantTypeHelper;
 
@@ -57,7 +56,6 @@ class TVariant
     {
         using Type = typename TVariantTypeHelper<0, SearchForIndex, Types...>::Type;
     };
-
 
     template<typename T>
     struct TDestructor
@@ -80,7 +78,6 @@ class TVariant
         }
     };
 
-
     template<typename T>
     struct TCopyConstructor
     {
@@ -101,7 +98,6 @@ class TVariant
         }
     };
 
-
     template<typename T>
     struct TMoveConstructor
     {
@@ -121,7 +117,6 @@ class TVariant
             Table[Index](Memory, Value);
         }
     };
-
 
     template<typename T>
     struct TCompareFuncs
@@ -156,13 +151,11 @@ class TVariant
         }
     };
 
-
     template<typename T>
     struct TIsValidType
     {
         inline static constexpr bool Value = (TVariantIndex<T>::Value != InvalidTypeIndex) ? true : false;
     };
-
 
     template<TypeIndexType Index>
     struct TIsValidIndex
@@ -171,7 +164,7 @@ class TVariant
     };
 
 public:
-    
+
     /**
      * @brief - Default constructor
      */

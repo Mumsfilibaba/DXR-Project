@@ -58,7 +58,7 @@ static int32   GEngineMainResult = 0;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)Notification
 {
-    SetupApplicationThread(self, @selector(runApplicationThread));
+    SetupAppThread(self, @selector(runApplicationThread));
 }
 
 @end
@@ -96,7 +96,7 @@ int main(int NumArgs, const CHAR** Args)
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     [NSApp run];
     
-    ShutdownApplicationThread();
+    ShutdownAppThread();
     return GEngineMainResult;
 }
 

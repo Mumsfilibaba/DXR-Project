@@ -70,21 +70,21 @@ public:
 };
 
 template<typename FuncType, typename ReturnType, typename... ArgTypes>
-struct TIsInvokableR
+struct TIsInvokableReturn
 {
 private:
     template<typename Fn, typename Ret, typename = void, typename... Args>
-    struct TIsInvokableRHelper
+    struct TIsInvokableReturnHelper
     {
         inline static constexpr bool Value = false;
     };
 
     template<typename Fn, typename Ret, typename... Args>
-    struct TIsInvokableRHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...))>::Type, Args...>
+    struct TIsInvokableReturnHelper<Fn, Ret, typename TVoid<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...))>::Type, Args...>
     {
         inline static constexpr bool Value = TIsConvertible<decltype(Internal::Invoke(DeclVal<Fn>(), DeclVal<Args>()...)), Ret>::Value;
     };
 
 public:
-    inline static constexpr bool Value = TIsInvokableRHelper<FuncType, ReturnType, void, ArgTypes...>::Value;
+    inline static constexpr bool Value = TIsInvokableReturnHelper<FuncType, ReturnType, void, ArgTypes...>::Value;
 };

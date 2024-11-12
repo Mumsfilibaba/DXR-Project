@@ -57,7 +57,6 @@ namespace FunctionInternal
         FunctionType Func;
     };
 
-
     template<typename FunctorType, typename FunctionType>
     struct TFunctionFunctorCaller;
 
@@ -142,7 +141,6 @@ namespace FunctionInternal
 
         FunctorType Functor;
     };
-
 
     struct FFunctionStorage
     {
@@ -233,7 +231,6 @@ namespace FunctionInternal
         TAlignedBytes<TFUNCTION_NUM_INLINE_BYTES, TFUNCTION_INLINE_ALIGNMENT> InlineAllocation;
     };
 
-
     template<typename FunctorType>
     void TFunctionContainer<FunctorType>::CopyToStorage(FFunctionStorage& Storage) const noexcept
     {
@@ -257,7 +254,6 @@ NODISCARD FORCEINLINE auto Bind(FunctionType InFunction, ParamTypes&&... InParam
 {
     return FunctionInternal::TBindPayload<FunctionType, ParamTypes...>(InFunction, ::Forward<ParamTypes>(InParams)...);
 }
-
 
 template<typename FunctionType>
 class TFunction;
@@ -450,7 +446,6 @@ private:
     ReturnType(*FunctorCaller)(void* Functor, ParamTypes&...){nullptr};
     FunctionInternal::FFunctionStorage Storage;
 };
-
 
 template<typename InvokableType>
 class TFunctionRef;

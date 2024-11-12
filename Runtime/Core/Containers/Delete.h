@@ -8,13 +8,13 @@ struct TDefaultDelete
 {
     using ElementType = InElementType;
 
-    TDefaultDelete()                      = default;
+    TDefaultDelete() = default;
     TDefaultDelete(const TDefaultDelete&) = default;
-    TDefaultDelete(TDefaultDelete&&)      = default;
-    ~TDefaultDelete()                     = default;
+    TDefaultDelete(TDefaultDelete&&) = default;
+    ~TDefaultDelete() = default;
 
     TDefaultDelete& operator=(const TDefaultDelete&) = default;
-    TDefaultDelete& operator=(TDefaultDelete&&)      = default;
+    TDefaultDelete& operator=(TDefaultDelete&&) = default;
 
     template<typename OtherType>
     FORCEINLINE TDefaultDelete(const TDefaultDelete<OtherType>&) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -49,13 +49,13 @@ struct TDefaultDelete<InElementType[]>
 {
     typedef typename TRemoveExtent<InElementType>::Type ElementType;
 
-    TDefaultDelete()                      = default;
+    TDefaultDelete() = default;
     TDefaultDelete(const TDefaultDelete&) = default;
-    TDefaultDelete(TDefaultDelete&&)      = default;
-    ~TDefaultDelete()                     = default;
+    TDefaultDelete(TDefaultDelete&&) = default;
+    ~TDefaultDelete() = default;
 
     TDefaultDelete& operator=(const TDefaultDelete&) = default;
-    TDefaultDelete& operator=(TDefaultDelete&&)      = default;
+    TDefaultDelete& operator=(TDefaultDelete&&) = default;
 
     template<typename OtherType>
     FORCEINLINE TDefaultDelete(const TDefaultDelete<OtherType>&) noexcept requires(TIsPointerConvertible<OtherType, ElementType>::Value)

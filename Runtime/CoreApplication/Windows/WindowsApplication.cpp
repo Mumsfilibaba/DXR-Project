@@ -250,13 +250,13 @@ TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
 
 TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
 {
-    HWND ActiveWindow = ::GetActiveWindow();
-    return GetWindowsWindowFromHWND(ActiveWindow);
+    // Use the for
+    HWND ForegroundWindow = ::GetForegroundWindow();
+    return GetWindowsWindowFromHWND(ForegroundWindow);
 }
 
 TSharedRef<FGenericWindow> FWindowsApplication::GetForegroundWindow() const
 {
-    HWND ForegroundWindow = ::GetForegroundWindow();
     return GetWindowsWindowFromHWND(ForegroundWindow);
 }
 

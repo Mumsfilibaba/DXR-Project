@@ -6,6 +6,7 @@ template<typename ElementType>
 class TOptional
 {
 public:
+
     template<typename OtherType>
     friend class TOptional;
 

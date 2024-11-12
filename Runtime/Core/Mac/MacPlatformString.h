@@ -21,14 +21,6 @@ struct FMacPlatformString final : public FGenericPlatformString
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // WIDECHAR
 
-    template<typename... ArgTypes>
-    static FORCEINLINE int32 Sprintf(WIDECHAR* Buffer, const WIDECHAR* Format, ArgTypes&&... Args) noexcept
-    {
-        // TODO: Finish
-        CHECK(false);
-        return 0; 
-    }
-    
     NODISCARD static FORCEINLINE int32 Stricmp(const WIDECHAR* String0, const WIDECHAR* String1) noexcept
     {
         return static_cast<int32>(::wcscasecmp(String0, String1));

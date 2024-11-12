@@ -7,11 +7,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class CORE_API FGenericEvent
 {
 public:
+
     // Creates a new event
     static FGenericEvent* Create(bool bManualReset);
 
     // Return the event to the system for reuse if possible
     static void Recycle(FGenericEvent* InEvent);
+
+public:
 
     /** @brief - Trigger the event */
     virtual void Trigger() { }

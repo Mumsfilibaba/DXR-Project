@@ -10,7 +10,7 @@ struct FMalloc;
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FUseUnmanagedMalloc
+struct FUseStandardMalloc
 {
     // Override the global new
     void* operator new(size_t InSize)
@@ -37,8 +37,7 @@ struct FUseUnmanagedMalloc
     }
 };
 
-
-struct CORE_API FMalloc : public FUseUnmanagedMalloc
+struct CORE_API FMalloc : public FUseStandardMalloc
 {
     // FMalloc instead of IMalloc since IMalloc is already defined in the WindowsHeaders
     virtual ~FMalloc() = default;
@@ -71,19 +70,12 @@ struct CORE_API FMalloc : public FUseUnmanagedMalloc
     virtual void DumpAllocations(IOutputDevice* OutputDevice) { }
 };
 
-
 struct CORE_API FMallocANSI : public FMalloc
 {
-    FMallocANSI()  = default;
-    ~FMallocANSI() = default;
-
     virtual void* Malloc(uint64 InSize) override final;
-
     virtual void* Realloc(void* InBlock, uint64 InSize) override final;
-
     virtual void Free(void* InBlock) override final;
 };
-
 
 class CORE_API FMallocLeakTracker : public FMalloc
 {
@@ -97,11 +89,8 @@ public:
     ~FMallocLeakTracker();
 
     virtual void* Malloc(uint64 InSize) override final;
-
     virtual void* Realloc(void* InBlock, uint64 InSize) override final;
-
     virtual void Free(void* InBlock) override final;
-
     virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
     void TrackAllocationMalloc(void* Block, uint64 Size);
@@ -119,7 +108,7 @@ public:
 
 private:
     TMap<void*, FAllocationInfo> Allocations;
-    FCriticalSection             AllocationsCS;
+    FCriticalSection AllocationsCS;
 
     FMalloc* BaseMalloc;
     bool     bTrackingEnabled;
@@ -127,10 +116,7 @@ private:
 
 class CORE_API FMallocStackTraceTracker : public FMalloc
 {
-    enum
-    {
-        NumStackTraces = 8
-    };
+    static constexpr uint32 NumStackTraces = 8; 
 
     struct FAllocationStackTrace
     {
@@ -166,7 +152,7 @@ public:
 
 private:
     TMap<void*, FAllocationStackTrace> Allocations;
-    FCriticalSection                   AllocationsCS;
+    FCriticalSection AllocationsCS;
 
     FMalloc*    BaseMalloc;
     FAtomicInt8 bTrackingEnabled;

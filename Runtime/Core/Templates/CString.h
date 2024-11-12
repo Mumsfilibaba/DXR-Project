@@ -72,12 +72,6 @@ struct TCString
     typedef InCharType CHARTYPE;
 
     template<typename... ArgTypes>
-    static FORCEINLINE int32 Sprintf(CHARTYPE* Buffer, const CHARTYPE* Format, ArgTypes&&... Args) noexcept
-    {
-        return FPlatformString::Sprintf(Buffer, Format, Forward<ArgTypes>(Args)...);
-    }
-
-    template<typename... ArgTypes>
     static FORCEINLINE int32 Snprintf(CHARTYPE* Buffer, TSIZE BufferSize, const CHARTYPE* Format, ArgTypes&&... Args) noexcept
     {
         return FPlatformString::Snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...);
@@ -260,7 +254,7 @@ struct TFormatSpecifier
 {
     NODISCARD static FORCEINLINE decltype(auto) GetStringSpecifier() 
     { 
-        return  ""; 
+        return ""; 
     }
 };
 

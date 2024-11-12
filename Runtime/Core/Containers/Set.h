@@ -13,7 +13,6 @@ class TSet
 
 public:
     typedef InElementType ElementType;
-    typedef int32         SizeType;
 
 private:
     struct FHasher
@@ -23,11 +22,15 @@ private:
             return static_cast<size_t>(GetHashForType(Value));
         }
     };
-    
+
 public:
     typedef std::unordered_set<ElementType, FHasher>    BaseSetType;
     typedef TSetIterator<TSet, ElementType>             IteratorType;
     typedef TSetIterator<const TSet, const ElementType> ConstIteratorType;
+
+    typedef int32 SIZETYPE;
+
+public:
 
     /** @brief - Default constructor */
     TSet() = default;
@@ -201,7 +204,7 @@ public:
             return *InsertedElement.first;
         }
     }
-    
+
     NODISCARD const ElementType& FindOrAdd(ElementType&& InElement)
     {
         typename BaseSetType::iterator Element = BaseSet.find(InElement);
@@ -215,7 +218,7 @@ public:
             return *InsertedElement;
         }
     }
-    
+
     void Remove(const ElementType& InElement)
     {
         BaseSet.erase(InElement);
@@ -227,7 +230,7 @@ public:
         return Element != BaseSet.end();
     }
 
-    void Reserve(SizeType InCapacity)
+    void Reserve(SIZETYPE InCapacity)
     {
         BaseSet.reserve(InCapacity);
     }
@@ -242,14 +245,14 @@ public:
         return BaseSet.empty();
     }
 
-    NODISCARD SizeType Size() const
+    NODISCARD SIZETYPE Size() const
     {
-        return static_cast<SizeType>(BaseSet.size());
+        return static_cast<SIZETYPE>(BaseSet.size());
     }
     
-    NODISCARD SizeType Capacity() const
+    NODISCARD SIZETYPE Capacity() const
     {
-        return static_cast<SizeType>(BaseSet.max_size());
+        return static_cast<SIZETYPE>(BaseSet.max_size());
     }
 
     NODISCARD TArray<ElementType> GetValues() const
@@ -265,7 +268,9 @@ public:
         return Values;
     }
 
-public: // Iterators
+public:
+
+    // Iterators
     NODISCARD IteratorType CreateIterator()
     {
         return TSetIterator<TSet, ElementType>(*this, BaseSet.begin());
@@ -281,7 +286,9 @@ public: // Iterators
         return TSetIterator<TSet, const ElementType>(*this, BaseSet.begin());
     }
 
-public: // STL Iterators
+public:
+
+    // STL Iterators
     NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return TSetIterator<TSet, ElementType>(*this, BaseSet.begin()); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return TSetIterator<const TSet, const ElementType>(*this, BaseSet.begin()); }
     

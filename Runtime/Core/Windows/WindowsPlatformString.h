@@ -31,12 +31,6 @@ struct FWindowsPlatformString final : public FGenericPlatformString
     /*///////////////////////////////////////////////////////////////////////////////////////////////*/
     // WIDECHAR
 
-    template<typename... ArgTypes>
-    static FORCEINLINE int32 Sprintf(WIDECHAR* Buffer, const WIDECHAR* Format, ArgTypes&&... Args) noexcept
-    {
-        return static_cast<int32>(::_swprintf(Buffer, Format, Forward<ArgTypes>(Args)...));
-    }
-
     NODISCARD static FORCEINLINE int32 Stricmp(const WIDECHAR* String0, const WIDECHAR* String1) noexcept
     {
         return static_cast<int32>(::_wcsicmp(String0, String1));

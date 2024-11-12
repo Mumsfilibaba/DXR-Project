@@ -27,6 +27,12 @@ struct FWindowsLibrary final : public FGenericLibrary
         return ::GetProcAddress(reinterpret_cast<HMODULE>(LibraryHandle), SymbolName);
     }
 
+    template<typename SymbolType>
+    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    {
+        return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
+    }
+
     static FORCEINLINE const CHAR* GetDynamicLibExtension()
     {
         return ".dll";
@@ -40,11 +46,5 @@ struct FWindowsLibrary final : public FGenericLibrary
     static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName)
     {
         return GetLoadedHandle(LibraryName) != nullptr;
-    }
-
-    template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
-    {
-        return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
     }
 };

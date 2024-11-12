@@ -4,21 +4,25 @@
 #include <Foundation/Foundation.h>
 #include <CoreFoundation/CoreFoundation.h>
 
-#define APPLICATION_THREAD_ENABLED (1)
+#define APP_THREAD_ENABLED (1)
 
-/** @brief - Extend NSThread in order to check for the ApplicationThread in a similar way as the MainThread */
-@interface NSThread (FApplicationThread)
-+(NSThread*) applicationThread;
-+(BOOL) isApplicationThread;
--(BOOL) isApplicationThread;
+/** @brief - Extend NSThread in order to check for the AppThread in a similar way as the MainThread */
+@interface NSThread (FAppThread)
+
++(NSThread*) appThread;
++(BOOL) isAppThread;
+-(BOOL) isAppThread;
+
 @end
 
-/** @brief - Create a subclass for the ApplicationThread */
-@interface FApplicationThread : NSThread
+/** @brief - Create a subclass for the AppThread */
+@interface FAppThread : NSThread
+
 -(id) init;
 -(id) initWithTarget:(id)Target selector:(SEL)Selector object:(id)Argument;
 -(void) main;
 -(void) dealloc;
+
 @end
 
 /**
@@ -26,19 +30,19 @@
  * main-thread from other threads
  */
 
-/** @brief - Setup and start the ApplicationThread and initialize the Main- and ApplicationThread's RunLoop */
-CORE_API bool SetupApplicationThread(id Delegate, SEL ApplicationThreadEntry);
+/** @brief - Setup and start the ApplicationThread and initialize the Main- and AppThread's RunLoop */
+CORE_API bool SetupAppThread(id Delegate, SEL AppThreadEntry);
 
 /** @brief - Release and Shutdown the ApplicationThread */
-CORE_API void ShutdownApplicationThread();
+CORE_API void ShutdownAppThread();
 
-/** @brief - Run the ApplicationThread's RunLoop and ensure there are no pending events */
-CORE_API void PumpMessagesApplicationThread(bool bUntilEmpty);
+/** @brief - Run the AppThread's RunLoop and ensure there are no pending events */
+CORE_API void PumpMessagesAppThread(bool bUntilEmpty);
 
 /** @brief - Perform a call on the MainThread */
 CORE_API void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
 
-/** @brief - Perform a call on the ApplicationThread */
+/** @brief - Perform a call on the AppThread */
 CORE_API void ExecuteOnAppThread(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
 
 /** @brief - Perform a call on the MainThread and wait for a returnvalue */

@@ -6,20 +6,16 @@
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 template<typename ElementType>
-class TArrayAllocatorInterface
+struct TArrayAllocatorInterface
 {
-public:
-    typedef int32 SizeType;
-
-    TArrayAllocatorInterface()  = default;
-    ~TArrayAllocatorInterface() = default;
+    typedef int32 SIZETYPE;
 
     /**
      * @brief              - Reallocates the allocation
      * @param CurrentCount - Current number of elements that are allocated 
      * @param NewCount     - The new number of elements to allocate
      */
-    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept { return nullptr; }
+    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount) noexcept { return nullptr; }
 
     /**
      * @brief - Free the allocation
@@ -56,11 +52,11 @@ template<typename ElementType>
 class TDefaultArrayAllocator
 {
 public:
-    typedef int32 SizeType;
+    typedef int32 SIZETYPE;
 
     TDefaultArrayAllocator() = default;
 
-    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) noexcept
+    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount) noexcept
     {
         Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewCount * sizeof(ElementType)));
         return Allocation;
@@ -110,14 +106,14 @@ class TInlineArrayAllocator
     class FInlineStorage
     {
     public:
-        typedef int32 SizeType;
+        typedef int32 SIZETYPE;
 
         NODISCARD constexpr ElementType* GetElements() const noexcept
         {
             return reinterpret_cast<ElementType*>(InlineAllocation);
         }
 
-        NODISCARD constexpr SizeType Size() const noexcept
+        NODISCARD constexpr SIZETYPE Size() const noexcept
         {
             return sizeof(InlineAllocation);
         }
@@ -127,7 +123,7 @@ class TInlineArrayAllocator
     };
 
 public:
-    typedef int32 SizeType;
+    typedef int32 SIZETYPE;
 
     TInlineArrayAllocator()
     {
@@ -139,7 +135,7 @@ public:
         Free();
     }
 
-    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewElementCount) noexcept
+    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewElementCount) noexcept
     {
         if (NewElementCount > NumInlineElements)
         {

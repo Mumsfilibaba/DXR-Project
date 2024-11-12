@@ -11,7 +11,6 @@ struct TIntegerSequence
     inline static constexpr auto Size = sizeof...(Sequence);
 };
 
-
 namespace IntegerSequenceInternal
 {
     template <typename T, unsigned N>
@@ -20,7 +19,6 @@ namespace IntegerSequenceInternal
 
 template<typename T, T N>
 using TMakeIntegerSequence = typename IntegerSequenceInternal::TMakeIntegerSequenceImpl<T, N>::Type;
-
 
 namespace IntegerSequenceInternal
 {

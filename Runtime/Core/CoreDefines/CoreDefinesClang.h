@@ -30,16 +30,13 @@
     #endif
 #endif
 
-
 #ifndef ALIGN_AS
     #define ALIGN_AS(Alignment) __attribute__((aligned(Alignment)))
 #endif
 
-
 #ifndef NOINLINE
     #define NOINLINE __attribute__ ((noinline))
 #endif
-
 
 #ifndef VECTORCALL
     #if PLATFORM_ARCHITECTURE_X86_X64
@@ -49,17 +46,14 @@
     #endif
 #endif
 
-
 #ifndef RESTRICT
     #define RESTRICT __restrict
 #endif
-
 
 // Function signature as a const CHAR* string
 #ifndef FUNCTION_SIGNATURE
     #define FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 #endif
-
 
 #ifndef MODULE_EXPORT
     #define MODULE_EXPORT __attribute__((visibility("default")))
@@ -68,7 +62,6 @@
 #ifndef MODULE_IMPORT
     #define MODULE_IMPORT __attribute__((visibility("default")))
 #endif
-
 
 #ifndef DEBUG_BREAK
     #if !PRODUCTION_BUILD
@@ -83,8 +76,8 @@
 
 // Disable unreferenced variable warning
 #if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)
-    #define DISABLE_UNREFERENCED_VARIABLE_WARNING                  \
-        _Pragma("clang diagnostic push")                           \
+    #define DISABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("clang diagnostic push") \
         _Pragma("clang diagnostic ignored \"-Wunused-parameter\"") 
     #define ENABLE_UNREFERENCED_VARIABLE_WARNING \
         _Pragma("clang diagnostic pop")

@@ -12,7 +12,7 @@ class TArrayIterator
     typedef const typename TRemoveCV<ElementType>::Type ConstElementType;
 
 public:
-    typedef typename ArrayType::SizeType SizeType;
+    typedef typename ArrayType::SIZETYPE SIZETYPE;
 
     TArrayIterator(const TArrayIterator&) = default;
     TArrayIterator(TArrayIterator&&) = default;
@@ -21,14 +21,14 @@ public:
     TArrayIterator& operator=(const TArrayIterator&) = default;
     TArrayIterator& operator=(TArrayIterator&&) = default;
 
-    static_assert(TIsSigned<SizeType>::Value, "TArrayIterator wants a signed SizeType");
+    static_assert(TIsSigned<SIZETYPE>::Value, "TArrayIterator wants a signed SIZETYPE");
 
     /**
      * @brief            - Create a new iterator
      * @param InArray    - Array to iterate
      * @param StartIndex - Index in the array to start
      */
-    FORCEINLINE explicit TArrayIterator(ArrayType& InArray, SizeType StartIndex) noexcept
+    FORCEINLINE explicit TArrayIterator(ArrayType& InArray, SIZETYPE StartIndex) noexcept
         : Array(InArray)
         , Index(StartIndex)
     {
@@ -66,7 +66,7 @@ public:
     }
 
     /** @return - Returns the index to the element that the iterator represents */
-    FORCEINLINE SizeType GetIndex() const noexcept
+    FORCEINLINE SIZETYPE GetIndex() const noexcept
     {
         return Index;
     }
@@ -136,7 +136,7 @@ public:
      * @param Other - Value to add
      * @return      - Returns a new iterator with the result from adding Other to this value 
      */
-    NODISCARD FORCEINLINE TArrayIterator operator+(SizeType Other) const noexcept
+    NODISCARD FORCEINLINE TArrayIterator operator+(SIZETYPE Other) const noexcept
     {
         TArrayIterator NewIterator(*this);
         return NewIterator += Other;
@@ -147,7 +147,7 @@ public:
      * @param Other - Value to subtract
      * @return      - Returns a new iterator with the result from subtracting Other to this value 
      */
-    NODISCARD FORCEINLINE TArrayIterator operator-(SizeType Other) const noexcept
+    NODISCARD FORCEINLINE TArrayIterator operator-(SIZETYPE Other) const noexcept
     {
         TArrayIterator NewIterator(*this);
         return NewIterator -= Other;
@@ -158,7 +158,7 @@ public:
      * @param Other - Value to add
      * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TArrayIterator& operator+=(SizeType Other) noexcept
+    FORCEINLINE TArrayIterator& operator+=(SIZETYPE Other) noexcept
     {
         Index += Other;
         CHECK(IsValid());
@@ -170,7 +170,7 @@ public:
      * @param Other - Value to subtract
      * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TArrayIterator& operator-=(SizeType Other) noexcept
+    FORCEINLINE TArrayIterator& operator-=(SIZETYPE Other) noexcept
     {
         Index -= Other;
         CHECK(IsValid());
@@ -209,11 +209,11 @@ public:
 
 private:
     TReferenceWrapper<ArrayType> Array;
-    SizeType                     Index;
+    SIZETYPE                     Index;
 };
 
 template<typename ArrayType, typename ElementType>
-FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SizeType LHS, TArrayIterator<ArrayType, ElementType>& Other) noexcept
+FORCEINLINE TArrayIterator<ArrayType, ElementType> operator+(typename TArrayIterator<ArrayType, ElementType>::SIZETYPE LHS, TArrayIterator<ArrayType, ElementType>& Other) noexcept
 {
     TArrayIterator NewIterator(Other);
     return NewIterator += LHS;
@@ -226,7 +226,7 @@ class TReverseArrayIterator
     typedef const typename TRemoveCV<ElementType>::Type ConstElementType;
 
 public:
-    typedef typename ArrayType::SizeType SizeType;
+    typedef typename ArrayType::SIZETYPE SIZETYPE;
 
     TReverseArrayIterator(const TReverseArrayIterator&) = default;
     TReverseArrayIterator(TReverseArrayIterator&&) = default;
@@ -235,7 +235,7 @@ public:
     TReverseArrayIterator& operator=(const TReverseArrayIterator&) = default;
     TReverseArrayIterator& operator=(TReverseArrayIterator&&) = default;
 
-    static_assert(TIsSigned<SizeType>::Value, "TReverseArrayIterator wants a signed SizeType");
+    static_assert(TIsSigned<SIZETYPE>::Value, "TReverseArrayIterator wants a signed SIZETYPE");
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator require ArrayType and ElementType to have the same constness");
 
     /**
@@ -243,7 +243,7 @@ public:
      * @param InArray    - Array to iterate
      * @param StartIndex - Index in the array to start
      */
-    FORCEINLINE explicit TReverseArrayIterator(ArrayType& InArray, SizeType StartIndex) noexcept
+    FORCEINLINE explicit TReverseArrayIterator(ArrayType& InArray, SIZETYPE StartIndex) noexcept
         : Array(InArray)
         , Index(StartIndex)
     {
@@ -281,7 +281,7 @@ public:
     }
 
     /** @return - Returns the index to the element that the iterator represents */
-    NODISCARD FORCEINLINE SizeType GetIndex() const noexcept
+    NODISCARD FORCEINLINE SIZETYPE GetIndex() const noexcept
     {
         return Index - 1;
     }
@@ -351,7 +351,7 @@ public:
      * @param Other - Value to add
      * @return      - Returns a new iterator with the result from adding Other to this value
      */
-    NODISCARD FORCEINLINE TReverseArrayIterator operator+(SizeType Other) const noexcept
+    NODISCARD FORCEINLINE TReverseArrayIterator operator+(SIZETYPE Other) const noexcept
     {
         TReverseArrayIterator NewIterator(*this);
         return NewIterator += Other; // Uses operator, therefore +=
@@ -362,7 +362,7 @@ public:
      * @param Other - Value to subtract
      * @return      - Returns a new iterator with the result from subtracting Other to this value
      */
-    NODISCARD FORCEINLINE TReverseArrayIterator operator-(SizeType Other) const noexcept
+    NODISCARD FORCEINLINE TReverseArrayIterator operator-(SIZETYPE Other) const noexcept
     {
         TReverseArrayIterator NewIterator(*this);
         return NewIterator -= Other; // Uses operator, therefore -=
@@ -373,7 +373,7 @@ public:
      * @param Other - Value to add
      * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TReverseArrayIterator& operator+=(SizeType Other) noexcept
+    FORCEINLINE TReverseArrayIterator& operator+=(SIZETYPE Other) noexcept
     {
         Index -= Other;
         CHECK(IsValid());
@@ -385,7 +385,7 @@ public:
      * @param Other - Value to subtract
      * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TReverseArrayIterator& operator-=(SizeType Other) noexcept
+    FORCEINLINE TReverseArrayIterator& operator-=(SIZETYPE Other) noexcept
     {
         Index += Other;
         CHECK(IsValid());
@@ -424,11 +424,11 @@ public:
 
 private:
     TReferenceWrapper<ArrayType> Array;
-    SizeType                     Index;
+    SIZETYPE                     Index;
 };
 
 template<typename ArrayType, typename ElementType>
-NODISCARD FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SizeType LHS, TReverseArrayIterator<ArrayType, ElementType>& Other) noexcept
+NODISCARD FORCEINLINE TReverseArrayIterator<ArrayType, ElementType> operator+(typename TReverseArrayIterator<ArrayType, ElementType>::SIZETYPE LHS, TReverseArrayIterator<ArrayType, ElementType>& Other) noexcept
 {
     TReverseArrayIterator NewIterator(Other);
     return NewIterator += LHS;

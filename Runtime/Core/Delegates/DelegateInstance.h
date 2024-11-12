@@ -8,10 +8,7 @@ typedef int64 DelegateHandle;
 
 class FDelegateHandle
 {
-    enum : DelegateHandle
-    {
-        InvalidHandle = DelegateHandle(-1)
-    };
+    inline static constexpr DelegateHandle InvalidHandle = DelegateHandle(~0);
 
 public:
 

@@ -372,65 +372,64 @@ private:
     ElementType* Ptr{nullptr};
 };
 
-
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, U* Other) noexcept
 {
-    return (LHS.Get() == Other);
+    return LHS.Get() == Other;
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(T* LHS, const TComPtr<U>& Other) noexcept
 {
-    return (LHS == Other.Get());
+    return LHS == Other.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, U* Other) noexcept
 {
-    return (LHS.Get() != Other);
+    return LHS.Get() != Other;
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(T* LHS, const TComPtr<U>& Other) noexcept
 {
-    return (LHS != Other.Get());
+    return LHS != Other.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, const TComPtr<U>& Other) noexcept
 {
-    return (LHS.Get() == Other.Get());
+    return LHS.Get() == Other.Get();
 }
 
 template<typename T, typename U>
 NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, const TComPtr<U>& Other) noexcept
 {
-    return (LHS.Get() != Other.Get());
+    return LHS.Get() != Other.Get();
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() == nullptr);
+    return LHS.Get() == nullptr;
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator==(nullptr_type, const TComPtr<T>& Other) noexcept
 {
-    return (nullptr == Other.Get());
+    return nullptr == Other.Get();
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, nullptr_type) noexcept
 {
-    return (LHS.Get() != nullptr);
+    return LHS.Get() != nullptr;
 }
 
 template<typename T>
 NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TComPtr<T>& Other) noexcept
 {
-    return (nullptr != Other.Get());
+    return nullptr != Other.Get();
 }
 
  /** 
