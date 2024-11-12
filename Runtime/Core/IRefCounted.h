@@ -17,7 +17,7 @@ struct IRefCounted
 };
 
 template<typename T>
-FORCEINLINE typename TEnableIf<TIsBaseOf<IRefCounted, T>::Value, typename TAddPointer<T>::Type>::Type AddRef(T* InRefCounted)
+FORCEINLINE typename TEnableIf<TIsBaseOf<IRefCounted, T>::Value, typename TAddPointer<T>::Type>::Type SafeAddRef(T* InRefCounted)
 {
     if (InRefCounted)
     {

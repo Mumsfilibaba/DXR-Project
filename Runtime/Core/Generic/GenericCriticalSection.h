@@ -6,9 +6,6 @@ struct FGenericCriticalSection : FNonCopyable
 {
     typedef void* PlatformHandle;
 
-    FGenericCriticalSection()  = default;
-    ~FGenericCriticalSection() = default;
-
     /** 
      * @brief - Lock CriticalSection for other threads
      */

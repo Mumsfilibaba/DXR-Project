@@ -281,13 +281,11 @@ struct TAddReference
     typedef typename TAddRValueReference<T>::Type RValue;
 };
 
-
 template<typename T>
 struct TAddPointer
 {
     typedef typename TIdentity<typename TRemoveReference<T>::Type*>::Type Type;
 };
-
 
 template<bool Condition, typename TrueType, typename FalseType>
 struct TConditional
@@ -300,7 +298,6 @@ struct TConditional<false, TrueType, FalseType>
 {
     typedef FalseType Type;
 };
-
 
 template<bool Condition, typename T = void>
 struct TEnableIf
@@ -322,13 +319,11 @@ struct TIsEmpty
     inline static constexpr bool Value = __is_empty(T);
 };
 
-
 template<typename T>
 struct TIsEnum
 {
     inline static constexpr bool Value = __is_enum(T);
 };
-
 
 template<typename T>
 struct TIsUnion
@@ -336,13 +331,11 @@ struct TIsUnion
     inline static constexpr bool Value = __is_union(T);
 };
 
-
 template<typename T>
 struct TIsFinal
 {
     inline static constexpr bool Value = __is_final(T);
 };
-
 
 template<typename T>
 struct TIsPOD
@@ -350,13 +343,11 @@ struct TIsPOD
     inline static constexpr bool Value = __is_pod(T);
 };
 
-
 template<typename T>
 struct TIsPolymorphic
 {
     inline static constexpr bool Value = __is_polymorphic(T);
 };
-
 
 template<typename T, typename FromType>
 struct TIsAssignable
@@ -364,20 +355,17 @@ struct TIsAssignable
     inline static constexpr bool Value = __is_assignable(T, FromType);
 };
 
-
 template<typename BaseType, typename DerivedType>
 struct TIsBaseOf
 {
     inline static constexpr bool Value = __is_base_of(BaseType, DerivedType);
 };
 
-
 template<typename T, typename... ArgTypes>
 struct TIsConstructible
 {
     inline static constexpr bool Value = __is_constructible(T, ArgTypes...);
 };
-
 
 template<typename FromType, typename ToType>
 struct TIsConvertible
@@ -390,7 +378,6 @@ struct TIsPointerConvertible
 {
     inline static constexpr bool Value = TIsConvertible<typename TAddPointer<FromType>::Type, typename TAddPointer<ToType>::Type>::Value;
 };
-
 
 template<typename T>
 struct TIsTriviallyCopyable
@@ -416,13 +403,11 @@ struct TIsTrivial
     inline static constexpr bool Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value;
 };
 
-
 template<typename T>
 struct TUnderlyingType
 {
     typedef typename TIdentity<__underlying_type(T)>::Type Type;
 };
-
 
 template<typename T>
 struct TIsConst
@@ -436,7 +421,6 @@ struct TIsConst<const T>
     inline static constexpr bool Value = true;
 };
 
-
 template<typename T>
 struct TIsVolatile
 {
@@ -448,7 +432,6 @@ struct TIsVolatile<volatile T>
 {
     inline static constexpr bool Value = true;
 };
-
 
 template<typename T>
 struct TIsCopyConstructable
@@ -462,7 +445,6 @@ struct TIsCopyAssignable
     inline static constexpr bool Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value;
 };
 
-
 template<typename T>
 struct TIsMoveConstructable
 {
@@ -475,7 +457,6 @@ struct TIsMoveAssignable
     inline static constexpr bool Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value;
 };
 
-
 template<typename T>
 struct TIsPointer
 {
@@ -487,7 +468,6 @@ struct TIsPointer<T*>
 {
     inline static constexpr bool Value = true;
 };
-
 
 template <typename T>
 struct TIsMemberPointer
@@ -519,13 +499,11 @@ struct TIsMemberPointer<const volatile T>
     inline static constexpr bool Value = TIsMemberPointer<T>::Value;
 };
 
-
 template<typename T>
 struct TIsNullable
 {
     inline static constexpr bool Value = TOr<TIsPointer<T>, TIsMemberPointer<T>>::Value;
 };
-
 
 template<typename T>
 struct TMemberPointerTraits
@@ -537,7 +515,6 @@ struct TMemberPointerTraits<U T::*>
 {
     typedef U Type;
 };
-
 
 template<typename T>
 struct TIsLValueReference
@@ -569,7 +546,6 @@ struct TIsReference
     inline static constexpr bool Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value;
 };
 
-
 template<typename T, typename U>
 struct TIsSame
 {
@@ -588,20 +564,17 @@ struct TIsNotSame
     inline static constexpr bool Value = TNot<TIsSame<T, U>>::Value;
 };
 
-
 template<typename T>
 struct TIsNullptr
 {
     inline static constexpr bool Value = TIsSame<nullptr_type, typename TRemoveCV<T>::Type>::Value;
 };
 
-
 template<typename T>
 struct TIsVoid
 {
     inline static constexpr bool Value = TIsSame<void, typename TRemoveCV<T>::Type>::Value;
 };
-
 
 template<typename T>
 struct TIsArray
@@ -621,7 +594,6 @@ struct TIsArray<T[N]>
     inline static constexpr bool Value = true;
 };
 
-
 template<typename T>
 struct TIsBoundedArray
 {
@@ -634,7 +606,6 @@ struct TIsBoundedArray<T[N]>
     inline static constexpr bool Value = true;
 };
 
-
 template<typename T>
 struct TIsUnboundedArray
 {
@@ -646,7 +617,6 @@ struct TIsUnboundedArray<T[]>
 {
     inline static constexpr bool Value = true;
 };
-
 
 template<typename T>
 struct TIsInteger
@@ -762,7 +732,6 @@ struct TIsInteger<const volatile T>
     inline static constexpr bool Value = TIsInteger<T>::Value;
 };
 
-
 template<typename T>
 struct TIsFloatingPoint
 {
@@ -789,13 +758,11 @@ struct TIsFloatingPoint<const volatile T>
     inline static constexpr bool Value = TIsFloatingPoint<T>::Value;
 };
 
-
 template<typename T>
 struct TIsIntegerNotBool
 {
     inline static constexpr bool Value = TAnd<TIsInteger<T>, TIsNotSame<T, bool>>::Value;
 };
-
 
 template<typename T>
 struct TIsArithmetic
@@ -803,13 +770,11 @@ struct TIsArithmetic
     inline static constexpr bool Value = TOr<TIsInteger<T>, TIsFloatingPoint<T>>::Value;
 };
 
-
 template<typename T>
 struct TIsScalar
 {
     inline static constexpr bool Value = TOr<TIsArithmetic<T>, TIsEnum<T>, TIsPointer<T>, TIsMemberPointer<T>, TIsNullptr<T>>::Value;
 };
-
 
 template<typename T>
 struct TIsSigned
@@ -851,7 +816,6 @@ public:
     inline static constexpr bool Value = TIsUnsignedImpl<T>::Value;
 };
 
-
 // Checks if the type is a TArray-type(TArray, TArrayView, TStaticArray)
 template<typename T>
 struct TIsTArrayType
@@ -865,7 +829,6 @@ struct TIsTStringType
 {
     inline static constexpr bool Value = false;
 };
-
 
 template<typename T>
 struct TIsContiguousContainer
@@ -909,7 +872,6 @@ struct TIsContiguousContainer<std::initializer_list<T>>
     inline static constexpr bool Value = true;
 };
 
-
 template<typename T>
 struct TIsClass
 {
@@ -926,13 +888,11 @@ public:
     inline static constexpr bool Value = !TIsUnion<T>::Value && (sizeof(Test<T>(0)) == 1);
 };
 
-
 template<typename T>
 struct TIsObject
 {
     inline static constexpr bool Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value;
 };
-
 
 #if PLATFORM_COMPILER_MSVC
     #pragma warning(push)
@@ -950,7 +910,6 @@ struct TIsFunction
     #pragma warning(pop)
 #endif
 
-
 template<typename T>
 struct TIsFundamental
 {
@@ -962,7 +921,6 @@ struct TIsCompound
 {
     inline static constexpr bool Value = !TIsFundamental<T>::Value;
 };
-
 
 // Decays T into the value that can be passed to a function by non-const/volatile value
 // - T[N] -> T*
@@ -980,7 +938,6 @@ private:
 public:
     typedef typename TConditional<TIsArray<U>::Value, TrueType, FalseType>::Type Type;
 };
-
 
 template<typename T>
 struct TAlignmentOf

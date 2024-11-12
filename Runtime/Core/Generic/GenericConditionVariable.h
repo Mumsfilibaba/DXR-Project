@@ -8,9 +8,6 @@ struct FGenericConditionVariable : FNonCopyable
 {
     typedef void* PlatformHandle;
 
-    FGenericConditionVariable()  = default;
-    ~FGenericConditionVariable() = default;
-
     /**
      * @brief - Notifies a single CriticalSection
      */

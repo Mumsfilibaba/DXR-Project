@@ -34,6 +34,18 @@ struct FGenericLibrary
     static FORCEINLINE void* LoadSymbol(const CHAR* SymbolName, void* LibraryHandle) { return nullptr; }
 
     /**
+     * @brief               - Loads a typed function or variable from with specified name from the specified library
+     * @param SymbolName    - Name of the symbol to load
+     * @param LibraryHandle - Handle to the library to load from
+     * @return              - Returns a pointer to the symbol in the dynamic library
+     */
+    template<typename SymbolType>
+    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
+    {
+        return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
+    }
+
+    /**
      * @brief  - Retrieve the extension that dynamic libraries use on the platform 
      * @return - Returns the extension that is used on the platform for dynamic libraries
      */
@@ -52,17 +64,6 @@ struct FGenericLibrary
      */
     static FORCEINLINE bool IsLibraryLoaded(const CHAR* LibraryName) { return false; }
 
-    /**
-     * @brief               - Loads a typed function or variable from with specified name from the specified library
-     * @param SymbolName    - Name of the symbol to load
-     * @param LibraryHandle - Handle to the library to load from
-     * @return              - Returns a pointer to the symbol in the dynamic library
-     */
-    template<typename SymbolType>
-    static FORCEINLINE SymbolType LoadSymbol(const CHAR* SymbolName, void* LibraryHandle)
-    {
-        return reinterpret_cast<SymbolType>(LoadSymbol(SymbolName, LibraryHandle));
-    }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

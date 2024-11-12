@@ -18,13 +18,11 @@
     #endif
 #endif
 
-
 #if (!PLATFORM_COMPILER_MSVC) || (!PLATFORM_COMPILER_CLANG) || (!PLATFORM_COMPILER_GCC)
     #ifndef PLATFORM_COMPILER_UNDEFINED
         #define PLATFORM_COMPILER_UNDEFINED
     #endif
 #endif
-
 
 // Works only on macOS and Windows right now
 #if (!PLATFORM_WINDOWS) && (!PLATFORM_MACOS)
@@ -59,56 +57,51 @@
     #endif
 #endif
 
-
 #ifndef SAFE_DELETE
-    #define SAFE_DELETE(OutObject)     \
-        do                             \
-        {                              \
-            if ((OutObject))           \
-            {                          \
-                delete (OutObject);    \
+    #define SAFE_DELETE(OutObject) \
+        do \
+        { \
+            if ((OutObject)) \
+            { \
+                delete (OutObject); \
                 (OutObject) = nullptr; \
-            }                          \
+            } \
         } while (false)
 #endif
 
 #ifndef SAFE_RELEASE
-    #define SAFE_RELEASE(OutObject)     \
-        do                              \
-        {                               \
-            if ((OutObject))            \
-            {                           \
+    #define SAFE_RELEASE(OutObject) \
+        do \
+        { \
+            if ((OutObject)) \
+            { \
                 (OutObject)->Release(); \
-                (OutObject) = nullptr;  \
-            }                           \
+                (OutObject) = nullptr; \
+            } \
         } while (false)
 #endif
 
 #ifndef SAFE_ADD_REF
-    #define SAFE_ADD_REF(OutObject)    \
-        do                             \
-        {                              \
-            if ((OutObject))           \
-            {                          \
+    #define SAFE_ADD_REF(OutObject) \
+        do \
+        { \
+            if ((OutObject)) \
+            { \
                 (OutObject)->AddRef(); \
-            }                          \
+            } \
         } while (false);
 #endif
-
 
 #ifndef ARRAY_COUNT
     #define ARRAY_COUNT(Array) (sizeof(Array) / sizeof(Array[0]))
 #endif
 
-
 #ifndef OFFSETOF
     #define OFFSETOF(Type, Member) reinterpret_cast<uint64>(&reinterpret_cast<Type*>(0)->Member)
 #endif
 
-
 #define BIT(Bit)  (1 << Bit)
 #define FLAG(Bit) BIT(Bit)
-
 
 #ifndef UNREFERENCED_VARIABLE
     #define UNREFERENCED_VARIABLE(Variable) (void)(Variable)
@@ -127,11 +120,9 @@
     #define STRING_CONCAT(x, y) _STRING_CONCAT(x, y)
 #endif
 
-
 #ifndef MULTILINE_STRING
     #define MULTILINE_STRING(...) #__VA_ARGS__
 #endif
-
 
 #define ENABLE_NODISCARD (1)
 #if ENABLE_NODISCARD
@@ -140,7 +131,6 @@
     #define NODISCARD
 #endif
 
-
 #define ENABLE_MAYBE_UNUSED (1)
 #if ENABLE_MAYBE_UNUSED
     #define MAYBE_UNUSED [[maybe_unused]]
@@ -148,14 +138,12 @@
     #define MAYBE_UNUSED
 #endif
 
-
 #define ENABLE_DEPRECATED (1)
 #if ENABLE_DEPRECATED
     #define DEPRECATED(Message) [[deprecated(Message)]]
 #else
     #define DEPRECATED(Message)
 #endif
-
 
 #define STANDARD_ALIGNMENT (__STDCPP_DEFAULT_NEW_ALIGNMENT__)
 
