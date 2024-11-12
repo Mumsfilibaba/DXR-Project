@@ -39,9 +39,9 @@ struct FDeferredMacEvent
     {
         @autoreleasepool
         {
-            NSSafeRelease(NotificationName);
-            NSSafeRelease(Event);
-            NSSafeRelease(Window);
+            [NotificationName release];
+            [Event release];
+            [Window release];
         }
     }
 

@@ -12,7 +12,7 @@ FMetalBuffer::FMetalBuffer(FMetalDeviceContext* DeviceContext, const FRHIBufferI
 
 FMetalBuffer::~FMetalBuffer()
 {
-    NSSafeRelease(Buffer);
+    [Buffer release];
 }
 
 bool FMetalBuffer::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)

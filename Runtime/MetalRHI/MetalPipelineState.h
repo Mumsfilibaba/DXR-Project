@@ -241,12 +241,12 @@ public:
         TextureBindings[ShaderVisibility_Pixel].Shrink();
         SamplerBindings[ShaderVisibility_Pixel].Shrink();
         
-        NSSafeRelease(Descriptor);
+        [Descriptor release];
     }
     
     ~FMetalGraphicsPipelineState()
     {
-        NSSafeRelease(PipelineState);
+        [PipelineState release];
     }
 
     virtual void SetDebugName(const FString& InName) override final {}

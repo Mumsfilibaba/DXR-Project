@@ -39,8 +39,8 @@ FMetalViewport::~FMetalViewport()
     // The view is a UI object and needs to be released on the main-thread
     ExecuteOnMainThread(^
     {
-        NSSafeRelease(MetalView);
-        NSSafeRelease(MetalLayer);
+        [MetalView release];
+        [MetalLayer release];
     }, NSDefaultRunLoopMode, true);
 }
 

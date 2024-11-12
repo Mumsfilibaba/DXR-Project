@@ -25,7 +25,7 @@ FMacWindow::~FMacWindow()
     ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
-        NSSafeRelease(CocoaWindowView);
+        [CocoaWindowView release];
     }, NSDefaultRunLoopMode, true);
 }
 

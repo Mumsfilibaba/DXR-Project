@@ -10,7 +10,7 @@ FMetalSamplerState::FMetalSamplerState(FMetalDeviceContext* InDeviceContext, con
 
 FMetalSamplerState::~FMetalSamplerState()
 {
-    NSSafeRelease(SamplerState);
+    [SamplerState release];
 }
 
 bool FMetalSamplerState::Initialize()

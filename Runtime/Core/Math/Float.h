@@ -8,12 +8,12 @@
     #pragma warning(disable : 4556) // Disable "value of intrinsic immediate argument '8' is out of range '0 - 7'"
 #endif
 
-#define FP32_HIDDEN_BIT   (0x800000U)
+#define FP32_HIDDEN_BIT (0x800000U)
 #define FP32_MAX_EXPONENT (0xff)
 #define FP16_MAX_EXPONENT (0x1f)
-#define MAX_EXPONENT      (FP16_MAX_EXPONENT + 127 - 15)
-#define DENORM_EXPONENT   (127 - 15)
-#define MIN_EXPONENT      (DENORM_EXPONENT - 10)
+#define MAX_EXPONENT (FP16_MAX_EXPONENT + 127 - 15)
+#define DENORM_EXPONENT (127 - 15)
+#define MIN_EXPONENT (DENORM_EXPONENT - 10)
 
 
 struct FFloat64

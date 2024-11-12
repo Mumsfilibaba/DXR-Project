@@ -194,7 +194,7 @@ FMacApplication::~FMacApplication()
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidBecomeActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidResignActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidChangeScreenParametersNotification object:nil];
-        NSSafeRelease(Observer);
+        [Observer release];
         
         if (GlobalMouseMovedEventMonitor)
         {

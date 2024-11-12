@@ -9,8 +9,8 @@ FMetalDeviceContext::FMetalDeviceContext(id<MTLDevice> InDevice)
 
 FMetalDeviceContext::~FMetalDeviceContext()
 {
-    NSSafeRelease(Device);
-    NSSafeRelease(CommandQueue);
+    [Device release];
+    [CommandQueue release];
 }
 
 FMetalDeviceContext* FMetalDeviceContext::CreateContext()
@@ -40,6 +40,6 @@ FMetalDeviceContext* FMetalDeviceContext::CreateContext()
     const bool bSupportRayTracingFromRender = SelectedDevice.supportsRaytracingFromRender;
     METAL_INFO("bSupportRayTracing=%s, bSupportRayTracingFromRender=%s", bSupportRayTracing ? "true" : "false", bSupportRayTracingFromRender ? "true" : "false");
     
-    NSRelease(AvailableDevices);
+    [AvailableDevices release];
     return new FMetalDeviceContext(SelectedDevice);
 }

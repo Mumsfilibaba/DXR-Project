@@ -498,6 +498,8 @@ struct FRenderTargetBlendInfo
     EColorWriteFlags ColorWriteMask;
 };
 
+static_assert(TAlignmentOf<FRenderTargetBlendInfo>::Value == sizeof(uint8), "FRenderTargetBlendInfo is assumed to aligned to a uint8");
+
 struct FRHIBlendStateInitializer
 {
     FRHIBlendStateInitializer()
@@ -513,7 +515,7 @@ struct FRHIBlendStateInitializer
     bool operator==(const FRHIBlendStateInitializer& Other) const
     {
         return NumRenderTargets == Other.NumRenderTargets
-            && CompareArrays(RenderTargets, Other.RenderTargets, NumRenderTargets)
+            && FMemory::Memcmp(RenderTargets, Other.RenderTargets, sizeof(FRenderTargetBlendInfo) * NumRenderTargets) == 0
             && LogicOp                 == Other.LogicOp
             && bLogicOpEnable          == Other.bLogicOpEnable
             && bAlphaToCoverageEnable  == Other.bAlphaToCoverageEnable

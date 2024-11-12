@@ -83,8 +83,7 @@ FGCInputDevice::~FGCInputDevice()
 {
     [[NSNotificationCenter defaultCenter] removeObserver:Observer name:GCControllerDidConnectNotification object:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:Observer name:GCControllerDidDisconnectNotification object:nil];
-
-    NSSafeRelease(Observer);
+    [Observer release];
 }
 
 void FGCInputDevice::UpdateDeviceState()

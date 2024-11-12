@@ -14,7 +14,7 @@ FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITex
 
 FMetalTexture::~FMetalTexture()
 {
-    NSSafeRelease(Texture);
+    [Texture release];
 }
 
 bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)

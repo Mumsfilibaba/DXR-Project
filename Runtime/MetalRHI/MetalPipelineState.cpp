@@ -32,7 +32,7 @@ FMetalDepthStencilState::FMetalDepthStencilState(FMetalDeviceContext* DeviceCont
 
 FMetalDepthStencilState::~FMetalDepthStencilState()
 {
-    NSSafeRelease(DepthStencilState);
+    [DepthStencilState release];
 }
 
 bool FMetalDepthStencilState::Initialize()

@@ -67,7 +67,7 @@ void FMetalCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& 
         GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     }
     
-    NSRelease(RenderPassDescriptor);
+    [RenderPassDescriptor release];
     
     [GraphicsEncoder endEncoding];
     GraphicsEncoder = nil;
@@ -133,7 +133,7 @@ void FMetalCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Beg
     GraphicsEncoder = [CommandBuffer renderCommandEncoderWithDescriptor:RenderPassDescriptor];
     [GraphicsEncoder retain];
     
-    NSRelease(RenderPassDescriptor);
+    [RenderPassDescriptor release];
 }
 
 void FMetalCommandContext::RHIEndRenderPass()
@@ -141,7 +141,7 @@ void FMetalCommandContext::RHIEndRenderPass()
     CHECK(GraphicsEncoder != nil);
         
     [GraphicsEncoder endEncoding];
-    NSRelease(GraphicsEncoder);
+    [GraphicsEncoder release];
 }
 
 void FMetalCommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)

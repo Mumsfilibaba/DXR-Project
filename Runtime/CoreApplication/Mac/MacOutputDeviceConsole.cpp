@@ -149,8 +149,7 @@ void FMacOutputDeviceConsole::DestroyConsole()
         
             FPlatformApplicationMisc::PumpMessages(true);
             
-            NSSafeRelease(WindowHandle);
-            
+            [WindowHandle release];
             DestroyResources();
         }, NSDefaultRunLoopMode, true);
     }
@@ -162,14 +161,25 @@ void FMacOutputDeviceConsole::DestroyResources()
     
     CHECK(FPlatformThreadMisc::IsMainThread());
     
-    NSSafeRelease(TextView);
-    NSSafeRelease(ScrollView);
-    NSSafeRelease(Attributes);
-    NSSafeRelease(AttributeNames);
-    NSSafeRelease(Font);
-    NSSafeRelease(TextColor);
-    NSSafeRelease(BackGroundColor);
-    NSSafeRelease(StringAttributes);
+    [TextView release];
+    [ScrollView release];
+    [Attributes release];
+    [AttributeNames release];
+    [Font release];
+    
+    if (TextColor)
+    {
+        [TextColor release];
+        TextColor = nullptr;
+    }
+    
+    [BackGroundColor release];
+
+    if (StringAttributes)
+    {
+        [StringAttributes release];
+        StringAttributes = nullptr;
+    }
 }
 
 void FMacOutputDeviceConsole::Show(bool bShow)

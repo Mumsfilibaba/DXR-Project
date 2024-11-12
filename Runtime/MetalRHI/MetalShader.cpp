@@ -11,9 +11,9 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
 
 FMetalShader::~FMetalShader()
 {
-    NSSafeRelease(Library);
-    NSSafeRelease(FunctionName);
-    NSSafeRelease(Function);
+    [Library release];
+    [FunctionName release];
+    [Function release];
 }
 
 bool FMetalShader::Initialize(const TArray<uint8>& InCode)
