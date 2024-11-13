@@ -1,5 +1,5 @@
 #pragma once
-#include "TypeTraits.h"
+#include "Core/Templates/TypeTraits.h"
 
 #define ENUM_CLASS_OPERATORS(EnumType) \
     constexpr EnumType operator|(EnumType LHS, EnumType RHS) noexcept \
@@ -32,5 +32,5 @@
     } \
     constexpr bool IsEnumFlagSet(EnumType EnumMask, EnumType EnumFlag) noexcept \
     { \
-        return ToUnderlying((EnumMask) & (EnumFlag)) != 0; \
+        return UnderlyingTypeValue((EnumMask) & (EnumFlag)) != 0; \
     }

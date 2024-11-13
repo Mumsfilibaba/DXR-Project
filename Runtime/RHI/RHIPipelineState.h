@@ -61,10 +61,10 @@ struct FStencilState
 
     friend uint64 GetHashForType(const FStencilState& Value)
     {
-        uint64 Hash = ToUnderlying(Value.StencilFailOp);
-        HashCombine(Hash, ToUnderlying(Value.StencilDepthFailOp));
-        HashCombine(Hash, ToUnderlying(Value.StencilDepthPassOp));
-        HashCombine(Hash, ToUnderlying(Value.StencilFunc));
+        uint64 Hash = UnderlyingTypeValue(Value.StencilFailOp);
+        HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthFailOp));
+        HashCombine(Hash, UnderlyingTypeValue(Value.StencilDepthPassOp));
+        HashCombine(Hash, UnderlyingTypeValue(Value.StencilFunc));
         return Hash;
     }
 
@@ -130,7 +130,7 @@ struct FRHIDepthStencilStateInitializer
     friend uint64 GetHashForType(const FRHIDepthStencilStateInitializer& Value)
     {
         uint64 Hash = static_cast<uint64>(Value.bDepthWriteEnable);
-        HashCombine(Hash, ToUnderlying(Value.DepthFunc));
+        HashCombine(Hash, UnderlyingTypeValue(Value.DepthFunc));
         HashCombine(Hash, Value.bDepthEnable);
         HashCombine(Hash, Value.StencilReadMask);
         HashCombine(Hash, Value.StencilWriteMask);
@@ -262,8 +262,8 @@ struct FRHIRasterizerStateInitializer
 
     friend uint64 GetHashForType(const FRHIRasterizerStateInitializer& Value)
     {
-        uint64 Hash = ToUnderlying(Value.FillMode);
-        HashCombine(Hash, ToUnderlying(Value.CullMode));
+        uint64 Hash = UnderlyingTypeValue(Value.FillMode);
+        HashCombine(Hash, UnderlyingTypeValue(Value.CullMode));
         HashCombine(Hash, Value.bFrontCounterClockwise);
         HashCombine(Hash, Value.bDepthClipEnable);
         HashCombine(Hash, Value.bMultisampleEnable);
@@ -477,14 +477,14 @@ struct FRenderTargetBlendInfo
 
     friend uint64 GetHashForType(const FRenderTargetBlendInfo& Value)
     {
-        uint64 Hash = ToUnderlying(Value.SrcBlend);
-        HashCombine(Hash, ToUnderlying(Value.DstBlend));
-        HashCombine(Hash, ToUnderlying(Value.BlendOp));
-        HashCombine(Hash, ToUnderlying(Value.SrcBlendAlpha));
-        HashCombine(Hash, ToUnderlying(Value.DstBlendAlpha));
-        HashCombine(Hash, ToUnderlying(Value.BlendOpAlpha));
+        uint64 Hash = UnderlyingTypeValue(Value.SrcBlend);
+        HashCombine(Hash, UnderlyingTypeValue(Value.DstBlend));
+        HashCombine(Hash, UnderlyingTypeValue(Value.BlendOp));
+        HashCombine(Hash, UnderlyingTypeValue(Value.SrcBlendAlpha));
+        HashCombine(Hash, UnderlyingTypeValue(Value.DstBlendAlpha));
+        HashCombine(Hash, UnderlyingTypeValue(Value.BlendOpAlpha));
         HashCombine(Hash, Value.bBlendEnable);
-        HashCombine(Hash, ToUnderlying(Value.ColorWriteMask));
+        HashCombine(Hash, UnderlyingTypeValue(Value.ColorWriteMask));
         return Hash;
     }
 
@@ -533,7 +533,7 @@ struct FRHIBlendStateInitializer
         for (uint32 Index = 0; Index < Value.NumRenderTargets; ++Index)
             HashCombine(Hash, GetHashForType(Value.RenderTargets[Index]));
 
-        HashCombine(Hash, ToUnderlying(Value.LogicOp));
+        HashCombine(Hash, UnderlyingTypeValue(Value.LogicOp));
         HashCombine(Hash, Value.bLogicOpEnable);
         HashCombine(Hash, Value.bAlphaToCoverageEnable);
         HashCombine(Hash, Value.bIndependentBlendEnable);

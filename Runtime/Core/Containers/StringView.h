@@ -433,7 +433,7 @@ public:
         {
             if (*Current == Char)
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - ViewStart));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - ViewStart));
             }
         }
 
@@ -465,7 +465,7 @@ public:
         {
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - ViewStart));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - ViewStart));
             }
         }
 
@@ -554,7 +554,7 @@ public:
             --Current;
             if (Char == *Current)
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - End));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - End));
             }
         }
 
@@ -587,7 +587,7 @@ public:
             --Current;
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - End));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - End));
             }
         }
 
@@ -752,7 +752,7 @@ public:
      */
     NODISCARD FORCEINLINE SIZETYPE Length() const noexcept
     {
-        return static_cast<SIZETYPE>(static_cast<intptr>(ViewEnd - ViewStart));
+        return static_cast<SIZETYPE>(static_cast<ptrint>(ViewEnd - ViewStart));
     }
 
     /**

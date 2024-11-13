@@ -1,10 +1,10 @@
 #pragma once
-#include "TypeTraits.h"
+#include "Core/Templates/TypeTraits.h"
 
 template<typename T>
 inline T* AddressOf(T& Object) noexcept requires(TIsObject<T>::Value)
 {
-    return reinterpret_cast<T*>(&const_cast<CHAR&>(reinterpret_cast<const volatile CHAR&>(Object)));
+    return reinterpret_cast<T*>(&const_cast<char&>(reinterpret_cast<const volatile char&>(Object)));
 }
 
 template<typename T>

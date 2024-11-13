@@ -673,7 +673,7 @@ public:
         }
         else
         {
-            return static_cast<SIZETYPE>(static_cast<intptr>(Result - CharData.Data()));
+            return static_cast<SIZETYPE>(static_cast<ptrint>(Result - CharData.Data()));
         }
     }
 
@@ -713,7 +713,7 @@ public:
         {
             if (*Current == Char)
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - CharData.Data()));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - CharData.Data()));
             }
         }
 
@@ -745,7 +745,7 @@ public:
         {
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - CharData.Data()));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - CharData.Data()));
             }
         }
 
@@ -834,7 +834,7 @@ public:
             --Current;
             if (Char == *Current)
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - End));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - End));
             }
         }
 
@@ -867,7 +867,7 @@ public:
             --Current;
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(static_cast<intptr>(Current - End));
+                return static_cast<SIZETYPE>(static_cast<ptrint>(Current - End));
             }
         }
 

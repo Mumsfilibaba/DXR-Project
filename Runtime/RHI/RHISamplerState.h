@@ -148,11 +148,11 @@ struct FRHISamplerStateInfo
 
     friend uint64 GetHashForType(const FRHISamplerStateInfo& Value)
     {
-        uint64 Hash = ToUnderlying(Value.AddressU);
-        HashCombine(Hash, ToUnderlying(Value.AddressV));
-        HashCombine(Hash, ToUnderlying(Value.AddressW));
-        HashCombine(Hash, ToUnderlying(Value.Filter));
-        HashCombine(Hash, ToUnderlying(Value.ComparisonFunc));
+        uint64 Hash = UnderlyingTypeValue(Value.AddressU);
+        HashCombine(Hash, UnderlyingTypeValue(Value.AddressV));
+        HashCombine(Hash, UnderlyingTypeValue(Value.AddressW));
+        HashCombine(Hash, UnderlyingTypeValue(Value.Filter));
+        HashCombine(Hash, UnderlyingTypeValue(Value.ComparisonFunc));
         HashCombine(Hash, Value.MaxAnisotropy);
         HashCombine(Hash, Value.MinLOD);
         HashCombine(Hash, Value.MinLOD);

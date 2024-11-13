@@ -1,7 +1,6 @@
 #pragma once
 #include "Utility.h"
 #include "TypeTraits.h"
-
 #include "Core/Core.h"
 #include "Core/Memory/Memory.h"
 

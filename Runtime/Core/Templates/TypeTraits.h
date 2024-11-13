@@ -310,7 +310,16 @@ struct TEnableIf<true, T>
     typedef T Type;
 };
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// DeclVal and ExpandPacks helpers
+
+template<typename T>
+typename TAddRValueReference<T>::Type DeclVal() noexcept;
+
+template<typename... Packs>
+inline void ExpandPacks(Packs&&...) { }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // Type Traits
 
 template<typename T>
@@ -349,10 +358,10 @@ struct TIsPolymorphic
     inline static constexpr bool Value = __is_polymorphic(T);
 };
 
-template<typename T, typename FromType>
+template<typename T, typename F>
 struct TIsAssignable
 {
-    inline static constexpr bool Value = __is_assignable(T, FromType);
+    inline static constexpr bool Value = __is_assignable(T, F);
 };
 
 template<typename BaseType, typename DerivedType>
@@ -367,16 +376,16 @@ struct TIsConstructible
     inline static constexpr bool Value = __is_constructible(T, ArgTypes...);
 };
 
-template<typename FromType, typename ToType>
+template<typename F, typename T>
 struct TIsConvertible
 {
-    inline static constexpr bool Value = __is_convertible_to(FromType, ToType);
+    inline static constexpr bool Value = __is_convertible_to(F, T);
 };
 
-template<typename FromType, typename ToType>
+template<typename F, typename T>
 struct TIsPointerConvertible
 {
-    inline static constexpr bool Value = TIsConvertible<typename TAddPointer<FromType>::Type, typename TAddPointer<ToType>::Type>::Value;
+    inline static constexpr bool Value = TIsConvertible<typename TAddPointer<F>::Type, typename TAddPointer<T>::Type>::Value;
 };
 
 template<typename T>
@@ -401,6 +410,18 @@ template<typename T>
 struct TIsTrivial
 {
     inline static constexpr bool Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value;
+};
+
+template<typename T, typename... Args>
+struct TIsNothrowConstructible
+{
+    static constexpr bool Value = TIsConstructible<T, Args...>::Value && noexcept(T(DeclVal<Args>()...));
+};
+
+template<typename T, typename U>
+struct TIsNothrowAssignable
+{
+    static constexpr bool Value = TIsAssignable<T, U>::Value && noexcept(DeclVal<T>() = DeclVal<U>());
 };
 
 template<typename T>
@@ -455,6 +476,30 @@ template<typename T>
 struct TIsMoveAssignable
 {
     inline static constexpr bool Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value;
+};
+
+template<typename T>
+struct TIsNothrowMoveConstructable
+{
+    inline static constexpr bool Value = TIsNothrowConstructible<T, typename TAddRValueReference<T>::Type>::Value;
+};
+
+template<typename T>
+struct TIsNothrowMoveAssignable
+{
+    inline static constexpr bool Value = TIsNothrowAssignable<typename TAddLValueReference<T>::Type, typename TAddRValueReference<T>::Type>::Value;
+};
+
+template<typename T>
+struct TIsNothrowCopyConstructable
+{
+    inline static constexpr bool Value = TIsNothrowConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
+};
+
+template<typename T>
+struct TIsNothrowCopyAssignable
+{
+    inline static constexpr bool Value = TIsNothrowAssignable<typename TAddLValueReference<T>::Type, typename TAddLValueReference<const T>::Type>::Value;
 };
 
 template<typename T>
@@ -735,9 +780,7 @@ struct TIsInteger<const volatile T>
 template<typename T>
 struct TIsFloatingPoint
 {
-    inline static constexpr bool Value = (TOr<
-        TIsSame<float, typename TRemoveCV<T>::Type>, TIsSame<double, typename TRemoveCV<T>::Type>, TIsSame<long double, typename TRemoveCV<T>::Type>
-    >::Value);
+    inline static constexpr bool Value = (TOr<TIsSame<float, typename TRemoveCV<T>::Type>, TIsSame<double, typename TRemoveCV<T>::Type>, TIsSame<long double, typename TRemoveCV<T>::Type>>::Value);
 };
 
 template <typename T>
@@ -949,10 +992,10 @@ struct TAlignmentOf
 // not reference itself or have classes pointing directly to an element. This
 // also means that objects can be memmove:ed without issues.
 
-#define MARK_AS_REALLOCATABLE(Type)                \
-    template<>                                     \
-    struct TIsReallocatable<Type>                  \
-    {                                              \
+#define MARK_AS_REALLOCATABLE(Type) \
+    template<> \
+    struct TIsReallocatable<Type> \
+    { \
         inline static constexpr bool Value = true; \
     }
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "TypeTraits.h"
+#include "Core/Templates/TypeTraits.h"
 
 // Move an object by converting it into a r-value
 template<typename T>

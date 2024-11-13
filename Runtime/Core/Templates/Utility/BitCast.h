@@ -1,5 +1,5 @@
 #pragma once
-#include "TypeTraits.h"
+#include "Core/Templates/TypeTraits.h"
 
 template <typename T, typename F>
 constexpr typename TEnableIf<TAnd<TValue<sizeof(T) == sizeof(F)>, TIsTriviallyCopyable<F>, TIsTriviallyCopyable<T>>::Value, T>::Type BitCast(const F& Src) noexcept

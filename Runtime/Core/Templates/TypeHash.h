@@ -1,5 +1,4 @@
 #pragma once
-#include "BitCast.h"
 #include "Core/Templates/Utility.h"
 
 constexpr uint64 GetHashForType(bool bValue)
@@ -66,5 +65,5 @@ constexpr TEnableIf<TIsPointer<PointerType>::Value, uint64>::Type GetHashForType
 template<typename EnumType>
 constexpr TEnableIf<TIsEnum<EnumType>::Value, uint64>::Type GetHashForType(EnumType Value) 
 {
-    return static_cast<uint64>(ToUnderlying<EnumType>(Value));
+    return static_cast<uint64>(UnderlyingTypeValue<EnumType>(Value));
 }

@@ -5,7 +5,7 @@ FInputMapper FInputMapper::Instance;
 void FInputMapper::Initialize()
 {
     // Init the KeyboardKey map
-    static_assert(ToUnderlying(EKeyboardKeyName::Unknown) == ToUnderlying(EKeyName::Unknown) && ToUnderlying(EKeyboardKeyName::Last) == ToUnderlying(EKeyName::Menu), "EKeyboardKeyName::Type has changed values, update mapping");
+    static_assert(UnderlyingTypeValue(EKeyboardKeyName::Unknown) == UnderlyingTypeValue(EKeyName::Unknown) && UnderlyingTypeValue(EKeyboardKeyName::Last) == UnderlyingTypeValue(EKeyName::Menu), "EKeyboardKeyName::Type has changed values, update mapping");
 
     for (int32 Index = EKeyboardKeyName::Unknown; Index <= EKeyboardKeyName::Last; Index++)
     {

@@ -38,7 +38,7 @@ public:
      */
     void Enqueue(ElementInputType Element, EQueuePriority Priority = EQueuePriority::Normal)
     {
-        const int32 QueueIndex = ToUnderlying(Priority);
+        const int32 QueueIndex = UnderlyingTypeValue(Priority);
         if (!PriorityQueues.IsValidIndex(QueueIndex))
         {
             PriorityQueues.Resize(QueueIndex + 1);
@@ -150,7 +150,7 @@ public:
     }
 
 private:
-    static constexpr auto NumPriorities = static_cast<int32>(ToUnderlying(EQueuePriority::Count));
+    static constexpr auto NumPriorities = static_cast<int32>(UnderlyingTypeValue(EQueuePriority::Count));
 
     using ElementArray   = TArray<ElementType>;
     using ArrayAllocator = TInlineArrayAllocator<ElementArray, NumPriorities + 1>;
