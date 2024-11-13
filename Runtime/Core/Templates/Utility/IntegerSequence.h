@@ -7,14 +7,17 @@ struct TIntegerSequence
     static_assert(TIsInteger<T>::Value, "TIntegerSequence must an integral type");
 
     typedef T Type;
- 
-    inline static constexpr auto Size = sizeof...(Sequence);
+
+    inline static constexpr TSIZE Size = sizeof...(Sequence);
 };
 
 namespace IntegerSequenceInternal
 {
-    template <typename T, unsigned N>
+    template<typename T, TSIZE N>
     struct TMakeIntegerSequenceImpl;
+
+    template<typename T, TSIZE N, typename F, typename S>
+    struct TIntegerSequenceHelper;
 }
 
 template<typename T, T N>
@@ -22,22 +25,22 @@ using TMakeIntegerSequence = typename IntegerSequenceInternal::TMakeIntegerSeque
 
 namespace IntegerSequenceInternal
 {
-    template<uint32 N, typename FirstSequence, typename SecondSequence>
+    template<typename T, TSIZE N, typename F, typename S>
     struct TIntegerSequenceHelper;
 
-    template<uint32 N, typename T, T... First, T... Second>
-    struct TIntegerSequenceHelper<N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
+    template<typename T, TSIZE N, T... First, T... Second>
+    struct TIntegerSequenceHelper<T, N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
     {
         using Type = TIntegerSequence<T, First..., (T(N + Second))...>;
     };
-    
-    template<uint32 N, typename FirstSequence, typename SecondSequence>
-    using TIntegerSequenceHelperType = typename TIntegerSequenceHelper<N, FirstSequence, SecondSequence>::Type;
 
-    template<typename T, uint32 N>
-    struct TMakeIntegerSequenceImpl : TIntegerSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
+    template<typename T, TSIZE N, typename F, typename S>
+    using TIntegerSequenceHelperType = typename TIntegerSequenceHelper<T, N, F, S>::Type;
+
+    template<typename T, TSIZE N>
+    struct TMakeIntegerSequenceImpl : TIntegerSequenceHelperType<T, N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
     {
-        using Type = TIntegerSequenceHelperType<N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
+        using Type = TIntegerSequenceHelperType<T, N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
     };
 
     template<typename T>

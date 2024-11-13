@@ -19,7 +19,7 @@ class TPriorityQueue
 {
 public:
     using ElementType      = T;
-    using ElementInputType = typename TConditional<TOr<TIsPointer<ElementType>, TIsFundamental<T>>::Value, ElementType, typename TAddReference<typename TAddConst<ElementType>::Type>::LValue>::Type;
+    using ElementInputType = typename TConditional<TOr<TIsPointer<ElementType>, TIsFundamental<T>>::Value, ElementType, typename TAddLValueReference<typename TAddConst<ElementType>::Type>::Type>::Type;
 
     /**
      * @brief - Constructor
