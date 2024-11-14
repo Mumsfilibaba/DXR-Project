@@ -10,5 +10,5 @@ struct TIsSame<T, T> : TTrueType { };
 template<typename T, typename U>
 struct TIsNotSame
 {
-    inline static constexpr bool Value = TNot<TIsSame<T, U>>::Value;
+    static constexpr bool Value = TNot<TIsSame<T, U>>::Value;
 };

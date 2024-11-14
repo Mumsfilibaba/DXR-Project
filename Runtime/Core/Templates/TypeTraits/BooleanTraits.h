@@ -7,13 +7,13 @@ typedef TIntegralConstant<bool, false> TFalseType;
 template<bool bIdentityValue>
 struct TValue
 {
-    inline static constexpr bool Value = bIdentityValue;
+    static constexpr bool Value = bIdentityValue;
 };
 
 template<typename T>
 struct TNot
 {
-    inline static constexpr bool Value = !T::Value;
+    static constexpr bool Value = !T::Value;
 };
 
 template<typename... ArgsType>
@@ -22,13 +22,13 @@ struct TAnd;
 template<typename T, typename... ArgsType>
 struct TAnd<T, ArgsType...>
 {
-    inline static constexpr bool Value = (T::Value && TAnd<ArgsType...>::Value);
+    static constexpr bool Value = (T::Value && TAnd<ArgsType...>::Value);
 };
 
 template<typename T>
 struct TAnd<T>
 {
-    inline static constexpr bool Value = T::Value;
+    static constexpr bool Value = T::Value;
 };
 
 template<typename... ArgsType>
@@ -37,41 +37,41 @@ struct TOr;
 template<typename T, typename... ArgsType>
 struct TOr<T, ArgsType...>
 {
-    inline static constexpr bool Value = (T::Value || TOr<ArgsType...>::Value);
+    static constexpr bool Value = (T::Value || TOr<ArgsType...>::Value);
 };
 
 template<typename T>
 struct TOr<T>
 {
-    inline static constexpr bool Value = T::Value;
+    static constexpr bool Value = T::Value;
 };
 
-template<int64 Arg0, int64... ArgsType>
+template<int64 Arg0, int64... Args>
 struct TMin;
 
-template<int64 Arg0>
-struct TMin<Arg0>
+template<int64 Arg>
+struct TMin<Arg>
 {
-    inline static constexpr int64 Value = Arg0;
+    static constexpr int64 Value = Arg;
 };
 
-template<int64 Arg0, int64 Arg1, int64... ArgsType>
-struct TMin<Arg0, Arg1, ArgsType...>
+template<int64 Arg0, int64 Arg1, int64... Args>
+struct TMin<Arg0, Arg1, Args...>
 {
-    inline static constexpr int64 Value = (Arg0 <= Arg1) ? TMin<Arg0, ArgsType...>::Value : TMin<Arg1, ArgsType...>::Value;
+    static constexpr int64 Value = TMin<(Arg0 <= Arg1 ? Arg0 : Arg1), Args...>::Value;
 };
 
-template<int64 Arg0, int64... ArgsType>
+template<int64 Arg0, int64... Args>
 struct TMax;
 
-template<int64 Arg0>
-struct TMax<Arg0>
+template<int64 Arg>
+struct TMax<Arg>
 {
-    inline static constexpr int64 Value = Arg0;
+    static constexpr int64 Value = Arg;
 };
 
-template<int64 Arg0, int64 Arg1, int64... ArgsType>
-struct TMax<Arg0, Arg1, ArgsType...>
+template<int64 Arg0, int64 Arg1, int64... Args>
+struct TMax<Arg0, Arg1, Args...>
 {
-    inline static constexpr int64 Value = (Arg0 >= Arg1) ? TMax<Arg0, ArgsType...>::Value : TMax<Arg1, ArgsType...>::Value;
+    static constexpr int64 Value = TMax<(Arg0 >= Arg1 ? Arg0 : Arg1), Args...>::Value;
 };

@@ -13,5 +13,5 @@
 template<typename T>
 struct TIsReallocatable
 {
-    inline static constexpr bool Value = TIsTrivial<T>::Value;
+    static constexpr bool Value = TIsTrivial<T>::Value;
 };

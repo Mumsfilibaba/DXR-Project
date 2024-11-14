@@ -25,10 +25,10 @@ struct TAddLValueReference
 {
 private:
     template <class U>
-    static TIdentity<U&> TryAdd(int);
+    static TTypeIdentity<U&> TryAdd(int);
 
     template <class U>
-    static TIdentity<U> TryAdd(...);
+    static TTypeIdentity<U> TryAdd(...);
 
     typedef decltype(TryAdd<T>(0)) IdentityType;
 
@@ -41,10 +41,10 @@ struct TAddRValueReference
 {
 private:
     template <class U>
-    static TIdentity<U&&> TryAdd(int);
+    static TTypeIdentity<U&&> TryAdd(int);
 
     template <class U>
-    static TIdentity<U> TryAdd(...);
+    static TTypeIdentity<U> TryAdd(...);
 
     typedef decltype(TryAdd<T>(0)) IdentityType;
 
@@ -57,10 +57,10 @@ struct TAddPointer
 {
 private:
     template <typename U>
-    static TIdentity<typename TRemoveReference<U>::Type*> TryAdd(int);
+    static TTypeIdentity<typename TRemoveReference<U>::Type*> TryAdd(int);
 
     template <typename U>
-    static TIdentity<U> TryAdd(...);
+    static TTypeIdentity<U> TryAdd(...);
 
     typedef decltype(TryAdd<T>(0)) IdentityType;
 

@@ -6,25 +6,25 @@
 template<typename T>
 struct TIsCopyConstructable
 {
-    inline static constexpr bool Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
+    static constexpr bool Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsCopyAssignable
 {
-    inline static constexpr bool Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value;
+    static constexpr bool Value = TIsAssignable<T, typename TAddLValueReference<const T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsMoveConstructable
 {
-    inline static constexpr bool Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value;
+    static constexpr bool Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsMoveAssignable
 {
-    inline static constexpr bool Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value;
+    static constexpr bool Value = TIsAssignable<T, typename TAddRValueReference<T>::Type>::Value;
 };
 
 template<typename T, typename... Args>
@@ -42,23 +42,23 @@ struct TIsNothrowAssignable
 template<typename T>
 struct TIsNothrowMoveConstructable
 {
-    inline static constexpr bool Value = TIsNothrowConstructible<T, typename TAddRValueReference<T>::Type>::Value;
+    static constexpr bool Value = TIsNothrowConstructible<T, typename TAddRValueReference<T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsNothrowMoveAssignable
 {
-    inline static constexpr bool Value = TIsNothrowAssignable<typename TAddLValueReference<T>::Type, typename TAddRValueReference<T>::Type>::Value;
+    static constexpr bool Value = TIsNothrowAssignable<typename TAddLValueReference<T>::Type, typename TAddRValueReference<T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsNothrowCopyConstructable
 {
-    inline static constexpr bool Value = TIsNothrowConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
+    static constexpr bool Value = TIsNothrowConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
 };
 
 template<typename T>
 struct TIsNothrowCopyAssignable
 {
-    inline static constexpr bool Value = TIsNothrowAssignable<typename TAddLValueReference<T>::Type, typename TAddLValueReference<const T>::Type>::Value;
+    static constexpr bool Value = TIsNothrowAssignable<typename TAddLValueReference<T>::Type, typename TAddLValueReference<const T>::Type>::Value;
 };

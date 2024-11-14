@@ -7,7 +7,7 @@
 template<typename T>
 struct TIsNullptr
 {
-    inline static constexpr bool Value = TIsSame<nullptr_type, typename TRemoveCV<T>::Type>::Value;
+    static constexpr bool Value = TIsSame<nullptr_type, typename TRemoveCV<T>::Type>::Value;
 };
 
 template<typename T>
@@ -25,29 +25,29 @@ struct TIsMemberPointer<T U::*> : TTrueType { };
 template <typename T>
 struct TIsMemberPointer<const T>
 {
-    inline static constexpr bool Value = TIsMemberPointer<T>::Value;
+    static constexpr bool Value = TIsMemberPointer<T>::Value;
 };
 
 template <typename T>
 struct TIsMemberPointer<volatile T>
 {
-    inline static constexpr bool Value = TIsMemberPointer<T>::Value;
+    static constexpr bool Value = TIsMemberPointer<T>::Value;
 };
 
 template <typename T>
 struct TIsMemberPointer<const volatile T>
 {
-    inline static constexpr bool Value = TIsMemberPointer<T>::Value;
+    static constexpr bool Value = TIsMemberPointer<T>::Value;
 };
 
 template<typename T>
 struct TIsNullable
 {
-    inline static constexpr bool Value = TOr<TIsPointer<T>, TIsMemberPointer<T>>::Value;
+    static constexpr bool Value = TOr<TIsPointer<T>, TIsMemberPointer<T>>::Value;
 };
 
 template<typename F, typename T>
 struct TIsPointerConvertible
 {
-    inline static constexpr bool Value = TIsConvertible<typename TAddPointer<F>::Type, typename TAddPointer<T>::Type>::Value;
+    static constexpr bool Value = TIsConvertible<typename TAddPointer<F>::Type, typename TAddPointer<T>::Type>::Value;
 };

@@ -10,7 +10,7 @@
 template<typename T>
 struct TIsVoid
 {
-    inline static constexpr bool Value = TIsSame<void, typename TRemoveCV<T>::Type>::Value;
+    static constexpr bool Value = TIsSame<void, typename TRemoveCV<T>::Type>::Value;
 };
 
 template<typename T>
@@ -24,13 +24,13 @@ private:
     static int16 Test(...);
 
 public:
-    inline static constexpr bool Value = TNot<TIsUnion<T>>::Value && (sizeof(Test<T>(0)) == 1);
+    static constexpr bool Value = TNot<TIsUnion<T>>::Value && (sizeof(Test<T>(0)) == 1);
 };
 
 template<typename T>
 struct TIsObject
 {
-    inline static constexpr bool Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value;
+    static constexpr bool Value = TOr<TIsScalar<T>, TIsArray<T>, TIsUnion<T>, TIsClass<T>>::Value;
 };
 
 // Primary template: defaults to false
@@ -130,19 +130,19 @@ struct TIsFunction<Ret(Args...) const volatile && noexcept> : TTrueType { };
 template<typename T>
 struct TIsFundamental
 {
-    inline static constexpr bool Value = TOr<TIsArithmetic<T>, TIsVoid<T>, TIsNullptr<T>>::Value;
+    static constexpr bool Value = TOr<TIsArithmetic<T>, TIsVoid<T>, TIsNullptr<T>>::Value;
 };
 
 template<typename T>
 struct TIsCompound
 {
-    inline static constexpr bool Value = TNot<TIsFundamental<T>>::Value;
+    static constexpr bool Value = TNot<TIsFundamental<T>>::Value;
 };
 
 template<typename T>
 struct TIsTrivial
 {
-    inline static constexpr bool Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value;
+    static constexpr bool Value = TAnd<TIsTriviallyConstructable<T>, TIsTriviallyCopyable<T>, TIsTriviallyDestructable<T>>::Value;
 };
 
 template<typename T, typename = void>

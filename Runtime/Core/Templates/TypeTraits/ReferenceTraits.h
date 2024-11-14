@@ -16,5 +16,5 @@ struct TIsRValueReference<T&&> : TTrueType { };
 template<typename T>
 struct TIsReference
 {
-    inline static constexpr bool Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value;
+    static constexpr bool Value = TOr<TIsLValueReference<T>, TIsRValueReference<T>>::Value;
 };
