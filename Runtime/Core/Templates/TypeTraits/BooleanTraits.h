@@ -1,5 +1,14 @@
 #pragma once
-#include "Core/CoreTypes.h"
+#include "Core/Templates/TypeTraits/BasicTraits.h"
+
+typedef TIntegralConstant<bool, true>  TTrueType;
+typedef TIntegralConstant<bool, false> TFalseType;
+
+template<bool bIdentityValue>
+struct TValue
+{
+    inline static constexpr bool Value = bIdentityValue;
+};
 
 template<typename T>
 struct TNot

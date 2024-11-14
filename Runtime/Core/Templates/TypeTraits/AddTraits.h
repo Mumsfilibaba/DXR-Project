@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Templates/TypeTraits/IdentityTraits.h"
+#include "Core/Templates/TypeTraits/BasicTraits.h"
 #include "Core/Templates/TypeTraits/RemoveTraits.h"
 
 template<typename T>

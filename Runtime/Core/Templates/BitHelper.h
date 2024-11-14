@@ -33,13 +33,13 @@ struct FBitHelper
         return Result;
     }
 
-    template<typename StorageType>
-    static typename TEnableIf<TIsUnsigned<StorageType>::Value, StorageType>::Type ReverseBits(StorageType Bits) noexcept
+    template<typename T>
+    static constexpr typename TEnableIf<TIsUnsigned<T>::Value, T>::Type ReverseBits(T Bits) noexcept
     {
-        constexpr StorageType NumBits = sizeof(StorageType) * 8;
+        constexpr T NumBits = sizeof(T) * 8;
 
-        StorageType BitCount = NumBits - 1;
-        StorageType NewBits  = Bits;
+        T BitCount = NumBits - 1;
+        T NewBits  = Bits;
         Bits >>= 1;
 
         while (Bits)
@@ -55,10 +55,10 @@ struct FBitHelper
     }
 
     // TODO: Check if intrinsics are viable
-    template<typename IntegerType>
-    static constexpr IntegerType CountAssignedBits(IntegerType Element)
+    template<typename T>
+    static constexpr T CountAssignedBits(T Element)
     {
-        IntegerType NumBits = 0;
+        T NumBits = 0;
         while (Element)
         {
             if ((Element & 1) == 1)
