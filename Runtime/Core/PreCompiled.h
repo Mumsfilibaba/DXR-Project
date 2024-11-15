@@ -151,6 +151,7 @@
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/ReferenceWrapper.h"
+#include "Core/Templates/TypeHash.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 
@@ -167,5 +168,4 @@
 #include "Core/Time/Timespan.h"
 #include "Core/Time/TimeUtilities.h"
 
-#include "Core/Utilities/HashUtilities.h"
 #include "Core/Utilities/StringUtilities.h"

@@ -1,6 +1,6 @@
 #pragma once
 #include "Array.h"
-#include "Core/Utilities/HashUtilities.h"
+#include "Core/Templates/TypeHash.h"
 
 // TODO: Custom map implementation
 #include <unordered_map>

@@ -3,7 +3,7 @@
 #include "Vector3.h"
 #include "Vector4.h"
 #include "Float.h"
-#include "Core/Utilities/HashUtilities.h"
+#include "Core/Templates/TypeHash.h"
 
 inline uint64 GetHashForType(FFloat16 Value)
 {

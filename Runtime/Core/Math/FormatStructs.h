@@ -1,7 +1,7 @@
 #pragma once
 #include "Float.h"
 #include "Vector3.h"
-#include "Core/Utilities/HashUtilities.h"
+#include "Core/Templates/TypeHash.h"
 
 struct FR10G10B10A2
 {

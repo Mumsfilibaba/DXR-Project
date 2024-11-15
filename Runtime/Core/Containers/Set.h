@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/Utilities/HashUtilities.h"
 #include "Core/Containers/Array.h"
+#include "Core/Templates/TypeHash.h"
 
 // TODO: Custom set implementation
 #include <unordered_set>

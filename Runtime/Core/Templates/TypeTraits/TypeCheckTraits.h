@@ -19,13 +19,16 @@ struct TIsClass
 {
 private:
     template<typename U>
-    static int8 Test(int U::*);
+    static TIntegralConstant<bool, TNot<TIsUnion<T>>::Value> IsClassType(int U::*);
 
     template<typename U>
-    static int16 Test(...);
+    static TFalseType IsClassType(...);
+
+    template<typename U>
+    struct TIsClassImpl : decltype(IsClassType<U>(nullptr)) { };
 
 public:
-    static constexpr bool Value = TNot<TIsUnion<T>>::Value && (sizeof(Test<T>(0)) == 1);
+    static constexpr bool Value = TIsClassImpl<T>::Value;
 };
 
 template<typename T>
