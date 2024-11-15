@@ -3,6 +3,7 @@
 #include "Core/Templates/TypeTraits/BooleanTraits.h"
 #include "Core/Templates/TypeTraits/BasicTraits.h"
 #include "Core/Templates/TypeTraits/EqualTraits.h"
+#include "Core/Templates/TypeTraits/MetaProgrammingFuncs.h"
 #include "Core/Templates/TypeTraits/NumericTraits.h"
 #include "Core/Templates/TypeTraits/PointerTraits.h"
 #include "Core/Templates/TypeTraits/RemoveTraits.h"

@@ -244,7 +244,7 @@ FORCEINLINE void DestroyObject(ObjectType* Object) noexcept
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void RelocateObjects(void* StartAddress, ObjectType* Source, SizeType Count) noexcept
 {
-    static_assert(TIsReallocatable<ObjectType>::Value || TIsMoveConstructable<ObjectType>::Value || TIsCopyConstructable<ObjectType>::Value, "ObjectType cannot be relocated");
+    static_assert(TIsReallocatable<ObjectType>::Value || TIsMoveConstructible<ObjectType>::Value || TIsCopyConstructible<ObjectType>::Value, "ObjectType cannot be relocated");
 
     if constexpr (TIsReallocatable<ObjectType>::Value)
     {
@@ -253,7 +253,7 @@ FORCEINLINE void RelocateObjects(void* StartAddress, ObjectType* Source, SizeTyp
     else
     {
         typedef ObjectType ObjectDestructorType;
-        if constexpr (TIsMoveConstructable<ObjectType>::Value)
+        if constexpr (TIsMoveConstructible<ObjectType>::Value)
         {
             // Ensures that the function works for overlapping ranges
             ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);

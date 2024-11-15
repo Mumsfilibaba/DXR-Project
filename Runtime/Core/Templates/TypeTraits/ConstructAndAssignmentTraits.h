@@ -4,7 +4,13 @@
 #include "Core/Templates/TypeTraits/MetaProgrammingFuncs.h"
 
 template<typename T>
-struct TIsCopyConstructable
+struct TIsDefaultConstructible
+{
+    static constexpr bool Value = TIsConstructible<T>::Value;
+};
+
+template<typename T>
+struct TIsCopyConstructible
 {
     static constexpr bool Value = TIsConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
 };
@@ -16,7 +22,7 @@ struct TIsCopyAssignable
 };
 
 template<typename T>
-struct TIsMoveConstructable
+struct TIsMoveConstructible
 {
     static constexpr bool Value = TIsConstructible<T, typename TAddRValueReference<T>::Type>::Value;
 };
@@ -40,7 +46,7 @@ struct TIsNothrowAssignable
 };
 
 template<typename T>
-struct TIsNothrowMoveConstructable
+struct TIsNothrowMoveConstructible
 {
     static constexpr bool Value = TIsNothrowConstructible<T, typename TAddRValueReference<T>::Type>::Value;
 };
@@ -52,7 +58,7 @@ struct TIsNothrowMoveAssignable
 };
 
 template<typename T>
-struct TIsNothrowCopyConstructable
+struct TIsNothrowCopyConstructible
 {
     static constexpr bool Value = TIsNothrowConstructible<T, typename TAddLValueReference<const T>::Type>::Value;
 };

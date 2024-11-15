@@ -1,6 +1,6 @@
 #pragma once
 
-template<bool Condition, typename TrueType, typename FalseType>
+template<bool bCondition, typename TrueType, typename FalseType>
 struct TConditional
 {
     typedef TrueType Type;

@@ -52,6 +52,12 @@ struct TIsEnum
 };
 
 template<typename T>
+struct TIsScopedEnum
+{
+    static constexpr bool Value = __is_scoped_enum(T);
+};
+
+template<typename T>
 struct TIsUnion
 {
     static constexpr bool Value = __is_union(T);
@@ -97,6 +103,12 @@ template<typename T>
 struct TIsDestructible
 {
     static constexpr bool Value = __is_destructible(T);
+};
+
+template<typename T>
+struct THasVirtualDestructor
+{
+    static constexpr bool Value = __has_virtual_destructor(T);
 };
 
 template<typename F, typename T>
