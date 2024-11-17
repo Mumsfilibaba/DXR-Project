@@ -5,7 +5,7 @@
 #include "Core/Containers/Queue.h"
 #include "Core/Threading/Spinlock.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
 #include <AppKit/AppKit.h>

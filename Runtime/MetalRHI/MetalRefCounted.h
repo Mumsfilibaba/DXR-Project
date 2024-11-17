@@ -1,6 +1,6 @@
 #pragma once
 #include "MetalCore.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 
 class FMetalRefCounted
 {

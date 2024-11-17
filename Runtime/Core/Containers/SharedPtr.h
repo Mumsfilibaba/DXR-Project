@@ -1,8 +1,8 @@
 #pragma once
-#include "UniquePtr.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Core/Templates/ObjectHandling.h"
 #include "Core/Templates/Utility.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 
 enum EThreadAccess
 {

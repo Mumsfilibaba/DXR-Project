@@ -4,7 +4,7 @@
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Map.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 
 struct FMalloc;
 

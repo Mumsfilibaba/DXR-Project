@@ -1,7 +1,7 @@
 #pragma once
 #include "Array.h"
 #include "Core/Templates/Utility.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformInterlocked.h"
 
@@ -306,5 +306,5 @@ private:
 
     FNode* volatile Head{nullptr};
     FNode* volatile Tail{nullptr};
-    FAtomicInt32    NumElements{0};
+    FAtomicInt32 NumElements;
 };

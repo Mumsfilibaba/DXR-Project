@@ -2,7 +2,7 @@
 #include "Core/Core.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Containers/Tuple.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 
 typedef int64 DelegateHandle;
 

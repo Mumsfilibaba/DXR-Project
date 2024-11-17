@@ -12,16 +12,16 @@ static_assert(sizeof(uint32) == 4, "uint8 has to be equal to 4 byte in size");
 typedef unsigned long long uint64;
 static_assert(sizeof(uint64) == 8, "uint64 has to be equal to 8 byte in size");
 
-typedef char int8;
+typedef signed char int8;
 static_assert(sizeof(int8) == 1, "int8 has to be equal to 1 byte in size");
 
-typedef short int16;
+typedef signed short int16;
 static_assert(sizeof(int16) == 2, "int16 has to be equal to 2 byte in size");
 
-typedef int int32;
+typedef signed int int32;
 static_assert(sizeof(int32) == 4, "int32 has to be equal to 4 byte in size");
 
-typedef long long int64;
+typedef signed long long int64;
 static_assert(sizeof(int64) == 8, "int64 has to be equal to 8 byte in size");
 
 typedef int64 ptrint;

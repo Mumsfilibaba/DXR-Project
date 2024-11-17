@@ -3,7 +3,7 @@
 #include "D3D12Device.h"
 #include "D3D12RefCounted.h"
 #include "Core/Containers/SharedRef.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 #include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FD3D12SamplerState> FD3D12SamplerStateRef;

@@ -1,6 +1,6 @@
 #pragma once
-#include "Array.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Containers/Array.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/NumericLimits.h"
 
@@ -18,8 +18,12 @@ template<typename T>
 class TPriorityQueue
 {
 public:
-    using ElementType      = T;
-    using ElementInputType = typename TConditional<TOr<TIsPointer<ElementType>, TIsFundamental<T>>::Value, ElementType, typename TAddLValueReference<typename TAddConst<ElementType>::Type>::Type>::Type;
+    using ElementType = T;
+    using ElementInputType = typename TConditional<
+            TOr<TIsPointer<ElementType>, TIsFundamental<T>>::Value,
+            ElementType,
+            typename TAddLValueReference<typename TAddConst<ElementType>::Type>::Type
+        >::Type;
 
     /**
      * @brief - Constructor

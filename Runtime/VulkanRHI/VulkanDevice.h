@@ -14,7 +14,7 @@
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Set.h"
 #include "Core/Containers/Optional.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Containers/String.h"
 
 class FVulkanInstance;

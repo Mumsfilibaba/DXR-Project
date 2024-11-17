@@ -1,7 +1,5 @@
 #pragma once
-#include "AtomicInt.h"
-
-#include "Core/Core.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 
 class FSpinLock
