@@ -19,13 +19,13 @@ struct TIsClass
 {
 private:
     template<typename U>
-    static TIntegralConstant<bool, TNot<TIsUnion<T>>::Value> IsClassType(int U::*);
+    static TIntegralConstant<bool, TNot<TIsUnion<T>>::Value> IsClassFunc(int U::*);
 
     template<typename U>
-    static TFalseType IsClassType(...);
+    static TFalseType IsClassFunc(...);
 
     template<typename U>
-    struct TIsClassImpl : decltype(IsClassType<U>(nullptr)) { };
+    struct TIsClassImpl : decltype(IsClassFunc<U>(nullptr)) { };
 
 public:
     static constexpr bool Value = TIsClassImpl<T>::Value;

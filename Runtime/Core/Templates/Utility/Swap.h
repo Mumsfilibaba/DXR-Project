@@ -19,16 +19,16 @@ private:
 
     // Attempt to call Swap(T&, T&) and check if it's a valid expression.
     template<typename U>
-    static auto Test(int32) -> decltype(Swap(DeclVal<U&>(), DeclVal<U&>()), TTrueType());
+    static auto IsSwappableFunc(int32) -> decltype(Swap(DeclVal<U&>(), DeclVal<U&>()), TTrueType());
 
     // Fallback if Swap(T&, T&) is not a valid expression.
     template<typename>
-    static TFalseType Test(...);
+    static TFalseType IsSwappableFunc(...);
 
 public:
 
     // Value is true if swap is valid, false otherwise.
-    static constexpr bool Value = decltype(Test<T>(0))::Value;
+    static constexpr bool Value = decltype(IsSwappableFunc<T>(0))::Value;
 };
 
 template<typename T>
