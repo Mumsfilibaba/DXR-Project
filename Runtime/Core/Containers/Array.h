@@ -66,7 +66,7 @@ public:
     }
 
     /** 
-     * @brief         - Copy-constructor
+     * @brief         - Copy-constructor with additional slack
      * @param Other   - Array to copy from
      * @param InSlack - Extra number of elements to allocate space for
      */
@@ -198,7 +198,7 @@ public:
 
     /**
      * @brief            - Resets the container by moving elements from another array to this one.
-     * @param InputArray - Array to copy-construct elements from
+     * @param InputArray - Array to move elements from
      */
     FORCEINLINE void Reset(TArray&& InputArray)
     {
@@ -330,7 +330,7 @@ public:
     /**
      * @brief         - Appends a new element at the end of the array if the element does not already exist
      * @param Element - Element to insert into the array by copy
-     * @return        - Returns a reference to the newly created element or element equal to Element
+     * @return        - Returns the index of the newly created element or the existing element
      */
     SIZETYPE AddUnique(const ElementType& Element)
     {
@@ -346,8 +346,8 @@ public:
 
     /**
      * @brief         - Appends a new element at the end of the array if the element does not already exist
-     * @param Element - Element to insert into the array by copy
-     * @return        - Returns a reference to the newly created element or element equal to Element
+     * @param Element - Element to insert into the array by move
+     * @return        - Returns the index of the newly created element or the existing element
      */
     SIZETYPE AddUnique(ElementType&& Element)
     {
@@ -402,7 +402,7 @@ public:
     }
 
     /**
-     * @brief          - Insert a new element at the a specific position in the array by moving
+     * @brief          - Insert a new element at a specific position in the array by moving
      * @param Position - Position of the new element
      * @param Element  - Element to move into the position
      */
@@ -508,7 +508,7 @@ public:
 
     /**
      * @brief             - Remove and destroy a number of elements from the back
-     * @param NumElements - Number of elements destroy from the end
+     * @param NumElements - Number of elements to destroy from the end
      */
     FORCEINLINE void Pop(SIZETYPE NumElements = 1)
     {
@@ -552,12 +552,14 @@ public:
      */
     FORCEINLINE bool Remove(const ElementType& Element)
     {
+        bool bRemoved = false;
         ElementType* Array = Allocator.GetAllocation();
         for (SIZETYPE Index = 0; Index < ArraySize;)
         {
             if (Element == Array[Index])
             {
                 RemoveAt(Index);
+                bRemoved = true;
             }
             else
             {
@@ -565,12 +567,12 @@ public:
             }
         }
 
-        return false;
+        return bRemoved;
     }
 
     /**
-     * @brief         - Search the array and remove the all instances of the element from the array if the predicate returns true.
-     * @param Element - Element to remove
+     * @brief         - Search the array and remove all instances of the element from the array if the predicate returns true.
+     * @param Predicate - Callable that determines if an element should be removed
      */
     template<typename PredicateType>
     FORCEINLINE void RemoveAll(PredicateType&& Predicate)
@@ -590,9 +592,9 @@ public:
     }
 
     /**
-     * @brief         - Returns the index of an element if it is present in the array, or -1 if it is not found
+     * @brief         - Returns the index of an element if it is present in the array, or INVALID_INDEX if it is not found
      * @param Element - Element to search for
-     * @return        - The index of the element if found or -1 if not
+     * @return        - The index of the element if found or INVALID_INDEX if not
      */
     NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& Element) const
     {
@@ -627,9 +629,9 @@ public:
     }
 
     /**
-     * @brief         - Returns the index of an element if it is present in the array, or -1 if it is not found
+     * @brief         - Returns the index of an element if it is present in the array, or INVALID_INDEX if it is not found
      * @param Element - Element to search for
-     * @return        - The index of the element if found or -1 if not
+     * @return        - The index of the element if found or INVALID_INDEX if not
      */
     NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& Element) const
     {
@@ -700,7 +702,7 @@ public:
     }
 
     /**
-     * @brief        - Perform some function on each element in the array
+     * @brief        - Perform some function on each element in the array (const version)
      * @param Lambda - Callable that takes one element and perform some operation on it
      */
     template<class LambdaType>
@@ -734,7 +736,7 @@ public:
     }
 
     /**
-     * @brief - Reverses the order for the Array
+     * @brief - Reverses the order of the array
      */
     void Reverse()
     {
@@ -759,7 +761,7 @@ public:
     }
 
     /**
-     * @brief - Sort the array using the quick-sort algorithm, assumes that the ElementType has the '<' operator
+     * @brief - Sort the array using the quick-sort algorithm with a custom comparator
      */
     template<typename PredicateType>
     FORCEINLINE void SortWithPredicate(PredicateType&& Predicate)
@@ -860,7 +862,7 @@ public:
 
     /**
      * @brief  - Retrieve the last index that can be used to retrieve an element from the array
-     * @return - Returns a the index to the last element of the array
+     * @return - Returns the index to the last element of the array
      */
     NODISCARD FORCEINLINE SIZETYPE LastElementIndex() const
     {
@@ -868,6 +870,7 @@ public:
     }
 
     /**
+     * @brief  - Retrieve the size of the container
      * @return - Returns the size of the container
      */
     NODISCARD FORCEINLINE SIZETYPE Size() const
@@ -876,6 +879,7 @@ public:
     }
 
     /**
+     * @brief  - Retrieve the stride of each element of the container
      * @return - Returns the stride of each element of the container
      */
     NODISCARD constexpr SIZETYPE Stride() const
@@ -884,6 +888,7 @@ public:
     }
 
     /**
+     * @brief  - Retrieve the size of the container in bytes
      * @return - Returns the size of the container in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE SizeInBytes() const
@@ -892,6 +897,7 @@ public:
     }
 
     /**
+     * @brief  - Retrieve the capacity of the container
      * @return - Returns the capacity of the container
      */
     NODISCARD FORCEINLINE SIZETYPE Capacity() const
@@ -900,6 +906,7 @@ public:
     }
 
     /**
+     * @brief  - Retrieve the capacity of the container in bytes
      * @return - Returns the capacity of the container in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE CapacityInBytes() const
@@ -908,7 +915,8 @@ public:
     }
 
     /**
-     * @return - Returns the allocator
+     * @brief  - Retrieve the allocator
+     * @return - Returns a reference to the allocator
      */
     NODISCARD FORCEINLINE AllocatorType& GetAllocator()
     {
@@ -916,7 +924,8 @@ public:
     }
 
     /**
-     * @return - Returns the allocator
+     * @brief  - Retrieve the allocator
+     * @return - Returns a const reference to the allocator
      */
     NODISCARD FORCEINLINE const AllocatorType& GetAllocator() const
     {
@@ -928,7 +937,7 @@ public:
     // Heap Functions
 
     /**
-     * @brief - Create a heap of the array 
+     * @brief - Create a heap from the array 
      */
     void Heapify()
     {
@@ -945,7 +954,8 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& HeapTop()
     {
-        const ElementType* Array = Allocator.GetAllocation();
+        CHECK(!IsEmpty());
+        ElementType* Array = Allocator.GetAllocation();
         return Array[0];
     }
 
@@ -955,13 +965,14 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& HeapTop() const
     {
+        CHECK(!IsEmpty());
         const ElementType* Array = Allocator.GetAllocation();
         return Array[0];
     }
 
     /**
-     * @brief         - Inserts a new element at the top of the heap
-     * @param Element - Element to copy to the top of the heap
+     * @brief         - Inserts a new element into the heap
+     * @param Element - Element to insert into the heap by copy
      */
     FORCEINLINE void HeapPush(const ElementType& Element)
     {
@@ -970,8 +981,8 @@ public:
     }
 
     /**
-     * @brief         - Inserts a new element at the top of the heap
-     * @param Element - Element to move to the top of the heap
+     * @brief         - Inserts a new element into the heap by moving
+     * @param Element - Element to insert into the heap by move
      */
     FORCEINLINE void HeapPush(ElementType&& Element)
     {
@@ -994,6 +1005,7 @@ public:
      */
     FORCEINLINE void HeapPop()
     {
+        CHECK(!IsEmpty());
         RemoveAt(0);
         Heapify();
     }
@@ -1039,7 +1051,7 @@ public:
 
     /**
      * @brief       - Assignment-operator that takes a initializer-list
-     * @param Other - A initializer list to replace the current contents with
+     * @param Other - An initializer list to replace the current contents with
      * @return      - A reference to this container
      */
     FORCEINLINE TArray& operator=(std::initializer_list<ElementType> Other)
@@ -1079,6 +1091,7 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
     {
+        CHECK(IsValidIndex(Index));
         ElementType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
@@ -1090,6 +1103,7 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
     {
+        CHECK(IsValidIndex(Index));
         const ElementType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
@@ -1129,7 +1143,7 @@ public:
 
     /**
      * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
+     * @return - An iterator that points to the first element
      */
     NODISCARD FORCEINLINE IteratorType Iterator()
     {
@@ -1138,7 +1152,7 @@ public:
 
     /**
      * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
+     * @return - A const iterator that points to the first element
      */
     NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
@@ -1146,8 +1160,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
+     * @brief  - Retrieve a reverse-iterator to the end of the array
+     * @return - A reverse iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
@@ -1155,8 +1169,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
+     * @brief  - Retrieve a reverse-iterator to the end of the array
+     * @return - A const reverse iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const
     {
@@ -1166,6 +1180,7 @@ public:
 public:
 
     // STL Iterator
+
     NODISCARD FORCEINLINE IteratorType      begin()       { return Iterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const { return ConstIterator(); }
     
@@ -1173,6 +1188,9 @@ public:
     NODISCARD FORCEINLINE ConstIteratorType end() const { return ConstIteratorType(*this, ArraySize); }
 
 private:
+
+    // Initialization Helpers
+
     FORCEINLINE void CreateUninitialized(SIZETYPE NumElements)
     {
         if (ArrayMax < NumElements)
@@ -1207,10 +1225,12 @@ private:
     {
         if (AddressOf(FromArray) != this)
         {
-            // Since the memory remains the same we should not need to use move-assignment or constructor. However, still need to call destructors
+            // Destroy current elements
             ::DestroyObjects<ElementType>(Allocator.GetAllocation(), ArraySize);
+            // Move allocator resources
             Allocator.MoveFrom(Move(FromArray.Allocator));
 
+            // Transfer size and capacity
             ArraySize           = FromArray.ArraySize;
             ArrayMax            = FromArray.ArrayMax;
             FromArray.ArraySize = 0;
@@ -1224,8 +1244,7 @@ private:
         {
             if (ArrayMax)
             {
-                // For non-trivial objects a new allocator is necessary in order to correctly reallocate objects. This in case
-                // objects has references to themselves or "child-objects" that references these objects.
+                // For non-trivial objects, reallocate with proper handling
                 AllocatorType NewAllocator;
                 NewAllocator.Realloc(ArrayMax, NewCapacity);
                 if (ArraySize)
@@ -1334,7 +1353,7 @@ private:
     {
         ElementType* Array = Allocator.GetAllocation();
 
-        // Select a random pivot value
+        // Select the last element as pivot
         const SIZETYPE Pivot = Last;
         SIZETYPE Index = First;
         for (SIZETYPE Current = First; Current < Last; ++Current)
@@ -1358,7 +1377,7 @@ private:
             return;
         }
 
-        // Max number of elements to use for QuickSort, otherwise use InsertionSort
+        // Threshold for switching to insertion sort
         constexpr SIZETYPE Threshold = 24;
         if ((Last - First + 1) >= Threshold)
         {
