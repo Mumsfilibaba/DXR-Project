@@ -786,7 +786,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
     {
-        return (Index >= 0) && (Index < ArraySize);
+        return Index >= 0 && Index < ArraySize;
     }
 
     /**
@@ -795,7 +795,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
-        return (ArraySize == 0);
+        return ArraySize == 0;
     }
 
     /**
@@ -1091,7 +1091,6 @@ public:
      */
     NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
     {
-        CHECK(IsValidIndex(Index));
         ElementType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
@@ -1103,7 +1102,6 @@ public:
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
     {
-        CHECK(IsValidIndex(Index));
         const ElementType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
