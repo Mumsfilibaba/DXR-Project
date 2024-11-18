@@ -15,6 +15,8 @@
 
 namespace FunctionInternal
 {
+    typedef TAlignedBytes<TFUNCTION_NUM_INLINE_BYTES, TFUNCTION_INLINE_ALIGNMENT> FFunctionInlineAllocation;
+
     struct FFunctionStorage;
 
     template<typename FunctionType, typename... PayloadTypes>
@@ -22,15 +24,15 @@ namespace FunctionInternal
     {
     public:
         TBindPayload(FunctionType InFunc, PayloadTypes&&... PayloadArgs) noexcept
-            : Payload(::Forward<PayloadTypes>(PayloadArgs)...)
-            , Func(::Move(InFunc))
+            : Payload(Forward<PayloadTypes>(PayloadArgs)...)
+            , Func(Move(InFunc))
         {
         }
 
         template<typename... ParamTypes>
         FORCEINLINE auto operator()(ParamTypes&&... Params) noexcept
         {
-            return Payload.ApplyBefore(Func, ::Forward<ParamTypes>(Params)...);
+            return Payload.ApplyBefore(Func, Forward<ParamTypes>(Params)...);
         }
 
     private:
@@ -43,14 +45,14 @@ namespace FunctionInternal
     {
     public:
         TBindPayload(FunctionType InFunc) noexcept
-            : Func(::Move(InFunc))
+            : Func(Move(InFunc))
         {
         }
 
         template<typename... ParamTypes>
         FORCEINLINE auto operator()(ParamTypes&&... Params) noexcept
         {
-            return Invoke(Func, ::Forward<ParamTypes>(Params)...);
+            return ::Invoke(Func, Forward<ParamTypes>(Params)...);
         }
 
     private:
@@ -65,7 +67,7 @@ namespace FunctionInternal
     {
         static ReturnType CallFunctor(void* InFunctor, ParamTypes&... InParams)
         {
-            return ::Invoke(*reinterpret_cast<FunctorType*>(InFunctor), ::Forward<ParamTypes>(InParams)...);
+            return ::Invoke(*reinterpret_cast<FunctorType*>(InFunctor), Forward<ParamTypes>(InParams)...);
         }
     };
 
@@ -74,7 +76,7 @@ namespace FunctionInternal
     {
         static void CallFunctor(void* InFunctor, ParamTypes&... InParams)
         {
-            ::Invoke(*reinterpret_cast<FunctorType*>(InFunctor), ::Forward<ParamTypes>(InParams)...);
+            ::Invoke(*reinterpret_cast<FunctorType*>(InFunctor), Forward<ParamTypes>(InParams)...);
         }
     };
 
@@ -111,7 +113,7 @@ namespace FunctionInternal
 
         TFunctionContainer(TFunctionContainer&& Other) noexcept
             : IFunctionContainer()
-            , Functor(::Move(Other.Functor))
+            , Functor(Move(Other.Functor))
         {
         }
 
@@ -144,6 +146,10 @@ namespace FunctionInternal
 
     struct FFunctionStorage
     {
+        FFunctionStorage(const FFunctionStorage&) = delete;
+        FFunctionStorage& operator=(FFunctionStorage&&) = delete;
+        FFunctionStorage& operator=(const FFunctionStorage&) = delete;
+
         FFunctionStorage() noexcept
             : HeapAllocation(nullptr)
         {
@@ -161,10 +167,6 @@ namespace FunctionInternal
             FMemory::Memzero(Other.InlineAllocation.Data, sizeof(Other.InlineAllocation.Data));
         #endif
         }
-
-        FFunctionStorage(const FFunctionStorage&) = delete;
-        FFunctionStorage& operator=(FFunctionStorage&&)      = delete;
-        FFunctionStorage& operator=(const FFunctionStorage&) = delete;
 
         template<typename InFunctorType>
         void BindFunctor(InFunctorType&& Functor) noexcept
@@ -184,7 +186,7 @@ namespace FunctionInternal
                 HeapAllocation = Memory;
             }
 
-            new(Memory) TFunctionContainer<FunctorType>(::Forward<InFunctorType>(Functor));
+            new(Memory) TFunctionContainer<FunctorType>(Forward<InFunctorType>(Functor));
         }
 
         FORCEINLINE void Unbind()
@@ -227,8 +229,8 @@ namespace FunctionInternal
             Other.HeapAllocation = nullptr;
         }
 
-        void* HeapAllocation{nullptr};
-        TAlignedBytes<TFUNCTION_NUM_INLINE_BYTES, TFUNCTION_INLINE_ALIGNMENT> InlineAllocation;
+        void*                     HeapAllocation;
+        FFunctionInlineAllocation InlineAllocation;
     };
 
     template<typename FunctorType>
@@ -252,7 +254,7 @@ namespace FunctionInternal
 template<typename FunctionType, typename... ParamTypes>
 NODISCARD FORCEINLINE auto Bind(FunctionType InFunction, ParamTypes&&... InParams)
 {
-    return FunctionInternal::TBindPayload<FunctionType, ParamTypes...>(InFunction, ::Forward<ParamTypes>(InParams)...);
+    return FunctionInternal::TBindPayload<FunctionType, ParamTypes...>(InFunction, Forward<ParamTypes>(InParams)...);
 }
 
 template<typename FunctionType>
@@ -284,7 +286,7 @@ public:
         : FunctorCaller(nullptr)
         , Storage()
     {
-        InitializeFrom<FunctorType>(::Forward<FunctorType>(Functor));
+        InitializeFrom<FunctorType>(Forward<FunctorType>(Functor));
     }
 
     /**
@@ -307,7 +309,7 @@ public:
      */
     FORCEINLINE TFunction(TFunction&& Other) noexcept
         : FunctorCaller(Other.FunctorCaller)
-        , Storage(::Move(Other.Storage))
+        , Storage(Move(Other.Storage))
     {
         Other.FunctorCaller = nullptr;
     }
@@ -325,7 +327,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (FunctorCaller != nullptr);
+        return FunctorCaller != nullptr;
     }
     
     /** 
@@ -348,9 +350,9 @@ public:
      */
     FORCEINLINE void Swap(TFunction& Other) noexcept
     {
-        TFunction TmpFunction(::Move(*this));
-        MoveFrom(::Move(Other));
-        Other.MoveFrom(::Move(TmpFunction));
+        TFunction TmpFunction(Move(*this));
+        MoveFrom(Move(Other));
+        Other.MoveFrom(Move(TmpFunction));
     }
 
     /**
@@ -361,7 +363,7 @@ public:
     FORCEINLINE void Bind(FunctorType&& Functor) noexcept requires(TIsInvokable<FunctorType, ParamTypes...>::Value)
     {
         Reset();
-        InitializeFrom<FunctorType>(::Forward<FunctorType>(Functor));
+        InitializeFrom<FunctorType>(Forward<FunctorType>(Functor));
     }
 
     /**
@@ -404,7 +406,7 @@ public:
      */
     FORCEINLINE TFunction& operator=(TFunction&& Other) noexcept
     {
-        TFunction(::Move(Other)).Swap(*this);
+        TFunction(Move(Other)).Swap(*this);
         return *this;
     }
 
@@ -423,6 +425,8 @@ private:
     FORCEINLINE void InitializeFrom(InFunctorType&& InFunctor) noexcept requires(TIsInvokable<InFunctorType, ParamTypes...>::Value)
     {
         typedef typename TDecay<InFunctorType>::Type FunctorType;
+        typedef FunctionInternal::TFunctionFunctorCaller<FunctorType, ReturnType(ParamTypes...)> FunctionCallerType;
+
         if constexpr (TIsNullable<FunctorType>::Value)
         {
             if (!InFunctor)
@@ -432,13 +436,13 @@ private:
             }
         }
 
-        FunctorCaller = &FunctionInternal::TFunctionFunctorCaller<FunctorType, ReturnType(ParamTypes...)>::CallFunctor;
-        Storage.BindFunctor<InFunctorType>(::Forward<InFunctorType>(InFunctor));
+        FunctorCaller = &FunctionCallerType::CallFunctor;
+        Storage.BindFunctor<InFunctorType>(Forward<InFunctorType>(InFunctor));
     }
 
     FORCEINLINE void MoveFrom(TFunction&& Other)
     {
-        Storage.MoveFrom(::Move(Other.Storage));
+        Storage.MoveFrom(Move(Other.Storage));
         FunctorCaller = Other.FunctorCaller;
         Other.FunctorCaller = nullptr;
     }
@@ -472,12 +476,11 @@ public:
      * @param Functor - Functor to store
      */
     template<typename FunctorType>
-    FORCEINLINE TFunctionRef(FunctorType&& InFunctor) noexcept
-        requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TFunctionRef, typename TDecay<FunctorType>::Type>>>::Value)
+    FORCEINLINE TFunctionRef(FunctorType&& InFunctor) noexcept requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TFunctionRef, typename TDecay<FunctorType>::Type>>>::Value)
         : FunctorCaller(nullptr)
         , Functor(nullptr)
     {
-        InitializeFrom<FunctorType>(::Forward<FunctorType>(InFunctor));
+        InitializeFrom<FunctorType>(Forward<FunctorType>(InFunctor));
     }
 
     /**
@@ -514,7 +517,7 @@ public:
      */
     NODISCARD FORCEINLINE bool IsValid() const noexcept
     {
-        return (Functor != nullptr) && (FunctorCaller != nullptr);
+        return Functor != nullptr && FunctorCaller != nullptr;
     }
     
     /** 
@@ -532,9 +535,9 @@ public:
      */
     FORCEINLINE void Swap(TFunctionRef& Other) noexcept
     {
-        TFunctionRef TmpFunction(::Move(*this));
-        MoveFrom(::Move(Other));
-        Other.MoveFrom(::Move(TmpFunction));
+        TFunctionRef TmpFunction(Move(*this));
+        MoveFrom(Move(Other));
+        Other.MoveFrom(Move(TmpFunction));
     }
 
     /**
@@ -545,7 +548,7 @@ public:
     FORCEINLINE void Bind(FunctorType&& Functor) noexcept requires(TIsInvokable<FunctorType, ParamTypes...>::Value)
     {
         Reset();
-        InitializeFrom<FunctorType>(::Forward<FunctorType>(Functor));
+        InitializeFrom<FunctorType>(Forward<FunctorType>(Functor));
     }
 
     /**
@@ -587,7 +590,7 @@ public:
      */
     FORCEINLINE TFunctionRef& operator=(TFunctionRef&& Other) noexcept
     {
-        TFunctionRef(::Move(Other)).Swap(*this);
+        TFunctionRef(Move(Other)).Swap(*this);
         return *this;
     }
 
@@ -605,7 +608,10 @@ private:
     template<typename InFunctorType>
     FORCEINLINE void InitializeFrom(InFunctorType&& InFunctor) noexcept requires(TIsInvokable<InFunctorType, ParamTypes...>::Value)
     {
-        if constexpr (TIsNullable<typename TDecay<InFunctorType>::Type>::Value)
+        typedef typename TDecay<InFunctorType>::Type FunctorType;
+        typedef FunctionInternal::TFunctionFunctorCaller<FunctorType, ReturnType(ParamTypes...)> FunctionCallerType;
+
+        if constexpr (TIsNullable<FunctorType>::Value)
         {
             if (!InFunctor)
             {
@@ -614,8 +620,7 @@ private:
             }
         }
 
-        typedef typename TRemoveReference<InFunctorType>::Type FunctorType;
-        FunctorCaller = &FunctionInternal::TFunctionFunctorCaller<FunctorType, ReturnType(ParamTypes...)>::CallFunctor;
+        FunctorCaller = &FunctionCallerType::CallFunctor;
         Functor = reinterpret_cast<void*>(&InFunctor);
     }
 
@@ -628,4 +633,176 @@ private:
 
     ReturnType(*FunctorCaller)(void* Functor, ParamTypes&...){nullptr};
     void* Functor{nullptr};
+};
+
+template<typename FunctionType>
+class TUniqueFunction;
+
+template<typename ReturnType, typename... ParamTypes>
+class TUniqueFunction<ReturnType(ParamTypes...)>
+{
+public:
+
+    TUniqueFunction(const TUniqueFunction&) = delete;
+    TUniqueFunction& operator=(const TUniqueFunction&) = delete;
+
+    /** @brief - Default constructor */
+    TUniqueFunction() = default;
+
+    /**
+     * @brief - Create from nullptr. Same as default constructor.
+     */
+    FORCEINLINE TUniqueFunction(nullptr_type) noexcept
+        : FunctorCaller(nullptr)
+        , Storage()
+    {
+    }
+
+    /**
+     * @brief         - Construct a unique-function from a functor
+     * @param Functor - Functor to store
+     */
+    template<typename FunctorType>
+    FORCEINLINE TUniqueFunction(FunctorType&& Functor) noexcept requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TUniqueFunction, typename TDecay<FunctorType>::Type>>>::Value)
+        : FunctorCaller(nullptr)
+        , Storage()
+    {
+        InitializeFrom<FunctorType>(Forward<FunctorType>(Functor));
+    }
+
+    /**
+     * @brief       - Move-constructor
+     * @param Other - Function to move from
+     */
+    FORCEINLINE TUniqueFunction(TUniqueFunction&& Other) noexcept
+        : FunctorCaller(Other.FunctorCaller)
+        , Storage(Move(Other.Storage))
+    {
+        Other.FunctorCaller = nullptr;
+    }
+
+    /**
+     * @brief - Destructor
+     */
+    FORCEINLINE ~TUniqueFunction()
+    {
+        Reset();
+    }
+
+    /**
+     * @return - Returns True if the pointer is not nullptr otherwise false
+     */
+    NODISCARD FORCEINLINE bool IsValid() const noexcept
+    {
+        return FunctorCaller != nullptr;
+    }
+
+    /**
+     * @brief - Resets the object to default state
+     */
+    FORCEINLINE void Reset() noexcept
+    {
+        if (IsValid())
+        {
+            Storage.Unbind();
+            FunctorCaller = nullptr;
+        }
+
+        CHECK(Storage.HeapAllocation == nullptr);
+    }
+
+    /**
+     * @brief       - Swap functor with another instance
+     * @param Other - Function to swap with
+     */
+    FORCEINLINE void Swap(TUniqueFunction& Other) noexcept
+    {
+        TUniqueFunction TmpFunction(Move(*this));
+        MoveFrom(Move(Other));
+        Other.MoveFrom(Move(TmpFunction));
+    }
+
+    /**
+     * @brief         - Assign a new functor
+     * @param Functor - New functor to store
+     */
+    template<typename FunctorType>
+    FORCEINLINE void Bind(FunctorType&& Functor) noexcept requires(TIsInvokable<FunctorType, ParamTypes...>::Value)
+    {
+        Reset();
+        InitializeFrom<FunctorType>(Forward<FunctorType>(Functor));
+    }
+
+    /**
+     * @brief        - Invoke the stored function
+     * @param Params - Arguments to forward to the function-call
+     * @return       - The return value from the function-call
+     */
+    FORCEINLINE ReturnType operator()(ParamTypes... Params) noexcept
+    {
+        CHECK(IsValid());
+        FunctionInternal::IFunctionContainer* Container = Storage.GetBoundObject();
+        return FunctorCaller(Container->GetFunctorPointer(), Params...);
+    }
+
+public:
+
+    /**
+     * @return - Returns True if the pointer is not nullptr otherwise false
+     */
+    NODISCARD FORCEINLINE operator bool() const noexcept
+    {
+        return IsValid();
+    }
+
+    /**
+     * @brief       - Move-assignment operator
+     * @param Other - Instance to move from
+     * @return      - A reference to this object
+     */
+    FORCEINLINE TUniqueFunction& operator=(TUniqueFunction&& Other) noexcept
+    {
+        TFunction(Move(Other)).Swap(*this);
+        return *this;
+    }
+
+    /**
+     * @brief  - Set the pointer to nullptr
+     * @return - A reference to this object
+     */
+    FORCEINLINE TUniqueFunction& operator=(nullptr_type) noexcept
+    {
+        Reset();
+        return *this;
+    }
+
+private:
+    template<typename InFunctorType>
+    FORCEINLINE void InitializeFrom(InFunctorType&& InFunctor) noexcept requires(TIsInvokable<InFunctorType, ParamTypes...>::Value)
+    {
+        typedef typename TDecay<InFunctorType>::Type FunctorType;
+        typedef FunctionInternal::TFunctionFunctorCaller<FunctorType, ReturnType(ParamTypes...)> FunctionCallerType;
+
+        if constexpr (TIsNullable<FunctorType>::Value)
+        {
+            if (!InFunctor)
+            {
+                FunctorCaller = nullptr;
+                return;
+            }
+        }
+
+        FunctorCaller = &FunctionCallerType::CallFunctor;
+        Storage.BindFunctor<InFunctorType>(Forward<InFunctorType>(InFunctor));
+    }
+
+    FORCEINLINE void MoveFrom(TUniqueFunction&& Other)
+    {
+        Storage.MoveFrom(Move(Other.Storage));
+        FunctorCaller = Other.FunctorCaller;
+        Other.FunctorCaller = nullptr;
+    }
+
+    ReturnType(*FunctorCaller)(void* Functor, ParamTypes&...){nullptr};
+    FunctionInternal::FFunctionStorage Storage;
 };
