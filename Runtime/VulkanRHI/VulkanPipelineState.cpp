@@ -4,6 +4,7 @@
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Project/ProjectManager.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(

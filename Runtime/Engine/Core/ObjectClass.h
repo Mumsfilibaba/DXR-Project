@@ -35,12 +35,7 @@ public:
         FObjectClass::StaticClassFunctionType StaticClassFunc,
         FObjectClass::StaticDefaultConstructorType DefaultConstructorFunc);
     
-    FObjectClass(
-        const CHAR* InName,
-        uint64 InSize,
-        uint64 InAlignment,
-        StaticClassFunctionType InStaticClassFunc,
-        StaticDefaultConstructorType InDefaultConstructorFunc);
+    FObjectClass(const CHAR* InName, uint64 InSize, uint64 InAlignment, StaticClassFunctionType InStaticClassFunc, StaticDefaultConstructorType InDefaultConstructorFunc);
     ~FObjectClass();
 
     bool IsSubClassOf(const FObjectClass* Class) const;
