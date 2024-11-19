@@ -21,7 +21,7 @@ namespace NVectorOp
 {
     /* TODO: Add fallback when we have no SSE intrinsics */
 
-#if ENABLE_SEE_INTRIN
+#if ENABLE_SSE_INTRIN
     typedef __m128  Float128;
     typedef __m128i Int128;
 

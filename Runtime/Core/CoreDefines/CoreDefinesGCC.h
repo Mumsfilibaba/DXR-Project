@@ -1,28 +1,21 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// GCC compiler specific macros etc.
-// For now this file should only be included into CoreDefines.h
+// GCC compiler-specific macros etc.
+// This file should only be included into CoreDefines.h
 
 #if PLATFORM_COMPILER_GCC
 
-#ifndef PLATFORM_ARCHITECTURE_X86_X64
-    #if defined(__x86_64__) || defined(__i386__)
-        #define PLATFORM_ARCHITECTURE_X86_X64 (1)
-    #else
-        #define PLATFORM_ARCHITECTURE_X86_X64 (0)
-    #endif
-#endif
-
 #if PLATFORM_ARCHITECTURE_X86_X64
-    #ifndef ENABLE_SEE_INTRIN
-        #define ENABLE_SEE_INTRIN (1)
+    #ifndef ENABLE_SSE_INTRIN
+        #define ENABLE_SSE_INTRIN (1)
     #endif
 #endif
 
+// Macro Definitions
 #ifndef FORCEINLINE
     #ifndef DEBUG_BUILD
-        #define FORCEINLINE __attribute__((always_inline)) inline
+        #define FORCEINLINE inline __attribute__((always_inline))
     #else
         #define FORCEINLINE inline
     #endif
@@ -33,15 +26,16 @@
 #endif
 
 #ifndef NOINLINE
-    #define NOINLINE __attribute__ ((noinline))
+    #define NOINLINE __attribute__((noinline))
 #endif
 
+// Not supported in GCC
 #ifndef VECTORCALL
-    #define VECTORCALL // Does not seem to be supported
+    #define VECTORCALL 
 #endif
 
 #ifndef RESTRICT
-    #define RESTRICT __restrict
+    #define RESTRICT __restrict__
 #endif
 
 #ifndef FUNCTION_SIGNATURE
@@ -49,45 +43,61 @@
 #endif
 
 #ifndef MODULE_EXPORT
-    #define MODULE_EXPORT __attribute__((visibility("default")))
-#endif
-
-#ifndef MODULE_IMPORT
-    #define MODULE_IMPORT __attribute__((visibility("default")))
-#endif
-
-#ifndef DEBUG_BREAK
-    #if !PRODUCTION_BUILD
-        #define DEBUG_BREAK __builtin_trap
+    #if PLATFORM_WINDOWS
+        #define MODULE_EXPORT __attribute__((dllexport))
     #else
-        #define DEBUG_BREAK
+        #define MODULE_EXPORT __attribute__((visibility("default")))
     #endif
 #endif
 
-// TODO: Finish up
+#ifndef MODULE_IMPORT
+    #if PLATFORM_WINDOWS
+        #define MODULE_IMPORT __attribute__((dllimport))
+    #else
+        #define MODULE_IMPORT
+    #endif
+#endif
+
+#ifndef DEBUG_BREAK
+    #if !defined(PRODUCTION_BUILD)
+        #define DEBUG_BREAK() __builtin_trap()
+    #else
+        #define DEBUG_BREAK() ((void)0)
+    #endif
+#endif
+
+// Warning Control Macros
+
 // Disable unreferenced variable warning
 #if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)
-    #define DISABLE_UNREFERENCED_VARIABLE_WARNING
-    #define ENABLE_UNREFERENCED_VARIABLE_WARNING
+    #define DISABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wunused-parameter\"")
+    #define ENABLE_UNREFERENCED_VARIABLE_WARNING \
+        _Pragma("GCC diagnostic pop")
 #endif
 
-// TODO: Finish up
 // Disable unreachable code warning
 #if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
-    #define DISABLE_UNREACHABLE_CODE_WARNING
-    #define ENABLE_UNREACHABLE_CODE_WARNING
+    #define DISABLE_UNREACHABLE_CODE_WARNING \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wunreachable-code\"")
+    #define ENABLE_UNREACHABLE_CODE_WARNING \
+        _Pragma("GCC diagnostic pop")
 #endif
 
-// TODO: Finish up
-// Disable hides previous local declaration
+// Disable hides previous local declaration warning
 #if !defined(DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING)
-    #define DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
-    #define ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
+    #define DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wshadow\"")
+    #define ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
+        _Pragma("GCC diagnostic pop")
 #endif
 
-// Define the rest of the defines to a default value
+// Include default definitions
 #include "CoreDefinesDefault.h"
 
 #else
-    #error "GCC Compiler-file included in non GCC- compiler"
+    #error "GCC Compiler-file included in non-GCC compiler"
 #endif

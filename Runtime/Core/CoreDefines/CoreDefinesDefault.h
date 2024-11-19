@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef PLATFORM_ARCHITECTURE_X86_X64
-    #define PLATFORM_ARCHITECTURE_X86_X64 (0)
+#ifndef ENABLE_SSE_INTRIN
+    #define ENABLE_SSE_INTRIN (0)
 #endif
 
 #ifndef FORCEINLINE
@@ -25,7 +25,7 @@
 #endif
 
 #ifndef FUNCTION_SIGNATURE
-    #define FUNCTION_SIGNATURE "NO COMPILER DEFINED, DEFINE TO GET THE FUNCTION_SIGNATURE"
+    #define FUNCTION_SIGNATURE __func__
 #endif
 
 #ifndef MODULE_EXPORT
@@ -38,4 +38,24 @@
 
 #ifndef DEBUG_BREAK
     #define DEBUG_BREAK() ((void)0)
+#endif
+
+// Warning Control Macros
+
+// Disable unreferenced variable warning
+#if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)
+    #define DISABLE_UNREFERENCED_VARIABLE_WARNING
+    #define ENABLE_UNREFERENCED_VARIABLE_WARNING
+#endif
+
+// Disable unreachable code warning
+#if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
+    #define DISABLE_UNREACHABLE_CODE_WARNING
+    #define ENABLE_UNREACHABLE_CODE_WARNING
+#endif
+
+// Disable hides previous local declaration warning
+#if !defined(DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING)
+    #define DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
+    #define ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING
 #endif

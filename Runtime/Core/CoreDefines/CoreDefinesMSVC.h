@@ -1,25 +1,18 @@
 #pragma once
 
 /*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// MSVC compiler specific macros etc.
-// For now this file should only be included into CoreDefines.h
+// MSVC compiler-specific macros etc.
+// This file should only be included into CoreDefines.h
 
 #if PLATFORM_COMPILER_MSVC
 
-#ifndef PLATFORM_ARCHITECTURE_X86_X64
-    #if defined(_M_IX86) || defined(_M_X64)
-        #define PLATFORM_ARCHITECTURE_X86_X64 (1)
-    #else
-        #define PLATFORM_ARCHITECTURE_X86_X64 (0)
-    #endif
-#endif
-
 #if PLATFORM_ARCHITECTURE_X86_X64
-    #ifndef ENABLE_SEE_INTRIN
-        #define ENABLE_SEE_INTRIN (1)
+    #ifndef ENABLE_SSE_INTRIN
+        #define ENABLE_SSE_INTRIN (1)
     #endif
 #endif
 
+// Macro Definitions
 #ifndef FORCEINLINE
     #ifndef DEBUG_BUILD
         #define FORCEINLINE __forceinline
@@ -29,7 +22,7 @@
 #endif
 
 #ifndef ALIGN_AS
-    #define ALIGN_AS(Alignment) __declspec(align((Alignment)))
+    #define ALIGN_AS(Alignment) __declspec(align(Alignment))
 #endif
 
 #ifndef NOINLINE
@@ -45,11 +38,11 @@
 #endif
 
 #ifndef RESTRICT
-   #define RESTRICT __restrict
+    #define RESTRICT __restrict
 #endif
 
 #ifndef FUNCTION_SIGNATURE
-    #define FUNCTION_SIGNATURE __FUNCTION__
+    #define FUNCTION_SIGNATURE __FUNCSIG__
 #endif
 
 #ifndef MODULE_EXPORT
@@ -61,42 +54,44 @@
 #endif
 
 #ifndef DEBUG_BREAK
-    #if !PRODUCTION_BUILD
-        #define DEBUG_BREAK __debugbreak
+    #if !defined(PRODUCTION_BUILD)
+        #define DEBUG_BREAK() __debugbreak()
     #else
-        #define DEBUG_BREAK
+        #define DEBUG_BREAK() ((void)0)
     #endif
 #endif
 
-// Define the rest of the defines to a default value
-#include "CoreDefinesDefault.h"
+// Warning Control Macros
 
 // Disable unreferenced variable warning
 #if !defined(DISABLE_UNREFERENCED_VARIABLE_WARNING)
     #define DISABLE_UNREFERENCED_VARIABLE_WARNING \
-        _Pragma("warning(push)") \
-        _Pragma("warning(disable : 4100)")
+        __pragma(warning(push)) \
+        __pragma(warning(disable : 4100))
     #define ENABLE_UNREFERENCED_VARIABLE_WARNING \
-        _Pragma("warning(pop)")
+        __pragma(warning(pop))
 #endif
 
- // Disable unreachable code warning
+// Disable unreachable code warning
 #if !defined(DISABLE_UNREACHABLE_CODE_WARNING)
     #define DISABLE_UNREACHABLE_CODE_WARNING \
-        _Pragma("warning(push)") \
-        _Pragma("warning(disable : 4702)")
+        __pragma(warning(push)) \
+        __pragma(warning(disable : 4702))
     #define ENABLE_UNREACHABLE_CODE_WARNING \
-        _Pragma("warning(pop)")
+        __pragma(warning(pop))
 #endif
 
-// Disable hides previous local declaration
+// Disable hides previous local declaration warning
 #if !defined(DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING)
-#define DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
-        _Pragma("warning(push)") \
-        _Pragma("warning(disable : 4456)") 
-#define ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
-        _Pragma("warning(pop)")
+    #define DISABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
+        __pragma(warning(push)) \
+        __pragma(warning(disable : 4456 4458))
+    #define ENABLE_HIDES_PREVIOUS_LOCAL_DEFINITION_WARNING \
+        __pragma(warning(pop))
 #endif
+
+// Include default definitions
+#include "CoreDefinesDefault.h"
 
 // Disable some warnings
 #pragma warning(disable : 4201) // nonstandard extension used: nameless struct/union
@@ -111,12 +106,12 @@
 #pragma warning(error : 4099) // wrong forward declaration
 #pragma warning(error : 4150) // cannot call destructor on incomplete type
 #pragma warning(error : 4239) // setting references to rvalues
-#pragma warning(error : 4456) // variable hides a already existing variable
+#pragma warning(error : 4456) // variable hides an already existing variable
 #pragma warning(error : 4458) // variable hides class member
 #pragma warning(error : 4554) // check operator precedence for possible error; use parentheses to clarify precedence
 #pragma warning(error : 4715) // not all paths return a value
 #pragma warning(error : 4840) // using string in variadic template (When it should be const CHAR)
 
 #else
-   #error "MSVC Compiler-file included in non MSVC- compiler"
+    #error "MSVC Compiler-file included in non-MSVC compiler"
 #endif
