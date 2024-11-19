@@ -360,10 +360,6 @@ void FMacApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) con
         MonitorInfo.bIsPrimary     = MainScreen == Screen;
         MonitorInfo.DisplayDPI     = MonitorDPIFromScreen(Screen);
         MonitorInfo.DisplayScaling = Screen.backingScaleFactor;
-        
-        // Convert the backingScaleFactor to a value similar to the one in windows that can be retreived via the
-        // 'GetScaleFactorForMonitor' function.
-        MonitorInfo.DisplayScaleFactor = static_cast<uint32>(FMath::Round(MonitorInfo.DisplayScaling * 100.0f));
     }
 }
 

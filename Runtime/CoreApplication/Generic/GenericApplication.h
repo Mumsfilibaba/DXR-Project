@@ -57,8 +57,7 @@ struct FMonitorInfo
     
     // The DPI of the montior
     int32 DisplayDPI;
-    int32 DisplayScaleFactor;
-    
+
     // This is a floating point value that can be used to scale content easily to the
     // DPI of the monitor.
     float DisplayScaling;

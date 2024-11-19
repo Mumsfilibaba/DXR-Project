@@ -366,19 +366,15 @@ BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, L
     ::GetDpiForMonitor(Monitor, MDT_EFFECTIVE_DPI, &DpiX, &DpiY);
     CHECK(DpiX == DpiY);
 
-    DEVICE_SCALE_FACTOR ScalingFactor;
-    ::GetScaleFactorForMonitor(Monitor, &ScalingFactor);
-
     FMonitorInfo NewMonitorInfo;
-    NewMonitorInfo.DeviceName         = FString(MonitorInfo.szDevice);
-    NewMonitorInfo.MainPosition       = FIntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
-    NewMonitorInfo.MainSize           = FIntVector2(MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
-    NewMonitorInfo.WorkPosition       = FIntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
-    NewMonitorInfo.WorkSize           = FIntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
-    NewMonitorInfo.bIsPrimary         = (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
-    NewMonitorInfo.DisplayDPI         = DpiX;
-    NewMonitorInfo.DisplayScaleFactor = static_cast<int32>(ScalingFactor);
-    NewMonitorInfo.DisplayScaling     = static_cast<float>(DpiX) / 96.0f;
+    NewMonitorInfo.DeviceName     = FString(MonitorInfo.szDevice);
+    NewMonitorInfo.MainPosition   = FIntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.MainSize       = FIntVector2(MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.WorkPosition   = FIntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
+    NewMonitorInfo.WorkSize       = FIntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
+    NewMonitorInfo.bIsPrimary     = (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
+    NewMonitorInfo.DisplayDPI     = DpiX;
+    NewMonitorInfo.DisplayScaling = static_cast<float>(DpiX) / 96.0f;
 
     if (NewMonitorInfo.bIsPrimary)
     {
