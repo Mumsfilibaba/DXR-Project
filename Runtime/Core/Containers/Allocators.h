@@ -15,12 +15,12 @@ struct TArrayAllocatorInterface
      * @param CurrentCount - Current number of elements that are allocated 
      * @param NewCount     - The new number of elements to allocate
      */
-    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount) noexcept { return nullptr; }
+    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount) { return nullptr; }
 
     /**
      * @brief - Free the allocation
      */
-    FORCEINLINE void Free() noexcept { }
+    FORCEINLINE void Free() { }
 
     /**
      * @brief       - Move allocation from another allocator-instance
@@ -32,19 +32,19 @@ struct TArrayAllocatorInterface
      * @brief  - Retrieve the allocation
      * @return - Returns the allocation
      */
-    NODISCARD FORCEINLINE ElementType* GetAllocation() const noexcept { return nullptr; }
+    NODISCARD FORCEINLINE ElementType* GetAllocation() const { return nullptr; }
 
     /**
      * @brief  - Returns the current state of the allocation
      * @return - Returns true or false if there is an allocation
      */
-    NODISCARD FORCEINLINE bool HasAllocation() const noexcept { return false; }
+    NODISCARD FORCEINLINE bool HasAllocation() const { return false; }
 
     /**
      * @brief  - Returns the current state of the allocation
      * @return - Returns true or false if the allocation is allocated on the heap
      */
-    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept { return false; }
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const { return false; }
 };
 
 
@@ -56,13 +56,13 @@ public:
 
     TDefaultArrayAllocator() = default;
 
-    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount) noexcept
+    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount)
     {
         Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewCount * sizeof(ElementType)));
         return Allocation;
     }
 
-    FORCEINLINE void Free() noexcept
+    FORCEINLINE void Free()
     {
         if (Allocation)
         {
@@ -79,17 +79,17 @@ public:
         Other.Allocation = nullptr;
     }
 
-    NODISCARD FORCEINLINE ElementType* GetAllocation() const noexcept
+    NODISCARD FORCEINLINE ElementType* GetAllocation() const
     {
         return Allocation;
     }
 
-    NODISCARD FORCEINLINE bool HasAllocation() const noexcept
+    NODISCARD FORCEINLINE bool HasAllocation() const
     {
         return Allocation != nullptr;
     }
 
-    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const
     {
         return true;
     }
@@ -108,12 +108,12 @@ class TInlineArrayAllocator
     public:
         typedef int32 SIZETYPE;
 
-        NODISCARD constexpr ElementType* GetElements() const noexcept
+        NODISCARD constexpr ElementType* GetElements() const
         {
             return reinterpret_cast<ElementType*>(InlineAllocation);
         }
 
-        NODISCARD constexpr SIZETYPE Size() const noexcept
+        NODISCARD constexpr SIZETYPE Size() const
         {
             return sizeof(InlineAllocation);
         }
@@ -135,7 +135,7 @@ public:
         Free();
     }
 
-    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewElementCount) noexcept
+    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewElementCount)
     {
         if (NewElementCount > NumInlineElements)
         {
@@ -165,7 +165,7 @@ public:
         }
     }
 
-    FORCEINLINE void Free() noexcept
+    FORCEINLINE void Free()
     {
         if (!DynamicAllocation.HasAllocation())
         {
@@ -191,17 +191,17 @@ public:
         DynamicAllocation.MoveFrom(::Move(Other.DynamicAllocation));
     }
 
-    NODISCARD FORCEINLINE ElementType* GetAllocation() const noexcept
+    NODISCARD FORCEINLINE ElementType* GetAllocation() const
     {
         return IsHeapAllocated() ? DynamicAllocation.GetAllocation() : InlineAllocation.GetElements();
     }
 
-    NODISCARD FORCEINLINE bool HasAllocation() const noexcept
+    NODISCARD FORCEINLINE bool HasAllocation() const
     {
         return DynamicAllocation.HasAllocation();
     }
 
-    NODISCARD FORCEINLINE bool IsHeapAllocated() const noexcept
+    NODISCARD FORCEINLINE bool IsHeapAllocated() const
     {
         return DynamicAllocation.HasAllocation();
     }

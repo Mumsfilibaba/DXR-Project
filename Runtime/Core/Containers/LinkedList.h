@@ -4,10 +4,10 @@
 template<typename T>
 struct TLinkedListNode
 {
-    TLinkedListNode() noexcept = default;
+    TLinkedListNode() = default;
 
     template<typename... ArgTypes>
-    FORCEINLINE TLinkedListNode(ArgTypes&&... Args) noexcept
+    FORCEINLINE TLinkedListNode(ArgTypes&&... Args)
         : Next(nullptr)
         , Item(Forward<ArgTypes>(Args)...)
     {
@@ -20,10 +20,10 @@ struct TLinkedListNode
 template<typename T>
 struct TDoubleLinkedListNode
 {
-    TDoubleLinkedListNode() noexcept = default;
+    TDoubleLinkedListNode() = default;
 
     template<typename... ArgTypes>
-    FORCEINLINE TDoubleLinkedListNode(ArgTypes&&... Args) noexcept
+    FORCEINLINE TDoubleLinkedListNode(ArgTypes&&... Args)
         : Item(Forward<ArgTypes>(Args)...)
     {
     }

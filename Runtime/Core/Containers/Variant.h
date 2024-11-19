@@ -7,11 +7,13 @@ class TVariant
 {
     typedef int32 TypeIndexType;
 
+    // Compile-time constants
     inline static constexpr TypeIndexType SizeInBytes      = TMax<sizeof(Types)...>::Value;
     inline static constexpr TypeIndexType AlignmentInBytes = TMax<alignof(Types)...>::Value;
-    inline static constexpr TypeIndexType InvalidTypeIndex = -1;
-    inline static constexpr TypeIndexType MaxTypeIndex     = sizeof... (Types);
-
+    inline static constexpr TypeIndexType InvalidTypeIndex = TypeIndexType(-1);
+    inline static constexpr TypeIndexType MaxTypeIndex     = sizeof...(Types);
+    
+    // Helper to find the index of a type
     template<TypeIndexType CurrentIndex, typename WantedType, typename... OtherTypes>
     struct TVariantIndexHelper
     {
@@ -30,37 +32,62 @@ class TVariant
         inline static constexpr TypeIndexType Value = CurrentIndex;
     };
 
+    // Struct to get the type index
     template<typename WantedType>
     struct TVariantIndex
     {
         inline static constexpr TypeIndexType Value = TVariantIndexHelper<0, WantedType, Types...>::Value;
     };
 
+    // Helper to get type by index
     template<TypeIndexType CurrentIndex, TypeIndexType Index, typename... OtherTypes>
     struct TVariantTypeHelper;
 
     template<TypeIndexType CurrentIndex, TypeIndexType Index, typename ElementType, typename... OtherTypes>
     struct TVariantTypeHelper<CurrentIndex, Index, ElementType, OtherTypes...>
     {
-        using Type = typename TVariantTypeHelper<CurrentIndex + 1, Index, OtherTypes...>::Type;
+        typedef typename TVariantTypeHelper<CurrentIndex + 1, Index, OtherTypes...>::Type Type;
     };
 
     template<TypeIndexType Index, typename ElementType, typename... OtherTypes>
     struct TVariantTypeHelper<Index, Index, ElementType, OtherTypes...>
     {
-        using Type = ElementType;
+        typedef ElementType Type;
     };
 
+    // Helper to get type by index
     template<TypeIndexType SearchForIndex>
     struct TVariantType
     {
-        using Type = typename TVariantTypeHelper<0, SearchForIndex, Types...>::Type;
+        typedef typename TVariantTypeHelper<0, SearchForIndex, Types...>::Type Type;
     };
 
+    template<typename T, typename... TTypes>
+    struct IsIn;
+
+    template<typename T>
+    struct IsIn<T> : TFalseType { };
+
+    template<typename T, typename U, typename... RestTypes>
+    struct IsIn<T, U, RestTypes...> : TConditional<TIsSame<T, U>::Value, TTrueType, IsIn<T, RestTypes...>>::Type { };
+
+    template<typename... TTypes>
+    struct TAllUnique;
+
+    template<>
+    struct TAllUnique<> : TTrueType { };
+
+    template<typename T, typename... RestTypes>
+    struct TAllUnique<T, RestTypes...> : TConditional<TNot<IsIn<T, RestTypes...>>::Value, TAllUnique<RestTypes...>, TFalseType>::Type { };
+
+    // Ensure that all types are unique
+    static_assert(TAllUnique<Types...>::Value, "All types in TVariant must be unique.");
+
+    // Destructor helper
     template<typename T>
     struct TDestructor
     {
-        static void Destruct(void* Memory) noexcept
+        static void Destruct(void* Memory)
         {
             typedef T TypeDestructor;
             reinterpret_cast<TypeDestructor*>(Memory)->TypeDestructor::~TypeDestructor();
@@ -69,64 +96,64 @@ class TVariant
 
     struct FDestructorTable
     {
-        static void Destruct(TypeIndexType Index, void* Memory) noexcept
+        static void Destruct(TypeIndexType Index, void* Memory)
         {
             static constexpr void(*Table[])(void*) = { &TDestructor<Types>::Destruct... };
-
-            CHECK(Index < ARRAY_COUNT(Table));
+            CHECK(Index < MaxTypeIndex);
             Table[Index](Memory);
         }
     };
 
+    // Copy constructor helper
     template<typename T>
     struct TCopyConstructor
     {
-        static void Copy(void* Memory, const void* Value) noexcept
+        static void Copy(void* Memory, const void* Value)
         {
-            new(Memory) T(*reinterpret_cast<const T*>(Value));
+            new (Memory) T(*reinterpret_cast<const T*>(Value));
         }
     };
 
     struct FCopyConstructorTable
     {
-        static void Copy(TypeIndexType Index, void* Memory, const void* Value) noexcept
+        static void Copy(TypeIndexType Index, void* Memory, const void* Value)
         {
-            static constexpr void(*Table[])(void*, void*) = { &TCopyConstructor<Types>::Copy... };
-
-            CHECK(Index < ARRAY_COUNT(Table));
+            static constexpr void(*Table[])(void*, const void*) = { &TCopyConstructor<Types>::Copy... };
+            CHECK(Index < MaxTypeIndex);
             Table[Index](Memory, Value);
         }
     };
 
+    // Move constructor helper
     template<typename T>
     struct TMoveConstructor
     {
-        static void Move(void* Memory, void* Value) noexcept
+        static void Move(void* Memory, void* Value)
         {
-            new(Memory) T(::Move(*reinterpret_cast<T*>(Value)));
+            new (Memory) T(Move(*reinterpret_cast<T*>(Value)));
         }
     };
 
     struct FMoveConstructorTable
     {
-        static void Move(TypeIndexType Index, void* Memory, void* Value) noexcept
+        static void Move(TypeIndexType Index, void* Memory, void* Value)
         {
             static constexpr void(*Table[])(void*, void*) = { &TMoveConstructor<Types>::Move... };
-
-            CHECK(Index < ARRAY_COUNT(Table));
+            CHECK(Index < MaxTypeIndex);
             Table[Index](Memory, Value);
         }
     };
 
+    // Comparison functions helper
     template<typename T>
     struct TCompareFuncs
     {
-        NODISCARD static bool IsEqual(const void* LHS, const void* RHS) noexcept
+        NODISCARD static bool IsEqual(const void* LHS, const void* RHS)
         {
             return (*reinterpret_cast<const T*>(LHS)) == (*reinterpret_cast<const T*>(RHS));
         }
 
-        NODISCARD static bool IsLessThan(const void* LHS, const void* RHS) noexcept
+        NODISCARD static bool IsLessThan(const void* LHS, const void* RHS)
         {
             return (*reinterpret_cast<const T*>(LHS)) < (*reinterpret_cast<const T*>(RHS));
         }
@@ -134,33 +161,33 @@ class TVariant
 
     struct FCompareFuncTable
     {
-        NODISCARD static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
+        NODISCARD static bool IsEqual(TypeIndexType Index, const void* LHS, const void* RHS)
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsEqual... };
-
-            CHECK(Index < ARRAY_COUNT(Table));
+            CHECK(Index < MaxTypeIndex);
             return Table[Index](LHS, RHS);
         }
 
-        NODISCARD static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS) noexcept
+        NODISCARD static bool IsLessThan(TypeIndexType Index, const void* LHS, const void* RHS)
         {
             static constexpr bool(*Table[])(const void*, const void*) = { &TCompareFuncs<Types>::IsLessThan... };
-
-            CHECK(Index < ARRAY_COUNT(Table));
+            CHECK(Index < MaxTypeIndex);
             return Table[Index](LHS, RHS);
         }
     };
 
+    // Validate type
     template<typename T>
     struct TIsValidType
     {
-        inline static constexpr bool Value = (TVariantIndex<T>::Value != InvalidTypeIndex) ? true : false;
+        inline static constexpr bool Value = TVariantIndex<T>::Value != InvalidTypeIndex;
     };
 
+    // Validate index
     template<TypeIndexType Index>
     struct TIsValidIndex
-	{
-        inline static constexpr bool Value = (Index < MaxTypeIndex) ? true : false;
+    {
+        inline static constexpr bool Value = Index < MaxTypeIndex;
     };
 
 public:
@@ -168,40 +195,39 @@ public:
     /**
      * @brief - Default constructor
      */
-    FORCEINLINE TVariant() noexcept
-        : Value()
-        , TypeIndex(InvalidTypeIndex)
+    FORCEINLINE TVariant()
+        : TypeIndex(InvalidTypeIndex)
     {
     }
 
     /**
-     * @brief      - In-Place constructor that constructs a variant of specified type with arguments for the types constructor
-     * @param Args - Arguments for the elements constructor
+     * @brief      - In-place constructor that constructs a variant of specified type with arguments for the type's constructor
+     * @param Args - Arguments for the type's constructor
      */
     template<typename T, typename... ArgTypes>
     FORCEINLINE explicit TVariant(TInPlaceType<T>, ArgTypes&&... Args)
+        requires(TIsValidType<T>::Value)
     {
-        static_assert(TIsValidType<T>::Value, "This TVariant is not specified to hold the specified type");
-        Construct<T>(::Forward<ArgTypes>(Args)...);
+        Construct<T>(Forward<ArgTypes>(Args)...);
     }
 
     /**
-     * @brief      - In-Place constructor that constructs a variant of specified type with arguments for the types constructor
-     * @param Args - Arguments for the elements constructor
+     * @brief      - In-place constructor that constructs a variant of specified type with arguments for the type's constructor
+     * @param Args - Arguments for the type's constructor
      */
     template<TypeIndexType InIndex, typename... ArgTypes>
     FORCEINLINE explicit TVariant(TInPlaceIndex<InIndex>, ArgTypes&&... Args)
+        requires(TIsValidIndex<InIndex>::Value)
     {
-        static_assert(TIsValidIndex<InIndex>::Value, "Specified index is not valid with this TVariant");
         typedef typename TVariantType<InIndex>::Type ConstructType;
-        Construct<ConstructType>(::Forward<ArgTypes>(Args)...);
+        Construct<ConstructType>(Forward<ArgTypes>(Args)...);
     }
 
     /**
      * @brief       - Copy constructor
      * @param Other - Variant to copy from
      */
-    FORCEINLINE TVariant(const TVariant& Other) noexcept
+    FORCEINLINE TVariant(const TVariant& Other)
         : TypeIndex(Other.TypeIndex)
     {
         if (Other.IsValid())
@@ -214,7 +240,7 @@ public:
      * @brief       - Move constructor
      * @param Other - Variant to move from
      */
-    FORCEINLINE TVariant(TVariant&& Other) noexcept
+    FORCEINLINE TVariant(TVariant&& Other)
         : TypeIndex(Other.TypeIndex)
     {
         if (Other.IsValid())
@@ -233,22 +259,22 @@ public:
     }
 
     /**
-     * @brief      - Create a value in-place 
-     * @param Args - Arguments for the constructor of the element
-     * @return     - Returns a reference to the newly created element
+     * @brief      - Emplace constructs a new element in the variant and destructs any old value
+     * @param Args - Arguments for constructor
+     * @return     - Returns a reference to the newly constructed element
      */
     template<typename T, typename... ArgTypes>
-    FORCEINLINE T& Emplace(ArgTypes&&... Args) noexcept requires(TIsValidType<T>::Value)
+    FORCEINLINE T& Emplace(ArgTypes&&... Args) requires(TIsValidType<T>::Value)
     {
         Reset();
-        Construct<T>(::Forward<ArgTypes>(Args)...);
+        Construct<T>(Forward<ArgTypes>(Args)...);
         return *reinterpret_cast<T*>(Value.Data);
     }
 
     /**
      * @brief - Resets the variant and calls the destructor
      */
-    FORCEINLINE void Reset() noexcept
+    FORCEINLINE void Reset()
     {
         if (IsValid())
         {
@@ -260,21 +286,37 @@ public:
      * @brief       - Swap this variant with another
      * @param Other - Variant to swap with
      */
-    FORCEINLINE void Swap(TVariant& Other) noexcept
+    FORCEINLINE void Swap(TVariant& Other)
     {
-        TVariant TempVariant(::Move(*this));
-        
-        TypeIndex = Other.TypeIndex;
-        if (Other.TypeIndex != InvalidTypeIndex)
+        if (IsValid() && Other.IsValid())
         {
-            MoveFrom(Other);
-            Other.Destruct();
-        }
+            if (TypeIndex == Other.TypeIndex)
+            {
+                // If both hold the same type, swap the contained objects
+                typedef typename TVariantType<TypeIndex>::Type SwappedType;
+                ::Swap(GetValue<SwappedType>(), Other.GetValue<SwappedType>());
+            }
+            else
+            {
+                // Swap the values out
+                TAlignedBytes<SizeInBytes, AlignmentInBytes> TempValue;
+                FMoveConstructorTable::Move(TypeIndex, TempValue.Data, Value.Data);
+                FMoveConstructorTable::Move(Other.TypeIndex, Value.Data, Other.Value.Data);
+                FMoveConstructorTable::Move(TypeIndex, Other.Value.Data, TempValue.Data);
 
-        Other.TypeIndex = TempVariant.TypeIndex;
-        if (TempVariant.TypeIndex != InvalidTypeIndex)
+                // Then swap the type index
+                ::Swap(TypeIndex, Other.TypeIndex);
+            }
+        }
+        else if (IsValid())
         {
-            Other.MoveFrom(TempVariant);
+            Other.Construct(Move(*this));
+            Destruct();
+        }
+        else if (Other.IsValid())
+        {
+            Construct(Move(Other));
+            Other.Destruct();
         }
     }
 
@@ -283,7 +325,7 @@ public:
      * @return - Returns true if the templated type is the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE bool IsType() const noexcept requires(TIsValidType<T>::Value)
+    NODISCARD FORCEINLINE bool IsType() const requires(TIsValidType<T>::Value)
     {
         return TypeIndex == TVariantIndex<T>::Value;
     }
@@ -293,7 +335,7 @@ public:
      * @return - Returns a reference to the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE T& GetValue() noexcept requires(TIsValidType<T>::Value)
+    NODISCARD FORCEINLINE T& GetValue() requires(TIsValidType<T>::Value)
     {
         CHECK(IsValid() && IsType<T>());
         return *reinterpret_cast<T*>(Value.Data);
@@ -304,28 +346,28 @@ public:
      * @return - Returns a reference to the currently held value
      */
     template<typename T>
-    NODISCARD FORCEINLINE const T& GetValue() const noexcept requires(TIsValidType<T>::Value)
+    NODISCARD FORCEINLINE const T& GetValue() const requires(TIsValidType<T>::Value)
     {
         CHECK(IsValid() && IsType<T>());
         return *reinterpret_cast<const T*>(Value.Data);
     }
 
     /**
-     * @brief  - Try and retrieve the currently held value, or get nullptr if value of specified type is not held
+     * @brief  - Try to retrieve the currently held value, or get nullptr if value of specified type is not held
      * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
-    NODISCARD FORCEINLINE T* TryGetValue() noexcept requires(TIsValidType<T>::Value)
+    NODISCARD FORCEINLINE T* TryGetValue() requires(TIsValidType<T>::Value)
     {
         return IsType<T>() ? reinterpret_cast<T*>(Value.Data) : nullptr;
     }
 
     /**
-     * @brief  - Try and retrieve the currently held value, or get nullptr if value of specified type is not held
+     * @brief  - Try to retrieve the currently held value, or get nullptr if value of specified type is not held
      * @return - Returns a pointer to the currently stored value or nullptr if not correct type
      */
     template<typename T>
-    NODISCARD FORCEINLINE const T* TryGetValue() const noexcept requires(TIsValidType<T>::Value)
+    NODISCARD FORCEINLINE const T* TryGetValue() const requires(TIsValidType<T>::Value)
     {
         return IsType<T>() ? reinterpret_cast<const T*>(Value.Data) : nullptr;
     }
@@ -334,18 +376,50 @@ public:
      * @brief  - Retrieve the type index of the currently held value
      * @return - Returns the index of the current held value
      */
-    NODISCARD FORCEINLINE TypeIndexType GetIndex() const noexcept
+    NODISCARD FORCEINLINE TypeIndexType GetIndex() const
     {
         return TypeIndex;
     }
 
     /**
-     * @brief  - Check if the Variant is valid or not
+     * @brief  - Check if the variant is valid or not
      * @return - Returns true if the variant holds a value
      */
-    NODISCARD FORCEINLINE bool IsValid() const noexcept
+    NODISCARD FORCEINLINE bool IsValid() const
     {
         return TypeIndex != InvalidTypeIndex;
+    }
+
+    /**
+     * @brief         - Retrieve the contained value or a default
+     * @param Default - Default value to return if a value of the specified type is not held
+     * @return        - Returns the stored value or the default
+     */
+    template<typename T, typename DefaultType>
+    NODISCARD FORCEINLINE const T& GetValueOrDefault(const DefaultType& Default) const requires(TIsValidType<T>::Value)
+    {
+        if (IsType<T>())
+        {
+            return GetValue<T>();
+        }
+
+        return static_cast<const T&>(Default);
+    }
+
+    /**
+     * @brief         - Retrieve the contained value or a default
+     * @param Default - Default value to return if a value of the specified type is not held
+     * @return        - Returns the stored value or the default
+     */
+    template<typename T, typename DefaultType>
+    NODISCARD FORCEINLINE T GetValueOrDefault(DefaultType&& Default) const requires(TIsValidType<T>::Value)
+    {
+        if (IsType<T>())
+        {
+            return GetValue<T>();
+        }
+        
+        return static_cast<T>(Forward<DefaultType>(Default));
     }
 
 public:
@@ -355,7 +429,7 @@ public:
      * @param Other - Variant to copy from
      * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TVariant& operator=(const TVariant& Other) noexcept
+    FORCEINLINE TVariant& operator=(const TVariant& Other)
     {
         TVariant(Other).Swap(*this);
         return *this;
@@ -366,9 +440,32 @@ public:
      * @param Other - Variant to move from
      * @return      - Returns a reference to this instance
      */
-    FORCEINLINE TVariant& operator=(TVariant&& Other) noexcept
+    FORCEINLINE TVariant& operator=(TVariant&& Other)
     {
-        TVariant(::Move(Other)).Swap(*this);
+        TVariant(Move(Other)).Swap(*this);
+        return *this;
+    }
+
+    /**
+     * @brief       - Assignment operator from a contained type
+     * @param Value - Value to assign to the variant
+     * @return      - Returns a reference to this instance
+     */
+    template<typename OtherType>
+    FORCEINLINE TVariant& operator=(OtherType&& Value) requires(TIsValidType<typename TDecay<OtherType>::Type>::Value)
+    {
+        typedef typename TDecay<OtherType>::Type DecayedType;
+        
+        if (IsType<DecayedType>())
+        {
+            GetValue<DecayedType>() = Forward<OtherType>(Value);
+        }
+        else
+        {
+            Reset();
+            Construct<DecayedType>(Forward<OtherType>(Value));
+        }
+        
         return *this;
     }
 
@@ -378,17 +475,21 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if the variants are equal
      */
-    NODISCARD friend FORCEINLINE bool operator==(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator==(const TVariant& LHS, const TVariant& RHS)
     {
         if (LHS.TypeIndex != RHS.TypeIndex)
         {
             return false;
         }
 
-        // Both indices are equal at this point
-        if (!LHS.IsValid())
+        if (!LHS.IsValid() && !RHS.IsValid())
         {
-            return true;
+            return true; // Both are invalid
+        }
+
+        if (!LHS.IsValid() || !RHS.IsValid())
+        {
+            return false;
         }
 
         return LHS.IsEqual(RHS);
@@ -400,7 +501,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns false if the variants are equal
      */
-    NODISCARD friend FORCEINLINE bool operator!=(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator!=(const TVariant& LHS, const TVariant& RHS)
     {
         return !(LHS == RHS);
     }
@@ -411,17 +512,31 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if LHS is less than RHS
      */
-    NODISCARD friend FORCEINLINE bool operator<(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<(const TVariant& LHS, const TVariant& RHS)
     {
-        if (LHS.TypeIndex != RHS.TypeIndex)
+        if (LHS.TypeIndex < RHS.TypeIndex)
+        {
+            return true;
+        }
+
+        if (LHS.TypeIndex > RHS.TypeIndex)
         {
             return false;
         }
 
-        // Both indices are equal at this point
+        if (!LHS.IsValid() && !RHS.IsValid())
+        {
+            return false; // Both are invalid, neither is less
+        }
+
         if (!LHS.IsValid())
         {
-            return true;
+            return true; // Invalid is considered less than valid
+        }
+
+        if (!RHS.IsValid())
+        {
+            return false;
         }
 
         return LHS.IsLessThan(RHS);
@@ -433,17 +548,31 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if LHS is less than or equal to RHS
      */
-    NODISCARD friend FORCEINLINE bool operator<=(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator<=(const TVariant& LHS, const TVariant& RHS)
     {
-        if (LHS.TypeIndex != RHS.TypeIndex)
+        if (LHS.TypeIndex < RHS.TypeIndex)
+        {
+            return true;
+        }
+
+        if (LHS.TypeIndex > RHS.TypeIndex)
         {
             return false;
         }
 
-        // Both indices are equal at this point
-        if (!LHS.IsValid())
+        if (!LHS.IsValid() && !RHS.IsValid())
         {
             return true;
+        }
+
+        if (!LHS.IsValid())
+        {
+            return true; // Invalid is considered less than valid
+        }
+
+        if (!RHS.IsValid())
+        {
+            return false;
         }
 
         return LHS.IsLessThan(RHS) || LHS.IsEqual(RHS);
@@ -455,7 +584,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if LHS is greater than RHS
      */
-    NODISCARD friend FORCEINLINE bool operator>(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>(const TVariant& LHS, const TVariant& RHS)
     {
         return !(LHS <= RHS);
     }
@@ -466,7 +595,7 @@ public:
      * @param RHS - Right side to compare with
      * @return    - Returns true if LHS is greater than or equal to RHS
      */
-    NODISCARD friend FORCEINLINE bool operator>=(const TVariant& LHS, const TVariant& RHS) noexcept
+    NODISCARD friend FORCEINLINE bool operator>=(const TVariant& LHS, const TVariant& RHS)
     {
         return !(LHS < RHS);
     }
@@ -474,39 +603,39 @@ public:
 private:
 
     template<typename T, typename... ArgTypes>
-    FORCEINLINE void Construct(ArgTypes&&... Args) noexcept
+    FORCEINLINE void Construct(ArgTypes&&... Args)
     {
-        new(reinterpret_cast<void*>(Value.Data)) T(::Forward<ArgTypes>(Args)...);
+        new(reinterpret_cast<void*>(Value.Data)) T(Forward<ArgTypes>(Args)...);
         TypeIndex = TVariantIndex<T>::Value;
     }
 
-    FORCEINLINE void MoveFrom(TVariant& Other) noexcept
-    {
-        FMoveConstructorTable::Move(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<void*>(Other.Value.Data));
-    }
-
-    FORCEINLINE void CopyFrom(const TVariant& Other) noexcept
-    {
-        FCopyConstructorTable::Copy(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<const void*>(Other.Value.Data));
-    }
-
-    FORCEINLINE void Destruct() noexcept
+    FORCEINLINE void Destruct()
     {
         FDestructorTable::Destruct(TypeIndex, reinterpret_cast<void*>(Value.Data));
         TypeIndex = InvalidTypeIndex;
     }
 
-    NODISCARD FORCEINLINE bool IsEqual(const TVariant& RHS) const noexcept
+    FORCEINLINE void MoveFrom(TVariant& Other)
+    {
+        FMoveConstructorTable::Move(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<void*>(Other.Value.Data));
+    }
+
+    FORCEINLINE void CopyFrom(const TVariant& Other)
+    {
+        FCopyConstructorTable::Copy(Other.TypeIndex, reinterpret_cast<void*>(Value.Data), reinterpret_cast<const void*>(Other.Value.Data));
+    }
+
+    NODISCARD FORCEINLINE bool IsEqual(const TVariant& RHS) const
     {
         return FCompareFuncTable::IsEqual(TypeIndex, reinterpret_cast<const void*>(Value.Data), reinterpret_cast<const void*>(RHS.Value.Data));
     }
 
-    NODISCARD FORCEINLINE bool IsLessThan(const TVariant& RHS) const noexcept
+    NODISCARD FORCEINLINE bool IsLessThan(const TVariant& RHS) const
     {
         return FCompareFuncTable::IsLessThan(TypeIndex, reinterpret_cast<const void*>(Value.Data), reinterpret_cast<const void*>(RHS.Value.Data));
     }
 
-    // Storage that fit the largest element
+    // Storage that fits the largest element with proper alignment
     TAlignedBytes<SizeInBytes, AlignmentInBytes> Value;
-    TypeIndexType TypeIndex;
+    TypeIndexType TypeIndex{ InvalidTypeIndex };
 };

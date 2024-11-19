@@ -58,7 +58,7 @@ public:
         , ViewSize(NumElements)
     {
         static_assert(TIsConvertible<typename TAddPointer<OtherElementType>::Type, typename TAddPointer<ElementType>::Type>::Value ||
-                      TIsSame<OtherElementType, ElementType>::Value, "OtherElementType must be convertible to ElementType");
+            TIsSame<OtherElementType, ElementType>::Value, "OtherElementType must be convertible to ElementType");
     }
 
     /**
@@ -128,7 +128,7 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the element that satisfy the conditions of a comparator
+     * @brief           - Returns the index of the element that satisfies the conditions of a comparator
      * @param Predicate - Callable that compares an element in the view against some condition
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
@@ -327,22 +327,22 @@ public:
 public:
 
     // Iterators
-    NODISCARD FORCEINLINE IteratorType      Iterator() noexcept
+    NODISCARD FORCEINLINE IteratorType Iterator()
     {
         return IteratorType(*this, 0);
     }
 
-    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
         return ConstIteratorType(*this, 0);
     }
 
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
         return ReverseIteratorType(*this, ViewSize);
     }
 
-    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const
     {
         return ReverseConstIteratorType(*this, ViewSize);
     }
@@ -350,21 +350,15 @@ public:
 public:
 
     // STL Iterators
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
+    NODISCARD FORCEINLINE IteratorType      begin()       { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const { return ConstIterator(); }
 
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, ViewSize); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, ViewSize); }
+    NODISCARD FORCEINLINE IteratorType      end()       { return IteratorType(*this, ViewSize); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const { return ConstIteratorType(*this, ViewSize); }
 
 private:
-    /**
-     * @brief Forward search helper function.
-     * @tparam PredicateType The predicate to evaluate.
-     * @param Predicate The predicate to evaluate.
-     * @return The index if found, otherwise INVALID_INDEX.
-     */
     template<typename PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindForward(PredicateType&& Predicate) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindForward(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Current = View, *RESTRICT End = View + ViewSize; Current != End; ++Current)
         {
@@ -377,14 +371,8 @@ private:
         return INVALID_INDEX;
     }
 
-    /**
-     * @brief Reverse search helper function.
-     * @tparam PredicateType The predicate to evaluate.
-     * @param Predicate The predicate to evaluate.
-     * @return The index if found, otherwise INVALID_INDEX.
-     */
     template<typename PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindReverse(PredicateType&& Predicate) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindReverse(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = View; Current != End;)
         {

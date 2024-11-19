@@ -30,7 +30,7 @@ public:
      * @brief        - Constructor that default creates a certain number of elements 
      * @param InSize - Number of elements to construct
      */
-    explicit TArray(SIZETYPE InSize)
+    FORCEINLINE explicit TArray(SIZETYPE InSize)
     {
         InitializeEmpty(InSize);
     }
@@ -40,7 +40,7 @@ public:
      * @param InSize  - Number of elements to construct
      * @param Element - Element to copy into all positions of the array
      */
-    TArray(SIZETYPE InSize, const ElementType& Element)
+    FORCEINLINE TArray(SIZETYPE InSize, const ElementType& Element)
     {
         Initialize(InSize, Element);
     }
@@ -51,7 +51,7 @@ public:
      * @param InNumElements - Number of elements in 'InputArray', which also is the resulting size of the constructed array
      * @param InSlack       - Extra number of elements to allocate space for
      */
-    TArray(const ElementType* InElements, SIZETYPE InNumElements, SIZETYPE InSlack = 0)
+    FORCEINLINE TArray(const ElementType* InElements, SIZETYPE InNumElements, SIZETYPE InSlack = 0)
     {
         InitializeByCopy(InElements, InNumElements, InSlack);
     }
@@ -60,7 +60,7 @@ public:
      * @brief       - Copy-constructor
      * @param Other - Array to copy from
      */
-    TArray(const TArray& Other)
+    FORCEINLINE TArray(const TArray& Other)
     {
         InitializeByCopy(Other.Data(), Other.Size(), 0);
     }
@@ -70,7 +70,7 @@ public:
      * @param Other   - Array to copy from
      * @param InSlack - Extra number of elements to allocate space for
      */
-    TArray(const TArray& Other, SIZETYPE InSlack)
+    FORCEINLINE TArray(const TArray& Other, SIZETYPE InSlack)
     {
         InitializeByCopy(Other.Data(), Other.Size(), InSlack);
     }
@@ -80,7 +80,7 @@ public:
      * @param Other - Array to copy from
      */
     template<typename ArrayType>
-    explicit TArray(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
+    FORCEINLINE explicit TArray(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
     {
         InitializeByCopy(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other), 0);
     }
@@ -89,7 +89,7 @@ public:
      * @brief       - Move-constructor 
      * @param Other - Array to move elements from
      */
-    TArray(TArray&& Other)
+    FORCEINLINE TArray(TArray&& Other)
     {
         InitializeByMove(Forward<TArray>(Other));
     }
@@ -98,7 +98,7 @@ public:
      * @brief          - Constructor that creates an array from an std::initializer_list
      * @param InitList - Initializer list containing all elements to construct the array from
      */
-    TArray(std::initializer_list<ElementType> InitList)
+    FORCEINLINE TArray(std::initializer_list<ElementType> InitList)
     {
         InitializeByCopy(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList), 0);
     }
@@ -106,7 +106,7 @@ public:
     /** 
      * @brief - Destructor
      */
-    ~TArray()
+    FORCEINLINE ~TArray()
     {
         Clear(true);
     }
@@ -191,7 +191,7 @@ public:
      * @param InputArray - Array to copy elements from
      */
     template<typename ArrayType>
-    void Reset(const ArrayType& InputArray) requires(TIsTArrayType<ArrayType>::Value)
+    FORCEINLINE void Reset(const ArrayType& InputArray) requires(TIsTArrayType<ArrayType>::Value)
     {
         Reset(FArrayContainerHelper::Data(InputArray), FArrayContainerHelper::Size(InputArray));
     }
@@ -200,7 +200,7 @@ public:
      * @brief            - Resets the container by moving elements from another array.
      * @param InputArray - Array to move elements from
      */
-    void Reset(TArray&& InputArray)
+    FORCEINLINE void Reset(TArray&& InputArray)
     {
         InitializeByMove(Forward<TArray>(InputArray));
     }
@@ -209,7 +209,7 @@ public:
      * @brief          - Resets the container and copy-constructs from an initializer-list
      * @param InitList - Initializer-list to copy-construct elements from
      */
-    void Reset(std::initializer_list<ElementType> InitList)
+    FORCEINLINE void Reset(std::initializer_list<ElementType> InitList)
     {
         Reset(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
     }
@@ -300,7 +300,7 @@ public:
      * @return     - Returns a reference to the newly created element
      */
     template<typename... ArgTypes>
-    ElementType& Emplace(ArgTypes&&... Args)
+    FORCEINLINE ElementType& Emplace(ArgTypes&&... Args)
     {
         EnsureCapacity(ArraySize + 1);
         new(reinterpret_cast<void*>(Allocator.GetAllocation() + (ArraySize++))) ElementType(Forward<ArgTypes>(Args)...);
@@ -312,7 +312,7 @@ public:
      * @param Element - Element to insert into the array by copy
      * @return        - Returns a reference to the newly created element
      */
-    ElementType& Add(const ElementType& Element)
+    FORCEINLINE ElementType& Add(const ElementType& Element)
     {
         return Emplace(Element);
     }
@@ -322,7 +322,7 @@ public:
      * @param Element - Element to insert into the array by move
      * @return        - Returns a reference to the newly created element
      */
-    ElementType& Add(ElementType&& Element)
+    FORCEINLINE ElementType& Add(ElementType&& Element)
     {
         return Emplace(Forward<ElementType>(Element));
     }
@@ -332,7 +332,7 @@ public:
      * @param Element - Element to insert into the array by copy
      * @return        - Returns the index of the newly created element or the existing element
      */
-    SIZETYPE AddUnique(const ElementType& Element)
+    FORCEINLINE SIZETYPE AddUnique(const ElementType& Element)
     {
         const SIZETYPE Index = Find(Element);
         if (Index >= 0)
@@ -349,7 +349,7 @@ public:
      * @param Element - Element to insert into the array by move
      * @return        - Returns the index of the newly created element or the existing element
      */
-    SIZETYPE AddUnique(ElementType&& Element)
+    FORCEINLINE SIZETYPE AddUnique(ElementType&& Element)
     {
         const SIZETYPE Index = Find(Element);
         if (Index >= 0)
@@ -364,7 +364,7 @@ public:
     /**
      * @brief - Appends a new element at the end of the array without calling any constructor
      */
-    void AddUninitialized()
+    FORCEINLINE void AddUninitialized()
     {
         AppendUninitialized(1);
     }
@@ -372,7 +372,7 @@ public:
     /**
      * @brief - Appends a default-constructed element
      */
-    ElementType& AddDefault()
+    FORCEINLINE ElementType& AddDefault()
     {
         return Emplace();
     }
@@ -383,7 +383,7 @@ public:
      * @param Args     - Arguments for the constructor of the element
      */
     template<typename... ArgTypes>
-    void EmplaceAt(SIZETYPE Position, ArgTypes&&... Args)
+    FORCEINLINE void EmplaceAt(SIZETYPE Position, ArgTypes&&... Args)
     {
         CHECK(Position <= ArraySize);
         InsertUninitializedUnchecked(Position, 1);
@@ -396,7 +396,7 @@ public:
      * @param Position - Position of the new element
      * @param Element  - Element to copy into the position
      */
-    void Insert(SIZETYPE Position, const ElementType& Element)
+    FORCEINLINE void Insert(SIZETYPE Position, const ElementType& Element)
     {
         EmplaceAt(Position, Element);
     }
@@ -406,7 +406,7 @@ public:
      * @param Position - Position of the new element
      * @param Element  - Element to move into the position
      */
-    void Insert(SIZETYPE Position, ElementType&& Element)
+    FORCEINLINE void Insert(SIZETYPE Position, ElementType&& Element)
     {
         EmplaceAt(Position, Forward<ElementType>(Element));
     }
@@ -432,7 +432,7 @@ public:
      * @param Position - Position to insert elements
      * @param InitList - Initializer list to copy elements from
      */
-    void Insert(SIZETYPE Position, std::initializer_list<ElementType> InitList)
+    FORCEINLINE void Insert(SIZETYPE Position, std::initializer_list<ElementType> InitList)
     {
         Insert(Position, FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
     }
@@ -443,7 +443,7 @@ public:
       * @param InArray  - Array to copy elements from
       */
     template<typename ArrayType>
-    void Insert(SIZETYPE Position, const ArrayType& InArray) requires(TIsTArrayType<ArrayType>::Value)
+    FORCEINLINE void Insert(SIZETYPE Position, const ArrayType& InArray) requires(TIsTArrayType<ArrayType>::Value)
     {
         Insert(Position, FArrayContainerHelper::Data(InArray), FArrayContainerHelper::Size(InArray));
     }
@@ -453,7 +453,7 @@ public:
      * @param Position    - Start-position of the new elements
      * @param NumElements - Number of elements to insert
      */
-    void InsertUninitialized(SIZETYPE Position, SIZETYPE NumElements)
+    FORCEINLINE void InsertUninitialized(SIZETYPE Position, SIZETYPE NumElements)
     {
         CHECK(Position <= ArraySize);
         InsertUninitializedUnchecked(Position, NumElements);
@@ -481,7 +481,7 @@ public:
      * @param Other - Array to copy elements from
      */
     template<typename ArrayType>
-    void Append(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
+    FORCEINLINE void Append(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
     {
         Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
     }
@@ -490,7 +490,7 @@ public:
      * @brief          - Append an initializer list at the end of the array
      * @param InitList - Initializer list to copy elements from
      */
-    void Append(std::initializer_list<ElementType> InitList)
+    FORCEINLINE void Append(std::initializer_list<ElementType> InitList)
     {
         Append(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
     }
@@ -499,7 +499,7 @@ public:
      * @brief         - Create a number of uninitialized elements at the end of the array
      * @param NewSize - Number of elements to append
      */
-    void AppendUninitialized(SIZETYPE NumElements)
+    FORCEINLINE void AppendUninitialized(SIZETYPE NumElements)
     {
         const SIZETYPE NewSize = ArraySize + NumElements;
         EnsureCapacity(NewSize);
@@ -540,7 +540,7 @@ public:
      * @brief          - Removes the element at the specified position
      * @param Position - Position of element to remove
      */
-    void RemoveAt(SIZETYPE Position)
+    FORCEINLINE void RemoveAt(SIZETYPE Position)
     {
         RemoveAt(Position, 1);
     }
@@ -575,7 +575,7 @@ public:
      * @param Predicate - Callable that determines if an element should be removed
      */
     template<typename PredicateType>
-    void RemoveAll(PredicateType&& Predicate)
+    FORCEINLINE void RemoveAll(PredicateType&& Predicate)
     {
         ElementType* Array = Allocator.GetAllocation();
         for (SIZETYPE Index = 0; Index < ArraySize;)
@@ -596,7 +596,7 @@ public:
      * @param InElement - Element to search for
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
-    NODISCARD SIZETYPE Find(const ElementType& InElement) const
+    NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& InElement) const
     {
         return FindForward([&](const ElementType& Element)
         {
@@ -610,7 +610,7 @@ public:
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
-    NODISCARD SIZETYPE FindWithPredicate(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const
     {
         return FindForward(Forward<PredicateType>(Predicate));
     }
@@ -620,7 +620,7 @@ public:
      * @param Element - Element to search for
      * @return        - The index of the element if found or INVALID_INDEX if not
      */
-    NODISCARD SIZETYPE FindLast(const ElementType& InElement) const
+    NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& InElement) const
     {
         return FindReverse([&](const ElementType& Element)
         {
@@ -634,7 +634,7 @@ public:
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
-    NODISCARD SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const
     {
         return FindReverse(Forward<PredicateType>(Predicate));
     }
@@ -644,7 +644,7 @@ public:
      * @param Element - Element to check for
      * @return        - Returns true if the element is found in the array, false otherwise
      */
-    NODISCARD bool Contains(const ElementType& Element) const
+    NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const
     {
         return Find(Element) != INVALID_INDEX;
     }
@@ -655,7 +655,7 @@ public:
      * @return          - Returns true if the predicate returned true for any element
      */
     template<class PredicateType>
-    NODISCARD bool ContainsWithPredicate(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const
     {
         return FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX;
     }
@@ -691,7 +691,7 @@ public:
      * @param FirstIndex  - Index of the first element to swap
      * @param SecondIndex - Index of the second element to swap
      */
-    void Swap(SIZETYPE FirstIndex, SIZETYPE SecondIndex)
+    FORCEINLINE void Swap(SIZETYPE FirstIndex, SIZETYPE SecondIndex)
     {
         CHECK(IsValidIndex(FirstIndex));
         CHECK(IsValidIndex(SecondIndex));
@@ -702,7 +702,7 @@ public:
     /**
      * @brief - Shrink the allocation to perfectly fit the size of the array
      */
-    void Shrink()
+    FORCEINLINE void Shrink()
     {
         Reserve(ArraySize);
     }
@@ -724,7 +724,7 @@ public:
     /**
      * @brief - Sort the array using the quick-sort algorithm, assumes that the ElementType has the '<' operator
      */
-    void Sort()
+    FORCEINLINE void Sort()
     {
         SortInternal(0, LastElementIndex(), [](const ElementType& First, const ElementType& Second)
         {
@@ -736,7 +736,7 @@ public:
      * @brief - Sort the array using the quick-sort algorithm with a custom comparator
      */
     template<typename PredicateType>
-    void SortWithPredicate(PredicateType&& Predicate)
+    FORCEINLINE void SortWithPredicate(PredicateType&& Predicate)
     {
         SortInternal(0, LastElementIndex(), Forward<PredicateType>(Predicate));
     }
@@ -746,7 +746,7 @@ public:
      * @param Address - Address to check.
      * @return        - Returns true if the address belongs to the array
      */
-    NODISCARD bool CheckAddress(const ElementType* Address) const
+    NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const
     {
         const ElementType* Array = Allocator.GetAllocation();
         return Address >= Array && Address < (Array + ArrayMax);
@@ -756,7 +756,7 @@ public:
      * @brief  - Checks if an index is a valid index
      * @return - Returns true if the index is valid
      */
-    NODISCARD bool IsValidIndex(SIZETYPE Index) const
+    NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
     {
         return Index >= 0 && Index < ArraySize;
     }
@@ -765,7 +765,7 @@ public:
      * @brief  - Check if the container contains any elements
      * @return - Returns true if the array is empty or false if it contains elements
      */
-    NODISCARD bool IsEmpty() const
+    NODISCARD FORCEINLINE bool IsEmpty() const
     {
         return ArraySize == 0;
     }
@@ -774,7 +774,7 @@ public:
      * @brief  - Retrieve the first element of the array (non-const)
      * @return - Returns a reference to the first element of the array
      */
-    NODISCARD ElementType& FirstElement()
+    NODISCARD FORCEINLINE ElementType& FirstElement()
     {
         CHECK(!IsEmpty());
         ElementType* Array = Allocator.GetAllocation();
@@ -785,7 +785,7 @@ public:
      * @brief  - Retrieve the first element of the array (const)
      * @return - Returns a reference to the first element of the array
      */
-    NODISCARD const ElementType& FirstElement() const
+    NODISCARD FORCEINLINE const ElementType& FirstElement() const
     {
         CHECK(!IsEmpty());
         const ElementType* Array = Allocator.GetAllocation();
@@ -796,7 +796,7 @@ public:
      * @brief  - Retrieve the last element of the array (non-const)
      * @return - Returns a reference to the last element of the array
      */
-    NODISCARD ElementType& LastElement()
+    NODISCARD FORCEINLINE ElementType& LastElement()
     {
         CHECK(!IsEmpty());
         ElementType* Array = Allocator.GetAllocation();
@@ -807,7 +807,7 @@ public:
      * @brief  - Retrieve the last element of the array (const)
      * @return - Returns a reference to the last element of the array
      */
-    NODISCARD const ElementType& LastElement() const
+    NODISCARD FORCEINLINE const ElementType& LastElement() const
     {
         CHECK(!IsEmpty());
         const ElementType* Array = Allocator.GetAllocation();
@@ -818,7 +818,7 @@ public:
      * @brief  - Retrieve the data of the array (non-const)
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD ElementType* Data()
+    NODISCARD FORCEINLINE ElementType* Data()
     {
         return Allocator.GetAllocation();
     }
@@ -827,7 +827,7 @@ public:
      * @brief  - Retrieve the data of the array (const)
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD const ElementType* Data() const
+    NODISCARD FORCEINLINE const ElementType* Data() const
     {
         return Allocator.GetAllocation();
     }
@@ -836,7 +836,7 @@ public:
      * @brief  - Retrieve the last index that can be used to retrieve an element from the array
      * @return - Returns the index to the last element of the array
      */
-    NODISCARD SIZETYPE LastElementIndex() const
+    NODISCARD FORCEINLINE SIZETYPE LastElementIndex() const
     {
         return ArraySize ? ArraySize - 1 : 0;
     }
@@ -845,7 +845,7 @@ public:
      * @brief  - Retrieve the size of the container
      * @return - Returns the size of the container
      */
-    NODISCARD SIZETYPE Size() const
+    NODISCARD FORCEINLINE SIZETYPE Size() const
     {
         return ArraySize;
     }
@@ -854,7 +854,7 @@ public:
      * @brief  - Retrieve the stride of each element of the container
      * @return - Returns the stride of each element of the container
      */
-    NODISCARD constexpr SIZETYPE Stride() const
+    NODISCARD FORCEINLINE constexpr SIZETYPE Stride() const
     {
         return sizeof(ElementType);
     }
@@ -863,7 +863,7 @@ public:
      * @brief  - Retrieve the size of the container in bytes
      * @return - Returns the size of the container in bytes
      */
-    NODISCARD SIZETYPE SizeInBytes() const
+    NODISCARD FORCEINLINE SIZETYPE SizeInBytes() const
     {
         return ArraySize * sizeof(ElementType);
     }
@@ -872,7 +872,7 @@ public:
      * @brief  - Retrieve the capacity of the container
      * @return - Returns the capacity of the container
      */
-    NODISCARD SIZETYPE Capacity() const
+    NODISCARD FORCEINLINE SIZETYPE Capacity() const
     {
         return ArrayMax;
     }
@@ -881,7 +881,7 @@ public:
      * @brief  - Retrieve the capacity of the container in bytes
      * @return - Returns the capacity of the container in bytes
      */
-    NODISCARD SIZETYPE CapacityInBytes() const
+    NODISCARD FORCEINLINE SIZETYPE CapacityInBytes() const
     {
         return ArrayMax * sizeof(ElementType);
     }
@@ -890,7 +890,7 @@ public:
      * @brief  - Retrieve the allocator (non-const)
      * @return - Returns a reference to the allocator
      */
-    NODISCARD AllocatorType& GetAllocator()
+    NODISCARD FORCEINLINE AllocatorType& GetAllocator()
     {
         return Allocator;
     }
@@ -899,7 +899,7 @@ public:
      * @brief  - Retrieve the allocator (const)
      * @return - Returns a const reference to the allocator
      */
-    NODISCARD const AllocatorType& GetAllocator() const
+    NODISCARD FORCEINLINE const AllocatorType& GetAllocator() const
     {
         return Allocator;
     }
@@ -913,12 +913,19 @@ public:
      */
     void Heapify()
     {
-        if (ArraySize == 0) return; // Prevent underflow for unsigned types
+        if (ArraySize == 0)
+        {
+            return;
+        }
+
         const SIZETYPE StartIndex = (ArraySize / 2) - 1;
         for (SIZETYPE Index = StartIndex; Index >= 0; --Index)
         {
             Heapify(ArraySize, Index);
-            if (Index == 0) break; // Prevent infinite loop for Index = 0
+            if (Index == 0)
+            {
+                break;
+            }
         }
     }
 
@@ -926,7 +933,7 @@ public:
      * @brief  - Retrieve the top of the heap. The same as the first element.
      * @return - A reference to the element at the top of the heap
      */
-    NODISCARD ElementType& HeapTop()
+    NODISCARD FORCEINLINE ElementType& HeapTop()
     {
         CHECK(!IsEmpty());
         ElementType* Array = Allocator.GetAllocation();
@@ -937,7 +944,7 @@ public:
      * @brief  - Retrieve the top of the heap. The same as the first element.
      * @return - A reference to the element at the top of the heap
      */
-    NODISCARD const ElementType& HeapTop() const
+    NODISCARD FORCEINLINE const ElementType& HeapTop() const
     {
         CHECK(!IsEmpty());
         const ElementType* Array = Allocator.GetAllocation();
@@ -948,7 +955,7 @@ public:
      * @brief         - Inserts a new element into the heap by copy
      * @param Element - Element to insert into the heap by copy
      */
-    void HeapPush(const ElementType& Element)
+    FORCEINLINE void HeapPush(const ElementType& Element)
     {
         Insert(0, Element);
         Heapify(ArraySize, 0);
@@ -958,7 +965,7 @@ public:
      * @brief         - Inserts a new element into the heap by move
      * @param Element - Element to insert into the heap by move
      */
-    void HeapPush(ElementType&& Element)
+    FORCEINLINE void HeapPush(ElementType&& Element)
     {
         Insert(0, Forward<ElementType>(Element));
         Heapify(ArraySize, 0);
@@ -968,7 +975,7 @@ public:
      * @brief            - Remove the top of the heap and retrieve the element on top
      * @param OutElement - Reference that the top element will be copied to
      */
-    void HeapPop(ElementType& OutElement)
+    FORCEINLINE void HeapPop(ElementType& OutElement)
     {
         OutElement = HeapTop();
         HeapPop();
@@ -977,7 +984,7 @@ public:
     /**
      * @brief - Remove the top of the heap
      */
-    void HeapPop()
+    FORCEINLINE void HeapPop()
     {
         CHECK(!IsEmpty());
         RemoveAt(0);
@@ -1006,7 +1013,7 @@ public:
      * @param Other - Array to copy
      * @return      - A reference to this container
      */
-    TArray& operator=(const TArray& Other)
+    FORCEINLINE TArray& operator=(const TArray& Other)
     {
         if (this != &Other)
         {
@@ -1021,7 +1028,7 @@ public:
      * @param Other - Array to move
      * @return      - A reference to this container
      */
-    TArray& operator=(TArray&& Other)
+    FORCEINLINE TArray& operator=(TArray&& Other)
     {
         if (this != &Other)
         {
@@ -1036,7 +1043,7 @@ public:
      * @param Other - An initializer list to replace the current contents with
      * @return      - A reference to this container
      */
-    TArray& operator=(std::initializer_list<ElementType> Other)
+    FORCEINLINE TArray& operator=(std::initializer_list<ElementType> Other)
     {
         Reset(Other);
         return *this;
@@ -1061,7 +1068,7 @@ public:
      * @return        - Returns true if any element is NOT equal to each other
      */
     template<typename ArrayType>
-    NODISCARD bool operator!=(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
+    NODISCARD FORCEINLINE bool operator!=(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
     {
         return !(*this == Other);
     }
@@ -1071,7 +1078,7 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the element at the index
      */
-    NODISCARD ElementType& operator[](SIZETYPE Index)
+    NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
     {
         return Allocator.GetAllocation()[Index];
     }
@@ -1081,7 +1088,7 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the element at the index
      */
-    NODISCARD const ElementType& operator[](SIZETYPE Index) const
+    NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
     {
         return Allocator.GetAllocation()[Index];
     }
@@ -1094,7 +1101,7 @@ public:
      * @return      - Reference to this array
      */
     template<typename ArrayType>
-    TArray& operator+=(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
+    FORCEINLINE TArray& operator+=(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
     {
         Append(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other));
         return *this;
@@ -1105,7 +1112,7 @@ public:
      * @param InitList - Initializer-list to copy elements from
      * @return         - Reference to this array
      */
-    TArray& operator+=(std::initializer_list<ElementType> InitList)
+    FORCEINLINE TArray& operator+=(std::initializer_list<ElementType> InitList)
     {
         Append(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList));
         return *this;
@@ -1118,7 +1125,7 @@ public:
      * @param RHS - Right-hand side array
      * @return    - A new array containing elements from both arrays
      */
-    NODISCARD friend TArray operator+(const TArray& LHS, const TArray& RHS)
+    NODISCARD FORCEINLINE friend TArray operator+(const TArray& LHS, const TArray& RHS)
     {
         TArray NewArray(LHS, RHS.Size());
         NewArray.Append(RHS);
@@ -1133,7 +1140,7 @@ public:
      * @brief  - Retrieve an iterator to the beginning of the array
      * @return - An iterator that points to the first element
      */
-    NODISCARD IteratorType Iterator()
+    NODISCARD FORCEINLINE IteratorType Iterator()
     {
         return IteratorType(*this, 0);
     }
@@ -1142,7 +1149,7 @@ public:
      * @brief  - Retrieve a const iterator to the beginning of the array
      * @return - A const iterator that points to the first element
      */
-    NODISCARD ConstIteratorType ConstIterator() const
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
         return ConstIteratorType(*this, 0);
     }
@@ -1151,7 +1158,7 @@ public:
      * @brief  - Retrieve a reverse iterator to the end of the array
      * @return - A reverse iterator that points to the last element
      */
-    NODISCARD ReverseIteratorType ReverseIterator()
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
         return ReverseIteratorType(*this, Size());
     }
@@ -1160,7 +1167,7 @@ public:
      * @brief  - Retrieve a const reverse iterator to the end of the array
      * @return - A const reverse iterator that points to the last element
      */
-    NODISCARD ReverseConstIteratorType ConstReverseIterator() const
+    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const
     {
         return ReverseConstIteratorType(*this, Size());
     }
@@ -1169,17 +1176,17 @@ public:
 
     // STL Iterators
 
-    NODISCARD IteratorType      begin()       { return Iterator(); }
-    NODISCARD ConstIteratorType begin() const { return ConstIterator(); }
+    NODISCARD FORCEINLINE IteratorType      begin()       { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const { return ConstIterator(); }
 
-    NODISCARD IteratorType      end()       { return IteratorType(*this, ArraySize); }
-    NODISCARD ConstIteratorType end() const { return ConstIteratorType(*this, ArraySize); }
+    NODISCARD FORCEINLINE IteratorType      end()       { return IteratorType(*this, ArraySize); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const { return ConstIteratorType(*this, ArraySize); }
 
 private:
 
     // Initialization Helpers
 
-    void CreateUninitialized(SIZETYPE NumElements)
+    FORCEINLINE void CreateUninitialized(SIZETYPE NumElements)
     {
         if (ArrayMax < NumElements)
         {
@@ -1219,8 +1226,8 @@ private:
             Allocator.MoveFrom(Move(FromArray.Allocator));
 
             // Transfer size and capacity
-            ArraySize           = FromArray.ArraySize;
-            ArrayMax            = FromArray.ArrayMax;
+            ArraySize = FromArray.ArraySize;
+            ArrayMax = FromArray.ArrayMax;
             FromArray.ArraySize = 0;
             FromArray.ArrayMax  = 0;
         }
@@ -1262,7 +1269,7 @@ private:
         ::RelocateObjects<ElementType>(CurrentAddress + InNumElements, CurrentAddress, ArraySize - Position);
     }
 
-    void EnsureCapacity(SIZETYPE RequiredCapacity)
+    void FORCEINLINE EnsureCapacity(SIZETYPE RequiredCapacity)
     {
         if (RequiredCapacity > ArrayMax)
         {
@@ -1304,12 +1311,12 @@ private:
         }
     }
 
-    NODISCARD static SIZETYPE LeftIndex(SIZETYPE Index)
+    NODISCARD FORCEINLINE static SIZETYPE LeftIndex(SIZETYPE Index)
     {
         return 2 * Index + 1;
     }
 
-    NODISCARD static SIZETYPE RightIndex(SIZETYPE Index)
+    NODISCARD FORCEINLINE static SIZETYPE RightIndex(SIZETYPE Index)
     {
         return 2 * Index + 2;
     }
@@ -1339,7 +1346,7 @@ private:
     NODISCARD SIZETYPE FindForward(auto&& Predicate) const
     {
         const ElementType* Start = Allocator.GetAllocation();
-        const ElementType* End = Start + ArraySize;
+        const ElementType* End  = Start + ArraySize;
         for (const ElementType* Current = Start; Current != End; ++Current)
         {
             if (Predicate(*Current))
@@ -1353,8 +1360,8 @@ private:
 
     NODISCARD SIZETYPE FindReverse(auto&& Predicate) const
     {
-        const ElementType* Start = Allocator.GetAllocation();
-        const ElementType* End = Start;
+        const ElementType* Start   = Allocator.GetAllocation();
+        const ElementType* End     = Start;
         const ElementType* Current = Start + ArraySize;
         while (Current != End)
         {

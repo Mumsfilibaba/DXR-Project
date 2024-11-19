@@ -40,7 +40,7 @@ namespace TupleInternal
         NODISCARD FORCEINLINE int32 Swap(TTupleLeaf& Other) noexcept
         {
             ::Swap<ValueType>(Value, Other.Value);
-            return 0;
+            return 0; // Return zero for the ExpandPacks function
         }
 
         ValueType Value;
@@ -49,11 +49,12 @@ namespace TupleInternal
     template<uint32 Index, typename ValueType>
     struct TTupleLeaf<Index, ValueType&>
     {
-        TTupleLeaf(const TTupleLeaf&) = default;
-        TTupleLeaf(TTupleLeaf&&) = default;
-
+        TTupleLeaf() = delete;
         TTupleLeaf& operator=(const TTupleLeaf&) = delete;
         TTupleLeaf& operator=(TTupleLeaf&&) = delete;
+
+        TTupleLeaf(const TTupleLeaf&) = default;
+        TTupleLeaf(TTupleLeaf&&) = default;
 
         FORCEINLINE explicit TTupleLeaf(ValueType&& InValue) noexcept
             : Value(Move(InValue))
@@ -73,7 +74,7 @@ namespace TupleInternal
 
         NODISCARD FORCEINLINE int32 Swap(TTupleLeaf&) noexcept
         {
-            return 0;
+            return 0; // Return zero for the ExpandPacks function
         }
 
         ValueType Value;
@@ -90,18 +91,18 @@ namespace TupleInternal
     template<uint32 Index, typename ElementType, typename... Types>
     struct TTupleGetByIndexHelper<Index, Index, ElementType, Types...>
     {
-        using Type = ElementType;
+        typedef ElementType Type;
 
-        enum { ElementIndex = Index };
+        static constexpr uint32 ElementIndex = Index;
 
         template<typename TupleType>
-        NODISCARD static FORCEINLINE ElementType& Get(TupleType& Tuple) noexcept
+        NODISCARD static FORCEINLINE auto& GetByIndex(TupleType& Tuple) noexcept
         {
             return static_cast<TTupleLeaf<Index, ElementType>&>(Tuple).Value;
         }
 
         template<typename TupleType>
-        NODISCARD static FORCEINLINE const ElementType& Get(const TupleType& Tuple) noexcept
+        NODISCARD static FORCEINLINE const auto& GetByIndex(const TupleType& Tuple) noexcept
         {
             return static_cast<const TTupleLeaf<Index, ElementType>&>(Tuple).Value;
         }
@@ -125,16 +126,16 @@ namespace TupleInternal
     {
         typedef WantedType Type;
 
-        enum { ElementIndex = Iteration };
+        static constexpr uint32 ElementIndex = Iteration;
 
         template <typename TupleType>
-        NODISCARD static FORCEINLINE WantedType& Get(TupleType& Tuple) noexcept
+        NODISCARD static FORCEINLINE auto& GetByType(TupleType& Tuple) noexcept
         {
             return static_cast<TTupleLeaf<Iteration, WantedType>&>(Tuple).Value;
         }
 
         template <typename TupleType>
-        NODISCARD static FORCEINLINE const WantedType& Get(const TupleType& Tuple) noexcept
+        NODISCARD static FORCEINLINE const auto& GetByType(const TupleType& Tuple) noexcept
         {
             return static_cast<const TTupleLeaf<Iteration, WantedType>&>(Tuple).Value;
         }
@@ -172,17 +173,17 @@ namespace TupleInternal
 
     public:
         template<typename ElementType>
-        NODISCARD FORCEINLINE ElementType& Get() noexcept
+        NODISCARD FORCEINLINE auto& GetByType() noexcept
         {
             typedef TTupleGetByElement<ElementType, Types...> Type;
-            return Type::Get(*this);
+            return Type::GetByType(*this);
         }
 
         template<typename ElementType>
-        NODISCARD FORCEINLINE const ElementType& Get() const noexcept
+        NODISCARD FORCEINLINE const auto& GetByType() const noexcept
         {
             typedef TTupleGetByElement<ElementType, Types...> Type;
-            return Type::Get(*this);
+            return Type::GetByType(*this);
         }
 
     public:
@@ -190,14 +191,14 @@ namespace TupleInternal
         NODISCARD FORCEINLINE auto& GetByIndex() noexcept
         {
             typedef TTupleGetByIndex<Index, Types...> IndexType;
-            return IndexType::Get(*this);
+            return IndexType::GetByIndex(*this);
         }
 
         template<uint32 Index>
         NODISCARD FORCEINLINE const auto& GetByIndex() const noexcept
         {
             typedef TTupleGetByIndex<Index, Types...> IndexType;
-            return IndexType::Get(*this);
+            return IndexType::GetByIndex(*this);
         }
 
     public:
@@ -238,12 +239,12 @@ namespace TupleInternal
         {
             typedef FirstType Type;
 
-            NODISCARD static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE auto& GetByIndex(TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
 
-            NODISCARD static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE const auto& GetByIndex(const TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
@@ -254,18 +255,18 @@ namespace TupleInternal
         {
             typedef SecondType Type;
 
-            NODISCARD static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE auto& GetByIndex(TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
 
-            NODISCARD static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE const auto& GetByIndex(const TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
         };
 
-        template<typename T, bool IsFirstType>
+        template<typename T, bool bIsFirstType>
         struct TGetByElement;
 
         template<typename T>
@@ -276,12 +277,12 @@ namespace TupleInternal
         {
             typedef FirstType Type;
 
-            NODISCARD static FORCEINLINE FirstType& Get(TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE auto& GetByType(TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
 
-            NODISCARD static FORCEINLINE const FirstType& Get(const TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE const auto& GetByType(const TTupleStorage& Tuple)
             {
                 return Tuple.First;
             }
@@ -292,12 +293,12 @@ namespace TupleInternal
         {
             typedef SecondType Type;
 
-            NODISCARD static FORCEINLINE SecondType& Get(TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE auto& GetByType(TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
 
-            NODISCARD static FORCEINLINE const SecondType& Get(const TTupleStorage& Tuple)
+            NODISCARD static FORCEINLINE const auto& GetByType(const TTupleStorage& Tuple)
             {
                 return Tuple.Second;
             }
@@ -332,28 +333,28 @@ namespace TupleInternal
 
     public:
         template<typename ElementType> 
-        NODISCARD FORCEINLINE typename TGetByElementHelper<ElementType>::Type& Get() noexcept
+        NODISCARD FORCEINLINE auto& GetByType() noexcept
         {
-            return TGetByElementHelper<ElementType>::Get(*this);
+            return TGetByElementHelper<ElementType>::GetByType(*this);
         }
 
         template<typename ElementType> 
-        NODISCARD FORCEINLINE const typename TGetByElementHelper<ElementType>::Type& Get() const noexcept
+        NODISCARD FORCEINLINE const auto& GetByType() const noexcept
         {
-            return TGetByElementHelper<ElementType>::Get(*this);
+            return TGetByElementHelper<ElementType>::GetByType(*this);
         }
 
     public:
         template<uint32 Index> 
-        NODISCARD FORCEINLINE typename TGetByIndexHelper<Index>::Type& GetByIndex() noexcept
+        NODISCARD FORCEINLINE auto& GetByIndex() noexcept
         {
-            return TGetByIndexHelper<Index>::Get(*this);
+            return TGetByIndexHelper<Index>::GetByIndex(*this);
         }
 
         template<uint32 Index> 
-        NODISCARD FORCEINLINE const typename TGetByIndexHelper<Index>::Type& GetByIndex() const noexcept
+        NODISCARD FORCEINLINE const auto& GetByIndex() const noexcept
         {
-            return TGetByIndexHelper<Index>::Get(*this);
+            return TGetByIndexHelper<Index>::GetByIndex(*this);
         }
 
     public:
@@ -393,21 +394,21 @@ namespace TupleInternal
         template<typename FirstTupleType, typename SecondTupleType>
         NODISCARD static FORCEINLINE bool IsEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
-            static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
+            static_assert(FirstTupleType::StaticSize() == SecondTupleType::StaticSize(), "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() == RHS.template GetByIndex<Index - 1>());
         }
 
         template<typename FirstTupleType, typename SecondTupleType>
         NODISCARD static FORCEINLINE bool IsLessThan(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
-            static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
+            static_assert(FirstTupleType::StaticSize() == SecondTupleType::StaticSize(), "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThan(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() < RHS.template GetByIndex<Index - 1>());
         }
 
         template<typename FirstTupleType, typename SecondTupleType>
         NODISCARD static FORCEINLINE bool IsLessThanOrEqual(const FirstTupleType& LHS, const SecondTupleType& RHS)
         {
-            static_assert(FirstTupleType::NumElements == SecondTupleType::NumElements, "Tuples must have equal size");
+            static_assert(FirstTupleType::StaticSize() == SecondTupleType::StaticSize(), "Tuples must have equal size");
             return TTupleComparators<Index - 1>::IsLessThanOrEqual(LHS, RHS) && (LHS.template GetByIndex<Index - 1>() <= RHS.template GetByIndex<Index - 1>());
         }
     };
@@ -443,11 +444,18 @@ class TTuple : public TupleInternal::TTupleStorage<TMakeIntegerSequence<uint32, 
 public:
     using Super::ApplyAfter;
     using Super::ApplyBefore;
-    using Super::Get;
+    using Super::GetByType;
     using Super::GetByIndex;
     using Super::Swap;
 
-    inline static constexpr uint32 NumElements = sizeof...(Types);
+    /**
+     * @brief  - Retrieve the number of elements 
+     * @return - Returns the number of elements for the tuples
+     */
+    NODISCARD static constexpr uint32 StaticSize()
+    {
+        return sizeof...(Types);
+    }
 
     TTuple() = default;
     TTuple(TTuple&&) = default;
@@ -461,8 +469,8 @@ public:
      * @param Args - Arguments for each type
      */
     template<typename... ArgTypes>
-    FORCEINLINE explicit TTuple(ArgTypes&&... Args) requires(NumElements > 0)
-        : Super(::Forward<ArgTypes>(Args)...)
+    FORCEINLINE explicit TTuple(ArgTypes&&... Args)
+        : Super(Forward<ArgTypes>(Args)...)
     {
     }
 
@@ -472,7 +480,37 @@ public:
      */
     NODISCARD constexpr uint32 Size() const
     {
-        return NumElements;
+        return StaticSize();
+    }
+};
+
+template<>
+class TTuple<>
+{
+public:
+    /**
+     * @brief  - Retrieve the number of elements 
+     * @return - Returns the number of elements for the tuples
+     */
+    NODISCARD static constexpr uint32 StaticSize()
+    {
+        return 0;
+    }
+
+    TTuple() = default;
+    TTuple(const TTuple&) = default;
+    TTuple(TTuple&&) = default;
+
+    TTuple& operator=(const TTuple&) = default;
+    TTuple& operator=(TTuple&&) = default;
+
+    /**
+     * @brief  - Retrieve the number of elements 
+     * @return - Returns the number of elements for the tuples
+     */
+    NODISCARD constexpr uint32 Size() const
+    {
+        return StaticSize();
     }
 };
 
@@ -513,19 +551,19 @@ NODISCARD inline bool operator>=(const TTuple<FirstTypes...>& LHS, const TTuple<
 }
 
 template<uint32 SearchForIndex, typename... Types>
-NODISCARD inline auto& TupleGetByIndex(const TTuple<Types...>& Tuple) noexcept
+NODISCARD inline auto& GetByIndex(const TTuple<Types...>& Tuple) noexcept
 {
     return Tuple.template GetByIndex<SearchForIndex>();
 }
 
 template<typename ElementType, typename... Types>
-NODISCARD inline auto& TupleGet(const TTuple<Types...>& Tuple) noexcept
+NODISCARD inline auto& GetByType(const TTuple<Types...>& Tuple) noexcept
 {
-    return Tuple.template Get<ElementType>();
+    return Tuple.template GetByType<ElementType>();
 }
 
 template<typename... Types>
-NODISCARD inline TTuple<Types...> MakeTuple(Types&&... InTypes) noexcept
+NODISCARD inline TTuple<typename TDecay<Types>::Type...> MakeTuple(Types&&... InTypes) noexcept
 {
-    return TTuple<Types...>(Forward<Types>(InTypes)...);
+    return TTuple<typename TDecay<Types>::Type...>(Forward<Types>(InTypes)...);
 }

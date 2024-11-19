@@ -1,5 +1,5 @@
 #pragma once
-#include "Array.h"
+#include "Core/Containers/Array.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Threading/Atomic.h"
 #include "Core/Platform/PlatformMisc.h"
@@ -33,7 +33,7 @@ public:
      */
     TQueue()
     {
-        // Create a Node here to more easily handle edge-cases
+        // Create a Node here to more easily handle edge cases
         Head = new FNode();
         Tail = Head;
     }
@@ -59,7 +59,7 @@ public:
     bool Dequeue(ElementType& OutElement)
     {
         FNode* NextNode;
-        if constexpr(QueueType == EQueueType::SPMC)
+        if constexpr (QueueType == EQueueType::SPMC)
         {
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -75,7 +75,7 @@ public:
         }
 
         // Move the item and "reset" it
-        OutElement = ::Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
+        OutElement = Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
         
         // Set the next node
         FNode* PreviousTail;
@@ -101,7 +101,7 @@ public:
     bool Dequeue()
     {
         FNode* NextNode;
-        if constexpr(QueueType == EQueueType::SPMC)
+        if constexpr (QueueType == EQueueType::SPMC)
         {
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -156,12 +156,12 @@ public:
         NumElements = 0;
         OutArray.Reserve(LocalNumElements);
         
-        // Insert all the elements in the array
+        // Add all the elements to the array
         FNode* CurrentTail  = TailToDequeue;
         FNode* PreviousTail = nullptr;
         while (CurrentTail)
         {
-            OutArray.Add(::Move(*reinterpret_cast<ElementType*>(CurrentTail->Item.Data)));
+            OutArray.Add(Move(*reinterpret_cast<ElementType*>(CurrentTail->Item.Data)));
             PreviousTail = CurrentTail;
             CurrentTail  = CurrentTail->NextNode;
             DeleteNode(PreviousTail);
@@ -194,7 +194,7 @@ public:
      */
     bool Enqueue(ElementType&& Item)
     {
-        return Emplace(::Forward<ElementType>(Item));
+        return Emplace(Forward<ElementType>(Item));
     }
 
     /**
@@ -203,9 +203,9 @@ public:
      * @return     - Returns true if the element was successfully pushed
      */
     template<typename... ArgTypes>
-    bool Emplace(ArgTypes&&... Args) noexcept
+    bool Emplace(ArgTypes&&... Args)
     {
-        FNode* NewNode = CreateNode(::Forward<ArgTypes>(Args)...);
+        FNode* NewNode = CreateNode(Forward<ArgTypes>(Args)...);
         if (NewNode == nullptr)
         {
             return false;
@@ -233,7 +233,7 @@ public:
      */
     bool IsEmpty() const
     {
-        return NumElements.Load() == 0;;
+        return NumElements.Load() == 0;
     }
     
     /**
@@ -274,8 +274,8 @@ public:
     }
 
     /**
-    * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
-    */
+     * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
+     */
     const ElementType* Peek() const
     {
         if (Tail->NextNode == nullptr)
@@ -292,7 +292,7 @@ private:
     {
         // Construct the new Item
         FNode* Result = new FNode();
-        new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
+        new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(Forward<ArgTypes>(Args)...);
         return Result;
     }
 
@@ -306,5 +306,5 @@ private:
 
     FNode* volatile Head{nullptr};
     FNode* volatile Tail{nullptr};
-    FAtomicInt32 NumElements;
+    FAtomicInt32    NumElements;
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "Iterator.h"
+#include "Core/Containers/Iterator.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/ObjectHandling.h"
@@ -27,7 +27,7 @@ public:
      * @param Address - Address to check.
      * @return        - Returns true if the address belongs to the array
      */
-    NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const noexcept
+    NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const
     {
         return (Address >= Elements) && (Address < (Elements + NUM_ELEMENTS));
     }
@@ -36,7 +36,7 @@ public:
      * @brief  - Checks if an index is a valid index
      * @return - Returns true if the index is valid
      */
-    NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const noexcept
+    NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
     {
         return (Index >= 0) && (Index < NUM_ELEMENTS);
     }
@@ -45,7 +45,7 @@ public:
      * @brief  - Retrieve the first element of the array
      * @return - Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE ElementType& FirstElement() noexcept
+    NODISCARD FORCEINLINE ElementType& FirstElement()
     {
         return Elements[0];
     }
@@ -54,7 +54,7 @@ public:
      * @brief  - Retrieve the first element of the array
      * @return - Returns a reference to the first element of the array
      */
-    NODISCARD FORCEINLINE const ElementType& FirstElement() const noexcept
+    NODISCARD FORCEINLINE const ElementType& FirstElement() const
     {
         return Elements[0];
     }
@@ -63,7 +63,7 @@ public:
      * @brief  - Retrieve the last element of the array
      * @return - Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE ElementType& LastElement() noexcept
+    NODISCARD FORCEINLINE ElementType& LastElement()
     {
         return Elements[NUM_ELEMENTS - 1];
     }
@@ -72,7 +72,7 @@ public:
      * @brief  - Retrieve the last element of the array
      * @return - Returns a reference to the last element of the array
      */
-    NODISCARD FORCEINLINE const ElementType& LastElement() const noexcept
+    NODISCARD FORCEINLINE const ElementType& LastElement() const
     {
         return Elements[NUM_ELEMENTS - 1];
     }
@@ -81,7 +81,7 @@ public:
      * @brief              - Fill the container with the specified value
      * @param InputElement - Element to copy into all elements in the array
      */
-    FORCEINLINE void Fill(const ElementType& InputElement) noexcept
+    FORCEINLINE void Fill(const ElementType& InputElement)
     {
         ::AssignObjects(Elements, InputElement, NUM_ELEMENTS);
     }
@@ -100,7 +100,7 @@ public:
      * @param Element - Element to search for
      * @return        - The index of the element if found or -1 if not
      */
-    NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& Element) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& Element) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
@@ -114,12 +114,12 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the element that satisfy the conditions of a comparator
+     * @brief           - Returns the index of the element that satisfies the conditions of a comparator
      * @param Predicate - Callable that compares an element in the array against some condition
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
@@ -137,7 +137,7 @@ public:
      * @param Element - Element to search for
      * @return        - The index of the element if found or -1 if not
      */
-    NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& Element) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& Element) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
@@ -152,12 +152,12 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the element that satisfy the conditions of a comparator
+     * @brief           - Returns the index of the element that satisfies the conditions of a comparator
      * @param Predicate - Callable that compares an element in the array against some condition
      * @return          - The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const noexcept
+    NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
@@ -176,7 +176,7 @@ public:
      * @param Element - Element to check for
      * @return        - Returns true if the element is found in the array and false if not
      */
-    NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const noexcept
+    NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const
     {
         return Find(Element) != INVALID_INDEX;
     }
@@ -187,19 +187,19 @@ public:
      * @return          - Returns true if the comparator returned true for one element
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const noexcept
+    NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const
     {
-        return FindWithPredicate(::Forward<PredicateType>(Predicate)) != INVALID_INDEX;
+        return FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX;
     }
 
     /**
      * @brief         - Perform some function on each element in the array
-     * @param Functor - Callable that takes one element and perform some operation on it
+     * @param Functor - Callable that takes one element and performs some operation on it
      */
     template<class LambdaType>
     FORCEINLINE void Foreach(LambdaType&& Lambda)
     {
-        for (const ElementType* RESTRICT Current = Elements, *RESTRICT End = Current + NUM_ELEMENTS; Current != End; ++Current)
+        for (ElementType* RESTRICT Current = Elements, *RESTRICT End = Current + NUM_ELEMENTS; Current != End; ++Current)
         {
             Lambda(*Current);
         }
@@ -207,10 +207,10 @@ public:
 
     /**
      * @brief             - Swap two elements with each other
-     * @param FirstIndex  - Index to the first element to Swap
-     * @param SecondIndex - Index to the second element to Swap
+     * @param FirstIndex  - Index to the first element to swap
+     * @param SecondIndex - Index to the second element to swap
      */
-    FORCEINLINE void Swap(SIZETYPE FirstIndex, SIZETYPE SecondIndex) noexcept
+    FORCEINLINE void Swap(SIZETYPE FirstIndex, SIZETYPE SecondIndex)
     {
         CHECK(IsValidIndex(FirstIndex));
         CHECK(IsValidIndex(SecondIndex));
@@ -221,7 +221,7 @@ public:
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE ElementType* Data() noexcept
+    NODISCARD FORCEINLINE ElementType* Data()
     {
         return Elements;
     }
@@ -230,7 +230,7 @@ public:
      * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the data of the array
      */
-    NODISCARD FORCEINLINE const ElementType* Data() const noexcept
+    NODISCARD FORCEINLINE const ElementType* Data() const
     {
         return Elements;
     }
@@ -242,7 +242,7 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the element at the index
      */
-    NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index) noexcept
+    NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
     {
         CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
@@ -253,7 +253,7 @@ public:
      * @param Index - Index of the element to retrieve
      * @return      - A reference to the element at the index
      */
-    NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const noexcept
+    NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
     {
         CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
@@ -265,7 +265,7 @@ public:
      * @return      - Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE bool operator==(const ArrayType& Other) const noexcept requires(TIsTArrayType<ArrayType>::Value)
+    NODISCARD FORCEINLINE bool operator==(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
     {
         return (NUM_ELEMENTS == FArrayContainerHelper::Size(Other)) ? ::CompareObjects<ElementType>(Elements, FArrayContainerHelper::Data(Other), NUM_ELEMENTS) : false;
     }
@@ -276,7 +276,7 @@ public:
      * @return      - Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
-    NODISCARD FORCEINLINE bool operator!=(const ArrayType& Other) const noexcept requires(TIsTArrayType<ArrayType>::Value)
+    NODISCARD FORCEINLINE bool operator!=(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
     {
         return !(*this == Other);
     }
@@ -285,9 +285,9 @@ public:
 
     /**
      * @brief  - Retrieve the last index that can be used to retrieve an element from the array
-     * @return - Returns a the index to the last element of the array
+     * @return - Returns the index to the last element of the array
      */
-    NODISCARD constexpr SIZETYPE LastElementIndex() const noexcept
+    NODISCARD constexpr SIZETYPE LastElementIndex() const
     {
         return NUM_ELEMENTS - 1;
     }
@@ -296,7 +296,7 @@ public:
      * @brief  - Returns the size of the container
      * @return - The current size of the container
      */
-    NODISCARD constexpr SIZETYPE Size() const noexcept
+    NODISCARD constexpr SIZETYPE Size() const
     {
         return NUM_ELEMENTS;
     }
@@ -305,7 +305,7 @@ public:
      * @brief  - Returns the size of the container in bytes
      * @return - The current size of the container in bytes
      */
-    NODISCARD constexpr SIZETYPE SizeInBytes() const noexcept
+    NODISCARD constexpr SIZETYPE SizeInBytes() const
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }
@@ -314,7 +314,7 @@ public:
      * @brief  - Returns the capacity of the container
      * @return - The current capacity of the container
      */
-    NODISCARD constexpr SIZETYPE Capacity() const noexcept
+    NODISCARD constexpr SIZETYPE Capacity() const
     {
         return NUM_ELEMENTS;
     }
@@ -323,7 +323,7 @@ public:
      * @brief  - Returns the capacity of the container in bytes
      * @return - The current capacity of the container in bytes
      */
-    NODISCARD constexpr SIZETYPE CapacityInBytes() const noexcept
+    NODISCARD constexpr SIZETYPE CapacityInBytes() const
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }
@@ -331,22 +331,22 @@ public:
 public:
 
     // Iterators
-    NODISCARD FORCEINLINE IteratorType Iterator() noexcept
+    NODISCARD FORCEINLINE IteratorType Iterator()
     {
         return IteratorType(*this, 0);
     }
 
-    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
         return ConstIteratorType(*this, 0);
     }
 
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
         return ReverseIteratorType(*this, NUM_ELEMENTS);
     }
 
-    NODISCARD  ReverseConstIteratorType ConstReverseIterator() const noexcept
+    NODISCARD ReverseConstIteratorType ConstReverseIterator() const
     {
         return ReverseConstIteratorType(*this, NUM_ELEMENTS);
     }
@@ -354,11 +354,11 @@ public:
 public:
 
     // STL Iterators
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
+    NODISCARD FORCEINLINE IteratorType      begin()       { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const { return ConstIterator(); }
 
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, NUM_ELEMENTS); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, NUM_ELEMENTS); }
+    NODISCARD FORCEINLINE IteratorType      end()       { return IteratorType(*this, NUM_ELEMENTS); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const { return ConstIteratorType(*this, NUM_ELEMENTS); }
 
 public:
     ElementType Elements[NUM_ELEMENTS];

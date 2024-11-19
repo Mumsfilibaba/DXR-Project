@@ -1,5 +1,5 @@
 #pragma once
-#include "Iterator.h"
+#include "Core/Containers/Iterator.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Templates/BitReference.h"
@@ -27,7 +27,7 @@ public:
     /**
      * @brief - Default constructor
      */
-    constexpr TStaticBitArray() noexcept
+    constexpr TStaticBitArray()
         : Integers()
     {
     }
@@ -36,7 +36,7 @@ public:
      * @brief         - Constructor that sets the elements based on an integer
      * @param InValue - Integer containing bits to set to the BitArray
      */
-    constexpr explicit TStaticBitArray(InIntegerType InValue) noexcept
+    constexpr explicit TStaticBitArray(InIntegerType InValue)
         : Integers()
     {
         Reset();
@@ -45,11 +45,11 @@ public:
     }
 
     /**
-     * @brief           - Constructor that sets the elements based on an integer
+     * @brief           - Constructor that sets the elements based on an integer array
      * @param InValues  - Integers containing bits to set to the BitArray
      * @param NumValues - Number of values in the input array
      */
-    constexpr explicit TStaticBitArray(const InIntegerType* InValues, SIZETYPE NumValues) noexcept
+    constexpr explicit TStaticBitArray(const InIntegerType* InValues, SIZETYPE NumValues)
         : Integers()
     {
         Reset();
@@ -64,11 +64,11 @@ public:
     }
 
     /**
-     * @brief          - Constructor that sets a certain number of bits to specified value
-     * @param bValue   - Value to set bits to
-     * @param NUM_BITS - Number of bits to set
+     * @brief           - Constructor that sets a certain number of bits to a specified value
+     * @param InNumBits - Number of bits to set
+     * @param bValue    - Value to set bits to
      */
-    constexpr explicit TStaticBitArray(SIZETYPE InNumBits, bool bValue) noexcept
+    constexpr explicit TStaticBitArray(SIZETYPE InNumBits, bool bValue)
         : Integers()
     {
         Reset();
@@ -80,10 +80,10 @@ public:
     }
 
     /**
-     * @brief          - Constructor that creates a BitArray from a list of booleans indicating the sign of the bit
-     * @param InitList - Contains bools to indicate the sign of each bit
+     * @brief          - Constructor that creates a BitArray from a list of booleans indicating the state of the bit
+     * @param InitList - Contains bools to indicate the state of each bit
      */
-    constexpr TStaticBitArray(std::initializer_list<bool> InitList) noexcept
+    constexpr TStaticBitArray(std::initializer_list<bool> InitList)
         : Integers()
     {
         Reset();
@@ -96,7 +96,7 @@ public:
     }
 
     /**
-     * @brief - Resets the all the bits to zero
+     * @brief - Resets all the bits to zero
      */
     constexpr void Reset()
     {
@@ -111,7 +111,7 @@ public:
      * @param BitPosition - Position of the bit to set
      * @param bValue      - Value to assign to the bit
      */
-    constexpr void AssignBit(SIZETYPE BitPosition, const bool bValue) noexcept
+    constexpr void AssignBit(SIZETYPE BitPosition, const bool bValue)
     {
         if (BitPosition < NUM_BITS)
         {
@@ -121,9 +121,9 @@ public:
 
     /**
      * @brief             - Flips the bit at the position
-     * @param BitPosition - Position of the bit to set
+     * @param BitPosition - Position of the bit to flip
      */
-    constexpr void FlipBit(SIZETYPE BitPosition) noexcept
+    constexpr void FlipBit(SIZETYPE BitPosition)
     {
         if (BitPosition < NUM_BITS)
         {
@@ -138,7 +138,7 @@ public:
      * @brief  - Count the number of bits that are assigned
      * @return - Returns the number of bits that are true
      */
-    NODISCARD constexpr SIZETYPE CountAssignedBits() const noexcept
+    NODISCARD constexpr SIZETYPE CountAssignedBits() const
     {
         SIZETYPE BitCount = 0;
         for (SIZETYPE Index = 0; Index < NumIntegers(); ++Index)
@@ -154,7 +154,7 @@ public:
      * @brief  - Check if any bit is set
      * @return - Returns true if any bit is set
      */
-    NODISCARD constexpr bool HasAnyBitSet() const noexcept
+    NODISCARD constexpr bool HasAnyBitSet() const
     {
         return CountAssignedBits() != 0;
     }
@@ -163,13 +163,13 @@ public:
      * @brief  - Check if no bit is set
      * @return - Returns true if no bit is set
      */
-    NODISCARD constexpr bool HasNoBitSet() const noexcept
+    NODISCARD constexpr bool HasNoBitSet() const
     {
         return CountAssignedBits() == 0;
     }
 
     /**
-     * @brief  - Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
+     * @brief  - Retrieve the most significant bit. Will return zero if no bits are set; check HasAnyBitSet.
      * @return - Returns the index of the most significant bit
      */
     NODISCARD constexpr SIZETYPE MostSignificant() const
@@ -190,7 +190,7 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
+     * @brief  - Retrieve the least significant bit. Will return zero if no bits are set; check HasAnyBitSet.
      * @return - Returns the index of the least significant bit
      */
     NODISCARD constexpr SIZETYPE LeastSignificant() const
@@ -214,7 +214,7 @@ public:
      * @brief       - Perform a bitwise AND between this and another BitArray
      * @param Other - BitArray to perform bitwise AND with
      */
-    constexpr void BitwiseAnd(const TStaticBitArray& Other) noexcept
+    constexpr void BitwiseAnd(const TStaticBitArray& Other)
     {
         for (SIZETYPE Index = 0; Index < Capacity(); Index++)
         {
@@ -226,7 +226,7 @@ public:
      * @brief       - Perform a bitwise OR between this and another BitArray
      * @param Other - BitArray to perform bitwise OR with
      */
-    constexpr void BitwiseOr(const TStaticBitArray& Other) noexcept
+    constexpr void BitwiseOr(const TStaticBitArray& Other)
     {
         for (SIZETYPE Index = 0; Index < Capacity(); Index++)
         {
@@ -238,19 +238,18 @@ public:
      * @brief       - Perform a bitwise XOR between this and another BitArray
      * @param Other - BitArray to perform bitwise XOR with
      */
-    constexpr void BitwiseXor(const TStaticBitArray& Other) noexcept
+    constexpr void BitwiseXor(const TStaticBitArray& Other)
     {
         for (SIZETYPE Index = 0; Index < Capacity(); Index++)
         {
-            Integers[Index] |= Other.Integers[Index];
+            Integers[Index] ^= Other.Integers[Index];
         }
     }
 
     /**
-     * @brief       - Perform a bitwise NOT on each bit in this BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief - Perform a bitwise NOT on each bit in this BitArray
      */
-    constexpr void BitwiseNot() noexcept
+    constexpr void BitwiseNot()
     {
         for (SIZETYPE Index = 0; Index < Capacity(); Index++)
         {
@@ -262,7 +261,7 @@ public:
      * @brief       - Perform a right BitShift
      * @param Steps - Number of steps to shift
      */
-    constexpr void BitshiftRight(SIZETYPE Steps) noexcept
+    constexpr void BitshiftRight(SIZETYPE Steps)
     {
         if (Steps)
         {
@@ -274,7 +273,7 @@ public:
      * @brief       - Perform a left BitShift
      * @param Steps - Number of steps to shift
      */
-    constexpr void BitshiftLeft(SIZETYPE Steps) noexcept
+    constexpr void BitshiftLeft(SIZETYPE Steps)
     {
         if (Steps)
         {
@@ -285,11 +284,11 @@ public:
 public:
 
     /**
-     * @brief       - Retrieve a bit with a certain index
-     * @param Index - Index to the bit
-     * @return      - Returns a BitReference to the specified bit
+     * @brief          - Retrieve a bit with a certain index
+     * @param BitIndex - Index to the bit
+     * @return         - Returns a BitReference to the specified bit
      */
-    NODISCARD constexpr BitReferenceType operator[](SIZETYPE BitIndex) noexcept
+    NODISCARD constexpr BitReferenceType operator[](SIZETYPE BitIndex)
     {
         CHECK(BitIndex < NUM_BITS);
         const SIZETYPE ElementIndex = GetIntegersIndexOfBit(BitIndex);
@@ -298,11 +297,11 @@ public:
     }
 
     /**
-     * @brief       - Retrieve a bit with a certain index
-     * @param Index - Index to the bit
-     * @return      - Returns a BitReference to the specified bit
+     * @brief          - Retrieve a bit with a certain index
+     * @param BitIndex - Index to the bit
+     * @return         - Returns a BitReference to the specified bit
      */
-    NODISCARD constexpr ConstBitReferenceType operator[](SIZETYPE BitIndex) const noexcept
+    NODISCARD constexpr ConstBitReferenceType operator[](SIZETYPE BitIndex) const
     {
         CHECK(BitIndex < NUM_BITS);
         const SIZETYPE ElementIndex = GetIntegersIndexOfBit(BitIndex);
@@ -315,7 +314,7 @@ public:
      * @param Other - Right-hand side to compare
      * @return      - Returns true if the BitArrays are equal
      */
-    NODISCARD constexpr bool operator==(const TStaticBitArray& Other) const noexcept
+    NODISCARD constexpr bool operator==(const TStaticBitArray& Other) const
     {
         constexpr SIZETYPE ThisCapacity = NumIntegers();
         if (ThisCapacity != Other.NumIntegers())
@@ -339,7 +338,7 @@ public:
      * @param Other - Right-hand side to compare
      * @return      - Returns false if the BitArrays are equal
      */
-    NODISCARD constexpr bool operator!=(const TStaticBitArray& Other) const noexcept
+    NODISCARD constexpr bool operator!=(const TStaticBitArray& Other) const
     {
         return !(*this == Other);
     }
@@ -349,7 +348,7 @@ public:
      * @param Other - BitArray to perform bitwise AND with
      * @return      - Returns a reference to this BitArray
      */
-    constexpr TStaticBitArray& operator&=(const TStaticBitArray& Other) noexcept
+    constexpr TStaticBitArray& operator&=(const TStaticBitArray& Other)
     {
         BitwiseAnd(Other);
         return *this;
@@ -360,7 +359,7 @@ public:
      * @param Other - BitArray to perform bitwise OR with
      * @return      - Returns a reference to this BitArray
      */
-    constexpr TStaticBitArray& operator|=(const TStaticBitArray& Other) noexcept
+    constexpr TStaticBitArray& operator|=(const TStaticBitArray& Other)
     {
         BitwiseOr(Other);
         return *this;
@@ -371,17 +370,16 @@ public:
      * @param Other - BitArray to perform bitwise XOR with
      * @return      - Returns a reference to this BitArray
      */
-    constexpr TStaticBitArray& operator^=(const TStaticBitArray& Other) noexcept
+    constexpr TStaticBitArray& operator^=(const TStaticBitArray& Other)
     {
         BitwiseXor(Other);
         return *this;
     }
 
     /**
-     * @brief       - Perform a bitwise NOT on each bit in this BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief - Perform a bitwise NOT on each bit in this BitArray
      */
-    constexpr TStaticBitArray operator~() const noexcept
+    constexpr TStaticBitArray operator~() const
     {
         TStaticBitArray NewArray(*this);
         NewArray.BitwiseNot();
@@ -390,59 +388,59 @@ public:
 
     /**
      * @brief       - Perform a bitshift right
-     * @param Other - Number of steps to bitshift
+     * @param Steps - Number of steps to bitshift
      * @return      - Returns a copy that is bitshifted to the right
      */
-    constexpr TStaticBitArray operator>>(SIZETYPE Other) const noexcept
+    constexpr TStaticBitArray operator>>(SIZETYPE Steps) const
     {
         TStaticBitArray NewArray(*this);
-        NewArray.BitshiftRight(Other);
+        NewArray.BitshiftRight(Steps);
         return NewArray;
     }
 
     /**
      * @brief       - Perform a bitshift right
-     * @param Other - Number of steps to bitshift
+     * @param Steps - Number of steps to bitshift
      * @return      - Returns a reference to this object
      */
-    constexpr TStaticBitArray& operator>>=(SIZETYPE Other) const noexcept
+    constexpr TStaticBitArray& operator>>=(SIZETYPE Steps)
     {
-        BitshiftRight(Other);
+        BitshiftRight(Steps);
         return *this;
     }
 
     /**
      * @brief       - Perform a bitshift left
-     * @param Other - Number of steps to bitshift
+     * @param Steps - Number of steps to bitshift
      * @return      - Returns a copy that is bitshifted to the left
      */
-    constexpr TStaticBitArray operator<<(SIZETYPE Other) const noexcept
+    constexpr TStaticBitArray operator<<(SIZETYPE Steps) const
     {
         TStaticBitArray NewArray(*this);
-        NewArray.BitshiftLeft(Other);
+        NewArray.BitshiftLeft(Steps);
         return NewArray;
     }
 
     /**
      * @brief       - Perform a bitshift left
-     * @param Other - Number of steps to bitshift
+     * @param Steps - Number of steps to bitshift
      * @return      - Returns a reference to this object
      */
-    constexpr TStaticBitArray& operator<<=(SIZETYPE Other) const noexcept
+    constexpr TStaticBitArray& operator<<=(SIZETYPE Steps)
     {
-        BitshiftLeft(Other);
+        BitshiftLeft(Steps);
         return *this;
     }
 
 public:
 
     /**
-     * @brief     - Bitwise AND operator, perform a bitwise AND between this and another BitArray
+     * @brief     - Bitwise AND operator, perform a bitwise AND between two BitArrays
      * @param LHS - Left-hand side to bitwise AND with
      * @param RHS - Right-hand side to bitwise AND with
      * @return    - Returns a BitArray with the result
      */
-    NODISCARD friend constexpr TStaticBitArray operator&(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
+    NODISCARD friend constexpr TStaticBitArray operator&(const TStaticBitArray& LHS, const TStaticBitArray& RHS)
     {
         TStaticBitArray NewArray(LHS);
         NewArray.BitwiseAnd(RHS);
@@ -450,12 +448,12 @@ public:
     }
 
     /**
-     * @brief     - Bitwise OR operator, perform a bitwise OR between this and another BitArray
+     * @brief     - Bitwise OR operator, perform a bitwise OR between two BitArrays
      * @param LHS - Left-hand side to bitwise OR with
      * @param RHS - Right-hand side to bitwise OR with
      * @return    - Returns a BitArray with the result
      */
-    NODISCARD friend constexpr TStaticBitArray operator|(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
+    NODISCARD friend constexpr TStaticBitArray operator|(const TStaticBitArray& LHS, const TStaticBitArray& RHS)
     {
         TStaticBitArray NewArray(LHS);
         NewArray.BitwiseOr(RHS);
@@ -463,12 +461,12 @@ public:
     }
 
     /**
-     * @brief     - Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
+     * @brief     - Bitwise XOR operator, perform a bitwise XOR between two BitArrays
      * @param LHS - Left-hand side to bitwise XOR with
      * @param RHS - Right-hand side to bitwise XOR with
      * @return    - Returns a BitArray with the result
      */
-    NODISCARD friend constexpr TStaticBitArray operator^(const TStaticBitArray& LHS, const TStaticBitArray& RHS) noexcept
+    NODISCARD friend constexpr TStaticBitArray operator^(const TStaticBitArray& LHS, const TStaticBitArray& RHS)
     {
         TStaticBitArray NewArray(LHS);
         NewArray.BitwiseXor(RHS);
@@ -481,7 +479,7 @@ public:
      * @brief  - Retrieve the number of bits
      * @return - Returns the number of bits in the array
      */
-    NODISCARD constexpr SIZETYPE Size() const noexcept
+    NODISCARD constexpr SIZETYPE Size() const
     {
         return NUM_BITS;
     }
@@ -490,7 +488,7 @@ public:
      * @brief  - Retrieve the maximum number of bits
      * @return - Returns the maximum number of bits in the array
      */
-    NODISCARD constexpr SIZETYPE Capacity() const noexcept
+    NODISCARD constexpr SIZETYPE Capacity() const
     {
         return IntegerSize() * NumBitsPerInteger();
     }
@@ -499,7 +497,7 @@ public:
      * @brief  - Retrieve the number of integers used to store the bits
      * @return - Returns the number of integers used to store the bits
      */
-    NODISCARD constexpr SIZETYPE IntegerSize() const noexcept
+    NODISCARD constexpr SIZETYPE IntegerSize() const
     {
         return NumIntegers();
     }
@@ -508,25 +506,25 @@ public:
      * @brief  - Retrieve the capacity of the array in bytes
      * @return - Returns the capacity of the array in bytes
      */
-    NODISCARD constexpr SIZETYPE CapacityInBytes() const noexcept
+    NODISCARD constexpr SIZETYPE CapacityInBytes() const
     {
         return IntegerSize() * sizeof(InIntegerType);
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
+     * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD constexpr InIntegerType* Data() noexcept
+    NODISCARD constexpr InIntegerType* Data()
     {
         return Integers;
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
+     * @brief  - Retrieve the data of the array
      * @return - Returns a pointer to the stored data
      */
-    NODISCARD constexpr const InIntegerType* Data() const noexcept
+    NODISCARD constexpr const InIntegerType* Data() const
     {
         return Integers;
     }
@@ -534,22 +532,22 @@ public:
 public:
 
     // Iterators
-    NODISCARD FORCEINLINE IteratorType Iterator() noexcept
+    NODISCARD FORCEINLINE IteratorType Iterator()
     {
         return IteratorType(*this, 0);
     }
 
-    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
         return ConstIteratorType(*this, 0);
     }
 
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
         return ReverseIteratorType(*this, NUM_BITS);
     }
 
-    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const
     {
         return ReverseConstIteratorType(*this, NUM_BITS);
     }
@@ -557,45 +555,45 @@ public:
 public:
 
     // STL Iterators
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return Iterator(); }
+    NODISCARD FORCEINLINE IteratorType      begin()       { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const { return Iterator(); }
 
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, NUM_BITS); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, NUM_BITS); }
+    NODISCARD FORCEINLINE IteratorType      end()       { return IteratorType(*this, NUM_BITS); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const { return ConstIteratorType(*this, NUM_BITS); }
 
 private:
-    NODISCARD static constexpr SIZETYPE GetIntegersIndexOfBit(SIZETYPE BitIndex) noexcept
+    NODISCARD static constexpr SIZETYPE GetIntegersIndexOfBit(SIZETYPE BitIndex)
     {
         return BitIndex / NumBitsPerInteger();
     }
 
-    NODISCARD static constexpr SIZETYPE GetIndexOfBitInIntegers(SIZETYPE BitIndex) noexcept
+    NODISCARD static constexpr SIZETYPE GetIndexOfBitInIntegers(SIZETYPE BitIndex)
     {
         return BitIndex % NumBitsPerInteger();
     }
 
-    NODISCARD static constexpr SIZETYPE NumBitsPerInteger() noexcept
+    NODISCARD static constexpr SIZETYPE NumBitsPerInteger()
     {
         return sizeof(InIntegerType) * 8;
     }
 
-    NODISCARD static constexpr SIZETYPE NumIntegers() noexcept
+    NODISCARD static constexpr SIZETYPE NumIntegers()
     {
         return (NUM_BITS + (NumBitsPerInteger() - 1)) / NumBitsPerInteger();
     }
 
-    NODISCARD static constexpr InIntegerType CreateMaskForBit(SIZETYPE BitIndex) noexcept
+    NODISCARD static constexpr InIntegerType CreateMaskForBit(SIZETYPE BitIndex)
     {
         return InIntegerType(1) << GetIndexOfBitInIntegers(BitIndex);
     }
 
-    NODISCARD static constexpr InIntegerType CreateMaskUpToBit(SIZETYPE BitIndex) noexcept
+    NODISCARD static constexpr InIntegerType CreateMaskUpToBit(SIZETYPE BitIndex)
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
 private:
-    constexpr void AssignBitUnchecked(SIZETYPE BitPosition, const bool bValue) noexcept
+    constexpr void AssignBitUnchecked(SIZETYPE BitPosition, const bool bValue)
     {
         const SIZETYPE ElementIndex   = GetIntegersIndexOfBit(BitPosition);
         const SIZETYPE IndexInElement = GetIndexOfBitInIntegers(BitPosition);
@@ -605,7 +603,7 @@ private:
         Integers[ElementIndex] |= Value;
     }
 
-    constexpr void BitshiftRightUnchecked(SIZETYPE Steps, SIZETYPE StartBit = 0) noexcept
+    constexpr void BitshiftRightUnchecked(SIZETYPE Steps, SIZETYPE StartBit = 0)
     {
         const SIZETYPE StartElementIndex = GetIntegersIndexOfBit(StartBit);
         InIntegerType* Pointer = Integers + StartElementIndex;
@@ -654,7 +652,7 @@ private:
         }
     }
 
-    constexpr void BitshiftLeftUnchecked(SIZETYPE Steps, SIZETYPE StartBit = 0) noexcept
+    constexpr void BitshiftLeftUnchecked(SIZETYPE Steps, SIZETYPE StartBit = 0)
     {
         const SIZETYPE StartElementIndex = GetIntegersIndexOfBit(StartBit);
         InIntegerType* Pointer = Integers + StartElementIndex;

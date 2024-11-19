@@ -91,7 +91,7 @@ public:
             if (!CurrentQueue.IsEmpty())
             {
                 CHECK(OutElement != nullptr);
-                *OutElement = ::Move(CurrentQueue.FirstElement());
+                *OutElement = Move(CurrentQueue.FirstElement());
 
                 CurrentQueue.RemoveAt(0);
                 NumElements--;
