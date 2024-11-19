@@ -1,6 +1,6 @@
 #pragma once
-#include "Vector2.h"
-#include "VectorOp.h"
+#include "Core/Math/Vector2.h"
+#include "Core/Math/VectorMath/PlatformVectorMath.h"
 
 class VECTOR_ALIGN FMatrix2
 {

@@ -1,6 +1,6 @@
 #pragma once
-#include "Float.h"
-#include "Vector3.h"
+#include "Core/Math/Float.h"
+#include "Core/Math/Vector3.h"
 #include "Core/Templates/TypeHash.h"
 
 struct FR10G10B10A2

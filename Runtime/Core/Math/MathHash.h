@@ -1,8 +1,8 @@
 #pragma once
-#include "Vector2.h"
-#include "Vector3.h"
-#include "Vector4.h"
-#include "Float.h"
+#include "Core/Math/Vector2.h"
+#include "Core/Math/Vector3.h"
+#include "Core/Math/Vector4.h"
+#include "Core/Math/Float.h"
 #include "Core/Templates/TypeHash.h"
 
 inline uint64 GetHashForType(FFloat16 Value)

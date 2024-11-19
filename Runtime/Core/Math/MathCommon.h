@@ -16,17 +16,17 @@
 
 struct FMath
 {
-    inline static constexpr const double kPI            = 3.1415926535898;
-    inline static constexpr const double kE             = 2.7182818284590;
-    inline static constexpr const double kHalfPI        = kPI / 2.0f;
-    inline static constexpr const double kTwoPI         = kPI * 2.0;
-    inline static constexpr const double kOneDegree     = kPI / 180.0f;
+    inline static constexpr const double kPI        = 3.1415926535898;
+    inline static constexpr const double kE         = 2.7182818284590;
+    inline static constexpr const double kHalfPI    = kPI / 2.0f;
+    inline static constexpr const double kTwoPI     = kPI * 2.0;
+    inline static constexpr const double kOneDegree = kPI / 180.0f;
 
-    inline static constexpr const float kPI_f           = 3.141592653f;
-    inline static constexpr const float kE_f            = 2.718281828f;
-    inline static constexpr const float kHalfPI_f       = kPI_f / 2.0f;
-    inline static constexpr const float kTwoPI_f        = 2.0f * kPI_f;
-    inline static constexpr const float kOneDegree_f    = kPI_f / 180.0f;
+    inline static constexpr const float kPI_f        = 3.141592653f;
+    inline static constexpr const float kE_f         = 2.718281828f;
+    inline static constexpr const float kHalfPI_f    = kPI_f / 2.0f;
+    inline static constexpr const float kTwoPI_f     = 2.0f * kPI_f;
+    inline static constexpr const float kOneDegree_f = kPI_f / 180.0f;
 
     inline static constexpr const float kIsEqualEpsilon = 0.0005f;
 

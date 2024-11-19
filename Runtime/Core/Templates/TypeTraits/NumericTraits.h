@@ -15,12 +15,6 @@ template<>
 struct TIsInteger<CHAR> : TTrueType { };
 
 template<>
-struct TIsInteger<signed char> : TTrueType { };
-
-template<>
-struct TIsInteger<unsigned char> : TTrueType { };
-
-template<>
 struct TIsInteger<WIDECHAR> : TTrueType { };
 
 template<>
@@ -30,28 +24,34 @@ template<>
 struct TIsInteger<char32_t> : TTrueType { };
 
 template<>
-struct TIsInteger<short> : TTrueType { };
-
-template<>
-struct TIsInteger<unsigned short> : TTrueType { };
-
-template<>
-struct TIsInteger<int> : TTrueType { };
-
-template<>
-struct TIsInteger<unsigned int> : TTrueType { };
-
-template<>
 struct TIsInteger<long> : TTrueType { };
 
 template<>
 struct TIsInteger<unsigned long> : TTrueType { };
 
 template<>
-struct TIsInteger<long long> : TTrueType { };
+struct TIsInteger<int8> : TTrueType { };
 
 template<>
-struct TIsInteger<unsigned long long> : TTrueType { };
+struct TIsInteger<uint8> : TTrueType { };
+
+template<>
+struct TIsInteger<int16> : TTrueType { };
+
+template<>
+struct TIsInteger<uint16> : TTrueType { };
+
+template<>
+struct TIsInteger<int32> : TTrueType { };
+
+template<>
+struct TIsInteger<uint32> : TTrueType { };
+
+template<>
+struct TIsInteger<int64> : TTrueType { };
+
+template<>
+struct TIsInteger<uint64> : TTrueType { };
 
 template <typename T>
 struct TIsInteger<const T>

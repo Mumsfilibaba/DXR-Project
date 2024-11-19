@@ -1,6 +1,6 @@
 #pragma once
-#include "Vector3.h"
-#include "VectorOp.h"
+#include "Core/Math/Vector3.h"
+#include "Core/Math/VectorMath/PlatformVectorMath.h"
 
 class VECTOR_ALIGN FVector4
 {

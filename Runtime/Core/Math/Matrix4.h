@@ -1,7 +1,7 @@
 #pragma once
-#include "Vector3.h"
-#include "Matrix3.h"
-#include "Vector4.h"
+#include "Core/Math/Vector3.h"
+#include "Core/Math/Matrix3.h"
+#include "Core/Math/Vector4.h"
 
 class VECTOR_ALIGN FMatrix4
 {

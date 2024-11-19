@@ -17,7 +17,7 @@ namespace IntegerSequenceInternal
     struct TMakeIntegerSequenceImpl;
 
     template<typename T, TSIZE N, typename F, typename S>
-    struct TIntegerSequenceHelper;
+    struct TIntegerSequenceImpl;
 }
 
 template<typename T, T N>
@@ -26,21 +26,21 @@ using TMakeIntegerSequence = typename IntegerSequenceInternal::TMakeIntegerSeque
 namespace IntegerSequenceInternal
 {
     template<typename T, TSIZE N, typename F, typename S>
-    struct TIntegerSequenceHelper;
+    struct TIntegerSequenceImpl;
 
     template<typename T, TSIZE N, T... First, T... Second>
-    struct TIntegerSequenceHelper<T, N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
+    struct TIntegerSequenceImpl<T, N, TIntegerSequence<T, First...>, TIntegerSequence<T, Second...>> : TIntegerSequence<T, First..., (T(N + Second))...>
     {
         using Type = TIntegerSequence<T, First..., (T(N + Second))...>;
     };
 
     template<typename T, TSIZE N, typename F, typename S>
-    using TIntegerSequenceHelperType = typename TIntegerSequenceHelper<T, N, F, S>::Type;
+    using TIntegerSequenceImplType = typename TIntegerSequenceImpl<T, N, F, S>::Type;
 
     template<typename T, TSIZE N>
-    struct TMakeIntegerSequenceImpl : TIntegerSequenceHelperType<T, N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
+    struct TMakeIntegerSequenceImpl : TIntegerSequenceImplType<T, N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>
     {
-        using Type = TIntegerSequenceHelperType<T, N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
+        using Type = TIntegerSequenceImplType<T, N / 2, TMakeIntegerSequence<T, N / 2>, TMakeIntegerSequence<T, N - N / 2>>;
     };
 
     template<typename T>

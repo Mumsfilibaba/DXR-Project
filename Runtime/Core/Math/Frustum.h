@@ -1,9 +1,7 @@
 #pragma once
-#include "AABB.h"
-#include "Matrix4.h"
-#include "Plane.h"
-
-#include "Core/Core.h"
+#include "Core/Math/AABB.h"
+#include "Core/Math/Matrix4.h"
+#include "Core/Math/Plane.h"
 
 class CORE_API FFrustum
 {

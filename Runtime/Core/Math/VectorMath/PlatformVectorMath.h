@@ -1,5 +1,5 @@
 #pragma once
-#include "MathCommon.h"
+#include "Core/Math/MathCommon.h"
 
 #ifndef VECTOR_ALIGN
     #define VECTOR_ALIGN ALIGN_AS(16)
