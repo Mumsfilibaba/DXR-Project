@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Math/Vector3.h"
-#include "Core/Math/VectorMath/PlatformVectorMath.h"
+#include "Core/Math/VectorMath/VectorMath.h"
 
 class VECTOR_ALIGN FVector4
 {
@@ -84,7 +84,7 @@ public:
      /** @brief - Normalize this vector */
     void Normalize() noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         const float fLengthSquared = LengthSquared();
         if (fLengthSquared != 0.0f)
         {
@@ -94,19 +94,19 @@ public:
             z *= fRecipLength;
             w *= fRecipLength;
         }
-#else
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Temp1 = NVectorOp::Dot(Temp0, Temp0);
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(reinterpret_cast<float*>(this));
+        FFloat128 Temp1 = FVectorMath::Dot(Temp0, Temp0);
 
-        const float fLengthSquared = NVectorOp::GetX(Temp1);
+        const float fLengthSquared = FVectorMath::GetX(Temp1);
         if (fLengthSquared != 0.0f)
         {
-            Temp1 = NVectorOp::Shuffle<0, 1, 0, 1>(Temp1);
-            Temp1 = NVectorOp::RecipSqrt(Temp1);
-            Temp0 = NVectorOp::Mul(Temp0, Temp1);
-            NVectorOp::StoreAligned(Temp0, this);
+            Temp1 = FVectorMath::Shuffle<0, 1, 0, 1>(Temp1);
+            Temp1 = FVectorMath::RecipSqrt(Temp1);
+            Temp0 = FVectorMath::Mul(Temp0, Temp1);
+            FVectorMath::StoreAligned(Temp0, this);
         }
-#endif
+    #endif
     }
 
     /**
@@ -127,7 +127,7 @@ public:
      */
     bool IsEqual(const FVector4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 4; ++Index)
@@ -140,15 +140,15 @@ public:
         }
 
         return true;
-#else
-        NVectorOp::Float128 Espilon128 = NVectorOp::Load(Epsilon);
-        Espilon128 = NVectorOp::Abs(Espilon128);
+    #else
+        FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
+        Espilon128 = FVectorMath::Abs(Espilon128);
 
-        NVectorOp::Float128 Diff = NVectorOp::Sub(this, &Other);
-        Diff = NVectorOp::Abs(Diff);
+        FFloat128 Diff = FVectorMath::Sub(this, &Other);
+        Diff = FVectorMath::Abs(Diff);
 
-        return NVectorOp::LessThan(Diff, Espilon128);
-#endif
+        return FVectorMath::LessThan(Diff, Espilon128);
+    #endif
     }
 
     /**
@@ -158,7 +158,7 @@ public:
     FORCEINLINE bool IsUnitVector() const noexcept
     {
         const float fLengthSquared = FMath::Abs(1.0f - LengthSquared());
-        return (fLengthSquared < FMath::kIsEqualEpsilon);
+        return fLengthSquared < FMath::kIsEqualEpsilon;
     }
 
     /**
@@ -230,14 +230,14 @@ public:
      */
     FORCEINLINE float DotProduct(const FVector4& Other) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return (x * Other.x) + (y * Other.y) + (z * Other.z) + (w * Other.w);
-#else
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(&Other);
-        NVectorOp::Float128 Dot   = NVectorOp::Dot(Temp0, Temp1);
-        return NVectorOp::GetX(Dot);
-#endif
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Temp1 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Other));
+        FFloat128 Dot   = FVectorMath::Dot(Temp0, Temp1);
+        return FVectorMath::GetX(Dot);
+    #endif
     }
 
     /**
@@ -249,23 +249,20 @@ public:
      */
     FVector4 CrossProduct(const FVector4& Other) const noexcept
     {
-#if !USE_VECTOR_OP
-        return FVector4((y * Other.z) - (z * Other.y)
-                       ,(z * Other.x) - (x * Other.z)
-                       ,(x * Other.y) - (y * Other.x)
-                       ,0.0f);
-#else
+    #if !USE_VECTOR_MATH
+        return FVector4((y * Other.z) - (z * Other.y), (z * Other.x) - (x * Other.z), (x * Other.y) - (y * Other.x), 0.0f);
+    #else
+        FFloat128 Temp0  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Temp1  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Other));
+        FFloat128 Result = FVectorMath::Cross(Temp0, Temp1);
+        
+        FInt128 Mask = FVectorMath::Load(~0, ~0, ~0, 0);
+        Result = FVectorMath::And(Result, FVectorMath::CastIntToFloat(Mask));
+
         FVector4 NewVector;
-
-        NVectorOp::Float128 Temp0  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Temp1  = NVectorOp::LoadAligned(&Other);
-        NVectorOp::Float128 Result = NVectorOp::Cross(Temp0, Temp1);
-        NVectorOp::Int128   Mask   = NVectorOp::Load(~0, ~0, ~0, 0);
-        Result = NVectorOp::And(Result, NVectorOp::CastIntToFloat(Mask));
-
-        NVectorOp::StoreAligned(Result, &NewVector);
+        FVectorMath::StoreAligned(Result, &NewVector);
         return NewVector;
-#endif
+    #endif
     }
 
     /**
@@ -275,27 +272,26 @@ public:
      */
     FVector4 ProjectOn(const FVector4& Other) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         float AdotB = DotProduct(Other);
         float BdotB = Other.LengthSquared();
         return (AdotB / BdotB) * Other;
-#else
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Temp1 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Other));
+
+        FFloat128 AdotB = FVectorMath::Dot(Temp0, Temp1);
+        AdotB = FVectorMath::Shuffle<0, 1, 0, 1>(AdotB);
+
+        FFloat128 BdotB = FVectorMath::Dot(Temp1, Temp1);
+        BdotB = FVectorMath::Shuffle<0, 1, 0, 1>(BdotB);
+        BdotB = FVectorMath::Div(AdotB, BdotB);
+        BdotB = FVectorMath::Mul(BdotB, Temp1);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(&Other);
-
-        NVectorOp::Float128 AdotB = NVectorOp::Dot(Temp0, Temp1);
-        AdotB = NVectorOp::Shuffle<0, 1, 0, 1>(AdotB);
-
-        NVectorOp::Float128 BdotB = NVectorOp::Dot(Temp1, Temp1);
-        BdotB = NVectorOp::Shuffle<0, 1, 0, 1>(BdotB);
-        BdotB = NVectorOp::Div(AdotB, BdotB);
-        BdotB = NVectorOp::Mul(BdotB, Temp1);
-
-        NVectorOp::StoreAligned(BdotB, &Result);
+        FVectorMath::StoreAligned(BdotB, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -305,31 +301,30 @@ public:
      */
     FVector4 Reflect(const FVector4& Normal) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         float VdotN = DotProduct(Normal);
         float NdotN = Normal.LengthSquared();
         return *this - ((2.0f * (VdotN / NdotN)) * Normal);
-#else
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Temp1 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Normal));
+
+        FFloat128 VdotN = FVectorMath::Dot(Temp0, Temp1);
+        VdotN = FVectorMath::Shuffle<0, 1, 0, 1>(VdotN);
+
+        FFloat128 NdotN = FVectorMath::Dot(Temp1, Temp1);
+        NdotN = FVectorMath::Shuffle<0, 1, 0, 1>(NdotN);
+
+        FFloat128 Reg2 = FVectorMath::Load(2.0f);
+        VdotN = FVectorMath::Div(VdotN, NdotN);
+        VdotN = FVectorMath::Mul(Reg2, VdotN);
+        Temp1 = FVectorMath::Mul(VdotN, Temp1);
+        Temp0 = FVectorMath::Sub(Temp0, Temp1);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Normal));
-
-        NVectorOp::Float128 VdotN = NVectorOp::Dot(Temp0, Temp1);
-        VdotN = NVectorOp::Shuffle<0, 1, 0, 1>(VdotN);
-
-        NVectorOp::Float128 NdotN = NVectorOp::Dot(Temp1, Temp1);
-        NdotN = NVectorOp::Shuffle<0, 1, 0, 1>(NdotN);
-
-        NVectorOp::Float128 Reg2 = NVectorOp::Load(2.0f);
-        VdotN = NVectorOp::Div(VdotN, NdotN);
-        VdotN = NVectorOp::Mul(Reg2, VdotN);
-        Temp1 = NVectorOp::Mul(VdotN, Temp1);
-        Temp0 = NVectorOp::Sub(Temp0, Temp1);
-
-        NVectorOp::StoreAligned(Temp0, &Result);
+        FVectorMath::StoreAligned(Temp0, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -360,22 +355,18 @@ public:
      */
     friend FORCEINLINE FVector4 Min(const FVector4& First, const FVector4& Second) noexcept
     {
-#if !USE_VECTOR_OP
-        return FVector4(
-            FMath::Min(First.x, Second.x),
-            FMath::Min(First.y, Second.y),
-            FMath::Min(First.z, Second.z),
-            FMath::Min(First.w, Second.w));
-#else
+    #if !USE_VECTOR_MATH
+        return FVector4(FMath::Min(First.x, Second.x), FMath::Min(First.y, Second.y), FMath::Min(First.z, Second.z), FMath::Min(First.w, Second.w));
+    #else
+
+        FFloat128 Temp0 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&First));
+        FFloat128 Temp1 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Second));
+        Temp0 = FVectorMath::Min(Temp0, Temp1);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&First));
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(&Second);
-        Temp0 = NVectorOp::Min(Temp0, Temp1);
-
-        NVectorOp::StoreAligned(Temp0, &Result);
+        FVectorMath::StoreAligned(Temp0, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -386,22 +377,17 @@ public:
      */
     friend FORCEINLINE FVector4 Max(const FVector4& First, const FVector4& Second) noexcept
     {
-#if !USE_VECTOR_OP
-        return FVector4(
-            FMath::Max(First.x, Second.x),
-            FMath::Max(First.y, Second.y),
-            FMath::Max(First.z, Second.z),
-            FMath::Max(First.w, Second.w));
-#else
+    #if !USE_VECTOR_MATH
+        return FVector4(FMath::Max(First.x, Second.x), FMath::Max(First.y, Second.y), FMath::Max(First.z, Second.z), FMath::Max(First.w, Second.w));
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&First));
+        FFloat128 Temp1 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Second));
+        Temp0 = FVectorMath::Max(Temp0, Temp1);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&First));
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(&Second);
-        Temp0 = NVectorOp::Max(Temp0, Temp1);
-
-        NVectorOp::StoreAligned(Temp0, &Result);
+        FVectorMath::StoreAligned(Temp0, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -413,29 +399,24 @@ public:
      */
     friend FORCEINLINE FVector4 Lerp(const FVector4& First, const FVector4& Second, float t) noexcept
     {
-#if !USE_VECTOR_OP
-        return FVector4(
-            (1.0f - t) * First.x + t * Second.x,
-            (1.0f - t) * First.y + t * Second.y,
-            (1.0f - t) * First.z + t * Second.z,
-            (1.0f - t) * First.w + t * Second.w);
-#else
+    #if !USE_VECTOR_MATH
+        return FVector4((1.0f - t) * First.x + t * Second.x, (1.0f - t) * First.y + t * Second.y, (1.0f - t) * First.z + t * Second.z, (1.0f - t) * First.w + t * Second.w);
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&First));
+        FFloat128 Temp1 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Second));
+        FFloat128 Temp3 = FVectorMath::Load(t);
+        
+        FFloat128 Ones  = FVectorMath::LoadOnes();
+        
+        FFloat128 Temp4 = FVectorMath::Sub(Ones, Temp3);
+        Temp0 = FVectorMath::Mul(Temp0, Temp4);
+        Temp1 = FVectorMath::Mul(Temp1, Temp3);
+        Temp0 = FVectorMath::Add(Temp0, Temp1);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&First));
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Second));
-        NVectorOp::Float128 Temp3 = NVectorOp::Load(t);
-        
-        NVectorOp::Float128 Ones  = NVectorOp::MakeOnes();
-        
-        NVectorOp::Float128 Temp4 = NVectorOp::Sub(Ones, Temp3);
-        Temp0 = NVectorOp::Mul(Temp0, Temp4);
-        Temp1 = NVectorOp::Mul(Temp1, Temp3);
-        Temp0 = NVectorOp::Add(Temp0, Temp1);
-
-        NVectorOp::StoreAligned(Temp0, &Result);
+        FVectorMath::StoreAligned(Temp0, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -447,24 +428,19 @@ public:
      */
     friend FORCEINLINE FVector4 Clamp(const FVector4& Min, const FVector4& Max, const FVector4& Value) noexcept
     {
-#if !USE_VECTOR_OP
-        return FVector4(
-            FMath::Min(FMath::Max(Value.x, Min.x), Max.x),
-            FMath::Min(FMath::Max(Value.y, Min.y), Max.y),
-            FMath::Min(FMath::Max(Value.z, Min.z), Max.z),
-            FMath::Min(FMath::Max(Value.w, Min.w), Max.w));
-#else
+    #if !USE_VECTOR_MATH
+        return FVector4(FMath::Clamp(Min.x, Max.x, Value.x), FMath::Clamp(Min.y, Max.y, Value.y), FMath::Clamp(Min.z, Max.z, Value.z), FMath::Clamp(Min.w, Max.w, Value.w));
+    #else
+        FFloat128 Min128   = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Min));
+        FFloat128 Max128   = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Max));
+        FFloat128 Value128 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Value));
+        Value128 = FVectorMath::Max(Value128, Min128);
+        Value128 = FVectorMath::Min(Value128, Max128);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Min128   = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Min));
-        NVectorOp::Float128 Max128   = NVectorOp::LoadAligned(reinterpret_cast<const float*>(&Max));
-        NVectorOp::Float128 Value128 = NVectorOp::LoadAligned(&Value);
-        Value128 = NVectorOp::Max(Value128, Min128);
-        Value128 = NVectorOp::Min(Value128, Max128);
-
-        NVectorOp::StoreAligned(Value128, &Result);
+        FVectorMath::StoreAligned(Value128, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -474,24 +450,19 @@ public:
      */
     friend FORCEINLINE FVector4 Saturate(const FVector4& Value) noexcept
     {
-#if !USE_VECTOR_OP
-        return FVector4(
-            FMath::Min(FMath::Max(Value.x, 0.0f), 1.0f),
-            FMath::Min(FMath::Max(Value.y, 0.0f), 1.0f),
-            FMath::Min(FMath::Max(Value.z, 0.0f), 1.0f),
-            FMath::Min(FMath::Max(Value.w, 0.0f), 1.0f));
-#else
+    #if !USE_VECTOR_MATH
+        return FVector4(FMath::Clamp(0.0f, 1.0f, Value.x), FMath::Clamp(0.0f, 1.0f, Value.y), FMath::Clamp(0.0f, 1.0f, Value.z), FMath::Clamp(0.0f, 1.0f, Value.w));
+    #else
+        FFloat128 Zeros    = FVectorMath::LoadZeros();
+        FFloat128 Ones     = FVectorMath::LoadOnes();
+        FFloat128 Value128 = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Value));
+        Value128 = FVectorMath::Max(Value128, Zeros);
+        Value128 = FVectorMath::Min(Value128, Ones);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Zeros       = NVectorOp::MakeZeros();
-        NVectorOp::Float128 Ones        = NVectorOp::MakeOnes();
-        NVectorOp::Float128 VectorValue = NVectorOp::LoadAligned(&Value);
-        VectorValue = NVectorOp::Max(VectorValue, Zeros);
-        VectorValue = NVectorOp::Min(VectorValue, Ones);
-
-        NVectorOp::StoreAligned(VectorValue, &Result);
+        FVectorMath::StoreAligned(Value128, &Result);
         return Result;
-#endif
+    #endif
     }
 
 public:
@@ -502,18 +473,17 @@ public:
      */
     FORCEINLINE FVector4 operator-() const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(-x, -y, -z, -w);
-#else
+    #else
+        FFloat128 Zeros = FVectorMath::LoadZeros();
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        This = FVectorMath::Sub(Zeros, This);
+
         FVector4 Result;
-
-        NVectorOp::Float128 Zeros = NVectorOp::MakeZeros();
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        This = NVectorOp::Sub(Zeros, This);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -523,18 +493,17 @@ public:
      */
     FORCEINLINE FVector4 operator+(const FVector4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x + RHS.x, y + RHS.y, z + RHS.z, w + RHS.w);
-#else
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Add(This, Other);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Add(This, Other);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -544,16 +513,15 @@ public:
      */
     FORCEINLINE FVector4& operator+=(const FVector4& RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this + RHS;
-#else
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Add(This, Other);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Add(This, Other);
+        FVectorMath::StoreAligned(This, reinterpret_cast<float*>(this));
         return *this;
-#endif
+    #endif
     }
 
     /**
@@ -563,18 +531,17 @@ public:
      */
     FORCEINLINE FVector4 operator+(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x + RHS, y + RHS, z + RHS, w + RHS);
-#else
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        This = FVectorMath::Add(This, Scalars);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Add(This, Scalars);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -584,16 +551,15 @@ public:
      */
     FORCEINLINE FVector4& operator+=(float RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this + RHS;
-#else
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Add(This, Scalars);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        This = FVectorMath::Add(This, Scalars);
+        FVectorMath::StoreAligned(This, reinterpret_cast<float*>(this));
         return *this;
-#endif
+    #endif
     }
 
     /**
@@ -603,18 +569,17 @@ public:
      */
     FORCEINLINE FVector4 operator-(const FVector4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x - RHS.x, y - RHS.y, z - RHS.z, w - RHS.w);
-#else
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Sub(This, Other);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Sub(This, Other);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -624,16 +589,15 @@ public:
      */
     FORCEINLINE FVector4& operator-=(const FVector4& RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this - RHS;
-#else
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Sub(This, Other);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Sub(This, Other);
+        FVectorMath::StoreAligned(This, reinterpret_cast<float*>(this));
         return *this;
-#endif
+    #endif
     }
 
     /**
@@ -643,18 +607,17 @@ public:
      */
     FORCEINLINE FVector4 operator-(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x - RHS, y - RHS, z - RHS, w - RHS);
-#else
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        This = FVectorMath::Sub(This, Scalars);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Sub(This, Scalars);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -664,16 +627,15 @@ public:
      */
     FORCEINLINE FVector4& operator-=(float RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this - RHS;
-#else
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Sub(This, Scalars);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        This = FVectorMath::Sub(This, Scalars);
+        FVectorMath::StoreAligned(This, this);
         return *this;
-#endif
+    #endif
     }
 
 
@@ -684,18 +646,17 @@ public:
      */
     FORCEINLINE FVector4 operator*(const FVector4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x * RHS.x, y * RHS.y, z * RHS.z, w * RHS.w);
-#else
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Mul(This, Other);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Mul(This, Other);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -705,16 +666,15 @@ public:
      */
     FORCEINLINE FVector4& operator*=(const FVector4& RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this * RHS;
-#else
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Mul(This, Other);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Mul(This, Other);
+        FVectorMath::StoreAligned(This, this);
         return *this;
-#endif
+    #endif
     }
 
     /**
@@ -724,18 +684,17 @@ public:
      */
     FORCEINLINE FVector4 operator*(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x * RHS, y * RHS, z * RHS, w * RHS);
-#else
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        This = FVectorMath::Mul(This, Scalars);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Mul(This, Scalars);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -746,18 +705,17 @@ public:
      */
     friend FORCEINLINE FVector4 operator*(float LHS, const FVector4& RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(RHS.x * LHS, RHS.y * LHS, RHS.z * LHS, RHS.w * LHS);
-#else
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        FFloat128 Scalars = FVectorMath::Load(LHS);
+        This = FVectorMath::Mul(This, Scalars);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(&RHS);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(LHS);
-        This = NVectorOp::Mul(This, Scalars);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -767,16 +725,15 @@ public:
      */
     FORCEINLINE FVector4 operator*=(float RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this * RHS;
-#else
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Mul(This, Scalars);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Mul(This, Scalars);
+        FVectorMath::StoreAligned(This, this);
         return *this;
-#endif
+    #endif
     }
 
     /**
@@ -786,18 +743,17 @@ public:
      */
     FORCEINLINE FVector4 operator/(const FVector4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x / RHS.x, y / RHS.y, z / RHS.z, w / RHS.w);
-#else
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Div(This, Other);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Div(This, Other);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -807,16 +763,15 @@ public:
      */
     FORCEINLINE FVector4& operator/=(const FVector4& RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this / RHS;
-#else
-        NVectorOp::Float128 This  = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Other = NVectorOp::LoadAligned(&RHS);
-        This = NVectorOp::Div(This, Other);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This  = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Other = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        This = FVectorMath::Div(This, Other);
+        FVectorMath::StoreAligned(This, this);
         return *this;
-#endif
+    #endif
     }
 
     /**
@@ -826,18 +781,17 @@ public:
      */
     FORCEINLINE FVector4 operator/(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return FVector4(x / RHS, y / RHS, z / RHS, w / RHS);
-#else
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        This = FVectorMath::Div(This, Scalars);
+
         FVector4 Result;
-
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Div(This, Scalars);
-
-        NVectorOp::StoreAligned(This, &Result);
+        FVectorMath::StoreAligned(This, &Result);
         return Result;
-#endif
+    #endif
     }
 
     /**
@@ -847,16 +801,15 @@ public:
      */
     FORCEINLINE FVector4& operator/=(float RHS) noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         return *this = *this / RHS;
-#else
-        NVectorOp::Float128 This    = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        This = NVectorOp::Div(This, Scalars);
-
-        NVectorOp::StoreAligned(This, this);
+    #else
+        FFloat128 This    = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        This = FVectorMath::Div(This, Scalars);
+        FVectorMath::StoreAligned(This, this);
         return *this;
-#endif
+    #endif
     }
 
     /**

@@ -65,7 +65,7 @@ public:
      */
     inline bool IsEqual(const FPlane& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
-#if !USE_VECTOR_OP
+#if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
 
         for (int32 Index = 0; Index < 4; ++Index)
@@ -79,13 +79,13 @@ public:
 
         return true;
 #else
-        NVectorOp::Float128 Espilon128 = NVectorOp::Load(Epsilon);
-        Espilon128 = NVectorOp::Abs(Espilon128);
+        FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
+        Espilon128 = FVectorMath::Abs(Espilon128);
 
-        NVectorOp::Float128 Diff = NVectorOp::Sub(this, &Other);
-        Diff = NVectorOp::Abs(Diff);
+        FFloat128 Diff = FVectorMath::Sub(this, &Other);
+        Diff = FVectorMath::Abs(Diff);
 
-        return NVectorOp::LessThan(Diff, Espilon128);
+        return FVectorMath::LessThan(Diff, Espilon128);
 #endif
     }
 

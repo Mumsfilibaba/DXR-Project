@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef ENABLE_SSE_INTRIN
-    #define ENABLE_SSE_INTRIN (0)
-#endif
-
 #ifndef FORCEINLINE
     #define FORCEINLINE inline
 #endif

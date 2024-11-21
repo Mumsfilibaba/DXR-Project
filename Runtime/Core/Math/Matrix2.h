@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Math/Vector2.h"
-#include "Core/Math/VectorMath/PlatformVectorMath.h"
+#include "Core/Math/VectorMath/VectorMath.h"
 
 class VECTOR_ALIGN FMatrix2
 {
@@ -65,23 +65,20 @@ public:
      */
     inline FMatrix2 Transpose() const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Transpose;
+
+    #if !USE_VECTOR_MATH
         Transpose.f[0][0] = f[0][0];
         Transpose.f[0][1] = f[1][0];
-
         Transpose.f[1][0] = f[0][1];
         Transpose.f[1][1] = f[1][1];
-        return Transpose;
-#else
-        FMatrix2 Transpose;
+    #else
+        FFloat128 This = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        This = FVectorMath::Shuffle<0, 2, 1, 3>(This);
+        FVectorMath::StoreAligned(This, &Transpose);
+    #endif
 
-        NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
-        This = NVectorOp::Shuffle<0, 2, 1, 3>(This);
-
-        NVectorOp::StoreAligned(This, &Transpose);
         return Transpose;
-#endif
     }
 
     /**
@@ -90,35 +87,32 @@ public:
      */
     inline FMatrix2 Invert() const noexcept
     {
-        const float fDeterminant = (m00 * m11) - (m01 * m10);
+        FMatrix2 Inverse;
 
-#if !USE_VECTOR_OP
+        const float fDeterminant = (m00 * m11) - (m01 * m10);
+    #if !USE_VECTOR_MATH
         const float RecipDeterminant = 1.0f / fDeterminant;
 
-        FMatrix2 Inverse;
         Inverse.m00 =  m11 * RecipDeterminant;
         Inverse.m10 = -m10 * RecipDeterminant;
         Inverse.m01 = -m01 * RecipDeterminant;
         Inverse.m11 =  m00 * RecipDeterminant;
-        return Inverse;
-#else
-        FMatrix2 Inverse;
-
-        NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
-        This = NVectorOp::Shuffle<3, 2, 1, 0>(This);
+    #else
+        FFloat128 This = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        This = FVectorMath::Shuffle<3, 2, 1, 0>(This);
 
         constexpr int32 Keep   = 0;
         constexpr int32 Negate = (1 << 31);
 
-        NVectorOp::Int128 Mask = NVectorOp::Load(Keep, Negate, Negate, Keep);
-        This = NVectorOp::Or(This, NVectorOp::CastIntToFloat(Mask));
+        FInt128 Mask = FVectorMath::Load(Keep, Negate, Negate, Keep);
+        This = FVectorMath::Or(This, FVectorMath::CastIntToFloat(Mask));
 
-        NVectorOp::Float128 RcpDeterminant = NVectorOp::Recip(NVectorOp::Load(fDeterminant));
-        This = NVectorOp::Mul(This, RcpDeterminant);
+        FFloat128 RcpDeterminant = FVectorMath::Recip(FVectorMath::Load(fDeterminant));
+        This = FVectorMath::Mul(This, RcpDeterminant);
+        FVectorMath::StoreAligned(This, &Inverse);
+    #endif
 
-        NVectorOp::StoreAligned(This, &Inverse);
         return Inverse;
-#endif
     }
 
     /**
@@ -127,28 +121,26 @@ public:
      */
     FORCEINLINE FMatrix2 Adjoint() const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Adjugate;
+
+    #if !USE_VECTOR_MATH
         Adjugate.m00 =  m11;
         Adjugate.m10 = -m10;
         Adjugate.m01 = -m01;
         Adjugate.m11 =  m00;
-        return Adjugate;
-#else
-        FMatrix2 Adjugate;
-
-        NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
-        This = NVectorOp::Shuffle<3, 2, 1, 0>(This);
+    #else
+        FFloat128 This = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        This = FVectorMath::Shuffle<3, 2, 1, 0>(This);
 
         constexpr int32 Keep   = 0;
         constexpr int32 Negate = (1 << 31);
 
-        NVectorOp::Int128 Mask = NVectorOp::Load(Keep, Negate, Negate, Keep);
-        This = NVectorOp::Or(This, NVectorOp::CastIntToFloat(Mask));
+        FInt128 Mask = FVectorMath::Load(Keep, Negate, Negate, Keep);
+        This = FVectorMath::Or(This, FVectorMath::CastIntToFloat(Mask));
+        FVectorMath::StoreAligned(This, &Adjugate);
+    #endif
 
-        NVectorOp::StoreAligned(This, &Adjugate);
         return Adjugate;
-#endif
     }
 
     /**
@@ -210,10 +202,8 @@ public:
      */
     bool IsEqual(const FMatrix2& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
-#if !USE_VECTOR_OP
-
+    #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
-
         for (int32 i = 0; i < 4; i++)
         {
             float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
@@ -224,30 +214,28 @@ public:
         }
 
         return true;
+    #else
+        FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
+        Espilon128 = FVectorMath::Abs(Espilon128);
 
-#else
-        NVectorOp::Float128 Espilon128 = NVectorOp::Load(Epsilon);
-        Espilon128 = NVectorOp::Abs(Espilon128);
-
-        NVectorOp::Float128 Diff = NVectorOp::Sub(this, &Other);
-        Diff = NVectorOp::Abs(Diff);
-        return NVectorOp::LessThan(Diff, Espilon128);
-#endif
+        FFloat128 Diff = FVectorMath::Sub(this, &Other);
+        Diff = FVectorMath::Abs(Diff);
+        return FVectorMath::LessThan(Diff, Espilon128);
+    #endif
     }
 
      /** @brief - Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         m00 = 1.0f;
         m01 = 0.0f;
-
         m10 = 0.0f;
         m11 = 1.0f;
-#else
-        NVectorOp::Float128 Constant = NVectorOp::Load(1.0f, 0.0f, 0.0f, 1.0f);
-        NVectorOp::StoreAligned(Constant, this);
-#endif
+    #else
+        FFloat128 Constant = FVectorMath::Load(1.0f, 0.0f, 0.0f, 1.0f);
+        FVectorMath::StoreAligned(Constant, this);
+    #endif
     }
 
     /**
@@ -299,25 +287,24 @@ public:
      */
     FORCEINLINE FVector2 operator*(const FVector2& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FVector2 Result;
+
+    #if !USE_VECTOR_MATH
         Result.x = (RHS[0] * m00) + (RHS[1] * m10);
         Result.y = (RHS[0] * m01) + (RHS[1] * m11);
-        return Result;
-#else
-        FVector2 Result;
+    #else
+        FFloat128 X128  = FVectorMath::LoadSingle(RHS.x);
+        FFloat128 Y128  = FVectorMath::LoadSingle(RHS.y);
+        FFloat128 Temp0 = FVectorMath::Shuffle0011<0, 0, 0, 0>(X128, Y128);
+        FFloat128 Temp1 = FVectorMath::Mul(this, Temp0);
+        Temp0 = FVectorMath::Shuffle<2, 3, 2, 3>(Temp1);
+        Temp1 = FVectorMath::Add(Temp0, Temp1);
 
-        NVectorOp::Float128 X128  = NVectorOp::LoadSingle(RHS.x);
-        NVectorOp::Float128 Y128  = NVectorOp::LoadSingle(RHS.y);
-        NVectorOp::Float128 Temp0 = NVectorOp::Shuffle0011<0, 0, 0, 0>(X128, Y128);
-        NVectorOp::Float128 Temp1 = NVectorOp::Mul(this, Temp0);
-        Temp0 = NVectorOp::Shuffle<2, 3, 2, 3>(Temp1);
-        Temp1 = NVectorOp::Add(Temp0, Temp1);
+        Result.x = FVectorMath::GetX(Temp1);
+        Result.y = FVectorMath::GetY(Temp1);
+    #endif
 
-        Result.x = NVectorOp::GetX(Temp1);
-        Result.y = NVectorOp::GetY(Temp1);
         return Result;
-#endif
     }
 
     /**
@@ -327,24 +314,21 @@ public:
      */
     FORCEINLINE FMatrix2 operator*(const FMatrix2& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Result;
+        
+    #if !USE_VECTOR_MATH
         Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10);
         Result.m01 = (m01 * RHS.m11) + (m00 * RHS.m01);
-
         Result.m10 = (m10 * RHS.m00) + (m11 * RHS.m10);
         Result.m11 = (m11 * RHS.m11) + (m10 * RHS.m01);
+    #else
+        FFloat128 This = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
+        FFloat128 Temp = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&RHS));
+        Temp = FVectorMath::Mat2Mul(This, Temp);
+        FVectorMath::StoreAligned(Temp, &Result);
+    #endif
+        
         return Result;
-#else
-        FMatrix2 Result;
-
-        NVectorOp::Float128 This = NVectorOp::LoadAligned(this);
-        NVectorOp::Float128 Temp = NVectorOp::LoadAligned(&RHS);
-        Temp = NVectorOp::Mat2Mul(This, Temp);
-
-        NVectorOp::StoreAligned(Temp, &Result);
-        return Result;
-#endif
     }
 
     /**
@@ -364,23 +348,20 @@ public:
      */
     FORCEINLINE FMatrix2 operator*(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Result;
+
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 * RHS;
         Result.m01 = m01 * RHS;
-
         Result.m10 = m10 * RHS;
         Result.m11 = m11 * RHS;
-        return Result;
-#else
-        FMatrix2 Result;
+    #else
+        FFloat128 Temp = FVectorMath::Load(RHS);
+        Temp = FVectorMath::Mul(this, Temp);
+        FVectorMath::StoreAligned(Temp, &Result);
+    #endif
 
-        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
-        Temp = NVectorOp::Mul(this, Temp);
-
-        NVectorOp::StoreAligned(Temp, &Result);
         return Result;
-#endif
     }
 
     /**
@@ -400,20 +381,19 @@ public:
      */
     FORCEINLINE FMatrix2 operator+(const FMatrix2& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Result;
+
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 + RHS.m00;
         Result.m01 = m01 + RHS.m01;
-
         Result.m10 = m10 + RHS.m10;
         Result.m11 = m11 + RHS.m11;
+    #else
+        FFloat128 Temp = FVectorMath::Add(this, &RHS);
+        FVectorMath::StoreAligned(Temp, &Result);
+    #endif
+
         return Result;
-#else
-        FMatrix2 Result;
-        NVectorOp::Float128 Temp = NVectorOp::Add(this, &RHS);
-        NVectorOp::StoreAligned(Temp, &Result);
-        return Result;
-#endif
     }
 
     /**
@@ -433,23 +413,20 @@ public:
      */
     FORCEINLINE FMatrix2 operator+(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Result;
+        
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 + RHS;
         Result.m01 = m01 + RHS;
-
         Result.m10 = m10 + RHS;
         Result.m11 = m11 + RHS;
+    #else
+        FFloat128 Temp = FVectorMath::Load(RHS);
+        Temp = FVectorMath::Add(this, Temp);
+        FVectorMath::StoreAligned(Temp, &Result);
+    #endif
+        
         return Result;
-#else
-        FMatrix2 Result;
-
-        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
-        Temp = NVectorOp::Add(this, Temp);
-
-        NVectorOp::StoreAligned(Temp, &Result);
-        return Result;
-#endif
     }
 
     /**
@@ -469,20 +446,19 @@ public:
      */
     FORCEINLINE FMatrix2 operator-(const FMatrix2& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Result;
+
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 - RHS.m00;
         Result.m01 = m01 - RHS.m01;
-
         Result.m10 = m10 - RHS.m10;
         Result.m11 = m11 - RHS.m11;
+    #else
+        FFloat128 Temp = FVectorMath::Sub(this, &RHS);
+        FVectorMath::StoreAligned(Temp, &Result);
+    #endif
+
         return Result;
-#else
-        FMatrix2 Result;
-        NVectorOp::Float128 Temp = NVectorOp::Sub(this, &RHS);
-        NVectorOp::StoreAligned(Temp, &Result);
-        return Result;
-#endif
     }
 
     /**
@@ -502,23 +478,20 @@ public:
      */
     FORCEINLINE FMatrix2 operator-(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix2 Result;
+
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 - RHS;
         Result.m01 = m01 - RHS;
-
         Result.m10 = m10 - RHS;
         Result.m11 = m11 - RHS;
-        return Result;
-#else
-        FMatrix2 Result;
+    #else
+        FFloat128 Temp = FVectorMath::Load(RHS);
+        Temp = FVectorMath::Sub(this, Temp);
+        FVectorMath::StoreAligned(Temp, &Result);
+    #endif
 
-        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
-        Temp = NVectorOp::Sub(this, Temp);
-
-        NVectorOp::StoreAligned(Temp, &Result);
         return Result;
-#endif
     }
 
     /**
@@ -538,26 +511,21 @@ public:
      */
     FORCEINLINE FMatrix2 operator/(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
-        float Recip = 1.0f / RHS;
-
         FMatrix2 Result;
+
+    #if !USE_VECTOR_MATH
+        float Recip = 1.0f / RHS;
         Result.m00 = m00 * Recip;
         Result.m01 = m01 * Recip;
-
         Result.m10 = m10 * Recip;
         Result.m11 = m11 * Recip;
+    #else
+        FFloat128 Temp = FVectorMath::Load(RHS);
+        Temp = FVectorMath::Div(this, Temp);
+        FVectorMath::StoreAligned(Temp, &Result);
+    #endif
+
         return Result;
-
-#else
-        FMatrix2 Result;
-
-        NVectorOp::Float128 Temp = NVectorOp::Load(RHS);
-        Temp = NVectorOp::Div(this, Temp);
-
-        NVectorOp::StoreAligned(Temp, &Result);
-        return Result;
-#endif
     }
 
     /**

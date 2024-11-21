@@ -75,6 +75,81 @@
     #define PLATFORM_64BIT (0)
 #endif
 
+// Check for SSE intrinsics support
+#if PLATFORM_ARCHITECTURE_X86_X64
+    // SSE
+    #if defined(__SSE__) || (defined(_M_IX86_FP) && _M_IX86_FP >= 1)
+        #ifndef PLATFORM_SUPPORT_SSE_INTRIN
+            #define PLATFORM_SUPPORT_SSE_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_SSE_INTRIN (0)
+    #endif
+
+    // SSE2
+    #if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2)
+        #ifndef PLATFORM_SUPPORT_SSE2_INTRIN
+            #define PLATFORM_SUPPORT_SSE2_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_SSE2_INTRIN (0)
+    #endif
+
+    // SSE3
+    #if defined(__SSE3__)
+        #ifndef PLATFORM_SUPPORT_SSE3_INTRIN
+            #define PLATFORM_SUPPORT_SSE3_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_SSE3_INTRIN (0)
+    #endif
+
+    // SSSE3
+    #if defined(__SSSE3__)
+        #ifndef PLATFORM_SUPPORT_SSSE3_INTRIN
+            #define PLATFORM_SUPPORT_SSSE3_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_SSSE3_INTRIN (0)
+    #endif
+
+    // SSE4.1
+    #if defined(__SSE4_1__)
+        #ifndef PLATFORM_SUPPORT_SSE4_1_INTRIN
+            #define PLATFORM_SUPPORT_SSE4_1_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_SSE4_1_INTRIN (0)
+    #endif
+
+    // SSE4.2
+    #if defined(__SSE4_2__)
+        #ifndef PLATFORM_SUPPORT_SSE4_2_INTRIN
+            #define PLATFORM_SUPPORT_SSE4_2_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_SSE4_2_INTRIN (0)
+    #endif
+
+    // AVX
+    #if defined(__AVX__)
+        #ifndef PLATFORM_SUPPORT_AVX_INTRIN
+            #define PLATFORM_SUPPORT_AVX_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_AVX_INTRIN (0)
+    #endif
+
+    // AVX2
+    #if defined(__AVX2__)
+        #ifndef PLATFORM_SUPPORT_AVX2_INTRIN
+            #define PLATFORM_SUPPORT_AVX2_INTRIN (1)
+        #endif
+    #else
+        #define PLATFORM_SUPPORT_AVX2_INTRIN (0)
+    #endif
+#endif
+
 // Assertion Control
 #ifndef ENABLE_ASSERTS
     #if !defined(PRODUCTION_BUILD)

@@ -6,13 +6,6 @@
 
 #if PLATFORM_COMPILER_CLANG
 
-// Use SSE intrinsics if we can
-#if PLATFORM_ARCHITECTURE_X86_X64
-    #ifndef ENABLE_SSE_INTRIN
-        #define ENABLE_SSE_INTRIN (1)
-    #endif
-#endif
-
 // Macro Definitions
 #ifndef FORCEINLINE
     #ifndef DEBUG_BUILD

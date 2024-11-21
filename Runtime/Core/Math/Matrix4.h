@@ -90,36 +90,36 @@ public:
 
     FORCEINLINE FVector4 Transform(const FVector4& Vector) const noexcept
     {
-#if !USE_VECTOR_OP
         FVector4 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.x = (Vector[0] * m00) + (Vector[1] * m10) + (Vector[2] * m20) + (Vector[3] * m30);
         Result.y = (Vector[0] * m01) + (Vector[1] * m11) + (Vector[2] * m21) + (Vector[3] * m31);
         Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (Vector[3] * m32);
         Result.w = (Vector[0] * m03) + (Vector[1] * m13) + (Vector[2] * m23) + (Vector[3] * m33);
+    #else
+        FFloat128 NewVector = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Vector));
+        NewVector = FVectorMath::Transform(this, NewVector);
+        FVectorMath::StoreAligned(NewVector, &Result);
+    #endif
+    
         return Result;
-#else
-        NVectorOp::Float128 NewVector = NVectorOp::LoadAligned(&Vector);
-        NewVector = NVectorOp::Transform(this, NewVector);
-
-        FVector4 Result;
-        NVectorOp::StoreAligned(NewVector, &Result);
-        return Result;
-#endif
     }
 
     FORCEINLINE FVector3 Transform(const FVector3& Vector) const noexcept
     {
-#if !USE_VECTOR_OP
         FVector3 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.x = (Vector[0] * m00) + (Vector[1] * m10) + (Vector[2] * m20) + (1.0f * m30);
         Result.y = (Vector[0] * m01) + (Vector[1] * m11) + (Vector[2] * m21) + (1.0f * m31);
         Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (1.0f * m32);
-        return Result;
-#else
-        NVectorOp::Float128 NewVector = NVectorOp::Load(Vector.x, Vector.y, Vector.z, 1.0f);
-        NewVector = NVectorOp::Transform(this, NewVector);
-        return FVector3(NVectorOp::GetX(NewVector), NVectorOp::GetY(NewVector), NVectorOp::GetZ(NewVector));
-#endif
+    #else
+        FFloat128 NewVector = FVectorMath::Load(Vector.x, Vector.y, Vector.z, 1.0f);
+        NewVector = FVectorMath::Transform(this, NewVector);
+    #endif
+    
+        return FVector3(FVectorMath::GetX(NewVector), FVectorMath::GetY(NewVector), FVectorMath::GetZ(NewVector));
     }
 
     /**
@@ -129,26 +129,26 @@ public:
      */
     FORCEINLINE FVector3 TransformCoord(const FVector3& Position) const noexcept
     {
-#if !USE_VECTOR_OP
+        FVector3 Result;
+
+    #if !USE_VECTOR_MATH
         float ComponentW = (Position[0] * m03) + (Position[1] * m13) + (Position[2] * m23) + (1.0f * m33);
         ComponentW = 1.0f / ComponentW;
 
-        FVector3 Result;
         Result.x = ((Position[0] * m00) + (Position[1] * m10) + (Position[2] * m20) + (1.0f * m30)) * ComponentW;
         Result.y = ((Position[0] * m01) + (Position[1] * m11) + (Position[2] * m21) + (1.0f * m31)) * ComponentW;
         Result.z = ((Position[0] * m02) + (Position[1] * m12) + (Position[2] * m22) + (1.0f * m32)) * ComponentW;
-        return Result;
-#else
-        NVectorOp::Float128 NewPosition = NVectorOp::Load(Position.x, Position.y, Position.z, 1.0f);
-        NewPosition = NVectorOp::Transform(this, NewPosition);
+    #else
+        FFloat128 NewPosition = FVectorMath::Load(Position.x, Position.y, Position.z, 1.0f);
+        NewPosition = FVectorMath::Transform(this, NewPosition);
         
-        NVectorOp::Float128 Temp0 = NVectorOp::MakeOnes();
-        NVectorOp::Float128 Temp1 = NVectorOp::Broadcast<3>(NewPosition);
-        Temp0       = NVectorOp::Div(Temp0, Temp1);
-        NewPosition = NVectorOp::Mul(Temp0, NewPosition);
-
-        return FVector3(NVectorOp::GetX(NewPosition), NVectorOp::GetY(NewPosition), NVectorOp::GetZ(NewPosition));
-#endif
+        FFloat128 Temp0 = FVectorMath::LoadOnes();
+        FFloat128 Temp1 = FVectorMath::Broadcast<3>(NewPosition);
+        Temp0       = FVectorMath::Div(Temp0, Temp1);
+        NewPosition = FVectorMath::Mul(Temp0, NewPosition);
+    #endif
+        
+        return FVector3(FVectorMath::GetX(NewPosition), FVectorMath::GetY(NewPosition), FVectorMath::GetZ(NewPosition));
     }
 
     /**
@@ -158,17 +158,18 @@ public:
      */
     FORCEINLINE FVector3 TransformNormal(const FVector3& Direction) const noexcept
     {
-#if !USE_VECTOR_OP
         FVector3 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.x = (Direction[0] * m00) + (Direction[1] * m10) + (Direction[2] * m20);
         Result.y = (Direction[0] * m01) + (Direction[1] * m11) + (Direction[2] * m21);
         Result.z = (Direction[0] * m02) + (Direction[1] * m12) + (Direction[2] * m22);
-        return Result;
-#else
-        NVectorOp::Float128 NewDirection = NVectorOp::Load(Direction.x, Direction.y, Direction.z, 0.0f);
-        NewDirection = NVectorOp::Transform(this, NewDirection);
-        return FVector3(NVectorOp::GetX(NewDirection), NVectorOp::GetY(NewDirection), NVectorOp::GetZ(NewDirection));
-#endif
+    #else
+        FFloat128 NewDirection = FVectorMath::Load(Direction.x, Direction.y, Direction.z, 0.0f);
+        NewDirection = FVectorMath::Transform(this, NewDirection);
+    #endif
+    
+        return FVector3(FVectorMath::GetX(NewDirection), FVectorMath::GetY(NewDirection), FVectorMath::GetZ(NewDirection));
     }
 
     /**
@@ -177,8 +178,9 @@ public:
      */
     inline FMatrix4 Transpose() const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix4 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.f[0][0] = f[0][0];
         Result.f[0][1] = f[1][0];
         Result.f[0][2] = f[2][0];
@@ -198,12 +200,11 @@ public:
         Result.f[3][1] = f[1][3];
         Result.f[3][2] = f[2][3];
         Result.f[3][3] = f[3][3];
+    #else
+        FVectorMath::Transpose(this, &Result);
+    #endif
+    
         return Result;
-#else
-        FMatrix4 Result;
-        NVectorOp::Transpose(this, &Result);
-        return Result;
-#endif
     }
 
     /**
@@ -212,7 +213,9 @@ public:
      */
     inline FMatrix4 Invert() const noexcept
     {
-#if !USE_VECTOR_OP
+        FMatrix4 Inverse;
+        
+    #if !USE_VECTOR_MATH
         float _a = (m22 * m33) - (m23 * m32);
         float _b = (m21 * m33) - (m23 * m31);
         float _c = (m21 * m32) - (m22 * m31);
@@ -220,7 +223,6 @@ public:
         float _e = (m20 * m32) - (m22 * m30);
         float _f = (m20 * m31) - (m21 * m30);
 
-        FMatrix4 Inverse;
         //d11
         Inverse.m00 = (m11 * _a) - (m12 * _b) + (m13 * _c);
         //d12
@@ -282,71 +284,69 @@ public:
         Inverse.m23 = -((m00 * _b) - (m01 * _d) + (m03 * _f)) * ReprDeterminant;
         //d44
         Inverse.m33 = ((m00 * _c) - (m01 * _e) + (m02 * _f)) * ReprDeterminant;
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(f[0]);
+        FFloat128 Temp1 = FVectorMath::LoadAligned(f[1]);
+        FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
+        FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
 
+        FFloat128 _0 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+        FFloat128 _1 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+        FFloat128 _2 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+        FFloat128 _3 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+        FFloat128 _4 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+        FFloat128 _5 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+        FFloat128 _6 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+        FFloat128 _7 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
+
+        FFloat128 Mul0   = FVectorMath::Mul(_4, _5);
+        FFloat128 Mul1   = FVectorMath::Mul(_6, _7);
+        FFloat128 DetSub = FVectorMath::Sub(Mul0, Mul1);
+
+        FFloat128 DetA = FVectorMath::Broadcast<0>(DetSub);
+        FFloat128 DetB = FVectorMath::Broadcast<1>(DetSub);
+        FFloat128 DetC = FVectorMath::Broadcast<2>(DetSub);
+        FFloat128 DetD = FVectorMath::Broadcast<3>(DetSub);
+
+        FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
+        FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
+
+        FFloat128 x = FVectorMath::Sub(FVectorMath::Mul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
+        FFloat128 w = FVectorMath::Sub(FVectorMath::Mul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
+
+        FFloat128 DetM = FVectorMath::Mul(DetA, DetD);
+
+        FFloat128 y = FVectorMath::Sub(FVectorMath::Mul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
+        FFloat128 z = FVectorMath::Sub(FVectorMath::Mul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
+
+        DetM = FVectorMath::Add(DetM, FVectorMath::Mul(DetB, DetC));
+
+        FFloat128 Trace = FVectorMath::Mul(ab, FVectorMath::Shuffle<0, 2, 1, 3>(dc));
+        Trace = FVectorMath::HorizontalAdd(Trace);
+        Trace = FVectorMath::HorizontalAdd(Trace);
+
+        DetM = FVectorMath::Sub(DetM, Trace);
+
+        const FFloat128 AdjSignMask = FVectorMath::Load(1.0f, -1.0f, -1.0f, 1.0f);
+        DetM = FVectorMath::Div(AdjSignMask, DetM);
+
+        x = FVectorMath::Mul(x, DetM);
+        y = FVectorMath::Mul(y, DetM);
+        z = FVectorMath::Mul(z, DetM);
+        w = FVectorMath::Mul(w, DetM);
+
+        Temp0 = FVectorMath::Shuffle0011<3, 1, 3, 1>(x, y);
+        Temp1 = FVectorMath::Shuffle0011<2, 0, 2, 0>(x, y);
+        Temp2 = FVectorMath::Shuffle0011<3, 1, 3, 1>(z, w);
+        Temp3 = FVectorMath::Shuffle0011<2, 0, 2, 0>(z, w);
+
+        FVectorMath::StoreAligned(Temp0, Inverse.f[0]);
+        FVectorMath::StoreAligned(Temp1, Inverse.f[1]);
+        FVectorMath::StoreAligned(Temp2, Inverse.f[2]);
+        FVectorMath::StoreAligned(Temp3, Inverse.f[3]);
+    #endif
+    
         return Inverse;
-#else
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(f[0]);
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(f[1]);
-        NVectorOp::Float128 Temp2 = NVectorOp::LoadAligned(f[2]);
-        NVectorOp::Float128 Temp3 = NVectorOp::LoadAligned(f[3]);
-
-        NVectorOp::Float128 _0 = NVectorOp::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        NVectorOp::Float128 _1 = NVectorOp::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        NVectorOp::Float128 _2 = NVectorOp::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        NVectorOp::Float128 _3 = NVectorOp::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        NVectorOp::Float128 _4 = NVectorOp::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        NVectorOp::Float128 _5 = NVectorOp::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        NVectorOp::Float128 _6 = NVectorOp::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        NVectorOp::Float128 _7 = NVectorOp::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
-
-        NVectorOp::Float128 Mul0   = NVectorOp::Mul(_4, _5);
-        NVectorOp::Float128 Mul1   = NVectorOp::Mul(_6, _7);
-        NVectorOp::Float128 DetSub = NVectorOp::Sub(Mul0, Mul1);
-
-        NVectorOp::Float128 DetA = NVectorOp::Broadcast<0>(DetSub);
-        NVectorOp::Float128 DetB = NVectorOp::Broadcast<1>(DetSub);
-        NVectorOp::Float128 DetC = NVectorOp::Broadcast<2>(DetSub);
-        NVectorOp::Float128 DetD = NVectorOp::Broadcast<3>(DetSub);
-
-        NVectorOp::Float128 dc = NVectorOp::Mat2AdjointMul(_3, _2);
-        NVectorOp::Float128 ab = NVectorOp::Mat2AdjointMul(_0, _1);
-
-        NVectorOp::Float128 x = NVectorOp::Sub(NVectorOp::Mul(DetD, _0), NVectorOp::Mat2Mul(_1, dc));
-        NVectorOp::Float128 w = NVectorOp::Sub(NVectorOp::Mul(DetA, _3), NVectorOp::Mat2Mul(_2, ab));
-
-        NVectorOp::Float128 DetM = NVectorOp::Mul(DetA, DetD);
-
-        NVectorOp::Float128 y = NVectorOp::Sub(NVectorOp::Mul(DetB, _2), NVectorOp::Mat2MulAdjoint(_3, ab));
-        NVectorOp::Float128 z = NVectorOp::Sub(NVectorOp::Mul(DetC, _1), NVectorOp::Mat2MulAdjoint(_0, dc));
-
-        DetM = NVectorOp::Add(DetM, NVectorOp::Mul(DetB, DetC));
-
-        NVectorOp::Float128 Trace = NVectorOp::Mul(ab, NVectorOp::Shuffle<0, 2, 1, 3>(dc));
-        Trace = NVectorOp::HorizontalAdd(Trace);
-        Trace = NVectorOp::HorizontalAdd(Trace);
-
-        DetM = NVectorOp::Sub(DetM, Trace);
-
-        const NVectorOp::Float128 AdjSignMask = NVectorOp::Load(1.0f, -1.0f, -1.0f, 1.0f);
-        DetM = NVectorOp::Div(AdjSignMask, DetM);
-
-        x = NVectorOp::Mul(x, DetM);
-        y = NVectorOp::Mul(y, DetM);
-        z = NVectorOp::Mul(z, DetM);
-        w = NVectorOp::Mul(w, DetM);
-
-        Temp0 = NVectorOp::Shuffle0011<3, 1, 3, 1>(x, y);
-        Temp1 = NVectorOp::Shuffle0011<2, 0, 2, 0>(x, y);
-        Temp2 = NVectorOp::Shuffle0011<3, 1, 3, 1>(z, w);
-        Temp3 = NVectorOp::Shuffle0011<2, 0, 2, 0>(z, w);
-
-        FMatrix4 Inverse;
-        NVectorOp::StoreAligned(Temp0, Inverse.f[0]);
-        NVectorOp::StoreAligned(Temp1, Inverse.f[1]);
-        NVectorOp::StoreAligned(Temp2, Inverse.f[2]);
-        NVectorOp::StoreAligned(Temp3, Inverse.f[3]);
-        return Inverse;
-#endif
     }
 
     /**
@@ -355,7 +355,9 @@ public:
      */
     inline FMatrix4 Adjoint() const noexcept
     {
-#if !USE_VECTOR_OP
+        FMatrix4 Adjugate;
+
+    #if !USE_VECTOR_MATH
         float _a = (m22 * m33) - (m23 * m32);
         float _b = (m21 * m33) - (m23 * m31);
         float _c = (m21 * m32) - (m22 * m31);
@@ -363,7 +365,6 @@ public:
         float _e = (m20 * m32) - (m22 * m30);
         float _f = (m20 * m31) - (m21 * m30);
 
-        FMatrix4 Adjugate;
         //d11
         Adjugate.m00 = (m11 * _a) - (m12 * _b) + (m13 * _c);
         //d12
@@ -413,59 +414,57 @@ public:
         Adjugate.m23 = -((m00 * _b) - (m01 * _d) + (m03 * _f));
         //d44
         Adjugate.m33 = (m00 * _c) - (m01 * _e) + (m02 * _f);
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(f[0]);
+        FFloat128 Temp1 = FVectorMath::LoadAligned(f[1]);
+        FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
+        FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
 
+        FFloat128 _0 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+        FFloat128 _1 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+        FFloat128 _2 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+        FFloat128 _3 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+        FFloat128 _4 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+        FFloat128 _5 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+        FFloat128 _6 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+        FFloat128 _7 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
+
+        FFloat128 Mul0   = FVectorMath::Mul(_4, _5);
+        FFloat128 Mul1   = FVectorMath::Mul(_6, _7);
+        FFloat128 DetSub = FVectorMath::Sub(Mul0, Mul1);
+
+        FFloat128 DetA = FVectorMath::Broadcast<0>(DetSub);
+        FFloat128 DetB = FVectorMath::Broadcast<1>(DetSub);
+        FFloat128 DetC = FVectorMath::Broadcast<2>(DetSub);
+        FFloat128 DetD = FVectorMath::Broadcast<3>(DetSub);
+
+        FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
+        FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
+
+        FFloat128 x = FVectorMath::Sub(FVectorMath::Mul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
+        FFloat128 w = FVectorMath::Sub(FVectorMath::Mul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
+
+        FFloat128 y = FVectorMath::Sub(FVectorMath::Mul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
+        FFloat128 z = FVectorMath::Sub(FVectorMath::Mul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
+
+        const FFloat128 Mask = FVectorMath::Load(1.0f, -1.0f, -1.0f, 1.0f);
+        x = FVectorMath::Mul(x, Mask);
+        y = FVectorMath::Mul(y, Mask);
+        z = FVectorMath::Mul(z, Mask);
+        w = FVectorMath::Mul(w, Mask);
+
+        Temp0 = FVectorMath::Shuffle0011<3, 1, 3, 1>(x, y);
+        Temp1 = FVectorMath::Shuffle0011<2, 0, 2, 0>(x, y);
+        Temp2 = FVectorMath::Shuffle0011<3, 1, 3, 1>(z, w);
+        Temp3 = FVectorMath::Shuffle0011<2, 0, 2, 0>(z, w);
+
+        FVectorMath::StoreAligned(Temp0, Adjugate.f[0]);
+        FVectorMath::StoreAligned(Temp1, Adjugate.f[1]);
+        FVectorMath::StoreAligned(Temp2, Adjugate.f[2]);
+        FVectorMath::StoreAligned(Temp3, Adjugate.f[3]);
+    #endif
+    
         return Adjugate;
-#else
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(f[0]);
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(f[1]);
-        NVectorOp::Float128 Temp2 = NVectorOp::LoadAligned(f[2]);
-        NVectorOp::Float128 Temp3 = NVectorOp::LoadAligned(f[3]);
-
-        NVectorOp::Float128 _0 = NVectorOp::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        NVectorOp::Float128 _1 = NVectorOp::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        NVectorOp::Float128 _2 = NVectorOp::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        NVectorOp::Float128 _3 = NVectorOp::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        NVectorOp::Float128 _4 = NVectorOp::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        NVectorOp::Float128 _5 = NVectorOp::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        NVectorOp::Float128 _6 = NVectorOp::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        NVectorOp::Float128 _7 = NVectorOp::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
-
-        NVectorOp::Float128 Mul0   = NVectorOp::Mul(_4, _5);
-        NVectorOp::Float128 Mul1   = NVectorOp::Mul(_6, _7);
-        NVectorOp::Float128 DetSub = NVectorOp::Sub(Mul0, Mul1);
-
-        NVectorOp::Float128 DetA = NVectorOp::Broadcast<0>(DetSub);
-        NVectorOp::Float128 DetB = NVectorOp::Broadcast<1>(DetSub);
-        NVectorOp::Float128 DetC = NVectorOp::Broadcast<2>(DetSub);
-        NVectorOp::Float128 DetD = NVectorOp::Broadcast<3>(DetSub);
-
-        NVectorOp::Float128 dc = NVectorOp::Mat2AdjointMul(_3, _2);
-        NVectorOp::Float128 ab = NVectorOp::Mat2AdjointMul(_0, _1);
-
-        NVectorOp::Float128 x = NVectorOp::Sub(NVectorOp::Mul(DetD, _0), NVectorOp::Mat2Mul(_1, dc));
-        NVectorOp::Float128 w = NVectorOp::Sub(NVectorOp::Mul(DetA, _3), NVectorOp::Mat2Mul(_2, ab));
-
-        NVectorOp::Float128 y = NVectorOp::Sub(NVectorOp::Mul(DetB, _2), NVectorOp::Mat2MulAdjoint(_3, ab));
-        NVectorOp::Float128 z = NVectorOp::Sub(NVectorOp::Mul(DetC, _1), NVectorOp::Mat2MulAdjoint(_0, dc));
-
-        const NVectorOp::Float128 Mask = NVectorOp::Load(1.0f, -1.0f, -1.0f, 1.0f);
-        x = NVectorOp::Mul(x, Mask);
-        y = NVectorOp::Mul(y, Mask);
-        z = NVectorOp::Mul(z, Mask);
-        w = NVectorOp::Mul(w, Mask);
-
-        Temp0 = NVectorOp::Shuffle0011<3, 1, 3, 1>(x, y);
-        Temp1 = NVectorOp::Shuffle0011<2, 0, 2, 0>(x, y);
-        Temp2 = NVectorOp::Shuffle0011<3, 1, 3, 1>(z, w);
-        Temp3 = NVectorOp::Shuffle0011<2, 0, 2, 0>(z, w);
-
-        FMatrix4 Inverse;
-        NVectorOp::StoreAligned(Temp0, Inverse.f[0]);
-        NVectorOp::StoreAligned(Temp1, Inverse.f[1]);
-        NVectorOp::StoreAligned(Temp2, Inverse.f[2]);
-        NVectorOp::StoreAligned(Temp3, Inverse.f[3]);
-        return Inverse;
-#endif
     }
 
     /**
@@ -474,7 +473,9 @@ public:
      */
     inline float Determinant() const noexcept
     {
-#if !USE_VECTOR_OP
+        float Determinant = 0.0f;
+        
+    #if !USE_VECTOR_MATH
         float _a = (m22 * m33) - (m23 * m32);
         float _b = (m21 * m33) - (m23 * m31);
         float _c = (m21 * m32) - (m22 * m31);
@@ -483,50 +484,51 @@ public:
         float _f = (m20 * m31) - (m21 * m30);
 
         //d11
-        float Determinant = m00 * ((m11 * _a) - (m12 * _b) + (m13 * _c));
+        Determinant = m00 * ((m11 * _a) - (m12 * _b) + (m13 * _c));
         //d12
         Determinant -= m01 * ((m10 * _a) - (m12 * _d) + (m13 * _e));
         //d13
         Determinant += m02 * ((m10 * _b) - (m11 * _d) + (m13 * _f));
         //d14
         Determinant -= m03 * ((m10 * _c) - (m11 * _e) + (m12 * _f));
+    #else
+        FFloat128 Temp0 = FVectorMath::LoadAligned(f[0]);
+        FFloat128 Temp1 = FVectorMath::LoadAligned(f[1]);
+        FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
+        FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
+
+        FFloat128 _0 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+        FFloat128 _1 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+        FFloat128 _2 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+        FFloat128 _3 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+        FFloat128 _4 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+        FFloat128 _5 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+        FFloat128 _6 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+        FFloat128 _7 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
+
+        FFloat128 Mul0   = FVectorMath::Mul(_4, _5);
+        FFloat128 Mul1   = FVectorMath::Mul(_6, _7);
+        FFloat128 DetSub = FVectorMath::Sub(Mul0, Mul1);
+
+        FFloat128 DetA = FVectorMath::Broadcast<0>(DetSub);
+        FFloat128 DetB = FVectorMath::Broadcast<1>(DetSub);
+        FFloat128 DetC = FVectorMath::Broadcast<2>(DetSub);
+        FFloat128 DetD = FVectorMath::Broadcast<3>(DetSub);
+
+        FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
+        FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
+
+        FFloat128 DetM = FVectorMath::Mul(DetA, DetD);
+        Mul0 = FVectorMath::Mul(DetB, DetC);
+        DetM = FVectorMath::Add(DetM, Mul0);
+        Mul0 = FVectorMath::Mul(ab, FVectorMath::Shuffle<0, 2, 1, 3>(dc));
+
+        FFloat128 Sum = FVectorMath::HorizontalSum(Mul0);
+        DetM = FVectorMath::Sub(DetM, Sum);
+        Determinant = FVectorMath::GetX(DetM);
+    #endif
+        
         return Determinant;
-#else
-        NVectorOp::Float128 Temp0 = NVectorOp::LoadAligned(f[0]);
-        NVectorOp::Float128 Temp1 = NVectorOp::LoadAligned(f[1]);
-        NVectorOp::Float128 Temp2 = NVectorOp::LoadAligned(f[2]);
-        NVectorOp::Float128 Temp3 = NVectorOp::LoadAligned(f[3]);
-
-        NVectorOp::Float128 _0 = NVectorOp::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        NVectorOp::Float128 _1 = NVectorOp::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        NVectorOp::Float128 _2 = NVectorOp::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        NVectorOp::Float128 _3 = NVectorOp::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        NVectorOp::Float128 _4 = NVectorOp::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        NVectorOp::Float128 _5 = NVectorOp::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        NVectorOp::Float128 _6 = NVectorOp::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        NVectorOp::Float128 _7 = NVectorOp::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
-
-        NVectorOp::Float128 Mul0   = NVectorOp::Mul(_4, _5);
-        NVectorOp::Float128 Mul1   = NVectorOp::Mul(_6, _7);
-        NVectorOp::Float128 DetSub = NVectorOp::Sub(Mul0, Mul1);
-
-        NVectorOp::Float128 DetA = NVectorOp::Broadcast<0>(DetSub);
-        NVectorOp::Float128 DetB = NVectorOp::Broadcast<1>(DetSub);
-        NVectorOp::Float128 DetC = NVectorOp::Broadcast<2>(DetSub);
-        NVectorOp::Float128 DetD = NVectorOp::Broadcast<3>(DetSub);
-
-        NVectorOp::Float128 dc = NVectorOp::Mat2AdjointMul(_3, _2);
-        NVectorOp::Float128 ab = NVectorOp::Mat2AdjointMul(_0, _1);
-
-        NVectorOp::Float128 DetM = NVectorOp::Mul(DetA, DetD);
-        Mul0 = NVectorOp::Mul(DetB, DetC);
-        DetM = NVectorOp::Add(DetM, Mul0);
-        Mul0 = NVectorOp::Mul(ab, NVectorOp::Shuffle<0, 2, 1, 3>(dc));
-
-        NVectorOp::Float128 Sum = NVectorOp::HorizontalSum(Mul0);
-        DetM = NVectorOp::Sub(DetM, Sum);
-        return NVectorOp::GetX(DetM);
-#endif
     }
 
     /**
@@ -579,7 +581,7 @@ public:
      */
     inline bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
 
         for (int32 i = 0; i < 16; i++)
@@ -592,29 +594,29 @@ public:
         }
 
         return true;
-#else
-        NVectorOp::Float128 Espilon128 = NVectorOp::Load(Epsilon);
-        Espilon128 = NVectorOp::Abs(Espilon128);
+    #else
+        FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
+        Espilon128 = FVectorMath::Abs(Espilon128);
 
         for (int32 i = 0; i < 4; i++)
         {
-            NVectorOp::Float128 Diff = NVectorOp::Sub(f[i], Other.f[i]);
-            Diff = NVectorOp::Abs(Diff);
+            FFloat128 Diff = FVectorMath::Sub(f[i], Other.f[i]);
+            Diff = FVectorMath::Abs(Diff);
 
-            if (NVectorOp::GreaterThan(Diff, Espilon128))
+            if (FVectorMath::GreaterThan(Diff, Espilon128))
             {
                 return false;
             }
         }
 
         return true;
-#endif
+    #endif
     }
 
      /** @brief - Sets this matrix to an identity matrix */
     FORCEINLINE void SetIdentity() noexcept
     {
-#if !USE_VECTOR_OP
+    #if !USE_VECTOR_MATH
         m00 = 1.0f;
         m01 = 0.0f;
         m02 = 0.0f;
@@ -634,12 +636,12 @@ public:
         m31 = 0.0f;
         m32 = 0.0f;
         m33 = 1.0f;
-#else
-        NVectorOp::StoreAligned(NVectorOp::Load(1.0f, 0.0f, 0.0f, 0.0f), f[0]);
-        NVectorOp::StoreAligned(NVectorOp::Load(0.0f, 1.0f, 0.0f, 0.0f), f[1]);
-        NVectorOp::StoreAligned(NVectorOp::Load(0.0f, 0.0f, 1.0f, 0.0f), f[2]);
-        NVectorOp::StoreAligned(NVectorOp::Load(0.0f, 0.0f, 0.0f, 1.0f), f[3]);
-#endif
+    #else
+        FVectorMath::StoreAligned(FVectorMath::Load(1.0f, 0.0f, 0.0f, 0.0f), f[0]);
+        FVectorMath::StoreAligned(FVectorMath::Load(0.0f, 1.0f, 0.0f, 0.0f), f[1]);
+        FVectorMath::StoreAligned(FVectorMath::Load(0.0f, 0.0f, 1.0f, 0.0f), f[2]);
+        FVectorMath::StoreAligned(FVectorMath::Load(0.0f, 0.0f, 0.0f, 1.0f), f[3]);
+    #endif
     }
 
     /**
@@ -749,8 +751,9 @@ public:
      */
     FORCEINLINE FMatrix4 operator*(const FMatrix4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix4 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10) + (m02 * RHS.m20) + (m03 * RHS.m30);
         Result.m01 = (m00 * RHS.m01) + (m01 * RHS.m11) + (m02 * RHS.m21) + (m03 * RHS.m31);
         Result.m02 = (m00 * RHS.m02) + (m01 * RHS.m12) + (m02 * RHS.m22) + (m03 * RHS.m32);
@@ -770,27 +773,26 @@ public:
         Result.m31 = (m30 * RHS.m01) + (m31 * RHS.m11) + (m32 * RHS.m21) + (m33 * RHS.m31);
         Result.m32 = (m30 * RHS.m02) + (m31 * RHS.m12) + (m32 * RHS.m22) + (m33 * RHS.m32);
         Result.m33 = (m30 * RHS.m03) + (m31 * RHS.m13) + (m32 * RHS.m23) + (m33 * RHS.m33);
+    #else
+        FFloat128 Row0 = FVectorMath::LoadAligned(f[0]);
+        Row0 = FVectorMath::Transform(&RHS, Row0);
+
+        FFloat128 Row1 = FVectorMath::LoadAligned(f[1]);
+        Row1 = FVectorMath::Transform(&RHS, Row1);
+
+        FFloat128 Row2 = FVectorMath::LoadAligned(f[2]);
+        Row2 = FVectorMath::Transform(&RHS, Row2);
+
+        FFloat128 Row3 = FVectorMath::LoadAligned(f[3]);
+        Row3 = FVectorMath::Transform(&RHS, Row3);
+
+        FVectorMath::StoreAligned(Row0, Result.f[0]);
+        FVectorMath::StoreAligned(Row1, Result.f[1]);
+        FVectorMath::StoreAligned(Row2, Result.f[2]);
+        FVectorMath::StoreAligned(Row3, Result.f[3]);
+    #endif
+
         return Result;
-#else
-        NVectorOp::Float128 Row0 = NVectorOp::LoadAligned(f[0]);
-        Row0 = NVectorOp::Transform(&RHS, Row0);
-
-        NVectorOp::Float128 Row1 = NVectorOp::LoadAligned(f[1]);
-        Row1 = NVectorOp::Transform(&RHS, Row1);
-
-        NVectorOp::Float128 Row2 = NVectorOp::LoadAligned(f[2]);
-        Row2 = NVectorOp::Transform(&RHS, Row2);
-
-        NVectorOp::Float128 Row3 = NVectorOp::LoadAligned(f[3]);
-        Row3 = NVectorOp::Transform(&RHS, Row3);
-
-        FMatrix4 Result;
-        NVectorOp::StoreAligned(Row0, Result.f[0]);
-        NVectorOp::StoreAligned(Row1, Result.f[1]);
-        NVectorOp::StoreAligned(Row2, Result.f[2]);
-        NVectorOp::StoreAligned(Row3, Result.f[3]);
-        return Result;
-#endif
     }
 
     /**
@@ -810,8 +812,9 @@ public:
      */
     FORCEINLINE FMatrix4 operator*(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix4 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 * RHS;
         Result.m01 = m01 * RHS;
         Result.m02 = m02 * RHS;
@@ -831,21 +834,20 @@ public:
         Result.m31 = m31 * RHS;
         Result.m32 = m32 * RHS;
         Result.m33 = m33 * RHS;
-        return Result;
-#else
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        NVectorOp::Float128 Row0    = NVectorOp::Mul(f[0], Scalars);
-        NVectorOp::Float128 Row1    = NVectorOp::Mul(f[1], Scalars);
-        NVectorOp::Float128 Row2    = NVectorOp::Mul(f[2], Scalars);
-        NVectorOp::Float128 Row3    = NVectorOp::Mul(f[3], Scalars);
+    #else
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        FFloat128 Row0    = FVectorMath::Mul(f[0], Scalars);
+        FFloat128 Row1    = FVectorMath::Mul(f[1], Scalars);
+        FFloat128 Row2    = FVectorMath::Mul(f[2], Scalars);
+        FFloat128 Row3    = FVectorMath::Mul(f[3], Scalars);
 
-        FMatrix4 Result;
-        NVectorOp::StoreAligned(Row0, Result.f[0]);
-        NVectorOp::StoreAligned(Row1, Result.f[1]);
-        NVectorOp::StoreAligned(Row2, Result.f[2]);
-        NVectorOp::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::StoreAligned(Row0, Result.f[0]);
+        FVectorMath::StoreAligned(Row1, Result.f[1]);
+        FVectorMath::StoreAligned(Row2, Result.f[2]);
+        FVectorMath::StoreAligned(Row3, Result.f[3]);
+    #endif
+    
         return Result;
-#endif
     }
 
     /**
@@ -865,8 +867,9 @@ public:
      */
     FORCEINLINE FMatrix4 operator+(const FMatrix4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix4 Result;
+
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 + RHS.m00;
         Result.m01 = m01 + RHS.m01;
         Result.m02 = m02 + RHS.m02;
@@ -886,20 +889,19 @@ public:
         Result.m31 = m31 + RHS.m31;
         Result.m32 = m32 + RHS.m32;
         Result.m33 = m33 + RHS.m33;
-        return Result;
-#else
-        NVectorOp::Float128 Row0 = NVectorOp::Add(f[0], RHS.f[0]);
-        NVectorOp::Float128 Row1 = NVectorOp::Add(f[1], RHS.f[1]);
-        NVectorOp::Float128 Row2 = NVectorOp::Add(f[2], RHS.f[2]);
-        NVectorOp::Float128 Row3 = NVectorOp::Add(f[3], RHS.f[3]);
+    #else
+        FFloat128 Row0 = FVectorMath::Add(f[0], RHS.f[0]);
+        FFloat128 Row1 = FVectorMath::Add(f[1], RHS.f[1]);
+        FFloat128 Row2 = FVectorMath::Add(f[2], RHS.f[2]);
+        FFloat128 Row3 = FVectorMath::Add(f[3], RHS.f[3]);
 
-        FMatrix4 Result;
-        NVectorOp::StoreAligned(Row0, Result.f[0]);
-        NVectorOp::StoreAligned(Row1, Result.f[1]);
-        NVectorOp::StoreAligned(Row2, Result.f[2]);
-        NVectorOp::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::StoreAligned(Row0, Result.f[0]);
+        FVectorMath::StoreAligned(Row1, Result.f[1]);
+        FVectorMath::StoreAligned(Row2, Result.f[2]);
+        FVectorMath::StoreAligned(Row3, Result.f[3]);
+    #endif
+    
         return Result;
-#endif
     }
 
     /**
@@ -919,8 +921,9 @@ public:
      */
     FORCEINLINE FMatrix4 operator+(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix4 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 + RHS;
         Result.m01 = m01 + RHS;
         Result.m02 = m02 + RHS;
@@ -940,21 +943,20 @@ public:
         Result.m31 = m31 + RHS;
         Result.m32 = m32 + RHS;
         Result.m33 = m33 + RHS;
-        return Result;
-#else
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        NVectorOp::Float128 Row0    = NVectorOp::Add(f[0], Scalars);
-        NVectorOp::Float128 Row1    = NVectorOp::Add(f[1], Scalars);
-        NVectorOp::Float128 Row2    = NVectorOp::Add(f[2], Scalars);
-        NVectorOp::Float128 Row3    = NVectorOp::Add(f[3], Scalars);
+    #else
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        FFloat128 Row0    = FVectorMath::Add(f[0], Scalars);
+        FFloat128 Row1    = FVectorMath::Add(f[1], Scalars);
+        FFloat128 Row2    = FVectorMath::Add(f[2], Scalars);
+        FFloat128 Row3    = FVectorMath::Add(f[3], Scalars);
 
-        FMatrix4 Result;
-        NVectorOp::StoreAligned(Row0, Result.f[0]);
-        NVectorOp::StoreAligned(Row1, Result.f[1]);
-        NVectorOp::StoreAligned(Row2, Result.f[2]);
-        NVectorOp::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::StoreAligned(Row0, Result.f[0]);
+        FVectorMath::StoreAligned(Row1, Result.f[1]);
+        FVectorMath::StoreAligned(Row2, Result.f[2]);
+        FVectorMath::StoreAligned(Row3, Result.f[3]);
+    #endif
+
         return Result;
-#endif
     }
 
     /**
@@ -974,8 +976,9 @@ public:
      */
     FORCEINLINE FMatrix4 operator-(const FMatrix4& RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix4 Result;
+    
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 - RHS.m00;
         Result.m01 = m01 - RHS.m01;
         Result.m02 = m02 - RHS.m02;
@@ -995,20 +998,19 @@ public:
         Result.m31 = m31 - RHS.m31;
         Result.m32 = m32 - RHS.m32;
         Result.m33 = m33 - RHS.m33;
-        return Result;
-#else
-        NVectorOp::Float128 Row0 = NVectorOp::Sub(f[0], RHS.f[0]);
-        NVectorOp::Float128 Row1 = NVectorOp::Sub(f[1], RHS.f[1]);
-        NVectorOp::Float128 Row2 = NVectorOp::Sub(f[2], RHS.f[2]);
-        NVectorOp::Float128 Row3 = NVectorOp::Sub(f[3], RHS.f[3]);
+    #else
+        FFloat128 Row0 = FVectorMath::Sub(f[0], RHS.f[0]);
+        FFloat128 Row1 = FVectorMath::Sub(f[1], RHS.f[1]);
+        FFloat128 Row2 = FVectorMath::Sub(f[2], RHS.f[2]);
+        FFloat128 Row3 = FVectorMath::Sub(f[3], RHS.f[3]);
 
-        FMatrix4 Result;
-        NVectorOp::StoreAligned(Row0, Result.f[0]);
-        NVectorOp::StoreAligned(Row1, Result.f[1]);
-        NVectorOp::StoreAligned(Row2, Result.f[2]);
-        NVectorOp::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::StoreAligned(Row0, Result.f[0]);
+        FVectorMath::StoreAligned(Row1, Result.f[1]);
+        FVectorMath::StoreAligned(Row2, Result.f[2]);
+        FVectorMath::StoreAligned(Row3, Result.f[3]);
+    #endif
+    
         return Result;
-#endif
     }
 
     /**
@@ -1028,8 +1030,9 @@ public:
      */
     FORCEINLINE FMatrix4 operator-(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
         FMatrix4 Result;
+
+    #if !USE_VECTOR_MATH
         Result.m00 = m00 - RHS;
         Result.m01 = m01 - RHS;
         Result.m02 = m02 - RHS;
@@ -1049,21 +1052,20 @@ public:
         Result.m31 = m31 - RHS;
         Result.m32 = m32 - RHS;
         Result.m33 = m33 - RHS;
-        return Result;
-#else
-        NVectorOp::Float128 Scalars = NVectorOp::Load(RHS);
-        NVectorOp::Float128 Row0    = NVectorOp::Sub(f[0], Scalars);
-        NVectorOp::Float128 Row1    = NVectorOp::Sub(f[1], Scalars);
-        NVectorOp::Float128 Row2    = NVectorOp::Sub(f[2], Scalars);
-        NVectorOp::Float128 Row3    = NVectorOp::Sub(f[3], Scalars);
+    #else
+        FFloat128 Scalars = FVectorMath::Load(RHS);
+        FFloat128 Row0    = FVectorMath::Sub(f[0], Scalars);
+        FFloat128 Row1    = FVectorMath::Sub(f[1], Scalars);
+        FFloat128 Row2    = FVectorMath::Sub(f[2], Scalars);
+        FFloat128 Row3    = FVectorMath::Sub(f[3], Scalars);
 
-        FMatrix4 Result;
-        NVectorOp::StoreAligned(Row0, Result.f[0]);
-        NVectorOp::StoreAligned(Row1, Result.f[1]);
-        NVectorOp::StoreAligned(Row2, Result.f[2]);
-        NVectorOp::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::StoreAligned(Row0, Result.f[0]);
+        FVectorMath::StoreAligned(Row1, Result.f[1]);
+        FVectorMath::StoreAligned(Row2, Result.f[2]);
+        FVectorMath::StoreAligned(Row3, Result.f[3]);
+    #endif
+    
         return Result;
-#endif
     }
 
     /**
@@ -1083,10 +1085,10 @@ public:
      */
     FORCEINLINE FMatrix4 operator/(float RHS) const noexcept
     {
-#if !USE_VECTOR_OP
-        const float Recip = 1.0f / RHS;
-
         FMatrix4 Result;
+
+    #if !USE_VECTOR_MATH
+        const float Recip = 1.0f / RHS;
         Result.m00 = m00 * Recip;
         Result.m01 = m01 * Recip;
         Result.m02 = m02 * Recip;
@@ -1106,21 +1108,20 @@ public:
         Result.m31 = m31 * Recip;
         Result.m32 = m32 * Recip;
         Result.m33 = m33 * Recip;
-        return Result;
-#else
-        NVectorOp::Float128 RecipScalars = NVectorOp::Load(1.0f / RHS);
-        NVectorOp::Float128 Row0         = NVectorOp::Mul(f[0], RecipScalars);
-        NVectorOp::Float128 Row1         = NVectorOp::Mul(f[1], RecipScalars);
-        NVectorOp::Float128 Row2         = NVectorOp::Mul(f[2], RecipScalars);
-        NVectorOp::Float128 Row3         = NVectorOp::Mul(f[3], RecipScalars);
+    #else
+        FFloat128 RecipScalars = FVectorMath::Load(1.0f / RHS);
+        FFloat128 Row0         = FVectorMath::Mul(f[0], RecipScalars);
+        FFloat128 Row1         = FVectorMath::Mul(f[1], RecipScalars);
+        FFloat128 Row2         = FVectorMath::Mul(f[2], RecipScalars);
+        FFloat128 Row3         = FVectorMath::Mul(f[3], RecipScalars);
 
-        FMatrix4 Result;
-        NVectorOp::StoreAligned(Row0, Result.f[0]);
-        NVectorOp::StoreAligned(Row1, Result.f[1]);
-        NVectorOp::StoreAligned(Row2, Result.f[2]);
-        NVectorOp::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::StoreAligned(Row0, Result.f[0]);
+        FVectorMath::StoreAligned(Row1, Result.f[1]);
+        FVectorMath::StoreAligned(Row2, Result.f[2]);
+        FVectorMath::StoreAligned(Row3, Result.f[3]);
+    #endif
+    
         return Result;
-#endif
     }
 
     /**
@@ -1172,10 +1173,10 @@ public:
     static FORCEINLINE FMatrix4 Scale(float Scale) noexcept
     {
         return FMatrix4(
-            Scale, 0.0f , 0.0f , 0.0f,
-            0.0f , Scale, 0.0f , 0.0f,
-            0.0f , 0.0f , Scale, 0.0f,
-            0.0f , 0.0f , 0.0f , 1.0f);
+            Scale, 0.0f, 0.0f, 0.0f,
+            0.0f, Scale, 0.0f, 0.0f,
+            0.0f, 0.0f, Scale, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1188,9 +1189,9 @@ public:
     static FORCEINLINE FMatrix4 Scale(float x, float y, float z) noexcept
     {
         return FMatrix4(
-            x   , 0.0f, 0.0f, 0.0f,
-            0.0f, y   , 0.0f, 0.0f,
-            0.0f, 0.0f, z   , 0.0f,
+            x, 0.0f, 0.0f, 0.0f,
+            0.0f, y, 0.0f, 0.0f,
+            0.0f, 0.0f, z, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
     }
 
@@ -1217,7 +1218,7 @@ public:
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,
-            x   , y   , z   , 1.0f);
+            x, y, z, 1.0f);
     }
 
     /**
@@ -1252,8 +1253,8 @@ public:
         return FMatrix4(
             (CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY), 0.0f,
             (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY), 0.0f,
-            (CosP * SinY)                    , -SinP        , (CosP * CosY)                    , 0.0f,
-            0.0f                             , 0.0f         , 0.0f                             , 1.0f);
+            (CosP * SinY), -SinP, (CosP * CosY), 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1277,10 +1278,10 @@ public:
         const float CosX = FMath::Cos(x);
 
         return FMatrix4(
-            1.0f,  0.0f, 0.0f, 0.0f,
-            0.0f,  CosX, SinX, 0.0f,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, CosX, SinX, 0.0f,
             0.0f, -SinX, CosX, 0.0f,
-            0.0f,  0.0f, 0.0f, 1.0f);
+            0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1295,9 +1296,9 @@ public:
 
         return FMatrix4(
             CosY, 0.0f, -SinY, 0.0f,
-            0.0f, 1.0f,  0.0f, 0.0f,
-            SinY, 0.0f,  CosY, 0.0f,
-            0.0f, 0.0f,  0.0f, 1.0f);
+            0.0f, 1.0f, 0.0f, 0.0f,
+            SinY, 0.0f, CosY, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1311,10 +1312,10 @@ public:
         const float CosZ = FMath::Cos(z);
 
         return FMatrix4(
-             CosZ, SinZ, 0.0f, 0.0f,
+            CosZ, SinZ, 0.0f, 0.0f,
             -SinZ, CosZ, 0.0f, 0.0f,
-             0.0f, 0.0f, 1.0f, 0.0f,
-             0.0f, 0.0f, 0.0f, 1.0f);
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
@@ -1328,10 +1329,10 @@ public:
     static FORCEINLINE FMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
         return FMatrix4(
-            2.0f / Width, 0.0f         ,  0.0f                  , 0.0f,
-            0.0f        , 2.0f / Height,  0.0f                  , 0.0f,
-            0.0f        , 0.0f         ,  1.0f / (FarZ - NearZ) , 0.0f,
-            0.0f        , 0.0f         , -NearZ / (FarZ - NearZ), 1.0f);
+            2.0f / Width, 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f / Height, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f / (FarZ - NearZ), 0.0f,
+            0.0f, 0.0f, -NearZ / (FarZ - NearZ), 1.0f);
     }
 
     /**
@@ -1351,9 +1352,9 @@ public:
         const float Range     = 1.0f / (FarZ - NearZ);
 
         return FMatrix4(
-             InvWidth + InvWidth      ,  0.0f                      ,  0.0f         , 0.0f,
-             0.0f                     ,  InvHeight + InvHeight     ,  0.0f         , 0.0f,
-             0.0f                     ,  0.0f                      ,  Range        , 0.0f,
+             InvWidth + InvWidth, 0.0f, 0.0f, 0.0f,
+             0.0f, InvHeight + InvHeight, 0.0f, 0.0f,
+             0.0f, 0.0f, Range, 0.0f,
             -(Left + Right) * InvWidth, -(Top + Bottom) * InvHeight, -Range * NearZ, 1.0f);
     }
 
@@ -1377,10 +1378,10 @@ public:
         const float Range  = (FarZ / (FarZ - NearZ));
 
         return FMatrix4(
-            ScaleX, 0.0f  ,  0.0f         , 0.0f,
-            0.0f  , ScaleY,  0.0f         , 0.0f,
-            0.0f  , 0.0f  ,  Range        , 1.0f,
-            0.0f  , 0.0f  , -Range * NearZ, 0.0f);
+            ScaleX, 0.0f, 0.0f, 0.0f,
+            0.0f, ScaleY, 0.0f, 0.0f,
+            0.0f, 0.0f, Range, 1.0f,
+            0.0f, 0.0f, -Range * NearZ, 0.0f);
     }
 
     /**
@@ -1399,11 +1400,11 @@ public:
     }
 
     /**
-     * @brief - Creates a look-at matrix (Left-handed)
+     * @brief     - Creates a look-at matrix (Left-handed)
      * @param Eye - Position to look from
-     * @param At - Position to look at
-     * @param Up - The up-axis of the new coordinate system in the current world-space
-     * @return - A look-at matrix
+     * @param At  - Position to look at
+     * @param Up  - The up-axis of the new coordinate system in the current world-space
+     * @return    - A look-at matrix
      */
     static FORCEINLINE FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
     {
@@ -1430,11 +1431,7 @@ public:
         const float m31 = NegEye.DotProduct(e1);
         const float m32 = NegEye.DotProduct(e2);
 
-        FMatrix4 Result(
-            FVector4(e0, m30),
-            FVector4(e1, m31),
-            FVector4(e2, m32),
-            FVector4(0.0f, 0.0f, 0.0f, 1.0f));
+        FMatrix4 Result(FVector4(e0, m30), FVector4(e1, m31), FVector4(e2, m32), FVector4(0.0f, 0.0f, 0.0f, 1.0f));
         return Result.Transpose();
     }
 
