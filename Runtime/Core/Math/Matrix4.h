@@ -100,7 +100,7 @@ public:
     #else
         FFloat128 NewVector = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Vector));
         NewVector = FVectorMath::Transform(this, NewVector);
-        FVectorMath::StoreAligned(NewVector, &Result);
+        FVectorMath::StoreAligned(NewVector, reinterpret_cast<float*>(&Result));
     #endif
     
         return Result;

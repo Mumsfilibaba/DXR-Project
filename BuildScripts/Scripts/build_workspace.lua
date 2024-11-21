@@ -249,7 +249,7 @@ function FWorkspaceRules(WorkspaceName)
                 exceptionhandling("Off")
                 rtti("Off")
                 floatingpoint("Fast")
-                vectorextensions("SSE2")
+                vectorextensions("Default")
                 characterset("Ascii")
                 flags(
                 { 
@@ -309,7 +309,7 @@ function FWorkspaceRules(WorkspaceName)
                 exceptionhandling("Off")
                 rtti("Off")
                 floatingpoint("Fast")
-                vectorextensions("SSE2")
+                vectorextensions("Default")
                 characterset("Ascii")
                 flags(
                 { 
@@ -360,7 +360,7 @@ function FWorkspaceRules(WorkspaceName)
                 exceptionhandling("Off")
                 rtti("Off")
                 floatingpoint("Fast")
-                vectorextensions("SSE2")
+                vectorextensions("Default")
                 characterset("Ascii")
                 flags(
                 { 
@@ -413,7 +413,7 @@ function FWorkspaceRules(WorkspaceName)
                 exceptionhandling("On")
                 rtti("Off")
                 floatingpoint("Fast")
-                vectorextensions("SSE2")
+                vectorextensions("Default")
                 characterset("Ascii")
                 flags(
                 { 
@@ -509,7 +509,7 @@ function FWorkspaceRules(WorkspaceName)
                     exceptionhandling("On")
                     rtti("Off")
                     floatingpoint("Fast")
-                    vectorextensions("SSE2")
+                    vectorextensions("Default")
                     characterset("Ascii")
                     flags(
                     { 
@@ -562,7 +562,7 @@ function FWorkspaceRules(WorkspaceName)
                     exceptionhandling("On")
                     rtti("Off")
                     floatingpoint("Fast")
-                    vectorextensions("SSE2")
+                    vectorextensions("Default")
                     characterset("Ascii")
                     flags(
                     { 
@@ -626,7 +626,7 @@ function FWorkspaceRules(WorkspaceName)
                     exceptionhandling("On")
                     rtti("Off")
                     floatingpoint("Fast")
-                    vectorextensions("SSE2")
+                    vectorextensions("Default")
                     characterset("Ascii")
                     flags(
                     { 
@@ -746,7 +746,7 @@ function FWorkspaceRules(WorkspaceName)
                     exceptionhandling("On")
                     rtti("Off")
                     floatingpoint("Fast")
-                    vectorextensions("SSE2")
+                    vectorextensions("Default")
                     characterset("Ascii")
                     flags(
                     { 
@@ -829,7 +829,7 @@ function FWorkspaceRules(WorkspaceName)
                     exceptionhandling("On")
                     rtti("Off")
                     floatingpoint("Fast")
-                    vectorextensions("SSE2")
+                    vectorextensions("Default")
                     characterset("Ascii")
                     flags(
                     { 
@@ -893,7 +893,7 @@ function FWorkspaceRules(WorkspaceName)
                     exceptionhandling("On")
                     rtti("Off")
                     floatingpoint("Fast")
-                    vectorextensions("SSE2")
+                    vectorextensions("Default")
                     characterset("Ascii")
                     flags(
                     { 
@@ -987,7 +987,7 @@ function FWorkspaceRules(WorkspaceName)
                     exceptionhandling("On")
                     rtti("Off")
                     floatingpoint("Fast")
-                    vectorextensions("SSE2")
+                    vectorextensions("Default")
                     characterset("Ascii")
                     flags(
                     { 

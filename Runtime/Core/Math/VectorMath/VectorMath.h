@@ -8,7 +8,16 @@
 #if PLATFORM_ARCHITECTURE_X86_X64 && PLATFORM_SUPPORT_SSE_INTRIN
     #define USE_VECTOR_MATH (1)
 
-    #if PLATFORM_SUPPORT_SSE3_INTRIN
+    #if PLATFORM_SUPPORT_SSE4_2_INTRIN
+        #include "Core/Math/VectorMath/VectorMathSSE4_2.h"
+        typedef FVectorMathSSE4_2 FPlatformVectorMath;
+    #elif PLATFORM_SUPPORT_SSE4_1_INTRIN
+        #include "Core/Math/VectorMath/VectorMathSSE4_1.h"
+        typedef FVectorMathSSE4_1 FPlatformVectorMath;
+    #elif PLATFORM_SUPPORT_SSSE3_INTRIN
+        #include "Core/Math/VectorMath/VectorMathSSSE3.h"
+        typedef FVectorMathSSSE3 FPlatformVectorMath;
+    #elif PLATFORM_SUPPORT_SSE3_INTRIN
         #include "Core/Math/VectorMath/VectorMathSSE3.h"
         typedef FVectorMathSSE3 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE2_INTRIN
@@ -28,22 +37,15 @@
 
 struct FVectorMath : public FPlatformVectorMath
 {
-    using FPlatformVectorMath::StoreAligned;
     using FPlatformVectorMath::Mul;
     using FPlatformVectorMath::Div;
     using FPlatformVectorMath::Add;
     using FPlatformVectorMath::Sub;
 
-    template<typename T>
-    static FORCEINLINE void VECTORCALL StoreAligned(FFloat128 Vector, T* Object) noexcept
-    {
-        FPlatformVectorMath::StoreAligned(Vector, reinterpret_cast<float*>(Object));
-    }
-
-    template<uint8 i>
+    template<uint8 RegisterIndex>
     static FORCEINLINE FFloat128 VECTORCALL Broadcast(FFloat128 Vector) noexcept
     {
-        return FPlatformVectorMath::Shuffle<i, i, i, i>(Vector);
+        return FPlatformVectorMath::Shuffle<RegisterIndex, RegisterIndex, RegisterIndex, RegisterIndex>(Vector);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Mul(const float* A, FFloat128 VectorB) noexcept

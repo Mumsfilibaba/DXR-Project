@@ -59,7 +59,7 @@ function FBuildRules(InName)
         Floatingpoint = "Fast",
         
         -- @brief - Enable vector extensions
-        VectorExtensions = "SSE2",
+        VectorExtensions = "Default",
         
         -- @brief - Language to compile
         Language = "C++",
@@ -471,16 +471,16 @@ function FBuildRules(InName)
             filter { "action:xcode4" }
                 xcodebuildsettings 
                 {
-                    ["PRODUCT_BUNDLE_IDENTIFIER"] = "com.DXREngine." .. self.Name,
-                    ["CODE_SIGN_STYLE"]           = "Automatic",
-                    ["ARCHS"]                     = "x86_64",               -- Specify the architecture(s) e.g., "x86_64" for Intel
-                    ["ONLY_ACTIVE_ARCH"]          = "YES",                  -- We only want to build the current architecture
-                    ["ENABLE_HARDENED_RUNTIME"]   = "NO",                   -- Hardened runtime is required for notarization
-                    ["GENERATE_INFOPLIST_FILE"]   = "YES",                  -- Generate the .plist file for now
-                    -- ["CODE_SIGN_IDENTITY"]        = "Apple Development", -- Sets 'Signing Certificate' to 'Development'. Defaults to 'Sign to Run Locally'. Not doing this will crash your app if you upgrade the project when prompted by Xcode.
-                    
-                    -- Tell the executable where to find the frameworks. Path is relative to executable location inside .app bundle
-                    ["LD_RUNPATH_SEARCH_PATHS"]   = "/usr/local/lib/ $(INSTALL_PATH) @executable_path/../Frameworks",
+                    ["PRODUCT_BUNDLE_IDENTIFIER"]  = "com.DXREngine." .. self.Name,
+                    ["CODE_SIGN_STYLE"]            = "Automatic",
+                    ["ARCHS"]                      = "x86_64",                                                         -- Specify the architecture(s) e.g., "x86_64" for Intel
+                    ["ONLY_ACTIVE_ARCH"]           = "YES",                                                            -- We only want to build the current architecture
+                    ["ENABLE_HARDENED_RUNTIME"]    = "NO",                                                             -- Hardened runtime is required for notarization
+                    ["GENERATE_INFOPLIST_FILE"]    = "YES",                                                            -- Generate the .plist file for now
+                    ["LD_RUNPATH_SEARCH_PATHS"]    = "/usr/local/lib/ $(INSTALL_PATH) @executable_path/../Frameworks", -- Tell the executable where to find the frameworks. Path is relative to executable location inside .app bundle
+                    ["GCC_ENABLE_AVX2_EXTENSIONS"] = "YES",                                                            -- Enable AVX2 extensions
+
+                    -- ["CODE_SIGN_IDENTITY"] = "Apple Development", -- Sets 'Signing Certificate' to 'Development'. Defaults to 'Sign to Run Locally'. Not doing this will crash your app if you upgrade the project when prompted by Xcode.
                 }
             filter {}
 
