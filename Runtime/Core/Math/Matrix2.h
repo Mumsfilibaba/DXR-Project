@@ -74,7 +74,7 @@ public:
         Transpose.f[1][1] = f[1][1];
     #else
         FFloat128 This = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
-        This = FVectorMath::Shuffle<0, 2, 1, 3>(This);
+        This = FVectorMath::VectorShuffle<0, 2, 1, 3>(This);
         FVectorMath::StoreAligned(This, reinterpret_cast<float*>(&Transpose));
     #endif
 
@@ -99,7 +99,7 @@ public:
         Inverse.m11 =  m00 * RecipDeterminant;
     #else
         FFloat128 This = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
-        This = FVectorMath::Shuffle<3, 2, 1, 0>(This);
+        This = FVectorMath::VectorShuffle<3, 2, 1, 0>(This);
 
         constexpr int32 Keep   = 0;
         constexpr int32 Negate = (1 << 31);
@@ -108,7 +108,7 @@ public:
         This = FVectorMath::Or(This, FVectorMath::CastIntToFloat(Mask));
 
         FFloat128 RcpDeterminant = FVectorMath::Recip(FVectorMath::Load(fDeterminant));
-        This = FVectorMath::Mul(This, RcpDeterminant);
+        This = FVectorMath::VectorMul(This, RcpDeterminant);
         FVectorMath::StoreAligned(This, reinterpret_cast<float*>(&Inverse));
     #endif
 
@@ -130,7 +130,7 @@ public:
         Adjugate.m11 =  m00;
     #else
         FFloat128 This = FVectorMath::LoadAligned(reinterpret_cast<const float*>(this));
-        This = FVectorMath::Shuffle<3, 2, 1, 0>(This);
+        This = FVectorMath::VectorShuffle<3, 2, 1, 0>(This);
 
         constexpr int32 Keep   = 0;
         constexpr int32 Negate = (1 << 31);
@@ -218,7 +218,7 @@ public:
         FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
         Espilon128 = FVectorMath::Abs(Espilon128);
 
-        FFloat128 Diff = FVectorMath::Sub(this, &Other);
+        FFloat128 Diff = FVectorMath::VectorSub(reinterpret_cast<const float*>(this), reinterpret_cast<const float*>(&Other));
         Diff = FVectorMath::Abs(Diff);
         return FVectorMath::LessThan(Diff, Espilon128);
     #endif
@@ -295,13 +295,13 @@ public:
     #else
         FFloat128 X128  = FVectorMath::LoadSingle(RHS.x);
         FFloat128 Y128  = FVectorMath::LoadSingle(RHS.y);
-        FFloat128 Temp0 = FVectorMath::Shuffle0011<0, 0, 0, 0>(X128, Y128);
-        FFloat128 Temp1 = FVectorMath::Mul(this, Temp0);
-        Temp0 = FVectorMath::Shuffle<2, 3, 2, 3>(Temp1);
-        Temp1 = FVectorMath::Add(Temp0, Temp1);
+        FFloat128 Temp0 = FVectorMath::VectorShuffle0011<0, 0, 0, 0>(X128, Y128);
+        FFloat128 Temp1 = FVectorMath::VectorMul(reinterpret_cast<const float*>(this), Temp0);
+        Temp0 = FVectorMath::VectorShuffle<2, 3, 2, 3>(Temp1);
+        Temp1 = FVectorMath::VectorAdd(Temp0, Temp1);
 
-        Result.x = FVectorMath::GetX(Temp1);
-        Result.y = FVectorMath::GetY(Temp1);
+        Result.x = FVectorMath::VectorGetX(Temp1);
+        Result.y = FVectorMath::VectorGetY(Temp1);
     #endif
 
         return Result;
@@ -357,7 +357,7 @@ public:
         Result.m11 = m11 * RHS;
     #else
         FFloat128 Temp = FVectorMath::Load(RHS);
-        Temp = FVectorMath::Mul(this, Temp);
+        Temp = FVectorMath::VectorMul(reinterpret_cast<const float*>(this), Temp);
         FVectorMath::StoreAligned(Temp, reinterpret_cast<float*>(&Result));
     #endif
 
@@ -389,7 +389,7 @@ public:
         Result.m10 = m10 + RHS.m10;
         Result.m11 = m11 + RHS.m11;
     #else
-        FFloat128 Temp = FVectorMath::Add(this, &RHS);
+        FFloat128 Temp = FVectorMath::VectorAdd(reinterpret_cast<const float*>(this), reinterpret_cast<const float*>(&RHS));
         FVectorMath::StoreAligned(Temp, reinterpret_cast<float*>(&Result));
     #endif
 
@@ -422,7 +422,7 @@ public:
         Result.m11 = m11 + RHS;
     #else
         FFloat128 Temp = FVectorMath::Load(RHS);
-        Temp = FVectorMath::Add(this, Temp);
+        Temp = FVectorMath::VectorAdd(reinterpret_cast<const float*>(this), Temp);
         FVectorMath::StoreAligned(Temp, reinterpret_cast<float*>(&Result));
     #endif
         
@@ -454,7 +454,7 @@ public:
         Result.m10 = m10 - RHS.m10;
         Result.m11 = m11 - RHS.m11;
     #else
-        FFloat128 Temp = FVectorMath::Sub(this, &RHS);
+        FFloat128 Temp = FVectorMath::VectorSub(reinterpret_cast<const float*>(this), reinterpret_cast<const float*>(&RHS));
         FVectorMath::StoreAligned(Temp, reinterpret_cast<float*>(&Result));
     #endif
 
@@ -487,7 +487,7 @@ public:
         Result.m11 = m11 - RHS;
     #else
         FFloat128 Temp = FVectorMath::Load(RHS);
-        Temp = FVectorMath::Sub(this, Temp);
+        Temp = FVectorMath::VectorSub(reinterpret_cast<const float*>(this), Temp);
         FVectorMath::StoreAligned(Temp, reinterpret_cast<float*>(&Result));
     #endif
 
@@ -521,7 +521,7 @@ public:
         Result.m11 = m11 * Recip;
     #else
         FFloat128 Temp = FVectorMath::Load(RHS);
-        Temp = FVectorMath::Div(this, Temp);
+        Temp = FVectorMath::VectorDiv(reinterpret_cast<const float*>(this), Temp);
         FVectorMath::StoreAligned(Temp, reinterpret_cast<float*>(&Result));
     #endif
 

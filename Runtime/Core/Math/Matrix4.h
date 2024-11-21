@@ -119,7 +119,7 @@ public:
         NewVector = FVectorMath::Transform(this, NewVector);
     #endif
     
-        return FVector3(FVectorMath::GetX(NewVector), FVectorMath::GetY(NewVector), FVectorMath::GetZ(NewVector));
+        return FVector3(FVectorMath::VectorGetX(NewVector), FVectorMath::VectorGetY(NewVector), FVectorMath::VectorGetZ(NewVector));
     }
 
     /**
@@ -143,12 +143,12 @@ public:
         NewPosition = FVectorMath::Transform(this, NewPosition);
         
         FFloat128 Temp0 = FVectorMath::LoadOnes();
-        FFloat128 Temp1 = FVectorMath::Broadcast<3>(NewPosition);
-        Temp0       = FVectorMath::Div(Temp0, Temp1);
-        NewPosition = FVectorMath::Mul(Temp0, NewPosition);
+        FFloat128 Temp1 = FVectorMath::VectorBroadcast<3>(NewPosition);
+        Temp0       = FVectorMath::VectorDiv(Temp0, Temp1);
+        NewPosition = FVectorMath::VectorMul(Temp0, NewPosition);
     #endif
         
-        return FVector3(FVectorMath::GetX(NewPosition), FVectorMath::GetY(NewPosition), FVectorMath::GetZ(NewPosition));
+        return FVector3(FVectorMath::VectorGetX(NewPosition), FVectorMath::VectorGetY(NewPosition), FVectorMath::VectorGetZ(NewPosition));
     }
 
     /**
@@ -169,7 +169,7 @@ public:
         NewDirection = FVectorMath::Transform(this, NewDirection);
     #endif
     
-        return FVector3(FVectorMath::GetX(NewDirection), FVectorMath::GetY(NewDirection), FVectorMath::GetZ(NewDirection));
+        return FVector3(FVectorMath::VectorGetX(NewDirection), FVectorMath::VectorGetY(NewDirection), FVectorMath::VectorGetZ(NewDirection));
     }
 
     /**
@@ -290,55 +290,55 @@ public:
         FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
         FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
 
-        FFloat128 _0 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        FFloat128 _1 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        FFloat128 _2 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        FFloat128 _3 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        FFloat128 _4 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        FFloat128 _5 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        FFloat128 _6 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        FFloat128 _7 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
+        FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+        FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+        FFloat128 _2 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+        FFloat128 _3 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+        FFloat128 _4 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+        FFloat128 _5 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+        FFloat128 _6 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+        FFloat128 _7 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp1, Temp3);
 
-        FFloat128 Mul0   = FVectorMath::Mul(_4, _5);
-        FFloat128 Mul1   = FVectorMath::Mul(_6, _7);
-        FFloat128 DetSub = FVectorMath::Sub(Mul0, Mul1);
+        FFloat128 Mul0   = FVectorMath::VectorMul(_4, _5);
+        FFloat128 Mul1   = FVectorMath::VectorMul(_6, _7);
+        FFloat128 DetSub = FVectorMath::VectorSub(Mul0, Mul1);
 
-        FFloat128 DetA = FVectorMath::Broadcast<0>(DetSub);
-        FFloat128 DetB = FVectorMath::Broadcast<1>(DetSub);
-        FFloat128 DetC = FVectorMath::Broadcast<2>(DetSub);
-        FFloat128 DetD = FVectorMath::Broadcast<3>(DetSub);
+        FFloat128 DetA = FVectorMath::VectorBroadcast<0>(DetSub);
+        FFloat128 DetB = FVectorMath::VectorBroadcast<1>(DetSub);
+        FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
+        FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
 
         FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
         FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
 
-        FFloat128 x = FVectorMath::Sub(FVectorMath::Mul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
-        FFloat128 w = FVectorMath::Sub(FVectorMath::Mul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
+        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
+        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
 
-        FFloat128 DetM = FVectorMath::Mul(DetA, DetD);
+        FFloat128 DetM = FVectorMath::VectorMul(DetA, DetD);
 
-        FFloat128 y = FVectorMath::Sub(FVectorMath::Mul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
-        FFloat128 z = FVectorMath::Sub(FVectorMath::Mul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
+        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
+        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
 
-        DetM = FVectorMath::Add(DetM, FVectorMath::Mul(DetB, DetC));
+        DetM = FVectorMath::VectorAdd(DetM, FVectorMath::VectorMul(DetB, DetC));
 
-        FFloat128 Trace = FVectorMath::Mul(ab, FVectorMath::Shuffle<0, 2, 1, 3>(dc));
+        FFloat128 Trace = FVectorMath::VectorMul(ab, FVectorMath::VectorShuffle<0, 2, 1, 3>(dc));
         Trace = FVectorMath::HorizontalAdd(Trace);
         Trace = FVectorMath::HorizontalAdd(Trace);
 
-        DetM = FVectorMath::Sub(DetM, Trace);
+        DetM = FVectorMath::VectorSub(DetM, Trace);
 
         const FFloat128 AdjSignMask = FVectorMath::Load(1.0f, -1.0f, -1.0f, 1.0f);
-        DetM = FVectorMath::Div(AdjSignMask, DetM);
+        DetM = FVectorMath::VectorDiv(AdjSignMask, DetM);
 
-        x = FVectorMath::Mul(x, DetM);
-        y = FVectorMath::Mul(y, DetM);
-        z = FVectorMath::Mul(z, DetM);
-        w = FVectorMath::Mul(w, DetM);
+        x = FVectorMath::VectorMul(x, DetM);
+        y = FVectorMath::VectorMul(y, DetM);
+        z = FVectorMath::VectorMul(z, DetM);
+        w = FVectorMath::VectorMul(w, DetM);
 
-        Temp0 = FVectorMath::Shuffle0011<3, 1, 3, 1>(x, y);
-        Temp1 = FVectorMath::Shuffle0011<2, 0, 2, 0>(x, y);
-        Temp2 = FVectorMath::Shuffle0011<3, 1, 3, 1>(z, w);
-        Temp3 = FVectorMath::Shuffle0011<2, 0, 2, 0>(z, w);
+        Temp0 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(x, y);
+        Temp1 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(x, y);
+        Temp2 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(z, w);
+        Temp3 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(z, w);
 
         FVectorMath::StoreAligned(Temp0, Inverse.f[0]);
         FVectorMath::StoreAligned(Temp1, Inverse.f[1]);
@@ -420,43 +420,43 @@ public:
         FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
         FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
 
-        FFloat128 _0 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        FFloat128 _1 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        FFloat128 _2 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        FFloat128 _3 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        FFloat128 _4 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        FFloat128 _5 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        FFloat128 _6 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        FFloat128 _7 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
+        FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+        FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+        FFloat128 _2 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+        FFloat128 _3 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+        FFloat128 _4 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+        FFloat128 _5 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+        FFloat128 _6 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+        FFloat128 _7 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp1, Temp3);
 
-        FFloat128 Mul0   = FVectorMath::Mul(_4, _5);
-        FFloat128 Mul1   = FVectorMath::Mul(_6, _7);
-        FFloat128 DetSub = FVectorMath::Sub(Mul0, Mul1);
+        FFloat128 Mul0   = FVectorMath::VectorMul(_4, _5);
+        FFloat128 Mul1   = FVectorMath::VectorMul(_6, _7);
+        FFloat128 DetSub = FVectorMath::VectorSub(Mul0, Mul1);
 
-        FFloat128 DetA = FVectorMath::Broadcast<0>(DetSub);
-        FFloat128 DetB = FVectorMath::Broadcast<1>(DetSub);
-        FFloat128 DetC = FVectorMath::Broadcast<2>(DetSub);
-        FFloat128 DetD = FVectorMath::Broadcast<3>(DetSub);
+        FFloat128 DetA = FVectorMath::VectorBroadcast<0>(DetSub);
+        FFloat128 DetB = FVectorMath::VectorBroadcast<1>(DetSub);
+        FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
+        FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
 
         FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
         FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
 
-        FFloat128 x = FVectorMath::Sub(FVectorMath::Mul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
-        FFloat128 w = FVectorMath::Sub(FVectorMath::Mul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
+        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
+        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
 
-        FFloat128 y = FVectorMath::Sub(FVectorMath::Mul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
-        FFloat128 z = FVectorMath::Sub(FVectorMath::Mul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
+        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
+        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
 
         const FFloat128 Mask = FVectorMath::Load(1.0f, -1.0f, -1.0f, 1.0f);
-        x = FVectorMath::Mul(x, Mask);
-        y = FVectorMath::Mul(y, Mask);
-        z = FVectorMath::Mul(z, Mask);
-        w = FVectorMath::Mul(w, Mask);
+        x = FVectorMath::VectorMul(x, Mask);
+        y = FVectorMath::VectorMul(y, Mask);
+        z = FVectorMath::VectorMul(z, Mask);
+        w = FVectorMath::VectorMul(w, Mask);
 
-        Temp0 = FVectorMath::Shuffle0011<3, 1, 3, 1>(x, y);
-        Temp1 = FVectorMath::Shuffle0011<2, 0, 2, 0>(x, y);
-        Temp2 = FVectorMath::Shuffle0011<3, 1, 3, 1>(z, w);
-        Temp3 = FVectorMath::Shuffle0011<2, 0, 2, 0>(z, w);
+        Temp0 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(x, y);
+        Temp1 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(x, y);
+        Temp2 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(z, w);
+        Temp3 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(z, w);
 
         FVectorMath::StoreAligned(Temp0, Adjugate.f[0]);
         FVectorMath::StoreAligned(Temp1, Adjugate.f[1]);
@@ -497,35 +497,35 @@ public:
         FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
         FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
 
-        FFloat128 _0 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        FFloat128 _1 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        FFloat128 _2 = FVectorMath::Shuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        FFloat128 _3 = FVectorMath::Shuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        FFloat128 _4 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        FFloat128 _5 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        FFloat128 _6 = FVectorMath::Shuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        FFloat128 _7 = FVectorMath::Shuffle0011<0, 2, 0, 2>(Temp1, Temp3);
+        FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
+        FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
+        FFloat128 _2 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp2, Temp3);
+        FFloat128 _3 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp2, Temp3);
+        FFloat128 _4 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp0, Temp2);
+        FFloat128 _5 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp1, Temp3);
+        FFloat128 _6 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp0, Temp2);
+        FFloat128 _7 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp1, Temp3);
 
-        FFloat128 Mul0   = FVectorMath::Mul(_4, _5);
-        FFloat128 Mul1   = FVectorMath::Mul(_6, _7);
-        FFloat128 DetSub = FVectorMath::Sub(Mul0, Mul1);
+        FFloat128 Mul0   = FVectorMath::VectorMul(_4, _5);
+        FFloat128 Mul1   = FVectorMath::VectorMul(_6, _7);
+        FFloat128 DetSub = FVectorMath::VectorSub(Mul0, Mul1);
 
-        FFloat128 DetA = FVectorMath::Broadcast<0>(DetSub);
-        FFloat128 DetB = FVectorMath::Broadcast<1>(DetSub);
-        FFloat128 DetC = FVectorMath::Broadcast<2>(DetSub);
-        FFloat128 DetD = FVectorMath::Broadcast<3>(DetSub);
+        FFloat128 DetA = FVectorMath::VectorBroadcast<0>(DetSub);
+        FFloat128 DetB = FVectorMath::VectorBroadcast<1>(DetSub);
+        FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
+        FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
 
         FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
         FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
 
-        FFloat128 DetM = FVectorMath::Mul(DetA, DetD);
-        Mul0 = FVectorMath::Mul(DetB, DetC);
-        DetM = FVectorMath::Add(DetM, Mul0);
-        Mul0 = FVectorMath::Mul(ab, FVectorMath::Shuffle<0, 2, 1, 3>(dc));
+        FFloat128 DetM = FVectorMath::VectorMul(DetA, DetD);
+        Mul0 = FVectorMath::VectorMul(DetB, DetC);
+        DetM = FVectorMath::VectorAdd(DetM, Mul0);
+        Mul0 = FVectorMath::VectorMul(ab, FVectorMath::VectorShuffle<0, 2, 1, 3>(dc));
 
         FFloat128 Sum = FVectorMath::HorizontalSum(Mul0);
-        DetM = FVectorMath::Sub(DetM, Sum);
-        Determinant = FVectorMath::GetX(DetM);
+        DetM = FVectorMath::VectorSub(DetM, Sum);
+        Determinant = FVectorMath::VectorGetX(DetM);
     #endif
         
         return Determinant;
@@ -600,7 +600,7 @@ public:
 
         for (int32 i = 0; i < 4; i++)
         {
-            FFloat128 Diff = FVectorMath::Sub(f[i], Other.f[i]);
+            FFloat128 Diff = FVectorMath::VectorSub(f[i], Other.f[i]);
             Diff = FVectorMath::Abs(Diff);
 
             if (FVectorMath::GreaterThan(Diff, Espilon128))
@@ -836,10 +836,10 @@ public:
         Result.m33 = m33 * RHS;
     #else
         FFloat128 Scalars = FVectorMath::Load(RHS);
-        FFloat128 Row0    = FVectorMath::Mul(f[0], Scalars);
-        FFloat128 Row1    = FVectorMath::Mul(f[1], Scalars);
-        FFloat128 Row2    = FVectorMath::Mul(f[2], Scalars);
-        FFloat128 Row3    = FVectorMath::Mul(f[3], Scalars);
+        FFloat128 Row0    = FVectorMath::VectorMul(f[0], Scalars);
+        FFloat128 Row1    = FVectorMath::VectorMul(f[1], Scalars);
+        FFloat128 Row2    = FVectorMath::VectorMul(f[2], Scalars);
+        FFloat128 Row3    = FVectorMath::VectorMul(f[3], Scalars);
 
         FVectorMath::StoreAligned(Row0, Result.f[0]);
         FVectorMath::StoreAligned(Row1, Result.f[1]);
@@ -890,10 +890,10 @@ public:
         Result.m32 = m32 + RHS.m32;
         Result.m33 = m33 + RHS.m33;
     #else
-        FFloat128 Row0 = FVectorMath::Add(f[0], RHS.f[0]);
-        FFloat128 Row1 = FVectorMath::Add(f[1], RHS.f[1]);
-        FFloat128 Row2 = FVectorMath::Add(f[2], RHS.f[2]);
-        FFloat128 Row3 = FVectorMath::Add(f[3], RHS.f[3]);
+        FFloat128 Row0 = FVectorMath::VectorAdd(f[0], RHS.f[0]);
+        FFloat128 Row1 = FVectorMath::VectorAdd(f[1], RHS.f[1]);
+        FFloat128 Row2 = FVectorMath::VectorAdd(f[2], RHS.f[2]);
+        FFloat128 Row3 = FVectorMath::VectorAdd(f[3], RHS.f[3]);
 
         FVectorMath::StoreAligned(Row0, Result.f[0]);
         FVectorMath::StoreAligned(Row1, Result.f[1]);
@@ -945,10 +945,10 @@ public:
         Result.m33 = m33 + RHS;
     #else
         FFloat128 Scalars = FVectorMath::Load(RHS);
-        FFloat128 Row0    = FVectorMath::Add(f[0], Scalars);
-        FFloat128 Row1    = FVectorMath::Add(f[1], Scalars);
-        FFloat128 Row2    = FVectorMath::Add(f[2], Scalars);
-        FFloat128 Row3    = FVectorMath::Add(f[3], Scalars);
+        FFloat128 Row0    = FVectorMath::VectorAdd(f[0], Scalars);
+        FFloat128 Row1    = FVectorMath::VectorAdd(f[1], Scalars);
+        FFloat128 Row2    = FVectorMath::VectorAdd(f[2], Scalars);
+        FFloat128 Row3    = FVectorMath::VectorAdd(f[3], Scalars);
 
         FVectorMath::StoreAligned(Row0, Result.f[0]);
         FVectorMath::StoreAligned(Row1, Result.f[1]);
@@ -999,10 +999,10 @@ public:
         Result.m32 = m32 - RHS.m32;
         Result.m33 = m33 - RHS.m33;
     #else
-        FFloat128 Row0 = FVectorMath::Sub(f[0], RHS.f[0]);
-        FFloat128 Row1 = FVectorMath::Sub(f[1], RHS.f[1]);
-        FFloat128 Row2 = FVectorMath::Sub(f[2], RHS.f[2]);
-        FFloat128 Row3 = FVectorMath::Sub(f[3], RHS.f[3]);
+        FFloat128 Row0 = FVectorMath::VectorSub(f[0], RHS.f[0]);
+        FFloat128 Row1 = FVectorMath::VectorSub(f[1], RHS.f[1]);
+        FFloat128 Row2 = FVectorMath::VectorSub(f[2], RHS.f[2]);
+        FFloat128 Row3 = FVectorMath::VectorSub(f[3], RHS.f[3]);
 
         FVectorMath::StoreAligned(Row0, Result.f[0]);
         FVectorMath::StoreAligned(Row1, Result.f[1]);
@@ -1054,10 +1054,10 @@ public:
         Result.m33 = m33 - RHS;
     #else
         FFloat128 Scalars = FVectorMath::Load(RHS);
-        FFloat128 Row0    = FVectorMath::Sub(f[0], Scalars);
-        FFloat128 Row1    = FVectorMath::Sub(f[1], Scalars);
-        FFloat128 Row2    = FVectorMath::Sub(f[2], Scalars);
-        FFloat128 Row3    = FVectorMath::Sub(f[3], Scalars);
+        FFloat128 Row0    = FVectorMath::VectorSub(f[0], Scalars);
+        FFloat128 Row1    = FVectorMath::VectorSub(f[1], Scalars);
+        FFloat128 Row2    = FVectorMath::VectorSub(f[2], Scalars);
+        FFloat128 Row3    = FVectorMath::VectorSub(f[3], Scalars);
 
         FVectorMath::StoreAligned(Row0, Result.f[0]);
         FVectorMath::StoreAligned(Row1, Result.f[1]);
@@ -1110,10 +1110,10 @@ public:
         Result.m33 = m33 * Recip;
     #else
         FFloat128 RecipScalars = FVectorMath::Load(1.0f / RHS);
-        FFloat128 Row0         = FVectorMath::Mul(f[0], RecipScalars);
-        FFloat128 Row1         = FVectorMath::Mul(f[1], RecipScalars);
-        FFloat128 Row2         = FVectorMath::Mul(f[2], RecipScalars);
-        FFloat128 Row3         = FVectorMath::Mul(f[3], RecipScalars);
+        FFloat128 Row0 = FVectorMath::VectorMul(f[0], RecipScalars);
+        FFloat128 Row1 = FVectorMath::VectorMul(f[1], RecipScalars);
+        FFloat128 Row2 = FVectorMath::VectorMul(f[2], RecipScalars);
+        FFloat128 Row3 = FVectorMath::VectorMul(f[3], RecipScalars);
 
         FVectorMath::StoreAligned(Row0, Result.f[0]);
         FVectorMath::StoreAligned(Row1, Result.f[1]);

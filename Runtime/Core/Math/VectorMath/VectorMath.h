@@ -37,181 +37,109 @@
 
 struct FVectorMath : public FPlatformVectorMath
 {
-    using FPlatformVectorMath::Mul;
-    using FPlatformVectorMath::Div;
-    using FPlatformVectorMath::Add;
-    using FPlatformVectorMath::Sub;
+    using FPlatformVectorMath::VectorMul;
+    using FPlatformVectorMath::VectorDiv;
+    using FPlatformVectorMath::VectorAdd;
+    using FPlatformVectorMath::VectorSub;
 
     template<uint8 RegisterIndex>
-    static FORCEINLINE FFloat128 VECTORCALL Broadcast(FFloat128 Vector) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorBroadcast(FFloat128 Vector) noexcept
     {
-        return FPlatformVectorMath::Shuffle<RegisterIndex, RegisterIndex, RegisterIndex, RegisterIndex>(Vector);
+        return VectorShuffle<RegisterIndex, RegisterIndex, RegisterIndex, RegisterIndex>(Vector);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Mul(const float* A, FFloat128 VectorB) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorMul(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 Temp = FPlatformVectorMath::LoadAligned(A);
-        return FPlatformVectorMath::Mul(Temp, VectorB);
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        return VectorMul(VectorA_128, VectorB);
     }
 
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Mul(const T* A, FFloat128 VectorB) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorMul(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        return Mul(reinterpret_cast<const float*>(A), VectorB);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorMul(VectorA, VectorB_128);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Mul(FFloat128 A, const float* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorMul(const float* VectorA, const float* VectorB) noexcept
     {
-        FFloat128 Temp = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Mul(A, Temp);
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorMul(VectorA_128, VectorB_128);
     }
 
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Mul(FFloat128 A, const T* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorDiv(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        return Mul(A, reinterpret_cast<const float*>(B));
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        return VectorDiv(VectorA_128, VectorB);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Mul(const float* A, const float* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorDiv(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        FFloat128 Temp0 = FPlatformVectorMath::LoadAligned(A);
-        FFloat128 Temp1 = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Mul(Temp0, Temp1);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorDiv(VectorA, VectorB_128);
     }
 
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Mul(const T* A, const T* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorDiv(const float* VectorA, const float* VectorB) noexcept
     {
-        return Mul(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorDiv(VectorA_128, VectorB_128);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Div(const float* A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorAdd(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 Temp = FPlatformVectorMath::LoadAligned(A);
-        return FPlatformVectorMath::Div(Temp, B);
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        return VectorAdd(VectorA_128, VectorB);
     }
 
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Div(const T* A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorAdd(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        return Div(reinterpret_cast<const float*>(A), B);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorAdd(VectorA, VectorB_128);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Div(FFloat128 A, const float* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorAdd(const float* VectorA, const float* VectorB) noexcept
     {
-        FFloat128 Temp = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Div(A, Temp);
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorAdd(VectorA_128, VectorB_128);
     }
 
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Div(FFloat128 A, const T* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorSub(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        return Div(A, reinterpret_cast<const float*>(B));
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        return VectorSub(VectorA_128, VectorB);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Div(const float* A, const float* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorSub(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        FFloat128 Temp0 = FPlatformVectorMath::LoadAligned(A);
-        FFloat128 Temp1 = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Div(Temp0, Temp1);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorSub(VectorA, VectorB_128);
     }
 
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Div(const T* A, const T* B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorSub(const float* VectorA, const float* VectorB) noexcept
     {
-        return Div(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
+        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        return VectorSub(VectorA_128, VectorB_128);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Add(const float* A, FFloat128 B) noexcept
+    static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept
     {
-        FFloat128 Temp = FPlatformVectorMath::LoadAligned(A);
-        return FPlatformVectorMath::Add(Temp, B);
+        FFloat128 ComponentY = VectorBroadcast<1>(Vector);
+        return VectorGetX(ComponentY);
     }
 
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Add(const T* A, FFloat128 B) noexcept
+    static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept
     {
-        return Add(reinterpret_cast<const float*>(A), B);
+        FFloat128 ComponentZ = VectorBroadcast<2>(Vector);
+        return VectorGetX(ComponentZ);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Add(FFloat128 A, const float* B) noexcept
+    static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept
     {
-        FFloat128 Temp = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Add(A, Temp);
-    }
-
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Add(FFloat128 A, const T* B) noexcept
-    {
-        return Add(A, reinterpret_cast<const float*>(B));
-    }
-
-    static FORCEINLINE FFloat128 VECTORCALL Add(const float* A, const float* B) noexcept
-    {
-        FFloat128 Temp0 = FPlatformVectorMath::LoadAligned(A);
-        FFloat128 Temp1 = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Add(Temp0, Temp1);
-    }
-
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Add(const T* A, const T* B) noexcept
-    {
-        return Add(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
-    }
-
-    static FORCEINLINE FFloat128 VECTORCALL Sub(const float* A, FFloat128 B) noexcept
-    {
-        FFloat128 Temp = LoadAligned(A);
-        return FPlatformVectorMath::Sub(Temp, B);
-    }
-
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Sub(const T* A, FFloat128 B) noexcept
-    {
-        return Sub(reinterpret_cast<const float*>(A), B);
-    }
-
-    static FORCEINLINE FFloat128 VECTORCALL Sub(FFloat128 A, const float* B) noexcept
-    {
-        FFloat128 Temp = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Sub(A, Temp);
-    }
-
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Sub(FFloat128 A, const T* B) noexcept
-    {
-        return Sub(A, reinterpret_cast<const float*>(B));
-    }
-
-    static FORCEINLINE FFloat128 VECTORCALL Sub(const float* A, const float* B) noexcept
-    {
-        FFloat128 Temp0 = FPlatformVectorMath::LoadAligned(A);
-        FFloat128 Temp1 = FPlatformVectorMath::LoadAligned(B);
-        return FPlatformVectorMath::Sub(Temp0, Temp1);
-    }
-
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Sub(const T* A, const T* B) noexcept
-    {
-        return Sub(reinterpret_cast<const float*>(A), reinterpret_cast<const float*>(B));
-    }
-
-    static FORCEINLINE float VECTORCALL GetY(FFloat128 Register) noexcept
-    {
-        FFloat128 Temp = Broadcast<1>(Register);
-        return GetX(Temp);
-    }
-
-    static FORCEINLINE float VECTORCALL GetZ(FFloat128 Register) noexcept
-    {
-        FFloat128 Temp = Broadcast<2>(Register);
-        return GetX(Temp);
-    }
-
-    static FORCEINLINE float VECTORCALL GetW(FFloat128 Register) noexcept
-    {
-        FFloat128 Temp = Broadcast<3>(Register);
-        return GetX(Temp);
+        FFloat128 ComponentW = VectorBroadcast<3>(Vector);
+        return VectorGetX(ComponentW);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Abs(FFloat128 A) noexcept
@@ -222,38 +150,38 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE FFloat128 VECTORCALL Dot(FFloat128 A, FFloat128 B) noexcept
     {
-        FFloat128 Reg0 = FPlatformVectorMath::Mul(A, B);                 // (Ax*Bx), (Ay*By)...
-        FFloat128 Reg1 = FPlatformVectorMath::Shuffle<1, 0, 3, 2>(Reg0); // (Ay*By), (Ax*Bx), (Aw*Bw), (Az*Bz))
-        Reg0 = FPlatformVectorMath::Add(Reg0, Reg1);                     // (Ax * Bx) + (Ay * By), ..., (Az * Bz) + (Aw * Bw)...
-        Reg1 = FPlatformVectorMath::Shuffle0011<2, 3, 2, 3>(Reg0, Reg1); // (Az * Bz) + (Aw * Bw), ..., (Ay*By), (Ax*Bx)
-        return FPlatformVectorMath::Add(Reg0, Reg1);                     // (Ax * Bx) + (Ay * By) + (Az * Bz) + (Aw * Bw), ...
+        FFloat128 Reg0 = VectorMul(A, B);                 // (Ax*Bx), (Ay*By)...
+        FFloat128 Reg1 = VectorShuffle<1, 0, 3, 2>(Reg0); // (Ay*By), (Ax*Bx), (Aw*Bw), (Az*Bz))
+        Reg0 = VectorAdd(Reg0, Reg1);                     // (Ax * Bx) + (Ay * By), ..., (Az * Bz) + (Aw * Bw)...
+        Reg1 = VectorShuffle0011<2, 3, 2, 3>(Reg0, Reg1); // (Az * Bz) + (Aw * Bw), ..., (Ay*By), (Ax*Bx)
+        return VectorAdd(Reg0, Reg1);                     // (Ax * Bx) + (Ay * By) + (Az * Bz) + (Aw * Bw), ...
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Cross(FFloat128 A, FFloat128 B) noexcept
     {
-        FFloat128 Mul0 = Shuffle<1, 2, 0, 3>(A);
-        Mul0 = FPlatformVectorMath::Mul(B, Mul0);
+        FFloat128 Mul0 = VectorShuffle<1, 2, 0, 3>(A);
+        Mul0 = VectorMul(B, Mul0);
 
-        FFloat128 Mul1 = Shuffle<1, 2, 0, 3>(B);
-        Mul1 = FPlatformVectorMath::Mul(A, Mul1);
+        FFloat128 Mul1 = VectorShuffle<1, 2, 0, 3>(B);
+        Mul1 = VectorMul(A, Mul1);
 
-        FFloat128 Result = FPlatformVectorMath::Sub(Mul1, Mul0);
-        return Shuffle<1, 2, 0, 3>(Result);
+        FFloat128 Result = VectorSub(Mul1, Mul0);
+        return VectorShuffle<1, 2, 0, 3>(Result);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Transform(const float* Mat, FFloat128 Row) noexcept
     {
-        FFloat128 Reg0 = FPlatformVectorMath::LoadAligned(&Mat[0]);
-        FFloat128 Reg1 = FPlatformVectorMath::Mul(Broadcast<0>(Row), Reg0);
+        FFloat128 Reg0 = LoadAligned(&Mat[0]);
+        FFloat128 Reg1 = VectorMul(VectorBroadcast<0>(Row), Reg0);
 
-        Reg0 = FPlatformVectorMath::LoadAligned(&Mat[4]);
-        Reg1 = FPlatformVectorMath::Add(Reg1, FPlatformVectorMath::Mul(Broadcast<1>(Row), Reg0));
+        Reg0 = LoadAligned(&Mat[4]);
+        Reg1 = VectorAdd(Reg1, VectorMul(VectorBroadcast<1>(Row), Reg0));
 
-        Reg0 = FPlatformVectorMath::LoadAligned(&Mat[8]);
-        Reg1 = FPlatformVectorMath::Add(Reg1, FPlatformVectorMath::Mul(Broadcast<2>(Row), Reg0));
+        Reg0 = LoadAligned(&Mat[8]);
+        Reg1 = VectorAdd(Reg1, VectorMul(VectorBroadcast<2>(Row), Reg0));
 
-        Reg0 = FPlatformVectorMath::LoadAligned(&Mat[12]);
-        return FPlatformVectorMath::Add(Reg1, FPlatformVectorMath::Mul(Broadcast<3>(Row), Reg0));
+        Reg0 = LoadAligned(&Mat[12]);
+        return VectorAdd(Reg1, VectorMul(VectorBroadcast<3>(Row), Reg0));
     }
 
     template<typename T>
@@ -264,27 +192,27 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE void VECTORCALL Transpose(const float* InMat, float* OutMat) noexcept
     {
-        FFloat128 Row0  = FPlatformVectorMath::LoadAligned(&InMat[0]);
-        FFloat128 Row1  = FPlatformVectorMath::LoadAligned(&InMat[4]);
-        FFloat128 Temp0 = FPlatformVectorMath::Shuffle0101<0, 0, 1, 1>(Row0, Row1);
-        FFloat128 Temp1 = FPlatformVectorMath::Shuffle0101<2, 2, 3, 3>(Row0, Row1);
+        FFloat128 Row0  = LoadAligned(&InMat[0]);
+        FFloat128 Row1  = LoadAligned(&InMat[4]);
+        FFloat128 Temp0 = VectorShuffle0101<0, 0, 1, 1>(Row0, Row1);
+        FFloat128 Temp1 = VectorShuffle0101<2, 2, 3, 3>(Row0, Row1);
 
-        Row0 = FPlatformVectorMath::LoadAligned(&InMat[8]);
-        Row1 = FPlatformVectorMath::LoadAligned(&InMat[12]);
+        Row0 = LoadAligned(&InMat[8]);
+        Row1 = LoadAligned(&InMat[12]);
 
-        FFloat128 Temp2 = FPlatformVectorMath::Shuffle0101<0, 0, 1, 1>(Row0, Row1);
-        FFloat128 Temp3 = FPlatformVectorMath::Shuffle0101<2, 2, 3, 3>(Row0, Row1);
+        FFloat128 Temp2 = VectorShuffle0101<0, 0, 1, 1>(Row0, Row1);
+        FFloat128 Temp3 = VectorShuffle0101<2, 2, 3, 3>(Row0, Row1);
 
-        FFloat128 Out = FPlatformVectorMath::Shuffle0011<0, 1, 0, 1>(Temp0, Temp2);
+        FFloat128 Out = VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp2);
         FPlatformVectorMath::StoreAligned(Out, &OutMat[0]);
 
-        Out = FPlatformVectorMath::Shuffle0011<2, 3, 2, 3>(Temp0, Temp2);
+        Out = VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp2);
         FPlatformVectorMath::StoreAligned(Out, &OutMat[4]);
 
-        Out = FPlatformVectorMath::Shuffle0011<0, 1, 0, 1>(Temp1, Temp3);
+        Out = VectorShuffle0011<0, 1, 0, 1>(Temp1, Temp3);
         FPlatformVectorMath::StoreAligned(Out, &OutMat[8]);
 
-        Out = FPlatformVectorMath::Shuffle0011<2, 3, 2, 3>(Temp1, Temp3);
+        Out = VectorShuffle0011<2, 3, 2, 3>(Temp1, Temp3);
         FPlatformVectorMath::StoreAligned(Out, &OutMat[12]);
     }
 
@@ -301,41 +229,41 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE FFloat128 VECTORCALL HorizontalSum(FFloat128 A) noexcept
     {
-        FFloat128 Shf = FPlatformVectorMath::Shuffle<1, 0, 3, 2>(A);
-        FFloat128 Sum = FPlatformVectorMath::Add(A, Shf);
-        Shf = FPlatformVectorMath::Shuffle0011<2, 3, 2, 3>(Shf, Sum);
-        Sum = FPlatformVectorMath::Add(Shf, Sum);
-        return Broadcast<0>(Sum);
+        FFloat128 Shf = VectorShuffle<1, 0, 3, 2>(A);
+        FFloat128 Sum = VectorAdd(A, Shf);
+        Shf = VectorShuffle0011<2, 3, 2, 3>(Shf, Sum);
+        Sum = VectorAdd(Shf, Sum);
+        return VectorBroadcast<0>(Sum);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Mat2Mul(FFloat128 A, FFloat128 B)
     {
-        FFloat128 Temp0 = FPlatformVectorMath::Shuffle<0, 3, 0, 3>(B);
-        FFloat128 Temp1 = FPlatformVectorMath::Mul(A, Temp0);
-        FFloat128 Temp2 = FPlatformVectorMath::Shuffle<1, 0, 3, 2>(A);
-        Temp0 = FPlatformVectorMath::Shuffle<2, 1, 2, 1>(B);
+        FFloat128 Temp0 = VectorShuffle<0, 3, 0, 3>(B);
+        FFloat128 Temp1 = VectorMul(A, Temp0);
+        FFloat128 Temp2 = VectorShuffle<1, 0, 3, 2>(A);
+        Temp0 = VectorShuffle<2, 1, 2, 1>(B);
 
-        FFloat128 Temp3 = FPlatformVectorMath::Mul(Temp2, Temp0);
-        return FPlatformVectorMath::Add(Temp1, Temp3);
+        FFloat128 Temp3 = VectorMul(Temp2, Temp0);
+        return VectorAdd(Temp1, Temp3);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Mat2AdjointMul(FFloat128 A, FFloat128 B)
     {
-        FFloat128 Temp0 = FPlatformVectorMath::Shuffle<1, 1, 2, 2>(A);
-        FFloat128 Temp1 = FPlatformVectorMath::Shuffle<2, 3, 0, 1>(B);
-        FFloat128 Temp2 = FPlatformVectorMath::Mul(Temp0, Temp1);
-        Temp0 = FPlatformVectorMath::Shuffle<3, 3, 0, 0>(A);
-        Temp1 = FPlatformVectorMath::Mul(Temp0, B);
-        return FPlatformVectorMath::Sub(Temp1, Temp2);
+        FFloat128 Temp0 = VectorShuffle<1, 1, 2, 2>(A);
+        FFloat128 Temp1 = VectorShuffle<2, 3, 0, 1>(B);
+        FFloat128 Temp2 = VectorMul(Temp0, Temp1);
+        Temp0 = VectorShuffle<3, 3, 0, 0>(A);
+        Temp1 = VectorMul(Temp0, B);
+        return VectorSub(Temp1, Temp2);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Mat2MulAdjoint(FFloat128 A, FFloat128 B)
     {
-        FFloat128 Temp0 = FPlatformVectorMath::Shuffle<1, 0, 3, 2>(A);
-        FFloat128 Temp1 = FPlatformVectorMath::Shuffle<2, 1, 2, 1>(B);
-        FFloat128 Temp2 = FPlatformVectorMath::Mul(Temp0, Temp1);
-        Temp0 = FPlatformVectorMath::Shuffle<3, 0, 3, 0>(B);
-        Temp1 = FPlatformVectorMath::Mul(A, Temp0);
-        return FPlatformVectorMath::Sub(Temp1, Temp2);
+        FFloat128 Temp0 = VectorShuffle<1, 0, 3, 2>(A);
+        FFloat128 Temp1 = VectorShuffle<2, 1, 2, 1>(B);
+        FFloat128 Temp2 = VectorMul(Temp0, Temp1);
+        Temp0 = VectorShuffle<3, 0, 3, 0>(B);
+        Temp1 = VectorMul(A, Temp0);
+        return VectorSub(Temp1, Temp2);
     }
 };
