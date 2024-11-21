@@ -77,66 +77,66 @@ struct FVectorMathSSE
     }
 
     template<uint8 x, uint8 y, uint8 z, uint8 w>
-    static FORCEINLINE FFloat128 VECTORCALL VectorShuffle(FFloat128 A) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorShuffle(FFloat128 VectorA) noexcept
     {
-        static constexpr auto Mask = _MM_SHUFFLE(w, z, y, x);
+        static constexpr auto ShuffleMask = _MM_SHUFFLE(w, z, y, x);
         
         if constexpr (x == 0 && y == 1 && z == 0 && w == 1)
         {
-            return _mm_movelh_ps(A, A);
+            return _mm_movelh_ps(VectorA, VectorA);
         }
         else if constexpr (x == 2 && y == 3 && z == 2 && w == 3)
         {
-            return _mm_movehl_ps(A, A);
+            return _mm_movehl_ps(VectorA, VectorA);
         }
         else if constexpr (x == 0 && y == 0 && z == 1 && w == 1)
         {
-            return _mm_unpacklo_ps(A, A);
+            return _mm_unpacklo_ps(VectorA, VectorA);
         }
         else if constexpr (x == 2 && y == 2 && z == 3 && w == 3)
         {
-            return _mm_unpackhi_ps(A, A);
+            return _mm_unpackhi_ps(VectorA, VectorA);
         }
         else
         {
-            return _mm_shuffle_ps(A, A, Mask);
+            return _mm_shuffle_ps(VectorA, VectorA, ShuffleMask);
         }
     }
 
     template<uint8 x, uint8 y, uint8 z, uint8 w>
-    static FORCEINLINE FFloat128 VECTORCALL VectorShuffle0011(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorShuffle0011(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        static constexpr auto Mask = _MM_SHUFFLE(w, z, y, x);
+        static constexpr auto ShuffleMask = _MM_SHUFFLE(w, z, y, x);
         
         if constexpr (x == 0 && y == 1 && z == 0 && w == 1)
         {
-            return _mm_movelh_ps(A, B);
+            return _mm_movelh_ps(VectorA, VectorB);
         }
         else if constexpr (x == 2 && y == 3 && z == 2 && w == 3)
         {
-            return _mm_movehl_ps(B, A);
+            return _mm_movehl_ps(VectorB, VectorA);
         }
         else
         {
-            return _mm_shuffle_ps(A, B, Mask);
+            return _mm_shuffle_ps(VectorA, VectorB, ShuffleMask);
         }
     }
 
     template<uint8 x, uint8 y, uint8 z, uint8 w>
-    static FORCEINLINE FFloat128 VECTORCALL VectorShuffle0101(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorShuffle0101(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         if constexpr (x == 0 && y == 0 && z == 1 && w == 1)
         {
-            return _mm_unpacklo_ps(A, B);
+            return _mm_unpacklo_ps(VectorA, VectorB);
         }
         else if constexpr (x == 2 && y == 2 && z == 3 && w == 3)
         {
-            return _mm_unpackhi_ps(A, B);
+            return _mm_unpackhi_ps(VectorA, VectorB);
         }
         else
         {
-            FFloat128 TempA = VectorShuffle0011<x, z, y, w>(A, B);
-            return VectorShuffle<0, 2, 1, 3>(TempA);
+            FFloat128 VectorC = VectorShuffle0011<x, z, y, w>(VectorA, VectorB);
+            return VectorShuffle<0, 2, 1, 3>(VectorC);
         }
     }
 
@@ -145,41 +145,41 @@ struct FVectorMathSSE
         return _mm_cvtss_f32(Vector);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL VectorMul(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorMul(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return _mm_mul_ps(A, B);
+        return _mm_mul_ps(VectorA, VectorB);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL VectorDiv(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorDiv(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return _mm_div_ps(A, B);
+        return _mm_div_ps(VectorA, VectorB);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL VectorAdd(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return _mm_add_ps(A, B);
+        return _mm_add_ps(VectorA, VectorB);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL HorizontalAdd(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorSub(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 Temp0 = VectorShuffle0011<0, 2, 0, 2>(A, B);
-        FFloat128 Temp1 = VectorShuffle0011<1, 3, 1, 3>(A, B);
-        return VectorAdd(Temp0, Temp1);
+        return _mm_sub_ps(VectorA, VectorB);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL VectorSub(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL HorizontalAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        return _mm_sub_ps(A, B);
+        FFloat128 VectorC = VectorShuffle0011<0, 2, 0, 2>(VectorA, VectorB);
+        FFloat128 VectorD = VectorShuffle0011<1, 3, 1, 3>(VectorA, VectorB);
+        return VectorAdd(VectorC, VectorD);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Sqrt(FFloat128 A) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorSqrt(FFloat128 Vector) noexcept
     {
-        return _mm_sqrt_ps(A);
+        return _mm_sqrt_ps(Vector);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL RecipSqrt(FFloat128 A) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorRecipSqrt(FFloat128 Vector) noexcept
     {
-        return _mm_rsqrt_ps(A);
+        return _mm_rsqrt_ps(Vector);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Recip(FFloat128 A) noexcept

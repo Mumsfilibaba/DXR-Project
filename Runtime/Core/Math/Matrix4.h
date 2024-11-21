@@ -99,7 +99,7 @@ public:
         Result.w = (Vector[0] * m03) + (Vector[1] * m13) + (Vector[2] * m23) + (Vector[3] * m33);
     #else
         FFloat128 NewVector = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Vector));
-        NewVector = FVectorMath::Transform(this, NewVector);
+        NewVector = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewVector);
         FVectorMath::StoreAligned(NewVector, reinterpret_cast<float*>(&Result));
     #endif
     
@@ -116,7 +116,7 @@ public:
         Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (1.0f * m32);
     #else
         FFloat128 NewVector = FVectorMath::Load(Vector.x, Vector.y, Vector.z, 1.0f);
-        NewVector = FVectorMath::Transform(this, NewVector);
+        NewVector = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewVector);
     #endif
     
         return FVector3(FVectorMath::VectorGetX(NewVector), FVectorMath::VectorGetY(NewVector), FVectorMath::VectorGetZ(NewVector));
@@ -140,7 +140,7 @@ public:
         Result.z = ((Position[0] * m02) + (Position[1] * m12) + (Position[2] * m22) + (1.0f * m32)) * ComponentW;
     #else
         FFloat128 NewPosition = FVectorMath::Load(Position.x, Position.y, Position.z, 1.0f);
-        NewPosition = FVectorMath::Transform(this, NewPosition);
+        NewPosition = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewPosition);
         
         FFloat128 Temp0 = FVectorMath::LoadOnes();
         FFloat128 Temp1 = FVectorMath::VectorBroadcast<3>(NewPosition);
@@ -166,7 +166,7 @@ public:
         Result.z = (Direction[0] * m02) + (Direction[1] * m12) + (Direction[2] * m22);
     #else
         FFloat128 NewDirection = FVectorMath::Load(Direction.x, Direction.y, Direction.z, 0.0f);
-        NewDirection = FVectorMath::Transform(this, NewDirection);
+        NewDirection = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewDirection);
     #endif
     
         return FVector3(FVectorMath::VectorGetX(NewDirection), FVectorMath::VectorGetY(NewDirection), FVectorMath::VectorGetZ(NewDirection));
@@ -596,12 +596,12 @@ public:
         return true;
     #else
         FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
-        Espilon128 = FVectorMath::Abs(Espilon128);
+        Espilon128 = FVectorMath::VectorAbs(Espilon128);
 
         for (int32 i = 0; i < 4; i++)
         {
             FFloat128 Diff = FVectorMath::VectorSub(f[i], Other.f[i]);
-            Diff = FVectorMath::Abs(Diff);
+            Diff = FVectorMath::VectorAbs(Diff);
 
             if (FVectorMath::GreaterThan(Diff, Espilon128))
             {
@@ -775,16 +775,16 @@ public:
         Result.m33 = (m30 * RHS.m03) + (m31 * RHS.m13) + (m32 * RHS.m23) + (m33 * RHS.m33);
     #else
         FFloat128 Row0 = FVectorMath::LoadAligned(f[0]);
-        Row0 = FVectorMath::Transform(&RHS, Row0);
+        Row0 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row0);
 
         FFloat128 Row1 = FVectorMath::LoadAligned(f[1]);
-        Row1 = FVectorMath::Transform(&RHS, Row1);
+        Row1 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row1);
 
         FFloat128 Row2 = FVectorMath::LoadAligned(f[2]);
-        Row2 = FVectorMath::Transform(&RHS, Row2);
+        Row2 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row2);
 
         FFloat128 Row3 = FVectorMath::LoadAligned(f[3]);
-        Row3 = FVectorMath::Transform(&RHS, Row3);
+        Row3 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row3);
 
         FVectorMath::StoreAligned(Row0, Result.f[0]);
         FVectorMath::StoreAligned(Row1, Result.f[1]);

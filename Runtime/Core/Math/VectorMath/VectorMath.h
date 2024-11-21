@@ -142,52 +142,48 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorGetX(ComponentW);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Abs(FFloat128 A) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorAbs(FFloat128 Vector) noexcept
     {
         FInt128 Mask = Load(~(1 << 31));
-        return And(A, CastIntToFloat(Mask));
+        return And(Vector, CastIntToFloat(Mask));
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Dot(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorDot(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 Reg0 = VectorMul(A, B);                 // (Ax*Bx), (Ay*By)...
-        FFloat128 Reg1 = VectorShuffle<1, 0, 3, 2>(Reg0); // (Ay*By), (Ax*Bx), (Aw*Bw), (Az*Bz))
-        Reg0 = VectorAdd(Reg0, Reg1);                     // (Ax * Bx) + (Ay * By), ..., (Az * Bz) + (Aw * Bw)...
-        Reg1 = VectorShuffle0011<2, 3, 2, 3>(Reg0, Reg1); // (Az * Bz) + (Aw * Bw), ..., (Ay*By), (Ax*Bx)
-        return VectorAdd(Reg0, Reg1);                     // (Ax * Bx) + (Ay * By) + (Az * Bz) + (Aw * Bw), ...
+        FFloat128 VectorC = VectorMul(VectorA, VectorB);           // (Ax*Bx), (Ay*By)...
+        FFloat128 VectorD = VectorShuffle<1, 0, 3, 2>(VectorC);    // (Ay*By), (Ax*Bx), (Aw*Bw), (Az*Bz))
+
+        VectorC = VectorAdd(VectorC, VectorD);                     // (Ax * Bx) + (Ay * By), ..., (Az * Bz) + (Aw * Bw)...
+        VectorD = VectorShuffle0011<2, 3, 2, 3>(VectorC, VectorD); // (Az * Bz) + (Aw * Bw), ..., (Ay*By), (Ax*Bx)
+
+        return VectorAdd(VectorC, VectorD);                        // (Ax * Bx) + (Ay * By) + (Az * Bz) + (Aw * Bw), ...
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Cross(FFloat128 A, FFloat128 B) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorCross(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 Mul0 = VectorShuffle<1, 2, 0, 3>(A);
-        Mul0 = VectorMul(B, Mul0);
+        FFloat128 VectorC = VectorShuffle<1, 2, 0, 3>(VectorA);
+        VectorC = VectorMul(VectorB, VectorC);
 
-        FFloat128 Mul1 = VectorShuffle<1, 2, 0, 3>(B);
-        Mul1 = VectorMul(A, Mul1);
+        FFloat128 VectorD = VectorShuffle<1, 2, 0, 3>(VectorB);
+        VectorD = VectorMul(VectorA, VectorD);
 
-        FFloat128 Result = VectorSub(Mul1, Mul0);
+        FFloat128 Result = VectorSub(VectorD, VectorC);
         return VectorShuffle<1, 2, 0, 3>(Result);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Transform(const float* Mat, FFloat128 Row) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorTransform(const float* Matrix, FFloat128 Vector) noexcept
     {
-        FFloat128 Reg0 = LoadAligned(&Mat[0]);
-        FFloat128 Reg1 = VectorMul(VectorBroadcast<0>(Row), Reg0);
+        FFloat128 VectorA = LoadAligned(&Matrix[0]);
+        FFloat128 VectorB = VectorMul(VectorBroadcast<0>(Vector), VectorA);
 
-        Reg0 = LoadAligned(&Mat[4]);
-        Reg1 = VectorAdd(Reg1, VectorMul(VectorBroadcast<1>(Row), Reg0));
+        VectorA = LoadAligned(&Matrix[4]);
+        VectorB = VectorAdd(VectorB, VectorMul(VectorBroadcast<1>(Vector), VectorA));
 
-        Reg0 = LoadAligned(&Mat[8]);
-        Reg1 = VectorAdd(Reg1, VectorMul(VectorBroadcast<2>(Row), Reg0));
+        VectorA = LoadAligned(&Matrix[8]);
+        VectorB = VectorAdd(VectorB, VectorMul(VectorBroadcast<2>(Vector), VectorA));
 
-        Reg0 = LoadAligned(&Mat[12]);
-        return VectorAdd(Reg1, VectorMul(VectorBroadcast<3>(Row), Reg0));
-    }
-
-    template<typename T>
-    static FORCEINLINE FFloat128 VECTORCALL Transform(const T* Mat, FFloat128 Row) noexcept
-    {
-        return Transform(reinterpret_cast<const float*>(Mat), Row);
+        VectorA = LoadAligned(&Matrix[12]);
+        return VectorAdd(VectorB, VectorMul(VectorBroadcast<3>(Vector), VectorA));
     }
 
     static FORCEINLINE void VECTORCALL Transpose(const float* InMat, float* OutMat) noexcept
