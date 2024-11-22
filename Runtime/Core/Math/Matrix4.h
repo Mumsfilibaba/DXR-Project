@@ -98,9 +98,9 @@ public:
         Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (Vector[3] * m32);
         Result.w = (Vector[0] * m03) + (Vector[1] * m13) + (Vector[2] * m23) + (Vector[3] * m33);
     #else
-        FFloat128 NewVector = FVectorMath::LoadAligned(reinterpret_cast<const float*>(&Vector));
+        FFloat128 NewVector = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Vector));
         NewVector = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewVector);
-        FVectorMath::StoreAligned(NewVector, reinterpret_cast<float*>(&Result));
+        FVectorMath::VectorStore(NewVector, reinterpret_cast<float*>(&Result));
     #endif
     
         return Result;
@@ -115,7 +115,7 @@ public:
         Result.y = (Vector[0] * m01) + (Vector[1] * m11) + (Vector[2] * m21) + (1.0f * m31);
         Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (1.0f * m32);
     #else
-        FFloat128 NewVector = FVectorMath::Load(Vector.x, Vector.y, Vector.z, 1.0f);
+        FFloat128 NewVector = FVectorMath::VectorSet(Vector.x, Vector.y, Vector.z, 1.0f);
         NewVector = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewVector);
     #endif
     
@@ -139,10 +139,10 @@ public:
         Result.y = ((Position[0] * m01) + (Position[1] * m11) + (Position[2] * m21) + (1.0f * m31)) * ComponentW;
         Result.z = ((Position[0] * m02) + (Position[1] * m12) + (Position[2] * m22) + (1.0f * m32)) * ComponentW;
     #else
-        FFloat128 NewPosition = FVectorMath::Load(Position.x, Position.y, Position.z, 1.0f);
+        FFloat128 NewPosition = FVectorMath::VectorSet(Position.x, Position.y, Position.z, 1.0f);
         NewPosition = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewPosition);
         
-        FFloat128 Temp0 = FVectorMath::LoadOnes();
+        FFloat128 Temp0 = FVectorMath::VectorOne();
         FFloat128 Temp1 = FVectorMath::VectorBroadcast<3>(NewPosition);
         Temp0       = FVectorMath::VectorDiv(Temp0, Temp1);
         NewPosition = FVectorMath::VectorMul(Temp0, NewPosition);
@@ -165,7 +165,7 @@ public:
         Result.y = (Direction[0] * m01) + (Direction[1] * m11) + (Direction[2] * m21);
         Result.z = (Direction[0] * m02) + (Direction[1] * m12) + (Direction[2] * m22);
     #else
-        FFloat128 NewDirection = FVectorMath::Load(Direction.x, Direction.y, Direction.z, 0.0f);
+        FFloat128 NewDirection = FVectorMath::VectorSet(Direction.x, Direction.y, Direction.z, 0.0f);
         NewDirection = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewDirection);
     #endif
     
@@ -285,10 +285,10 @@ public:
         //d44
         Inverse.m33 = ((m00 * _c) - (m01 * _e) + (m02 * _f)) * ReprDeterminant;
     #else
-        FFloat128 Temp0 = FVectorMath::LoadAligned(f[0]);
-        FFloat128 Temp1 = FVectorMath::LoadAligned(f[1]);
-        FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
-        FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
+        FFloat128 Temp0 = FVectorMath::VectorLoad(f[0]);
+        FFloat128 Temp1 = FVectorMath::VectorLoad(f[1]);
+        FFloat128 Temp2 = FVectorMath::VectorLoad(f[2]);
+        FFloat128 Temp3 = FVectorMath::VectorLoad(f[3]);
 
         FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
         FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
@@ -327,7 +327,7 @@ public:
 
         DetM = FVectorMath::VectorSub(DetM, Trace);
 
-        const FFloat128 AdjSignMask = FVectorMath::Load(1.0f, -1.0f, -1.0f, 1.0f);
+        const FFloat128 AdjSignMask = FVectorMath::VectorSet(1.0f, -1.0f, -1.0f, 1.0f);
         DetM = FVectorMath::VectorDiv(AdjSignMask, DetM);
 
         x = FVectorMath::VectorMul(x, DetM);
@@ -340,10 +340,10 @@ public:
         Temp2 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(z, w);
         Temp3 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(z, w);
 
-        FVectorMath::StoreAligned(Temp0, Inverse.f[0]);
-        FVectorMath::StoreAligned(Temp1, Inverse.f[1]);
-        FVectorMath::StoreAligned(Temp2, Inverse.f[2]);
-        FVectorMath::StoreAligned(Temp3, Inverse.f[3]);
+        FVectorMath::VectorStore(Temp0, Inverse.f[0]);
+        FVectorMath::VectorStore(Temp1, Inverse.f[1]);
+        FVectorMath::VectorStore(Temp2, Inverse.f[2]);
+        FVectorMath::VectorStore(Temp3, Inverse.f[3]);
     #endif
     
         return Inverse;
@@ -415,10 +415,10 @@ public:
         //d44
         Adjugate.m33 = (m00 * _c) - (m01 * _e) + (m02 * _f);
     #else
-        FFloat128 Temp0 = FVectorMath::LoadAligned(f[0]);
-        FFloat128 Temp1 = FVectorMath::LoadAligned(f[1]);
-        FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
-        FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
+        FFloat128 Temp0 = FVectorMath::VectorLoad(f[0]);
+        FFloat128 Temp1 = FVectorMath::VectorLoad(f[1]);
+        FFloat128 Temp2 = FVectorMath::VectorLoad(f[2]);
+        FFloat128 Temp3 = FVectorMath::VectorLoad(f[3]);
 
         FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
         FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
@@ -447,7 +447,7 @@ public:
         FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
         FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
 
-        const FFloat128 Mask = FVectorMath::Load(1.0f, -1.0f, -1.0f, 1.0f);
+        const FFloat128 Mask = FVectorMath::VectorSet(1.0f, -1.0f, -1.0f, 1.0f);
         x = FVectorMath::VectorMul(x, Mask);
         y = FVectorMath::VectorMul(y, Mask);
         z = FVectorMath::VectorMul(z, Mask);
@@ -458,10 +458,10 @@ public:
         Temp2 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(z, w);
         Temp3 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(z, w);
 
-        FVectorMath::StoreAligned(Temp0, Adjugate.f[0]);
-        FVectorMath::StoreAligned(Temp1, Adjugate.f[1]);
-        FVectorMath::StoreAligned(Temp2, Adjugate.f[2]);
-        FVectorMath::StoreAligned(Temp3, Adjugate.f[3]);
+        FVectorMath::VectorStore(Temp0, Adjugate.f[0]);
+        FVectorMath::VectorStore(Temp1, Adjugate.f[1]);
+        FVectorMath::VectorStore(Temp2, Adjugate.f[2]);
+        FVectorMath::VectorStore(Temp3, Adjugate.f[3]);
     #endif
     
         return Adjugate;
@@ -492,10 +492,10 @@ public:
         //d14
         Determinant -= m03 * ((m10 * _c) - (m11 * _e) + (m12 * _f));
     #else
-        FFloat128 Temp0 = FVectorMath::LoadAligned(f[0]);
-        FFloat128 Temp1 = FVectorMath::LoadAligned(f[1]);
-        FFloat128 Temp2 = FVectorMath::LoadAligned(f[2]);
-        FFloat128 Temp3 = FVectorMath::LoadAligned(f[3]);
+        FFloat128 Temp0 = FVectorMath::VectorLoad(f[0]);
+        FFloat128 Temp1 = FVectorMath::VectorLoad(f[1]);
+        FFloat128 Temp2 = FVectorMath::VectorLoad(f[2]);
+        FFloat128 Temp3 = FVectorMath::VectorLoad(f[3]);
 
         FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
         FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
@@ -595,7 +595,7 @@ public:
 
         return true;
     #else
-        FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
+        FFloat128 Espilon128 = FVectorMath::VectorSet1(Epsilon);
         Espilon128 = FVectorMath::VectorAbs(Espilon128);
 
         for (int32 i = 0; i < 4; i++)
@@ -603,7 +603,7 @@ public:
             FFloat128 Diff = FVectorMath::VectorSub(f[i], Other.f[i]);
             Diff = FVectorMath::VectorAbs(Diff);
 
-            if (FVectorMath::GreaterThan(Diff, Espilon128))
+            if (FVectorMath::VectorGreaterThan(Diff, Espilon128))
             {
                 return false;
             }
@@ -637,10 +637,10 @@ public:
         m32 = 0.0f;
         m33 = 1.0f;
     #else
-        FVectorMath::StoreAligned(FVectorMath::Load(1.0f, 0.0f, 0.0f, 0.0f), f[0]);
-        FVectorMath::StoreAligned(FVectorMath::Load(0.0f, 1.0f, 0.0f, 0.0f), f[1]);
-        FVectorMath::StoreAligned(FVectorMath::Load(0.0f, 0.0f, 1.0f, 0.0f), f[2]);
-        FVectorMath::StoreAligned(FVectorMath::Load(0.0f, 0.0f, 0.0f, 1.0f), f[3]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(1.0f, 0.0f, 0.0f, 0.0f), f[0]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 1.0f, 0.0f, 0.0f), f[1]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 0.0f, 1.0f, 0.0f), f[2]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 0.0f, 0.0f, 1.0f), f[3]);
     #endif
     }
 
@@ -774,22 +774,22 @@ public:
         Result.m32 = (m30 * RHS.m02) + (m31 * RHS.m12) + (m32 * RHS.m22) + (m33 * RHS.m32);
         Result.m33 = (m30 * RHS.m03) + (m31 * RHS.m13) + (m32 * RHS.m23) + (m33 * RHS.m33);
     #else
-        FFloat128 Row0 = FVectorMath::LoadAligned(f[0]);
+        FFloat128 Row0 = FVectorMath::VectorLoad(f[0]);
         Row0 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row0);
 
-        FFloat128 Row1 = FVectorMath::LoadAligned(f[1]);
+        FFloat128 Row1 = FVectorMath::VectorLoad(f[1]);
         Row1 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row1);
 
-        FFloat128 Row2 = FVectorMath::LoadAligned(f[2]);
+        FFloat128 Row2 = FVectorMath::VectorLoad(f[2]);
         Row2 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row2);
 
-        FFloat128 Row3 = FVectorMath::LoadAligned(f[3]);
+        FFloat128 Row3 = FVectorMath::VectorLoad(f[3]);
         Row3 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row3);
 
-        FVectorMath::StoreAligned(Row0, Result.f[0]);
-        FVectorMath::StoreAligned(Row1, Result.f[1]);
-        FVectorMath::StoreAligned(Row2, Result.f[2]);
-        FVectorMath::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::VectorStore(Row0, Result.f[0]);
+        FVectorMath::VectorStore(Row1, Result.f[1]);
+        FVectorMath::VectorStore(Row2, Result.f[2]);
+        FVectorMath::VectorStore(Row3, Result.f[3]);
     #endif
 
         return Result;
@@ -835,16 +835,16 @@ public:
         Result.m32 = m32 * RHS;
         Result.m33 = m33 * RHS;
     #else
-        FFloat128 Scalars = FVectorMath::Load(RHS);
+        FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
         FFloat128 Row0    = FVectorMath::VectorMul(f[0], Scalars);
         FFloat128 Row1    = FVectorMath::VectorMul(f[1], Scalars);
         FFloat128 Row2    = FVectorMath::VectorMul(f[2], Scalars);
         FFloat128 Row3    = FVectorMath::VectorMul(f[3], Scalars);
 
-        FVectorMath::StoreAligned(Row0, Result.f[0]);
-        FVectorMath::StoreAligned(Row1, Result.f[1]);
-        FVectorMath::StoreAligned(Row2, Result.f[2]);
-        FVectorMath::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::VectorStore(Row0, Result.f[0]);
+        FVectorMath::VectorStore(Row1, Result.f[1]);
+        FVectorMath::VectorStore(Row2, Result.f[2]);
+        FVectorMath::VectorStore(Row3, Result.f[3]);
     #endif
     
         return Result;
@@ -895,10 +895,10 @@ public:
         FFloat128 Row2 = FVectorMath::VectorAdd(f[2], RHS.f[2]);
         FFloat128 Row3 = FVectorMath::VectorAdd(f[3], RHS.f[3]);
 
-        FVectorMath::StoreAligned(Row0, Result.f[0]);
-        FVectorMath::StoreAligned(Row1, Result.f[1]);
-        FVectorMath::StoreAligned(Row2, Result.f[2]);
-        FVectorMath::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::VectorStore(Row0, Result.f[0]);
+        FVectorMath::VectorStore(Row1, Result.f[1]);
+        FVectorMath::VectorStore(Row2, Result.f[2]);
+        FVectorMath::VectorStore(Row3, Result.f[3]);
     #endif
     
         return Result;
@@ -944,16 +944,16 @@ public:
         Result.m32 = m32 + RHS;
         Result.m33 = m33 + RHS;
     #else
-        FFloat128 Scalars = FVectorMath::Load(RHS);
+        FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
         FFloat128 Row0    = FVectorMath::VectorAdd(f[0], Scalars);
         FFloat128 Row1    = FVectorMath::VectorAdd(f[1], Scalars);
         FFloat128 Row2    = FVectorMath::VectorAdd(f[2], Scalars);
         FFloat128 Row3    = FVectorMath::VectorAdd(f[3], Scalars);
 
-        FVectorMath::StoreAligned(Row0, Result.f[0]);
-        FVectorMath::StoreAligned(Row1, Result.f[1]);
-        FVectorMath::StoreAligned(Row2, Result.f[2]);
-        FVectorMath::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::VectorStore(Row0, Result.f[0]);
+        FVectorMath::VectorStore(Row1, Result.f[1]);
+        FVectorMath::VectorStore(Row2, Result.f[2]);
+        FVectorMath::VectorStore(Row3, Result.f[3]);
     #endif
 
         return Result;
@@ -1004,10 +1004,10 @@ public:
         FFloat128 Row2 = FVectorMath::VectorSub(f[2], RHS.f[2]);
         FFloat128 Row3 = FVectorMath::VectorSub(f[3], RHS.f[3]);
 
-        FVectorMath::StoreAligned(Row0, Result.f[0]);
-        FVectorMath::StoreAligned(Row1, Result.f[1]);
-        FVectorMath::StoreAligned(Row2, Result.f[2]);
-        FVectorMath::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::VectorStore(Row0, Result.f[0]);
+        FVectorMath::VectorStore(Row1, Result.f[1]);
+        FVectorMath::VectorStore(Row2, Result.f[2]);
+        FVectorMath::VectorStore(Row3, Result.f[3]);
     #endif
     
         return Result;
@@ -1053,16 +1053,16 @@ public:
         Result.m32 = m32 - RHS;
         Result.m33 = m33 - RHS;
     #else
-        FFloat128 Scalars = FVectorMath::Load(RHS);
+        FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
         FFloat128 Row0    = FVectorMath::VectorSub(f[0], Scalars);
         FFloat128 Row1    = FVectorMath::VectorSub(f[1], Scalars);
         FFloat128 Row2    = FVectorMath::VectorSub(f[2], Scalars);
         FFloat128 Row3    = FVectorMath::VectorSub(f[3], Scalars);
 
-        FVectorMath::StoreAligned(Row0, Result.f[0]);
-        FVectorMath::StoreAligned(Row1, Result.f[1]);
-        FVectorMath::StoreAligned(Row2, Result.f[2]);
-        FVectorMath::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::VectorStore(Row0, Result.f[0]);
+        FVectorMath::VectorStore(Row1, Result.f[1]);
+        FVectorMath::VectorStore(Row2, Result.f[2]);
+        FVectorMath::VectorStore(Row3, Result.f[3]);
     #endif
     
         return Result;
@@ -1109,16 +1109,16 @@ public:
         Result.m32 = m32 * Recip;
         Result.m33 = m33 * Recip;
     #else
-        FFloat128 RecipScalars = FVectorMath::Load(1.0f / RHS);
+        FFloat128 RecipScalars = FVectorMath::VectorSet1(1.0f / RHS);
         FFloat128 Row0 = FVectorMath::VectorMul(f[0], RecipScalars);
         FFloat128 Row1 = FVectorMath::VectorMul(f[1], RecipScalars);
         FFloat128 Row2 = FVectorMath::VectorMul(f[2], RecipScalars);
         FFloat128 Row3 = FVectorMath::VectorMul(f[3], RecipScalars);
 
-        FVectorMath::StoreAligned(Row0, Result.f[0]);
-        FVectorMath::StoreAligned(Row1, Result.f[1]);
-        FVectorMath::StoreAligned(Row2, Result.f[2]);
-        FVectorMath::StoreAligned(Row3, Result.f[3]);
+        FVectorMath::VectorStore(Row0, Result.f[0]);
+        FVectorMath::VectorStore(Row1, Result.f[1]);
+        FVectorMath::VectorStore(Row2, Result.f[2]);
+        FVectorMath::VectorStore(Row3, Result.f[3]);
     #endif
     
         return Result;

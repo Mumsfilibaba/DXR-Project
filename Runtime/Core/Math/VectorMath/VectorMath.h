@@ -43,110 +43,112 @@ struct FVectorMath : public FPlatformVectorMath
     using FPlatformVectorMath::VectorSub;
     using FPlatformVectorMath::VectorHorizontalAdd;
 
-    template<uint8 RegisterIndex>
+    template<uint8 ComponentIndex>
     static FORCEINLINE FFloat128 VECTORCALL VectorBroadcast(FFloat128 Vector) noexcept
     {
-        return VectorShuffle<RegisterIndex, RegisterIndex, RegisterIndex, RegisterIndex>(Vector);
+        return VectorShuffle<ComponentIndex, ComponentIndex, ComponentIndex, ComponentIndex>(Vector);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
         return VectorMul(VectorA_128, VectorB);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorMul(VectorA, VectorB_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(const float* VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorMul(VectorA_128, VectorB_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDiv(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
         return VectorDiv(VectorA_128, VectorB);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDiv(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorDiv(VectorA, VectorB_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDiv(const float* VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorDiv(VectorA_128, VectorB_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAdd(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
         return VectorAdd(VectorA_128, VectorB);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAdd(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorAdd(VectorA, VectorB_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAdd(const float* VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorAdd(VectorA_128, VectorB_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSub(const float* VectorA, FFloat128 VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
         return VectorSub(VectorA_128, VectorB);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSub(FFloat128 VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorSub(VectorA, VectorB_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorSub(const float* VectorA, const float* VectorB) noexcept
     {
-        FFloat128 VectorA_128 = LoadAligned(VectorA);
-        FFloat128 VectorB_128 = LoadAligned(VectorB);
+        FFloat128 VectorA_128 = VectorLoad(VectorA);
+        FFloat128 VectorB_128 = VectorLoad(VectorB);
         return VectorSub(VectorA_128, VectorB_128);
     }
 
     static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept
     {
-        FFloat128 ComponentY = VectorBroadcast<1>(Vector);
-        return VectorGetX(ComponentY);
+        FFloat128 ComponentY_128 = VectorBroadcast<1>(Vector);
+        return VectorGetX(ComponentY_128);
     }
 
     static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept
     {
-        FFloat128 ComponentZ = VectorBroadcast<2>(Vector);
-        return VectorGetX(ComponentZ);
+        FFloat128 ComponentZ_128 = VectorBroadcast<2>(Vector);
+        return VectorGetX(ComponentZ_128);
     }
 
     static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept
     {
-        FFloat128 ComponentW = VectorBroadcast<3>(Vector);
-        return VectorGetX(ComponentW);
+        FFloat128 ComponentW_128 = VectorBroadcast<3>(Vector);
+        return VectorGetX(ComponentW_128);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorAbs(FFloat128 Vector) noexcept
     {
-        FInt128 Mask = Load(~(1 << 31));
-        return And(Vector, VectorIntToFloat(Mask));
+        constexpr int32 Mask = ~(1 << 31);
+
+        FInt128 Mask_128 = VectorSetInt1(Mask);
+        return VectorAnd(Vector, VectorIntToFloat(Mask_128));
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDot(FFloat128 VectorA, FFloat128 VectorB) noexcept
@@ -174,43 +176,43 @@ struct FVectorMath : public FPlatformVectorMath
 
     static FORCEINLINE FFloat128 VECTORCALL VectorTransform(const float* Matrix, FFloat128 Vector) noexcept
     {
-        FFloat128 VectorA = LoadAligned(&Matrix[0]);
-        FFloat128 VectorB = VectorMul(VectorBroadcast<0>(Vector), VectorA);
+        FFloat128 MatrixRow_128 = VectorLoad(&Matrix[0]);
+        FFloat128 VectorA = VectorMul(VectorBroadcast<0>(Vector), MatrixRow_128);
 
-        VectorA = LoadAligned(&Matrix[4]);
-        VectorB = VectorAdd(VectorB, VectorMul(VectorBroadcast<1>(Vector), VectorA));
+        MatrixRow_128 = VectorLoad(&Matrix[4]);
+        VectorA = VectorAdd(VectorA, VectorMul(VectorBroadcast<1>(Vector), MatrixRow_128));
 
-        VectorA = LoadAligned(&Matrix[8]);
-        VectorB = VectorAdd(VectorB, VectorMul(VectorBroadcast<2>(Vector), VectorA));
+        MatrixRow_128 = VectorLoad(&Matrix[8]);
+        VectorA = VectorAdd(VectorA, VectorMul(VectorBroadcast<2>(Vector), MatrixRow_128));
 
-        VectorA = LoadAligned(&Matrix[12]);
-        return VectorAdd(VectorB, VectorMul(VectorBroadcast<3>(Vector), VectorA));
+        MatrixRow_128 = VectorLoad(&Matrix[12]);
+        return VectorAdd(VectorA, VectorMul(VectorBroadcast<3>(Vector), MatrixRow_128));
     }
 
     static FORCEINLINE void VECTORCALL VectorTranspose(const float* InMatrix, float* OutMatrix) noexcept
     {
-        FFloat128 RowA    = LoadAligned(&InMatrix[0]);
-        FFloat128 RowB    = LoadAligned(&InMatrix[4]);
-        FFloat128 VectorA = VectorShuffle0101<0, 0, 1, 1>(RowA, RowB);
-        FFloat128 VectorB = VectorShuffle0101<2, 2, 3, 3>(RowA, RowB);
+        FFloat128 MatrixRowA_128 = VectorLoad(&InMatrix[0]);
+        FFloat128 MatrixRowB_128 = VectorLoad(&InMatrix[4]);
+        FFloat128 VectorA = VectorShuffle0101<0, 0, 1, 1>(MatrixRowA_128, MatrixRowB_128);
+        FFloat128 VectorB = VectorShuffle0101<2, 2, 3, 3>(MatrixRowA_128, MatrixRowB_128);
 
-        RowA = LoadAligned(&InMatrix[8]);
-        RowB = LoadAligned(&InMatrix[12]);
+        MatrixRowA_128 = VectorLoad(&InMatrix[8]);
+        MatrixRowB_128 = VectorLoad(&InMatrix[12]);
 
-        FFloat128 VectorC = VectorShuffle0101<0, 0, 1, 1>(RowA, RowB);
-        FFloat128 VectorD = VectorShuffle0101<2, 2, 3, 3>(RowA, RowB);
+        FFloat128 VectorC = VectorShuffle0101<0, 0, 1, 1>(MatrixRowA_128, MatrixRowB_128);
+        FFloat128 VectorD = VectorShuffle0101<2, 2, 3, 3>(MatrixRowA_128, MatrixRowB_128);
 
         FFloat128 OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorA, VectorC);
-        StoreAligned(OutVector, &OutMatrix[0]);
+        VectorStore(OutVector, &OutMatrix[0]);
 
         OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorA, VectorC);
-        StoreAligned(OutVector, &OutMatrix[4]);
+        VectorStore(OutVector, &OutMatrix[4]);
 
         OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorB, VectorD);
-        StoreAligned(OutVector, &OutMatrix[8]);
+        VectorStore(OutVector, &OutMatrix[8]);
 
         OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorB, VectorD);
-        StoreAligned(OutVector, &OutMatrix[12]);
+        VectorStore(OutVector, &OutMatrix[12]);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 Vector) noexcept
@@ -221,10 +223,10 @@ struct FVectorMath : public FPlatformVectorMath
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalSum(FFloat128 Vector) noexcept
     {
         FFloat128 ShuffledVector = VectorShuffle<1, 0, 3, 2>(Vector);
-        FFloat128 VectorSum      = VectorAdd(Vector, ShuffledVector);
+        FFloat128 VectorSum = VectorAdd(Vector, ShuffledVector);
 
         ShuffledVector = VectorShuffle0011<2, 3, 2, 3>(ShuffledVector, VectorSum);
-        VectorSum      = VectorAdd(ShuffledVector, VectorSum);
+        VectorSum = VectorAdd(ShuffledVector, VectorSum);
 
         return VectorBroadcast<0>(VectorSum);
     }

@@ -79,13 +79,13 @@ public:
 
         return true;
     #else
-        FFloat128 Espilon128 = FVectorMath::Load(Epsilon);
+        FFloat128 Espilon128 = FVectorMath::VectorSet1(Epsilon);
         Espilon128 = FVectorMath::VectorAbs(Espilon128);
         
         FFloat128 Diff = FVectorMath::VectorSub(reinterpret_cast<const float*>(this), reinterpret_cast<const float*>(&Other));
         Diff = FVectorMath::VectorAbs(Diff);
         
-        return FVectorMath::LessThan(Diff, Espilon128);
+        return FVectorMath::VectorLessThan(Diff, Espilon128);
     #endif
     }
 
