@@ -46,9 +46,9 @@ struct FVectorMathSSE
         return _mm_setzero_ps();
     }
 
-    static FORCEINLINE FInt128 VECTORCALL VectorLoadInt(const int32* Array) noexcept
+    static FORCEINLINE FInt128 VECTORCALL VectorLoadInt(const int32* Source) noexcept
     {
-        return _mm_load_si128(reinterpret_cast<const __m128i*>(Array));
+        return _mm_load_si128(reinterpret_cast<const __m128i*>(Source));
     }
 
     static FORCEINLINE FInt128 VECTORCALL VectorSetInt(int32 x, int32 y, int32 z, int32 w) noexcept

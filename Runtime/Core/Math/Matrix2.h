@@ -324,7 +324,7 @@ public:
     #else
         FFloat128 This = FVectorMath::VectorLoad(reinterpret_cast<const float*>(this));
         FFloat128 Temp = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&RHS));
-        Temp = FVectorMath::Mat2Mul(This, Temp);
+        Temp = FVectorMath::Matrix2Mul(This, Temp);
         FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
     #endif
         

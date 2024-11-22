@@ -231,34 +231,38 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorBroadcast<0>(VectorSum);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Mat2Mul(FFloat128 A, FFloat128 B)
+    static FORCEINLINE FFloat128 VECTORCALL Matrix2Mul(FFloat128 MatrixA, FFloat128 MatrixB)
     {
-        FFloat128 Temp0 = VectorShuffle<0, 3, 0, 3>(B);
-        FFloat128 Temp1 = VectorMul(A, Temp0);
-        FFloat128 Temp2 = VectorShuffle<1, 0, 3, 2>(A);
-        Temp0 = VectorShuffle<2, 1, 2, 1>(B);
+        FFloat128 MatrixC = VectorShuffle<0, 3, 0, 3>(MatrixB);
+        FFloat128 MatrixD = VectorMul(MatrixA, MatrixC);
+        FFloat128 MatrixE = VectorShuffle<1, 0, 3, 2>(MatrixA);
+        MatrixC = VectorShuffle<2, 1, 2, 1>(MatrixB);
 
-        FFloat128 Temp3 = VectorMul(Temp2, Temp0);
-        return VectorAdd(Temp1, Temp3);
+        FFloat128 MatrixF = VectorMul(MatrixE, MatrixC);
+        return VectorAdd(MatrixD, MatrixF);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Mat2AdjointMul(FFloat128 A, FFloat128 B)
+    static FORCEINLINE FFloat128 VECTORCALL Matrix2AdjointMul(FFloat128 MatrixA, FFloat128 MatrixB)
     {
-        FFloat128 Temp0 = VectorShuffle<1, 1, 2, 2>(A);
-        FFloat128 Temp1 = VectorShuffle<2, 3, 0, 1>(B);
-        FFloat128 Temp2 = VectorMul(Temp0, Temp1);
-        Temp0 = VectorShuffle<3, 3, 0, 0>(A);
-        Temp1 = VectorMul(Temp0, B);
-        return VectorSub(Temp1, Temp2);
+        FFloat128 MatrixC = VectorShuffle<1, 1, 2, 2>(MatrixA);
+        FFloat128 MatrixD = VectorShuffle<2, 3, 0, 1>(MatrixB);
+        FFloat128 MatrixE = VectorMul(MatrixC, MatrixD);
+
+        MatrixC = VectorShuffle<3, 3, 0, 0>(MatrixA);
+        MatrixD = VectorMul(MatrixC, MatrixB);
+
+        return VectorSub(MatrixD, MatrixE);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Mat2MulAdjoint(FFloat128 A, FFloat128 B)
+    static FORCEINLINE FFloat128 VECTORCALL Matrix2MulAdjoint(FFloat128 MatrixA, FFloat128 MatrixB)
     {
-        FFloat128 Temp0 = VectorShuffle<1, 0, 3, 2>(A);
-        FFloat128 Temp1 = VectorShuffle<2, 1, 2, 1>(B);
-        FFloat128 Temp2 = VectorMul(Temp0, Temp1);
-        Temp0 = VectorShuffle<3, 0, 3, 0>(B);
-        Temp1 = VectorMul(A, Temp0);
-        return VectorSub(Temp1, Temp2);
+        FFloat128 MatrixC = VectorShuffle<1, 0, 3, 2>(MatrixA);
+        FFloat128 MatrixD = VectorShuffle<2, 1, 2, 1>(MatrixB);
+        FFloat128 MatrixE = VectorMul(MatrixC, MatrixD);
+
+        MatrixC = VectorShuffle<3, 0, 3, 0>(MatrixB);
+        MatrixD = VectorMul(MatrixA, MatrixC);
+
+        return VectorSub(MatrixD, MatrixE);
     }
 };

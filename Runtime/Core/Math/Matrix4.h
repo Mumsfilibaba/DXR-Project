@@ -308,16 +308,16 @@ public:
         FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
         FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
 
-        FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
-        FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
+        FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
+        FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
 
-        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
-        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
+        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Matrix2Mul(_1, dc));
+        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Matrix2Mul(_2, ab));
 
         FFloat128 DetM = FVectorMath::VectorMul(DetA, DetD);
 
-        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
-        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
+        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Matrix2MulAdjoint(_3, ab));
+        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Matrix2MulAdjoint(_0, dc));
 
         DetM = FVectorMath::VectorAdd(DetM, FVectorMath::VectorMul(DetB, DetC));
 
@@ -438,14 +438,14 @@ public:
         FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
         FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
 
-        FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
-        FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
+        FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
+        FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
 
-        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Mat2Mul(_1, dc));
-        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Mat2Mul(_2, ab));
+        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Matrix2Mul(_1, dc));
+        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Matrix2Mul(_2, ab));
 
-        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Mat2MulAdjoint(_3, ab));
-        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Mat2MulAdjoint(_0, dc));
+        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Matrix2MulAdjoint(_3, ab));
+        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Matrix2MulAdjoint(_0, dc));
 
         const FFloat128 Mask = FVectorMath::VectorSet(1.0f, -1.0f, -1.0f, 1.0f);
         x = FVectorMath::VectorMul(x, Mask);
@@ -515,8 +515,8 @@ public:
         FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
         FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
 
-        FFloat128 dc = FVectorMath::Mat2AdjointMul(_3, _2);
-        FFloat128 ab = FVectorMath::Mat2AdjointMul(_0, _1);
+        FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
+        FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
 
         FFloat128 DetM = FVectorMath::VectorMul(DetA, DetD);
         Mul0 = FVectorMath::VectorMul(DetB, DetC);
