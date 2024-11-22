@@ -41,6 +41,7 @@ struct FVectorMath : public FPlatformVectorMath
     using FPlatformVectorMath::VectorDiv;
     using FPlatformVectorMath::VectorAdd;
     using FPlatformVectorMath::VectorSub;
+    using FPlatformVectorMath::VectorHorizontalAdd;
 
     template<uint8 RegisterIndex>
     static FORCEINLINE FFloat128 VECTORCALL VectorBroadcast(FFloat128 Vector) noexcept
@@ -145,7 +146,7 @@ struct FVectorMath : public FPlatformVectorMath
     static FORCEINLINE FFloat128 VECTORCALL VectorAbs(FFloat128 Vector) noexcept
     {
         FInt128 Mask = Load(~(1 << 31));
-        return And(Vector, CastIntToFloat(Mask));
+        return And(Vector, VectorIntToFloat(Mask));
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorDot(FFloat128 VectorA, FFloat128 VectorB) noexcept
@@ -186,50 +187,46 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorAdd(VectorB, VectorMul(VectorBroadcast<3>(Vector), VectorA));
     }
 
-    static FORCEINLINE void VECTORCALL Transpose(const float* InMat, float* OutMat) noexcept
+    static FORCEINLINE void VECTORCALL VectorTranspose(const float* InMatrix, float* OutMatrix) noexcept
     {
-        FFloat128 Row0  = LoadAligned(&InMat[0]);
-        FFloat128 Row1  = LoadAligned(&InMat[4]);
-        FFloat128 Temp0 = VectorShuffle0101<0, 0, 1, 1>(Row0, Row1);
-        FFloat128 Temp1 = VectorShuffle0101<2, 2, 3, 3>(Row0, Row1);
+        FFloat128 RowA    = LoadAligned(&InMatrix[0]);
+        FFloat128 RowB    = LoadAligned(&InMatrix[4]);
+        FFloat128 VectorA = VectorShuffle0101<0, 0, 1, 1>(RowA, RowB);
+        FFloat128 VectorB = VectorShuffle0101<2, 2, 3, 3>(RowA, RowB);
 
-        Row0 = LoadAligned(&InMat[8]);
-        Row1 = LoadAligned(&InMat[12]);
+        RowA = LoadAligned(&InMatrix[8]);
+        RowB = LoadAligned(&InMatrix[12]);
 
-        FFloat128 Temp2 = VectorShuffle0101<0, 0, 1, 1>(Row0, Row1);
-        FFloat128 Temp3 = VectorShuffle0101<2, 2, 3, 3>(Row0, Row1);
+        FFloat128 VectorC = VectorShuffle0101<0, 0, 1, 1>(RowA, RowB);
+        FFloat128 VectorD = VectorShuffle0101<2, 2, 3, 3>(RowA, RowB);
 
-        FFloat128 Out = VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp2);
-        FPlatformVectorMath::StoreAligned(Out, &OutMat[0]);
+        FFloat128 OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorA, VectorC);
+        StoreAligned(OutVector, &OutMatrix[0]);
 
-        Out = VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp2);
-        FPlatformVectorMath::StoreAligned(Out, &OutMat[4]);
+        OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorA, VectorC);
+        StoreAligned(OutVector, &OutMatrix[4]);
 
-        Out = VectorShuffle0011<0, 1, 0, 1>(Temp1, Temp3);
-        FPlatformVectorMath::StoreAligned(Out, &OutMat[8]);
+        OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorB, VectorD);
+        StoreAligned(OutVector, &OutMatrix[8]);
 
-        Out = VectorShuffle0011<2, 3, 2, 3>(Temp1, Temp3);
-        FPlatformVectorMath::StoreAligned(Out, &OutMat[12]);
+        OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorB, VectorD);
+        StoreAligned(OutVector, &OutMatrix[12]);
     }
 
-    template<typename T>
-    static FORCEINLINE void VECTORCALL Transpose(const T* InMat, T* OutMat) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 Vector) noexcept
     {
-        return Transpose(reinterpret_cast<const float*>(InMat), reinterpret_cast<float*>(OutMat));
+        return VectorHorizontalAdd(Vector, Vector);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL HorizontalAdd(FFloat128 A) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalSum(FFloat128 Vector) noexcept
     {
-        return FPlatformVectorMath::HorizontalAdd(A, A);
-    }
+        FFloat128 ShuffledVector = VectorShuffle<1, 0, 3, 2>(Vector);
+        FFloat128 VectorSum      = VectorAdd(Vector, ShuffledVector);
 
-    static FORCEINLINE FFloat128 VECTORCALL HorizontalSum(FFloat128 A) noexcept
-    {
-        FFloat128 Shf = VectorShuffle<1, 0, 3, 2>(A);
-        FFloat128 Sum = VectorAdd(A, Shf);
-        Shf = VectorShuffle0011<2, 3, 2, 3>(Shf, Sum);
-        Sum = VectorAdd(Shf, Sum);
-        return VectorBroadcast<0>(Sum);
+        ShuffledVector = VectorShuffle0011<2, 3, 2, 3>(ShuffledVector, VectorSum);
+        VectorSum      = VectorAdd(ShuffledVector, VectorSum);
+
+        return VectorBroadcast<0>(VectorSum);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Mat2Mul(FFloat128 A, FFloat128 B)

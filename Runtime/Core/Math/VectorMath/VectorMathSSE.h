@@ -61,19 +61,19 @@ struct FVectorMathSSE
         return _mm_set1_epi32(Scalar);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL CastIntToFloat(FInt128 A) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorIntToFloat(FInt128 Vector) noexcept
     {
-        return _mm_castsi128_ps(A);
+        return _mm_castsi128_ps(Vector);
     }
 
-    static FORCEINLINE FInt128 VECTORCALL CastFloatToInt(FFloat128 A) noexcept
+    static FORCEINLINE FInt128 VECTORCALL VectorFloatToInt(FFloat128 Vector) noexcept
     {
-        return _mm_castps_si128(A);
+        return _mm_castps_si128(Vector);
     }
 
-    static FORCEINLINE void VECTORCALL StoreAligned(FFloat128 Register, float* Array) noexcept
+    static FORCEINLINE void VECTORCALL StoreAligned(FFloat128 Vector, float* Dest) noexcept
     {
-        return _mm_store_ps(Array, Register);
+        return _mm_store_ps(Dest, Vector);
     }
 
     template<uint8 x, uint8 y, uint8 z, uint8 w>
@@ -165,7 +165,7 @@ struct FVectorMathSSE
         return _mm_sub_ps(VectorA, VectorB);
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL HorizontalAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         FFloat128 VectorC = VectorShuffle0011<0, 2, 0, 2>(VectorA, VectorB);
         FFloat128 VectorD = VectorShuffle0011<1, 3, 1, 3>(VectorA, VectorB);

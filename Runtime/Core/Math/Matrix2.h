@@ -105,7 +105,7 @@ public:
         constexpr int32 Negate = (1 << 31);
 
         FInt128 Mask = FVectorMath::Load(Keep, Negate, Negate, Keep);
-        This = FVectorMath::Or(This, FVectorMath::CastIntToFloat(Mask));
+        This = FVectorMath::Or(This, FVectorMath::VectorIntToFloat(Mask));
 
         FFloat128 RcpDeterminant = FVectorMath::Recip(FVectorMath::Load(fDeterminant));
         This = FVectorMath::VectorMul(This, RcpDeterminant);
@@ -136,7 +136,7 @@ public:
         constexpr int32 Negate = (1 << 31);
 
         FInt128 Mask = FVectorMath::Load(Keep, Negate, Negate, Keep);
-        This = FVectorMath::Or(This, FVectorMath::CastIntToFloat(Mask));
+        This = FVectorMath::Or(This, FVectorMath::VectorIntToFloat(Mask));
         FVectorMath::StoreAligned(This, reinterpret_cast<float*>(&Adjugate));
     #endif
 

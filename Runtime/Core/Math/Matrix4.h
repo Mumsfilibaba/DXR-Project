@@ -201,7 +201,7 @@ public:
         Result.f[3][2] = f[2][3];
         Result.f[3][3] = f[3][3];
     #else
-        FVectorMath::Transpose(this, &Result);
+        FVectorMath::VectorTranspose(reinterpret_cast<const float*>(this), reinterpret_cast<float*>(&Result));
     #endif
     
         return Result;
@@ -322,8 +322,8 @@ public:
         DetM = FVectorMath::VectorAdd(DetM, FVectorMath::VectorMul(DetB, DetC));
 
         FFloat128 Trace = FVectorMath::VectorMul(ab, FVectorMath::VectorShuffle<0, 2, 1, 3>(dc));
-        Trace = FVectorMath::HorizontalAdd(Trace);
-        Trace = FVectorMath::HorizontalAdd(Trace);
+        Trace = FVectorMath::VectorHorizontalAdd(Trace);
+        Trace = FVectorMath::VectorHorizontalAdd(Trace);
 
         DetM = FVectorMath::VectorSub(DetM, Trace);
 
@@ -523,7 +523,7 @@ public:
         DetM = FVectorMath::VectorAdd(DetM, Mul0);
         Mul0 = FVectorMath::VectorMul(ab, FVectorMath::VectorShuffle<0, 2, 1, 3>(dc));
 
-        FFloat128 Sum = FVectorMath::HorizontalSum(Mul0);
+        FFloat128 Sum = FVectorMath::VectorHorizontalSum(Mul0);
         DetM = FVectorMath::VectorSub(DetM, Sum);
         Determinant = FVectorMath::VectorGetX(DetM);
     #endif

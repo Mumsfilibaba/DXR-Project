@@ -259,7 +259,7 @@ public:
         FFloat128 Result = FVectorMath::VectorCross(Temp0, Temp1);
         
         FInt128 Mask = FVectorMath::Load(~0, ~0, ~0, 0);
-        Result = FVectorMath::And(Result, FVectorMath::CastIntToFloat(Mask));
+        Result = FVectorMath::And(Result, FVectorMath::VectorIntToFloat(Mask));
 
         FVectorMath::StoreAligned(Result, reinterpret_cast<float*>(&NewVector));
     #endif
