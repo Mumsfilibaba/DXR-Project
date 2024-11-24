@@ -144,7 +144,8 @@ public:
         
         FFloat128 Temp0 = FVectorMath::VectorOne();
         FFloat128 Temp1 = FVectorMath::VectorBroadcast<3>(NewPosition);
-        Temp0       = FVectorMath::VectorDiv(Temp0, Temp1);
+
+        Temp0 = FVectorMath::VectorDiv(Temp0, Temp1);
         NewPosition = FVectorMath::VectorMul(Temp0, NewPosition);
     #endif
         
@@ -201,7 +202,7 @@ public:
         Result.f[3][2] = f[2][3];
         Result.f[3][3] = f[3][3];
     #else
-        FVectorMath::VectorTranspose(reinterpret_cast<const float*>(this), reinterpret_cast<float*>(&Result));
+        FVectorMath::Matrix4Transpose(reinterpret_cast<const float*>(this), reinterpret_cast<float*>(&Result));
     #endif
     
         return Result;
@@ -711,7 +712,10 @@ public:
      */
     FORCEINLINE FMatrix3 GetRotationAndScale() const noexcept
     {
-        return FMatrix3(m00, m01, m02, m10, m11, m12, m20, m21, m22);
+        return FMatrix3(
+            m00, m01, m02,
+            m10, m11, m12,
+            m20, m21, m22);
     }
 
     /**
@@ -836,10 +840,11 @@ public:
         Result.m33 = m33 * RHS;
     #else
         FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
-        FFloat128 Row0    = FVectorMath::VectorMul(f[0], Scalars);
-        FFloat128 Row1    = FVectorMath::VectorMul(f[1], Scalars);
-        FFloat128 Row2    = FVectorMath::VectorMul(f[2], Scalars);
-        FFloat128 Row3    = FVectorMath::VectorMul(f[3], Scalars);
+
+        FFloat128 Row0 = FVectorMath::VectorMul(f[0], Scalars);
+        FFloat128 Row1 = FVectorMath::VectorMul(f[1], Scalars);
+        FFloat128 Row2 = FVectorMath::VectorMul(f[2], Scalars);
+        FFloat128 Row3 = FVectorMath::VectorMul(f[3], Scalars);
 
         FVectorMath::VectorStore(Row0, Result.f[0]);
         FVectorMath::VectorStore(Row1, Result.f[1]);
@@ -945,10 +950,11 @@ public:
         Result.m33 = m33 + RHS;
     #else
         FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
-        FFloat128 Row0    = FVectorMath::VectorAdd(f[0], Scalars);
-        FFloat128 Row1    = FVectorMath::VectorAdd(f[1], Scalars);
-        FFloat128 Row2    = FVectorMath::VectorAdd(f[2], Scalars);
-        FFloat128 Row3    = FVectorMath::VectorAdd(f[3], Scalars);
+
+        FFloat128 Row0 = FVectorMath::VectorAdd(f[0], Scalars);
+        FFloat128 Row1 = FVectorMath::VectorAdd(f[1], Scalars);
+        FFloat128 Row2 = FVectorMath::VectorAdd(f[2], Scalars);
+        FFloat128 Row3 = FVectorMath::VectorAdd(f[3], Scalars);
 
         FVectorMath::VectorStore(Row0, Result.f[0]);
         FVectorMath::VectorStore(Row1, Result.f[1]);
@@ -1054,10 +1060,11 @@ public:
         Result.m33 = m33 - RHS;
     #else
         FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
-        FFloat128 Row0    = FVectorMath::VectorSub(f[0], Scalars);
-        FFloat128 Row1    = FVectorMath::VectorSub(f[1], Scalars);
-        FFloat128 Row2    = FVectorMath::VectorSub(f[2], Scalars);
-        FFloat128 Row3    = FVectorMath::VectorSub(f[3], Scalars);
+
+        FFloat128 Row0 = FVectorMath::VectorSub(f[0], Scalars);
+        FFloat128 Row1 = FVectorMath::VectorSub(f[1], Scalars);
+        FFloat128 Row2 = FVectorMath::VectorSub(f[2], Scalars);
+        FFloat128 Row3 = FVectorMath::VectorSub(f[3], Scalars);
 
         FVectorMath::VectorStore(Row0, Result.f[0]);
         FVectorMath::VectorStore(Row1, Result.f[1]);
@@ -1110,6 +1117,7 @@ public:
         Result.m33 = m33 * Recip;
     #else
         FFloat128 RecipScalars = FVectorMath::VectorSet1(1.0f / RHS);
+
         FFloat128 Row0 = FVectorMath::VectorMul(f[0], RecipScalars);
         FFloat128 Row1 = FVectorMath::VectorMul(f[1], RecipScalars);
         FFloat128 Row2 = FVectorMath::VectorMul(f[2], RecipScalars);

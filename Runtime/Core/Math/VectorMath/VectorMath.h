@@ -43,12 +43,6 @@ struct FVectorMath : public FPlatformVectorMath
     using FPlatformVectorMath::VectorSub;
     using FPlatformVectorMath::VectorHorizontalAdd;
 
-    template<uint8 ComponentIndex>
-    static FORCEINLINE FFloat128 VECTORCALL VectorBroadcast(FFloat128 Vector) noexcept
-    {
-        return VectorShuffle<ComponentIndex, ComponentIndex, ComponentIndex, ComponentIndex>(Vector);
-    }
-
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(const float* VectorA, FFloat128 VectorB) noexcept
     {
         FFloat128 VectorA_128 = VectorLoad(VectorA);
@@ -125,52 +119,26 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorSub(VectorA_128, VectorB_128);
     }
 
-    static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept
-    {
-        FFloat128 ComponentY_128 = VectorBroadcast<1>(Vector);
-        return VectorGetX(ComponentY_128);
-    }
-
-    static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept
-    {
-        FFloat128 ComponentZ_128 = VectorBroadcast<2>(Vector);
-        return VectorGetX(ComponentZ_128);
-    }
-
-    static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept
-    {
-        FFloat128 ComponentW_128 = VectorBroadcast<3>(Vector);
-        return VectorGetX(ComponentW_128);
-    }
-
     static FORCEINLINE FFloat128 VECTORCALL VectorAbs(FFloat128 Vector) noexcept
     {
-        constexpr int32 Mask = ~(1 << 31);
+        static constexpr int32 Mask = ~(1 << 31);
 
         FInt128 Mask_128 = VectorSetInt1(Mask);
         return VectorAnd(Vector, VectorIntToFloat(Mask_128));
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL VectorDot(FFloat128 VectorA, FFloat128 VectorB) noexcept
-    {
-        FFloat128 VectorC = VectorMul(VectorA, VectorB);           // (Ax*Bx), (Ay*By)...
-        FFloat128 VectorD = VectorShuffle<1, 0, 3, 2>(VectorC);    // (Ay*By), (Ax*Bx), (Aw*Bw), (Az*Bz))
-
-        VectorC = VectorAdd(VectorC, VectorD);                     // (Ax * Bx) + (Ay * By), ..., (Az * Bz) + (Aw * Bw)...
-        VectorD = VectorShuffle0011<2, 3, 2, 3>(VectorC, VectorD); // (Az * Bz) + (Aw * Bw), ..., (Ay*By), (Ax*Bx)
-
-        return VectorAdd(VectorC, VectorD);                        // (Ax * Bx) + (Ay * By) + (Az * Bz) + (Aw * Bw), ...
-    }
-
     static FORCEINLINE FFloat128 VECTORCALL VectorCross(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
+        // Shuffle to get (Ay, Az, Ax, w) and (By, Bz, Bx, w)
         FFloat128 VectorC = VectorShuffle<1, 2, 0, 3>(VectorA);
-        VectorC = VectorMul(VectorB, VectorC);
-
         FFloat128 VectorD = VectorShuffle<1, 2, 0, 3>(VectorB);
-        VectorD = VectorMul(VectorA, VectorD);
 
-        FFloat128 Result = VectorSub(VectorD, VectorC);
+        VectorC = VectorMul(VectorB, VectorC); // (Ax * By, Ay * Bz, Az * Bx, w)
+        VectorD = VectorMul(VectorA, VectorD); // (Bx * Ay, By * Az, Bz * Ax, w)
+
+        FFloat128 Result = VectorSub(VectorD, VectorC); // (Ay * Bz - Az * By, Az * Bx - Ax * Bz, Ax * By - Ay * Bx, 0)
+
+        // Shuffle back to (X, Y, Z, w)
         return VectorShuffle<1, 2, 0, 3>(Result);
     }
 
@@ -189,46 +157,9 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorAdd(VectorA, VectorMul(VectorBroadcast<3>(Vector), MatrixRow_128));
     }
 
-    static FORCEINLINE void VECTORCALL VectorTranspose(const float* InMatrix, float* OutMatrix) noexcept
-    {
-        FFloat128 MatrixRowA_128 = VectorLoad(&InMatrix[0]);
-        FFloat128 MatrixRowB_128 = VectorLoad(&InMatrix[4]);
-        FFloat128 VectorA = VectorShuffle0101<0, 0, 1, 1>(MatrixRowA_128, MatrixRowB_128);
-        FFloat128 VectorB = VectorShuffle0101<2, 2, 3, 3>(MatrixRowA_128, MatrixRowB_128);
-
-        MatrixRowA_128 = VectorLoad(&InMatrix[8]);
-        MatrixRowB_128 = VectorLoad(&InMatrix[12]);
-
-        FFloat128 VectorC = VectorShuffle0101<0, 0, 1, 1>(MatrixRowA_128, MatrixRowB_128);
-        FFloat128 VectorD = VectorShuffle0101<2, 2, 3, 3>(MatrixRowA_128, MatrixRowB_128);
-
-        FFloat128 OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorA, VectorC);
-        VectorStore(OutVector, &OutMatrix[0]);
-
-        OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorA, VectorC);
-        VectorStore(OutVector, &OutMatrix[4]);
-
-        OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorB, VectorD);
-        VectorStore(OutVector, &OutMatrix[8]);
-
-        OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorB, VectorD);
-        VectorStore(OutVector, &OutMatrix[12]);
-    }
-
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 Vector) noexcept
     {
         return VectorHorizontalAdd(Vector, Vector);
-    }
-
-    static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalSum(FFloat128 Vector) noexcept
-    {
-        FFloat128 ShuffledVector = VectorShuffle<1, 0, 3, 2>(Vector);
-        FFloat128 VectorSum = VectorAdd(Vector, ShuffledVector);
-
-        ShuffledVector = VectorShuffle0011<2, 3, 2, 3>(ShuffledVector, VectorSum);
-        VectorSum = VectorAdd(ShuffledVector, VectorSum);
-
-        return VectorBroadcast<0>(VectorSum);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Matrix2Mul(FFloat128 MatrixA, FFloat128 MatrixB)
@@ -264,5 +195,31 @@ struct FVectorMath : public FPlatformVectorMath
         MatrixD = VectorMul(MatrixA, MatrixC);
 
         return VectorSub(MatrixD, MatrixE);
+    }
+
+    static FORCEINLINE void VECTORCALL Matrix4Transpose(const float* InMatrix, float* OutMatrix) noexcept
+    {
+        FFloat128 MatrixRowA_128 = VectorLoad(&InMatrix[0]);
+        FFloat128 MatrixRowB_128 = VectorLoad(&InMatrix[4]);
+        FFloat128 VectorA = VectorShuffle0101<0, 0, 1, 1>(MatrixRowA_128, MatrixRowB_128);
+        FFloat128 VectorB = VectorShuffle0101<2, 2, 3, 3>(MatrixRowA_128, MatrixRowB_128);
+
+        MatrixRowA_128 = VectorLoad(&InMatrix[8]);
+        MatrixRowB_128 = VectorLoad(&InMatrix[12]);
+
+        FFloat128 VectorC = VectorShuffle0101<0, 0, 1, 1>(MatrixRowA_128, MatrixRowB_128);
+        FFloat128 VectorD = VectorShuffle0101<2, 2, 3, 3>(MatrixRowA_128, MatrixRowB_128);
+
+        FFloat128 OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorA, VectorC);
+        VectorStore(OutVector, &OutMatrix[0]);
+
+        OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorA, VectorC);
+        VectorStore(OutVector, &OutMatrix[4]);
+
+        OutVector = VectorShuffle0011<0, 1, 0, 1>(VectorB, VectorD);
+        VectorStore(OutVector, &OutMatrix[8]);
+
+        OutVector = VectorShuffle0011<2, 3, 2, 3>(VectorB, VectorD);
+        VectorStore(OutVector, &OutMatrix[12]);
     }
 };

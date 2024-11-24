@@ -101,7 +101,6 @@ public:
         const float fLengthSquared = FVectorMath::VectorGetX(Temp1);
         if (fLengthSquared != 0.0f)
         {
-            Temp1 = FVectorMath::VectorShuffle<0, 1, 0, 1>(Temp1);
             Temp1 = FVectorMath::VectorRecipSqrt(Temp1);
             Temp0 = FVectorMath::VectorMul(Temp0, Temp1);
             FVectorMath::VectorStore(Temp0, reinterpret_cast<float*>(this));

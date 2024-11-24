@@ -3,12 +3,11 @@
 #include "Core/Math/MathCommon.h"
 
 #if PLATFORM_WINDOWS
-    #include <xmmintrin.h>
-    #include <immintrin.h>
+    #include <xmmintrin.h> // SSE
 #elif PLATFORM_MACOS
-    #include <immintrin.h>
+    #include <xmmintrin.h> // SSE
 #else
-    #error No valid platform
+    #error "No valid platform. This code requires SSE support on Windows or macOS."
 #endif
 
 typedef __m128  FFloat128;
@@ -76,24 +75,29 @@ struct FVectorMathSSE
         return _mm_store_ps(Dest, Vector);
     }
 
-    template<uint8 x, uint8 y, uint8 z, uint8 w>
+    template<uint8 ComponentIndexX, uint8 ComponentIndexY, uint8 ComponentIndexZ, uint8 ComponentIndexW>
     static FORCEINLINE FFloat128 VECTORCALL VectorShuffle(FFloat128 VectorA) noexcept
     {
-        static constexpr auto ShuffleMask = _MM_SHUFFLE(w, z, y, x);
-        
-        if constexpr (x == 0 && y == 1 && z == 0 && w == 1)
+        static_assert(ComponentIndexX < 4, "ComponentIndexX out of range");
+        static_assert(ComponentIndexY < 4, "ComponentIndexY out of range");
+        static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
+        static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
+
+        static constexpr auto ShuffleMask = _MM_SHUFFLE(ComponentIndexW, ComponentIndexZ, ComponentIndexY, ComponentIndexX);
+
+        if constexpr (ComponentIndexX == 0 && ComponentIndexY == 1 && ComponentIndexZ == 0 && ComponentIndexW == 1)
         {
             return _mm_movelh_ps(VectorA, VectorA);
         }
-        else if constexpr (x == 2 && y == 3 && z == 2 && w == 3)
+        else if constexpr (ComponentIndexX == 2 && ComponentIndexY == 3 && ComponentIndexZ == 2 && ComponentIndexW == 3)
         {
             return _mm_movehl_ps(VectorA, VectorA);
         }
-        else if constexpr (x == 0 && y == 0 && z == 1 && w == 1)
+        else if constexpr (ComponentIndexX == 0 && ComponentIndexY == 0 && ComponentIndexZ == 1 && ComponentIndexW == 1)
         {
             return _mm_unpacklo_ps(VectorA, VectorA);
         }
-        else if constexpr (x == 2 && y == 2 && z == 3 && w == 3)
+        else if constexpr (ComponentIndexX == 2 && ComponentIndexY == 2 && ComponentIndexZ == 3 && ComponentIndexW == 3)
         {
             return _mm_unpackhi_ps(VectorA, VectorA);
         }
@@ -103,16 +107,21 @@ struct FVectorMathSSE
         }
     }
 
-    template<uint8 x, uint8 y, uint8 z, uint8 w>
+    template<uint8 ComponentIndexX, uint8 ComponentIndexY, uint8 ComponentIndexZ, uint8 ComponentIndexW>
     static FORCEINLINE FFloat128 VECTORCALL VectorShuffle0011(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        static constexpr auto ShuffleMask = _MM_SHUFFLE(w, z, y, x);
-        
-        if constexpr (x == 0 && y == 1 && z == 0 && w == 1)
+        static_assert(ComponentIndexX < 4, "ComponentIndexX out of range");
+        static_assert(ComponentIndexY < 4, "ComponentIndexY out of range");
+        static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
+        static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
+
+        static constexpr auto ShuffleMask = _MM_SHUFFLE(ComponentIndexW, ComponentIndexZ, ComponentIndexY, ComponentIndexX);
+
+        if constexpr (ComponentIndexX == 0 && ComponentIndexY == 1 && ComponentIndexZ == 0 && ComponentIndexW == 1)
         {
             return _mm_movelh_ps(VectorA, VectorB);
         }
-        else if constexpr (x == 2 && y == 3 && z == 2 && w == 3)
+        else if constexpr (ComponentIndexX == 2 && ComponentIndexY == 3 && ComponentIndexZ == 2 && ComponentIndexW == 3)
         {
             return _mm_movehl_ps(VectorB, VectorA);
         }
@@ -122,27 +131,57 @@ struct FVectorMathSSE
         }
     }
 
-    template<uint8 x, uint8 y, uint8 z, uint8 w>
+    template<uint8 ComponentIndexX, uint8 ComponentIndexY, uint8 ComponentIndexZ, uint8 ComponentIndexW>
     static FORCEINLINE FFloat128 VECTORCALL VectorShuffle0101(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        if constexpr (x == 0 && y == 0 && z == 1 && w == 1)
+        static_assert(ComponentIndexX < 4, "ComponentIndexX out of range");
+        static_assert(ComponentIndexY < 4, "ComponentIndexY out of range");
+        static_assert(ComponentIndexZ < 4, "ComponentIndexZ out of range");
+        static_assert(ComponentIndexW < 4, "ComponentIndexW out of range");
+
+        if constexpr (ComponentIndexX == 0 && ComponentIndexY == 0 && ComponentIndexZ == 1 && ComponentIndexW == 1)
         {
             return _mm_unpacklo_ps(VectorA, VectorB);
         }
-        else if constexpr (x == 2 && y == 2 && z == 3 && w == 3)
+        else if constexpr (ComponentIndexX == 2 && ComponentIndexY == 2 && ComponentIndexZ == 3 && ComponentIndexW == 3)
         {
             return _mm_unpackhi_ps(VectorA, VectorB);
         }
         else
         {
-            FFloat128 VectorC = VectorShuffle0011<x, z, y, w>(VectorA, VectorB);
+            FFloat128 VectorC = VectorShuffle0011<ComponentIndexX, ComponentIndexZ, ComponentIndexY, ComponentIndexW>(VectorA, VectorB);
             return VectorShuffle<0, 2, 1, 3>(VectorC);
         }
+    }
+
+    template<uint8 ComponentIndex>
+    static FORCEINLINE FFloat128 VECTORCALL VectorBroadcast(FFloat128 Vector) noexcept
+    {
+        static_assert(ComponentIndex < 4, "ComponentIndex out of range");
+        return VectorShuffle<ComponentIndex, ComponentIndex, ComponentIndex, ComponentIndex>(Vector);
     }
 
     static FORCEINLINE float VECTORCALL VectorGetX(FFloat128 Vector) noexcept
     {
         return _mm_cvtss_f32(Vector);
+    }
+
+    static FORCEINLINE float VECTORCALL VectorGetY(FFloat128 Vector) noexcept
+    {
+        FFloat128 ShuffledVector = VectorBroadcast<1>(Vector);
+        return _mm_cvtss_f32(ShuffledVector);
+    }
+
+    static FORCEINLINE float VECTORCALL VectorGetZ(FFloat128 Vector) noexcept
+    {
+        FFloat128 ShuffledVector = VectorBroadcast<2>(Vector);
+        return _mm_cvtss_f32(ShuffledVector);
+    }
+
+    static FORCEINLINE float VECTORCALL VectorGetW(FFloat128 Vector) noexcept
+    {
+        FFloat128 ShuffledVector = VectorBroadcast<3>(Vector);
+        return _mm_cvtss_f32(ShuffledVector);
     }
 
     static FORCEINLINE FFloat128 VECTORCALL VectorMul(FFloat128 VectorA, FFloat128 VectorB) noexcept
@@ -172,6 +211,17 @@ struct FVectorMathSSE
         return VectorAdd(VectorC, VectorD);
     }
 
+    static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalSum(FFloat128 Vector) noexcept
+    {
+        FFloat128 ShuffledVector = VectorShuffle<1, 0, 3, 2>(Vector);
+        FFloat128 VectorSum = VectorAdd(Vector, ShuffledVector);
+
+        ShuffledVector = VectorShuffle0011<2, 3, 2, 3>(ShuffledVector, VectorSum);
+        VectorSum = VectorAdd(ShuffledVector, VectorSum);
+
+        return VectorBroadcast<0>(VectorSum);
+    }
+
     static FORCEINLINE FFloat128 VECTORCALL VectorSqrt(FFloat128 Vector) noexcept
     {
         return _mm_sqrt_ps(Vector);
@@ -195,6 +245,17 @@ struct FVectorMathSSE
     static FORCEINLINE FFloat128 VECTORCALL VectorOr(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         return _mm_or_ps(VectorA, VectorB);
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorDot(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    {
+        FFloat128 VectorC = VectorMul(VectorA, VectorB);        // (Ax*Bx), (Ay*By), (Az*Bz), (Aw*Bw)
+        FFloat128 VectorD = VectorShuffle<1, 0, 3, 2>(VectorC); // (Ay*By), (Ax*Bx), (Aw*Bw), (Az*Bz)
+
+        VectorC = VectorAdd(VectorC, VectorD);                  // (Ax * Bx) + (Ay * By), (Ay * By) + (Ax * Bx), (Az * Bz) + (Aw * Bw), (Aw * Bw) + (Az * Bz)
+        VectorD = VectorShuffle<2, 3, 0, 1>(VectorC);           // (Az * Bz) + (Aw * Bw), (Aw * Bw) + (Az * Bz), (Ax * Bx) + (Ay * By), (Ay * By) + (Ax * Bx)
+
+        return VectorAdd(VectorC, VectorD);                     // (Ax * Bx) + (Ay * By) + (Az * Bz) + (Aw * Bw), ...
     }
 
     static FORCEINLINE bool VECTORCALL VectorEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
