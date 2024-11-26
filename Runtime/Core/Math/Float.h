@@ -1,95 +1,137 @@
 #pragma once
 #include "Core/Math/MathCommon.h"
-
 #include <cfloat>
 
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(push)
-    #pragma warning(disable : 4556) // Disable "value of intrinsic immediate argument '8' is out of range '0 - 7'"
-#endif
+// Float32 (Single Precision) Constants
+static constexpr uint32 FP32_HIDDEN_BIT      = 0x00800000U; // The implicit leading 1 in normalized float32 mantissa
+static constexpr uint32 FP32_MAX_EXPONENT    = 0xFFU;       // Maximum exponent value for float32 (all bits set)
+static constexpr int32  FP32_EXPONENT_BIAS   = 127;         // Exponent bias for float32
+static constexpr int32  FP32_MANTISSA_BITS   = 23;          // Number of mantissa bits in float32
 
-#define FP32_HIDDEN_BIT (0x800000U)
-#define FP32_MAX_EXPONENT (0xff)
-#define FP16_MAX_EXPONENT (0x1f)
-#define MAX_EXPONENT (FP16_MAX_EXPONENT + 127 - 15)
-#define DENORM_EXPONENT (127 - 15)
-#define MIN_EXPONENT (DENORM_EXPONENT - 10)
+// Float16 (Half Precision) Constants
+static constexpr uint16 FP16_MAX_EXPONENT    = 0x1FU;       // Maximum exponent value for float16 (all bits set)
+static constexpr int32  FP16_EXPONENT_BIAS   = 15;          // Exponent bias for float16
+static constexpr int32  FP16_MANTISSA_BITS   = 10;          // Number of mantissa bits in float16
+
+// Float16 Specific Magic Constants
+static constexpr uint16 FP16_MANTISSA_MASK   = 0x03FF;      // Mask to extract mantissa (10 bits)
+static constexpr uint16 FP16_EXPONENT_MASK   = 0x1F;        // Mask to extract exponent (5 bits)
+static constexpr uint16 FP16_SIGN_MASK       = 0x8000;      // Mask to extract sign bit (1 bit)
+
+static constexpr uint32 FP16_MANTISSA_SHIFT  = 13;          // Number of bits to shift mantissa from float32 to float16
+static constexpr uint32 FP16_SUBNORMAL_SHIFT = 23;          // Number of bits to shift mantissa for subnormals
+
+static constexpr uint16 FP16_INFINITE        = FP16_MAX_EXPONENT << FP16_MANTISSA_BITS;           // Representation of infinity
+static constexpr uint16 FP16_NAN             = (FP16_MAX_EXPONENT << FP16_MANTISSA_BITS) | 0x200; // Representation of NaN
 
 struct FFloat64
 {
-    /**
-     * @brief - Default constructor
+    /** 
+     * @brief Default constructor initializes the double value to zero.
      */
-    FORCEINLINE FFloat64()
+    FFloat64()
         : Float64(0.0)
     {
     }
 
     /**
-     * @brief           - Construct a Float64 with a double
-     * @param InFloat64 - Value to set the float64 to
+     * @brief Constructs an FFloat64 with a double value.
+     * @param InFloat64 The double value to initialize with.
      */
-    FORCEINLINE FFloat64(double InFloat64)
+    FFloat64(double InFloat64)
         : Float64(InFloat64)
     {
     }
 
     /**
-     * @brief       - Copy constructor
-     * @param Other - Other instance to copy
+     * @brief Copy constructor.
+     * @param Other The FFloat64 instance to copy from.
      */
-    FORCEINLINE FFloat64(const FFloat64& Other)
+    FFloat64(const FFloat64& Other)
         : Float64(Other.Float64)
     {
     }
 
     /**
-     * @brief           - Set the instance to a new value
-     * @param InFloat64 - Value to set the float64 to
+     * @brief Sets the internal double value.
+     * @param InFloat64 The double value to set.
      */
-    FORCEINLINE void SetFloat(double InFloat64)
+    void SetFloat(double InFloat64)
     {
         Float64 = InFloat64;
     }
 
-    FORCEINLINE double GetFloat() const
+    /**
+     * @brief Retrieves the internal double value.
+     * @return The stored double value.
+     */
+    double GetFloat() const
     {
         return Float64;
     }
 
-    bool operator==(const FFloat64& RHS) const
+    /**
+     * @brief Returns the raw encoded bits of the double.
+     * @return The 64-bit encoded value.
+     */
+    uint64 GetBits() const
     {
-        return (Encoded == RHS.Encoded);
+        return Encoded;
     }
 
-    bool operator!=(const FFloat64& RHS) const
+    /**
+     * @brief Equality operator.
+     * @param Other The right-hand side FFloat64 to compare with.
+     * @return True if the stored double values are equal.
+     */
+    bool operator==(const FFloat64& Other) const
     {
-        return !(*this == RHS);
+        return Float64 == Other.Float64;
     }
 
-    FORCEINLINE FFloat64& operator=(double InFloat64)
+    /**
+     * @brief Inequality operator.
+     * @param Other The right-hand side FFloat64 to compare with.
+     * @return True if the stored double values are not equal.
+     */
+    bool operator!=(const FFloat64& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    /**
+     * @brief Assignment operator from double.
+     * @param InFloat64 The double value to assign.
+     * @return Reference to this FFloat64 instance.
+     */
+    FFloat64& operator=(double InFloat64)
     {
         Float64 = InFloat64;
         return *this;
     }
 
-    FORCEINLINE FFloat64& operator=(const FFloat64& Other)
+    /**
+     * @brief Copy assignment operator.
+     * @param Other The FFloat64 instance to copy from.
+     * @return Reference to this FFloat64 instance.
+     */
+    FFloat64& operator=(const FFloat64& Other)
     {
         Float64 = Other.Float64;
         return *this;
     }
 
+    /** Union for accessing the raw bits of the double value */
     union
     {
-        double Float64;
-        uint64 Encoded;
-
+        double Float64; ///< The double value
+        uint64 Encoded; ///< The raw bits of the double value
         struct
         {
-            uint64 Mantissa : 52;
-            uint64 Exponent : 11;
-            uint64 Sign     : 1;
-        };
+            uint64 Mantissa : 52; ///< Mantissa (fractional part)
+            uint64 Exponent : 11; ///< Exponent
+            uint64 Sign     : 1;  ///< Sign bit
+        } Bits;
     };
 };
 
@@ -98,64 +140,112 @@ MARK_AS_REALLOCATABLE(FFloat64);
 
 struct FFloat32
 {
-    FORCEINLINE FFloat32()
+    /**
+     * @brief Default constructor initializes the float value to zero.
+     */
+    FFloat32()
         : Float32(0.0f)
     {
     }
 
-    FORCEINLINE FFloat32(float InFloat32)
+    /**
+     * @brief Constructs an FFloat32 with a float value.
+     * @param InFloat32 The float value to initialize with.
+     */
+    FFloat32(float InFloat32)
         : Float32(InFloat32)
     {
     }
 
-    FORCEINLINE FFloat32(const FFloat32& Other)
+    /**
+     * @brief Copy constructor.
+     * @param Other The FFloat32 instance to copy from.
+     */
+    FFloat32(const FFloat32& Other)
         : Float32(Other.Float32)
     {
     }
 
-    FORCEINLINE void SetFloat(float InFloat32)
+    /**
+     * @brief Sets the internal float value.
+     * @param InFloat32 The float value to set.
+     */
+    void SetFloat(float InFloat32)
     {
         Float32 = InFloat32;
     }
 
-    FORCEINLINE float GetFloat() const
+    /**
+     * @brief Retrieves the internal float value.
+     * @return The stored float value.
+     */
+    float GetFloat() const
     {
         return Float32;
     }
 
-    bool operator==(const FFloat32& RHS) const
+    /**
+     * @brief Returns the raw encoded bits of the float.
+     * @return The 32-bit encoded value.
+     */
+    uint32 GetBits() const
     {
-        return (Encoded == RHS.Encoded);
+        return Encoded;
     }
 
-    bool operator!=(const FFloat32& RHS) const
+    /**
+     * @brief Equality operator.
+     * @param Other The right-hand side FFloat32 to compare with.
+     * @return True if the stored float values are equal.
+     */
+    bool operator==(const FFloat32& Other) const
     {
-        return !(*this == RHS);
+        return Float32 == Other.Float32;
     }
 
-    FORCEINLINE FFloat32& operator=(float InFloat32)
+    /**
+     * @brief Inequality operator.
+     * @param Other The right-hand side FFloat32 to compare with.
+     * @return True if the stored float values are not equal.
+     */
+    bool operator!=(const FFloat32& Other) const
+    {
+        return !(*this == Other);
+    }
+
+    /**
+     * @brief Assignment operator from float.
+     * @param InFloat32 The float value to assign.
+     * @return Reference to this FFloat32 instance.
+     */
+    FFloat32& operator=(float InFloat32)
     {
         Float32 = InFloat32;
         return *this;
     }
 
-    FORCEINLINE FFloat32& operator=(const FFloat32& Other)
+    /**
+     * @brief Copy assignment operator.
+     * @param Other The FFloat32 instance to copy from.
+     * @return Reference to this FFloat32 instance.
+     */
+    FFloat32& operator=(const FFloat32& Other)
     {
         Float32 = Other.Float32;
         return *this;
     }
 
+    /** Union for accessing the raw bits of the float value */
     union
     {
-        float  Float32;
-        uint32 Encoded;
-
+        float  Float32; ///< The float value
+        uint32 Encoded; ///< The raw bits of the float value
         struct
         {
-            uint32 Mantissa : 23;
-            uint32 Exponent : 8;
-            uint32 Sign     : 1;
-        };
+            uint32 Mantissa : 23; ///< Mantissa (fractional part)
+            uint32 Exponent : 8;  ///< Exponent
+            uint32 Sign     : 1;  ///< Sign bit
+        } Bits;
     };
 };
 
@@ -164,155 +254,238 @@ MARK_AS_REALLOCATABLE(FFloat32);
 
 struct FFloat16
 {
-    FORCEINLINE FFloat16()
+    /**
+     * @brief Default constructor initializes the encoded value to zero.
+     */
+    FFloat16()
         : Encoded(0)
     {
     }
 
-    FORCEINLINE FFloat16(float Float32)
-        : Encoded(0)
+    /**
+     * @brief Constructs an FFloat16 from a 32-bit float.
+     * @param Float32 The float value to convert and store.
+     */
+    FFloat16(float Float32)
     {
         SetFloat(Float32);
     }
 
-    FORCEINLINE FFloat16(const FFloat16& Other)
+    /**
+     * @brief Copy constructor.
+     * @param Other The FFloat16 instance to copy from.
+     */
+    FFloat16(const FFloat16& Other)
         : Encoded(Other.Encoded)
     {
     }
 
-    FORCEINLINE void SetFloat(float Float32)
+    /**
+     * @brief Sets the half-precision float from a 32-bit float.
+     * @param Float32 The 32-bit float to convert.
+     * 
+     * This function converts a 32-bit single-precision float to a 16-bit half-precision float,
+     * handling special cases like NaN, infinity, zero, subnormal numbers, and normal numbers.
+     * It aims to produce an accurate half-precision representation of the input float.
+     */
+    void SetFloat(float InFloat32)
     {
-        // Convert
-        const FFloat32 In(Float32);
-        Sign = In.Sign;
+        // Utilize FFloat32 to access float components
+        FFloat32 Float32(InFloat32);
 
-        // This value is to large to be represented with Fp16 (Alt. Infinity or NaN)
-        if (In.Exponent >= MAX_EXPONENT)
+        // Extract sign, exponent, and mantissa
+        const uint32 InFloat32Sign     = Float32.Bits.Sign;
+        const int32  InFloat32Exponent = static_cast<int32>(Float32.Bits.Exponent) - FP32_EXPONENT_BIAS;
+        const uint32 InFloat32Mantissa = Float32.Bits.Mantissa;
+
+        // Initialize encoded to zero
+        Encoded = 0;
+
+        // Set the sign bit
+        Sign = static_cast<uint16>(InFloat32Sign);
+
+        if (InFloat32Exponent == (FP32_MAX_EXPONENT - FP32_EXPONENT_BIAS)) // Exponent all ones: NaN or Infinity
         {
-            // Set mantissa to NaN if these bit are set otherwise Infinity
-            constexpr uint32 SIGN_EXLUDE_MASK = 0x7fffffff;
-            const uint32 InEncoded = (In.Encoded & SIGN_EXLUDE_MASK);
-            Mantissa = (InEncoded > 0x7F800000) ? (0x200 | (In.Mantissa & 0x3ffu)) : 0u;
             Exponent = FP16_MAX_EXPONENT;
+            Mantissa = (InFloat32Mantissa == 0) ? 0 : static_cast<uint16>((InFloat32Mantissa >> FP16_MANTISSA_SHIFT) | FP16_MANTISSA_MASK + 1);
         }
-        else if (In.Exponent <= MIN_EXPONENT)
+        else if (InFloat32Exponent > (FP16_EXPONENT_BIAS - 1)) // Overflow: Exponent exceeds half-precision range
         {
-            // These values are too small to be represented by Fp16, these values results in +/- zero
-            Exponent = 0;
+            // Set to infinity
+            Exponent = FP16_MAX_EXPONENT;
             Mantissa = 0;
         }
-        else if (In.Exponent <= DENORM_EXPONENT)
+        else if (InFloat32Exponent >= -14) // Normalized number
         {
-            // Calculate new mantissa with hidden bit
-            const uint32 NewMantissa = FP32_HIDDEN_BIT | In.Mantissa;
-            const uint32 Shift = 125u - In.Exponent; // Calculate how much to shift to go from normalized to de-normalized
-
+            // Re-bias the exponent from float32 bias (127) to float16 bias (15)
+            Exponent = static_cast<uint16>(InFloat32Exponent + FP16_EXPONENT_BIAS);
+            // Shift mantissa to align with float16 mantissa (10 bits)
+            Mantissa = static_cast<uint16>(InFloat32Mantissa >> FP16_MANTISSA_SHIFT);
+        }
+        else if (InFloat32Exponent >= -24) // Subnormal number
+        {
+            // Calculate the number of bits to shift to normalize the mantissa
+            const int32  ExponentShift     = (-14) - InFloat32Exponent;
+            const uint32 SubnormalMantissa = (InFloat32Mantissa | FP32_HIDDEN_BIT) >> (ExponentShift + FP16_MANTISSA_SHIFT);
             Exponent = 0;
-            Mantissa = NewMantissa >> (Shift + 1);
-
-            // CHECK for rounding and add one
-            if ((NewMantissa & ((1u << Shift) - 1)))
-            {
-                Encoded++;
-            }
+            Mantissa = static_cast<uint16>(SubnormalMantissa);
         }
         else
         {
-            // All other values
-            const int32 NewExponent = int32(In.Exponent) - 127 + 15; // Unbias and bias the exponents
-            Exponent = uint16(NewExponent);
-
-            const int32 NewMantissa = int32(In.Mantissa) >> 13; // Bit-Shift difference in number of mantissa bits
-            Mantissa = uint16(NewMantissa);
+            // Underflow: too small to represent as subnormal half-precision float
+            Exponent = 0;
+            Mantissa = 0;
         }
     }
 
-    FORCEINLINE void SetFloatFast(float Float32)
+    /**
+     * @brief Fast conversion from float32 to float16.
+     * @param InFloat32 The 32-bit float to convert.
+     * 
+     * This function provides a faster conversion from float32 to float16 by directly adjusting the
+     * exponent and mantissa without handling special cases. It is intended for use when performance
+     * is critical and the input values are known to be within the normal range representable by float16.
+     * 
+     * **Limitations**:
+     * - Does not handle NaN or infinity correctly.
+     * - Does not handle denormalized numbers or zero correctly.
+     * - Exponent underflow or overflow may occur without handling.
+     */
+    void SetFloatFast(float InFloat32)
     {
-        FFloat32 In(Float32);
-        Exponent = uint16(int32(In.Exponent) - 127 + 15); // Unbias and bias the exponents
-        Mantissa = uint16(In.Mantissa >> 13);               // Bit-Shift difference in number of mantissa bits
-        Sign = In.Sign;
+        FFloat32 Float32(InFloat32);
+
+        // Calculate the new exponent by adjusting the bias
+        const int32 NewExponent = static_cast<int32>(Float32.Bits.Exponent) - FP32_EXPONENT_BIAS + FP16_EXPONENT_BIAS;
+
+        // Shift mantissa to fit into float16 mantissa bits
+        const uint16 NewMantissa = static_cast<uint16>(Float32.Bits.Mantissa >> FP16_MANTISSA_SHIFT);
+
+        // Assign the values directly
+        Sign     = static_cast<uint16>(Float32.Bits.Sign);
+        Exponent = static_cast<uint16>(NewExponent);
+        Mantissa = NewMantissa;
     }
 
-    FORCEINLINE float GetFloat() const
+    /**
+     * @brief Converts the half-precision float to a 32-bit float.
+     * @return The 32-bit float representation.
+     * 
+     * This function converts the stored 16-bit half-precision float to a 32-bit single-precision float,
+     * handling special cases and reconstructing the float32 representation.
+     */
+    float GetFloat() const
     {
-        FFloat32 Ret;
-        Ret.Sign = Sign;
-
-        // Infinity/NaN
-        if (Exponent == FP16_MAX_EXPONENT)
+        FFloat32 OutFloat32;
+        if (Exponent == FP16_MAX_EXPONENT) // Exponent all ones: NaN or Infinity
         {
-            Ret.Exponent = FP32_MAX_EXPONENT;
-            Ret.Mantissa = (Mantissa != 0) ? (Mantissa << 13) : 0u;
+            OutFloat32.Bits.Sign     = Sign;
+            OutFloat32.Bits.Exponent = FP32_MAX_EXPONENT;
+            OutFloat32.Bits.Mantissa = (Mantissa != 0) ? (Mantissa << FP16_MANTISSA_SHIFT) : 0; // Preserve NaN payload
         }
-        else if (Exponent == 0)
+        else if (Exponent == 0) // Zero or subnormal
         {
             if (Mantissa == 0)
             {
                 // Zero
-                Ret.Exponent = 0;
-                Ret.Mantissa = 0;
+                OutFloat32.Bits.Sign     = Sign;
+                OutFloat32.Bits.Exponent = 0;
+                OutFloat32.Bits.Mantissa = 0;
             }
             else
             {
-                // De-normalized
-                const uint32 Shift = 10 - uint32(std::log2((float)Mantissa));
-                Ret.Exponent = 127 - 14 - Shift;
-                Ret.Mantissa = Mantissa << (Shift + 13);
+                // Subnormal number, Normalize the mantissa
+                uint16 TempMantissa = Mantissa;
+                int32  TempExponent = -14;
+                while ((TempMantissa & (1 << (FP16_MANTISSA_BITS))) == 0)
+                {
+                    TempMantissa <<= 1;
+                    TempExponent--;
+                }
+
+                TempMantissa &= (FP16_MANTISSA_MASK); // Remove the leading 1
+                TempExponent++;                       // Adjust exponent
+                TempExponent += FP32_EXPONENT_BIAS - FP16_EXPONENT_BIAS;
+
+                OutFloat32.Bits.Sign     = Sign;
+                OutFloat32.Bits.Exponent = static_cast<uint32>(TempExponent);
+                OutFloat32.Bits.Mantissa = static_cast<uint32>(TempMantissa) << FP16_MANTISSA_SHIFT; // Align mantissa to float32
             }
         }
-        else
+        else // Normalized number
         {
-            // All other values
-            const int32 NewExponent = int32(Exponent) - 15 + 127; // Unbias and bias the exponents
-            Ret.Exponent = uint32(NewExponent);
-
-            const int32 NewMantissa = int32(Mantissa) << 13; // Bit-Shift diff in number of mantissa bits
-            Ret.Mantissa = uint32(NewMantissa);
+            const int32 AdjustedExponent = Exponent + FP32_EXPONENT_BIAS - FP16_EXPONENT_BIAS;
+            OutFloat32.Bits.Sign     = Sign;
+            OutFloat32.Bits.Exponent = static_cast<uint32>(AdjustedExponent);
+            OutFloat32.Bits.Mantissa = static_cast<uint32>(Mantissa) << FP16_MANTISSA_SHIFT; // Align mantissa to float32
         }
 
-        return Ret.Float32;
+        return OutFloat32.Float32;
     }
 
-    bool operator==(const FFloat16& RHS) const
+    /**
+     * @brief Returns the raw encoded bits of the half-precision float.
+     * @return The 16-bit encoded value.
+     */
+    uint16 GetBits() const
     {
-        return (Encoded == RHS.Encoded);
+        return Encoded;
     }
 
-    bool operator!=(const FFloat16& RHS) const
+    /**
+     * @brief Equality operator.
+     * @param Other The right-hand side FFloat16 to compare with.
+     * @return True if the encoded values are equal.
+     */
+    bool operator==(const FFloat16& Other) const
     {
-        return !(*this == RHS);
+        return Encoded == Other.Encoded;
     }
 
-    FORCEINLINE FFloat16& operator=(float F32)
+    /**
+     * @brief Inequality operator.
+     * @param Other The right-hand side FFloat16 to compare with.
+     * @return True if the encoded values are not equal.
+     */
+    bool operator!=(const FFloat16& Other) const
     {
-        SetFloat(F32);
+        return !(*this == Other);
+    }
+
+    /**
+     * @brief Assignment operator from float.
+     * @param InFloat32 The float value to assign.
+     * @return Reference to this FFloat16 instance.
+     */
+    FFloat16& operator=(float InFloat32)
+    {
+        SetFloat(InFloat32);
         return *this;
     }
 
-    FORCEINLINE FFloat16& operator=(const FFloat16& Other)
+    /**
+     * @brief Copy assignment operator.
+     * @param Other The FFloat16 instance to copy from.
+     * @return Reference to this FFloat16 instance.
+     */
+    FFloat16& operator=(const FFloat16& Other)
     {
         Encoded = Other.Encoded;
         return *this;
     }
 
+    /** Union for accessing the raw bits of the half-precision float */
     union
     {
-        uint16 Encoded;
-
+        uint16 Encoded; ///< The raw bits of the half-precision float
         struct
         {
-            uint16 Mantissa : 10;
-            uint16 Exponent : 5;
-            uint16 Sign     : 1;
+            uint16 Mantissa : 10; ///< Mantissa (fractional part)
+            uint16 Exponent : 5;  ///< Exponent
+            uint16 Sign     : 1;  ///< Sign bit
         };
     };
 };
 
 static_assert(sizeof(FFloat16) == sizeof(uint16), "FFloat16 should have the same size as a uint16");
 MARK_AS_REALLOCATABLE(FFloat16);
-
-#if defined(PLATFORM_COMPILER_MSVC)
-    #pragma warning(pop)
-#endif
