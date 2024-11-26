@@ -152,8 +152,8 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     }
     else
     {
-        CurrentExtent.width  = FMath::Clamp(Capabilities.minImageExtent.width , Capabilities.maxImageExtent.width , CreateInfo.Extent.width);
-        CurrentExtent.height = FMath::Clamp(Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height, CreateInfo.Extent.height);
+        CurrentExtent.width  = FMath::Clamp(CreateInfo.Extent.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+        CurrentExtent.height = FMath::Clamp(CreateInfo.Extent.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
     }
 
     CurrentExtent.width  = FMath::Max(CurrentExtent.width , 1u);
@@ -161,7 +161,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     VULKAN_INFO("SwapChain - CurrentExtent: w=%d h=%d, MinExtent: w=%d h=%d, MaxExtent: w=%d h=%d", Capabilities.currentExtent.width, Capabilities.currentExtent.height, Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height);
 
     // Get the number of swapchain image that we can have based on the BackBuffer CVar
-    const uint32 SupportedBufferCount = Capabilities.maxImageCount == 0 ? CreateInfo.BufferCount : FMath::Clamp<uint32>(Capabilities.minImageCount, Capabilities.maxImageCount, CreateInfo.BufferCount);
+    const uint32 SupportedBufferCount = Capabilities.maxImageCount == 0 ? CreateInfo.BufferCount : FMath::Clamp<uint32>(CreateInfo.BufferCount, Capabilities.minImageCount, Capabilities.maxImageCount);
     if (SupportedBufferCount != CreateInfo.BufferCount)
     {
         VULKAN_INFO("Number of buffers(=%d) is not supported. MinBuffers=%d MaxBuffers=%d", CreateInfo.BufferCount, Capabilities.minImageCount, Capabilities.maxImageCount);

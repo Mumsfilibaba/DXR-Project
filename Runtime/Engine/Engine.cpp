@@ -226,10 +226,10 @@ bool FEngine::Init()
 
     // Base material
     FMaterialInfo MaterialDesc;
-    MaterialDesc.AmbientOcclusion = 1.0f;
+    MaterialDesc.Albedo           = FFloatColor::White;
     MaterialDesc.Metallic         = 0.0f;
+    MaterialDesc.AmbientOcclusion = 1.0f;
     MaterialDesc.Roughness        = 1.0f;
-    MaterialDesc.Albedo           = FVector3(1.0f);
 
     BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
     BaseMaterial->AlbedoMap    = GEngine->BaseTexture;

@@ -5,38 +5,26 @@
 #include <algorithm>
 #include <cmath>
 
-#if PLATFORM_WINDOWS
-    #include <intrin.h>
-    #include <smmintrin.h>
-#elif PLATFORM_MACOS && PLATFORM_ARCHITECTURE_X86_X64
-    #include <immintrin.h>
-#else
-    #error No platform defined
-#endif
-
 struct FMath
 {
-    inline static constexpr const double kPI        = 3.1415926535898;
-    inline static constexpr const double kE         = 2.7182818284590;
-    inline static constexpr const double kHalfPI    = kPI / 2.0f;
-    inline static constexpr const double kTwoPI     = kPI * 2.0;
-    inline static constexpr const double kOneDegree = kPI / 180.0f;
+    inline static constexpr double kPI        = 3.1415926535898;
+    inline static constexpr double kE         = 2.7182818284590;
+    inline static constexpr double kHalfPI    = kPI / 2.0;
+    inline static constexpr double kTwoPI     = kPI * 2.0;
+    inline static constexpr double kOneDegree = kPI / 180.0;
 
-    inline static constexpr const float kPI_f        = 3.141592653f;
-    inline static constexpr const float kE_f         = 2.718281828f;
-    inline static constexpr const float kHalfPI_f    = kPI_f / 2.0f;
-    inline static constexpr const float kTwoPI_f     = 2.0f * kPI_f;
-    inline static constexpr const float kOneDegree_f = kPI_f / 180.0f;
+    inline static constexpr float kPI_f        = 3.141592653f;
+    inline static constexpr float kE_f         = 2.718281828f;
+    inline static constexpr float kHalfPI_f    = kPI_f / 2.0f;
+    inline static constexpr float kTwoPI_f     = 2.0f * kPI_f;
+    inline static constexpr float kOneDegree_f = kPI_f / 180.0f;
 
-    inline static constexpr const float kIsEqualEpsilon = 0.0005f;
+    inline static constexpr float kIsEqualEpsilon = 0.0005f;
 
-    static FORCEINLINE float VECTORCALL Sqrt(float Value)
+    template<typename T>
+    static FORCEINLINE T Sqrt(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-#if PLATFORM_ARCHITECTURE_X86_X64
-        return _mm_cvtss_f32(_mm_sqrt_ss(_mm_load_ss(&Value)));
-#else
-        return std::sqrtf(Value);
-#endif
+        return std::sqrt(Value);
     }
 
     template<typename T>
@@ -56,13 +44,13 @@ struct FMath
     static constexpr T AlignDown(T Value, T Alignment) requires(TIsInteger<T>::Value)
     {
         const T Mask = Alignment - 1;
-        return ((Value) & (~Mask));
+        return (Value & (~Mask));
     }
 
     template<typename T>
     static constexpr T Lerp(T First, T Second, T Factor) requires(TIsFloatingPoint<T>::Value)
     {
-        return (-Factor * Second) + ((First * Factor) + Second);
+        return First + Factor * (Second - First);
     }
 
     template<typename T>
@@ -78,111 +66,114 @@ struct FMath
     }
 
     template<typename T>
-    static constexpr T Clamp(T ValueMin, T ValueMax, T Value) requires(TIsArithmetic<T>::Value)
+    static constexpr T Clamp(T Value, T MinValue, T MaxValue) requires(TIsArithmetic<T>::Value)
     {
-        return Min(ValueMax, Max(ValueMin, Value));
+        return Min(MaxValue, Max(MinValue, Value));
+    }
+
+    template<typename T>
+    static constexpr T Saturate(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return Clamp(Value, T(0.0), T(1.0));
     }
 
     template<typename T>
     static constexpr T Abs(T Value) requires(TIsArithmetic<T>::Value)
     {
-        if constexpr (TIsInteger<T>::Value)
-        {
-            if constexpr (TIsSigned<T>::Value)
-            {
-                T Mask = Value >> (TNumericLimits<T>::Digits() - 1);
-                return (Value + Mask) ^ Mask;
-            }
-            else
-            {
-                return Value;
-            }
-        }
-        else
-        {
-            return (Value >= 0) ? Value : -Value;
-        }
+        return std::abs(Value);
     }
 
     template<typename T>
-    static FORCEINLINE T Round(T a)
+    static FORCEINLINE T Round(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::roundf(static_cast<float>(a)));
+        return std::round(Value);
     }
 
     template<typename T>
-    static constexpr T ToRadians(T Degrees)
+    static FORCEINLINE int32 RoundToInt(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(static_cast<float>(Degrees) * (kPI_f / 180.0f));
+        return static_cast<int32>(std::round(Value));
     }
 
     template<typename T>
-    static constexpr T ToDegrees(T Radians)
+    static constexpr T ToRadians(T Value)
     {
-        return static_cast<T>(static_cast<float>(Radians) * (180.0f / kPI_f));
+        return Value * static_cast<T>(kPI_f / 180.0f);
     }
 
     template<typename T>
-    static FORCEINLINE T Log2(T Value)
+    static constexpr T ToDegrees(T Value)
     {
-        return static_cast<T>(std::log2(static_cast<double>(Value)));
+        return Value * static_cast<T>(180.0f / kPI_f);
     }
 
     template<typename T>
-    static FORCEINLINE T Asin(T Value)
+    static FORCEINLINE T Log2(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::asinf(static_cast<float>(Value)));
+        return static_cast<T>(std::log2(Value));
     }
 
     template<typename T>
-    static FORCEINLINE T Atan2(T y, T x)
+    static FORCEINLINE T Asin(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::atan2f(static_cast<float>(y), static_cast<float>(x)));
+        return static_cast<T>(std::asin(Value));
     }
 
     template<typename T>
-    static FORCEINLINE T Sin(T Value)
+    static FORCEINLINE T Atan2(T y, T x) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::sinf(static_cast<float>(Value)));
+        return static_cast<T>(std::atan2(y, x));
     }
 
     template<typename T>
-    static FORCEINLINE T Cos(T Value)
+    static FORCEINLINE T Sin(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::cosf(static_cast<float>(Value)));
+        return static_cast<T>(std::sin(Value));
     }
 
     template<typename T>
-    static FORCEINLINE T Tan(T Value)
+    static FORCEINLINE T Cos(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::tanf(static_cast<float>(Value)));
+        return static_cast<T>(std::cos(Value));
     }
 
     template<typename T>
-    static FORCEINLINE T Ceil(T Value)
+    static FORCEINLINE T Tan(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return static_cast<T>(std::ceilf(static_cast<float>(Value)));
+        return static_cast<T>(std::tan(Value));
     }
 
     template<typename T>
-    static FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsNaN(T Float)
+    static FORCEINLINE T Ceil(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return isnan(Float);
+        return static_cast<T>(std::ceil(Value));
     }
 
     template<typename T>
-    static FORCEINLINE typename TEnableIf<TIsFloatingPoint<T>::Value, bool>::Type IsInfinity(T Float)
+    static FORCEINLINE T Floor(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        return isinf(Float);
+        return static_cast<T>(std::floor(Value));
     }
 
-    static constexpr float CubicInterp(float p0, float p1, float p2, float p3, float t)
+    template<typename T>
+    static FORCEINLINE bool IsNaN(T Value) requires(TIsFloatingPoint<T>::Value)
     {
-        float a = p3 - p2 - p0 + p1;
-        float b = p0 - p1 - a;
-        float c = p2 - p0;
-        float d = p1;
-        return a * t * t * t + b * t * t + c * t + d;
+        return std::isnan(Value);
+    }
+
+    template<typename T>
+    static FORCEINLINE bool IsInfinity(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return std::isinf(Value);
+    }
+
+    static constexpr float CubicInterp(float P0, float P1, float P2, float P3, float T)
+    {
+        float A = P3 - P2 - P0 + P1;
+        float B = P0 - P1 - A;
+        float C = P2 - P0;
+        float D = P1;
+        return (A * T * T * T) + (B * T * T) + (C * T) + D;
     }
 
     static constexpr uint32 BytesToNum32BitConstants(uint32 Bytes)
@@ -191,8 +182,8 @@ struct FMath
     }
 
     template<const uint32 kBits>
-    static constexpr uint32 MaxNum()
+    static constexpr uint64 MaxNum()
     {
-        return ((1 << kBits) - 1);
+        return (static_cast<uint64>(1) << kBits) - 1;
     }
 };

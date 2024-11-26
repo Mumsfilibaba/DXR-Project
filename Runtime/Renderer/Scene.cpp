@@ -214,11 +214,11 @@ void FScene::UpdateVisibility()
         TransformMatrix = TransformMatrix.Transpose();
 
         const FAABB& BoundingBox = Component->Mesh->GetAABB();
-        const FVector3 Top    = TransformMatrix.Transform(BoundingBox.Top);
-        const FVector3 Bottom = TransformMatrix.Transform(BoundingBox.Bottom);
+        const FVector3 Max = TransformMatrix.Transform(BoundingBox.Max);
+        const FVector3 Min = TransformMatrix.Transform(BoundingBox.Min);
 
         // Frustum cull the main view
-        FAABB Box(Top, Bottom);
+        FAABB Box(Max, Min);
         if (CameraFrustum.CheckAABB(Box))
         {
             Component->UpdateFrustumVisbility(true);

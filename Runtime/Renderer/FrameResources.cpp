@@ -66,7 +66,7 @@ static int32 ClosestPowerOf2(int32 Value)
 
 static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
 {
-    const int32 Result = FMath::Clamp(MinSize, MaxSize, NewSize);
+    const int32 Result = FMath::Clamp(NewSize, MinSize, MaxSize);
     return ClosestPowerOf2(Result);
 }
 

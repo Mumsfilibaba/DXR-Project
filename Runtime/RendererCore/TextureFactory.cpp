@@ -69,9 +69,9 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 {
     CHECK(Pixels != nullptr);
 
-    const bool GenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+    const bool bGenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     
-    const uint32 NumMips = GenerateMips ? FMath::Max<uint32>(FMath::Log2(FMath::Max(Width, Height)), 1u) : 1;
+    const uint32 NumMips = bGenerateMips ? FMath::Max<uint32>(FMath::Log2(static_cast<float>(FMath::Max(Width, Height))), 1u) : 1u;
     CHECK(NumMips != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
@@ -89,7 +89,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
         return nullptr;
     }
 
-    if (GenerateMips && NumMips > 1)
+    if (bGenerateMips && NumMips > 1)
     {
         FRHICommandList CommandList;
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
@@ -108,8 +108,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
     const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 
-    const uint32 NumMips = bGenerateNumMips ? FMath::Max<uint32>(FMath::Log2(CubeMapSize), 1u) : 1u;
-
+    const uint32 NumMips = bGenerateNumMips ? FMath::Max<uint32>(FMath::Log2(static_cast<float>(CubeMapSize)), 1u) : 1u;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTextureCube(Format, CubeMapSize, NumMips, 1, ETextureUsageFlags::UnorderedAccess);
 
     FRHITextureRef StagingTexture = RHICreateTexture(TextureInfo, EResourceAccess::Common, nullptr);

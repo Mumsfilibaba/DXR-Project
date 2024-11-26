@@ -301,7 +301,7 @@ public:
 
         if (Index)
         {
-            StringLength = FMath::Clamp<SIZETYPE>(0, NUM_CHARS - 1, StringLength - Index);
+            StringLength = FMath::Clamp<SIZETYPE>(StringLength - Index, 0, NUM_CHARS - 1);
             FCStringType::Strnmove(CharData, CharData + Index, StringLength);
         }
     }
@@ -489,7 +489,7 @@ public:
         SIZETYPE Index = 0;
         if (Position != INVALID_INDEX && StringLength > 0)
         {
-            Index += FMath::Clamp(0, StringLength - 1, Position);
+            Index += FMath::Clamp(Position, 0, StringLength - 1);
         }
 
         const CHARTYPE* RESTRICT Result = FCStringType::Strstr(CharData + Index, InString);
@@ -531,7 +531,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData;
         if (Position != INVALID_INDEX && StringLength > 0)
         {
-            Current += FMath::Clamp(0, StringLength - 1, Position);
+            Current += FMath::Clamp(Position, 0, StringLength - 1);
         }
 
         for (const CHARTYPE* RESTRICT End = CharData + StringLength; Current != End; ++Current)
@@ -562,7 +562,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData;
         if (Position != INVALID_INDEX && StringLength > 0)
         {
-            Current += FMath::Clamp(0, StringLength - 1, Position);
+            Current += FMath::Clamp(Position, 0, StringLength - 1);
         }
 
         for (const CHARTYPE* RESTRICT End = CharData + StringLength; Current != End; ++Current)

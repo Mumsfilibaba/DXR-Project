@@ -282,12 +282,9 @@ public:
      * @param Value - Vector to clamp
      * @return      - A vector with the result of clamping
      */
-    friend FORCEINLINE FVector3 Clamp(const FVector3& Min, const FVector3& Max, const FVector3& Value) noexcept
+    friend FORCEINLINE FVector3 Clamp(const FVector3& Value, const FVector3& Min, const FVector3& Max) noexcept
     {
-        return FVector3(
-            FMath::Min(FMath::Max(Value.x, Min.x), Max.x),
-            FMath::Min(FMath::Max(Value.y, Min.y), Max.y),
-            FMath::Min(FMath::Max(Value.z, Min.z), Max.z));
+        return FVector3(FMath::Clamp(Value.x, Min.x, Max.x), FMath::Clamp(Value.y, Min.y, Max.y), FMath::Clamp(Value.z, Min.z, Max.z));
     }
 
     /**
@@ -297,10 +294,7 @@ public:
      */
     friend FORCEINLINE FVector3 Saturate(const FVector3& Value) noexcept
     {
-        return FVector3(
-            FMath::Min(FMath::Max(Value.x, 0.0f), 1.0f),
-            FMath::Min(FMath::Max(Value.y, 0.0f), 1.0f),
-            FMath::Min(FMath::Max(Value.z, 0.0f), 1.0f));
+        return FVector3(FMath::Saturate(Value.x), FMath::Saturate(Value.y), FMath::Saturate(Value.z));
     }
 
 public:

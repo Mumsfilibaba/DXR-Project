@@ -440,7 +440,7 @@ public:
         FVector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result = FVector4(FMath::Clamp(Min.x, Max.x, Value.x), FMath::Clamp(Min.y, Max.y, Value.y), FMath::Clamp(Min.z, Max.z, Value.z), FMath::Clamp(Min.w, Max.w, Value.w));
+        Result = FVector4(FMath::Clamp(Value.x, Min.x, Max.x), FMath::Clamp(Value.y, Min.y, Max.y), FMath::Clamp(Value.z, Min.z, Max.z), FMath::Clamp(Value.w, Min.w, Max.w));
     #else
         FFloat128 Min128   = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Min));
         FFloat128 Max128   = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Max));
@@ -463,7 +463,7 @@ public:
         FVector4 Result;
     
     #if !USE_VECTOR_MATH
-        Result = FVector4(FMath::Clamp(0.0f, 1.0f, Value.x), FMath::Clamp(0.0f, 1.0f, Value.y), FMath::Clamp(0.0f, 1.0f, Value.z), FMath::Clamp(0.0f, 1.0f, Value.w));
+        Result = FVector4(FMath::Saturate(Value.x), FMath::Saturate(Value.y), FMath::Saturate(Value.z), FMath::Saturate(Value.w));
     #else
         FFloat128 Zeros    = FVectorMath::VectorZero();
         FFloat128 Ones     = FVectorMath::VectorOne();

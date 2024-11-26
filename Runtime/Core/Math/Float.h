@@ -15,7 +15,6 @@
 #define DENORM_EXPONENT (127 - 15)
 #define MIN_EXPONENT (DENORM_EXPONENT - 10)
 
-
 struct FFloat64
 {
     /**
@@ -183,11 +182,6 @@ struct FFloat16
 
     FORCEINLINE void SetFloat(float Float32)
     {
-    #if PLATFORM_ARCHITECTURE_X86_X64
-        __m128  Reg0 = _mm_set_ss(Float32);
-        __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
-        Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
-    #else
         // Convert
         const FFloat32 In(Float32);
         Sign = In.Sign;
@@ -231,30 +225,18 @@ struct FFloat16
             const int32 NewMantissa = int32(In.Mantissa) >> 13; // Bit-Shift difference in number of mantissa bits
             Mantissa = uint16(NewMantissa);
         }
-#endif
     }
 
     FORCEINLINE void SetFloatFast(float Float32)
     {
-    #if PLATFORM_ARCHITECTURE_X86_X64
-        __m128  Reg0 = _mm_set_ss(Float32);
-        __m128i Reg1 = _mm_cvtps_ph(Reg0, _MM_FROUND_NO_EXC);
-        Encoded = static_cast<uint16>(_mm_cvtsi128_si32(Reg1));
-    #else
         FFloat32 In(Float32);
         Exponent = uint16(int32(In.Exponent) - 127 + 15); // Unbias and bias the exponents
         Mantissa = uint16(In.Mantissa >> 13);               // Bit-Shift difference in number of mantissa bits
         Sign = In.Sign;
-    #endif
     }
 
     FORCEINLINE float GetFloat() const
     {
-    #if PLATFORM_ARCHITECTURE_X86_X64
-        __m128i Reg0 = _mm_cvtsi32_si128(static_cast<uint32>(Encoded));
-        __m128  Reg1 = _mm_cvtph_ps(Reg0);
-        return _mm_cvtss_f32(Reg1);
-    #else
         FFloat32 Ret;
         Ret.Sign = Sign;
 
@@ -291,7 +273,6 @@ struct FFloat16
         }
 
         return Ret.Float32;
-    #endif
     }
 
     bool operator==(const FFloat16& RHS) const

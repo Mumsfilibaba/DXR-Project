@@ -1,7 +1,8 @@
 #pragma once
-#include "Engine/EngineModule.h"
 #include "Core/Math/Vector3.h"
+#include "Core/Math/Color.h"
 #include "Core/Containers/StaticArray.h"
+#include "Engine/EngineModule.h"
 #include "RHI/RHIResources.h"
 
 #define SafeGetDefaultSRV(Texture) (Texture ? Texture->GetShaderResourceView() : nullptr)
@@ -23,7 +24,7 @@ ENUM_CLASS_OPERATORS(EMaterialFlags);
 struct FMaterialInfo
 {
     FMaterialInfo()
-        : Albedo(1.0f)
+        : Albedo(FFloatColor::White)
         , Roughness(0.0f)
         , Metallic(0.0f)
         , AmbientOcclusion(0.5f)
@@ -32,7 +33,7 @@ struct FMaterialInfo
     {
     }
 
-    FVector3       Albedo;
+    FFloatColor    Albedo;
     float          Roughness;
     float          Metallic;
     float          AmbientOcclusion;
@@ -61,8 +62,7 @@ public:
 
     bool IsBufferDirty() const { return bMaterialBufferIsDirty; }
 
-    void SetAlbedo(const FVector3& Albedo);
-    void SetAlbedo(float r, float g, float b);
+    void SetAlbedo(const FFloatColor& Albedo);
     void SetMetallic(float Metallic);
     void SetRoughness(float Roughness);
     void SetAmbientOcclusion(float AO);

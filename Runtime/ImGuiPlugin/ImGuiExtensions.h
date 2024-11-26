@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Math/Vector3.h"
+#include "Core/Math/Color.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -93,6 +94,11 @@ namespace ImGuiExtensions
     FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
     {
         return ImGui::ColorEdit3(Label, OutColor.Data(), Flags);
+    }
+    
+    FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FFloatColor& OutColor, ImGuiColorEditFlags Flags = 0)
+    {
+        return ImGui::ColorEdit3(Label, OutColor.RGBA, Flags);
     }
 
     FORCEINLINE bool IsMultiViewportEnabled()

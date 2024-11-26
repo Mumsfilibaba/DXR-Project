@@ -273,8 +273,8 @@ void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
         MaxBounds = Max(MaxBounds, Vertex.Position);
     }
 
-    BoundingBox.Top    = MaxBounds;
-    BoundingBox.Bottom = MinBounds;
+    BoundingBox.Max = MaxBounds;
+    BoundingBox.Min = MinBounds;
 }
 
 FModel::FModel()
@@ -325,7 +325,7 @@ bool FModel::Init(const FModelCreateInfo& CreateInfo)
     for (int32 Index = 0; Index < NumMaterials; Index++)
     {
         FMaterialInfo MaterialInfo;
-        MaterialInfo.Albedo           = CreateInfo.Materials[Index].Diffuse;
+        MaterialInfo.Albedo           = FFloatColor(CreateInfo.Materials[Index].Diffuse);
         MaterialInfo.AmbientOcclusion = CreateInfo.Materials[Index].AmbientFactor;
         MaterialInfo.Metallic         = CreateInfo.Materials[Index].Metallic;
         MaterialInfo.Roughness        = CreateInfo.Materials[Index].Roughness;

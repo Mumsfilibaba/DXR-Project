@@ -29,7 +29,7 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     {
         if (SunLight && SunLight->IsVariableFloat())
         {
-            const float NewSize = FMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
+            const float NewSize = FMath::Clamp(SunLight->GetFloat(), 0.0f, 1.0f);
             this->Size = NewSize;
         }
     }));
@@ -38,7 +38,7 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     {
         if (CascadeSplitLambda && CascadeSplitLambda->IsVariableFloat())
         {
-            const float NewLambda = FMath::Clamp(0.0f, 1.0f, CascadeSplitLambda->GetFloat());
+            const float NewLambda = FMath::Clamp(CascadeSplitLambda->GetFloat(), 0.0f, 1.0f);
             this->CascadeSplitLambda = NewLambda;
         }
     }));

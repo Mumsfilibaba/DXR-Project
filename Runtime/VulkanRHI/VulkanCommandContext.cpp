@@ -530,7 +530,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
                 RenderPassKey.RenderTargetActions[Index].StoreAction = RenderTargetView.StoreAction;
             
                 VkClearValue& ClearValue = ClearValues[NumClearValues++];
-                FMemory::Memcpy(ClearValue.color.float32, &RenderTargetView.ClearValue.r, sizeof(ClearValue.color.float32));
+                FMemory::Memcpy(ClearValue.color.float32, RenderTargetView.ClearValue.RGBA, sizeof(ClearValue.color.float32));
 
                 FVulkanHashableImageView HashableImageView;
                 HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;

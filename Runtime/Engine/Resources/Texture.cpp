@@ -41,7 +41,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     uint32 NumMipsRHI = NumMips;
     if (bGenerateMips)
     {
-        NumMipsRHI = FMath::Max<uint32>(FMath::Log2(FMath::Max(Width, Height)), 1u);
+        NumMipsRHI = FMath::Max<uint32>(FMath::Log2(static_cast<float>(FMath::Max(Width, Height))), 1u);
     }
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResource);

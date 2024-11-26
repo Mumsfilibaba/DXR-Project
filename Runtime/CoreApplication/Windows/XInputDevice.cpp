@@ -102,7 +102,7 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
         constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1;
         
         // Clamp the repeat delay (TODO: Add support for clamping inside of CVars)
-        const int32 RepeatDelay    = FMath::Clamp(0, MaxButtonRepeatDelay, CVarXInputButtonRepeatDelay.GetValue());
+        const int32 RepeatDelay    = FMath::Clamp(CVarXInputButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
         const int32 GamePadButtons = Gamepad.wButtons;
 
         const auto IsButtonDown = [GamePadButtons](int32 ButtonMask) -> bool

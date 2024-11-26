@@ -373,7 +373,7 @@ public:
         SIZETYPE Index = 0;
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Index += FMath::Clamp(0, CurrentLength - 1, Position);
+            Index += FMath::Clamp(Position, 0, CurrentLength - 1);
         }
 
         const SIZETYPE SearchLength = FCStringType::Strlen(InString);
@@ -426,7 +426,7 @@ public:
         const CHARTYPE* RESTRICT Current = ViewStart;
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += FMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(Position, 0, CurrentLength - 1);
         }
 
         for (const CHARTYPE* RESTRICT End = ViewStart + CurrentLength; Current != End; ++Current)
@@ -458,7 +458,7 @@ public:
         const CHARTYPE* RESTRICT Current = ViewStart;
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += FMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(Position, 0, CurrentLength - 1);
         }
 
         for (const CHARTYPE* RESTRICT End = ViewStart + CurrentLength; Current != End; ++Current)

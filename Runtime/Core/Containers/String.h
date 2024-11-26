@@ -663,7 +663,7 @@ public:
         SIZETYPE Index = 0;
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Index += FMath::Clamp(0, CurrentLength - 1, Position);
+            Index += FMath::Clamp(Position, 0, CurrentLength - 1);
         }
 
         const CHARTYPE* RESTRICT Result = FCStringType::Strstr(CharData.Data() + Index, InString);
@@ -706,7 +706,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData.Data();
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += FMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(Position, 0, CurrentLength - 1);
         }
 
         for (const CHARTYPE* RESTRICT End = CharData.Data() + CurrentLength; Current != End; ++Current)
@@ -738,7 +738,7 @@ public:
         const CHARTYPE* RESTRICT Current = CharData.Data();
         if (Position != INVALID_INDEX && CurrentLength > 0)
         {
-            Current += FMath::Clamp(0, CurrentLength - 1, Position);
+            Current += FMath::Clamp(Position, 0, CurrentLength - 1);
         }
 
         for (const CHARTYPE *RESTRICT End = CharData.Data() + CurrentLength; Current != End; ++Current)

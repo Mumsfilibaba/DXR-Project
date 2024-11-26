@@ -148,7 +148,7 @@ bool FSandbox::Init()
     constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
     FMaterialInfo MaterialInfo;
-    MaterialInfo.Albedo           = FVector3(1.0f);
+    MaterialInfo.Albedo           = FFloatColor::White;
     MaterialInfo.AmbientOcclusion = 1.0f;
     MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
@@ -265,7 +265,7 @@ bool FSandbox::Init()
         NewActor->SetName("Cube");
         NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
 
-        MaterialInfo.Albedo           = FVector3(1.0f);
+        MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 1.0f;
@@ -311,7 +311,7 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetUniformScale(50.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
-        MaterialInfo.Albedo           = FVector3(1.0f);
+        MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 0.5f;
@@ -348,7 +348,7 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetUniformScale(3.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 0.5f, 50.0f);
 
-        MaterialInfo.Albedo           = FVector3(0.0f, 1.0f, 0.0f);
+        MaterialInfo.Albedo           = FFloatColor::Green;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 0.0f;
         MaterialInfo.Roughness        = 1.0f;
@@ -386,7 +386,7 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 45.0f);
 
-        MaterialInfo.Albedo           = FVector3(1.0f, 0.0f, 0.0f);
+        MaterialInfo.Albedo           = FFloatColor::Red;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 0.0f;
         MaterialInfo.Roughness        = 1.0f;
@@ -425,7 +425,7 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 37.5f);
 
         // Gold: 0.944, 0.776, 0.373
-        MaterialInfo.Albedo           = FVector3(0.944f, 0.776f, 0.373f);
+        MaterialInfo.Albedo           = FFloatColor(0.944f, 0.776f, 0.373f, 1.0f);
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 0.2f;
@@ -463,7 +463,7 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetUniformScale(1.0f);
         NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 30.0f);
 
-        MaterialInfo.Albedo           = FVector3(0.0f, 0.0f, 1.0f);
+        MaterialInfo.Albedo           = FFloatColor::Blue;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 0.0f;
         MaterialInfo.Roughness        = 1.0f;
@@ -501,7 +501,7 @@ bool FSandbox::Init()
         FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
         FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
         
-        MaterialInfo.Albedo           = FVector3(1.0f);
+        MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 1.0f;
@@ -542,7 +542,7 @@ bool FSandbox::Init()
         }
     }
 
-    MaterialInfo.Albedo           = FVector3(0.4f);
+    MaterialInfo.Albedo           = FFloatColor(0.4f, 0.4f, 0.4f, 1.0f);
     MaterialInfo.AmbientOcclusion = 1.0f;
     MaterialInfo.Metallic         = 0.0f;
     MaterialInfo.Roughness        = 1.0f;

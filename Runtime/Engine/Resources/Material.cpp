@@ -13,8 +13,8 @@ FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
     , Name()
     , MaterialData()
     , MaterialInfo(InMaterialInfo)
-    , MaterialBuffer()
     , bMaterialBufferIsDirty(true)
+    , MaterialBuffer()
 {
 }
 
@@ -36,7 +36,7 @@ void FMaterial::Initialize()
 
 void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 {
-    MaterialData.Albedo           = MaterialInfo.Albedo;
+    MaterialData.Albedo           = FVector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
     MaterialData.Metallic         = MaterialInfo.Metallic;
     MaterialData.Roughness        = MaterialInfo.Roughness;
     MaterialData.AmbientOcclusion = MaterialInfo.AmbientOcclusion;
@@ -47,15 +47,9 @@ void FMaterial::BuildBuffer(FRHICommandList& CommandList)
     bMaterialBufferIsDirty = false;
 }
 
-void FMaterial::SetAlbedo(const FVector3& Albedo)
+void FMaterial::SetAlbedo(const FFloatColor& Albedo)
 {
     MaterialInfo.Albedo    = Albedo;
-    bMaterialBufferIsDirty = true;
-}
-
-void FMaterial::SetAlbedo(float r, float g, float b)
-{
-    MaterialInfo.Albedo    = FVector3(r, g, b);
     bMaterialBufferIsDirty = true;
 }
 

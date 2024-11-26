@@ -56,7 +56,7 @@ void FMetalCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& 
 
     ColorAttachment.texture            = RTVTexture->GetMTLTexture();
     ColorAttachment.loadAction         = ConvertAttachmentLoadAction(RenderTargetView.LoadAction);
-    ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.r, RenderTargetView.ClearValue.g, RenderTargetView.ClearValue.b, RenderTargetView.ClearValue.a);
+    ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
     ColorAttachment.level              = RenderTargetView.MipLevel;
     ColorAttachment.slice              = RenderTargetView.ArrayIndex;
     ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
@@ -110,7 +110,7 @@ void FMetalCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Beg
         ColorAttachment.slice              = RenderTargetView.ArrayIndex;
         ColorAttachment.storeActionOptions = MTLStoreActionOptionNone;
         ColorAttachment.storeAction        = ConvertAttachmentStoreAction(RenderTargetView.StoreAction);
-        ColorAttachment.clearColor         = MTLClearColorMake(1.0f, RenderTargetView.ClearValue.g, RenderTargetView.ClearValue.g, RenderTargetView.ClearValue.a);
+        ColorAttachment.clearColor         = MTLClearColorMake(RenderTargetView.ClearValue.R, RenderTargetView.ClearValue.G, RenderTargetView.ClearValue.B, RenderTargetView.ClearValue.A);
     }
 
     if (DSVTexture)
