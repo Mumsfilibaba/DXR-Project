@@ -3,165 +3,343 @@
 #include "Core/Math/Vector3.h"
 #include "Core/Templates/TypeHash.h"
 
+// FR10G10B10A2 Constants
+static constexpr int32  FR10G10B10A2_ALPHA_BITS = 2;
+static constexpr int32  FR10G10B10A2_COLOR_BITS = 10;
+static constexpr uint32 FR10G10B10A2_ALPHA_MASK = (1 << FR10G10B10A2_ALPHA_BITS) - 1; // 0x3
+static constexpr uint32 FR10G10B10A2_COLOR_MASK = (1 << FR10G10B10A2_COLOR_BITS) - 1; // 0x3FF
+
+// FRG16F Constants
+static constexpr int32 FRG16F_COLOR_BITS = 16;
+
+// FRGBA16F Constants
+static constexpr int32 FRGBA16F_COLOR_BITS = 16;
+
+#pragma pack(push, 1) // Ensure no padding
+
+/**
+ * @brief 10-bit Red, 10-bit Green, 10-bit Blue, 2-bit Alpha color representation.
+ */
 struct FR10G10B10A2
 {
+    /**
+     * @brief Default constructor initializes all channels to zero.
+     */
     FR10G10B10A2()
-        : A(0)
-        , R(0)
-        , G(0)
-        , B(0)
+        : ARGB(0)
     {
     }
 
+    /**
+     * @brief Constructs FR10G10B10A2 with specified channel values.
+     * @param InA 2-bit Alpha value.
+     * @param InR 10-bit Red value.
+     * @param InG 10-bit Green value.
+     * @param InB 10-bit Blue value.
+     */
     FR10G10B10A2(uint8 InA, uint16 InR, uint16 InG, uint16 InB)
-        : A(InA)
-        , R(InR)
-        , G(InG)
-        , B(InB)
     {
+        A = InA;
+        R = InR;
+        G = InG;
+        B = InB;
     }
 
-    FR10G10B10A2(float InR, float InG, float InB)
-        : A(0)
-        , R(0)
-        , G(0)
-        , B(0)
+    /**
+     * @brief Constructs FR10G10B10A2 from normalized float RGBA values.
+     * @param InR Red component (0.0f to 1.0f).
+     * @param InG Green component (0.0f to 1.0f).
+     * @param InB Blue component (0.0f to 1.0f).
+     * @param InA Alpha component (0.0f to 1.0f, default is 0).
+     */
+    FR10G10B10A2(float InR, float InG, float InB, float InA = 0.0f)
+        : ARGB(0)
     {
         FVector3 Vector(InR, InG, InB);
         Vector.Normalize();
 
-        R = uint32(FMath::RoundToInt(Vector.x * float(FMath::MaxNum<10>())));
-        G = uint32(FMath::RoundToInt(Vector.y * float(FMath::MaxNum<10>())));
-        B = uint32(FMath::RoundToInt(Vector.z * float(FMath::MaxNum<10>())));
+        Vector.x = FMath::Clamp(Vector.x, 0.0f, 1.0f);
+        Vector.y = FMath::Clamp(Vector.y, 0.0f, 1.0f);
+        Vector.z = FMath::Clamp(Vector.z, 0.0f, 1.0f);
+
+        const float ClampedA = FMath::Clamp(InA, 0.0f, 1.0f);
+
+        R = static_cast<uint32>(FMath::RoundToInt(Vector.x * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
+        G = static_cast<uint32>(FMath::RoundToInt(Vector.y * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
+        B = static_cast<uint32>(FMath::RoundToInt(Vector.z * static_cast<float>(FR10G10B10A2_COLOR_MASK)));
+        A = static_cast<uint32>(FMath::RoundToInt(ClampedA * static_cast<float>(FR10G10B10A2_ALPHA_MASK)));
     }
 
-    uint32 EncodeAsInteger() const 
-    { 
-        return *reinterpret_cast<const uint32*>(this);
-    }
-
-    bool operator==(FR10G10B10A2 RHS) const
+    /**
+     * @brief Packs the ARGB channels into a 32-bit unsigned integer.
+     * @return A 32-bit unsigned integer representing the packed color.
+     */
+    uint32 ToPackedARGB() const
     {
-        return EncodeAsInteger() == RHS.EncodeAsInteger();
+        return ARGB;
     }
 
-    bool operator!=(FR10G10B10A2 RHS) const
+    /**
+     * @brief Equality operator.
+     * @param Other The right-hand side FR10G10B10A2 to compare with.
+     * @return True if all channels are equal.
+     */
+    bool operator==(const FR10G10B10A2& Other) const
     {
-        return EncodeAsInteger() != RHS.EncodeAsInteger();
+        return ARGB == Other.ARGB;
     }
 
-    friend uint64 GetHashForType(FR10G10B10A2 Value) 
+    /**
+     * @brief Inequality operator.
+     * @param Other The right-hand side FR10G10B10A2 to compare with.
+     * @return True if any channel differs.
+     */
+    bool operator!=(const FR10G10B10A2& Other) const
     {
-        return GetHashForType(Value.EncodeAsInteger());
+        return !(*this == Other);
     }
 
-    uint32 A : 2;
-    uint32 R : 10;
-    uint32 G : 10;
-    uint32 B : 10;
+    /**
+     * @brief Hash function for FR10G10B10A2.
+     * @param Value The FR10G10B10A2 value to hash.
+     * @return Hash value.
+     */
+    friend uint64 GetHashForType(const FR10G10B10A2& Value)
+    {
+        // Using a prime multiplier for hashing
+        uint64 hash = 17;
+        hash = hash * 31 + static_cast<uint64>(Value.A);
+        hash = hash * 31 + static_cast<uint64>(Value.R);
+        hash = hash * 31 + static_cast<uint64>(Value.G);
+        hash = hash * 31 + static_cast<uint64>(Value.B);
+        return hash;
+    }
+
+    union
+    {
+        struct
+        {
+            /** @brief 2-bit Alpha channel */
+            uint32 A : FR10G10B10A2_ALPHA_BITS;
+
+            /** @brief 10-bit Red channel */
+            uint32 R : FR10G10B10A2_COLOR_BITS;
+
+            /** @brief 10-bit Green channel */
+            uint32 G : FR10G10B10A2_COLOR_BITS;
+
+            /** @brief 10-bit Blue channel */
+            uint32 B : FR10G10B10A2_COLOR_BITS;
+        };
+
+        uint32 ARGB;
+    };
 };
 
 static_assert(sizeof(FR10G10B10A2) == sizeof(uint32), "FR10G10B10A2 is assumed to have the same size as a uint32");
 MARK_AS_REALLOCATABLE(FR10G10B10A2);
 
+/**
+ * @brief 16-bit Red and 16-bit Green floating-point representation.
+ */
 struct FRG16F
 {
+    /**
+     * @brief Default constructor initializes R and G to zero.
+     */
     FRG16F()
-        : R(0)
-        , G(0)
+        : RG(0)
     {
     }
 
+    /**
+     * @brief Constructs FRG16F with specified channel values.
+     * @param InR 16-bit Red value.
+     * @param InG 16-bit Green value.
+     */
     FRG16F(uint16 InR, uint16 InG)
-        : R(InR)
-        , G(InG)
+        : RG(0)
     {
+        // Assign values directly to the union
+        R = InR;
+        G = InG;
     }
 
+    /**
+     * @brief Constructs FRG16F from normalized float RG values.
+     * @param InR Red component (0.0f to 1.0f).
+     * @param InG Green component (0.0f to 1.0f).
+     */
     FRG16F(float InR, float InG)
-        : R(FFloat16(InR).Encoded)
-        , G(FFloat16(InG).Encoded)
+        : RG(0)
     {
+        // Convert normalized float to 16-bit half-precision
+        R = FFloat16(InR).Encoded;
+        G = FFloat16(InG).Encoded;
     }
 
-    uint32 EncodeAsInteger() const 
+    /**
+     * @brief Packs the RG channels into a 32-bit unsigned integer.
+     * @return A 32-bit unsigned integer representing the packed RG channels.
+     */
+    uint32 ToPackedRG() const 
     { 
-        return *reinterpret_cast<const uint32*>(this);
+        return RG;
     }
 
-    bool operator==(FRG16F RHS) const
+    /**
+     * @brief Equality operator.
+     * @param Other The right-hand side FRG16F to compare with.
+     * @return True if both R and G channels are equal.
+     */
+    bool operator==(const FRG16F& Other) const
     {
-        return EncodeAsInteger() == RHS.EncodeAsInteger();
+        return RG == Other.RG;
     }
 
-    bool operator!=(FRG16F RHS) const
+    /**
+     * @brief Inequality operator.
+     * @param Other The right-hand side FRG16F to compare with.
+     * @return True if either R or G channels differ.
+     */
+    bool operator!=(const FRG16F& Other) const
     {
-        return EncodeAsInteger() != RHS.EncodeAsInteger();
+        return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(FRG16F Value) 
+    /**
+     * @brief Hash function for FRG16F.
+     * @param Value The FRG16F value to hash.
+     * @return Hash value.
+     */
+    friend uint64 GetHashForType(const FRG16F& Value) 
     {
-        return GetHashForType(Value.EncodeAsInteger());
+        return GetHashForType(Value.RG);
     }
 
-    uint16 R;
-    uint16 G;
+    union
+    {
+        struct
+        {
+            /** @brief 16-bit Red channel */
+            uint16 R;
+
+            /** @brief 16-bit Green channel */
+            uint16 G;
+        };
+
+        uint32 RG;
+    };
 };
 
 static_assert(sizeof(FRG16F) == sizeof(uint32), "FRG16F is assumed to have the same size as a uint32");
 MARK_AS_REALLOCATABLE(FRG16F);
 
+/**
+ * @brief 16-bit Alpha, Red, Green, and Blue floating-point representation.
+ */
 struct FRGBA16F
 {
+    /**
+     * @brief Default constructor initializes all channels to zero.
+     */
     FRGBA16F()
-        : A(0)
-        , R(0)
-        , G(0)
-        , B(0)
+        : ARGB(0)
     {
     }
 
+    /**
+     * @brief Constructs FRGBA16F with specified channel values.
+     * @param InA 16-bit Alpha value.
+     * @param InR 16-bit Red value.
+     * @param InG 16-bit Green value.
+     * @param InB 16-bit Blue value.
+     */
     FRGBA16F(uint16 InA, uint16 InR, uint16 InG, uint16 InB)
-        : A(InA)
-        , R(InR)
-        , G(InG)
-        , B(InB)
     {
+        A = InA;
+        R = InR;
+        G = InG;
+        B = InB;
     }
 
+    /**
+     * @brief Constructs FRGBA16F from normalized float ARGB values.
+     * @param InA Alpha component (0.0f to 1.0f).
+     * @param InR Red component (0.0f to 1.0f).
+     * @param InG Green component (0.0f to 1.0f).
+     * @param InB Blue component (0.0f to 1.0f).
+     */
     FRGBA16F(float InA, float InR, float InG, float InB)
-        : A(FFloat16(InA).Encoded)
-        , R(FFloat16(InR).Encoded)
-        , G(FFloat16(InG).Encoded)
-        , B(FFloat16(InB).Encoded)
+        : ARGB(0)
     {
+        A = FFloat16(InA).Encoded;
+        R = FFloat16(InR).Encoded;
+        G = FFloat16(InG).Encoded;
+        B = FFloat16(InB).Encoded;
     }
 
-    uint64 EncodeAsInteger() const 
+    /**
+     * @brief Packs the ARGB channels into a 64-bit unsigned integer.
+     * @return A 64-bit unsigned integer representing the packed ARGB channels.
+     */
+    uint64 ToPackedARGB() const 
     { 
-        return *reinterpret_cast<const uint64*>(this); 
+        return ARGB; 
     }
 
-    bool operator==(FRGBA16F RHS) const
+    /**
+     * @brief Equality operator.
+     * @param Other The right-hand side FRGBA16F to compare with.
+     * @return True if all channels are equal.
+     */
+    bool operator==(const FRGBA16F& Other) const
     {
-        return EncodeAsInteger() == RHS.EncodeAsInteger();
+        return ARGB == Other.ARGB;
     }
 
-    bool operator!=(FRGBA16F RHS) const
+    /**
+     * @brief Inequality operator.
+     * @param Other The right-hand side FRGBA16F to compare with.
+     * @return True if any channel differs.
+     */
+    bool operator!=(const FRGBA16F& Other) const
     {
-        return EncodeAsInteger() != RHS.EncodeAsInteger();
+        return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(FRGBA16F Value) 
+    /**
+     * @brief Hash function for FRGBA16F.
+     * @param Value The FRGBA16F value to hash.
+     * @return Hash value.
+     */
+    friend uint64 GetHashForType(const FRGBA16F& Value) 
     {
-        return GetHashForType(Value.EncodeAsInteger());
+        return GetHashForType(Value.ARGB);
     }
 
-    uint16 A;
-    uint16 R;
-    uint16 G;
-    uint16 B;
+    union
+    {
+        struct 
+        {
+            /** @brief 16-bit Alpha channel */
+            uint16 A;
+
+            /** @brief 16-bit Red channel */
+            uint16 R;
+
+            /** @brief 16-bit Green channel */
+            uint16 G;
+
+            /** @brief 16-bit Blue channel */
+            uint16 B;
+        };
+
+        uint64 ARGB;
+    };
 };
 
 static_assert(sizeof(FRGBA16F) == sizeof(uint64), "FRGBA16F is assumed to have the same size as a uint64");
 MARK_AS_REALLOCATABLE(FRGBA16F);
+
+#pragma pack(pop) // End struct packing
