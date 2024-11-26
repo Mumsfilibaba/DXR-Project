@@ -219,7 +219,7 @@ void FScene::UpdateVisibility()
 
         // Frustum cull the main view
         FAABB Box(Max, Min);
-        if (CameraFrustum.CheckAABB(Box))
+        if (CameraFrustum.IntersectsAABB(Box))
         {
             Component->UpdateFrustumVisbility(true);
             VisiblePrimitives.Add(Component);
@@ -245,7 +245,7 @@ void FScene::UpdateVisibility()
                 bool bIsVisibleSinglePass = false;
                 for (int32 FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
                 {
-                    if (ScenePointLight->Frustums[FaceIndex].CheckAABB(Box))
+                    if (ScenePointLight->Frustums[FaceIndex].IntersectsAABB(Box))
                     {
                         ScenePointLight->Primitives[FaceIndex].Add(Component);
                         bIsVisibleSinglePass = true;
@@ -266,7 +266,7 @@ void FScene::UpdateVisibility()
                 bool bIsVisibleTwoPass = false;
                 for (int32 FaceIndex = 0; FaceIndex < NumFacesPerPass; FaceIndex++)
                 {
-                    if (ScenePointLight->Frustums[FaceIndex].CheckAABB(Box))
+                    if (ScenePointLight->Frustums[FaceIndex].IntersectsAABB(Box))
                     {
                         bIsVisibleTwoPass = true;
                     }
@@ -281,7 +281,7 @@ void FScene::UpdateVisibility()
                 bIsVisibleTwoPass = false;
                 for (int32 FaceIndex = NumFacesPerPass; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex++)
                 {
-                    if (ScenePointLight->Frustums[FaceIndex].CheckAABB(Box))
+                    if (ScenePointLight->Frustums[FaceIndex].IntersectsAABB(Box))
                     {
                         bIsVisibleTwoPass = true;
                     }
