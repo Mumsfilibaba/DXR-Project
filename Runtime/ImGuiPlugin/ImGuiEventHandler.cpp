@@ -298,18 +298,18 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
             FWindowShape WindowShape;
             Window->GetWindowShape(WindowShape);
 
-            CursorPos.x = CursorPos.x - WindowShape.Position.x;
-            CursorPos.y = CursorPos.y - WindowShape.Position.y;
+            CursorPos.X = CursorPos.X - WindowShape.Position.X;
+            CursorPos.Y = CursorPos.Y - WindowShape.Position.Y;
         }
         else
         {
-            CursorPos.x = -TNumericLimits<int32>::Max();
-            CursorPos.y = -TNumericLimits<int32>::Max();
+            CursorPos.X = -TNumericLimits<int32>::Max();
+            CursorPos.Y = -TNumericLimits<int32>::Max();
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
+    UIState.AddMousePosEvent(static_cast<float>(CursorPos.X), static_cast<float>(CursorPos.Y));
     return false;
 }
 

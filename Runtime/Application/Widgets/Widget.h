@@ -36,7 +36,7 @@ struct FRectangle
 
     bool EncapsualtesPoint(const FIntVector2& Point) const
     {
-        return Point.x >= Position.x && Point.y >= Position.y && Point.x <= (Position.x + Width) && Point.y <= (Position.y + Height);
+        return Point.X >= Position.X && Point.Y >= Position.Y && Point.X <= (Position.X + Width) && Point.Y <= (Position.Y + Height);
     }
 
     bool operator==(const FRectangle& Other) const

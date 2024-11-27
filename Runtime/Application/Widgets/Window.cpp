@@ -35,8 +35,8 @@ void FWindow::Tick()
 {
     FRectangle NewContentRectangle;
     NewContentRectangle.Position = CachedPosition;
-    NewContentRectangle.Width    = CachedSize.x;
-    NewContentRectangle.Height   = CachedSize.y;
+    NewContentRectangle.Width    = CachedSize.X;
+    NewContentRectangle.Height   = CachedSize.Y;
     SetContentRectangle(NewContentRectangle);
 
     if (Content)
@@ -145,7 +145,7 @@ void FWindow::MoveTo(const FIntVector2& InPosition)
         // Set the actual size of the platform window
         if (PlatformWindow)
         {
-            PlatformWindow->SetWindowPos(InPosition.x, InPosition.y);
+            PlatformWindow->SetWindowPos(InPosition.X, InPosition.Y);
         }
     }
 }
@@ -163,7 +163,7 @@ void FWindow::Resize(const FIntVector2& InSize)
         // Set the actual size of the platform window
         if (PlatformWindow)
         {
-            FWindowShape WindowShape(InSize.x, InSize.y);
+            FWindowShape WindowShape(InSize.X, InSize.Y);
             PlatformWindow->SetWindowShape(WindowShape, false);
         }
     }
@@ -191,12 +191,12 @@ FIntVector2 FWindow::GetPosition() const
 
 uint32 FWindow::GetWidth() const
 {
-    return static_cast<uint32>(CachedSize.x);
+    return static_cast<uint32>(CachedSize.X);
 }
 
 uint32 FWindow::GetHeight() const
 {
-    return static_cast<uint32>(CachedSize.y);
+    return static_cast<uint32>(CachedSize.Y);
 }
 
 TSharedPtr<FWidget> FWindow::GetOverlay() const

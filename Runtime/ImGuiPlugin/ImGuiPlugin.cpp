@@ -583,8 +583,8 @@ void FImGuiPlugin::Tick(float Delta)
             ImVec2 MousePos = UIState.MousePos;
             if (!ImGuiExtensions::IsMultiViewportEnabled())
             {
-                MousePos.x = MousePos.x - ForegroundWindowPosition.x;
-                MousePos.y = MousePos.y - ForegroundWindowPosition.y;
+                MousePos.x = MousePos.x - ForegroundWindowPosition.X;
+                MousePos.y = MousePos.y - ForegroundWindowPosition.Y;
             }
 
             const FIntVector2 CursorPos = FIntVector2(static_cast<int32>(MousePos.x), static_cast<int32>(MousePos.y));
@@ -595,11 +595,11 @@ void FImGuiPlugin::Tick(float Delta)
             FIntVector2 CursorPos = FApplicationInterface::Get().GetCursorPosition();
             if (!ImGuiExtensions::IsMultiViewportEnabled())
             {
-                CursorPos.x = CursorPos.x - ForegroundWindowPosition.x;
-                CursorPos.y = CursorPos.y - ForegroundWindowPosition.y;
+                CursorPos.X = CursorPos.X - ForegroundWindowPosition.X;
+                CursorPos.Y = CursorPos.Y - ForegroundWindowPosition.Y;
             }
 
-            UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
+            UIState.AddMousePosEvent(static_cast<float>(CursorPos.X), static_cast<float>(CursorPos.Y));
         }
     }
 
@@ -727,10 +727,10 @@ void FImGuiPlugin::UpdateMonitorInfo()
     for (const FMonitorInfo& MonitorInfo : MonitorInfos)
     {
         ImGuiPlatformMonitor ImGuiMonitor;
-        ImGuiMonitor.MainPos  = ImVec2(static_cast<float>(MonitorInfo.MainPosition.x), static_cast<float>(MonitorInfo.MainPosition.y));
-        ImGuiMonitor.MainSize = ImVec2(static_cast<float>(MonitorInfo.MainSize.x), static_cast<float>(MonitorInfo.MainSize.y));
-        ImGuiMonitor.WorkPos  = ImVec2(static_cast<float>(MonitorInfo.WorkPosition.x), static_cast<float>(MonitorInfo.WorkPosition.y));
-        ImGuiMonitor.WorkSize = ImVec2(static_cast<float>(MonitorInfo.WorkSize.x), static_cast<float>(MonitorInfo.WorkSize.y));
+        ImGuiMonitor.MainPos  = ImVec2(static_cast<float>(MonitorInfo.MainPosition.X), static_cast<float>(MonitorInfo.MainPosition.Y));
+        ImGuiMonitor.MainSize = ImVec2(static_cast<float>(MonitorInfo.MainSize.X), static_cast<float>(MonitorInfo.MainSize.Y));
+        ImGuiMonitor.WorkPos  = ImVec2(static_cast<float>(MonitorInfo.WorkPosition.X), static_cast<float>(MonitorInfo.WorkPosition.Y));
+        ImGuiMonitor.WorkSize = ImVec2(static_cast<float>(MonitorInfo.WorkSize.X), static_cast<float>(MonitorInfo.WorkSize.Y));
         ImGuiMonitor.DpiScale = MonitorInfo.DisplayScaling;
 
         ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
@@ -872,7 +872,7 @@ ImVec2 FImGuiPlugin::OnGetPlatformWindowPosition(ImGuiViewport* Viewport)
     CHECK(ViewportData != nullptr);
 
     const FIntVector2 Position = ViewportData->Window->GetPosition();
-    return ImVec2(static_cast<float>(Position.x), static_cast<float>(Position.y));
+    return ImVec2(static_cast<float>(Position.X), static_cast<float>(Position.Y));
 }
 
 void FImGuiPlugin::OnSetPlatformWindowPosition(ImGuiViewport* Viewport, ImVec2 Position)
@@ -890,7 +890,7 @@ ImVec2 FImGuiPlugin::OnGetPlatformWindowSize(ImGuiViewport* Viewport)
     CHECK(ViewportData != nullptr);
 
     const FIntVector2 Size = ViewportData->Window->GetSize();
-    return ImVec2(static_cast<float>(Size.x), static_cast<float>(Size.y));
+    return ImVec2(static_cast<float>(Size.X), static_cast<float>(Size.Y));
 }
 
 void FImGuiPlugin::OnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size)

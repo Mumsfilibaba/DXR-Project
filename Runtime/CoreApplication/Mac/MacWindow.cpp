@@ -61,8 +61,8 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
         CGFloat Width     = static_cast<CGFloat>(InInitializer.Width);
         CGFloat Height    = static_cast<CGFloat>(InInitializer.Height);
-        CGFloat PositionX = static_cast<CGFloat>(InInitializer.Position.x);
-        CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.y);
+        CGFloat PositionX = static_cast<CGFloat>(InInitializer.Position.X);
+        CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.X);
 
         const NSRect WindowRect = FMacApplication::ConvertEngineRectToCocoa(Width, Height, PositionX, PositionY);
         CocoaWindow = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];
@@ -449,7 +449,7 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
             NSRect NewContentRect;
             if (bMove)
             {
-                NewContentRect = NSMakeRect(Shape.Position.x, Shape.Position.y, Shape.Width, Shape.Height);
+                NewContentRect = NSMakeRect(Shape.Position.X, Shape.Position.Y, Shape.Width, Shape.Height);
             }
             else
             {
@@ -486,8 +486,8 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 
     OutWindowShape.Width      = ContentRect.size.width;
     OutWindowShape.Height     = ContentRect.size.height;
-    OutWindowShape.Position.x = ContentRect.origin.x;
-    OutWindowShape.Position.y = ContentRect.origin.y;
+    OutWindowShape.Position.X = ContentRect.origin.x;
+    OutWindowShape.Position.Y = ContentRect.origin.y;
 }
 
 uint32 FMacWindow::GetWidth() const

@@ -154,7 +154,7 @@ void FPlayerInput::SetCursorPosition(const FIntVector2& Position)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursorInterface())
     {
-        Cursor->SetPosition(Position.x, Position.y);
+        Cursor->SetPosition(Position.X, Position.Y);
     }
 }
 

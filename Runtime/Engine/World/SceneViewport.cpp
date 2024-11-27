@@ -46,8 +46,8 @@ bool FSceneViewport::InitializeRHI()
     FRHIViewportInfo ViewportInfo;
     ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
     ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use RGBA for all RHIs except Vulkan?
-    ViewportInfo.Width        = static_cast<uint16>(WindowSize.x);
-    ViewportInfo.Height       = static_cast<uint16>(WindowSize.y);
+    ViewportInfo.Width        = static_cast<uint16>(WindowSize.X);
+    ViewportInfo.Height       = static_cast<uint16>(WindowSize.Y);
 
     FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
     if (!NewViewport)

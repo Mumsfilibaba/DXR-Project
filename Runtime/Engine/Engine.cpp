@@ -93,8 +93,8 @@ bool FEngine::CreateEngineWindow()
 {
     FWindow::FInitializer WindowInitializer;
     WindowInitializer.Title      = "Sandbox";
-    WindowInitializer.Size.x     = CVarViewportWidth.GetValue();
-    WindowInitializer.Size.y     = CVarViewportHeight.GetValue();
+    WindowInitializer.Size.X     = CVarViewportWidth.GetValue();
+    WindowInitializer.Size.Y     = CVarViewportHeight.GetValue();
     WindowInitializer.StyleFlags = EWindowStyleFlags::Default;
     
     EngineWindow = CreateWidget<FWindow>(WindowInitializer);

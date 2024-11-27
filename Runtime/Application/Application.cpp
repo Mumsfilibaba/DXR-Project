@@ -284,30 +284,30 @@ void FApplicationInterface::CreateWindow(const TSharedPtr<FWindow>& InWindow)
     
     // Calculate the maximum position and size of the new window so that if fits in the main monitor bounds.
     const FMonitorInfo& MonitorInfo = MonitorInfos[PrimaryMonitorIndex];
-    if (MonitorInfo.MainPosition.x > WindowInitializer.Position.x)
+    if (MonitorInfo.MainPosition.X > WindowInitializer.Position.X)
     {
-        WindowInitializer.Position.x = MonitorInfo.MainPosition.x;
+        WindowInitializer.Position.X = MonitorInfo.MainPosition.X;
     }
-    if (MonitorInfo.MainPosition.y > WindowInitializer.Position.y)
+    if (MonitorInfo.MainPosition.Y > WindowInitializer.Position.Y)
     {
-        WindowInitializer.Position.y = MonitorInfo.MainPosition.y;
+        WindowInitializer.Position.Y = MonitorInfo.MainPosition.Y;
     }
     
     WindowInitializer.Width  = InWindow->GetWidth();
     WindowInitializer.Height = InWindow->GetHeight();
     
-    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.MainPosition.x + MonitorInfo.MainSize.x);
-    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.MainPosition.y + MonitorInfo.MainSize.y);
-    const uint32 WindowEndX = WindowInitializer.Position.x + WindowInitializer.Width;
-    const uint32 WindowEndY = WindowInitializer.Position.y + WindowInitializer.Height;
+    const uint32 ScreenEndX = static_cast<uint32>(MonitorInfo.MainPosition.X + MonitorInfo.MainSize.X);
+    const uint32 ScreenEndY = static_cast<uint32>(MonitorInfo.MainPosition.Y + MonitorInfo.MainSize.Y);
+    const uint32 WindowEndX = WindowInitializer.Position.X + WindowInitializer.Width;
+    const uint32 WindowEndY = WindowInitializer.Position.Y + WindowInitializer.Height;
     
     if (WindowEndX > ScreenEndX)
     {
-        WindowInitializer.Width = ScreenEndX - WindowInitializer.Position.x;
+        WindowInitializer.Width = ScreenEndX - WindowInitializer.Position.X;
     }
     if (WindowEndY > ScreenEndY)
     {
-        WindowInitializer.Height = ScreenEndY - WindowInitializer.Position.y;
+        WindowInitializer.Height = ScreenEndY - WindowInitializer.Position.Y;
     }
 
     if (PlatformWindow->Initialize(WindowInitializer))
@@ -925,7 +925,7 @@ void FApplicationInterface::SetCursorPosition(const FIntVector2& Position)
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {
-        Cursor->SetPosition(Position.x, Position.y);
+        Cursor->SetPosition(Position.X, Position.Y);
     }
 }
 

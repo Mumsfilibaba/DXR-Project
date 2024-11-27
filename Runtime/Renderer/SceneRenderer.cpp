@@ -514,8 +514,8 @@ void FSceneRenderer::Tick(FScene* Scene)
     GRHICommandExecutor.Tick();
     
     const FIntVector2 CurrentSize = EngineWindow->GetSize();
-    Resources.DesiredWidth  = CurrentSize.x;
-    Resources.DesiredHeight = CurrentSize.y;
+    Resources.DesiredWidth  = CurrentSize.X;
+    Resources.DesiredHeight = CurrentSize.Y;
 
     if (Resources.DesiredWidth != Resources.CurrentWidth || Resources.DesiredHeight != Resources.CurrentHeight)
     {

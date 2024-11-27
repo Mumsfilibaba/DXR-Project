@@ -748,7 +748,7 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
     const FIntVector2 CachedPosition = Window->GetCachedPosition();
-    if (CachedPosition.x != PositionX || CachedPosition.y != PositionY)
+    if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
         MessageHandler->OnWindowMoved(Window, PositionX, PositionY);
         Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
@@ -769,7 +769,7 @@ void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
     const FIntVector2 CachedPosition = Window->GetCachedPosition();
-    if (CachedPosition.x != PositionX || CachedPosition.y != PositionY)
+    if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
         MessageHandler->OnWindowMoved(Window, PositionX, PositionY);
         Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
