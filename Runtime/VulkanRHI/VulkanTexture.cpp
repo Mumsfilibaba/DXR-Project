@@ -132,8 +132,8 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
     ImageCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ImageCreateInfo.imageType             = ConvertTextureDimension(Info.Dimension);
-    ImageCreateInfo.extent.width          = Info.Extent.x;
-    ImageCreateInfo.extent.height         = Info.Extent.y;
+    ImageCreateInfo.extent.width          = Info.Extent.X;
+    ImageCreateInfo.extent.height         = Info.Extent.Y;
     ImageCreateInfo.mipLevels             = Info.NumMipLevels;
     ImageCreateInfo.pQueueFamilyIndices   = nullptr;
     ImageCreateInfo.queueFamilyIndexCount = 0;
@@ -151,12 +151,12 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
 
     if (ImageCreateInfo.imageType == VK_IMAGE_TYPE_3D)
     {
-        ImageCreateInfo.arrayLayers = 1;
-        ImageCreateInfo.extent.depth = Info.Extent.z;
+        ImageCreateInfo.arrayLayers  = 1;
+        ImageCreateInfo.extent.depth = Info.Extent.Z;
     }
     else
     {
-        ImageCreateInfo.arrayLayers = Info.NumArraySlices;
+        ImageCreateInfo.arrayLayers  = Info.NumArraySlices;
         ImageCreateInfo.extent.depth = 1;
     }
     
@@ -314,8 +314,8 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
         InCommandContext->GetBarrierBatcher().AddImageMemoryBarrier(0, ImageBarrier);
 
         // Transfer all the miplevels
-        uint32 Width  = Info.Extent.x;
-        uint32 Height = Info.Extent.y;
+        uint32 Width  = Info.Extent.X;
+        uint32 Height = Info.Extent.Y;
         for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
         {
             // TODO: This does not feel optimal
@@ -524,8 +524,8 @@ FVulkanBackBufferTexture::~FVulkanBackBufferTexture()
 
 void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
 {
-    Info.Extent.x = InWidth;
-    Info.Extent.y = InHeight;
+    Info.Extent.X = InWidth;
+    Info.Extent.Y = InHeight;
     
     const uint32 NumBackBuffers = Viewport->GetNumBackBuffers();
     for (uint32 Index = 0; Index < NumBackBuffers; Index++)

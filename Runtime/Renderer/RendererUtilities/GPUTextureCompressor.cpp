@@ -98,7 +98,7 @@ bool FGPUTextureCompressor::Initialize()
 bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextureRef& Output)
 {
     const FRHITextureInfo SourceInfo = Source->GetInfo();
-    if (!IsBlockCompressedAligned(SourceInfo.Extent.x) || !IsBlockCompressedAligned(SourceInfo.Extent.y))
+    if (!IsBlockCompressedAligned(SourceInfo.Extent.X) || !IsBlockCompressedAligned(SourceInfo.Extent.Y))
     {
         LOG_ERROR("[FGPUTextureCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
         return false;
@@ -108,8 +108,8 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     FRHITextureInfo CompressedTexInfo = SourceInfo;
     CompressedTexInfo.Format       = EFormat::R32G32B32A32_Uint;
     CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccess;
-    CompressedTexInfo.Extent.x     = FMath::DivideByMultiple(SourceInfo.Extent.x, BC_BLOCK_SIZE);
-    CompressedTexInfo.Extent.y     = FMath::DivideByMultiple(SourceInfo.Extent.y, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.X     = FMath::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.Y     = FMath::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
     CompressedTexInfo.NumMipLevels = 1;
 
     FRHITextureRef CompressedTex = RHICreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
@@ -148,19 +148,19 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     CommandList.SetUnorderedAccessView(BC6HCompressionShader.Get(), CompressedTex->GetUnorderedAccessView(), 0);
     CommandList.SetSamplerState(BC6HCompressionShader.Get(), PointSampler.Get(), 0);
 
-    const FVector2 TexSize = FVector2(static_cast<float>(SourceInfo.Extent.x), static_cast<float>(SourceInfo.Extent.y));
+    const FVector2 TexSize = FVector2(static_cast<float>(SourceInfo.Extent.X), static_cast<float>(SourceInfo.Extent.Y));
 
     FCompressionBuffer Buffer;
-    Buffer.TextureSizeInBlocks[0] = FMath::AlignUp(CompressedTexInfo.Extent.x, BC_BLOCK_SIZE);
-    Buffer.TextureSizeInBlocks[1] = FMath::AlignUp(CompressedTexInfo.Extent.y, BC_BLOCK_SIZE);
+    Buffer.TextureSizeInBlocks[0] = FMath::AlignUp(CompressedTexInfo.Extent.X, BC_BLOCK_SIZE);
+    Buffer.TextureSizeInBlocks[1] = FMath::AlignUp(CompressedTexInfo.Extent.Y, BC_BLOCK_SIZE);
     Buffer.TextureSizeRcp         = FVector2(1.0f) / TexSize;
 
     CommandList.Set32BitShaderConstants(BC6HCompressionShader.Get(), &Buffer, FMath::BytesToNum32BitConstants(sizeof(FCompressionBuffer)));
     
     CommandList.TransitionTexture(Source.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
-    const uint32 ThreadGroupsX = FMath::DivideByMultiple(CompressedTexInfo.Extent.x, CS_NUM_THREADS);
-    const uint32 ThreadGroupsY = FMath::DivideByMultiple(CompressedTexInfo.Extent.y, CS_NUM_THREADS);
+    const uint32 ThreadGroupsX = FMath::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);
+    const uint32 ThreadGroupsY = FMath::DivideByMultiple(CompressedTexInfo.Extent.Y, CS_NUM_THREADS);
     CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, 1);
     CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
 
@@ -173,9 +173,9 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     CopyDesc.SrcMipSlice   = 0;
     CopyDesc.SrcPosition   = FIntVector3();
 
-    CopyDesc.Size.x         = CompressedTexInfo.Extent.x;
-    CopyDesc.Size.y         = CompressedTexInfo.Extent.y;
-    CopyDesc.Size.z         = CompressedTexInfo.Extent.z;
+    CopyDesc.Size.X         = CompressedTexInfo.Extent.X;
+    CopyDesc.Size.Y         = CompressedTexInfo.Extent.Y;
+    CopyDesc.Size.Z         = CompressedTexInfo.Extent.Z;
     CopyDesc.NumArraySlices = 1;
     CopyDesc.NumMipLevels   = 1;
 
@@ -190,7 +190,7 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
 bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRHITextureRef& Output)
 {
     const FRHITextureInfo SourceInfo = Source->GetInfo();
-    if (!IsBlockCompressedAligned(SourceInfo.Extent.x) || !IsBlockCompressedAligned(SourceInfo.Extent.y))
+    if (!IsBlockCompressedAligned(SourceInfo.Extent.X) || !IsBlockCompressedAligned(SourceInfo.Extent.Y))
     {
         LOG_ERROR("[FGPUTextureCompressor] Cannot compress a texture with dimensions that are not a multiple of 4");
         return false;
@@ -200,15 +200,15 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     FRHITextureInfo CompressedTexInfo = SourceInfo;
     CompressedTexInfo.Format       = EFormat::R32G32B32A32_Uint;
     CompressedTexInfo.UsageFlags   = ETextureUsageFlags::UnorderedAccess;
-    CompressedTexInfo.Extent.x     = FMath::DivideByMultiple(SourceInfo.Extent.x, BC_BLOCK_SIZE);
-    CompressedTexInfo.Extent.y     = FMath::DivideByMultiple(SourceInfo.Extent.y, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.X     = FMath::DivideByMultiple(SourceInfo.Extent.X, BC_BLOCK_SIZE);
+    CompressedTexInfo.Extent.Y     = FMath::DivideByMultiple(SourceInfo.Extent.Y, BC_BLOCK_SIZE);
 
     // When calculating NumMips we skip 3 miplevels since those are too small for the compressed texture 
     // since they are smaller than the compressed block-size.
     constexpr uint32 NumMipsSkipped = 3;
 
     // Calculate the amount of compressed miplevels
-    CompressedTexInfo.NumMipLevels = FMath::Max<uint32>(FMath::Log2(static_cast<float>(SourceInfo.Extent.x)) - NumMipsSkipped, 1u);
+    CompressedTexInfo.NumMipLevels = FMath::Max<uint32>(FMath::Log2(static_cast<float>(SourceInfo.Extent.X)) - NumMipsSkipped, 1u);
 
     FRHITextureRef CompressedTex = RHICreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
     if (!CompressedTex)
@@ -272,8 +272,8 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
 
     CommandList.TransitionTexture(Source.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
     
-    int32 CurrentFaceSize         = SourceInfo.Extent.x;
-    int32 CurrentFaceSizeInBlocks = CompressedTexInfo.Extent.x;
+    int32 CurrentFaceSize         = SourceInfo.Extent.X;
+    int32 CurrentFaceSizeInBlocks = CompressedTexInfo.Extent.X;
     for (uint32 Index = 0; Index < CompressedTexInfo.NumMipLevels; Index++)
     {
         FRHIUnorderedAccessViewRef CompressedTexUAV = CompressedUAVs[Index];
@@ -289,8 +289,8 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
         CommandList.Set32BitShaderConstants(BC6HCompressionCubeShader.Get(), &Buffer, FMath::BytesToNum32BitConstants(sizeof(FCompressionBuffer)));
 
         const uint32 NumArraySlices = 6;
-        const uint32 ThreadGroupsX  = FMath::DivideByMultiple(CompressedTexInfo.Extent.x, CS_NUM_THREADS);
-        const uint32 ThreadGroupsY  = FMath::DivideByMultiple(CompressedTexInfo.Extent.y, CS_NUM_THREADS);
+        const uint32 ThreadGroupsX  = FMath::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);
+        const uint32 ThreadGroupsY  = FMath::DivideByMultiple(CompressedTexInfo.Extent.Y, CS_NUM_THREADS);
         CommandList.Dispatch(ThreadGroupsX, ThreadGroupsY, NumArraySlices);
 
         CommandList.UnorderedAccessTextureBarrier(CompressedTex.Get());
@@ -306,9 +306,9 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     CopyDesc.SrcPosition    = FIntVector3();
     CopyDesc.SrcArraySlice  = 0;
     CopyDesc.SrcMipSlice    = 0;
-    CopyDesc.Size.x         = CompressedTexInfo.Extent.x;
-    CopyDesc.Size.y         = CompressedTexInfo.Extent.y;
-    CopyDesc.Size.z         = CompressedTexInfo.Extent.z;
+    CopyDesc.Size.X         = CompressedTexInfo.Extent.X;
+    CopyDesc.Size.Y         = CompressedTexInfo.Extent.Y;
+    CopyDesc.Size.Z         = CompressedTexInfo.Extent.Z;
     CopyDesc.NumMipLevels   = CompressedTexInfo.NumMipLevels;
     CopyDesc.NumArraySlices = 1;
 

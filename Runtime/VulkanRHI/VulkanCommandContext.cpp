@@ -1000,9 +1000,9 @@ void FVulkanCommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
         VkImageCopy& ImageCopy = ImageCopies[MipLevel];
         FMemory::Memzero(&ImageCopy, sizeof(ImageCopy));
     
-        ImageCopy.extent.width                  = FMath::Max<uint32>(TextureInfo.Extent.x >> MipLevel, 1u);
-        ImageCopy.extent.height                 = FMath::Max<uint32>(TextureInfo.Extent.y >> MipLevel, 1u);
-        ImageCopy.extent.depth                  = FMath::Max<uint32>(TextureInfo.Extent.z >> MipLevel, 1u);
+        ImageCopy.extent.width                  = FMath::Max<uint32>(TextureInfo.Extent.X >> MipLevel, 1u);
+        ImageCopy.extent.height                 = FMath::Max<uint32>(TextureInfo.Extent.Y >> MipLevel, 1u);
+        ImageCopy.extent.depth                  = FMath::Max<uint32>(TextureInfo.Extent.Z >> MipLevel, 1u);
         ImageCopy.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
         ImageCopy.srcSubresource.mipLevel       = MipLevel;
         ImageCopy.srcSubresource.baseArrayLayer = 0;
@@ -1078,25 +1078,25 @@ void FVulkanCommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* 
             // Describe the source subresource
             CopyInfo.srcSubresource.aspectMask     = GetImageAspectFlagsFromFormat(SrcVulkanTexture->GetVkFormat());
             CopyInfo.srcSubresource.mipLevel       = CopyDesc.SrcMipSlice + MipLevel;
-            CopyInfo.srcOffset.x                   = CopyDesc.SrcPosition.x >> MipLevel;
-            CopyInfo.srcOffset.y                   = CopyDesc.SrcPosition.y >> MipLevel;
-            CopyInfo.srcOffset.z                   = CopyDesc.SrcPosition.z >> MipLevel;
+            CopyInfo.srcOffset.x                   = CopyDesc.SrcPosition.X >> MipLevel;
+            CopyInfo.srcOffset.y                   = CopyDesc.SrcPosition.Y >> MipLevel;
+            CopyInfo.srcOffset.z                   = CopyDesc.SrcPosition.Z >> MipLevel;
             CopyInfo.srcSubresource.baseArrayLayer = SrcBaseArrayLayer + ArrayLayer;
             CopyInfo.srcSubresource.layerCount     = 1;
             
             // Describe the destination subresource
             CopyInfo.dstSubresource.aspectMask     = GetImageAspectFlagsFromFormat(DstVulkanTexture->GetVkFormat());
             CopyInfo.dstSubresource.mipLevel       = CopyDesc.DstMipSlice + MipLevel;
-            CopyInfo.dstOffset.x                   = CopyDesc.DstPosition.x >> MipLevel;
-            CopyInfo.dstOffset.y                   = CopyDesc.DstPosition.y >> MipLevel;
-            CopyInfo.dstOffset.z                   = CopyDesc.DstPosition.z >> MipLevel;
+            CopyInfo.dstOffset.x                   = CopyDesc.DstPosition.X >> MipLevel;
+            CopyInfo.dstOffset.y                   = CopyDesc.DstPosition.Y >> MipLevel;
+            CopyInfo.dstOffset.z                   = CopyDesc.DstPosition.Z >> MipLevel;
             CopyInfo.dstSubresource.baseArrayLayer = DstBaseArrayLayer + ArrayLayer;
             CopyInfo.dstSubresource.layerCount     = 1;
             
             // Size of this mip-slice
-            CopyInfo.extent.width  = FMath::Max(CopyDesc.Size.x >> MipLevel, 1);
-            CopyInfo.extent.height = FMath::Max(CopyDesc.Size.y >> MipLevel, 1);
-            CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.z >> MipLevel, 1);
+            CopyInfo.extent.width  = FMath::Max(CopyDesc.Size.X >> MipLevel, 1);
+            CopyInfo.extent.height = FMath::Max(CopyDesc.Size.Y >> MipLevel, 1);
+            CopyInfo.extent.depth  = FMath::Max(CopyDesc.Size.Z >> MipLevel, 1);
         }
         
         GetCommandBuffer()->CopyImage(SrcVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, DstVulkanTexture->GetVkImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, CopyDesc.NumMipLevels, ImageCopy);
@@ -1170,7 +1170,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
     }
 
     VkImage    VulkanImage       = VulkanTexture->GetVkImage();
-    VkExtent2D SourceExtent      = { static_cast<uint32>(TextureInfo.Extent.x), static_cast<uint32>(TextureInfo.Extent.y) };
+    VkExtent2D SourceExtent      = { static_cast<uint32>(TextureInfo.Extent.X), static_cast<uint32>(TextureInfo.Extent.Y) };
     VkExtent2D DestinationExtent = {};
     
     // Setup TransitionBarrier since these parameters will be the same for all MipLevels

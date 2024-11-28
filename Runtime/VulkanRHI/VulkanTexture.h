@@ -62,8 +62,8 @@ public:
     // TODO: Solve in a cleaner way and remove this function
     void Resize(uint32 InWidth, uint32 InHeight)
     {
-        Info.Extent.x = InWidth;
-        Info.Extent.y = InHeight;
+        Info.Extent.X = InWidth;
+        Info.Extent.Y = InHeight;
     }
 
 protected:
