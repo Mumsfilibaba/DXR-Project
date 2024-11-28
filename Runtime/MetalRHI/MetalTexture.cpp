@@ -47,7 +47,7 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         TextureDescriptor.arrayLength = FMath::Max(Info.Extent.Z, 1);
     }
     
-    id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
+    id<MTLDevice>  Device = GetDeviceContext()->GetMTLDevice();
     id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
     if (!NewTexture)
     {

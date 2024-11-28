@@ -9,18 +9,28 @@
     #define USE_VECTOR_MATH (1)
 
     #if PLATFORM_SUPPORT_SSE4_2_INTRIN
+        #define USE_INT_VECTOR_MATH (1)
+
         #include "Core/Math/VectorMath/VectorMathSSE4_2.h"
         typedef FVectorMathSSE4_2 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE4_1_INTRIN
+        #define USE_INT_VECTOR_MATH (1)
+
         #include "Core/Math/VectorMath/VectorMathSSE4_1.h"
         typedef FVectorMathSSE4_1 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSSE3_INTRIN
+        #define USE_INT_VECTOR_MATH (1)
+
         #include "Core/Math/VectorMath/VectorMathSSSE3.h"
         typedef FVectorMathSSSE3 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE3_INTRIN
+        #define USE_INT_VECTOR_MATH (1)
+
         #include "Core/Math/VectorMath/VectorMathSSE3.h"
         typedef FVectorMathSSE3 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE2_INTRIN
+        #define USE_INT_VECTOR_MATH (1)
+
         #include "Core/Math/VectorMath/VectorMathSSE2.h"
         typedef FVectorMathSSE2 FPlatformVectorMath;
     #else
@@ -160,6 +170,16 @@ struct FVectorMath : public FPlatformVectorMath
     static FORCEINLINE FFloat128 VECTORCALL VectorHorizontalAdd(FFloat128 Vector) noexcept
     {
         return VectorHorizontalAdd(Vector, Vector);
+    }
+
+    static FORCEINLINE FFloat128 VECTORCALL VectorClamp(FFloat128 Value, FFloat128 MinValue, FFloat128 MaxValue) noexcept
+    {
+        return VectorMin(MinValue, VectorMax(MaxValue, Value));
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorClampInt(FInt128 Value, FInt128 MinValue, FInt128 MaxValue) noexcept
+    {
+        return VectorMinInt(MinValue, VectorMaxInt(MaxValue, Value));
     }
 
     static FORCEINLINE FFloat128 VECTORCALL Matrix2Mul(FFloat128 MatrixA, FFloat128 MatrixB)

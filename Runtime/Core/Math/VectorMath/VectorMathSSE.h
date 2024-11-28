@@ -45,34 +45,19 @@ struct FVectorMathSSE
         return _mm_setzero_ps();
     }
 
-    static FORCEINLINE FInt128 VECTORCALL VectorLoadInt(const int32* Source) noexcept
-    {
-        return _mm_load_si128(reinterpret_cast<const __m128i*>(Source));
-    }
-
-    static FORCEINLINE FInt128 VECTORCALL VectorSetInt(int32 x, int32 y, int32 z, int32 w) noexcept
-    {
-        return _mm_set_epi32(w, z, y, x);
-    }
-
-    static FORCEINLINE FInt128 VECTORCALL VectorSetInt1(int32 Scalar) noexcept
-    {
-        return _mm_set1_epi32(Scalar);
-    }
-
-    static FORCEINLINE FFloat128 VECTORCALL VectorIntToFloat(FInt128 Vector) noexcept
-    {
-        return _mm_castsi128_ps(Vector);
-    }
-
-    static FORCEINLINE FInt128 VECTORCALL VectorFloatToInt(FFloat128 Vector) noexcept
-    {
-        return _mm_castps_si128(Vector);
-    }
-
     static FORCEINLINE void VECTORCALL VectorStore(FFloat128 Vector, float* Dest) noexcept
     {
-        return _mm_store_ps(Dest, Vector);
+        _mm_store_ps(Dest, Vector);
+    }
+
+    static FORCEINLINE void VECTORCALL VectorStore3(FFloat128 Vector, float* Dest) noexcept
+    {
+        ALIGN_AS(16) float Array[4];
+        _mm_store_ps(Array, Vector);
+
+        Dest[0] = Array[0];
+        Dest[1] = Array[1];
+        Dest[2] = Array[2];
     }
 
     template<uint8 ComponentIndexX, uint8 ComponentIndexY, uint8 ComponentIndexZ, uint8 ComponentIndexW>
@@ -260,31 +245,31 @@ struct FVectorMathSSE
 
     static FORCEINLINE bool VECTORCALL VectorEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const auto Mask = _mm_movemask_ps(_mm_cmpeq_ps(VectorA, VectorB));
+        int32 Mask = _mm_movemask_ps(_mm_cmpeq_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
     static FORCEINLINE bool VECTORCALL VectorGreaterThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const auto Mask = _mm_movemask_ps(_mm_cmpgt_ps(VectorA, VectorB));
+        int32 Mask = _mm_movemask_ps(_mm_cmpgt_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
     static FORCEINLINE bool VECTORCALL VectorGreaterThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const auto Mask = _mm_movemask_ps(_mm_cmpge_ps(VectorA, VectorB));
+        int32 Mask = _mm_movemask_ps(_mm_cmpge_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
     static FORCEINLINE bool VECTORCALL VectorLessThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const auto Mask = _mm_movemask_ps(_mm_cmplt_ps(VectorA, VectorB));
+        int32 Mask = _mm_movemask_ps(_mm_cmplt_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
     static FORCEINLINE bool VECTORCALL VectorLessThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
-        const auto Mask = _mm_movemask_ps(_mm_cmple_ps(VectorA, VectorB));
+        int32 Mask = _mm_movemask_ps(_mm_cmple_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 

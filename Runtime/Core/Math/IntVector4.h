@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Math/MathCommon.h"
+#include "Core/Math/VectorMath/VectorMath.h"
 
 class FInt16Vector4
 {
@@ -477,7 +478,18 @@ public:
      */
     FIntVector4 operator-() const noexcept
     {
-        return FIntVector4(-X, -Y, -Z, -W);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(-X, -Y, -Z, -W);
+    #else
+        FInt128 Zero_128   = FVectorMath::VectorZeroInt();
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Result_128 = FVectorMath::VectorSubInt(Zero_128, XYZW_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -487,7 +499,18 @@ public:
      */
     FIntVector4 operator+(const FIntVector4& Other) const noexcept
     {
-        return FIntVector4(X + Other.X, Y + Other.Y, Z + Other.Z, W + Other.W);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(X + Other.X, Y + Other.Y, Z + Other.Z, W + Other.W);
+    #else
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Other_128  = FVectorMath::VectorLoadInt(Other.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorAddInt(XYZW_128, Other_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -497,10 +520,18 @@ public:
      */
     FIntVector4& operator+=(const FIntVector4& Other) noexcept
     {
+    #if !USE_INT_VECTOR_MATH
         X += Other.X;
         Y += Other.Y;
         Z += Other.Z;
         W += Other.W;
+    #else
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Other_128  = FVectorMath::VectorLoadInt(Other.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorAddInt(XYZW_128, Other_128);
+        FVectorMath::VectorStoreInt(Result_128, XYZW);
+    #endif
+
         return *this;
     }
 
@@ -511,7 +542,18 @@ public:
      */
     FIntVector4 operator+(int32 Scalar) const noexcept
     {
-        return FIntVector4(X + Scalar, Y + Scalar, Z + Scalar, W + Scalar);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(X + Scalar, Y + Scalar, Z + Scalar, W + Scalar);
+    #else
+        FInt128 XYZW_128    = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Scalars_128 = FVectorMath::VectorSetInt1(Scalar);
+        FInt128 Result_128  = FVectorMath::VectorAddInt(XYZW_128, Scalars_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -521,10 +563,18 @@ public:
      */
     FIntVector4& operator+=(int32 Scalar) noexcept
     {
+    #if !USE_INT_VECTOR_MATH
         X += Scalar;
         Y += Scalar;
         Z += Scalar;
         W += Scalar;
+    #else
+        FInt128 XYZW_128    = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Scalars_128 = FVectorMath::VectorSetInt1(Scalar);
+        FInt128 Result_128  = FVectorMath::VectorAddInt(XYZW_128, Scalars_128);
+        FVectorMath::VectorStoreInt(Result_128, XYZW);
+    #endif
+
         return *this;
     }
 
@@ -535,7 +585,18 @@ public:
      */
     FIntVector4 operator-(const FIntVector4& Other) const noexcept
     {
-        return FIntVector4(X - Other.X, Y - Other.Y, Z - Other.Z, W - Other.W);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(X - Other.X, Y - Other.Y, Z - Other.Z, W - Other.W);
+    #else
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Other_128  = FVectorMath::VectorLoadInt(Other.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorSubInt(XYZW_128, Other_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -545,10 +606,18 @@ public:
      */
     FIntVector4& operator-=(const FIntVector4& Other) noexcept
     {
+    #if !USE_INT_VECTOR_MATH
         X -= Other.X;
         Y -= Other.Y;
         Z -= Other.Z;
         W -= Other.W;
+    #else
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Other_128  = FVectorMath::VectorLoadInt(Other.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorSubInt(XYZW_128, Other_128);
+        FVectorMath::VectorStoreInt(Result_128, XYZW);
+    #endif
+
         return *this;
     }
 
@@ -559,7 +628,18 @@ public:
      */
     FIntVector4 operator-(int32 Scalar) const noexcept
     {
-        return FIntVector4(X - Scalar, Y - Scalar, Z - Scalar, W - Scalar);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(X - Scalar, Y - Scalar, Z - Scalar, W - Scalar);
+    #else
+        FInt128 XYZW_128    = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Scalars_128 = FVectorMath::VectorSetInt1(Scalar);
+        FInt128 Result_128  = FVectorMath::VectorSubInt(XYZW_128, Scalars_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -569,10 +649,18 @@ public:
      */
     FIntVector4& operator-=(int32 Scalar) noexcept
     {
+    #if !USE_INT_VECTOR_MATH
         X -= Scalar;
         Y -= Scalar;
         Z -= Scalar;
         W -= Scalar;
+    #else
+        FInt128 XYZW_128    = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Scalars_128 = FVectorMath::VectorSetInt1(Scalar);
+        FInt128 Result_128  = FVectorMath::VectorSubInt(XYZW_128, Scalars_128);
+        FVectorMath::VectorStoreInt(Result_128, XYZW);
+    #endif
+
         return *this;
     }
 
@@ -583,7 +671,18 @@ public:
      */
     FIntVector4 operator*(const FIntVector4& Other) const noexcept
     {
-        return FIntVector4(X * Other.X, Y * Other.Y, Z * Other.Z, W * Other.W);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(X * Other.X, Y * Other.Y, Z * Other.Z, W * Other.W);
+    #else
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Other_128  = FVectorMath::VectorLoadInt(Other.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorMulInt(XYZW_128, Other_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -593,10 +692,18 @@ public:
      */
     FIntVector4& operator*=(const FIntVector4& Other) noexcept
     {
+    #if !USE_INT_VECTOR_MATH
         X *= Other.X;
         Y *= Other.Y;
         Z *= Other.Z;
         W *= Other.W;
+    #else
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Other_128  = FVectorMath::VectorLoadInt(Other.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorMulInt(XYZW_128, Other_128);
+        FVectorMath::VectorStoreInt(Result_128, XYZW);
+    #endif
+
         return *this;
     }
 
@@ -607,7 +714,18 @@ public:
      */
     FIntVector4 operator*(int32 Scalar) const noexcept
     {
-        return FIntVector4(X * Scalar, Y * Scalar, Z * Scalar, W * Scalar);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(X * Scalar, Y * Scalar, Z * Scalar, W * Scalar);
+    #else
+        FInt128 XYZW_128    = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Scalars_128 = FVectorMath::VectorSetInt1(Scalar);
+        FInt128 Result_128  = FVectorMath::VectorMulInt(XYZW_128, Scalars_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -617,10 +735,18 @@ public:
      */
     FIntVector4& operator*=(int32 Scalar) noexcept
     {
+    #if !USE_INT_VECTOR_MATH
         X *= Scalar;
         Y *= Scalar;
         Z *= Scalar;
         W *= Scalar;
+    #else
+        FInt128 XYZW_128    = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Scalars_128 = FVectorMath::VectorSetInt1(Scalar);
+        FInt128 Result_128  = FVectorMath::VectorMulInt(XYZW_128, Scalars_128);
+        FVectorMath::VectorStoreInt(Result_128, XYZW);
+    #endif
+
         return *this;
     }
 
@@ -683,7 +809,13 @@ public:
      */
     bool operator==(const FIntVector4& Other) const noexcept
     {
+    #if !USE_INT_VECTOR_MATH
         return (X == Other.X) && (Y == Other.Y) && (Z == Other.Z) && (W == Other.W);
+    #else
+        FInt128 XYZW_128   = FVectorMath::VectorLoadInt(XYZW);
+        FInt128 Other_128  = FVectorMath::VectorLoadInt(Other.XYZW);
+        return FVectorMath::VectorEqualInt(XYZW_128, Other_128);
+    #endif
     }
 
     /**
@@ -706,7 +838,18 @@ public:
      */
     static FIntVector4 Min(const FIntVector4& LHS, const FIntVector4& RHS) noexcept
     {
-        return FIntVector4(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z), FMath::Min(LHS.W, RHS.W));
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z), FMath::Min(LHS.W, RHS.W));
+    #else
+        FInt128 LHS_128    = FVectorMath::VectorLoadInt(LHS.XYZW);
+        FInt128 RHS_128    = FVectorMath::VectorLoadInt(RHS.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorMinInt(LHS_128, RHS_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -717,7 +860,18 @@ public:
      */
     static FIntVector4 Max(const FIntVector4& LHS, const FIntVector4& RHS) noexcept
     {
-        return FIntVector4(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z), FMath::Max(LHS.W, RHS.W));
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z), FMath::Max(LHS.W, RHS.W));
+    #else
+        FInt128 LHS_128    = FVectorMath::VectorLoadInt(LHS.XYZW);
+        FInt128 RHS_128    = FVectorMath::VectorLoadInt(RHS.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorMaxInt(LHS_128, RHS_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**
@@ -729,7 +883,19 @@ public:
      */
     static FIntVector4 Clamp(const FIntVector4& Value, const FIntVector4& Min, const FIntVector4& Max) noexcept
     {
-        return FIntVector4(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z), FMath::Clamp(Value.W, Min.W, Max.W));
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z), FMath::Clamp(Value.W, Min.W, Max.W));
+    #else
+        FInt128 Value_128  = FVectorMath::VectorLoadInt(Value.XYZW);
+        FInt128 Min_128    = FVectorMath::VectorLoadInt(Min.XYZW);
+        FInt128 Max_128    = FVectorMath::VectorLoadInt(Max.XYZW);
+        FInt128 Result_128 = FVectorMath::VectorClampInt(Value_128, Min_128, Max_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
 public:
@@ -753,7 +919,18 @@ public:
      */
     friend FIntVector4 operator-(int32 Scalar, const FIntVector4& Vector) noexcept
     {
-        return FIntVector4(Scalar - Vector.X, Scalar - Vector.Y, Scalar - Vector.Z, Scalar - Vector.W);
+        FIntVector4 Result;
+
+    #if !USE_INT_VECTOR_MATH
+        Result = FIntVector4(Scalar - Vector.X, Scalar - Vector.Y, Scalar - Vector.Z, Scalar - Vector.W);
+    #else
+        FInt128 Vector_128  = FVectorMath::VectorLoadInt(Vector.XYZW);
+        FInt128 Scalars_128 = FVectorMath::VectorSetInt1(Scalar);
+        FInt128 Result_128  = FVectorMath::VectorSubInt(Scalars_128, Vector_128);
+        FVectorMath::VectorStoreInt(Result_128, Result.XYZW);
+    #endif
+
+        return Result;
     }
 
     /**

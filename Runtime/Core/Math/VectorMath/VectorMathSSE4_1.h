@@ -16,8 +16,22 @@ struct FVectorMathSSE4_1 : public FVectorMathSSSE3
     {
         // Mask 0xFF ensures all components participate in the dot product, and the result is replicated across all components.
         static constexpr int32 Mask = 0xFF;
-
         return _mm_dp_ps(VectorA, VectorB, Mask);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorMulInt(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        return _mm_mullo_epi32(VectorA, VectorB);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorMinInt(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        return _mm_min_epi32(VectorA, VectorB);
+    }
+
+    static FORCEINLINE FInt128 VECTORCALL VectorMaxInt(FInt128 VectorA, FInt128 VectorB) noexcept
+    {
+        return _mm_max_epi32(VectorA, VectorB);
     }
 };
 
