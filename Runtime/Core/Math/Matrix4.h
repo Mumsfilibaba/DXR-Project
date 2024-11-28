@@ -312,8 +312,8 @@ public:
         FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
         FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
 
-        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Matrix2Mul(_1, dc));
-        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Matrix2Mul(_2, ab));
+        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::MatrixMul2x2(_1, dc));
+        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::MatrixMul2x2(_2, ab));
 
         FFloat128 DetM = FVectorMath::VectorMul(DetA, DetD);
 
@@ -442,8 +442,8 @@ public:
         FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
         FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
 
-        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::Matrix2Mul(_1, dc));
-        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::Matrix2Mul(_2, ab));
+        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::MatrixMul2x2(_1, dc));
+        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::MatrixMul2x2(_2, ab));
 
         FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Matrix2MulAdjoint(_3, ab));
         FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Matrix2MulAdjoint(_0, dc));
@@ -651,17 +651,17 @@ public:
      */
     FORCEINLINE void SetRotationAndScale(const FMatrix3& RotationAndScale) noexcept
     {
-        m00 = RotationAndScale.m00;
-        m01 = RotationAndScale.m01;
-        m02 = RotationAndScale.m02;
+        m00 = RotationAndScale.M[0][0];
+        m01 = RotationAndScale.M[0][1];
+        m02 = RotationAndScale.M[0][2];
 
-        m10 = RotationAndScale.m10;
-        m11 = RotationAndScale.m11;
-        m12 = RotationAndScale.m12;
+        m10 = RotationAndScale.M[1][0];
+        m11 = RotationAndScale.M[1][1];
+        m12 = RotationAndScale.M[1][2];
 
-        m20 = RotationAndScale.m20;
-        m21 = RotationAndScale.m21;
-        m22 = RotationAndScale.m22;
+        m20 = RotationAndScale.M[2][0];
+        m21 = RotationAndScale.M[2][1];
+        m22 = RotationAndScale.M[2][2];
     }
 
     /**

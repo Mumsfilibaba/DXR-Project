@@ -2,167 +2,169 @@
 #include "Core/Math/Vector2.h"
 #include "Core/Math/VectorMath/VectorMath.h"
 
+/** @brief 2D Matrix class with float components. */
 class VECTOR_ALIGN FMatrix2
 {
 public:
 
-    /** 
-     * @brief - Default constructor (Initialize components to zero) 
-     */
-    FORCEINLINE FMatrix2() noexcept 
-        : m00(0.0f), m01(0.0f)
-        , m10(0.0f), m11(0.0f)
+    /** @brief Default constructor (Initialize components to zero) */
+    FMatrix2() noexcept 
+        : M{ {0.0f, 0.0f}, {0.0f, 0.0f} }
     {
     }
 
     /**
-     * @brief          - Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
-     * @param Diagonal - Value to set on the diagonal
+     * @brief Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
+     * @param Diagonal Value to set on the diagonal
      */
-    FORCEINLINE explicit FMatrix2(float Diagonal) noexcept
-        : m00(Diagonal), m01(0.0f)
-        , m10(0.0f), m11(Diagonal)
+    explicit FMatrix2(float Diagonal) noexcept
+        : M{ {Diagonal, 0.0f}, {0.0f, Diagonal} }
     {
     }
 
     /**
-     * @brief      - Constructor initializing all values with vectors specifying each row
-     * @param Row0 - Vector to set the first row to
-     * @param Row1 - Vector to set the second row to
+     * @brief Constructor initializing all values with vectors specifying each row
+     * @param Row0 Vector to set the first row to
+     * @param Row1 Vector to set the second row to
      */
-    FORCEINLINE explicit FMatrix2(const FVector2& Row0, const FVector2& Row1) noexcept
-        : m00(Row0.x), m01(Row0.y)
-        , m10(Row1.x), m11(Row1.y)
+    explicit FMatrix2(const FVector2& Row0, const FVector2& Row1) noexcept
+        : M{ {Row0.x, Row0.y}, {Row1.x, Row1.y} }
     {
     }
 
     /**
-     * @brief      - Constructor initializing all values with corresponding value
-     * @param In00 - Value to set on row 0 and column 0
-     * @param In01 - Value to set on row 0 and column 1
-     * @param In10 - Value to set on row 1 and column 0
-     * @param In11 - Value to set on row 1 and column 1
+     * @brief Constructor initializing all values with corresponding values
+     * @param M00 Value to set on row 0 and column 0
+     * @param M01 Value to set on row 0 and column 1
+     * @param M10 Value to set on row 1 and column 0
+     * @param M11 Value to set on row 1 and column 1
      */
-    FORCEINLINE explicit FMatrix2(float In00, float In01, float In10, float In11) noexcept
-        : m00(In00), m01(In01)
-        , m10(In10), m11(In11)
+    explicit FMatrix2(float M00, float M01, float M10, float M11) noexcept
+        : M{ {M00, M01}, {M10, M11} }
     {
     }
 
     /**
-     * @brief     - Constructor initializing all components with an array
-     * @param Arr - Array with at least 4 elements
+     * @brief Constructor initializing all components with an array
+     * @param Array Array with at least 4 elements
      */
-    FORCEINLINE explicit FMatrix2(const float* Arr) noexcept
-        : m00(Arr[0]), m01(Arr[1])
-        , m10(Arr[2]), m11(Arr[3])
+    explicit FMatrix2(const float* Array) noexcept
     {
+        CHECK(Array != nullptr);
+        M[0][0] = Array[0];
+        M[0][1] = Array[1];
+        M[1][0] = Array[2];
+        M[1][1] = Array[3];
     }
 
     /**
-     * @brief  - Returns the transposed version of this matrix
-     * @return - Transposed matrix
+     * @brief Returns the transposed version of this matrix
+     * @return Transposed matrix
      */
-    inline FMatrix2 Transpose() const noexcept
+    FMatrix2 GetTranspose() const noexcept
     {
         FMatrix2 Transpose;
 
     #if !USE_VECTOR_MATH
-        Transpose.f[0][0] = f[0][0];
-        Transpose.f[0][1] = f[1][0];
-        Transpose.f[1][0] = f[0][1];
-        Transpose.f[1][1] = f[1][1];
+        Transpose.M[0][0] = M[0][0];
+        Transpose.M[0][1] = M[1][0];
+        Transpose.M[1][0] = M[0][1];
+        Transpose.M[1][1] = M[1][1];
     #else
-        FFloat128 This = FVectorMath::VectorLoad(reinterpret_cast<const float*>(this));
-        This = FVectorMath::VectorShuffle<0, 2, 1, 3>(This);
-        FVectorMath::VectorStore(This, reinterpret_cast<float*>(&Transpose));
+        FFloat128 M_128      = FVectorMath::VectorLoad(&M[0][0]);
+        FFloat128 Result_128 = FVectorMath::VectorShuffle<0, 2, 1, 3>(M_128);
+        FVectorMath::VectorStore(Result_128, &Transpose.M[0][0]);
     #endif
 
         return Transpose;
     }
 
     /**
-     * @brief  - Returns the inverted version of this matrix
-     * @return - Inverse matrix
+     * @brief Returns the inverted version of this matrix
+     * @return Inverse matrix
      */
-    inline FMatrix2 Invert() const noexcept
+    FMatrix2 GetInverse() const noexcept
     {
         FMatrix2 Inverse;
 
-        const float fDeterminant = (m00 * m11) - (m01 * m10);
+        const float Determinant = GetDeterminant();
+        CHECK(Determinant != 0.0f);
+
     #if !USE_VECTOR_MATH
-        const float RecipDeterminant = 1.0f / fDeterminant;
+        const float RcpDeterminant = 1.0f / Determinant;
 
-        Inverse.m00 =  m11 * RecipDeterminant;
-        Inverse.m10 = -m10 * RecipDeterminant;
-        Inverse.m01 = -m01 * RecipDeterminant;
-        Inverse.m11 =  m00 * RecipDeterminant;
+        Inverse.M[0][0] =  M[1][1] * RcpDeterminant;
+        Inverse.M[1][0] = -M[1][0] * RcpDeterminant;
+        Inverse.M[0][1] = -M[0][1] * RcpDeterminant;
+        Inverse.M[1][1] =  M[0][0] * RcpDeterminant;
     #else
-        FFloat128 This = FVectorMath::VectorLoad(reinterpret_cast<const float*>(this));
-        This = FVectorMath::VectorShuffle<3, 2, 1, 0>(This);
+        FFloat128 M_128   = FVectorMath::VectorLoad(&M[0][0]);
+        FFloat128 VectorA = FVectorMath::VectorShuffle<3, 2, 1, 0>(M_128);
 
-        constexpr int32 Keep   = 0;
-        constexpr int32 Negate = (1 << 31);
+        constexpr int32 KeepMask   = 0;
+        constexpr int32 NegateMask = (1 << 31);
 
-        FInt128 Mask = FVectorMath::VectorSetInt(Keep, Negate, Negate, Keep);
-        This = FVectorMath::VectorOr(This, FVectorMath::VectorIntToFloat(Mask));
-
-        FFloat128 RcpDeterminant = FVectorMath::VectorRecip(FVectorMath::VectorSet1(fDeterminant));
-        This = FVectorMath::VectorMul(This, RcpDeterminant);
-        FVectorMath::VectorStore(This, reinterpret_cast<float*>(&Inverse));
+        FInt128   Mask_128       = FVectorMath::VectorSetInt(KeepMask, NegateMask, NegateMask, KeepMask);
+        FFloat128 VectorB        = FVectorMath::VectorOr(VectorA, FVectorMath::VectorIntToFloat(Mask_128));
+        FFloat128 RcpDeterminant = FVectorMath::VectorRecip(FVectorMath::VectorSet1(Determinant));
+        FFloat128 Result_128     = FVectorMath::VectorMul(VectorB, RcpDeterminant);
+        FVectorMath::VectorStore(Result_128, &Inverse.M[0][0]);
     #endif
 
         return Inverse;
     }
 
     /**
-     * @brief  - Returns the adjugate of this matrix
-     * @return - Adjugate matrix
+     * @brief Returns the adjugate of this matrix
+     * @return Adjugate matrix
      */
-    FORCEINLINE FMatrix2 Adjoint() const noexcept
+    FMatrix2 GetAdjoint() const noexcept
     {
         FMatrix2 Adjugate;
 
     #if !USE_VECTOR_MATH
-        Adjugate.m00 =  m11;
-        Adjugate.m10 = -m10;
-        Adjugate.m01 = -m01;
-        Adjugate.m11 =  m00;
+        Adjugate.M[0][0] =  M[1][1];
+        Adjugate.M[1][0] = -M[1][0];
+        Adjugate.M[0][1] = -M[0][1];
+        Adjugate.M[1][1] =  M[0][0];
     #else
-        FFloat128 This = FVectorMath::VectorLoad(reinterpret_cast<const float*>(this));
-        This = FVectorMath::VectorShuffle<3, 2, 1, 0>(This);
+        FFloat128 M_128   = FVectorMath::VectorLoad(&M[0][0]);
+        FFloat128 VectorA = FVectorMath::VectorShuffle<3, 2, 1, 0>(M_128);
 
-        constexpr int32 Keep   = 0;
-        constexpr int32 Negate = (1 << 31);
+        constexpr int32 KeepMask   = 0;
+        constexpr int32 NegateMask = (1 << 31);
 
-        FInt128 Mask = FVectorMath::VectorSetInt(Keep, Negate, Negate, Keep);
-        This = FVectorMath::VectorOr(This, FVectorMath::VectorIntToFloat(Mask));
-        FVectorMath::VectorStore(This, reinterpret_cast<float*>(&Adjugate));
+        FInt128   Mask_128   = FVectorMath::VectorSetInt(KeepMask, NegateMask, NegateMask, KeepMask);
+        FFloat128 Result_128 = FVectorMath::VectorOr(VectorA, FVectorMath::VectorIntToFloat(Mask_128));
+        FVectorMath::VectorStore(Result_128, &Adjugate.M[0][0]);
     #endif
 
         return Adjugate;
     }
 
     /**
-     * @brief  - Returns the determinant of this matrix
-     * @return - The determinant
+     * @brief Returns the determinant of this matrix
+     * @return The determinant
      */
-    FORCEINLINE float Determinant() const noexcept
+    float GetDeterminant() const noexcept
     {
-        return (m00 * m11) - (m01 * m10);
+        return (M[0][0] * M[1][1]) - (M[0][1] * M[1][0]);
     }
 
     /**
-     * @brief  - Checks weather this matrix has any value that equals NaN
-     * @return - True if the any value equals NaN, false if not
+     * @brief Checks whether this matrix has any value that equals NaN
+     * @return True if any value equals NaN, false if not
      */
-    bool HasNaN() const noexcept
+    bool ContainsNaN() const noexcept
     {
-        for (int32 Index = 0; Index < 4; ++Index)
+        for (int32 Row = 0; Row < 2; ++Row)
         {
-            if (FMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
+            for (int32 Col = 0; Col < 2; ++Col)
             {
-                return true;
+                if (FMath::IsNaN(M[Row][Col]))
+                {
+                    return true;
+                }
             }
         }
 
@@ -170,16 +172,19 @@ public:
     }
 
     /**
-     * @brief  - Checks weather this matrix has any value that equals infinity
-     * @return - True if the any value equals infinity, false if not
+     * @brief Checks whether this matrix has any value that equals infinity
+     * @return True if any value equals infinity, false if not
      */
-    bool HasInfinity() const noexcept
+    bool ContainsInfinity() const noexcept
     {
-        for (int32 Index = 0; Index < 4; ++Index)
+        for (int32 Row = 0; Row < 2; ++Row)
         {
-            if (FMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
+            for (int32 Col = 0; Col < 2; ++Col)
             {
-                return true;
+                if (FMath::IsInfinity(M[Row][Col]))
+                {
+                    return true;
+                }
             }
         }
 
@@ -187,425 +192,414 @@ public:
     }
 
     /**
-     * @brief  - Checks weather this matrix has any value that equals infinity or NaN
-     * @return - False if the any value equals infinity or NaN, true if not
-     */
-    FORCEINLINE bool IsValid() const noexcept
-    {
-        return !HasNaN() && !HasInfinity();
-    }
-
-    /**
-     * @brief       - Compares, within a threshold Epsilon, this matrix with another matrix
-     * @param Other - matrix to compare against
-     * @return      - True if equal, false if not
+     * @brief Compares, within a threshold Epsilon, this matrix with another matrix
+     * @param Other Matrix to compare against
+     * @param Epsilon Threshold for comparison
+     * @return True if equal within Epsilon, false otherwise
      */
     bool IsEqual(const FMatrix2& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
-        for (int32 i = 0; i < 4; i++)
+        for (int32 Row = 0; Row < 2; ++Row)
         {
-            float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-            if (FMath::Abs(Diff) > Epsilon)
+            for (int32 Col = 0; Col < 2; ++Col)
             {
-                return false;
+                float Diff = M[Row][Col] - Other.M[Row][Col];
+                if (FMath::Abs(Diff) > Epsilon)
+                {
+                    return false;
+                }
             }
         }
 
         return true;
     #else
-        FFloat128 Espilon128 = FVectorMath::VectorSet1(Epsilon);
-        Espilon128 = FVectorMath::VectorAbs(Espilon128);
-
-        FFloat128 Diff = FVectorMath::VectorSub(reinterpret_cast<const float*>(this), reinterpret_cast<const float*>(&Other));
-        Diff = FVectorMath::VectorAbs(Diff);
-        return FVectorMath::VectorLessThan(Diff, Espilon128);
+        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(Epsilon);
+        FFloat128 VectorA     = FVectorMath::VectorAbs(Epsilon_128);
+        FFloat128 VectorB     = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
+        FFloat128 Result_128  = FVectorMath::VectorAbs(VectorB);
+        return FVectorMath::VectorLessThan(Result_128, Epsilon_128);
     #endif
     }
 
-     /** @brief - Sets this matrix to an identity matrix */
-    FORCEINLINE void SetIdentity() noexcept
+    /** 
+     * @brief Sets this matrix to an identity matrix 
+     */
+    void SetIdentity() noexcept
     {
     #if !USE_VECTOR_MATH
-        m00 = 1.0f;
-        m01 = 0.0f;
-        m10 = 0.0f;
-        m11 = 1.0f;
+        M[0][0] = 1.0f;
+        M[0][1] = 0.0f;
+        M[1][0] = 0.0f;
+        M[1][1] = 1.0f;
     #else
-        FFloat128 Constant = FVectorMath::VectorSet(1.0f, 0.0f, 0.0f, 1.0f);
-        FVectorMath::VectorStore(Constant, reinterpret_cast<float*>(this));
+        FFloat128 Identity_128 = FVectorMath::VectorSet(1.0f, 0.0f, 0.0f, 1.0f);
+        FVectorMath::VectorStore(Identity_128, &M[0][0]);
     #endif
     }
 
     /**
-     * @brief     - Returns a row of this matrix
-     * @param Row - The row to retrieve
-     * @return    - A vector containing the specified row
+     * @brief Returns a row of this matrix
+     * @param Row The row to retrieve (0 or 1)
+     * @return A vector containing the specified row
      */
-    FORCEINLINE FVector2 GetRow(int32 Row) const noexcept
+    FVector2 GetRow(int32 Row) const noexcept
     {
         CHECK(Row < 2);
-        return FVector2(f[Row]);
+        return FVector2(M[Row][0], M[Row][1]);
     }
 
     /**
-     * @brief        - Returns a column of this matrix
-     * @param Column - The column to retrieve
-     * @return       - A vector containing the specified column
+     * @brief Returns a column of this matrix
+     * @param Column The column to retrieve (0 or 1)
+     * @return A vector containing the specified column
      */
-    FORCEINLINE FVector2 GetColumn(int32 Column) const noexcept
+    FVector2 GetColumn(int32 Column) const noexcept
     {
         CHECK(Column < 2);
-        return FVector2(f[0][Column], f[1][Column]);
-    }
-
-    /**
-     * @brief  - Returns the data of this matrix as a pointer
-     * @return - A pointer to the data
-     */
-    FORCEINLINE float* Data() noexcept
-    {
-        return reinterpret_cast<float*>(this);
-    }
-
-    /**
-     * @brief  - Returns the data of this matrix as a pointer
-     * @return - A pointer to the data
-     */
-    FORCEINLINE const float* Data() const noexcept
-    {
-        return reinterpret_cast<const float*>(this);
+        return FVector2(M[0][Column], M[1][Column]);
     }
 
 public:
 
     /**
-     * @brief     - Transforms a 2-D vector
-     * @param RHS - The vector to transform
-     * @return    - A vector containing the transformation
+     * @brief Transforms a 2-D vector
+     * @param Vector The vector to transform
+     * @return A vector containing the transformation
      */
-    FORCEINLINE FVector2 operator*(const FVector2& RHS) const noexcept
+    FVector2 operator*(const FVector2& Vector) const noexcept
     {
         FVector2 Result;
 
     #if !USE_VECTOR_MATH
-        Result.x = (RHS[0] * m00) + (RHS[1] * m10);
-        Result.y = (RHS[0] * m01) + (RHS[1] * m11);
+        Result.x = (Vector.x * M[0][0]) + (Vector.y * M[1][0]);
+        Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]);
     #else
-        FFloat128 X128  = FVectorMath::VectorSet1(RHS.x);
-        FFloat128 Y128  = FVectorMath::VectorSet1(RHS.y);
-        FFloat128 Temp0 = FVectorMath::VectorShuffle0011<0, 0, 0, 0>(X128, Y128);
-        FFloat128 Temp1 = FVectorMath::VectorMul(reinterpret_cast<const float*>(this), Temp0);
-        Temp0 = FVectorMath::VectorShuffle<2, 3, 2, 3>(Temp1);
-        Temp1 = FVectorMath::VectorAdd(Temp0, Temp1);
+        FFloat128 X_128      = FVectorMath::VectorSet1(Vector.x);
+        FFloat128 Y_128      = FVectorMath::VectorSet1(Vector.y);
+        FFloat128 VectorA    = FVectorMath::VectorShuffle0011<0, 0, 0, 0>(X_128, Y_128);
+        FFloat128 VectorB    = FVectorMath::VectorMul(&M[0][0], VectorA);
+        FFloat128 VectorC    = FVectorMath::VectorShuffle<2, 3, 2, 3>(VectorB);
+        FFloat128 Result_128 = FVectorMath::VectorAdd(VectorC, VectorB);
 
-        Result.x = FVectorMath::VectorGetX(Temp1);
-        Result.y = FVectorMath::VectorGetY(Temp1);
+        Result.x = FVectorMath::VectorGetX(Result_128);
+        Result.y = FVectorMath::VectorGetY(Result_128);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Multiplies a matrix with another matrix
-     * @param RHS - The other matrix
-     * @return    - A matrix containing the result of the multiplication
+     * @brief Multiplies a matrix with another matrix
+     * @param Other The other matrix
+     * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix2 operator*(const FMatrix2& RHS) const noexcept
-    {
-        FMatrix2 Result;
-        
-    #if !USE_VECTOR_MATH
-        Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10);
-        Result.m01 = (m01 * RHS.m11) + (m00 * RHS.m01);
-        Result.m10 = (m10 * RHS.m00) + (m11 * RHS.m10);
-        Result.m11 = (m11 * RHS.m11) + (m10 * RHS.m01);
-    #else
-        FFloat128 This = FVectorMath::VectorLoad(reinterpret_cast<const float*>(this));
-        FFloat128 Temp = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&RHS));
-        Temp = FVectorMath::Matrix2Mul(This, Temp);
-        FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
-    #endif
-        
-        return Result;
-    }
-
-    /**
-     * @brief     - Multiplies this matrix with another matrix
-     * @param RHS - The other matrix
-     * @return    - A reference to this matrix
-     */
-    FORCEINLINE FMatrix2& operator*=(const FMatrix2& RHS) noexcept
-    {
-        return *this = *this * RHS;
-    }
-
-    /**
-     * @brief     - Multiplies a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the multiplication
-     */
-    FORCEINLINE FMatrix2 operator*(float RHS) const noexcept
+    FMatrix2 operator*(const FMatrix2& Other) const noexcept
     {
         FMatrix2 Result;
 
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 * RHS;
-        Result.m01 = m01 * RHS;
-        Result.m10 = m10 * RHS;
-        Result.m11 = m11 * RHS;
+        Result.M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]);
+        Result.M[0][1] = (M[0][1] * Other.M[1][1]) + (M[0][0] * Other.M[0][1]);
+        Result.M[1][0] = (M[1][0] * Other.M[0][0]) + (M[1][1] * Other.M[1][0]);
+        Result.M[1][1] = (M[1][1] * Other.M[1][1]) + (M[1][0] * Other.M[0][1]);
     #else
-        FFloat128 Temp = FVectorMath::VectorSet1(RHS);
-        Temp = FVectorMath::VectorMul(reinterpret_cast<const float*>(this), Temp);
-        FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
+        FFloat128 M_128      = FVectorMath::VectorLoad(&M[0][0]);
+        FFloat128 Other_128  = FVectorMath::VectorLoad(&Other.M[0][0]);
+        FFloat128 Result_128 = FVectorMath::MatrixMul2x2(M_128, Other_128);
+        FVectorMath::VectorStore(Result_128, &Result.M[0][0]);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Multiplies this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Multiplies this matrix with another matrix
+     * @param Other The other matrix
+     * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix2& operator*=(float RHS) noexcept
+    FMatrix2& operator*=(const FMatrix2& Other) noexcept
     {
-        return *this = *this * RHS;
+    #if !USE_VECTOR_MATH
+        M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]);
+        M[0][1] = (M[0][1] * Other.M[1][1]) + (M[0][0] * Other.M[0][1]);
+        M[1][0] = (M[1][0] * Other.M[0][0]) + (M[1][1] * Other.M[1][0]);
+        M[1][1] = (M[1][1] * Other.M[1][1]) + (M[1][0] * Other.M[0][1]);
+    #else
+        FFloat128 M_128      = FVectorMath::VectorLoad(&M[0][0]);
+        FFloat128 Other_128  = FVectorMath::VectorLoad(&Other.M[0][0]);
+        FFloat128 Result_128 = FVectorMath::MatrixMul2x2(M_128, Other_128);
+        FVectorMath::VectorStore(Result_128, &M[0][0]);
+    #endif
+
+        return *this;
     }
 
     /**
-     * @brief     - Adds a matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A matrix containing the result of the addition
+     * @brief Multiplies a matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix2 operator+(const FMatrix2& RHS) const noexcept
+    FMatrix2 operator*(float Scalar) const noexcept
     {
         FMatrix2 Result;
 
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 + RHS.m00;
-        Result.m01 = m01 + RHS.m01;
-        Result.m10 = m10 + RHS.m10;
-        Result.m11 = m11 + RHS.m11;
+        Result.M[0][0] = M[0][0] * Scalar;
+        Result.M[0][1] = M[0][1] * Scalar;
+        Result.M[1][0] = M[1][0] * Scalar;
+        Result.M[1][1] = M[1][1] * Scalar;
     #else
-        FFloat128 Temp = FVectorMath::VectorAdd(reinterpret_cast<const float*>(this), reinterpret_cast<const float*>(&RHS));
-        FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
+        FFloat128 VectorA = FVectorMath::VectorSet1(Scalar);
+        FFloat128 VectorB = FVectorMath::VectorMul(&M[0][0], VectorA);
+        FVectorMath::VectorStore(VectorB, &Result.M[0][0]);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Adds this matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A reference to this matrix
+     * @brief Multiplies this matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix2& operator+=(const FMatrix2& RHS) noexcept
+    FMatrix2& operator*=(float Scalar) noexcept
     {
-        return *this = *this + RHS;
-    }
-
-    /**
-     * @brief     - Adds a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the addition
-     */
-    FORCEINLINE FMatrix2 operator+(float RHS) const noexcept
-    {
-        FMatrix2 Result;
-        
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 + RHS;
-        Result.m01 = m01 + RHS;
-        Result.m10 = m10 + RHS;
-        Result.m11 = m11 + RHS;
+        M[0][0] = M[0][0] * Scalar;
+        M[0][1] = M[0][1] * Scalar;
+        M[1][0] = M[1][0] * Scalar;
+        M[1][1] = M[1][1] * Scalar;
     #else
-        FFloat128 Temp = FVectorMath::VectorSet1(RHS);
-        Temp = FVectorMath::VectorAdd(reinterpret_cast<const float*>(this), Temp);
-        FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
+        FFloat128 VectorA = FVectorMath::VectorSet1(Scalar);
+        FFloat128 VectorB = FVectorMath::VectorMul(&M[0][0], VectorA);
+        FVectorMath::VectorStore(VectorB, &M[0][0]);
     #endif
-        
-        return Result;
+
+        return *this;
     }
 
     /**
-     * @brief     - Adds this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Adds a matrix component-wise with another matrix
+     * @param Other The other matrix
+     * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix2& operator+=(float RHS) noexcept
-    {
-        return *this = *this + RHS;
-    }
-
-    /**
-     * @brief     - Subtracts a matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A matrix containing the result of the subtraction
-     */
-    FORCEINLINE FMatrix2 operator-(const FMatrix2& RHS) const noexcept
+    FMatrix2 operator+(const FMatrix2& Other) const noexcept
     {
         FMatrix2 Result;
 
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 - RHS.m00;
-        Result.m01 = m01 - RHS.m01;
-        Result.m10 = m10 - RHS.m10;
-        Result.m11 = m11 - RHS.m11;
+        Result.M[0][0] = M[0][0] + Other.M[0][0];
+        Result.M[0][1] = M[0][1] + Other.M[0][1];
+        Result.M[1][0] = M[1][0] + Other.M[1][0];
+        Result.M[1][1] = M[1][1] + Other.M[1][1];
     #else
-        FFloat128 Temp = FVectorMath::VectorSub(reinterpret_cast<const float*>(this), reinterpret_cast<const float*>(&RHS));
-        FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
+        FFloat128 M_128 = FVectorMath::VectorAdd(&M[0][0], &Other.M[0][0]);
+        FVectorMath::VectorStore(M_128, &Result.M[0][0]);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Subtracts this matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A reference to this matrix
+     * @brief Adds this matrix component-wise with another matrix
+     * @param Other The other matrix
+     * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix2& operator-=(const FMatrix2& RHS) noexcept
+    FMatrix2& operator+=(const FMatrix2& Other) noexcept
     {
-        return *this = *this - RHS;
+    #if !USE_VECTOR_MATH
+        Result.M[0][0] = M[0][0] + Other.M[0][0];
+        Result.M[0][1] = M[0][1] + Other.M[0][1];
+        Result.M[1][0] = M[1][0] + Other.M[1][0];
+        Result.M[1][1] = M[1][1] + Other.M[1][1];
+    #else
+        FFloat128 M_128 = FVectorMath::VectorAdd(&M[0][0], &Other.M[0][0]);
+        FVectorMath::VectorStore(M_128, &M[0][0]);
+    #endif
+
+        return *this;
     }
 
     /**
-     * @brief     - Subtracts a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the subtraction
+     * @brief Adds a matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix2 operator-(float RHS) const noexcept
+    FMatrix2 operator+(float Scalar) const noexcept
     {
         FMatrix2 Result;
 
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 - RHS;
-        Result.m01 = m01 - RHS;
-        Result.m10 = m10 - RHS;
-        Result.m11 = m11 - RHS;
+        Result.M[0][0] = M[0][0] + Scalar;
+        Result.M[0][1] = M[0][1] + Scalar;
+        Result.M[1][0] = M[1][0] + Scalar;
+        Result.M[1][1] = M[1][1] + Scalar;
     #else
-        FFloat128 Temp = FVectorMath::VectorSet1(RHS);
-        Temp = FVectorMath::VectorSub(reinterpret_cast<const float*>(this), Temp);
-        FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Result_128  = FVectorMath::VectorAdd(&M[0][0], Scalars_128);
+        FVectorMath::VectorStore(Result_128, &Result.M[0][0]);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Subtracts this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Adds this matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix2& operator-=(float RHS) noexcept
+    FMatrix2& operator+=(float Scalar) noexcept
     {
-        return *this = *this - RHS;
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] + Scalar;
+        M[0][1] = M[0][1] + Scalar;
+        M[1][0] = M[1][0] + Scalar;
+        M[1][1] = M[1][1] + Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Result_128  = FVectorMath::VectorAdd(&M[0][0], Scalars_128);
+        FVectorMath::VectorStore(Result_128, &M[0][0]);
+    #endif
+
+        return *this;
     }
 
     /**
-     * @brief     - Divides a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the division
+     * @brief Subtracts a matrix component-wise with another matrix
+     * @param Other The other matrix
+     * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE FMatrix2 operator/(float RHS) const noexcept
+    FMatrix2 operator-(const FMatrix2& Other) const noexcept
     {
         FMatrix2 Result;
 
     #if !USE_VECTOR_MATH
-        float Recip = 1.0f / RHS;
-        Result.m00 = m00 * Recip;
-        Result.m01 = m01 * Recip;
-        Result.m10 = m10 * Recip;
-        Result.m11 = m11 * Recip;
+        Result.M[0][0] = M[0][0] - Other.M[0][0];
+        Result.M[0][1] = M[0][1] - Other.M[0][1];
+        Result.M[1][0] = M[1][0] - Other.M[1][0];
+        Result.M[1][1] = M[1][1] - Other.M[1][1];
     #else
-        FFloat128 Temp = FVectorMath::VectorSet1(RHS);
-        Temp = FVectorMath::VectorDiv(reinterpret_cast<const float*>(this), Temp);
-        FVectorMath::VectorStore(Temp, reinterpret_cast<float*>(&Result));
+        FFloat128 Result_128 = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
+        FVectorMath::VectorStore(Result_128, &Result.M[0][0]);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Divides this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Subtracts this matrix component-wise with another matrix
+     * @param Other The other matrix
+     * @return A reference to this matrix after subtraction
      */
-    FORCEINLINE FMatrix2& operator/=(float RHS) noexcept
+    FMatrix2& operator-=(const FMatrix2& Other) noexcept
     {
-        return *this = *this / RHS;
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] - Other.M[0][0];
+        M[0][1] = M[0][1] - Other.M[0][1];
+        M[1][0] = M[1][0] - Other.M[1][0];
+        M[1][1] = M[1][1] - Other.M[1][1];
+    #else
+        FFloat128 Result_128 = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
+        FVectorMath::VectorStore(Result_128, &M[0][0]);
+    #endif
+
+        return *this;
     }
 
     /**
-     * @brief       - Returns the result after comparing this and another matrix
-     * @param Other - The matrix to compare with
-     * @return      - True if equal, false if not
+     * @brief Subtracts a matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE bool operator==(const FMatrix2& Other) const noexcept
+    FMatrix2 operator-(float Scalar) const noexcept
     {
-        return IsEqual(Other);
+        FMatrix2 Result;
+
+    #if !USE_VECTOR_MATH
+        Result.M[0][0] = M[0][0] - Scalar;
+        Result.M[0][1] = M[0][1] - Scalar;
+        Result.M[1][0] = M[1][0] - Scalar;
+        Result.M[1][1] = M[1][1] - Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Result_128  = FVectorMath::VectorSub(&M[0][0], Scalars_128);
+        FVectorMath::VectorStore(Result_128, &Result.M[0][0]);
+    #endif
+
+        return Result;
     }
 
     /**
-     * @brief       - Returns the negated result after comparing this and another matrix
-     * @param Other - The matrix to compare with
-     * @return      - False if equal, true if not
+     * @brief Subtracts this matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A reference to this matrix after subtraction
      */
-    FORCEINLINE bool operator!=(const FMatrix2& Other) const noexcept
+    FMatrix2& operator-=(float Scalar) noexcept
     {
-        return !IsEqual(Other);
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] - Scalar;
+        M[0][1] = M[0][1] - Scalar;
+        M[1][0] = M[1][0] - Scalar;
+        M[1][1] = M[1][1] - Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+        FFloat128 Result_128  = FVectorMath::VectorSub(&M[0][0], Scalars_128);
+        FVectorMath::VectorStore(Result_128, &M[0][0]);
+    #endif
+
+        return *this;
     }
 
 public:
 
     /**
-     * @brief  - Creates and returns a identity matrix
-     * @return - A identity matrix
+     * @brief Creates and returns an identity matrix
+     * @return An identity matrix
      */
-    static FORCEINLINE FMatrix2 Identity() noexcept
+    static FMatrix2 Identity() noexcept
     {
         return FMatrix2(1.0f);
     }
 
     /**
-     * @brief       - Creates and returns a uniform scale matrix
-     * @param Scale - Uniform scale that represents this matrix
-     * @return      - A scale matrix
+     * @brief Creates and returns a uniform scale matrix
+     * @param Scale Uniform scale that represents this matrix
+     * @return A scale matrix
      */
-    static FORCEINLINE FMatrix2 Scale(float Scale) noexcept
+    static FMatrix2 Scale(float Scale) noexcept
     {
         return FMatrix2(Scale);
     }
 
     /**
-     * @brief   - Creates and returns a scale matrix for each axis
-     * @param x - Scale for the x-axis
-     * @param y - Scale for the y-axis
-     * @return  - A scale matrix
+     * @brief Creates and returns a scale matrix for each axis
+     * @param x Scale for the x-axis
+     * @param y Scale for the y-axis
+     * @return A scale matrix
      */
-    static FORCEINLINE FMatrix2 Scale(float x, float y) noexcept
+    static FMatrix2 Scale(float x, float y) noexcept
     {
         return FMatrix2(x, 0.0f, 0.0f, y);
     }
 
     /**
-     * @brief                 - Creates and returns a scale matrix for each axis
-     * @param VectorWithScale - A vector containing the scale for each axis in the x-, and y-components
-     * @return                - A scale matrix
+     * @brief Creates and returns a scale matrix for each axis
+     * @param VectorWithScale A vector containing the scale for each axis in the x- and y-components
+     * @return A scale matrix
      */
-    static FORCEINLINE FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
+    static FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.x, VectorWithScale.y);
     }
 
     /**
-     * @brief          - Creates and returns a rotation matrix around the x-axis
-     * @param Rotation - Rotation around in radians
-     * @return         - A rotation matrix
+     * @brief Creates and returns a rotation matrix around the z-axis
+     * @param Rotation Rotation in radians
+     * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix2 Rotation(float Rotation) noexcept
+    static FMatrix2 Rotation(float Rotation) noexcept
     {
         const float SinZ = FMath::Sin(Rotation);
         const float CosZ = FMath::Cos(Rotation);
@@ -614,18 +608,9 @@ public:
     }
 
 public:
-    union
-    {
-         /** @brief - Each element of the matrix */
-        struct
-        {
-            float m00, m01;
-            float m10, m11;
-        };
 
-         /** @brief - 2-D array of the matrix */
-        float f[2][2];
-    };
+    /** @brief Each element of the matrix stored as a 2-D array. M[row][column], where row and column are 0-based indices. */
+    float M[2][2];
 };
 
 MARK_AS_REALLOCATABLE(FMatrix2);

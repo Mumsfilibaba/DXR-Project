@@ -182,7 +182,7 @@ struct FVectorMath : public FPlatformVectorMath
         return VectorMinInt(MinValue, VectorMaxInt(MaxValue, Value));
     }
 
-    static FORCEINLINE FFloat128 VECTORCALL Matrix2Mul(FFloat128 MatrixA, FFloat128 MatrixB)
+    static FORCEINLINE FFloat128 VECTORCALL MatrixMul2x2(FFloat128 MatrixA, FFloat128 MatrixB)
     {
         FFloat128 MatrixC = VectorShuffle<0, 3, 0, 3>(MatrixB);
         FFloat128 MatrixD = VectorMul(MatrixA, MatrixC);
