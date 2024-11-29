@@ -613,14 +613,14 @@ void FSceneRenderer::Tick(FScene* Scene)
         // Add Jitter to projection matrix
         FMatrix4 JitterOffset = FMatrix4::Translation(FVector3(ClipSpaceJitter.x, ClipSpaceJitter.y, 0.0f));
         CameraBuffer.Projection    = CameraBuffer.Projection * JitterOffset;
-        CameraBuffer.ProjectionInv = CameraBuffer.Projection.Invert();
-        CameraBuffer.ProjectionInv = CameraBuffer.ProjectionInv.Transpose();
+        CameraBuffer.ProjectionInv = CameraBuffer.Projection.GetInverse();
+        CameraBuffer.ProjectionInv = CameraBuffer.ProjectionInv.GetTranspose();
 
         // Calculate new ViewProjection
-        CameraBuffer.ViewProjection    = CameraBuffer.View.Transpose() * CameraBuffer.Projection;
-        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.Invert();
-        CameraBuffer.ViewProjection    = CameraBuffer.ViewProjection.Transpose();
-        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjectionInv.Transpose();
+        CameraBuffer.ViewProjection    = CameraBuffer.View.GetTranspose() * CameraBuffer.Projection;
+        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.GetInverse();
+        CameraBuffer.ViewProjection    = CameraBuffer.ViewProjection.GetTranspose();
+        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjectionInv.GetTranspose();
 
         CameraBuffer.PrevJitter = CameraBuffer.Jitter;
         CameraBuffer.Jitter     = ClipSpaceJitter;

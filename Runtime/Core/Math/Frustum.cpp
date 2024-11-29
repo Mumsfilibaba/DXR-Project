@@ -10,7 +10,7 @@ FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Project
 void FFrustum::Initialize(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
 {
     // Combine the view and projection matrices
-    FMatrix4 View = InView.Transpose();
+    FMatrix4 View = InView.GetTranspose();
     FMatrix4 CombinedMatrix = View * InProjection;
 
     // Extract frustum planes from the combined matrix
@@ -26,45 +26,45 @@ void FFrustum::ExtractPlanes(const FMatrix4& CombinedMatrix)
     // The order is: near, far, left, right, top, bottom
 
     // Near Plane
-    Planes[0].x = CombinedMatrix.m03 + CombinedMatrix.m02;
-    Planes[0].y = CombinedMatrix.m13 + CombinedMatrix.m12;
-    Planes[0].z = CombinedMatrix.m23 + CombinedMatrix.m22;
-    Planes[0].w = CombinedMatrix.m33 + CombinedMatrix.m32;
+    Planes[0].x = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][2];
+    Planes[0].y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][2];
+    Planes[0].z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][2];
+    Planes[0].w = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][2];
     Planes[0].Normalize();
 
     // Far Plane
-    Planes[1].x = CombinedMatrix.m03 - CombinedMatrix.m02;
-    Planes[1].y = CombinedMatrix.m13 - CombinedMatrix.m12;
-    Planes[1].z = CombinedMatrix.m23 - CombinedMatrix.m22;
-    Planes[1].w = CombinedMatrix.m33 - CombinedMatrix.m32;
+    Planes[1].x = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][2];
+    Planes[1].y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][2];
+    Planes[1].z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][2];
+    Planes[1].w = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][2];
     Planes[1].Normalize();
 
     // Left Plane
-    Planes[2].x = CombinedMatrix.m03 + CombinedMatrix.m00;
-    Planes[2].y = CombinedMatrix.m13 + CombinedMatrix.m10;
-    Planes[2].z = CombinedMatrix.m23 + CombinedMatrix.m20;
-    Planes[2].w = CombinedMatrix.m33 + CombinedMatrix.m30;
+    Planes[2].x = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][0];
+    Planes[2].y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][0];
+    Planes[2].z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][0];
+    Planes[2].w = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][0];
     Planes[2].Normalize();
 
     // Right Plane
-    Planes[3].x = CombinedMatrix.m03 - CombinedMatrix.m00;
-    Planes[3].y = CombinedMatrix.m13 - CombinedMatrix.m10;
-    Planes[3].z = CombinedMatrix.m23 - CombinedMatrix.m20;
-    Planes[3].w = CombinedMatrix.m33 - CombinedMatrix.m30;
+    Planes[3].x = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][0];
+    Planes[3].y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][0];
+    Planes[3].z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][0];
+    Planes[3].w = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][0];
     Planes[3].Normalize();
 
     // Top Plane
-    Planes[4].x = CombinedMatrix.m03 - CombinedMatrix.m01;
-    Planes[4].y = CombinedMatrix.m13 - CombinedMatrix.m11;
-    Planes[4].z = CombinedMatrix.m23 - CombinedMatrix.m21;
-    Planes[4].w = CombinedMatrix.m33 - CombinedMatrix.m31;
+    Planes[4].x = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][1];
+    Planes[4].y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][1];
+    Planes[4].z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][1];
+    Planes[4].w = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][1];
     Planes[4].Normalize();
 
     // Bottom Plane
-    Planes[5].x = CombinedMatrix.m03 + CombinedMatrix.m01;
-    Planes[5].y = CombinedMatrix.m13 + CombinedMatrix.m11;
-    Planes[5].z = CombinedMatrix.m23 + CombinedMatrix.m21;
-    Planes[5].w = CombinedMatrix.m33 + CombinedMatrix.m31;
+    Planes[5].x = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][1];
+    Planes[5].y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][1];
+    Planes[5].z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][1];
+    Planes[5].w = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][1];
     Planes[5].Normalize();
 }
 
@@ -84,7 +84,7 @@ void FFrustum::GenerateFrustumCorners(const FMatrix4& CombinedMatrix)
     };
 
     // Invert the combined view-projection matrix to transform NDC to world space
-    FMatrix4 InverseViewProjection = CombinedMatrix.Invert();
+    FMatrix4 InverseViewProjection = CombinedMatrix.GetInverse();
 
     // Transform each corner from NDC to world space
     for (int32 Corner = 0; Corner < 8; ++Corner)

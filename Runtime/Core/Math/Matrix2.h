@@ -51,10 +51,7 @@ public:
     explicit FMatrix2(const float* Array) noexcept
     {
         CHECK(Array != nullptr);
-        M[0][0] = Array[0];
-        M[0][1] = Array[1];
-        M[1][0] = Array[2];
-        M[1][1] = Array[3];
+        FMemory::Memcpy(&M[0][0], Array, sizeof(M));
     }
 
     /**

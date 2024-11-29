@@ -74,7 +74,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
 
     // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
     FMatrix4 InverseViewProjection = Camera.GetViewProjectionInverseMatrix();
-    InverseViewProjection = InverseViewProjection.Transpose();
+    InverseViewProjection = InverseViewProjection.GetTranspose();
 
     // Calculate the center of frustum
     FVector3 FrustumCenter = FVector3(0.0f);
@@ -93,10 +93,10 @@ void FDirectionalLight::Tick(FCamera& Camera)
         FVector3 ShadowPosition = FrustumCenter + (Direction * -0.5f);
 
         FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
-        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrtographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
+        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrthographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
 
         ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
-        ShadowMatrix = ShadowMatrix.Transpose();
+        ShadowMatrix = ShadowMatrix.GetTranspose();
     }
 
     // Generate a bounds matrix
@@ -122,10 +122,10 @@ void FDirectionalLight::Tick(FCamera& Camera)
         ShadowFarPlane  =  Extents.z;
 
         ViewMatrix = FMatrix4::LookAt(Position, LightDirection, UpVector);
-        ViewMatrix = ViewMatrix.Transpose();
+        ViewMatrix = ViewMatrix.GetTranspose();
 
-        ProjectionMatrix = FMatrix4::OrtographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, ShadowNearPlane, ShadowFarPlane);
-        // ProjectionMatrix = ProjectionMatrix.Transpose();
+        ProjectionMatrix = FMatrix4::OrthographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, ShadowNearPlane, ShadowFarPlane);
+        // ProjectionMatrix = ProjectionMatrix.GetTranspose();
     }
 }
 

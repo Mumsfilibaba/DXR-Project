@@ -48,16 +48,13 @@ public:
 
     FMatrix4 GetMatrixInverse() const
     {
-        FMatrix4 MatrixInverse = Matrix.Invert();
-        return MatrixInverse.Transpose();
+        FMatrix4 MatrixInverse = Matrix.GetInverse();
+        return MatrixInverse.GetTranspose();
     }
 
     FMatrix3x4 GetTinyMatrix() const
     {
-        return FMatrix3x4(
-            Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
-            Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13,
-            Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
+        return FMatrix3x4(Matrix);
     }
 
 private:

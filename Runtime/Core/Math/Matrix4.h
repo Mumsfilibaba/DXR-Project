@@ -1,548 +1,373 @@
 #pragma once
 #include "Core/Math/Vector3.h"
-#include "Core/Math/Matrix3.h"
 #include "Core/Math/Vector4.h"
+#include "Core/Math/Matrix3.h"
+#include "Core/Math/MathCommon.h"
 
+/** @brief 4x4 Matrix class with float components. Represents a 3D affine transformation matrix in homogeneous coordinates. */
 class VECTOR_ALIGN FMatrix4
 {
 public:
 
-    /**
-     * @brief - Default constructor (Initialize components to zero)
-     */
-    FORCEINLINE FMatrix4() noexcept
-        : m00(0.0f), m01(0.0f), m02(0.0f), m03(0.0f)
-        , m10(0.0f), m11(0.0f), m12(0.0f), m13(0.0f)
-        , m20(0.0f), m21(0.0f), m22(0.0f), m23(0.0f)
-        , m30(0.0f), m31(0.0f), m32(0.0f), m33(0.0f)
+    /** @brief Default constructor (Initializes all components to zero) */
+    FMatrix4() noexcept
+        : M{ {0.0f, 0.0f, 0.0f, 0.0f},
+             {0.0f, 0.0f, 0.0f, 0.0f},
+             {0.0f, 0.0f, 0.0f, 0.0f},
+             {0.0f, 0.0f, 0.0f, 0.0f} }
     {
     }
 
     /**
-     * @brief          - Constructor initializing all values on the diagonal with a single value. The other values are set to zero.
-     * @param Diagonal - Value to set on the diagonal
+     * @brief Constructor initializing all diagonal values with a single value. Other values are set to zero.
+     * @param Diagonal Value to set on the diagonal
      */
-    FORCEINLINE explicit FMatrix4(float Diagonal) noexcept
-        : m00(Diagonal), m01(0.0f), m02(0.0f), m03(0.0f)
-        , m10(0.0f), m11(Diagonal), m12(0.0f), m13(0.0f)
-        , m20(0.0f), m21(0.0f), m22(Diagonal), m23(0.0f)
-        , m30(0.0f), m31(0.0f), m32(0.0f), m33(Diagonal)
+    explicit FMatrix4(float Diagonal) noexcept
+        : M{ {Diagonal, 0.0f, 0.0f, 0.0f},
+             {0.0f, Diagonal, 0.0f, 0.0f},
+             {0.0f, 0.0f, Diagonal, 0.0f},
+             {0.0f, 0.0f, 0.0f, Diagonal} }
     {
     }
 
     /**
-     * @brief      - Constructor initializing all values with vectors specifying each row
-     * @param Row0 - Vector to set the first row to
-     * @param Row1 - Vector to set the second row to
-     * @param Row2 - Vector to set the third row to
-     * @param Row3 - Vector to set the fourth row to
+     * @brief Constructor initializing all values with vectors specifying each row
+     * @param Row0 Vector to set the first row to
+     * @param Row1 Vector to set the second row to
+     * @param Row2 Vector to set the third row to
+     * @param Row3 Vector to set the fourth row to
      */
-    FORCEINLINE explicit FMatrix4(const FVector4& Row0, const FVector4& Row1, const FVector4& Row2, const FVector4& Row3) noexcept
-        : m00(Row0.x), m01(Row0.y), m02(Row0.z), m03(Row0.w)
-        , m10(Row1.x), m11(Row1.y), m12(Row1.z), m13(Row1.w)
-        , m20(Row2.x), m21(Row2.y), m22(Row2.z), m23(Row2.w)
-        , m30(Row3.x), m31(Row3.y), m32(Row3.z), m33(Row3.w)
+    explicit FMatrix4(const FVector4& Row0, const FVector4& Row1, const FVector4& Row2, const FVector4& Row3) noexcept
+        : M{ {Row0.x, Row0.y, Row0.z, Row0.w},
+             {Row1.x, Row1.y, Row1.z, Row1.w},
+             {Row2.x, Row2.y, Row2.z, Row2.w},
+             {Row3.x, Row3.y, Row3.z, Row3.w} }
     {
     }
 
     /**
-     * @brief      - Constructor initializing all values with corresponding value
-     * @param In00 - Value to set on row 0 and column 0
-     * @param In01 - Value to set on row 0 and column 1
-     * @param In02 - Value to set on row 0 and column 2
-     * @param In03 - Value to set on row 0 and column 3
-     * @param In10 - Value to set on row 1 and column 0
-     * @param In11 - Value to set on row 1 and column 1
-     * @param In12 - Value to set on row 1 and column 2
-     * @param In13 - Value to set on row 1 and column 3
-     * @param In20 - Value to set on row 2 and column 0
-     * @param In21 - Value to set on row 2 and column 1
-     * @param In22 - Value to set on row 2 and column 2
-     * @param In23 - Value to set on row 2 and column 3
-     * @param In30 - Value to set on row 3 and column 0
-     * @param In31 - Value to set on row 3 and column 1
-     * @param In32 - Value to set on row 3 and column 2
-     * @param In33 - Value to set on row 3 and column 3
+     * @brief Constructor initializing all values with corresponding values
+     * @param M00 Value to set at row 0, column 0
+     * @param M01 Value to set at row 0, column 1
+     * @param M02 Value to set at row 0, column 2
+     * @param M03 Value to set at row 0, column 3
+     * @param M10 Value to set at row 1, column 0
+     * @param M11 Value to set at row 1, column 1
+     * @param M12 Value to set at row 1, column 2
+     * @param M13 Value to set at row 1, column 3
+     * @param M20 Value to set at row 2, column 0
+     * @param M21 Value to set at row 2, column 1
+     * @param M22 Value to set at row 2, column 2
+     * @param M23 Value to set at row 2, column 3
+     * @param M30 Value to set at row 3, column 0
+     * @param M31 Value to set at row 3, column 1
+     * @param M32 Value to set at row 3, column 2
+     * @param M33 Value to set at row 3, column 3
      */
-    FORCEINLINE explicit FMatrix4(
-        float m00, float m01, float m02, float m03,
-        float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23,
-        float m30, float m31, float m32, float m33) noexcept
-        : m00(m00), m01(m01), m02(m02), m03(m03)
-        , m10(m10), m11(m11), m12(m12), m13(m13)
-        , m20(m20), m21(m21), m22(m22), m23(m23)
-        , m30(m30), m31(m31), m32(m32), m33(m33)
+    explicit FMatrix4(
+        float M00, float M01, float M02, float M03,
+        float M10, float M11, float M12, float M13,
+        float M20, float M21, float M22, float M23,
+        float M30, float M31, float M32, float M33) noexcept
+        : M{ {M00, M01, M02, M03},
+             {M10, M11, M12, M13},
+             {M20, M21, M22, M23},
+             {M30, M31, M32, M33} }
     {
     }
 
     /**
-     * @brief     - Constructor initializing all components with an array
-     * @param Arr - Array with at least 16 elements
+     * @brief Constructor initializing all components with an array
+     * @param Array Array with at least 16 elements
      */
-    FORCEINLINE explicit FMatrix4(const float* Arr) noexcept
-        : m00(Arr[0]) , m01(Arr[1]) , m02(Arr[2]) , m03(Arr[3])
-        , m10(Arr[4]) , m11(Arr[5]) , m12(Arr[6]) , m13(Arr[7])
-        , m20(Arr[8]) , m21(Arr[9]) , m22(Arr[10]), m23(Arr[11])
-        , m30(Arr[12]), m31(Arr[13]), m32(Arr[14]), m33(Arr[15])
+    explicit FMatrix4(const float* Array) noexcept
     {
+        CHECK(Array != nullptr);
+        FMemory::Memcpy(M[0], Array, sizeof(M));
     }
 
-    FORCEINLINE FVector4 Transform(const FVector4& Vector) const noexcept
+    /**
+     * @brief Transforms a 4-D vector using this matrix
+     * @param Vector The vector to transform
+     * @return The transformed vector
+     */
+    FVector4 Transform(const FVector4& Vector) const noexcept
     {
         FVector4 Result;
-    
+
     #if !USE_VECTOR_MATH
-        Result.x = (Vector[0] * m00) + (Vector[1] * m10) + (Vector[2] * m20) + (Vector[3] * m30);
-        Result.y = (Vector[0] * m01) + (Vector[1] * m11) + (Vector[2] * m21) + (Vector[3] * m31);
-        Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (Vector[3] * m32);
-        Result.w = (Vector[0] * m03) + (Vector[1] * m13) + (Vector[2] * m23) + (Vector[3] * m33);
+        Result.x = (Vector.x * M[0][0]) + (Vector.y * M[1][0]) + (Vector.z * M[2][0]) + (Vector.w * M[3][0]);
+        Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]) + (Vector.z * M[2][1]) + (Vector.w * M[3][1]);
+        Result.z = (Vector.x * M[0][2]) + (Vector.y * M[1][2]) + (Vector.z * M[2][2]) + (Vector.w * M[3][2]);
+        Result.w = (Vector.x * M[0][3]) + (Vector.y * M[1][3]) + (Vector.z * M[2][3]) + (Vector.w * M[3][3]);
     #else
-        FFloat128 NewVector = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Vector));
-        NewVector = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewVector);
-        FVectorMath::VectorStore(NewVector, reinterpret_cast<float*>(&Result));
+        FFloat128 Vector_128 = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Vector));
+        FFloat128 Result_128 = FVectorMath::VectorTransform(M[0], Vector_128);
+        FVectorMath::VectorStore(Result_128, reinterpret_cast<float*>(&Result));
     #endif
-    
+
         return Result;
     }
 
-    FORCEINLINE FVector3 Transform(const FVector3& Vector) const noexcept
+    /**
+     * @brief Transforms a 3-D vector using this matrix (as a direction, W=0)
+     * @param Vector The vector to transform
+     * @return The transformed vector
+     */
+    FVector3 Transform(const FVector3& Vector) const noexcept
     {
         FVector3 Result;
-    
+
     #if !USE_VECTOR_MATH
-        Result.x = (Vector[0] * m00) + (Vector[1] * m10) + (Vector[2] * m20) + (1.0f * m30);
-        Result.y = (Vector[0] * m01) + (Vector[1] * m11) + (Vector[2] * m21) + (1.0f * m31);
-        Result.z = (Vector[0] * m02) + (Vector[1] * m12) + (Vector[2] * m22) + (1.0f * m32);
+        Result.x = (Vector.x * M[0][0]) + (Vector.y * M[1][0]) + (Vector.z * M[2][0]) + (1.0f * M[3][0]);
+        Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]) + (Vector.z * M[2][1]) + (1.0f * M[3][1]);
+        Result.z = (Vector.x * M[0][2]) + (Vector.y * M[1][2]) + (Vector.z * M[2][2]) + (1.0f * M[3][2]);
     #else
-        FFloat128 NewVector = FVectorMath::VectorSet(Vector.x, Vector.y, Vector.z, 1.0f);
-        NewVector = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewVector);
+        FFloat128 Vector_128 = FVectorMath::VectorSet(Vector.x, Vector.y, Vector.z, 1.0f);
+        FFloat128 Result_128 = FVectorMath::VectorTransform(M[0], Vector_128);
+        Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
     #endif
-    
-        return FVector3(FVectorMath::VectorGetX(NewVector), FVectorMath::VectorGetY(NewVector), FVectorMath::VectorGetZ(NewVector));
+
+        return Result;
     }
 
     /**
-     * @brief          - Transform a 3-D vector as position, fourth component to one
-     * @param Position - Vector to transform
-     * @return         - Transformed vector
+     * @brief Transforms a 3-D vector as position (W=1) and performs perspective division
+     * @param Position The position vector to transform
+     * @return The transformed vector with perspective division applied
      */
-    FORCEINLINE FVector3 TransformCoord(const FVector3& Position) const noexcept
+    FVector3 TransformCoord(const FVector3& Position) const noexcept
     {
         FVector3 Result;
 
     #if !USE_VECTOR_MATH
-        float ComponentW = (Position[0] * m03) + (Position[1] * m13) + (Position[2] * m23) + (1.0f * m33);
+        float ComponentW = (Position.x * M[0][3]) + (Position.y * M[1][3]) + (Position.z * M[2][3]) + (1.0f * M[3][3]);
         ComponentW = 1.0f / ComponentW;
 
-        Result.x = ((Position[0] * m00) + (Position[1] * m10) + (Position[2] * m20) + (1.0f * m30)) * ComponentW;
-        Result.y = ((Position[0] * m01) + (Position[1] * m11) + (Position[2] * m21) + (1.0f * m31)) * ComponentW;
-        Result.z = ((Position[0] * m02) + (Position[1] * m12) + (Position[2] * m22) + (1.0f * m32)) * ComponentW;
+        Result.x = ((Position.x * M[0][0]) + (Position.y * M[1][0]) + (Position.z * M[2][0]) + (1.0f * M[3][0])) * ComponentW;
+        Result.y = ((Position.x * M[0][1]) + (Position.y * M[1][1]) + (Position.z * M[2][1]) + (1.0f * M[3][1])) * ComponentW;
+        Result.z = ((Position.x * M[0][2]) + (Position.y * M[1][2]) + (Position.z * M[2][2]) + (1.0f * M[3][2])) * ComponentW;
     #else
-        FFloat128 NewPosition = FVectorMath::VectorSet(Position.x, Position.y, Position.z, 1.0f);
-        NewPosition = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewPosition);
-        
-        FFloat128 Temp0 = FVectorMath::VectorOne();
-        FFloat128 Temp1 = FVectorMath::VectorBroadcast<3>(NewPosition);
-
-        Temp0 = FVectorMath::VectorDiv(Temp0, Temp1);
-        NewPosition = FVectorMath::VectorMul(Temp0, NewPosition);
+        FFloat128 Position_128 = FVectorMath::VectorSet(Position.x, Position.y, Position.z, 1.0f);
+        FFloat128 VectorA      = FVectorMath::VectorTransform(M[0], Position_128);
+        FFloat128 VectorB      = FVectorMath::VectorBroadcast<3>(VectorA);
+        FFloat128 VectorC      = FVectorMath::VectorOne();
+        FFloat128 VectorD      = FVectorMath::VectorDiv(VectorC, VectorB);
+        FFloat128 Result_128   = FVectorMath::VectorMul(VectorD, VectorD);
+        Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
     #endif
-        
-        return FVector3(FVectorMath::VectorGetX(NewPosition), FVectorMath::VectorGetY(NewPosition), FVectorMath::VectorGetZ(NewPosition));
-    }
 
-    /**
-     * @brief           - Transform a 3-D vector as direction, fourth component to zero
-     * @param Direction - Vector to transform
-     * @return          - Transformed vector
-     */
-    FORCEINLINE FVector3 TransformNormal(const FVector3& Direction) const noexcept
-    {
-        FVector3 Result;
-    
-    #if !USE_VECTOR_MATH
-        Result.x = (Direction[0] * m00) + (Direction[1] * m10) + (Direction[2] * m20);
-        Result.y = (Direction[0] * m01) + (Direction[1] * m11) + (Direction[2] * m21);
-        Result.z = (Direction[0] * m02) + (Direction[1] * m12) + (Direction[2] * m22);
-    #else
-        FFloat128 NewDirection = FVectorMath::VectorSet(Direction.x, Direction.y, Direction.z, 0.0f);
-        NewDirection = FVectorMath::VectorTransform(reinterpret_cast<const float*>(this), NewDirection);
-    #endif
-    
-        return FVector3(FVectorMath::VectorGetX(NewDirection), FVectorMath::VectorGetY(NewDirection), FVectorMath::VectorGetZ(NewDirection));
-    }
-
-    /**
-     * @brief  - Returns the transposed version of this matrix
-     * @return - Transposed matrix
-     */
-    inline FMatrix4 Transpose() const noexcept
-    {
-        FMatrix4 Result;
-    
-    #if !USE_VECTOR_MATH
-        Result.f[0][0] = f[0][0];
-        Result.f[0][1] = f[1][0];
-        Result.f[0][2] = f[2][0];
-        Result.f[0][3] = f[3][0];
-
-        Result.f[1][0] = f[0][1];
-        Result.f[1][1] = f[1][1];
-        Result.f[1][2] = f[2][1];
-        Result.f[1][3] = f[3][1];
-
-        Result.f[2][0] = f[0][2];
-        Result.f[2][1] = f[1][2];
-        Result.f[2][2] = f[2][2];
-        Result.f[2][3] = f[3][2];
-
-        Result.f[3][0] = f[0][3];
-        Result.f[3][1] = f[1][3];
-        Result.f[3][2] = f[2][3];
-        Result.f[3][3] = f[3][3];
-    #else
-        FVectorMath::Matrix4Transpose(reinterpret_cast<const float*>(this), reinterpret_cast<float*>(&Result));
-    #endif
-    
         return Result;
     }
 
     /**
-     * @brief  - Returns the inverted version of this matrix
-     * @return - Inverse matrix
+     * @brief Transforms a 3-D vector as a normal (w=0)
+     * @param Direction The direction vector to transform
+     * @return The transformed normal vector
      */
-    inline FMatrix4 Invert() const noexcept
+    FVector3 TransformNormal(const FVector3& Direction) const noexcept
+    {
+        FVector3 Result;
+
+    #if !USE_VECTOR_MATH
+        Result.x = (Direction.x * M[0][0]) + (Direction.y * M[1][0]) + (Direction.z * M[2][0]);
+        Result.y = (Direction.x * M[0][1]) + (Direction.y * M[1][1]) + (Direction.z * M[2][1]);
+        Result.z = (Direction.x * M[0][2]) + (Direction.y * M[1][2]) + (Direction.z * M[2][2]);
+    #else
+        FFloat128 Direction_128 = FVectorMath::VectorSet(Direction.x, Direction.y, Direction.z, 0.0f);
+        FFloat128 Result_128    = FVectorMath::VectorTransform(M[0], Direction_128);
+        Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
+    #endif
+
+        return Result;
+    }
+
+    /**
+     * @brief Returns the transposed version of this matrix
+     * @return Transposed matrix
+     */
+    FMatrix4 GetTranspose() const noexcept
+    {
+        FMatrix4 Result;
+
+    #if !USE_VECTOR_MATH
+        Result.M[0][0] = M[0][0];
+        Result.M[0][1] = M[1][0];
+        Result.M[0][2] = M[2][0];
+        Result.M[0][3] = M[3][0];
+
+        Result.M[1][0] = M[0][1];
+        Result.M[1][1] = M[1][1];
+        Result.M[1][2] = M[2][1];
+        Result.M[1][3] = M[3][1];
+
+        Result.M[2][0] = M[0][2];
+        Result.M[2][1] = M[1][2];
+        Result.M[2][2] = M[2][2];
+        Result.M[2][3] = M[3][2];
+
+        Result.M[3][0] = M[0][3];
+        Result.M[3][1] = M[1][3];
+        Result.M[3][2] = M[2][3];
+        Result.M[3][3] = M[3][3];
+    #else
+        FVectorMath::MatrixTranspose4x4(M[0], Result.M[0]);
+    #endif
+
+        return Result;
+    }
+
+    /**
+     * @brief Returns the inverted version of this matrix
+     * @return Inverse matrix
+     */
+    FMatrix4 GetInverse() const noexcept
     {
         FMatrix4 Inverse;
-        
+
     #if !USE_VECTOR_MATH
-        float _a = (m22 * m33) - (m23 * m32);
-        float _b = (m21 * m33) - (m23 * m31);
-        float _c = (m21 * m32) - (m22 * m31);
-        float _d = (m20 * m33) - (m23 * m30);
-        float _e = (m20 * m32) - (m22 * m30);
-        float _f = (m20 * m31) - (m21 * m30);
+        // Calculate the inverse of a 4x4 matrix manually
+        float ScalarA = (M[2][2] * M[3][3]) - (M[2][3] * M[3][2]);
+        float ScalarB = (M[2][1] * M[3][3]) - (M[2][3] * M[3][1]);
+        float ScalarC = (M[2][1] * M[3][2]) - (M[2][2] * M[3][1]);
+        float ScalarD = (M[2][0] * M[3][3]) - (M[2][3] * M[3][0]);
+        float ScalarE = (M[2][0] * M[3][2]) - (M[2][2] * M[3][0]);
+        float ScalarF = (M[2][0] * M[3][1]) - (M[2][1] * M[3][0]);
 
-        //d11
-        Inverse.m00 = (m11 * _a) - (m12 * _b) + (m13 * _c);
-        //d12
-        Inverse.m10 = -((m10 * _a) - (m12 * _d) + (m13 * _e));
-        //d13
-        Inverse.m20 = (m10 * _b) - (m11 * _d) + (m13 * _f);
-        //d14
-        Inverse.m30 = -((m10 * _c) - (m11 * _e) + (m12 * _f));
+        // Compute the adjugate matrix
+        Inverse.M[0][0] =   (M[1][1] * ScalarA) - (M[1][2] * ScalarB) + (M[1][3] * ScalarC);
+        Inverse.M[0][1] = -((M[1][0] * ScalarA) - (M[1][2] * ScalarD) + (M[1][3] * ScalarE));
+        Inverse.M[0][2] =   (M[1][0] * ScalarB) - (M[1][1] * ScalarD) + (M[1][3] * ScalarF);
+        Inverse.M[0][3] = -((M[1][0] * ScalarC) - (M[1][1] * ScalarE) + (M[1][2] * ScalarF));
 
-        //d21
-        Inverse.m01 = -((m01 * _a) - (m02 * _b) + (m03 * _c));
-        //d22
-        Inverse.m11 = (m00 * _a) - (m02 * _d) + (m03 * _e);
-        //d23
-        Inverse.m21 = -((m00 * _b) - (m01 * _d) + (m03 * _f));
-        //d24
-        Inverse.m31 = (m00 * _c) - (m01 * _e) + (m02 * _f);
+        Inverse.M[1][0] = -((M[0][1] * ScalarA) - (M[0][2] * ScalarB) + (M[0][3] * ScalarC));
+        Inverse.M[1][1] =   (M[0][0] * ScalarA) - (M[0][2] * ScalarD) + (M[0][3] * ScalarE);
+        Inverse.M[1][2] = -((M[0][0] * ScalarB) - (M[0][1] * ScalarD) + (M[0][3] * ScalarF));
+        Inverse.M[1][3] =   (M[0][0] * ScalarC) - (M[0][1] * ScalarE) + (M[0][2] * ScalarF);
 
-        const float Determinant     = (Inverse.m00 * m00) - (Inverse.m10 * m01) + (Inverse.m20 * m02) - (Inverse.m30 * m03);
-        const float ReprDeterminant = 1.0f / Determinant;
+        float ScalarG = (M[1][2] * M[3][3]) - (M[1][3] * M[3][2]);
+        float ScalarH = (M[1][1] * M[3][3]) - (M[1][3] * M[3][1]);
+        float ScalarI = (M[1][1] * M[3][2]) - (M[1][2] * M[3][1]);
+        float ScalarJ = (M[1][0] * M[3][3]) - (M[1][3] * M[3][0]);
+        float ScalarK = (M[1][0] * M[3][2]) - (M[1][2] * M[3][0]);
+        float ScalarL = (M[1][0] * M[3][1]) - (M[1][1] * M[3][0]);
 
-        Inverse.m00 *= ReprDeterminant;
-        Inverse.m10 *= ReprDeterminant;
-        Inverse.m20 *= ReprDeterminant;
-        Inverse.m30 *= ReprDeterminant;
-        Inverse.m01 *= ReprDeterminant;
-        Inverse.m11 *= ReprDeterminant;
-        Inverse.m21 *= ReprDeterminant;
-        Inverse.m31 *= ReprDeterminant;
+        Inverse.M[2][0] =   (M[0][1] * ScalarA) - (M[0][2] * ScalarB) + (M[0][3] * ScalarC);
+        Inverse.M[2][1] = -((M[0][0] * ScalarA) - (M[0][2] * ScalarD) + (M[0][3] * ScalarE));
+        Inverse.M[2][2] =   (M[0][0] * ScalarB) - (M[0][1] * ScalarD) + (M[0][3] * ScalarF);
+        Inverse.M[2][3] = -((M[0][0] * ScalarC) - (M[0][1] * ScalarE) + (M[0][2] * ScalarF));
 
-        _a = (m12 * m33) - (m13 * m32);
-        _b = (m11 * m33) - (m13 * m31);
-        _c = (m11 * m32) - (m12 * m31);
-        _d = (m10 * m33) - (m13 * m30);
-        _e = (m10 * m32) - (m12 * m30);
-        _f = (m10 * m31) - (m11 * m30);
+        float Determinant    = (M[0][0] * Inverse.M[0][0]) + (M[0][1] * Inverse.M[1][0]) + (M[0][2] * Inverse.M[2][0]) + (M[0][3] * Inverse.M[3][0]);
+        float RcpDeterminant = 1.0f / Determinant;
 
-        //d31
-        Inverse.m02 = ((m01 * _a) - (m02 * _b) + (m03 * _c)) * ReprDeterminant;
-        //d32
-        Inverse.m12 = -((m00 * _a) - (m02 * _d) + (m03 * _e)) * ReprDeterminant;
-        //d33
-        Inverse.m22 = ((m00 * _b) - (m01 * _d) + (m03 * _f)) * ReprDeterminant;
-        //d34
-        Inverse.m32 = -((m00 * _c) - (m01 * _e) + (m02 * _f)) * ReprDeterminant;
-
-        _a = (m12 * m23) - (m13 * m22);
-        _b = (m11 * m23) - (m13 * m21);
-        _c = (m11 * m22) - (m12 * m21);
-        _d = (m10 * m23) - (m13 * m20);
-        _e = (m10 * m22) - (m12 * m20);
-        _f = (m10 * m21) - (m11 * m20);
-
-        //d41
-        Inverse.m03 = -((m01 * _a) - (m02 * _b) + (m03 * _c)) * ReprDeterminant;
-        //d42
-        Inverse.m13 = ((m00 * _a) - (m02 * _d) + (m03 * _e)) * ReprDeterminant;
-        //d43
-        Inverse.m23 = -((m00 * _b) - (m01 * _d) + (m03 * _f)) * ReprDeterminant;
-        //d44
-        Inverse.m33 = ((m00 * _c) - (m01 * _e) + (m02 * _f)) * ReprDeterminant;
+        for (int32 Row = 0; Row < 4; ++Row)
+        {
+            for (int32 Col = 0; Col < 4; ++Col)
+            {
+                Inverse.M[Row][Col] *= RcpDeterminant;
+            }
+        }
     #else
-        FFloat128 Temp0 = FVectorMath::VectorLoad(f[0]);
-        FFloat128 Temp1 = FVectorMath::VectorLoad(f[1]);
-        FFloat128 Temp2 = FVectorMath::VectorLoad(f[2]);
-        FFloat128 Temp3 = FVectorMath::VectorLoad(f[3]);
-
-        FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        FFloat128 _2 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        FFloat128 _3 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        FFloat128 _4 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        FFloat128 _5 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        FFloat128 _6 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        FFloat128 _7 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp1, Temp3);
-
-        FFloat128 Mul0   = FVectorMath::VectorMul(_4, _5);
-        FFloat128 Mul1   = FVectorMath::VectorMul(_6, _7);
-        FFloat128 DetSub = FVectorMath::VectorSub(Mul0, Mul1);
-
-        FFloat128 DetA = FVectorMath::VectorBroadcast<0>(DetSub);
-        FFloat128 DetB = FVectorMath::VectorBroadcast<1>(DetSub);
-        FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
-        FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
-
-        FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
-        FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
-
-        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::MatrixMul2x2(_1, dc));
-        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::MatrixMul2x2(_2, ab));
-
-        FFloat128 DetM = FVectorMath::VectorMul(DetA, DetD);
-
-        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Matrix2MulAdjoint(_3, ab));
-        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Matrix2MulAdjoint(_0, dc));
-
-        DetM = FVectorMath::VectorAdd(DetM, FVectorMath::VectorMul(DetB, DetC));
-
-        FFloat128 Trace = FVectorMath::VectorMul(ab, FVectorMath::VectorShuffle<0, 2, 1, 3>(dc));
-        Trace = FVectorMath::VectorHorizontalAdd(Trace);
-        Trace = FVectorMath::VectorHorizontalAdd(Trace);
-
-        DetM = FVectorMath::VectorSub(DetM, Trace);
-
-        const FFloat128 AdjSignMask = FVectorMath::VectorSet(1.0f, -1.0f, -1.0f, 1.0f);
-        DetM = FVectorMath::VectorDiv(AdjSignMask, DetM);
-
-        x = FVectorMath::VectorMul(x, DetM);
-        y = FVectorMath::VectorMul(y, DetM);
-        z = FVectorMath::VectorMul(z, DetM);
-        w = FVectorMath::VectorMul(w, DetM);
-
-        Temp0 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(x, y);
-        Temp1 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(x, y);
-        Temp2 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(z, w);
-        Temp3 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(z, w);
-
-        FVectorMath::VectorStore(Temp0, Inverse.f[0]);
-        FVectorMath::VectorStore(Temp1, Inverse.f[1]);
-        FVectorMath::VectorStore(Temp2, Inverse.f[2]);
-        FVectorMath::VectorStore(Temp3, Inverse.f[3]);
+        FVectorMath::MatrixInvert4x4(M[0], Inverse.M[0]);
     #endif
-    
+
         return Inverse;
     }
 
     /**
-     * @brief  - Returns the adjugate of this matrix
-     * @return - Adjugate matrix
+     * @brief Returns the adjugate of this matrix
+     * @return Adjugate matrix
      */
-    inline FMatrix4 Adjoint() const noexcept
+    FMatrix4 GetAdjugate() const noexcept
     {
         FMatrix4 Adjugate;
 
     #if !USE_VECTOR_MATH
-        float _a = (m22 * m33) - (m23 * m32);
-        float _b = (m21 * m33) - (m23 * m31);
-        float _c = (m21 * m32) - (m22 * m31);
-        float _d = (m20 * m33) - (m23 * m30);
-        float _e = (m20 * m32) - (m22 * m30);
-        float _f = (m20 * m31) - (m21 * m30);
+        // Calculate the adjugate matrix manually
+        float ScalarA = (M[2][2] * M[3][3]) - (M[2][3] * M[3][2]);
+        float ScalarB = (M[2][1] * M[3][3]) - (M[2][3] * M[3][1]);
+        float ScalarC = (M[2][1] * M[3][2]) - (M[2][2] * M[3][1]);
+        float ScalarD = (M[2][0] * M[3][3]) - (M[2][3] * M[3][0]);
+        float ScalarE = (M[2][0] * M[3][2]) - (M[2][2] * M[3][0]);
+        float ScalarF = (M[2][0] * M[3][1]) - (M[2][1] * M[3][0]);
 
-        //d11
-        Adjugate.m00 = (m11 * _a) - (m12 * _b) + (m13 * _c);
-        //d12
-        Adjugate.m10 = -((m10 * _a) - (m12 * _d) + (m13 * _e));
-        //d13
-        Adjugate.m20 = (m10 * _b) - (m11 * _d) + (m13 * _f);
-        //d14
-        Adjugate.m30 = -((m10 * _c) - (m11 * _e) + (m12 * _f));
+        Adjugate.M[0][0] =   (M[1][1] * ScalarA) - (M[1][2] * ScalarB) + (M[1][3] * ScalarC);
+        Adjugate.M[0][1] = -((M[1][0] * ScalarA) - (M[1][2] * ScalarD) + (M[1][3] * ScalarE));
+        Adjugate.M[0][2] =   (M[1][0] * ScalarB) - (M[1][1] * ScalarD) + (M[1][3] * ScalarF);
+        Adjugate.M[0][3] = -((M[1][0] * ScalarC) - (M[1][1] * ScalarE) + (M[1][2] * ScalarF));
 
-        //d21
-        Adjugate.m01 = -((m01 * _a) - (m02 * _b) + (m03 * _c));
-        //d22
-        Adjugate.m11 = (m00 * _a) - (m02 * _d) + (m03 * _e);
-        //d23
-        Adjugate.m21 = -((m00 * _b) - (m01 * _d) + (m03 * _f));
-        //d24
-        Adjugate.m31 = (m00 * _c) - (m01 * _e) + (m02 * _f);
+        float ScalarG = (M[1][2] * M[3][3]) - (M[1][3] * M[3][2]);
+        float ScalarH = (M[1][1] * M[3][3]) - (M[1][3] * M[3][1]);
+        float ScalarI = (M[1][1] * M[3][2]) - (M[1][2] * M[3][1]);
+        float ScalarJ = (M[1][0] * M[3][3]) - (M[1][3] * M[3][0]);
+        float ScalarK = (M[1][0] * M[3][2]) - (M[1][2] * M[3][0]);
+        float ScalarL = (M[1][0] * M[3][1]) - (M[1][1] * M[3][0]);
 
-        _a = (m12 * m33) - (m13 * m32);
-        _b = (m11 * m33) - (m13 * m31);
-        _c = (m11 * m32) - (m12 * m31);
-        _d = (m10 * m33) - (m13 * m30);
-        _e = (m10 * m32) - (m12 * m30);
-        _f = (m10 * m31) - (m11 * m30);
+        Adjugate.M[2][0] =   (M[0][1] * ScalarA) - (M[0][2] * ScalarB) + (M[0][3] * ScalarC);
+        Adjugate.M[2][1] = -((M[0][0] * ScalarA) - (M[0][2] * ScalarD) + (M[0][3] * ScalarE));
+        Adjugate.M[2][2] =   (M[0][0] * ScalarB) - (M[0][1] * ScalarD) + (M[0][3] * ScalarF);
+        Adjugate.M[2][3] = -((M[0][0] * ScalarC) - (M[0][1] * ScalarE) + (M[0][2] * ScalarF));
 
-        //d31
-        Adjugate.m02 = (m01 * _a) - (m02 * _b) + (m03 * _c);
-        //d32
-        Adjugate.m12 = -((m00 * _a) - (m02 * _d) + (m03 * _e));
-        //d33
-        Adjugate.m22 = (m00 * _b) - (m01 * _d) + (m03 * _f);
-        //d34
-        Adjugate.m32 = -((m00 * _c) - (m01 * _e) + (m02 * _f));
+        float ScalarM = (M[1][2] * M[2][3]) - (M[1][3] * M[2][2]);
+        float ScalarN = (M[1][1] * M[2][3]) - (M[1][3] * M[2][1]);
+        float ScalarO = (M[1][1] * M[2][2]) - (M[1][2] * M[2][1]);
+        float ScalarP = (M[1][0] * M[2][3]) - (M[1][3] * M[2][0]);
+        float ScalarQ = (M[1][0] * M[2][2]) - (M[1][2] * M[2][0]);
+        float ScalarR = (M[1][0] * M[2][1]) - (M[1][1] * M[2][0]);
 
-        _a = (m12 * m23) - (m13 * m22);
-        _b = (m11 * m23) - (m13 * m21);
-        _c = (m11 * m22) - (m12 * m21);
-        _d = (m10 * m23) - (m13 * m20);
-        _e = (m10 * m22) - (m12 * m20);
-        _f = (m10 * m21) - (m11 * m20);
-
-        //d41
-        Adjugate.m03 = -((m01 * _a) - (m02 * _b) + (m03 * _c));
-        //d42
-        Adjugate.m13 = (m00 * _a) - (m02 * _d) + (m03 * _e);
-        //d43
-        Adjugate.m23 = -((m00 * _b) - (m01 * _d) + (m03 * _f));
-        //d44
-        Adjugate.m33 = (m00 * _c) - (m01 * _e) + (m02 * _f);
+        Adjugate.M[3][0] = -((M[0][1] * ScalarM) - (M[0][2] * ScalarN) + (M[0][3] * ScalarO));
+        Adjugate.M[3][1] =   (M[0][0] * ScalarM) - (M[0][2] * ScalarP) + (M[0][3] * ScalarQ);
+        Adjugate.M[3][2] = -((M[0][0] * ScalarN) - (M[0][1] * ScalarP) + (M[0][3] * ScalarR));
+        Adjugate.M[3][3] =   (M[0][0] * ScalarO) - (M[0][1] * ScalarQ) + (M[0][2] * ScalarR);
     #else
-        FFloat128 Temp0 = FVectorMath::VectorLoad(f[0]);
-        FFloat128 Temp1 = FVectorMath::VectorLoad(f[1]);
-        FFloat128 Temp2 = FVectorMath::VectorLoad(f[2]);
-        FFloat128 Temp3 = FVectorMath::VectorLoad(f[3]);
-
-        FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        FFloat128 _2 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        FFloat128 _3 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        FFloat128 _4 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        FFloat128 _5 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        FFloat128 _6 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        FFloat128 _7 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp1, Temp3);
-
-        FFloat128 Mul0   = FVectorMath::VectorMul(_4, _5);
-        FFloat128 Mul1   = FVectorMath::VectorMul(_6, _7);
-        FFloat128 DetSub = FVectorMath::VectorSub(Mul0, Mul1);
-
-        FFloat128 DetA = FVectorMath::VectorBroadcast<0>(DetSub);
-        FFloat128 DetB = FVectorMath::VectorBroadcast<1>(DetSub);
-        FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
-        FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
-
-        FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
-        FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
-
-        FFloat128 x = FVectorMath::VectorSub(FVectorMath::VectorMul(DetD, _0), FVectorMath::MatrixMul2x2(_1, dc));
-        FFloat128 w = FVectorMath::VectorSub(FVectorMath::VectorMul(DetA, _3), FVectorMath::MatrixMul2x2(_2, ab));
-
-        FFloat128 y = FVectorMath::VectorSub(FVectorMath::VectorMul(DetB, _2), FVectorMath::Matrix2MulAdjoint(_3, ab));
-        FFloat128 z = FVectorMath::VectorSub(FVectorMath::VectorMul(DetC, _1), FVectorMath::Matrix2MulAdjoint(_0, dc));
-
-        const FFloat128 Mask = FVectorMath::VectorSet(1.0f, -1.0f, -1.0f, 1.0f);
-        x = FVectorMath::VectorMul(x, Mask);
-        y = FVectorMath::VectorMul(y, Mask);
-        z = FVectorMath::VectorMul(z, Mask);
-        w = FVectorMath::VectorMul(w, Mask);
-
-        Temp0 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(x, y);
-        Temp1 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(x, y);
-        Temp2 = FVectorMath::VectorShuffle0011<3, 1, 3, 1>(z, w);
-        Temp3 = FVectorMath::VectorShuffle0011<2, 0, 2, 0>(z, w);
-
-        FVectorMath::VectorStore(Temp0, Adjugate.f[0]);
-        FVectorMath::VectorStore(Temp1, Adjugate.f[1]);
-        FVectorMath::VectorStore(Temp2, Adjugate.f[2]);
-        FVectorMath::VectorStore(Temp3, Adjugate.f[3]);
+        FVectorMath::MatrixAdjoint4x4(M[0], Adjugate.M[0]);
     #endif
-    
+
         return Adjugate;
     }
 
     /**
-     * @brief  - Returns the determinant of this matrix
-     * @return - The determinant
+     * @brief Returns the determinant of this matrix
+     * @return The determinant
      */
-    inline float Determinant() const noexcept
+    float GetDeterminant() const noexcept
     {
         float Determinant = 0.0f;
-        
+
     #if !USE_VECTOR_MATH
-        float _a = (m22 * m33) - (m23 * m32);
-        float _b = (m21 * m33) - (m23 * m31);
-        float _c = (m21 * m32) - (m22 * m31);
-        float _d = (m20 * m33) - (m23 * m30);
-        float _e = (m20 * m32) - (m22 * m30);
-        float _f = (m20 * m31) - (m21 * m30);
+        // Calculate the determinant manually
+        float ScalarA = (M[2][2] * M[3][3]) - (M[2][3] * M[3][2]);
+        float ScalarB = (M[2][1] * M[3][3]) - (M[2][3] * M[3][1]);
+        float ScalarC = (M[2][1] * M[3][2]) - (M[2][2] * M[3][1]);
+        float ScalarD = (M[2][0] * M[3][3]) - (M[2][3] * M[3][0]);
+        float ScalarE = (M[2][0] * M[3][2]) - (M[2][2] * M[3][0]);
+        float ScalarF = (M[2][0] * M[3][1]) - (M[2][1] * M[3][0]);
 
-        //d11
-        Determinant = m00 * ((m11 * _a) - (m12 * _b) + (m13 * _c));
-        //d12
-        Determinant -= m01 * ((m10 * _a) - (m12 * _d) + (m13 * _e));
-        //d13
-        Determinant += m02 * ((m10 * _b) - (m11 * _d) + (m13 * _f));
-        //d14
-        Determinant -= m03 * ((m10 * _c) - (m11 * _e) + (m12 * _f));
+        Determinant  = M[0][0] * ((M[1][1] * ScalarA) - (M[1][2] * ScalarB) + (M[1][3] * ScalarC));
+        Determinant -= M[0][1] * ((M[1][0] * ScalarA) - (M[1][2] * ScalarD) + (M[1][3] * ScalarE));
+        Determinant += M[0][2] * ((M[1][0] * ScalarB) - (M[1][1] * ScalarD) + (M[1][3] * ScalarF));
+        Determinant -= M[0][3] * ((M[1][0] * ScalarC) - (M[1][1] * ScalarE) + (M[1][2] * ScalarF));
     #else
-        FFloat128 Temp0 = FVectorMath::VectorLoad(f[0]);
-        FFloat128 Temp1 = FVectorMath::VectorLoad(f[1]);
-        FFloat128 Temp2 = FVectorMath::VectorLoad(f[2]);
-        FFloat128 Temp3 = FVectorMath::VectorLoad(f[3]);
-
-        FFloat128 _0 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp0, Temp1);
-        FFloat128 _1 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp0, Temp1);
-        FFloat128 _2 = FVectorMath::VectorShuffle0011<0, 1, 0, 1>(Temp2, Temp3);
-        FFloat128 _3 = FVectorMath::VectorShuffle0011<2, 3, 2, 3>(Temp2, Temp3);
-        FFloat128 _4 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp0, Temp2);
-        FFloat128 _5 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp1, Temp3);
-        FFloat128 _6 = FVectorMath::VectorShuffle0011<1, 3, 1, 3>(Temp0, Temp2);
-        FFloat128 _7 = FVectorMath::VectorShuffle0011<0, 2, 0, 2>(Temp1, Temp3);
-
-        FFloat128 Mul0   = FVectorMath::VectorMul(_4, _5);
-        FFloat128 Mul1   = FVectorMath::VectorMul(_6, _7);
-        FFloat128 DetSub = FVectorMath::VectorSub(Mul0, Mul1);
-
-        FFloat128 DetA = FVectorMath::VectorBroadcast<0>(DetSub);
-        FFloat128 DetB = FVectorMath::VectorBroadcast<1>(DetSub);
-        FFloat128 DetC = FVectorMath::VectorBroadcast<2>(DetSub);
-        FFloat128 DetD = FVectorMath::VectorBroadcast<3>(DetSub);
-
-        FFloat128 dc = FVectorMath::Matrix2AdjointMul(_3, _2);
-        FFloat128 ab = FVectorMath::Matrix2AdjointMul(_0, _1);
-
-        FFloat128 DetM = FVectorMath::VectorMul(DetA, DetD);
-        Mul0 = FVectorMath::VectorMul(DetB, DetC);
-        DetM = FVectorMath::VectorAdd(DetM, Mul0);
-        Mul0 = FVectorMath::VectorMul(ab, FVectorMath::VectorShuffle<0, 2, 1, 3>(dc));
-
-        FFloat128 Sum = FVectorMath::VectorHorizontalSum(Mul0);
-        DetM = FVectorMath::VectorSub(DetM, Sum);
-        Determinant = FVectorMath::VectorGetX(DetM);
+        Determinant = FVectorMath::MatrixDeterminant4x4(M[0]);
     #endif
-        
+
         return Determinant;
     }
 
     /**
-     * @brief  - Checks weather this matrix has any value that equals NaN
-     * @return - True if the any value equals NaN, false if not
+     * @brief Checks whether this matrix has any value that equals NaN
+     * @return True if any value equals NaN, false otherwise
      */
-    inline bool HasNaN() const noexcept
+    bool ContainsNaN() const noexcept
     {
-        for (int32 i = 0; i < 16; i++)
+        for (int32 Row = 0; Row < 4; ++Row)
         {
-            if (FMath::IsNaN(reinterpret_cast<const float*>(this)[i]))
+            for (int32 Col = 0; Col < 4; ++Col)
             {
-                return true;
+                if (FMath::IsNaN(M[Row][Col]))
+                {
+                    return true;
+                }
             }
         }
 
@@ -550,16 +375,19 @@ public:
     }
 
     /**
-     * @brief  - Checks weather this matrix has any value that equals infinity
-     * @return - True if the any value equals infinity, false if not
+     * @brief Checks whether this matrix has any value that equals infinity
+     * @return True if any value equals infinity, false otherwise
      */
-    inline bool HasInfinity() const noexcept
+    bool ContainsInfinity() const noexcept
     {
-        for (int32 i = 0; i < 16; i++)
+        for (int32 Row = 0; Row < 4; ++Row)
         {
-            if (FMath::IsInfinity(reinterpret_cast<const float*>(this)[i]))
+            for (int32 Col = 0; Col < 4; ++Col)
             {
-                return true;
+                if (FMath::IsInfinity(M[Row][Col]))
+                {
+                    return true;
+                }
             }
         }
 
@@ -567,44 +395,38 @@ public:
     }
 
     /**
-     * @brief  - Checks weather this matrix has any value that equals infinity or NaN
-     * @return - False if the any value equals infinity or NaN, true if not
+     * @brief Compares, within a threshold Epsilon, this matrix with another matrix
+     * @param Other Matrix to compare against
+     * @param Epsilon Threshold for comparison
+     * @return True if equal within Epsilon, false otherwise
      */
-    FORCEINLINE bool IsValid() const noexcept
-    {
-        return !HasNaN() && !HasInfinity();
-    }
-
-    /**
-     * @brief       - Compares, within a threshold Epsilon, this matrix with another matrix
-     * @param Other - matrix to compare against
-     * @return      - True if equal, false if not
-     */
-    inline bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
 
-        for (int32 i = 0; i < 16; i++)
+        for (int32 Row = 0; Row < 4; ++Row)
         {
-            float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
-            if (FMath::Abs(Diff) > Epsilon)
+            for (int32 Col = 0; Col < 4; ++Col)
             {
-                return false;
+                const float Diff = M[Row][Col] - Other.M[Row][Col];
+                if (FMath::Abs(Diff) > Epsilon)
+                {
+                    return false;
+                }
             }
         }
 
         return true;
     #else
-        FFloat128 Espilon128 = FVectorMath::VectorSet1(Epsilon);
-        Espilon128 = FVectorMath::VectorAbs(Espilon128);
+        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(FMath::Abs(Epsilon));
 
-        for (int32 i = 0; i < 4; i++)
+        for (int32 Row = 0; Row < 4; ++Row)
         {
-            FFloat128 Diff = FVectorMath::VectorSub(f[i], Other.f[i]);
-            Diff = FVectorMath::VectorAbs(Diff);
+            FFloat128 Diff       = FVectorMath::VectorSub(M[Row], Other.M[Row]);
+            FFloat128 Result_128 = FVectorMath::VectorAbs(Diff);
 
-            if (FVectorMath::VectorGreaterThan(Diff, Espilon128))
+            if (FVectorMath::VectorGreaterThan(Result_128, Epsilon_128))
             {
                 return false;
             }
@@ -614,550 +436,742 @@ public:
     #endif
     }
 
-     /** @brief - Sets this matrix to an identity matrix */
-    FORCEINLINE void SetIdentity() noexcept
+    /**
+     * @brief Sets this matrix to an identity matrix
+     */
+    void SetIdentity() noexcept
     {
     #if !USE_VECTOR_MATH
-        m00 = 1.0f;
-        m01 = 0.0f;
-        m02 = 0.0f;
-        m03 = 0.0f;
+        M[0][0] = 1.0f;
+        M[0][1] = 0.0f;
+        M[0][2] = 0.0f;
+        M[0][3] = 0.0f;
 
-        m10 = 0.0f;
-        m11 = 1.0f;
-        m12 = 0.0f;
-        m13 = 0.0f;
+        M[1][0] = 0.0f;
+        M[1][1] = 1.0f;
+        M[1][2] = 0.0f;
+        M[1][3] = 0.0f;
 
-        m20 = 0.0f;
-        m21 = 0.0f;
-        m22 = 1.0f;
-        m23 = 0.0f;
+        M[2][0] = 0.0f;
+        M[2][1] = 0.0f;
+        M[2][2] = 1.0f;
+        M[2][3] = 0.0f;
 
-        m30 = 0.0f;
-        m31 = 0.0f;
-        m32 = 0.0f;
-        m33 = 1.0f;
+        M[3][0] = 0.0f;
+        M[3][1] = 0.0f;
+        M[3][2] = 0.0f;
+        M[3][3] = 1.0f;
     #else
-        FVectorMath::VectorStore(FVectorMath::VectorSet(1.0f, 0.0f, 0.0f, 0.0f), f[0]);
-        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 1.0f, 0.0f, 0.0f), f[1]);
-        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 0.0f, 1.0f, 0.0f), f[2]);
-        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 0.0f, 0.0f, 1.0f), f[3]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(1.0f, 0.0f, 0.0f, 0.0f), M[0]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 1.0f, 0.0f, 0.0f), M[1]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 0.0f, 1.0f, 0.0f), M[2]);
+        FVectorMath::VectorStore(FVectorMath::VectorSet(0.0f, 0.0f, 0.0f, 1.0f), M[3]);
     #endif
     }
 
     /**
-     * @brief                  - Sets the upper 3x3 matrix
-     * @param RotationAndScale - 3x3 to set the upper quadrant to
+     * @brief Sets the upper 3x3 matrix (rotation and scale)
+     * @param RotationAndScale 3x3 matrix to set the upper quadrant to
      */
-    FORCEINLINE void SetRotationAndScale(const FMatrix3& RotationAndScale) noexcept
+    void SetRotationAndScale(const FMatrix3& RotationAndScale) noexcept
     {
-        m00 = RotationAndScale.M[0][0];
-        m01 = RotationAndScale.M[0][1];
-        m02 = RotationAndScale.M[0][2];
+        M[0][0] = RotationAndScale.M[0][0];
+        M[0][1] = RotationAndScale.M[0][1];
+        M[0][2] = RotationAndScale.M[0][2];
 
-        m10 = RotationAndScale.M[1][0];
-        m11 = RotationAndScale.M[1][1];
-        m12 = RotationAndScale.M[1][2];
+        M[1][0] = RotationAndScale.M[1][0];
+        M[1][1] = RotationAndScale.M[1][1];
+        M[1][2] = RotationAndScale.M[1][2];
 
-        m20 = RotationAndScale.M[2][0];
-        m21 = RotationAndScale.M[2][1];
-        m22 = RotationAndScale.M[2][2];
+        M[2][0] = RotationAndScale.M[2][0];
+        M[2][1] = RotationAndScale.M[2][1];
+        M[2][2] = RotationAndScale.M[2][2];
     }
 
     /**
-     * @brief             - Sets the translation part of a matrix
-     * @param Translation - The translation part
+     * @brief Sets the translation part of the matrix
+     * @param Translation The translation vector
      */
-    FORCEINLINE void SetTranslation(const FVector3& Translation) noexcept
+    void SetTranslation(const FVector3& Translation) noexcept
     {
-        m30 = Translation.x;
-        m31 = Translation.y;
-        m32 = Translation.z;
+        M[3][0] = Translation.x;
+        M[3][1] = Translation.y;
+        M[3][2] = Translation.z;
     }
 
     /**
-     * @brief     - Returns a row of this matrix
-     * @param Row - The row to retrieve
-     * @return    - A vector containing the specified row
+     * @brief Returns a row of this matrix
+     * @param Row The row to retrieve (0, 1, 2, or 3)
+     * @return A vector containing the specified row
      */
-    FORCEINLINE FVector4 GetRow(int32 Row) const noexcept
+    FVector4 GetRow(int32 Row) const noexcept
     {
         CHECK(Row < 4);
-        return FVector4(f[Row]);
+        return FVector4(M[Row][0], M[Row][1], M[Row][2], M[Row][3]);
     }
 
     /**
-     * @brief        - Returns a column of this matrix
-     * @param Column - The column to retrieve
-     * @return       - A vector containing the specified column
+     * @brief Returns a column of this matrix
+     * @param Column The column to retrieve (0, 1, 2, or 3)
+     * @return A vector containing the specified column
      */
-    FORCEINLINE FVector4 GetColumn(int32 Column) const noexcept
+    FVector4 GetColumn(int32 Column) const noexcept
     {
         CHECK(Column < 4);
-        return FVector4(f[0][Column], f[1][Column], f[2][Column], f[3][Column]);
+        return FVector4(M[0][Column], M[1][Column], M[2][Column], M[3][Column]);
     }
 
     /**
-     * @brief  - Returns the translation part of this matrix, that is the x-, y-, and z-coordinates of the fourth row
-     * @return - A vector containing the translation
+     * @brief Returns the translation part of this matrix
+     * @return A vector containing the translation
      */
-    FORCEINLINE FVector3 GetTranslation() const noexcept
+    FVector3 GetTranslation() const noexcept
     {
-        return FVector3(m30, m31, m32);
+        return FVector3(M[3][0], M[3][1], M[3][2]);
     }
 
     /**
-     * @brief  - Returns the 3x3 matrix thats forming the upper quadrant of this matrix.
-     * @return - A matrix containing the upper part of the matrix
+     * @brief Returns the upper 3x3 rotation and scale matrix
+     * @return A 3x3 matrix containing the upper part of the matrix
      */
-    FORCEINLINE FMatrix3 GetRotationAndScale() const noexcept
+    FMatrix3 GetRotationAndScale() const noexcept
     {
         return FMatrix3(
-            m00, m01, m02,
-            m10, m11, m12,
-            m20, m21, m22);
-    }
-
-    /**
-     * @brief  - Returns the data of this matrix as a pointer
-     * @return - A pointer to the data
-     */
-    FORCEINLINE float* Data() noexcept
-    {
-        return reinterpret_cast<float*>(this);
-    }
-
-    /**
-     * @brief  - Returns the data of this matrix as a pointer
-     * @return - A pointer to the data
-     */
-    FORCEINLINE const float* Data() const noexcept
-    {
-        return reinterpret_cast<const float*>(this);
+            M[0][0], M[0][1], M[0][2],
+            M[1][0], M[1][1], M[1][2],
+            M[2][0], M[2][1], M[2][2]);
     }
 
 public:
 
     /**
-     * @brief     - Transforms a 4-D vector
-     * @param RHS - The vector to transform
-     * @return    - A vector containing the transformation
+     * @brief Transforms a 4-D vector using this matrix
+     * @param Other The vector to transform
+     * @return The transformed vector
      */
-    FORCEINLINE FVector4 operator*(const FVector4& RHS) const noexcept
+    FVector4 operator*(const FVector4& Other) const noexcept
     {
-        return Transform(RHS);
+        return Transform(Other);
     }
 
     /**
-     * @brief     - Multiplies a matrix with another matrix
-     * @param RHS - The other matrix
-     * @return    - A matrix containing the result of the multiplication
+     * @brief Multiplies this matrix with another matrix
+     * @param Other The other matrix
+     * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix4 operator*(const FMatrix4& RHS) const noexcept
+    FMatrix4 operator*(const FMatrix4& Other) const noexcept
     {
         FMatrix4 Result;
-    
+
     #if !USE_VECTOR_MATH
-        Result.m00 = (m00 * RHS.m00) + (m01 * RHS.m10) + (m02 * RHS.m20) + (m03 * RHS.m30);
-        Result.m01 = (m00 * RHS.m01) + (m01 * RHS.m11) + (m02 * RHS.m21) + (m03 * RHS.m31);
-        Result.m02 = (m00 * RHS.m02) + (m01 * RHS.m12) + (m02 * RHS.m22) + (m03 * RHS.m32);
-        Result.m03 = (m00 * RHS.m03) + (m01 * RHS.m13) + (m02 * RHS.m23) + (m03 * RHS.m33);
+        Result.M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]) + (M[0][2] * Other.M[2][0]) + (M[0][3] * Other.M[3][0]);
+        Result.M[0][1] = (M[0][0] * Other.M[0][1]) + (M[0][1] * Other.M[1][1]) + (M[0][2] * Other.M[2][1]) + (M[0][3] * Other.M[3][1]);
+        Result.M[0][2] = (M[0][0] * Other.M[0][2]) + (M[0][1] * Other.M[1][2]) + (M[0][2] * Other.M[2][2]) + (M[0][3] * Other.M[3][2]);
+        Result.M[0][3] = (M[0][0] * Other.M[0][3]) + (M[0][1] * Other.M[1][3]) + (M[0][2] * Other.M[2][3]) + (M[0][3] * Other.M[3][3]);
 
-        Result.m10 = (m10 * RHS.m00) + (m11 * RHS.m10) + (m12 * RHS.m20) + (m13 * RHS.m30);
-        Result.m11 = (m10 * RHS.m01) + (m11 * RHS.m11) + (m12 * RHS.m21) + (m13 * RHS.m31);
-        Result.m12 = (m10 * RHS.m02) + (m11 * RHS.m12) + (m12 * RHS.m22) + (m13 * RHS.m32);
-        Result.m13 = (m10 * RHS.m03) + (m11 * RHS.m13) + (m12 * RHS.m23) + (m13 * RHS.m33);
+        Result.M[1][0] = (M[1][0] * Other.M[0][0]) + (M[1][1] * Other.M[1][0]) + (M[1][2] * Other.M[2][0]) + (M[1][3] * Other.M[3][0]);
+        Result.M[1][1] = (M[1][0] * Other.M[0][1]) + (M[1][1] * Other.M[1][1]) + (M[1][2] * Other.M[2][1]) + (M[1][3] * Other.M[3][1]);
+        Result.M[1][2] = (M[1][0] * Other.M[0][2]) + (M[1][1] * Other.M[1][2]) + (M[1][2] * Other.M[2][2]) + (M[1][3] * Other.M[3][2]);
+        Result.M[1][3] = (M[1][0] * Other.M[0][3]) + (M[1][1] * Other.M[1][3]) + (M[1][2] * Other.M[2][3]) + (M[1][3] * Other.M[3][3]);
 
-        Result.m20 = (m20 * RHS.m00) + (m21 * RHS.m10) + (m22 * RHS.m20) + (m23 * RHS.m30);
-        Result.m21 = (m20 * RHS.m01) + (m21 * RHS.m11) + (m22 * RHS.m21) + (m23 * RHS.m31);
-        Result.m22 = (m20 * RHS.m02) + (m21 * RHS.m12) + (m22 * RHS.m22) + (m23 * RHS.m32);
-        Result.m23 = (m20 * RHS.m03) + (m21 * RHS.m13) + (m22 * RHS.m23) + (m23 * RHS.m33);
+        Result.M[2][0] = (M[2][0] * Other.M[0][0]) + (M[2][1] * Other.M[1][0]) + (M[2][2] * Other.M[2][0]) + (M[2][3] * Other.M[3][0]);
+        Result.M[2][1] = (M[2][0] * Other.M[0][1]) + (M[2][1] * Other.M[1][1]) + (M[2][2] * Other.M[2][1]) + (M[2][3] * Other.M[3][1]);
+        Result.M[2][2] = (M[2][0] * Other.M[0][2]) + (M[2][1] * Other.M[1][2]) + (M[2][2] * Other.M[2][2]) + (M[2][3] * Other.M[3][2]);
+        Result.M[2][3] = (M[2][0] * Other.M[0][3]) + (M[2][1] * Other.M[1][3]) + (M[2][2] * Other.M[2][3]) + (M[2][3] * Other.M[3][3]);
 
-        Result.m30 = (m30 * RHS.m00) + (m31 * RHS.m10) + (m32 * RHS.m20) + (m33 * RHS.m30);
-        Result.m31 = (m30 * RHS.m01) + (m31 * RHS.m11) + (m32 * RHS.m21) + (m33 * RHS.m31);
-        Result.m32 = (m30 * RHS.m02) + (m31 * RHS.m12) + (m32 * RHS.m22) + (m33 * RHS.m32);
-        Result.m33 = (m30 * RHS.m03) + (m31 * RHS.m13) + (m32 * RHS.m23) + (m33 * RHS.m33);
+        Result.M[3][0] = (M[3][0] * Other.M[0][0]) + (M[3][1] * Other.M[1][0]) + (M[3][2] * Other.M[2][0]) + (M[3][3] * Other.M[3][0]);
+        Result.M[3][1] = (M[3][0] * Other.M[0][1]) + (M[3][1] * Other.M[1][1]) + (M[3][2] * Other.M[2][1]) + (M[3][3] * Other.M[3][1]);
+        Result.M[3][2] = (M[3][0] * Other.M[0][2]) + (M[3][1] * Other.M[1][2]) + (M[3][2] * Other.M[2][2]) + (M[3][3] * Other.M[3][2]);
+        Result.M[3][3] = (M[3][0] * Other.M[0][3]) + (M[3][1] * Other.M[1][3]) + (M[3][2] * Other.M[2][3]) + (M[3][3] * Other.M[3][3]);
     #else
-        FFloat128 Row0 = FVectorMath::VectorLoad(f[0]);
-        Row0 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row0);
-
-        FFloat128 Row1 = FVectorMath::VectorLoad(f[1]);
-        Row1 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row1);
-
-        FFloat128 Row2 = FVectorMath::VectorLoad(f[2]);
-        Row2 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row2);
-
-        FFloat128 Row3 = FVectorMath::VectorLoad(f[3]);
-        Row3 = FVectorMath::VectorTransform(reinterpret_cast<const float*>(&RHS), Row3);
-
-        FVectorMath::VectorStore(Row0, Result.f[0]);
-        FVectorMath::VectorStore(Row1, Result.f[1]);
-        FVectorMath::VectorStore(Row2, Result.f[2]);
-        FVectorMath::VectorStore(Row3, Result.f[3]);
+        FVectorMath::MatrixMul4x4(M[0], Other.M[0], Result.M[0]);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Multiplies this matrix with another matrix
-     * @param RHS - The other matrix
-     * @return    - A reference to this matrix
+     * @brief Multiplies this matrix with another matrix and assigns the result
+     * @param Other The other matrix
+     * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix4& operator*=(const FMatrix4& RHS) noexcept
+    FMatrix4& operator*=(const FMatrix4& Other) noexcept
     {
-        return *this = *this * RHS;
-    }
-
-    /**
-     * @brief     - Multiplies a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the multiplication
-     */
-    FORCEINLINE FMatrix4 operator*(float RHS) const noexcept
-    {
-        FMatrix4 Result;
-    
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 * RHS;
-        Result.m01 = m01 * RHS;
-        Result.m02 = m02 * RHS;
-        Result.m03 = m03 * RHS;
+        M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]) + (M[0][2] * Other.M[2][0]) + (M[0][3] * Other.M[3][0]);
+        M[0][1] = (M[0][0] * Other.M[0][1]) + (M[0][1] * Other.M[1][1]) + (M[0][2] * Other.M[2][1]) + (M[0][3] * Other.M[3][1]);
+        M[0][2] = (M[0][0] * Other.M[0][2]) + (M[0][1] * Other.M[1][2]) + (M[0][2] * Other.M[2][2]) + (M[0][3] * Other.M[3][2]);
+        M[0][3] = (M[0][0] * Other.M[0][3]) + (M[0][1] * Other.M[1][3]) + (M[0][2] * Other.M[2][3]) + (M[0][3] * Other.M[3][3]);
 
-        Result.m10 = m10 * RHS;
-        Result.m11 = m11 * RHS;
-        Result.m12 = m12 * RHS;
-        Result.m13 = m13 * RHS;
+        M[1][0] = (M[1][0] * Other.M[0][0]) + (M[1][1] * Other.M[1][0]) + (M[1][2] * Other.M[2][0]) + (M[1][3] * Other.M[3][0]);
+        M[1][1] = (M[1][0] * Other.M[0][1]) + (M[1][1] * Other.M[1][1]) + (M[1][2] * Other.M[2][1]) + (M[1][3] * Other.M[3][1]);
+        M[1][2] = (M[1][0] * Other.M[0][2]) + (M[1][1] * Other.M[1][2]) + (M[1][2] * Other.M[2][2]) + (M[1][3] * Other.M[3][2]);
+        M[1][3] = (M[1][0] * Other.M[0][3]) + (M[1][1] * Other.M[1][3]) + (M[1][2] * Other.M[2][3]) + (M[1][3] * Other.M[3][3]);
 
-        Result.m20 = m20 * RHS;
-        Result.m21 = m21 * RHS;
-        Result.m22 = m22 * RHS;
-        Result.m23 = m23 * RHS;
+        M[2][0] = (M[2][0] * Other.M[0][0]) + (M[2][1] * Other.M[1][0]) + (M[2][2] * Other.M[2][0]) + (M[2][3] * Other.M[3][0]);
+        M[2][1] = (M[2][0] * Other.M[0][1]) + (M[2][1] * Other.M[1][1]) + (M[2][2] * Other.M[2][1]) + (M[2][3] * Other.M[3][1]);
+        M[2][2] = (M[2][0] * Other.M[0][2]) + (M[2][1] * Other.M[1][2]) + (M[2][2] * Other.M[2][2]) + (M[2][3] * Other.M[3][2]);
+        M[2][3] = (M[2][0] * Other.M[0][3]) + (M[2][1] * Other.M[1][3]) + (M[2][2] * Other.M[2][3]) + (M[2][3] * Other.M[3][3]);
 
-        Result.m30 = m30 * RHS;
-        Result.m31 = m31 * RHS;
-        Result.m32 = m32 * RHS;
-        Result.m33 = m33 * RHS;
+        M[3][0] = (M[3][0] * Other.M[0][0]) + (M[3][1] * Other.M[1][0]) + (M[3][2] * Other.M[2][0]) + (M[3][3] * Other.M[3][0]);
+        M[3][1] = (M[3][0] * Other.M[0][1]) + (M[3][1] * Other.M[1][1]) + (M[3][2] * Other.M[2][1]) + (M[3][3] * Other.M[3][1]);
+        M[3][2] = (M[3][0] * Other.M[0][2]) + (M[3][1] * Other.M[1][2]) + (M[3][2] * Other.M[2][2]) + (M[3][3] * Other.M[3][2]);
+        M[3][3] = (M[3][0] * Other.M[0][3]) + (M[3][1] * Other.M[1][3]) + (M[3][2] * Other.M[2][3]) + (M[3][3] * Other.M[3][3]);
     #else
-        FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
-
-        FFloat128 Row0 = FVectorMath::VectorMul(f[0], Scalars);
-        FFloat128 Row1 = FVectorMath::VectorMul(f[1], Scalars);
-        FFloat128 Row2 = FVectorMath::VectorMul(f[2], Scalars);
-        FFloat128 Row3 = FVectorMath::VectorMul(f[3], Scalars);
-
-        FVectorMath::VectorStore(Row0, Result.f[0]);
-        FVectorMath::VectorStore(Row1, Result.f[1]);
-        FVectorMath::VectorStore(Row2, Result.f[2]);
-        FVectorMath::VectorStore(Row3, Result.f[3]);
+        FVectorMath::MatrixMul4x4(M[0], Other.M[0], M[0]);
     #endif
-    
-        return Result;
+
+        return *this;
     }
 
     /**
-     * @brief     - Multiplies this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Multiplies this matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A matrix containing the result of the multiplication
      */
-    FORCEINLINE FMatrix4& operator*=(float RHS) noexcept
-    {
-        return *this = *this * RHS;
-    }
-
-    /**
-     * @brief     - Adds a matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A matrix containing the result of the addition
-     */
-    FORCEINLINE FMatrix4 operator+(const FMatrix4& RHS) const noexcept
+    FMatrix4 operator*(float Scalar) const noexcept
     {
         FMatrix4 Result;
 
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 + RHS.m00;
-        Result.m01 = m01 + RHS.m01;
-        Result.m02 = m02 + RHS.m02;
-        Result.m03 = m03 + RHS.m03;
+        Result.M[0][0] = M[0][0] * Scalar;
+        Result.M[0][1] = M[0][1] * Scalar;
+        Result.M[0][2] = M[0][2] * Scalar;
+        Result.M[0][3] = M[0][3] * Scalar;
 
-        Result.m10 = m10 + RHS.m10;
-        Result.m11 = m11 + RHS.m11;
-        Result.m12 = m12 + RHS.m12;
-        Result.m13 = m13 + RHS.m13;
+        Result.M[1][0] = M[1][0] * Scalar;
+        Result.M[1][1] = M[1][1] * Scalar;
+        Result.M[1][2] = M[1][2] * Scalar;
+        Result.M[1][3] = M[1][3] * Scalar;
 
-        Result.m20 = m20 + RHS.m20;
-        Result.m21 = m21 + RHS.m21;
-        Result.m22 = m22 + RHS.m22;
-        Result.m23 = m23 + RHS.m23;
+        Result.M[2][0] = M[2][0] * Scalar;
+        Result.M[2][1] = M[2][1] * Scalar;
+        Result.M[2][2] = M[2][2] * Scalar;
+        Result.M[2][3] = M[2][3] * Scalar;
 
-        Result.m30 = m30 + RHS.m30;
-        Result.m31 = m31 + RHS.m31;
-        Result.m32 = m32 + RHS.m32;
-        Result.m33 = m33 + RHS.m33;
+        Result.M[3][0] = M[3][0] * Scalar;
+        Result.M[3][1] = M[3][1] * Scalar;
+        Result.M[3][2] = M[3][2] * Scalar;
+        Result.M[3][3] = M[3][3] * Scalar;
     #else
-        FFloat128 Row0 = FVectorMath::VectorAdd(f[0], RHS.f[0]);
-        FFloat128 Row1 = FVectorMath::VectorAdd(f[1], RHS.f[1]);
-        FFloat128 Row2 = FVectorMath::VectorAdd(f[2], RHS.f[2]);
-        FFloat128 Row3 = FVectorMath::VectorAdd(f[3], RHS.f[3]);
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
 
-        FVectorMath::VectorStore(Row0, Result.f[0]);
-        FVectorMath::VectorStore(Row1, Result.f[1]);
-        FVectorMath::VectorStore(Row2, Result.f[2]);
-        FVectorMath::VectorStore(Row3, Result.f[3]);
-    #endif
-    
-        return Result;
-    }
+        FFloat128 MatrixRow0 = FVectorMath::VectorMul(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorMul(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorMul(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorMul(M[3], Scalars_128);
 
-    /**
-     * @brief     - Adds this matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A reference to this matrix
-     */
-    FORCEINLINE FMatrix4& operator+=(const FMatrix4& RHS) noexcept
-    {
-        return *this = *this + RHS;
-    }
-
-    /**
-     * @brief     - Adds a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the addition
-     */
-    FORCEINLINE FMatrix4 operator+(float RHS) const noexcept
-    {
-        FMatrix4 Result;
-    
-    #if !USE_VECTOR_MATH
-        Result.m00 = m00 + RHS;
-        Result.m01 = m01 + RHS;
-        Result.m02 = m02 + RHS;
-        Result.m03 = m03 + RHS;
-
-        Result.m10 = m10 + RHS;
-        Result.m11 = m11 + RHS;
-        Result.m12 = m12 + RHS;
-        Result.m13 = m13 + RHS;
-
-        Result.m20 = m20 + RHS;
-        Result.m21 = m21 + RHS;
-        Result.m22 = m22 + RHS;
-        Result.m23 = m23 + RHS;
-
-        Result.m30 = m30 + RHS;
-        Result.m31 = m31 + RHS;
-        Result.m32 = m32 + RHS;
-        Result.m33 = m33 + RHS;
-    #else
-        FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
-
-        FFloat128 Row0 = FVectorMath::VectorAdd(f[0], Scalars);
-        FFloat128 Row1 = FVectorMath::VectorAdd(f[1], Scalars);
-        FFloat128 Row2 = FVectorMath::VectorAdd(f[2], Scalars);
-        FFloat128 Row3 = FVectorMath::VectorAdd(f[3], Scalars);
-
-        FVectorMath::VectorStore(Row0, Result.f[0]);
-        FVectorMath::VectorStore(Row1, Result.f[1]);
-        FVectorMath::VectorStore(Row2, Result.f[2]);
-        FVectorMath::VectorStore(Row3, Result.f[3]);
+        FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
+        FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
+        FVectorMath::VectorStore(MatrixRow2, Result.M[2]);
+        FVectorMath::VectorStore(MatrixRow3, Result.M[3]);
     #endif
 
         return Result;
     }
 
     /**
-     * @brief     - Adds this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Multiplies this matrix component-wise with a scalar and assigns the result
+     * @param Scalar The scalar
+     * @return A reference to this matrix after multiplication
      */
-    FORCEINLINE FMatrix4& operator+=(float RHS) noexcept
+    FMatrix4& operator*=(float Scalar) noexcept
     {
-        return *this = *this + RHS;
-    }
-
-    /**
-     * @brief     - Subtracts a matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A matrix containing the result of the subtraction
-     */
-    FORCEINLINE FMatrix4 operator-(const FMatrix4& RHS) const noexcept
-    {
-        FMatrix4 Result;
-    
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 - RHS.m00;
-        Result.m01 = m01 - RHS.m01;
-        Result.m02 = m02 - RHS.m02;
-        Result.m03 = m03 - RHS.m03;
+        M[0][0] = M[0][0] * Scalar;
+        M[0][1] = M[0][1] * Scalar;
+        M[0][2] = M[0][2] * Scalar;
+        M[0][3] = M[0][3] * Scalar;
 
-        Result.m10 = m10 - RHS.m10;
-        Result.m11 = m11 - RHS.m11;
-        Result.m12 = m12 - RHS.m12;
-        Result.m13 = m13 - RHS.m13;
+        M[1][0] = M[1][0] * Scalar;
+        M[1][1] = M[1][1] * Scalar;
+        M[1][2] = M[1][2] * Scalar;
+        M[1][3] = M[1][3] * Scalar;
 
-        Result.m20 = m20 - RHS.m20;
-        Result.m21 = m21 - RHS.m21;
-        Result.m22 = m22 - RHS.m22;
-        Result.m23 = m23 - RHS.m23;
+        M[2][0] = M[2][0] * Scalar;
+        M[2][1] = M[2][1] * Scalar;
+        M[2][2] = M[2][2] * Scalar;
+        M[2][3] = M[2][3] * Scalar;
 
-        Result.m30 = m30 - RHS.m30;
-        Result.m31 = m31 - RHS.m31;
-        Result.m32 = m32 - RHS.m32;
-        Result.m33 = m33 - RHS.m33;
+        M[3][0] = M[3][0] * Scalar;
+        M[3][1] = M[3][1] * Scalar;
+        M[3][2] = M[3][2] * Scalar;
+        M[3][3] = M[3][3] * Scalar;
     #else
-        FFloat128 Row0 = FVectorMath::VectorSub(f[0], RHS.f[0]);
-        FFloat128 Row1 = FVectorMath::VectorSub(f[1], RHS.f[1]);
-        FFloat128 Row2 = FVectorMath::VectorSub(f[2], RHS.f[2]);
-        FFloat128 Row3 = FVectorMath::VectorSub(f[3], RHS.f[3]);
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
 
-        FVectorMath::VectorStore(Row0, Result.f[0]);
-        FVectorMath::VectorStore(Row1, Result.f[1]);
-        FVectorMath::VectorStore(Row2, Result.f[2]);
-        FVectorMath::VectorStore(Row3, Result.f[3]);
+        FFloat128 MatrixRow0 = FVectorMath::VectorMul(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorMul(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorMul(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorMul(M[3], Scalars_128);
+
+        FVectorMath::VectorStore(MatrixRow0, M[0]);
+        FVectorMath::VectorStore(MatrixRow1, M[1]);
+        FVectorMath::VectorStore(MatrixRow2, M[2]);
+        FVectorMath::VectorStore(MatrixRow3, M[3]);
     #endif
-    
-        return Result;
+
+        return *this;
     }
 
     /**
-     * @brief     - Subtracts this matrix component-wise with another matrix
-     * @param RHS - The other matrix
-     * @return    - A reference to this matrix
+     * @brief Adds this matrix component-wise with another matrix
+     * @param Other The other matrix
+     * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix4& operator-=(const FMatrix4& RHS) noexcept
-    {
-        return *this = *this - RHS;
-    }
-
-    /**
-     * @brief     - Subtracts a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the subtraction
-     */
-    FORCEINLINE FMatrix4 operator-(float RHS) const noexcept
+    FMatrix4 operator+(const FMatrix4& Other) const noexcept
     {
         FMatrix4 Result;
 
     #if !USE_VECTOR_MATH
-        Result.m00 = m00 - RHS;
-        Result.m01 = m01 - RHS;
-        Result.m02 = m02 - RHS;
-        Result.m03 = m03 - RHS;
+        Result.M[0][0] = M[0][0] + Other.M[0][0];
+        Result.M[0][1] = M[0][1] + Other.M[0][1];
+        Result.M[0][2] = M[0][2] + Other.M[0][2];
+        Result.M[0][3] = M[0][3] + Other.M[0][3];
 
-        Result.m10 = m10 - RHS;
-        Result.m11 = m11 - RHS;
-        Result.m12 = m12 - RHS;
-        Result.m13 = m13 - RHS;
+        Result.M[1][0] = M[1][0] + Other.M[1][0];
+        Result.M[1][1] = M[1][1] + Other.M[1][1];
+        Result.M[1][2] = M[1][2] + Other.M[1][2];
+        Result.M[1][3] = M[1][3] + Other.M[1][3];
 
-        Result.m20 = m20 - RHS;
-        Result.m21 = m21 - RHS;
-        Result.m22 = m22 - RHS;
-        Result.m23 = m23 - RHS;
+        Result.M[2][0] = M[2][0] + Other.M[2][0];
+        Result.M[2][1] = M[2][1] + Other.M[2][1];
+        Result.M[2][2] = M[2][2] + Other.M[2][2];
+        Result.M[2][3] = M[2][3] + Other.M[2][3];
 
-        Result.m30 = m30 - RHS;
-        Result.m31 = m31 - RHS;
-        Result.m32 = m32 - RHS;
-        Result.m33 = m33 - RHS;
+        Result.M[3][0] = M[3][0] + Other.M[3][0];
+        Result.M[3][1] = M[3][1] + Other.M[3][1];
+        Result.M[3][2] = M[3][2] + Other.M[3][2];
+        Result.M[3][3] = M[3][3] + Other.M[3][3];
     #else
-        FFloat128 Scalars = FVectorMath::VectorSet1(RHS);
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Other.M[0]);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Other.M[1]);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Other.M[2]);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Other.M[3]);
 
-        FFloat128 Row0 = FVectorMath::VectorSub(f[0], Scalars);
-        FFloat128 Row1 = FVectorMath::VectorSub(f[1], Scalars);
-        FFloat128 Row2 = FVectorMath::VectorSub(f[2], Scalars);
-        FFloat128 Row3 = FVectorMath::VectorSub(f[3], Scalars);
-
-        FVectorMath::VectorStore(Row0, Result.f[0]);
-        FVectorMath::VectorStore(Row1, Result.f[1]);
-        FVectorMath::VectorStore(Row2, Result.f[2]);
-        FVectorMath::VectorStore(Row3, Result.f[3]);
+        FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
+        FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
+        FVectorMath::VectorStore(MatrixRow2, Result.M[2]);
+        FVectorMath::VectorStore(MatrixRow3, Result.M[3]);
     #endif
-    
+
         return Result;
     }
 
     /**
-     * @brief     - Subtracts this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Adds this matrix component-wise with another matrix and assigns the result
+     * @param Other The other matrix
+     * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix4& operator-=(float RHS) noexcept
+    FMatrix4& operator+=(const FMatrix4& Other) noexcept
     {
-        return *this = *this - RHS;
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] + Other.M[0][0];
+        M[0][1] = M[0][1] + Other.M[0][1];
+        M[0][2] = M[0][2] + Other.M[0][2];
+        M[0][3] = M[0][3] + Other.M[0][3];
+
+        M[1][0] = M[1][0] + Other.M[1][0];
+        M[1][1] = M[1][1] + Other.M[1][1];
+        M[1][2] = M[1][2] + Other.M[1][2];
+        M[1][3] = M[1][3] + Other.M[1][3];
+
+        M[2][0] = M[2][0] + Other.M[2][0];
+        M[2][1] = M[2][1] + Other.M[2][1];
+        M[2][2] = M[2][2] + Other.M[2][2];
+        M[2][3] = M[2][3] + Other.M[2][3];
+
+        M[3][0] = M[3][0] + Other.M[3][0];
+        M[3][1] = M[3][1] + Other.M[3][1];
+        M[3][2] = M[3][2] + Other.M[3][2];
+        M[3][3] = M[3][3] + Other.M[3][3];
+    #else
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Other.M[0]);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Other.M[1]);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Other.M[2]);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Other.M[3]);
+
+        FVectorMath::VectorStore(MatrixRow0, M[0]);
+        FVectorMath::VectorStore(MatrixRow1, M[1]);
+        FVectorMath::VectorStore(MatrixRow2, M[2]);
+        FVectorMath::VectorStore(MatrixRow3, M[3]);
+    #endif
+
+        return *this;
     }
 
     /**
-     * @brief     - Divides a matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A matrix containing the result of the division
+     * @brief Adds this matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A matrix containing the result of the addition
      */
-    FORCEINLINE FMatrix4 operator/(float RHS) const noexcept
+    FMatrix4 operator+(float Scalar) const noexcept
     {
         FMatrix4 Result;
 
     #if !USE_VECTOR_MATH
-        const float Recip = 1.0f / RHS;
-        Result.m00 = m00 * Recip;
-        Result.m01 = m01 * Recip;
-        Result.m02 = m02 * Recip;
-        Result.m03 = m03 * Recip;
+        Result.M[0][0] = M[0][0] + Scalar;
+        Result.M[0][1] = M[0][1] + Scalar;
+        Result.M[0][2] = M[0][2] + Scalar;
+        Result.M[0][3] = M[0][3] + Scalar;
 
-        Result.m10 = m10 * Recip;
-        Result.m11 = m11 * Recip;
-        Result.m12 = m12 * Recip;
-        Result.m13 = m13 * Recip;
+        Result.M[1][0] = M[1][0] + Scalar;
+        Result.M[1][1] = M[1][1] + Scalar;
+        Result.M[1][2] = M[1][2] + Scalar;
+        Result.M[1][3] = M[1][3] + Scalar;
 
-        Result.m20 = m20 * Recip;
-        Result.m21 = m21 * Recip;
-        Result.m22 = m22 * Recip;
-        Result.m23 = m23 * Recip;
+        Result.M[2][0] = M[2][0] + Scalar;
+        Result.M[2][1] = M[2][1] + Scalar;
+        Result.M[2][2] = M[2][2] + Scalar;
+        Result.M[2][3] = M[2][3] + Scalar;
 
-        Result.m30 = m30 * Recip;
-        Result.m31 = m31 * Recip;
-        Result.m32 = m32 * Recip;
-        Result.m33 = m33 * Recip;
+        Result.M[3][0] = M[3][0] + Scalar;
+        Result.M[3][1] = M[3][1] + Scalar;
+        Result.M[3][2] = M[3][2] + Scalar;
+        Result.M[3][3] = M[3][3] + Scalar;
     #else
-        FFloat128 RecipScalars = FVectorMath::VectorSet1(1.0f / RHS);
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
 
-        FFloat128 Row0 = FVectorMath::VectorMul(f[0], RecipScalars);
-        FFloat128 Row1 = FVectorMath::VectorMul(f[1], RecipScalars);
-        FFloat128 Row2 = FVectorMath::VectorMul(f[2], RecipScalars);
-        FFloat128 Row3 = FVectorMath::VectorMul(f[3], RecipScalars);
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars_128);
 
-        FVectorMath::VectorStore(Row0, Result.f[0]);
-        FVectorMath::VectorStore(Row1, Result.f[1]);
-        FVectorMath::VectorStore(Row2, Result.f[2]);
-        FVectorMath::VectorStore(Row3, Result.f[3]);
+        FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
+        FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
+        FVectorMath::VectorStore(MatrixRow2, Result.M[2]);
+        FVectorMath::VectorStore(MatrixRow3, Result.M[3]);
     #endif
-    
+
         return Result;
     }
 
     /**
-     * @brief     - Divides this matrix component-wise with a scalar
-     * @param RHS - The scalar
-     * @return    - A reference to this matrix
+     * @brief Adds this matrix component-wise with a scalar and assigns the result
+     * @param Scalar The scalar
+     * @return A reference to this matrix after addition
      */
-    FORCEINLINE FMatrix4& operator/=(float RHS) noexcept
+    FMatrix4& operator+=(float Scalar) noexcept
     {
-        return *this = *this / RHS;
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] + Scalar;
+        M[0][1] = M[0][1] + Scalar;
+        M[0][2] = M[0][2] + Scalar;
+        M[0][3] = M[0][3] + Scalar;
+
+        M[1][0] = M[1][0] + Scalar;
+        M[1][1] = M[1][1] + Scalar;
+        M[1][2] = M[1][2] + Scalar;
+        M[1][3] = M[1][3] + Scalar;
+
+        M[2][0] = M[2][0] + Scalar;
+        M[2][1] = M[2][1] + Scalar;
+        M[2][2] = M[2][2] + Scalar;
+        M[2][3] = M[2][3] + Scalar;
+
+        M[3][0] = M[3][0] + Scalar;
+        M[3][1] = M[3][1] + Scalar;
+        M[3][2] = M[3][2] + Scalar;
+        M[3][3] = M[3][3] + Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars_128);
+
+        FVectorMath::VectorStore(MatrixRow0, M[0]);
+        FVectorMath::VectorStore(MatrixRow1, M[1]);
+        FVectorMath::VectorStore(MatrixRow2, M[2]);
+        FVectorMath::VectorStore(MatrixRow3, M[3]);
+    #endif
+
+        return *this;
     }
 
     /**
-     * @brief       - Returns the result after comparing this and another matrix
-     * @param Other - The matrix to compare with
-     * @return      - True if equal, false if not
+     * @brief Subtracts this matrix component-wise with another matrix
+     * @param Other The other matrix
+     * @return A matrix containing the result of the subtraction
      */
-    FORCEINLINE bool operator==(const FMatrix4& Other) const noexcept
+    FMatrix4 operator-(const FMatrix4& Other) const noexcept
+    {
+        FMatrix4 Result;
+
+    #if !USE_VECTOR_MATH
+        Result.M[0][0] = M[0][0] - Other.M[0][0];
+        Result.M[0][1] = M[0][1] - Other.M[0][1];
+        Result.M[0][2] = M[0][2] - Other.M[0][2];
+        Result.M[0][3] = M[0][3] - Other.M[0][3];
+
+        Result.M[1][0] = M[1][0] - Other.M[1][0];
+        Result.M[1][1] = M[1][1] - Other.M[1][1];
+        Result.M[1][2] = M[1][2] - Other.M[1][2];
+        Result.M[1][3] = M[1][3] - Other.M[1][3];
+
+        Result.M[2][0] = M[2][0] - Other.M[2][0];
+        Result.M[2][1] = M[2][1] - Other.M[2][1];
+        Result.M[2][2] = M[2][2] - Other.M[2][2];
+        Result.M[2][3] = M[2][3] - Other.M[2][3];
+
+        Result.M[3][0] = M[3][0] - Other.M[3][0];
+        Result.M[3][1] = M[3][1] - Other.M[3][1];
+        Result.M[3][2] = M[3][2] - Other.M[3][2];
+        Result.M[3][3] = M[3][3] - Other.M[3][3];
+    #else
+        FFloat128 MatrixRow0 = FVectorMath::VectorSub(M[0], Other.M[0]);
+        FFloat128 MatrixRow1 = FVectorMath::VectorSub(M[1], Other.M[1]);
+        FFloat128 MatrixRow2 = FVectorMath::VectorSub(M[2], Other.M[2]);
+        FFloat128 MatrixRow3 = FVectorMath::VectorSub(M[3], Other.M[3]);
+
+        FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
+        FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
+        FVectorMath::VectorStore(MatrixRow2, Result.M[2]);
+        FVectorMath::VectorStore(MatrixRow3, Result.M[3]);
+    #endif
+
+        return Result;
+    }
+
+    /**
+     * @brief Subtracts this matrix component-wise with another matrix and assigns the result
+     * @param Other The other matrix
+     * @return A reference to this matrix after subtraction
+     */
+    FMatrix4& operator-=(const FMatrix4& Other) noexcept
+    {
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] - Other.M[0][0];
+        M[0][1] = M[0][1] - Other.M[0][1];
+        M[0][2] = M[0][2] - Other.M[0][2];
+        M[0][3] = M[0][3] - Other.M[0][3];
+
+        M[1][0] = M[1][0] - Other.M[1][0];
+        M[1][1] = M[1][1] - Other.M[1][1];
+        M[1][2] = M[1][2] - Other.M[1][2];
+        M[1][3] = M[1][3] - Other.M[1][3];
+
+        M[2][0] = M[2][0] - Other.M[2][0];
+        M[2][1] = M[2][1] - Other.M[2][1];
+        M[2][2] = M[2][2] - Other.M[2][2];
+        M[2][3] = M[2][3] - Other.M[2][3];
+
+        M[3][0] = M[3][0] - Other.M[3][0];
+        M[3][1] = M[3][1] - Other.M[3][1];
+        M[3][2] = M[3][2] - Other.M[3][2];
+        M[3][3] = M[3][3] - Other.M[3][3];
+    #else
+        FFloat128 MatrixRow0 = FVectorMath::VectorSub(M[0], Other.M[0]);
+        FFloat128 MatrixRow1 = FVectorMath::VectorSub(M[1], Other.M[1]);
+        FFloat128 MatrixRow2 = FVectorMath::VectorSub(M[2], Other.M[2]);
+        FFloat128 MatrixRow3 = FVectorMath::VectorSub(M[3], Other.M[3]);
+
+        FVectorMath::VectorStore(MatrixRow0, M[0]);
+        FVectorMath::VectorStore(MatrixRow1, M[1]);
+        FVectorMath::VectorStore(MatrixRow2, M[2]);
+        FVectorMath::VectorStore(MatrixRow3, M[3]);
+    #endif
+
+        return *this;
+    }
+
+    /**
+     * @brief Subtracts this matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A matrix containing the result of the subtraction
+     */
+    FMatrix4 operator-(float Scalar) const noexcept
+    {
+        FMatrix4 Result;
+
+    #if !USE_VECTOR_MATH
+        Result.M[0][0] = M[0][0] - Scalar;
+        Result.M[0][1] = M[0][1] - Scalar;
+        Result.M[0][2] = M[0][2] - Scalar;
+        Result.M[0][3] = M[0][3] - Scalar;
+
+        Result.M[1][0] = M[1][0] - Scalar;
+        Result.M[1][1] = M[1][1] - Scalar;
+        Result.M[1][2] = M[1][2] - Scalar;
+        Result.M[1][3] = M[1][3] - Scalar;
+
+        Result.M[2][0] = M[2][0] - Scalar;
+        Result.M[2][1] = M[2][1] - Scalar;
+        Result.M[2][2] = M[2][2] - Scalar;
+        Result.M[2][3] = M[2][3] - Scalar;
+
+        Result.M[3][0] = M[3][0] - Scalar;
+        Result.M[3][1] = M[3][1] - Scalar;
+        Result.M[3][2] = M[3][2] - Scalar;
+        Result.M[3][3] = M[3][3] - Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+
+        FFloat128 MatrixRow0 = FVectorMath::VectorSub(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorSub(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorSub(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorSub(M[3], Scalars_128);
+
+        FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
+        FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
+        FVectorMath::VectorStore(MatrixRow2, Result.M[2]);
+        FVectorMath::VectorStore(MatrixRow3, Result.M[3]);
+    #endif
+
+        return Result;
+    }
+
+    /**
+     * @brief Subtracts this matrix component-wise with a scalar and assigns the result
+     * @param RHS The scalar
+     * @return A reference to this matrix after subtraction
+     */
+    FMatrix4& operator-=(float Scalar) noexcept
+    {
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] - Scalar;
+        M[0][1] = M[0][1] - Scalar;
+        M[0][2] = M[0][2] - Scalar;
+        M[0][3] = M[0][3] - Scalar;
+
+        M[1][0] = M[1][0] - Scalar;
+        M[1][1] = M[1][1] - Scalar;
+        M[1][2] = M[1][2] - Scalar;
+        M[1][3] = M[1][3] - Scalar;
+
+        M[2][0] = M[2][0] - Scalar;
+        M[2][1] = M[2][1] - Scalar;
+        M[2][2] = M[2][2] - Scalar;
+        M[2][3] = M[2][3] - Scalar;
+
+        M[3][0] = M[3][0] - Scalar;
+        M[3][1] = M[3][1] - Scalar;
+        M[3][2] = M[3][2] - Scalar;
+        M[3][3] = M[3][3] - Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+
+        FFloat128 MatrixRow0 = FVectorMath::VectorAdd(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorAdd(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorAdd(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorAdd(M[3], Scalars_128);
+
+        FVectorMath::VectorStore(MatrixRow0, M[0]);
+        FVectorMath::VectorStore(MatrixRow1, M[1]);
+        FVectorMath::VectorStore(MatrixRow2, M[2]);
+        FVectorMath::VectorStore(MatrixRow3, M[3]);
+    #endif
+
+        return *this;
+    }
+
+    /**
+     * @brief Divides this matrix component-wise with a scalar
+     * @param Scalar The scalar
+     * @return A matrix containing the result of the division
+     */
+    FMatrix4 operator/(float Scalar) const noexcept
+    {
+        FMatrix4 Result;
+
+    #if !USE_VECTOR_MATH
+        Result.M[0][0] = M[0][0] / Scalar;
+        Result.M[0][1] = M[0][1] / Scalar;
+        Result.M[0][2] = M[0][2] / Scalar;
+        Result.M[0][3] = M[0][3] / Scalar;
+
+        Result.M[1][0] = M[1][0] / Scalar;
+        Result.M[1][1] = M[1][1] / Scalar;
+        Result.M[1][2] = M[1][2] / Scalar;
+        Result.M[1][3] = M[1][3] / Scalar;
+
+        Result.M[2][0] = M[2][0] / Scalar;
+        Result.M[2][1] = M[2][1] / Scalar;
+        Result.M[2][2] = M[2][2] / Scalar;
+        Result.M[2][3] = M[2][3] / Scalar;
+
+        Result.M[3][0] = M[3][0] / Scalar;
+        Result.M[3][1] = M[3][1] / Scalar;
+        Result.M[3][2] = M[3][2] / Scalar;
+        Result.M[3][3] = M[3][3] / Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+
+        FFloat128 MatrixRow0 = FVectorMath::VectorDiv(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorDiv(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorDiv(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorDiv(M[3], Scalars_128);
+
+        FVectorMath::VectorStore(MatrixRow0, Result.M[0]);
+        FVectorMath::VectorStore(MatrixRow1, Result.M[1]);
+        FVectorMath::VectorStore(MatrixRow2, Result.M[2]);
+        FVectorMath::VectorStore(MatrixRow3, Result.M[3]);
+    #endif
+
+        return Result;
+    }
+
+    /**
+     * @brief Divides this matrix component-wise with a scalar and assigns the result
+     * @param Scalar The scalar
+     * @return A reference to this matrix after division
+     */
+    FMatrix4& operator/=(float Scalar) noexcept
+    {
+    #if !USE_VECTOR_MATH
+        M[0][0] = M[0][0] / Scalar;
+        M[0][1] = M[0][1] / Scalar;
+        M[0][2] = M[0][2] / Scalar;
+        M[0][3] = M[0][3] / Scalar;
+
+        M[1][0] = M[1][0] / Scalar;
+        M[1][1] = M[1][1] / Scalar;
+        M[1][2] = M[1][2] / Scalar;
+        M[1][3] = M[1][3] / Scalar;
+
+        M[2][0] = M[2][0] / Scalar;
+        M[2][1] = M[2][1] / Scalar;
+        M[2][2] = M[2][2] / Scalar;
+        M[2][3] = M[2][3] / Scalar;
+
+        M[3][0] = M[3][0] / Scalar;
+        M[3][1] = M[3][1] / Scalar;
+        M[3][2] = M[3][2] / Scalar;
+        M[3][3] = M[3][3] / Scalar;
+    #else
+        FFloat128 Scalars_128 = FVectorMath::VectorSet1(Scalar);
+
+        FFloat128 MatrixRow0 = FVectorMath::VectorDiv(M[0], Scalars_128);
+        FFloat128 MatrixRow1 = FVectorMath::VectorDiv(M[1], Scalars_128);
+        FFloat128 MatrixRow2 = FVectorMath::VectorDiv(M[2], Scalars_128);
+        FFloat128 MatrixRow3 = FVectorMath::VectorDiv(M[3], Scalars_128);
+
+        FVectorMath::VectorStore(MatrixRow0, M[0]);
+        FVectorMath::VectorStore(MatrixRow1, M[1]);
+        FVectorMath::VectorStore(MatrixRow2, M[2]);
+        FVectorMath::VectorStore(MatrixRow3, M[3]);
+    #endif
+
+        return *this;
+    }
+
+    /**
+     * @brief Compares this matrix with another matrix for equality
+     * @param Other The matrix to compare with
+     * @return True if matrices are equal within a default epsilon, false otherwise
+     */
+    bool operator==(const FMatrix4& Other) const noexcept
     {
         return IsEqual(Other);
     }
 
     /**
-     * @brief       - Returns the negated result after comparing this and another matrix
-     * @param Other - The matrix to compare with
-     * @return      - False if equal, true if not
+     * @brief Compares this matrix with another matrix for inequality
+     * @param Other The matrix to compare with
+     * @return True if matrices are not equal within a default epsilon, false otherwise
      */
-    FORCEINLINE bool operator!=(const FMatrix4& Other) const noexcept
+    bool operator!=(const FMatrix4& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -1165,299 +1179,291 @@ public:
 public:
 
     /**
-     * @brief  - Creates and returns a identity matrix
-     * @return - A identity matrix
+     * @brief Creates and returns an identity matrix
+     * @return An identity matrix
      */
-    static FORCEINLINE FMatrix4 Identity() noexcept
+    static FMatrix4 Identity() noexcept
     {
-        return FMatrix4(1.0f);
+        FMatrix4 IdentityMatrix;
+        IdentityMatrix.SetIdentity();
+        return IdentityMatrix;
     }
 
     /**
-     * @brief       - Creates and returns a uniform scale matrix
-     * @param Scale - Uniform scale that represents this matrix
-     * @return      - A scale matrix
+     * @brief Creates and returns a uniform scale matrix
+     * @param Scale Uniform scale that represents this matrix
+     * @return A scale matrix
      */
-    static FORCEINLINE FMatrix4 Scale(float Scale) noexcept
+    static FMatrix4 Scale(float Scale) noexcept
     {
         return FMatrix4(
-            Scale, 0.0f, 0.0f, 0.0f,
-            0.0f, Scale, 0.0f, 0.0f,
-            0.0f, 0.0f, Scale, 0.0f,
+            Scale, 0.0f,  0.0f,  0.0f,
+            0.0f,  Scale, 0.0f,  0.0f,
+            0.0f,  0.0f,  Scale, 0.0f,
+            0.0f,  0.0f,  0.0f,  1.0f);
+    }
+
+    /**
+     * @brief Creates and returns a scale matrix for each axis
+     * @param x Scale for the x-axis
+     * @param y Scale for the y-axis
+     * @param z Scale for the z-axis
+     * @return A scale matrix
+     */
+    static FMatrix4 Scale(float x, float y, float z) noexcept
+    {
+        return FMatrix4(
+            x,    0.0f, 0.0f, 0.0f,
+            0.0f, y,    0.0f, 0.0f,
+            0.0f, 0.0f, z,    0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
-     * @brief   - Creates and returns a scale matrix for each axis
-     * @param x - Scale for the x-axis
-     * @param y - Scale for the y-axis
-     * @param z - Scale for the z-axis
-     * @return  - A scale matrix
+     * @brief Creates and returns a scale matrix using a vector for scaling each axis
+     * @param VectorWithScale A vector containing the scale for each axis in the x-, y-, z-components
+     * @return A scale matrix
      */
-    static FORCEINLINE FMatrix4 Scale(float x, float y, float z) noexcept
-    {
-        return FMatrix4(
-            x, 0.0f, 0.0f, 0.0f,
-            0.0f, y, 0.0f, 0.0f,
-            0.0f, 0.0f, z, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
-    }
-
-    /**
-     * @brief                 - Creates and returns a scale matrix for each axis
-     * @param VectorWithScale - A vector containing the scale for each axis in the x-, y-, z-components
-     * @return                - A scale matrix
-     */
-    static FORCEINLINE FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
+    static FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
     }
 
     /**
-     * @brief   - Creates and returns a translation matrix
-     * @param x - Translation for the x-axis
-     * @param y - Translation for the y-axis
-     * @param z - Translation for the z-axis
-     * @return  - A translation matrix
+     * @brief Creates and returns a translation matrix
+     * @param x Translation for the x-axis
+     * @param y Translation for the y-axis
+     * @param z Translation for the z-axis
+     * @return A translation matrix
      */
-    static FORCEINLINE FMatrix4 Translation(float x, float y, float z) noexcept
+    static FMatrix4 Translation(float x, float y, float z) noexcept
     {
         return FMatrix4(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,
-            x, y, z, 1.0f);
+            x,    y,    z,    1.0f);
     }
 
     /**
-     * @brief             - Creates and returns a translation matrix
-     * @param Translation - A vector containing the translation
-     * @return            - A translation matrix
+     * @brief Creates and returns a translation matrix
+     * @param InTranslation A vector containing the translation
+     * @return A translation matrix
      */
-    static FORCEINLINE FMatrix4 Translation(const FVector3& InTranslation) noexcept
+    static FMatrix4 Translation(const FVector3& InTranslation) noexcept
     {
         return Translation(InTranslation.x, InTranslation.y, InTranslation.z);
     }
 
     /**
-     * @brief       - Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
-     * @param Pitch - Rotation around the x-axis in radians
-     * @param Yaw   - Rotation around the y-axis in radians
-     * @param Roll  - Rotation around the z-axis in radians
-     * @return      - A rotation matrix
+     * @brief Creates and returns a rotation matrix from Roll, Pitch, and Yaw in radians
+     * @param Pitch Rotation around the x-axis in radians
+     * @param Yaw Rotation around the y-axis in radians
+     * @param Roll Rotation around the z-axis in radians
+     * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    static FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
         const float SinP = FMath::Sin(Pitch);
-        const float SinY = FMath::Sin(Yaw);
-        const float SinR = FMath::Sin(Roll);
         const float CosP = FMath::Cos(Pitch);
+        const float SinY = FMath::Sin(Yaw);
         const float CosY = FMath::Cos(Yaw);
+        const float SinR = FMath::Sin(Roll);
         const float CosR = FMath::Cos(Roll);
 
         const float SinRSinP = SinR * SinP;
         const float CosRSinP = CosR * SinP;
 
         return FMatrix4(
-            (CosR * CosY) + (SinRSinP * SinY), (SinR * CosP), (SinRSinP * CosY) - (CosR * SinY), 0.0f,
-            (CosRSinP * SinY) - (SinR * CosY), (CosR * CosP), (SinR * SinY) + (CosRSinP * CosY), 0.0f,
-            (CosP * SinY), -SinP, (CosP * CosY), 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+            (CosR * CosY) + (SinRSinP * SinY),  SinR * CosP, (SinRSinP * CosY) - (CosR * SinY), 0.0f,
+            (CosRSinP * SinY) - (SinR * CosY),  CosR * CosP, (SinR * SinY) + (CosRSinP * CosY), 0.0f,
+            (CosP * SinY),                     -SinP,         CosP * CosY,                      0.0f,
+            0.0f,                               0.0f,         0.0f,                             1.0f);
     }
 
     /**
-     * @brief              - Creates and returns a rotation matrix from Roll, pitch, and Yaw in radians
-     * @param PitchYawRoll - A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
-     * @return             - A rotation matrix
+     * @brief Creates and returns a rotation matrix from Roll, Pitch, and Yaw in radians
+     * @param PitchYawRoll A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
+     * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
+    static FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
     {
         return RotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
     }
 
     /**
-     * @brief   - Creates and returns a rotation matrix around the x-axis
-     * @param x - Rotation around the x-axis in radians
-     * @return  - A rotation matrix
+     * @brief Creates and returns a rotation matrix around the x-axis
+     * @param x Rotation around the x-axis in radians
+     * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix4 RotationX(float x) noexcept
+    static FMatrix4 RotationX(float x) noexcept
     {
         const float SinX = FMath::Sin(x);
         const float CosX = FMath::Cos(x);
 
         return FMatrix4(
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, CosX, SinX, 0.0f,
+            1.0f,  0.0f, 0.0f, 0.0f,
+            0.0f,  CosX, SinX, 0.0f,
             0.0f, -SinX, CosX, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+            0.0f,  0.0f, 0.0f, 1.0f);
     }
 
     /**
-     * @brief   - Creates and returns a rotation matrix around the y-axis
-     * @param y - Rotation around the y-axis in radians
-     * @return  - A rotation matrix
+     * @brief Creates and returns a rotation matrix around the y-axis
+     * @param y Rotation around the y-axis in radians
+     * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix4 RotationY(float y) noexcept
+    static FMatrix4 RotationY(float y) noexcept
     {
         const float SinY = FMath::Sin(y);
         const float CosY = FMath::Cos(y);
 
         return FMatrix4(
             CosY, 0.0f, -SinY, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            SinY, 0.0f, CosY, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+            0.0f, 1.0f,  0.0f, 0.0f,
+            SinY, 0.0f,  CosY, 0.0f,
+            0.0f, 0.0f,  0.0f, 1.0f);
     }
 
     /**
-     * @brief   - Creates and returns a rotation matrix around the z-axis
-     * @param z - Rotation around the z-axis in radians
-     * @return  - A rotation matrix
+     * @brief Creates and returns a rotation matrix around the z-axis
+     * @param z Rotation around the z-axis in radians
+     * @return A rotation matrix
      */
-    static FORCEINLINE FMatrix4 RotationZ(float z) noexcept
+    static FMatrix4 RotationZ(float z) noexcept
     {
         const float SinZ = FMath::Sin(z);
         const float CosZ = FMath::Cos(z);
 
         return FMatrix4(
-            CosZ, SinZ, 0.0f, 0.0f,
+             CosZ, SinZ, 0.0f, 0.0f,
             -SinZ, CosZ, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
+             0.0f, 0.0f, 1.0f, 0.0f,
+             0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     /**
-     * @brief        - Creates a orthographic-projection matrix (Left-handed)
-     * @param Width  - Width of the projection plane in pixels
-     * @param Height - Height of the projection plane in pixels
-     * @param NearZ  - The distance to the near plane in world-units
-     * @param FarZ   - The distance to the far plane in world-units
-     * @return       - A orthographic-projection matrix
+     * @brief Creates an orthographic projection matrix (Left-handed)
+     * @param Width Width of the projection plane in pixels
+     * @param Height Height of the projection plane in pixels
+     * @param NearZ The distance to the near plane in world units
+     * @param FarZ The distance to the far plane in world units
+     * @return An orthographic projection matrix
      */
-    static FORCEINLINE FMatrix4 OrtographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
+    static FMatrix4 OrthographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
         return FMatrix4(
-            2.0f / Width, 0.0f, 0.0f, 0.0f,
-            0.0f, 2.0f / Height, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f / (FarZ - NearZ), 0.0f,
-            0.0f, 0.0f, -NearZ / (FarZ - NearZ), 1.0f);
+            2.0f / Width, 0.0f,           0.0f,                   0.0f,
+            0.0f,         2.0f / Height,  0.0f,                   0.0f,
+            0.0f,         0.0f,           1.0f / (FarZ - NearZ),  0.0f,
+            0.0f,         0.0f,          -NearZ / (FarZ - NearZ), 1.0f);
     }
 
     /**
-     * @brief        - Creates a orthographic-projection matrix (Left-handed)
-     * @param Left   - Negative offset on the x-axis in world-units
-     * @param Right  - Positive offset on the x-axis in world-units
-     * @param Bottom - Negative offset on the y-axis in world-units
-     * @param Top    - Positive offset on the y-axis in world-units
-     * @param NearZ  - The distance to the near plane in world-units
-     * @param FarZ   - The distance to the far plane in world-units
-     * @return       - A orthographic-projection matrix
+     * @brief Creates an orthographic projection matrix (Left-handed)
+     * @param Left Negative offset on the x-axis in world units
+     * @param Right Positive offset on the x-axis in world units
+     * @param Bottom Negative offset on the y-axis in world units
+     * @param Top Positive offset on the y-axis in world units
+     * @param NearZ The distance to the near plane in world units
+     * @param FarZ The distance to the far plane in world units
+     * @return An orthographic projection matrix
      */
-    static FORCEINLINE FMatrix4 OrtographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
+    static FMatrix4 OrthographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
     {
         const float InvWidth  = 1.0f / (Right - Left);
         const float InvHeight = 1.0f / (Top - Bottom);
         const float Range     = 1.0f / (FarZ - NearZ);
 
         return FMatrix4(
-             InvWidth + InvWidth, 0.0f, 0.0f, 0.0f,
-             0.0f, InvHeight + InvHeight, 0.0f, 0.0f,
-             0.0f, 0.0f, Range, 0.0f,
+             2.0f * InvWidth,            0.0f,                        0.0f,          0.0f,
+             0.0f,                       2.0f * InvHeight,            0.0f,          0.0f,
+             0.0f,                       0.0f,                        Range,         0.0f,
             -(Left + Right) * InvWidth, -(Top + Bottom) * InvHeight, -Range * NearZ, 1.0f);
     }
 
     /**
-     * @brief             - Creates a perspective-projection matrix (Left-handed)
-     * @param Fov         - Field of view of the projection in radians
-     * @param AspectRatio - Aspect ratio of the projection (Width / Height)
-     * @param NearZ       - The distance to the near plane in world-units
-     * @param FarZ        - The distance to the far plane in world-units
-     * @return            - A perspective-projection matrix
+     * @brief Creates a perspective projection matrix (Left-handed)
+     * @param Fov Field of view of the projection in radians
+     * @param AspectRatio Aspect ratio of the projection (Width / Height)
+     * @param NearZ The distance to the near plane in world units
+     * @param FarZ The distance to the far plane in world units
+     * @return A perspective projection matrix
      */
-    static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
+    static FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
         if ((Fov < FMath::kOneDegree_f) || (Fov > (FMath::kPI_f - FMath::kOneDegree_f)))
         {
             return FMatrix4();
         }
 
-        const float ScaleY = (1.0f / FMath::Tan(Fov * 0.5f));
-        const float ScaleX = (ScaleY / AspectRatio);
-        const float Range  = (FarZ / (FarZ - NearZ));
+        const float ScaleY = 1.0f / FMath::Tan(Fov * 0.5f);
+        const float ScaleX = ScaleY / AspectRatio;
+        const float Range  = FarZ / (FarZ - NearZ);
 
         return FMatrix4(
-            ScaleX, 0.0f, 0.0f, 0.0f,
-            0.0f, ScaleY, 0.0f, 0.0f,
-            0.0f, 0.0f, Range, 1.0f,
-            0.0f, 0.0f, -Range * NearZ, 0.0f);
+            ScaleX, 0.0f,    0.0f,          0.0f,
+            0.0f,   ScaleY,  0.0f,          0.0f,
+            0.0f,   0.0f,    Range,         1.0f,
+            0.0f,   0.0f,   -Range * NearZ, 0.0f);
     }
 
     /**
-     * @brief        - Creates a perspective-projection matrix (Left-handed)
-     * @param Fov    - Field of view of the projection in radians
-     * @param Width  - Width of the projection plane in pixels
-     * @param Height - Height of the projection plane in pixels
-     * @param NearZ  - The distance to the near plane in world-units
-     * @param FarZ   - The distance to the far plane in world-units
-     * @return       - A perspective-projection matrix
+     * @brief Creates a perspective projection matrix (Left-handed)
+     * @param Fov Field of view of the projection in radians
+     * @param Width Width of the projection plane in pixels
+     * @param Height Height of the projection plane in pixels
+     * @param NearZ The distance to the near plane in world units
+     * @param FarZ The distance to the far plane in world units
+     * @return A perspective projection matrix
      */
-    static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
+    static FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
     {
         const float AspectRatio = Width / Height;
         return PerspectiveProjection(Fov, AspectRatio, NearZ, FarZ);
     }
 
     /**
-     * @brief     - Creates a look-at matrix (Left-handed)
-     * @param Eye - Position to look from
-     * @param At  - Position to look at
-     * @param Up  - The up-axis of the new coordinate system in the current world-space
-     * @return    - A look-at matrix
+     * @brief Creates a look-at matrix (Left-handed)
+     * @param Eye Position to look from
+     * @param At Position to look at
+     * @param Up The up-axis of the new coordinate system in the current world-space
+     * @return A look-at matrix
      */
-    static FORCEINLINE FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
+    static FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
     {
-        const FVector3 Direction = At - Eye;
+        const FVector3 Direction = (At - Eye).GetNormalized();
         return LookTo(Eye, Direction, Up);
     }
 
     /**
-     * @brief           - Creates a look-to matrix (Left-handed)
-     * @param Eye       - Position to look from
-     * @param Direction - Direction to look in
-     * @param Up        - The up-axis of the new coordinate system in the current world-space
-     * @return          - A look-to matrix
+     * @brief Creates a look-to matrix (Left-handed)
+     * @param Eye Position to look from
+     * @param Direction Direction to look in
+     * @param Up The up-axis of the new coordinate system in the current world-space
+     * @return A look-to matrix
      */
-    static FORCEINLINE FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
+    static FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
     {
-        FVector3 e2 = Direction.GetNormalized();
-        FVector3 e0 = Up.CrossProduct(e2).GetNormalized();
-        FVector3 e1 = e2.CrossProduct(e0).GetNormalized();
+        FVector3 Forward    = Direction.GetNormalized();
+        FVector3 Right      = Up.CrossProduct(Forward).GetNormalized();
+        FVector3 UpAdjusted = Forward.CrossProduct(Right).GetNormalized();
 
-        FVector3 NegEye = -Eye;
+        float Tx = -Eye.DotProduct(Right);
+        float Ty = -Eye.DotProduct(UpAdjusted);
+        float Tz = -Eye.DotProduct(Forward);
 
-        const float m30 = NegEye.DotProduct(e0);
-        const float m31 = NegEye.DotProduct(e1);
-        const float m32 = NegEye.DotProduct(e2);
-
-        FMatrix4 Result(FVector4(e0, m30), FVector4(e1, m31), FVector4(e2, m32), FVector4(0.0f, 0.0f, 0.0f, 1.0f));
-        return Result.Transpose();
+        return FMatrix4(
+            Right.x, UpAdjusted.x, Forward.x, 0.0f,
+            Right.y, UpAdjusted.y, Forward.y, 0.0f,
+            Right.z, UpAdjusted.z, Forward.z, 0.0f,
+            Tx,      Ty,           Tz,        1.0f);
     }
 
 public:
-    union
-    {
-         /** @brief - Each element of the matrix */
-        struct
-        {
-            float m00, m01, m02, m03;
-            float m10, m11, m12, m13;
-            float m20, m21, m22, m23;
-            float m30, m31, m32, m33;
-        };
 
-         /** @brief - 2-D array of the matrix */
-        float f[4][4];
-    };
+    /** @brief Each element of the matrix stored as a 2-D array. M[row][column], where row and column are 0-based indices. */
+    float M[4][4];
 };
 
 MARK_AS_REALLOCATABLE(FMatrix4);

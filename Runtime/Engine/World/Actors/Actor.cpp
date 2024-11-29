@@ -53,7 +53,7 @@ void FActorTransform::CalculateMatrix()
     FMatrix4 TranslationMatrix = FMatrix4::Translation(Translation);
     
     Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
-    Matrix = Matrix.Transpose();
+    Matrix = Matrix.GetTranspose();
 }
 
 FActor::FActor(const FObjectInitializer& ObjectInitializer)

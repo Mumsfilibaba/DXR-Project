@@ -456,13 +456,13 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
         FVector3 Position = Box.GetCenter();
 
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).GetTranspose();
         FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformMatrix = TransformMatrix.Transpose();
+        TransformMatrix = TransformMatrix.GetTranspose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
-        TransformMatrix = TransformMatrix.Transpose();
+        TransformMatrix = TransformMatrix.GetTranspose();
 
-        CommandList.Set32BitShaderConstants(AABBVertexShader.Get(), TransformMatrix.Data(), 16);
+        CommandList.Set32BitShaderConstants(AABBVertexShader.Get(), TransformMatrix.M, 16);
 
         CommandList.DrawIndexedInstanced(AABBIndexCount, 1, 0, 0, 0);
     }
@@ -506,12 +506,12 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
 
         FVector3 Position          = BoundingBox.GetCenter();
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).GetTranspose();
 
         ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
-        ShaderData.TransformMatrix = ShaderData.TransformMatrix.Transpose();
+        ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
         ShaderData.TransformMatrix = (ScaleMatrix * TranslationMatrix) * ShaderData.TransformMatrix;
-        ShaderData.TransformMatrix = ShaderData.TransformMatrix.Transpose();
+        ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
         ShaderData.Color           = FVector4(0.8f, 0.8f, 0.8f, 0.5f);
 
         CommandList.SetConstantBuffer(OcclusionVolumeVS.Get(), Resources.CameraBuffer.Get(), 0);

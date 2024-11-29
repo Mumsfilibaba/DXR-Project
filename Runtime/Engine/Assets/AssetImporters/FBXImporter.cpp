@@ -32,7 +32,7 @@ static FMatrix4 ToFloat4x4(const ofbx::DMatrix& Matrix)
         for (uint32 x = 0; x < 4; x++)
         {
             const uint32 Index = y * 4 + x;
-            Result.f[y][x] = static_cast<float>(Matrix.m[Index]);
+            Result.M[y][x] = static_cast<float>(Matrix.m[Index]);
         }
     }
 

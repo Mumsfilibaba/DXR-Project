@@ -55,21 +55,21 @@ void FCamera::UpdateMatrices()
 
     Projection  = FMatrix4::PerspectiveProjection(FOV, Width, Height, NearPlane, FarPlane);
     View        = FMatrix4::LookTo(Position, Forward, Up);
-    ViewInverse = View.Invert();
+    ViewInverse = View.GetInverse();
 
     FMatrix3 View3x3 = View.GetRotationAndScale();
-    ProjectionInverse     = Projection.Invert();
+    ProjectionInverse     = Projection.GetInverse();
     ViewProjection        = View * Projection;
-    ViewProjectionInverse = ViewProjection.Invert();
+    ViewProjectionInverse = ViewProjection.GetInverse();
 
     ViewProjectionNoTranslation.SetIdentity();
     ViewProjectionNoTranslation.SetRotationAndScale(View3x3);
     ViewProjectionNoTranslation = ViewProjectionNoTranslation * Projection;
 
-    View                        = View.Transpose();
-    ViewInverse                 = ViewInverse.Transpose();
-    ProjectionInverse           = ProjectionInverse.Transpose();
-    ViewProjection              = ViewProjection.Transpose();
-    ViewProjectionInverse       = ViewProjectionInverse.Transpose();
-    ViewProjectionNoTranslation = ViewProjectionNoTranslation.Transpose();
+    View                        = View.GetTranspose();
+    ViewInverse                 = ViewInverse.GetTranspose();
+    ProjectionInverse           = ProjectionInverse.GetTranspose();
+    ViewProjection              = ViewProjection.GetTranspose();
+    ViewProjectionInverse       = ViewProjectionInverse.GetTranspose();
+    ViewProjectionNoTranslation = ViewProjectionNoTranslation.GetTranspose();
 }

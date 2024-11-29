@@ -211,7 +211,7 @@ void FScene::UpdateVisibility()
     for (FProxySceneComponent* Component : Primitives)
     {
         FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformMatrix = TransformMatrix.Transpose();
+        TransformMatrix = TransformMatrix.GetTranspose();
 
         const FAABB& BoundingBox = Component->Mesh->GetAABB();
         const FVector3 Max = TransformMatrix.Transform(BoundingBox.Max);

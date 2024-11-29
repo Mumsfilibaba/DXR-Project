@@ -1397,11 +1397,11 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
 
         FVector3 Position            = BoundingBox.GetCenter();
         FMatrix4 TranslationMatrix   = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix         = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
+        FMatrix4 ScaleMatrix         = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).GetTranspose();
         TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformPerObject.Transform = TransformPerObject.Transform.Transpose();
+        TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
         TransformPerObject.Transform = (ScaleMatrix * TranslationMatrix) * TransformPerObject.Transform;
-        TransformPerObject.Transform = TransformPerObject.Transform.Transpose();
+        TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
 
         CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, 32);
 

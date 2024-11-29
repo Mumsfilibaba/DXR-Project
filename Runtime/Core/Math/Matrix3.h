@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Math/Vector3.h"
+#include "Core/Memory/Memory.h"
 
 /** @brief 3D Matrix class with float components. */
 class FMatrix3
@@ -67,16 +68,7 @@ public:
     explicit FMatrix3(const float* Array) noexcept
     {
         CHECK(Array != nullptr);
-
-        M[0][0] = Array[0];
-        M[0][1] = Array[1];
-        M[0][2] = Array[2];
-        M[1][0] = Array[3];
-        M[1][1] = Array[4];
-        M[1][2] = Array[5];
-        M[2][0] = Array[6];
-        M[2][1] = Array[7];
-        M[2][2] = Array[8];
+        FMemory::Memcpy(&M[0][0], Array, sizeof(M));
     }
 
     /**
@@ -179,6 +171,7 @@ public:
                 }
             }
         }
+
         return false;
     }
 
@@ -198,6 +191,7 @@ public:
                 }
             }
         }
+
         return false;
     }
 
@@ -231,9 +225,17 @@ public:
      */
     void SetIdentity() noexcept
     {
-        M[0][0] = 1.0f; M[0][1] = 0.0f; M[0][2] = 0.0f;
-        M[1][0] = 0.0f; M[1][1] = 1.0f; M[1][2] = 0.0f;
-        M[2][0] = 0.0f; M[2][1] = 0.0f; M[2][2] = 1.0f;
+        M[0][0] = 1.0f;
+        M[0][1] = 0.0f;
+        M[0][2] = 0.0f;
+        
+        M[1][0] = 0.0f;
+        M[1][1] = 1.0f;
+        M[1][2] = 0.0f;
+        
+        M[2][0] = 0.0f;
+        M[2][1] = 0.0f;
+        M[2][2] = 1.0f;
     }
 
     /**
@@ -548,8 +550,8 @@ public:
     static FMatrix3 Scale(float InX, float InY, float InZ) noexcept
     {
         return FMatrix3(
-            InX, 0.0f, 0.0f,
-            0.0f, InY, 0.0f,
+            InX,  0.0f, 0.0f,
+            0.0f, InY,  0.0f,
             0.0f, 0.0f, InZ);
     }
 
@@ -583,9 +585,9 @@ public:
         const float CosRSinP = CosR * SinP;
 
         return FMatrix3(
-            (CosR * CosY) + (SinRSinP * SinY), SinR * CosP, (SinRSinP * CosY) - (CosR * SinY),
-            (CosRSinP * SinY) - (SinR * CosY), CosR * CosP, (SinR * SinY) + (CosRSinP * CosY),
-            CosP * SinY, -SinP, CosP * CosY);
+            (CosR * CosY) + (SinRSinP * SinY),  SinR * CosP, (SinRSinP * CosY) - (CosR * SinY),
+            (CosRSinP * SinY) - (SinR * CosY),  CosR * CosP, (SinR * SinY) + (CosRSinP * CosY),
+            CosP * SinY,                       -SinP,         CosP * CosY);
     }
 
     /**
