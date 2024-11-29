@@ -33,16 +33,16 @@ public:
 
 public:
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TMap() = default;
 
-    /** @brief - Copy constructor */
+    /** @brief Copy constructor */
     TMap(const TMap& Other)
         : BaseMap(Other.BaseMap)
     {
     }
     
-    /** @brief - Move constructor */
+    /** @brief Move constructor */
     TMap(TMap&& Other)
         : BaseMap(Move(Other.BaseMap))
     {

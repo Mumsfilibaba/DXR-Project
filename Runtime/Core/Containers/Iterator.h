@@ -24,9 +24,9 @@ public:
     static_assert(TIsSigned<SIZETYPE>::Value, "TArrayIterator wants a signed SIZETYPE");
 
     /**
-     * @brief            - Create a new iterator
-     * @param InArray    - Array to iterate
-     * @param StartIndex - Index in the array to start
+     * @brief Create a new iterator
+     * @param InArray Array to iterate
+     * @param StartIndex Index in the array to start
      */
     FORCEINLINE explicit TArrayIterator(ArrayType& InArray, SIZETYPE StartIndex)
         : Array(InArray)
@@ -36,9 +36,9 @@ public:
     }
 
     /**
-     * @brief           - Check if the iterator belongs to a certain array
-     * @param FromArray - Array to check
-     * @return          - Returns true if the iterator is from the array, otherwise false 
+     * @brief Check if the iterator belongs to a certain array
+     * @param FromArray Array to check
+     * @return Returns true if the iterator is from the array, otherwise false 
      */
     NODISCARD FORCEINLINE bool IsFrom(const ArrayType& FromArray) const
     {
@@ -46,26 +46,26 @@ public:
         return Array.AddressOf() == FromPointer;
     }
 
-    /** @return - Returns true if the iterator is valid */
+    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         return Index >= 0 && Index <= Array.Get().Size();
     }
 
-    /** @return - Returns true if the iterator is the end-iterator */
+    /** @return Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const
     {
         return Index == Array.Get().Size();
     }
 
-    /** @return - Returns a raw pointer to the data */
+    /** @return Returns a raw pointer to the data */
     NODISCARD FORCEINLINE ElementType* GetPointer() const
     {
         CHECK(IsValid());
         return Array.Get().Data() + Index;
     }
 
-    /** @return - Returns the index to the element that the iterator represents */
+    /** @return Returns the index to the element that the iterator represents */
     FORCEINLINE SIZETYPE GetIndex() const
     {
         return Index;
@@ -73,21 +73,21 @@ public:
 
 public:
 
-    /** @return - Returns a raw pointer to the data */
+    /** @return Returns a raw pointer to the data */
     FORCEINLINE ElementType* operator->() const
     {
         return GetPointer();
     }
 
-    /** @return - Returns a reference to the data */
+    /** @return Returns a reference to the data */
     FORCEINLINE ElementType& operator*() const
     {
         return *GetPointer();
     }
 
     /**
-     * @brief  - Increment the index for the iterator  
-     * @return - Returns a new iterator with the new value
+     * @brief Increment the index for the iterator  
+     * @return Returns a new iterator with the new value
      */
     FORCEINLINE TArrayIterator operator++()
     {
@@ -97,8 +97,8 @@ public:
     }
 
     /**
-     * @brief  - Increment the index for the iterator  
-     * @return - Returns a new iterator with the previous value
+     * @brief Increment the index for the iterator  
+     * @return Returns a new iterator with the previous value
      */
     FORCEINLINE TArrayIterator operator++(int)
     {
@@ -109,8 +109,8 @@ public:
     }
 
     /**
-     * @brief  - Decrement the index for the iterator
-     * @return - Returns a new iterator with the new value
+     * @brief Decrement the index for the iterator
+     * @return Returns a new iterator with the new value
      */
     FORCEINLINE TArrayIterator operator--()
     {
@@ -120,8 +120,8 @@ public:
     }
 
     /**
-     * @brief  - Decrement the index for the iterator  
-     * @return - Returns a new iterator with the previous value
+     * @brief Decrement the index for the iterator  
+     * @return Returns a new iterator with the previous value
      */
     FORCEINLINE TArrayIterator operator--(int)
     {
@@ -132,9 +132,9 @@ public:
     }
 
     /**
-     * @brief       - Add a new value to the iterator
-     * @param Other - Value to add
-     * @return      - Returns a new iterator with the result from adding Other to this value 
+     * @brief Add a new value to the iterator
+     * @param Other Value to add
+     * @return Returns a new iterator with the result from adding Other to this value 
      */
     NODISCARD FORCEINLINE TArrayIterator operator+(SIZETYPE Other) const
     {
@@ -143,9 +143,9 @@ public:
     }
 
     /**
-     * @brief       - Subtract a new value from the iterator
-     * @param Other - Value to subtract
-     * @return      - Returns a new iterator with the result from subtracting Other from this value 
+     * @brief Subtract a new value from the iterator
+     * @param Other Value to subtract
+     * @return Returns a new iterator with the result from subtracting Other from this value 
      */
     NODISCARD FORCEINLINE TArrayIterator operator-(SIZETYPE Other) const
     {
@@ -154,9 +154,9 @@ public:
     }
 
     /**
-     * @brief       - Add a value to the iterator and store it in this instance
-     * @param Other - Value to add
-     * @return      - Returns a reference to this instance
+     * @brief Add a value to the iterator and store it in this instance
+     * @param Other Value to add
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TArrayIterator& operator+=(SIZETYPE Other)
     {
@@ -166,9 +166,9 @@ public:
     }
 
     /**
-     * @brief       - Subtract a value from the iterator and store it in this instance
-     * @param Other - Value to subtract
-     * @return      - Returns a reference to this instance
+     * @brief Subtract a value from the iterator and store it in this instance
+     * @param Other Value to subtract
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TArrayIterator& operator-=(SIZETYPE Other)
     {
@@ -178,9 +178,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are equal
      */
     NODISCARD FORCEINLINE bool operator==(const TArrayIterator& Other) const
     {
@@ -188,9 +188,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are not equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are not equal
      */
     NODISCARD FORCEINLINE bool operator!=(const TArrayIterator& Other) const
     {
@@ -198,8 +198,8 @@ public:
     }
 
     /**
-     * @brief  - Create a constant iterator from this
-     * @return - Returns a new iterator based on the index from this instance
+     * @brief Create a constant iterator from this
+     * @return Returns a new iterator based on the index from this instance
      */
     NODISCARD FORCEINLINE operator TArrayIterator<ConstArrayType, ConstElementType>() const
     {
@@ -239,9 +239,9 @@ public:
     static_assert(TIsConst<ArrayType>::Value == TIsConst<ElementType>::Value, "TReverseArrayIterator requires ArrayType and ElementType to have the same constness");
 
     /**
-     * @brief            - Create a new iterator
-     * @param InArray    - Array to iterate
-     * @param StartIndex - Index in the array to start
+     * @brief Create a new iterator
+     * @param InArray Array to iterate
+     * @param StartIndex Index in the array to start
      */
     FORCEINLINE explicit TReverseArrayIterator(ArrayType& InArray, SIZETYPE StartIndex)
         : Array(InArray)
@@ -251,9 +251,9 @@ public:
     }
 
     /**
-     * @brief           - Check if the iterator belongs to a certain array
-     * @param FromArray - Array to check
-     * @return          - Returns true if the iterator is from the array, otherwise false
+     * @brief Check if the iterator belongs to a certain array
+     * @param FromArray Array to check
+     * @return Returns true if the iterator is from the array, otherwise false
      */
     NODISCARD FORCEINLINE bool IsFrom(const ArrayType& FromArray) const
     {
@@ -261,26 +261,26 @@ public:
         return Array.AddressOf() == FromPointer;
     }
 
-    /** @return - Returns true if the iterator is valid */
+    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         return Index >= 0 && Index <= Array.Get().Size();
     }
 
-    /** @return - Returns true if the iterator is the end-iterator */
+    /** @return Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const
     {
         return Index == 0;
     }
 
-    /** @return - Returns a raw pointer to the data */
+    /** @return Returns a raw pointer to the data */
     NODISCARD FORCEINLINE ElementType* GetPointer() const
     {
         CHECK(IsValid());
         return Array.Get().Data() + GetIndex();
     }
 
-    /** @return - Returns the index to the element that the iterator represents */
+    /** @return Returns the index to the element that the iterator represents */
     NODISCARD FORCEINLINE SIZETYPE GetIndex() const
     {
         return Index - 1;
@@ -288,21 +288,21 @@ public:
 
 public:
 
-    /** @return - Returns a raw pointer to the data */
+    /** @return Returns a raw pointer to the data */
     NODISCARD FORCEINLINE ElementType* operator->() const
     {
         return GetPointer();
     }
 
-    /** @return - Returns a reference to the data */
+    /** @return Returns a reference to the data */
     NODISCARD FORCEINLINE ElementType& operator*() const
     {
         return *GetPointer();
     }
 
     /**
-     * @brief  - Increment the index for the iterator
-     * @return - Returns a new iterator with the new value
+     * @brief Increment the index for the iterator
+     * @return Returns a new iterator with the new value
      */
     FORCEINLINE TReverseArrayIterator operator++()
     {
@@ -312,8 +312,8 @@ public:
     }
 
     /**
-     * @brief  - Increment the index for the iterator
-     * @return - Returns a new iterator with the previous value
+     * @brief Increment the index for the iterator
+     * @return Returns a new iterator with the previous value
      */
     FORCEINLINE TReverseArrayIterator operator++(int)
     {
@@ -324,8 +324,8 @@ public:
     }
 
     /**
-     * @brief  - Decrement the index for the iterator
-     * @return - Returns a new iterator with the new value
+     * @brief Decrement the index for the iterator
+     * @return Returns a new iterator with the new value
      */
     FORCEINLINE TReverseArrayIterator operator--()
     {
@@ -335,8 +335,8 @@ public:
     }
 
     /**
-     * @brief  - Decrement the index for the iterator
-     * @return - Returns a new iterator with the previous value
+     * @brief Decrement the index for the iterator
+     * @return Returns a new iterator with the previous value
      */
     FORCEINLINE TReverseArrayIterator operator--(int)
     {
@@ -347,9 +347,9 @@ public:
     }
 
     /**
-     * @brief       - Add a new value to the iterator
-     * @param Other - Value to add
-     * @return      - Returns a new iterator with the result from adding Other to this value
+     * @brief Add a new value to the iterator
+     * @param Other Value to add
+     * @return Returns a new iterator with the result from adding Other to this value
      */
     NODISCARD FORCEINLINE TReverseArrayIterator operator+(SIZETYPE Other) const
     {
@@ -358,9 +358,9 @@ public:
     }
 
     /**
-     * @brief       - Subtract a new value from the iterator
-     * @param Other - Value to subtract
-     * @return      - Returns a new iterator with the result from subtracting Other from this value
+     * @brief Subtract a new value from the iterator
+     * @param Other Value to subtract
+     * @return Returns a new iterator with the result from subtracting Other from this value
      */
     NODISCARD FORCEINLINE TReverseArrayIterator operator-(SIZETYPE Other) const
     {
@@ -369,9 +369,9 @@ public:
     }
 
     /**
-     * @brief       - Add a value to the iterator and store it in this instance
-     * @param Other - Value to add
-     * @return      - Returns a reference to this instance
+     * @brief Add a value to the iterator and store it in this instance
+     * @param Other Value to add
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TReverseArrayIterator& operator+=(SIZETYPE Other)
     {
@@ -381,9 +381,9 @@ public:
     }
 
     /**
-     * @brief       - Subtract a value from the iterator and store it in this instance
-     * @param Other - Value to subtract
-     * @return      - Returns a reference to this instance
+     * @brief Subtract a value from the iterator and store it in this instance
+     * @param Other Value to subtract
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TReverseArrayIterator& operator-=(SIZETYPE Other)
     {
@@ -393,9 +393,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are equal
      */
     NODISCARD FORCEINLINE bool operator==(const TReverseArrayIterator& Other) const
     {
@@ -403,9 +403,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are not equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are not equal
      */
     NODISCARD FORCEINLINE bool operator!=(const TReverseArrayIterator& Other) const
     {
@@ -413,8 +413,8 @@ public:
     }
 
     /**
-     * @brief  - Create a constant iterator from this
-     * @return - Returns a new iterator based on the index from this instance
+     * @brief Create a constant iterator from this
+     * @return Returns a new iterator based on the index from this instance
      */
     NODISCARD FORCEINLINE operator TReverseArrayIterator<ConstArrayType, ConstElementType>() const
     {
@@ -452,9 +452,9 @@ public:
     TBitArrayIterator& operator=(TBitArrayIterator&&) = default;
 
     /**
-     * @brief            - Constructor taking array and index of the iterator
-     * @param InBitArray - Array that the iterator belongs to
-     * @param InIndex    - Index of the bit inside the BitArray
+     * @brief Constructor taking array and index of the iterator
+     * @param InBitArray Array that the iterator belongs to
+     * @param InIndex Index of the bit inside the BitArray
      */
     FORCEINLINE explicit TBitArrayIterator(const BitArrayType& InBitArray, uint32 InIndex)
         : Index(InIndex)
@@ -463,9 +463,9 @@ public:
     }
 
     /**
-     * @brief           - Check if the iterator belongs to a certain array
-     * @param FromArray - Array to check
-     * @return          - Returns true if the iterator is from the array, otherwise false
+     * @brief Check if the iterator belongs to a certain array
+     * @param FromArray Array to check
+     * @return Returns true if the iterator is from the array, otherwise false
      */
     NODISCARD FORCEINLINE bool IsFrom(const BitArrayType& FromArray) const
     {
@@ -473,21 +473,21 @@ public:
         return BitArray.AddressOf() == FromPointer;
     }
 
-    /** @return - Returns true if the iterator is valid */
+    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         const auto Count = BitArray.Get().Count();
         return Index >= 0 && Index <= Count;
     }
 
-    /** @return - Returns the value of the bit */
+    /** @return Returns the value of the bit */
     NODISCARD FORCEINLINE BitReferenceType GetBitValue()
     {
         CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
-    /** @return - Returns the value of the bit */
+    /** @return Returns the value of the bit */
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitValue() const
     {
         CHECK(IsValid());
@@ -497,8 +497,8 @@ public:
 public:
 
     /**
-     * @brief  - Pre-increment operator
-     * @return - Returns an iterator with the next index
+     * @brief Pre-increment operator
+     * @return Returns an iterator with the next index
      */
     FORCEINLINE TBitArrayIterator operator++()
     {
@@ -508,8 +508,8 @@ public:
     }
 
     /**
-     * @brief  - Post-increment operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-increment operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TBitArrayIterator operator++(int)
     {
@@ -520,8 +520,8 @@ public:
     }
 
     /**
-     * @brief  - Pre-decrement operator
-     * @return - Returns an iterator with the previous index
+     * @brief Pre-decrement operator
+     * @return Returns an iterator with the previous index
      */
     FORCEINLINE TBitArrayIterator operator--()
     {
@@ -531,8 +531,8 @@ public:
     }
 
     /**
-     * @brief  - Post-decrement operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-decrement operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TBitArrayIterator operator--(int)
     {
@@ -543,9 +543,9 @@ public:
     }
 
     /**
-     * @brief       - Compare operator
-     * @param Other - Other iterator to compare to
-     * @return      - Returns true if the index is the same and the iterators belong to the same BitArray
+     * @brief Compare operator
+     * @param Other Other iterator to compare to
+     * @return Returns true if the index is the same and the iterators belong to the same BitArray
      */
     NODISCARD FORCEINLINE bool operator==(const TBitArrayIterator& Other) const
     {
@@ -553,24 +553,24 @@ public:
     }
 
     /**
-     * @brief       - Compare operator
-     * @param Other - Other iterator to compare to
-     * @return      - Returns true if the iterators are not equal
+     * @brief Compare operator
+     * @param Other Other iterator to compare to
+     * @return Returns true if the iterators are not equal
      */
     NODISCARD FORCEINLINE bool operator!=(const TBitArrayIterator& Other) const
     {
         return !(*this == Other);
     }
 
-    /** @return - Returns a reference to the data */
+    /** @return Returns a reference to the data */
     NODISCARD FORCEINLINE BitReferenceType& operator*()
     {
         return GetBitValue();
     }
 
     /**
-     * @brief  - Create a constant iterator from this
-     * @return - Returns a new iterator based on the index from this instance
+     * @brief Create a constant iterator from this
+     * @return Returns a new iterator based on the index from this instance
      */
     NODISCARD FORCEINLINE operator TBitArrayIterator<ConstBitArrayType, ConstStorageType>() const
     {
@@ -601,9 +601,9 @@ public:
     TReverseBitArrayIterator& operator=(TReverseBitArrayIterator&&) = default;
 
     /**
-     * @brief            - Constructor taking array and index of the iterator
-     * @param InBitArray - Array that the iterator belongs to
-     * @param InIndex    - Index of the bit inside the BitArray
+     * @brief Constructor taking array and index of the iterator
+     * @param InBitArray Array that the iterator belongs to
+     * @param InIndex Index of the bit inside the BitArray
      */
     FORCEINLINE explicit TReverseBitArrayIterator(const BitArrayType& InBitArray, uint32 InIndex)
         : Index(InIndex)
@@ -612,9 +612,9 @@ public:
     }
 
     /**
-     * @brief           - Check if the iterator belongs to a certain array
-     * @param FromArray - Array to check
-     * @return          - Returns true if the iterator is from the array, otherwise false
+     * @brief Check if the iterator belongs to a certain array
+     * @param FromArray Array to check
+     * @return Returns true if the iterator is from the array, otherwise false
      */
     NODISCARD FORCEINLINE bool IsFrom(const BitArrayType& FromArray) const
     {
@@ -622,21 +622,21 @@ public:
         return BitArray.AddressOf() == FromPointer;
     }
 
-    /** @return - Returns true if the iterator is valid */
+    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         const auto Count = BitArray.Get().Count();
         return Index >= 0 && Index <= Count;
     }
 
-    /** @return - Returns the value of the bit */
+    /** @return Returns the value of the bit */
     NODISCARD FORCEINLINE BitReferenceType GetBitValue()
     {
         CHECK(IsValid());
         return BitArray.Get().GetBitReference(Index);
     }
 
-    /** @return - Returns the value of the bit */
+    /** @return Returns the value of the bit */
     NODISCARD FORCEINLINE ConstBitReferenceType GetBitValue() const
     {
         CHECK(IsValid());
@@ -646,8 +646,8 @@ public:
 public:
 
     /**
-     * @brief  - Pre-increment operator
-     * @return - Returns an iterator with the next index
+     * @brief Pre-increment operator
+     * @return Returns an iterator with the next index
      */
     FORCEINLINE TReverseBitArrayIterator operator++()
     {
@@ -657,8 +657,8 @@ public:
     }
 
     /**
-     * @brief  - Post-increment operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-increment operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TReverseBitArrayIterator operator++(int)
     {
@@ -669,8 +669,8 @@ public:
     }
 
     /**
-     * @brief  - Pre-decrement operator
-     * @return - Returns an iterator with the previous index
+     * @brief Pre-decrement operator
+     * @return Returns an iterator with the previous index
      */
     FORCEINLINE TReverseBitArrayIterator operator--()
     {
@@ -680,8 +680,8 @@ public:
     }
 
     /**
-     * @brief  - Post-decrement operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-decrement operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TReverseBitArrayIterator operator--(int)
     {
@@ -692,9 +692,9 @@ public:
     }
 
     /**
-     * @brief       - Compare operator
-     * @param Other - Other iterator to compare to
-     * @return      - Returns true if the index is the same and the iterators belong to the same BitArray
+     * @brief Compare operator
+     * @param Other Other iterator to compare to
+     * @return Returns true if the index is the same and the iterators belong to the same BitArray
      */
     NODISCARD FORCEINLINE bool operator==(const TReverseBitArrayIterator& Other) const
     {
@@ -702,24 +702,24 @@ public:
     }
 
     /**
-     * @brief       - Compare operator
-     * @param Other - Other iterator to compare to
-     * @return      - Returns true if the iterators are not equal
+     * @brief Compare operator
+     * @param Other Other iterator to compare to
+     * @return Returns true if the iterators are not equal
      */
     NODISCARD FORCEINLINE bool operator!=(const TReverseBitArrayIterator& Other) const
     {
         return !(*this == Other);
     }
 
-    /** @return - Returns a reference to the data */
+    /** @return Returns a reference to the data */
     NODISCARD FORCEINLINE BitReferenceType& operator*()
     {
         return GetBitValue();
     }
 
     /**
-     * @brief  - Create a constant iterator from this
-     * @return - Returns a new iterator based on the index from this instance
+     * @brief Create a constant iterator from this
+     * @return Returns a new iterator based on the index from this instance
      */
     NODISCARD FORCEINLINE operator TReverseBitArrayIterator<ConstBitArrayType, ConstStorageType>() const
     {
@@ -755,31 +755,31 @@ public:
     {
     }
 
-    /** @return - Returns true if the iterator is the end-iterator */
+    /** @return Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const
     {
         return BaseIterator == Map.Get().BaseMap.end();
     }
 
-    /** @return - Returns true if the iterator is valid */
+    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         return true;
     }
 
-    /** @return - Returns the key for this iterator */
+    /** @return Returns the key for this iterator */
     NODISCARD FORCEINLINE const KeyType& GetKey() const
     {
         return BaseIterator->first;
     }
 
-    /** @return - Returns the value for this iterator */
+    /** @return Returns the value for this iterator */
     NODISCARD FORCEINLINE ValueType& GetValue()
     {
         return BaseIterator->second;
     }
 
-    /** @return - Returns the value for this iterator */
+    /** @return Returns the value for this iterator */
     NODISCARD FORCEINLINE const ValueType& GetValue() const
     {
         return BaseIterator->second;
@@ -788,8 +788,8 @@ public:
 public:
 
     /**
-     * @brief  - Pre-increment operator
-     * @return - Returns an iterator with the next index
+     * @brief Pre-increment operator
+     * @return Returns an iterator with the next index
      */
     FORCEINLINE TMapIterator operator++()
     {
@@ -798,8 +798,8 @@ public:
     }
 
     /**
-     * @brief  - Post-increment operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-increment operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TMapIterator operator++(int)
     {
@@ -809,8 +809,8 @@ public:
     }
 
     /**
-     * @brief  - Pre-decrement operator
-     * @return - Returns an iterator with the previous index
+     * @brief Pre-decrement operator
+     * @return Returns an iterator with the previous index
      */
     FORCEINLINE TMapIterator operator--()
     {
@@ -819,8 +819,8 @@ public:
     }
 
     /**
-     * @brief  - Post-decrement operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-decrement operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TMapIterator operator--(int)
     {
@@ -830,8 +830,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve key and value pair
-     * @return - Returns references to the key and values from this iterator
+     * @brief Retrieve key and value pair
+     * @return Returns references to the key and values from this iterator
      */
     NODISCARD FORCEINLINE TPair<ConstKeyType&, ValueType&> operator*()
     {
@@ -839,8 +839,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve key and value pair
-     * @return - Returns references to the key and values from this iterator
+     * @brief Retrieve key and value pair
+     * @return Returns references to the key and values from this iterator
      */
     NODISCARD FORCEINLINE TPair<ConstKeyType&, ConstValueType&> operator*() const
     {
@@ -848,9 +848,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are equal
      */
     NODISCARD FORCEINLINE bool operator==(const TMapIterator& Other) const
     {
@@ -858,9 +858,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are not equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are not equal
      */
     NODISCARD FORCEINLINE bool operator!=(const TMapIterator& Other) const
     {
@@ -868,8 +868,8 @@ public:
     }
 
     /**
-     * @brief  - Create a constant iterator from this
-     * @return - Returns a new iterator based on the index from this instance
+     * @brief Create a constant iterator from this
+     * @return Returns a new iterator based on the index from this instance
      */
     NODISCARD FORCEINLINE operator TMapIterator<ConstMapType, ConstKeyType, ConstValueType>() const
     {
@@ -904,19 +904,19 @@ public:
     {
     }
 
-    /** @return - Returns true if the iterator is the end-iterator */
+    /** @return Returns true if the iterator is the end-iterator */
     NODISCARD FORCEINLINE bool IsEnd() const
     {
         return BaseIterator == Set.Get().BaseSet.end();
     }
 
-    /** @return - Returns true if the iterator is valid */
+    /** @return Returns true if the iterator is valid */
     NODISCARD FORCEINLINE bool IsValid() const
     {
         return true;
     }
 
-    /** @return - Returns the element for this iterator */
+    /** @return Returns the element for this iterator */
     NODISCARD FORCEINLINE const ElementType& GetElement() const
     {
         return *BaseIterator;
@@ -925,8 +925,8 @@ public:
 public:
 
     /**
-     * @brief  - Pre-increment operator
-     * @return - Returns an iterator with the next index
+     * @brief Pre-increment operator
+     * @return Returns an iterator with the next index
      */
     FORCEINLINE TSetIterator operator++()
     {
@@ -935,8 +935,8 @@ public:
     }
 
     /**
-     * @brief  - Post-increment operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-increment operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TSetIterator operator++(int)
     {
@@ -946,8 +946,8 @@ public:
     }
 
     /**
-     * @brief  - Pre-decrement operator
-     * @return - Returns an iterator with the previous index
+     * @brief Pre-decrement operator
+     * @return Returns an iterator with the previous index
      */
     FORCEINLINE TSetIterator operator--()
     {
@@ -956,8 +956,8 @@ public:
     }
 
     /**
-     * @brief  - Post-decrement operator
-     * @return - Returns an iterator with the current index
+     * @brief Post-decrement operator
+     * @return Returns an iterator with the current index
      */
     FORCEINLINE TSetIterator operator--(int)
     {
@@ -967,8 +967,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the element
-     * @return - Returns a reference to the element from this iterator
+     * @brief Retrieve the element
+     * @return Returns a reference to the element from this iterator
      */
     NODISCARD FORCEINLINE const ElementType& operator*() const
     {
@@ -976,9 +976,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are equal
      */
     NODISCARD FORCEINLINE bool operator==(const TSetIterator& Other) const
     {
@@ -986,9 +986,9 @@ public:
     }
 
     /**
-     * @brief       - Compare this and another instance
-     * @param Other - Value to compare with
-     * @return      - Returns true if the iterators are not equal
+     * @brief Compare this and another instance
+     * @param Other Value to compare with
+     * @return Returns true if the iterators are not equal
      */
     NODISCARD FORCEINLINE bool operator!=(const TSetIterator& Other) const
     {
@@ -996,8 +996,8 @@ public:
     }
 
     /**
-     * @brief  - Create a constant iterator from this
-     * @return - Returns a new iterator based on the index from this instance
+     * @brief Create a constant iterator from this
+     * @return Returns a new iterator based on the index from this instance
      */
     NODISCARD FORCEINLINE operator TSetIterator<ConstSetType, ConstElementType>() const
     {

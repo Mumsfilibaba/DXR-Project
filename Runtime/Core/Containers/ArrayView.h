@@ -21,12 +21,12 @@ public:
 
 public:
 
-    /** @brief - Default construct an empty view */
+    /** @brief Default construct an empty view */
     TArrayView() = default;
 
     /**
-     * @brief           - Construct a view from a contiguous container (e.g., TArray, TArrayView, TStaticArray)
-     * @param Container - Container to create view from
+     * @brief Construct a view from a contiguous container (e.g., TArray, TArrayView, TStaticArray)
+     * @param Container Container to create view from
      */
     template<
         typename ContainerType,
@@ -38,8 +38,8 @@ public:
     }
 
     /**
-     * @brief          - Construct a view from an initializer_list
-     * @param InitList - initializer_list to create view from
+     * @brief Construct a view from an initializer_list
+     * @param InitList initializer_list to create view from
      */
     FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList)
         : View(FArrayContainerHelper::Data(InitList))
@@ -48,9 +48,9 @@ public:
     }
 
     /**
-     * @brief             - Construct a view from a raw-array
-     * @param InElements  - Array to create view from
-     * @param NumElements - Number of elements in the array
+     * @brief Construct a view from a raw-array
+     * @param InElements Array to create view from
+     * @param NumElements Number of elements in the array
      */
     template<typename OtherElementType>
     FORCEINLINE TArrayView(OtherElementType* InElements, SIZETYPE NumElements)
@@ -62,9 +62,9 @@ public:
     }
 
     /**
-     * @brief         - Returns true if the address is within the view's range
-     * @param Address - Address to check.
-     * @return        - Returns true if the address belongs to the view
+     * @brief Returns true if the address is within the view's range
+     * @param Address Address to check.
+     * @return Returns true if the address belongs to the view
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const
     {
@@ -77,8 +77,8 @@ public:
     }
 
     /**
-     * @brief  - Checks if an index is a valid index
-     * @return - Returns true if the index is valid
+     * @brief Checks if an index is a valid index
+     * @return Returns true if the index is valid
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
     {
@@ -86,8 +86,8 @@ public:
     }
 
     /**
-     * @brief  - Check if the view contains any elements
-     * @return - Returns true if the view is empty or false if it contains elements
+     * @brief Check if the view contains any elements
+     * @return Returns true if the view is empty or false if it contains elements
      */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
@@ -95,8 +95,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the first element of the view
-     * @return - Returns a reference to the first element of the view
+     * @brief Retrieve the first element of the view
+     * @return Returns a reference to the first element of the view
      */
     NODISCARD FORCEINLINE ElementType& FirstElement() const
     {
@@ -105,8 +105,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last element of the view
-     * @return - Returns a reference to the last element of the view
+     * @brief Retrieve the last element of the view
+     * @return Returns a reference to the last element of the view
      */
     NODISCARD FORCEINLINE ElementType& LastElement() const
     {
@@ -115,9 +115,9 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of an element if it is present in the view, or INVALID_INDEX if it is not found
-     * @param InElement - Element to search for
-     * @return          - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of an element if it is present in the view, or INVALID_INDEX if it is not found
+     * @param InElement Element to search for
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& InElement) const
     {
@@ -128,9 +128,9 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the element that satisfies the conditions of a comparator
-     * @param Predicate - Callable that compares an element in the view against some condition
-     * @return          - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of the element that satisfies the conditions of a comparator
+     * @param Predicate Callable that compares an element in the view against some condition
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const
@@ -139,9 +139,9 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the last occurrence of an element if it is present in the view, or INVALID_INDEX if it is not found
-     * @param InElement - Element to search for
-     * @return          - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of the last occurrence of an element if it is present in the view, or INVALID_INDEX if it is not found
+     * @param InElement Element to search for
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& InElement) const
     {
@@ -152,9 +152,9 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the last element that satisfies the conditions of a comparator
-     * @param Predicate - Callable that compares an element in the view against some condition
-     * @return          - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of the last element that satisfies the conditions of a comparator
+     * @param Predicate Callable that compares an element in the view against some condition
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const
@@ -163,9 +163,9 @@ public:
     }
 
     /**
-     * @brief         - Check if an element exists in the view
-     * @param Element - Element to check for
-     * @return        - Returns true if the element is found in the view and false if not
+     * @brief Check if an element exists in the view
+     * @param Element Element to check for
+     * @return Returns true if the element is found in the view and false if not
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const
     {
@@ -173,9 +173,9 @@ public:
     }
 
     /**
-     * @brief           - Check if an element that satisfies the conditions of a comparator exists in the view
-     * @param Predicate - Callable that compares an element in the view against some condition
-     * @return          - Returns true if the comparator returned true for one element
+     * @brief Check if an element that satisfies the conditions of a comparator exists in the view
+     * @param Predicate Callable that compares an element in the view against some condition
+     * @return Returns true if the comparator returned true for one element
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const
@@ -184,8 +184,8 @@ public:
     }
 
     /**
-     * @brief        - Perform some function on each element in the view
-     * @param Lambda - Callable that takes one element and performs some operation on it
+     * @brief Perform some function on each element in the view
+     * @param Lambda Callable that takes one element and performs some operation on it
      */
     template<class LambdaType>
     FORCEINLINE void Foreach(LambdaType&& Lambda) const
@@ -197,8 +197,8 @@ public:
     }
 
     /**
-     * @brief       - Swap the contents of this view with another
-     * @param Other - The other view to swap with
+     * @brief Swap the contents of this view with another
+     * @param Other The other view to swap with
      */
     FORCEINLINE void Swap(TArrayView& Other)
     {
@@ -208,8 +208,8 @@ public:
     }
 
     /**
-     * @brief              - Fill the view with the specified value
-     * @param InputElement - Element to copy into all elements in the view
+     * @brief Fill the view with the specified value
+     * @param InputElement Element to copy into all elements in the view
      */
     FORCEINLINE void Fill(const ElementType& InputElement)
     {
@@ -217,7 +217,7 @@ public:
     }
 
     /**
-     * @brief - Sets the view's memory to zero
+     * @brief Sets the view's memory to zero
      */
     template<typename U = ElementType>
     FORCEINLINE void Memzero() requires(TIsTrivial<U>::Value)
@@ -226,8 +226,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last index that can be used to retrieve an element from the view
-     * @return - Returns the index to the last element of the view
+     * @brief Retrieve the last index that can be used to retrieve an element from the view
+     * @return Returns the index to the last element of the view
      */
     NODISCARD FORCEINLINE SIZETYPE LastElementIndex() const
     {
@@ -235,8 +235,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the size of the view
-     * @return - The current size of the view
+     * @brief Returns the size of the view
+     * @return The current size of the view
      */
     NODISCARD FORCEINLINE SIZETYPE Size() const
     {
@@ -244,8 +244,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the size of the view in bytes
-     * @return - The current size of the view in bytes
+     * @brief Returns the size of the view in bytes
+     * @return The current size of the view in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE SizeInBytes() const
     {
@@ -253,8 +253,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the view
-     * @return - Returns a pointer to the data of the view
+     * @brief Retrieve the data of the view
+     * @return Returns a pointer to the data of the view
      */
     NODISCARD FORCEINLINE ElementType* Data() const
     {
@@ -262,10 +262,10 @@ public:
     }
 
     /**
-     * @brief             - Create a sub-view
-     * @param Offset      - Offset into the view
-     * @param NumElements - Number of elements to include in the view
-     * @return            - A new array-view pointing to the specified elements
+     * @brief Create a sub-view
+     * @param Offset Offset into the view
+     * @param NumElements Number of elements to include in the view
+     * @return A new array-view pointing to the specified elements
      */
     NODISCARD FORCEINLINE TArrayView SubView(SIZETYPE Offset, SIZETYPE NumElements) const
     {
@@ -276,9 +276,9 @@ public:
 public:
 
     /**
-     * @brief     - Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
-     * @param RHS - Array to compare with
-     * @return    - Returns true if all elements are equal to each other
+     * @brief Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     * @param RHS Array to compare with
+     * @return Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
     NODISCARD FORCEINLINE bool operator==(const ArrayType& RHS) const requires(TIsTArrayType<ArrayType>::Value)
@@ -292,9 +292,9 @@ public:
     }
 
     /**
-     * @brief     - Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
-     * @param RHS - Array to compare with
-     * @return    - Returns true if all elements are NOT equal to each other
+     * @brief Comparison operator that compares all elements in the view, which can be of any ArrayType qualified type
+     * @param RHS Array to compare with
+     * @return Returns true if all elements are NOT equal to each other
      */
     template<typename ArrayType>
     NODISCARD FORCEINLINE bool operator!=(const ArrayType& RHS) const requires(TIsTArrayType<ArrayType>::Value)
@@ -303,9 +303,9 @@ public:
     }
 
     /**
-     * @brief       - Bracket-operator to retrieve an element at a certain index
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
+     * @brief Bracket-operator to retrieve an element at a certain index
+     * @param Index Index of the element to retrieve
+     * @return A reference to the element at the index
      */
     NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
     {
@@ -314,9 +314,9 @@ public:
     }
 
     /**
-     * @brief       - Bracket-operator to retrieve an element at a certain index
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
+     * @brief Bracket-operator to retrieve an element at a certain index
+     * @param Index Index of the element to retrieve
+     * @return A reference to the element at the index
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
     {

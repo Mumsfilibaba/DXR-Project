@@ -265,11 +265,11 @@ class TFunction<ReturnType(ParamTypes...)>
 {
 public:
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TFunction() = default;
 
     /** 
-     * @brief - Create from nullptr. Same as default constructor. 
+     * @brief Create from nullptr. Same as default constructor. 
      */
     FORCEINLINE TFunction(nullptr_type)
         : FunctorCaller(nullptr)
@@ -278,8 +278,8 @@ public:
     }
 
     /**
-     * @brief         - Construct a function from a functor
-     * @param Functor - Functor to store
+     * @brief Construct a function from a functor
+     * @param Functor Functor to store
      */
     template<typename FunctorType>
     FORCEINLINE TFunction(FunctorType&& Functor) requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TFunction, typename TDecay<FunctorType>::Type>>>::Value)
@@ -290,8 +290,8 @@ public:
     }
 
     /**
-     * @brief       - Copy-constructor
-     * @param Other - Function to copy from
+     * @brief Copy-constructor
+     * @param Other Function to copy from
      */
     FORCEINLINE TFunction(const TFunction& Other)
         : FunctorCaller(Other.FunctorCaller)
@@ -304,8 +304,8 @@ public:
     }
 
     /**
-     * @brief       - Move-constructor
-     * @param Other - Function to move from
+     * @brief Move-constructor
+     * @param Other Function to move from
      */
     FORCEINLINE TFunction(TFunction&& Other)
         : FunctorCaller(Other.FunctorCaller)
@@ -315,7 +315,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TFunction()
     {
@@ -323,7 +323,7 @@ public:
     }
 
     /** 
-     * @return - Returns true if the pointer is not nullptr otherwise false 
+     * @return Returns true if the pointer is not nullptr otherwise false 
      */
     NODISCARD FORCEINLINE bool IsValid() const
     {
@@ -331,7 +331,7 @@ public:
     }
     
     /** 
-     * @brief - Resets the object to default state
+     * @brief Resets the object to default state
      */
     FORCEINLINE void Reset()
     {
@@ -345,8 +345,8 @@ public:
     }
 
     /**
-     * @brief       - Swap functor with another instance
-     * @param Other - Function to swap with
+     * @brief Swap functor with another instance
+     * @param Other Function to swap with
      */
     FORCEINLINE void Swap(TFunction& Other)
     {
@@ -356,8 +356,8 @@ public:
     }
 
     /**
-     * @brief         - Assign a new functor
-     * @param Functor - New functor to store
+     * @brief Assign a new functor
+     * @param Functor New functor to store
      */
     template<typename FunctorType>
     FORCEINLINE void Bind(FunctorType&& Functor) requires(TIsInvokable<FunctorType, ParamTypes...>::Value)
@@ -367,9 +367,9 @@ public:
     }
 
     /**
-     * @brief        - Invoke the stored function
-     * @param Params - Arguments to forward to the function-call
-     * @return       - The return value from the function-call
+     * @brief Invoke the stored function
+     * @param Params Arguments to forward to the function-call
+     * @return The return value from the function-call
      */
     FORCEINLINE ReturnType operator()(ParamTypes... Params)
     {
@@ -381,7 +381,7 @@ public:
 public:
 
     /**
-     * @return - Returns true if the pointer is not nullptr otherwise false
+     * @return Returns true if the pointer is not nullptr otherwise false
      */
     NODISCARD FORCEINLINE operator bool() const
     {
@@ -389,9 +389,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Instance to copy from
-     * @return      - A reference to this object
+     * @brief Copy-assignment operator
+     * @param Other Instance to copy from
+     * @return A reference to this object
      */
     FORCEINLINE TFunction& operator=(const TFunction& Other)
     {
@@ -400,9 +400,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Instance to move from
-     * @return      - A reference to this object
+     * @brief Move-assignment operator
+     * @param Other Instance to move from
+     * @return A reference to this object
      */
     FORCEINLINE TFunction& operator=(TFunction&& Other)
     {
@@ -411,8 +411,8 @@ public:
     }
 
     /**
-     * @brief  - Set the pointer to nullptr
-     * @return - A reference to this object
+     * @brief Set the pointer to nullptr
+     * @return A reference to this object
      */
     FORCEINLINE TFunction& operator=(nullptr_type)
     {
@@ -459,11 +459,11 @@ class TFunctionRef<ReturnType(ParamTypes...)>
 {
 public:
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TFunctionRef() = default;
 
     /**
-     * @brief - Create from nullptr. Same as default constructor.
+     * @brief Create from nullptr. Same as default constructor.
      */
     FORCEINLINE TFunctionRef(nullptr_type)
         : FunctorCaller(nullptr)
@@ -472,8 +472,8 @@ public:
     }
 
     /**
-     * @brief         - Construct a function from a functor
-     * @param Functor - Functor to store
+     * @brief Construct a function from a functor
+     * @param Functor Functor to store
      */
     template<typename FunctorType>
     FORCEINLINE TFunctionRef(FunctorType&& InFunctor) requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TFunctionRef, typename TDecay<FunctorType>::Type>>>::Value)
@@ -484,8 +484,8 @@ public:
     }
 
     /**
-     * @brief       - Copy-constructor
-     * @param Other - Function to copy from
+     * @brief Copy-constructor
+     * @param Other Function to copy from
      */
     FORCEINLINE TFunctionRef(const TFunctionRef& Other)
         : FunctorCaller(Other.FunctorCaller)
@@ -494,8 +494,8 @@ public:
     }
 
     /**
-     * @brief       - Move-constructor
-     * @param Other - Function to move from
+     * @brief Move-constructor
+     * @param Other Function to move from
      */
     FORCEINLINE TFunctionRef(TFunctionRef&& Other)
         : FunctorCaller(Other.FunctorCaller)
@@ -505,7 +505,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TFunctionRef()
     {
@@ -513,7 +513,7 @@ public:
     }
 
     /**
-     * @return - Returns true if the pointer is not nullptr otherwise false
+     * @return Returns true if the pointer is not nullptr otherwise false
      */
     NODISCARD FORCEINLINE bool IsValid() const
     {
@@ -521,7 +521,7 @@ public:
     }
     
     /** 
-     * @brief - Resets the object to default state
+     * @brief Resets the object to default state
      */
     FORCEINLINE void Reset()
     {
@@ -530,8 +530,8 @@ public:
     }
 
     /**
-     * @brief       - Swap functor with another instance
-     * @param Other - Function to swap with
+     * @brief Swap functor with another instance
+     * @param Other Function to swap with
      */
     FORCEINLINE void Swap(TFunctionRef& Other)
     {
@@ -541,8 +541,8 @@ public:
     }
 
     /**
-     * @brief         - Assign a new functor
-     * @param Functor - New functor to store
+     * @brief Assign a new functor
+     * @param Functor New functor to store
      */
     template<typename FunctorType >
     FORCEINLINE void Bind(FunctorType&& Functor) requires(TIsInvokable<FunctorType, ParamTypes...>::Value)
@@ -552,9 +552,9 @@ public:
     }
 
     /**
-     * @brief        - Invoke the stored function
-     * @param Params - Arguments to forward to the function-call
-     * @return       - The return value from the function-call
+     * @brief Invoke the stored function
+     * @param Params Arguments to forward to the function-call
+     * @return The return value from the function-call
      */
     FORCEINLINE ReturnType operator()(ParamTypes... Params)
     {
@@ -565,7 +565,7 @@ public:
 public:
 
     /**
-     * @return - Returns true if the pointer is not nullptr otherwise false
+     * @return Returns true if the pointer is not nullptr otherwise false
      */
     NODISCARD FORCEINLINE operator bool() const
     {
@@ -573,9 +573,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Instance to copy from
-     * @return      - A reference to this object
+     * @brief Copy-assignment operator
+     * @param Other Instance to copy from
+     * @return A reference to this object
      */
     FORCEINLINE TFunctionRef& operator=(const TFunctionRef& Other)
     {
@@ -584,9 +584,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Instance to move from
-     * @return      - A reference to this object
+     * @brief Move-assignment operator
+     * @param Other Instance to move from
+     * @return A reference to this object
      */
     FORCEINLINE TFunctionRef& operator=(TFunctionRef&& Other)
     {
@@ -595,8 +595,8 @@ public:
     }
 
     /**
-     * @brief  - Set the pointer to nullptr
-     * @return - A reference to this object
+     * @brief Set the pointer to nullptr
+     * @return A reference to this object
      */
     FORCEINLINE TFunctionRef& operator=(nullptr_type)
     {
@@ -646,11 +646,11 @@ public:
     TUniqueFunction(const TUniqueFunction&) = delete;
     TUniqueFunction& operator=(const TUniqueFunction&) = delete;
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TUniqueFunction() = default;
 
     /**
-     * @brief - Create from nullptr. Same as default constructor.
+     * @brief Create from nullptr. Same as default constructor.
      */
     FORCEINLINE TUniqueFunction(nullptr_type)
         : FunctorCaller(nullptr)
@@ -659,8 +659,8 @@ public:
     }
 
     /**
-     * @brief         - Construct a unique-function from a functor
-     * @param Functor - Functor to store
+     * @brief Construct a unique-function from a functor
+     * @param Functor Functor to store
      */
     template<typename FunctorType>
     FORCEINLINE TUniqueFunction(FunctorType&& Functor) requires(TAnd<TIsInvokable<FunctorType, ParamTypes...>, TNot<TIsSame<TUniqueFunction, typename TDecay<FunctorType>::Type>>>::Value)
@@ -671,8 +671,8 @@ public:
     }
 
     /**
-     * @brief       - Move-constructor
-     * @param Other - Function to move from
+     * @brief Move-constructor
+     * @param Other Function to move from
      */
     FORCEINLINE TUniqueFunction(TUniqueFunction&& Other)
         : FunctorCaller(Other.FunctorCaller)
@@ -682,7 +682,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TUniqueFunction()
     {
@@ -690,7 +690,7 @@ public:
     }
 
     /**
-     * @return - Returns true if the pointer is not nullptr otherwise false
+     * @return Returns true if the pointer is not nullptr otherwise false
      */
     NODISCARD FORCEINLINE bool IsValid() const
     {
@@ -698,7 +698,7 @@ public:
     }
 
     /**
-     * @brief - Resets the object to default state
+     * @brief Resets the object to default state
      */
     FORCEINLINE void Reset()
     {
@@ -712,8 +712,8 @@ public:
     }
 
     /**
-     * @brief       - Swap functor with another instance
-     * @param Other - Function to swap with
+     * @brief Swap functor with another instance
+     * @param Other Function to swap with
      */
     FORCEINLINE void Swap(TUniqueFunction& Other)
     {
@@ -723,8 +723,8 @@ public:
     }
 
     /**
-     * @brief         - Assign a new functor
-     * @param Functor - New functor to store
+     * @brief Assign a new functor
+     * @param Functor New functor to store
      */
     template<typename FunctorType>
     FORCEINLINE void Bind(FunctorType&& Functor) requires(TIsInvokable<FunctorType, ParamTypes...>::Value)
@@ -734,9 +734,9 @@ public:
     }
 
     /**
-     * @brief        - Invoke the stored function
-     * @param Params - Arguments to forward to the function-call
-     * @return       - The return value from the function-call
+     * @brief Invoke the stored function
+     * @param Params Arguments to forward to the function-call
+     * @return The return value from the function-call
      */
     FORCEINLINE ReturnType operator()(ParamTypes... Params)
     {
@@ -748,7 +748,7 @@ public:
 public:
 
     /**
-     * @return - Returns true if the pointer is not nullptr otherwise false
+     * @return Returns true if the pointer is not nullptr otherwise false
      */
     NODISCARD FORCEINLINE operator bool() const
     {
@@ -756,9 +756,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Instance to move from
-     * @return      - A reference to this object
+     * @brief Move-assignment operator
+     * @param Other Instance to move from
+     * @return A reference to this object
      */
     FORCEINLINE TUniqueFunction& operator=(TUniqueFunction&& Other)
     {
@@ -767,8 +767,8 @@ public:
     }
 
     /**
-     * @brief  - Set the pointer to nullptr
-     * @return - A reference to this object
+     * @brief Set the pointer to nullptr
+     * @return A reference to this object
      */
     FORCEINLINE TUniqueFunction& operator=(nullptr_type)
     {

@@ -25,12 +25,12 @@ public:
 
 public:
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TBitArray() = default;
 
     /**
-     * @brief         - Constructor that sets the elements based on an integer
-     * @param InValue - Integer containing bits to set to the BitArray
+     * @brief Constructor that sets the elements based on an integer
+     * @param InValue Integer containing bits to set to the BitArray
      */
     FORCEINLINE explicit TBitArray(InIntegerType InValue)
         : Allocator()
@@ -43,9 +43,9 @@ public:
     }
 
     /**
-     * @brief           - Constructor that sets the elements based on an integer
-     * @param InValues  - Integers containing bits to set to the BitArray
-     * @param NumValues - Number of values in the input array
+     * @brief Constructor that sets the elements based on an integer
+     * @param InValues Integers containing bits to set to the BitArray
+     * @param NumValues Number of values in the input array
      */
     NOINLINE explicit TBitArray(const InIntegerType* InValues, SIZETYPE NumValues)
         : Allocator()
@@ -62,9 +62,9 @@ public:
     }
 
     /**
-     * @brief         - Constructor that sets a certain number of bits to specified value
-     * @param bValue  - Value to set bits to
-     * @param NumBits - Number of bits to set
+     * @brief Constructor that sets a certain number of bits to specified value
+     * @param bValue Value to set bits to
+     * @param NumBits Number of bits to set
      */
     FORCEINLINE explicit TBitArray(SIZETYPE InNumBits, bool bValue)
         : Allocator()
@@ -79,8 +79,8 @@ public:
     }
 
     /**
-     * @brief          - Constructor that creates a BitArray from a list of booleans indicating the sign of the bit
-     * @param InitList - Contains bools to indicate the sign of each bit
+     * @brief Constructor that creates a BitArray from a list of booleans indicating the sign of the bit
+     * @param InitList Contains bools to indicate the sign of each bit
      */
     FORCEINLINE TBitArray(std::initializer_list<bool> InitList)
         : Allocator()
@@ -97,8 +97,8 @@ public:
     }
 
     /**
-     * @brief       - Copy constructor
-     * @param Other - BitArray to copy from
+     * @brief Copy constructor
+     * @param Other BitArray to copy from
      */
     FORCEINLINE TBitArray(const TBitArray& Other)
         : Allocator()
@@ -110,8 +110,8 @@ public:
     }
 
     /**
-     * @brief       - Move constructor
-     * @param Other - BitArray to move from
+     * @brief Move constructor
+     * @param Other BitArray to move from
      */ 
     FORCEINLINE TBitArray(TBitArray&& Other)
         : Allocator()
@@ -122,7 +122,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TBitArray()
     {
@@ -132,7 +132,7 @@ public:
     }
 
     /**
-     * @brief - Resets the all the bits to zero
+     * @brief Resets the all the bits to zero
      */
     FORCEINLINE void Reset()
     {
@@ -140,8 +140,8 @@ public:
     }
 
     /**
-     * @brief  - Checks if an index is a valid index
-     * @return - Returns true if the index is valid
+     * @brief Checks if an index is a valid index
+     * @return Returns true if the index is valid
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
     {
@@ -149,8 +149,8 @@ public:
     }
 
     /**
-     * @brief  - Check if the array is empty
-     * @return - Returns true if the array is empty
+     * @brief Check if the array is empty
+     * @return Returns true if the array is empty
      */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
@@ -158,8 +158,8 @@ public:
     }
 
     /**
-     * @brief        - Add a new bit with the specified value
-     * @param bValue - Value of the new bit
+     * @brief Add a new bit with the specified value
+     * @param bValue Value of the new bit
      */
     void Add(const bool bValue)
     {
@@ -169,9 +169,9 @@ public:
     }
 
     /**
-     * @brief             - Assign a value to a bit
-     * @param BitPosition - Position of the bit to set
-     * @param bValue      - Value to assign to the bit
+     * @brief Assign a value to a bit
+     * @param BitPosition Position of the bit to set
+     * @param bValue Value to assign to the bit
      */
     void AssignBit(SIZETYPE BitPosition, const bool bValue)
     {
@@ -180,8 +180,8 @@ public:
     }
 
     /**
-     * @brief             - Flips the bit at the position
-     * @param BitPosition - Position of the bit to set
+     * @brief Flips the bit at the position
+     * @param BitPosition Position of the bit to set
      */
     FORCEINLINE void FlipBit(SIZETYPE BitPosition)
     {
@@ -195,8 +195,8 @@ public:
     }
 
     /**
-     * @brief  - Count the number of bits that are assigned
-     * @return - Returns the number of bits that are true
+     * @brief Count the number of bits that are assigned
+     * @return Returns the number of bits that are true
      */
     NODISCARD FORCEINLINE SIZETYPE CountAssignedBits() const
     {
@@ -211,8 +211,8 @@ public:
     }
 
     /**
-     * @brief  - Check if any bit is set
-     * @return - Returns true if any bit is set
+     * @brief Check if any bit is set
+     * @return Returns true if any bit is set
      */
     NODISCARD FORCEINLINE bool HasAnyBitSet() const
     {
@@ -220,8 +220,8 @@ public:
     }
 
     /**
-     * @brief  - Check if no bit is set
-     * @return - Returns true if no bit is set
+     * @brief Check if no bit is set
+     * @return Returns true if no bit is set
      */
     NODISCARD FORCEINLINE bool HasNoBitSet() const
     {
@@ -229,8 +229,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
-     * @return - Returns the index of the most significant bit
+     * @brief Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
+     * @return Returns the index of the most significant bit
      */
     NODISCARD FORCEINLINE SIZETYPE MostSignificant() const
     {
@@ -250,8 +250,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the least significant bit. Will return zero if no bits are set, check HasAnyBitSet.
-     * @return - Returns the index of the least significant bit
+     * @brief Retrieve the least significant bit. Will return zero if no bits are set, check HasAnyBitSet.
+     * @return Returns the index of the least significant bit
      */
     NODISCARD FORCEINLINE SIZETYPE LeastSignificant() const
     {
@@ -271,9 +271,9 @@ public:
     }
 
     /**
-     * @brief             - Insert a new bit with a certain value
-     * @param BitPosition - Position of the bit to set
-     * @param bValue      - Value to assign to the bit
+     * @brief Insert a new bit with a certain value
+     * @param BitPosition Position of the bit to set
+     * @param bValue Value to assign to the bit
      */
     void Insert(SIZETYPE BitPosition, const bool bValue)
     {
@@ -288,8 +288,8 @@ public:
     }
 
     /**
-     * @brief             - Remove a bit from the array
-     * @param BitPosition - Position of the bit to set
+     * @brief Remove a bit from the array
+     * @param BitPosition Position of the bit to set
      */
     inline void Remove(SIZETYPE BitPosition)
     {
@@ -299,8 +299,8 @@ public:
     }
 
     /**
-     * @brief         - Reserve a certain number of bits to be stored
-     * @param NumBits - Number of bits to be able to store
+     * @brief Reserve a certain number of bits to be stored
+     * @param NumBits Number of bits to be able to store
      */
     FORCEINLINE void Reserve(SIZETYPE InNumBits)
     {
@@ -321,8 +321,8 @@ public:
     }
 
     /**
-     * @brief           - Resize the array to a certain number of bits
-     * @param InNumBits - New number of bits in the array
+     * @brief Resize the array to a certain number of bits
+     * @param InNumBits New number of bits in the array
      */
     inline void Resize(SIZETYPE InNumBits)
     {
@@ -331,7 +331,7 @@ public:
     }
 
     /**
-     * @brief - Shrink the allocated array to fit the number of bits and remove unnecessary space
+     * @brief Shrink the allocated array to fit the number of bits and remove unnecessary space
      */
     FORCEINLINE void Shrink()
     {
@@ -344,8 +344,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise AND between this and another BitArray
-     * @param Other - BitArray to perform bitwise AND with
+     * @brief Perform a bitwise AND between this and another BitArray
+     * @param Other BitArray to perform bitwise AND with
      */
     FORCEINLINE void BitwiseAnd(const TBitArray& Other)
     {
@@ -358,8 +358,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise OR between this and another BitArray
-     * @param Other - BitArray to perform bitwise OR with
+     * @brief Perform a bitwise OR between this and another BitArray
+     * @param Other BitArray to perform bitwise OR with
      */
     FORCEINLINE void BitwiseOr(const TBitArray& Other)
     {
@@ -372,8 +372,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise XOR between this and another BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief Perform a bitwise XOR between this and another BitArray
+     * @param Other BitArray to perform bitwise XOR with
      */
     FORCEINLINE void BitwiseXor(const TBitArray& Other)
     {
@@ -386,8 +386,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise NOT on each bit in this BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief Perform a bitwise NOT on each bit in this BitArray
+     * @param Other BitArray to perform bitwise XOR with
      */
     FORCEINLINE void BitwiseNot()
     {
@@ -399,8 +399,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a right BitShift
-     * @param Steps - Number of steps to shift
+     * @brief Perform a right BitShift
+     * @param Steps Number of steps to shift
      */
     FORCEINLINE void BitshiftRight(SIZETYPE Steps)
     {
@@ -409,8 +409,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a left BitShift
-     * @param Steps - Number of steps to shift
+     * @brief Perform a left BitShift
+     * @param Steps Number of steps to shift
      */
     FORCEINLINE void BitshiftLeft(SIZETYPE Steps)
     {
@@ -419,8 +419,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the number of bits
-     * @return - Returns the number of bits in the array
+     * @brief Retrieve the number of bits
+     * @return Returns the number of bits in the array
      */
     NODISCARD FORCEINLINE SIZETYPE Size() const
     {
@@ -428,8 +428,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the number of integers used to store the bits
-     * @return - Returns the number of integers used to store the bits
+     * @brief Retrieve the number of integers used to store the bits
+     * @return Returns the number of integers used to store the bits
      */
     NODISCARD FORCEINLINE SIZETYPE IntegerSize() const
     {
@@ -437,8 +437,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the maximum number of bits
-     * @return - Returns the maximum number of bits in the array
+     * @brief Retrieve the maximum number of bits
+     * @return Returns the maximum number of bits in the array
      */
     NODISCARD FORCEINLINE SIZETYPE Capacity() const
     {
@@ -446,8 +446,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the capacity of the array in bytes
-     * @return - Returns the capacity of the array in bytes
+     * @brief Retrieve the capacity of the array in bytes
+     * @return Returns the capacity of the array in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE CapacityInBytes() const
     {
@@ -455,8 +455,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the data of the Array
+     * @return Returns a pointer to the stored data
      */
     NODISCARD FORCEINLINE InIntegerType* Data()
     {
@@ -464,8 +464,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the data of the Array
+     * @return Returns a pointer to the stored data
      */
     NODISCARD FORCEINLINE const InIntegerType* Data() const
     {
@@ -473,8 +473,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the allocator of the Array
-     * @return - Returns a reference to the allocator
+     * @brief Retrieve the allocator of the Array
+     * @return Returns a reference to the allocator
      */
     NODISCARD FORCEINLINE InAllocatorType& GetAllocator()
     {
@@ -482,8 +482,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the allocator of the Array
-     * @return - Returns a const reference to the allocator
+     * @brief Retrieve the allocator of the Array
+     * @return Returns a const reference to the allocator
      */
     NODISCARD FORCEINLINE const InAllocatorType& GetAllocator() const
     {
@@ -493,9 +493,9 @@ public:
 public:
 
     /**
-     * @brief     - Bitwise AND operator, perform a bitwise AND between this and another BitArray
-     * @param RHS - BitArray to perform bitwise AND with
-     * @return    - Returns a reference to this BitArray
+     * @brief Bitwise AND operator, perform a bitwise AND between this and another BitArray
+     * @param RHS BitArray to perform bitwise AND with
+     * @return Returns a reference to this BitArray
      */
     FORCEINLINE TBitArray& operator&=(const TBitArray& RHS)
     {
@@ -504,9 +504,9 @@ public:
     }
 
     /**
-     * @brief     - Bitwise OR operator, perform a bitwise OR between this and another BitArray
-     * @param RHS - BitArray to perform bitwise OR with
-     * @return    - Returns a reference to this BitArray
+     * @brief Bitwise OR operator, perform a bitwise OR between this and another BitArray
+     * @param RHS BitArray to perform bitwise OR with
+     * @return Returns a reference to this BitArray
      */
     FORCEINLINE TBitArray& operator|=(const TBitArray& RHS)
     {
@@ -515,9 +515,9 @@ public:
     }
 
     /**
-     * @brief     - Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
-     * @param RHS - BitArray to perform bitwise XOR with
-     * @return    - Returns a reference to this BitArray
+     * @brief Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
+     * @param RHS BitArray to perform bitwise XOR with
+     * @return Returns a reference to this BitArray
      */
     FORCEINLINE TBitArray& operator^=(const TBitArray& RHS)
     {
@@ -526,8 +526,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise NOT on each bit in this BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief Perform a bitwise NOT on each bit in this BitArray
+     * @param Other BitArray to perform bitwise XOR with
      */
     FORCEINLINE TBitArray operator~() const
     {
@@ -537,9 +537,9 @@ public:
     }
 
     /**
-     * @brief     - Perform a bitshift right
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a copy that is bitshifted to the right
+     * @brief Perform a bitshift right
+     * @param RHS Number of steps to bitshift
+     * @return Returns a copy that is bitshifted to the right
      */
     FORCEINLINE TBitArray operator>>(SIZETYPE RHS) const
     {
@@ -549,9 +549,9 @@ public:
     }
 
     /**
-     * @brief     - Perform a bitshift right
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a reference to this object
+     * @brief Perform a bitshift right
+     * @param RHS Number of steps to bitshift
+     * @return Returns a reference to this object
      */
     FORCEINLINE TBitArray& operator>>=(SIZETYPE RHS) const
     {
@@ -560,9 +560,9 @@ public:
     }
 
     /**
-     * @brief     - Perform a bitshift left
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a copy that is bitshifted to the left
+     * @brief Perform a bitshift left
+     * @param RHS Number of steps to bitshift
+     * @return Returns a copy that is bitshifted to the left
      */
     FORCEINLINE TBitArray operator<<(SIZETYPE RHS) const
     {
@@ -572,9 +572,9 @@ public:
     }
 
     /**
-     * @brief     - Perform a bitshift left
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a reference to this object
+     * @brief Perform a bitshift left
+     * @param RHS Number of steps to bitshift
+     * @return Returns a reference to this object
      */
     FORCEINLINE TBitArray& operator<<=(SIZETYPE RHS) const
     {
@@ -583,9 +583,9 @@ public:
     }
 
     /**
-     * @brief       - Retrieve a bit with a certain index
-     * @param Index - Index to the bit
-     * @return      - Returns a BitReference to the specified bit
+     * @brief Retrieve a bit with a certain index
+     * @param Index Index to the bit
+     * @return Returns a BitReference to the specified bit
      */
     NODISCARD FORCEINLINE BitReferenceType operator[](SIZETYPE BitIndex)
     {
@@ -598,9 +598,9 @@ public:
     }
 
     /**
-     * @brief       - Retrieve a bit with a certain index
-     * @param Index - Index to the bit
-     * @return      - Returns a BitReference to the specified bit
+     * @brief Retrieve a bit with a certain index
+     * @param Index Index to the bit
+     * @return Returns a BitReference to the specified bit
      */
     NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SIZETYPE BitIndex) const
     {
@@ -613,9 +613,9 @@ public:
     }
 
     /**
-     * @brief     - Copy assignment operator
-     * @param RHS - BitArray to copy from
-     * @return    - Returns a reference to this BitArray
+     * @brief Copy assignment operator
+     * @param RHS BitArray to copy from
+     * @return Returns a reference to this BitArray
      */
     FORCEINLINE TBitArray& operator=(const TBitArray& RHS)
     {
@@ -624,9 +624,9 @@ public:
     }
 
     /**
-     * @brief     - Move assignment operator
-     * @param RHS - BitArray to move from
-     * @return    - Returns a reference to this BitArray
+     * @brief Move assignment operator
+     * @param RHS BitArray to move from
+     * @return Returns a reference to this BitArray
      */
     FORCEINLINE TBitArray& operator=(TBitArray&& RHS)
     {
@@ -635,9 +635,9 @@ public:
     }
 
     /**
-     * @brief     - Compare operator
-     * @param RHS - Right-hand side to compare
-     * @return    - Returns true if the BitArrays are equal
+     * @brief Compare operator
+     * @param RHS Right-hand side to compare
+     * @return Returns true if the BitArrays are equal
      */
     template<typename OtherIntegerType, typename OtherAllocatorType>
     NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const
@@ -646,9 +646,9 @@ public:
     }
 
     /**
-     * @brief     - Compare operator
-     * @param RHS - Right-hand side to compare
-     * @return    - Returns false if the BitArrays are equal
+     * @brief Compare operator
+     * @param RHS Right-hand side to compare
+     * @return Returns false if the BitArrays are equal
      */
     template<typename OtherIntegerType, typename OtherAllocatorType>
     NODISCARD FORCEINLINE bool operator!=(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const
@@ -659,10 +659,10 @@ public:
 public:
 
     /**
-     * @brief     - Bitwise AND operator, perform a bitwise AND between this and another BitArray
-     * @param LHS - Left-hand side to bitwise AND with
-     * @param RHS - Right-hand side to bitwise AND with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise AND operator, perform a bitwise AND between this and another BitArray
+     * @param LHS Left-hand side to bitwise AND with
+     * @param RHS Right-hand side to bitwise AND with
+     * @return Returns a BitArray with the result
      */
     NODISCARD friend FORCEINLINE TBitArray operator&(const TBitArray& LHS, const TBitArray& RHS)
     {
@@ -672,10 +672,10 @@ public:
     }
 
     /**
-     * @brief     - Bitwise OR operator, perform a bitwise OR between this and another BitArray
-     * @param LHS - Left-hand side to bitwise OR with
-     * @param RHS - Right-hand side to bitwise OR with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise OR operator, perform a bitwise OR between this and another BitArray
+     * @param LHS Left-hand side to bitwise OR with
+     * @param RHS Right-hand side to bitwise OR with
+     * @return Returns a BitArray with the result
      */
     NODISCARD friend FORCEINLINE TBitArray operator|(const TBitArray& LHS, const TBitArray& RHS)
     {
@@ -685,10 +685,10 @@ public:
     }
 
     /**
-     * @brief     - Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
-     * @param LHS - Left-hand side to bitwise XOR with
-     * @param RHS - Right-hand side to bitwise XOR with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
+     * @param LHS Left-hand side to bitwise XOR with
+     * @param RHS Right-hand side to bitwise XOR with
+     * @return Returns a BitArray with the result
      */
     NODISCARD friend FORCEINLINE TBitArray operator^(const TBitArray& LHS, const TBitArray& RHS)
     {
@@ -700,8 +700,8 @@ public:
 public:
 
     /**
-     * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
+     * @brief Retrieve an iterator to the beginning of the array
+     * @return A iterator that points to the first element
      */
     NODISCARD FORCEINLINE IteratorType Iterator()
     {
@@ -709,8 +709,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
+     * @brief Retrieve an iterator to the beginning of the array
+     * @return A iterator that points to the first element
      */
     NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
@@ -718,8 +718,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve a reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
+     * @brief Retrieve a reverse-iterator to the end of the array
+     * @return A reverse-iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
@@ -727,15 +727,17 @@ public:
     }
 
     /**
-     * @brief  - Retrieve a reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
+     * @brief Retrieve a reverse-iterator to the end of the array
+     * @return A reverse-iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const
     {
         return ReverseConstIteratorType(*this, NumBits);
     }
 
-public: // STL Iterators
+public:
+
+    // STL Iterators
     NODISCARD FORCEINLINE IteratorType      begin()       { return Iterator(); }
     NODISCARD FORCEINLINE ConstIteratorType begin() const { return ConstIterator(); }
 

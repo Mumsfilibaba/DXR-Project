@@ -10,12 +10,12 @@ public:
     template<typename OtherType>
     friend class TComPtr;
 
-    /** @brief - Default constructor that sets the pointer to nullptr */
+    /** @brief Default constructor that sets the pointer to nullptr */
     TComPtr() = default;
 
     /**
-     * @brief       - Copy-constructor 
-     * @param Other - ComPtr to copy from
+     * @brief Copy-constructor 
+     * @param Other ComPtr to copy from
      */
     FORCEINLINE TComPtr(const TComPtr& Other)
         : Ptr(Other.Ptr)
@@ -24,8 +24,8 @@ public:
     }
 
     /**
-     * @brief       - Copy-constructor that copies from a ComPtr of a convertible type
-     * @param Other - ComPtr to copy from
+     * @brief Copy-constructor that copies from a ComPtr of a convertible type
+     * @param Other ComPtr to copy from
      */
     template<typename OtherType>
     FORCEINLINE TComPtr(const TComPtr<OtherType>& Other) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -35,8 +35,8 @@ public:
     }
 
     /**
-     * @brief       - Move-constructor
-     * @param Other - ComPtr to move from
+     * @brief Move-constructor
+     * @param Other ComPtr to move from
      */
     FORCEINLINE TComPtr(TComPtr&& Other)
         : Ptr(Other.Ptr)
@@ -45,8 +45,8 @@ public:
     }
 
     /**
-     * @brief       - Move-constructor that moves from a ComPtr of a convertible type
-     * @param Other - ComPtr to move from
+     * @brief Move-constructor that moves from a ComPtr of a convertible type
+     * @param Other ComPtr to move from
      */
     template<typename OtherType>
     FORCEINLINE TComPtr(TComPtr<OtherType>&& Other) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -56,8 +56,8 @@ public:
     }
 
     /**
-     * @brief           - Construct a ComPtr from a raw pointer. The container takes ownership.
-     * @param InPointer - Pointer to reference
+     * @brief Construct a ComPtr from a raw pointer. The container takes ownership.
+     * @param InPointer Pointer to reference
      */
     FORCEINLINE TComPtr(ElementType* InPointer)
         : Ptr(InPointer)
@@ -65,8 +65,8 @@ public:
     }
 
     /**
-     * @brief           - Construct a ComPtr from a raw pointer of a convertible type. The container takes ownership.
-     * @param InPointer - Pointer to reference
+     * @brief Construct a ComPtr from a raw pointer of a convertible type. The container takes ownership.
+     * @param InPointer Pointer to reference
      */
     template<typename OtherType>
     FORCEINLINE TComPtr(OtherType* InPointer) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -75,7 +75,7 @@ public:
     }
 
     /**
-     * @brief - Default destructor
+     * @brief Default destructor
      */
     FORCEINLINE ~TComPtr()
     {
@@ -83,8 +83,8 @@ public:
     }
 
     /**
-     * @brief        - Resets the container and sets to a potential new raw pointer 
-     * @param NewPtr - New pointer to reference
+     * @brief Resets the container and sets to a potential new raw pointer 
+     * @param NewPtr New pointer to reference
      */
     FORCEINLINE void Reset(ElementType* NewPtr = nullptr)
     {
@@ -92,8 +92,8 @@ public:
     }
 
     /**
-     * @brief        - Resets the container and sets to a new raw pointer from a convertible type
-     * @param NewPtr - New pointer to reference
+     * @brief Resets the container and sets to a new raw pointer from a convertible type
+     * @param NewPtr New pointer to reference
      */
     template<typename OtherType>
     FORCEINLINE void Reset(OtherType* NewPtr) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -102,8 +102,8 @@ public:
     }
 
     /**
-     * @brief       - Swaps the pointers in the two containers 
-     * @param Other - ComPtr to swap with
+     * @brief Swaps the pointers in the two containers 
+     * @param Other ComPtr to swap with
      */
     FORCEINLINE void Swap(TComPtr& Other)
     {
@@ -113,8 +113,8 @@ public:
     }
 
     /**
-     * @brief  - Releases the ownership of the pointer and returns the pointer
-     * @return - Returns the pointer that was previously held by the container
+     * @brief Releases the ownership of the pointer and returns the pointer
+     * @return Returns the pointer that was previously held by the container
      */
     NODISCARD FORCEINLINE ElementType* ReleaseOwnership()
     {
@@ -124,7 +124,7 @@ public:
     }
 
     /**
-     * @brief - Adds a reference to the stored pointer 
+     * @brief Adds a reference to the stored pointer 
      */
     FORCEINLINE void AddRef()
     {
@@ -135,8 +135,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the raw pointer 
-     * @return - Returns the raw pointer
+     * @brief Retrieve the raw pointer 
+     * @return Returns the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* Get() const
     {
@@ -144,8 +144,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the current reference count of the object. The object needs to be valid.
-     * @return - The current reference count of the stored pointer
+     * @brief Retrieve the current reference count of the object. The object needs to be valid.
+     * @return The current reference count of the stored pointer
      */
     NODISCARD FORCEINLINE uint64 GetRefCount() const
     {
@@ -157,8 +157,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the raw pointer and add a reference 
-     * @return - Returns the raw pointer
+     * @brief Retrieve the raw pointer and add a reference 
+     * @return Returns the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* GetAndAddRef()
     {
@@ -167,8 +167,8 @@ public:
     }
 
     /**
-     * @brief  - Releases the objects and returns the address of the stored pointer
-     * @return - Pointer to the stored pointer
+     * @brief Releases the objects and returns the address of the stored pointer
+     * @return Pointer to the stored pointer
      */
     NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf()
     {
@@ -177,9 +177,9 @@ public:
     }
 
     /** 
-     * @brief            - Retrieve the pointer as another type that is convertible by querying the interface type
-     * @param NewPointer - A pointer to store the result in
-     * @return           - The result of the operation
+     * @brief Retrieve the pointer as another type that is convertible by querying the interface type
+     * @param NewPointer A pointer to store the result in
+     * @return The result of the operation
      */
     template<typename CastType>
     FORCEINLINE HRESULT GetAs(CastType** NewPointer)
@@ -188,10 +188,10 @@ public:
     }
 
     /**
-     * @brief            - Retrieve the pointer as another type that is convertible by querying the interface type
-     * @param Riid       - The IID of the type to query
-     * @param NewPointer - A ComPtr of unknown type to store the result in
-     * @return           - The result of the operation
+     * @brief Retrieve the pointer as another type that is convertible by querying the interface type
+     * @param Riid The IID of the type to query
+     * @param NewPointer A ComPtr of unknown type to store the result in
+     * @return The result of the operation
      */
     FORCEINLINE HRESULT GetAs(REFIID Riid, TComPtr<IUnknown>* ComObject)
     {
@@ -207,8 +207,8 @@ public:
     }
 
     /**
-     * @brief  - Get the address of the raw pointer 
-     * @return - The address of the raw pointer
+     * @brief Get the address of the raw pointer 
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType** GetAddressOf()
     {
@@ -216,8 +216,8 @@ public:
     }
 
     /**
-     * @brief  - Get the address of the raw pointer
-     * @return - The address of the raw pointer
+     * @brief Get the address of the raw pointer
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const
     {
@@ -225,8 +225,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether the pointer is valid or not 
-     * @return - True if the pointer is not nullptr otherwise false
+     * @brief Checks whether the pointer is valid or not 
+     * @return True if the pointer is not nullptr otherwise false
      */
     NODISCARD FORCEINLINE bool IsValid() const
     {
@@ -236,8 +236,8 @@ public:
 public:
 
     /**
-     * @brief  - Retrieve the raw pointer
-     * @return - Returns the raw pointer
+     * @brief Retrieve the raw pointer
+     * @return Returns the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* operator->() const
     {
@@ -245,8 +245,8 @@ public:
     }
 
     /**
-     * @brief  - Get the address of the raw pointer
-     * @return - The address of the raw pointer
+     * @brief Get the address of the raw pointer
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType** operator&() 
     {
@@ -254,8 +254,8 @@ public:
     }
 
     /**
-     * @brief  - Get the address of the raw pointer
-     * @return - The address of the raw pointer
+     * @brief Get the address of the raw pointer
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* const* operator&() const
     {
@@ -263,8 +263,8 @@ public:
     }
 
     /**
-     * @brief  - Dereference the stored pointer
-     * @return - A reference to the object pointed to by the pointer
+     * @brief Dereference the stored pointer
+     * @return A reference to the object pointed to by the pointer
      */
     NODISCARD FORCEINLINE ElementType& operator*() const
     {
@@ -272,8 +272,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether the pointer is valid or not
-     * @return - True if the pointer is not nullptr otherwise false
+     * @brief Checks whether the pointer is valid or not
+     * @return True if the pointer is not nullptr otherwise false
      */
     NODISCARD FORCEINLINE operator bool() const
     {
@@ -281,9 +281,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Instance to copy from
-     * @return      - A reference to this object
+     * @brief Copy-assignment operator
+     * @param Other Instance to copy from
+     * @return A reference to this object
      */
     FORCEINLINE TComPtr& operator=(const TComPtr& Other)
     {
@@ -292,9 +292,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator that takes a convertible type
-     * @param Other - Instance to copy from
-     * @return      - A reference to this object
+     * @brief Copy-assignment operator that takes a convertible type
+     * @param Other Instance to copy from
+     * @return A reference to this object
      */
     template<typename OtherType>
     FORCEINLINE TComPtr& operator=(const TComPtr<OtherType>& Other) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -304,9 +304,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Instance to move from
-     * @return      - A reference to this object
+     * @brief Move-assignment operator
+     * @param Other Instance to move from
+     * @return A reference to this object
      */
     FORCEINLINE TComPtr& operator=(TComPtr&& Other)
     {
@@ -315,9 +315,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator that takes a convertible type
-     * @param Other - Instance to move from
-     * @return      - A reference to this object
+     * @brief Move-assignment operator that takes a convertible type
+     * @param Other Instance to move from
+     * @return A reference to this object
      */
     template<typename OtherType>
     FORCEINLINE TComPtr& operator=(TComPtr<OtherType>&& Other) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -327,9 +327,9 @@ public:
     }
 
     /**
-     * @brief       - Assignment operator that takes a raw pointer
-     * @param Other - Pointer to store
-     * @return      - A reference to this object
+     * @brief Assignment operator that takes a raw pointer
+     * @param Other Pointer to store
+     * @return A reference to this object
      */
     FORCEINLINE TComPtr& operator=(ElementType* Other)
     {
@@ -338,9 +338,9 @@ public:
     }
 
     /**
-     * @brief       - Assignment operator that takes a raw pointer of a convertible type
-     * @param Other - Pointer to store
-     * @return      - A reference to this object
+     * @brief Assignment operator that takes a raw pointer of a convertible type
+     * @param Other Pointer to store
+     * @return A reference to this object
      */
     template<typename OtherType>
     FORCEINLINE TComPtr& operator=(OtherType* Other) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -350,8 +350,8 @@ public:
     }
 
     /**
-     * @brief  - Set the pointer to nullptr 
-     * @return - A reference to this object
+     * @brief Set the pointer to nullptr 
+     * @return A reference to this object
      */
     FORCEINLINE TComPtr& operator=(nullptr_type)
     {
@@ -433,7 +433,7 @@ NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TComPtr<T>& Other)
 }
 
 /** 
- * @brief - Converts a raw pointer into a TComPtr 
+ * @brief Converts a raw pointer into a TComPtr 
  */
 template<typename T, typename U>
 NODISCARD FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)

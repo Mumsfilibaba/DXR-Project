@@ -11,38 +11,38 @@ struct TArrayAllocatorInterface
     typedef int32 SIZETYPE;
 
     /**
-     * @brief              - Reallocates the allocation
-     * @param CurrentCount - Current number of elements that are allocated 
-     * @param NewCount     - The new number of elements to allocate
+     * @brief Reallocates the allocation
+     * @param CurrentCount Current number of elements that are allocated 
+     * @param NewCount The new number of elements to allocate
      */
     FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount) { return nullptr; }
 
     /**
-     * @brief - Free the allocation
+     * @brief Free the allocation
      */
     FORCEINLINE void Free() { }
 
     /**
-     * @brief       - Move allocation from another allocator-instance
-     * @param Other - Other allocator instance
+     * @brief Move allocation from another allocator-instance
+     * @param Other Other allocator instance
      */
     FORCEINLINE void MoveFrom(TArrayAllocatorInterface&& Other) { }
 
     /**
-     * @brief  - Retrieve the allocation
-     * @return - Returns the allocation
+     * @brief Retrieve the allocation
+     * @return Returns the allocation
      */
     NODISCARD FORCEINLINE ElementType* GetAllocation() const { return nullptr; }
 
     /**
-     * @brief  - Returns the current state of the allocation
-     * @return - Returns true or false if there is an allocation
+     * @brief Returns the current state of the allocation
+     * @return Returns true or false if there is an allocation
      */
     NODISCARD FORCEINLINE bool HasAllocation() const { return false; }
 
     /**
-     * @brief  - Returns the current state of the allocation
-     * @return - Returns true or false if the allocation is allocated on the heap
+     * @brief Returns the current state of the allocation
+     * @return Returns true or false if the allocation is allocated on the heap
      */
     NODISCARD FORCEINLINE bool IsHeapAllocated() const { return false; }
 };

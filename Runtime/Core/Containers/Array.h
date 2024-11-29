@@ -23,88 +23,108 @@ public:
 
 public:
 
-    /** @brief - Default constructor */
-    TArray() = default;
+    /** @brief Default constructor */
+    TArray()
+        : ArraySize(0)
+        , ArrayMax(0)
+    {
+    }
 
     /** 
-     * @brief        - Constructor that default creates a certain number of elements 
-     * @param InSize - Number of elements to construct
+     * @brief Constructor that default creates a certain number of elements 
+     * @param InSize Number of elements to construct
      */
     FORCEINLINE explicit TArray(SIZETYPE InSize)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         InitializeEmpty(InSize);
     }
 
     /**
-     * @brief         - Constructor that Allocates the specified amount of elements, and initializes them to the same value 
-     * @param InSize  - Number of elements to construct
-     * @param Element - Element to copy into all positions of the array
+     * @brief Constructor that Allocates the specified amount of elements, and initializes them to the same value 
+     * @param InSize Number of elements to construct
+     * @param Element Element to copy into all positions of the array
      */
     FORCEINLINE TArray(SIZETYPE InSize, const ElementType& Element)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         Initialize(InSize, Element);
     }
 
     /**
-     * @brief               - Constructor that creates an array from a raw pointer array 
-     * @param InElements    - Pointer to the start of the array to copy from
-     * @param InNumElements - Number of elements in 'InputArray', which also is the resulting size of the constructed array
-     * @param InSlack       - Extra number of elements to allocate space for
+     * @brief Constructor that creates an array from a raw pointer array 
+     * @param InElements Pointer to the start of the array to copy from
+     * @param InNumElements Number of elements in 'InputArray', which also is the resulting size of the constructed array
+     * @param InSlack Extra number of elements to allocate space for
      */
     FORCEINLINE TArray(const ElementType* InElements, SIZETYPE InNumElements, SIZETYPE InSlack = 0)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         InitializeByCopy(InElements, InNumElements, InSlack);
     }
 
     /** 
-     * @brief       - Copy-constructor
-     * @param Other - Array to copy from
+     * @brief Copy-constructor
+     * @param Other Array to copy from
      */
     FORCEINLINE TArray(const TArray& Other)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         InitializeByCopy(Other.Data(), Other.Size(), 0);
     }
 
     /** 
-     * @brief         - Copy-constructor with additional slack
-     * @param Other   - Array to copy from
-     * @param InSlack - Extra number of elements to allocate space for
+     * @brief Copy-constructor with additional slack
+     * @param Other Array to copy from
+     * @param InSlack Extra number of elements to allocate space for
      */
     FORCEINLINE TArray(const TArray& Other, SIZETYPE InSlack)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         InitializeByCopy(Other.Data(), Other.Size(), InSlack);
     }
 
     /**
-     * @brief       - Copy-constructor from another type of array
-     * @param Other - Array to copy from
+     * @brief Copy-constructor from another type of array
+     * @param Other Array to copy from
      */
     template<typename ArrayType>
     FORCEINLINE explicit TArray(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         InitializeByCopy(FArrayContainerHelper::Data(Other), FArrayContainerHelper::Size(Other), 0);
     }
 
     /** 
-     * @brief       - Move-constructor 
-     * @param Other - Array to move elements from
+     * @brief Move-constructor 
+     * @param Other Array to move elements from
      */
     FORCEINLINE TArray(TArray&& Other)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         InitializeByMove(Forward<TArray>(Other));
     }
 
     /** 
-     * @brief          - Constructor that creates an array from an std::initializer_list
-     * @param InitList - Initializer list containing all elements to construct the array from
+     * @brief Constructor that creates an array from an std::initializer_list
+     * @param InitList Initializer list containing all elements to construct the array from
      */
     FORCEINLINE TArray(std::initializer_list<ElementType> InitList)
+        : ArraySize(0)
+        , ArrayMax(0)
     {
         InitializeByCopy(FArrayContainerHelper::Data(InitList), FArrayContainerHelper::Size(InitList), 0);
     }
 
     /** 
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TArray()
     {
@@ -112,8 +132,8 @@ public:
     }
 
     /** 
-     * @brief              - Clear all elements of the container, but does not deallocate the memory
-     * @param bRemoveSlack - Should the memory be deallocated or not
+     * @brief Clear all elements of the container, but does not deallocate the memory
+     * @param bRemoveSlack Should the memory be deallocated or not
      */
     void Clear(bool bRemoveSlack = false)
     {
@@ -131,8 +151,8 @@ public:
     }
 
     /**
-     * @brief         - Resets the container, optionally default constructing a new amount of elements.
-     * @param NewSize - Number of elements to construct (default is 0)
+     * @brief Resets the container, optionally default constructing a new amount of elements.
+     * @param NewSize Number of elements to construct (default is 0)
      */
     void Reset(SIZETYPE NewSize = 0)
     {
@@ -148,9 +168,9 @@ public:
     }
 
     /** 
-     * @brief         - Resets the container, initializes with copies of a specific element.
-     * @param NewSize - Number of elements to construct
-     * @param Element - Element to copy-construct from
+     * @brief Resets the container, initializes with copies of a specific element.
+     * @param NewSize Number of elements to construct
+     * @param Element Element to copy-construct from
      */
     void Reset(SIZETYPE NewSize, const ElementType& Element)
     {
@@ -166,9 +186,9 @@ public:
     }
 
     /** 
-     * @brief               - Resets the container, initializes with copies from a raw pointer array.
-     * @param Elements      - Array to copy-construct from
-     * @param NumElements   - Number of elements to copy
+     * @brief Resets the container, initializes with copies from a raw pointer array.
+     * @param Elements Array to copy-construct from
+     * @param NumElements Number of elements to copy
      */
     void Reset(const ElementType* Elements, SIZETYPE NumElements)
     {
@@ -187,8 +207,8 @@ public:
     }
 
     /** 
-     * @brief            - Resets the container, copies elements from another array.
-     * @param InputArray - Array to copy elements from
+     * @brief Resets the container, copies elements from another array.
+     * @param InputArray Array to copy elements from
      */
     template<typename ArrayType>
     FORCEINLINE void Reset(const ArrayType& InputArray) requires(TIsTArrayType<ArrayType>::Value)
@@ -197,8 +217,8 @@ public:
     }
 
     /**
-     * @brief            - Resets the container by moving elements from another array.
-     * @param InputArray - Array to move elements from
+     * @brief Resets the container by moving elements from another array.
+     * @param InputArray Array to move elements from
      */
     FORCEINLINE void Reset(TArray&& InputArray)
     {
@@ -206,8 +226,8 @@ public:
     }
 
     /** 
-     * @brief          - Resets the container and copy-constructs from an initializer-list
-     * @param InitList - Initializer-list to copy-construct elements from
+     * @brief Resets the container and copy-constructs from an initializer-list
+     * @param InitList Initializer-list to copy-construct elements from
      */
     FORCEINLINE void Reset(std::initializer_list<ElementType> InitList)
     {
@@ -215,8 +235,8 @@ public:
     }
 
     /** 
-     * @brief              - Fill the container with the specified value 
-     * @param InputElement - Element to copy into all elements in the array
+     * @brief Fill the container with the specified value 
+     * @param InputElement Element to copy into all elements in the array
      */
     void Fill(const ElementType& InputElement)
     {
@@ -224,8 +244,8 @@ public:
     }
 
     /**
-     * @brief         - Resizes the container with a new size, default constructing new elements or destructing excess elements
-     * @param NewSize - The new size of the array
+     * @brief Resizes the container with a new size, default constructing new elements or destructing excess elements
+     * @param NewSize The new size of the array
      */
     void Resize(SIZETYPE NewSize)
     {
@@ -254,8 +274,8 @@ public:
     }
 
     /**
-     * @brief         - Resizes the container with a new size without calling any constructors
-     * @param NewSize - The new size of the array
+     * @brief Resizes the container with a new size without calling any constructors
+     * @param NewSize The new size of the array
      */
     void ResizeUninitialized(SIZETYPE NewSize)
     {
@@ -277,8 +297,8 @@ public:
     }
 
     /**
-     * @brief             - Reallocate the array to a new capacity
-     * @param NewCapacity - The new capacity of the allocated array
+     * @brief Reallocate the array to a new capacity
+     * @param NewCapacity The new capacity of the allocated array
      */
     void Reserve(SIZETYPE NewCapacity)
     {
@@ -295,9 +315,9 @@ public:
     }
 
     /** 
-     * @brief      - Constructs a new element at the end of the array 
-     * @param Args - Arguments for the constructor of the element
-     * @return     - Returns a reference to the newly created element
+     * @brief Constructs a new element at the end of the array 
+     * @param Args Arguments for the constructor of the element
+     * @return Returns a reference to the newly created element
      */
     template<typename... ArgTypes>
     FORCEINLINE ElementType& Emplace(ArgTypes&&... Args)
@@ -308,9 +328,9 @@ public:
     }
 
     /**
-     * @brief         - Appends a new element at the end of the array by copy
-     * @param Element - Element to insert into the array by copy
-     * @return        - Returns a reference to the newly created element
+     * @brief Appends a new element at the end of the array by copy
+     * @param Element Element to insert into the array by copy
+     * @return Returns a reference to the newly created element
      */
     FORCEINLINE ElementType& Add(const ElementType& Element)
     {
@@ -318,9 +338,9 @@ public:
     }
 
     /**
-     * @brief         - Appends a new element at the end of the array by move
-     * @param Element - Element to insert into the array by move
-     * @return        - Returns a reference to the newly created element
+     * @brief Appends a new element at the end of the array by move
+     * @param Element Element to insert into the array by move
+     * @return Returns a reference to the newly created element
      */
     FORCEINLINE ElementType& Add(ElementType&& Element)
     {
@@ -328,9 +348,9 @@ public:
     }
 
     /**
-     * @brief         - Appends a new element at the end of the array if it does not already exist (copy)
-     * @param Element - Element to insert into the array by copy
-     * @return        - Returns the index of the newly created element or the existing element
+     * @brief Appends a new element at the end of the array if it does not already exist (copy)
+     * @param Element Element to insert into the array by copy
+     * @return Returns the index of the newly created element or the existing element
      */
     FORCEINLINE SIZETYPE AddUnique(const ElementType& Element)
     {
@@ -345,9 +365,9 @@ public:
     }
 
     /**
-     * @brief         - Appends a new element at the end of the array if it does not already exist (move)
-     * @param Element - Element to insert into the array by move
-     * @return        - Returns the index of the newly created element or the existing element
+     * @brief Appends a new element at the end of the array if it does not already exist (move)
+     * @param Element Element to insert into the array by move
+     * @return Returns the index of the newly created element or the existing element
      */
     FORCEINLINE SIZETYPE AddUnique(ElementType&& Element)
     {
@@ -362,7 +382,7 @@ public:
     }
 
     /**
-     * @brief - Appends a new element at the end of the array without calling any constructor
+     * @brief Appends a new element at the end of the array without calling any constructor
      */
     FORCEINLINE void AddUninitialized()
     {
@@ -370,7 +390,7 @@ public:
     }
 
     /**
-     * @brief - Appends a default-constructed element
+     * @brief Appends a default-constructed element
      */
     FORCEINLINE ElementType& AddDefault()
     {
@@ -378,9 +398,9 @@ public:
     }
 
     /**
-     * @brief          - Constructs a new element at a specific position in the array
-     * @param Position - Position of the new element
-     * @param Args     - Arguments for the constructor of the element
+     * @brief Constructs a new element at a specific position in the array
+     * @param Position Position of the new element
+     * @param Args Arguments for the constructor of the element
      */
     template<typename... ArgTypes>
     FORCEINLINE void EmplaceAt(SIZETYPE Position, ArgTypes&&... Args)
@@ -392,9 +412,9 @@ public:
     }
 
     /**
-     * @brief          - Insert a new element at a specific position in the array by copy
-     * @param Position - Position of the new element
-     * @param Element  - Element to copy into the position
+     * @brief Insert a new element at a specific position in the array by copy
+     * @param Position Position of the new element
+     * @param Element Element to copy into the position
      */
     FORCEINLINE void Insert(SIZETYPE Position, const ElementType& Element)
     {
@@ -402,9 +422,9 @@ public:
     }
 
     /**
-     * @brief          - Insert a new element at a specific position in the array by move
-     * @param Position - Position of the new element
-     * @param Element  - Element to move into the position
+     * @brief Insert a new element at a specific position in the array by move
+     * @param Position Position of the new element
+     * @param Element Element to move into the position
      */
     FORCEINLINE void Insert(SIZETYPE Position, ElementType&& Element)
     {
@@ -412,10 +432,10 @@ public:
     }
 
     /**
-     * @brief             - Insert an array at a specific position in the array
-     * @param Position    - Position to insert elements
-     * @param Elements    - Array to copy elements from
-     * @param InNumElements - Number of elements to copy
+     * @brief Insert an array at a specific position in the array
+     * @param Position Position to insert elements
+     * @param Elements Array to copy elements from
+     * @param InNumElements Number of elements to copy
      */
     void Insert(SIZETYPE Position, const ElementType* Elements, SIZETYPE InNumElements)
     {
@@ -428,9 +448,9 @@ public:
     }
 
     /**
-     * @brief          - Insert elements from an initializer list at a specific position in the array
-     * @param Position - Position to insert elements
-     * @param InitList - Initializer list to copy elements from
+     * @brief Insert elements from an initializer list at a specific position in the array
+     * @param Position Position to insert elements
+     * @param InitList Initializer list to copy elements from
      */
     FORCEINLINE void Insert(SIZETYPE Position, std::initializer_list<ElementType> InitList)
     {
@@ -438,9 +458,9 @@ public:
     }
 
     /**
-      * @brief          - Insert elements from another array at a specific position in the array
-      * @param Position - Position to insert elements
-      * @param InArray  - Array to copy elements from
+      * @brief Insert elements from another array at a specific position in the array
+      * @param Position Position to insert elements
+      * @param InArray Array to copy elements from
       */
     template<typename ArrayType>
     FORCEINLINE void Insert(SIZETYPE Position, const ArrayType& InArray) requires(TIsTArrayType<ArrayType>::Value)
@@ -449,9 +469,9 @@ public:
     }
 
     /**
-     * @brief             - Insert a number of uninitialized elements in the array at a specific position
-     * @param Position    - Start-position of the new elements
-     * @param NumElements - Number of elements to insert
+     * @brief Insert a number of uninitialized elements in the array at a specific position
+     * @param Position Start-position of the new elements
+     * @param NumElements Number of elements to insert
      */
     FORCEINLINE void InsertUninitialized(SIZETYPE Position, SIZETYPE NumElements)
     {
@@ -461,9 +481,9 @@ public:
     }
 
     /**
-     * @brief             - Append elements from a raw-pointer array at the end of the array
-     * @param InElements  - Array to copy elements from
-     * @param NumElements - Number of elements in the input array
+     * @brief Append elements from a raw-pointer array at the end of the array
+     * @param InElements Array to copy elements from
+     * @param NumElements Number of elements in the input array
      */
     void Append(const ElementType* InElements, SIZETYPE NumElements)
     {
@@ -477,8 +497,8 @@ public:
     }
 
     /**
-     * @brief       - Append another array at the end of the array
-     * @param Other - Array to copy elements from
+     * @brief Append another array at the end of the array
+     * @param Other Array to copy elements from
      */
     template<typename ArrayType>
     FORCEINLINE void Append(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
@@ -487,8 +507,8 @@ public:
     }
 
     /**
-     * @brief          - Append an initializer list at the end of the array
-     * @param InitList - Initializer list to copy elements from
+     * @brief Append an initializer list at the end of the array
+     * @param InitList Initializer list to copy elements from
      */
     FORCEINLINE void Append(std::initializer_list<ElementType> InitList)
     {
@@ -496,8 +516,8 @@ public:
     }
 
     /**
-     * @brief         - Create a number of uninitialized elements at the end of the array
-     * @param NewSize - Number of elements to append
+     * @brief Create a number of uninitialized elements at the end of the array
+     * @param NewSize Number of elements to append
      */
     FORCEINLINE void AppendUninitialized(SIZETYPE NumElements)
     {
@@ -507,8 +527,8 @@ public:
     }
 
     /**
-     * @brief             - Remove and destroy a number of elements from the back
-     * @param NumElements - Number of elements to destroy from the end
+     * @brief Remove and destroy a number of elements from the back
+     * @param NumElements Number of elements to destroy from the end
      */
     void Pop(SIZETYPE NumElements = 1)
     {
@@ -519,9 +539,9 @@ public:
     }
 
     /**
-     * @brief             - Remove a range of elements starting at position
-     * @param Position    - Position to start removing elements
-     * @param NumElements - Number of elements to remove
+     * @brief Remove a range of elements starting at position
+     * @param Position Position to start removing elements
+     * @param NumElements Number of elements to remove
      */
     void RemoveAt(SIZETYPE Position, SIZETYPE NumElements)
     {
@@ -537,8 +557,8 @@ public:
     }
 
     /**
-     * @brief          - Removes the element at the specified position
-     * @param Position - Position of element to remove
+     * @brief Removes the element at the specified position
+     * @param Position Position of element to remove
      */
     FORCEINLINE void RemoveAt(SIZETYPE Position)
     {
@@ -546,9 +566,9 @@ public:
     }
 
     /**
-     * @brief         - Search the array and remove all instances of the element
-     * @param Element - Element to remove
-     * @return        - Returns true if the element was found and removed, false otherwise
+     * @brief Search the array and remove all instances of the element
+     * @param Element Element to remove
+     * @return Returns true if the element was found and removed, false otherwise
      */
     bool Remove(const ElementType& Element)
     {
@@ -571,8 +591,8 @@ public:
     }
 
     /**
-     * @brief         - Search the array and remove all elements satisfying the predicate
-     * @param Predicate - Callable that determines if an element should be removed
+     * @brief Search the array and remove all elements satisfying the predicate
+     * @param Predicate Callable that determines if an element should be removed
      */
     template<typename PredicateType>
     FORCEINLINE void RemoveAll(PredicateType&& Predicate)
@@ -592,9 +612,9 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of an element if it is present in the array, or INVALID_INDEX if not found
-     * @param InElement - Element to search for
-     * @return          - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of an element if it is present in the array, or INVALID_INDEX if not found
+     * @param InElement Element to search for
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& InElement) const
     {
@@ -605,9 +625,9 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the element that satisfies the conditions of a comparator
-     * @param Predicate - Callable that compares an element in the array against some condition
-     * @return          - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of the element that satisfies the conditions of a comparator
+     * @param Predicate Callable that compares an element in the array against some condition
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const
@@ -616,9 +636,9 @@ public:
     }
 
     /**
-     * @brief         - Returns the index of the last occurrence of an element, or INVALID_INDEX if not found
-     * @param Element - Element to search for
-     * @return        - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of the last occurrence of an element, or INVALID_INDEX if not found
+     * @param Element Element to search for
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& InElement) const
     {
@@ -629,9 +649,9 @@ public:
     }
 
     /**
-     * @brief           - Returns the index of the last element that satisfies the conditions of a comparator
-     * @param Predicate - Callable that compares an element in the array against some condition
-     * @return          - The index of the element if found or INVALID_INDEX if not
+     * @brief Returns the index of the last element that satisfies the conditions of a comparator
+     * @param Predicate Callable that compares an element in the array against some condition
+     * @return The index of the element if found or INVALID_INDEX if not
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const
@@ -640,9 +660,9 @@ public:
     }
 
     /**
-     * @brief         - Check if an element exists in the array
-     * @param Element - Element to check for
-     * @return        - Returns true if the element is found in the array, false otherwise
+     * @brief Check if an element exists in the array
+     * @param Element Element to check for
+     * @return Returns true if the element is found in the array, false otherwise
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const
     {
@@ -650,9 +670,9 @@ public:
     }
 
     /**
-     * @brief           - Check if an element satisfying the predicate exists in the array
-     * @param Predicate - Callable that compares an element in the array against some condition
-     * @return          - Returns true if the predicate returned true for any element
+     * @brief Check if an element satisfying the predicate exists in the array
+     * @param Predicate Callable that compares an element in the array against some condition
+     * @return Returns true if the predicate returned true for any element
      */
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const
@@ -661,8 +681,8 @@ public:
     }
 
     /**
-     * @brief        - Perform a function on each element in the array (non-const)
-     * @param Lambda - Callable that takes one element and performs some operation on it
+     * @brief Perform a function on each element in the array (non-const)
+     * @param Lambda Callable that takes one element and performs some operation on it
      */
     template<class LambdaType>
     void Foreach(LambdaType&& Lambda)
@@ -674,8 +694,8 @@ public:
     }
 
     /**
-     * @brief        - Perform a function on each element in the array (const version)
-     * @param Lambda - Callable that takes one element and performs some operation on it
+     * @brief Perform a function on each element in the array (const version)
+     * @param Lambda Callable that takes one element and performs some operation on it
      */
     template<class LambdaType>
     void Foreach(LambdaType&& Lambda) const
@@ -687,9 +707,9 @@ public:
     }
 
     /**
-     * @brief             - Swap two elements within the array
-     * @param FirstIndex  - Index of the first element to swap
-     * @param SecondIndex - Index of the second element to swap
+     * @brief Swap two elements within the array
+     * @param FirstIndex Index of the first element to swap
+     * @param SecondIndex Index of the second element to swap
      */
     FORCEINLINE void Swap(SIZETYPE FirstIndex, SIZETYPE SecondIndex)
     {
@@ -700,7 +720,7 @@ public:
     }
 
     /**
-     * @brief - Shrink the allocation to perfectly fit the size of the array
+     * @brief Shrink the allocation to perfectly fit the size of the array
      */
     FORCEINLINE void Shrink()
     {
@@ -708,7 +728,7 @@ public:
     }
 
     /**
-     * @brief - Reverses the order of the array
+     * @brief Reverses the order of the array
      */
     void Reverse()
     {
@@ -722,7 +742,7 @@ public:
     }
 
     /**
-     * @brief - Sort the array using the quick-sort algorithm, assumes that the ElementType has the '<' operator
+     * @brief Sort the array using the quick-sort algorithm, assumes that the ElementType has the '<' operator
      */
     FORCEINLINE void Sort()
     {
@@ -733,7 +753,7 @@ public:
     }
 
     /**
-     * @brief - Sort the array using the quick-sort algorithm with a custom comparator
+     * @brief Sort the array using the quick-sort algorithm with a custom comparator
      */
     template<typename PredicateType>
     FORCEINLINE void SortWithPredicate(PredicateType&& Predicate)
@@ -742,9 +762,9 @@ public:
     }
 
     /**
-     * @brief         - Checks that the pointer is a part of the array
-     * @param Address - Address to check.
-     * @return        - Returns true if the address belongs to the array
+     * @brief Checks that the pointer is a part of the array
+     * @param Address Address to check.
+     * @return Returns true if the address belongs to the array
      */
     NODISCARD FORCEINLINE bool CheckAddress(const ElementType* Address) const
     {
@@ -753,8 +773,8 @@ public:
     }
 
     /**
-     * @brief  - Checks if an index is a valid index
-     * @return - Returns true if the index is valid
+     * @brief Checks if an index is a valid index
+     * @return Returns true if the index is valid
      */
     NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
     {
@@ -762,8 +782,8 @@ public:
     }
 
     /**
-     * @brief  - Check if the container contains any elements
-     * @return - Returns true if the array is empty or false if it contains elements
+     * @brief Check if the container contains any elements
+     * @return Returns true if the array is empty or false if it contains elements
      */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
@@ -771,8 +791,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the first element of the array (non-const)
-     * @return - Returns a reference to the first element of the array
+     * @brief Retrieve the first element of the array (non-const)
+     * @return Returns a reference to the first element of the array
      */
     NODISCARD FORCEINLINE ElementType& FirstElement()
     {
@@ -782,8 +802,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the first element of the array (const)
-     * @return - Returns a reference to the first element of the array
+     * @brief Retrieve the first element of the array (const)
+     * @return Returns a reference to the first element of the array
      */
     NODISCARD FORCEINLINE const ElementType& FirstElement() const
     {
@@ -793,8 +813,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last element of the array (non-const)
-     * @return - Returns a reference to the last element of the array
+     * @brief Retrieve the last element of the array (non-const)
+     * @return Returns a reference to the last element of the array
      */
     NODISCARD FORCEINLINE ElementType& LastElement()
     {
@@ -804,8 +824,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last element of the array (const)
-     * @return - Returns a reference to the last element of the array
+     * @brief Retrieve the last element of the array (const)
+     * @return Returns a reference to the last element of the array
      */
     NODISCARD FORCEINLINE const ElementType& LastElement() const
     {
@@ -815,8 +835,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the array (non-const)
-     * @return - Returns a pointer to the data of the array
+     * @brief Retrieve the data of the array (non-const)
+     * @return Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE ElementType* Data()
     {
@@ -824,8 +844,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the array (const)
-     * @return - Returns a pointer to the data of the array
+     * @brief Retrieve the data of the array (const)
+     * @return Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE const ElementType* Data() const
     {
@@ -833,8 +853,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last index that can be used to retrieve an element from the array
-     * @return - Returns the index to the last element of the array
+     * @brief Retrieve the last index that can be used to retrieve an element from the array
+     * @return Returns the index to the last element of the array
      */
     NODISCARD FORCEINLINE SIZETYPE LastElementIndex() const
     {
@@ -842,8 +862,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the size of the container
-     * @return - Returns the size of the container
+     * @brief Retrieve the size of the container
+     * @return Returns the size of the container
      */
     NODISCARD FORCEINLINE SIZETYPE Size() const
     {
@@ -851,8 +871,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the stride of each element of the container
-     * @return - Returns the stride of each element of the container
+     * @brief Retrieve the stride of each element of the container
+     * @return Returns the stride of each element of the container
      */
     NODISCARD FORCEINLINE constexpr SIZETYPE Stride() const
     {
@@ -860,8 +880,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the size of the container in bytes
-     * @return - Returns the size of the container in bytes
+     * @brief Retrieve the size of the container in bytes
+     * @return Returns the size of the container in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE SizeInBytes() const
     {
@@ -869,8 +889,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the capacity of the container
-     * @return - Returns the capacity of the container
+     * @brief Retrieve the capacity of the container
+     * @return Returns the capacity of the container
      */
     NODISCARD FORCEINLINE SIZETYPE Capacity() const
     {
@@ -878,8 +898,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the capacity of the container in bytes
-     * @return - Returns the capacity of the container in bytes
+     * @brief Retrieve the capacity of the container in bytes
+     * @return Returns the capacity of the container in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE CapacityInBytes() const
     {
@@ -887,8 +907,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the allocator (non-const)
-     * @return - Returns a reference to the allocator
+     * @brief Retrieve the allocator (non-const)
+     * @return Returns a reference to the allocator
      */
     NODISCARD FORCEINLINE AllocatorType& GetAllocator()
     {
@@ -896,8 +916,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the allocator (const)
-     * @return - Returns a const reference to the allocator
+     * @brief Retrieve the allocator (const)
+     * @return Returns a const reference to the allocator
      */
     NODISCARD FORCEINLINE const AllocatorType& GetAllocator() const
     {
@@ -909,7 +929,7 @@ public:
     // Heap Functions
 
     /**
-     * @brief - Create a heap from the array 
+     * @brief Create a heap from the array 
      */
     void Heapify()
     {
@@ -930,8 +950,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the top of the heap. The same as the first element.
-     * @return - A reference to the element at the top of the heap
+     * @brief Retrieve the top of the heap. The same as the first element.
+     * @return A reference to the element at the top of the heap
      */
     NODISCARD FORCEINLINE ElementType& HeapTop()
     {
@@ -941,8 +961,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the top of the heap. The same as the first element.
-     * @return - A reference to the element at the top of the heap
+     * @brief Retrieve the top of the heap. The same as the first element.
+     * @return A reference to the element at the top of the heap
      */
     NODISCARD FORCEINLINE const ElementType& HeapTop() const
     {
@@ -952,8 +972,8 @@ public:
     }
 
     /**
-     * @brief         - Inserts a new element into the heap by copy
-     * @param Element - Element to insert into the heap by copy
+     * @brief Inserts a new element into the heap by copy
+     * @param Element Element to insert into the heap by copy
      */
     FORCEINLINE void HeapPush(const ElementType& Element)
     {
@@ -962,8 +982,8 @@ public:
     }
 
     /**
-     * @brief         - Inserts a new element into the heap by move
-     * @param Element - Element to insert into the heap by move
+     * @brief Inserts a new element into the heap by move
+     * @param Element Element to insert into the heap by move
      */
     FORCEINLINE void HeapPush(ElementType&& Element)
     {
@@ -972,8 +992,8 @@ public:
     }
 
     /**
-     * @brief            - Remove the top of the heap and retrieve the element on top
-     * @param OutElement - Reference that the top element will be copied to
+     * @brief Remove the top of the heap and retrieve the element on top
+     * @param OutElement Reference that the top element will be copied to
      */
     FORCEINLINE void HeapPop(ElementType& OutElement)
     {
@@ -982,7 +1002,7 @@ public:
     }
 
     /**
-     * @brief - Remove the top of the heap
+     * @brief Remove the top of the heap
      */
     FORCEINLINE void HeapPop()
     {
@@ -992,7 +1012,7 @@ public:
     }
 
     /**
-     * @brief - Performs heap sort on the array (assuming the operator> exists for the elements)
+     * @brief Performs heap sort on the array (assuming the operator> exists for the elements)
      */
     void HeapSort()
     {
@@ -1009,9 +1029,9 @@ public:
 public:
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Array to copy
-     * @return      - A reference to this container
+     * @brief Copy-assignment operator
+     * @param Other Array to copy
+     * @return A reference to this container
      */
     FORCEINLINE TArray& operator=(const TArray& Other)
     {
@@ -1024,9 +1044,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Array to move
-     * @return      - A reference to this container
+     * @brief Move-assignment operator
+     * @param Other Array to move
+     * @return A reference to this container
      */
     FORCEINLINE TArray& operator=(TArray&& Other)
     {
@@ -1039,9 +1059,9 @@ public:
     }
 
     /**
-     * @brief       - Assignment operator that takes an initializer-list
-     * @param Other - An initializer list to replace the current contents with
-     * @return      - A reference to this container
+     * @brief Assignment operator that takes an initializer-list
+     * @param Other An initializer list to replace the current contents with
+     * @return A reference to this container
      */
     FORCEINLINE TArray& operator=(std::initializer_list<ElementType> Other)
     {
@@ -1050,9 +1070,9 @@ public:
     }
 
     /**
-     * @brief       - Comparison operator that compares all elements in the array
-     * @param Other - Array to compare with
-     * @return        - Returns true if all elements are equal to each other
+     * @brief Comparison operator that compares all elements in the array
+     * @param Other Array to compare with
+     * @return Returns true if all elements are equal to each other
      */
     template<typename ArrayType>
     NODISCARD bool operator==(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
@@ -1063,9 +1083,9 @@ public:
     }
 
     /**
-     * @brief       - Comparison operator that compares all elements in the array
-     * @param Other - Array to compare with
-     * @return        - Returns true if any element is NOT equal to each other
+     * @brief Comparison operator that compares all elements in the array
+     * @param Other Array to compare with
+     * @return Returns true if any element is NOT equal to each other
      */
     template<typename ArrayType>
     NODISCARD FORCEINLINE bool operator!=(const ArrayType& Other) const requires(TIsTArrayType<ArrayType>::Value)
@@ -1074,9 +1094,9 @@ public:
     }
 
     /**
-     * @brief       - Bracket-operator to retrieve an element at a certain index (non-const)
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
+     * @brief Bracket-operator to retrieve an element at a certain index (non-const)
+     * @param Index Index of the element to retrieve
+     * @return A reference to the element at the index
      */
     NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
     {
@@ -1084,9 +1104,9 @@ public:
     }
 
     /**
-     * @brief       - Bracket-operator to retrieve an element at a certain index (const)
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
+     * @brief Bracket-operator to retrieve an element at a certain index (const)
+     * @param Index Index of the element to retrieve
+     * @return A reference to the element at the index
      */
     NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
     {
@@ -1096,9 +1116,9 @@ public:
 public:
 
     /**
-     * @brief       - Append another array at the end of the array
-     * @param Other - Array to copy elements from
-     * @return      - Reference to this array
+     * @brief Append another array at the end of the array
+     * @param Other Array to copy elements from
+     * @return Reference to this array
      */
     template<typename ArrayType>
     FORCEINLINE TArray& operator+=(const ArrayType& Other) requires(TIsTArrayType<ArrayType>::Value)
@@ -1108,9 +1128,9 @@ public:
     }
 
     /**
-     * @brief          - Append an initializer-list at the end of the array
-     * @param InitList - Initializer-list to copy elements from
-     * @return         - Reference to this array
+     * @brief Append an initializer-list at the end of the array
+     * @param InitList Initializer-list to copy elements from
+     * @return Reference to this array
      */
     FORCEINLINE TArray& operator+=(std::initializer_list<ElementType> InitList)
     {
@@ -1119,11 +1139,12 @@ public:
     }
 
 public:
+
     /**
-     * @brief       - Friend operator to concatenate two arrays
-     * @param LHS - Left-hand side array
-     * @param RHS - Right-hand side array
-     * @return    - A new array containing elements from both arrays
+     * @brief Friend operator to concatenate two arrays
+     * @param LHS Left-hand side array
+     * @param RHS Right-hand side array
+     * @return A new array containing elements from both arrays
      */
     NODISCARD FORCEINLINE friend TArray operator+(const TArray& LHS, const TArray& RHS)
     {
@@ -1137,8 +1158,8 @@ public:
     // Iterators
 
     /**
-     * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - An iterator that points to the first element
+     * @brief Retrieve an iterator to the beginning of the array
+     * @return An iterator that points to the first element
      */
     NODISCARD FORCEINLINE IteratorType Iterator()
     {
@@ -1146,8 +1167,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve a const iterator to the beginning of the array
-     * @return - A const iterator that points to the first element
+     * @brief Retrieve a const iterator to the beginning of the array
+     * @return A const iterator that points to the first element
      */
     NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
@@ -1155,8 +1176,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve a reverse iterator to the end of the array
-     * @return - A reverse iterator that points to the last element
+     * @brief Retrieve a reverse iterator to the end of the array
+     * @return A reverse iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
@@ -1164,8 +1185,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve a const reverse iterator to the end of the array
-     * @return - A const reverse iterator that points to the last element
+     * @brief Retrieve a const reverse iterator to the end of the array
+     * @return A const reverse iterator that points to the last element
      */
     NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const
     {
@@ -1227,7 +1248,7 @@ private:
 
             // Transfer size and capacity
             ArraySize = FromArray.ArraySize;
-            ArrayMax = FromArray.ArrayMax;
+            ArrayMax  = FromArray.ArrayMax;
             FromArray.ArraySize = 0;
             FromArray.ArrayMax  = 0;
         }
@@ -1346,7 +1367,7 @@ private:
     NODISCARD SIZETYPE FindForward(auto&& Predicate) const
     {
         const ElementType* Start = Allocator.GetAllocation();
-        const ElementType* End  = Start + ArraySize;
+        const ElementType* End   = Start + ArraySize;
         for (const ElementType* Current = Start; Current != End; ++Current)
         {
             if (Predicate(*Current))
@@ -1429,8 +1450,8 @@ private:
 
 private:
     AllocatorType Allocator;
-    SIZETYPE      ArraySize = 0;
-    SIZETYPE      ArrayMax  = 0;
+    SIZETYPE      ArraySize;
+    SIZETYPE      ArrayMax;
 };
 
 template<typename T, typename AllocatorType>
