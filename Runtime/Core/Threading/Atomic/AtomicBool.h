@@ -10,15 +10,15 @@ class FAtomicBool
 public:
     typedef bool Type;
 
-    /** @brief - Default constructor initializes to false */
+    /** @brief Default constructor initializes to false */
     FORCEINLINE FAtomicBool() noexcept
         : Value(false)
     {
     }
 
     /**
-     * @brief       - Copy-constructor
-     * @param Other - Instance to copy
+     * @brief Copy-constructor
+     * @param Other Instance to copy
      */
     FORCEINLINE FAtomicBool(const FAtomicBool& Other) noexcept
     {
@@ -27,8 +27,8 @@ public:
     }
 
     /**
-     * @brief         - Construct with an initial value
-     * @param InValue - Initial value
+     * @brief Construct with an initial value
+     * @param InValue Initial value
      */
     FORCEINLINE FAtomicBool(bool bInValue) noexcept
         : Value(static_cast<IntegerType>(bInValue))
@@ -36,9 +36,9 @@ public:
     }
 
     /**
-     * @brief         - Atomically sets the boolean to a new value and returns the previous value
-     * @param InValue - New value to set
-     * @return        - Returns the previous value
+     * @brief Atomically sets the boolean to a new value and returns the previous value
+     * @param InValue New value to set
+     * @return Returns the previous value
      */
     FORCEINLINE bool Exchange(bool bInValue) noexcept
     {
@@ -47,10 +47,10 @@ public:
     }
 
     /**
-     * @brief           - Compares and exchanges the boolean to a new value if it matches the comparand
+     * @brief Compares and exchanges the boolean to a new value if it matches the comparand
      * @param InValue   - Value to exchange
-     * @param Comparand - Value to compare against
-     * @return          - Returns true if the exchange was successful
+     * @param Comparand Value to compare against
+     * @return Returns true if the exchange was successful
      */
     FORCEINLINE bool CompareExchange(bool bInValue, bool bComparand) noexcept
     {
@@ -61,8 +61,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieves the boolean atomically
-     * @return - Returns the stored boolean value
+     * @brief Retrieves the boolean atomically
+     * @return Returns the stored boolean value
      */
     FORCEINLINE bool Load() const noexcept
     {
@@ -70,8 +70,8 @@ public:
     }
 
     /**
-     * @brief  - Stores a new boolean atomically
-     * @param InValue - New value to store
+     * @brief Stores a new boolean atomically
+     * @param InValue New value to store
      */
     FORCEINLINE void Store(bool bInValue) noexcept
     {
@@ -81,9 +81,9 @@ public:
 public:
 
     /**
-     * @brief     - Copy-assignment operator
-     * @param RHS - Instance to copy
-     * @return    - Returns a reference to this instance
+     * @brief Copy-assignment operator
+     * @param RHS Instance to copy
+     * @return Returns a reference to this instance
      */
     FORCEINLINE FAtomicBool& operator=(const FAtomicBool& RHS) noexcept
     {
@@ -93,9 +93,9 @@ public:
     }
 
     /**
-     * @brief     - Assign a new value
-     * @param RHS - Value to assign
-     * @return    - Returns the assigned value
+     * @brief Assign a new value
+     * @param RHS Value to assign
+     * @return Returns the assigned value
      */
     FORCEINLINE bool operator=(bool bRHS) noexcept
     {

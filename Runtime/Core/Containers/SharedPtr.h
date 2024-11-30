@@ -547,11 +547,11 @@ public:
 
     static inline constexpr EThreadAccess ThreadAccess = InThreadAccess;
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TSharedPtr() = default;
 
     /**
-     * @brief - Constructor setting both counter and pointer to nullptr
+     * @brief Constructor setting both counter and pointer to nullptr
      */
     FORCEINLINE TSharedPtr(nullptr_type)
         : Object(nullptr)
@@ -560,8 +560,8 @@ public:
     }
 
     /**
-     * @brief          - Constructor that initializes a new SharedPtr from a raw pointer
-     * @param InObject - Pointer to store in the SharedPtr
+     * @brief Constructor that initializes a new SharedPtr from a raw pointer
+     * @param InObject Pointer to store in the SharedPtr
      */
     FORCEINLINE explicit TSharedPtr(ObjectType* InObject)
         : Object(InObject)
@@ -571,9 +571,9 @@ public:
     }
 
     /**
-     * @brief          - Constructor that initializes a new SharedPtr from a raw pointer of a convertible type
-     * @param InObject - Pointer to store in the SharedPtr
-     * @param Deleter  - Deleter object used to delete the pointer when the last reference is released
+     * @brief Constructor that initializes a new SharedPtr from a raw pointer of a convertible type
+     * @param InObject Pointer to store in the SharedPtr
+     * @param Deleter Deleter object used to delete the pointer when the last reference is released
      */
     template<typename OtherObjectType, typename DeleterType>
     FORCEINLINE explicit TSharedPtr(OtherObjectType* InObject, DeleterType&& InDeleter) requires(TIsPointerConvertible<typename TRemoveExtent<OtherObjectType>::Type, ObjectType>::Value)
@@ -584,8 +584,8 @@ public:
     }
 
     /**
-     * @brief         - Constructor that initializes a new SharedPtr from TSharedReferenceProxy which is used by MakeSharedPtr
-     * @param InProxy - Proxy container
+     * @brief Constructor that initializes a new SharedPtr from TSharedReferenceProxy which is used by MakeSharedPtr
+     * @param InProxy Proxy container
      */
     FORCEINLINE explicit TSharedPtr(SharedPointerInternal::TSharedReferenceProxy<ObjectType, ThreadAccess>&& InProxy)
         : Object(InProxy.Object)
@@ -598,8 +598,8 @@ public:
     }
 
     /**
-     * @brief       - Copy constructor
-     * @param Other - SharedPtr to copy
+     * @brief Copy constructor
+     * @param Other SharedPtr to copy
      */
     FORCEINLINE TSharedPtr(const TSharedPtr& Other)
         : Object(Other.Object)
@@ -608,8 +608,8 @@ public:
     }
 
     /**
-     * @brief       - Copy constructor that copies from a convertible type
-     * @param Other - SharedPtr to copy
+     * @brief Copy constructor that copies from a convertible type
+     * @param Other SharedPtr to copy
      */
     template<typename OtherObjectType>
     FORCEINLINE TSharedPtr(const TSharedPtr<OtherObjectType, ThreadAccess>& Other) requires(TIsPointerConvertible<typename TRemoveExtent<OtherObjectType>::Type, ObjectType>::Value)
@@ -619,8 +619,8 @@ public:
     }
 
     /**
-     * @brief       - Move constructor
-     * @param Other - SharedPtr to move
+     * @brief Move constructor
+     * @param Other SharedPtr to move
      */
     FORCEINLINE TSharedPtr(TSharedPtr&& Other)
         : Object(Other.Object)
@@ -630,8 +630,8 @@ public:
     }
 
     /**
-     * @brief       - Move constructor that moves from a convertible type
-     * @param Other - SharedPtr to move
+     * @brief Move constructor that moves from a convertible type
+     * @param Other SharedPtr to move
      */
     template<typename OtherObjectType>
     FORCEINLINE TSharedPtr(TSharedPtr<OtherObjectType, ThreadAccess>&& Other) requires(TIsPointerConvertible<typename TRemoveExtent<OtherObjectType>::Type, ObjectType>::Value)
@@ -642,9 +642,9 @@ public:
     }
 
     /**
-     * @brief          - Copy constructor that copies the counter, but the pointer is taken from the raw pointer to enable casting
-     * @param Other    - Container to take the counter from
-     * @param InObject - Pointer to store in the SharedPtr
+     * @brief Copy constructor that copies the counter, but the pointer is taken from the raw pointer to enable casting
+     * @param Other Container to take the counter from
+     * @param InObject Pointer to store in the SharedPtr
      */
     template<typename OtherObjectType>
     FORCEINLINE explicit TSharedPtr(const TSharedPtr<OtherObjectType, ThreadAccess>& Other, ObjectType* InObject)
@@ -654,9 +654,9 @@ public:
     }
 
     /**
-     * @brief          - Move constructor that moves the counter, but the pointer is taken from the raw pointer to enable casting
-     * @param Other    - Container to take the counter from
-     * @param InObject - Pointer to store in the SharedPtr
+     * @brief Move constructor that moves the counter, but the pointer is taken from the raw pointer to enable casting
+     * @param Other Container to take the counter from
+     * @param InObject Pointer to store in the SharedPtr
      */
     template<typename OtherObjectType>
     FORCEINLINE explicit TSharedPtr(TSharedPtr<OtherObjectType>&& Other, ObjectType* InObject)
@@ -667,8 +667,8 @@ public:
     }
 
     /**
-     * @brief       - Constructor that creates a SharedPtr from a WeakPtr
-     * @param Other - WeakPtr to take counter and pointer from
+     * @brief Constructor that creates a SharedPtr from a WeakPtr
+     * @param Other WeakPtr to take counter and pointer from
      */
     template<typename OtherObjectType>
     FORCEINLINE explicit TSharedPtr(const TWeakPtr<OtherObjectType, ThreadAccess>& Other) requires(TIsPointerConvertible<typename TRemoveExtent<OtherObjectType>::Type, ObjectType>::Value)
@@ -678,8 +678,8 @@ public:
     }
 
     /**
-     * @brief       - Constructor that creates a SharedPtr from a UniquePtr
-     * @param Other - UniquePtr to take counter and pointer from
+     * @brief Constructor that creates a SharedPtr from a UniquePtr
+     * @param Other UniquePtr to take counter and pointer from
      */
     template<typename OtherObjectType, typename OtherDeleterType>
     FORCEINLINE TSharedPtr(TUniquePtr<OtherObjectType, OtherDeleterType>&& Other) requires(TIsPointerConvertible<typename TRemoveExtent<OtherObjectType>::Type, ObjectType>::Value)
@@ -690,7 +690,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TSharedPtr()
     {
@@ -698,7 +698,7 @@ public:
     }
 
     /**
-     * @brief - Reset the pointer
+     * @brief Reset the pointer
      */
     FORCEINLINE void Reset()
     {
@@ -707,8 +707,8 @@ public:
     }
 
     /**
-     * @brief       - Swaps the contents of this and another container
-     * @param Other - SharedPtr to swap with
+     * @brief Swaps the contents of this and another container
+     * @param Other SharedPtr to swap with
      */
     FORCEINLINE void Swap(TSharedPtr& Other)
     {
@@ -722,8 +722,8 @@ public:
     }
 
     /**
-     * @brief  - Check whether the strong reference count is one
-     * @return - Returns true if the strong reference count is equal to one
+     * @brief Check whether the strong reference count is one
+     * @return Returns true if the strong reference count is equal to one
      */
     NODISCARD FORCEINLINE bool IsUnique() const
     {
@@ -731,8 +731,8 @@ public:
     }
 
     /**
-     * @brief  - Check whether the pointer is nullptr or not
-     * @return - Returns true if the pointer is not nullptr
+     * @brief Check whether the pointer is nullptr or not
+     * @return Returns true if the pointer is not nullptr
      */
     NODISCARD FORCEINLINE bool IsValid() const
     {
@@ -740,8 +740,8 @@ public:
     }
 
     /**
-     * @brief  - Return the raw pointer
-     * @return - Returns the stored pointer
+     * @brief Return the raw pointer
+     * @return Returns the stored pointer
      */
     NODISCARD FORCEINLINE ObjectType* Get() const
     {
@@ -749,8 +749,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the number of strong references
-     * @return - The number of strong references
+     * @brief Returns the number of strong references
+     * @return The number of strong references
      */
     NODISCARD FORCEINLINE auto GetStrongReferenceCount() const
     {
@@ -758,8 +758,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the number of weak references
-     * @return - The number of weak references
+     * @brief Returns the number of weak references
+     * @return The number of weak references
      */
     NODISCARD FORCEINLINE auto GetWeakReferenceCount() const
     {
@@ -769,8 +769,8 @@ public:
 public:
 
     /**
-     * @brief  - Return the raw pointer
-     * @return - Returns the stored pointer
+     * @brief Return the raw pointer
+     * @return Returns the stored pointer
      */
     NODISCARD FORCEINLINE ObjectType* operator->() const
     {
@@ -778,8 +778,8 @@ public:
     }
 
     /**
-     * @brief  - Dereference the pointer
-     * @return - A reference to the object pointed to by the stored pointer
+     * @brief Dereference the pointer
+     * @return A reference to the object pointed to by the stored pointer
      */
     NODISCARD FORCEINLINE ObjectType& operator*() const
     {
@@ -787,8 +787,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve element at a certain index
-     * @return - Return the element at the index
+     * @brief Retrieve element at a certain index
+     * @return Return the element at the index
      */
     NODISCARD FORCEINLINE ObjectType& operator[](SIZETYPE Index) const requires(TIsArray<InObjectType>::Value)
     {
@@ -797,8 +797,8 @@ public:
     }
 
     /**
-     * @brief  - Check whether the pointer is nullptr or not
-     * @return - Returns true if the pointer is not nullptr
+     * @brief Check whether the pointer is nullptr or not
+     * @return Returns true if the pointer is not nullptr
      */
     NODISCARD FORCEINLINE operator bool() const
     {
@@ -806,9 +806,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - SharedPtr to copy
-     * @return      - A reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other SharedPtr to copy
+     * @return A reference to this instance
      */
     FORCEINLINE TSharedPtr& operator=(const TSharedPtr& Other)
     {
@@ -817,9 +817,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - SharedPtr to move
-     * @return      - A reference to this instance
+     * @brief Move-assignment operator
+     * @param Other SharedPtr to move
+     * @return A reference to this instance
      */
     FORCEINLINE TSharedPtr& operator=(TSharedPtr&& Other)
     {
@@ -828,9 +828,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator with a convertible type
-     * @param Other - SharedPtr to copy
-     * @return      - A reference to this instance
+     * @brief Copy-assignment operator with a convertible type
+     * @param Other SharedPtr to copy
+     * @return A reference to this instance
      */
     template<typename OtherObjectType>
     FORCEINLINE TSharedPtr& operator=(const TSharedPtr<OtherObjectType>& Other) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -840,9 +840,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator with a convertible type
-     * @param Other - SharedPtr to move
-     * @return      - A reference to this instance
+     * @brief Move-assignment operator with a convertible type
+     * @param Other SharedPtr to move
+     * @return A reference to this instance
      */
     template<typename OtherObjectType>
     FORCEINLINE TSharedPtr& operator=(TSharedPtr<OtherObjectType>&& Other) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -852,9 +852,9 @@ public:
     }
 
     /**
-     * @brief            - Assignment operator that takes a raw pointer
-     * @param NewPointer - Raw pointer to store
-     * @return           - A reference to this instance
+     * @brief Assignment operator that takes a raw pointer
+     * @param NewPointer Raw pointer to store
+     * @return A reference to this instance
      */
     FORCEINLINE TSharedPtr& operator=(ObjectType* NewPointer)
     {
@@ -863,8 +863,8 @@ public:
     }
 
     /**
-     * @brief  - Assignment operator that takes a nullptr
-     * @return - A reference to this instance
+     * @brief Assignment operator that takes a nullptr
+     * @return A reference to this instance
      */
     FORCEINLINE TSharedPtr& operator=(nullptr_type)
     {
@@ -904,11 +904,11 @@ public:
 
     static inline constexpr EThreadAccess ThreadAccess = InThreadAccess;
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TWeakPtr() = default;
 
     /**
-     * @brief - Constructor taking a nullptr
+     * @brief Constructor taking a nullptr
      */
     FORCEINLINE TWeakPtr(nullptr_type) noexcept
         : Object(nullptr)
@@ -917,8 +917,8 @@ public:
     }
 
     /**
-     * @brief       - Copy constructor
-     * @param Other - WeakPtr to copy
+     * @brief Copy constructor
+     * @param Other WeakPtr to copy
      */
     FORCEINLINE TWeakPtr(const TWeakPtr& Other)
         : Object(Other.Object)
@@ -927,8 +927,8 @@ public:
     }
 
     /**
-     * @brief       - Move constructor
-     * @param Other - WeakPtr to move
+     * @brief Move constructor
+     * @param Other WeakPtr to move
      */
     FORCEINLINE TWeakPtr(TWeakPtr&& Other)
         : Object(Other.Object)
@@ -937,8 +937,8 @@ public:
     }
 
     /**
-     * @brief       - Copy constructor that copies from a convertible type
-     * @param Other - WeakPtr to copy
+     * @brief Copy constructor that copies from a convertible type
+     * @param Other WeakPtr to copy
      */
     template<typename OtherObjectType>
     FORCEINLINE TWeakPtr(const TWeakPtr<OtherObjectType, ThreadAccess>& Other) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -948,8 +948,8 @@ public:
     }
 
     /**
-     * @brief       - Move constructor that moves from a convertible type
-     * @param Other - WeakPtr to move
+     * @brief Move constructor that moves from a convertible type
+     * @param Other WeakPtr to move
      */
     template<typename OtherObjectType>
     FORCEINLINE TWeakPtr(TWeakPtr<OtherObjectType, ThreadAccess>&& Other) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -959,8 +959,8 @@ public:
     }
 
     /**
-     * @brief       - Constructor that constructs a WeakPtr from a SharedPtr
-     * @param Other - SharedPtr to take pointer and counter from
+     * @brief Constructor that constructs a WeakPtr from a SharedPtr
+     * @param Other SharedPtr to take pointer and counter from
      */
     FORCEINLINE TWeakPtr(const TSharedPtr<InObjectType, ThreadAccess>& Other)
         : Object(Other.Object)
@@ -969,8 +969,8 @@ public:
     }
 
     /**
-     * @brief       - Constructor that constructs a WeakPtr from a SharedPtr of a convertible type
-     * @param Other - SharedPtr to take pointer and counter from
+     * @brief Constructor that constructs a WeakPtr from a SharedPtr of a convertible type
+     * @param Other SharedPtr to take pointer and counter from
      */
     template<typename OtherObjectType>
     FORCEINLINE TWeakPtr(const TSharedPtr<OtherObjectType, ThreadAccess>& Other) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -980,7 +980,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TWeakPtr()
     {
@@ -988,7 +988,7 @@ public:
     }
 
     /**
-     * @brief - Reset the pointer
+     * @brief Reset the pointer
      */
     FORCEINLINE void Reset()
     {
@@ -997,8 +997,8 @@ public:
     }
 
     /**
-     * @brief            - Reset the pointer and set it to an optional new pointer of a convertible type
-     * @param NewPointer - New pointer to store
+     * @brief Reset the pointer and set it to an optional new pointer of a convertible type
+     * @param NewPointer New pointer to store
      */
     template<typename OtherObjectType>
     FORCEINLINE void Reset(OtherObjectType* NewPtr = nullptr) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -1007,8 +1007,8 @@ public:
     }
 
     /**
-     * @brief       - Swaps the contents of this and another container
-     * @param Other - Instance to swap with
+     * @brief Swaps the contents of this and another container
+     * @param Other Instance to swap with
      */
     FORCEINLINE void Swap(TWeakPtr& Other)
     {
@@ -1022,8 +1022,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether there are any strong references left
-     * @return - Returns true if the strong reference count is less than one
+     * @brief Checks whether there are any strong references left
+     * @return Returns true if the strong reference count is less than one
      */
     NODISCARD FORCEINLINE bool IsExpired() const
     {
@@ -1031,8 +1031,8 @@ public:
     }
 
     /**
-     * @brief  - Creates a shared pointer from this WeakPtr
-     * @return - A new SharedPtr that holds the same pointer as this WeakPtr
+     * @brief Creates a shared pointer from this WeakPtr
+     * @return A new SharedPtr that holds the same pointer as this WeakPtr
      */
     NODISCARD FORCEINLINE TSharedPtr<InObjectType> ToSharedPtr()
     {
@@ -1040,8 +1040,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether the strong reference count is one
-     * @return - Returns true if the strong reference count is one
+     * @brief Checks whether the strong reference count is one
+     * @return Returns true if the strong reference count is one
      */
     NODISCARD FORCEINLINE bool IsUnique() const
     {
@@ -1049,8 +1049,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether the pointer is nullptr or not and the pointer is not expired
-     * @return - Returns true if the pointer is not nullptr and the strong reference count is more than zero
+     * @brief Checks whether the pointer is nullptr or not and the pointer is not expired
+     * @return Returns true if the pointer is not nullptr and the strong reference count is more than zero
      */
     NODISCARD FORCEINLINE bool IsValid() const
     {
@@ -1058,8 +1058,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the stored pointer
-     * @return - Returns the stored pointer
+     * @brief Retrieve the stored pointer
+     * @return Returns the stored pointer
      */
     NODISCARD FORCEINLINE ObjectType* Get() const
     {
@@ -1067,8 +1067,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the number of strong references
-     * @return - The number of strong references
+     * @brief Returns the number of strong references
+     * @return The number of strong references
      */
     NODISCARD FORCEINLINE auto GetStrongReferenceCount() const
     {
@@ -1076,8 +1076,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the number of weak references
-     * @return - The number of weak references
+     * @brief Returns the number of weak references
+     * @return The number of weak references
      */
     NODISCARD FORCEINLINE auto GetWeakReferenceCount() const
     {
@@ -1087,8 +1087,8 @@ public:
 public:
 
     /**
-     * @brief  - Retrieve the stored pointer
-     * @return - Returns the stored pointer
+     * @brief Retrieve the stored pointer
+     * @return Returns the stored pointer
      */
     NODISCARD FORCEINLINE ObjectType* operator->() const
     {
@@ -1096,8 +1096,8 @@ public:
     }
 
     /**
-     * @brief  - Dereference the pointer
-     * @return - A reference to the object pointed to by the stored pointer
+     * @brief Dereference the pointer
+     * @return A reference to the object pointed to by the stored pointer
      */
     NODISCARD FORCEINLINE ObjectType& operator*() const
     {
@@ -1105,9 +1105,9 @@ public:
     }
 
     /**
-     * @brief       - Retrieve an element at a certain index
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the retrieved element
+     * @brief Retrieve an element at a certain index
+     * @param Index Index of the element to retrieve
+     * @return A reference to the retrieved element
      */
     NODISCARD FORCEINLINE ObjectType& operator[](SIZETYPE Index) const requires(TIsUnboundedArray<InObjectType>::Value)
     {
@@ -1116,8 +1116,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether the pointer is nullptr or not and the pointer is not expired
-     * @return - Returns true if the pointer is not nullptr and the strong reference count is more than zero
+     * @brief Checks whether the pointer is nullptr or not and the pointer is not expired
+     * @return Returns true if the pointer is not nullptr and the strong reference count is more than zero
      */
     NODISCARD FORCEINLINE operator bool() const
     {
@@ -1125,9 +1125,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - WeakPtr to copy from
-     * @return      - Returns the reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other WeakPtr to copy from
+     * @return Returns the reference to this instance
      */
     FORCEINLINE TWeakPtr& operator=(const TWeakPtr& Other)
     {
@@ -1136,9 +1136,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - WeakPtr to move from
-     * @return      - Returns the reference to this instance
+     * @brief Move-assignment operator
+     * @param Other WeakPtr to move from
+     * @return Returns the reference to this instance
      */
     FORCEINLINE TWeakPtr& operator=(TWeakPtr&& Other)
     {
@@ -1147,9 +1147,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator that takes a convertible type
-     * @param Other - WeakPtr to copy from
-     * @return      - Returns the reference to this instance
+     * @brief Copy-assignment operator that takes a convertible type
+     * @param Other WeakPtr to copy from
+     * @return Returns the reference to this instance
      */
     template<typename OtherObjectType>
     FORCEINLINE TWeakPtr& operator=(const TWeakPtr<OtherObjectType, ThreadAccess>& Other) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -1159,9 +1159,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator that takes a convertible type
-     * @param Other - WeakPtr to move from
-     * @return      - Returns the reference to this instance
+     * @brief Move-assignment operator that takes a convertible type
+     * @param Other WeakPtr to move from
+     * @return Returns the reference to this instance
      */
     template<typename OtherObjectType>
     FORCEINLINE TWeakPtr& operator=(TWeakPtr<OtherObjectType, ThreadAccess>&& Other) requires(TIsPointerConvertible<OtherObjectType, ObjectType>::Value)
@@ -1171,9 +1171,9 @@ public:
     }
 
     /**
-     * @brief       - Assignment operator that takes a raw pointer
-     * @param Other - Pointer to store
-     * @return      - Returns the reference to this instance
+     * @brief Assignment operator that takes a raw pointer
+     * @param Other Pointer to store
+     * @return Returns the reference to this instance
      */
     FORCEINLINE TWeakPtr& operator=(ObjectType* Other)
     {
@@ -1182,8 +1182,8 @@ public:
     }
 
     /**
-     * @brief  - Assignment operator that takes a nullptr
-     * @return - Returns the reference to this instance
+     * @brief Assignment operator that takes a nullptr
+     * @return Returns the reference to this instance
      */
     FORCEINLINE TWeakPtr& operator=(nullptr_type) noexcept
     {

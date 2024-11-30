@@ -32,16 +32,16 @@ public:
 
 public:
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TSet() = default;
 
-    /** @brief - Copy constructor */
+    /** @brief Copy constructor */
     TSet(const TSet& Other)
         : BaseSet(Other.BaseSet)
     {
     }
     
-    /** @brief - Move constructor */
+    /** @brief Move constructor */
     TSet(TSet&& Other)
         : BaseSet(Move(Other.BaseSet))
     {

@@ -13,31 +13,31 @@ public:
     FEngine();
     virtual ~FEngine();
 
-    /** @return - Returns true if Engine initialization was successful */
+    /** @return Returns true if Engine initialization was successful */
     virtual bool Init();
 
-    /** @brief - Releases engine resource */
+    /** @brief Releases engine resource */
     virtual void Release();
 
-    /** @return - Returns true if Starting the Engine was successful */
+    /** @return Returns true if Starting the Engine was successful */
     virtual bool Start();
 
-    /** @brief - Tick the engine */
+    /** @brief Tick the engine */
     virtual void Tick(float DeltaTime);
     
-    /** @brief - Exit the engine */
+    /** @brief Exit the engine */
     virtual void Exit();
 
-    /** @brief - A completely white texture */
+    /** @brief A completely white texture */
     FRHITextureRef BaseTexture;
 
-    /** @brief - A completely flat normal map */
+    /** @brief A completely flat normal map */
     FRHITextureRef BaseNormal;
 
-    /** @brief - Base sampler used by all materials */
+    /** @brief Base sampler used by all materials */
     FRHISamplerStateRef BaseMaterialSampler;
 
-    /** @brief - Base material */
+    /** @brief Base material */
     TSharedPtr<FMaterial> BaseMaterial;
 
     // Returns the current world
@@ -59,28 +59,28 @@ private:
     void OnEngineWindowMoved(const FIntVector2& NewScreenPosition);
     void OnEngineWindowResized(const FIntVector2& NewScreenSize);
 
-    /** @brief - The main Window */
+    /** @brief The main Window */
     TSharedPtr<FWindow> EngineWindow;
 
-    /** @brief - The main viewport */
+    /** @brief The main viewport */
     TSharedPtr<FViewport> EngineViewportWidget;
 
-    /** @brief - SceneViewport */
+    /** @brief SceneViewport */
     TSharedPtr<FSceneViewport> SceneViewport;
 
-    /** @brief - In-game Console Widget */
+    /** @brief In-game Console Widget */
     TSharedPtr<class FConsoleWidget> ConsoleWidget;
 
-    /** @brief - Profiler Widget */
+    /** @brief Profiler Widget */
     TSharedPtr<class FFrameProfilerWidget> ProfilerWidget;
 
-    /** @brief - Scene Inspector Widget */
+    /** @brief Scene Inspector Widget */
     TSharedPtr<class FInspectorWidget> InspectorWidget;
 
-    /** @brief - The current world */
+    /** @brief The current world */
     FWorld* World;
 
-    /** @brief - The current Game-Module */
+    /** @brief The current Game-Module */
     FGameModule* GameModule;
 };
 

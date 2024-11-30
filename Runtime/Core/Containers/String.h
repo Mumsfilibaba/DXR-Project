@@ -49,10 +49,10 @@ public:
 public:
 
     /**
-     * @brief          - Create a string from a formatted string
-     * @param InFormat - Formatted string
-     * @param Args     - Arguments for the formatted string
-     * @return         - Returns the formatted string based on the format string
+     * @brief Create a string from a formatted string
+     * @param InFormat Formatted string
+     * @param Args Arguments for the formatted string
+     * @return Returns the formatted string based on the format string
      */
     template<typename... ArgTypes>
     NODISCARD static FORCEINLINE TString CreateFormatted(const CHARTYPE* InFormat, ArgTypes... Args)
@@ -64,12 +64,12 @@ public:
 
 public:
     
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TString() = default;
 
     /**
-     * @brief          - Create a string from a c-string
-     * @param InString - String to copy
+     * @brief Create a string from a c-string
+     * @param InString String to copy
      */
     FORCEINLINE TString(const CHARTYPE* InString)
     {
@@ -77,9 +77,9 @@ public:
     }
 
     /**
-     * @brief          - Create a string from a c-string
-     * @param InSlack  - Extra number of characters to allocate
-     * @param InString - String to copy
+     * @brief Create a string from a c-string
+     * @param InSlack Extra number of characters to allocate
+     * @param InString String to copy
      */
     FORCEINLINE TString(SIZETYPE InSlack, const CHARTYPE* InString)
     {
@@ -87,8 +87,8 @@ public:
     }
 
     /**
-     * @brief          - Create a string with a specific reserved length
-     * @param InLength - Length of the string
+     * @brief Create a string with a specific reserved length
+     * @param InLength Length of the string
      */
     FORCEINLINE explicit TString(SIZETYPE InLength)
         : CharData(InLength + 1)
@@ -96,9 +96,9 @@ public:
     }
 
     /**
-     * @brief          - Create a string from a specified length c-string
-     * @param InString - String to copy
-     * @param InLength - Length of the string to copy
+     * @brief Create a string from a specified length c-string
+     * @param InString String to copy
+     * @param InLength Length of the string to copy
      */
     FORCEINLINE explicit TString(const CHARTYPE* InString, SIZETYPE InLength)
     {
@@ -106,8 +106,8 @@ public:
     }
 
     /**
-     * @brief          - Create a static string from another string-type
-     * @param InString - String to copy from
+     * @brief Create a static string from another string-type
+     * @param InString String to copy from
      */
     template<typename StringType>
     FORCEINLINE explicit TString(const StringType& InString) requires(TIsTStringType<StringType>::Value)
@@ -116,8 +116,8 @@ public:
     }
 
     /**
-     * @brief       - Copy Constructor
-     * @param Other - Other string to copy from
+     * @brief Copy Constructor
+     * @param Other Other string to copy from
      */
     FORCEINLINE TString(const TString& Other)
     {
@@ -125,9 +125,9 @@ public:
     }
 
     /**
-     * @brief         - Copy Constructor
-     * @param Other   - Other string to copy from
-     * @param InSlack - Extra chars that get allocated
+     * @brief Copy Constructor
+     * @param Other Other string to copy from
+     * @param InSlack Extra chars that get allocated
      */
     FORCEINLINE TString(const TString& Other, SIZETYPE InSlack)
     {
@@ -135,8 +135,8 @@ public:
     }
 
     /**
-     * @brief       - Move Constructor
-     * @param Other - Other string to move from
+     * @brief Move Constructor
+     * @param Other Other string to move from
      */
     FORCEINLINE TString(TString&& Other)
         : CharData(Move(Other.CharData))
@@ -161,7 +161,7 @@ public:
 #endif
 
     /**
-     * @brief - Clears the string
+     * @brief Clears the string
      */
     FORCEINLINE void Clear(bool bRemoveSlack = false)
     {
@@ -177,8 +177,8 @@ public:
     }
     
     /**
-     * @brief           - Resets the container, but does not deallocate the memory. Takes an optional parameter to default construct a new number of elements.
-     * @param NewLength - Number of elements to construct
+     * @brief Resets the container, but does not deallocate the memory. Takes an optional parameter to default construct a new number of elements.
+     * @param NewLength Number of elements to construct
      */
     FORCEINLINE void Reset(SIZETYPE NewLength = 0)
     {
@@ -191,9 +191,9 @@ public:
     }
 
     /**
-     * @brief          - Resets the container, but does not deallocate the memory. Takes in a pointer to copy-construct elements from.
-     * @param InString - Raw string to copy from
-     * @param InLength - Length of the string
+     * @brief Resets the container, but does not deallocate the memory. Takes in a pointer to copy-construct elements from.
+     * @param InString Raw string to copy from
+     * @param InLength Length of the string
      */
     FORCEINLINE void Reset(const CHARTYPE* InString, SIZETYPE InLength)
     {
@@ -209,8 +209,8 @@ public:
     }
 
     /**
-     * @brief            - Resets the container, but does not deallocate the memory. Creates a new array from another array, which can be of a different array type.
-     * @param InputArray - Array to copy-construct from
+     * @brief Resets the container, but does not deallocate the memory. Creates a new array from another array, which can be of a different array type.
+     * @param InputArray Array to copy-construct from
      */
     template<typename ArrayType>
     FORCEINLINE void Reset(const ArrayType& InputArray) requires(TIsTArrayType<ArrayType>::Value)
@@ -219,8 +219,8 @@ public:
     }
 
     /**
-     * @brief      - Appends a character to this string
-     * @param Char - Character to append
+     * @brief Appends a character to this string
+     * @param Char Character to append
      */
     FORCEINLINE void Append(CHARTYPE Char)
     {
@@ -233,8 +233,8 @@ public:
     }
 
     /**
-     * @brief          - Appends a c-string to this string
-     * @param InString - String to append
+     * @brief Appends a c-string to this string
+     * @param InString String to append
      */
     FORCEINLINE void Append(const CHARTYPE* InString)
     {
@@ -242,8 +242,8 @@ public:
     }
 
     /**
-     * @brief          - Appends a string of another string-type to this string
-     * @param InString - String to append
+     * @brief Appends a string of another string-type to this string
+     * @param InString String to append
      */
     template<typename StringType>
     FORCEINLINE void Append(const StringType& InString) requires(TIsTStringType<StringType>::Value)
@@ -252,9 +252,9 @@ public:
     }
 
     /**
-     * @brief          - Appends a c-string to this string with a fixed length
-     * @param InString - String to append
-     * @param InLength - Length of the string
+     * @brief Appends a c-string to this string with a fixed length
+     * @param InString String to append
+     * @param InLength Length of the string
      */
     FORCEINLINE void Append(const CHARTYPE* InString, SIZETYPE InLength)
     {
@@ -270,8 +270,8 @@ public:
     }
 
     /**
-     * @brief           - Resize the string
-     * @param NewLength - New length of the string
+     * @brief Resize the string
+     * @param NewLength New length of the string
      */
     FORCEINLINE void Resize(SIZETYPE NewLength)
     {
@@ -284,8 +284,8 @@ public:
     }
 
     /**
-     * @brief             - Reserve storage space
-     * @param NewCapacity - New capacity of the string
+     * @brief Reserve storage space
+     * @param NewCapacity New capacity of the string
      */
     FORCEINLINE void Reserve(SIZETYPE NewCapacity)
     {
@@ -294,10 +294,10 @@ public:
     }
 
     /**
-     * @brief            - Copy this string into a buffer
-     * @param Buffer     - Buffer to fill
-     * @param BufferSize - Size of the buffer to fill
-     * @param Position   - Offset to start copy from
+     * @brief Copy this string into a buffer
+     * @param Buffer Buffer to fill
+     * @param BufferSize Size of the buffer to fill
+     * @param Position Offset to start copy from
      */
     FORCEINLINE void CopyToBuffer(CHARTYPE* Buffer, SIZETYPE BufferSize, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -319,9 +319,9 @@ public:
     }
 
     /**
-     * @brief         - Replace the string with a formatted string (similar to snprintf)
-     * @param InFormat  - Formatted string to replace the string with
-     * @param Args     - Arguments for the formatted string
+     * @brief Replace the string with a formatted string (similar to snprintf)
+     * @param InFormat Formatted string to replace the string with
+     * @param Args Arguments for the formatted string
      */
     template<typename... ArgTypes>
     inline void Format(const CHARTYPE* InFormat, ArgTypes&&... Args)
@@ -356,9 +356,9 @@ public:
     }
 
     /**
-     * @brief          - Appends a formatted string to the string
-     * @param InFormat - Formatted string to append
-     * @param Args     - Arguments for the formatted string
+     * @brief Appends a formatted string to the string
+     * @param InFormat Formatted string to append
+     * @param Args Arguments for the formatted string
      */
     template<typename... ArgTypes>
     inline void AppendFormat(const CHARTYPE* InFormat, ArgTypes&&... Args)
@@ -396,7 +396,7 @@ public:
     }
 
     /**
-     * @brief - Convert this string to a lower-case string
+     * @brief Convert this string to a lower-case string
      */
     FORCEINLINE void ToLowerInline()
     {
@@ -407,8 +407,8 @@ public:
     }
 
     /**
-     * @brief  - Convert this string to a lower-case string and returns a copy
-     * @return - Returns a copy of this string, with all characters in lower-case
+     * @brief Convert this string to a lower-case string and returns a copy
+     * @return Returns a copy of this string, with all characters in lower-case
      */
     NODISCARD FORCEINLINE TString ToLower() const
     {
@@ -418,7 +418,7 @@ public:
     }
 
     /**
-     * @brief - Convert this string to an upper-case string
+     * @brief Convert this string to an upper-case string
      */
     FORCEINLINE void ToUpperInline()
     {
@@ -429,8 +429,8 @@ public:
     }
 
     /**
-     * @brief  - Convert this string to an upper-case string and returns a copy
-     * @return - Returns a copy of this string, with all characters in upper-case
+     * @brief Convert this string to an upper-case string and returns a copy
+     * @return Returns a copy of this string, with all characters in upper-case
      */
     NODISCARD FORCEINLINE TString ToUpper() const
     {
@@ -440,7 +440,7 @@ public:
     }
 
     /**
-     * @brief - Removes whitespace from the beginning and end of the string
+     * @brief Removes whitespace from the beginning and end of the string
      */
     FORCEINLINE void TrimInline()
     {
@@ -449,8 +449,8 @@ public:
     }
 
     /**
-     * @brief  - Removes whitespace from the beginning and end of the string and returns a copy
-     * @return - Returns a copy of this string with the whitespace removed from the end and beginning
+     * @brief Removes whitespace from the beginning and end of the string and returns a copy
+     * @return Returns a copy of this string with the whitespace removed from the end and beginning
      */
     NODISCARD FORCEINLINE TString Trim()
     {
@@ -460,8 +460,8 @@ public:
     }
 
     /**
-     * @brief  - Removes whitespace from the beginning of the string and returns a copy
-     * @return - Returns a copy of this string with all the whitespace removed from the beginning
+     * @brief Removes whitespace from the beginning of the string and returns a copy
+     * @return Returns a copy of this string with all the whitespace removed from the beginning
      */
     NODISCARD FORCEINLINE TString TrimStart()
     {
@@ -471,7 +471,7 @@ public:
     }
 
     /**
-     * @brief - Removes whitespace from the beginning of the string
+     * @brief Removes whitespace from the beginning of the string
      */
     FORCEINLINE void TrimStartInline()
     {
@@ -485,8 +485,8 @@ public:
     }
 
     /**
-     * @brief  - Removes whitespace from the end of the string and returns a copy
-     * @return - Returns a copy of this string with all the whitespace removed from the end
+     * @brief Removes whitespace from the end of the string and returns a copy
+     * @return Returns a copy of this string with all the whitespace removed from the end
      */
     NODISCARD FORCEINLINE TString TrimEnd()
     {
@@ -496,7 +496,7 @@ public:
     }
 
     /**
-     * @brief - Removes whitespace from the end of the string
+     * @brief Removes whitespace from the end of the string
      */
     FORCEINLINE void TrimEndInline()
     {
@@ -511,8 +511,8 @@ public:
     }
 
     /**
-     * @brief  - Reverses the order of all the characters in the string and returns a copy
-     * @return - Returns a string with all the characters reversed
+     * @brief Reverses the order of all the characters in the string and returns a copy
+     * @return Returns a string with all the characters reversed
      */
     NODISCARD FORCEINLINE TString Reverse()
     {
@@ -522,7 +522,7 @@ public:
     }
 
     /**
-     * @brief - Reverses the order of all the characters in the string
+     * @brief Reverses the order of all the characters in the string
      */
     FORCEINLINE void ReverseInline()
     {
@@ -540,10 +540,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string to another string-type
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns zero if the strings are equal, a negative value if this string is less than the other, or a positive value if this string is greater than the other.
+     * @brief Compares this string to another string-type
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns zero if the strings are equal, a negative value if this string is less than the other, or a positive value if this string is greater than the other.
      */
     template<typename StringType>
     NODISCARD FORCEINLINE SIZETYPE Compare(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const requires(TIsTStringType<StringType>::Value)
@@ -552,10 +552,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns zero if the strings are equal, a negative value if this string is less than the other, or a positive value if this string is greater than the other.
+     * @brief Compares this string with a c-string
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns zero if the strings are equal, a negative value if this string is less than the other, or a positive value if this string is greater than the other.
      */
     NODISCARD FORCEINLINE SIZETYPE Compare(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -570,11 +570,11 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string of a fixed length
-     * @param InString - String to compare with
-     * @param InLength - Length of the string to compare
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns zero if the strings are equal, a negative value if this string is less than the other, or a positive value if this string is greater than the other.
+     * @brief Compares this string with a c-string of a fixed length
+     * @param InString String to compare with
+     * @param InLength Length of the string to compare
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns zero if the strings are equal, a negative value if this string is less than the other, or a positive value if this string is greater than the other.
      */
     NODISCARD FORCEINLINE SIZETYPE Compare(const CHARTYPE* InString, SIZETYPE InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -590,10 +590,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string to another string-type
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns true if the strings are equal
+     * @brief Compares this string to another string-type
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns true if the strings are equal
      */
     template<typename StringType>
     NODISCARD FORCEINLINE bool Equals(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const requires(TIsTStringType<StringType>::Value)
@@ -602,10 +602,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns true if the strings are equal
+     * @brief Compares this string with a c-string
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns true if the strings are equal
      */
     NODISCARD FORCEINLINE bool Equals(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -613,11 +613,11 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string of a fixed length
-     * @param InString - String to compare with
-     * @param InLength - Length of the string to compare
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns true if the strings are equal
+     * @brief Compares this string with a c-string of a fixed length
+     * @param InString String to compare with
+     * @param InLength Length of the string to compare
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns true if the strings are equal
      */
     NODISCARD FORCEINLINE bool Equals(const CHARTYPE* InString, SIZETYPE InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -642,10 +642,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the first occurrence of the start of the search-string
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SIZETYPE Find(const CHARTYPE* InString, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -678,10 +678,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the first occurrence of the start of the search-string
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     template<typename StringType>
     NODISCARD FORCEINLINE SIZETYPE Find(const StringType& InString, SIZETYPE Position = INVALID_INDEX) const requires(TIsTStringType<StringType>::Value)
@@ -690,10 +690,10 @@ public:
     }
 
     /**
-     * @brief          - Returns the position of the first occurrence of CHAR
-     * @param Char     - Character to search for
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first occurrence of CHAR
+     * @param Char Character to search for
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SIZETYPE FindChar(CHARTYPE Char, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -721,10 +721,10 @@ public:
     }
 
     /**
-     * @brief           - Returns the position of the first CHAR that passes the predicate
-     * @param Predicate - Predicate that specifies valid chars
-     * @param Position  - Position to start search at
-     * @return          - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first CHAR that passes the predicate
+     * @param Predicate Predicate that specifies valid chars
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindCharWithPredicate(PredicateType&& Predicate, SIZETYPE Position = INVALID_INDEX) const
@@ -753,10 +753,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the last occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the last occurrence of the start of the search-string
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SIZETYPE FindLast(const CHARTYPE* InString, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -798,10 +798,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the last occurrence of the start of the search-string. Searches the string in reverse.
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the last occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     template<typename StringType>
     NODISCARD FORCEINLINE SIZETYPE FindLast(const StringType& InString, SIZETYPE Position = INVALID_INDEX) const requires(TIsTStringType<StringType>::Value)
@@ -810,10 +810,10 @@ public:
     }
 
     /**
-     * @brief          - Returns the position of the first occurrence of CHAR. Searches the string in reverse.
-     * @param Char     - Character to search for
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first occurrence of CHAR. Searches the string in reverse.
+     * @param Char Character to search for
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SIZETYPE FindLastChar(CHARTYPE Char, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -842,10 +842,10 @@ public:
     }
 
     /**
-     * @brief           - Returns the position of the first CHAR that passes the predicate
-     * @param Predicate - Predicate that specifies valid chars
-     * @param Position  - Position to start search at
-     * @return          - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first CHAR that passes the predicate
+     * @param Predicate Predicate that specifies valid chars
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindLastCharWithPredicate(PredicateType&& Predicate, SIZETYPE Position = INVALID_INDEX) const
@@ -875,10 +875,10 @@ public:
     }
 
     /**
-     * @brief          - Check if the search-string exists within the string
-     * @param InString - String to search for
-     * @param Position - Position to start to search at
-     * @return         - Returns true if the string is found
+     * @brief Check if the search-string exists within the string
+     * @param InString String to search for
+     * @param Position Position to start to search at
+     * @return Returns true if the string is found
      */
     NODISCARD FORCEINLINE bool Contains(const CHARTYPE* InString, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -886,10 +886,10 @@ public:
     }
 
     /**
-     * @brief          - Check if the search-string exists within the string. The string is of a string-type.
-     * @param InString - String to search for
-     * @param Position - Position to start to search at
-     * @return         - Returns true if the string is found
+     * @brief Check if the search-string exists within the string. The string is of a string-type.
+     * @param InString String to search for
+     * @param Position Position to start to search at
+     * @return Returns true if the string is found
      */
     template<typename StringType>
     NODISCARD FORCEINLINE bool Contains(const StringType& InString, SIZETYPE Position = INVALID_INDEX) const requires(TIsTStringType<StringType>::Value)
@@ -898,10 +898,10 @@ public:
     }
 
     /**
-     * @brief          - Check if the character exists within the string
-     * @param Char     - Character to search for
-     * @param Position - Position to start to search at
-     * @return         - Returns true if the character is found
+     * @brief Check if the character exists within the string
+     * @param Char Character to search for
+     * @param Position Position to start to search at
+     * @return Returns true if the character is found
      */
     NODISCARD FORCEINLINE bool Contains(CHARTYPE Char, SIZETYPE Position = 0) const
     {
@@ -909,10 +909,10 @@ public:
     }
 
     /**
-     * @brief            - Check if string begins with a string
-     * @param InString   - String to test for
-     * @param SearchType - Type of search to perform, case-sensitive or not
-     * @return           - Returns true if the string begins with InString
+     * @brief Check if string begins with a string
+     * @param InString String to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string begins with InString
      */
     NODISCARD FORCEINLINE bool StartsWith(const CHARTYPE* InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const
     {
@@ -938,10 +938,10 @@ public:
     }
 
     /**
-     * @brief            - Check if string ends with a string
-     * @param InString   - String to test for
-     * @param SearchType - Type of search to perform, case-sensitive or not
-     * @return           - Returns true if the string ends with InString
+     * @brief Check if string ends with a string
+     * @param InString String to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string ends with InString
      */
     NODISCARD FORCEINLINE bool EndsWith(const CHARTYPE* InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const
     {
@@ -969,9 +969,9 @@ public:
     }
 
     /**
-     * @brief               - Removes a specified number of characters starting from a given position
-     * @param Position      - Position to start remove at
-     * @param NumCharacters - Number of characters to remove
+     * @brief Removes a specified number of characters starting from a given position
+     * @param Position Position to start remove at
+     * @param NumCharacters Number of characters to remove
      */
     FORCEINLINE void Remove(SIZETYPE Position, SIZETYPE Count)
     {
@@ -980,9 +980,9 @@ public:
     }
 
     /**
-     * @brief          - Insert a string at a specified position
-     * @param InString - String to insert
-     * @param Position - Position to start the insertion at
+     * @brief Insert a string at a specified position
+     * @param InString String to insert
+     * @param Position Position to start the insertion at
      */
     FORCEINLINE void Insert(const CHARTYPE* InString, SIZETYPE Position)
     {
@@ -990,9 +990,9 @@ public:
     }
 
     /**
-     * @brief          - Insert a string at a specified position. The string is of string-type.
-     * @param InString - String to insert
-     * @param Position - Position to start the insertion at
+     * @brief Insert a string at a specified position. The string is of string-type.
+     * @param InString String to insert
+     * @param Position Position to start the insertion at
      */
     template<typename StringType>
     FORCEINLINE void Insert(const StringType& InString, SIZETYPE Position) requires(TIsTStringType<StringType>::Value)
@@ -1001,10 +1001,10 @@ public:
     }
 
     /**
-     * @brief          - Insert a string at a specified position
-     * @param InString - String to insert
-     * @param InLength - Length of the string to insert
-     * @param Position - Position to start the insertion at
+     * @brief Insert a string at a specified position
+     * @param InString String to insert
+     * @param InLength Length of the string to insert
+     * @param Position Position to start the insertion at
      */
     FORCEINLINE void Insert(const CHARTYPE* InString, SIZETYPE InLength, SIZETYPE Position)
     {
@@ -1013,9 +1013,9 @@ public:
     }
 
     /**
-     * @brief          - Insert a character at specified position
-     * @param Char     - Character to insert
-     * @param Position - Position to insert character at
+     * @brief Insert a character at specified position
+     * @param Char Character to insert
+     * @param Position Position to insert character at
      */
     FORCEINLINE void Insert(CHARTYPE Char, SIZETYPE Position)
     {
@@ -1024,9 +1024,9 @@ public:
     }
 
     /**
-     * @brief          - Replace a part of the string
-     * @param InString - String to replace
-     * @param Position - Position to start the replacing at
+     * @brief Replace a part of the string
+     * @param InString String to replace
+     * @param Position Position to start the replacing at
      */
     FORCEINLINE void Replace(const CHARTYPE* InString, SIZETYPE Position)
     {
@@ -1034,9 +1034,9 @@ public:
     }
 
     /**
-     * @brief          - Replace a part of the string. String is of string-type.
-     * @param InString - String to replace
-     * @param Position - Position to start the replacing at
+     * @brief Replace a part of the string. String is of string-type.
+     * @param InString String to replace
+     * @param Position Position to start the replacing at
      */
     template<typename StringType>
     FORCEINLINE void Replace(const StringType& InString, SIZETYPE Position) requires(TIsTStringType<StringType>::Value)
@@ -1045,10 +1045,10 @@ public:
     }
 
     /**
-     * @brief          - Replace a part of the string
-     * @param InString - String to replace
-     * @param InLength - Length of the string to replace
-     * @param Position - Position to start the replacing at
+     * @brief Replace a part of the string
+     * @param InString String to replace
+     * @param InLength Length of the string to replace
+     * @param Position Position to start the replacing at
      */
     FORCEINLINE void Replace(const CHARTYPE* InString, SIZETYPE InLength, SIZETYPE Position)
     {
@@ -1057,9 +1057,9 @@ public:
     }
 
     /**
-     * @brief          - Replace a character in the string
-     * @param Char     - Character to replace
-     * @param Position - Position of the character to replace
+     * @brief Replace a character in the string
+     * @param Char Character to replace
+     * @param Position Position of the character to replace
      */
     FORCEINLINE void Replace(CHARTYPE Char, SIZETYPE Position = INVALID_INDEX)
     {
@@ -1068,8 +1068,8 @@ public:
     }
 
     /**
-     * @brief      - Inserts a new character at the end
-     * @param Char - Character to insert at the end
+     * @brief Inserts a new character at the end
+     * @param Char Character to insert at the end
      */
     FORCEINLINE void Add(CHARTYPE Char)
     {
@@ -1077,7 +1077,7 @@ public:
     }
 
     /**
-     * @brief - Removes the character at the end
+     * @brief Removes the character at the end
      */
     FORCEINLINE void Pop()
     {
@@ -1090,8 +1090,8 @@ public:
     }
 
     /**
-     * @brief       - Swaps this string with another
-     * @param Other - String to swap with
+     * @brief Swaps this string with another
+     * @param Other String to swap with
      */
     FORCEINLINE void Swap(TString& Other)
     {
@@ -1101,10 +1101,10 @@ public:
     }
 
     /**
-     * @brief               - Creates a sub-string of this string
-     * @param Position      - Position to start the sub-string at
-     * @param NumCharacters - Number of characters in the sub-string
-     * @return              - Returns a sub-string
+     * @brief Creates a sub-string of this string
+     * @param Position Position to start the sub-string at
+     * @param NumCharacters Number of characters in the sub-string
+     * @return Returns a sub-string
      */
     NODISCARD FORCEINLINE TString SubString(SIZETYPE Offset, SIZETYPE Count) const
     {
@@ -1113,7 +1113,7 @@ public:
     }
     
     /**
-     * @brief            - Splits the string into two parts at a certain character if it is found
+     * @brief Splits the string into two parts at a certain character if it is found
      * @param Char       - Character to look for
      * @param LeftValue  - String to store the left value in
      * @param RightValue - String to store the right value in
@@ -1141,8 +1141,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the array
-     * @return - Returns a pointer to the data of the array
+     * @brief Retrieve the data of the array
+     * @return Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE CHARTYPE* Data()
     {
@@ -1150,8 +1150,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the array
-     * @return - Returns a pointer to the data of the array
+     * @brief Retrieve the data of the array
+     * @return Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE const CHARTYPE* Data() const
     {
@@ -1159,8 +1159,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve a null-terminated string
-     * @return - Returns a pointer containing a null-terminated string
+     * @brief Retrieve a null-terminated string
+     * @return Returns a pointer containing a null-terminated string
      */
     NODISCARD FORCEINLINE const CHARTYPE* GetCString() const
     {
@@ -1169,8 +1169,8 @@ public:
 
 #if defined(__OBJC__)
     /**
-     * @brief  - Retrieve a null-terminated string
-     * @return - Returns a pointer containing a null-terminated string
+     * @brief Retrieve a null-terminated string
+     * @return Returns a pointer containing a null-terminated string
      */
     NODISCARD FORCEINLINE NSString* GetNSString() const
     {
@@ -1186,8 +1186,8 @@ public:
 #endif
     
     /**
-     * @brief  - Returns the size of the container
-     * @return - The current size of the container
+     * @brief Returns the size of the container
+     * @return The current size of the container
      */
     NODISCARD FORCEINLINE SIZETYPE Size() const
     {
@@ -1196,8 +1196,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the size of the container in bytes
-     * @return - The current size of the container in bytes
+     * @brief Returns the size of the container in bytes
+     * @return The current size of the container in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE SizeInBytes() const
     {
@@ -1205,8 +1205,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the length of the string
-     * @return - The current length of the string
+     * @brief Returns the length of the string
+     * @return The current length of the string
      */
     NODISCARD FORCEINLINE SIZETYPE Length() const
     {
@@ -1214,8 +1214,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the capacity of the container
-     * @return - The current capacity of the container
+     * @brief Returns the capacity of the container
+     * @return The current capacity of the container
      */
     NODISCARD FORCEINLINE SIZETYPE Capacity() const
     {
@@ -1223,8 +1223,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the capacity of the container in bytes
-     * @return - The current capacity of the container in bytes
+     * @brief Returns the capacity of the container in bytes
+     * @return The current capacity of the container in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE CapacityInBytes() const
     {
@@ -1232,8 +1232,8 @@ public:
     }
 
     /**
-     * @brief  - Checks if the container contains any elements
-     * @return - Returns true if the array is empty or false if it contains elements
+     * @brief Checks if the container contains any elements
+     * @return Returns true if the array is empty or false if it contains elements
      */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
@@ -1242,8 +1242,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last index that can be used to retrieve an element from the array
-     * @return - Returns the index to the last element of the array
+     * @brief Retrieve the last index that can be used to retrieve an element from the array
+     * @return Returns the index to the last element of the array
      */
     NODISCARD FORCEINLINE SIZETYPE LastElementIndex() const
     {
@@ -1251,8 +1251,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the first element of the array
-     * @return - Returns a reference to the first element of the array
+     * @brief Retrieve the first element of the array
+     * @return Returns a reference to the first element of the array
      */
     NODISCARD FORCEINLINE CHARTYPE& FirstElement()
     {
@@ -1260,8 +1260,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the first element of the array
-     * @return - Returns a reference to the first element of the array
+     * @brief Retrieve the first element of the array
+     * @return Returns a reference to the first element of the array
      */
     NODISCARD FORCEINLINE const CHARTYPE& FirstElement() const
     {
@@ -1269,8 +1269,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last element of the array
-     * @return - Returns a reference to the last element of the array
+     * @brief Retrieve the last element of the array
+     * @return Returns a reference to the last element of the array
      */
     NODISCARD FORCEINLINE CHARTYPE& LastElement()
     {
@@ -1279,8 +1279,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last element of the array
-     * @return - Returns a reference to the last element of the array
+     * @brief Retrieve the last element of the array
+     * @return Returns a reference to the last element of the array
      */
     NODISCARD FORCEINLINE const CHARTYPE& LastElement() const
     {
@@ -1291,9 +1291,9 @@ public:
 public:
 
     /**
-     * @brief       - Appends a character to this string
-     * @param Other - Character to append
-     * @return      - Returns a reference to this instance
+     * @brief Appends a character to this string
+     * @param Other Character to append
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TString& operator+=(CHARTYPE Other)
     {
@@ -1302,9 +1302,9 @@ public:
     }
 
     /**
-     * @brief       - Appends a c-string to this string
-     * @param Other - String to append
-     * @return      - Returns a reference to this instance
+     * @brief Appends a c-string to this string
+     * @param Other String to append
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TString& operator+=(const CHARTYPE* Other)
     {
@@ -1313,9 +1313,9 @@ public:
     }
 
     /**
-     * @brief       - Appends a string of a string-type to this string
-     * @param Other - String to append
-     * @return      - Returns a reference to this instance
+     * @brief Appends a string of a string-type to this string
+     * @param Other String to append
+     * @return Returns a reference to this instance
      */
     template<typename StringType>
     FORCEINLINE TString& operator+=(const StringType& Other) requires(TIsTStringType<StringType>::Value)
@@ -1325,9 +1325,9 @@ public:
     }
 
     /**
-     * @brief       - Bracket operator to retrieve an element at a certain index
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
+     * @brief Bracket operator to retrieve an element at a certain index
+     * @param Index Index of the element to retrieve
+     * @return A reference to the element at the index
      */
     NODISCARD FORCEINLINE CHARTYPE& operator[](SIZETYPE Index)
     {
@@ -1336,9 +1336,9 @@ public:
     }
 
     /**
-     * @brief       - Bracket operator to retrieve an element at a certain index
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
+     * @brief Bracket operator to retrieve an element at a certain index
+     * @param Index Index of the element to retrieve
+     * @return A reference to the element at the index
      */
     NODISCARD FORCEINLINE const CHARTYPE& operator[](SIZETYPE Index) const
     {
@@ -1347,9 +1347,9 @@ public:
     }
 
     /**
-     * @brief       - Assignment operator that takes a raw string
-     * @param Other - String to copy
-     * @return      - Returns a reference to this instance
+     * @brief Assignment operator that takes a raw string
+     * @param Other String to copy
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TString& operator=(const CHARTYPE* Other)
     {
@@ -1358,9 +1358,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - String to copy
-     * @return      - Returns a reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other String to copy
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TString& operator=(const TString& Other)
     {
@@ -1369,9 +1369,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator that takes another string-type
-     * @param Other - String to copy
-     * @return      - Returns a reference to this instance
+     * @brief Copy-assignment operator that takes another string-type
+     * @param Other String to copy
+     * @return Returns a reference to this instance
      */
     template<typename StringType>
     FORCEINLINE TString& operator=(const StringType& Other) requires(TIsTStringType<StringType>::Value)
@@ -1381,9 +1381,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - String to move
-     * @return      - Returns a reference to this instance
+     * @brief Move-assignment operator
+     * @param Other String to move
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TString& operator=(TString&& Other)
     {

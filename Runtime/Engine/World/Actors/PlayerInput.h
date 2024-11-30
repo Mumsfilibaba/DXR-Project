@@ -17,19 +17,19 @@ struct FKeyState
     {
     }
 
-    /** @brief - The key for this key-state */
+    /** @brief The key for this key-state */
     const FKey Key;
     
-    /** @brief - Indicates if the current state of the key is down */
+    /** @brief Indicates if the current state of the key is down */
     uint32 bIsDown : 1;
     
-    /** @brief - Indicates if the last state of the key was down (1) or if it was up (0) */
+    /** @brief Indicates if the last state of the key was down (1) or if it was up (0) */
     uint32 bPreviousState : 1;
     
-    /** @brief - If this state is repeated due to the user holding down the key, the repeat-count is increased */
+    /** @brief If this state is repeated due to the user holding down the key, the repeat-count is increased */
     uint32 RepeatCount : 30;
 
-    /** @brief - Time pressed */
+    /** @brief Time pressed */
     float TimePressed = 0.0f;
 };
 
@@ -42,13 +42,13 @@ struct FAxisState
     {
     }
 
-    /** @brief - The analog source that this came from */
+    /** @brief The analog source that this came from */
     const EAnalogSourceName::Type Source;
 
-    /** @brief - The current analog value */
+    /** @brief The current analog value */
     float Value;
 
-    /** @brief - Amount of frames that has passed since the value was updated */
+    /** @brief Amount of frames that has passed since the value was updated */
     int32 NumTicksSinceUpdate;
 };
 

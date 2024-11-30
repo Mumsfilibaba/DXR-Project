@@ -11,12 +11,12 @@ public:
     template<typename OtherType>
     friend class TSharedRef;
 
-    /** @brief - Default constructor that sets the pointer to nullptr */
+    /** @brief Default constructor that sets the pointer to nullptr */
     TSharedRef() = default;
 
     /**
-     * @brief       - Copy constructor
-     * @param Other - SharedRef to copy from
+     * @brief Copy constructor
+     * @param Other SharedRef to copy from
      */
     FORCEINLINE TSharedRef(const TSharedRef& Other)
         : Object(Other.Object)
@@ -25,8 +25,8 @@ public:
     }
 
     /**
-     * @brief       - Copy constructor from a SharedRef of a convertible type
-     * @param Other - SharedRef to copy from
+     * @brief Copy constructor from a SharedRef of a convertible type
+     * @param Other SharedRef to copy from
      */
     template<typename OtherType>
     FORCEINLINE TSharedRef(const TSharedRef<OtherType>& Other) requires(TIsPointerConvertible<OtherType, ElementType>::Value)
@@ -36,8 +36,8 @@ public:
     }
 
     /**
-     * @brief       - Move constructor
-     * @param Other - SharedRef to move from
+     * @brief Move constructor
+     * @param Other SharedRef to move from
      */
     FORCEINLINE TSharedRef(TSharedRef&& Other)
         : Object(Other.Object)
@@ -46,8 +46,8 @@ public:
     }
 
     /**
-     * @brief       - Move constructor from a SharedRef of a convertible type
-     * @param Other - SharedRef to move from
+     * @brief Move constructor from a SharedRef of a convertible type
+     * @param Other SharedRef to move from
      */
     template<typename OtherType>
     FORCEINLINE TSharedRef(TSharedRef<OtherType>&& Other) requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
@@ -57,8 +57,8 @@ public:
     }
 
     /**
-     * @brief           - Construct a SharedRef from a raw pointer. The container takes ownership.
-     * @param InPointer - Pointer to reference
+     * @brief Construct a SharedRef from a raw pointer. The container takes ownership.
+     * @param InPointer Pointer to reference
      */
     FORCEINLINE TSharedRef(ElementType* InPointer)
         : Object(InPointer)
@@ -66,8 +66,8 @@ public:
     }
 
     /**
-     * @brief           - Construct a SharedRef from a raw pointer of a convertible type. The container takes ownership.
-     * @param InPointer - Pointer to reference
+     * @brief Construct a SharedRef from a raw pointer of a convertible type. The container takes ownership.
+     * @param InPointer Pointer to reference
      */
     template<typename OtherType>
     FORCEINLINE TSharedRef(OtherType* InPtr) requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
@@ -76,7 +76,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TSharedRef()
     {
@@ -84,8 +84,8 @@ public:
     }
 
     /**
-     * @brief        - Resets the container and sets to a potential new raw pointer
-     * @param NewPtr - New pointer to reference
+     * @brief Resets the container and sets to a potential new raw pointer
+     * @param NewPtr New pointer to reference
      */
     FORCEINLINE void Reset(ElementType* NewPtr = nullptr)
     {
@@ -93,8 +93,8 @@ public:
     }
 
     /**
-     * @brief        - Resets the container and sets to a potential new raw pointer of a convertible type
-     * @param NewPtr - New pointer to reference
+     * @brief Resets the container and sets to a potential new raw pointer of a convertible type
+     * @param NewPtr New pointer to reference
      */
     template<typename OtherType>
     FORCEINLINE void Reset(OtherType* NewPtr) requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
@@ -103,8 +103,8 @@ public:
     }
 
     /**
-     * @brief       - Swaps the pointers in the two containers
-     * @param Other - SharedRef to swap with
+     * @brief Swaps the pointers in the two containers
+     * @param Other SharedRef to swap with
      */
     FORCEINLINE void Swap(TSharedRef& Other)
     {
@@ -112,8 +112,8 @@ public:
     }
 
     /**
-     * @brief  - Releases the ownership of the pointer and returns the pointer
-     * @return - Returns the pointer that was previously held by the container
+     * @brief Releases the ownership of the pointer and returns the pointer
+     * @return Returns the pointer that was previously held by the container
      */
     NODISCARD FORCEINLINE ElementType* ReleaseOwnership()
     {
@@ -123,7 +123,7 @@ public:
     }
 
     /**
-     * @brief - Adds a reference to the stored pointer
+     * @brief Adds a reference to the stored pointer
      */
     FORCEINLINE void AddRef()
     {
@@ -134,8 +134,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the raw pointer
-     * @return - Returns the raw pointer
+     * @brief Retrieve the raw pointer
+     * @return Returns the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* Get() const
     {
@@ -143,8 +143,8 @@ public:
     }
 
     /**
-     * @brief  - Releases the object and returns the address of the stored pointer
-     * @return - Pointer to the stored pointer
+     * @brief Releases the object and returns the address of the stored pointer
+     * @return Pointer to the stored pointer
      */
     NODISCARD FORCEINLINE ElementType** ReleaseAndGetAddressOf()
     {
@@ -154,8 +154,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the raw pointer and add a reference
-     * @return - Returns the raw pointer
+     * @brief Retrieve the raw pointer and add a reference
+     * @return Returns the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* GetAndAddRef()
     {
@@ -164,8 +164,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the pointer as another type that is convertible
-     * @return - A pointer of the casted type
+     * @brief Retrieve the pointer as another type that is convertible
+     * @return A pointer of the casted type
      */
     template<typename CastType>
     NODISCARD FORCEINLINE CastType* GetAs() const requires(TIsConvertible<typename TAddPointer<CastType>::Type, typename TAddPointer<ElementType>::Type>::Value)
@@ -174,8 +174,8 @@ public:
     }
 
     /**
-     * @brief  - Get the address of the raw pointer
-     * @return - The address of the raw pointer
+     * @brief Get the address of the raw pointer
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType** GetAddressOf()
     {
@@ -183,8 +183,8 @@ public:
     }
 
     /**
-     * @brief  - Get the address of the raw pointer
-     * @return - The address of the raw pointer
+     * @brief Get the address of the raw pointer
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* const* GetAddressOf() const
     {
@@ -192,8 +192,8 @@ public:
     }
 
     /**
-     * @brief  - Dereference the stored pointer
-     * @return - A reference to the object pointed to by the pointer
+     * @brief Dereference the stored pointer
+     * @return A reference to the object pointed to by the pointer
      */
     NODISCARD FORCEINLINE ElementType& Dereference() const
     {
@@ -202,8 +202,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether the pointer is valid or not
-     * @return - True if the pointer is not nullptr, otherwise false
+     * @brief Checks whether the pointer is valid or not
+     * @return True if the pointer is not nullptr, otherwise false
      */
     NODISCARD FORCEINLINE bool IsValid() const
     {
@@ -213,8 +213,8 @@ public:
 public:
 
     /**
-     * @brief  - Retrieve the raw pointer
-     * @return - Returns the raw pointer
+     * @brief Retrieve the raw pointer
+     * @return Returns the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* operator->() const
     {
@@ -222,8 +222,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the address of the raw pointer
-     * @return - The address of the raw pointer
+     * @brief Retrieve the address of the raw pointer
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType** operator&()
     {
@@ -231,8 +231,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the address of the raw pointer
-     * @return - The address of the raw pointer
+     * @brief Retrieve the address of the raw pointer
+     * @return The address of the raw pointer
      */
     NODISCARD FORCEINLINE ElementType* const* operator&() const
     {
@@ -240,8 +240,8 @@ public:
     }
 
     /**
-     * @brief  - Dereference the stored pointer
-     * @return - A reference to the object pointed to by the pointer
+     * @brief Dereference the stored pointer
+     * @return A reference to the object pointed to by the pointer
      */
     NODISCARD FORCEINLINE ElementType& operator*() const
     {
@@ -249,8 +249,8 @@ public:
     }
 
     /**
-     * @brief  - Checks whether the pointer is valid or not
-     * @return - True if the pointer is not nullptr, otherwise false
+     * @brief Checks whether the pointer is valid or not
+     * @return True if the pointer is not nullptr, otherwise false
      */
     NODISCARD FORCEINLINE operator bool() const
     {
@@ -258,9 +258,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - SharedRef to copy from
-     * @return      - A reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other SharedRef to copy from
+     * @return A reference to this instance
      */
     FORCEINLINE TSharedRef& operator=(const TSharedRef& Other)
     {
@@ -269,9 +269,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator that takes a convertible type
-     * @param Other - SharedRef to copy from
-     * @return      - A reference to this instance
+     * @brief Copy-assignment operator that takes a convertible type
+     * @param Other SharedRef to copy from
+     * @return A reference to this instance
      */
     template<typename OtherType>
     FORCEINLINE TSharedRef& operator=(const TSharedRef<OtherType>& Other) requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
@@ -281,9 +281,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - SharedRef to move from
-     * @return      - A reference to this instance
+     * @brief Move-assignment operator
+     * @param Other SharedRef to move from
+     * @return A reference to this instance
      */
     FORCEINLINE TSharedRef& operator=(TSharedRef&& Other)
     {
@@ -292,9 +292,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator that takes a convertible type
-     * @param Other - SharedRef to move from
-     * @return      - A reference to this instance
+     * @brief Move-assignment operator that takes a convertible type
+     * @param Other SharedRef to move from
+     * @return A reference to this instance
      */
     template<typename OtherType>
     FORCEINLINE TSharedRef& operator=(TSharedRef<OtherType>&& Other) requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
@@ -304,9 +304,9 @@ public:
     }
 
     /**
-     * @brief       - Assignment operator that takes a raw pointer
-     * @param Other - Pointer to store
-     * @return      - A reference to this object
+     * @brief Assignment operator that takes a raw pointer
+     * @param Other Pointer to store
+     * @return A reference to this object
      */
     FORCEINLINE TSharedRef& operator=(ElementType* Other)
     {
@@ -315,9 +315,9 @@ public:
     }
 
     /**
-     * @brief       - Assignment operator that takes a raw pointer of a convertible type
-     * @param Other - Pointer to store
-     * @return      - A reference to this object
+     * @brief Assignment operator that takes a raw pointer of a convertible type
+     * @param Other Pointer to store
+     * @return A reference to this object
      */
     template<typename OtherType>
     FORCEINLINE TSharedRef& operator=(OtherType* Other) requires(TIsConvertible<typename TAddPointer<OtherType>::Type, typename TAddPointer<ElementType>::Type>::Value)
@@ -327,8 +327,8 @@ public:
     }
 
     /**
-     * @brief  - Set the pointer to nullptr
-     * @return - A reference to this object
+     * @brief Set the pointer to nullptr
+     * @return A reference to this object
      */
     FORCEINLINE TSharedRef& operator=(nullptr_type)
     {

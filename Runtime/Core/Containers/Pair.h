@@ -9,9 +9,9 @@ struct TPair
     TPair(TPair&&) = default;
 
     /**
-     * @brief          - Create a new instance of a pair
-     * @param InFirst  - Instance of the first type to copy
-     * @param InSecond - Instance of the second type to copy
+     * @brief Create a new instance of a pair
+     * @param InFirst Instance of the first type to copy
+     * @param InSecond Instance of the second type to copy
      */
     FORCEINLINE explicit TPair(const FirstType& InFirst, const SecondType& InSecond)
         : First(InFirst)
@@ -20,9 +20,9 @@ struct TPair
     }
 
     /**
-     * @brief          - Create a new instance of a pair
-     * @param InFirst  - Instance of the first type to move
-     * @param InSecond - Instance of the second type to move
+     * @brief Create a new instance of a pair
+     * @param InFirst Instance of the first type to move
+     * @param InSecond Instance of the second type to move
      */
     template<typename OtherFirstType = FirstType, typename OtherSecondType = SecondType>
     FORCEINLINE explicit TPair(OtherFirstType&& InFirst, OtherSecondType&& InSecond)
@@ -32,8 +32,8 @@ struct TPair
     }
 
     /**
-     * @brief       - Copy constructor
-     * @param Other - Pair to copy
+     * @brief Copy constructor
+     * @param Other Pair to copy
      */
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE explicit TPair(const TPair<OtherFirstType, OtherSecondType>& Other)
@@ -43,8 +43,8 @@ struct TPair
     }
 
     /**
-     * @brief       - Move constructor
-     * @param Other - Pair to move
+     * @brief Move constructor
+     * @param Other Pair to move
      */
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE explicit TPair(TPair<OtherFirstType, OtherSecondType>&& Other)
@@ -54,8 +54,8 @@ struct TPair
     }
 
     /**
-     * @brief       - Swap this pair with another
-     * @param Other - Pair to swap with 
+     * @brief Swap this pair with another
+     * @param Other Pair to swap with 
      */
     FORCEINLINE void Swap(TPair& Other)
     {
@@ -66,9 +66,9 @@ struct TPair
 public:
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Pair to copy
-     * @return      - A reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other Pair to copy
+     * @return A reference to this instance
      */
     FORCEINLINE TPair& operator=(const TPair& Other)
     {
@@ -77,9 +77,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Pair to copy
-     * @return      - A reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other Pair to copy
+     * @return A reference to this instance
      */
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE TPair& operator=(const TPair<OtherFirstType, OtherSecondType>& Other)
@@ -90,9 +90,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Pair to move
-     * @return      - A reference to this instance
+     * @brief Move-assignment operator
+     * @param Other Pair to move
+     * @return A reference to this instance
      */
     FORCEINLINE TPair& operator=(TPair&& Other)
     {
@@ -101,9 +101,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Pair to move
-     * @return      - A reference to this instance
+     * @brief Move-assignment operator
+     * @param Other Pair to move
+     * @return A reference to this instance
      */
     template<typename OtherFirstType, typename OtherSecondType>
     FORCEINLINE TPair& operator=(TPair<OtherFirstType, OtherSecondType>&& Other)

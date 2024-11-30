@@ -32,13 +32,13 @@ class ENGINE_API FAssetManager
 {
 public:
 
-    /** @brief - Create and initialize the AssetManager */
+    /** @brief Create and initialize the AssetManager */
     static bool Initialize();
 
-    /** @brief - Destroy the AssetManager */
+    /** @brief Destroy the AssetManager */
     static void Release();
 
-    /** @brief - Retrieve the AssetManager instance */
+    /** @brief Retrieve the AssetManager instance */
     static FAssetManager& Get();
 
     TSharedRef<FTexture> LoadTexture(const FString& Filename, bool bGenerateMips = true);

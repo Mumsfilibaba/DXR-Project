@@ -8,7 +8,7 @@ class VECTOR_ALIGN FPlane
 public:
 
     /**
-     * @brief - Default constructor
+     * @brief Default constructor
      */
     FORCEINLINE FPlane() noexcept
         : x(0.0f)
@@ -19,7 +19,7 @@ public:
     }
 
     /**
-     * @brief       - Constructor that creates a plane from a Vector4
+     * @brief Constructor that creates a plane from a Vector4
      * @param Plane - Vector4 representing a plane
      */
     FORCEINLINE explicit FPlane(const FVector4& Plane) noexcept
@@ -31,7 +31,7 @@ public:
     }
 
     /**
-     * @brief        - Constructor that creates a plane from a normal and offset
+     * @brief Constructor that creates a plane from a normal and offset
      * @param Normal - Normal of a plane
      * @param InW    - Offset from origin in direction of the normal
      */
@@ -44,7 +44,7 @@ public:
     }
     
     /**
-     * @brief     - Constructor that creates a plane from components of a Vector4
+     * @brief Constructor that creates a plane from components of a Vector4
      * @param InX - x-component of a Vector4
      * @param InY - y-component of a Vector4
      * @param InZ - z-component of a Vector4
@@ -59,9 +59,9 @@ public:
     }
 
     /**
-     * @brief       - Compares, within a threshold Epsilon, this plane with another plane
-     * @param Other - plane to compare against
-     * @return      - True if equal, false if not
+     * @brief Compares, within a threshold Epsilon, this plane with another plane
+     * @param Other plane to compare against
+     * @return True if equal, false if not
      */
     inline bool IsEqual(const FPlane& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
@@ -90,7 +90,7 @@ public:
     }
 
     /**
-     * @brief - Normalized the plane
+     * @brief Normalized the plane
      */
     FORCEINLINE void Normalize() noexcept
     {
@@ -106,9 +106,9 @@ public:
     }
 
     /**
-     * @brief       - Performs dot-product between a plane and a point
+     * @brief Performs dot-product between a plane and a point
      * @param Point - Point to perform dot-product with
-     * @return      - Returns the dot-product
+     * @return Returns the dot-product
      */
     FORCEINLINE float DotProductCoord(const FVector3& Point) const noexcept
     {
@@ -119,8 +119,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the normal of the plane
-     * @return - Returns the normal of the plane
+     * @brief Retrieve the normal of the plane
+     * @return Returns the normal of the plane
      */
     FORCEINLINE FVector3 GetNormal() const noexcept
     {
@@ -128,8 +128,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data as an array
-     * @return - A pointer to the data representing the plane
+     * @brief Retrieve the data as an array
+     * @return A pointer to the data representing the plane
      */
     FORCEINLINE float* Data() noexcept
     {
@@ -137,8 +137,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data as an array
-     * @return - A pointer to the data representing the plane
+     * @brief Retrieve the data as an array
+     * @return A pointer to the data representing the plane
      */
     FORCEINLINE const float* Data() const noexcept
     {
@@ -148,9 +148,9 @@ public:
 public:
 
     /**
-     * @brief       - Returns the result after comparing this and another plane
-     * @param Other - The plane to compare with
-     * @return      - True if equal, false if not
+     * @brief Returns the result after comparing this and another plane
+     * @param Other The plane to compare with
+     * @return True if equal, false if not
      */
     FORCEINLINE bool operator==(const FPlane& Other) const noexcept
     {
@@ -158,9 +158,9 @@ public:
     }
 
     /**
-     * @brief       - Returns the negated result after comparing this and another plane
-     * @param Other - The plane to compare with
-     * @return      - False if equal, true if not
+     * @brief Returns the negated result after comparing this and another plane
+     * @param Other The plane to compare with
+     * @return False if equal, true if not
      */
     FORCEINLINE bool operator!=(const FPlane& Other) const noexcept
     {
@@ -169,16 +169,16 @@ public:
 
 public:
 
-     /** @brief - The normals x-coordinate */
+     /** @brief The normals x-coordinate */
     float x;
 
-     /** @brief - The normals y-coordinate */
+     /** @brief The normals y-coordinate */
     float y;
     
-    /** @brief - The normals z-coordinate */
+    /** @brief The normals z-coordinate */
     float z;
     
-    /** @brief - The w-coordinate */
+    /** @brief The w-coordinate */
     float w;
 };
 

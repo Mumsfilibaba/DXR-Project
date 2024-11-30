@@ -80,34 +80,34 @@ public:
         return Instance;
     }
 
-    /** @brief - Releases all query objects */
+    /** @brief Releases all query objects */
     void Release();
 
-     /** @brief - Enables the collection of samples (Resume) */
+     /** @brief Enables the collection of samples (Resume) */
     void Enable();
 
-     /** @brief - Disables the collection of samples (Pause) */
+     /** @brief Disables the collection of samples (Pause) */
     void Disable();
 
-     /** @brief - Updates the profiler, should be called once per frame */
+     /** @brief Updates the profiler, should be called once per frame */
     void Tick();
 
-     /** @brief - Resets all the samples */
+     /** @brief Resets all the samples */
     void Reset();
 
-     /** @brief - Retrieve a copy of the GPU Profiler samples */
+     /** @brief Retrieve a copy of the GPU Profiler samples */
     void GetGPUSamples(GPUProfileSamplesMap& OutGPUSamples);
 
-     /** @brief - Start the GPU frame */
+     /** @brief Start the GPU frame */
     void BeginGPUFrame(FRHICommandList& CmdList);
 
-     /** @brief - End the GPU frame */
+     /** @brief End the GPU frame */
     void EndGPUFrame(FRHICommandList& CmdList);
 
-     /** @brief - Begin a GPU scope */
+     /** @brief Begin a GPU scope */
     void BeginGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
-     /** @brief - End a GPU scope */
+     /** @brief End a GPU scope */
     void EndGPUTrace(FRHICommandList& CmdList, const CHAR* Name);
 
     const FGPUProfileSample& GetGPUFrameTime() const

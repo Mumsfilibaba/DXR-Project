@@ -26,7 +26,7 @@ public:
     bool Resize(uint32 InWidth, uint32 InHeight);
     bool Present(bool bVerticalSync);
 
-    /** @return - Returns the current drawable, will release it during next call to present */
+    /** @return Returns the current drawable, will release it during next call to present */
     id<CAMetalDrawable> GetDrawable();
     id<MTLTexture> GetDrawableTexture();
     

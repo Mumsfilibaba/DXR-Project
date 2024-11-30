@@ -9,34 +9,34 @@ struct IFileHandle
 {
     virtual ~IFileHandle() = default;
 
-    /** @brief - Move the file pointer relative to the beginning of the file */
+    /** @brief Move the file pointer relative to the beginning of the file */
     virtual bool SeekFromStart(int64 NewPosition) = 0;
     
-    /** @brief - Move the file pointer relative to the current pointer of the file */
+    /** @brief Move the file pointer relative to the current pointer of the file */
     virtual bool SeekFromCurrent(int64 NewPosition) = 0;
 
-    /** @brief - Move the file pointer relative to the end of the file */
+    /** @brief Move the file pointer relative to the end of the file */
     virtual bool SeekFromEnd(int64 NewPosition) = 0;
 
-    /** @return - Returns the size of the file */
+    /** @return Returns the size of the file */
     virtual int64 Size() const = 0;
 
-    /** @return - Returns the current pointer of the file */
+    /** @return Returns the current pointer of the file */
     virtual int64 Tell() const = 0;
 
-    /** @brief - Read from the file */
+    /** @brief Read from the file */
     virtual int32 Read(uint8* Dst, uint32 BytesToRead) = 0;
 
-    /** @brief - Write to the file */
+    /** @brief Write to the file */
     virtual int32 Write(const uint8* Src, uint32 BytesToWrite) = 0;
 
-    /** @brief - Truncate the file if the file is currently larger than the new size */
+    /** @brief Truncate the file if the file is currently larger than the new size */
     virtual bool Truncate(int64 NewSize) = 0;
 
-    /** @return - Returns true if the FileHandle is valid */
+    /** @return Returns true if the FileHandle is valid */
     virtual bool IsValid() const = 0;
 
-    /** @brief - Closes the FileHandle and deletes this instance */
+    /** @brief Closes the FileHandle and deletes this instance */
     virtual void Close() = 0;
 };
 

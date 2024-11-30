@@ -31,12 +31,12 @@ public:
 
 public:
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TStringView() = default;
 
     /**
-     * @brief          - Create a view from a raw string
-     * @param InString - String to view
+     * @brief Create a view from a raw string
+     * @param InString String to view
      */
     FORCEINLINE TStringView(const CHARTYPE* InString)
         : ViewStart(InString)
@@ -45,10 +45,10 @@ public:
     }
 
     /**
-     * @brief          - Create a view from a raw string with a fixed length
-     * @param InString - String to view
-     * @param InLength - Length of the string to view
-     * @param Offset   - Offset into the string
+     * @brief Create a view from a raw string with a fixed length
+     * @param InString String to view
+     * @param InLength Length of the string to view
+     * @param Offset Offset into the string
      */
     FORCEINLINE explicit TStringView(const CHARTYPE* InString, SIZETYPE InLength, SIZETYPE Offset = 0)
         : ViewStart(InString + Offset)
@@ -57,8 +57,8 @@ public:
     }
 
     /**
-     * @brief          - Create a view from a string-type
-     * @param InString - String to view
+     * @brief Create a view from a string-type
+     * @param InString String to view
      */
     template<typename StringType>
     FORCEINLINE explicit TStringView(const StringType& InString) requires(TIsTStringType<StringType>::Value)
@@ -68,8 +68,8 @@ public:
     }
 
     /**
-     * @brief       - Copy Constructor
-     * @param Other - Other view to copy from
+     * @brief Copy Constructor
+     * @param Other Other view to copy from
      */
     FORCEINLINE TStringView(const TStringView& Other)
         : ViewStart(Other.ViewStart)
@@ -78,8 +78,8 @@ public:
     }
 
     /**
-     * @brief       - Move Constructor
-     * @param Other - Other view to move from
+     * @brief Move Constructor
+     * @param Other Other view to move from
      */
     FORCEINLINE TStringView(TStringView&& Other)
         : ViewStart(Other.ViewStart)
@@ -90,7 +90,7 @@ public:
     }
 
     /**
-     * @brief - Clears the view
+     * @brief Clears the view
      */
     FORCEINLINE void Clear()
     {
@@ -99,10 +99,10 @@ public:
     }
 
     /**
-     * @brief            - Copy this string into buffer
-     * @param Buffer     - Buffer to fill
-     * @param BufferSize - Size of the buffer to fill
-     * @param Position   - Offset to start copy from
+     * @brief Copy this string into buffer
+     * @param Buffer Buffer to fill
+     * @param BufferSize Size of the buffer to fill
+     * @param Position Offset to start copy from
      */
     FORCEINLINE void CopyToBuffer(CHARTYPE* Buffer, SIZETYPE BufferSize, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -115,8 +115,8 @@ public:
     }
 
     /**
-     * @brief  - Removes whitespace from the beginning and end of the string and returns a copy
-     * @return - Returns a copy of this string with the whitespace removed at the end and beginning
+     * @brief Removes whitespace from the beginning and end of the string and returns a copy
+     * @return Returns a copy of this string with the whitespace removed at the end and beginning
      */
     NODISCARD FORCEINLINE TStringView Trim()
     {
@@ -126,7 +126,7 @@ public:
     }
 
     /**
-     * @brief - Removes whitespace from the beginning and end of the string
+     * @brief Removes whitespace from the beginning and end of the string
      */
     FORCEINLINE void TrimInline()
     {
@@ -135,8 +135,8 @@ public:
     }
 
     /**
-     * @brief  - Removes whitespace from the beginning of the string and returns a copy
-     * @return - Returns a copy of this string with all the whitespace removed from the beginning
+     * @brief Removes whitespace from the beginning of the string and returns a copy
+     * @return Returns a copy of this string with all the whitespace removed from the beginning
      */
     NODISCARD FORCEINLINE TStringView TrimStart()
     {
@@ -146,7 +146,7 @@ public:
     }
 
     /**
-     * @brief - Removes whitespace from the beginning of the string
+     * @brief Removes whitespace from the beginning of the string
      */
     FORCEINLINE void TrimStartInline()
     {
@@ -163,8 +163,8 @@ public:
     }
 
     /**
-     * @brief  - Removes whitespace from the end of the string and returns a copy
-     * @return - Returns a copy of this string with all the whitespace removed from the end
+     * @brief Removes whitespace from the end of the string and returns a copy
+     * @return Returns a copy of this string with all the whitespace removed from the end
      */
     NODISCARD FORCEINLINE TStringView TrimEnd()
     {
@@ -174,7 +174,7 @@ public:
     }
 
     /**
-     * @brief - Removes whitespace from the end of the string
+     * @brief Removes whitespace from the end of the string
      */
     FORCEINLINE void TrimEndInline()
     {
@@ -192,9 +192,9 @@ public:
     }
 
     /**
-     * @brief     - Shrink the view from the left and return a copy
-     * @param Num - Number of characters to trim
-     * @return    - Return a trimmed copy of the view
+     * @brief Shrink the view from the left and return a copy
+     * @param Num Number of characters to trim
+     * @return Return a trimmed copy of the view
      */
     NODISCARD FORCEINLINE TStringView ShrinkLeft(int32 Num = 1)
     {
@@ -204,8 +204,8 @@ public:
     }
 
     /**
-     * @brief     - Shrink the view from the left
-     * @param Num - Number of characters to trim
+     * @brief Shrink the view from the left
+     * @param Num Number of characters to trim
      */
     FORCEINLINE void ShrinkLeftInline(int32 Num = 1)
     {
@@ -221,9 +221,9 @@ public:
     }
 
     /**
-     * @brief     - Shrink the view from the right and return a copy
-     * @param Num - Number of characters to trim
-     * @return    - Return a trimmed copy of the view
+     * @brief Shrink the view from the right and return a copy
+     * @param Num Number of characters to trim
+     * @return Return a trimmed copy of the view
      */
     NODISCARD FORCEINLINE TStringView ShrinkRight(int32 Num = 1)
     {
@@ -233,8 +233,8 @@ public:
     }
 
     /**
-     * @brief     - Shrink the view from the right
-     * @param Num - Number of characters to trim
+     * @brief Shrink the view from the right
+     * @param Num Number of characters to trim
      */
     FORCEINLINE void ShrinkRightInline(int32 Num = 1)
     {
@@ -250,10 +250,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string to another string-type
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns the position of the characters that are not equal. The sign determines difference of the character.
+     * @brief Compares this string to another string-type
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns the position of the characters that are not equal. The sign determines difference of the character.
      */
     template<typename StringType>
     NODISCARD FORCEINLINE SIZETYPE Compare(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const requires(TIsTStringType<StringType>::Value)
@@ -262,10 +262,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns the position of the characters that are not equal. The sign determines difference of the character.
+     * @brief Compares this string with a c-string
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns the position of the characters that are not equal. The sign determines difference of the character.
      */
     NODISCARD FORCEINLINE SIZETYPE Compare(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -280,11 +280,11 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string of a fixed length
-     * @param InString - String to compare with
-     * @param InLength - Length of the string to compare
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns the position of the characters that are not equal. The sign determines difference of the character.
+     * @brief Compares this string with a c-string of a fixed length
+     * @param InString String to compare with
+     * @param InLength Length of the string to compare
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns the position of the characters that are not equal. The sign determines difference of the character.
      */
     NODISCARD FORCEINLINE SIZETYPE Compare(const CHARTYPE* InString, SIZETYPE InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -300,10 +300,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string to another string-type
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns true if the strings are equal
+     * @brief Compares this string to another string-type
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns true if the strings are equal
      */
     template<typename StringType>
     NODISCARD FORCEINLINE bool Equals(const StringType& InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const requires(TIsTStringType<StringType>::Value)
@@ -312,10 +312,10 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string
-     * @param InString - String to compare with
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns true if the strings are equal
+     * @brief Compares this string with a c-string
+     * @param InString String to compare with
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns true if the strings are equal
      */
     NODISCARD FORCEINLINE bool Equals(const CHARTYPE* InString, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -323,11 +323,11 @@ public:
     }
 
     /**
-     * @brief          - Compares this string with a c-string of a fixed length
-     * @param InString - String to compare with
-     * @param InLength - Length of the string to compare
-     * @param CaseType - Enum that decides if the comparison should be case-sensitive or not
-     * @return         - Returns true if the strings are equal
+     * @brief Compares this string with a c-string of a fixed length
+     * @param InString String to compare with
+     * @param InLength Length of the string to compare
+     * @param CaseType Enum that decides if the comparison should be case-sensitive or not
+     * @return Returns true if the strings are equal
      */
     NODISCARD FORCEINLINE bool Equals(const CHARTYPE* InString, SIZETYPE InLength, EStringCaseType CaseType = EStringCaseType::CaseSensitive) const
     {
@@ -352,10 +352,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the first occurrence of the start of the search-string
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SIZETYPE Find(const CHARTYPE* InString, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -398,10 +398,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the first occurrence of the start of the search-string
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     template<typename StringType>
     NODISCARD FORCEINLINE SIZETYPE Find(const StringType& InString, SIZETYPE Position = INVALID_INDEX) const requires(TIsTStringType<StringType>::Value)
@@ -410,10 +410,10 @@ public:
     }
 
     /**
-     * @brief          - Returns the position of the first occurrence of CHAR
-     * @param Char     - Character to search for
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first occurrence of CHAR
+     * @param Char Character to search for
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SIZETYPE FindChar(CHARTYPE Char, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -441,10 +441,10 @@ public:
     }
 
     /**
-     * @brief           - Returns the position of the first CHAR that passes the predicate
-     * @param Predicate - Predicate that specifies valid chars
-     * @param Position  - Position to start search at
-     * @return          - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first CHAR that passes the predicate
+     * @param Predicate Predicate that specifies valid chars
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindCharWithPredicate(PredicateType&& Predicate, SIZETYPE Position = INVALID_INDEX) const
@@ -473,10 +473,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     NODISCARD FORCEINLINE SIZETYPE FindLast(const CHARTYPE* InString, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -518,10 +518,10 @@ public:
     }
 
     /**
-     * @brief          - Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
-     * @param InString - String to search
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first character in the search-string
+     * @brief Find the position of the first occurrence of the start of the search-string. Searches the string in reverse.
+     * @param InString String to search
+     * @param Position Position to start search at
+     * @return Returns the position of the first character in the search-string
      */
     template<typename StringType>
     NODISCARD FORCEINLINE SIZETYPE FindLast(const StringType& InString, SIZETYPE Position = INVALID_INDEX) const requires(TIsTStringType<StringType>::Value)
@@ -530,10 +530,10 @@ public:
     }
 
     /**
-     * @brief          - Returns the position of the first occurrence of CHAR. Searches the string in reverse.
-     * @param Char     - Character to search for
-     * @param Position - Position to start search at
-     * @return         - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first occurrence of CHAR. Searches the string in reverse.
+     * @param Char Character to search for
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     NODISCARD FORCEINLINE SIZETYPE FindLastChar(CHARTYPE Char, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -562,10 +562,10 @@ public:
     }
 
     /**
-     * @brief           - Returns the position of the first CHAR that passes the predicate
-     * @param Predicate - Predicate that specifies valid chars
-     * @param Position  - Position to start search at
-     * @return          - Returns the position of the first occurrence of the CHAR
+     * @brief Returns the position of the first CHAR that passes the predicate
+     * @param Predicate Predicate that specifies valid chars
+     * @param Position Position to start search at
+     * @return Returns the position of the first occurrence of the CHAR
      */
     template<typename PredicateType>
     NODISCARD FORCEINLINE SIZETYPE FindLastCharWithPredicate(PredicateType&& Predicate, SIZETYPE Position = INVALID_INDEX) const
@@ -595,10 +595,10 @@ public:
     }
 
     /**
-     * @brief          - Check if the search-string exists within the view
-     * @param InString - String to search for
-     * @param Position - Position to start to search at
-     * @return         - Returns true if the string is found
+     * @brief Check if the search-string exists within the view
+     * @param InString String to search for
+     * @param Position Position to start to search at
+     * @return Returns true if the string is found
      */
     NODISCARD FORCEINLINE bool Contains(const CHARTYPE* InString, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -606,10 +606,10 @@ public:
     }
 
     /**
-     * @brief          - Check if the search-string exists within the view. The string is of a string-type.
-     * @param InString - String to search for
-     * @param Position - Position to start to search at
-     * @return         - Returns true if the string is found
+     * @brief Check if the search-string exists within the view. The string is of a string-type.
+     * @param InString String to search for
+     * @param Position Position to start to search at
+     * @return Returns true if the string is found
      */
     template<typename StringType>
     NODISCARD FORCEINLINE bool Contains(const StringType& InString, SIZETYPE Position = INVALID_INDEX) const requires(TIsTStringType<StringType>::Value)
@@ -618,10 +618,10 @@ public:
     }
 
     /**
-     * @brief          - Check if the character exists within the view
-     * @param Char     - Character to search for
-     * @param Position - Position to start to search at
-     * @return         - Returns true if the character is found
+     * @brief Check if the character exists within the view
+     * @param Char Character to search for
+     * @param Position Position to start to search at
+     * @return Returns true if the character is found
      */
     NODISCARD FORCEINLINE bool Contains(CHARTYPE Char, SIZETYPE Position = INVALID_INDEX) const
     {
@@ -629,10 +629,10 @@ public:
     }
 
     /**
-     * @brief            - Check if string begins with a string
-     * @param InString   - String to test for
-     * @param SearchType - Type of search to perform, case-sensitive or not
-     * @return           - Returns true if the string begins with InString
+     * @brief Check if string begins with a string
+     * @param InString String to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string begins with InString
      */
     NODISCARD FORCEINLINE bool StartsWith(const CHARTYPE* InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const
     {
@@ -658,10 +658,10 @@ public:
     }
 
     /**
-     * @brief            - Check if string ends with a string
-     * @param InString   - String to test for
-     * @param SearchType - Type of search to perform, case-sensitive or not
-     * @return           - Returns true if the string ends with InString
+     * @brief Check if string ends with a string
+     * @param InString String to test for
+     * @param SearchType Type of search to perform, case-sensitive or not
+     * @return Returns true if the string ends with InString
      */
     NODISCARD FORCEINLINE bool EndsWith(const CHARTYPE* InString, EStringCaseType SearchType = EStringCaseType::CaseSensitive) const
     {
@@ -689,8 +689,8 @@ public:
     }
 
     /**
-     * @brief       - Swap this view with another
-     * @param Other - View to swap with
+     * @brief Swap this view with another
+     * @param Other View to swap with
      */
     FORCEINLINE void Swap(TStringView& Other)
     {
@@ -699,10 +699,10 @@ public:
     }
 
     /**
-     * @brief               - Create a sub-string view of this string
-     * @param Offset        - Position to start the sub-string at
-     * @param Count         - Number of characters in the sub-string
-     * @return              - Returns a sub-string view
+     * @brief Create a sub-string view of this string
+     * @param Offset Position to start the sub-string at
+     * @param Count Number of characters in the sub-string
+     * @return Returns a sub-string view
      */
     NODISCARD FORCEINLINE TStringView SubString(SIZETYPE Offset, SIZETYPE Count) const
     {
@@ -711,8 +711,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the array
-     * @return - Returns a pointer to the data of the array
+     * @brief Retrieve the data of the array
+     * @return Returns a pointer to the data of the array
      */
     NODISCARD FORCEINLINE const CHARTYPE* Data() const
     {
@@ -720,8 +720,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve a null-terminated string
-     * @return - Returns a pointer containing a null-terminated string
+     * @brief Retrieve a null-terminated string
+     * @return Returns a pointer containing a null-terminated string
      */
     NODISCARD FORCEINLINE const CHARTYPE* GetCString() const
     {
@@ -729,8 +729,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the size of the view
-     * @return - The current size of the view
+     * @brief Returns the size of the view
+     * @return The current size of the view
      */
     NODISCARD FORCEINLINE SIZETYPE Size() const
     {
@@ -738,8 +738,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the size of the view in bytes
-     * @return - The current size of the view in bytes
+     * @brief Returns the size of the view in bytes
+     * @return The current size of the view in bytes
      */
     NODISCARD FORCEINLINE SIZETYPE SizeInBytes() const
     {
@@ -747,8 +747,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the length of the view
-     * @return - The current length of the view
+     * @brief Returns the length of the view
+     * @return The current length of the view
      */
     NODISCARD FORCEINLINE SIZETYPE Length() const
     {
@@ -756,8 +756,8 @@ public:
     }
 
     /**
-     * @brief  - Check if the view contains any elements
-     * @return - Returns true if the view is empty or false if it contains elements
+     * @brief Check if the view contains any elements
+     * @return Returns true if the view is empty or false if it contains elements
      */
     NODISCARD FORCEINLINE bool IsEmpty() const
     {
@@ -765,8 +765,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last index that can be used to retrieve an element from the view
-     * @return - Returns the index to the last element of the view
+     * @brief Retrieve the last index that can be used to retrieve an element from the view
+     * @return Returns the index to the last element of the view
      */
     NODISCARD FORCEINLINE SIZETYPE LastElementIndex() const
     {
@@ -775,8 +775,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the first element of the view
-     * @return - Returns a reference to the first element of the view
+     * @brief Retrieve the first element of the view
+     * @return Returns a reference to the first element of the view
      */
     NODISCARD FORCEINLINE const CHARTYPE& FirstElement() const
     {
@@ -785,8 +785,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the last element of the view
-     * @return - Returns a reference to the last element of the view
+     * @brief Retrieve the last element of the view
+     * @return Returns a reference to the last element of the view
      */
     NODISCARD FORCEINLINE const CHARTYPE& LastElement() const
     {
@@ -797,9 +797,9 @@ public:
 public:
 
     /**
-     * @brief       - Bracket operator to retrieve an element at a certain index
-     * @param Index - Index of the element to retrieve
-     * @return      - A reference to the element at the index
+     * @brief Bracket operator to retrieve an element at a certain index
+     * @param Index Index of the element to retrieve
+     * @return A reference to the element at the index
      */
     NODISCARD FORCEINLINE const CHARTYPE& operator[](SIZETYPE Index) const
     {
@@ -808,9 +808,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - View to copy
-     * @return      - Returns a reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other View to copy
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TStringView& operator=(const TStringView& Other)
     {
@@ -819,9 +819,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - View to move
-     * @return      - Returns a reference to this instance
+     * @brief Move-assignment operator
+     * @param Other View to move
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TStringView& operator=(TStringView&& Other)
     {

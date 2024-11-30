@@ -9,10 +9,10 @@ public:
     FRenderTargetDebugWindow();
     ~FRenderTargetDebugWindow();
 
-    /** @brief - Called from ImGuiPlugin. This is where the ImGui-Commands should be called */
+    /** @brief Called from ImGuiPlugin. This is where the ImGui-Commands should be called */
     void Draw();
 
-     /** @brief - Add image for debug drawing */
+     /** @brief Add image for debug drawing */
     void AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState);
 
     void ClearImages()

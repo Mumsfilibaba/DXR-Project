@@ -13,9 +13,9 @@ public:
 public:
 
     /**
-     * @brief      - Perform bitwise ANS with BitReference and boolean
+     * @brief Perform bitwise ANS with BitReference and boolean
      * @param bRHS - Value to AND with
-     * @return     - Returns a reference to this BitReference
+     * @return Returns a reference to this BitReference
      */
     FORCEINLINE TBitReference& operator&=(const bool bRHS) noexcept
     {
@@ -25,9 +25,9 @@ public:
     }
 
     /**
-     * @brief      - Perform bitwise ANS with BitReference and boolean
+     * @brief Perform bitwise ANS with BitReference and boolean
      * @param bRHS - Value to AND with
-     * @return     - Returns a reference to this BitReference
+     * @return Returns a reference to this BitReference
      */
     FORCEINLINE TBitReference& operator|=(const bool bRHS) noexcept
     {
@@ -37,9 +37,9 @@ public:
     }
 
     /**
-     * @brief      - Assign a new value to underlying bit
+     * @brief Assign a new value to underlying bit
      * @param bRHS - Value to assign
-     * @return     - Returns a reference to this BitReference
+     * @return Returns a reference to this BitReference
      */
     FORCEINLINE TBitReference& operator=(const bool bRHS) noexcept
     {
@@ -49,9 +49,9 @@ public:
     }
 
     /**
-     * @brief     - Assign another BitReference to this instance
+     * @brief Assign another BitReference to this instance
      * @param Rhs - BitReference to assign
-     * @return    - Returns a reference to this BitReference
+     * @return Returns a reference to this BitReference
      */
     FORCEINLINE TBitReference& operator=(const TBitReference& Rhs) noexcept
     {
@@ -61,8 +61,8 @@ public:
     }
 
     /**
-     * @brief  - Returns the value of the bit as a bool
-     * @return - Returns true if the Bit is assigned, otherwise false
+     * @brief Returns the value of the bit as a bool
+     * @return Returns true if the Bit is assigned, otherwise false
      */
     FORCEINLINE operator bool() const noexcept
     {

@@ -43,29 +43,29 @@ struct CORE_API FMalloc : public FUseStandardMalloc
     virtual ~FMalloc() = default;
 
     /**
-     * @brief        - Allocates memory  
-     * @param InSize - Number of bytes to allocate
-     * @return       - Returns a pointer with allocated memory
+     * @brief Allocates memory  
+     * @param InSize Number of bytes to allocate
+     * @return Returns a pointer with allocated memory
      */
     virtual void* Malloc(uint64 InSize) = 0;
 
     /**
-     * @brief        - Allocates memory, from an existing block and copies over the old content to the new  
-     * @param Block  - The old block to reallocate
-     * @param InSize - Number of bytes to allocate
-     * @return       - Returns a pointer with allocated memory
+     * @brief Allocates memory, from an existing block and copies over the old content to the new  
+     * @param Block The old block to reallocate
+     * @param InSize Number of bytes to allocate
+     * @return Returns a pointer with allocated memory
      */
     virtual void* Realloc(void* Block, uint64 InSize) = 0;
 
     /**
-     * @brief       - Frees a block of memory  
-     * @param Block - Block to free
+     * @brief Frees a block of memory  
+     * @param Block Block to free
      */
     virtual void Free(void* Block) = 0;
 
     /**
-     * @brief              - Dumps information about the current allocations. For the standard implementation no info is available.
-     * @param OutputDevice - Device to output the information to
+     * @brief Dumps information about the current allocations. For the standard implementation no info is available.
+     * @param OutputDevice Device to output the information to
      */
     virtual void DumpAllocations(IOutputDevice* OutputDevice) { }
 };

@@ -16,19 +16,19 @@ public:
 
 public:
 
-    /** @brief - Trigger the event */
+    /** @brief Trigger the event */
     virtual void Trigger() { }
 
-    /** @brief - Wait for the event to be triggered */
+    /** @brief Wait for the event to be triggered */
     virtual void Wait(uint64 Milliseconds) { }
 
-    /** @brief - Wait for the event to be triggered */
+    /** @brief Wait for the event to be triggered */
     virtual void Wait(FTimespan Timeout) { Wait(static_cast<uint64>(Timeout.AsMilliseconds())); }
 
-    /** @brief - Reset the event */
+    /** @brief Reset the event */
     virtual void Reset() { }
 
-    /** @brief - Check if the event needs a manual reset */
+    /** @brief Check if the event needs a manual reset */
     virtual bool IsManualReset() const { return false; }
 
 protected:

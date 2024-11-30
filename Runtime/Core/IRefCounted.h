@@ -6,13 +6,13 @@ struct IRefCounted
 {
     virtual ~IRefCounted() = default;
 
-    /** @return - Adds a reference and returns the new reference count */
+    /** @return Adds a reference and returns the new reference count */
     virtual int32 AddRef() const = 0;
 
-    /** @return - Removes a reference and returns the new reference count */
+    /** @return Removes a reference and returns the new reference count */
     virtual int32 Release() const = 0;
 
-    /** @return - Returns the current reference count */
+    /** @return Returns the current reference count */
     virtual int32 GetRefCount() const = 0;
 };
 

@@ -14,15 +14,15 @@ public:
     typedef T PointerType;
     typedef PointerType Type;
 
-    /** @brief - Default constructor initializes to nullptr */
+    /** @brief Default constructor initializes to nullptr */
     FORCEINLINE TAtomicPointer() noexcept
         : Value(0)
     {
     }
 
     /**
-     * @brief       - Copy-constructor
-     * @param Other - Instance to copy
+     * @brief Copy-constructor
+     * @param Other Instance to copy
      */
     FORCEINLINE TAtomicPointer(const TAtomicPointer& Other) noexcept
     {
@@ -31,7 +31,7 @@ public:
     }
 
     /**
-     * @brief       - Construct with an initial pointer value
+     * @brief Construct with an initial pointer value
      * @param InPtr - Initial pointer value
      */
     FORCEINLINE TAtomicPointer(PointerType InPtr) noexcept
@@ -40,9 +40,9 @@ public:
     }
 
     /**
-     * @brief       - Atomically sets the pointer to a new value and returns the old value
+     * @brief Atomically sets the pointer to a new value and returns the old value
      * @param InPtr - New pointer value
-     * @return      - Returns the old pointer value
+     * @return Returns the old pointer value
      */
     FORCEINLINE PointerType Exchange(PointerType InPtr) noexcept
     {
@@ -51,10 +51,10 @@ public:
     }
 
     /**
-     * @brief           - Compares and exchanges the pointer to a new value if it matches the comparand
+     * @brief Compares and exchanges the pointer to a new value if it matches the comparand
      * @param InPtr     - New pointer value to set
-     * @param Comparand - Pointer value to compare against
-     * @return          - Returns true if the exchange was successful
+     * @param Comparand Pointer value to compare against
+     * @return Returns true if the exchange was successful
      */
     FORCEINLINE bool CompareExchange(PointerType InPtr, PointerType Comparand) noexcept
     {
@@ -65,8 +65,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieves the pointer atomically
-     * @return - Returns the stored pointer value
+     * @brief Retrieves the pointer atomically
+     * @return Returns the stored pointer value
      */
     FORCEINLINE PointerType Load() const noexcept
     {
@@ -75,7 +75,7 @@ public:
     }
 
     /**
-     * @brief       - Stores a new pointer atomically
+     * @brief Stores a new pointer atomically
      * @param InPtr - New pointer value to store
      */
     FORCEINLINE void Store(PointerType InPtr) noexcept
@@ -86,9 +86,9 @@ public:
 public:
 
     /**
-     * @brief     - Copy-assignment operator
-     * @param RHS - Instance to copy
-     * @return    - Returns a reference to this instance
+     * @brief Copy-assignment operator
+     * @param RHS Instance to copy
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TAtomicPointer& operator=(const TAtomicPointer& RHS) noexcept
     {
@@ -98,9 +98,9 @@ public:
     }
 
     /**
-     * @brief     - Assign a new pointer value
-     * @param RHS - Pointer value to assign
-     * @return    - Returns the assigned pointer value
+     * @brief Assign a new pointer value
+     * @param RHS Pointer value to assign
+     * @return Returns the assigned pointer value
      */
     FORCEINLINE PointerType operator=(PointerType RHS) noexcept
     {

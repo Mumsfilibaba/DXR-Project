@@ -449,8 +449,8 @@ public:
     using Super::Swap;
 
     /**
-     * @brief  - Retrieve the number of elements 
-     * @return - Returns the number of elements for the tuples
+     * @brief Retrieve the number of elements 
+     * @return Returns the number of elements for the tuples
      */
     NODISCARD static constexpr uint32 StaticSize()
     {
@@ -465,8 +465,8 @@ public:
     TTuple& operator=(const TTuple&) = default;
 
     /**
-     * @brief      - Constructor
-     * @param Args - Arguments for each type
+     * @brief Constructor
+     * @param Args Arguments for each type
      */
     template<typename... ArgTypes>
     FORCEINLINE explicit TTuple(ArgTypes&&... Args)
@@ -475,8 +475,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the number of elements 
-     * @return - Returns the number of elements for the tuples
+     * @brief Retrieve the number of elements 
+     * @return Returns the number of elements for the tuples
      */
     NODISCARD constexpr uint32 Size() const
     {
@@ -489,8 +489,8 @@ class TTuple<>
 {
 public:
     /**
-     * @brief  - Retrieve the number of elements 
-     * @return - Returns the number of elements for the tuples
+     * @brief Retrieve the number of elements 
+     * @return Returns the number of elements for the tuples
      */
     NODISCARD static constexpr uint32 StaticSize()
     {
@@ -505,8 +505,8 @@ public:
     TTuple& operator=(TTuple&&) = default;
 
     /**
-     * @brief  - Retrieve the number of elements 
-     * @return - Returns the number of elements for the tuples
+     * @brief Retrieve the number of elements 
+     * @return Returns the number of elements for the tuples
      */
     NODISCARD constexpr uint32 Size() const
     {

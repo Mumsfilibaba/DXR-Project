@@ -58,7 +58,7 @@ struct FRunLoopTask
     dispatch_block_t Block;
 };
 
-/** @brief - Manager for a RunLoop for a certain Thread */
+/** @brief Manager for a RunLoop for a certain Thread */
 class FRunLoopSourceContext : public FRefCounted
 {
 public:
@@ -274,7 +274,7 @@ private:
 FRunLoopSourceContext* FRunLoopSourceContext::MainThreadContext;
 FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
-/** @brief - Interface for the RunLoopSource */
+/** @brief Interface for the RunLoopSource */
 @implementation FRunLoopSource
 
 - (id)initWithContext:(FRunLoopSourceContext*)InContext
@@ -331,7 +331,7 @@ FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
 @end
 
-/** @brief - Extend NSThread in order to check for the ApplicationThread in a similar way as the MainThread */
+/** @brief Extend NSThread in order to check for the ApplicationThread in a similar way as the MainThread */
 @implementation NSThread (FAppThread)
 
 +(NSThread*) appThread
@@ -358,7 +358,7 @@ FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
 @end
 
-/** @brief - Create a subclass for the ApplicationThread */
+/** @brief Create a subclass for the ApplicationThread */
 @implementation FAppThread
 
 -(id) init
@@ -427,7 +427,7 @@ FRunLoopSourceContext* FRunLoopSourceContext::ApplicationThreadContext;
 
 @end
 
-/** @brief - Interface for starting up the ApplicationThread */
+/** @brief Interface for starting up the ApplicationThread */
 bool SetupAppThread(id Delegate, SEL AppThreadEntry)
 {
     [[NSProcessInfo processInfo] disableSuddenTermination];
@@ -449,13 +449,13 @@ bool SetupAppThread(id Delegate, SEL AppThreadEntry)
     return true;
 }
 
-/** @brief - Interface for closing down the ApplicationThread */
+/** @brief Interface for closing down the ApplicationThread */
 void ShutdownAppThread()
 {
     [GApplicationThread release];
 }
 
-/** @brief - Interface for running the current thread's runloop */
+/** @brief Interface for running the current thread's runloop */
 void PumpMessagesAppThread(bool bUntilEmpty)
 {
     SCOPED_AUTORELEASE_POOL();
@@ -482,7 +482,7 @@ void PumpMessagesAppThread(bool bUntilEmpty)
 #endif
 }
 
-/** @brief - Interface for executing a block on either Main- or ApplicationThread */
+/** @brief Interface for executing a block on either Main- or ApplicationThread */
 void ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     dispatch_block_t CopiedBlock = Block_copy(Block);

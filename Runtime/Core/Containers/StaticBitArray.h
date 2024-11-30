@@ -25,7 +25,7 @@ public:
 public:
     
     /**
-     * @brief - Default constructor
+     * @brief Default constructor
      */
     constexpr TStaticBitArray()
         : Integers()
@@ -33,8 +33,8 @@ public:
     }
 
     /**
-     * @brief         - Constructor that sets the elements based on an integer
-     * @param InValue - Integer containing bits to set to the BitArray
+     * @brief Constructor that sets the elements based on an integer
+     * @param InValue Integer containing bits to set to the BitArray
      */
     constexpr explicit TStaticBitArray(InIntegerType InValue)
         : Integers()
@@ -45,9 +45,9 @@ public:
     }
 
     /**
-     * @brief           - Constructor that sets the elements based on an integer array
-     * @param InValues  - Integers containing bits to set to the BitArray
-     * @param NumValues - Number of values in the input array
+     * @brief Constructor that sets the elements based on an integer array
+     * @param InValues Integers containing bits to set to the BitArray
+     * @param NumValues Number of values in the input array
      */
     constexpr explicit TStaticBitArray(const InIntegerType* InValues, SIZETYPE NumValues)
         : Integers()
@@ -64,9 +64,9 @@ public:
     }
 
     /**
-     * @brief           - Constructor that sets a certain number of bits to a specified value
-     * @param InNumBits - Number of bits to set
-     * @param bValue    - Value to set bits to
+     * @brief Constructor that sets a certain number of bits to a specified value
+     * @param InNumBits Number of bits to set
+     * @param bValue Value to set bits to
      */
     constexpr explicit TStaticBitArray(SIZETYPE InNumBits, bool bValue)
         : Integers()
@@ -80,8 +80,8 @@ public:
     }
 
     /**
-     * @brief          - Constructor that creates a BitArray from a list of booleans indicating the state of the bit
-     * @param InitList - Contains bools to indicate the state of each bit
+     * @brief Constructor that creates a BitArray from a list of booleans indicating the state of the bit
+     * @param InitList Contains bools to indicate the state of each bit
      */
     constexpr TStaticBitArray(std::initializer_list<bool> InitList)
         : Integers()
@@ -96,7 +96,7 @@ public:
     }
 
     /**
-     * @brief - Resets all the bits to zero
+     * @brief Resets all the bits to zero
      */
     constexpr void Reset()
     {
@@ -107,8 +107,8 @@ public:
     }
 
     /**
-     * @brief             - Assign a value to a bit
-     * @param BitPosition - Position of the bit to set
+     * @brief Assign a value to a bit
+     * @param BitPosition Position of the bit to set
      * @param bValue      - Value to assign to the bit
      */
     constexpr void AssignBit(SIZETYPE BitPosition, const bool bValue)
@@ -120,8 +120,8 @@ public:
     }
 
     /**
-     * @brief             - Flips the bit at the position
-     * @param BitPosition - Position of the bit to flip
+     * @brief Flips the bit at the position
+     * @param BitPosition Position of the bit to flip
      */
     constexpr void FlipBit(SIZETYPE BitPosition)
     {
@@ -135,8 +135,8 @@ public:
     }
 
     /**
-     * @brief  - Count the number of bits that are assigned
-     * @return - Returns the number of bits that are true
+     * @brief Count the number of bits that are assigned
+     * @return Returns the number of bits that are true
      */
     NODISCARD constexpr SIZETYPE CountAssignedBits() const
     {
@@ -151,8 +151,8 @@ public:
     }
 
     /**
-     * @brief  - Check if any bit is set
-     * @return - Returns true if any bit is set
+     * @brief Check if any bit is set
+     * @return Returns true if any bit is set
      */
     NODISCARD constexpr bool HasAnyBitSet() const
     {
@@ -160,8 +160,8 @@ public:
     }
 
     /**
-     * @brief  - Check if no bit is set
-     * @return - Returns true if no bit is set
+     * @brief Check if no bit is set
+     * @return Returns true if no bit is set
      */
     NODISCARD constexpr bool HasNoBitSet() const
     {
@@ -169,8 +169,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the most significant bit. Will return zero if no bits are set; check HasAnyBitSet.
-     * @return - Returns the index of the most significant bit
+     * @brief Retrieve the most significant bit. Will return zero if no bits are set; check HasAnyBitSet.
+     * @return Returns the index of the most significant bit
      */
     NODISCARD constexpr SIZETYPE MostSignificant() const
     {
@@ -190,8 +190,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the least significant bit. Will return zero if no bits are set; check HasAnyBitSet.
-     * @return - Returns the index of the least significant bit
+     * @brief Retrieve the least significant bit. Will return zero if no bits are set; check HasAnyBitSet.
+     * @return Returns the index of the least significant bit
      */
     NODISCARD constexpr SIZETYPE LeastSignificant() const
     {
@@ -211,8 +211,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise AND between this and another BitArray
-     * @param Other - BitArray to perform bitwise AND with
+     * @brief Perform a bitwise AND between this and another BitArray
+     * @param Other BitArray to perform bitwise AND with
      */
     constexpr void BitwiseAnd(const TStaticBitArray& Other)
     {
@@ -223,8 +223,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise OR between this and another BitArray
-     * @param Other - BitArray to perform bitwise OR with
+     * @brief Perform a bitwise OR between this and another BitArray
+     * @param Other BitArray to perform bitwise OR with
      */
     constexpr void BitwiseOr(const TStaticBitArray& Other)
     {
@@ -235,8 +235,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise XOR between this and another BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief Perform a bitwise XOR between this and another BitArray
+     * @param Other BitArray to perform bitwise XOR with
      */
     constexpr void BitwiseXor(const TStaticBitArray& Other)
     {
@@ -247,7 +247,7 @@ public:
     }
 
     /**
-     * @brief - Perform a bitwise NOT on each bit in this BitArray
+     * @brief Perform a bitwise NOT on each bit in this BitArray
      */
     constexpr void BitwiseNot()
     {
@@ -258,8 +258,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a right BitShift
-     * @param Steps - Number of steps to shift
+     * @brief Perform a right BitShift
+     * @param Steps Number of steps to shift
      */
     constexpr void BitshiftRight(SIZETYPE Steps)
     {
@@ -270,8 +270,8 @@ public:
     }
 
     /**
-     * @brief       - Perform a left BitShift
-     * @param Steps - Number of steps to shift
+     * @brief Perform a left BitShift
+     * @param Steps Number of steps to shift
      */
     constexpr void BitshiftLeft(SIZETYPE Steps)
     {
@@ -284,9 +284,9 @@ public:
 public:
 
     /**
-     * @brief          - Retrieve a bit with a certain index
-     * @param BitIndex - Index to the bit
-     * @return         - Returns a BitReference to the specified bit
+     * @brief Retrieve a bit with a certain index
+     * @param BitIndex Index to the bit
+     * @return Returns a BitReference to the specified bit
      */
     NODISCARD constexpr BitReferenceType operator[](SIZETYPE BitIndex)
     {
@@ -297,9 +297,9 @@ public:
     }
 
     /**
-     * @brief          - Retrieve a bit with a certain index
-     * @param BitIndex - Index to the bit
-     * @return         - Returns a BitReference to the specified bit
+     * @brief Retrieve a bit with a certain index
+     * @param BitIndex Index to the bit
+     * @return Returns a BitReference to the specified bit
      */
     NODISCARD constexpr ConstBitReferenceType operator[](SIZETYPE BitIndex) const
     {
@@ -310,9 +310,9 @@ public:
     }
 
     /**
-     * @brief       - Compare operator
-     * @param Other - Right-hand side to compare
-     * @return      - Returns true if the BitArrays are equal
+     * @brief Compare operator
+     * @param Other Right-hand side to compare
+     * @return Returns true if the BitArrays are equal
      */
     NODISCARD constexpr bool operator==(const TStaticBitArray& Other) const
     {
@@ -334,9 +334,9 @@ public:
     }
 
     /**
-     * @brief       - Compare operator
-     * @param Other - Right-hand side to compare
-     * @return      - Returns false if the BitArrays are equal
+     * @brief Compare operator
+     * @param Other Right-hand side to compare
+     * @return Returns false if the BitArrays are equal
      */
     NODISCARD constexpr bool operator!=(const TStaticBitArray& Other) const
     {
@@ -344,9 +344,9 @@ public:
     }
 
     /**
-     * @brief       - Bitwise AND operator, perform a bitwise AND between this and another BitArray
-     * @param Other - BitArray to perform bitwise AND with
-     * @return      - Returns a reference to this BitArray
+     * @brief Bitwise AND operator, perform a bitwise AND between this and another BitArray
+     * @param Other BitArray to perform bitwise AND with
+     * @return Returns a reference to this BitArray
      */
     constexpr TStaticBitArray& operator&=(const TStaticBitArray& Other)
     {
@@ -355,9 +355,9 @@ public:
     }
 
     /**
-     * @brief       - Bitwise OR operator, perform a bitwise OR between this and another BitArray
-     * @param Other - BitArray to perform bitwise OR with
-     * @return      - Returns a reference to this BitArray
+     * @brief Bitwise OR operator, perform a bitwise OR between this and another BitArray
+     * @param Other BitArray to perform bitwise OR with
+     * @return Returns a reference to this BitArray
      */
     constexpr TStaticBitArray& operator|=(const TStaticBitArray& Other)
     {
@@ -366,9 +366,9 @@ public:
     }
 
     /**
-     * @brief       - Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
-     * @param Other - BitArray to perform bitwise XOR with
-     * @return      - Returns a reference to this BitArray
+     * @brief Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
+     * @param Other BitArray to perform bitwise XOR with
+     * @return Returns a reference to this BitArray
      */
     constexpr TStaticBitArray& operator^=(const TStaticBitArray& Other)
     {
@@ -377,7 +377,7 @@ public:
     }
 
     /**
-     * @brief - Perform a bitwise NOT on each bit in this BitArray
+     * @brief Perform a bitwise NOT on each bit in this BitArray
      */
     constexpr TStaticBitArray operator~() const
     {
@@ -387,9 +387,9 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitshift right
-     * @param Steps - Number of steps to bitshift
-     * @return      - Returns a copy that is bitshifted to the right
+     * @brief Perform a bitshift right
+     * @param Steps Number of steps to bitshift
+     * @return Returns a copy that is bitshifted to the right
      */
     constexpr TStaticBitArray operator>>(SIZETYPE Steps) const
     {
@@ -399,9 +399,9 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitshift right
-     * @param Steps - Number of steps to bitshift
-     * @return      - Returns a reference to this object
+     * @brief Perform a bitshift right
+     * @param Steps Number of steps to bitshift
+     * @return Returns a reference to this object
      */
     constexpr TStaticBitArray& operator>>=(SIZETYPE Steps)
     {
@@ -410,9 +410,9 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitshift left
-     * @param Steps - Number of steps to bitshift
-     * @return      - Returns a copy that is bitshifted to the left
+     * @brief Perform a bitshift left
+     * @param Steps Number of steps to bitshift
+     * @return Returns a copy that is bitshifted to the left
      */
     constexpr TStaticBitArray operator<<(SIZETYPE Steps) const
     {
@@ -422,9 +422,9 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitshift left
-     * @param Steps - Number of steps to bitshift
-     * @return      - Returns a reference to this object
+     * @brief Perform a bitshift left
+     * @param Steps Number of steps to bitshift
+     * @return Returns a reference to this object
      */
     constexpr TStaticBitArray& operator<<=(SIZETYPE Steps)
     {
@@ -435,10 +435,10 @@ public:
 public:
 
     /**
-     * @brief     - Bitwise AND operator, perform a bitwise AND between two BitArrays
-     * @param LHS - Left-hand side to bitwise AND with
-     * @param RHS - Right-hand side to bitwise AND with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise AND operator, perform a bitwise AND between two BitArrays
+     * @param LHS Left-hand side to bitwise AND with
+     * @param RHS Right-hand side to bitwise AND with
+     * @return Returns a BitArray with the result
      */
     NODISCARD friend constexpr TStaticBitArray operator&(const TStaticBitArray& LHS, const TStaticBitArray& RHS)
     {
@@ -448,10 +448,10 @@ public:
     }
 
     /**
-     * @brief     - Bitwise OR operator, perform a bitwise OR between two BitArrays
-     * @param LHS - Left-hand side to bitwise OR with
-     * @param RHS - Right-hand side to bitwise OR with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise OR operator, perform a bitwise OR between two BitArrays
+     * @param LHS Left-hand side to bitwise OR with
+     * @param RHS Right-hand side to bitwise OR with
+     * @return Returns a BitArray with the result
      */
     NODISCARD friend constexpr TStaticBitArray operator|(const TStaticBitArray& LHS, const TStaticBitArray& RHS)
     {
@@ -461,10 +461,10 @@ public:
     }
 
     /**
-     * @brief     - Bitwise XOR operator, perform a bitwise XOR between two BitArrays
-     * @param LHS - Left-hand side to bitwise XOR with
-     * @param RHS - Right-hand side to bitwise XOR with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise XOR operator, perform a bitwise XOR between two BitArrays
+     * @param LHS Left-hand side to bitwise XOR with
+     * @param RHS Right-hand side to bitwise XOR with
+     * @return Returns a BitArray with the result
      */
     NODISCARD friend constexpr TStaticBitArray operator^(const TStaticBitArray& LHS, const TStaticBitArray& RHS)
     {
@@ -476,8 +476,8 @@ public:
 public:
 
     /**
-     * @brief  - Retrieve the number of bits
-     * @return - Returns the number of bits in the array
+     * @brief Retrieve the number of bits
+     * @return Returns the number of bits in the array
      */
     NODISCARD constexpr SIZETYPE Size() const
     {
@@ -485,8 +485,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the maximum number of bits
-     * @return - Returns the maximum number of bits in the array
+     * @brief Retrieve the maximum number of bits
+     * @return Returns the maximum number of bits in the array
      */
     NODISCARD constexpr SIZETYPE Capacity() const
     {
@@ -494,8 +494,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the number of integers used to store the bits
-     * @return - Returns the number of integers used to store the bits
+     * @brief Retrieve the number of integers used to store the bits
+     * @return Returns the number of integers used to store the bits
      */
     NODISCARD constexpr SIZETYPE IntegerSize() const
     {
@@ -503,8 +503,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the capacity of the array in bytes
-     * @return - Returns the capacity of the array in bytes
+     * @brief Retrieve the capacity of the array in bytes
+     * @return Returns the capacity of the array in bytes
      */
     NODISCARD constexpr SIZETYPE CapacityInBytes() const
     {
@@ -512,8 +512,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the data of the array
+     * @return Returns a pointer to the stored data
      */
     NODISCARD constexpr InIntegerType* Data()
     {
@@ -521,8 +521,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the data of the array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the data of the array
+     * @return Returns a pointer to the stored data
      */
     NODISCARD constexpr const InIntegerType* Data() const
     {

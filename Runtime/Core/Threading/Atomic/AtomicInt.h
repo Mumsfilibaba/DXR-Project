@@ -15,15 +15,15 @@ public:
 
     static_assert(TIsIntegerNotBool<Type>::Value, "TAtomicInt only supports integer types");
 
-    /** @brief - Default constructor initializes to zero */
+    /** @brief Default constructor initializes to zero */
     FORCEINLINE TAtomicInt() noexcept
         : Value(0)
     {
     }
 
     /**
-     * @brief       - Copy-constructor
-     * @param Other - Instance to copy
+     * @brief Copy-constructor
+     * @param Other Instance to copy
      */
     FORCEINLINE TAtomicInt(const TAtomicInt& Other) noexcept
     {
@@ -32,8 +32,8 @@ public:
     }
 
     /**
-     * @brief         - Construct with an initial value
-     * @param InValue - Initial value
+     * @brief Construct with an initial value
+     * @param InValue Initial value
      */
     FORCEINLINE TAtomicInt(IntegerType InValue) noexcept
         : Value(static_cast<SignedType>(InValue))
@@ -41,8 +41,8 @@ public:
     }
 
     /**
-     * @brief  - Atomically increments the integer
-     * @return - Returns the new value
+     * @brief Atomically increments the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType Increment() noexcept
     {
@@ -50,8 +50,8 @@ public:
     }
 
     /**
-     * @brief  - Atomically decrements the integer
-     * @return - Returns the new value
+     * @brief Atomically decrements the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType Decrement() noexcept
     {
@@ -59,8 +59,8 @@ public:
     }
 
     /**
-     * @brief  - Atomically adds a value to the integer
-     * @return - Returns the new value
+     * @brief Atomically adds a value to the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType Add(IntegerType RHS) noexcept
     {
@@ -69,8 +69,8 @@ public:
     }
 
     /**
-     * @brief  - Atomically subtracts a value from the integer
-     * @return - Returns the new value
+     * @brief Atomically subtracts a value from the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType Subtract(IntegerType RHS) noexcept
     {
@@ -79,8 +79,8 @@ public:
     }
 
     /**
-     * @brief  - Performs a bitwise AND atomically with a value and the integer
-     * @return - Returns the new value
+     * @brief Performs a bitwise AND atomically with a value and the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType And(IntegerType RHS) noexcept
     {
@@ -89,8 +89,8 @@ public:
     }
 
     /**
-     * @brief  - Performs a bitwise OR atomically with a value and the integer
-     * @return - Returns the new value
+     * @brief Performs a bitwise OR atomically with a value and the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType Or(IntegerType RHS) noexcept
     {
@@ -99,8 +99,8 @@ public:
     }
 
     /**
-     * @brief  - Performs a bitwise XOR atomically with a value and the integer
-     * @return - Returns the new value
+     * @brief Performs a bitwise XOR atomically with a value and the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType Xor(IntegerType RHS) noexcept
     {
@@ -109,8 +109,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieves the integer atomically and ensures that all prior accesses have completed 
-     * @return - Returns the stored value
+     * @brief Retrieves the integer atomically and ensures that all prior accesses have completed 
+     * @return Returns the stored value
      */
     FORCEINLINE IntegerType Load() const noexcept
     {
@@ -118,8 +118,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieves the integer atomically without ensuring that all prior accesses have completed
-     * @return - Returns the stored value
+     * @brief Retrieves the integer atomically without ensuring that all prior accesses have completed
+     * @return Returns the stored value
      */
     FORCEINLINE IntegerType RelaxedLoad() const noexcept
     {
@@ -127,9 +127,9 @@ public:
     }
 
     /**
-     * @brief         - Exchanges the integer to a new value and returns the original value
-     * @param InValue - Value to exchange
-     * @return        - Returns the original value
+     * @brief Exchanges the integer to a new value and returns the original value
+     * @param InValue Value to exchange
+     * @return Returns the original value
      */
     FORCEINLINE IntegerType Exchange(IntegerType InValue) noexcept
     {
@@ -138,10 +138,10 @@ public:
     }
 
     /**
-     * @brief           - Compares and exchanges the integer to a new value if it matches the comparand
+     * @brief Compares and exchanges the integer to a new value if it matches the comparand
      * @param InValue   - Value to exchange
-     * @param Comparand - Value to compare against
-     * @return          - Returns true if the exchange was successful
+     * @param Comparand Value to compare against
+     * @return Returns true if the exchange was successful
      */
     FORCEINLINE bool CompareExchange(IntegerType InValue, IntegerType Comparand) noexcept
     {
@@ -151,8 +151,8 @@ public:
     }
 
     /**
-     * @brief         - Stores a new integer atomically and ensures that all prior accesses have completed
-     * @param InValue - New value to store
+     * @brief Stores a new integer atomically and ensures that all prior accesses have completed
+     * @param InValue New value to store
      */
     FORCEINLINE void Store(IntegerType InValue) noexcept
     {
@@ -160,8 +160,8 @@ public:
     }
 
     /**
-     * @brief         - Stores a new integer atomically without ensuring that all prior accesses have completed
-     * @param InValue - New value to store
+     * @brief Stores a new integer atomically without ensuring that all prior accesses have completed
+     * @param InValue New value to store
      */
     FORCEINLINE void RelaxedStore(IntegerType InValue) noexcept
     {
@@ -171,9 +171,9 @@ public:
 public:
 
     /**
-     * @brief     - Copy-assignment operator
-     * @param RHS - Instance to copy
-     * @return    - Returns a reference to this instance
+     * @brief Copy-assignment operator
+     * @param RHS Instance to copy
+     * @return Returns a reference to this instance
      */
     FORCEINLINE TAtomicInt& operator=(const TAtomicInt& RHS) noexcept
     {
@@ -183,9 +183,9 @@ public:
     }
 
     /**
-     * @brief     - Assign a new value
-     * @param RHS - Value to assign
-     * @return    - Returns the assigned value
+     * @brief Assign a new value
+     * @param RHS Value to assign
+     * @return Returns the assigned value
      */
     FORCEINLINE IntegerType operator=(IntegerType RHS) noexcept
     {
@@ -194,8 +194,8 @@ public:
     }
 
     /**
-     * @brief  - Increment the integer by one (postfix)
-     * @return - Returns the previous value
+     * @brief Increment the integer by one (postfix)
+     * @return Returns the previous value
      */
     FORCEINLINE IntegerType operator++(int) noexcept
     {
@@ -205,8 +205,8 @@ public:
     }
 
     /**
-     * @brief  - Increment the integer by one (prefix)
-     * @return - Returns the new value
+     * @brief Increment the integer by one (prefix)
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType operator++() noexcept
     {
@@ -214,8 +214,8 @@ public:
     }
 
     /**
-     * @brief  - Decrement the integer by one (postfix)
-     * @return - Returns the previous value
+     * @brief Decrement the integer by one (postfix)
+     * @return Returns the previous value
      */
     FORCEINLINE IntegerType operator--(int) noexcept
     {
@@ -225,8 +225,8 @@ public:
     }
 
     /**
-     * @brief  - Decrement the integer by one (prefix)
-     * @return - Returns the new value
+     * @brief Decrement the integer by one (prefix)
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType operator--() noexcept
     {
@@ -234,9 +234,9 @@ public:
     }
 
     /**
-     * @brief     - Add a value
-     * @param RHS - Value to add to the integer
-     * @return    - Returns the new value
+     * @brief Add a value
+     * @param RHS Value to add to the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType operator+=(IntegerType RHS) noexcept
     {
@@ -244,9 +244,9 @@ public:
     }
 
     /**
-     * @brief     - Subtract a value
-     * @param RHS - Value to subtract from the integer
-     * @return    - Returns the new value
+     * @brief Subtract a value
+     * @param RHS Value to subtract from the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType operator-=(IntegerType RHS) noexcept
     {
@@ -254,9 +254,9 @@ public:
     }
 
     /**
-     * @brief     - Bitwise AND with a value
-     * @param RHS - Value to AND with the integer
-     * @return    - Returns the new value
+     * @brief Bitwise AND with a value
+     * @param RHS Value to AND with the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType operator&=(IntegerType RHS) noexcept
     {
@@ -264,9 +264,9 @@ public:
     }
 
     /**
-     * @brief     - Bitwise OR with a value
-     * @param RHS - Value to OR with the integer
-     * @return    - Returns the new value
+     * @brief Bitwise OR with a value
+     * @param RHS Value to OR with the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType operator|=(IntegerType RHS) noexcept
     {
@@ -274,9 +274,9 @@ public:
     }
 
     /**
-     * @brief     - Bitwise XOR with a value
-     * @param RHS - Value to XOR with the integer
-     * @return    - Returns the new value
+     * @brief Bitwise XOR with a value
+     * @param RHS Value to XOR with the integer
+     * @return Returns the new value
      */
     FORCEINLINE IntegerType operator^=(IntegerType RHS) noexcept
     {

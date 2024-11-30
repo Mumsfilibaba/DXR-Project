@@ -7,24 +7,24 @@ struct FGenericCriticalSection : FNonCopyable
     typedef void* PlatformHandle;
 
     /** 
-     * @brief - Lock CriticalSection for other threads
+     * @brief Lock CriticalSection for other threads
      */
     FORCEINLINE void Lock() noexcept { }
 
     /**
-     * @brief  - Try to lock CriticalSection for other threads
-     * @return - Returns true if the lock is successful
+     * @brief Try to lock CriticalSection for other threads
+     * @return Returns true if the lock is successful
      */
     FORCEINLINE bool TryLock() noexcept { return false; }
 
     /** 
-     * @brief - Unlock CriticalSection for other threads 
+     * @brief Unlock CriticalSection for other threads 
      */
     FORCEINLINE void Unlock() noexcept { }
 
     /**
-     * @brief  - Retrieve platform specific handle
-     * @return - Returns a platform specific handle or nullptr if no platform handle is defined
+     * @brief Retrieve platform specific handle
+     * @return Returns a platform specific handle or nullptr if no platform handle is defined
      */
     FORCEINLINE PlatformHandle GetPlatformHandle() { return nullptr; }
 };
