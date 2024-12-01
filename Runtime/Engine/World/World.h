@@ -39,49 +39,49 @@ public:
 
      /**
       * @brief Ticks all actors in the world, should be called once per frame
-      * @param DeltaTime - The time between this and the last tick in seconds
+      * @param DeltaTime The time between this and the last tick in seconds
       */
     void Tick(float DeltaTime);
 
     /**
      * @brief Adds a camera into the world 
-     * @param InCamera - Camera to add to the world
+     * @param InCamera Camera to add to the world
      */
     void AddCamera(FCamera* InCamera);
 
     /**
      * @brief Adds an actor into the world 
-     * @param InActor - Actor to add to the world
+     * @param InActor Actor to add to the world
      */
     void AddActor(FActor* InActor);
 
     /**
-     * @brief                   - Adds a player-controller into the world
-     * @param InPlayerController - PlayerController to add to the world
+     * @brief Adds a player-controller into the world
+     * @param InPlayerController PlayerController to add to the world
      */
     void AddPlayerController(FPlayerController* InPlayerController);
 
     /**
      * @brief Adds an light into the world
-     * @param InLight - Light to add to the world
+     * @param InLight Light to add to the world
      */
     void AddLight(FLight* InLight);
 
     /**
      * @brief Adds a light-probe into the world
-     * @param InLightProbe - LightProbe to add to the world
+     * @param InLightProbe LightProbe to add to the world
      */
     void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
-     * @brief                  - Function called when adding a new RendererComponent
-     * @param RendererComponent - New RendererComponent just added to the world
+     * @brief Function called when adding a new RendererComponent
+     * @param RendererComponent New RendererComponent just added to the world
      */
     void AddRendererComponent(FSceneComponent* RendererComponent);
 
     /**
       * @brief Sets the scene representation in the renderer
-      * @param InScene - Interface to the renderer scene representation
+      * @param InScene Interface to the renderer scene representation
       */
     void SetSceneInterface(IScene* InScene);
 

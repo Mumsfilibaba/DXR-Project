@@ -16,8 +16,8 @@ public:
     static_assert(TIsObject<T>::Value || TIsFunction<T>::Value, "TReferenceWrapper requires T to be of object or function type");
 
     /**
-     * @brief   - Construct a new reference-wrapper from a reference
-     * @param In - The reference to store
+     * @brief Construct a new reference-wrapper from a reference
+     * @param In The reference to store
      */
     FORCEINLINE TReferenceWrapper(Type& In)
         : Pointer(::AddressOf(In))

@@ -194,7 +194,7 @@ public:
     
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
-    
+
     virtual void SetDebugName(const FString&) { }
     virtual FString GetDebugName() const { return ""; }
 

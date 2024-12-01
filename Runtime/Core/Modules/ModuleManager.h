@@ -102,42 +102,42 @@ public:
 
     /**
      * @brief Load a new module into the engine
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a pointer to a IModule interface if the load is successful, otherwise nullptr
      */
     FModuleInterface* LoadModule(const CHAR* ModuleName);
 
     /**
      * @brief Retrieve a already loaded module interface
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a pointer to a IModule interface if the interface is present, otherwise nullptr
      */
     FModuleInterface* GetModule(const CHAR* ModuleName);
 
     /**
      * @brief Retrieve a already loaded module's native handle
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a native handle to a module if the module is present otherwise a platform-defined invalid handle
      */
     PlatformModule GetModuleHandle(const CHAR* ModuleName);
 
     /**
      * @brief Registers a static module
-     * @param ModuleName   - Name of the module to load without platform extension or prefix
-     * @param InitDelegate - Delegate to initialize the static delegate
+     * @param ModuleName Name of the module to load without platform extension or prefix
+     * @param InitDelegate Delegate to initialize the static delegate
      */
     void RegisterStaticModule(const CHAR* ModuleName, FInitializeStaticModuleDelegate InitDelegate);
 
     /**
      * @brief Check if a module is already loaded
-     * @param ModuleName - Name of the module to load without platform extension or prefix
+     * @param ModuleName Name of the module to load without platform extension or prefix
      * @return Returns true if the module is loaded, otherwise false
      */
     bool IsModuleLoaded(const CHAR* ModuleName);
 
     /**
      * @brief Release a single module
-     * @param ModuleName - Name of the module to load without platform extension or prefix
+     * @param ModuleName Name of the module to load without platform extension or prefix
      */
     void UnloadModule(const CHAR* ModuleName);
 
@@ -148,7 +148,7 @@ public:
 
     /**
      * @brief Load a new module into the engine
-     * @param ModuleName - Name of the module to load without platform extension or prefix
+     * @param ModuleName Name of the module to load without platform extension or prefix
      * @return A reference to the IModule interface, on fail an assert is triggered
      */
     FORCEINLINE FModuleInterface& LoadModuleRef(const CHAR* ModuleName)
@@ -160,7 +160,7 @@ public:
 
     /**
      * @brief Load a new module into the engine
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a typed pointer to if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
@@ -171,7 +171,7 @@ public:
 
     /**
      * @brief Load a new module into the engine
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a typed reference to if the load is successful, on fail an assert is triggered
      */
     template<typename ModuleType>
@@ -182,7 +182,7 @@ public:
 
     /**
      * @brief Retrieve a already loaded module interface
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a reference to a typed interface if the interface is present, on fail an assert is triggered
      */
     FORCEINLINE FModuleInterface& GetModuleRef(const TCHAR* ModuleName)
@@ -194,7 +194,7 @@ public:
 
     /**
      * @brief Load a new module into the engine
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a typed pointer to a interface if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
@@ -205,7 +205,7 @@ public:
 
     /**
      * @brief Load a new module into the engine
-     * @param ModuleName - Name of the module without platform extension or prefix
+     * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a typed pointer to a interface if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
@@ -253,7 +253,7 @@ public:
 
     /**
      * @brief Constructor that registers the module to the ModuleManager
-     * @param ModuleName - Name of the module
+     * @param ModuleName Name of the module
      */
     TStaticModuleInitializer(const TCHAR* ModuleName)
     {

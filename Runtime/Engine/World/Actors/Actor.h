@@ -85,26 +85,26 @@ public:
 
     /**
      * @brief Tick component, should be called once every frame
-     * @param DeltaTime - Time since the last call to tick in seconds
+     * @param DeltaTime Time since the last call to tick in seconds
      */
     virtual void Tick(float DeltaTime);
 
     /**
      * @brief Add a new component to the actor 
-     * @param InComponent - Component to add to the Actor
+     * @param InComponent Component to add to the Actor
      */
     void AddComponent(FComponent* InComponent);
 
     /**
      * @brief Set name of the actor 
-     * @param InName - Name of the actor
+     * @param InName Name of the actor
      */
     void SetName(const FString& InName);
 
     /**
-     * @brief               - Check if the actor has a component of the component-class 
-     * @param ComponentClass - ClassObject to of the component to retrieve 
-     * @return               - Returns true if the actor contains a component of a certain type
+     * @brief Check if the actor has a component of the component-class 
+     * @param ComponentClass ClassObject to of the component to retrieve 
+     * @return Returns true if the actor contains a component of a certain type
      */
     bool HasComponentOfClass(class FObjectClass* ComponentClass) const;
 
@@ -119,9 +119,9 @@ public:
     }
 
     /**
-     * @brief               - Retrieve a component from the actor of the component-class 
-     * @param ComponentClass - ClassObject to of the component to retrieve
-     * @return               - Returns a pointer to the requested component, or nullptr if no component of the type exist
+     * @brief Retrieve a component from the actor of the component-class 
+     * @param ComponentClass ClassObject to of the component to retrieve
+     * @return Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
     FComponent* GetComponentOfClass(class FObjectClass* ComponentClass) const;
 

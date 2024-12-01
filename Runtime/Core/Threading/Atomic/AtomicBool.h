@@ -48,7 +48,7 @@ public:
 
     /**
      * @brief Compares and exchanges the boolean to a new value if it matches the comparand
-     * @param InValue   - Value to exchange
+     * @param InValue Value to exchange
      * @param Comparand Value to compare against
      * @return Returns true if the exchange was successful
      */
@@ -97,9 +97,9 @@ public:
      * @param RHS Value to assign
      * @return Returns the assigned value
      */
-    FORCEINLINE bool operator=(bool bRHS) noexcept
+    FORCEINLINE bool operator=(bool bValue) noexcept
     {
-        Store(bRHS);
+        Store(bValue);
         return Load();
     }
 

@@ -9,7 +9,7 @@ struct FInputHandler
 
     /**
      * @brief Handle AnalogEvent event, if the event-handler consumes the event, return true
-     * @param AnalogEvent - Data for the controller event
+     * @param AnalogEvent Data for the controller event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogEvent)
@@ -19,7 +19,7 @@ struct FInputHandler
 
     /**
      * @brief Handle KeyEvent event, if the event-handler consumes the event, return true
-     * @param KeyEvent - Data for the key event
+     * @param KeyEvent Data for the key event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnKeyDown(const FKeyEvent& KeyEvent)
@@ -29,7 +29,7 @@ struct FInputHandler
 
     /**
      * @brief Handle KeyEvent event, if the event-handler consumes the event, return true
-     * @param KeyEvent - Data for the key event
+     * @param KeyEvent Data for the key event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnKeyUp(const FKeyEvent& KeyEvent)
@@ -39,7 +39,7 @@ struct FInputHandler
 
     /**
      * @brief Handle Key typed (String-Character), if the event-handler consumes the event, return true
-     * @param KeyTypedEvent - Data for the key-typed event
+     * @param KeyTypedEvent Data for the key-typed event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnKeyChar(const FKeyEvent& KeyTypedEvent)
@@ -49,7 +49,7 @@ struct FInputHandler
 
     /**
      * @brief Handle mouse move event, if the event-handler consumes the event, return true
-     * @param CursorEvent - Data for the mouse event
+     * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnMouseMove(const FCursorEvent& CursorEvent)
@@ -59,7 +59,7 @@ struct FInputHandler
 
     /**
      * @brief Handle mouse button event, if the event-handler consumes the event, return true
-     * @param CursorEvent - Data for the mouse event
+     * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnMouseButtonDown(const FCursorEvent& CursorEvent)
@@ -69,7 +69,7 @@ struct FInputHandler
 
     /**
      * @brief Handle mouse button event, if the event-handler consumes the event, return true
-     * @param CursorEvent - Data for the mouse event
+     * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnMouseButtonUp(const FCursorEvent& CursorEvent)
@@ -79,7 +79,7 @@ struct FInputHandler
 
     /**
      * @brief Handle mouse scrolled event, if the event-handler consumes the event, return true 
-     * @param CursorEvent - Data for the mouse event
+     * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnMouseScrolled(const FCursorEvent& CursorEvent)
@@ -89,7 +89,7 @@ struct FInputHandler
 
     /**
      * @brief Handle a high-precision mouse event, if the event-handler consumes the event, return true
-     * @param CursorEvent - Data for the mouse event
+     * @param CursorEvent Data for the mouse event
      * @return Returns true if the event was handled and should not be sent to other input-handlers
      */
     virtual bool OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent)

@@ -2,6 +2,8 @@
 #include "Core/Templates/CString.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Platform/PlatformMisc.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Project);
 
@@ -35,6 +37,12 @@ bool FProjectManager::Initialize()
     {
         GInstance = new FProjectManager(ProjectName, ProjectPath, AssetFolderPath);
     }
+
+#if !PRODUCTION_BUILD
+    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
+    LOG_INFO("ProjectName=%s", FProjectManager::Get().GetProjectName().GetCString());
+    LOG_INFO("ProjectPath=%s", FProjectManager::Get().GetProjectPath().GetCString());
+#endif
 
     return true;
 }

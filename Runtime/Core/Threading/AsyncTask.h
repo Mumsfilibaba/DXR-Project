@@ -26,7 +26,7 @@ public:
     /**
      * @brief Launches the task on a new thread.
      * @param Priority The priority for this task
-     * @param bAsync   - True if the task should execute on the calling thread or async
+     * @param bAsync True if the task should execute on the calling thread or async
      * @return Returns true if the task was successfully queued up
      */
     bool Launch(EQueuePriority Priority = EQueuePriority::Normal, bool bAsync = true);

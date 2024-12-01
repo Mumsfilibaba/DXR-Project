@@ -32,7 +32,7 @@ public:
 
     /**
      * @brief Construct with an initial pointer value
-     * @param InPtr - Initial pointer value
+     * @param InPtr Initial pointer value
      */
     FORCEINLINE TAtomicPointer(PointerType InPtr) noexcept
         : Value(reinterpret_cast<SignedType>(InPtr))
@@ -41,7 +41,7 @@ public:
 
     /**
      * @brief Atomically sets the pointer to a new value and returns the old value
-     * @param InPtr - New pointer value
+     * @param InPtr New pointer value
      * @return Returns the old pointer value
      */
     FORCEINLINE PointerType Exchange(PointerType InPtr) noexcept
@@ -52,7 +52,7 @@ public:
 
     /**
      * @brief Compares and exchanges the pointer to a new value if it matches the comparand
-     * @param InPtr     - New pointer value to set
+     * @param InPtr New pointer value to set
      * @param Comparand Pointer value to compare against
      * @return Returns true if the exchange was successful
      */
@@ -76,7 +76,7 @@ public:
 
     /**
      * @brief Stores a new pointer atomically
-     * @param InPtr - New pointer value to store
+     * @param InPtr New pointer value to store
      */
     FORCEINLINE void Store(PointerType InPtr) noexcept
     {

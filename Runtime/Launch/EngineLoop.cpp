@@ -172,12 +172,6 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-#if !PRODUCTION_BUILD
-    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
-    LOG_INFO("ProjectName=%s", FProjectManager::Get().GetProjectName().GetCString());
-    LOG_INFO("ProjectPath=%s", FProjectManager::Get().GetProjectPath().GetCString());
-#endif
-
     if (!FThreadManager::Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");

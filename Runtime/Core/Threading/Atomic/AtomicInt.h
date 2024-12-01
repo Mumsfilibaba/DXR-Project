@@ -139,7 +139,7 @@ public:
 
     /**
      * @brief Compares and exchanges the integer to a new value if it matches the comparand
-     * @param InValue   - Value to exchange
+     * @param InValue Value to exchange
      * @param Comparand Value to compare against
      * @return Returns true if the exchange was successful
      */

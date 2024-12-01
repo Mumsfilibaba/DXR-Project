@@ -12,7 +12,7 @@ public:
     
     /**
      * @brief Constructor that takes a lock and tries to lock it
-     * @param InLock - Lock to lock
+     * @param InLock Lock to lock
      */
     FORCEINLINE TScopedLock(LockType& InLock)
         : Lock(InLock)

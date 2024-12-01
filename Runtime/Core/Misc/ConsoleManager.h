@@ -194,7 +194,7 @@ struct IConsoleVariable : public IConsoleObject
     virtual bool IsVariableString() const = 0;
 
     /**
-     * @brief                   - Set the callback for when the variable changes
+     * @brief Set the callback for when the variable changes
      * @param NewChangedDelegate - Delegate for when the variable changes 
      */
     virtual void SetOnChangedDelegate(const FConsoleVariableDelegate& NewChangedDelegate) = 0;
@@ -227,85 +227,85 @@ public:
     }
 
     /**
-     * @brief                - Register a new console-command
-     * @param Name            - Name of the console-command
-     * @param CommandDelegate - CommandDelegate to call when executing the command
+     * @brief Register a new console-command
+     * @param Name Name of the console-command
+     * @param CommandDelegate CommandDelegate to call when executing the command
      */
     IConsoleCommand* RegisterCommand(const CHAR* InName, const CHAR* HelpString, const FConsoleCommandDelegate& CommandDelegate);
 
     /**
      * @brief Register a new String ConsoleVariable
-     * @param Name         - Name of the ConsoleVariable
-     * @param DefaultValue - Default value for the ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param DefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, const CHAR* DefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief Register a new int32 ConsoleVariable
-     * @param Name         - Name of the ConsoleVariable
-     * @param DefaultValue - Default value for the ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param DefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief Register a new float ConsoleVariable
-     * @param Name         - Name of the ConsoleVariable
-     * @param DefaultValue - Default value for the ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param DefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief Register a new bool ConsoleVariable
-     * @param Name          - Name of the ConsoleVariable
-     * @param bDefaultValue - Default value for the ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param bDefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags);
 
     /**
      * @brief Unregister a ConsoleObject
-     * @param ConsoleObject - ConsoleObject to unregister from the console manager
+     * @param ConsoleObject ConsoleObject to unregister from the console manager
      */
     void UnregisterObject(IConsoleObject* ConsoleObject);
 
     /**
      * @brief Check weather or not a console-object exists with a specific name
-     * @param Name - Name of the console-object
+     * @param Name Name of the console-object
      * @return Returns true if there exists a console-object with the specified name
      */
     bool IsConsoleObject(const CHAR* Name) const;
 
     /**
      * @brief Finds the name of a ConsoleObject
-     * @param ConsoleObject - Name of the ConsoleCommand
+     * @param ConsoleObject Name of the ConsoleCommand
      * @return The ConsoleCommand matching the name
      */
     FString FindConsoleObjectName(IConsoleObject* ConsoleObject);
 
     /**
      * @brief Finds the ConsoleCommand with the matching name, returns nullptr if not found
-     * @param Name - Name of the ConsoleCommand
+     * @param Name Name of the ConsoleCommand
      * @return The ConsoleCommand matching the name
      */
     IConsoleCommand* FindConsoleCommand(const CHAR* Name) const;
 
     /**
      * @brief Find the ConsoleVariable with the matching name, returns nullptr if not found
-     * @param Name - Name of the ConsoleVariable
+     * @param Name Name of the ConsoleVariable
      * @return The ConsoleVariable matching the name
      */
     IConsoleVariable* FindConsoleVariable(const CHAR* Name) const;
 
     /**
      * @brief Finds a any ConsoleObject with the matching name, returns nullptr if not found
-     * @param Name - Name of the ConsoleObject
+     * @param Name Name of the ConsoleObject
      * @return The ConsoleObject matching the name
      */
     IConsoleObject* FindConsoleObject(const CHAR* Name) const;
 
     /**
      * @brief Retrieve all ConsoleObjects that fits the name of the specified string
-     * @param CandidateName - Names to match
-     * @param OutCandidates - Array to store the console-objects that matches the candidate-name
+     * @param CandidateName Names to match
+     * @param OutCandidates Array to store the console-objects that matches the candidate-name
      */
     void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates);
 
@@ -317,7 +317,7 @@ public:
     /**
      * @brief Execute a string from the console
      * @param OutputDevice OutputDevice to print any messages to
-     * @param Command      - Command to execute by the console
+     * @param Command Command to execute by the console
      */
     void ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command);
 
@@ -449,18 +449,9 @@ class TAutoConsoleVariable : public FAutoConsoleObject
     typedef TConsoleVariableData<T> FConsoleVariableData;
 
 public:
-    TAutoConsoleVariable(
-        const CHAR*           InName, 
-        const CHAR*           InHelpString,
-        const T&              DefaultValue, 
-        EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default);
+    TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const T& DefaultValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default);
 
-    TAutoConsoleVariable(
-        const CHAR*                     InName, 
-        const CHAR*                     InHelpString,
-        const T&                        DefaultValue, 
-        const FConsoleVariableDelegate& VariableChangedDelegate, 
-        EConsoleVariableFlags           InFlags = EConsoleVariableFlags::Default)
+    TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const T& DefaultValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
         : TAutoConsoleVariable(InName, InHelpString, DefaultValue, InFlags)
     {
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
