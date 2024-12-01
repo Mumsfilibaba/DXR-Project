@@ -10,8 +10,14 @@ struct ICursor;
 struct FGenericApplicationMessageHandler;
 class FInputDevice;
 
+/**
+ * @brief Contains information about a monitor connected to the system.
+ */
 struct FMonitorInfo
 {
+    /**
+     * @brief Default constructor initializes monitor information with default values.
+     */
     FMonitorInfo()
         : DisplayDPI(0)
         , DisplayScaling(1.0f)
@@ -19,6 +25,11 @@ struct FMonitorInfo
     {
     }
 
+    /**
+     * @brief Checks if this monitor info is equal to another.
+     * @param Other The other monitor info to compare with.
+     * @return True if both monitor info objects are equal.
+     */
     bool operator==(const FMonitorInfo& Other) const
     {
         return DeviceName     == Other.DeviceName
@@ -31,106 +42,168 @@ struct FMonitorInfo
             && bIsPrimary     == Other.bIsPrimary;
     }
 
+    /**
+     * @brief Checks if this monitor info is not equal to another.
+     * @param Other The other monitor info to compare with.
+     * @return True if both monitor info objects are not equal.
+     */
     bool operator!=(const FMonitorInfo& Other) const
     {
         return !(*this == Other);
     }
 
-    // This is just a name of the monitor decided by the platform
+    /** @brief Name of the monitor as decided by the platform. */
     FString DeviceName;
-
-    // This is the workspace position of the monitor without taking menu-bars, dock, etc.
-    // into account, so basically the "raw" position.
+    
+    /** @brief The workspace position of the monitor without considering menu-bars, docks, etc., i.e., the "raw" position. */
     FIntVector2 MainPosition;
-    
-    // This is the workspace size of the monitor without taking menu-bars, dock, etc.
-    // into account, so basically the "raw" size.
-    FIntVector2 MainSize;
-    
-    // This is the workspace position of the monitor that is usable. This is the postion
-    // when taking menu-bars, dock, etc. into account.
-    FIntVector2 WorkPosition;
-    
-    // This is the workspace size of the monitor that is usable. This is the size when
-    // taking menu-bars, dock, etc. into account.
-    FIntVector2 WorkSize;
-    
-    // The DPI of the montior
-    int32 DisplayDPI;
 
-    // This is a floating point value that can be used to scale content easily to the
-    // DPI of the monitor.
+    /** @brief The workspace size of the monitor without considering menu-bars, docks, etc., i.e., the "raw" size. */
+    FIntVector2 MainSize;
+
+    /** @brief The usable workspace position of the monitor, considering menu-bars, docks, etc. */
+    FIntVector2 WorkPosition;
+
+    /** @brief The usable workspace size of the monitor, considering menu-bars, docks, etc. */
+    FIntVector2 WorkSize;
+
+    /** @brief The DPI (dots per inch) of the monitor. */
+    int32 DisplayDPI;
+    
+    /** @brief A scaling factor used to scale content to the DPI of the monitor. */
     float DisplayScaling;
 
-    // This monitor is marked as the primary display by the platform.
+    /** @brief Indicates if this monitor is marked as the primary display by the platform. */
     bool bIsPrimary;
 };
 
+/**
+ * @brief Represents a generic application interface for platform-specific implementations.
+ */
 class COREAPPLICATION_API FGenericApplication
 {
 public:
-    
-    // Create a basic instance of a FGenericApplication, this is basically a null-application and can
-    // be used when the FPlatformApplication is not desired.
+
+    /**
+     * @brief Creates a basic instance of FGenericApplication.
+     * 
+     * This is essentially a null-application and can be used when FPlatformApplication is not desired.
+     * @return A shared pointer to the created FGenericApplication.
+     */
     static TSharedPtr<FGenericApplication> Create();
     
 public:
+
+    /**
+     * @brief Constructs an FGenericApplication with the specified cursor.
+     * @param InCursor The cursor to use with this application.
+     */
     FGenericApplication(const TSharedPtr<ICursor>& InCursor);
+
     virtual ~FGenericApplication() = default;
 
-    // Creates a FGenericWindow interface, this window is not initialized though
+    /**
+     * @brief Creates an interface for a generic window.
+     * 
+     * Note: The window is not initialized and FGenericWindow::Initialize needs to be called before the window is fully initialized
+     * @return A shared reference to the created FGenericWindow.
+     */
     virtual TSharedRef<FGenericWindow> CreateWindow() { return nullptr; }
-    
-    // Update the FGenericApplication by pump messages from the platform and the process any deferred
-    // messages that has been queued up to be processed.
+
+    /**
+     * @brief Updates the application by processing platform messages and any deferred messages.
+     * @param Delta The time elapsed since the last tick.
+     */
     virtual void Tick(float Delta) { }
-    
-    // Updates any InputDevices that are currently available to the FGenericApplication
+
+    /**
+     * @brief Updates the input devices currently available to the application.
+     */
     virtual void UpdateInputDevices() { }
-    
-    // Retrieve the gamepad interface
+
+    /**
+     * @brief Retrieves the input device interface (e.g., gamepad).
+     * @return A pointer to the input device.
+     */
     virtual FInputDevice* GetInputDevice() { return nullptr; }
-    
-    // Returns true if the FGenericApplication supports high-precision mouse-events. This corresponds
-    // to raw-input on windows and is currently unsupported on macOS.
+
+    /**
+     * @brief Checks if high-precision mouse events are supported.
+     * 
+     * This corresponds to raw input on Windows and is currently unsupported on macOS.
+     * @return True if high-precision mouse events are supported.
+     */
     virtual bool SupportsHighPrecisionMouse() const { return false; }
-    
-    // Enables high-precision mouse-events for a certain window if the platform supports this
+
+    /**
+     * @brief Enables high-precision mouse events for a specific window, if supported by the platform.
+     * @param Window The window for which to enable high-precision mouse events.
+     * @return True if high-precision mouse events were successfully enabled.
+     */
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) { return true; }
-    
-    // Set a new active window
+
+    /**
+     * @brief Sets a new active window.
+     * @param Window The window to set as active.
+     */
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) { }
-    
-    // Set the window that should have mouse-capture. This is currently specific to Windows.
+
+    /**
+     * @brief Sets the window that should have mouse capture. This is currently specific to Windows.
+     * @param Window The window to capture the mouse.
+     */
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) { }
-    
-    // Returns the current window that us under the mouse-cursor
+
+    /**
+     * @brief Gets the window currently under the mouse cursor.
+     * @return A shared reference to the window under the mouse cursor.
+     */
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const { return nullptr; }
-    
-    // Returns the current window that has the mouse-capture
+
+    /**
+     * @brief Gets the window that currently has mouse capture.
+     * @return A shared reference to the window with mouse capture.
+     */
     virtual TSharedRef<FGenericWindow> GetCapture() const { return nullptr; }
-    
-    // Returns the current window that is the current active window
+
+    /**
+     * @brief Gets the current active window.
+     * @return A shared reference to the active window.
+     */
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const { return nullptr; }
 
-    // This function queries directly from platform functions the different monitors that are currently
-    // contected to the system and return this array of information for these monitors.
+    /**
+     * @brief Queries the system for monitors currently connected and retrieves their information.
+     * @param OutMonitorInfo An array to store the monitor information.
+     */
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const { }
 
+    /**
+     * @brief Sets the message handler for the application.
+     * @param InMessageHandler The message handler to use.
+     */
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
     { 
         MessageHandler = InMessageHandler;
     }
 
+    /**
+     * @brief Gets the current message handler.
+     * @return A shared pointer to the message handler.
+     */
     TSharedPtr<FGenericApplicationMessageHandler> GetMessageHandler() const 
     { 
         return MessageHandler; 
     }
 
 public:
-    const TSharedPtr<ICursor> Cursor;
+
+    /** @brief The cursor associated with this application. */
+    const TSharedPtr<ICursor> Cursor; 
 
 protected:
+
+    /** @brief The message handler used by the application */
     TSharedPtr<FGenericApplicationMessageHandler> MessageHandler;
 };
 

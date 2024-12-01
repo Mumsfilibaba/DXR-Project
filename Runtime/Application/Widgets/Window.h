@@ -6,16 +6,36 @@
 
 class FWindow;
 
+/** Delegate called when the window is moved. */
 DECLARE_DELEGATE(FOnWindowMoved, const FIntVector2&);
+
+/** Delegate called when the window is resized. */
 DECLARE_DELEGATE(FOnWindowResized, const FIntVector2&);
+
+/** Delegate called when the window is closed. */
 DECLARE_DELEGATE(FOnWindowClosed);
+
+/** Delegate called when the window activation state changes. */
 DECLARE_DELEGATE(FOnWindowActivationChanged);
+
+/**
+ * @brief Represents a window in the application, managing its content, overlay, and platform-specific window.
+ */
 
 class APPLICATION_API FWindow : public FWidget
 {
 public:
+
+    /**
+     * @brief Initialization parameters for an FWindow.
+     */
+
     struct FInitializer
     {
+        /**
+         * @brief Default constructor initializes default window parameters.
+         */
+
         FInitializer()
             : Title()
             , Size()
@@ -24,150 +44,321 @@ public:
         {
         }
 
-        FString           Title;
-        FIntVector2       Size;
-        FIntVector2       Position;
-        EWindowStyleFlags StyleFlags;
+        FString           Title;       /**< @brief The title of the window. */
+        FIntVector2       Size;        /**< @brief The size of the window (width, height). */
+        FIntVector2       Position;    /**< @brief The position of the window (x, y). */
+        EWindowStyleFlags StyleFlags;  /**< @brief Style flags for the window. */
     };
 
+    /**
+     * @brief Constructs an FWindow object.
+     */
     FWindow();
+
+    /**
+     * @brief Destructor for FWindow.
+     */
     virtual ~FWindow();
 
+    /**
+     * @brief Initializes the window with the specified parameters.
+     * @param Initializer Initialization parameters.
+     */
     void Initialize(const FInitializer& Initializer);
 
+    /**
+     * @brief Updates the window each frame.
+     */
     virtual void Tick() override final;
+
+    /**
+     * @brief Checks if this widget is a window.
+     * @return True if it is a window; false otherwise.
+     */
     virtual bool IsWindow() const override final;
 
+    /**
+     * @brief Finds child widgets that contain the specified point.
+     * @param Point The point to check.
+     * @param OutParentWidgets Output parameter to store the widget path.
+     */
     virtual void FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets) override final;
 
-    // Sets a delegate that is called when the window is notified about being closed.
+    /**
+     * @brief Sets a delegate to be called when the window is closed.
+     * @param InOnWindowClosed The delegate to set.
+     */
     void SetOnWindowClosed(const FOnWindowClosed& InOnWindowClosed);
 
-    // Sets a delegate that is called when the window is notified about being moved.
+    /**
+     * @brief Sets a delegate to be called when the window is moved.
+     * @param InOnWindowMoved The delegate to set.
+     */
     void SetOnWindowMoved(const FOnWindowMoved& InOnWindowMoved);
 
-    // Sets a delegate that is called when the window is notified about being resized.
+    /**
+     * @brief Sets a delegate to be called when the window is resized.
+     * @param InOnWindowResized The delegate to set.
+     */
     void SetOnWindowResized(const FOnWindowResized& InOnWindowResized);
 
-    // This function is called from the FApplicationInstance when the PlatformWindow is destroyed.
+    /**
+     * @brief Called when the platform window is destroyed.
+     * 
+     * This function is called from the FApplicationInstance when the platform window is destroyed.
+     */
     void OnWindowDestroyed();
 
-    // This function is called from the FApplicationInstance when the PlatformWindow activation 
-    // is changed. This meaning that the user switches window which recieves focus or if the 
-    // whole application looses focus. The behavior changes somewhat depending on the platoform 
-    // but generally the function is called the window looses or gains focus.
+    /**
+     * @brief Called when the window activation state changes.
+     * 
+     * This function is called from the FApplicationInstance when the platform window's activation state changes.
+     * This means that the user switches windows, changing focus, or the entire application loses focus.
+     * The behavior may vary depending on the platform, but generally, the function is called when the window loses or gains focus.
+     * @param bIsActive True if the window is now active; false if it is inactive.
+     */
     void OnWindowActivationChanged(bool bIsActive);
 
-    // This function is called from the FApplicationInstance when the PlatformWindow is being resized.
+    /**
+     * @brief Called when the platform window is resized.
+     * @param InSize The new size of the window.
+     */
     void OnWindowResize(const FIntVector2& InSize);
 
-    // This function is called from the FApplicationInstance when the PlatformWindow is moved.
+    /**
+     * @brief Called when the platform window is moved.
+     * @param InPosition The new position of the window.
+     */
     void OnWindowMoved(const FIntVector2& InPosition);
 
-    // Resizes the window with a new size. This function also sets the PlatformWindow's size and
-    // changes the current cached size.
+    /**
+     * @brief Resizes the window to a new size.
+     * 
+     * This function also sets the platform window's size and updates the cached size.
+     * @param InSize The new size for the window.
+     */
     void Resize(const FIntVector2& InSize);
 
-    // Move the window to a new position. This function also sets the PlatformWindow's position and
-    // changes the current cached position.
+    /**
+     * @brief Moves the window to a new position.
+     * 
+     * This function also sets the platform window's position and updates the cached position.
+     * @param InPosition The new position for the window.
+     */
     void MoveTo(const FIntVector2& InPosition);
         
-    // This function sets the cached window size and does not modify the PlatformWindow size.
+    /**
+     * @brief Sets the cached window size without modifying the platform window size.
+     * @param InSize The new cached size.
+     */
     void SetSize(const FIntVector2& InSize);
     
-    // This function sets the cached window position and does not modify the PlatformWindow position.
+    /**
+     * @brief Sets the cached window position without modifying the platform window position.
+     * @param InPosition The new cached position.
+     */
     void SetPosition(const FIntVector2& InPosition);
 
-    // Returns the current cached window size
+    /**
+     * @brief Gets the current cached window size.
+     * @return The size of the window.
+     */
     FIntVector2 GetSize() const;
     
-    // Returns the current cached window position
+    /**
+     * @brief Gets the current cached window position.
+     * @return The position of the window.
+     */
     FIntVector2 GetPosition() const;
 
-    // Returns the current cached window width
+    /**
+     * @brief Gets the current cached window width.
+     * @return The width of the window.
+     */
     uint32 GetWidth() const;
     
-    // Returns the current cached window height
+    /**
+     * @brief Gets the current cached window height.
+     * @return The height of the window.
+     */
     uint32 GetHeight() const;
 
-    // Returns the current overlay-widget
+    /**
+     * @brief Gets the current overlay widget.
+     * @return A shared pointer to the overlay widget.
+     */
     TSharedPtr<FWidget> GetOverlay() const;
     
-    // Returns the current content-widget
+    /**
+     * @brief Gets the current content widget.
+     * @return A shared pointer to the content widget.
+     */
     TSharedPtr<FWidget> GetContent() const;
 
-    // Set the overlay-widget. This widget will recieve an event before the content does and allow
-    // the overlay to respond to the event before the content recieves it.
+    /**
+     * @brief Sets the overlay widget.
+     * 
+     * This widget will receive events before the content widget, allowing the overlay to respond to events first.
+     * @param InOverlay The overlay widget to set.
+     */
     void SetOverlay(const TSharedPtr<FWidget>& InOverlay);
     
-    // Set the content-widget.
+    /**
+     * @brief Sets the content widget.
+     * @param InContent The content widget to set.
+     */
     void SetContent(const TSharedPtr<FWidget>& InContent);
 
-    // Show the window with the option to set the window focus to this window when starting to
-    // display the window. This only happens if there is a valid PlatformWindow.
+    /**
+     * @brief Shows the window, optionally setting focus to it.
+     * 
+     * This only occurs if there is a valid platform window.
+     * @param bFocus If true, sets focus to this window when displaying it.
+     */
     void Show(bool bFocus = true);
     
-    // Minimizes the window if there is a valid PlatformWindow.
+    /**
+     * @brief Minimizes the window.
+     * 
+     * This only occurs if there is a valid platform window.
+     */
     void Minimize();
     
-    // Maximizes the window if there is a valid PlatformWindow.
+    /**
+     * @brief Maximizes the window.
+     * 
+     * This only occurs if there is a valid platform window.
+     */
     void Maximize();
     
-    // Restore the window to the previous state (position and size) if the window has been minimized
-    // or maximized.
+    /**
+     * @brief Restores the window to its previous state.
+     * 
+     * Restores the window's position and size if it has been minimized or maximized.
+     */
     void Restore();
 
-    // Returns true if the FWindow's PlatformWindow is the current active window
+    /**
+     * @brief Checks if the window's platform window is the current active window.
+     * @return True if the window is active; false otherwise.
+     */
     bool IsActive() const;
     
-    // Returns true if the FWindow's PlatformWindow is the currently minimized
+    /**
+     * @brief Checks if the window's platform window is currently minimized.
+     * @return True if the window is minimized; false otherwise.
+     */
     bool IsMinimized() const;
     
-    // Returns true if the FWindow's PlatformWindow is the currently maximized
+    /**
+     * @brief Checks if the window's platform window is currently maximized.
+     * @return True if the window is maximized; false otherwise.
+     */
     bool IsMaximized() const;
 
-    // Returns the DPI scale of the monitor that this FWindow is currently displayed on.
+    /**
+     * @brief Gets the DPI scale of the monitor where this window is currently displayed.
+     * @return The DPI scale factor.
+     */
     float GetWindowDPIScale() const;
 
-    // Sets the cached title and also set the PlatformWindow text if there currently is a valid PlatformWindow.
+    /**
+     * @brief Sets the window title.
+     * 
+     * Updates the cached title and sets the platform window's text if there is a valid platform window.
+     * @param InTitle The new title for the window.
+     */
     void SetTitle(const FString& InTitle);
     
-    // Sets the cached window-style and also set the PlatformWindow style if there currently is valid
-    // PlatformWindow.
+    /**
+     * @brief Sets the window style flags.
+     * 
+     * Updates the cached style flags and sets the platform window's style if there is a valid platform window.
+     * @param InStyleFlags The new style flags.
+     */
     void SetStyle(EWindowStyleFlags InStyleFlags);
     
-    // Sets the PlatformWindow. This function also updates the current cached variables based on the new platform window.
+    /**
+     * @brief Sets the platform window.
+     * 
+     * Updates the cached variables based on the new platform window.
+     * @param InPlatformWindow A shared reference to the new platform window.
+     */
     void SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow);
     
-    // Sets this FWindow's PlatformWindow to be the window that has the focus.
+    /**
+     * @brief Sets focus to this window's platform window.
+     */
     void SetFocus();
     
-    // Sets the opacity of the PlatformWindow.
+    /**
+     * @brief Sets the opacity of the platform window.
+     * @param Alpha The opacity value between 0.0 (fully transparent) and 1.0 (fully opaque).
+     */
     void SetOpacity(float Alpha);
 
-    TSharedRef<FGenericWindow>       GetPlatformWindow()       { return PlatformWindow; }
+    /**
+     * @brief Gets the platform window.
+     * @return A shared reference to the platform window.
+     */
+    TSharedRef<FGenericWindow> GetPlatformWindow() { return PlatformWindow; }
+
+    /**
+     * @brief Gets the platform window (const version).
+     * @return A shared reference to the platform window.
+     */
     TSharedRef<const FGenericWindow> GetPlatformWindow() const { return PlatformWindow; }
 
+    /**
+     * @brief Gets the window title.
+     * @return The title of the window.
+     */
     const FString& GetTitle() const
     {
         return Title;
     }
 
+    /**
+     * @brief Gets the window style flags.
+     * @return The style flags of the window.
+     */
     EWindowStyleFlags GetStyle() const
     {
         return StyleFlags;
     }
 
 private:
-    FString                     Title;
-    FOnWindowClosed             OnWindowClosedDelegate;
-    FOnWindowMoved              OnWindowMovedDelegate;
-    FOnWindowResized            OnWindowResizedDelegate;
-    FOnWindowActivationChanged  OnWindowActivationChangedDelegate;
-    FIntVector2                 CachedPosition;
-    FIntVector2                 CachedSize;
-    TSharedPtr<FWidget>         Overlay;
-    TSharedPtr<FWidget>         Content;
-    TSharedRef<FGenericWindow>  PlatformWindow;
-    EWindowStyleFlags           StyleFlags;
+
+    /** @brief The title of the window. */
+    FString Title;
+
+    /** @brief Delegate called when the window is closed. */
+    FOnWindowClosed OnWindowClosedDelegate;
+
+    /** @brief Delegate called when the window is moved. */
+    FOnWindowMoved OnWindowMovedDelegate;
+
+    /** @brief Delegate called when the window is resized. */
+    FOnWindowResized OnWindowResizedDelegate;
+
+    /** @brief Delegate called when the window activation changes. */
+    FOnWindowActivationChanged OnWindowActivationChangedDelegate;
+
+    /** @brief Cached window position. */
+    FIntVector2 CachedPosition;
+
+    /** @brief Cached window size. */
+    FIntVector2 CachedSize;
+
+    /** @brief The overlay widget. */
+    TSharedPtr<FWidget> Overlay;
+
+    /** @brief The content widget. */
+    TSharedPtr<FWidget> Content;
+
+    /** @brief The platform-specific window. */
+    TSharedRef<FGenericWindow> PlatformWindow;
+
+    /** @brief Style flags of the window. */
+    EWindowStyleFlags StyleFlags;
 };

@@ -23,14 +23,14 @@ struct ICursor
 
      /**
       * @brief Sets the type of cursor that is being used 
-      * @param Cursor - New cursor type to set
+      * @param Cursor New cursor type to set
       */
     virtual void SetCursor(ECursor Cursor) = 0;
 
      /** 
-      * @brief  - Sets the position of the cursor
-      * @param x - New x-position of the cursor
-      * @param y - New y-position of the cursor
+      * @brief Sets the position of the cursor
+      * @param x New x-position of the cursor
+      * @param y New y-position of the cursor
       */
     virtual void SetPosition(int32 x, int32 y) = 0;
 
@@ -42,7 +42,7 @@ struct ICursor
 
      /**
       * @brief Set the cursor visibility
-      * @param bIsVisible - The new visibility of the cursor, true to show it and false to hide it
+      * @param bIsVisible The new visibility of the cursor, true to show it and false to hide it
       */
     virtual void SetVisibility(bool bIsVisible) = 0;
 
