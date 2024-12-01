@@ -1,12 +1,11 @@
 include "../BuildScripts/Scripts/build_workspace.lua"
 
----------------------------------------------------------------------------------------------------
 -- Sandbox Project
 
-local Workspace = FWorkspaceRules("DXR-Engine Sandbox")
+local workspace = workspace_rules("DXR-Engine Sandbox")
 
-local Sandbox = FTargetBuildRules("Sandbox", Workspace)
-Sandbox.AddModuleDependencies(
+local sandbox = target_build_rules("Sandbox", workspace)
+sandbox.add_module_dependencies
 {
     "Core",
     "CoreApplication",
@@ -19,19 +18,19 @@ Sandbox.AddModuleDependencies(
     "VulkanRHI",
     "RendererCore",
     "Project",
-})
+}
 
-if IsPlatformMac() then
-    Sandbox.AddModuleDependencies(
+if is_platform_mac() then
+    sandbox.add_module_dependencies
     { 
         "MetalRHI"
-    })
-elseif IsPlatformWindows() then
-    Sandbox.AddModuleDependencies(
+    }
+elseif is_platform_windows() then
+    sandbox.add_module_dependencies
     { 
         "D3D12RHI"
-    })
+    }
 end
 
-Workspace.AddTarget(Sandbox)
-Workspace.Generate()
+workspace.add_target(sandbox)
+workspace.generate()

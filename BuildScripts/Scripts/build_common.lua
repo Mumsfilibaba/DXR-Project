@@ -1,7 +1,7 @@
 include "build_log.lua"
 
--- Custom options 
-newoption 
+-- Custom options
+newoption
 {
     trigger     = "monolithic",
     description = "Links all modules as static libraries instead of DLLs"
@@ -14,165 +14,143 @@ newoption
     description = "Specify the platform to use",
     allowed     = { { "Win32" }, { "macOS" } },
     default     = "Win32"
- }
+}
 
--- Check if the module should be built monolithicly
-function IsMonolithic()
-    if GbIsMonolithic == nil then
-        GbIsMonolithic = (_OPTIONS["monolithic"] ~= nil)
+-- Global variables
+local g_is_monolithic
+local g_modules = {}
+
+-- Check if the module should be built monolithically
+function is_global_monolithic()
+    if g_is_monolithic == nil then
+        g_is_monolithic = (_OPTIONS["monolithic"] ~= nil)
     end
-    
-    return GbIsMonolithic
+    return g_is_monolithic
 end
 
--- Check if the current platform to build for is Win32
-function IsPlatformWindows()
-    return _OPTIONS["platform"] == "Win32" 
+-- Check if the current platform is Windows
+function is_platform_windows()
+    return _OPTIONS["platform"] == "Win32"
 end
 
--- Check if the current platform to build for is MacOS
-function IsPlatformMac()
-    return _OPTIONS["platform"] == "macOS" 
+-- Check if the current platform is macOS
+function is_platform_mac()
+    return _OPTIONS["platform"] == "macOS"
 end
 
 -- Check the action being used
-function BuildWithXcode()
+function build_with_xcode()
     return _ACTION == "xcode4"
 end
 
-function BuildWithVisualStudio()
-    return 
-        _ACTION == "vs2022" or 
-        _ACTION == "vs2019" or 
-        _ACTION == "vs2017" or 
-        _ACTION == "vs2015" or 
-        _ACTION == "vs2013" or
-        _ACTION == "vs2012" or
-        _ACTION == "vs2010" or
-        _ACTION == "vs2008" or
-        _ACTION == "vs2005"
+local vs_actions =
+{
+    vs2022 = true, vs2019 = true, vs2017 = true, vs2015 = true,
+    vs2013 = true, vs2012 = true, vs2010 = true, vs2008 = true, vs2005 = true
+}
+
+function build_with_visual_studio()
+    return vs_actions[_ACTION] == true
 end
 
 -- Verify language version
-function VerifyLanguageVersion(LanguageVersion)
-    return
-        LanguageVersion == "c++98" or
-        LanguageVersion == "c++11" or
-        LanguageVersion == "c++14" or
-        LanguageVersion == "c++17" or 
-        LanguageVersion == "c++20" or
-        LanguageVersion == "latest"
+local valid_language_versions =
+{
+    ["c++98"] = true, ["c++11"] = true, ["c++14"] = true,
+    ["c++17"] = true, ["c++20"] = true, ["latest"] = true
+}
+
+function verify_language_version(language_version)
+    return valid_language_versions[language_version] == true
 end
 
 -- Helper for printing all strings in a table and ending with endline
-function PrintTable(Format, Table)
-    if Table == nil then
-        return
+function print_table(format_str, tbl)
+    if tbl == nil then 
+        return 
+    end
+    for _, value in ipairs(tbl) do
+        log_info(format_str, value)
+    end
+end
+
+-- Helper to append multiple unique elements to a table
+function add_unique_elements(elements, tbl)
+    if tbl == nil or elements == nil then 
+        return 
     end
 
-    if #Table >= 1 then
-        for Index = 1, #Table do
-            LogInfo(Format, Table[Index])
+    local element_set = {}
+    for _, v in ipairs(tbl) do
+        element_set[v] = true
+    end
+    for _, v in ipairs(elements) do
+        if not element_set[v] then
+            table.insert(tbl, v)
+            element_set[v] = true
         end
     end
 end
 
--- Helper to appending multiple elements to a table
-function AddUniqueElements(Elements, Table)
-    if Table == nil then
-        return
-    end
-
-    if Elements ~= nil then
-        for i = 1, #Elements do
-            local bIsUnique = true
-            for j = 1, #Table do
-                if Table[j] == Elements[i] then
-                    bIsUnique = false
-                    break
-                end
-            end
-            
-            if bIsUnique then
-                Table[#Table + 1] = Elements[i]
-            end
-        end
-    end
+-- Module management functions
+function get_module(module_name)
+    return g_modules[module_name]
 end
 
-
--- Global variable that stores all created modules
-GModules = { }
-
-function GetModule(ModuleName)
-    if GModules ~= nil then
-        return GModules[ModuleName]
-    else
-        LogError("Global Module-List has not been initialized")
-        return nil
-    end
+function is_module(module_name)
+    return g_modules[module_name] ~= nil
 end
 
-function IsModule(ModuleName)
-    return GetModule(ModuleName) ~= nil  
+function add_module(module_name, module)
+    g_modules[module_name] = module
 end
 
-function AddModule(ModuleName, Module)
-    if GModules ~= nil then
-        GModules[ModuleName] = Module
-    else
-        LogError("Global Module-List has not been initialized")
-    end
+-- Path handling
+local g_path_separator = is_platform_windows() and '\\' or '/'
+
+function create_os_path(in_path)
+    return path.translate(in_path, g_path_separator)
 end
 
-_GSeperatorForOS = ''
-if IsPlatformWindows() then
-    _GSeperatorForOS = '\\'
-else
-    _GSeperatorForOS = '/'
-end
+-- Main paths
+local g_engine_path = create_os_path(path.getabsolute("../../", _PREMAKE_DIR))
 
-function CreateOSPath(InPath)
-    return path.translate(InPath, _GSeperatorForOS)
-end
-
--- Mainpath ../BuildScripts/Premake
-GEnginePath = CreateOSPath(path.getabsolute( "../../", _PREMAKE_DIR))
-
-function GetEnginePath()
-    return GEnginePath
+function get_engine_path()
+    return g_engine_path
 end
 
 -- Join two paths
-function JoinPath(Path0, Path1)
-    return CreateOSPath(path.join(Path0, Path1))
+function join_path(path_a, path_b)
+    return create_os_path(path.join(path_a, path_b))
 end
 
 -- Retrieve the path to the Runtime folder containing all the engine modules
-_GRuntimeFolderPath = JoinPath(GEnginePath, "Runtime")
-function GetRuntimeFolderPath()
-    return _GRuntimeFolderPath
+local g_runtime_folder_path = join_path(g_engine_path, "Runtime")
+
+function get_runtime_folder_path()
+    return g_runtime_folder_path
 end
 
--- Retrieve the path to the solutions folder containing solution and project files
-_GSolutionsFolderPath = JoinPath(GEnginePath, "Solutions")
-function GetSolutionsFolderPath()
-    return _GSolutionsFolderPath
+-- Retrieve the path to the Solutions folder containing solution and project files
+local g_solutions_folder_path = join_path(g_engine_path, "Solutions")
+
+function get_solutions_folder_path()
+    return g_solutions_folder_path
 end
 
--- Retrieve the path to the dependencies folder containing external dependecy projects
-_GExternalDependenciesFolderPath = JoinPath(GEnginePath, "Dependencies")
-function GetExternalDependenciesFolderPath()
-    return _GExternalDependenciesFolderPath
+-- Retrieve the path to the Dependencies folder containing external dependency projects
+local g_external_dependencies_folder_path = join_path(g_engine_path, "Dependencies")
+
+function get_external_dependencies_folder_path()
+    return g_external_dependencies_folder_path
 end
 
--- Make path relative to dependency folder
-function CreateExternalDependencyPath(Path)
-    return JoinPath(GetExternalDependenciesFolderPath(), Path)
+-- Make path relative to the dependency folder
+function create_external_dependency_path(dependency_path)
+    return join_path(get_external_dependencies_folder_path(), dependency_path)
 end
-
 
 -- Deep copy a table
-function Copy(Source)
-    return table.deepcopy(Source)
+function copy(source)
+    return table.deepcopy(source)
 end

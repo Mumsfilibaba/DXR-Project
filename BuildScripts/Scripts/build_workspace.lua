@@ -2,241 +2,232 @@ include "build_module.lua"
 include "build_target.lua"
 
 -- Function to deduce software version
-function Glslang_DeduceSoftwareVersion(Directory)
+function glslang_deduce_software_version(directory)
     -- Path to the CHANGES.md file
-    local ChangesFile = JoinPath(Directory, "CHANGES.md")
+    local changes_file = join_path(directory, "CHANGES.md")
 
     -- Create a pattern to match the version and date line in CHANGES.md
-    local Pattern = "^#*%s*(%d+)%.(%d+)%.(%d+)%s*(-?[%w]*)%s*(%d%d%d%d%-%d%d%-%d%d)%s*"
+    local pattern = "^#*%s*(%d+)%.(%d+)%.(%d+)%s*(-?[%w]*)%s*(%d%d%d%d%-%d%d%-%d%d)%s*"
 
     -- Read the file line by line
-    for Line in io.lines(ChangesFile) do
-        local Major, Minor, Patch, Flavor, Date = Line:match(Pattern)
-        if Major then
-            Flavor = Flavor:gsub("^%-", "") -- Remove leading hyphen from flavor
+    for line in io.lines(changes_file) do
+        local major, minor, patch, flavor, date = line:match(pattern)
+        if major then
+            flavor = flavor:gsub("^%-", "") -- Remove leading hyphen from flavor
+
             return 
             {
-                Major  = Major,
-                Minor  = Minor,
-                Patch  = Patch,
-                Flavor = Flavor,
-                Date   = Date
+                major  = major,
+                minor  = minor,
+                patch  = patch,
+                flavor = flavor,
+                date   = date
             }
         end
     end
 
-    LogError("No version number found in %s", ChangesFile)
+    log_error("No version number found in %s", changes_file)
 end
 
 -- Generate build info headers
-function Glslang_GenerateBuildTimeHeaders()
-    LogInfo("            Generating BuildTime Headers for 'glslang'")
+function glslang_generate_build_time_headers()
+    log_info("            Generating BuildTime Headers for 'glslang'")
 
-    -- NOTE: This requires python to be installed
-    local GlslangPath      = JoinPath(GetEnginePath(), "Dependencies/glslang")
-    local ScriptPath       = JoinPath(GlslangPath, "build_info.py")
-    local TemplateFilePath = JoinPath(GlslangPath, "build_info.h.tmpl")
-    local OutputFileDir    = JoinPath(GlslangPath, "glslang/include/glslang")
-    local OutputFilePath   = OutputFileDir .. "/build_info.h"
-
-    -- Local variable to store the template file in
-    local Template
+    -- NOTE: This requires Python to be installed
+    local glslang_path       = join_path(get_engine_path(), "Dependencies/glslang")
+    local script_path        = join_path(glslang_path, "build_info.py")
+    local template_file_path = join_path(glslang_path, "build_info.h.tmpl")
+    local output_file_dir    = join_path(glslang_path, "glslang/include/glslang")
+    local output_file_path   = output_file_dir .. "/build_info.h"
 
     -- Load the template file
-    local File = io.open(TemplateFilePath, "r")
-    if File then
-        LogInfo("            Loaded template file '%s'", TemplateFilePath)
-
-        Template = File:read("*a")
-        File:close()
+    local file = io.open(template_file_path, "r")
+    if file then
+        log_info("            Loaded template file '%s'", template_file_path)
+        template = file:read("*a")
+        file:close()
     else
-        LogError("Failed to open template file '%s'", TemplateFilePath)
+        log_error("Failed to open template file '%s'", template_file_path)
         return
     end
 
-    local SoftwareVersion = Glslang_DeduceSoftwareVersion(GlslangPath)
-    LogInfo("            SoftwareVersion @major@ '%d'", SoftwareVersion.Major)
-    LogInfo("            SoftwareVersion @minor@ '%d'", SoftwareVersion.Minor)
-    LogInfo("            SoftwareVersion @patch@ '%d'", SoftwareVersion.Patch)
-    LogInfo("            SoftwareVersion @flavor@ '%s'", SoftwareVersion.Flavor)
-    LogInfo("            SoftwareVersion @date@ '%s'", SoftwareVersion.Date)
+    local software_version = glslang_deduce_software_version(glslang_path)
+    log_info("            SoftwareVersion @major@ '%d'", software_version.major)
+    log_info("            SoftwareVersion @minor@ '%d'", software_version.minor)
+    log_info("            SoftwareVersion @patch@ '%d'", software_version.patch)
+    log_info("            SoftwareVersion @flavor@ '%s'", software_version.flavor)
+    log_info("            SoftwareVersion @date@ '%s'", software_version.date)
     
-    local Output = Template;
-    Output = string.gsub(Output, "@major@", SoftwareVersion.Major)
-    Output = string.gsub(Output, "@minor@", SoftwareVersion.Minor)
-    Output = string.gsub(Output, "@patch@", SoftwareVersion.Patch)
-    Output = string.gsub(Output, "@flavor@", SoftwareVersion.Flavor)
-    Output = string.gsub(Output, "@date@", SoftwareVersion.Date)
+    local output = template
+    output = string.gsub(output, "@major@", software_version.major)
+    output = string.gsub(output, "@minor@", software_version.minor)
+    output = string.gsub(output, "@patch@", software_version.patch)
+    output = string.gsub(output, "@flavor@", software_version.flavor)
+    output = string.gsub(output, "@date@", software_version.date)
 
-    if not os.isdir(OutputFileDir) then
-        LogInfo("            'build_info.h' does not exist yet, creating file...")
+    if not os.isdir(output_file_dir) then
+        log_info("            'build_info.h' does not exist yet, creating file...")
 
-        local Success, Error = os.mkdir(OutputFileDir)
-        if not Success then
-            LogError("Failed to create output directory '%s': %s", OutputFileDir, Error)
+        local success, err = os.mkdir(output_file_dir)
+        if not success then
+            log_error("Failed to create output directory '%s': %s", output_file_dir, err)
             return
         end
     else
-        local File, Error = io.open(OutputFilePath, "r")
-        if File then
-            local ExistingOutput = File:read("*a")
-            File:close()
+        local file, err = io.open(output_file_path, "r")
+        if file then
+            local existing_output = file:read("*a")
+            file:close()
     
-            if Output == ExistingOutput then
-                LogInfo("            'build_info.h' is equal to the generated one, skipping file creation")
+            if output == existing_output then
+                log_info("            'build_info.h' is equal to the generated one, skipping file creation")
                 return
             end
         else
-            LogInfo("            'build_info.h' does not exist yet, creating file...")
+            log_info("            'build_info.h' does not exist yet, creating file...")
         end
     end
 
-    local File, Error = io.open(OutputFilePath, "w")
-    if File then
-        File:write(Output)
-        File:close()
-        LogInfo("            ... finished creating 'build_info.h'")
+    local file, err = io.open(output_file_path, "w")
+    if file then
+        file:write(output)
+        file:close()
+        log_info("            ... finished creating 'build_info.h'")
     else
-        LogError("Failed to open output file '%s': %s", OutputFilePath, Error)
+        log_error("Failed to open output file '%s': %s", output_file_path, err)
         return
     end
 end
 
 -- Define platform-specific settings
-function Glslang_SetPlatformProperties()
-    if (os.target() == "windows") then
-        buildoptions
-        {
+function glslang_set_platform_properties()
+    if os.target() == "windows" then
+        buildoptions {
             "/Zc:threadSafeInit-"
         }
-
-        defines
-        {
+        defines {
             "GLSLANG_OSINCLUDE_WIN32"
         }
     else
-        defines
-        {
-            "GLSLANG_OSINCLUDE_UNIX" 
+        defines {
+            "GLSLANG_OSINCLUDE_UNIX"
         }
     end
 end
 
--- Generate a workspace from an array of target-rules
-function FWorkspaceRules(WorkspaceName)
-    
-    -- Must have a valid Workspace Name
-    if WorkspaceName == nil then
+-- Generate a workspace from an array of target rules
+function workspace_rules(workspace_name)
+    -- Must have a valid workspace name
+    if workspace_name == nil then
         return nil
     end
 
-    -- Init this object
-    local self = 
-    {
+    log_highlight("Creating Workspace '%s'", workspace_name)
+
+    -- Initialize this object
+    local self = {
         -- @brief - Name of the workspace being generated
-        Name = WorkspaceName,
+        name = workspace_name,
         
-        -- @brief - List  of targets for this workspace
-        TargetRules = { },
+        -- @brief - List of targets for this workspace
+        target_rules = {},
 
         -- @brief - Name of the target of the workspace
-        TargetName = "",
+        target_name = "",
         
         -- @brief - Engine folder path
-        EnginePath = GetEnginePath(),
+        engine_path = get_engine_path(),
 
         -- @brief - Defines
-        Defines = { },
+        defines = {},
 
         -- @brief - Projects that should have projects generated
-        ProjectRules = { },
+        project_rules = {},
 
-        -- @brief - Name of the project that should be set to startup project
-        StartProjectName = "",
+        -- @brief - Name of the project that should be set as startup project
+        start_project_name = "",
     }
 
-    -- @brief - Output path for dependencies (ImGui etc.)
-    function self.GetOutputPath()
+    -- @brief - Output path for dependencies (ImGui, etc.)
+    function self.get_output_path()
         return "%{cfg.buildcfg}-%{cfg.system}-%{cfg.platform}"
     end
 
-    -- @brief - Retreive the path of the engine
-    function self.GetEnginePath()
-        return self.EnginePath
+    -- @brief - Retrieve the path of the engine
+    function self.get_engine_path()
+        return self.engine_path
     end
 
-    -- @brief - Retreive the current Target Name
-    function self.GetCurrentTargetName()
-        return self.TargetName
+    -- @brief - Retrieve the current target name
+    function self.get_current_target_name()
+        return self.target_name
     end
 
-    -- @brief - Retreive the path of the engine 'Runtime' folder
-    local _RuntimeFolderPath = JoinPath(self.GetEnginePath(), "Runtime")
-    function self.GetRuntimeFolderPath()
-        return _RuntimeFolderPath
+    -- @brief - Retrieve the path of the engine 'Runtime' folder
+    local runtime_folder_path = join_path(self.get_engine_path(), "Runtime")
+    function self.get_runtime_folder_path()
+        return runtime_folder_path
     end
 
-    -- @brief - Retreive the path of the engine 'Runtime' folder
-    local _BuildFolderPath = JoinPath(self.GetEnginePath(), "Build")
-    function self.GetBuildFolderPath()
-        return _BuildFolderPath
+    -- @brief - Retrieve the path of the engine 'Build' folder
+    local build_folder_path = join_path(self.get_engine_path(), "Build")
+    function self.get_build_folder_path()
+        return build_folder_path
     end
 
-    -- @brief - Retreive the path of the engine 'Solutions' folder
-    local _SolutionsFolderPath = JoinPath(self.GetEnginePath(), "Solutions")
-    function self.GetSolutionsFolderPath()
-        return _SolutionsFolderPath
+    -- @brief - Retrieve the path of the engine 'Solutions' folder
+    local solutions_folder_path = join_path(self.get_engine_path(), "Solutions")
+    function self.get_solutions_folder_path()
+        return solutions_folder_path
     end
 
-    -- @brief - Retrieve the path to the dependencies folder containing external dependecy projects
-    local _ExternalDependenciesFolderPath = JoinPath(self.GetEnginePath(), "Dependencies")
-    function self.GetExternalDependenciesFolderPath()
-        return _ExternalDependenciesFolderPath
+    -- @brief - Retrieve the path to the dependencies folder containing external dependency projects
+    local external_dependencies_folder_path = join_path(self.get_engine_path(), "Dependencies")
+    function self.get_external_dependencies_folder_path()
+        return external_dependencies_folder_path
     end
 
     -- @brief - Create a path relative to dependency folder
-    function self.CreateExternalDependencyPath(Path)
-        return JoinPath(GetExternalDependenciesFolderPath(), Path)
+    function self.create_external_dependency_path(path)
+        return join_path(self.get_external_dependencies_folder_path(), path)
     end
 
-    -- @brief - Retreive a target added to the workspace
-    function self.GetTarget(TargetName)
-        return self.TargetRules[TargetName]
+    -- @brief - Retrieve a target added to the workspace
+    function self.get_target(target_name)
+        return self.target_rules[target_name]
     end
 
     -- @brief - Check if a target already exists
-    function self.IsTarget(TargetName)
-        return self.GetTarget(TargetName) ~= nil
+    function self.is_target(target_name)
+        return self.get_target(target_name) ~= nil
     end
 
     -- @brief - Helper function for adding a target
-    function self.AddTarget(InTarget)
-        table.insert(self.TargetRules, InTarget)
+    function self.add_target(target)
+        table.insert(self.target_rules, target)
     end
 
     -- @brief - Helper function for adding defines
-    function self.AddDefines(InDefine)
-        AddUniqueElements(InDefine, self.Defines)
+    function self.add_defines(define)
+        add_unique_elements(define, self.defines)
     end
 
     -- @brief - Helper function for adding a rule
-    function self.AddRule(InRule)
-        table.insert(self.ProjectRules, InRule)
+    function self.add_rule(rule)
+        table.insert(self.project_rules, rule)
     end
 
     -- TODO: Better way of handling these dependencies
-    -- Inject dependencies projects into the workspace
-    function self.GenerateDependencyProjects()
-        local SolutionLocation = self.GetSolutionsFolderPath()
+    -- Inject dependency projects into the workspace
+    function self.generate_dependency_projects()
+        local solution_location = self.get_solutions_folder_path()
 
         group "Dependencies"
-            LogInfo("\n--- External Dependencies ---")
+            log_info("\n--- External Dependencies ---")
             
-            -----------
-            -- Imgui --
-            -----------
+            -- ImGui
             project "ImGui"
-                LogInfo("    Generating dependecy ImGui")
+                log_info("    Generating dependency ImGui")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -251,32 +242,27 @@ function FWorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags(
-                { 
-                    "MultiProcessorCompile",
-                    "NoIncrementalLink",
-                })
+                flags { "MultiProcessorCompile", "NoIncrementalLink" }
 
-                location(JoinPath(SolutionLocation, "Dependencies/ImGui"))
+                location(join_path(solution_location, "Dependencies/ImGui"))
 
                 -- Locations
-                targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/ImGui/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/ImGui/" .. self.GetOutputPath()))
+                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/ImGui/" .. self.get_output_path()))
+                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/ImGui/" .. self.get_output_path()))
 
                 -- Files
-                files
-                {
-                    self.CreateExternalDependencyPath("imgui/imconfig.h"),
-                    self.CreateExternalDependencyPath("imgui/imgui.h"),
-                    self.CreateExternalDependencyPath("imgui/imgui.cpp"),
-                    self.CreateExternalDependencyPath("imgui/imgui_demo.cpp"),
-                    self.CreateExternalDependencyPath("imgui/imgui_draw.cpp"),
-                    self.CreateExternalDependencyPath("imgui/imgui_internal.h"),
-                    self.CreateExternalDependencyPath("imgui/imgui_tables.cpp"),
-                    self.CreateExternalDependencyPath("imgui/imgui_widgets.cpp"),
-                    self.CreateExternalDependencyPath("imgui/imstb_rectpack.h"),
-                    self.CreateExternalDependencyPath("imgui/imstb_textedit.h"),
-                    self.CreateExternalDependencyPath("imgui/imstb_truetype.h"),
+                files {
+                    self.create_external_dependency_path("imgui/imconfig.h"),
+                    self.create_external_dependency_path("imgui/imgui.h"),
+                    self.create_external_dependency_path("imgui/imgui.cpp"),
+                    self.create_external_dependency_path("imgui/imgui_demo.cpp"),
+                    self.create_external_dependency_path("imgui/imgui_draw.cpp"),
+                    self.create_external_dependency_path("imgui/imgui_internal.h"),
+                    self.create_external_dependency_path("imgui/imgui_tables.cpp"),
+                    self.create_external_dependency_path("imgui/imgui_widgets.cpp"),
+                    self.create_external_dependency_path("imgui/imstb_rectpack.h"),
+                    self.create_external_dependency_path("imgui/imstb_textedit.h"),
+                    self.create_external_dependency_path("imgui/imstb_truetype.h"),
                 }
                 
                 -- Configurations
@@ -292,11 +278,9 @@ function FWorkspaceRules(WorkspaceName)
                     optimize("Full")
                 filter {}
             
-            -------------------
-            -- tinyobjloader --
-            -------------------
+            -- tinyobjloader
             project "tinyobjloader"
-                LogInfo("    Generating dependecy tinyobjloader")
+                log_info("    Generating dependency tinyobjloader")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -311,23 +295,18 @@ function FWorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags(
-                { 
-                    "MultiProcessorCompile",
-                    "NoIncrementalLink",
-                })
+                flags { "MultiProcessorCompile", "NoIncrementalLink" }
 
-                location(JoinPath(SolutionLocation, "Dependencies/tinyobjloader"))
+                location(join_path(solution_location, "Dependencies/tinyobjloader"))
 
                 -- Locations
-                targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/tinyobjloader/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/tinyobjloader/" .. self.GetOutputPath()))
+                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/tinyobjloader/" .. self.get_output_path()))
+                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/tinyobjloader/" .. self.get_output_path()))
 
                 -- Files
-                files 
-                {
-                    self.CreateExternalDependencyPath("tinyobjloader/tiny_obj_loader.h"),
-                    self.CreateExternalDependencyPath("tinyobjloader/tiny_obj_loader.cc"),
+                files {
+                    self.create_external_dependency_path("tinyobjloader/tiny_obj_loader.h"),
+                    self.create_external_dependency_path("tinyobjloader/tiny_obj_loader.cc"),
                 }
 
                 -- Configurations
@@ -340,14 +319,12 @@ function FWorkspaceRules(WorkspaceName)
                 filter "configurations:Production"
                     symbols("off")
                     runtime("Release")
-                    optimize("Full")    
+                    optimize("Full")
                 filter {}
             
-            -------------
-            -- OpenFBX --
-            -------------
+            -- OpenFBX
             project "OpenFBX"
-                LogInfo("    Generating dependecy OpenFBX")
+                log_info("    Generating dependency OpenFBX")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -362,25 +339,20 @@ function FWorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags(
-                { 
-                    "MultiProcessorCompile",
-                    "NoIncrementalLink",
-                })
+                flags { "MultiProcessorCompile", "NoIncrementalLink" }
                 
-                location(JoinPath(SolutionLocation, "Dependencies/OpenFBX"))
+                location(join_path(solution_location, "Dependencies/OpenFBX"))
             
                 -- Locations
-                targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/OpenFBX/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/OpenFBX/" .. self.GetOutputPath()))
+                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/OpenFBX/" .. self.get_output_path()))
+                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/OpenFBX/" .. self.get_output_path()))
 
                 -- Files
-                files 
-                {
-                    self.CreateExternalDependencyPath("OpenFBX/src/ofbx.h"),
-                    self.CreateExternalDependencyPath("OpenFBX/src/ofbx.cpp"),
-                    self.CreateExternalDependencyPath("OpenFBX/src/libdeflate.h"),
-                    self.CreateExternalDependencyPath("OpenFBX/src/libdeflate.c"),
+                files {
+                    self.create_external_dependency_path("OpenFBX/src/ofbx.h"),
+                    self.create_external_dependency_path("OpenFBX/src/ofbx.cpp"),
+                    self.create_external_dependency_path("OpenFBX/src/libdeflate.h"),
+                    self.create_external_dependency_path("OpenFBX/src/libdeflate.c"),
                 }
 
                 -- Configurations 
@@ -396,11 +368,9 @@ function FWorkspaceRules(WorkspaceName)
                     optimize("Full")
                 filter {}
 
-            -----------------
-            -- SPIRV-Cross --
-            -----------------
+            -- SPIRV-Cross
             project "SPIRV-Cross"
-                LogInfo("    Generating dependecy SPIRV-Cross")
+                log_info("    Generating dependency SPIRV-Cross")
 
                 kind("StaticLib")
                 warnings("Off")
@@ -415,56 +385,50 @@ function FWorkspaceRules(WorkspaceName)
                 floatingpoint("Fast")
                 vectorextensions("Default")
                 characterset("Ascii")
-                flags(
-                { 
-                    "MultiProcessorCompile",
-                    "NoIncrementalLink",
-                })
+                flags { "MultiProcessorCompile", "NoIncrementalLink" }
                 
-                location(JoinPath(SolutionLocation, "Dependencies/SPIRV-Cross"))
+                location(join_path(solution_location, "Dependencies/SPIRV-Cross"))
             
                 -- Locations
-                targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/SPIRV-Cross/" .. self.GetOutputPath()))
-                objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/SPIRV-Cross/" .. self.GetOutputPath()))
+                targetdir(self.create_external_dependency_path("Build/bin/Dependencies/SPIRV-Cross/" .. self.get_output_path()))
+                objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/SPIRV-Cross/" .. self.get_output_path()))
 
                 -- Files
-                files 
-                {
-                    self.CreateExternalDependencyPath("SPIRV-Cross/GLSL.std.450.h"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv.h"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_c.h"),
+                files {
+                    self.create_external_dependency_path("SPIRV-Cross/GLSL.std.450.h"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv.h"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_c.h"),
 
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cfg.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_common.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cpp.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_containers.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_error_handling.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_parsed_ir.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_util.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_glsl.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_hlsl.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_msl.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_parser.hpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_reflect.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cfg.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_common.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cpp.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_containers.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_error_handling.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_parsed_ir.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_util.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_glsl.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_hlsl.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_msl.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_parser.hpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_reflect.hpp"),
 
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cfg.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cpp.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_c.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_parsed_ir.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_cross_util.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_glsl.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_hlsl.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_msl.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_parser.cpp"),
-                    self.CreateExternalDependencyPath("SPIRV-Cross/spirv_reflect.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cfg.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cpp.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_c.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_parsed_ir.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_cross_util.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_glsl.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_hlsl.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_msl.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_parser.cpp"),
+                    self.create_external_dependency_path("SPIRV-Cross/spirv_reflect.cpp"),
                 }
 
                 -- Defines 
-                defines
-                {
+                defines {
                     "SPIRV_CROSS_C_API_MSL=(1)",
                     "SPIRV_CROSS_C_API_HLSL=(1)",
                     "SPIRV_CROSS_C_API_GLSL=(1)",
@@ -483,20 +447,16 @@ function FWorkspaceRules(WorkspaceName)
                     optimize("Full")
                 filter {}
             
-            -------------------
-            -- glslang group --
-            -------------------
+            -- glslang group
             group "Dependencies/glslang"
-                LogInfo("\n    --- Generating glslang projects ---")
+                log_info("\n    --- Generating glslang projects ---")
 
                 -- Include directories for build-time generated include files
-                local GLSLANG_GENERATED_INCLUDEDIR = JoinPath("build/generated/include", "glslang")
+                local glslang_generated_includedir = join_path("build/generated/include", "glslang")
 
-                --------------------
-                -- GenericCodeGen --
-                --------------------
+                -- GenericCodeGen
                 project "GenericCodeGen"
-                    LogInfo("        Generating dependecy GenericCodeGen")
+                    log_info("        Generating dependency GenericCodeGen")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -511,26 +471,21 @@ function FWorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
+                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/GenericCodeGen/"))
+                    location(join_path(solution_location, "Dependencies/glslang/GenericCodeGen/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/GenericCodeGen/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/GenericCodeGen/" .. self.GetOutputPath()))
+                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/GenericCodeGen/" .. self.get_output_path()))
+                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/GenericCodeGen/" .. self.get_output_path()))
 
                     -- Files
-                    files 
-                    {
-                        self.CreateExternalDependencyPath("glslang/glslang/GenericCodeGen/CodeGen.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/GenericCodeGen/Link.cpp"),
+                    files {
+                        self.create_external_dependency_path("glslang/glslang/GenericCodeGen/CodeGen.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/GenericCodeGen/Link.cpp"),
                     }
 
-                    Glslang_SetPlatformProperties()
+                    glslang_set_platform_properties()
 
                     -- Configurations 
                     filter "configurations:Debug or Release"
@@ -545,11 +500,9 @@ function FWorkspaceRules(WorkspaceName)
                         optimize("Full")
                     filter {}
 
-                -----------------
-                -- OSDependent --
-                -----------------
+                -- OSDependent
                 project "OSDependent"
-                    LogInfo("        Generating dependecy OSDependent")
+                    log_info("        Generating dependency OSDependent")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -564,37 +517,30 @@ function FWorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
+                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/OSDependent/"))
+                    location(join_path(solution_location, "Dependencies/glslang/OSDependent/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/OSDependent/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/OSDependent/" .. self.GetOutputPath()))
+                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/OSDependent/" .. self.get_output_path()))
+                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/OSDependent/" .. self.get_output_path()))
 
                     -- Files
-                    files 
-                    {
-                        self.CreateExternalDependencyPath("glslang/glslang/OSDependent/osinclude.h"),
+                    files {
+                        self.create_external_dependency_path("glslang/glslang/OSDependent/osinclude.h"),
                     }
 
                     filter "system:windows"
-                        files 
-                        {
-                            self.CreateExternalDependencyPath("glslang/glslang/OSDependent/Windows/ossource.cpp"),
+                        files {
+                            self.create_external_dependency_path("glslang/glslang/OSDependent/Windows/ossource.cpp"),
                         }
                     filter "system:macosx"
-                        files 
-                        {
-                            self.CreateExternalDependencyPath("glslang/glslang/OSDependent/Unix/ossource.cpp"),
+                        files {
+                            self.create_external_dependency_path("glslang/glslang/OSDependent/Unix/ossource.cpp"),
                         }
                     filter {}
 
-                    Glslang_SetPlatformProperties()
+                    glslang_set_platform_properties()
 
                     -- Configurations 
                     filter "configurations:Debug or Release"
@@ -609,11 +555,9 @@ function FWorkspaceRules(WorkspaceName)
                         optimize("Full")
                     filter {}
 
-                ------------------------
-                -- MachineIndependent --
-                ------------------------
+                -- MachineIndependent
                 project "MachineIndependent"
-                    LogInfo("        Generating dependecy MachineIndependent")
+                    log_info("        Generating dependency MachineIndependent")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -628,90 +572,83 @@ function FWorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
+                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/MachineIndependent/"))
+                    location(join_path(solution_location, "Dependencies/glslang/MachineIndependent/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/MachineIndependent/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/MachineIndependent/" .. self.GetOutputPath()))
+                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/MachineIndependent/" .. self.get_output_path()))
+                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/MachineIndependent/" .. self.get_output_path()))
 
                     -- Include Directories
-                    includedirs
-                    {
-                        self.CreateExternalDependencyPath("glslang/glslang/include")
+                    includedirs {
+                        self.create_external_dependency_path("glslang/glslang/include")
                     }
 
                     -- Files
-                    files 
-                    {
+                    files {
                         -- Cpp files
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/glslang.y"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/glslang.y"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/glslang_tab.cpp"),
 
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/attribute.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Constant.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/InfoSink.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Initialize.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/intermOut.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/iomapper.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Intermediate.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/limits.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/linkValidate.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/parseConst.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ParseHelper.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/reflection.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/RemoveTree.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Scan.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ShaderLang.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/SymbolTable.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Versions.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/attribute.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Constant.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/InfoSink.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Initialize.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/intermOut.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/IntermTraverse.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/iomapper.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Intermediate.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/limits.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/linkValidate.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/parseConst.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ParseContextBase.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ParseHelper.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/PoolAlloc.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/propagateNoContraction.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/reflection.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/RemoveTree.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Scan.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ShaderLang.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/SpirvIntrinsics.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/SymbolTable.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Versions.cpp"),
 
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/Pp.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp"),
 
                         -- Header Files
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/gl_types.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/glslang_tab.cpp.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/gl_types.h"),
 
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/attribute.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Initialize.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/iomapper.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/LiveTraverser.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/localintermediate.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ParseHelper.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/parseVersions.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/reflection.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/RemoveTree.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Scan.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/ScanContext.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/span.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/SymbolTable.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/Versions.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/attribute.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Initialize.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/iomapper.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/LiveTraverser.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/localintermediate.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ParseHelper.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/parseVersions.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/propagateNoContraction.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/reflection.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/RemoveTree.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Scan.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/ScanContext.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/span.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/SymbolTable.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/Versions.h"),
 
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpContext.h"),
+                        self.create_external_dependency_path("glslang/glslang/MachineIndependent/preprocessor/PpTokens.h"),
                     }
 
-                    Glslang_SetPlatformProperties()
-                    Glslang_GenerateBuildTimeHeaders()
+                    glslang_set_platform_properties()
+                    glslang_generate_build_time_headers()
 
                     -- Links
-                    links
-                    {
+                    links {
                         "OSDependent",
                         "GenericCodeGen",
                     }
@@ -729,11 +666,9 @@ function FWorkspaceRules(WorkspaceName)
                         optimize("Full")
                     filter {}
 
-                -------------
-                -- glslang --
-                -------------
+                -- glslang
                 project "glslang"
-                    LogInfo("        Generating dependecy glslang")
+                    log_info("        Generating dependency glslang")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -748,56 +683,49 @@ function FWorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
+                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/glslang/"))
+                    location(join_path(solution_location, "Dependencies/glslang/glslang/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/glslang/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/glslang/" .. self.GetOutputPath()))
+                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/glslang/" .. self.get_output_path()))
+                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/glslang/" .. self.get_output_path()))
 
                     -- Include Directories
-                    includedirs
-                    {
-                        self.CreateExternalDependencyPath("glslang")
+                    includedirs {
+                        self.create_external_dependency_path("glslang")
                     }
 
                     -- Files
-                    files 
-                    {
+                    files {
                         -- Cpp
-                        self.CreateExternalDependencyPath("glslang/glslang/CInterface/glslang_c_interface.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/CInterface/glslang_c_interface.cpp"),
 
                         -- Header
-                        self.CreateExternalDependencyPath("glslang/glslang/Public/ShaderLang.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/arrays.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/BaseTypes.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/Common.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/ConstantUnion.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/glslang_c_interface.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/glslang_c_shader_types.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/InfoSink.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/InitializeGlobals.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/intermediate.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/PoolAlloc.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/ResourceLimits.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/ShHandle.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/SpirvIntrinsics.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Include/Types.h"),
+                        self.create_external_dependency_path("glslang/glslang/Public/ShaderLang.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/arrays.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/BaseTypes.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/Common.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/ConstantUnion.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/glslang_c_interface.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/glslang_c_shader_types.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/InfoSink.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/InitializeGlobals.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/intermediate.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/PoolAlloc.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/ResourceLimits.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/ShHandle.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/SpirvIntrinsics.h"),
+                        self.create_external_dependency_path("glslang/glslang/Include/Types.h"),
                     }
 
                     -- Links
-                    links
-                    {
+                    links {
                         "OSDependent",
                         "MachineIndependent",
                     }
 
-                    Glslang_SetPlatformProperties()
+                    glslang_set_platform_properties()
 
                     -- Configurations 
                     filter "configurations:Debug or Release"
@@ -812,11 +740,9 @@ function FWorkspaceRules(WorkspaceName)
                         optimize("Full")
                     filter {}
 
-                --------------------
-                -- ResourceLimits --
-                --------------------
+                -- ResourceLimits
                 project "glslang-default-resource-limits"
-                    LogInfo("        Generating dependecy glslang-default-resource-limits")
+                    log_info("        Generating dependency glslang-default-resource-limits")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -831,37 +757,31 @@ function FWorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
+                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/glslang-default-resource-limits/"))
+                    location(join_path(solution_location, "Dependencies/glslang/glslang-default-resource-limits/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/glslang-default-resource-limits/" .. self.GetOutputPath()))
+                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/glslang-default-resource-limits/" .. self.get_output_path()))
+                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/glslang-default-resource-limits/" .. self.get_output_path()))
 
                     -- Include Directories
-                    includedirs
-                    {
-                        self.CreateExternalDependencyPath("glslang")
+                    includedirs {
+                        self.create_external_dependency_path("glslang")
                     }
                     
                     -- Files
-                    files 
-                    {
+                    files {
                         -- Cpp
-                        self.CreateExternalDependencyPath("glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
-                        self.CreateExternalDependencyPath("glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/ResourceLimits/ResourceLimits.cpp"),
+                        self.create_external_dependency_path("glslang/glslang/ResourceLimits/resource_limits_c.cpp"),
 
                         -- Header
-                        self.CreateExternalDependencyPath("glslang/glslang/Public/ResourceLimits.h"),
-                        self.CreateExternalDependencyPath("glslang/glslang/Public/resource_limits_c.h"),
+                        self.create_external_dependency_path("glslang/glslang/Public/ResourceLimits.h"),
+                        self.create_external_dependency_path("glslang/glslang/Public/resource_limits_c.h"),
                     }
 
-                    Glslang_SetPlatformProperties()
+                    glslang_set_platform_properties()
 
                     -- Configurations
                     filter "configurations:Debug or Release"
@@ -876,11 +796,9 @@ function FWorkspaceRules(WorkspaceName)
                         optimize("Full")
                     filter {}
 
-                ------------
-                -- SPIR-V --
-                ------------
+                -- SPIRV
                 project "SPIRV"
-                    LogInfo("        Generating dependecy SPIRV")
+                    log_info("        Generating dependency SPIRV")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -895,67 +813,60 @@ function FWorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
+                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/SPIRV/"))
+                    location(join_path(solution_location, "Dependencies/glslang/SPIRV/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/SPIRV/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/SPIRV/" .. self.GetOutputPath()))
+                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/SPIRV/" .. self.get_output_path()))
+                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/SPIRV/" .. self.get_output_path()))
 
                     -- Include Directories
-                    includedirs
-                    {
-                        self.CreateExternalDependencyPath("glslang"),
-                        self.CreateExternalDependencyPath("glslang/glslang/include"),
+                    includedirs {
+                        self.create_external_dependency_path("glslang"),
+                        self.create_external_dependency_path("glslang/glslang/include"),
                     }
 
                     -- Files
-                    files
-                    {
+                    files {
                         -- Cpp
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GlslangToSpv.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/InReadableOrder.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/Logger.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/SpvBuilder.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/SpvPostProcess.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/doc.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/SpvTools.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/disassemble.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/CInterface/spirv_c_interface.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/GlslangToSpv.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/InReadableOrder.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/Logger.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/SpvBuilder.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/SpvPostProcess.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/doc.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/SpvTools.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/disassemble.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/CInterface/spirv_c_interface.cpp"),
 
                         -- Headers
-                        self.CreateExternalDependencyPath("glslang/SPIRV/bitutils.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/spirv.hpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GLSL.std.450.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GLSL.ext.EXT.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GLSL.ext.KHR.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GlslangToSpv.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/hex_float.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/Logger.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/SpvBuilder.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/spvIR.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/doc.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/SpvTools.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/disassemble.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GLSL.ext.AMD.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GLSL.ext.NV.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/GLSL.ext.ARM.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/NonSemanticDebugPrintf.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/bitutils.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/spirv.hpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/GLSL.std.450.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.EXT.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.KHR.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/GlslangToSpv.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/hex_float.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/Logger.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/SpvBuilder.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/spvIR.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/doc.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/SpvTools.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/disassemble.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.AMD.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.NV.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/GLSL.ext.ARM.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/NonSemanticDebugPrintf.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/NonSemanticShaderDebugInfo100.h"),
                     }
 
                     -- Links
-                    links
-                    {
+                    links {
                         "MachineIndependent",
                     }
 
-                    Glslang_SetPlatformProperties()
+                    glslang_set_platform_properties()
 
                     -- Configurations
                     filter "configurations:Debug or Release"
@@ -970,11 +881,9 @@ function FWorkspaceRules(WorkspaceName)
                         optimize("Full")
                     filter {}
 
-                ---------------------
-                -- SPIR-V Remapper --
-                ---------------------
+                -- SPVRemapper
                 project "SPVRemapper"
-                    LogInfo("        Generating dependecy SPVRemapper")
+                    log_info("        Generating dependency SPVRemapper")
 
                     kind("StaticLib")
                     warnings("Off")
@@ -989,28 +898,23 @@ function FWorkspaceRules(WorkspaceName)
                     floatingpoint("Fast")
                     vectorextensions("Default")
                     characterset("Ascii")
-                    flags(
-                    { 
-                        "MultiProcessorCompile",
-                        "NoIncrementalLink",
-                    })
+                    flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
-                    location(JoinPath(SolutionLocation, "Dependencies/glslang/SPVRemapper/"))
+                    location(join_path(solution_location, "Dependencies/glslang/SPVRemapper/"))
                 
                     -- Locations
-                    targetdir(self.CreateExternalDependencyPath("Build/bin/Dependencies/glslang/SPVRemapper/" .. self.GetOutputPath()))
-                    objdir(self.CreateExternalDependencyPath("Build/bin-int/Dependencies/glslang/SPVRemapper/" .. self.GetOutputPath()))
+                    targetdir(self.create_external_dependency_path("Build/bin/Dependencies/glslang/SPVRemapper/" .. self.get_output_path()))
+                    objdir(self.create_external_dependency_path("Build/bin-int/Dependencies/glslang/SPVRemapper/" .. self.get_output_path()))
 
                     -- Files
-                    files 
-                    {
-                        self.CreateExternalDependencyPath("glslang/SPIRV/SPVRemapper.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/doc.cpp"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/SPVRemapper.h"),
-                        self.CreateExternalDependencyPath("glslang/SPIRV/doc.h"),
+                    files {
+                        self.create_external_dependency_path("glslang/SPIRV/SPVRemapper.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/doc.cpp"),
+                        self.create_external_dependency_path("glslang/SPIRV/SPVRemapper.h"),
+                        self.create_external_dependency_path("glslang/SPIRV/doc.h"),
                     }
 
-                    Glslang_SetPlatformProperties()
+                    glslang_set_platform_properties()
 
                     -- Configurations
                     filter "configurations:Debug or Release"
@@ -1029,26 +933,23 @@ function FWorkspaceRules(WorkspaceName)
     end
 
     -- Generate the actual solution files
-    function self.GenerateSolutionFiles()
-        LogInfo("\n--- Generating Solution Files for Workspace \'%s\' ---", self.Name)
+    function self.generate_solution_files()
+        log_info("\n--- Generating Solution Files for Workspace '%s' ---", self.name)
 
         -- Set the name of the workspace
-        workspace(self.Name)
+        workspace(self.name)
 
         -- Set location of the generated solution file
-        local SolutionLocation = self.GetSolutionsFolderPath()
-        location(SolutionLocation)
+        local solution_location = self.get_solutions_folder_path()
+        location(solution_location)
 
-        LogInfo("    Generated solution location \'%s\'", SolutionLocation)
+        log_info("    Generated solution location '%s'", solution_location)
 
         -- Platforms
-        platforms
-        {
-            "x64",
-        }
+        platforms { "x64" }
 
         -- Configurations
-        configurations
+        configurations 
         {
             "Debug",
             "Release",
@@ -1056,21 +957,18 @@ function FWorkspaceRules(WorkspaceName)
         }
 
         -- Includes
-        local RuntimeFolderPath = self.GetRuntimeFolderPath()
-        includedirs
-        {
-            RuntimeFolderPath,
-        }
+        local runtime_folder_path = self.get_runtime_folder_path()
+        includedirs { runtime_folder_path }
 
         -- Workspace defines
-        LogInfo("\n--- Workspace Defines (Num Defines=%d) ---", #self.Defines)
-        if #self.Defines > 0 then
-            PrintTable("    Using Define \'%s\'", self.Defines)
+        log_info("\n--- Workspace Defines (Num Defines=%d) ---", #self.defines)
+        if #self.defines > 0 then
+            print_table("    Using Define '%s'", self.defines)
         else
-            LogInfo("")
+            log_info("")
         end
 
-        defines(self.Defines)
+        defines(self.defines)
 
         -- Add settings based on configuration
         filter "configurations:Debug"
@@ -1078,7 +976,7 @@ function FWorkspaceRules(WorkspaceName)
             runtime("Debug")
             optimize("Off")
             architecture("x86_64")
-            defines
+            defines 
             {
                 "_DEBUG",
                 "DEBUG",
@@ -1091,7 +989,7 @@ function FWorkspaceRules(WorkspaceName)
             runtime("Release")
             optimize("Full")
             architecture("x86_64")
-            defines
+            defines 
             {
                 "NDEBUG",
                 "RELEASE_BUILD=(1)",
@@ -1103,7 +1001,7 @@ function FWorkspaceRules(WorkspaceName)
             runtime("Release")
             optimize("Full")
             architecture("x86_64")
-            defines
+            defines 
             {
                 "NDEBUG",
                 "PRODUCTION_BUILD=(1)",
@@ -1112,107 +1010,95 @@ function FWorkspaceRules(WorkspaceName)
 
         -- Architecture defines
         filter "architecture:x86"
-            defines
-            {
-                "ARCHITECTURE_X86=(1)",
-            }
+            defines { "ARCHITECTURE_X86=(1)" }
         filter {}
 
         filter "architecture:x86_x64"
-            defines
-            {
-                "PLATFORM_ARCHITECTURE_X86_X64=(1)",
-            }
+            defines { "PLATFORM_ARCHITECTURE_X86_X64=(1)" }
         filter {}
 
         filter "architecture:ARM"
-            defines
-            {
-                "PLATFORM_ARCHITECTURE_ARM=(1)",
-            }
+            defines { "PLATFORM_ARCHITECTURE_ARM=(1)" }
         filter {}
 
         -- Startup project name
-        LogInfo("    StartProject = \'%s\'", self.StartProjectName)
-        startproject(self.StartProjectName)
+        log_info("    StartProject = '%s'", self.start_project_name)
+        startproject(self.start_project_name)
 
         -- Generate projects for all dependencies
-        self.GenerateDependencyProjects()
+        self.generate_dependency_projects()
 
-        -- Generate project files for all the rules that has been added
-        LogInfo("\n--- Generating module and target project files ---")
-        for Index = 1, #self.ProjectRules do
-            local CurrentRule = self.ProjectRules[Index]
-            CurrentRule.GenerateProject()
+        -- Generate project files for all the rules that have been added
+        log_info("\n--- Generating module and target project files ---")
+        for _, current_rule in ipairs(self.project_rules) do
+            current_rule.generate_project()
         end
     end
 
     -- Generate workspace
-    function self.Generate()
-        LogInfo("\n--- Generating Workspace \'%s\' ---", self.Name)
-        LogInfo("OutputPath = \'%s\'", self.GetOutputPath())
+    function self.generate()
+        log_info("\n--- Generating Workspace '%s' ---", self.name)
+        log_info("OutputPath = '%s'", self.get_output_path())
 
-        if self.TargetRules == nil then
-            LogError("TargetRules cannot be nil")
+        if self.target_rules == nil then
+            log_error("TargetRules cannot be nil")
             return
         end
 
-        if #self.TargetRules < 1 then
-            LogError("Workspace must contain atleast one buildrule (Current=%d)", #self.TargetRules)
+        if #self.target_rules < 1 then
+            log_error("Workspace must contain at least one build rule (Current=%d)", #self.target_rules)
             return
         end
 
-        -- Define the workspace location we do this with a Unix Path since the engine (C++ side) expects this currently
-        local UnixEnginePath = path.translate(self.GetEnginePath(), "/")
-        local EngineLocation = "ENGINE_LOCATION=" .. "\"" .. UnixEnginePath .. "\""
-        self.AddDefines({ EngineLocation })
+        -- Define the workspace location; we do this with a Unix path since the engine (C++ side) expects this currently
+        local unix_engine_path = path.translate(self.get_engine_path(), "/")
+        local engine_location = 'ENGINE_LOCATION="' .. unix_engine_path .. '"'
+        self.add_defines { engine_location }
         
-        LogInfo("    Engine Path =\'%s\'", self.GetEnginePath())
-        LogInfo("    RuntimeFolderPath = \'%s\'", self.GetRuntimeFolderPath())
+        log_info("    Engine Path ='%s'", self.get_engine_path())
+        log_info("    RuntimeFolderPath = '%s'", self.get_runtime_folder_path())
         
-        -- Check if the commandline overrides monolithic builds
-        if IsMonolithic() then
-            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
+        -- Check if the command line overrides monolithic builds
+        if is_global_monolithic() then
+            self.add_defines { "MONOLITHIC_BUILD=(1)" }
         end
 
         -- IDE Defines
-        if BuildWithVisualStudio() then 
-            self.AddDefines({ "IDE_VISUAL_STUDIO" })
-            self.AddDefines({ "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING" })
-            self.AddDefines({ "_CRT_SECURE_NO_WARNINGS" })
+        if build_with_visual_studio() then 
+            self.add_defines { "IDE_VISUAL_STUDIO" }
+            self.add_defines { "_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING" }
+            self.add_defines { "_CRT_SECURE_NO_WARNINGS" }
         end
 
         -- OS Defines
-        if IsPlatformWindows() then
-            self.AddDefines({ "PLATFORM_WINDOWS=(1)" })
+        if is_platform_windows() then
+            self.add_defines { "PLATFORM_WINDOWS=(1)" }
         end
-        if IsPlatformMac() then
-            self.AddDefines({ "PLATFORM_MACOS=(1)" })
+        if is_platform_mac() then
+            self.add_defines { "PLATFORM_MACOS=(1)" }
         end
 
         -- Setup startup project
-        local StartProjectTarget = self.TargetRules[1]
-        if (StartProjectTarget.TargetType == ETargetType.Client) and (not StartProjectTarget.bIsMonolithic) then
-            self.StartProjectName = StartProjectTarget.Name .. "Standalone"
+        local start_project_target = self.target_rules[1]
+        if (start_project_target.target_type == ETargetType.Client) and (not start_project_target.is_monolithic) then
+            self.start_project_name = start_project_target.name .. "Standalone"
         else
-            self.StartProjectName = StartProjectTarget.Name
+            self.start_project_name = start_project_target.name
         end
         
         -- Generate projects from targets
-        LogInfo("\n--- Generating Targets (NumTargets=%d) ---", #self.TargetRules)
-        for Index = 1, #self.TargetRules do
-            local CurrentTarget = self.TargetRules[Index]
-            self.TargetName = CurrentTarget.Name
-            CurrentTarget.Workspace = self
-            CurrentTarget.Generate()
+        log_info("\n--- Generating Targets (NumTargets=%d) ---", #self.target_rules)
+        for _, current_target in ipairs(self.target_rules) do
+            self.target_name = current_target.name
+            current_target.workspace = self
+            current_target.generate()
         end
 
         -- Generate the actual solution files
-        self.GenerateSolutionFiles()
+        self.generate_solution_files()
 
-        LogInfo("\n--- Finished generating workspace ---")
+        log_info("\n--- Finished generating workspace ---")
     end
 
-    LogHighlight("Creating Workspace \'%s\'", WorkspaceName)
     return self
 end

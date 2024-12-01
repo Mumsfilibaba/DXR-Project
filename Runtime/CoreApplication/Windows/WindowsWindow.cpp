@@ -27,7 +27,7 @@ static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
         {
             NewStyle |= WS_SYSMENU | WS_MAXIMIZEBOX;
         }
-        if ((Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+        if ((Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
             NewStyle |= WS_THICKFRAME;
         }

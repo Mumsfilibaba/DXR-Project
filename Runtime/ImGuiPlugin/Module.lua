@@ -1,26 +1,24 @@
+include "../../BuildScripts/Scripts/build_module.lua"
 
-include "../../BuildScripts/Scripts/Build_Module.lua"
-
----------------------------------------------------------------------------------------------------
 -- ImGuiPlugin Module
 
-local ImGuiPluginModule = FModuleBuildRules("ImGuiPlugin")
+local imgui_plugin_module = module_build_rules("ImGuiPlugin")
 
-ImGuiPluginModule.AddSystemIncludes( 
+imgui_plugin_module.add_system_includes
 {
-    CreateExternalDependencyPath("imgui")
-})
+    create_external_dependency_path("imgui"),
+}
 
-ImGuiPluginModule.AddModuleDependencies( 
+imgui_plugin_module.add_module_dependencies
 {
     "Core",
     "CoreApplication",
     "Application",
     "RHI",
     "RendererCore",
-})
+}
 
-ImGuiPluginModule.AddLinkLibraries( 
+imgui_plugin_module.add_link_libraries
 {
     "ImGui",
-})
+}

@@ -58,7 +58,7 @@ bool FWindow::IsWindow() const
 void FWindow::FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets)
 {
     FRectangle WindowBounds = GetContentRectangle();
-    if (WindowBounds.EncapsualtesPoint(Point))
+    if (WindowBounds.EncapsulatesPoint(Point))
     {
         const EVisibility CurrentVisibility = GetVisibility();
         if (OutParentWidgets.AcceptVisbility(CurrentVisibility))

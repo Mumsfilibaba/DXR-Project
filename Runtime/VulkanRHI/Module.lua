@@ -1,85 +1,83 @@
 include '../../BuildScripts/Scripts/build_module.lua'
 
----------------------------------------------------------------------------------------------------
 -- Vulkan Helpers
 
-function FindVulkanIncludePath()
-    -- Vulkan is installed to the local folder on mac (Latest installed version) so we can just return this global path
-    if IsPlatformMac() then
+function find_vulkan_include_path()
+    -- Vulkan is installed to the local folder on macOS (latest installed version), so we can just return this global path
+    if is_platform_mac() then
         return '/usr/local'
     end
 
-    local VulkanEnvironmentVars = 
-    {
+    local vulkan_environment_vars = {
         'VK_SDK_PATH',
-        'VULKAN_SDK'
+        'VULKAN_SDK',
     }
 
-    for _, EnvironmentVar in ipairs(VulkanEnvironmentVars) do
-        local Path = os.getenv(EnvironmentVar)
-        if Path ~= nil then
-            LogHighlight('Found \'%s\'=\'%s\'', EnvironmentVar, Path)
-            return Path
+    for _, environment_var in ipairs(vulkan_environment_vars) do
+        local path = os.getenv(environment_var)
+        if path ~= nil then
+            log_highlight("Found '%s'='%s'", environment_var, path)
+            return path
         else
-            LogWarning('[WARNING]: Could not find the environment variable \'%s\'', EnvironmentVar)
+            log_warning("[WARNING]: Could not find the environment variable '%s'", environment_var)
         end
     end
 
-    LogError('[ERROR]: Failed to find Vulkan SDK path')
+    log_error("[ERROR]: Failed to find Vulkan SDK path")
     return ''
 end
 
-_GVulkanIncludePath = CreateOSPath(FindVulkanIncludePath());
-function GetVulkanIncludePath()
-    return _GVulkanIncludePath
+local _g_vulkan_include_path = create_os_path(find_vulkan_include_path())
+
+function get_vulkan_include_path()
+    return _g_vulkan_include_path
 end
 
----------------------------------------------------------------------------------------------------
 -- VulkanRHI Module
 
-local VulkanPath = GetVulkanIncludePath()
-LogHighlight('VulkanPath=%s', VulkanPath)
+local vulkan_path = get_vulkan_include_path()
+log_highlight('VulkanPath=%s', vulkan_path)
 
-local VulkanBinaries = JoinPath(VulkanPath, 'bin')
-LogHighlight('Vulkan bin path=%s', VulkanBinaries)
+local vulkan_binaries = join_path(vulkan_path, 'bin')
+log_highlight('Vulkan bin path=%s', vulkan_binaries)
 
-local VulkanLibraries = JoinPath(VulkanPath, 'lib')
-LogHighlight('Vulkan lib path=%s', VulkanLibraries)
+local vulkan_libraries = join_path(vulkan_path, 'lib')
+log_highlight('Vulkan lib path=%s', vulkan_libraries)
 
-local VulkanInclude = JoinPath(VulkanPath, 'include')
-LogHighlight('Vulkan include path=%s', VulkanInclude)
+local vulkan_include = join_path(vulkan_path, 'include')
+log_highlight('Vulkan include path=%s', vulkan_include)
 
-local VulkanRHI = FModuleBuildRules('VulkanRHI')
-VulkanRHI.bRuntimeLinking        = true
-VulkanRHI.bUsePrecompiledHeaders = true
+local vulkan_rhi = module_build_rules('VulkanRHI')
+vulkan_rhi.runtime_linking        = true
+vulkan_rhi.use_precompiled_headers = true
 
-VulkanRHI.AddModuleDependencies( 
+vulkan_rhi.add_module_dependencies
 {
     'Core',
     'CoreApplication',
     'RHI',
     'Project',
-})
+}
 
-if IsPlatformMac() then
-    VulkanRHI.AddFrameWorks( 
+if is_platform_mac() then
+    vulkan_rhi.add_frameworks
     {
         'QuartzCore',
-    })
+    }
 end
 
-VulkanRHI.AddSystemIncludes(
+vulkan_rhi.add_system_includes
 {
-    VulkanInclude,
-    CreateExternalDependencyPath("SPIRV-Cross"),
-})
+    vulkan_include,
+    create_external_dependency_path("SPIRV-Cross"),
+}
 
-VulkanRHI.AddLibraryPaths(
+vulkan_rhi.add_library_paths
 {
-    VulkanLibraries,
-})
+    vulkan_libraries,
+}
 
-VulkanRHI.AddLinkLibraries(
+vulkan_rhi.add_link_libraries
 {
     "SPIRV-Cross",
-})
+}

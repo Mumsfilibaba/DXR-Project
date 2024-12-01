@@ -955,7 +955,7 @@ void FApplicationInterface::ShowCursor(bool bIsVisible)
     }
 }
 
-bool FApplicationInterface::IsCursorVisibile() const
+bool FApplicationInterface::IsCursorVisible() const
 {
     if (TSharedPtr<ICursor> Cursor = GetCursor())
     {

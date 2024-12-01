@@ -29,7 +29,7 @@ static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags
     EWindowStyleFlags WindowStyleFlags = EWindowStyleFlags::None;
     if ((Flags & ImGuiViewportFlags_NoDecoration) == ImGuiViewportFlags_None)
     {
-        WindowStyleFlags = EWindowStyleFlags::Titled | EWindowStyleFlags::Minimizable | EWindowStyleFlags::Maximizable | EWindowStyleFlags::Resizeable | EWindowStyleFlags::Closable;
+        WindowStyleFlags = EWindowStyleFlags::Titled | EWindowStyleFlags::Minimizable | EWindowStyleFlags::Maximizable | EWindowStyleFlags::Resizable | EWindowStyleFlags::Closable;
     }
     if (Flags & ImGuiViewportFlags_NoTaskBarIcon)
     {

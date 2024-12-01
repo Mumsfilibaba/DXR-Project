@@ -104,7 +104,7 @@ void FWidget::FindParentWidgets(FWidgetPath& OutRootPath)
 
 void FWidget::FindChildrenContainingPoint(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutChildWidgets)
 {
-    if (ContentRectangle.EncapsualtesPoint(ScreenCursorPosition))
+    if (ContentRectangle.EncapsulatesPoint(ScreenCursorPosition))
     {
         OutChildWidgets.Add(Visibility, AsSharedPtr());
     }

@@ -1,21 +1,20 @@
-include "../../BuildScripts/Scripts/Build_Module.lua"
+include "../../BuildScripts/Scripts/build_module.lua"
 
----------------------------------------------------------------------------------------------------
 -- Engine Module
 
-local EngineModule = FModuleBuildRules("Engine")
-EngineModule.bUsePrecompiledHeaders = true
+local engine_module = module_build_rules("Engine")
+engine_module.use_precompiled_headers = true
 
-EngineModule.AddSystemIncludes( 
+engine_module.add_system_includes
 {
-    CreateExternalDependencyPath("imgui"),
-    CreateExternalDependencyPath("stb_image"),
-    CreateExternalDependencyPath("tinyobjloader"),
-    CreateExternalDependencyPath("tinyddsloader"),
-    CreateExternalDependencyPath("OpenFBX/src"),
-})
+    create_external_dependency_path("imgui"),
+    create_external_dependency_path("stb_image"),
+    create_external_dependency_path("tinyobjloader"),
+    create_external_dependency_path("tinyddsloader"),
+    create_external_dependency_path("OpenFBX/src"),
+}
 
-EngineModule.AddModuleDependencies( 
+engine_module.add_module_dependencies
 {
     "Core",
     "CoreApplication",
@@ -24,11 +23,11 @@ EngineModule.AddModuleDependencies(
     "RendererCore",
     "Project",
     "ImGuiPlugin",
-})
+}
 
-EngineModule.AddLinkLibraries( 
+engine_module.add_link_libraries
 {
     "ImGui",
     "tinyobjloader",
     "OpenFBX",
-})
+}

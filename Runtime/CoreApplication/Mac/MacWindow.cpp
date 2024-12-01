@@ -40,7 +40,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         {
             WindowStyle |= NSWindowStyleMaskClosable;
         }
-        if ((InInitializer.Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+        if ((InInitializer.Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskResizable;
         }
@@ -108,7 +108,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         }
 
         NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-        if ((InInitializer.Style & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+        if ((InInitializer.Style & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
             Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
         }
@@ -254,7 +254,7 @@ void FMacWindow::Restore()
 
 void FMacWindow::ToggleFullscreen()
 {
-    if ((StyleParams & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+    if ((StyleParams & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
     {
         ExecuteOnMainThread(^
         {
@@ -599,7 +599,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         {
             WindowStyle |= NSWindowStyleMaskClosable;
         }
-        if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+        if ((InStyle & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
         {
             WindowStyle |= NSWindowStyleMaskResizable;
         }
@@ -650,7 +650,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
             }
             
             NSWindowCollectionBehavior Behavior = NSWindowCollectionBehaviorDefault | NSWindowCollectionBehaviorManaged | NSWindowCollectionBehaviorParticipatesInCycle;
-            if ((InStyle & EWindowStyleFlags::Resizeable) != EWindowStyleFlags::None)
+            if ((InStyle & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
             {
                 Behavior |= NSWindowCollectionBehaviorFullScreenPrimary;
             }

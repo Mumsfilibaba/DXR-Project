@@ -1,17 +1,15 @@
+include "../../BuildScripts/Scripts/build_module.lua"
 
-include "../../BuildScripts/Scripts/Build_Module.lua"
-
----------------------------------------------------------------------------------------------------
 -- Application Module
 
-local ApplicationModule = FModuleBuildRules("Application")
-ApplicationModule.bUsePrecompiledHeaders = true
+local application_module = module_build_rules("Application")
+application_module.use_precompiled_headers = true
 
-ApplicationModule.AddModuleDependencies( 
+application_module.add_module_dependencies
 {
     "Core",
     "CoreApplication",
     "RHI",
     "RendererCore",
     "Project",
-})
+}

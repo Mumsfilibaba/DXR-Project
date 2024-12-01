@@ -1,13 +1,12 @@
-include "../../BuildScripts/Scripts/Build_Module.lua"
+include "../../BuildScripts/Scripts/build_module.lua"
 
----------------------------------------------------------------------------------------------------
 -- NullRHI Module
 
-local NullRHIModule = FModuleBuildRules("NullRHI")
-NullRHIModule.bRuntimeLinking = true
+local null_rhi_module = module_build_rules("NullRHI")
+null_rhi_module.runtime_linking = true
 
-NullRHIModule.AddModuleDependencies( 
+null_rhi_module.add_module_dependencies
 {
     "Core",
     "RHI",
-})
+}
