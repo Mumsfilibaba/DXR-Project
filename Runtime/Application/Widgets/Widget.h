@@ -35,10 +35,6 @@ inline TSharedPtr<WidgetType> CreateWidget(const typename WidgetType::FInitializ
     return NewWidget;
 }
 
-/**
- * @brief Represents a rectangle with position and size.
- */
-
 struct FRectangle
 {
     /**
@@ -93,10 +89,6 @@ struct FRectangle
     /** @brief Position of the rectangle (x, y). */
     FIntVector2 Position;
 };
-
-/**
- * @brief Base class for all widgets in the application.
- */
 
 class APPLICATION_API FWidget : public TSharedFromThis<FWidget>
 {

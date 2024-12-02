@@ -11,10 +11,6 @@
 /** @brief Event triggered when the monitor configuration changes. */
 DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplicationInterface);
 
-/**
- * @brief Application interface that handles windows, input devices, and event processing.
- */
-
 class APPLICATION_API FApplicationInterface : public FGenericApplicationMessageHandler, public TSharedFromThis<FApplicationInterface>
 {
 public:
