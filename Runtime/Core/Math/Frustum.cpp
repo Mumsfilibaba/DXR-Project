@@ -26,45 +26,45 @@ void FFrustum::ExtractPlanes(const FMatrix4& CombinedMatrix)
     // The order is: near, far, left, right, top, bottom
 
     // Near Plane
-    Planes[0].x = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][2];
-    Planes[0].y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][2];
-    Planes[0].z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][2];
-    Planes[0].w = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][2];
+    Planes[0].X = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][2];
+    Planes[0].Y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][2];
+    Planes[0].Z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][2];
+    Planes[0].W = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][2];
     Planes[0].Normalize();
 
     // Far Plane
-    Planes[1].x = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][2];
-    Planes[1].y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][2];
-    Planes[1].z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][2];
-    Planes[1].w = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][2];
+    Planes[1].X = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][2];
+    Planes[1].Y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][2];
+    Planes[1].Z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][2];
+    Planes[1].W = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][2];
     Planes[1].Normalize();
 
     // Left Plane
-    Planes[2].x = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][0];
-    Planes[2].y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][0];
-    Planes[2].z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][0];
-    Planes[2].w = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][0];
+    Planes[2].X = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][0];
+    Planes[2].Y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][0];
+    Planes[2].Z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][0];
+    Planes[2].W = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][0];
     Planes[2].Normalize();
 
     // Right Plane
-    Planes[3].x = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][0];
-    Planes[3].y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][0];
-    Planes[3].z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][0];
-    Planes[3].w = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][0];
+    Planes[3].X = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][0];
+    Planes[3].Y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][0];
+    Planes[3].Z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][0];
+    Planes[3].W = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][0];
     Planes[3].Normalize();
 
     // Top Plane
-    Planes[4].x = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][1];
-    Planes[4].y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][1];
-    Planes[4].z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][1];
-    Planes[4].w = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][1];
+    Planes[4].X = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][1];
+    Planes[4].Y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][1];
+    Planes[4].Z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][1];
+    Planes[4].W = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][1];
     Planes[4].Normalize();
 
     // Bottom Plane
-    Planes[5].x = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][1];
-    Planes[5].y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][1];
-    Planes[5].z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][1];
-    Planes[5].w = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][1];
+    Planes[5].X = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][1];
+    Planes[5].Y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][1];
+    Planes[5].Z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][1];
+    Planes[5].W = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][1];
     Planes[5].Normalize();
 }
 

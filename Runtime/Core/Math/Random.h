@@ -30,9 +30,9 @@ public:
     int64 RandInt(int64 Min, int64 Max)
     {
         const uint64 RandVal = Rand();
-        const uint64 Range  = static_cast<uint64>(Max - Min) + 1;
-        const uint64 Scaled = RandVal % Range;
-        const int64  Result = static_cast<int64>(Scaled) + Min;
+        const uint64 Range   = static_cast<uint64>(Max - Min) + 1;
+        const uint64 Scaled  = RandVal % Range;
+        const int64  Result  = static_cast<int64>(Scaled) + Min;
         return Result;
     }
 
