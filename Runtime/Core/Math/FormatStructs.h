@@ -25,7 +25,7 @@ struct FR10G10B10A2
     /**
      * @brief Default constructor initializes all channels to zero.
      */
-    FR10G10B10A2()
+    FORCEINLINE FR10G10B10A2()
         : ARGB(0)
     {
     }
@@ -37,12 +37,12 @@ struct FR10G10B10A2
      * @param InG 10-bit Green value.
      * @param InB 10-bit Blue value.
      */
-    FR10G10B10A2(uint8 InA, uint16 InR, uint16 InG, uint16 InB)
+    FORCEINLINE FR10G10B10A2(uint8 InA, uint16 InR, uint16 InG, uint16 InB)
+        : A(InA)
+        , R(InR)
+        , G(InG)
+        , B(InB)
     {
-        A = InA;
-        R = InR;
-        G = InG;
-        B = InB;
     }
 
     /**
@@ -52,7 +52,7 @@ struct FR10G10B10A2
      * @param InB Blue component (0.0f to 1.0f).
      * @param InA Alpha component (0.0f to 1.0f, default is 0).
      */
-    FR10G10B10A2(float InR, float InG, float InB, float InA = 0.0f)
+    FORCEINLINE FR10G10B10A2(float InR, float InG, float InB, float InA = 0.0f)
         : ARGB(0)
     {
         FVector3 Vector(InR, InG, InB);
@@ -74,7 +74,7 @@ struct FR10G10B10A2
      * @brief Packs the ARGB channels into a 32-bit unsigned integer.
      * @return A 32-bit unsigned integer representing the packed color.
      */
-    uint32 ToPackedARGB() const
+    FORCEINLINE uint32 ToPackedARGB() const
     {
         return ARGB;
     }
@@ -84,7 +84,7 @@ struct FR10G10B10A2
      * @param Other The right-hand side FR10G10B10A2 to compare with.
      * @return True if all channels are equal.
      */
-    bool operator==(const FR10G10B10A2& Other) const
+    FORCEINLINE bool operator==(const FR10G10B10A2& Other) const
     {
         return ARGB == Other.ARGB;
     }
@@ -94,7 +94,7 @@ struct FR10G10B10A2
      * @param Other The right-hand side FR10G10B10A2 to compare with.
      * @return True if any channel differs.
      */
-    bool operator!=(const FR10G10B10A2& Other) const
+    FORCEINLINE bool operator!=(const FR10G10B10A2& Other) const
     {
         return !(*this == Other);
     }
@@ -114,6 +114,8 @@ struct FR10G10B10A2
         hash = hash * 31 + static_cast<uint64>(Value.B);
         return hash;
     }
+
+public:
 
     union
     {
@@ -147,7 +149,7 @@ struct FRG16F
     /**
      * @brief Default constructor initializes R and G to zero.
      */
-    FRG16F()
+    FORCEINLINE FRG16F()
         : RG(0)
     {
     }
@@ -157,12 +159,10 @@ struct FRG16F
      * @param InR 16-bit Red value.
      * @param InG 16-bit Green value.
      */
-    FRG16F(uint16 InR, uint16 InG)
-        : RG(0)
+    FORCEINLINE FRG16F(uint16 InR, uint16 InG)
+        : R(InR)
+        , G(InG)
     {
-        // Assign values directly to the union
-        R = InR;
-        G = InG;
     }
 
     /**
@@ -170,7 +170,7 @@ struct FRG16F
      * @param InR Red component (0.0f to 1.0f).
      * @param InG Green component (0.0f to 1.0f).
      */
-    FRG16F(float InR, float InG)
+    FORCEINLINE FRG16F(float InR, float InG)
         : RG(0)
     {
         // Convert normalized float to 16-bit half-precision
@@ -182,7 +182,7 @@ struct FRG16F
      * @brief Packs the RG channels into a 32-bit unsigned integer.
      * @return A 32-bit unsigned integer representing the packed RG channels.
      */
-    uint32 ToPackedRG() const 
+    FORCEINLINE uint32 ToPackedRG() const 
     { 
         return RG;
     }
@@ -192,7 +192,7 @@ struct FRG16F
      * @param Other The right-hand side FRG16F to compare with.
      * @return True if both R and G channels are equal.
      */
-    bool operator==(const FRG16F& Other) const
+    FORCEINLINE bool operator==(const FRG16F& Other) const
     {
         return RG == Other.RG;
     }
@@ -202,7 +202,7 @@ struct FRG16F
      * @param Other The right-hand side FRG16F to compare with.
      * @return True if either R or G channels differ.
      */
-    bool operator!=(const FRG16F& Other) const
+    FORCEINLINE bool operator!=(const FRG16F& Other) const
     {
         return !(*this == Other);
     }
@@ -243,7 +243,7 @@ struct FRGBA16F
     /**
      * @brief Default constructor initializes all channels to zero.
      */
-    FRGBA16F()
+    FORCEINLINE FRGBA16F()
         : ARGB(0)
     {
     }
@@ -255,12 +255,12 @@ struct FRGBA16F
      * @param InG 16-bit Green value.
      * @param InB 16-bit Blue value.
      */
-    FRGBA16F(uint16 InA, uint16 InR, uint16 InG, uint16 InB)
+    FORCEINLINE FRGBA16F(uint16 InA, uint16 InR, uint16 InG, uint16 InB)
+        : A(InA)
+        , R(InR)
+        , G(InG)
+        , B(InB)
     {
-        A = InA;
-        R = InR;
-        G = InG;
-        B = InB;
     }
 
     /**
@@ -270,7 +270,7 @@ struct FRGBA16F
      * @param InG Green component (0.0f to 1.0f).
      * @param InB Blue component (0.0f to 1.0f).
      */
-    FRGBA16F(float InA, float InR, float InG, float InB)
+    FORCEINLINE FRGBA16F(float InA, float InR, float InG, float InB)
         : ARGB(0)
     {
         A = FFloat16(InA).Encoded;
@@ -283,7 +283,7 @@ struct FRGBA16F
      * @brief Packs the ARGB channels into a 64-bit unsigned integer.
      * @return A 64-bit unsigned integer representing the packed ARGB channels.
      */
-    uint64 ToPackedARGB() const 
+    FORCEINLINE uint64 ToPackedARGB() const 
     { 
         return ARGB; 
     }
@@ -293,7 +293,7 @@ struct FRGBA16F
      * @param Other The right-hand side FRGBA16F to compare with.
      * @return True if all channels are equal.
      */
-    bool operator==(const FRGBA16F& Other) const
+    FORCEINLINE bool operator==(const FRGBA16F& Other) const
     {
         return ARGB == Other.ARGB;
     }
@@ -303,7 +303,7 @@ struct FRGBA16F
      * @param Other The right-hand side FRGBA16F to compare with.
      * @return True if any channel differs.
      */
-    bool operator!=(const FRGBA16F& Other) const
+    FORCEINLINE bool operator!=(const FRGBA16F& Other) const
     {
         return !(*this == Other);
     }
@@ -317,6 +317,8 @@ struct FRGBA16F
     {
         return GetHashForType(Value.ARGB);
     }
+
+public:
 
     union
     {

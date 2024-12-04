@@ -10,7 +10,7 @@ class VECTOR_ALIGN FMatrix4
 public:
 
     /** @brief Default constructor (Initializes all components to zero) */
-    FMatrix4() noexcept
+    FORCEINLINE FMatrix4() noexcept
         : M{ {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f},
@@ -22,7 +22,7 @@ public:
      * @brief Constructor initializing all diagonal values with a single value. Other values are set to zero.
      * @param Diagonal Value to set on the diagonal
      */
-    explicit FMatrix4(float Diagonal) noexcept
+    FORCEINLINE explicit FMatrix4(float Diagonal) noexcept
         : M{ {Diagonal, 0.0f, 0.0f, 0.0f},
              {0.0f, Diagonal, 0.0f, 0.0f},
              {0.0f, 0.0f, Diagonal, 0.0f},
@@ -37,7 +37,7 @@ public:
      * @param Row2 Vector to set the third row to
      * @param Row3 Vector to set the fourth row to
      */
-    explicit FMatrix4(const FVector4& Row0, const FVector4& Row1, const FVector4& Row2, const FVector4& Row3) noexcept
+    FORCEINLINE explicit FMatrix4(const FVector4& Row0, const FVector4& Row1, const FVector4& Row2, const FVector4& Row3) noexcept
         : M{ {Row0.x, Row0.y, Row0.z, Row0.w},
              {Row1.x, Row1.y, Row1.z, Row1.w},
              {Row2.x, Row2.y, Row2.z, Row2.w},
@@ -64,7 +64,7 @@ public:
      * @param M32 Value to set at row 3, column 2
      * @param M33 Value to set at row 3, column 3
      */
-    explicit FMatrix4(
+    FORCEINLINE explicit FMatrix4(
         float M00, float M01, float M02, float M03,
         float M10, float M11, float M12, float M13,
         float M20, float M21, float M22, float M23,
@@ -80,7 +80,7 @@ public:
      * @brief Constructor initializing all components with an array
      * @param Array Array with at least 16 elements
      */
-    explicit FMatrix4(const float* Array) noexcept
+    FORCEINLINE explicit FMatrix4(const float* Array) noexcept
     {
         CHECK(Array != nullptr);
         FMemory::Memcpy(M[0], Array, sizeof(M));
@@ -91,7 +91,7 @@ public:
      * @param Vector The vector to transform
      * @return The transformed vector
      */
-    FVector4 Transform(const FVector4& Vector) const noexcept
+    FORCEINLINE FVector4 Transform(const FVector4& Vector) const noexcept
     {
         FVector4 Result;
 
@@ -114,7 +114,7 @@ public:
      * @param Vector The vector to transform
      * @return The transformed vector
      */
-    FVector3 Transform(const FVector3& Vector) const noexcept
+    FORCEINLINE FVector3 Transform(const FVector3& Vector) const noexcept
     {
         FVector3 Result;
 
@@ -136,7 +136,7 @@ public:
      * @param Position The position vector to transform
      * @return The transformed vector with perspective division applied
      */
-    FVector3 TransformCoord(const FVector3& Position) const noexcept
+    FORCEINLINE FVector3 TransformCoord(const FVector3& Position) const noexcept
     {
         FVector3 Result;
 
@@ -165,7 +165,7 @@ public:
      * @param Direction The direction vector to transform
      * @return The transformed normal vector
      */
-    FVector3 TransformNormal(const FVector3& Direction) const noexcept
+    FORCEINLINE FVector3 TransformNormal(const FVector3& Direction) const noexcept
     {
         FVector3 Result;
 
@@ -186,7 +186,7 @@ public:
      * @brief Returns the transposed version of this matrix
      * @return Transposed matrix
      */
-    FMatrix4 GetTranspose() const noexcept
+    FORCEINLINE FMatrix4 GetTranspose() const noexcept
     {
         FMatrix4 Result;
 
@@ -221,7 +221,7 @@ public:
      * @brief Returns the inverted version of this matrix
      * @return Inverse matrix
      */
-    FMatrix4 GetInverse() const noexcept
+    inline FMatrix4 GetInverse() const noexcept
     {
         FMatrix4 Inverse;
 
@@ -278,7 +278,7 @@ public:
      * @brief Returns the adjugate of this matrix
      * @return Adjugate matrix
      */
-    FMatrix4 GetAdjugate() const noexcept
+    inline FMatrix4 GetAdjugate() const noexcept
     {
         FMatrix4 Adjugate;
 
@@ -330,7 +330,7 @@ public:
      * @brief Returns the determinant of this matrix
      * @return The determinant
      */
-    float GetDeterminant() const noexcept
+    inline float GetDeterminant() const noexcept
     {
         float Determinant = 0.0f;
 
@@ -358,7 +358,7 @@ public:
      * @brief Checks whether this matrix has any value that equals NaN
      * @return True if any value equals NaN, false otherwise
      */
-    bool ContainsNaN() const noexcept
+    FORCEINLINE bool ContainsNaN() const noexcept
     {
         for (int32 Row = 0; Row < 4; ++Row)
         {
@@ -378,7 +378,7 @@ public:
      * @brief Checks whether this matrix has any value that equals infinity
      * @return True if any value equals infinity, false otherwise
      */
-    bool ContainsInfinity() const noexcept
+    FORCEINLINE bool ContainsInfinity() const noexcept
     {
         for (int32 Row = 0; Row < 4; ++Row)
         {
@@ -400,7 +400,7 @@ public:
      * @param Epsilon Threshold for comparison
      * @return True if equal within Epsilon, false otherwise
      */
-    bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
@@ -439,7 +439,7 @@ public:
     /**
      * @brief Sets this matrix to an identity matrix
      */
-    void SetIdentity() noexcept
+    inline void SetIdentity() noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = 1.0f;
@@ -473,7 +473,7 @@ public:
      * @brief Sets the upper 3x3 matrix (rotation and scale)
      * @param RotationAndScale 3x3 matrix to set the upper quadrant to
      */
-    void SetRotationAndScale(const FMatrix3& RotationAndScale) noexcept
+    FORCEINLINE void SetRotationAndScale(const FMatrix3& RotationAndScale) noexcept
     {
         M[0][0] = RotationAndScale.M[0][0];
         M[0][1] = RotationAndScale.M[0][1];
@@ -492,7 +492,7 @@ public:
      * @brief Sets the translation part of the matrix
      * @param Translation The translation vector
      */
-    void SetTranslation(const FVector3& Translation) noexcept
+    FORCEINLINE void SetTranslation(const FVector3& Translation) noexcept
     {
         M[3][0] = Translation.x;
         M[3][1] = Translation.y;
@@ -504,7 +504,7 @@ public:
      * @param Row The row to retrieve (0, 1, 2, or 3)
      * @return A vector containing the specified row
      */
-    FVector4 GetRow(int32 Row) const noexcept
+    FORCEINLINE FVector4 GetRow(int32 Row) const noexcept
     {
         CHECK(Row < 4);
         return FVector4(M[Row][0], M[Row][1], M[Row][2], M[Row][3]);
@@ -515,7 +515,7 @@ public:
      * @param Column The column to retrieve (0, 1, 2, or 3)
      * @return A vector containing the specified column
      */
-    FVector4 GetColumn(int32 Column) const noexcept
+    FORCEINLINE FVector4 GetColumn(int32 Column) const noexcept
     {
         CHECK(Column < 4);
         return FVector4(M[0][Column], M[1][Column], M[2][Column], M[3][Column]);
@@ -525,7 +525,7 @@ public:
      * @brief Returns the translation part of this matrix
      * @return A vector containing the translation
      */
-    FVector3 GetTranslation() const noexcept
+    FORCEINLINE FVector3 GetTranslation() const noexcept
     {
         return FVector3(M[3][0], M[3][1], M[3][2]);
     }
@@ -534,7 +534,7 @@ public:
      * @brief Returns the upper 3x3 rotation and scale matrix
      * @return A 3x3 matrix containing the upper part of the matrix
      */
-    FMatrix3 GetRotationAndScale() const noexcept
+    FORCEINLINE FMatrix3 GetRotationAndScale() const noexcept
     {
         return FMatrix3(
             M[0][0], M[0][1], M[0][2],
@@ -549,7 +549,7 @@ public:
      * @param Other The vector to transform
      * @return The transformed vector
      */
-    FVector4 operator*(const FVector4& Other) const noexcept
+    FORCEINLINE FVector4 operator*(const FVector4& Other) const noexcept
     {
         return Transform(Other);
     }
@@ -559,7 +559,7 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the multiplication
      */
-    FMatrix4 operator*(const FMatrix4& Other) const noexcept
+    inline FMatrix4 operator*(const FMatrix4& Other) const noexcept
     {
         FMatrix4 Result;
 
@@ -595,7 +595,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after multiplication
      */
-    FMatrix4& operator*=(const FMatrix4& Other) noexcept
+    inline FMatrix4& operator*=(const FMatrix4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = (M[0][0] * Other.M[0][0]) + (M[0][1] * Other.M[1][0]) + (M[0][2] * Other.M[2][0]) + (M[0][3] * Other.M[3][0]);
@@ -629,7 +629,7 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the multiplication
      */
-    FMatrix4 operator*(float Scalar) const noexcept
+    inline FMatrix4 operator*(float Scalar) const noexcept
     {
         FMatrix4 Result;
 
@@ -675,7 +675,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after multiplication
      */
-    FMatrix4& operator*=(float Scalar) noexcept
+    inline FMatrix4& operator*=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] * Scalar;
@@ -719,7 +719,7 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the addition
      */
-    FMatrix4 operator+(const FMatrix4& Other) const noexcept
+    inline FMatrix4 operator+(const FMatrix4& Other) const noexcept
     {
         FMatrix4 Result;
 
@@ -763,7 +763,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after addition
      */
-    FMatrix4& operator+=(const FMatrix4& Other) noexcept
+    inline FMatrix4& operator+=(const FMatrix4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] + Other.M[0][0];
@@ -805,7 +805,7 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the addition
      */
-    FMatrix4 operator+(float Scalar) const noexcept
+    inline FMatrix4 operator+(float Scalar) const noexcept
     {
         FMatrix4 Result;
 
@@ -851,7 +851,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after addition
      */
-    FMatrix4& operator+=(float Scalar) noexcept
+    inline FMatrix4& operator+=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] + Scalar;
@@ -895,7 +895,7 @@ public:
      * @param Other The other matrix
      * @return A matrix containing the result of the subtraction
      */
-    FMatrix4 operator-(const FMatrix4& Other) const noexcept
+    inline FMatrix4 operator-(const FMatrix4& Other) const noexcept
     {
         FMatrix4 Result;
 
@@ -939,7 +939,7 @@ public:
      * @param Other The other matrix
      * @return A reference to this matrix after subtraction
      */
-    FMatrix4& operator-=(const FMatrix4& Other) noexcept
+    inline FMatrix4& operator-=(const FMatrix4& Other) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] - Other.M[0][0];
@@ -981,7 +981,7 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the subtraction
      */
-    FMatrix4 operator-(float Scalar) const noexcept
+    inline FMatrix4 operator-(float Scalar) const noexcept
     {
         FMatrix4 Result;
 
@@ -1027,7 +1027,7 @@ public:
      * @param RHS The scalar
      * @return A reference to this matrix after subtraction
      */
-    FMatrix4& operator-=(float Scalar) noexcept
+    inline FMatrix4& operator-=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] - Scalar;
@@ -1071,7 +1071,7 @@ public:
      * @param Scalar The scalar
      * @return A matrix containing the result of the division
      */
-    FMatrix4 operator/(float Scalar) const noexcept
+    inline FMatrix4 operator/(float Scalar) const noexcept
     {
         FMatrix4 Result;
 
@@ -1117,7 +1117,7 @@ public:
      * @param Scalar The scalar
      * @return A reference to this matrix after division
      */
-    FMatrix4& operator/=(float Scalar) noexcept
+    inline FMatrix4& operator/=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         M[0][0] = M[0][0] / Scalar;
@@ -1161,7 +1161,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are equal within a default epsilon, false otherwise
      */
-    bool operator==(const FMatrix4& Other) const noexcept
+    FORCEINLINE bool operator==(const FMatrix4& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -1171,7 +1171,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are not equal within a default epsilon, false otherwise
      */
-    bool operator!=(const FMatrix4& Other) const noexcept
+    FORCEINLINE bool operator!=(const FMatrix4& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -1182,7 +1182,7 @@ public:
      * @brief Creates and returns an identity matrix
      * @return An identity matrix
      */
-    static FMatrix4 Identity() noexcept
+    FORCEINLINE static FMatrix4 Identity() noexcept
     {
         FMatrix4 IdentityMatrix;
         IdentityMatrix.SetIdentity();
@@ -1194,7 +1194,7 @@ public:
      * @param Scale Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    static FMatrix4 Scale(float Scale) noexcept
+    FORCEINLINE static FMatrix4 Scale(float Scale) noexcept
     {
         return FMatrix4(
             Scale, 0.0f,  0.0f,  0.0f,
@@ -1205,17 +1205,17 @@ public:
 
     /**
      * @brief Creates and returns a scale matrix for each axis
-     * @param x Scale for the x-axis
-     * @param y Scale for the y-axis
-     * @param z Scale for the z-axis
+     * @param InX Scale for the x-axis
+     * @param InY Scale for the y-axis
+     * @param InZ Scale for the z-axis
      * @return A scale matrix
      */
-    static FMatrix4 Scale(float x, float y, float z) noexcept
+    FORCEINLINE static FMatrix4 Scale(float InX, float InY, float InZ) noexcept
     {
         return FMatrix4(
-            x,    0.0f, 0.0f, 0.0f,
-            0.0f, y,    0.0f, 0.0f,
-            0.0f, 0.0f, z,    0.0f,
+            InX,  0.0f, 0.0f, 0.0f,
+            0.0f, InY,  0.0f, 0.0f,
+            0.0f, 0.0f, InZ,  0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
     }
 
@@ -1224,25 +1224,29 @@ public:
      * @param VectorWithScale A vector containing the scale for each axis in the x-, y-, z-components
      * @return A scale matrix
      */
-    static FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
+    FORCEINLINE static FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
     {
-        return Scale(VectorWithScale.x, VectorWithScale.y, VectorWithScale.z);
+        return FMatrix4(
+            VectorWithScale.x, 0.0f,              0.0f,              0.0f,
+            0.0f,              VectorWithScale.y, 0.0f,              0.0f,
+            0.0f,              0.0f,              VectorWithScale.z, 0.0f,
+            0.0f,              0.0f,              0.0f,              1.0f);
     }
 
     /**
      * @brief Creates and returns a translation matrix
-     * @param x Translation for the x-axis
-     * @param y Translation for the y-axis
-     * @param z Translation for the z-axis
+     * @param InX Translation for the x-axis
+     * @param InY Translation for the y-axis
+     * @param InZ Translation for the z-axis
      * @return A translation matrix
      */
-    static FMatrix4 Translation(float x, float y, float z) noexcept
+    FORCEINLINE static FMatrix4 Translation(float InX, float InY, float InZ) noexcept
     {
         return FMatrix4(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,
-            x,    y,    z,    1.0f);
+            InX,  InY,  InZ,  1.0f);
     }
 
     /**
@@ -1250,9 +1254,13 @@ public:
      * @param InTranslation A vector containing the translation
      * @return A translation matrix
      */
-    static FMatrix4 Translation(const FVector3& InTranslation) noexcept
+    FORCEINLINE static FMatrix4 Translation(const FVector3& InTranslation) noexcept
     {
-        return Translation(InTranslation.x, InTranslation.y, InTranslation.z);
+        return FMatrix4(
+            1.0f,            0.0f,            0.0f,            0.0f,
+            0.0f,            1.0f,            0.0f,            0.0f,
+            0.0f,            0.0f,            1.0f,            0.0f,
+            InTranslation.x, InTranslation.y, InTranslation.z, 1.0f);
     }
 
     /**
@@ -1262,7 +1270,7 @@ public:
      * @param Roll Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    static FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    FORCEINLINE static FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
         const float SinP = FMath::Sin(Pitch);
         const float CosP = FMath::Cos(Pitch);
@@ -1286,7 +1294,7 @@ public:
      * @param PitchYawRoll A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
      * @return A rotation matrix
      */
-    static FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
+    FORCEINLINE static FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
     {
         return RotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
     }
@@ -1296,7 +1304,7 @@ public:
      * @param x Rotation around the x-axis in radians
      * @return A rotation matrix
      */
-    static FMatrix4 RotationX(float x) noexcept
+    FORCEINLINE static FMatrix4 RotationX(float x) noexcept
     {
         const float SinX = FMath::Sin(x);
         const float CosX = FMath::Cos(x);
@@ -1313,7 +1321,7 @@ public:
      * @param y Rotation around the y-axis in radians
      * @return A rotation matrix
      */
-    static FMatrix4 RotationY(float y) noexcept
+    FORCEINLINE static FMatrix4 RotationY(float y) noexcept
     {
         const float SinY = FMath::Sin(y);
         const float CosY = FMath::Cos(y);
@@ -1330,7 +1338,7 @@ public:
      * @param z Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    static FMatrix4 RotationZ(float z) noexcept
+    FORCEINLINE static FMatrix4 RotationZ(float z) noexcept
     {
         const float SinZ = FMath::Sin(z);
         const float CosZ = FMath::Cos(z);
@@ -1350,7 +1358,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return An orthographic projection matrix
      */
-    static FMatrix4 OrthographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
+    FORCEINLINE static FMatrix4 OrthographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
         return FMatrix4(
             2.0f / Width, 0.0f,           0.0f,                   0.0f,
@@ -1369,7 +1377,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return An orthographic projection matrix
      */
-    static FMatrix4 OrthographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
+    FORCEINLINE static FMatrix4 OrthographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
     {
         const float InvWidth  = 1.0f / (Right - Left);
         const float InvHeight = 1.0f / (Top - Bottom);
@@ -1390,7 +1398,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return A perspective projection matrix
      */
-    static FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
+    FORCEINLINE static FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
         if ((Fov < FMath::kOneDegree_f) || (Fov > (FMath::kPI_f - FMath::kOneDegree_f)))
         {
@@ -1417,7 +1425,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return A perspective projection matrix
      */
-    static FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
+    FORCEINLINE static FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
     {
         const float AspectRatio = Width / Height;
         return PerspectiveProjection(Fov, AspectRatio, NearZ, FarZ);
@@ -1430,7 +1438,7 @@ public:
      * @param Up The up-axis of the new coordinate system in the current world-space
      * @return A look-at matrix
      */
-    static FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
+    FORCEINLINE static FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
     {
         const FVector3 Direction = (At - Eye).GetNormalized();
         return LookTo(Eye, Direction, Up);
@@ -1443,7 +1451,7 @@ public:
      * @param Up The up-axis of the new coordinate system in the current world-space
      * @return A look-to matrix
      */
-    static FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
+    FORCEINLINE static FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
     {
         FVector3 Forward    = Direction.GetNormalized();
         FVector3 Right      = Up.CrossProduct(Forward).GetNormalized();

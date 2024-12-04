@@ -11,7 +11,7 @@ class FColor
 public:
 
     /** @brief Default constructor */
-    FColor()
+    FORCEINLINE FColor()
         : PackedRGBA(0)
     {
     }
@@ -23,7 +23,7 @@ public:
      * @param InB Blue channel
      * @param InA Alpha channel
      */
-    FColor(uint8 InR, uint8 InG, uint8 InB, uint8 InA)
+    FORCEINLINE FColor(uint8 InR, uint8 InG, uint8 InB, uint8 InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -35,7 +35,7 @@ public:
      * @brief Packs the RGBA channels into a 32-bit unsigned integer.
      * @return A 32-bit unsigned integer representing the packed color.
      */
-    uint32 ToPackedRGBA() const
+    FORCEINLINE uint32 ToPackedRGBA() const
     {
         return (static_cast<uint32>(R) << 24) | (static_cast<uint32>(G) << 16) | (static_cast<uint32>(B) << 8) | static_cast<uint32>(A);
     }
@@ -44,16 +44,18 @@ public:
      * @brief Converts this color to a float color.
      * @return An `FFloatColor` representation of this color.
      */
-    FFloatColor ToFloatColor() const;
+    FORCEINLINE FFloatColor ToFloatColor() const;
+
+public:
 
     /** @brief Equality operator */
-    bool operator==(const FColor& Other) const
+    FORCEINLINE bool operator==(const FColor& Other) const
     {
         return PackedRGBA == Other.PackedRGBA;
     }
 
     /** @brief Inequality operator */
-    bool operator!=(const FColor& Other) const
+    FORCEINLINE bool operator!=(const FColor& Other) const
     {
         return !(*this == Other);
     }
@@ -120,7 +122,7 @@ public:
 public:
 
     /** @brief Default constructor */
-    FFloatColor()
+    FORCEINLINE FFloatColor()
     {
         FMemory::Memzero(RGBA, sizeof(RGBA));
     }
@@ -132,7 +134,7 @@ public:
      * @param InB Blue channel
      * @param InA Alpha channel
      */
-    FFloatColor(float InR, float InG, float InB, float InA)
+    FORCEINLINE FFloatColor(float InR, float InG, float InB, float InA)
         : R(InR)
         , G(InG)
         , B(InB)
@@ -144,7 +146,7 @@ public:
      * @brief Constructs a float color from a 3D vector.
      * @param InVector The input vector containing RGB components.
      */
-    explicit FFloatColor(const FVector3& InVector)
+    FORCEINLINE explicit FFloatColor(const FVector3& InVector)
     {
         FMemory::Memcpy(RGBA, &InVector, sizeof(FVector3));
     }
@@ -153,7 +155,7 @@ public:
      * @brief Constructs a float color from a 4D vector.
      * @param InVector The input vector containing RGBA components.
      */
-    explicit FFloatColor(const FVector4& InVector)
+    FORCEINLINE explicit FFloatColor(const FVector4& InVector)
     {
         FMemory::Memcpy(RGBA, &InVector, sizeof(RGBA));
     }
@@ -162,7 +164,7 @@ public:
      * @brief Converts this float color to an `FColor` by scaling and clamping each component.
      * @return An `FColor` representation of this float color.
      */
-    FColor ToColor() const
+    FORCEINLINE FColor ToColor() const
     {
         // Clamp each component between 0.0f and 1.0f
         const float ClampedR = FMath::Clamp(R, 0.0f, 1.0f);
@@ -183,7 +185,7 @@ public:
      * @brief Returns a color with component-wise negation of this color.
      * @return A negated color.
      */
-    FFloatColor operator-() const noexcept
+    FORCEINLINE FFloatColor operator-() const noexcept
     {
         FFloatColor Result;
 
@@ -204,7 +206,7 @@ public:
      * @param ColorB The color to subtract.
      * @return The result of the subtraction.
      */
-    FFloatColor operator-(const FFloatColor& ColorB) const noexcept
+    FORCEINLINE FFloatColor operator-(const FFloatColor& ColorB) const noexcept
     {
         FFloatColor Result;
 
@@ -225,7 +227,7 @@ public:
      * @param ColorB The color to subtract.
      * @return A reference to this color after subtraction.
      */
-    FFloatColor& operator-=(const FFloatColor& ColorB) noexcept
+    FORCEINLINE FFloatColor& operator-=(const FFloatColor& ColorB) noexcept
     {
     #if !USE_VECTOR_MATH
         R -= ColorB.R;
@@ -247,7 +249,7 @@ public:
      * @param ColorB The color to multiply with.
      * @return The result of the multiplication.
      */
-    FFloatColor operator*(const FFloatColor& ColorB) const noexcept
+    FORCEINLINE FFloatColor operator*(const FFloatColor& ColorB) const noexcept
     {
         FFloatColor Result;
 
@@ -268,7 +270,7 @@ public:
      * @param ColorB The color to multiply with.
      * @return A reference to this color after multiplication.
      */
-    FFloatColor& operator*=(const FFloatColor& ColorB) noexcept
+    FORCEINLINE FFloatColor& operator*=(const FFloatColor& ColorB) noexcept
     {
     #if !USE_VECTOR_MATH
         R *= ColorB.R;
@@ -290,7 +292,7 @@ public:
      * @param ColorB The color to divide by.
      * @return The result of the division.
      */
-    FFloatColor operator/(const FFloatColor& ColorB) const noexcept
+    FORCEINLINE FFloatColor operator/(const FFloatColor& ColorB) const noexcept
     {
         FFloatColor Result;
 
@@ -311,7 +313,7 @@ public:
      * @param ColorB The color to divide by.
      * @return A reference to this color after division.
      */
-    FFloatColor& operator/=(const FFloatColor& ColorB) noexcept
+    FORCEINLINE FFloatColor& operator/=(const FFloatColor& ColorB) noexcept
     {
     #if !USE_VECTOR_MATH
         R /= ColorB.R;
@@ -333,7 +335,7 @@ public:
      * @param ColorB The color to add.
      * @return The result of the addition.
      */
-    FFloatColor operator+(const FFloatColor& ColorB) const noexcept
+    FORCEINLINE FFloatColor operator+(const FFloatColor& ColorB) const noexcept
     {
         FFloatColor Result;
 
@@ -354,7 +356,7 @@ public:
      * @param ColorB The color to add.
      * @return A reference to this color after addition.
      */
-    FFloatColor& operator+=(const FFloatColor& ColorB) noexcept
+    FORCEINLINE FFloatColor& operator+=(const FFloatColor& ColorB) noexcept
     {
     #if !USE_VECTOR_MATH
         R += ColorB.R;
@@ -376,7 +378,7 @@ public:
      * @param Scalar The scalar value to add.
      * @return The result of the addition.
      */
-    FFloatColor operator+(float Scalar) const noexcept
+    FORCEINLINE FFloatColor operator+(float Scalar) const noexcept
     {
         FFloatColor Result;
 
@@ -397,7 +399,7 @@ public:
      * @param Scalar The scalar value to add.
      * @return A reference to this color after addition.
      */
-    FFloatColor& operator+=(float Scalar) noexcept
+    FORCEINLINE FFloatColor& operator+=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         R += Scalar;
@@ -419,7 +421,7 @@ public:
      * @param Scalar The scalar value to subtract.
      * @return The result of the subtraction.
      */
-    FFloatColor operator-(float Scalar) const noexcept
+    FORCEINLINE FFloatColor operator-(float Scalar) const noexcept
     {
         FFloatColor Result;
 
@@ -440,7 +442,7 @@ public:
      * @param Scalar The scalar value to subtract.
      * @return A reference to this color after subtraction.
      */
-    FFloatColor& operator-=(float Scalar) noexcept
+    FORCEINLINE FFloatColor& operator-=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         R -= Scalar;
@@ -462,7 +464,7 @@ public:
      * @param Scalar The scalar value to multiply with.
      * @return The result of the multiplication.
      */
-    FFloatColor operator*(float Scalar) const noexcept
+    FORCEINLINE FFloatColor operator*(float Scalar) const noexcept
     {
         FFloatColor Result;
 
@@ -483,7 +485,7 @@ public:
      * @param Scalar The scalar value to multiply with.
      * @return A reference to this color after multiplication.
      */
-    FFloatColor& operator*=(float Scalar) noexcept
+    FORCEINLINE FFloatColor& operator*=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         R *= Scalar;
@@ -505,7 +507,7 @@ public:
      * @param Scalar The scalar value to divide by.
      * @return The result of the division.
      */
-    FFloatColor operator/(float Scalar) const noexcept
+    FORCEINLINE FFloatColor operator/(float Scalar) const noexcept
     {
         FFloatColor Result;
 
@@ -526,7 +528,7 @@ public:
      * @param Scalar The scalar value to divide by.
      * @return A reference to this color after division.
      */
-    FFloatColor& operator/=(float Scalar) noexcept
+    FORCEINLINE FFloatColor& operator/=(float Scalar) noexcept
     {
     #if !USE_VECTOR_MATH
         R /= Scalar;
@@ -548,14 +550,14 @@ public:
      * @param RHS The color to compare with.
      * @return `true` if colors are approximately equal, `false` otherwise.
      */
-    bool operator==(const FFloatColor& RHS) const
+    FORCEINLINE bool operator==(const FFloatColor& RHS) const
     {
         constexpr float Epsilon = 1e-6f;
         return (FMath::Abs(R - RHS.R) <= Epsilon) && (FMath::Abs(G - RHS.G) <= Epsilon) && (FMath::Abs(B - RHS.B) <= Epsilon) && (FMath::Abs(A - RHS.A) <= Epsilon);
     }
 
     /** @brief Inequality operator */
-    bool operator!=(const FFloatColor& RHS) const
+    FORCEINLINE bool operator!=(const FFloatColor& RHS) const
     {
         return !(*this == RHS);
     }
@@ -597,7 +599,7 @@ public:
     };
 };
 
-inline FFloatColor FColor::ToFloatColor() const
+FFloatColor FColor::ToFloatColor() const
 {
     return FFloatColor(static_cast<float>(R) / 255.0f, static_cast<float>(G) / 255.0f, static_cast<float>(B) / 255.0f, static_cast<float>(A) / 255.0f);
 }
@@ -634,13 +636,13 @@ public:
     }
 
     /** @brief Equality operator */
-    bool operator==(const FFloatColor16& RHS) const
+    FORCEINLINE bool operator==(const FFloatColor16& RHS) const
     {
         return R == RHS.R && G == RHS.G && B == RHS.B && A == RHS.A;
     }
 
     /** @brief Inequality operator */
-    bool operator!=(const FFloatColor16& RHS) const
+    FORCEINLINE bool operator!=(const FFloatColor16& RHS) const
     {
         return !(*this == RHS);
     }

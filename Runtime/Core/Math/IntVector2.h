@@ -6,7 +6,7 @@ class FInt16Vector2
 public:
 
     /** @brief Default constructor initializes components to zero. */
-    FInt16Vector2() noexcept
+    FORCEINLINE FInt16Vector2() noexcept
         : X(0)
         , Y(0)
     {
@@ -17,28 +17,17 @@ public:
      * @param InX The X-coordinate.
      * @param InY The Y-coordinate.
      */
-    FInt16Vector2(int16 InX, int16 InY) noexcept
+    FORCEINLINE FInt16Vector2(int16 InX, int16 InY) noexcept
         : X(InX)
         , Y(InY)
     {
     }
 
     /**
-     * @brief Constructs the vector from an array of two int16 values.
-     * @param Array Array containing two elements: [0] = X, [1] = Y.
-     */
-    explicit FInt16Vector2(const int16* Array) noexcept
-        : X(Array[0])
-        , Y(Array[1])
-    {
-        CHECK(Array != nullptr);
-    }
-
-    /**
      * @brief Constructs the vector by setting both X and Y to the same scalar value.
      * @param Scalar The scalar value to set both components.
      */
-    explicit FInt16Vector2(int16 Scalar) noexcept
+    FORCEINLINE explicit FInt16Vector2(int16 Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
     {
@@ -50,7 +39,7 @@ public:
      * @brief Returns a negated vector.
      * @return A new vector with each component negated.
      */
-    FInt16Vector2 operator-() const noexcept
+    FORCEINLINE FInt16Vector2 operator-() const noexcept
     {
         return FInt16Vector2(-X, -Y);
     }
@@ -60,7 +49,7 @@ public:
      * @param Other The vector to add.
      * @return A new vector representing the sum.
      */
-    FInt16Vector2 operator+(const FInt16Vector2& Other) const noexcept
+    FORCEINLINE FInt16Vector2 operator+(const FInt16Vector2& Other) const noexcept
     {
         return FInt16Vector2(X + Other.X, Y + Other.Y);
     }
@@ -70,7 +59,7 @@ public:
      * @param Other The vector to add.
      * @return A reference to this vector after addition.
      */
-    FInt16Vector2& operator+=(const FInt16Vector2& Other) noexcept
+    FORCEINLINE FInt16Vector2& operator+=(const FInt16Vector2& Other) noexcept
     {
         X += Other.X;
         Y += Other.Y;
@@ -82,7 +71,7 @@ public:
      * @param Scalar The scalar value to add.
      * @return A new vector with each component increased by the scalar.
      */
-    FInt16Vector2 operator+(int16 Scalar) const noexcept
+    FORCEINLINE FInt16Vector2 operator+(int16 Scalar) const noexcept
     {
         return FInt16Vector2(X + Scalar, Y + Scalar);
     }
@@ -92,7 +81,7 @@ public:
      * @param Scalar The scalar value to add.
      * @return A reference to this vector after addition.
      */
-    FInt16Vector2& operator+=(int16 Scalar) noexcept
+    FORCEINLINE FInt16Vector2& operator+=(int16 Scalar) noexcept
     {
         X += Scalar;
         Y += Scalar;
@@ -104,7 +93,7 @@ public:
      * @param Other The vector to subtract.
      * @return A new vector representing the difference.
      */
-    FInt16Vector2 operator-(const FInt16Vector2& Other) const noexcept
+    FORCEINLINE FInt16Vector2 operator-(const FInt16Vector2& Other) const noexcept
     {
         return FInt16Vector2(X - Other.X, Y - Other.Y);
     }
@@ -114,7 +103,7 @@ public:
      * @param Other The vector to subtract.
      * @return A reference to this vector after subtraction.
      */
-    FInt16Vector2& operator-=(const FInt16Vector2& Other) noexcept
+    FORCEINLINE FInt16Vector2& operator-=(const FInt16Vector2& Other) noexcept
     {
         X -= Other.X;
         Y -= Other.Y;
@@ -126,7 +115,7 @@ public:
      * @param Scalar The scalar value to subtract.
      * @return A new vector with each component decreased by the scalar.
      */
-    FInt16Vector2 operator-(int16 Scalar) const noexcept
+    FORCEINLINE FInt16Vector2 operator-(int16 Scalar) const noexcept
     {
         return FInt16Vector2(X - Scalar, Y - Scalar);
     }
@@ -136,7 +125,7 @@ public:
      * @param Scalar The scalar value to subtract.
      * @return A reference to this vector after subtraction.
      */
-    FInt16Vector2& operator-=(int16 Scalar) noexcept
+    FORCEINLINE FInt16Vector2& operator-=(int16 Scalar) noexcept
     {
         X -= Scalar;
         Y -= Scalar;
@@ -148,7 +137,7 @@ public:
      * @param Other The vector to multiply with.
      * @return A new vector representing the product.
      */
-    FInt16Vector2 operator*(const FInt16Vector2& Other) const noexcept
+    FORCEINLINE FInt16Vector2 operator*(const FInt16Vector2& Other) const noexcept
     {
         return FInt16Vector2(X * Other.X, Y * Other.Y);
     }
@@ -158,7 +147,7 @@ public:
      * @param Other The vector to multiply with.
      * @return A reference to this vector after multiplication.
      */
-    FInt16Vector2& operator*=(const FInt16Vector2& Other) noexcept
+    FORCEINLINE FInt16Vector2& operator*=(const FInt16Vector2& Other) noexcept
     {
         X *= Other.X;
         Y *= Other.Y;
@@ -170,7 +159,7 @@ public:
      * @param Scalar The scalar value to multiply with.
      * @return A new vector with each component multiplied by the scalar.
      */
-    FInt16Vector2 operator*(int16 Scalar) const noexcept
+    FORCEINLINE FInt16Vector2 operator*(int16 Scalar) const noexcept
     {
         return FInt16Vector2(X * Scalar, Y * Scalar);
     }
@@ -180,7 +169,7 @@ public:
      * @param Scalar The scalar value to multiply with.
      * @return A reference to this vector after multiplication.
      */
-    FInt16Vector2& operator*=(int16 Scalar) noexcept
+    FORCEINLINE FInt16Vector2& operator*=(int16 Scalar) noexcept
     {
         X *= Scalar;
         Y *= Scalar;
@@ -192,7 +181,7 @@ public:
      * @param Other The vector to divide by.
      * @return A new vector representing the quotient.
      */
-    FInt16Vector2 operator/(const FInt16Vector2& Other) const noexcept
+    FORCEINLINE FInt16Vector2 operator/(const FInt16Vector2& Other) const noexcept
     {
         CHECK(Other.X != 0 && Other.Y != 0);
         return FInt16Vector2(X / Other.X, Y / Other.Y);
@@ -203,7 +192,7 @@ public:
      * @param Other The vector to divide by.
      * @return A reference to this vector after division.
      */
-    FInt16Vector2& operator/=(const FInt16Vector2& Other) noexcept
+    FORCEINLINE FInt16Vector2& operator/=(const FInt16Vector2& Other) noexcept
     {
         CHECK(Other.X != 0 && Other.Y != 0);
         X /= Other.X;
@@ -216,7 +205,7 @@ public:
      * @param Scalar The scalar value to divide by.
      * @return A new vector with each component divided by the scalar.
      */
-    FInt16Vector2 operator/(int16 Scalar) const noexcept
+    FORCEINLINE FInt16Vector2 operator/(int16 Scalar) const noexcept
     {
         CHECK(Scalar != 0);
         return FInt16Vector2(X / Scalar, Y / Scalar);
@@ -227,7 +216,7 @@ public:
      * @param Scalar The scalar value to divide by.
      * @return A reference to this vector after division.
      */
-    FInt16Vector2& operator/=(int16 Scalar) noexcept
+    FORCEINLINE FInt16Vector2& operator/=(int16 Scalar) noexcept
     {
         CHECK(Scalar != 0);
         X /= Scalar;
@@ -240,7 +229,7 @@ public:
      * @param Other The vector to compare against.
      * @return True if both components are equal; otherwise, false.
      */
-    bool operator==(const FInt16Vector2& Other) const noexcept
+    FORCEINLINE bool operator==(const FInt16Vector2& Other) const noexcept
     {
         return (X == Other.X) && (Y == Other.Y);
     }
@@ -250,7 +239,7 @@ public:
      * @param Other The vector to compare against.
      * @return True if not equal; otherwise, false.
      */
-    bool operator!=(const FInt16Vector2& Other) const noexcept
+    FORCEINLINE bool operator!=(const FInt16Vector2& Other) const noexcept
     {
         return !(*this == Other);
     }
@@ -263,7 +252,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the minimum of each component.
      */
-    static FInt16Vector2 Min(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
+    FORCEINLINE static FInt16Vector2 Min(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
         return FInt16Vector2(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y));
     }
@@ -274,7 +263,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the maximum of each component.
      */
-    static FInt16Vector2 Max(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
+    FORCEINLINE static FInt16Vector2 Max(const FInt16Vector2& LHS, const FInt16Vector2& RHS) noexcept
     {
         return FInt16Vector2(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y));
     }
@@ -286,7 +275,7 @@ public:
      * @param Max The maximum bounds vector.
      * @return A new vector with each component clamped.
      */
-    static FInt16Vector2 Clamp(const FInt16Vector2& Value, const FInt16Vector2& Min, const FInt16Vector2& Max) noexcept
+    FORCEINLINE static FInt16Vector2 Clamp(const FInt16Vector2& Value, const FInt16Vector2& Min, const FInt16Vector2& Max) noexcept
     {
         return FInt16Vector2(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y));
     }
@@ -299,7 +288,7 @@ public:
      * @param Vector The vector to add the scalar to.
      * @return A new vector with each component increased by the scalar.
      */
-    friend FInt16Vector2 operator+(int16 Scalar, const FInt16Vector2& Vector) noexcept
+    FORCEINLINE friend FInt16Vector2 operator+(int16 Scalar, const FInt16Vector2& Vector) noexcept
     {
         return Vector + Scalar;
     }
@@ -310,7 +299,7 @@ public:
      * @param Vector The vector to subtract from the scalar.
      * @return A new vector with each component being Scalar minus the original component.
      */
-    friend FInt16Vector2 operator-(int16 Scalar, const FInt16Vector2& Vector) noexcept
+    FORCEINLINE friend FInt16Vector2 operator-(int16 Scalar, const FInt16Vector2& Vector) noexcept
     {
         return FInt16Vector2(Scalar - Vector.X, Scalar - Vector.Y);
     }
@@ -321,7 +310,7 @@ public:
      * @param Vector The vector to multiply.
      * @return A new vector with each component multiplied by the scalar.
      */
-    friend FInt16Vector2 operator*(int16 Scalar, const FInt16Vector2& Vector) noexcept
+    FORCEINLINE friend FInt16Vector2 operator*(int16 Scalar, const FInt16Vector2& Vector) noexcept
     {
         return Vector * Scalar;
     }
@@ -332,7 +321,7 @@ public:
      * @param Vector The vector whose components divide the scalar.
      * @return A new vector with each component being Scalar divided by the original component.
      */
-    friend FInt16Vector2 operator/(int16 Scalar, const FInt16Vector2& Vector) noexcept
+    FORCEINLINE friend FInt16Vector2 operator/(int16 Scalar, const FInt16Vector2& Vector) noexcept
     {
         CHECK(Vector.X != 0 && Vector.Y != 0);
         return FInt16Vector2(Scalar / Vector.X, Scalar / Vector.Y);
@@ -345,7 +334,7 @@ public:
      * @param Index The component index (0 for X, 1 for Y).
      * @return Reference to the component.
      */
-    int16& operator[](int32 Index) noexcept
+    FORCEINLINE int16& operator[](int32 Index) noexcept
     {
         CHECK(Index >= 0 && Index < 2);
         return XY[Index];
@@ -356,7 +345,7 @@ public:
      * @param Index The component index (0 for X, 1 for Y).
      * @return The component value.
      */
-    int16 operator[](int32 Index) const noexcept
+    FORCEINLINE int16 operator[](int32 Index) const noexcept
     {
         CHECK(Index >= 0 && Index < 2);
         return XY[Index];
@@ -386,7 +375,7 @@ class FIntVector2
 public:
 
     /** @brief Default constructor initializes components to zero. */
-    FIntVector2() noexcept
+    FORCEINLINE FIntVector2() noexcept
         : X(0)
         , Y(0)
     {
@@ -397,28 +386,17 @@ public:
      * @param InX The X-coordinate.
      * @param InY The Y-coordinate.
      */
-    FIntVector2(int32 InX, int32 InY) noexcept
+    FORCEINLINE FIntVector2(int32 InX, int32 InY) noexcept
         : X(InX)
         , Y(InY)
     {
     }
 
     /**
-     * @brief Constructs the vector from an array of two int32 values.
-     * @param Array Array containing two elements: [0] = X, [1] = Y.
-     */
-    explicit FIntVector2(const int32* Array) noexcept
-        : X(Array[0])
-        , Y(Array[1])
-    {
-        CHECK(Array != nullptr);
-    }
-
-    /**
      * @brief Constructs the vector by setting both X and Y to the same scalar value.
      * @param Scalar The scalar value to set both components.
      */
-    explicit FIntVector2(int32 Scalar) noexcept
+    FORCEINLINE explicit FIntVector2(int32 Scalar) noexcept
         : X(Scalar)
         , Y(Scalar)
     {
@@ -430,7 +408,7 @@ public:
      * @brief Returns a negated vector.
      * @return A new vector with each component negated.
      */
-    FIntVector2 operator-() const noexcept
+    FORCEINLINE FIntVector2 operator-() const noexcept
     {
         return FIntVector2(-X, -Y);
     }
@@ -440,7 +418,7 @@ public:
      * @param Other The vector to add.
      * @return A new vector representing the sum.
      */
-    FIntVector2 operator+(const FIntVector2& Other) const noexcept
+    FORCEINLINE FIntVector2 operator+(const FIntVector2& Other) const noexcept
     {
         return FIntVector2(X + Other.X, Y + Other.Y);
     }
@@ -450,7 +428,7 @@ public:
      * @param Other The vector to add.
      * @return A reference to this vector after addition.
      */
-    FIntVector2& operator+=(const FIntVector2& Other) noexcept
+    FORCEINLINE FIntVector2& operator+=(const FIntVector2& Other) noexcept
     {
         X += Other.X;
         Y += Other.Y;
@@ -462,7 +440,7 @@ public:
      * @param Scalar The scalar value to add.
      * @return A new vector with each component increased by the scalar.
      */
-    FIntVector2 operator+(int32 Scalar) const noexcept
+    FORCEINLINE FIntVector2 operator+(int32 Scalar) const noexcept
     {
         return FIntVector2(X + Scalar, Y + Scalar);
     }
@@ -472,7 +450,7 @@ public:
      * @param Scalar The scalar value to add.
      * @return A reference to this vector after addition.
      */
-    FIntVector2& operator+=(int32 Scalar) noexcept
+    FORCEINLINE FIntVector2& operator+=(int32 Scalar) noexcept
     {
         X += Scalar;
         Y += Scalar;
@@ -484,7 +462,7 @@ public:
      * @param Other The vector to subtract.
      * @return A new vector representing the difference.
      */
-    FIntVector2 operator-(const FIntVector2& Other) const noexcept
+    FORCEINLINE FIntVector2 operator-(const FIntVector2& Other) const noexcept
     {
         return FIntVector2(X - Other.X, Y - Other.Y);
     }
@@ -494,7 +472,7 @@ public:
      * @param Other The vector to subtract.
      * @return A reference to this vector after subtraction.
      */
-    FIntVector2& operator-=(const FIntVector2& Other) noexcept
+    FORCEINLINE FIntVector2& operator-=(const FIntVector2& Other) noexcept
     {
         X -= Other.X;
         Y -= Other.Y;
@@ -506,7 +484,7 @@ public:
      * @param Scalar The scalar value to subtract.
      * @return A new vector with each component decreased by the scalar.
      */
-    FIntVector2 operator-(int32 Scalar) const noexcept
+    FORCEINLINE FIntVector2 operator-(int32 Scalar) const noexcept
     {
         return FIntVector2(X - Scalar, Y - Scalar);
     }
@@ -516,7 +494,7 @@ public:
      * @param Scalar The scalar value to subtract.
      * @return A reference to this vector after subtraction.
      */
-    FIntVector2& operator-=(int32 Scalar) noexcept
+    FORCEINLINE FIntVector2& operator-=(int32 Scalar) noexcept
     {
         X -= Scalar;
         Y -= Scalar;
@@ -528,7 +506,7 @@ public:
      * @param Other The vector to multiply with.
      * @return A new vector representing the product.
      */
-    FIntVector2 operator*(const FIntVector2& Other) const noexcept
+    FORCEINLINE FIntVector2 operator*(const FIntVector2& Other) const noexcept
     {
         return FIntVector2(X * Other.X, Y * Other.Y);
     }
@@ -538,7 +516,7 @@ public:
      * @param Other The vector to multiply with.
      * @return A reference to this vector after multiplication.
      */
-    FIntVector2& operator*=(const FIntVector2& Other) noexcept
+    FORCEINLINE FIntVector2& operator*=(const FIntVector2& Other) noexcept
     {
         X *= Other.X;
         Y *= Other.Y;
@@ -550,7 +528,7 @@ public:
      * @param Scalar The scalar value to multiply with.
      * @return A new vector with each component multiplied by the scalar.
      */
-    FIntVector2 operator*(int32 Scalar) const noexcept
+    FORCEINLINE FIntVector2 operator*(int32 Scalar) const noexcept
     {
         return FIntVector2(X * Scalar, Y * Scalar);
     }
@@ -560,7 +538,7 @@ public:
      * @param Scalar The scalar value to multiply with.
      * @return A reference to this vector after multiplication.
      */
-    FIntVector2& operator*=(int32 Scalar) noexcept
+    FORCEINLINE FIntVector2& operator*=(int32 Scalar) noexcept
     {
         X *= Scalar;
         Y *= Scalar;
@@ -572,7 +550,7 @@ public:
      * @param Other The vector to divide by.
      * @return A new vector representing the quotient.
      */
-    FIntVector2 operator/(const FIntVector2& Other) const noexcept
+    FORCEINLINE FIntVector2 operator/(const FIntVector2& Other) const noexcept
     {
         CHECK(Other.X != 0 && Other.Y != 0);
         return FIntVector2(X / Other.X, Y / Other.Y);
@@ -583,7 +561,7 @@ public:
      * @param Other The vector to divide by.
      * @return A reference to this vector after division.
      */
-    FIntVector2& operator/=(const FIntVector2& Other) noexcept
+    FORCEINLINE FIntVector2& operator/=(const FIntVector2& Other) noexcept
     {
         CHECK(Other.X != 0 && Other.Y != 0);
         X /= Other.X;
@@ -596,7 +574,7 @@ public:
      * @param Scalar The scalar value to divide by.
      * @return A new vector with each component divided by the scalar.
      */
-    FIntVector2 operator/(int32 Scalar) const noexcept
+    FORCEINLINE FIntVector2 operator/(int32 Scalar) const noexcept
     {
         CHECK(Scalar != 0);
         return FIntVector2(X / Scalar, Y / Scalar);
@@ -607,7 +585,7 @@ public:
      * @param Scalar The scalar value to divide by.
      * @return A reference to this vector after division.
      */
-    FIntVector2& operator/=(int32 Scalar) noexcept
+    FORCEINLINE FIntVector2& operator/=(int32 Scalar) noexcept
     {
         CHECK(Scalar != 0);
         X /= Scalar;
@@ -620,7 +598,7 @@ public:
      * @param Other The vector to compare against.
      * @return True if both components are equal; otherwise, false.
      */
-    bool operator==(const FIntVector2& Other) const noexcept
+    FORCEINLINE bool operator==(const FIntVector2& Other) const noexcept
     {
         return (X == Other.X) && (Y == Other.Y);
     }
@@ -630,7 +608,7 @@ public:
      * @param Other The vector to compare against.
      * @return True if not equal; otherwise, false.
      */
-    bool operator!=(const FIntVector2& Other) const noexcept
+    FORCEINLINE bool operator!=(const FIntVector2& Other) const noexcept
     {
         return !(*this == Other);
     }
@@ -643,7 +621,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the minimum of each component.
      */
-    static FIntVector2 Min(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
+    FORCEINLINE static FIntVector2 Min(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
         return FIntVector2(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y));
     }
@@ -654,7 +632,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the maximum of each component.
      */
-    static FIntVector2 Max(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
+    FORCEINLINE static FIntVector2 Max(const FIntVector2& LHS, const FIntVector2& RHS) noexcept
     {
         return FIntVector2(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y));
     }
@@ -666,7 +644,7 @@ public:
      * @param Max The maximum bounds vector.
      * @return A new vector with each component clamped.
      */
-    static FIntVector2 Clamp(const FIntVector2& Value, const FIntVector2& Min, const FIntVector2& Max) noexcept
+    FORCEINLINE static FIntVector2 Clamp(const FIntVector2& Value, const FIntVector2& Min, const FIntVector2& Max) noexcept
     {
         return FIntVector2(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y));
     }
@@ -679,7 +657,7 @@ public:
      * @param Vector The vector to add the scalar to.
      * @return A new vector with each component increased by the scalar.
      */
-    friend FIntVector2 operator+(int32 Scalar, const FIntVector2& Vector) noexcept
+    FORCEINLINE friend FIntVector2 operator+(int32 Scalar, const FIntVector2& Vector) noexcept
     {
         return Vector + Scalar;
     }
@@ -690,7 +668,7 @@ public:
      * @param Vector The vector to subtract from the scalar.
      * @return A new vector with each component being Scalar minus the original component.
      */
-    friend FIntVector2 operator-(int32 Scalar, const FIntVector2& Vector) noexcept
+    FORCEINLINE friend FIntVector2 operator-(int32 Scalar, const FIntVector2& Vector) noexcept
     {
         return FIntVector2(Scalar - Vector.X, Scalar - Vector.Y);
     }
@@ -701,7 +679,7 @@ public:
      * @param Vector The vector to multiply.
      * @return A new vector with each component multiplied by the scalar.
      */
-    friend FIntVector2 operator*(int32 Scalar, const FIntVector2& Vector) noexcept
+    FORCEINLINE friend FIntVector2 operator*(int32 Scalar, const FIntVector2& Vector) noexcept
     {
         return Vector * Scalar;
     }
@@ -712,7 +690,7 @@ public:
      * @param Vector The vector whose components divide the scalar.
      * @return A new vector with each component being Scalar divided by the original component.
      */
-    friend FIntVector2 operator/(int32 Scalar, const FIntVector2& Vector) noexcept
+    FORCEINLINE friend FIntVector2 operator/(int32 Scalar, const FIntVector2& Vector) noexcept
     {
         CHECK(Vector.X != 0 && Vector.Y != 0);
         return FIntVector2(Scalar / Vector.X, Scalar / Vector.Y);
@@ -725,7 +703,7 @@ public:
      * @param Index The component index (0 for X, 1 for Y).
      * @return Reference to the component.
      */
-    int32& operator[](int32 Index) noexcept
+    FORCEINLINE int32& operator[](int32 Index) noexcept
     {
         CHECK(Index >= 0 && Index < 2);
         return XY[Index];
@@ -736,7 +714,7 @@ public:
      * @param Index The component index (0 for X, 1 for Y).
      * @return The component value.
      */
-    int32 operator[](int32 Index) const noexcept
+    FORCEINLINE int32 operator[](int32 Index) const noexcept
     {
         CHECK(Index >= 0 && Index < 2);
         return XY[Index];

@@ -7,7 +7,7 @@ class VECTOR_ALIGN FMatrix3x4
 public:
 
     /** @brief Default constructor (Initializes all components to zero) */
-    FMatrix3x4() noexcept
+    FORCEINLINE FMatrix3x4() noexcept
         : M{ {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f},
              {0.0f, 0.0f, 0.0f, 0.0f} }
@@ -29,7 +29,7 @@ public:
      * @param M22 Value to set on row 2 and column 2
      * @param M23 Value to set on row 2 and column 3
      */
-    explicit FMatrix3x4(
+    FORCEINLINE explicit FMatrix3x4(
         float M00, float M01, float M02, float M03,
         float M10, float M11, float M12, float M13,
         float M20, float M21, float M22, float M23) noexcept
@@ -43,26 +43,16 @@ public:
      * @brief Constructor initializing all components from a 4x4 matrix
      * @param InMatrix A 4x4 matrix to initialize this matrix from
      */
-    explicit FMatrix3x4(const FMatrix4& InMatrix) noexcept
+    FORCEINLINE explicit FMatrix3x4(const FMatrix4& InMatrix) noexcept
     {
         FMemory::Memcpy(M[0], InMatrix.M[0], sizeof(M));
-    }
-
-    /**
-     * @brief Constructor initializing all components with an array
-     * @param Array Array with at least 12 elements
-     */
-    explicit FMatrix3x4(const float* Array) noexcept
-    {
-        CHECK(Array != nullptr);
-        FMemory::Memcpy(&M[0][0], Array, sizeof(M));
     }
 
     /**
      * @brief Checks whether this matrix has any value that equals NaN
      * @return True if any value equals NaN, false otherwise
      */
-    bool ContainsNaN() const noexcept
+    FORCEINLINE bool ContainsNaN() const noexcept
     {
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -82,7 +72,7 @@ public:
      * @brief Checks whether this matrix has any value that equals infinity
      * @return True if any value equals infinity, false otherwise
      */
-    bool ContainsInfinity() const noexcept
+    FORCEINLINE bool ContainsInfinity() const noexcept
     {
         for (int32 Row = 0; Row < 3; ++Row)
         {
@@ -104,7 +94,7 @@ public:
      * @param Epsilon Threshold for comparison
      * @return True if equal within Epsilon, false otherwise
      */
-    bool IsEqual(const FMatrix3x4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FMatrix3x4& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
         Epsilon = FMath::Abs(Epsilon);
 
@@ -130,7 +120,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are equal within a default epsilon, false otherwise
      */
-    bool operator==(const FMatrix3x4& Other) const noexcept
+    FORCEINLINE bool operator==(const FMatrix3x4& Other) const noexcept
     {
         return IsEqual(Other);
     }
@@ -140,7 +130,7 @@ public:
      * @param Other The matrix to compare with
      * @return True if matrices are not equal within a default epsilon, false otherwise
      */
-    bool operator!=(const FMatrix3x4& Other) const noexcept
+    FORCEINLINE bool operator!=(const FMatrix3x4& Other) const noexcept
     {
         return !IsEqual(Other);
     }

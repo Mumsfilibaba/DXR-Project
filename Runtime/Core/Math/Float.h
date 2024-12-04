@@ -29,7 +29,7 @@ struct FFloat64
     /** 
      * @brief Default constructor initializes the double value to zero.
      */
-    FFloat64()
+    FORCEINLINE FFloat64()
         : Float64(0.0)
     {
     }
@@ -38,7 +38,7 @@ struct FFloat64
      * @brief Constructs an FFloat64 with a double value.
      * @param InFloat64 The double value to initialize with.
      */
-    FFloat64(double InFloat64)
+    FORCEINLINE FFloat64(double InFloat64)
         : Float64(InFloat64)
     {
     }
@@ -47,7 +47,7 @@ struct FFloat64
      * @brief Copy constructor.
      * @param Other The FFloat64 instance to copy from.
      */
-    FFloat64(const FFloat64& Other)
+    FORCEINLINE FFloat64(const FFloat64& Other)
         : Float64(Other.Float64)
     {
     }
@@ -56,7 +56,7 @@ struct FFloat64
      * @brief Sets the internal double value.
      * @param InFloat64 The double value to set.
      */
-    void SetFloat(double InFloat64)
+    FORCEINLINE void SetFloat(double InFloat64)
     {
         Float64 = InFloat64;
     }
@@ -65,7 +65,7 @@ struct FFloat64
      * @brief Retrieves the internal double value.
      * @return The stored double value.
      */
-    double GetFloat() const
+    FORCEINLINE double GetFloat() const
     {
         return Float64;
     }
@@ -74,7 +74,7 @@ struct FFloat64
      * @brief Returns the raw encoded bits of the double.
      * @return The 64-bit encoded value.
      */
-    uint64 GetBits() const
+    FORCEINLINE uint64 GetBits() const
     {
         return Encoded;
     }
@@ -84,7 +84,7 @@ struct FFloat64
      * @param Other The right-hand side FFloat64 to compare with.
      * @return True if the stored double values are equal.
      */
-    bool operator==(const FFloat64& Other) const
+    FORCEINLINE bool operator==(const FFloat64& Other) const
     {
         return Float64 == Other.Float64;
     }
@@ -94,7 +94,7 @@ struct FFloat64
      * @param Other The right-hand side FFloat64 to compare with.
      * @return True if the stored double values are not equal.
      */
-    bool operator!=(const FFloat64& Other) const
+    FORCEINLINE bool operator!=(const FFloat64& Other) const
     {
         return !(*this == Other);
     }
@@ -104,7 +104,7 @@ struct FFloat64
      * @param InFloat64 The double value to assign.
      * @return Reference to this FFloat64 instance.
      */
-    FFloat64& operator=(double InFloat64)
+    FORCEINLINE FFloat64& operator=(double InFloat64)
     {
         Float64 = InFloat64;
         return *this;
@@ -115,22 +115,24 @@ struct FFloat64
      * @param Other The FFloat64 instance to copy from.
      * @return Reference to this FFloat64 instance.
      */
-    FFloat64& operator=(const FFloat64& Other)
+    FORCEINLINE FFloat64& operator=(const FFloat64& Other)
     {
         Float64 = Other.Float64;
         return *this;
     }
 
+public:
+
     /** Union for accessing the raw bits of the double value */
     union
     {
-        double Float64; ///< The double value
-        uint64 Encoded; ///< The raw bits of the double value
+        double Float64; /** @brief The double value */
+        uint64 Encoded; /** @brief The raw bits of the double value */
         struct
         {
-            uint64 Mantissa : 52; ///< Mantissa (fractional part)
-            uint64 Exponent : 11; ///< Exponent
-            uint64 Sign     : 1;  ///< Sign bit
+            uint64 Mantissa : 52; /** @brief Mantissa (fractional part) */
+            uint64 Exponent : 11; /** @brief Exponent */
+            uint64 Sign     : 1;  /** @brief Sign bit */
         } Bits;
     };
 };
@@ -143,7 +145,7 @@ struct FFloat32
     /**
      * @brief Default constructor initializes the float value to zero.
      */
-    FFloat32()
+    FORCEINLINE FFloat32()
         : Float32(0.0f)
     {
     }
@@ -152,7 +154,7 @@ struct FFloat32
      * @brief Constructs an FFloat32 with a float value.
      * @param InFloat32 The float value to initialize with.
      */
-    FFloat32(float InFloat32)
+    FORCEINLINE FFloat32(float InFloat32)
         : Float32(InFloat32)
     {
     }
@@ -161,7 +163,7 @@ struct FFloat32
      * @brief Copy constructor.
      * @param Other The FFloat32 instance to copy from.
      */
-    FFloat32(const FFloat32& Other)
+    FORCEINLINE FFloat32(const FFloat32& Other)
         : Float32(Other.Float32)
     {
     }
@@ -170,7 +172,7 @@ struct FFloat32
      * @brief Sets the internal float value.
      * @param InFloat32 The float value to set.
      */
-    void SetFloat(float InFloat32)
+    FORCEINLINE void SetFloat(float InFloat32)
     {
         Float32 = InFloat32;
     }
@@ -179,7 +181,7 @@ struct FFloat32
      * @brief Retrieves the internal float value.
      * @return The stored float value.
      */
-    float GetFloat() const
+    FORCEINLINE float GetFloat() const
     {
         return Float32;
     }
@@ -188,7 +190,7 @@ struct FFloat32
      * @brief Returns the raw encoded bits of the float.
      * @return The 32-bit encoded value.
      */
-    uint32 GetBits() const
+    FORCEINLINE uint32 GetBits() const
     {
         return Encoded;
     }
@@ -198,7 +200,7 @@ struct FFloat32
      * @param Other The right-hand side FFloat32 to compare with.
      * @return True if the stored float values are equal.
      */
-    bool operator==(const FFloat32& Other) const
+    FORCEINLINE bool operator==(const FFloat32& Other) const
     {
         return Float32 == Other.Float32;
     }
@@ -208,7 +210,7 @@ struct FFloat32
      * @param Other The right-hand side FFloat32 to compare with.
      * @return True if the stored float values are not equal.
      */
-    bool operator!=(const FFloat32& Other) const
+    FORCEINLINE bool operator!=(const FFloat32& Other) const
     {
         return !(*this == Other);
     }
@@ -218,7 +220,7 @@ struct FFloat32
      * @param InFloat32 The float value to assign.
      * @return Reference to this FFloat32 instance.
      */
-    FFloat32& operator=(float InFloat32)
+    FORCEINLINE FFloat32& operator=(float InFloat32)
     {
         Float32 = InFloat32;
         return *this;
@@ -229,22 +231,24 @@ struct FFloat32
      * @param Other The FFloat32 instance to copy from.
      * @return Reference to this FFloat32 instance.
      */
-    FFloat32& operator=(const FFloat32& Other)
+    FORCEINLINE FFloat32& operator=(const FFloat32& Other)
     {
         Float32 = Other.Float32;
         return *this;
     }
 
+public:
+
     /** Union for accessing the raw bits of the float value */
     union
     {
-        float  Float32; ///< The float value
-        uint32 Encoded; ///< The raw bits of the float value
+        float  Float32; /** @brief The float value */
+        uint32 Encoded; /** @brief The raw bits of the float value */
         struct
         {
-            uint32 Mantissa : 23; ///< Mantissa (fractional part)
-            uint32 Exponent : 8;  ///< Exponent
-            uint32 Sign     : 1;  ///< Sign bit
+            uint32 Mantissa : 23; /** @brief Mantissa (fractional part) */
+            uint32 Exponent : 8;  /** @brief Exponent */
+            uint32 Sign     : 1;  /** @brief Sign bit */
         } Bits;
     };
 };
@@ -257,7 +261,7 @@ struct FFloat16
     /**
      * @brief Default constructor initializes the encoded value to zero.
      */
-    FFloat16()
+    FORCEINLINE FFloat16()
         : Encoded(0)
     {
     }
@@ -266,7 +270,7 @@ struct FFloat16
      * @brief Constructs an FFloat16 from a 32-bit float.
      * @param Float32 The float value to convert and store.
      */
-    FFloat16(float Float32)
+    FORCEINLINE FFloat16(float Float32)
     {
         SetFloat(Float32);
     }
@@ -275,7 +279,7 @@ struct FFloat16
      * @brief Copy constructor.
      * @param Other The FFloat16 instance to copy from.
      */
-    FFloat16(const FFloat16& Other)
+    FORCEINLINE FFloat16(const FFloat16& Other)
         : Encoded(Other.Encoded)
     {
     }
@@ -288,7 +292,7 @@ struct FFloat16
      * handling special cases like NaN, infinity, zero, subnormal numbers, and normal numbers.
      * It aims to produce an accurate half-precision representation of the input float.
      */
-    void SetFloat(float InFloat32)
+    inline void SetFloat(float InFloat32)
     {
         // Utilize FFloat32 to access float components
         FFloat32 Float32(InFloat32);
@@ -351,7 +355,7 @@ struct FFloat16
      * - Does not handle denormalized numbers or zero correctly.
      * - Exponent underflow or overflow may occur without handling.
      */
-    void SetFloatFast(float InFloat32)
+    inline void SetFloatFast(float InFloat32)
     {
         FFloat32 Float32(InFloat32);
 
@@ -374,7 +378,7 @@ struct FFloat16
      * This function converts the stored 16-bit half-precision float to a 32-bit single-precision float,
      * handling special cases and reconstructing the float32 representation.
      */
-    float GetFloat() const
+    inline float GetFloat() const
     {
         FFloat32 OutFloat32;
         if (Exponent == FP16_MAX_EXPONENT) // Exponent all ones: NaN or Infinity
@@ -427,7 +431,7 @@ struct FFloat16
      * @brief Returns the raw encoded bits of the half-precision float.
      * @return The 16-bit encoded value.
      */
-    uint16 GetBits() const
+    FORCEINLINE uint16 GetBits() const
     {
         return Encoded;
     }
@@ -437,7 +441,7 @@ struct FFloat16
      * @param Other The right-hand side FFloat16 to compare with.
      * @return True if the encoded values are equal.
      */
-    bool operator==(const FFloat16& Other) const
+    FORCEINLINE bool operator==(const FFloat16& Other) const
     {
         return Encoded == Other.Encoded;
     }
@@ -447,7 +451,7 @@ struct FFloat16
      * @param Other The right-hand side FFloat16 to compare with.
      * @return True if the encoded values are not equal.
      */
-    bool operator!=(const FFloat16& Other) const
+    FORCEINLINE bool operator!=(const FFloat16& Other) const
     {
         return !(*this == Other);
     }
@@ -457,7 +461,7 @@ struct FFloat16
      * @param InFloat32 The float value to assign.
      * @return Reference to this FFloat16 instance.
      */
-    FFloat16& operator=(float InFloat32)
+    FORCEINLINE FFloat16& operator=(float InFloat32)
     {
         SetFloat(InFloat32);
         return *this;
@@ -468,21 +472,23 @@ struct FFloat16
      * @param Other The FFloat16 instance to copy from.
      * @return Reference to this FFloat16 instance.
      */
-    FFloat16& operator=(const FFloat16& Other)
+    FORCEINLINE FFloat16& operator=(const FFloat16& Other)
     {
         Encoded = Other.Encoded;
         return *this;
     }
 
+public:
+
     /** Union for accessing the raw bits of the half-precision float */
     union
     {
-        uint16 Encoded; ///< The raw bits of the half-precision float
+        uint16 Encoded; /** @brief The raw bits of the half-precision float */
         struct
         {
-            uint16 Mantissa : 10; ///< Mantissa (fractional part)
-            uint16 Exponent : 5;  ///< Exponent
-            uint16 Sign     : 1;  ///< Sign bit
+            uint16 Mantissa : 10; /** @brief Mantissa (fractional part) */
+            uint16 Exponent : 5;  /** @brief Exponent */
+            uint16 Sign     : 1;  /** @brief Sign bit */
         };
     };
 };

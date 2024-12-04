@@ -7,8 +7,9 @@ public:
 
     /**
      * @brief Default constructor
+     * Initializes a plane with default values.
      */
-    FPlane() noexcept
+    FORCEINLINE FPlane() noexcept
         : X(0.0f)
         , Y(1.0f)
         , Z(0.0f)
@@ -17,10 +18,10 @@ public:
     }
 
     /**
-     * @brief Constructor that creates a plane from a Vector4
-     * @param Plane Vector4 representing a plane
+     * @brief Constructor that creates a plane from a FVector4.
+     * @param Plane A FVector4 representing the plane.
      */
-    explicit FPlane(const FVector4& Plane) noexcept
+    FORCEINLINE explicit FPlane(const FVector4& Plane) noexcept
         : X(Plane.x)
         , Y(Plane.y)
         , Z(Plane.z)
@@ -29,11 +30,11 @@ public:
     }
 
     /**
-     * @brief Constructor that creates a plane from a normal and offset
-     * @param Normal Normal of a plane
-     * @param InW Offset from origin in direction of the normal
+     * @brief Constructor that creates a plane from a normal vector and an offset.
+     * @param Normal The normal vector of the plane.
+     * @param InW The offset from the origin along the normal.
      */
-    explicit FPlane(const FVector3& Normal, float InW) noexcept
+    FORCEINLINE explicit FPlane(const FVector3& Normal, float InW) noexcept
         : X(Normal.x)
         , Y(Normal.y)
         , Z(Normal.z)
@@ -42,13 +43,13 @@ public:
     }
     
     /**
-     * @brief Constructor that creates a plane from components of a Vector4
-     * @param InX x-component of a Vector4
-     * @param InY y-component of a Vector4
-     * @param InZ z-component of a Vector4
-     * @param InW w-component of a Vector4
+     * @brief Constructor that creates a plane from individual components.
+     * @param InX The x-component of the plane.
+     * @param InY The y-component of the plane.
+     * @param InZ The z-component of the plane.
+     * @param InW The w-component of the plane.
      */
-    explicit FPlane(float InX, float InY, float InZ, float InW) noexcept
+    FORCEINLINE explicit FPlane(float InX, float InY, float InZ, float InW) noexcept
         : X(InX)
         , Y(InY)
         , Z(InZ)
@@ -57,11 +58,12 @@ public:
     }
 
     /**
-     * @brief Compares, within a threshold Epsilon, this plane with another plane
-     * @param Other plane to compare against
-     * @return True if equal, false if not
+     * @brief Compares this plane with another plane within a specified threshold.
+     * @param Other The plane to compare against.
+     * @param Epsilon The threshold for comparison. Defaults to FMath::kIsEqualEpsilon.
+     * @return True if planes are approximately equal, false otherwise.
      */
-    bool IsEqual(const FPlane& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
+    FORCEINLINE bool IsEqual(const FPlane& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
     #if !USE_VECTOR_MATH
         Epsilon = FMath::Abs(Epsilon);
@@ -77,20 +79,62 @@ public:
 
         return true;
     #else
-        FFloat128 Espilon_128 = FVectorMath::VectorSet1(Epsilon);
-        Espilon_128 = FVectorMath::VectorAbs(Espilon_128);
+        FFloat128 Epsilon_128 = FVectorMath::VectorSet1(Epsilon);
+        Epsilon_128 = FVectorMath::VectorAbs(Epsilon_128);
 
         FFloat128 Diff = FVectorMath::VectorSub(XYZW, Other.XYZW);
         Diff = FVectorMath::VectorAbs(Diff);
 
-        return FVectorMath::VectorLessThan(Diff, Espilon_128);
+        return FVectorMath::VectorLessThan(Diff, Epsilon_128);
     #endif
     }
 
     /**
-     * @brief Normalized the plane
+     * @brief Checks whether this plane has any component that equals NaN.
+     * @return True if any component equals NaN, false otherwise.
      */
-    void Normalize() noexcept
+    FORCEINLINE bool ContainsNaN() const noexcept
+    {
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            if (FMath::IsNaN(XYZW[Index]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @brief Checks whether this plane has any component that equals infinity.
+     * @return True if any component equals infinity, false otherwise.
+     */
+    FORCEINLINE bool ContainsInfinity() const noexcept
+    {
+        for (int32 Index = 0; Index < 4; ++Index)
+        {
+            if (FMath::IsInfinity(XYZW[Index]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @brief Flips the plane by negating its normal vector and offset.
+     */
+    FORCEINLINE FPlane Flip() noexcept
+    {
+        return FPlane(-X, -Y, -Z, -W);
+    }
+
+    /**
+     * @brief Normalizes the plane to ensure its normal vector has unit length.
+     */
+    FORCEINLINE void Normalize() noexcept
     {
     #if !USE_VECTOR_MATH
         FVector3 Normal = GetNormal();
@@ -110,11 +154,11 @@ public:
     }
 
     /**
-     * @brief Performs dot-product between a plane and a point
-     * @param Point Point to perform dot-product with
-     * @return Returns the dot-product
+     * @brief Performs the dot product between the plane and a point.
+     * @param Point The point to compute the dot product with.
+     * @return The resulting dot product value.
      */
-    float DotProductCoord(const FVector3& Point) const noexcept
+    FORCEINLINE float DotProductCoord(const FVector3& Point) const noexcept
     {
     #if !USE_VECTOR_MATH
         FVector3 Normal = GetNormal();
@@ -128,19 +172,19 @@ public:
     }
 
     /**
-     * @brief Retrieve the normal of the plane
-     * @return Returns the normal of the plane
+     * @brief Retrieves the normal vector of the plane.
+     * @return A FVector3 representing the plane's normal vector.
      */
-    FVector3 GetNormal() const noexcept
+    FORCEINLINE FVector3 GetNormal() const noexcept
     {
         return FVector3(X, Y, Z);
     }
 
     /**
-     * @brief Retrieve the origin of the plane
-     * @return Returns the origin of the plane
+     * @brief Retrieves the origin point of the plane.
+     * @return A FVector3 representing the plane's origin.
      */
-    FVector3 GetOrigin() const noexcept
+    FORCEINLINE FVector3 GetOrigin() const noexcept
     {
         return FVector3(X * W, Y * W, Z * W);
     }
@@ -148,21 +192,21 @@ public:
 public:
 
     /**
-     * @brief Returns the result after comparing this and another plane
-     * @param Other The plane to compare with
-     * @return True if equal, false if not
+     * @brief Compares this plane with another for equality.
+     * @param Other The plane to compare with.
+     * @return True if planes are equal, false otherwise.
      */
-    bool operator==(const FPlane& Other) const noexcept
+    FORCEINLINE bool operator==(const FPlane& Other) const noexcept
     {
         return IsEqual(Other);
     }
 
     /**
-     * @brief Returns the negated result after comparing this and another plane
-     * @param Other The plane to compare with
-     * @return False if equal, true if not
+     * @brief Compares this plane with another for inequality.
+     * @param Other The plane to compare with.
+     * @return True if planes are not equal, false otherwise.
      */
-    bool operator!=(const FPlane& Other) const noexcept
+    FORCEINLINE bool operator!=(const FPlane& Other) const noexcept
     {
         return !IsEqual(Other);
     }
@@ -173,22 +217,21 @@ public:
     {
         struct
         {
-            /** @brief The normals x-coordinate */
+            /** @brief The normal's x-coordinate. */
             float X;
 
-            /** @brief The normals y-coordinate */
+            /** @brief The normal's y-coordinate. */
             float Y;
 
-            /** @brief The normals z-coordinate */
+            /** @brief The normal's z-coordinate. */
             float Z;
 
-            /** @brief The w-coordinate */
+            /** @brief The w-component of the plane. */
             float W;
         };
         
         float XYZW[4];
     };
-    
 };
 
 MARK_AS_REALLOCATABLE(FPlane);

@@ -8,17 +8,17 @@ class FRandom
     static constexpr uint64 Multipler = 0x2545F4914F6CDD1D;
 
 public:
-    FRandom() 
+    FORCEINLINE FRandom() 
         : Seed(FPlatformTime::QueryPerformanceCounter()) 
     {
     }
 
-    FRandom(uint32 InSeed)
+    FORCEINLINE FRandom(uint32 InSeed)
         : Seed(InSeed)
     {
     }
 
-    uint64 Rand()
+    FORCEINLINE uint64 Rand()
     {
         // Perform an XOR Shift
         Seed ^= Seed << 12;
@@ -27,7 +27,7 @@ public:
         return Seed * Multipler;
     }
 
-    int64 RandInt(int64 Min, int64 Max)
+    FORCEINLINE int64 RandInt(int64 Min, int64 Max)
     {
         const uint64 RandVal = Rand();
         const uint64 Range   = static_cast<uint64>(Max - Min) + 1;
@@ -36,7 +36,7 @@ public:
         return Result;
     }
 
-    float RandFloat(float Min, float Max)
+    FORCEINLINE float RandFloat(float Min, float Max)
     {
         const uint64 RandVal = Rand();
         const float Fraction = static_cast<float>(RandVal) / static_cast<float>(TNumericLimits<uint64>::Max());

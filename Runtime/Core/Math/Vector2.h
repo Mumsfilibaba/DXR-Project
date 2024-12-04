@@ -103,7 +103,7 @@ public:
      * @brief Checks weather this vector has any component that equals NaN
      * @return True if the any component equals NaN, false if not
      */
-    FORCEINLINE bool HasNaN() const noexcept
+    FORCEINLINE bool ContainsNaN() const noexcept
     {
         for (int32 Index = 0; Index < 2; ++Index)
         {
@@ -120,7 +120,7 @@ public:
      * @brief Checks weather this vector has any component that equals infinity
      * @return True if the any component equals infinity, false if not
      */
-    FORCEINLINE bool HasInfinity() const noexcept
+    FORCEINLINE bool ContainsInfinity() const noexcept
     {
         for (int32 Index = 0; Index < 2; ++Index)
         {
@@ -139,7 +139,7 @@ public:
      */
     FORCEINLINE bool IsValid() const noexcept
     {
-        return !HasNaN() && !HasInfinity();
+        return !ContainsNaN() && !ContainsInfinity();
     }
 
     /**
