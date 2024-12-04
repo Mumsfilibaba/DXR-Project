@@ -23,10 +23,10 @@ public:
      * @param Diagonal Value to set on the diagonal
      */
     FORCEINLINE explicit FMatrix4(float Diagonal) noexcept
-        : M{ {Diagonal, 0.0f, 0.0f, 0.0f},
-             {0.0f, Diagonal, 0.0f, 0.0f},
-             {0.0f, 0.0f, Diagonal, 0.0f},
-             {0.0f, 0.0f, 0.0f, Diagonal} }
+        : M{ { Diagonal, 0.0f,     0.0f,     0.0f },
+             { 0.0f,     Diagonal, 0.0f,     0.0f },
+             { 0.0f,     0.0f,     Diagonal, 0.0f },
+             { 0.0f,     0.0f,     0.0f,     Diagonal } }
     {
     }
 
@@ -38,10 +38,10 @@ public:
      * @param Row3 Vector to set the fourth row to
      */
     FORCEINLINE explicit FMatrix4(const FVector4& Row0, const FVector4& Row1, const FVector4& Row2, const FVector4& Row3) noexcept
-        : M{ {Row0.x, Row0.y, Row0.z, Row0.w},
-             {Row1.x, Row1.y, Row1.z, Row1.w},
-             {Row2.x, Row2.y, Row2.z, Row2.w},
-             {Row3.x, Row3.y, Row3.z, Row3.w} }
+        : M{ { Row0.X, Row0.Y, Row0.Z, Row0.W },
+             { Row1.X, Row1.Y, Row1.Z, Row1.W },
+             { Row2.X, Row2.Y, Row2.Z, Row2.W },
+             { Row3.X, Row3.Y, Row3.Z, Row3.W } }
     {
     }
 
@@ -69,10 +69,10 @@ public:
         float M10, float M11, float M12, float M13,
         float M20, float M21, float M22, float M23,
         float M30, float M31, float M32, float M33) noexcept
-        : M{ {M00, M01, M02, M03},
-             {M10, M11, M12, M13},
-             {M20, M21, M22, M23},
-             {M30, M31, M32, M33} }
+        : M{ { M00, M01, M02, M03 },
+             { M10, M11, M12, M13 },
+             { M20, M21, M22, M23 },
+             { M30, M31, M32, M33 } }
     {
     }
 

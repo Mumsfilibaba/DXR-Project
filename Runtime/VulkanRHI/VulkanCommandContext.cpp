@@ -389,7 +389,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
         BarrierBatcher.FlushBarriers();
 
         VkClearColorValue VulkanClearColor;
-        FMemory::Memcpy(VulkanClearColor.float32, ClearColor.Data(), sizeof(VulkanClearColor.float32));
+        FMemory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
 
         const FVulkanResourceView::FImageView& ImageViewInfo = ImageView->GetImageViewInfo();
         GetCommandBuffer()->ClearColorImage(ImageViewInfo.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &VulkanClearColor, 1, &ImageViewInfo.SubresourceRange);
@@ -475,7 +475,7 @@ void FVulkanCommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccess
     CHECK(VulkanUnorderedAccessView != nullptr);
     
     VkClearColorValue VulkanClearColor;
-    FMemory::Memcpy(VulkanClearColor.float32, ClearColor.Data(), sizeof(VulkanClearColor.float32));
+    FMemory::Memcpy(VulkanClearColor.float32, ClearColor.XYZW, sizeof(VulkanClearColor.float32));
 
     const FVulkanResourceView::EType Type = VulkanUnorderedAccessView->GetType();
     if (Type == FVulkanResourceView::EType::ImageView)
@@ -684,7 +684,7 @@ void FVulkanCommandContext::RHISetScissorRect(const FScissorRegion& ScissorRegio
 
 void FVulkanCommandContext::RHISetBlendFactor(const FVector4& Color)
 {
-    ContextState.SetBlendFactor(Color.Data());
+    ContextState.SetBlendFactor(Color.XYZW);
 }
 
 void FVulkanCommandContext::RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)

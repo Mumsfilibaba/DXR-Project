@@ -22,10 +22,10 @@ public:
      * @param Plane A FVector4 representing the plane.
      */
     FORCEINLINE explicit FPlane(const FVector4& Plane) noexcept
-        : X(Plane.x)
-        , Y(Plane.y)
-        , Z(Plane.z)
-        , W(Plane.w)
+        : X(Plane.X)
+        , Y(Plane.Y)
+        , Z(Plane.Z)
+        , W(Plane.W)
     {
     }
 
