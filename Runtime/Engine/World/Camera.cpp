@@ -27,11 +27,11 @@ void FCamera::Move(float x, float y, float z)
 
 void FCamera::Rotate(float Pitch, float Yaw, float Roll)
 {
-    Rotation.x += Pitch;
-    Rotation.x  = FMath::Clamp(Rotation.x, FMath::ToRadians(-89.0f), FMath::ToRadians(89.0f));
+    Rotation.X += Pitch;
+    Rotation.X  = FMath::Clamp(Rotation.X, FMath::ToRadians(-89.0f), FMath::ToRadians(89.0f));
 
-    Rotation.y += Yaw;
-    Rotation.z += Roll;
+    Rotation.Y += Yaw;
+    Rotation.Z += Roll;
 
     FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation);
 

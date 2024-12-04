@@ -80,9 +80,9 @@ inline uint64 GetHashForType(const FVector2& Value)
 
 inline uint64 GetHashForType(const FVector3& Value)
 {
-    uint64 Hash = GetHashForType(Value.x);
-    HashCombine<float>(Hash, Value.y);
-    HashCombine<float>(Hash, Value.z);
+    uint64 Hash = GetHashForType(Value.X);
+    HashCombine<float>(Hash, Value.Y);
+    HashCombine<float>(Hash, Value.Z);
     return Hash;
 }
 

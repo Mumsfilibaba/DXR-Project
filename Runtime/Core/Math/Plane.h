@@ -35,9 +35,9 @@ public:
      * @param InW The offset from the origin along the normal.
      */
     FORCEINLINE explicit FPlane(const FVector3& Normal, float InW) noexcept
-        : X(Normal.x)
-        , Y(Normal.y)
-        , Z(Normal.z)
+        : X(Normal.X)
+        , Y(Normal.Y)
+        , Z(Normal.Z)
         , W(InW)
     {
     }
@@ -165,7 +165,7 @@ public:
         return Normal.DotProduct(Point) + W;
     #else
         FFloat128 Normal_128     = FVectorMath::VectorSet(X, Y, Z, 0.0f);
-        FFloat128 Point_128      = FVectorMath::VectorSet(Point.x, Point.y, Point.z, 0.0f);
+        FFloat128 Point_128      = FVectorMath::VectorSet(Point.X, Point.Y, Point.Z, 0.0f);
         FFloat128 DotProduct_128 = FVectorMath::VectorDot(Normal_128, Point_128);
         return FVectorMath::VectorGetX(DotProduct_128) + W;
     #endif

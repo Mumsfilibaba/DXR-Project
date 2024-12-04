@@ -265,7 +265,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the minimum of each component.
      */
-    FORCEINLINE static FInt16Vector3 Min(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
+    static FORCEINLINE FInt16Vector3 Min(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
         return FInt16Vector3(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z));
     }
@@ -276,7 +276,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the maximum of each component.
      */
-    FORCEINLINE static FInt16Vector3 Max(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
+    static FORCEINLINE FInt16Vector3 Max(const FInt16Vector3& LHS, const FInt16Vector3& RHS) noexcept
     {
         return FInt16Vector3(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z));
     }
@@ -288,7 +288,7 @@ public:
      * @param Max The maximum bounds vector.
      * @return A new vector with each component clamped.
      */
-    FORCEINLINE static FInt16Vector3 Clamp(const FInt16Vector3& Value, const FInt16Vector3& Min, const FInt16Vector3& Max) noexcept
+    static FORCEINLINE FInt16Vector3 Clamp(const FInt16Vector3& Value, const FInt16Vector3& Min, const FInt16Vector3& Max) noexcept
     {
         return FInt16Vector3(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z));
     }
@@ -649,7 +649,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the minimum of each component.
      */
-    FORCEINLINE static FIntVector3 Min(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
+    static FORCEINLINE FIntVector3 Min(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
     {
         return FIntVector3(FMath::Min(LHS.X, RHS.X), FMath::Min(LHS.Y, RHS.Y), FMath::Min(LHS.Z, RHS.Z));
     }
@@ -660,7 +660,7 @@ public:
      * @param RHS Second vector.
      * @return A new vector containing the maximum of each component.
      */
-    FORCEINLINE static FIntVector3 Max(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
+    static FORCEINLINE FIntVector3 Max(const FIntVector3& LHS, const FIntVector3& RHS) noexcept
     {
         return FIntVector3(FMath::Max(LHS.X, RHS.X), FMath::Max(LHS.Y, RHS.Y), FMath::Max(LHS.Z, RHS.Z));
     }
@@ -672,7 +672,7 @@ public:
      * @param Max The maximum bounds vector.
      * @return A new vector with each component clamped.
      */
-    FORCEINLINE static FIntVector3 Clamp(const FIntVector3& Value, const FIntVector3& Min, const FIntVector3& Max) noexcept
+    static FORCEINLINE FIntVector3 Clamp(const FIntVector3& Value, const FIntVector3& Min, const FIntVector3& Max) noexcept
     {
         return FIntVector3(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z));
     }

@@ -103,14 +103,14 @@ bool FFrustum::IntersectsAABB(const FAABB& Box) const
 
     // Calculate the eight corners of the bounding box
     FVector3 BoxCorners[8];
-    BoxCorners[0] = FVector3(Center.x - HalfWidth, Center.y - HalfHeight, Center.z - HalfDepth);
-    BoxCorners[1] = FVector3(Center.x + HalfWidth, Center.y - HalfHeight, Center.z - HalfDepth);
-    BoxCorners[2] = FVector3(Center.x - HalfWidth, Center.y + HalfHeight, Center.z - HalfDepth);
-    BoxCorners[3] = FVector3(Center.x + HalfWidth, Center.y + HalfHeight, Center.z - HalfDepth);
-    BoxCorners[4] = FVector3(Center.x - HalfWidth, Center.y - HalfHeight, Center.z + HalfDepth);
-    BoxCorners[5] = FVector3(Center.x + HalfWidth, Center.y - HalfHeight, Center.z + HalfDepth);
-    BoxCorners[6] = FVector3(Center.x - HalfWidth, Center.y + HalfHeight, Center.z + HalfDepth);
-    BoxCorners[7] = FVector3(Center.x + HalfWidth, Center.y + HalfHeight, Center.z + HalfDepth);
+    BoxCorners[0] = FVector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[1] = FVector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[2] = FVector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[3] = FVector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[4] = FVector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[5] = FVector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[6] = FVector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[7] = FVector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
 
     // Check each frustum plane
     for (int32 PlaneIndex = 0; PlaneIndex < 6; ++PlaneIndex)

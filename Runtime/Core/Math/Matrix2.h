@@ -545,7 +545,7 @@ public:
      * @brief Creates and returns an identity matrix
      * @return An identity matrix
      */
-    FORCEINLINE static FMatrix2 Identity() noexcept
+    static FORCEINLINE FMatrix2 Identity() noexcept
     {
         return FMatrix2(1.0f);
     }
@@ -555,7 +555,7 @@ public:
      * @param Scale Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix2 Scale(float Scale) noexcept
+    static FORCEINLINE FMatrix2 Scale(float Scale) noexcept
     {
         return FMatrix2(Scale);
     }
@@ -566,7 +566,7 @@ public:
      * @param y Scale for the y-axis
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix2 Scale(float x, float y) noexcept
+    static FORCEINLINE FMatrix2 Scale(float x, float y) noexcept
     {
         return FMatrix2(x, 0.0f, 0.0f, y);
     }
@@ -576,7 +576,7 @@ public:
      * @param VectorWithScale A vector containing the scale for each axis in the x- and y-components
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
+    static FORCEINLINE FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
     {
         return Scale(VectorWithScale.X, VectorWithScale.Y);
     }
@@ -586,7 +586,7 @@ public:
      * @param Rotation Rotation in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix2 Rotation(float Rotation) noexcept
+    static FORCEINLINE FMatrix2 Rotation(float Rotation) noexcept
     {
         const float SinZ = FMath::Sin(Rotation);
         const float CosZ = FMath::Cos(Rotation);

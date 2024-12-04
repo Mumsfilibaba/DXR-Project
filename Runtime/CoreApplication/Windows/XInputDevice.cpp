@@ -12,13 +12,13 @@ static TAutoConsoleVariable<int32> CVarXInputButtonRepeatDelay(
     60,
     EConsoleVariableFlags::Default);
 
-FORCEINLINE static float NormalizeThumbStick(int16 ThumbValue)
+static FORCEINLINE float NormalizeThumbStick(int16 ThumbValue)
 {
     const float ThumbMaxValue = (ThumbValue <= 0) ? 32768.0f : 32767.0f;
     return static_cast<float>(ThumbValue) / ThumbMaxValue;
 }
 
-FORCEINLINE static float NormalizeTrigger(uint8 TriggerValue)
+static FORCEINLINE float NormalizeTrigger(uint8 TriggerValue)
 {
     constexpr float TriggerMaxValue = 255.0f;
     return static_cast<float>(TriggerValue) / TriggerMaxValue;

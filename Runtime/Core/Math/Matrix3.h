@@ -33,9 +33,9 @@ public:
      * @param Row2 Vector to set the third row to
      */
     FORCEINLINE explicit FMatrix3(const FVector3& Row0, const FVector3& Row1, const FVector3& Row2) noexcept
-        : M{ { Row0.x, Row0.y, Row0.z },
-             { Row1.x, Row1.y, Row1.z },
-             { Row2.x, Row2.y, Row2.z } }
+        : M{ { Row0.X, Row0.Y, Row0.Z },
+             { Row1.X, Row1.Y, Row1.Z },
+             { Row2.X, Row2.Y, Row2.Z } }
     {
     }
 
@@ -260,9 +260,9 @@ public:
     FORCEINLINE FVector3 operator*(const FVector3& Other) const noexcept
     {
         FVector3 Result;
-        Result.x = (Other.x * M[0][0]) + (Other.y * M[1][0]) + (Other.z * M[2][0]);
-        Result.y = (Other.x * M[0][1]) + (Other.y * M[1][1]) + (Other.z * M[2][1]);
-        Result.z = (Other.x * M[0][2]) + (Other.y * M[1][2]) + (Other.z * M[2][2]);
+        Result.X = (Other.X * M[0][0]) + (Other.Y * M[1][0]) + (Other.Z * M[2][0]);
+        Result.Y = (Other.X * M[0][1]) + (Other.Y * M[1][1]) + (Other.Z * M[2][1]);
+        Result.Z = (Other.X * M[0][2]) + (Other.Y * M[1][2]) + (Other.Z * M[2][2]);
         return Result;
     }
 
@@ -514,7 +514,7 @@ public:
      * @brief Creates and returns an identity matrix
      * @return An identity matrix
      */
-    FORCEINLINE static FMatrix3 Identity() noexcept
+    static FORCEINLINE FMatrix3 Identity() noexcept
     {
         return FMatrix3(1.0f);
     }
@@ -524,7 +524,7 @@ public:
      * @param Scale Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix3 Scale(float Scale) noexcept
+    static FORCEINLINE FMatrix3 Scale(float Scale) noexcept
     {
         return FMatrix3(Scale);
     }
@@ -536,7 +536,7 @@ public:
      * @param InZ Scale for the z-axis
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix3 Scale(float InX, float InY, float InZ) noexcept
+    static FORCEINLINE FMatrix3 Scale(float InX, float InY, float InZ) noexcept
     {
         return FMatrix3(
             InX,  0.0f, 0.0f,
@@ -549,12 +549,12 @@ public:
      * @param VectorWithScale A vector containing the scale for each axis in the x-, y-, z-components
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix3 Scale(const FVector3& VectorWithScale) noexcept
+    static FORCEINLINE FMatrix3 Scale(const FVector3& VectorWithScale) noexcept
     {
         return FMatrix3(
-            VectorWithScale.x, 0.0f,              0.0f,
-            0.0f,              VectorWithScale.y, 0.0f,
-            0.0f,              0.0f,              VectorWithScale.z);
+            VectorWithScale.X, 0.0f,              0.0f,
+            0.0f,              VectorWithScale.Y, 0.0f,
+            0.0f,              0.0f,              VectorWithScale.Z);
     }
 
     /**
@@ -564,7 +564,7 @@ public:
      * @param Roll Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    static FORCEINLINE FMatrix3 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
         const float SinP = FMath::Sin(Pitch);
         const float SinY = FMath::Sin(Yaw);
@@ -587,7 +587,7 @@ public:
      * @param AxisX Rotation around the x-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix3 RotationX(float AxisX) noexcept
+    static FORCEINLINE FMatrix3 RotationX(float AxisX) noexcept
     {
         const float SinX = FMath::Sin(AxisX);
         const float CosX = FMath::Cos(AxisX);
@@ -603,7 +603,7 @@ public:
      * @param AxisY Rotation around the y-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix3 RotationY(float AxisY) noexcept
+    static FORCEINLINE FMatrix3 RotationY(float AxisY) noexcept
     {
         const float SinY = FMath::Sin(AxisY);
         const float CosY = FMath::Cos(AxisY);
@@ -619,7 +619,7 @@ public:
      * @param AxisZ Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix3 RotationZ(float AxisZ) noexcept
+    static FORCEINLINE FMatrix3 RotationZ(float AxisZ) noexcept
     {
         const float SinZ = FMath::Sin(AxisZ);
         const float CosZ = FMath::Cos(AxisZ);

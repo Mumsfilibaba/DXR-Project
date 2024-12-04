@@ -150,8 +150,8 @@ void FMeshCreateInfo::ReverseHandedness()
 
     for (int32 i = 0; i < Vertices.Size(); ++i)
     {
-        Vertices[i].Position.z = Vertices[i].Position.z * -1.0f;
-        Vertices[i].Normal.z   = Vertices[i].Normal.z   * -1.0f;
+        Vertices[i].Position.Z = Vertices[i].Position.Z * -1.0f;
+        Vertices[i].Normal.Z   = Vertices[i].Normal.Z   * -1.0f;
     }
 }
 
@@ -461,8 +461,8 @@ FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) no
         SphereInfo.Vertices[i].Position = Position * Radius;
 
         // Calculate UVs
-        SphereInfo.Vertices[i].TexCoord.Y = (FMath::Asin(SphereInfo.Vertices[i].Position.y) / FMath::kPI_f) + 0.5f;
-        SphereInfo.Vertices[i].TexCoord.X = (FMath::Atan2(SphereInfo.Vertices[i].Position.z, SphereInfo.Vertices[i].Position.x) + FMath::kPI_f) / (2.0f * FMath::kPI_f);
+        SphereInfo.Vertices[i].TexCoord.Y = (FMath::Asin(SphereInfo.Vertices[i].Position.Y) / FMath::kPI_f) + 0.5f;
+        SphereInfo.Vertices[i].TexCoord.X = (FMath::Atan2(SphereInfo.Vertices[i].Position.Z, SphereInfo.Vertices[i].Position.X) + FMath::kPI_f) / (2.0f * FMath::kPI_f);
     }
 
     SphereInfo.Indices.Shrink();
@@ -516,7 +516,7 @@ FMeshCreateInfo FMeshFactory::CreateCone(uint32 Sides, float Radius, float Heigh
         MeshCreateInfo.Vertices[Offset + i].Position = BasePosition;
         
         FVector3 Normal(x, Radius / Height, z);
-        if (Normal.LengthSquared() > 0.0f) // Ensure normalization is safe
+        if (Normal.GetLengthSquared() > 0.0f) // Ensure normalization is safe
         {
             Normal.Normalize();
         }
@@ -899,10 +899,10 @@ FMeshCreateInfo FMeshFactory::CreatePyramid(float Width, float Depth, float Heig
     FVector3 BaseNormal = FVector3(0.0f, -1.0f, 0.0f);
 
     // Side normals (calculated for each face)
-    FVector3 Normal0 = FVector3::CrossProduct(v4.Position - v0.Position, v1.Position - v0.Position).Normalize();
-    FVector3 Normal1 = FVector3::CrossProduct(v4.Position - v1.Position, v2.Position - v1.Position).Normalize();
-    FVector3 Normal2 = FVector3::CrossProduct(v4.Position - v2.Position, v3.Position - v2.Position).Normalize();
-    FVector3 Normal3 = FVector3::CrossProduct(v4.Position - v3.Position, v0.Position - v3.Position).Normalize();
+    FVector3 Normal0 = (v4.Position - v0.Position).CrossProduct(v1.Position - v0.Position).Normalize();
+    FVector3 Normal1 = (v4.Position - v1.Position).CrossProduct(v2.Position - v1.Position).Normalize();
+    FVector3 Normal2 = (v4.Position - v2.Position).CrossProduct(v3.Position - v2.Position).Normalize();
+    FVector3 Normal3 = (v4.Position - v3.Position).CrossProduct(v0.Position - v3.Position).Normalize();
 
     // Assign normals to the base vertices
     v0.Normal = BaseNormal;

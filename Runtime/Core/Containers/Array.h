@@ -1332,12 +1332,12 @@ private:
         }
     }
 
-    NODISCARD FORCEINLINE static SIZETYPE LeftIndex(SIZETYPE Index)
+    NODISCARD static FORCEINLINE SIZETYPE LeftIndex(SIZETYPE Index)
     {
         return 2 * Index + 1;
     }
 
-    NODISCARD FORCEINLINE static SIZETYPE RightIndex(SIZETYPE Index)
+    NODISCARD static FORCEINLINE SIZETYPE RightIndex(SIZETYPE Index)
     {
         return 2 * Index + 2;
     }

@@ -1391,13 +1391,13 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
         const FAABB& BoundingBox = Component->Mesh->GetAABB();
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
-        Scale.x = FMath::Max<float>(Scale.x, 0.005f);
-        Scale.y = FMath::Max<float>(Scale.y, 0.005f);
-        Scale.z = FMath::Max<float>(Scale.z, 0.005f);
+        Scale.X = FMath::Max<float>(Scale.X, 0.005f);
+        Scale.Y = FMath::Max<float>(Scale.Y, 0.005f);
+        Scale.Z = FMath::Max<float>(Scale.Z, 0.005f);
 
         FVector3 Position            = BoundingBox.GetCenter();
-        FMatrix4 TranslationMatrix   = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix         = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).GetTranspose();
+        FMatrix4 TranslationMatrix   = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
+        FMatrix4 ScaleMatrix         = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z).GetTranspose();
         TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
         TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
         TransformPerObject.Transform = (ScaleMatrix * TranslationMatrix) * TransformPerObject.Transform;

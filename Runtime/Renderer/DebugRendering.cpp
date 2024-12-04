@@ -455,8 +455,8 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
         FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         FVector3 Position = Box.GetCenter();
 
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).GetTranspose();
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z).GetTranspose();
         FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
         TransformMatrix = TransformMatrix.GetTranspose();
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
@@ -500,13 +500,13 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
         const FAABB& BoundingBox = Component->Mesh->GetAABB();
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
-        Scale.x = FMath::Max<float>(Scale.x, 0.005f);
-        Scale.y = FMath::Max<float>(Scale.y, 0.005f);
-        Scale.z = FMath::Max<float>(Scale.z, 0.005f);
+        Scale.X = FMath::Max<float>(Scale.X, 0.005f);
+        Scale.Y = FMath::Max<float>(Scale.Y, 0.005f);
+        Scale.Z = FMath::Max<float>(Scale.Z, 0.005f);
 
         FVector3 Position          = BoundingBox.GetCenter();
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).GetTranspose();
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z).GetTranspose();
 
         ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
         ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
@@ -555,7 +555,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
         if (FPointLight* CurrentPointLight = Cast<FPointLight>(Light))
         {
             FVector3 Color = CurrentPointLight->GetColor();
-            PointLightData.Color         = FVector4(Color.x, Color.y, Color.z, 1.0f);
+            PointLightData.Color         = FVector4(Color.X, Color.Y, Color.Z, 1.0f);
             PointLightData.WorldPosition = CurrentPointLight->GetPosition();
 
             CommandList.Set32BitShaderConstants(LightDebugVS.Get(), &PointLightData, 8);

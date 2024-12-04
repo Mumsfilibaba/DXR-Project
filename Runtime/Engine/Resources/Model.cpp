@@ -269,8 +269,8 @@ void FMesh::CreateBoundingBox(const FMeshCreateInfo& CreateInfo)
 
     for (const FVertex& Vertex : CreateInfo.Vertices)
     {
-        MinBounds = Min(MinBounds, Vertex.Position);
-        MaxBounds = Max(MaxBounds, Vertex.Position);
+        MinBounds = FVector3::Min(MinBounds, Vertex.Position);
+        MaxBounds = FVector3::Max(MaxBounds, Vertex.Position);
     }
 
     BoundingBox.Max = MaxBounds;

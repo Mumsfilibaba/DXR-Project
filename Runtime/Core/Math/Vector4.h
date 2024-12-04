@@ -61,9 +61,9 @@ public:
      * @param XYZ - Value to set first components to
      */
     FORCEINLINE FVector4(const FVector3& XYZ) noexcept
-        : x(XYZ.x)
-        , y(XYZ.y)
-        , z(XYZ.z)
+        : x(XYZ.X)
+        , y(XYZ.Y)
+        , z(XYZ.Z)
         , w(0.0f)
     {
     }
@@ -74,9 +74,9 @@ public:
      * @param InW - Value to set the w-component to
      */
     FORCEINLINE explicit FVector4(const FVector3& XYZ, float InW) noexcept
-        : x(XYZ.x)
-        , y(XYZ.y)
-        , z(XYZ.z)
+        : x(XYZ.X)
+        , y(XYZ.Y)
+        , z(XYZ.Z)
         , w(InW)
     {
     }

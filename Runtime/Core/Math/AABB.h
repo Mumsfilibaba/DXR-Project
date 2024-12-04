@@ -18,8 +18,8 @@ public:
      * @param InPointB Second point.
      */
     FORCEINLINE FAABB(const FVector3& InPointA, const FVector3& InPointB)
-        : Min(FVector3(FMath::Min(InPointA.x, InPointB.x), FMath::Min(InPointA.y, InPointB.y), FMath::Min(InPointA.z, InPointB.z)))
-        , Max(FVector3(FMath::Max(InPointA.x, InPointB.x), FMath::Max(InPointA.y, InPointB.y), FMath::Max(InPointA.z, InPointB.z)))
+        : Min(FVector3(FMath::Min(InPointA.X, InPointB.X), FMath::Min(InPointA.Y, InPointB.Y), FMath::Min(InPointA.Z, InPointB.Z)))
+        , Max(FVector3(FMath::Max(InPointA.X, InPointB.X), FMath::Max(InPointA.Y, InPointB.Y), FMath::Max(InPointA.Z, InPointB.Z)))
     {
     }
 
@@ -47,7 +47,7 @@ public:
      */
     FORCEINLINE float GetWidth() const
     {
-        return Max.x - Min.x;
+        return Max.X - Min.X;
     }
 
     /**
@@ -56,7 +56,7 @@ public:
      */
     FORCEINLINE float GetHeight() const
     {
-        return Max.y - Min.y;
+        return Max.Y - Min.Y;
     }
 
     /**
@@ -65,7 +65,7 @@ public:
      */
     FORCEINLINE float GetDepth() const
     {
-        return Max.z - Min.z;
+        return Max.Z - Min.Z;
     }
 
     /**
@@ -74,7 +74,7 @@ public:
      */
     FORCEINLINE bool IsEmpty() const
     {
-        return (Max.x <= Min.x) || (Max.y <= Min.y) || (Max.z <= Min.z);
+        return (Max.X <= Min.X) || (Max.Y <= Min.Y) || (Max.Z <= Min.Z);
     }
 
     /**
@@ -84,7 +84,7 @@ public:
      */
     FORCEINLINE bool Contains(const FVector3& Point) const
     {
-        return (Point.x >= Min.x && Point.x <= Max.x) && (Point.y >= Min.y && Point.y <= Max.y) && (Point.z >= Min.z && Point.z <= Max.z);
+        return (Point.X >= Min.X && Point.X <= Max.X) && (Point.Y >= Min.Y && Point.Y <= Max.Y) && (Point.Z >= Min.Z && Point.Z <= Max.Z);
     }
 
     /**
@@ -94,7 +94,7 @@ public:
      */
     FORCEINLINE bool Intersects(const FAABB& Other) const
     {
-        return (Max.x >= Other.Min.x && Min.x <= Other.Max.x) && (Max.y >= Other.Min.y && Min.y <= Other.Max.y) && (Max.z >= Other.Min.z && Min.z <= Other.Max.z);
+        return (Max.X >= Other.Min.X && Min.X <= Other.Max.X) && (Max.Y >= Other.Min.Y && Min.Y <= Other.Max.Y) && (Max.Z >= Other.Min.Z && Min.Z <= Other.Max.Z);
     }
 
     /**
@@ -103,13 +103,13 @@ public:
      */
     FORCEINLINE void ExpandToInclude(const FAABB& Other)
     {
-        Min.x = FMath::Min(Min.x, Other.Min.x);
-        Min.y = FMath::Min(Min.y, Other.Min.y);
-        Min.z = FMath::Min(Min.z, Other.Min.z);
+        Min.X = FMath::Min(Min.X, Other.Min.X);
+        Min.Y = FMath::Min(Min.Y, Other.Min.Y);
+        Min.Z = FMath::Min(Min.Z, Other.Min.Z);
 
-        Max.x = FMath::Max(Max.x, Other.Max.x);
-        Max.y = FMath::Max(Max.y, Other.Max.y);
-        Max.z = FMath::Max(Max.z, Other.Max.z);
+        Max.X = FMath::Max(Max.X, Other.Max.X);
+        Max.Y = FMath::Max(Max.Y, Other.Max.Y);
+        Max.Z = FMath::Max(Max.Z, Other.Max.Z);
     }
 
     /**
@@ -118,13 +118,13 @@ public:
      */
     FORCEINLINE void Encapsulate(const FVector3& Point)
     {
-        Min.x = FMath::Min(Min.x, Point.x);
-        Min.y = FMath::Min(Min.y, Point.y);
-        Min.z = FMath::Min(Min.z, Point.z);
+        Min.X = FMath::Min(Min.X, Point.X);
+        Min.Y = FMath::Min(Min.Y, Point.Y);
+        Min.Z = FMath::Min(Min.Z, Point.Z);
 
-        Max.x = FMath::Max(Max.x, Point.x);
-        Max.y = FMath::Max(Max.y, Point.y);
-        Max.z = FMath::Max(Max.z, Point.z);
+        Max.X = FMath::Max(Max.X, Point.X);
+        Max.Y = FMath::Max(Max.Y, Point.Y);
+        Max.Z = FMath::Max(Max.Z, Point.Z);
     }
 
 public:

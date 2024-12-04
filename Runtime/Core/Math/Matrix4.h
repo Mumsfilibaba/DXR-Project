@@ -123,7 +123,7 @@ public:
         Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]) + (Vector.z * M[2][1]) + (1.0f * M[3][1]);
         Result.z = (Vector.x * M[0][2]) + (Vector.y * M[1][2]) + (Vector.z * M[2][2]) + (1.0f * M[3][2]);
     #else
-        FFloat128 Vector_128 = FVectorMath::VectorSet(Vector.x, Vector.y, Vector.z, 1.0f);
+        FFloat128 Vector_128 = FVectorMath::VectorSet(Vector.X, Vector.Y, Vector.Z, 1.0f);
         FFloat128 Result_128 = FVectorMath::VectorTransform(M[0], Vector_128);
         Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
     #endif
@@ -148,7 +148,7 @@ public:
         Result.y = ((Position.x * M[0][1]) + (Position.y * M[1][1]) + (Position.z * M[2][1]) + (1.0f * M[3][1])) * ComponentW;
         Result.z = ((Position.x * M[0][2]) + (Position.y * M[1][2]) + (Position.z * M[2][2]) + (1.0f * M[3][2])) * ComponentW;
     #else
-        FFloat128 Position_128 = FVectorMath::VectorSet(Position.x, Position.y, Position.z, 1.0f);
+        FFloat128 Position_128 = FVectorMath::VectorSet(Position.X, Position.Y, Position.Z, 1.0f);
         FFloat128 VectorA      = FVectorMath::VectorTransform(M[0], Position_128);
         FFloat128 VectorB      = FVectorMath::VectorBroadcast<3>(VectorA);
         FFloat128 VectorC      = FVectorMath::VectorOne();
@@ -174,7 +174,7 @@ public:
         Result.y = (Direction.x * M[0][1]) + (Direction.y * M[1][1]) + (Direction.z * M[2][1]);
         Result.z = (Direction.x * M[0][2]) + (Direction.y * M[1][2]) + (Direction.z * M[2][2]);
     #else
-        FFloat128 Direction_128 = FVectorMath::VectorSet(Direction.x, Direction.y, Direction.z, 0.0f);
+        FFloat128 Direction_128 = FVectorMath::VectorSet(Direction.X, Direction.Y, Direction.Z, 0.0f);
         FFloat128 Result_128    = FVectorMath::VectorTransform(M[0], Direction_128);
         Result = FVector3(FVectorMath::VectorGetX(Result_128), FVectorMath::VectorGetY(Result_128), FVectorMath::VectorGetZ(Result_128));
     #endif
@@ -494,9 +494,9 @@ public:
      */
     FORCEINLINE void SetTranslation(const FVector3& Translation) noexcept
     {
-        M[3][0] = Translation.x;
-        M[3][1] = Translation.y;
-        M[3][2] = Translation.z;
+        M[3][0] = Translation.X;
+        M[3][1] = Translation.Y;
+        M[3][2] = Translation.Z;
     }
 
     /**
@@ -1182,7 +1182,7 @@ public:
      * @brief Creates and returns an identity matrix
      * @return An identity matrix
      */
-    FORCEINLINE static FMatrix4 Identity() noexcept
+    static FORCEINLINE FMatrix4 Identity() noexcept
     {
         FMatrix4 IdentityMatrix;
         IdentityMatrix.SetIdentity();
@@ -1194,7 +1194,7 @@ public:
      * @param Scale Uniform scale that represents this matrix
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix4 Scale(float Scale) noexcept
+    static FORCEINLINE FMatrix4 Scale(float Scale) noexcept
     {
         return FMatrix4(
             Scale, 0.0f,  0.0f,  0.0f,
@@ -1210,7 +1210,7 @@ public:
      * @param InZ Scale for the z-axis
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix4 Scale(float InX, float InY, float InZ) noexcept
+    static FORCEINLINE FMatrix4 Scale(float InX, float InY, float InZ) noexcept
     {
         return FMatrix4(
             InX,  0.0f, 0.0f, 0.0f,
@@ -1224,12 +1224,12 @@ public:
      * @param VectorWithScale A vector containing the scale for each axis in the x-, y-, z-components
      * @return A scale matrix
      */
-    FORCEINLINE static FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
+    static FORCEINLINE FMatrix4 Scale(const FVector3& VectorWithScale) noexcept
     {
         return FMatrix4(
-            VectorWithScale.x, 0.0f,              0.0f,              0.0f,
-            0.0f,              VectorWithScale.y, 0.0f,              0.0f,
-            0.0f,              0.0f,              VectorWithScale.z, 0.0f,
+            VectorWithScale.X, 0.0f,              0.0f,              0.0f,
+            0.0f,              VectorWithScale.Y, 0.0f,              0.0f,
+            0.0f,              0.0f,              VectorWithScale.Z, 0.0f,
             0.0f,              0.0f,              0.0f,              1.0f);
     }
 
@@ -1240,7 +1240,7 @@ public:
      * @param InZ Translation for the z-axis
      * @return A translation matrix
      */
-    FORCEINLINE static FMatrix4 Translation(float InX, float InY, float InZ) noexcept
+    static FORCEINLINE FMatrix4 Translation(float InX, float InY, float InZ) noexcept
     {
         return FMatrix4(
             1.0f, 0.0f, 0.0f, 0.0f,
@@ -1254,13 +1254,13 @@ public:
      * @param InTranslation A vector containing the translation
      * @return A translation matrix
      */
-    FORCEINLINE static FMatrix4 Translation(const FVector3& InTranslation) noexcept
+    static FORCEINLINE FMatrix4 Translation(const FVector3& InTranslation) noexcept
     {
         return FMatrix4(
             1.0f,            0.0f,            0.0f,            0.0f,
             0.0f,            1.0f,            0.0f,            0.0f,
             0.0f,            0.0f,            1.0f,            0.0f,
-            InTranslation.x, InTranslation.y, InTranslation.z, 1.0f);
+            InTranslation.X, InTranslation.Y, InTranslation.Z, 1.0f);
     }
 
     /**
@@ -1270,7 +1270,7 @@ public:
      * @param Roll Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
+    static FORCEINLINE FMatrix4 RotationRollPitchYaw(float Pitch, float Yaw, float Roll) noexcept
     {
         const float SinP = FMath::Sin(Pitch);
         const float CosP = FMath::Cos(Pitch);
@@ -1294,9 +1294,9 @@ public:
      * @param PitchYawRoll A vector containing the PitchYawRoll (x = Pitch, y = Yaw, z = Roll)
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
+    static FORCEINLINE FMatrix4 RotationRollPitchYaw(const FVector3& PitchYawRoll) noexcept
     {
-        return RotationRollPitchYaw(PitchYawRoll.x, PitchYawRoll.y, PitchYawRoll.z);
+        return RotationRollPitchYaw(PitchYawRoll.X, PitchYawRoll.Y, PitchYawRoll.Z);
     }
 
     /**
@@ -1304,7 +1304,7 @@ public:
      * @param x Rotation around the x-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix4 RotationX(float x) noexcept
+    static FORCEINLINE FMatrix4 RotationX(float x) noexcept
     {
         const float SinX = FMath::Sin(x);
         const float CosX = FMath::Cos(x);
@@ -1321,7 +1321,7 @@ public:
      * @param y Rotation around the y-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix4 RotationY(float y) noexcept
+    static FORCEINLINE FMatrix4 RotationY(float y) noexcept
     {
         const float SinY = FMath::Sin(y);
         const float CosY = FMath::Cos(y);
@@ -1338,7 +1338,7 @@ public:
      * @param z Rotation around the z-axis in radians
      * @return A rotation matrix
      */
-    FORCEINLINE static FMatrix4 RotationZ(float z) noexcept
+    static FORCEINLINE FMatrix4 RotationZ(float z) noexcept
     {
         const float SinZ = FMath::Sin(z);
         const float CosZ = FMath::Cos(z);
@@ -1358,7 +1358,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return An orthographic projection matrix
      */
-    FORCEINLINE static FMatrix4 OrthographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 OrthographicProjection(float Width, float Height, float NearZ, float FarZ) noexcept
     {
         return FMatrix4(
             2.0f / Width, 0.0f,           0.0f,                   0.0f,
@@ -1377,7 +1377,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return An orthographic projection matrix
      */
-    FORCEINLINE static FMatrix4 OrthographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 OrthographicProjection(float Left, float Right, float Bottom, float Top, float NearZ, float FarZ) noexcept
     {
         const float InvWidth  = 1.0f / (Right - Left);
         const float InvHeight = 1.0f / (Top - Bottom);
@@ -1398,7 +1398,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return A perspective projection matrix
      */
-    FORCEINLINE static FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float AspectRatio, float NearZ, float FarZ) noexcept
     {
         if ((Fov < FMath::kOneDegree_f) || (Fov > (FMath::kPI_f - FMath::kOneDegree_f)))
         {
@@ -1425,7 +1425,7 @@ public:
      * @param FarZ The distance to the far plane in world units
      * @return A perspective projection matrix
      */
-    FORCEINLINE static FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
+    static FORCEINLINE FMatrix4 PerspectiveProjection(float Fov, float Width, float Height, float NearZ, float FarZ) noexcept
     {
         const float AspectRatio = Width / Height;
         return PerspectiveProjection(Fov, AspectRatio, NearZ, FarZ);
@@ -1438,7 +1438,7 @@ public:
      * @param Up The up-axis of the new coordinate system in the current world-space
      * @return A look-at matrix
      */
-    FORCEINLINE static FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
+    static FORCEINLINE FMatrix4 LookAt(const FVector3& Eye, const FVector3& At, const FVector3& Up) noexcept
     {
         const FVector3 Direction = (At - Eye).GetNormalized();
         return LookTo(Eye, Direction, Up);
@@ -1451,7 +1451,7 @@ public:
      * @param Up The up-axis of the new coordinate system in the current world-space
      * @return A look-to matrix
      */
-    FORCEINLINE static FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
+    static FORCEINLINE FMatrix4 LookTo(const FVector3& Eye, const FVector3& Direction, const FVector3& Up) noexcept
     {
         FVector3 Forward    = Direction.GetNormalized();
         FVector3 Right      = Up.CrossProduct(Forward).GetNormalized();
@@ -1462,9 +1462,9 @@ public:
         float Tz = -Eye.DotProduct(Forward);
 
         return FMatrix4(
-            Right.x, UpAdjusted.x, Forward.x, 0.0f,
-            Right.y, UpAdjusted.y, Forward.y, 0.0f,
-            Right.z, UpAdjusted.z, Forward.z, 0.0f,
+            Right.X, UpAdjusted.X, Forward.X, 0.0f,
+            Right.Y, UpAdjusted.Y, Forward.Y, 0.0f,
+            Right.Z, UpAdjusted.Z, Forward.Z, 0.0f,
             Tx,      Ty,           Tz,        1.0f);
     }
 

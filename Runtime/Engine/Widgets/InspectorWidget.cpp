@@ -211,7 +211,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::Text("Rotation Theta (Degrees)");
                     ImGui::NextColumn();
 
-                    float RotationTheta = FMath::ToDegrees(Rotation.x);
+                    float RotationTheta = FMath::ToDegrees(Rotation.X);
                     if (ImGui::SliderFloat("##RotationTheta", &RotationTheta, -90.0f, 90.0f, "%.2f"))
                     {
                         bSetRotation = true;
@@ -221,7 +221,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::Text("Rotation Phi (Degrees)");
                     ImGui::NextColumn();
 
-                    float RotationPhi = FMath::ToDegrees(Rotation.y);
+                    float RotationPhi = FMath::ToDegrees(Rotation.Y);
                     if (ImGui::SliderFloat("##RotationPhi", &RotationPhi, 0.0f, 360.0f, "%.2f"))
                     {
                         bSetRotation = true;
@@ -229,8 +229,8 @@ void FInspectorWidget::DrawSceneInfo()
 
                     if (bSetRotation)
                     {
-                        Rotation.x = FMath::ToRadians(RotationTheta);
-                        Rotation.y = FMath::ToRadians(RotationPhi);
+                        Rotation.X = FMath::ToRadians(RotationTheta);
+                        Rotation.Y = FMath::ToRadians(RotationPhi);
                         CurrentDirectionalLight->SetRotation(Rotation);
                     }
 
@@ -239,7 +239,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::NextColumn();
 
                     FVector3 Direction = CurrentDirectionalLight->GetDirection();
-                    ImGui::InputFloat3("##Direction", Direction.Data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
+                    ImGui::InputFloat3("##Direction", Direction.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                     ImGui::Columns(1);
 
@@ -257,7 +257,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::NextColumn();
 
                     FVector3 Position = CurrentDirectionalLight->GetPosition();
-                    ImGui::InputFloat3("##Translation", Position.Data(), "%.3f", ImGuiInputTextFlags_ReadOnly);
+                    ImGui::InputFloat3("##Translation", Position.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                     // Shadow Bias
                     ImGui::NextColumn();
@@ -372,20 +372,20 @@ void FInspectorWidget::DrawSceneInfo()
 
                 if (bUniform)
                 {
-                    if (Scale1.x != Scale0.x)
+                    if (Scale1.X != Scale0.X)
                     {
-                        Scale0.y = Scale0.x;
-                        Scale0.z = Scale0.x;
+                        Scale0.Y = Scale0.X;
+                        Scale0.Z = Scale0.X;
                     }
-                    else if (Scale1.y != Scale0.y)
+                    else if (Scale1.Y != Scale0.Y)
                     {
-                        Scale0.x = Scale0.y;
-                        Scale0.z = Scale0.y;
+                        Scale0.X = Scale0.Y;
+                        Scale0.Z = Scale0.Y;
                     }
-                    else if (Scale1.z != Scale0.z)
+                    else if (Scale1.Z != Scale0.Z)
                     {
-                        Scale0.x = Scale0.z;
-                        Scale0.y = Scale0.z;
+                        Scale0.X = Scale0.Z;
+                        Scale0.Y = Scale0.Z;
                     }
                 }
 

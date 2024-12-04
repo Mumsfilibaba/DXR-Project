@@ -120,6 +120,12 @@ struct FMath
     }
 
     template<typename T>
+    static FORCEINLINE T Acos(T Value) requires(TIsFloatingPoint<T>::Value)
+    {
+        return static_cast<T>(std::acos(Value));
+    }
+
+    template<typename T>
     static FORCEINLINE T Atan2(T y, T x) requires(TIsFloatingPoint<T>::Value)
     {
         return static_cast<T>(std::atan2(y, x));
