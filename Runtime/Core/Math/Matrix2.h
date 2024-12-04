@@ -9,7 +9,7 @@ public:
 
     /** @brief Default constructor (Initialize components to zero) */
     FORCEINLINE FMatrix2() noexcept 
-        : M{ {0.0f, 0.0f}, {0.0f, 0.0f} }
+        : M{ { 0.0f, 0.0f }, { 0.0f, 0.0f } }
     {
     }
 
@@ -18,7 +18,7 @@ public:
      * @param Diagonal Value to set on the diagonal
      */
     FORCEINLINE explicit FMatrix2(float Diagonal) noexcept
-        : M{ {Diagonal, 0.0f}, {0.0f, Diagonal} }
+        : M{ { Diagonal, 0.0f }, { 0.0f, Diagonal } }
     {
     }
 
@@ -28,7 +28,7 @@ public:
      * @param Row1 Vector to set the second row to
      */
     FORCEINLINE explicit FMatrix2(const FVector2& Row0, const FVector2& Row1) noexcept
-        : M{ {Row0.x, Row0.y}, {Row1.x, Row1.y} }
+        : M{ { Row0.X, Row0.Y }, { Row1.X, Row1.Y } }
     {
     }
     
@@ -40,7 +40,7 @@ public:
      * @param M11 Value to set on row 1 and column 1
      */
     FORCEINLINE explicit FMatrix2(float M00, float M01, float M10, float M11) noexcept
-        : M{ {M00, M01}, {M10, M11} }
+        : M{ { M00, M01 }, { M10, M11 } }
     {
     }
 
@@ -263,15 +263,15 @@ public:
         Result.x = (Vector.x * M[0][0]) + (Vector.y * M[1][0]);
         Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]);
     #else
-        FFloat128 X_128      = FVectorMath::VectorSet1(Vector.x);
-        FFloat128 Y_128      = FVectorMath::VectorSet1(Vector.y);
+        FFloat128 X_128      = FVectorMath::VectorSet1(Vector.X);
+        FFloat128 Y_128      = FVectorMath::VectorSet1(Vector.Y);
         FFloat128 VectorA    = FVectorMath::VectorShuffle0011<0, 0, 0, 0>(X_128, Y_128);
         FFloat128 VectorB    = FVectorMath::VectorMul(&M[0][0], VectorA);
         FFloat128 VectorC    = FVectorMath::VectorShuffle<2, 3, 2, 3>(VectorB);
         FFloat128 Result_128 = FVectorMath::VectorAdd(VectorC, VectorB);
 
-        Result.x = FVectorMath::VectorGetX(Result_128);
-        Result.y = FVectorMath::VectorGetY(Result_128);
+        Result.X = FVectorMath::VectorGetX(Result_128);
+        Result.Y = FVectorMath::VectorGetY(Result_128);
     #endif
 
         return Result;
@@ -578,7 +578,7 @@ public:
      */
     FORCEINLINE static FMatrix2 Scale(const FVector2& VectorWithScale) noexcept
     {
-        return Scale(VectorWithScale.x, VectorWithScale.y);
+        return Scale(VectorWithScale.X, VectorWithScale.Y);
     }
 
     /**

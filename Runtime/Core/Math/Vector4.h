@@ -354,8 +354,8 @@ public:
 
     /**
      * @brief Returns a vector with the smallest of each component of two vectors
-     * @param First  - First vector to compare with
-     * @param Second - Second vector to compare with
+     * @param First First vector to compare with
+     * @param Second Second vector to compare with
      * @return A vector with the smallest components of First and Second
      */
     friend FORCEINLINE FVector4 Min(const FVector4& First, const FVector4& Second) noexcept
@@ -377,8 +377,8 @@ public:
 
     /**
      * @brief Returns a vector with the largest of each component of two vectors
-     * @param First  - First vector to compare with
-     * @param Second - Second vector to compare with
+     * @param First First vector to compare with
+     * @param Second Second vector to compare with
      * @return A vector with the largest components of First and Second
      */
     friend FORCEINLINE FVector4 Max(const FVector4& First, const FVector4& Second) noexcept
@@ -399,9 +399,9 @@ public:
 
     /**
      * @brief Returns the linear interpolation between two vectors
-     * @param First  - First vector to interpolate
-     * @param Second - Second vector to interpolate
-     * @param Factor - Factor to interpolate with. Zero returns First, One returns seconds
+     * @param First First vector to interpolate
+     * @param Second Second vector to interpolate
+     * @param Factor Factor to interpolate with. Zero returns First, One returns seconds
      * @return A vector with the result of interpolation
      */
     friend FORCEINLINE FVector4 Lerp(const FVector4& First, const FVector4& Second, float t) noexcept
@@ -430,8 +430,8 @@ public:
 
     /**
      * @brief Returns a vector with all the components within the range of a min and max value
-     * @param Min   - Vector with minimum values
-     * @param Max   - Vector with maximum values
+     * @param Min Vector with minimum values
+     * @param Max Vector with maximum values
      * @param Value Vector to clamp
      * @return A vector with the result of clamping
      */

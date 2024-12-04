@@ -9,29 +9,19 @@ public:
      * @brief Default constructor (Initialize components to zero) 
      */
     FORCEINLINE FVector2() noexcept
-        : x(0.0f)
-        , y(0.0f)
+        : X(0.0f)
+        , Y(0.0f)
     {
     }
 
     /**
      * @brief Constructor initializing all components with a corresponding value.
-     * @param InX - The x-coordinate
-     * @param InY - The y-coordinate
+     * @param InX - The X-coordinate
+     * @param InY - The Y-coordinate
      */
     FORCEINLINE explicit FVector2(float InX, float InY) noexcept
-        : x(InX)
-        , y(InY)
-    {
-    }
-
-    /**
-     * @brief Constructor initializing all components with an array.
-     * @param Arr - Array with 2 elements
-     */
-    FORCEINLINE explicit FVector2(const float* Arr) noexcept
-        : x(Arr[0])
-        , y(Arr[1])
+        : X(InX)
+        , Y(InY)
     {
     }
 
@@ -40,20 +30,20 @@ public:
      * @param Scalar - Value to set all components to
      */
     FORCEINLINE explicit FVector2(float Scalar) noexcept
-        : x(Scalar)
-        , y(Scalar)
+        : X(Scalar)
+        , Y(Scalar)
     {
     }
 
      /** @brief Normalized this vector */
     inline void Normalize() noexcept
     {
-        const float fLengthSquared = LengthSquared();
-        if (fLengthSquared != 0.0f)
+        const float LengthSqrd = GetLengthSquared();
+        if (LengthSqrd != 0.0f)
         {
-            const float fRecipLength = 1.0f / FMath::Sqrt(fLengthSquared);
-            x = x * fRecipLength;
-            y = y * fRecipLength;
+            const float RcpLength = 1.0f / FMath::Sqrt(LengthSqrd);
+            X = X * RcpLength;
+            Y = Y * RcpLength;
         }
     }
 
@@ -95,8 +85,8 @@ public:
      */
     FORCEINLINE bool IsUnitVector() const noexcept
     {
-        const float fLengthSquared = FMath::Abs(1.0f - LengthSquared());
-        return (fLengthSquared < FMath::kIsEqualEpsilon);
+        const float LengthSqrd = FMath::Abs(1.0f - GetLengthSquared());
+        return (LengthSqrd < FMath::kIsEqualEpsilon);
     }
 
     /**
@@ -107,7 +97,7 @@ public:
     {
         for (int32 Index = 0; Index < 2; ++Index)
         {
-            if (FMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsNaN(XY[Index]))
             {
                 return true;
             }
@@ -124,7 +114,7 @@ public:
     {
         for (int32 Index = 0; Index < 2; ++Index)
         {
-            if (FMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsInfinity(XY[Index]))
             {
                 return true;
             }
@@ -146,17 +136,17 @@ public:
      * @brief Returns the length of this vector
      * @return The length of the vector
      */
-    FORCEINLINE float Length() const noexcept
+    FORCEINLINE float GetLength() const noexcept
     {
-        const float fLengthSquared = LengthSquared();
-        return FMath::Sqrt(fLengthSquared);
+        const float LengthSqrd = GetLengthSquared();
+        return FMath::Sqrt(LengthSqrd);
     }
 
     /**
      * @brief Returns the length of this vector squared
      * @return The length of the vector squared
      */
-    FORCEINLINE float LengthSquared() const noexcept
+    FORCEINLINE float GetLengthSquared() const noexcept
     {
         return DotProduct(*this);
     }
@@ -168,7 +158,7 @@ public:
      */
     FORCEINLINE float DotProduct(const FVector2& Other) const noexcept
     {
-        return (x * Other.x) + (y * Other.y);
+        return (X * Other.X) + (Y * Other.Y);
     }
 
     /**
@@ -179,74 +169,56 @@ public:
     inline FVector2 ProjectOn(const FVector2& Other) const noexcept
     {
         float AdotB = DotProduct(Other);
-        float BdotB = Other.LengthSquared();
+        float BdotB = Other.DotProduct(Other);
         return (AdotB / BdotB) * Other;
-    }
-
-    /**
-     * @brief Returns the data of this matrix as a pointer
-     * @return A pointer to the data
-     */
-    FORCEINLINE float* Data() noexcept
-    {
-        return reinterpret_cast<float*>(this);
-    }
-
-    /**
-     * @brief Returns the data of this matrix as a pointer
-     * @return A pointer to the data
-     */
-    FORCEINLINE const float* Data() const noexcept
-    {
-        return reinterpret_cast<const float*>(this);
     }
 
 public:
 
     /**
      * @brief Returns a vector with the smallest of each component of two vectors
-     * @param First  - First vector to compare with
-     * @param Second - Second vector to compare with
+     * @param ValueA First vector to compare with
+     * @param ValueB Second vector to compare with
      * @return A vector with the smallest components of First and Second
      */
-    friend FORCEINLINE FVector2 Min(const FVector2& First, const FVector2& Second) noexcept
+    FORCEINLINE static FVector2 Min(const FVector2& ValueA, const FVector2& ValueB) noexcept
     {
-        return FVector2(FMath::Min(First.x, Second.x), FMath::Min(First.y, Second.y));
+        return FVector2(FMath::Min(ValueA.X, ValueB.X), FMath::Min(ValueA.Y, ValueB.Y));
     }
 
     /**
      * @brief Returns a vector with the largest of each component of two vectors
-     * @param First  - First vector to compare with
-     * @param Second - Second vector to compare with
+     * @param ValueA First vector to compare with
+     * @param ValueB Second vector to compare with
      * @return A vector with the largest components of First and Second
      */
-    friend FORCEINLINE FVector2 Max(const FVector2& First, const FVector2& Second) noexcept
+    FORCEINLINE static FVector2 Max(const FVector2& ValueA, const FVector2& ValueB) noexcept
     {
-        return FVector2(FMath::Max(First.x, Second.x), FMath::Max(First.y, Second.y));
+        return FVector2(FMath::Max(ValueA.X, ValueB.X), FMath::Max(ValueA.Y, ValueB.Y));
     }
 
     /**
      * @brief Returns the linear interpolation between two vectors
-     * @param First  - First vector to interpolate
-     * @param Second - Second vector to interpolate
-     * @param Factor - Factor to interpolate with. Zero returns First, One returns seconds
+     * @param First First vector to interpolate
+     * @param Second Second vector to interpolate
+     * @param Factor Factor to interpolate with. Zero returns First, One returns seconds
      * @return A vector with the result of interpolation
      */
-    friend FORCEINLINE FVector2 Lerp(const FVector2& First, const FVector2& Second, float Factor) noexcept
+    FORCEINLINE static FVector2 Lerp(const FVector2& First, const FVector2& Second, float Factor) noexcept
     {
-        return FVector2((1.0f - Factor) * First.x + Factor * Second.x, (1.0f - Factor) * First.y + Factor * Second.y);
+        return FVector2((1.0f - Factor) * First.X + Factor * Second.X, (1.0f - Factor) * First.Y + Factor * Second.Y);
     }
 
     /**
      * @brief Returns a vector with all the components within the range of a min and max value
-     * @param Min   - Vector with minimum values
-     * @param Max   - Vector with maximum values
+     * @param Min Vector with minimum values
+     * @param Max Vector with maximum values
      * @param Value Vector to clamp
      * @return A vector with the result of clamping
      */
-    friend FORCEINLINE FVector2 Clamp(const FVector2& Value, const FVector2& Min, const FVector2& Max) noexcept
+    FORCEINLINE static FVector2 Clamp(const FVector2& Value, const FVector2& Min, const FVector2& Max) noexcept
     {
-        return FVector2(FMath::Clamp(Value.x, Min.x, Max.x), FMath::Clamp(Value.y, Min.y, Max.y));
+        return FVector2(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y));
     }
 
     /**
@@ -254,9 +226,19 @@ public:
      * @param Value Value to saturate
      * @return A vector with the result of saturation
      */
-    friend FORCEINLINE FVector2 Saturate(const FVector2& Value) noexcept
+    FORCEINLINE static FVector2 Saturate(const FVector2& Value) noexcept
     {
-        return FVector2(FMath::Saturate(Value.x), FMath::Saturate(Value.y));
+        return FVector2(FMath::Saturate(Value.X), FMath::Saturate(Value.Y));
+    }
+
+    FORCEINLINE static FVector2 ToDegrees(FVector2 Radians)
+    {
+        return FVector2(FMath::ToDegrees(Radians.X), FMath::ToDegrees(Radians.Y));
+    }
+
+    FORCEINLINE static FVector2 ToRadians(FVector2 Degrees)
+    {
+        return FVector2(FMath::ToRadians(Degrees.X), FMath::ToRadians(Degrees.Y));
     }
 
 public:
@@ -267,7 +249,7 @@ public:
      */
     FORCEINLINE FVector2 operator-() const noexcept
     {
-        return FVector2(-x, -y);
+        return FVector2(-X, -Y);
     }
 
     /**
@@ -277,7 +259,7 @@ public:
      */
     FORCEINLINE FVector2 operator+(const FVector2& RHS) const noexcept
     {
-        return FVector2(x + RHS.x, y + RHS.y);
+        return FVector2(X + RHS.X, Y + RHS.Y);
     }
 
     /**
@@ -297,7 +279,7 @@ public:
      */
     FORCEINLINE FVector2 operator+(float RHS) const noexcept
     {
-        return FVector2(x + RHS, y + RHS);
+        return FVector2(X + RHS, Y + RHS);
     }
 
     /**
@@ -317,7 +299,7 @@ public:
      */
     FORCEINLINE FVector2 operator-(const FVector2& RHS) const noexcept
     {
-        return FVector2(x - RHS.x, y - RHS.y);
+        return FVector2(X - RHS.X, Y - RHS.Y);
     }
 
     /**
@@ -337,7 +319,7 @@ public:
      */
     FORCEINLINE FVector2 operator-(float RHS) const noexcept
     {
-        return FVector2(x - RHS, y - RHS);
+        return FVector2(X - RHS, Y - RHS);
     }
 
     /**
@@ -357,7 +339,7 @@ public:
      */
     FORCEINLINE FVector2 operator*(const FVector2& RHS) const noexcept
     {
-        return FVector2(x * RHS.x, y * RHS.y);
+        return FVector2(X * RHS.X, Y * RHS.Y);
     }
 
     /**
@@ -377,7 +359,7 @@ public:
      */
     FORCEINLINE FVector2 operator*(float RHS) const noexcept
     {
-        return FVector2(x * RHS, y * RHS);
+        return FVector2(X * RHS, Y * RHS);
     }
 
     /**
@@ -388,7 +370,7 @@ public:
      */
     friend FORCEINLINE FVector2 operator*(float LHS, const FVector2& RHS) noexcept
     {
-        return FVector2(LHS * RHS.x, LHS * RHS.y);
+        return FVector2(LHS * RHS.X, LHS * RHS.Y);
     }
 
     /**
@@ -408,7 +390,7 @@ public:
      */
     FORCEINLINE FVector2 operator/(const FVector2& RHS) const noexcept
     {
-        return FVector2(x / RHS.x, y / RHS.y);
+        return FVector2(X / RHS.X, Y / RHS.Y);
     }
 
     /**
@@ -428,7 +410,7 @@ public:
      */
     FORCEINLINE FVector2 operator/(float RHS) const noexcept
     {
-        return FVector2(x / RHS, y / RHS);
+        return FVector2(X / RHS, Y / RHS);
     }
 
 
@@ -470,7 +452,7 @@ public:
     FORCEINLINE float& operator[](int32 Index) noexcept
     {
         CHECK(Index < 2);
-        return reinterpret_cast<float*>(this)[Index];
+        return XY[Index];
     }
 
     /**
@@ -481,28 +463,25 @@ public:
     FORCEINLINE float operator[](int32 Index) const noexcept
     {
         CHECK(Index < 2);
-        return reinterpret_cast<const float*>(this)[Index];
+        return XY[Index];
     }
 
 public:
 
-     /** @brief The x-coordinate */
-    float x;
+    union
+    {
+        struct 
+        {
+            /** @brief The X-coordinate */
+            float X;
 
-    /** @brief The y-coordinate */
-    float y;
+            /** @brief The Y-coordinate */
+            float Y;
+        };
+
+        float XY[2];
+    };
+    
 };
 
 MARK_AS_REALLOCATABLE(FVector2);
-
-template<>
-FORCEINLINE FVector2 FMath::ToDegrees<FVector2>(FVector2 Radians)
-{
-    return FVector2(ToDegrees(Radians.x), ToDegrees(Radians.y));
-}
-
-template<>
-FORCEINLINE FVector2 FMath::ToRadians<FVector2>(FVector2 Degrees)
-{
-    return FVector2(ToRadians(Degrees.x), ToRadians(Degrees.y));
-}

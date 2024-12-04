@@ -117,9 +117,9 @@ void FMeshCreateInfo::CalculateTangents()
         FVector2 UVEdge1 = Vertex2.TexCoord - Vertex1.TexCoord;
         FVector2 UVEdge2 = Vertex3.TexCoord - Vertex1.TexCoord;
 
-        const float RecipDenominator = 1.0f / (UVEdge1.x * UVEdge2.y - UVEdge2.x * UVEdge1.y);
+        const float RcpDenominator = 1.0f / (UVEdge1.X * UVEdge2.Y - UVEdge2.X * UVEdge1.Y);
 
-        FVector3 Tangent = RecipDenominator * ((UVEdge2.y * Edge1) - (UVEdge1.y * Edge2));
+        FVector3 Tangent = RcpDenominator * ((UVEdge2.Y * Edge1) - (UVEdge1.Y * Edge2));
         Tangent.Normalize();
 
         Vertex1.Tangent = Tangent;
@@ -372,11 +372,11 @@ FMeshCreateInfo FMeshFactory::CreatePlane(uint32 Width, uint32 Height) noexcept
         for (uint32 y = 0; y <= Height; y++)
         {
             int32 v = ((1 + Height) * x) + y;
-            PlaneInfo.Vertices[v].Position = FVector3(0.5f - (QuadSize.x * x), 0.5f - (QuadSize.y * y), 0.0f);
+            PlaneInfo.Vertices[v].Position = FVector3(0.5f - (QuadSize.X * x), 0.5f - (QuadSize.Y * y), 0.0f);
             // TODO: Fix vertices so normal is positive
             PlaneInfo.Vertices[v].Normal   = FVector3(0.0f, 0.0f, -1.0f);
             PlaneInfo.Vertices[v].Tangent  = FVector3(1.0f, 0.0f, 0.0f);
-            PlaneInfo.Vertices[v].TexCoord = FVector2(0.0f + (UvQuadSize.x * x), 0.0f + (UvQuadSize.y * y));
+            PlaneInfo.Vertices[v].TexCoord = FVector2(0.0f + (UvQuadSize.X * x), 0.0f + (UvQuadSize.Y * y));
         }
     }
 
@@ -461,8 +461,8 @@ FMeshCreateInfo FMeshFactory::CreateSphere(uint32 Subdivisions, float Radius) no
         SphereInfo.Vertices[i].Position = Position * Radius;
 
         // Calculate UVs
-        SphereInfo.Vertices[i].TexCoord.y = (FMath::Asin(SphereInfo.Vertices[i].Position.y) / FMath::kPI_f) + 0.5f;
-        SphereInfo.Vertices[i].TexCoord.x = (FMath::Atan2(SphereInfo.Vertices[i].Position.z, SphereInfo.Vertices[i].Position.x) + FMath::kPI_f) / (2.0f * FMath::kPI_f);
+        SphereInfo.Vertices[i].TexCoord.Y = (FMath::Asin(SphereInfo.Vertices[i].Position.y) / FMath::kPI_f) + 0.5f;
+        SphereInfo.Vertices[i].TexCoord.X = (FMath::Atan2(SphereInfo.Vertices[i].Position.z, SphereInfo.Vertices[i].Position.x) + FMath::kPI_f) / (2.0f * FMath::kPI_f);
     }
 
     SphereInfo.Indices.Shrink();
@@ -1031,16 +1031,12 @@ FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float H
     // Angle increment per side
     const float DeltaAngle = 2.0f * FMath::kPI_f / static_cast<float>(Sides);
 
-    // Generate vertices and indices for the top and bottom caps and the sides
-    uint32 BaseVertexIndex = 0;
-
     // Generate top cap vertices
     FVertex TopCenterVertex;
     TopCenterVertex.Position = FVector3(0.0f, HalfHeight, 0.0f);
     TopCenterVertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
     TopCenterVertex.TexCoord = FVector2(0.5f, 0.5f); // Center of the texture
     MeshInfo.Vertices.Add(TopCenterVertex);
-    BaseVertexIndex++;
 
     for (uint32 i = 0; i < Sides; ++i)
     {
@@ -1053,7 +1049,6 @@ FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float H
         Vertex.Normal   = FVector3(0.0f, 1.0f, 0.0f);
         Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f); // Map to [0,1]
         MeshInfo.Vertices.Add(Vertex);
-        BaseVertexIndex++;
     }
 
     // Generate bottom cap vertices
@@ -1064,7 +1059,6 @@ FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float H
     BottomCenterVertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
     BottomCenterVertex.TexCoord = FVector2(0.5f, 0.5f);
     MeshInfo.Vertices.Add(BottomCenterVertex);
-    BaseVertexIndex++;
 
     for (uint32 i = 0; i < Sides; ++i)
     {
@@ -1077,8 +1071,6 @@ FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float H
         Vertex.Normal   = FVector3(0.0f, -1.0f, 0.0f);
         Vertex.TexCoord = FVector2((cosf(Angle) + 1.0f) * 0.5f, (sinf(Angle) + 1.0f) * 0.5f);
         MeshInfo.Vertices.Add(Vertex);
-        
-        BaseVertexIndex++;
     }
 
     // Generate side vertices
@@ -1133,7 +1125,6 @@ FMeshCreateInfo FMeshFactory::CreateCylinder(uint32 Sides, float Radius, float H
     }
 
     // Generate indices for the sides
-    const uint32 SideVertexCount = (Sides + 1) * 2; // Each side has two vertices (top and bottom)
     for (uint32 i = 0; i < Sides; ++i)
     {
         const uint32 TopCurr    = SideStartIndex + i * 2;

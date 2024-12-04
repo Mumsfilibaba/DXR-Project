@@ -431,19 +431,6 @@ public:
     }
 
     /**
-     * @brief Constructs the vector from an array of four int32 values.
-     * @param Array Array containing four elements: [0] = X, [1] = Y, [2] = Z, [3] = W.
-     */
-    FORCEINLINE explicit FIntVector4(const int32* Array) noexcept
-        : X(Array[0])
-        , Y(Array[1])
-        , Z(Array[2])
-        , W(Array[3])
-    {
-        CHECK(Array != nullptr);
-    }
-
-    /**
      * @brief Constructs the vector by setting X, Y, Z, and W to the same scalar value.
      * @param Scalar The scalar value to set all components.
      */
