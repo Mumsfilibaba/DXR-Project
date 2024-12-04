@@ -426,7 +426,7 @@ public:
             FFloat128 Diff       = FVectorMath::VectorSub(M[Row], Other.M[Row]);
             FFloat128 Result_128 = FVectorMath::VectorAbs(Diff);
 
-            if (FVectorMath::VectorGreaterThan(Result_128, Epsilon_128))
+            if (FVectorMath::VectorAllGreaterThan(Result_128, Epsilon_128))
             {
                 return false;
             }

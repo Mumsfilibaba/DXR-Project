@@ -206,7 +206,7 @@ public:
         FFloat128 VectorA     = FVectorMath::VectorAbs(Epsilon_128);
         FFloat128 VectorB     = FVectorMath::VectorSub(&M[0][0], &Other.M[0][0]);
         FFloat128 Result_128  = FVectorMath::VectorAbs(VectorB);
-        return FVectorMath::VectorLessThan(Result_128, Epsilon_128);
+        return FVectorMath::VectorAllLessThan(Result_128, Epsilon_128);
     #endif
     }
 

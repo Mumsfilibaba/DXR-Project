@@ -187,7 +187,7 @@ public:
         FFloat128 XYZW_128 = FVectorMath::VectorSub(XYZW, Other.XYZW);
         XYZW_128 = FVectorMath::VectorAbs(XYZW_128);
 
-        return FVectorMath::VectorLessThan(XYZW_128, Epsilon_128);
+        return FVectorMath::VectorAllLessThan(XYZW_128, Epsilon_128);
     #endif
     }
 

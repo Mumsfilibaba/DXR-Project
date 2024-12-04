@@ -243,31 +243,31 @@ struct FVectorMathSSE
         return VectorAdd(VectorC, VectorD);                     // (Ax * Bx) + (Ay * By) + (Az * Bz) + (Aw * Bw), ...
     }
 
-    static FORCEINLINE bool VECTORCALL VectorEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    static FORCEINLINE bool VECTORCALL VectorAllEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         int32 Mask = _mm_movemask_ps(_mm_cmpeq_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
-    static FORCEINLINE bool VECTORCALL VectorGreaterThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    static FORCEINLINE bool VECTORCALL VectorAllGreaterThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         int32 Mask = _mm_movemask_ps(_mm_cmpgt_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
-    static FORCEINLINE bool VECTORCALL VectorGreaterThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    static FORCEINLINE bool VECTORCALL VectorAllGreaterThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         int32 Mask = _mm_movemask_ps(_mm_cmpge_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
-    static FORCEINLINE bool VECTORCALL VectorLessThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    static FORCEINLINE bool VECTORCALL VectorAllLessThan(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         int32 Mask = _mm_movemask_ps(_mm_cmplt_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);
     }
 
-    static FORCEINLINE bool VECTORCALL VectorLessThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
+    static FORCEINLINE bool VECTORCALL VectorAllLessThanOrEqual(FFloat128 VectorA, FFloat128 VectorB) noexcept
     {
         int32 Mask = _mm_movemask_ps(_mm_cmple_ps(VectorA, VectorB));
         return 0xf == (Mask & 0xf);

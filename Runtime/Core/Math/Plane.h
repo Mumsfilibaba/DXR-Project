@@ -85,7 +85,7 @@ public:
         FFloat128 Diff = FVectorMath::VectorSub(XYZW, Other.XYZW);
         Diff = FVectorMath::VectorAbs(Diff);
 
-        return FVectorMath::VectorLessThan(Diff, Epsilon_128);
+        return FVectorMath::VectorAllLessThan(Diff, Epsilon_128);
     #endif
     }
 
