@@ -8,13 +8,13 @@ struct FWindowsLibrary final : public FGenericLibrary
     static FORCEINLINE void* LoadDynamicLib(const CHAR* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(::LoadLibraryA(RealName.GetCString()));
+        return reinterpret_cast<void*>(::LoadLibraryA(*RealName));
     }
 
     static FORCEINLINE void* GetLoadedHandle(const CHAR* LibraryName)
     {
         const FString RealName = GetRealName(LibraryName);
-        return reinterpret_cast<void*>(::GetModuleHandleA(RealName.GetCString()));
+        return reinterpret_cast<void*>(::GetModuleHandleA(*RealName));
     }
 
     static FORCEINLINE void FreeDynamicLib(void* LibraryHandle)

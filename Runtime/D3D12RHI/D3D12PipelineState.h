@@ -388,7 +388,7 @@ public:
     virtual void SetDebugName(const FString& InName) override
     {
         FStringWide WideName = CharToWide(InName);
-        StateObject->SetName(WideName.GetCString());
+        StateObject->SetName(*WideName);
     }
 
     void* GetShaderIdentifer(const FString& ExportName);

@@ -26,7 +26,7 @@ public:
     void SetDebugName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
-        Allocator->SetName(WideName.GetCString());
+        Allocator->SetName(*WideName);
     }
 
     ED3D12CommandQueueType GetQueueType() const
@@ -103,7 +103,7 @@ public:
     FORCEINLINE void SetDebugName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
-        CmdList->SetName(WideName.GetCString());
+        CmdList->SetName(*WideName);
     }
 
     FORCEINLINE FCommandList<ID3D12GraphicsCommandList> operator->()

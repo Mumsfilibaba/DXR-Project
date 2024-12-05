@@ -80,7 +80,7 @@ public:
     void SetDebugName(const FString& Name)
     {
         FStringWide WideName = CharToWide(Name);
-        RootSignature->SetName(WideName.GetCString());
+        RootSignature->SetName(*WideName);
     }
 
     ID3D12RootSignature* GetD3D12RootSignature() const { return RootSignature.Get(); }

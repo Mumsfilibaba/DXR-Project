@@ -25,7 +25,7 @@ bool FWindowsPlatformStackTrace::InitializeSymbols()
         // Get handle for the current process handle
         HANDLE CurrentProcess = ::GetCurrentProcess();
 
-        const int32 Result = ::SymInitialize(CurrentProcess, SymbolPath.IsEmpty() ? nullptr : SymbolPath.GetCString(), TRUE);
+        const int32 Result = ::SymInitialize(CurrentProcess, SymbolPath.IsEmpty() ? nullptr : *SymbolPath, TRUE);
         if (!Result)
         {
             LOG_ERROR("Failed to initialize Symbols");

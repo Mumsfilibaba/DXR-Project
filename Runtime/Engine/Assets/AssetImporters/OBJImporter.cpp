@@ -23,15 +23,15 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     const FString FilenameWithoutPath = FFileHelpers::ExtractFilenameWithoutExtension(Filename);
     
     // Load the OBJ file
-    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, Filename.GetCString(), MTLFiledir.GetCString(), true, false))
+    if (!tinyobj::LoadObj(&Attributes, &Shapes, &Materials, &Warning, &Error, *Filename, *MTLFiledir, true, false))
     {
-        LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", Filename.GetCString(), Warning.c_str(), Error.c_str());
+        LOG_ERROR("[FOBJImporter]: Failed to load '%s'. Warning: %s Error: %s", *Filename, Warning.c_str(), Error.c_str());
         return false;
     }
     
     if (!Warning.empty())
     {
-        LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", Filename.GetCString(), Warning.c_str());
+        LOG_WARNING("[FOBJImporter]: Loaded '%s' with Warning: %s", *Filename, Warning.c_str());
     }
 
     // Create all Materials in scene
@@ -54,7 +54,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
         if (Mat.name.empty())
         {
-            MaterialCreateInfo.Name = FString::CreateFormatted("%s_material_%d", FilenameWithoutPath.GetCString(), SceneMaterialIndex);
+            MaterialCreateInfo.Name = FString::CreateFormatted("%s_material_%d", *FilenameWithoutPath, SceneMaterialIndex);
         }
         else
         {
@@ -164,7 +164,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
             if (Shape.name.empty())
             {
-                MeshCreateInfo.Name = FString::CreateFormatted("%s_%d", FilenameWithoutPath.GetCString(), ShapeIndex);
+                MeshCreateInfo.Name = FString::CreateFormatted("%s_%d", *FilenameWithoutPath, ShapeIndex);
             }
             else
             {
@@ -176,7 +176,7 @@ bool FOBJImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
         ShapeIndex++;
     }
 
-    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", Filename.GetCString(), OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
+    LOG_INFO("[FOBJImporter]: Loaded Model '%s' which contains %d models and %d materials", *Filename, OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
     return true;
 }
 

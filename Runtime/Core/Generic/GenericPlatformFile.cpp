@@ -86,7 +86,7 @@ FString FFileHelpers::ExtractFilepath(const FString& Filepath)
         LastSlash = Filepath.Length();
     }
     
-    return FString(Filepath.GetCString(), LastSlash);
+    return FString(*Filepath, LastSlash);
 }
 
 FString FFileHelpers::ExtractFilename(const FString& Filepath)
@@ -102,7 +102,7 @@ FString FFileHelpers::ExtractFilename(const FString& Filepath)
     }
     
     int32 NewLength = Filepath.Length() - LastSlash;
-    return FString(Filepath.GetCString() + LastSlash, NewLength);
+    return FString(*Filepath + LastSlash, NewLength);
 }
     
 FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
@@ -120,9 +120,9 @@ FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
     int32 ExtensionPos = Filepath.FindLastChar('.');
     if (ExtensionPos == FString::InvalidIndex)
     {
-        ExtensionPos = FCString::Strlen(Filepath.GetCString() + LastSlash);
+        ExtensionPos = FCString::Strlen(*Filepath + LastSlash);
     }
     
     int32 NewLength = ExtensionPos - LastSlash;
-    return FString(Filepath.GetCString() + LastSlash, NewLength);
+    return FString(*Filepath + LastSlash, NewLength);
 }

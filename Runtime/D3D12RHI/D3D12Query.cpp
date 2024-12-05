@@ -151,7 +151,7 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
 {
     if (QueryHeap)
     {
-        HRESULT Result = QueryHeap->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Size(), InName.GetCString());
+        HRESULT Result = QueryHeap->SetPrivateData(WKPDID_D3DDebugObjectName, InName.Size(), *InName);
         if (FAILED(Result))
         {
             D3D12_ERROR("Failed to set queryheap name");
@@ -159,7 +159,7 @@ void FD3D12QueryHeap::SetDebugName(const FString& InName)
 
         // Calling SetName as well since NVIDIA NSight does not recognize the name otherwise
         FStringWide WideName = CharToWide(InName);
-        Result = QueryHeap->SetName(WideName.GetCString());
+        Result = QueryHeap->SetName(*WideName);
         if (FAILED(Result))
         {
             D3D12_ERROR("Failed to set queryheap name");

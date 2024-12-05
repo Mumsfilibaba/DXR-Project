@@ -18,8 +18,8 @@ void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Messag
 {
     SCOPED_AUTORELEASE_POOL();
     
-    CFStringRef CaptionRef = CFStringCreateWithCString(0, Title.GetCString(),   static_cast<CFStringEncoding>(Title.Length()));
-    CFStringRef TextRef    = CFStringCreateWithCString(0, Message.GetCString(), static_cast<CFStringEncoding>(Message.Length()));
+    CFStringRef CaptionRef = CFStringCreateWithCString(0, *Title,   static_cast<CFStringEncoding>(Title.Length()));
+    CFStringRef TextRef    = CFStringCreateWithCString(0, *Message, static_cast<CFStringEncoding>(Message.Length()));
         
     CFOptionFlags Result = 0;
     CFOptionFlags Flags  = kCFUserNotificationStopAlertLevel;

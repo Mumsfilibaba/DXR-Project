@@ -119,10 +119,10 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& File
 {
     tinyddsloader::DDSFile File;
 
-    auto Result = File.Load(FileName.GetCString());
+    auto Result = File.Load(*FileName);
     if (Result != tinyddsloader::Success)
     {
-        LOG_ERROR("[FTextureImporterDDS]: Failed to open '%s'", FileName.GetCString());
+        LOG_ERROR("[FTextureImporterDDS]: Failed to open '%s'", *FileName);
         return nullptr;
     }
 
@@ -132,7 +132,7 @@ TSharedRef<FTexture> FTextureImporterDDS::ImportFromFile(const FStringView& File
     const EFormat Format = ConvertFormat(File.GetFormat());
     if (IsBlockCompressed(Format) && (!IsBlockCompressedAligned(File.GetWidth()) || !IsBlockCompressedAligned(File.GetHeight())))
     {
-        LOG_ERROR("[FTextureImporterDDS]: The image '%s' is in an unsupported format", FileName.GetCString());
+        LOG_ERROR("[FTextureImporterDDS]: The image '%s' is in an unsupported format", *FileName);
         return nullptr;
     }
 

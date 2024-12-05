@@ -34,7 +34,7 @@ FMetalDeviceContext* FMetalDeviceContext::CreateContext()
     }
     
     const FString DeviceName = SelectedDevice.name;
-    METAL_INFO("Selected Device=%s", DeviceName.GetCString());
+    METAL_INFO("Selected Device=%s", *DeviceName);
 
     const bool bSupportRayTracing           = SelectedDevice.supportsRaytracing;
     const bool bSupportRayTracingFromRender = SelectedDevice.supportsRaytracingFromRender;

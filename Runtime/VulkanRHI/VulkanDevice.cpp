@@ -209,7 +209,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
             VkPhysicalDeviceProperties AdapterProperties;
             vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
             
-            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, GetVersionAsString(AdapterProperties.apiVersion).GetCString());
+            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
         }
     }
 
@@ -400,7 +400,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
     
-    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, GetVersionAsString(DeviceProperties.apiVersion).GetCString());
+    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *GetVersionAsString(DeviceProperties.apiVersion));
     return true;
 }
 
@@ -471,7 +471,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
         for (const VkQueueFamilyProperties& Properties : QueueFamilies)
         {
             const FString PropertyString = GetQueuePropertiesAsString(Properties);
-            VULKAN_INFO("Queue[%d]: %s", Index, PropertyString.GetCString());
+            VULKAN_INFO("Queue[%d]: %s", Index, *PropertyString);
             Index++;
         }
     }

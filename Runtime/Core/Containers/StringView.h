@@ -720,15 +720,6 @@ public:
     }
 
     /**
-     * @brief Retrieve a null-terminated string
-     * @return Returns a pointer containing a null-terminated string
-     */
-    NODISCARD FORCEINLINE const CharType* GetCString() const
-    {
-        return (ViewStart == nullptr) ? FCStringType::Empty() : ViewStart;
-    }
-
-    /**
      * @brief Returns the size of the view
      * @return The current size of the view
      */
@@ -805,6 +796,15 @@ public:
     {
         CHECK(Index < Length());
         return ViewStart[Index];
+    }
+
+    /**
+     * @brief Retrieve a null-terminated string
+     * @return Returns a pointer containing a null-terminated string
+     */
+    NODISCARD FORCEINLINE const CharType* operator*() const
+    {
+        return (ViewStart == nullptr) ? FCStringType::Empty() : ViewStart;
     }
 
     /**

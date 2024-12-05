@@ -1188,15 +1188,6 @@ public:
         return CharData.Data();
     }
 
-    /**
-     * @brief Retrieve a null-terminated string
-     * @return Returns a pointer containing a null-terminated string
-     */
-    NODISCARD FORCEINLINE const CharType* GetCString() const
-    {
-        return !CharData.IsEmpty() ? CharData.Data() : FCStringType::Empty();
-    }
-
 #if defined(__OBJC__)
     /**
      * @brief Retrieve a null-terminated string
@@ -1374,6 +1365,15 @@ public:
     {
         CHECK(Index < Length());
         return CharData[Index];
+    }
+
+    /**
+     * @brief Retrieve a null-terminated string
+     * @return Returns a pointer containing a null-terminated string
+     */
+    NODISCARD FORCEINLINE const CharType* operator*() const
+    {
+        return !CharData.IsEmpty() ? CharData.Data() : FCStringType::Empty();
     }
 
     /**
@@ -1668,7 +1668,7 @@ NODISCARD inline FString WideToChar(const FStringWide& WideString)
 // Jenkins's one_at_a_time hash: https://en.wikipedia.org/wiki/Jenkins_hash_function
 inline uint64 GetHashForType(const FString& String)
 {
-    const CHAR* Key = String.GetCString();
+    const CHAR* Key = *String;
 
     int32  Index = 0;
     uint64 Hash  = 0;
@@ -1691,7 +1691,7 @@ inline uint64 GetHashForType(const FString& String)
 inline uint64 GetHashForType(const FStringWide& String)
 {
     // TODO: Investigate how good is this for wide chars
-    const WIDECHAR* Key = String.GetCString();
+    const WIDECHAR* Key = *String;
 
     int32  Index = 0;
     uint64 Hash  = 0;
@@ -1757,7 +1757,7 @@ template<>
 FORCEINLINE bool TTypeFromString<int32>::FromString(const FString& String, int32& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = String.GetCString();
+    const CHAR* Start = *String;
     OutElement = FCString::Strtoi(Start, &End, 10);
     if (End != Start)
     {
@@ -1771,7 +1771,7 @@ template<>
 FORCEINLINE bool TTypeFromString<int64>::FromString(const FString& String, int64& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = String.GetCString();
+    const CHAR* Start = *String;
     OutElement = FCString::Strtoi64(Start, &End, 10);
     if (End != Start)
     {
@@ -1785,7 +1785,7 @@ template<>
 FORCEINLINE bool TTypeFromString<uint32>::FromString(const FString& String, uint32& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = String.GetCString();
+    const CHAR* Start = *String;
     OutElement = FCString::Strtoui(Start, &End, 10);
     if (End != Start)
     {
@@ -1799,7 +1799,7 @@ template<>
 FORCEINLINE bool TTypeFromString<uint64>::FromString(const FString& String, uint64& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = String.GetCString();
+    const CHAR* Start = *String;
     OutElement = FCString::Strtoui64(Start, &End, 10);
     if (End != Start)
     {
@@ -1813,7 +1813,7 @@ template<>
 FORCEINLINE bool TTypeFromString<float>::FromString(const FString& String, float& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = String.GetCString();
+    const CHAR* Start = *String;
     OutElement = FCString::Strtof(Start, &End);
     if (End != Start)
     {
@@ -1827,7 +1827,7 @@ template<>
 FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, double& OutElement)
 {
     CHAR* End;
-    const CHAR* Start = String.GetCString();
+    const CHAR* Start = *String;
     OutElement = FCString::Strtod(Start, &End);
     if (End != Start)
     {
@@ -1840,7 +1840,7 @@ FORCEINLINE bool TTypeFromString<double>::FromString(const FString& String, doub
 template<>
 FORCEINLINE bool TTypeFromString<bool>::FromString(const FString& String, bool& OutElement)
 {
-    const CHAR* Start = String.GetCString();
+    const CHAR* Start = *String;
     if (FCString::Stricmp(Start, "true") == 0)
     {
         OutElement = true;
@@ -1879,7 +1879,7 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<int32>::FromString(const FStringWide& String, int32& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = String.GetCString();
+    const WIDECHAR* Start = *String;
     OutElement = FCStringWide::Strtoi(Start, &End, 10);
     if (End != Start)
     {
@@ -1893,7 +1893,7 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<int64>::FromString(const FStringWide& String, int64& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = String.GetCString();
+    const WIDECHAR* Start = *String;
     OutElement = FCStringWide::Strtoi64(Start, &End, 10);
     if (End != Start)
     {
@@ -1907,7 +1907,7 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<uint32>::FromString(const FStringWide& String, uint32& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = String.GetCString();
+    const WIDECHAR* Start = *String;
     OutElement = FCStringWide::Strtoui(Start, &End, 10);
     if (End != Start)
     {
@@ -1921,7 +1921,7 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<uint64>::FromString(const FStringWide& String, uint64& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = String.GetCString();
+    const WIDECHAR* Start = *String;
     OutElement = FCStringWide::Strtoui64(Start, &End, 10);
     if (End != Start)
     {
@@ -1935,7 +1935,7 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<float>::FromString(const FStringWide& String, float& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = String.GetCString();
+    const WIDECHAR* Start = *String;
     OutElement = FCStringWide::Strtof(Start, &End);
     if (End != Start)
     {
@@ -1949,7 +1949,7 @@ template<>
 FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& String, double& OutElement)
 {
     WIDECHAR* End;
-    const WIDECHAR* Start = String.GetCString();
+    const WIDECHAR* Start = *String;
     OutElement = FCStringWide::Strtod(Start, &End);
     if (End != Start)
     {
@@ -1962,7 +1962,7 @@ FORCEINLINE bool TTypeFromStringWide<double>::FromString(const FStringWide& Stri
 template<>
 FORCEINLINE bool TTypeFromStringWide<bool>::FromString(const FStringWide& String, bool& OutElement)
 {
-    const WIDECHAR* Start = String.GetCString();
+    const WIDECHAR* Start = *String;
     if (FCStringWide::Stricmp(Start, L"true") == 0)
     {
         OutElement = true;
@@ -1994,7 +1994,7 @@ template<>
 FORCEINLINE bool TTryParseType<int32>::TryParse(const FString& InString)
 {
     CHAR* End;
-    const CHAR* Start = InString.GetCString();
+    const CHAR* Start = *InString;
     FCString::Strtoi(Start, &End, 10);
     return (End != Start);
 }
@@ -2003,7 +2003,7 @@ template<>
 FORCEINLINE bool TTryParseType<uint32>::TryParse(const FString& InString)
 {
     CHAR* End;
-    const CHAR* Start = InString.GetCString();
+    const CHAR* Start = *InString;
     FCString::Strtoui(Start, &End, 10);
     return (End != Start);
 }
@@ -2012,7 +2012,7 @@ template<>
 FORCEINLINE bool TTryParseType<int64>::TryParse(const FString& InString)
 {
     CHAR* End;
-    const CHAR* Start = InString.GetCString();
+    const CHAR* Start = *InString;
     FCString::Strtoi64(Start, &End, 10);
     return (End != Start);
 }
@@ -2021,7 +2021,7 @@ template<>
 FORCEINLINE bool TTryParseType<uint64>::TryParse(const FString& InString)
 {
     CHAR* End;
-    const CHAR* Start = InString.GetCString();
+    const CHAR* Start = *InString;
     FCString::Strtoui64(Start, &End, 10);
     return (End != Start);
 }
@@ -2030,7 +2030,7 @@ template<>
 FORCEINLINE bool TTryParseType<float>::TryParse(const FString& InString)
 {
     CHAR* End;
-    const CHAR* Start = InString.GetCString();
+    const CHAR* Start = *InString;
     FCString::Strtof(Start, &End);
     return (End != Start);
 }
@@ -2039,7 +2039,7 @@ template<>
 FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
 {
     CHAR* End;
-    const CHAR* Start = InString.GetCString();
+    const CHAR* Start = *InString;
     FCString::Strtof(Start, &End);
     return (End != Start);
 }
@@ -2047,7 +2047,7 @@ FORCEINLINE bool TTryParseType<double>::TryParse(const FString& InString)
 template<>
 FORCEINLINE bool TTryParseType<bool>::TryParse(const FString& InString)
 {
-    const CHAR* Start = InString.GetCString();
+    const CHAR* Start = *InString;
     if (FCString::Stricmp(Start, "true") == 0)
     {
         return true;

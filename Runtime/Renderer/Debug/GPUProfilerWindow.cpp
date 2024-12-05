@@ -178,7 +178,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
             const float Max = Sample.Second.Max;
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::Text("%s", Sample.First.GetCString());
+            ImGui::Text("%s", *Sample.First);
             ImGui::TableSetColumnIndex(1);
             ImGui::Text("%.4f ms", TimeUtilities::ToMilliseconds<float>(Avg));
             ImGui::TableSetColumnIndex(2);

@@ -5,7 +5,7 @@ struct FDebug
 {
     static FORCEINLINE void OutputDebugString(const FString& Message)
     {
-        FPlatformMisc::OutputDebugString(Message.GetCString());
+        FPlatformMisc::OutputDebugString(*Message);
     }
 
     /**

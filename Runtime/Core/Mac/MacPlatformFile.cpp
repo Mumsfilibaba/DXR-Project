@@ -156,7 +156,7 @@ void FMacFileHandle::Close()
 
 IFileHandle* FMacPlatformFile::OpenForRead(const FString& Filename)
 {
-    int32 FileHandle = ::open(Filename.GetCString(), O_RDONLY);
+    int32 FileHandle = ::open(*Filename, O_RDONLY);
     if (FileHandle < 0)
     {
         return nullptr;
@@ -197,7 +197,7 @@ IFileHandle* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTrunc
         S_IROTH | // Read permission for Other
         S_IWOTH;  // Write permission for Other
 
-    int32 FileHandle = ::open(Filename.GetCString(), Flags, PermissonFlags);
+    int32 FileHandle = ::open(*Filename, Flags, PermissonFlags);
     if (FileHandle < 0)
     {
         return nullptr;

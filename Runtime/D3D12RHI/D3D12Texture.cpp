@@ -247,7 +247,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) == D3D12_RESOURCE_FLAG_NONE)
     {
-        D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", Resource->GetDebugName().GetCString());
+        D3D12_ERROR("Texture '%s' does not allow RenderTargetViews", *Resource->GetDebugName());
         return nullptr;
     }
 
@@ -385,7 +385,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
     D3D12_RESOURCE_DESC ResourceDesc = D3D12Resource->GetDesc();
     if ((ResourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) == D3D12_RESOURCE_FLAG_NONE)
     {
-        D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", Resource->GetDebugName().GetCString());
+        D3D12_ERROR("Texture '%s' does not allow DepthStencilViews", *Resource->GetDebugName());
         return nullptr;
     }
 

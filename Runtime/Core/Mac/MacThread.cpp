@@ -69,7 +69,7 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
         // ThreadName can only be set from the running thread
         if (!CurrentThread->ThreadName.IsEmpty())
         {
-            const CHAR* ThreadName = CurrentThread->ThreadName.GetCString();
+            const CHAR* ThreadName = *CurrentThread->ThreadName;
             ::pthread_setname_np(ThreadName);
         }
 

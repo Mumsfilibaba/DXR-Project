@@ -111,7 +111,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     CHECK(Device != nullptr);
 
     FString Message = "[D3D12] Device Removed";
-    D3D12_ERROR("%s", Message.GetCString());
+    D3D12_ERROR("%s", *Message);
 
     ID3D12Device* DxDevice = Device->GetD3D12Device();
 
@@ -137,7 +137,7 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
     if (File)
     {
         Message += '\n';
-        File->Write((const uint8*)Message.GetCString(), Message.Size());
+        File->Write((const uint8*)*Message, Message.Size());
     }
 
     const D3D12_AUTO_BREADCRUMB_NODE* CurrentNode  = DredAutoBreadcrumbsOutput.pHeadAutoBreadcrumbNode;
@@ -148,18 +148,18 @@ void D3D12DeviceRemovedHandlerRHI(FD3D12Device* Device)
         if (File)
         {
             Message += '\n';
-            File->Write((const uint8*)Message.GetCString(), Message.Size());
+            File->Write((const uint8*)*Message, Message.Size());
         }
 
-        D3D12_ERROR("%s", Message.GetCString());
+        D3D12_ERROR("%s", *Message);
         for (uint32 i = 0; i < CurrentNode->BreadcrumbCount; i++)
         {
             Message = "    " + FString(ToString(CurrentNode->pCommandHistory[i]));
-            D3D12_ERROR("%s", Message.GetCString());
+            D3D12_ERROR("%s", *Message);
             if (File)
             {
                 Message += '\n';
-                File->Write((const uint8*)Message.GetCString(), Message.Size());
+                File->Write((const uint8*)*Message, Message.Size());
             }
         }
 
@@ -766,7 +766,7 @@ bool FD3D12Device::CreateDevice()
     else
     {
         const FString Description = Adapter->GetDescription();
-        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", Description.GetCString());
+        D3D12_INFO("[FD3D12Device]: Created Device for adapter '%s'", *Description);
     }
 
     // NodeMask

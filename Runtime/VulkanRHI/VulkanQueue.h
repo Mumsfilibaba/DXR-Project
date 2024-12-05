@@ -39,7 +39,7 @@ public:
 
     void SetDebugName(const FString& Name)
     {
-        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), Name.GetCString(), Queue, VK_OBJECT_TYPE_QUEUE);
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *Name, Queue, VK_OBJECT_TYPE_QUEUE);
     }
 
     VkQueue GetVkQueue() const

@@ -28,12 +28,12 @@ struct FDebuggerOutputDevice : public IOutputDevice
 {
     virtual void Log(const FString& Message)
     {
-        FPlatformMisc::OutputDebugString(Message.GetCString());
+        FPlatformMisc::OutputDebugString(*Message);
     }
 
     virtual void Log(ELogSeverity Severity, const FString& Message)
     {
-        FPlatformMisc::OutputDebugString(Message.GetCString());
+        FPlatformMisc::OutputDebugString(*Message);
     }
 };
 

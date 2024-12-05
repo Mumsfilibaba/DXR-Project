@@ -1007,15 +1007,6 @@ public:
     }
 
     /**
-     * @brief Retrieve the string as a C-array
-     * @return Returns a pointer to the data of the array
-     */
-    NODISCARD FORCEINLINE const CharType* GetCString() const
-    {
-        return CharData;
-    }
-
-    /**
      * @brief Returns the size of the container
      * @return The current size of the container
      */
@@ -1172,6 +1163,15 @@ public:
     {
         CHECK(Index < Length());
         return CharData[Index];
+    }
+
+    /**
+     * @brief Retrieve the string as a C-array
+     * @return Returns a pointer to the data of the array
+     */
+    NODISCARD FORCEINLINE const CharType* operator*() const
+    {
+        return CharData;
     }
 
     /**

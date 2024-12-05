@@ -93,7 +93,7 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         ParentWindow = reinterpret_cast<HWND>(InInitializer.ParentWindow->GetPlatformHandle());
     }
 
-    const CHAR* Title     = InInitializer.Title.GetCString();
+    const CHAR* Title     = *InInitializer.Title;
     const CHAR* ClassName = FWindowsWindow::GetClassName();
 
     HINSTANCE Instance = Application->GetInstance();
@@ -294,7 +294,7 @@ void FWindowsWindow::SetTitle(const FString& Title)
 {
     if (IsValid())
     {
-        ::SetWindowTextA(Window, Title.GetCString());
+        ::SetWindowTextA(Window, *Title);
     }
 }
 

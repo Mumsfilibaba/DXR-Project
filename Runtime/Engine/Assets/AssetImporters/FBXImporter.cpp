@@ -63,7 +63,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     FFileHandleRef File = FPlatformFile::OpenForRead(Filename);
     if (!File)
     {
-        LOG_ERROR("[FFBXImporter]: Failed to open '%s'", Filename.GetCString());
+        LOG_ERROR("[FFBXImporter]: Failed to open '%s'", *Filename);
         return false;
     }
 
@@ -74,7 +74,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     const int32 NumBytesRead = File->Read(FileContent.Data(), FileSize);
     if (NumBytesRead <= 0)
     {
-        LOG_ERROR("[FFBXImporter]: Failed to load '%s'", Filename.GetCString());
+        LOG_ERROR("[FFBXImporter]: Failed to load '%s'", *Filename);
         return false;
     }
 
@@ -82,7 +82,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
     if (!FBXScene)
     {
         const CHAR* ErrorString = ofbx::getError();
-        LOG_ERROR("[FFBXImporter]: Failed to load content '%s', error '%s'", Filename.GetCString(), ErrorString);
+        LOG_ERROR("[FFBXImporter]: Failed to load content '%s', error '%s'", *Filename, ErrorString);
         return false;
     }
 
@@ -305,7 +305,7 @@ bool FFBXImporter::ImportFromFile(const FStringView& InFilename, EMeshImportFlag
 
     FBXScene->destroy();
 
-    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", Filename.GetCString(), OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
+    LOG_INFO("[FFBXImporter]: Loaded Model '%s' which contains %d meshes and %d materials", *Filename, OutModelInfo.Meshes.Size(), OutModelInfo.Materials.Size());
     return true;
 }
 

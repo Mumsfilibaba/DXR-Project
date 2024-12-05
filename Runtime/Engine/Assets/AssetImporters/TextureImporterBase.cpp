@@ -79,7 +79,7 @@ TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& Fil
     FFileHandleRef File = FPlatformFile::OpenForRead(FString(FileName));
     if (!File)
     {
-        LOG_ERROR("[FTextureImporterBase]: Failed to open '%s'", FileName.GetCString());
+        LOG_ERROR("[FTextureImporterBase]: Failed to open '%s'", *FileName);
         return nullptr;
     }
 
@@ -135,7 +135,7 @@ TSharedRef<FTexture> FTextureImporterBase::ImportFromFile(const FStringView& Fil
 
     if (!Pixels)
     {
-        LOG_ERROR("[FTextureImporterBase]: Failed to load image '%s'", FileName.GetCString());
+        LOG_ERROR("[FTextureImporterBase]: Failed to load image '%s'", *FileName);
         return nullptr;
     }
 

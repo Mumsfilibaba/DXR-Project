@@ -28,7 +28,7 @@ FD3D12VertexLayout::FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& In
         FMemory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
 
         const FString& Semantic = SemanticNames.Emplace(Element.Semantic);
-        InputElementDesc.SemanticName = Semantic.GetCString();
+        InputElementDesc.SemanticName = *Semantic;
         HashCombine(CalculatedHash, GetHashForType(Semantic));
 
         InputElementDesc.SemanticIndex = Element.SemanticIndex;
@@ -150,7 +150,7 @@ FD3D12PipelineStateCommon::FD3D12PipelineStateCommon(FD3D12Device* InDevice)
 void FD3D12PipelineStateCommon::SetDebugName(const FString& InName)
 {
     const FStringWide WideName = CharToWide(InName);
-    PipelineState->SetName(WideName.GetCString());
+    PipelineState->SetName(*WideName);
     DebugName = InName;
 }
 
@@ -576,7 +576,7 @@ struct FD3D12RootSignatureAssociation
     {
         for (int32 i = 0; i < ShaderExportNames.Size(); i++)
         {
-            ShaderExportNamesRef[i] = ShaderExportNames[i].GetCString();
+            ShaderExportNamesRef[i] = *ShaderExportNames[i];
         }
     }
 
@@ -600,17 +600,17 @@ struct FD3D12HitGroup
         FMemory::Memzero(&Desc);
 
         Desc.Type                   = D3D12_HIT_GROUP_TYPE_TRIANGLES;
-        Desc.HitGroupExport         = HitGroupName.GetCString();
-        Desc.ClosestHitShaderImport = ClosestHit.GetCString();
+        Desc.HitGroupExport         = *HitGroupName;
+        Desc.ClosestHitShaderImport = *ClosestHit;
 
         if (AnyHit != L"")
         {
-            Desc.AnyHitShaderImport = AnyHit.GetCString();
+            Desc.AnyHitShaderImport = *AnyHit;
         }
 
         if (Desc.Type != D3D12_HIT_GROUP_TYPE_TRIANGLES)
         {
-            Desc.IntersectionShaderImport = Intersection.GetCString();
+            Desc.IntersectionShaderImport = *Intersection;
         }
     }
 
@@ -633,7 +633,7 @@ struct FD3D12Library
         {
             D3D12_EXPORT_DESC& TempDesc = ExportDescs[i];
             TempDesc.Flags          = D3D12_EXPORT_FLAG_NONE;
-            TempDesc.Name           = ExportNames[i].GetCString();
+            TempDesc.Name           = *ExportNames[i];
             TempDesc.ExportToRename = nullptr;
         }
 
@@ -714,7 +714,7 @@ struct FD3D12RayTracingPipelineStateStream
         PayLoadExportNamesRef.Resize(PayLoadExportNames.Size());
         for (int32 i = 0; i < PayLoadExportNames.Size(); i++)
         {
-            PayLoadExportNamesRef[i] = PayLoadExportNames[i].GetCString();
+            PayLoadExportNamesRef[i] = *PayLoadExportNames[i];
         }
 
         ShaderConfigAssociation.pExports              = PayLoadExportNamesRef.Data();
@@ -959,7 +959,7 @@ void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportNam
     {
         FStringWide WideExportName = CharToWide(ExportName);
 
-        void* Result = StateObjectProperties->GetShaderIdentifier(WideExportName.GetCString());
+        void* Result = StateObjectProperties->GetShaderIdentifier(*WideExportName);
         if (!Result)
         {
             return nullptr;
@@ -1139,7 +1139,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         }
         else
         {
-            D3D12_INFO("Saved PipelineCache to file '%s'", PipelineCacheFilepath.GetCString());
+            D3D12_INFO("Saved PipelineCache to file '%s'", *PipelineCacheFilepath);
         }
     }
 

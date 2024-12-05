@@ -221,7 +221,7 @@ FVulkanPipeline::~FVulkanPipeline()
 
 void FVulkanPipeline::SetDebugName(const FString& InName)
 {
-    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Pipeline, VK_OBJECT_TYPE_PIPELINE);
+    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, Pipeline, VK_OBJECT_TYPE_PIPELINE);
     DebugName = InName;
 }
 
@@ -752,7 +752,7 @@ bool FVulkanPipelineStateManager::SaveCacheData()
         }
         else
         {
-            VULKAN_INFO("Saved PipelineCache to file '%s'", PipelineCacheFilepath.GetCString());
+            VULKAN_INFO("Saved PipelineCache to file '%s'", *PipelineCacheFilepath);
         }
     }
     

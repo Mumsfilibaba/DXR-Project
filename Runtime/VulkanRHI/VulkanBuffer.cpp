@@ -167,7 +167,7 @@ bool FVulkanBuffer::Initialize(FVulkanCommandContext* InCommandContext, EResourc
 
 void FVulkanBuffer::SetDebugName(const FString& InName)
 {
-    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), Buffer, VK_OBJECT_TYPE_BUFFER);
+    FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, Buffer, VK_OBJECT_TYPE_BUFFER);
     DebugName = InName;
 }
 

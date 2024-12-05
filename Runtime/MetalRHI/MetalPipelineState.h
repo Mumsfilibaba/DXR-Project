@@ -169,7 +169,7 @@ public:
                                                                                       error:&Error];
         
         const FString ErrorString([Error localizedDescription]);
-        METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", ErrorString.GetCString());
+        METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", *ErrorString);
         
         // Vertex- Function Resources
         for (MTLArgument* Argument in PipelineReflection.vertexArguments)

@@ -20,14 +20,14 @@ bool FProjectManager::Initialize()
 {
     const FString ProjectName = PROJECT_NAME;
     const FString ProjectPath = FString(ENGINE_LOCATION) + "/" + ProjectName;
-    if (!FPlatformFile::IsDirectory(ProjectPath.GetCString()))
+    if (!FPlatformFile::IsDirectory(*ProjectPath))
     {
         DEBUG_BREAK();
         return false;
     }
 
     const FString AssetFolderPath = FString(ENGINE_LOCATION) + FString("/Assets");
-    if (!FPlatformFile::IsDirectory(AssetFolderPath.GetCString()))
+    if (!FPlatformFile::IsDirectory(*AssetFolderPath))
     {
         DEBUG_BREAK();
         return false;
@@ -40,8 +40,8 @@ bool FProjectManager::Initialize()
 
 #if !PRODUCTION_BUILD
     LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
-    LOG_INFO("ProjectName=%s", FProjectManager::Get().GetProjectName().GetCString());
-    LOG_INFO("ProjectPath=%s", FProjectManager::Get().GetProjectPath().GetCString());
+    LOG_INFO("ProjectName=%s", *FProjectManager::Get().GetProjectName());
+    LOG_INFO("ProjectPath=%s", *FProjectManager::Get().GetProjectPath());
 #endif
 
     return true;

@@ -38,7 +38,7 @@ void FRendererInfoWindow::Draw()
 
         const ImVec2 MainViewportPos  = ImGuiExtensions::GetMainViewportPos();
         const ImVec2 DisplaySize      = ImGuiExtensions::GetDisplaySize();
-        const ImVec2 TextSize         = ImGui::CalcTextSize(AdapterName.GetCString());
+        const ImVec2 TextSize         = ImGui::CalcTextSize(*AdapterName);
         const ImVec2 FrameBufferScale = ImGuiExtensions::GetDisplayFramebufferScale();
 
         const float WindowWidth  = DisplaySize.x;
@@ -61,7 +61,7 @@ void FRendererInfoWindow::Draw()
         ImGui::Text("Adapter: ");
         ImGui::NextColumn();
 
-        ImGui::Text("%s", AdapterName.GetCString());
+        ImGui::Text("%s", *AdapterName);
         ImGui::NextColumn();
         
         ImGui::Text("Render Resolution:");

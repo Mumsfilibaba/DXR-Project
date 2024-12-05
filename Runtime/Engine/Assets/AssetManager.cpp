@@ -136,7 +136,7 @@ void FAssetRegistry::UpdateRegistryFile()
     FString FileContents;
     for (TMap<FString, FString>::IteratorType Iterator = RegistryMap.CreateIterator(); !Iterator.IsEnd(); Iterator++)
     {
-        FileContents.AppendFormat("%s = %s\n", Iterator.GetKey().GetCString(), Iterator.GetValue().GetCString());
+        FileContents.AppendFormat("%s = %s\n", *Iterator.GetKey(), *Iterator.GetValue());
     }
 
     {
@@ -258,7 +258,7 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
 
     if (!NewTexture)
     {
-        LOG_ERROR("[FAssetManager]: Unsupported texture format. Failed to load '%s'.", FinalPath.GetCString());
+        LOG_ERROR("[FAssetManager]: Unsupported texture format. Failed to load '%s'.", *FinalPath);
         return nullptr;
     }
 
@@ -269,11 +269,11 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
 
     if (!NewTexture->CreateRHITexture(bGenerateMips))
     {
-        LOG_ERROR("[FAssetManager]: Failed to create RHI texture for image '%s'.", FinalPath.GetCString());
+        LOG_ERROR("[FAssetManager]: Failed to create RHI texture for image '%s'.", *FinalPath);
         return nullptr;
     }
 
-    LOG_INFO("[FAssetManager]: Loaded Texture '%s'", FinalPath.GetCString());
+    LOG_INFO("[FAssetManager]: Loaded Texture '%s'", *FinalPath);
 
     // Set name 
     NewTexture->SetDebugName(FinalPath); // For the RHI
@@ -336,7 +336,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
             
             if (NewModel)
             {
-                LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", FinalPath.GetCString());
+                LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
                 return NewModel;
             }
             else
@@ -370,7 +370,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
     
     if (!NewModel)
     {
-        LOG_ERROR("[FAssetManager]: Unsupported mesh format. Failed to load '%s'.", FinalPath.GetCString());
+        LOG_ERROR("[FAssetManager]: Unsupported mesh format. Failed to load '%s'.", *FinalPath);
         return nullptr;
     }
     
@@ -383,7 +383,7 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
         }
     }
     
-    LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", FinalPath.GetCString());
+    LOG_INFO("[FAssetManager]: Loaded Mesh '%s'", *FinalPath);
     return NewModel;
 }
 

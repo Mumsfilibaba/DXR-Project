@@ -34,7 +34,7 @@ static int32   GEngineMainResult = 0;
 - (void)runApplicationThread
 {
     // Startup the mainloop
-    auto CommandLine = GMacCommandLine.GetCString();
+    auto CommandLine = *GMacCommandLine;
     GEngineMainResult = EngineMain(&CommandLine, 1);
     
     if (GEngineMainResult == 0)
@@ -78,11 +78,11 @@ int main(int NumArgs, const CHAR** Args)
                 FString Argument;
                 FString ArgumentValue;
                 CurrentArg.Split('=', Argument, ArgumentValue);
-                CurrentArg = FString::CreateFormatted("%s=\"%s\"", Argument.GetCString(), ArgumentValue.GetCString());
+                CurrentArg = FString::CreateFormatted("%s=\"%s\"", *Argument, *ArgumentValue);
             }
             else
             {
-                CurrentArg = FString::CreateFormatted("\"%s\"", CurrentArg.GetCString());
+                CurrentArg = FString::CreateFormatted("\"%s\"", *CurrentArg);
             }
         }
         

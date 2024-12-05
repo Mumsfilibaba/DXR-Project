@@ -337,7 +337,7 @@ void FInspectorWidget::DrawSceneInfo()
         {
             ImGui::PushID(Actor);
 
-            if (ImGui::TreeNode(Actor->GetName().GetCString()))
+            if (ImGui::TreeNode(*Actor->GetName()))
             {
                 // Transform
                 ImGui::SeparatorText("Transform");

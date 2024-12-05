@@ -72,7 +72,7 @@ int32 FWindowsFileHandle::Read(uint8* Dst, uint32 BytesToRead)
                 FString ErrorString;
 
                 FWindowsPlatformMisc::GetLastErrorString(ErrorString);
-                LOG_ERROR("Failed to read file, Error '%d' Message '%s'", Error, ErrorString.GetCString());
+                LOG_ERROR("Failed to read file, Error '%d' Message '%s'", Error, *ErrorString);
                 
                 return -1;
             }
@@ -152,7 +152,7 @@ IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
     ::SetLastError(S_OK);
 
     HANDLE NewHandle = CreateFileA(
-        Filename.GetCString(),
+        *Filename,
         GENERIC_READ,
         0,
         0,
@@ -171,7 +171,7 @@ IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
             ErrorString.Remove(Position, 2);
         }
 
-        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", ErrorString.GetCString());
+        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", *ErrorString);
         return nullptr;
     }
 
@@ -183,7 +183,7 @@ IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bT
     ::SetLastError(S_OK);
 
     HANDLE NewHandle = ::CreateFileA(
-        Filename.GetCString(),
+        *Filename,
         GENERIC_WRITE,
         0,
         0,
@@ -202,7 +202,7 @@ IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bT
             ErrorString.Remove(Position, 2);
         }
 
-        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", ErrorString.GetCString());
+        LOG_ERROR("[FWindowsPlatformFile] Failed to open file. Error '%s'", *ErrorString);
         return nullptr;
     }
     else
@@ -233,7 +233,7 @@ FString FWindowsPlatformFile::GetCurrentWorkingDirectory()
     {
         FString Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
-        LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
+        LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, *Error);
         return FString();
     }
 
@@ -244,7 +244,7 @@ FString FWindowsPlatformFile::GetCurrentWorkingDirectory()
     {
         FString Error;
         const int32 ErrorCode = FWindowsPlatformMisc::GetLastErrorString(Error);
-        LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, Error.GetCString());
+        LOG_ERROR("GetCurrentWorkingDirectory failed with error %d '%s' ", ErrorCode, *Error);
         return FString();
     }
     else

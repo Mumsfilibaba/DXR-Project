@@ -286,7 +286,7 @@ void FVulkanMemoryHeap::SetDebugName(const FString& InName)
 
     if (VULKAN_CHECK_HANDLE(DeviceMemory))
     {
-        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), DeviceMemory, VK_OBJECT_TYPE_DEVICE_MEMORY);
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, DeviceMemory, VK_OBJECT_TYPE_DEVICE_MEMORY);
         DebugName = InName;
     }
 }

@@ -489,7 +489,7 @@ private:
 
 template<>
 FORCEINLINE TAutoConsoleVariable<FString>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const FString& DefaultValue, EConsoleVariableFlags InFlags)
-    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, DefaultValue.GetCString(), InFlags))
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, *DefaultValue, InFlags))
 { 
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetStringData());
     CHECK(Data != nullptr);

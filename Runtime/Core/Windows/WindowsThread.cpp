@@ -102,7 +102,7 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
         if (!CurrentThread->ThreadName.IsEmpty())
         {
             FStringWide WideName = CharToWide(CurrentThread->ThreadName);
-            ::SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
+            ::SetThreadDescription(CurrentThread->Thread, *WideName);
         }
 
         if (FRunnable* Runnable = CurrentThread->Runnable)

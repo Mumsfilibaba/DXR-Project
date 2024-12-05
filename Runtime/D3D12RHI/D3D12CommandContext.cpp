@@ -1438,7 +1438,7 @@ void FD3D12CommandContext::RHIInsertMarker(const FStringView& Message)
     if (FDynamicD3D12::SetMarkerOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
-        FDynamicD3D12::SetMarkerOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), Message.GetCString());
+        FDynamicD3D12::SetMarkerOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Message);
     }
 }
 

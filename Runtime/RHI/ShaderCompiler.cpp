@@ -295,14 +295,14 @@ bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderComp
         FFileHandleRef File = FPlatformFile::OpenForRead(FilePath);
         if (!File)
         {
-            LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", Filename.GetCString());
+            LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", *Filename);
             return false;
         }
 
         // Read the full file as a text-file
         if (!FFileHelpers::ReadTextFile(File.Get(), Text))
         {
-            LOG_ERROR("[FShaderCompiler]: Failed to read file '%s'", Filename.GetCString());
+            LOG_ERROR("[FShaderCompiler]: Failed to read file '%s'", *Filename);
             return false;
         }
     }
@@ -435,7 +435,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         {
             const FStringWide& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
             const FStringWide& WideValue  = DefineStrings.Emplace(CharToWide(Define.Value));
-            DxcDefines.Add({ WideDefine.GetCString(), WideValue.GetCString() });
+            DxcDefines.Add({ *WideDefine, *WideValue });
         }
     }
  
@@ -444,7 +444,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     {
         if (!FilePath.IsEmpty())
         {
-            LOG_INFO("[FShaderCompiler]: Compiling shader '%s', using the following defines:", FilePath.GetCString());
+            LOG_INFO("[FShaderCompiler]: Compiling shader '%s', using the following defines:", *FilePath);
         }
         else
         {
@@ -476,8 +476,8 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     TComPtr<IDxcOperationResult> Result;
     hResult = Compiler->Compile(
         SourceBlob.Get(),
-        WideFilePath.GetCString(),
-        WideEntrypoint.GetCString(),
+        *WideFilePath,
+        *WideEntrypoint,
         TargetProfile,
         CompileArgs.Data(),
         CompileArgs.Size(),
@@ -527,11 +527,11 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
         {
             const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", ArgumentsString.GetCString(), Output.GetCString());
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", *ArgumentsString, *Output);
         }
         else
         {
-            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s'.", ArgumentsString.GetCString());
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s'.", *ArgumentsString);
         }
     }
 
@@ -594,7 +594,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     {
         if (!FilePath.IsEmpty())
         {
-            LOG_INFO("[FShaderCompiler]: Successfully compiled shader '%s'", FilePath.GetCString());
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader '%s'", *FilePath);
         }
         else
         {
@@ -919,7 +919,7 @@ bool FShaderCompiler::DumpContentToFile(const TArray<uint8>& ByteCode, const FSt
     FFileHandleRef Output = FPlatformFile::OpenForWrite(Filename);
     if (!Output)
     {
-        LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", Filename.GetCString());
+        LOG_ERROR("[FShaderCompiler]: Failed to open file '%s'", *Filename);
         return false;
     }
 

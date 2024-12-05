@@ -371,7 +371,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Texture->GetDebugName().GetCString(),  ToString(BeforeState));
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", *Texture->GetDebugName(),  ToString(BeforeState));
         }
     }
 
@@ -383,7 +383,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Buffer->GetDebugName().GetCString(),  ToString(BeforeState));
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", *Buffer->GetDebugName(),  ToString(BeforeState));
         }
     }
 
@@ -444,7 +444,7 @@ public:
 
     FORCEINLINE void InsertMarker(const FStringView& Marker) noexcept
     {
-        FStringView NewMarker = AllocateString(Marker.GetCString());
+        FStringView NewMarker = AllocateString(*Marker);
         EmplaceCommand<FRHICommandInsertMarker>(NewMarker);
     }
     

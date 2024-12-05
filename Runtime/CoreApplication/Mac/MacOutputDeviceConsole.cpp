@@ -360,7 +360,7 @@ NSAttributedString* FMacOutputDeviceConsole::CreatePrintableString(const FString
 {
     SCOPED_AUTORELEASE_POOL();
 
-    NSString* NativeString = [NSString stringWithFormat:@"%s\n", String.GetCString()];
+    NSString* NativeString = [NSString stringWithFormat:@"%s\n", *String];
     
     // Set the textcolor
     Attributes[0] = TextColor;

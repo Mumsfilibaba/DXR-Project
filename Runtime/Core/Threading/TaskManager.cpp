@@ -264,7 +264,7 @@ bool FTaskManager::CreateWorkers(int32 NumWorkers)
             const FString Name = FString::CreateFormatted("Task Worker[%d]", Index);
 
             FTaskWorkerThread* NewWorker = new FTaskWorkerThread();
-            if (NewWorker->Create(Name.GetCString()))
+            if (NewWorker->Create(*Name))
             {
                 Workers.Emplace(NewWorker);
                 AvailableWorkers.Emplace(NewWorker);
