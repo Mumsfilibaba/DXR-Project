@@ -87,10 +87,10 @@ public:
         return NewCommand;
     }
 
-    FORCEINLINE TCHAR* AllocateString(const TCHAR* String) noexcept
+    FORCEINLINE CHAR_T* AllocateString(const CHAR_T* String) noexcept
     {
         int32  Length    = FCString::Strlen(String);
-        TCHAR* NewString = reinterpret_cast<TCHAR*>(Allocate(sizeof(TCHAR) * Length, alignof(TCHAR)));
+        CHAR_T* NewString = reinterpret_cast<CHAR_T*>(Allocate(sizeof(CHAR_T) * Length, alignof(CHAR_T)));
         return FCString::Strcpy(NewString, String);
     }
 

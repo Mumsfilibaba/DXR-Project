@@ -7,7 +7,7 @@
 template<typename T>
 struct TIsNullptr
 {
-    static constexpr bool Value = TIsSame<nullptr_type, typename TRemoveCV<T>::Type>::Value;
+    static constexpr bool Value = TIsSame<NULLPTR_TYPE, typename TRemoveCV<T>::Type>::Value;
 };
 
 template<typename T>

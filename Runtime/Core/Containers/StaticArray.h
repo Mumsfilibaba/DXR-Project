@@ -8,9 +8,9 @@
 template<typename ElementType, int32 NUM_ELEMENTS>
 struct TStaticArray
 {
-    typedef int32 SIZETYPE;
+    typedef int32 SizeType;
 
-    static_assert(TIsSigned<SIZETYPE>::Value, "TStaticArray only supports a SIZETYPE that's signed");
+    static_assert(TIsSigned<SizeType>::Value, "TStaticArray only supports a SizeType that's signed");
     static_assert(NUM_ELEMENTS > 0, "TStaticArray does not support a zero element count");
 
     typedef TArrayIterator<TStaticArray, ElementType>                    IteratorType;
@@ -18,7 +18,7 @@ struct TStaticArray
     typedef TReverseArrayIterator<TStaticArray, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TStaticArray, const ElementType> ReverseConstIteratorType;
 
-    inline static constexpr SIZETYPE INVALID_INDEX = SIZETYPE(~0);
+    inline static constexpr SizeType InvalidIndex = SizeType(~0);
 
 public:
 
@@ -36,7 +36,7 @@ public:
      * @brief Checks if an index is a valid index
      * @return Returns true if the index is valid
      */
-    NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
+    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const
     {
         return (Index >= 0) && (Index < NUM_ELEMENTS);
     }
@@ -100,36 +100,36 @@ public:
      * @param Element Element to search for
      * @return The index of the element if found or -1 if not
      */
-    NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& Element) const
+    NODISCARD FORCEINLINE SizeType Find(const ElementType& Element) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
             if (Element == *Current)
             {
-                return static_cast<SIZETYPE>(Current - Start);
+                return static_cast<SizeType>(Current - Start);
             }
         }
 
-        return INVALID_INDEX;
+        return InvalidIndex;
     }
 
     /**
      * @brief Returns the index of the element that satisfies the conditions of a comparator
      * @param Predicate Callable that compares an element in the array against some condition
-     * @return The index of the element if found or INVALID_INDEX if not
+     * @return The index of the element if found or InvalidIndex if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start, *RESTRICT End = Start + NUM_ELEMENTS; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(Current - Start);
+                return static_cast<SizeType>(Current - Start);
             }
         }
 
-        return INVALID_INDEX;
+        return InvalidIndex;
     }
 
     /**
@@ -137,38 +137,38 @@ public:
      * @param Element Element to search for
      * @return The index of the element if found or -1 if not
      */
-    NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& Element) const
+    NODISCARD FORCEINLINE SizeType FindLast(const ElementType& Element) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Element == *Current)
             {
-                return static_cast<SIZETYPE>(Current - Start);
+                return static_cast<SizeType>(Current - Start);
             }
         }
 
-        return INVALID_INDEX;
+        return InvalidIndex;
     }
 
     /**
      * @brief Returns the index of the element that satisfies the conditions of a comparator
      * @param Predicate Callable that compares an element in the array against some condition
-     * @return The index of the element if found or INVALID_INDEX if not
+     * @return The index of the element if found or InvalidIndex if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Start = Elements, *RESTRICT Current = Start + NUM_ELEMENTS, *RESTRICT End = Start; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(Current - Start);
+                return static_cast<SizeType>(Current - Start);
             }
         }
 
-        return INVALID_INDEX;
+        return InvalidIndex;
     }
 
     /**
@@ -178,7 +178,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const
     {
-        return Find(Element) != INVALID_INDEX;
+        return Find(Element) != InvalidIndex;
     }
 
     /**
@@ -189,7 +189,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const
     {
-        return FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX;
+        return FindWithPredicate(Forward<PredicateType>(Predicate)) != InvalidIndex;
     }
 
     /**
@@ -210,7 +210,7 @@ public:
      * @param FirstIndex Index to the first element to swap
      * @param SecondIndex Index to the second element to swap
      */
-    FORCEINLINE void Swap(SIZETYPE FirstIndex, SIZETYPE SecondIndex)
+    FORCEINLINE void Swap(SizeType FirstIndex, SizeType SecondIndex)
     {
         CHECK(IsValidIndex(FirstIndex));
         CHECK(IsValidIndex(SecondIndex));
@@ -242,7 +242,7 @@ public:
      * @param Index Index of the element to retrieve
      * @return A reference to the element at the index
      */
-    NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
+    NODISCARD FORCEINLINE ElementType& operator[](SizeType Index)
     {
         CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
@@ -253,7 +253,7 @@ public:
      * @param Index Index of the element to retrieve
      * @return A reference to the element at the index
      */
-    NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
+    NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const
     {
         CHECK(Index < NUM_ELEMENTS);
         return Elements[Index];
@@ -287,7 +287,7 @@ public:
      * @brief Retrieve the last index that can be used to retrieve an element from the array
      * @return Returns the index to the last element of the array
      */
-    NODISCARD constexpr SIZETYPE LastElementIndex() const
+    NODISCARD constexpr SizeType LastElementIndex() const
     {
         return NUM_ELEMENTS - 1;
     }
@@ -296,7 +296,7 @@ public:
      * @brief Returns the size of the container
      * @return The current size of the container
      */
-    NODISCARD constexpr SIZETYPE Size() const
+    NODISCARD constexpr SizeType Size() const
     {
         return NUM_ELEMENTS;
     }
@@ -305,7 +305,7 @@ public:
      * @brief Returns the size of the container in bytes
      * @return The current size of the container in bytes
      */
-    NODISCARD constexpr SIZETYPE SizeInBytes() const
+    NODISCARD constexpr SizeType SizeInBytes() const
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }
@@ -314,7 +314,7 @@ public:
      * @brief Returns the capacity of the container
      * @return The current capacity of the container
      */
-    NODISCARD constexpr SIZETYPE Capacity() const
+    NODISCARD constexpr SizeType Capacity() const
     {
         return NUM_ELEMENTS;
     }
@@ -323,7 +323,7 @@ public:
      * @brief Returns the capacity of the container in bytes
      * @return The current capacity of the container in bytes
      */
-    NODISCARD constexpr SIZETYPE CapacityInBytes() const
+    NODISCARD constexpr SizeType CapacityInBytes() const
     {
         return NUM_ELEMENTS * sizeof(ElementType);
     }

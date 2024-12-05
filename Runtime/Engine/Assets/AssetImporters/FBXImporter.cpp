@@ -14,7 +14,7 @@
 static FString ExtractPath(const FString& FullFilePath)
 {
     auto Pos = FullFilePath.FindLastChar('/');
-    if (Pos != FString::INVALID_INDEX)
+    if (Pos != FString::InvalidIndex)
     {
         return FullFilePath.SubString(0, Pos);
     }

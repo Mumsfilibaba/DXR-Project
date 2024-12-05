@@ -29,49 +29,49 @@ struct FArrayContainerHelper
         return Container.Size();
     }
 
-    template <typename T, TSIZE N> 
+    template <typename T, SIZE_T N> 
     static constexpr T* Data(T(&Container)[N]) 
     { 
         return Container; 
     }
 
-    template <typename T, TSIZE N>
+    template <typename T, SIZE_T N>
     static constexpr decltype(auto) Size(T(&Container)[N])
     {
         return N;
     }
     
-    template <typename T, TSIZE N>
+    template <typename T, SIZE_T N>
     static constexpr T* Data(T(&& Container)[N]) 
     { 
         return Container; 
     }
 
-    template <typename T, TSIZE N>
+    template <typename T, SIZE_T N>
     static constexpr decltype(auto) Size(T(&& Container)[N])
     {
         return N;
     }
     
-    template <typename T, TSIZE N>
+    template <typename T, SIZE_T N>
     static constexpr const T* Data(const T(&Container)[N]) 
     { 
         return Container; 
     }
     
-    template <typename T, TSIZE N>
+    template <typename T, SIZE_T N>
     static constexpr decltype(auto) Size(const T(& Container)[N])
     {
         return N;
     }
 
-    template <typename T, TSIZE N>
+    template <typename T, SIZE_T N>
     static constexpr const T* Data(const T(&& Container)[N]) 
     { 
         return Container; 
     }
 
-    template <typename T, TSIZE N>
+    template <typename T, SIZE_T N>
     static constexpr decltype(auto) Size(const T(&& Container)[N])
     {
         return N;

@@ -478,7 +478,7 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
 
     FString FuncName(FuncDesc.Name);
     auto result = FuncName.Find(Buffer);
-    if (result == FString::INVALID_INDEX)
+    if (result == FString::InvalidIndex)
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, FuncName.GetCString());
         return false;

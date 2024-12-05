@@ -536,7 +536,7 @@ template<typename InObjectType, EThreadAccess InThreadAccess = EThreadAccess::Sa
 class TSharedPtr
 {
 public:
-    using SIZETYPE = int32;
+    using SizeType = int32;
     using ObjectType = typename TRemoveExtent<InObjectType>::Type;
 
     template<typename OtherObjectType, EThreadAccess OtherThreadAccess>
@@ -553,7 +553,7 @@ public:
     /**
      * @brief Constructor setting both counter and pointer to nullptr
      */
-    FORCEINLINE TSharedPtr(nullptr_type)
+    FORCEINLINE TSharedPtr(NULLPTR_TYPE)
         : Object(nullptr)
         , ReferenceHandler()
     {
@@ -790,7 +790,7 @@ public:
      * @brief Retrieve element at a certain index
      * @return Return the element at the index
      */
-    NODISCARD FORCEINLINE ObjectType& operator[](SIZETYPE Index) const requires(TIsArray<InObjectType>::Value)
+    NODISCARD FORCEINLINE ObjectType& operator[](SizeType Index) const requires(TIsArray<InObjectType>::Value)
     {
         CHECK(IsValid());
         return Object[Index];
@@ -866,7 +866,7 @@ public:
      * @brief Assignment operator that takes a nullptr
      * @return A reference to this instance
      */
-    FORCEINLINE TSharedPtr& operator=(nullptr_type)
+    FORCEINLINE TSharedPtr& operator=(NULLPTR_TYPE)
     {
         TSharedPtr().Swap(*this);
         return *this;
@@ -893,7 +893,7 @@ template<typename InObjectType, EThreadAccess InThreadAccess = EThreadAccess::Sa
 class TWeakPtr
 {
 public:
-    using SIZETYPE   = int32;
+    using SizeType   = int32;
     using ObjectType = typename TRemoveExtent<InObjectType>::Type;
 
     template<typename OtherObjectType, EThreadAccess ThreadAccess>
@@ -910,7 +910,7 @@ public:
     /**
      * @brief Constructor taking a nullptr
      */
-    FORCEINLINE TWeakPtr(nullptr_type) noexcept
+    FORCEINLINE TWeakPtr(NULLPTR_TYPE) noexcept
         : Object(nullptr)
         , ReferenceHandler()
     {
@@ -1109,7 +1109,7 @@ public:
      * @param Index Index of the element to retrieve
      * @return A reference to the retrieved element
      */
-    NODISCARD FORCEINLINE ObjectType& operator[](SIZETYPE Index) const requires(TIsUnboundedArray<InObjectType>::Value)
+    NODISCARD FORCEINLINE ObjectType& operator[](SizeType Index) const requires(TIsUnboundedArray<InObjectType>::Value)
     {
         CHECK(IsValid());
         return Object[Index];
@@ -1185,7 +1185,7 @@ public:
      * @brief Assignment operator that takes a nullptr
      * @return Returns the reference to this instance
      */
-    FORCEINLINE TWeakPtr& operator=(nullptr_type) noexcept
+    FORCEINLINE TWeakPtr& operator=(NULLPTR_TYPE) noexcept
     {
         TWeakPtr().Swap(*this);
         return *this;
@@ -1283,25 +1283,25 @@ NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, const TSharedPtr
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator==(const TSharedPtr<T>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() == nullptr;
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedPtr<T>& RHS)
+NODISCARD FORCEINLINE bool operator==(NULLPTR_TYPE, const TSharedPtr<T>& RHS)
 {
     return nullptr == RHS.Get();
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator!=(const TSharedPtr<T>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() != nullptr;
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedPtr<T>& RHS)
+NODISCARD FORCEINLINE bool operator!=(NULLPTR_TYPE, const TSharedPtr<T>& RHS)
 {
     return nullptr != RHS.Get();
 }
@@ -1368,25 +1368,25 @@ NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, const TWeakPtr<U>&
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator==(const TWeakPtr<T>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() == nullptr;
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator==(nullptr_type, const TWeakPtr<T>& RHS)
+NODISCARD FORCEINLINE bool operator==(NULLPTR_TYPE, const TWeakPtr<T>& RHS)
 {
     return nullptr == RHS.Get();
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator!=(const TWeakPtr<T>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() != nullptr;
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TWeakPtr<T>& RHS)
+NODISCARD FORCEINLINE bool operator!=(NULLPTR_TYPE, const TWeakPtr<T>& RHS)
 {
     return nullptr != RHS.Get();
 }

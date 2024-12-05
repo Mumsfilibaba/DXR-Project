@@ -8,14 +8,14 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 template<typename ElementType>
 struct TArrayAllocatorInterface
 {
-    typedef int32 SIZETYPE;
+    typedef int32 SizeType;
 
     /**
      * @brief Reallocates the allocation
      * @param CurrentCount Current number of elements that are allocated 
      * @param NewCount The new number of elements to allocate
      */
-    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount) { return nullptr; }
+    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount) { return nullptr; }
 
     /**
      * @brief Free the allocation
@@ -52,11 +52,11 @@ template<typename ElementType>
 class TDefaultArrayAllocator
 {
 public:
-    typedef int32 SIZETYPE;
+    typedef int32 SizeType;
 
     TDefaultArrayAllocator() = default;
 
-    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewCount)
+    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewCount)
     {
         Allocation = reinterpret_cast<ElementType*>(FMemory::Realloc(Allocation, NewCount * sizeof(ElementType)));
         return Allocation;
@@ -106,14 +106,14 @@ class TInlineArrayAllocator
     class FInlineStorage
     {
     public:
-        typedef int32 SIZETYPE;
+        typedef int32 SizeType;
 
         NODISCARD constexpr ElementType* GetElements() const
         {
             return reinterpret_cast<ElementType*>(InlineAllocation);
         }
 
-        NODISCARD constexpr SIZETYPE Size() const
+        NODISCARD constexpr SizeType Size() const
         {
             return sizeof(InlineAllocation);
         }
@@ -123,7 +123,7 @@ class TInlineArrayAllocator
     };
 
 public:
-    typedef int32 SIZETYPE;
+    typedef int32 SizeType;
 
     TInlineArrayAllocator()
     {
@@ -135,7 +135,7 @@ public:
         Free();
     }
 
-    FORCEINLINE ElementType* Realloc(SIZETYPE CurrentCount, SIZETYPE NewElementCount)
+    FORCEINLINE ElementType* Realloc(SizeType CurrentCount, SizeType NewElementCount)
     {
         if (NewElementCount > NumInlineElements)
         {

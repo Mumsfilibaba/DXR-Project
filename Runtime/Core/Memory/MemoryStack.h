@@ -51,13 +51,13 @@ public:
 
         const int32 AlignedSize = FMath::AlignUp(Size, Alignment);
         
-        uint8* AlignedAddress = reinterpret_cast<uint8*>(FMath::AlignUp<uptrint>(reinterpret_cast<uptrint>(StackStart), Alignment));
+        uint8* AlignedAddress = reinterpret_cast<uint8*>(FMath::AlignUp<UPTR_INT>(reinterpret_cast<UPTR_INT>(StackStart), Alignment));
         uint8* NewStart       = AlignedAddress + AlignedSize;
         if (NewStart >= StackEnd)
         {
             // In case the new chunk needs to be aligned, pass the alignment as well as the size
             AllocateNewChunk(AlignedSize + Alignment);
-            AlignedAddress = reinterpret_cast<uint8*>(FMath::AlignUp<uptrint>(reinterpret_cast<uptrint>(StackStart), Alignment));
+            AlignedAddress = reinterpret_cast<uint8*>(FMath::AlignUp<UPTR_INT>(reinterpret_cast<UPTR_INT>(StackStart), Alignment));
             NewStart       = AlignedAddress + AlignedSize;
         }
 

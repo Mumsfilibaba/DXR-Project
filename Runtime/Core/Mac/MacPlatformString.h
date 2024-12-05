@@ -13,7 +13,7 @@ struct FMacPlatformString final : public FGenericPlatformString
         return static_cast<int32>(::strcasecmp(String0, String1));
     }
 
-    NODISCARD static FORCEINLINE int32 Strnicmp(const CHAR* String0, const CHAR* String1, TSIZE InLength) noexcept
+    NODISCARD static FORCEINLINE int32 Strnicmp(const CHAR* String0, const CHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::strncasecmp(String0, String1, InLength));
     }
@@ -26,7 +26,7 @@ struct FMacPlatformString final : public FGenericPlatformString
         return static_cast<int32>(::wcscasecmp(String0, String1));
     }
 
-    NODISCARD static FORCEINLINE int32 Strnicmp(const WIDECHAR* String0, const WIDECHAR* String1, TSIZE InLength) noexcept
+    NODISCARD static FORCEINLINE int32 Strnicmp(const WIDECHAR* String0, const WIDECHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::wcsncasecmp(String0, String1, InLength));
     }

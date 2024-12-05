@@ -220,7 +220,7 @@ template<typename T>
 struct TMakeSigned
 {
 private:
-    template<TSIZE Size>
+    template<SIZE_T Size>
     struct TMakeSignedFromSize
     {
         // NOTE: Invalid type for TMakeSigned
@@ -358,7 +358,7 @@ template<typename T>
 struct TMakeUnsigned
 {
 private:
-    template<TSIZE Size>
+    template<SIZE_T Size>
     struct TMakeUnsignedFromSize
     {
         // NOTE: Invalid type for TMakeUnsigned

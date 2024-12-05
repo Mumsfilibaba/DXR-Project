@@ -4,7 +4,7 @@
 template <typename T>
 struct TVoid
 {
-    typedef void_type Type;
+    typedef VOID_TYPE Type;
 };
 
 template<typename T>
@@ -36,7 +36,7 @@ struct TIntegralConstant
 template<typename T>
 struct TAlignmentOf
 {
-    static constexpr TSIZE Value = alignof(T);
+    static constexpr SIZE_T Value = alignof(T);
 };
 
 template<typename T>

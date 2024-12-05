@@ -28,7 +28,7 @@ public:
     typedef TSetIterator<TSet, ElementType>             IteratorType;
     typedef TSetIterator<const TSet, const ElementType> ConstIteratorType;
 
-    typedef int32 SIZETYPE;
+    typedef int32 SizeType;
 
 public:
 
@@ -229,7 +229,7 @@ public:
         return Element != BaseSet.end();
     }
 
-    void Reserve(SIZETYPE InCapacity)
+    void Reserve(SizeType InCapacity)
     {
         BaseSet.reserve(InCapacity);
     }
@@ -244,14 +244,14 @@ public:
         return BaseSet.empty();
     }
 
-    NODISCARD SIZETYPE Size() const
+    NODISCARD SizeType Size() const
     {
-        return static_cast<SIZETYPE>(BaseSet.size());
+        return static_cast<SizeType>(BaseSet.size());
     }
     
-    NODISCARD SIZETYPE Capacity() const
+    NODISCARD SizeType Capacity() const
     {
-        return static_cast<SIZETYPE>(BaseSet.max_size());
+        return static_cast<SizeType>(BaseSet.max_size());
     }
 
     NODISCARD TArray<ElementType> GetValues() const

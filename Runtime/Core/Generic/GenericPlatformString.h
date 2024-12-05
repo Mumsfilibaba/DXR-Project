@@ -10,12 +10,12 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FGenericPlatformString
 {
-    static FORCEINLINE TSIZE Mbstowcs(WIDECHAR* Dest, const CHAR* Src, uint64 Max)
+    static FORCEINLINE SIZE_T Mbstowcs(WIDECHAR* Dest, const CHAR* Src, uint64 Max)
     {
         return ::mbstowcs(Dest, Src, Max);
     }
 
-    static FORCEINLINE TSIZE Wcstombs(CHAR* Dest, const WIDECHAR* Src, uint64 Max)
+    static FORCEINLINE SIZE_T Wcstombs(CHAR* Dest, const WIDECHAR* Src, uint64 Max)
     {
         return ::wcstombs(Dest, Src, Max);
     }
@@ -74,7 +74,7 @@ struct FGenericPlatformString
     }
 
     template<typename... ArgTypes>
-    static FORCEINLINE int32 Snprintf(CHAR* Buffer, TSIZE BufferSize, const CHAR* Format, ArgTypes&&... Args) noexcept
+    static FORCEINLINE int32 Snprintf(CHAR* Buffer, SIZE_T BufferSize, const CHAR* Format, ArgTypes&&... Args) noexcept
     {
         return static_cast<int32>(::snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...));
     }
@@ -106,9 +106,9 @@ struct FGenericPlatformString
         return static_cast<int32>(::strlen(String));
     }
 
-    NODISCARD static FORCEINLINE TSIZE Strspn(const CHAR* String, const CHAR* Set) noexcept
+    NODISCARD static FORCEINLINE SIZE_T Strspn(const CHAR* String, const CHAR* Set) noexcept
     {
-        return static_cast<TSIZE>(::strspn(String, Set));
+        return static_cast<SIZE_T>(::strspn(String, Set));
     }
 
     static FORCEINLINE CHAR* Strcpy(CHAR* Dst, const CHAR* Src) noexcept
@@ -116,7 +116,7 @@ struct FGenericPlatformString
         return static_cast<CHAR*>(::strcpy(Dst, Src));
     }
 
-    static FORCEINLINE CHAR* Strncpy(CHAR* Dst, const CHAR* Src, TSIZE InLength) noexcept
+    static FORCEINLINE CHAR* Strncpy(CHAR* Dst, const CHAR* Src, SIZE_T InLength) noexcept
     {
         return static_cast<CHAR*>(::strncpy(Dst, Src, InLength));
     }
@@ -126,7 +126,7 @@ struct FGenericPlatformString
         return static_cast<CHAR*>(::strcat(Dst, Src));
     }
 
-    static FORCEINLINE CHAR* Strncat(CHAR* Dst, const CHAR* Src, TSIZE InLength) noexcept
+    static FORCEINLINE CHAR* Strncat(CHAR* Dst, const CHAR* Src, SIZE_T InLength) noexcept
     {
         return static_cast<CHAR*>(::strncat(Dst, Src, InLength));
     }
@@ -136,7 +136,7 @@ struct FGenericPlatformString
         return static_cast<int32>(::strcmp(String0, String1));
     }
 
-    NODISCARD static FORCEINLINE int32 Strncmp(const CHAR* String0, const CHAR* String1, TSIZE InLength) noexcept
+    NODISCARD static FORCEINLINE int32 Strncmp(const CHAR* String0, const CHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::strncmp(String0, String1, InLength));
     }
@@ -250,7 +250,7 @@ struct FGenericPlatformString
     }
 
     template<typename... ArgTypes>
-    static FORCEINLINE int32 Snprintf(WIDECHAR* Buffer, TSIZE BufferSize, const WIDECHAR* Format, ArgTypes&&... Args) noexcept
+    static FORCEINLINE int32 Snprintf(WIDECHAR* Buffer, SIZE_T BufferSize, const WIDECHAR* Format, ArgTypes&&... Args) noexcept
     {
         return static_cast<int32>(::swprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...));
     }
@@ -290,7 +290,7 @@ struct FGenericPlatformString
         return static_cast<WIDECHAR*>(::wcscpy(Dst, Src));
     }
 
-    static FORCEINLINE WIDECHAR* Strncpy(WIDECHAR* Dst, const WIDECHAR* Src, TSIZE InLength) noexcept
+    static FORCEINLINE WIDECHAR* Strncpy(WIDECHAR* Dst, const WIDECHAR* Src, SIZE_T InLength) noexcept
     {
         return static_cast<WIDECHAR*>(::wcsncpy(Dst, Src, InLength));
     }
@@ -300,7 +300,7 @@ struct FGenericPlatformString
         return static_cast<WIDECHAR*>(::wcscat(Dst, Src));
     }
 
-    static FORCEINLINE WIDECHAR* Strncat(WIDECHAR* Dst, const WIDECHAR* Src, TSIZE InLength) noexcept
+    static FORCEINLINE WIDECHAR* Strncat(WIDECHAR* Dst, const WIDECHAR* Src, SIZE_T InLength) noexcept
     {
         return static_cast<WIDECHAR*>(::wcsncat(Dst, Src, InLength));
     }
@@ -310,7 +310,7 @@ struct FGenericPlatformString
         return static_cast<int32>(::wcscmp(String0, String1));
     }
 
-    NODISCARD static FORCEINLINE int32 Strncmp(const WIDECHAR* String0, const WIDECHAR* String1, TSIZE InLength) noexcept
+    NODISCARD static FORCEINLINE int32 Strncmp(const WIDECHAR* String0, const WIDECHAR* String1, SIZE_T InLength) noexcept
     {
         return static_cast<int32>(::wcsncmp(String0, String1, InLength));
     }

@@ -166,7 +166,7 @@ IFileHandle* FWindowsPlatformFile::OpenForRead(const FString& Filename)
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
         
         auto Position = ErrorString.FindLast("\r\n");
-        if (Position != FString::INVALID_INDEX)
+        if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }
@@ -197,7 +197,7 @@ IFileHandle* FWindowsPlatformFile::OpenForWrite(const FString& Filename, bool bT
         FWindowsPlatformMisc::GetLastErrorString(ErrorString);
 
         int32 Position = ErrorString.FindLast("\r\n");
-        if (Position != FString::INVALID_INDEX)
+        if (Position != FString::InvalidIndex)
         {
             ErrorString.Remove(Position, 2);
         }

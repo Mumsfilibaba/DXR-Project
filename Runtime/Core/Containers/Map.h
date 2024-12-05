@@ -29,7 +29,7 @@ public:
     typedef TMapIterator<TMap, KeyType, ValueType>                   IteratorType;
     typedef TMapIterator<const TMap, const KeyType, const ValueType> ConstIteratorType;
 
-    typedef int32 SIZETYPE;
+    typedef int32 SizeType;
 
 public:
 
@@ -239,12 +239,12 @@ public:
         return Element != BaseMap.end();
     }
 
-    NODISCARD SIZETYPE Count(const KeyType& Key)
+    NODISCARD SizeType Count(const KeyType& Key)
     {
-        return static_cast<SIZETYPE>(BaseMap.count(Key));
+        return static_cast<SizeType>(BaseMap.count(Key));
     }
     
-    void Reserve(SIZETYPE InCapacity)
+    void Reserve(SizeType InCapacity)
     {
         BaseMap.reserve(InCapacity);
     }
@@ -259,14 +259,14 @@ public:
         return BaseMap.empty();
     }
 
-    NODISCARD SIZETYPE Size() const
+    NODISCARD SizeType Size() const
     {
-        return static_cast<SIZETYPE>(BaseMap.size());
+        return static_cast<SizeType>(BaseMap.size());
     }
     
-    NODISCARD SIZETYPE Capacity() const
+    NODISCARD SizeType Capacity() const
     {
-        return static_cast<SIZETYPE>(BaseMap.max_size());
+        return static_cast<SizeType>(BaseMap.max_size());
     }
 
     NODISCARD TArray<KeyType> GetKeys() const

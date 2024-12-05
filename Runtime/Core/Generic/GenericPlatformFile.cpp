@@ -81,7 +81,7 @@ bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Siz
 FString FFileHelpers::ExtractFilepath(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::INVALID_INDEX)
+    if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = Filepath.Length();
     }
@@ -92,7 +92,7 @@ FString FFileHelpers::ExtractFilepath(const FString& Filepath)
 FString FFileHelpers::ExtractFilename(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::INVALID_INDEX)
+    if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = 0;
     }
@@ -108,7 +108,7 @@ FString FFileHelpers::ExtractFilename(const FString& Filepath)
 FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::INVALID_INDEX)
+    if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = 0;
     }
@@ -118,7 +118,7 @@ FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
     }
     
     int32 ExtensionPos = Filepath.FindLastChar('.');
-    if (ExtensionPos == FString::INVALID_INDEX)
+    if (ExtensionPos == FString::InvalidIndex)
     {
         ExtensionPos = FCString::Strlen(Filepath.GetCString() + LastSlash);
     }

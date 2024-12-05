@@ -116,7 +116,7 @@ struct FRHITextureSRVDesc
 
     friend uint64 GetHashForType(const FRHITextureSRVDesc& Value)
     {
-        uint64 Hash = BitCast<uptrint>(Value.Texture);
+        uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
         HashCombine(Hash, Value.MinLODClamp);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
         HashCombine(Hash, Value.FirstMipLevel);
@@ -165,7 +165,7 @@ struct FRHIBufferSRVDesc
 
     friend uint64 GetHashForType(const FRHIBufferSRVDesc& Value)
     {
-        uint64 Hash = BitCast<uptrint>(Value.Buffer);
+        uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
         HashCombine(Hash, Value.FirstElement);
         HashCombine(Hash, Value.NumElements);
@@ -219,7 +219,7 @@ struct FRHITextureUAVDesc
 
     friend uint64 GetHashForType(const FRHITextureUAVDesc& Value)
     {
-        uint64 Hash = BitCast<uptrint>(Value.Texture);
+        uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
         HashCombine(Hash, Value.MipLevel);
         HashCombine(Hash, Value.FirstArraySlice);
@@ -264,7 +264,7 @@ struct FRHIBufferUAVDesc
 
     friend uint64 GetHashForType(const FRHIBufferUAVDesc& Value)
     {
-        uint64 Hash = BitCast<uptrint>(Value.Buffer);
+        uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
         HashCombine(Hash, Value.FirstElement);
         HashCombine(Hash, Value.NumElements);

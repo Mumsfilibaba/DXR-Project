@@ -20,7 +20,7 @@ public:
     /**
      * @brief Construct from nullptr
      */
-    FORCEINLINE TOptional(nullptr_type)
+    FORCEINLINE TOptional(NULLPTR_TYPE)
         : Value()
         , bHasValue(false)
     {
@@ -215,7 +215,7 @@ public:
      * @brief Nullptr assignment operator
      * @return Returns a reference to this instance
      */
-    FORCEINLINE TOptional& operator=(nullptr_type)
+    FORCEINLINE TOptional& operator=(NULLPTR_TYPE)
     {
         Reset();
         return *this;

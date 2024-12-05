@@ -61,7 +61,7 @@ struct TRemoveExtent<T[]>
     typedef T Type;
 };
 
-template<typename T, TSIZE N>
+template<typename T, SIZE_T N>
 struct TRemoveExtent<T[N]>
 {
     typedef T Type;
@@ -79,7 +79,7 @@ struct TRemoveAllExtents<T[]>
     typedef typename TRemoveAllExtents<T>::Type Type;
 };
 
-template<typename T, TSIZE N>
+template<typename T, SIZE_T N>
 struct TRemoveAllExtents<T[N]>
 {
     typedef typename TRemoveAllExtents<T>::Type Type;

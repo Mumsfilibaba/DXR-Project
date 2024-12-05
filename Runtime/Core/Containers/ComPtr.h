@@ -353,7 +353,7 @@ public:
      * @brief Set the pointer to nullptr 
      * @return A reference to this object
      */
-    FORCEINLINE TComPtr& operator=(nullptr_type)
+    FORCEINLINE TComPtr& operator=(NULLPTR_TYPE)
     {
         TComPtr().Swap(*this);
         return *this;
@@ -409,25 +409,25 @@ NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, const TComPtr<U>& O
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator==(const TComPtr<T>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() == nullptr;
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator==(nullptr_type, const TComPtr<T>& Other)
+NODISCARD FORCEINLINE bool operator==(NULLPTR_TYPE, const TComPtr<T>& Other)
 {
     return nullptr == Other.Get();
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator!=(const TComPtr<T>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() != nullptr;
 }
 
 template<typename T>
-NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TComPtr<T>& Other)
+NODISCARD FORCEINLINE bool operator!=(NULLPTR_TYPE, const TComPtr<T>& Other)
 {
     return nullptr != Other.Get();
 }

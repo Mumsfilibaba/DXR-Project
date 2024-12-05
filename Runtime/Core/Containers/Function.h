@@ -271,7 +271,7 @@ public:
     /** 
      * @brief Create from nullptr. Same as default constructor. 
      */
-    FORCEINLINE TFunction(nullptr_type)
+    FORCEINLINE TFunction(NULLPTR_TYPE)
         : FunctorCaller(nullptr)
         , Storage()
     {
@@ -414,7 +414,7 @@ public:
      * @brief Set the pointer to nullptr
      * @return A reference to this object
      */
-    FORCEINLINE TFunction& operator=(nullptr_type)
+    FORCEINLINE TFunction& operator=(NULLPTR_TYPE)
     {
         Reset();
         return *this;
@@ -465,7 +465,7 @@ public:
     /**
      * @brief Create from nullptr. Same as default constructor.
      */
-    FORCEINLINE TFunctionRef(nullptr_type)
+    FORCEINLINE TFunctionRef(NULLPTR_TYPE)
         : FunctorCaller(nullptr)
         , Functor(nullptr)
     {
@@ -598,7 +598,7 @@ public:
      * @brief Set the pointer to nullptr
      * @return A reference to this object
      */
-    FORCEINLINE TFunctionRef& operator=(nullptr_type)
+    FORCEINLINE TFunctionRef& operator=(NULLPTR_TYPE)
     {
         Reset();
         return *this;
@@ -652,7 +652,7 @@ public:
     /**
      * @brief Create from nullptr. Same as default constructor.
      */
-    FORCEINLINE TUniqueFunction(nullptr_type)
+    FORCEINLINE TUniqueFunction(NULLPTR_TYPE)
         : FunctorCaller(nullptr)
         , Storage()
     {
@@ -770,7 +770,7 @@ public:
      * @brief Set the pointer to nullptr
      * @return A reference to this object
      */
-    FORCEINLINE TUniqueFunction& operator=(nullptr_type)
+    FORCEINLINE TUniqueFunction& operator=(NULLPTR_TYPE)
     {
         Reset();
         return *this;

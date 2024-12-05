@@ -330,7 +330,7 @@ public:
      * @brief Set the pointer to nullptr
      * @return A reference to this object
      */
-    FORCEINLINE TSharedRef& operator=(nullptr_type)
+    FORCEINLINE TSharedRef& operator=(NULLPTR_TYPE)
     {
         TSharedRef().Swap(*this);
         return *this;
@@ -387,25 +387,25 @@ NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, const 
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator==(const TSharedRef<ElementType>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() == nullptr;
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator==(nullptr_type, const TSharedRef<ElementType>& RHS)
+NODISCARD FORCEINLINE bool operator==(NULLPTR_TYPE, const TSharedRef<ElementType>& RHS)
 {
     return RHS.Get() == nullptr;
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator!=(const TSharedRef<ElementType>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() != nullptr;
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TSharedRef<ElementType>& RHS)
+NODISCARD FORCEINLINE bool operator!=(NULLPTR_TYPE, const TSharedRef<ElementType>& RHS)
 {
     return RHS.Get() != nullptr;
 }

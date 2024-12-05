@@ -640,7 +640,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     }
 
     int32 Pos = Command.FindChar(' ');
-    if (Pos == FString::INVALID_INDEX)
+    if (Pos == FString::InvalidIndex)
     {
         IConsoleCommand* CommandObject = FindConsoleCommand(Command.GetCString());
         if (!CommandObject)

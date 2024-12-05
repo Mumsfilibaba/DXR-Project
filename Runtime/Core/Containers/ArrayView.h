@@ -9,15 +9,15 @@ template<typename ElementType>
 class TArrayView
 {
 public:
-    typedef int32 SIZETYPE;
-    static_assert(TIsSigned<SIZETYPE>::Value, "TArrayView only supports a SIZETYPE that's signed");
+    typedef int32 SizeType;
+    static_assert(TIsSigned<SizeType>::Value, "TArrayView only supports a SizeType that's signed");
 
     typedef TArrayIterator<TArrayView, ElementType>                    IteratorType;
     typedef TArrayIterator<const TArrayView, const ElementType>        ConstIteratorType;
     typedef TReverseArrayIterator<TArrayView, ElementType>             ReverseIteratorType;
     typedef TReverseArrayIterator<const TArrayView, const ElementType> ReverseConstIteratorType;
 
-    inline static constexpr SIZETYPE INVALID_INDEX = SIZETYPE(~0);
+    inline static constexpr SizeType InvalidIndex = SizeType(~0);
 
 public:
 
@@ -33,7 +33,7 @@ public:
         typename PureContainerType = typename TRemoveCV<typename TRemoveReference<ContainerType>::Type>::Type>
     FORCEINLINE TArrayView(ContainerType&& Container) requires(TIsContiguousContainer<PureContainerType>::Value)
         : View(FArrayContainerHelper::Data(Forward<ContainerType>(Container)))
-        , ViewSize(static_cast<SIZETYPE>(FArrayContainerHelper::Size(Forward<ContainerType>(Container))))
+        , ViewSize(static_cast<SizeType>(FArrayContainerHelper::Size(Forward<ContainerType>(Container))))
     {
     }
 
@@ -43,7 +43,7 @@ public:
      */
     FORCEINLINE TArrayView(std::initializer_list<ElementType> InitList)
         : View(FArrayContainerHelper::Data(InitList))
-        , ViewSize(static_cast<SIZETYPE>(FArrayContainerHelper::Size(InitList)))
+        , ViewSize(static_cast<SizeType>(FArrayContainerHelper::Size(InitList)))
     {
     }
 
@@ -53,7 +53,7 @@ public:
      * @param NumElements Number of elements in the array
      */
     template<typename OtherElementType>
-    FORCEINLINE TArrayView(OtherElementType* InElements, SIZETYPE NumElements)
+    FORCEINLINE TArrayView(OtherElementType* InElements, SizeType NumElements)
         : View(InElements)
         , ViewSize(NumElements)
     {
@@ -80,7 +80,7 @@ public:
      * @brief Checks if an index is a valid index
      * @return Returns true if the index is valid
      */
-    NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
+    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const
     {
         return Index >= 0 && Index < ViewSize;
     }
@@ -115,11 +115,11 @@ public:
     }
 
     /**
-     * @brief Returns the index of an element if it is present in the view, or INVALID_INDEX if it is not found
+     * @brief Returns the index of an element if it is present in the view, or InvalidIndex if it is not found
      * @param InElement Element to search for
-     * @return The index of the element if found or INVALID_INDEX if not
+     * @return The index of the element if found or InvalidIndex if not
      */
-    NODISCARD FORCEINLINE SIZETYPE Find(const ElementType& InElement) const
+    NODISCARD FORCEINLINE SizeType Find(const ElementType& InElement) const
     {
         return FindForward([&](const ElementType& Element)
         {
@@ -130,20 +130,20 @@ public:
     /**
      * @brief Returns the index of the element that satisfies the conditions of a comparator
      * @param Predicate Callable that compares an element in the view against some condition
-     * @return The index of the element if found or INVALID_INDEX if not
+     * @return The index of the element if found or InvalidIndex if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindWithPredicate(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SizeType FindWithPredicate(PredicateType&& Predicate) const
     {
         return FindForward(Forward<PredicateType>(Predicate));
     }
 
     /**
-     * @brief Returns the index of the last occurrence of an element if it is present in the view, or INVALID_INDEX if it is not found
+     * @brief Returns the index of the last occurrence of an element if it is present in the view, or InvalidIndex if it is not found
      * @param InElement Element to search for
-     * @return The index of the element if found or INVALID_INDEX if not
+     * @return The index of the element if found or InvalidIndex if not
      */
-    NODISCARD FORCEINLINE SIZETYPE FindLast(const ElementType& InElement) const
+    NODISCARD FORCEINLINE SizeType FindLast(const ElementType& InElement) const
     {
         return FindReverse([&](const ElementType& Element)
         {
@@ -154,10 +154,10 @@ public:
     /**
      * @brief Returns the index of the last element that satisfies the conditions of a comparator
      * @param Predicate Callable that compares an element in the view against some condition
-     * @return The index of the element if found or INVALID_INDEX if not
+     * @return The index of the element if found or InvalidIndex if not
      */
     template<class PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindLastWithPredicate(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SizeType FindLastWithPredicate(PredicateType&& Predicate) const
     {
         return FindReverse(Forward<PredicateType>(Predicate));
     }
@@ -169,7 +169,7 @@ public:
      */
     NODISCARD FORCEINLINE bool Contains(const ElementType& Element) const
     {
-        return Find(Element) != INVALID_INDEX;
+        return Find(Element) != InvalidIndex;
     }
 
     /**
@@ -180,7 +180,7 @@ public:
     template<class PredicateType>
     NODISCARD FORCEINLINE bool ContainsWithPredicate(PredicateType&& Predicate) const
     {
-        return FindWithPredicate(Forward<PredicateType>(Predicate)) != INVALID_INDEX;
+        return FindWithPredicate(Forward<PredicateType>(Predicate)) != InvalidIndex;
     }
 
     /**
@@ -229,7 +229,7 @@ public:
      * @brief Retrieve the last index that can be used to retrieve an element from the view
      * @return Returns the index to the last element of the view
      */
-    NODISCARD FORCEINLINE SIZETYPE LastElementIndex() const
+    NODISCARD FORCEINLINE SizeType LastElementIndex() const
     {
         return ViewSize > 0 ? ViewSize - 1 : 0;
     }
@@ -238,7 +238,7 @@ public:
      * @brief Returns the size of the view
      * @return The current size of the view
      */
-    NODISCARD FORCEINLINE SIZETYPE Size() const
+    NODISCARD FORCEINLINE SizeType Size() const
     {
         return ViewSize;
     }
@@ -247,7 +247,7 @@ public:
      * @brief Returns the size of the view in bytes
      * @return The current size of the view in bytes
      */
-    NODISCARD FORCEINLINE SIZETYPE SizeInBytes() const
+    NODISCARD FORCEINLINE SizeType SizeInBytes() const
     {
         return ViewSize * sizeof(ElementType);
     }
@@ -267,7 +267,7 @@ public:
      * @param NumElements Number of elements to include in the view
      * @return A new array-view pointing to the specified elements
      */
-    NODISCARD FORCEINLINE TArrayView SubView(SIZETYPE Offset, SIZETYPE NumElements) const
+    NODISCARD FORCEINLINE TArrayView SubView(SizeType Offset, SizeType NumElements) const
     {
         CHECK(Offset >= 0 && NumElements >= 0 && (Offset + NumElements) <= ViewSize);
         return TArrayView(View + Offset, NumElements);
@@ -307,7 +307,7 @@ public:
      * @param Index Index of the element to retrieve
      * @return A reference to the element at the index
      */
-    NODISCARD FORCEINLINE ElementType& operator[](SIZETYPE Index)
+    NODISCARD FORCEINLINE ElementType& operator[](SizeType Index)
     {
         CHECK(Index < ViewSize);
         return View[Index];
@@ -318,7 +318,7 @@ public:
      * @param Index Index of the element to retrieve
      * @return A reference to the element at the index
      */
-    NODISCARD FORCEINLINE const ElementType& operator[](SIZETYPE Index) const
+    NODISCARD FORCEINLINE const ElementType& operator[](SizeType Index) const
     {
         CHECK(Index < ViewSize);
         return View[Index];
@@ -358,37 +358,37 @@ public:
 
 private:
     template<typename PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindForward(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SizeType FindForward(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Current = View, *RESTRICT End = View + ViewSize; Current != End; ++Current)
         {
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(Current - View);
+                return static_cast<SizeType>(Current - View);
             }
         }
 
-        return INVALID_INDEX;
+        return InvalidIndex;
     }
 
     template<typename PredicateType>
-    NODISCARD FORCEINLINE SIZETYPE FindReverse(PredicateType&& Predicate) const
+    NODISCARD FORCEINLINE SizeType FindReverse(PredicateType&& Predicate) const
     {
         for (const ElementType* RESTRICT Current = View + ViewSize, *RESTRICT End = View; Current != End;)
         {
             --Current;
             if (Predicate(*Current))
             {
-                return static_cast<SIZETYPE>(Current - View);
+                return static_cast<SizeType>(Current - View);
             }
         }
 
-        return INVALID_INDEX;
+        return InvalidIndex;
     }
 
 private:
     ElementType* View     = nullptr;
-    SIZETYPE     ViewSize = 0;
+    SizeType     ViewSize = 0;
 };
 
 template<typename T>

@@ -610,17 +610,17 @@ bool FShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutS
     // Find the actual entrypoint, and change it to a specific spirv one. This is done since
     // the current version of DXC available on macOS does not support the compiler argument
     // that does this for us, therefor we now replace the entrypoint ourselves.
-    int32 Position = FString::INVALID_INDEX;
+    int32 Position = FString::InvalidIndex;
     while (true)
     {
         Position = OutSource.Find(Entrypoint, Position);
-        if (Position == FString::INVALID_INDEX)
+        if (Position == FString::InvalidIndex)
         {
             return false;
         }
         
         const int32 BracketPosition = OutSource.FindChar('(', Position);
-        if (BracketPosition == FString::INVALID_INDEX)
+        if (BracketPosition == FString::InvalidIndex)
         {
             return false;
         }

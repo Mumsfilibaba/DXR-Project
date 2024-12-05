@@ -12,7 +12,7 @@ template<typename InIntegerType = uint32, typename InAllocatorType = TDefaultArr
 class TBitArray
 {
 public:
-    typedef int32 SIZETYPE;
+    typedef int32 SizeType;
     static_assert(TIsUnsigned<InIntegerType>::Value, "BitArray must have an unsigned InIntegerType");
 
     using BitReferenceType      = TBitReference<InIntegerType>;
@@ -47,14 +47,14 @@ public:
      * @param InValues Integers containing bits to set to the BitArray
      * @param NumValues Number of values in the input array
      */
-    NOINLINE explicit TBitArray(const InIntegerType* InValues, SIZETYPE NumValues)
+    NOINLINE explicit TBitArray(const InIntegerType* InValues, SizeType NumValues)
         : Allocator()
         , NumBits(NumValues * NumBitsPerInteger())
         , NumElements(0)
     {
         InitializeZeroed(NumBits);
 
-        for (SIZETYPE Index = 0; Index < NumValues; ++Index)
+        for (SizeType Index = 0; Index < NumValues; ++Index)
         {
             InIntegerType& Element = GetInteger(Index);
             Element = InValues[Index];
@@ -66,13 +66,13 @@ public:
      * @param bValue Value to set bits to
      * @param NumBits Number of bits to set
      */
-    FORCEINLINE explicit TBitArray(SIZETYPE InNumBits, bool bValue)
+    FORCEINLINE explicit TBitArray(SizeType InNumBits, bool bValue)
         : Allocator()
         , NumBits(InNumBits)
         , NumElements(0)
     {
         InitializeZeroed(NumBits);
-        for (SIZETYPE Index = 0; Index < InNumBits; Index++)
+        for (SizeType Index = 0; Index < InNumBits; Index++)
         {
             AssignBitUnchecked(Index, bValue);
         }
@@ -89,7 +89,7 @@ public:
     {
         InitializeZeroed(NumBits);
         
-        SIZETYPE Index = 0;
+        SizeType Index = 0;
         for (bool bValue : InitList)
         {
             AssignBitUnchecked(Index++, bValue);
@@ -143,7 +143,7 @@ public:
      * @brief Checks if an index is a valid index
      * @return Returns true if the index is valid
      */
-    NODISCARD FORCEINLINE bool IsValidIndex(SIZETYPE Index) const
+    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const
     {
         return Index >= 0 && Index < NumBits;
     }
@@ -173,7 +173,7 @@ public:
      * @param BitPosition Position of the bit to set
      * @param bValue Value to assign to the bit
      */
-    void AssignBit(SIZETYPE BitPosition, const bool bValue)
+    void AssignBit(SizeType BitPosition, const bool bValue)
     {
         CHECK(BitPosition < NumBits);
         AssignBitUnchecked(BitPosition, bValue);
@@ -183,11 +183,11 @@ public:
      * @brief Flips the bit at the position
      * @param BitPosition Position of the bit to set
      */
-    FORCEINLINE void FlipBit(SIZETYPE BitPosition)
+    FORCEINLINE void FlipBit(SizeType BitPosition)
     {
         CHECK(BitPosition < NumBits);
-        const SIZETYPE ElementIndex   = GetArrayIndexOfBit(BitPosition);
-        const SIZETYPE IndexInElement = GetIndexOfBitInArray(BitPosition);
+        const SizeType ElementIndex   = GetArrayIndexOfBit(BitPosition);
+        const SizeType IndexInElement = GetIndexOfBitInArray(BitPosition);
 
         const InIntegerType Mask = CreateMaskForBit(IndexInElement);
         InIntegerType& Element = GetInteger(ElementIndex);
@@ -198,10 +198,10 @@ public:
      * @brief Count the number of bits that are assigned
      * @return Returns the number of bits that are true
      */
-    NODISCARD FORCEINLINE SIZETYPE CountAssignedBits() const
+    NODISCARD FORCEINLINE SizeType CountAssignedBits() const
     {
-        SIZETYPE BitCount = 0;
-        for (SIZETYPE Index = 0; Index < NumElements; ++Index)
+        SizeType BitCount = 0;
+        for (SizeType Index = 0; Index < NumElements; ++Index)
         {
             const InIntegerType Element = GetInteger(Index);
             BitCount += FBitHelper::CountAssignedBits(Element);
@@ -232,15 +232,15 @@ public:
      * @brief Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
      * @return Returns the index of the most significant bit
      */
-    NODISCARD FORCEINLINE SIZETYPE MostSignificant() const
+    NODISCARD FORCEINLINE SizeType MostSignificant() const
     {
-        SIZETYPE Result = 0;
-        for (SIZETYPE Index = NumElements - 1; Index >= 0; --Index)
+        SizeType Result = 0;
+        for (SizeType Index = NumElements - 1; Index >= 0; --Index)
         {
             const InIntegerType Element = GetInteger(Index);
             if (Element)
             {
-                const SIZETYPE BitIndex = FBitHelper::MostSignificant<SIZETYPE>(Element);
+                const SizeType BitIndex = FBitHelper::MostSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -253,15 +253,15 @@ public:
      * @brief Retrieve the least significant bit. Will return zero if no bits are set, check HasAnyBitSet.
      * @return Returns the index of the least significant bit
      */
-    NODISCARD FORCEINLINE SIZETYPE LeastSignificant() const
+    NODISCARD FORCEINLINE SizeType LeastSignificant() const
     {
-        SIZETYPE Result = 0;
-        for (SIZETYPE Index = 0; Index < NumElements; ++Index)
+        SizeType Result = 0;
+        for (SizeType Index = 0; Index < NumElements; ++Index)
         {
             const InIntegerType Element = GetInteger(Index);
             if (Element)
             {
-                const SIZETYPE BitIndex = FBitHelper::LeastSignificant<SIZETYPE>(Element);
+                const SizeType BitIndex = FBitHelper::LeastSignificant<SizeType>(Element);
                 Result = BitIndex + (Index * NumBitsPerInteger());
                 break;
             }
@@ -275,13 +275,13 @@ public:
      * @param BitPosition Position of the bit to set
      * @param bValue Value to assign to the bit
      */
-    void Insert(SIZETYPE BitPosition, const bool bValue)
+    void Insert(SizeType BitPosition, const bool bValue)
     {
         CHECK(BitPosition <= NumBits);
         Reserve(NumBits + 1);
         BitshiftLeft_SimpleWithBitOffset(1, BitPosition);
 
-        const SIZETYPE ElementIndex = GetArrayIndexOfBit(BitPosition);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitPosition);
         InIntegerType& Element = GetInteger(ElementIndex);
         Element |= (InIntegerType(bValue) << BitPosition);
         NumBits++;
@@ -291,7 +291,7 @@ public:
      * @brief Remove a bit from the array
      * @param BitPosition Position of the bit to set
      */
-    inline void Remove(SIZETYPE BitPosition)
+    inline void Remove(SizeType BitPosition)
     {
         CHECK(BitPosition <= NumBits);
         BitshiftRight_SimpleWithBitOffset(1, BitPosition);
@@ -302,16 +302,16 @@ public:
      * @brief Reserve a certain number of bits to be stored
      * @param NumBits Number of bits to be able to store
      */
-    FORCEINLINE void Reserve(SIZETYPE InNumBits)
+    FORCEINLINE void Reserve(SizeType InNumBits)
     {
-        const SIZETYPE MaxBits = Capacity();
+        const SizeType MaxBits = Capacity();
         if (InNumBits >= MaxBits)
         {
-            const SIZETYPE NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
+            const SizeType NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
             Allocator.Realloc(NumElements, NewNumElements);
 
             InIntegerType* Array = Allocator.GetAllocation();
-            for (SIZETYPE Index = NumElements; Index < NewNumElements; ++Index)
+            for (SizeType Index = NumElements; Index < NewNumElements; ++Index)
             {
                 Array[Index] = 0;
             }
@@ -324,7 +324,7 @@ public:
      * @brief Resize the array to a certain number of bits
      * @param InNumBits New number of bits in the array
      */
-    inline void Resize(SIZETYPE InNumBits)
+    inline void Resize(SizeType InNumBits)
     {
         Reserve(InNumBits);
         NumBits = InNumBits;
@@ -335,7 +335,7 @@ public:
      */
     FORCEINLINE void Shrink()
     {
-        const SIZETYPE RequiredElements = GetNumIntegersRequiredForBits(NumBits);
+        const SizeType RequiredElements = GetNumIntegersRequiredForBits(NumBits);
         if (RequiredElements >= NumElements)
         {
             Allocator.Realloc(NumElements, RequiredElements);
@@ -349,8 +349,8 @@ public:
      */
     FORCEINLINE void BitwiseAnd(const TBitArray& Other)
     {
-        const SIZETYPE Count = FMath::Min<SIZETYPE>(NumElements, Other.NumElements);
-        for (SIZETYPE Index = 0; Index < Count; Index++)
+        const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
+        for (SizeType Index = 0; Index < Count; Index++)
         {
             InIntegerType& Element = GetInteger(Index);
             Element &= Other.GetInteger(Index);
@@ -363,8 +363,8 @@ public:
      */
     FORCEINLINE void BitwiseOr(const TBitArray& Other)
     {
-        const SIZETYPE Count = FMath::Min<SIZETYPE>(NumElements, Other.NumElements);
-        for (SIZETYPE Index = 0; Index < Count; Index++)
+        const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
+        for (SizeType Index = 0; Index < Count; Index++)
         {
             InIntegerType& Element = GetInteger(Index);
             Element |= Other.GetInteger(Index);
@@ -377,8 +377,8 @@ public:
      */
     FORCEINLINE void BitwiseXor(const TBitArray& Other)
     {
-        const SIZETYPE Count = FMath::Min<SIZETYPE>(NumElements, Other.NumElements);
-        for (SIZETYPE Index = 0; Index < Count; Index++)
+        const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
+        for (SizeType Index = 0; Index < Count; Index++)
         {
             InIntegerType& Element = GetInteger(Index);
             Element |= Other.GetInteger(Index);
@@ -391,7 +391,7 @@ public:
      */
     FORCEINLINE void BitwiseNot()
     {
-        for (SIZETYPE Index = 0; Index < NumElements; Index++)
+        for (SizeType Index = 0; Index < NumElements; Index++)
         {
             InIntegerType& Element = GetInteger(Index);
             Element = ~Element;
@@ -402,7 +402,7 @@ public:
      * @brief Perform a right BitShift
      * @param Steps Number of steps to shift
      */
-    FORCEINLINE void BitshiftRight(SIZETYPE Steps)
+    FORCEINLINE void BitshiftRight(SizeType Steps)
     {
         if (Steps && NumBits)
             BitshiftRightUnchecked(Steps, 0);
@@ -412,7 +412,7 @@ public:
      * @brief Perform a left BitShift
      * @param Steps Number of steps to shift
      */
-    FORCEINLINE void BitshiftLeft(SIZETYPE Steps)
+    FORCEINLINE void BitshiftLeft(SizeType Steps)
     {
         if (Steps && NumBits)
             BitshiftLeftUnchecked(Steps, 0);
@@ -422,7 +422,7 @@ public:
      * @brief Retrieve the number of bits
      * @return Returns the number of bits in the array
      */
-    NODISCARD FORCEINLINE SIZETYPE Size() const
+    NODISCARD FORCEINLINE SizeType Size() const
     {
         return NumBits;
     }
@@ -431,7 +431,7 @@ public:
      * @brief Retrieve the number of integers used to store the bits
      * @return Returns the number of integers used to store the bits
      */
-    NODISCARD FORCEINLINE SIZETYPE IntegerSize() const
+    NODISCARD FORCEINLINE SizeType IntegerSize() const
     {
         return NumElements;
     }
@@ -440,7 +440,7 @@ public:
      * @brief Retrieve the maximum number of bits
      * @return Returns the maximum number of bits in the array
      */
-    NODISCARD FORCEINLINE SIZETYPE Capacity() const
+    NODISCARD FORCEINLINE SizeType Capacity() const
     {
         return NumElements * NumBitsPerInteger();
     }
@@ -449,7 +449,7 @@ public:
      * @brief Retrieve the capacity of the array in bytes
      * @return Returns the capacity of the array in bytes
      */
-    NODISCARD FORCEINLINE SIZETYPE CapacityInBytes() const
+    NODISCARD FORCEINLINE SizeType CapacityInBytes() const
     {
         return NumElements * sizeof(InIntegerType);
     }
@@ -541,7 +541,7 @@ public:
      * @param RHS Number of steps to bitshift
      * @return Returns a copy that is bitshifted to the right
      */
-    FORCEINLINE TBitArray operator>>(SIZETYPE RHS) const
+    FORCEINLINE TBitArray operator>>(SizeType RHS) const
     {
         TBitArray NewArray(*this);
         NewArray.BitshiftRight(RHS);
@@ -553,7 +553,7 @@ public:
      * @param RHS Number of steps to bitshift
      * @return Returns a reference to this object
      */
-    FORCEINLINE TBitArray& operator>>=(SIZETYPE RHS) const
+    FORCEINLINE TBitArray& operator>>=(SizeType RHS) const
     {
         BitshiftRight(RHS);
         return *this;
@@ -564,7 +564,7 @@ public:
      * @param RHS Number of steps to bitshift
      * @return Returns a copy that is bitshifted to the left
      */
-    FORCEINLINE TBitArray operator<<(SIZETYPE RHS) const
+    FORCEINLINE TBitArray operator<<(SizeType RHS) const
     {
         TBitArray NewArray(*this);
         NewArray.BitshiftLeft(RHS);
@@ -576,7 +576,7 @@ public:
      * @param RHS Number of steps to bitshift
      * @return Returns a reference to this object
      */
-    FORCEINLINE TBitArray& operator<<=(SIZETYPE RHS) const
+    FORCEINLINE TBitArray& operator<<=(SizeType RHS) const
     {
         BitshiftLeft(RHS);
         return *this;
@@ -587,10 +587,10 @@ public:
      * @param Index Index to the bit
      * @return Returns a BitReference to the specified bit
      */
-    NODISCARD FORCEINLINE BitReferenceType operator[](SIZETYPE BitIndex)
+    NODISCARD FORCEINLINE BitReferenceType operator[](SizeType BitIndex)
     {
         CHECK(BitIndex < NumBits);
-        const SIZETYPE ElementIndex = GetArrayIndexOfBit(BitIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         CHECK(ElementIndex < NumElements);
 
         InIntegerType& Element = GetInteger(ElementIndex);
@@ -602,10 +602,10 @@ public:
      * @param Index Index to the bit
      * @return Returns a BitReference to the specified bit
      */
-    NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SIZETYPE BitIndex) const
+    NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SizeType BitIndex) const
     {
         CHECK(BitIndex < NumBits);
-        const SIZETYPE ElementIndex = GetArrayIndexOfBit(BitIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         CHECK(ElementIndex < NumElements);
 
         const InIntegerType& Element = GetInteger(ElementIndex);
@@ -745,41 +745,41 @@ public:
     NODISCARD FORCEINLINE ConstIteratorType end() const { return ConstIteratorType(*this, NumBits); }
 
 public: 
-    NODISCARD static constexpr SIZETYPE NumBitsPerInteger()
+    NODISCARD static constexpr SizeType NumBitsPerInteger()
     {
         return sizeof(InIntegerType) * 8;
     }
 
 private:
-    NODISCARD static constexpr SIZETYPE GetArrayIndexOfBit(SIZETYPE BitIndex)
+    NODISCARD static constexpr SizeType GetArrayIndexOfBit(SizeType BitIndex)
     {
         return BitIndex / NumBitsPerInteger();
     }
 
-    NODISCARD static constexpr SIZETYPE GetIndexOfBitInArray(SIZETYPE BitIndex)
+    NODISCARD static constexpr SizeType GetIndexOfBitInArray(SizeType BitIndex)
     {
         return BitIndex % NumBitsPerInteger();
     }
 
-    NODISCARD static constexpr InIntegerType CreateMaskForBit(SIZETYPE BitIndex)
+    NODISCARD static constexpr InIntegerType CreateMaskForBit(SizeType BitIndex)
     {
         return InIntegerType(1) << GetIndexOfBitInArray(BitIndex);
     }
 
-    NODISCARD static constexpr InIntegerType CreateMaskUpToBit(SIZETYPE BitIndex)
+    NODISCARD static constexpr InIntegerType CreateMaskUpToBit(SizeType BitIndex)
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
-    NODISCARD static constexpr SIZETYPE GetNumIntegersRequiredForBits(SIZETYPE InNumBits)
+    NODISCARD static constexpr SizeType GetNumIntegersRequiredForBits(SizeType InNumBits)
     {
         return (InNumBits + (NumBitsPerInteger() - 1)) / NumBitsPerInteger();
     }
 
 private:
-    FORCEINLINE void InitializeZeroed(SIZETYPE InNumBits)
+    FORCEINLINE void InitializeZeroed(SizeType InNumBits)
     {
-        const SIZETYPE NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
+        const SizeType NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
         Allocator.Realloc(NumElements, NewNumElements);
         NumElements = NewNumElements;
         FMemory::Memzero(Allocator.GetAllocation(), CapacityInBytes());
@@ -797,10 +797,10 @@ private:
         Other.NumElements = 0;
     }
 
-    FORCEINLINE void AssignBitUnchecked(SIZETYPE BitPosition, const bool bValue)
+    FORCEINLINE void AssignBitUnchecked(SizeType BitPosition, const bool bValue)
     {
-        const SIZETYPE ElementIndex   = GetArrayIndexOfBit(BitPosition);
-        const SIZETYPE IndexInElement = GetIndexOfBitInArray(BitPosition);
+        const SizeType ElementIndex   = GetArrayIndexOfBit(BitPosition);
+        const SizeType IndexInElement = GetIndexOfBitInArray(BitPosition);
 
         const InIntegerType Mask  = CreateMaskForBit(IndexInElement);
         const InIntegerType Value = bValue ? Mask : InIntegerType(0);
@@ -809,13 +809,13 @@ private:
         Element |= Value;
     }
 
-    FORCEINLINE void BitshiftRightUnchecked(SIZETYPE Steps, SIZETYPE StartBit = 0)
+    FORCEINLINE void BitshiftRightUnchecked(SizeType Steps, SizeType StartBit = 0)
     {
-        const SIZETYPE StartElementIndex = GetArrayIndexOfBit(StartBit);
+        const SizeType StartElementIndex = GetArrayIndexOfBit(StartBit);
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
-        const SIZETYPE RemainingElements = IntegerSize() - StartElementIndex;
-        const SIZETYPE RemainingBits     = NumBits - StartBit;
+        const SizeType RemainingElements = IntegerSize() - StartElementIndex;
+        const SizeType RemainingBits     = NumBits - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -824,8 +824,8 @@ private:
             const InIntegerType InverseMask = ~Mask;
             *Array = (StartValue & InverseMask);
 
-            const SIZETYPE DiscardCount = Steps / NumBitsPerInteger();
-            const SIZETYPE RangeSize    = RemainingElements - DiscardCount;
+            const SizeType DiscardCount = Steps / NumBitsPerInteger();
+            const SizeType RangeSize    = RemainingElements - DiscardCount;
 
             FMemory::Memmove(Array, Array + DiscardCount, sizeof(InIntegerType) * RangeSize);
             FMemory::Memzero(Array + RangeSize, sizeof(InIntegerType) * DiscardCount);
@@ -841,11 +841,11 @@ private:
         }
     }
 
-    FORCEINLINE void BitshiftRight_Simple(SIZETYPE Steps, SIZETYPE StartElementIndex, SIZETYPE ElementsToShift)
+    FORCEINLINE void BitshiftRight_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex + ElementsToShift;
-        const SIZETYPE CurrShift = Steps % NumBitsPerInteger();
-        const SIZETYPE PrevShift = NumBitsPerInteger() - CurrShift;
+        const SizeType CurrShift = Steps % NumBitsPerInteger();
+        const SizeType PrevShift = NumBitsPerInteger() - CurrShift;
 
         InIntegerType Previous = 0;
         while (ElementsToShift)
@@ -857,10 +857,10 @@ private:
         }
     }
 
-    FORCEINLINE void BitshiftRight_SimpleWithBitOffset(SIZETYPE Steps, SIZETYPE BitPosition)
+    FORCEINLINE void BitshiftRight_SimpleWithBitOffset(SizeType Steps, SizeType BitPosition)
     {
-        const SIZETYPE StartElementIndex = GetArrayIndexOfBit(BitPosition);
-        const SIZETYPE ElementsToShift = NumElements - StartElementIndex;
+        const SizeType StartElementIndex = GetArrayIndexOfBit(BitPosition);
+        const SizeType ElementsToShift = NumElements - StartElementIndex;
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
@@ -875,13 +875,13 @@ private:
         *Array = (CurrentValue & InverseMask) | (StartValue & Mask);
     }
 
-    FORCEINLINE void BitshiftLeftUnchecked(SIZETYPE Steps, SIZETYPE StartBit = 0)
+    FORCEINLINE void BitshiftLeftUnchecked(SizeType Steps, SizeType StartBit = 0)
     {
-        const SIZETYPE StartElementIndex = GetArrayIndexOfBit(StartBit);
+        const SizeType StartElementIndex = GetArrayIndexOfBit(StartBit);
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
-        const SIZETYPE RemainingElements = IntegerSize() - StartElementIndex;
-        const SIZETYPE RemainingBits     = NumBits - StartBit;
+        const SizeType RemainingElements = IntegerSize() - StartElementIndex;
+        const SizeType RemainingBits     = NumBits - StartBit;
         if (Steps < RemainingBits)
         {
             // Mask value to ensure that we get zeros shifted in
@@ -890,8 +890,8 @@ private:
             const InIntegerType InverseMask = ~Mask;
             *Array = (StartValue & InverseMask);
 
-            const SIZETYPE DiscardCount = Steps / NumBitsPerInteger();
-            const SIZETYPE RangeSize    = RemainingElements - DiscardCount;
+            const SizeType DiscardCount = Steps / NumBitsPerInteger();
+            const SizeType RangeSize    = RemainingElements - DiscardCount;
 
             FMemory::Memmove(Array + DiscardCount, Array, sizeof(InIntegerType) * RangeSize);
             FMemory::Memzero(Array, sizeof(InIntegerType) * DiscardCount);
@@ -907,11 +907,11 @@ private:
         }
     }
 
-    FORCEINLINE void BitshiftLeft_Simple(SIZETYPE Steps, SIZETYPE StartElementIndex, SIZETYPE ElementsToShift)
+    FORCEINLINE void BitshiftLeft_Simple(SizeType Steps, SizeType StartElementIndex, SizeType ElementsToShift)
     {
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
-        const SIZETYPE CurrShift = Steps % NumBitsPerInteger();
-        const SIZETYPE PrevShift = NumBitsPerInteger() - CurrShift;
+        const SizeType CurrShift = Steps % NumBitsPerInteger();
+        const SizeType PrevShift = NumBitsPerInteger() - CurrShift;
 
         InIntegerType Previous = 0;
         while (ElementsToShift)
@@ -923,10 +923,10 @@ private:
         }
     }
 
-    FORCEINLINE void BitshiftLeft_SimpleWithBitOffset(SIZETYPE Steps, SIZETYPE BitPosition)
+    FORCEINLINE void BitshiftLeft_SimpleWithBitOffset(SizeType Steps, SizeType BitPosition)
     {
-        const SIZETYPE StartElementIndex = GetArrayIndexOfBit(BitPosition);
-        const SIZETYPE ElementsToShift   = NumElements - StartElementIndex;
+        const SizeType StartElementIndex = GetArrayIndexOfBit(BitPosition);
+        const SizeType ElementsToShift   = NumElements - StartElementIndex;
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
 
         // Mask value to ensure that we get zeros shifted in
@@ -943,34 +943,34 @@ private:
 
     FORCEINLINE void MaskLastInteger()
     {
-        const SIZETYPE LastValidBit     = NumBits ? (NumBits - 1) : 0;
-        const SIZETYPE LastElementIndex = GetArrayIndexOfBit(LastValidBit);
-        const SIZETYPE LastBitIndex     = GetIndexOfBitInArray(LastValidBit);
+        const SizeType LastValidBit     = NumBits ? (NumBits - 1) : 0;
+        const SizeType LastElementIndex = GetArrayIndexOfBit(LastValidBit);
+        const SizeType LastBitIndex     = GetIndexOfBitInArray(LastValidBit);
 
         const InIntegerType Mask = CreateMaskUpToBit(LastBitIndex) | CreateMaskForBit(LastBitIndex);
         InIntegerType& Element = GetInteger(LastElementIndex);
         Element &= Mask;
     }
 
-    NODISCARD FORCEINLINE InIntegerType& GetIntegerForBit(SIZETYPE BitIndex)
+    NODISCARD FORCEINLINE InIntegerType& GetIntegerForBit(SizeType BitIndex)
     {
-        const SIZETYPE ElementIndex = GetArrayIndexOfBit(BitIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         return GetInteger(ElementIndex);
     }
 
-    NODISCARD FORCEINLINE const InIntegerType& GetIntegerForBit(SIZETYPE BitIndex) const
+    NODISCARD FORCEINLINE const InIntegerType& GetIntegerForBit(SizeType BitIndex) const
     {
-        const SIZETYPE ElementIndex = GetArrayIndexOfBit(BitIndex);
+        const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         return GetInteger(ElementIndex);
     }
 
-    NODISCARD FORCEINLINE InIntegerType& GetInteger(SIZETYPE Index)
+    NODISCARD FORCEINLINE InIntegerType& GetInteger(SizeType Index)
     {
         InIntegerType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
 
-    NODISCARD FORCEINLINE const InIntegerType& GetInteger(SIZETYPE Index) const
+    NODISCARD FORCEINLINE const InIntegerType& GetInteger(SizeType Index) const
     {
         const InIntegerType* Array = Allocator.GetAllocation();
         return Array[Index];
@@ -978,8 +978,8 @@ private:
 
 private:
     InAllocatorType Allocator;
-    SIZETYPE        NumBits{ 0 };
-    SIZETYPE        NumElements{ 0 };
+    SizeType        NumBits{ 0 };
+    SizeType        NumElements{ 0 };
 };
 
 typedef TBitArray<uint8>  FBitArray8;

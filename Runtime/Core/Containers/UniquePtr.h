@@ -21,7 +21,7 @@ public:
     /**
      * @brief Construct from nullptr
      */
-    FORCEINLINE TUniquePtr(nullptr_type)
+    FORCEINLINE TUniquePtr(NULLPTR_TYPE)
         : Super()
         , Object(nullptr)
     {
@@ -229,7 +229,7 @@ public:
     /**
      * @brief Assignment operator that takes a nullptr
      */
-    FORCEINLINE TUniquePtr& operator=(nullptr_type)
+    FORCEINLINE TUniquePtr& operator=(NULLPTR_TYPE)
     {
         TUniquePtr().Swap(*this);
         return *this;
@@ -277,7 +277,7 @@ public:
     /**
      * @brief Construct from nullptr
      */
-    FORCEINLINE TUniquePtr(nullptr_type)
+    FORCEINLINE TUniquePtr(NULLPTR_TYPE)
         : Super()
         , Object(nullptr)
     {
@@ -469,7 +469,7 @@ public:
      * @brief Assignment operator that takes a nullptr
      * @return A reference to this instance
      */
-    FORCEINLINE TUniquePtr& operator=(nullptr_type)
+    FORCEINLINE TUniquePtr& operator=(NULLPTR_TYPE)
     {
         TUniquePtr().Swap(*this);
         return *this;
@@ -534,25 +534,25 @@ NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<ElementType>& LHS, const 
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator==(const TUniquePtr<ElementType>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator==(const TUniquePtr<ElementType>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() == nullptr;
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator==(nullptr_type, const TUniquePtr<ElementType>& RHS)
+NODISCARD FORCEINLINE bool operator==(NULLPTR_TYPE, const TUniquePtr<ElementType>& RHS)
 {
     return nullptr == RHS.Get();
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<ElementType>& LHS, nullptr_type)
+NODISCARD FORCEINLINE bool operator!=(const TUniquePtr<ElementType>& LHS, NULLPTR_TYPE)
 {
     return LHS.Get() != nullptr;
 }
 
 template<typename ElementType>
-NODISCARD FORCEINLINE bool operator!=(nullptr_type, const TUniquePtr<ElementType>& RHS)
+NODISCARD FORCEINLINE bool operator!=(NULLPTR_TYPE, const TUniquePtr<ElementType>& RHS)
 {
     return nullptr != RHS.Get();
 }

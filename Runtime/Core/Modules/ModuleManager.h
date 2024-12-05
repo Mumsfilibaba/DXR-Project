@@ -164,7 +164,7 @@ public:
      * @return Returns a typed pointer to if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
-    FORCEINLINE ModuleType* LoadModule(const TCHAR* ModuleName)
+    FORCEINLINE ModuleType* LoadModule(const CHAR_T* ModuleName)
     {
         return static_cast<ModuleType*>(LoadModule(ModuleName));
     }
@@ -175,7 +175,7 @@ public:
      * @return Returns a typed reference to if the load is successful, on fail an assert is triggered
      */
     template<typename ModuleType>
-    FORCEINLINE ModuleType& LoadModuleRef(const TCHAR* ModuleName)
+    FORCEINLINE ModuleType& LoadModuleRef(const CHAR_T* ModuleName)
     {
         return static_cast<ModuleType&>(LoadModuleRef(ModuleName));
     }
@@ -185,7 +185,7 @@ public:
      * @param ModuleName Name of the module without platform extension or prefix
      * @return Returns a reference to a typed interface if the interface is present, on fail an assert is triggered
      */
-    FORCEINLINE FModuleInterface& GetModuleRef(const TCHAR* ModuleName)
+    FORCEINLINE FModuleInterface& GetModuleRef(const CHAR_T* ModuleName)
     {
         FModuleInterface* Module = GetModule(ModuleName);
         CHECK(Module != nullptr);
@@ -198,7 +198,7 @@ public:
      * @return Returns a typed pointer to a interface if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
-    FORCEINLINE ModuleType* GetModule(const TCHAR* ModuleName)
+    FORCEINLINE ModuleType* GetModule(const CHAR_T* ModuleName)
     {
         return static_cast<ModuleType*>(GetModule(ModuleName));
     }
@@ -209,7 +209,7 @@ public:
      * @return Returns a typed pointer to a interface if the load is successful, otherwise nullptr
      */
     template<typename ModuleType>
-    FORCEINLINE ModuleType& GetModuleRef(const TCHAR* ModuleName)
+    FORCEINLINE ModuleType& GetModuleRef(const CHAR_T* ModuleName)
     {
         return static_cast<ModuleType&>(GetModuleRef(ModuleName));
     }
@@ -255,7 +255,7 @@ public:
      * @brief Constructor that registers the module to the ModuleManager
      * @param ModuleName Name of the module
      */
-    TStaticModuleInitializer(const TCHAR* ModuleName)
+    TStaticModuleInitializer(const CHAR_T* ModuleName)
     {
         FInitializeDelegate InitializeDelegate = FInitializeDelegate::CreateRaw(this, &TStaticModuleInitializer::CreateModuleInterface);
         FModuleManager::Get().RegisterStaticModule(ModuleName, InitializeDelegate);

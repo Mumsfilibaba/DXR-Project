@@ -22,7 +22,7 @@ static TAutoConsoleVariable<bool> CVarEnableAssetConversion(
 static FString ReplaceExtension(const FString& Filename, const FString& NewExtension)
 {
     const int32 Position = Filename.FindLastChar('.');
-    if (Position == FString::INVALID_INDEX)
+    if (Position == FString::InvalidIndex)
     {
         return Filename;
     }

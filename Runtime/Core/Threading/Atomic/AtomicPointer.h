@@ -6,7 +6,7 @@
 template<typename T>
 class TAtomicPointer
 {
-    typedef typename TMakeSigned<uptrint>::Type SignedType;
+    typedef typename TMakeSigned<UPTR_INT>::Type SignedType;
 
 public:
     static_assert(TIsPointer<T>::Value, "TAtomicPointer can only be instantiated with pointer types.");
