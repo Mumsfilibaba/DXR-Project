@@ -2,12 +2,11 @@
 #include "MetalDeviceContext.h"
 #include "MetalShader.h"
 #include "MetalRefCounted.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalVertexLayout>       FMetalVertexInputLayoutRef;
+typedef TSharedRef<class FMetalVertexLayout>            FMetalVertexInputLayoutRef;
 typedef TSharedRef<class FMetalDepthStencilState>       FMetalDepthStencilStateRef;
 typedef TSharedRef<class FMetalGraphicsPipelineState>   FMetalGraphicsPipelineStateRef;
 typedef TSharedRef<class FMetalComputePipelineState>    FMetalComputePipelineStateRef;

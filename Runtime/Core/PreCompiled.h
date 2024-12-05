@@ -167,5 +167,3 @@
 #include "Core/Time/Time.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Time/TimeUtilities.h"
-
-#include "Core/Utilities/StringUtilities.h"

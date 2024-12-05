@@ -1,4 +1,3 @@
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
@@ -233,7 +232,7 @@ TSharedRef<FTexture> FAssetManager::LoadTexture(const FString& Filename, bool bG
 
     // Convert backslashes
     FString FinalPath = Filename;
-    ConvertBackslashes(FinalPath);
+    FinalPath.ReplaceAll('\\', '/');
     
     if (int32* TextureID = TextureMap.Find(FinalPath))
     {
@@ -296,8 +295,8 @@ TSharedRef<FModel> FAssetManager::LoadModel(const FString& Filename, EMeshImport
 
     // Convert backslashes
     FString FinalPath = Filename;
-    ConvertBackslashes(FinalPath);
-    
+    FinalPath.ReplaceAll('\\', '/');
+
     if (int32* MeshID = ModelsMap.Find(FinalPath))
     {
         const int32 MeshIndex = *MeshID;

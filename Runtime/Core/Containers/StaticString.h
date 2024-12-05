@@ -915,6 +915,36 @@ public:
     }
 
     /**
+     * @brief Replaces all occurrences of a character with another character in the string, starting from a specified position.
+     * @param CharToReplace The character to search for and replace.
+     * @param NewChar The character to replace with.
+     * @param StartPosition The position in the string to start the replacement from.
+     */
+    FORCEINLINE void ReplaceAll(CharType CharToReplace, CharType NewChar, SizeType StartPosition = 0)
+    {
+        if (CharToReplace == NewChar)
+        {
+            // No action needed if both characters are the same.
+            return;
+        }
+
+        SizeType ThisLength = Length();
+        if (StartPosition >= ThisLength)
+        {
+            // Starting position is beyond the end of the string; nothing to do.
+            return;
+        }
+
+        for (SizeType Index = StartPosition; Index < ThisLength; ++Index)
+        {
+            if (CharData[Index] == CharToReplace)
+            {
+                CharData[Index] = NewChar;
+            }
+        }
+    }
+
+    /**
      * @brief Insert a new character at the end
      * @param Char Character to insert at the end
      */

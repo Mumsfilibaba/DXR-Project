@@ -2,7 +2,6 @@
 #include "Core/Core.h"
 #include "Core/Containers/String.h"
 #include "Core/Containers/Map.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Templates/TypeTraits.h"
 #include "Engine/Assets/ModelCreateInfo.h"
 #include "Engine/Assets/IModelImporter.h"

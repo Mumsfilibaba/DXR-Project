@@ -1,6 +1,5 @@
 #include "Core/Math/Matrix4.h"
 #include "Core/Containers/Map.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Engine/Assets/VertexFormat.h"
@@ -49,7 +48,7 @@ static auto LoadMaterialTexture(const FString& Path, const ofbx::Material* Mater
 
         // Make sure that correct slashes are used
         FString Filename = Path + '/' + StringBuffer;
-        ConvertBackslashes(Filename);
+        Filename.ReplaceAll('\\', '/');
 
         return StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(Filename, false));
     }

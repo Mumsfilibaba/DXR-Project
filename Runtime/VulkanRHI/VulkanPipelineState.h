@@ -3,7 +3,6 @@
 #include "VulkanRefCounted.h"
 #include "VulkanDeviceChild.h"
 #include "RHI/RHIResources.h"
-#include "Core/Utilities/StringUtilities.h"
 
 typedef TSharedRef<class FVulkanVertexLayout>            FVulkanVertexInputLayoutRef;
 typedef TSharedRef<class FVulkanDepthStencilState>       FVulkanDepthStencilStateRef;
