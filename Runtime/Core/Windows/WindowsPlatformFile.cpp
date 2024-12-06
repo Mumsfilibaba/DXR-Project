@@ -1,5 +1,5 @@
-#include "WindowsPlatformFile.h"
-#include "WindowsPlatformMisc.h"
+#include "Core/Windows/WindowsPlatformFile.h"
+#include "Core/Windows/WindowsPlatformMisc.h"
 #include "Core/Templates/NumericLimits.h"
 
 FWindowsFileHandle::FWindowsFileHandle(HANDLE InFileHandle)

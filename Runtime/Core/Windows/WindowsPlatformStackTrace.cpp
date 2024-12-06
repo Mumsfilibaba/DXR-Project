@@ -1,4 +1,4 @@
-#include "WindowsPlatformStackTrace.h"
+#include "Core/Windows/WindowsPlatformStackTrace.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #include <dbghelp.h>

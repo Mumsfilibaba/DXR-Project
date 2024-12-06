@@ -60,8 +60,11 @@ public:
     static TSharedPtr<FGenericApplication> Create();
 
 public:
+
     FMacApplication(const TSharedPtr<FMacCursor>& InCursor);
     virtual ~FMacApplication();
+
+public:
 
     // FGenericApplication Interface
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
@@ -75,6 +78,8 @@ public:
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
+
+public:
 
     // Defer an event to be processed later in the tick function. EventObject can be an NSEvent, NSNotificationName,
     // or NSString based on what type of event we are handling.

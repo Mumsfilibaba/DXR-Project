@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/CoreDefines.h"
-
 #include <Foundation/Foundation.h>
 
 #define SCOPED_AUTORELEASE_POOL() const FScopedAutoreleasePool STRING_CONCAT(AutoReleasePool_, __LINE__)
@@ -16,6 +15,7 @@ public:
     FORCEINLINE ~FScopedAutoreleasePool()
     {
         [Pool release];
+        Pool = nullptr;
     }
 
 private:

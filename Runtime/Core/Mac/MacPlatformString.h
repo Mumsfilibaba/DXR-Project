@@ -5,9 +5,9 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 
 struct FMacPlatformString final : public FGenericPlatformString
 {
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     // CHAR
-    
+
     NODISCARD static FORCEINLINE int32 Stricmp(const CHAR* String0, const CHAR* String1) noexcept
     {
         return static_cast<int32>(::strcasecmp(String0, String1));
@@ -18,7 +18,7 @@ struct FMacPlatformString final : public FGenericPlatformString
         return static_cast<int32>(::strncasecmp(String0, String1, InLength));
     }
 
-    /*///////////////////////////////////////////////////////////////////////////////////////////////*/
+    ///////////////////////////////////////////////////////////////////////////////////////////////////
     // WIDECHAR
 
     NODISCARD static FORCEINLINE int32 Stricmp(const WIDECHAR* String0, const WIDECHAR* String1) noexcept

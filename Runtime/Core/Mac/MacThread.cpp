@@ -1,5 +1,5 @@
-#include "MacThread.h"
-#include "MacThreadMisc.h"
+#include "Core/Mac/MacThread.h"
+#include "Core/Mac/MacThreadMisc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 FGenericThread* FMacThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)

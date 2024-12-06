@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Containers/String.h"
 #include "Core/Generic/GenericLibrary.h"
-
 #include <dlfcn.h>
 
 struct CORE_API FMacLibrary final : public FGenericLibrary

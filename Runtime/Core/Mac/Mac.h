@@ -1,6 +1,5 @@
 #pragma once
-#include "ScopedAutoreleasePool.h"
-
+#include "Core/Mac/ScopedAutoreleasePool.h"
 #include <Foundation/Foundation.h>
 
 template<typename CastType>

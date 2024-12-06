@@ -7,6 +7,7 @@ class CORE_API FWindowsThread final : public FGenericThread
 public:
     static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
+public:
     virtual ~FWindowsThread();
     
     virtual bool Start() override final;

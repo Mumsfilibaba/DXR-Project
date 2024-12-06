@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Core.h"
-
 #include <cctype>
 #include <cwchar>
 #include <cwctype>

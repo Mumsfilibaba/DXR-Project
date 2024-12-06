@@ -1,5 +1,5 @@
 #pragma once
-#include "Windows.h"
+#include "Core/Windows/Windows.h"
 #include "Core/Generic/GenericPlatformFile.h"
 
 class CORE_API FWindowsFileHandle : public IFileHandle
@@ -42,7 +42,6 @@ private:
     int64  FilePointer;
     int64  FileSize;
 };
-
 
 struct CORE_API FWindowsPlatformFile : public FGenericPlatformFile
 {

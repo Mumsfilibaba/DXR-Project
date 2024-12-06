@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Generic/GenericInterlocked.h"
 #include "Core/Windows/Windows.h"
-
 #include <intrin.h>
 
 struct FWindowsInterlocked final : public FGenericInterlocked

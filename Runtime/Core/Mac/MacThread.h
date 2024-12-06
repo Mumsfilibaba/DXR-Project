@@ -1,18 +1,17 @@
 #pragma once
 #include "Core/Generic/GenericThread.h"
-
 #include <pthread.h>
 
 class FMacThread final : public FGenericThread
 {
 public:
-    
+
     // Create a new MacThread
     static FGenericThread* Create(FRunnable* Runnable, const CHAR* ThreadName, bool bSuspended = true);
 
 public:
     virtual ~FMacThread() = default;
-    
+
     virtual bool Start() override final;
     virtual void Kill(bool bWaitUntilCompletion) override final;
 

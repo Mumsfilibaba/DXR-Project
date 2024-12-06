@@ -1,4 +1,4 @@
-#include "GenericPlatformFile.h"
+#include "Core/Generic/GenericPlatformFile.h"
 
 bool FFileHelpers::ReadFile(IFileHandle* File, FByteInputStream& OutData)
 {

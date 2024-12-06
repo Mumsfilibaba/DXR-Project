@@ -1,5 +1,5 @@
 #pragma once
-#include "WindowsCriticalSection.h"
+#include "Core/Windows/WindowsCriticalSection.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Generic/GenericConditionVariable.h"

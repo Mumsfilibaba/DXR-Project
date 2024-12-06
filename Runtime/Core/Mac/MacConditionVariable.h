@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Generic/GenericConditionVariable.h"
-
 #include <pthread.h>
 
 class FMacConditionVariable final : public FGenericConditionVariable

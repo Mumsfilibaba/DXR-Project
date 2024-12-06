@@ -1,6 +1,6 @@
 #pragma once
-#include "GenericThread.h"
-#include "GenericEvent.h"
+#include "Core/Generic/GenericThread.h"
+#include "Core/Generic/GenericEvent.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Threading/Runnable.h"
 
