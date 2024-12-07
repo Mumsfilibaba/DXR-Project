@@ -1,5 +1,5 @@
 #pragma once
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Generic/GenericThreadMisc.h"
 #include <unistd.h>
 #include <pthread.h>

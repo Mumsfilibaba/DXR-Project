@@ -1,8 +1,7 @@
-#include "MacCursor.h"
-#include "MacWindow.h"
-#include "CocoaWindow.h"
 #include "Core/Memory/Memory.h"
-
+#include "CoreApplication/Mac/MacCursor.h"
+#include "CoreApplication/Mac/MacWindow.h"
+#include "CoreApplication/Mac/CocoaWindow.h"
 #include <AppKit/AppKit.h>
 
 // These cursors are available but not documented

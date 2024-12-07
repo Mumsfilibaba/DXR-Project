@@ -1,5 +1,5 @@
 #include "MetalViewport.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformEvent.h"
 
 @implementation FMetalWindowView

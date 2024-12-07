@@ -1,5 +1,5 @@
 #include "Core/Mac/Mac.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Containers/String.h"
 #include <Appkit/Appkit.h>
 #include <pthread.h>

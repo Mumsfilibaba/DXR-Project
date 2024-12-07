@@ -1,9 +1,9 @@
-#include "MacWindow.h"
-#include "CocoaWindow.h"
 #include "Core/Mac/Mac.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
+#include "CoreApplication/Mac/MacWindow.h"
+#include "CoreApplication/Mac/CocoaWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 TSharedRef<FMacWindow> FMacWindow::Create(FMacApplication* InApplication)

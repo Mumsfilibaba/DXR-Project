@@ -1,11 +1,10 @@
-#include "MacApplicationMisc.h"
-#include "MacApplication.h"
-#include "MacOutputDeviceConsole.h"
 #include "Core/Mac/Mac.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "CoreApplication/Mac/MacApplicationMisc.h"
+#include "CoreApplication/Mac/MacApplication.h"
+#include "CoreApplication/Mac/MacOutputDeviceConsole.h"
 #include "CoreApplication/Generic/InputCodes.h"
-
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 

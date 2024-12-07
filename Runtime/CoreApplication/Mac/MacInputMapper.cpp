@@ -1,5 +1,5 @@
 #if PLATFORM_MACOS
-#include "MacInputMapper.h"
+#include "CoreApplication/Mac/MacInputMapper.h"
 
 TStaticArray<EKeyboardKeyName::Type, FMacInputMapper::NumKeys>         FMacInputMapper::KeyCodeFromScanCodeTable;
 TStaticArray<uint16, FMacInputMapper::NumKeys>                 FMacInputMapper::ScanCodeFromKeyCodeTable;

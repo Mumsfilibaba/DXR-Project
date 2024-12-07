@@ -3,7 +3,7 @@
 #include "MetalTexture.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Mac/MacEvent.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
 

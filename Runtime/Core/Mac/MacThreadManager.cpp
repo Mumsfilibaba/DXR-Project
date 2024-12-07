@@ -1,4 +1,4 @@
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Mac/ScopedAutoreleasePool.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Threading/Atomic.h"

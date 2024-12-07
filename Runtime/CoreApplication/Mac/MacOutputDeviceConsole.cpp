@@ -1,11 +1,11 @@
-#include "MacOutputDeviceConsole.h"
-#include "MacApplication.h"
-#include "CocoaConsoleWindow.h"
 #include "Core/Mac/Mac.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Platform/PlatformThreadMisc.h"
+#include "CoreApplication/Mac/MacOutputDeviceConsole.h"
+#include "CoreApplication/Mac/MacApplication.h"
+#include "CoreApplication/Mac/CocoaConsoleWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
 FMacOutputDeviceConsole::FMacOutputDeviceConsole()

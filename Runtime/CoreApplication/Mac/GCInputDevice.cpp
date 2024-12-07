@@ -1,9 +1,9 @@
-#include "GCInputDevice.h"
 #include "Core/Math/Math.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Platform/PlatformTime.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "CoreApplication/Mac/GCInputDevice.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
 static TAutoConsoleVariable<int32> CVarGameControllerButtonRepeatDelay(

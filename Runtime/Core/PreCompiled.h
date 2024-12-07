@@ -86,7 +86,7 @@
     #include "Core/Mac/MacPlatformString.h"
     #include "Core/Mac/MacPlatformTime.h"
     #include "Core/Mac/MacPlatformTLS.h"
-    #include "Core/Mac/MacRunLoop.h"
+    #include "Core/Mac/MacThreadManager.h"
     #include "Core/Mac/MacThread.h"
     #include "Core/Mac/MacThreadMisc.h"
     #include "Core/Mac/ScopedAutoreleasePool.h"

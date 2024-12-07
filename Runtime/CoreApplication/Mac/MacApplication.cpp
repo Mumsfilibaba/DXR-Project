@@ -1,5 +1,5 @@
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
 #include "CoreApplication/Mac/MacApplication.h"
@@ -9,7 +9,6 @@
 #include "CoreApplication/Platform/PlatformInputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
-
 #include <AppKit/AppKit.h>
 #include <IOKit/graphics/IOGraphicsLib.h>
 
