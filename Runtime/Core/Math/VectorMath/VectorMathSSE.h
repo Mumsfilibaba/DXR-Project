@@ -10,8 +10,8 @@
     #error "No valid platform. This code requires SSE support on Windows or macOS."
 #endif
 
-typedef __m128  FFloat128;
-typedef __m128i FInt128;
+typedef __m128 FFloat128;
+// TODO: define a fallback to typedef __m128i FInt128;
 
 struct FVectorMathSSE
 {

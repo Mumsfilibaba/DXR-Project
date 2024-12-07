@@ -60,7 +60,7 @@ function build_rules(name)
         floating_point = "Fast",
 
         -- @brief - Enable vector extensions
-        vector_extensions = "Default",
+        vector_extensions = "AVX2",
 
         -- @brief - Language to compile
         language = "C++",

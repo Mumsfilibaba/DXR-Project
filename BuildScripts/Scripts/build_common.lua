@@ -21,7 +21,7 @@ local g_is_monolithic
 local g_modules = {}
 
 -- Check if the module should be built monolithically
-function is_global_monolithic()
+function global_is_monolithic()
     if g_is_monolithic == nil then
         g_is_monolithic = (_OPTIONS["monolithic"] ~= nil)
     end

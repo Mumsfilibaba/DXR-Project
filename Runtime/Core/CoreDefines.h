@@ -26,6 +26,21 @@
     #error "Unknown Compiler"
 #endif
 
+// Define the standard SSE macros since MSVC does not do this for us
+#if PLATFORM_COMPILER_MSVC
+    #if defined(_M_IX86_FP) && (_M_IX86_FP >= 1)
+        #define __SSE__
+    #endif
+    #if defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2)
+        #define __SSE__
+        #define __SSE2__
+        #define __SSE3__
+        #define __SSSE3__
+        #define __SSE4_1__
+        #define __SSE4_2__
+    #endif
+#endif
+
 // Platform Detection
 #if defined(_WIN32) || defined(_WIN64)
     #ifndef PLATFORM_WINDOWS
@@ -78,7 +93,7 @@
 // Check for SSE intrinsics support
 #if PLATFORM_ARCHITECTURE_X86_X64
     // SSE
-    #if defined(__SSE__) || (defined(_M_IX86_FP) && _M_IX86_FP >= 1)
+    #if defined(__SSE__)
         #ifndef PLATFORM_SUPPORT_SSE_INTRIN
             #define PLATFORM_SUPPORT_SSE_INTRIN (1)
         #endif
@@ -87,7 +102,7 @@
     #endif
 
     // SSE2
-    #if defined(__SSE2__) || defined(_M_X64) || (defined(_M_IX86_FP) && _M_IX86_FP >= 2)
+    #if defined(__SSE2__)
         #ifndef PLATFORM_SUPPORT_SSE2_INTRIN
             #define PLATFORM_SUPPORT_SSE2_INTRIN (1)
         #endif

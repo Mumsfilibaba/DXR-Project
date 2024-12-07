@@ -46,7 +46,7 @@ function target_build_rules(name, workspace)
     self.target_type = ETargetType.Client
     
     -- @brief - Whether or not the build should be forced monolithic
-    self.is_monolithic = is_global_monolithic()
+    self.is_monolithic = global_is_monolithic()
 
     -- @brief - Helper function for retrieving path
     local path_to_target = join_path(self.workspace.get_engine_path(), self.name)

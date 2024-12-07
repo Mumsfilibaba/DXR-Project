@@ -35,7 +35,7 @@ function module_build_rules(name)
         log_info("\n--- Generating Module '%s' ---", self.name)
 
         -- Handle monolithic build
-        self.is_monolithic = is_global_monolithic()
+        self.is_monolithic = global_is_monolithic()
         if self.is_monolithic then
             log_info("    Build is monolithic")
 

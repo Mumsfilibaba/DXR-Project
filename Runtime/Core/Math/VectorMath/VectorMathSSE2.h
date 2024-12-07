@@ -10,6 +10,8 @@
     #error "No valid platform. This code requires SSE2 support on Windows or macOS."
 #endif
 
+typedef __m128i FInt128;
+
 struct FVectorMathSSE2 : public FVectorMathSSE
 {
     static FORCEINLINE FInt128 VECTORCALL VectorLoadInt(const int32* Source) noexcept

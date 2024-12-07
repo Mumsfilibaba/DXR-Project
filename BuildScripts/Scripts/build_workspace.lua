@@ -1059,7 +1059,7 @@ function workspace_rules(workspace_name)
         log_info("    RuntimeFolderPath = '%s'", self.get_runtime_folder_path())
         
         -- Check if the command line overrides monolithic builds
-        if is_global_monolithic() then
+        if global_is_monolithic() then
             self.add_defines { "MONOLITHIC_BUILD=(1)" }
         end
 
