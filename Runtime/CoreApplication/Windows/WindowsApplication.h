@@ -1,9 +1,9 @@
 #pragma once 
-#include "Windows.h"
-#include "XInputDevice.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Windows/Windows.h"
+#include "CoreApplication/Windows/XInputDevice.h"
 #include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericApplication.h"
 
@@ -51,29 +51,45 @@ class COREAPPLICATION_API FWindowsApplication final : public FGenericApplication
 public:
 
     // Creates a FWindowsAppliction and returns it as a FGenericApplication. It also assigns the global 
-    // WindowsApplication pointer in the FWindowsApplication constructor which is later reset in the 
+    // GWindowsApplication pointer in the FWindowsApplication constructor which is later reset in the 
     // FWindowsApplication destructor.
     static TSharedPtr<FGenericApplication> Create();
 
 public:
+
     FWindowsApplication(HINSTANCE InInstance, HICON InIcon);
     virtual ~FWindowsApplication();
 
+public:
+
     // FGenericApplication Interface
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
+
     virtual void Tick(float Delta) override final;
+
     virtual void UpdateInputDevices() override final;
+
     virtual FInputDevice* GetInputDevice() override final;
+
     virtual bool SupportsHighPrecisionMouse() const override final { return false; }
+
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
+
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
+
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
+
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
+
     virtual TSharedRef<FGenericWindow> GetCapture() const override final;
+
     virtual TSharedRef<FGenericWindow> GetActiveWindow() const override final;
-    virtual TSharedRef<FGenericWindow> GetForegroundWindow() const override final;
+
     virtual void QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const override final;
+
     virtual void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler) override final;
+
+public:
 
     TSharedRef<FWindowsWindow> GetWindowsWindowFromHWND(HWND Window) const;
     void StoreMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY);
@@ -116,4 +132,4 @@ private:
     FCriticalSection ClosedWindowsCS;
 };
 
-extern COREAPPLICATION_API FWindowsApplication* WindowsApplication;
+extern COREAPPLICATION_API FWindowsApplication* GWindowsApplication;

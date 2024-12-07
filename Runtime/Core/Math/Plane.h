@@ -139,7 +139,7 @@ public:
     #if !USE_VECTOR_MATH
         FVector3 Normal = GetNormal();
 
-        const float RcpLength = 1.0f / Normal.Length();
+        const float RcpLength = 1.0f / Normal.GetLength();
         X *= RcpLength;
         Y *= RcpLength;
         Z *= RcpLength;

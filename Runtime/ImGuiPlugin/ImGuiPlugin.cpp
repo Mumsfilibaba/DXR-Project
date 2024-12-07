@@ -851,7 +851,7 @@ void FImGuiPlugin::OnUpdatePlatformWindow(ImGuiViewport* Viewport)
         ViewportData->Window->SetStyle(WindowStyle);
 
         // TODO: This should be moved into FWindowsWindow::SetStyle
-    #if PLATFORM_WINDOWS
+    #if 0 && PLATFORM_WINDOWS
         if ((WindowStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
         {
             PlatformWindow->SetWindowFocus();

@@ -1,6 +1,7 @@
 #pragma once
 #include "Core/Core.h"
 #include <cmath>
+#include <cfloat>
 
 // bool constants
 #define LIMITS_DIGITS_BOOL (1)
@@ -48,24 +49,29 @@
 #define LIMITS_MAX_UINT64 ((uint64)(18446744073709551615ULL))
 
 // float constants
-#define LIMITS_DIGITS_FLT (24)  // Number of mantissa bits for float
+#define LIMITS_DIGITS_FLT (24) // Number of mantissa bits for float
 #define LIMITS_MIN_FLT ((float)(1.175494351e-38F))
 #define LIMITS_MAX_FLT ((float)(3.402823466e+38F))
 #define LIMITS_EPS_FLT ((float)(1.1920928955078125e-07F))
 
 // double constants
-#define LIMITS_DIGITS_DBL (53)  // Number of mantissa bits for double
+#define LIMITS_DIGITS_DBL (53) // Number of mantissa bits for double
 #define LIMITS_MIN_DBL ((double)(2.2250738585072014e-308))
 #define LIMITS_MAX_DBL ((double)(1.7976931348623158e+308))
 #define LIMITS_EPS_DBL ((double)(2.2204460492503131e-16))
 
 // long double constants
-// Note: The exact values for long double depend on the platform and compiler.
-// Below are typical values for an 80-bit long double (x87) on x86 architectures.
-#define LIMITS_DIGITS_LDBL (64)  // Number of mantissa bits for long double (commonly 64)
-#define LIMITS_MIN_LDBL ((long double)(3.362103143112093506262677817e-4932L))
-#define LIMITS_MAX_LDBL ((long double)(1.18973149535723176502e+4932L))
-#define LIMITS_EPS_LDBL ((long double)(1.08420217248550443401e-19L))
+#if 0 // Note: Disabled currently disabled since it seems to be incompatible with MSVC
+    #define LIMITS_DIGITS_LDBL (64) // Number of mantissa bits for long double
+    #define LIMITS_MIN_LDBL ((long double)(3.362103143112093506262677817e-4932L))
+    #define LIMITS_MAX_LDBL ((long double)(1.18973149535723176502e+4932L))
+    #define LIMITS_EPS_LDBL ((long double)(1.08420217248550443401e-19L))
+#else
+    #define LIMITS_DIGITS_LDBL LIMITS_DIGITS_DBL
+    #define LIMITS_MIN_LDBL LIMITS_MIN_DBL
+    #define LIMITS_MAX_LDBL LIMITS_MAX_DBL
+    #define LIMITS_EPS_LDBL LIMITS_EPS_DBL
+#endif
 
 template<typename T>
 struct TNumericLimits;

@@ -4,7 +4,6 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/CRC.h"
 
 typedef TSharedRef<class FD3D12VertexLayout>            FD3D12VertexLayoutRef;
@@ -303,7 +302,7 @@ public:
     virtual ~FD3D12GraphicsPipelineState();
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
-    
+
     virtual void SetDebugName(const FString& InName) override final
     {
         FD3D12PipelineStateCommon::SetDebugName(InName);

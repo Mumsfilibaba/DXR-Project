@@ -1,6 +1,6 @@
-#include "WindowsWindow.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Platform/PlatformMisc.h"
+#include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
@@ -82,8 +82,8 @@ bool FWindowsWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     ::AdjustWindowRectEx(&ClientRect, NewStyle.Style, false, NewStyle.StyleEx);
 #endif
 
-    int32 PositionX  = InInitializer.Position.x;
-    int32 PositionY  = InInitializer.Position.y;
+    int32 PositionX  = InInitializer.Position.X;
+    int32 PositionY  = InInitializer.Position.Y;
     int32 RealWidth  = ClientRect.right - ClientRect.left;
     int32 RealHeight = ClientRect.bottom - ClientRect.top;
 
@@ -347,8 +347,8 @@ void FWindowsWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
     if (IsValid())
     {
-        int32 PositionX  = Shape.Position.x;
-        int32 PositionY  = Shape.Position.y;
+        int32 PositionX  = Shape.Position.X;
+        int32 PositionY  = Shape.Position.X;
 
         uint32 Flags = SWP_NOZORDER | SWP_NOACTIVATE;
         if (!bMove)

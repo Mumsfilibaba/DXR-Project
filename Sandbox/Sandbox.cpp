@@ -526,7 +526,7 @@ bool FSandbox::Init()
                 if (NewActor)
                 {
                     const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
-                    NewActor->SetName(FString::CreateFormatted("Street Light (%s) %d", Mesh->GetName().GetCString(), i));
+                    NewActor->SetName(FString::CreateFormatted("Street Light (%s) %d", *Mesh->GetName(), i));
                     NewActor->GetTransform().SetUniformScale(0.25f);
                     NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
 

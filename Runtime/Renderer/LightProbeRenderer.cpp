@@ -176,7 +176,7 @@ bool FLightProbeRenderer::CreateSkyLightResources(FFrameResources& FrameResource
         return false;
     }
 
-    const int32 SpecularIrradianceMiplevels = FMath::Max<int32>(FMath::Log2(static_cast<float>(FrameResources.SpecularIrradianceProbeSize)), 1);
+    const int32 SpecularIrradianceMiplevels = FMath::Max<int32>(static_cast<uint32>(FMath::Log2(static_cast<float>(FrameResources.SpecularIrradianceProbeSize))), 1);
     LightProbeInfo.Extent       = FIntVector3(FrameResources.SpecularIrradianceProbeSize, FrameResources.SpecularIrradianceProbeSize, 0);
     LightProbeInfo.NumMipLevels = uint8(SpecularIrradianceMiplevels);
 

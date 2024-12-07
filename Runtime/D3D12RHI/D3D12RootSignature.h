@@ -2,8 +2,6 @@
 #include "D3D12DeviceChild.h"
 #include "D3D12Shader.h"
 #include "D3D12RefCounted.h"
-#include "Core/Utilities/StringUtilities.h"
-#include "Core/Utilities/HashUtilities.h"
 #include "Core/Containers/Map.h"
 
 typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;

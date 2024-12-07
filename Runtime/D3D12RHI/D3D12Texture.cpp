@@ -31,13 +31,13 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     ResourceDesc.Layout           = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     ResourceDesc.MipLevels        = static_cast<UINT16>(Info.NumMipLevels);
     ResourceDesc.Alignment        = 0;
-    ResourceDesc.Width            = Info.Extent.x;
-    ResourceDesc.Height           = Info.Extent.y;
+    ResourceDesc.Width            = Info.Extent.X;
+    ResourceDesc.Height           = Info.Extent.Y;
     ResourceDesc.SampleDesc.Count = Info.NumSamples;
     
     if (Info.IsTexture3D())
     {
-        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(Info.Extent.z);
+        ResourceDesc.DepthOrArraySize = static_cast<UINT16>(Info.Extent.Z);
     }
     else 
     {
@@ -59,27 +59,27 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         ResourceDesc.SampleDesc.Quality = 0;
     }
 
-    D3D12_CLEAR_VALUE* ClearValue = nullptr;
-    D3D12_CLEAR_VALUE  D3D12ClearValue;
-    if (Info.IsRenderTarget() || Info.IsDepthStencil())
-    {
-        FMemory::Memzero(&D3D12ClearValue);
-        ClearValue = &D3D12ClearValue;
+    D3D12_CLEAR_VALUE ClearValue;
 
-        D3D12ClearValue.Format = (Info.ClearValue.Format != EFormat::Unknown) ? ConvertFormat(Info.ClearValue.Format) : ResourceDesc.Format;
+    const bool bSupportClearValue = Info.IsRenderTarget() || Info.IsDepthStencil();
+    if (bSupportClearValue)
+    {
+        FMemory::Memzero(&ClearValue);
+
+        ClearValue.Format = (Info.ClearValue.Format != EFormat::Unknown) ? ConvertFormat(Info.ClearValue.Format) : ResourceDesc.Format;
         if (Info.ClearValue.IsDepthStencilValue())
         {
-            D3D12ClearValue.DepthStencil.Depth   = Info.ClearValue.AsDepthStencil().Depth;
-            D3D12ClearValue.DepthStencil.Stencil = static_cast<uint8>(Info.ClearValue.AsDepthStencil().Stencil);
+            ClearValue.DepthStencil.Depth   = Info.ClearValue.AsDepthStencil().Depth;
+            ClearValue.DepthStencil.Stencil = static_cast<uint8>(Info.ClearValue.AsDepthStencil().Stencil);
         }
         else if (Info.ClearValue.IsColorValue())
         {
-            FMemory::Memcpy(D3D12ClearValue.Color, &Info.ClearValue.ColorValue.r, sizeof(float[4]));
+            FMemory::Memcpy(ClearValue.Color, Info.ClearValue.ColorValue.RGBA, sizeof(float[4]));
         }
     }
 
     FD3D12ResourceRef NewResource = new FD3D12Resource(GetDevice(), ResourceDesc, D3D12_HEAP_TYPE_DEFAULT);
-    if (!NewResource->Initialize(D3D12_RESOURCE_STATE_COMMON, ClearValue))
+    if (!NewResource->Initialize(D3D12_RESOURCE_STATE_COMMON, bSupportClearValue ? &ClearValue : nullptr))
     {
         return false;
     }
@@ -196,8 +196,8 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
         Context->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
 
         // Transfer all the miplevels
-        uint32 Width  = Info.Extent.x;
-        uint32 Height = Info.Extent.y;
+        uint32 Width  = Info.Extent.X;
+        uint32 Height = Info.Extent.Y;
         for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
         {
             // TODO: This does not feel optimal
@@ -549,8 +549,8 @@ FD3D12BackBufferTexture::~FD3D12BackBufferTexture()
 
 void FD3D12BackBufferTexture::Resize(uint32 InWidth, uint32 InHeight)
 {
-    Info.Extent.x = InWidth;
-    Info.Extent.y = InHeight;
+    Info.Extent.X = InWidth;
+    Info.Extent.Y = InHeight;
 }
 
 FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture()

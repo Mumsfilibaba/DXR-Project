@@ -1,5 +1,5 @@
 #pragma once
-#include "ITextureImporter.h"
+#include "Engine/Assets/ITextureImporter.h"
 
 struct FTextureImporterDDS : public ITextureImporter
 {

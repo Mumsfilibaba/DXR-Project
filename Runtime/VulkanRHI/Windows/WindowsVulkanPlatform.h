@@ -60,7 +60,7 @@ struct FWindowsVulkanPlatform : public FGenericVulkanPlatform
         Win32SurfaceCreateInfo.pNext     = nullptr;
         Win32SurfaceCreateInfo.flags     = 0;
         Win32SurfaceCreateInfo.hwnd      = reinterpret_cast<HWND>(InWindowHandle);
-        Win32SurfaceCreateInfo.hinstance = WindowsApplication->GetInstance();
+        Win32SurfaceCreateInfo.hinstance = GWindowsApplication->GetInstance();
 
         return vkCreateWin32SurfaceKHR(Instance, &Win32SurfaceCreateInfo, nullptr, OutSurface);
     #else

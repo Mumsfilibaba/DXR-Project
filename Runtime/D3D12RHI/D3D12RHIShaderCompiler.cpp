@@ -1,5 +1,4 @@
 #include "D3D12RHIShaderCompiler.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"

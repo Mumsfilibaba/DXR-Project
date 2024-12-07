@@ -11,7 +11,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedAdd(volatile int8* Target, int8 Value)
     {
-        return static_cast<int8>(::_InterlockedExchangeAdd8(static_cast<volatile CHAR*>(Target), static_cast<CHAR>(Value)));
+        return static_cast<int8>(::_InterlockedExchangeAdd8(reinterpret_cast<volatile char*>(Target), static_cast<char>(Value)));
     }
 
     static FORCEINLINE int16 InterlockedAdd(volatile int16* Target, int16 Value)
@@ -31,7 +31,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedSub(volatile int8* Target, int8 Value)
     {
-        return static_cast<int8>(::_InterlockedExchangeAdd8(static_cast<volatile CHAR*>(Target), -static_cast<CHAR>(Value)));
+        return static_cast<int8>(::_InterlockedExchangeAdd8(reinterpret_cast<volatile char*>(Target), -static_cast<char>(Value)));
     }
 
     static FORCEINLINE int16 InterlockedSub(volatile int16* Target, int16 Value)
@@ -51,7 +51,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedAnd(volatile int8* Target, int8 Value)
     {
-        return static_cast<int8>(::_InterlockedAnd8(static_cast<volatile CHAR*>(Target), static_cast<CHAR>(Value)));
+        return static_cast<int8>(::_InterlockedAnd8(reinterpret_cast<volatile char*>(Target), static_cast<char>(Value)));
     }
 
     static FORCEINLINE int16 InterlockedAnd(volatile int16* Target, int16 Value)
@@ -71,7 +71,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedOr(volatile int8* Target, int8 Value)
     {
-        return static_cast<int8>(::_InterlockedOr8(static_cast<volatile CHAR*>(Target), static_cast<CHAR>(Value)));
+        return static_cast<int8>(::_InterlockedOr8(reinterpret_cast<volatile char*>(Target), static_cast<char>(Value)));
     }
 
     static FORCEINLINE int16 InterlockedOr(volatile int16* Target, int16 Value)
@@ -91,7 +91,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedXor(volatile int8* Target, int8 Value)
     {
-        return static_cast<int8>(::_InterlockedXor8(static_cast<volatile CHAR*>(Target), static_cast<CHAR>(Value)));
+        return static_cast<int8>(::_InterlockedXor8(reinterpret_cast<volatile char*>(Target), static_cast<char>(Value)));
     }
 
     static FORCEINLINE int16 InterlockedXor(volatile int16* Target, int16 Value)
@@ -111,7 +111,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedIncrement(volatile int8* Target)
     {
-        return static_cast<int8>(::_InterlockedExchangeAdd8(static_cast<volatile CHAR*>(Target), 1)) + 1;
+        return static_cast<int8>(::_InterlockedExchangeAdd8(reinterpret_cast<volatile char*>(Target), 1)) + 1;
     }
 
     static FORCEINLINE int16 InterlockedIncrement(volatile int16* Target)
@@ -131,7 +131,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedDecrement(volatile int8* Target)
     {
-        return static_cast<int8>(::_InterlockedExchangeAdd8(static_cast<volatile CHAR*>(Target), -1)) - 1;
+        return static_cast<int8>(::_InterlockedExchangeAdd8(reinterpret_cast<volatile char*>(Target), -1)) - 1;
     }
 
     static FORCEINLINE int16 InterlockedDecrement(volatile int16* Target)
@@ -151,7 +151,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedCompareExchange(volatile int8* Target, int8 Exchange, int8 Comparand)
     {
-        return static_cast<int8>(::_InterlockedCompareExchange8(static_cast<volatile CHAR*>(Target), static_cast<CHAR>(Exchange), static_cast<CHAR>(Comparand)));
+        return static_cast<int8>(::_InterlockedCompareExchange8(reinterpret_cast<volatile char*>(Target), static_cast<char>(Exchange), static_cast<char>(Comparand)));
     }
 
     static FORCEINLINE int16 InterlockedCompareExchange(volatile int16* Target, int16 Exchange, int16 Comparand)
@@ -171,7 +171,7 @@ struct FWindowsInterlocked final : public FGenericInterlocked
 
     static FORCEINLINE int8 InterlockedExchange(volatile int8* Target, int8 Value)
     {
-        return static_cast<int8>(::_InterlockedExchange8(static_cast<volatile CHAR*>(Target), static_cast<CHAR>(Value)));
+        return static_cast<int8>(::_InterlockedExchange8(reinterpret_cast<volatile char*>(Target), static_cast<char>(Value)));
     }
 
     static FORCEINLINE int16 InterlockedExchange(volatile int16* Target, int16 Value)

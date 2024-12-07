@@ -10,27 +10,22 @@
 
     #if PLATFORM_SUPPORT_SSE4_2_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-
         #include "Core/Math/VectorMath/VectorMathSSE4_2.h"
         typedef FVectorMathSSE4_2 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE4_1_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-
         #include "Core/Math/VectorMath/VectorMathSSE4_1.h"
         typedef FVectorMathSSE4_1 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSSE3_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-
         #include "Core/Math/VectorMath/VectorMathSSSE3.h"
         typedef FVectorMathSSSE3 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE3_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-
         #include "Core/Math/VectorMath/VectorMathSSE3.h"
         typedef FVectorMathSSE3 FPlatformVectorMath;
     #elif PLATFORM_SUPPORT_SSE2_INTRIN
         #define USE_INT_VECTOR_MATH (1)
-
         #include "Core/Math/VectorMath/VectorMathSSE2.h"
         typedef FVectorMathSSE2 FPlatformVectorMath;
     #else

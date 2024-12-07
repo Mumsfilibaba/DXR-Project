@@ -44,7 +44,6 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     TArray<uint32>   SkyboxIndicies32;
 
     // Create a sphere used for the Skybox
-    void* SkyboxInitalIndicies = nullptr;
     {
         FMeshCreateInfo SkyboxMesh = FMeshFactory::CreateSphere(0);
         SkyboxIndexCount = SkyboxMesh.Indices.Size();

@@ -1,7 +1,7 @@
-#include "WindowsCursor.h"
-#include "WindowsWindow.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/SharedRef.h"
+#include "CoreApplication/Windows/WindowsCursor.h"
+#include "CoreApplication/Windows/WindowsWindow.h"
 
 void FWindowsCursor::SetCursor(ECursor Cursor)
 {
@@ -49,7 +49,7 @@ void FWindowsCursor::SetCursor(ECursor Cursor)
     // TODO: Log error
 }
 
-void FWindowsCursor::SetPosition(int32 x, int32 y) const
+void FWindowsCursor::SetPosition(int32 x, int32 y)
 {
     ::SetCursorPos(x, y);
 }

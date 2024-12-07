@@ -1,6 +1,6 @@
-#include "WindowsApplication.h"
-#include "WindowsApplicationMisc.h"
-#include "WindowsOutputDeviceConsole.h"
+#include "CoreApplication/Windows/WindowsApplication.h"
+#include "CoreApplication/Windows/WindowsApplicationMisc.h"
+#include "CoreApplication/Windows/WindowsOutputDeviceConsole.h"
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
 
 FOutputDeviceConsole* FWindowsApplicationMisc::CreateOutputDeviceConsole()
@@ -25,9 +25,9 @@ void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
         if (Message.message == WM_QUIT)
         {
-            if (WindowsApplication)
+            if (GWindowsApplication)
             {
-                WindowsApplication->StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
+                GWindowsApplication->StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
             }
         }
 

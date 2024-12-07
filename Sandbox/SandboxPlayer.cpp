@@ -100,37 +100,37 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     FVector3 CameraAcceleration;
     if (FMath::Abs(LeftThumbY.Value) > Deadzone)
     {
-        CameraAcceleration.z = Acceleration * LeftThumbY.Value;
+        CameraAcceleration.Z = Acceleration * LeftThumbY.Value;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::W))
     {
-        CameraAcceleration.z = Acceleration;
+        CameraAcceleration.Z = Acceleration;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::S))
     {
-        CameraAcceleration.z = -Acceleration;
+        CameraAcceleration.Z = -Acceleration;
     }
 
     if (FMath::Abs(LeftThumbX.Value) > Deadzone)
     {
-        CameraAcceleration.x = Acceleration * -LeftThumbX.Value;
+        CameraAcceleration.X = Acceleration * -LeftThumbX.Value;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::A))
     {
-        CameraAcceleration.x = Acceleration;
+        CameraAcceleration.X = Acceleration;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::D))
     {
-        CameraAcceleration.x = -Acceleration;
+        CameraAcceleration.X = -Acceleration;
     }
 
     if (GetPlayerInput()->IsKeyDown(EKeys::Q))
     {
-        CameraAcceleration.y = Acceleration;
+        CameraAcceleration.Y = Acceleration;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::E))
     {
-        CameraAcceleration.y = -Acceleration;
+        CameraAcceleration.Y = -Acceleration;
     }
 
     const float Deacceleration = -5.0f;
@@ -138,7 +138,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
 
     const FVector3 Speed = CameraSpeed * DeltaTime;
-    Camera->Move(Speed.x, Speed.y, Speed.z);
+    Camera->Move(Speed.X, Speed.Y, Speed.Z);
     Camera->UpdateMatrices();
 }
 

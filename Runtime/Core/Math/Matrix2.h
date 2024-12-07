@@ -260,8 +260,8 @@ public:
         FVector2 Result;
 
     #if !USE_VECTOR_MATH
-        Result.x = (Vector.x * M[0][0]) + (Vector.y * M[1][0]);
-        Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]);
+        Result.X = (Vector.X * M[0][0]) + (Vector.Y * M[1][0]);
+        Result.Y = (Vector.X * M[0][1]) + (Vector.Y * M[1][1]);
     #else
         FFloat128 X_128      = FVectorMath::VectorSet1(Vector.X);
         FFloat128 Y_128      = FVectorMath::VectorSet1(Vector.Y);
@@ -397,10 +397,10 @@ public:
     FORCEINLINE FMatrix2& operator+=(const FMatrix2& Other) noexcept
     {
     #if !USE_VECTOR_MATH
-        Result.M[0][0] = M[0][0] + Other.M[0][0];
-        Result.M[0][1] = M[0][1] + Other.M[0][1];
-        Result.M[1][0] = M[1][0] + Other.M[1][0];
-        Result.M[1][1] = M[1][1] + Other.M[1][1];
+        M[0][0] = M[0][0] + Other.M[0][0];
+        M[0][1] = M[0][1] + Other.M[0][1];
+        M[1][0] = M[1][0] + Other.M[1][0];
+        M[1][1] = M[1][1] + Other.M[1][1];
     #else
         FFloat128 M_128 = FVectorMath::VectorAdd(&M[0][0], &Other.M[0][0]);
         FVectorMath::VectorStore(M_128, &M[0][0]);

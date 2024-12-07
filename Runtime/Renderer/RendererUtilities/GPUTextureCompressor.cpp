@@ -208,7 +208,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     constexpr uint32 NumMipsSkipped = 3;
 
     // Calculate the amount of compressed miplevels
-    CompressedTexInfo.NumMipLevels = FMath::Max<uint32>(FMath::Log2(static_cast<float>(SourceInfo.Extent.X)) - NumMipsSkipped, 1u);
+    CompressedTexInfo.NumMipLevels = FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(SourceInfo.Extent.X))) - NumMipsSkipped, 1u);
 
     FRHITextureRef CompressedTex = RHICreateTexture(CompressedTexInfo, EResourceAccess::UnorderedAccess);
     if (!CompressedTex)

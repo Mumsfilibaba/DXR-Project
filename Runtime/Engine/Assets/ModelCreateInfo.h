@@ -42,7 +42,7 @@ struct FSubMeshInfo
     int32  MaterialIndex;
 };
 
-struct FMeshCreateInfo
+struct ENGINE_API FMeshCreateInfo
 {
     FMeshCreateInfo()
         : Name()

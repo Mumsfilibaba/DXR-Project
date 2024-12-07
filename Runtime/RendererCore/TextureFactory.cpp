@@ -71,7 +71,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 
     const bool bGenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
     
-    const uint32 NumMips = bGenerateMips ? FMath::Max<uint32>(FMath::Log2(static_cast<float>(FMath::Max(Width, Height))), 1u) : 1u;
+    const uint32 NumMips = bGenerateMips ? FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(FMath::Max(Width, Height)))), 1u) : 1u;
     CHECK(NumMips != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
@@ -108,7 +108,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
     const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
 
-    const uint32 NumMips = bGenerateNumMips ? FMath::Max<uint32>(FMath::Log2(static_cast<float>(CubeMapSize)), 1u) : 1u;
+    const uint32 NumMips = bGenerateNumMips ? FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(CubeMapSize))), 1u) : 1u;
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTextureCube(Format, CubeMapSize, NumMips, 1, ETextureUsageFlags::UnorderedAccess);
 
     FRHITextureRef StagingTexture = RHICreateTexture(TextureInfo, EResourceAccess::Common, nullptr);

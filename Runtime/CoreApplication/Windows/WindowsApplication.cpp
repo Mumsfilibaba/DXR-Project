@@ -1,10 +1,10 @@
-#include "WindowsApplication.h"
-#include "WindowsInputMapper.h"
-#include "WindowsCursor.h"
-#include "WindowsWindow.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/OutputDeviceLogger.h"
+#include "CoreApplication/Windows/WindowsApplication.h"
+#include "CoreApplication/Windows/WindowsInputMapper.h"
+#include "CoreApplication/Windows/WindowsCursor.h"
+#include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
@@ -18,7 +18,7 @@ static TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
     true,
     EConsoleVariableFlags::Default);
 
-COREAPPLICATION_API FWindowsApplication* WindowsApplication = nullptr;
+COREAPPLICATION_API FWindowsApplication* GWindowsApplication = nullptr;
 
 TSharedPtr<FGenericApplication> FWindowsApplication::Create()
 {
@@ -29,7 +29,7 @@ TSharedPtr<FGenericApplication> FWindowsApplication::Create()
     HICON Icon = ::LoadIcon(NULL, IDI_APPLICATION);
 
     TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeSharedPtr<FWindowsApplication>(AppInstanceHandle, Icon);
-    WindowsApplication = NewWindowsApplication.Get();
+    GWindowsApplication = NewWindowsApplication.Get();
     return NewWindowsApplication;
 }
 
@@ -66,9 +66,9 @@ FWindowsApplication::~FWindowsApplication()
 {
     Windows.Clear();
 
-    if (WindowsApplication == this)
+    if (GWindowsApplication == this)
     {
-        WindowsApplication = nullptr;
+        GWindowsApplication = nullptr;
     }
 }
 
@@ -255,15 +255,10 @@ TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
     return GetWindowsWindowFromHWND(ForegroundWindow);
 }
 
-TSharedRef<FGenericWindow> FWindowsApplication::GetForegroundWindow() const
-{
-    return GetWindowsWindowFromHWND(ForegroundWindow);
-}
-
 void FWindowsApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const
 {
-    ::EnumDisplayMonitors(nullptr, nullptr, FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(&OutDisplayInfo));
-    OutDisplayInfo.MonitorInfos.Shrink();
+    ::EnumDisplayMonitors(nullptr, nullptr, FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(&OutMonitorInfo));
+    OutMonitorInfo.Shrink();
 }
 
 void FWindowsApplication::SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
@@ -343,13 +338,13 @@ void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
 
 LRESULT FWindowsApplication::StaticMessageProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    return WindowsApplication ? WindowsApplication->MessageProc(Window, Message, wParam, lParam) : ::DefWindowProc(Window, Message, wParam, lParam);
+    return GWindowsApplication ? GWindowsApplication->MessageProc(Window, Message, wParam, lParam) : ::DefWindowProc(Window, Message, wParam, lParam);
 }
 
-BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, LPARAM Data)
+BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, LPARAM InMonitorInfos)
 {
-    FDisplayInfo* DisplayInfo = reinterpret_cast<FDisplayInfo*>(Data);
-    CHECK(DisplayInfo != nullptr);
+    TArray<FMonitorInfo>* MonitorInfos = reinterpret_cast<TArray<FMonitorInfo>*>(InMonitorInfos);
+    CHECK(MonitorInfos != nullptr);
 
     MONITORINFOEX MonitorInfo;
     FMemory::Memzero(&MonitorInfo);
@@ -376,13 +371,7 @@ BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, L
     NewMonitorInfo.DisplayDPI     = DpiX;
     NewMonitorInfo.DisplayScaling = static_cast<float>(DpiX) / 96.0f;
 
-    if (NewMonitorInfo.bIsPrimary)
-    {
-        DisplayInfo->PrimaryDisplayWidth  = NewMonitorInfo.MainSize.x;
-        DisplayInfo->PrimaryDisplayHeight = NewMonitorInfo.MainSize.y;
-    }
-
-    DisplayInfo->MonitorInfos.Add(NewMonitorInfo);
+    MonitorInfos->Add(NewMonitorInfo);
     return TRUE;
 }
 
@@ -415,7 +404,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         {
             if (MessageWindow)
             {
-                MessageHandler->OnMouseLeft(MessageWindow);
+                MessageHandler->OnMouseLeft();
             }
 
             bIsTrackingMouse = false;
@@ -489,7 +478,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
                 if (MessageWindow)
                 {
-                    MessageHandler->OnMouseEntered(MessageWindow);
+                    MessageHandler->OnMouseEntered();
                 }
             }
 
@@ -502,7 +491,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
 
         case WM_INPUT:
         {
-            MessageHandler->OnHighPrecisionMouseInput(MessageWindow, MouseDeltaX, MouseDeltaY);
+            MessageHandler->OnHighPrecisionMouseInput(MouseDeltaX, MouseDeltaY);
             break;
         }
 
@@ -536,10 +525,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 }
             }
 
-            POINT CursorPos;
-            ::GetCursorPos(&CursorPos);
-
-            MessageHandler->OnMouseButtonDown(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), CursorPos.x, CursorPos.y);
+            MessageHandler->OnMouseButtonDown(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -573,10 +559,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 }
             }
 
-            POINT CursorPos;
-            ::GetCursorPos(&CursorPos);
-
-            MessageHandler->OnMouseButtonDoubleClick(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState(), CursorPos.x, CursorPos.y);
+            MessageHandler->OnMouseButtonDoubleClick(Button, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
@@ -609,24 +592,18 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                     Button = EMouseButtonName::Thumb2;
                 }
             }
-            
-            POINT CursorPos;
-            ::GetCursorPos(&CursorPos);
 
-            MessageHandler->OnMouseButtonUp(Button, FPlatformApplicationMisc::GetModifierKeyState(), CursorPos.x, CursorPos.y);
+            MessageHandler->OnMouseButtonUp(Button, FPlatformApplicationMisc::GetModifierKeyState());
             break;
         }
 
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
         {
-            POINT CursorPos;
-            ::GetCursorPos(&CursorPos);
+            const bool bIsVertical = Message == WM_MOUSEWHEEL;
 
-            const bool bIsVertical = (Message == WM_MOUSEWHEEL);
             const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
-
-            MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical, CursorPos.x, CursorPos.y);
+            MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical);
             break;
         }
 

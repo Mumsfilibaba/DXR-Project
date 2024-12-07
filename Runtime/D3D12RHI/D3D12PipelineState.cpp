@@ -3,6 +3,7 @@
 #include "D3D12Device.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Project/ProjectManager.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
@@ -144,6 +145,10 @@ FD3D12BlendState::~FD3D12BlendState()
 
 FD3D12PipelineStateCommon::FD3D12PipelineStateCommon(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
+{
+}
+
+FD3D12PipelineStateCommon::~FD3D12PipelineStateCommon()
 {
 }
 

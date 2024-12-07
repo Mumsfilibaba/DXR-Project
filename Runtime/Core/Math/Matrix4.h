@@ -96,10 +96,10 @@ public:
         FVector4 Result;
 
     #if !USE_VECTOR_MATH
-        Result.x = (Vector.x * M[0][0]) + (Vector.y * M[1][0]) + (Vector.z * M[2][0]) + (Vector.w * M[3][0]);
-        Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]) + (Vector.z * M[2][1]) + (Vector.w * M[3][1]);
-        Result.z = (Vector.x * M[0][2]) + (Vector.y * M[1][2]) + (Vector.z * M[2][2]) + (Vector.w * M[3][2]);
-        Result.w = (Vector.x * M[0][3]) + (Vector.y * M[1][3]) + (Vector.z * M[2][3]) + (Vector.w * M[3][3]);
+        Result.X = (Vector.X * M[0][0]) + (Vector.Y * M[1][0]) + (Vector.Z * M[2][0]) + (Vector.W * M[3][0]);
+        Result.Y = (Vector.X * M[0][1]) + (Vector.Y * M[1][1]) + (Vector.Z * M[2][1]) + (Vector.W * M[3][1]);
+        Result.Z = (Vector.X * M[0][2]) + (Vector.Y * M[1][2]) + (Vector.Z * M[2][2]) + (Vector.W * M[3][2]);
+        Result.W = (Vector.X * M[0][3]) + (Vector.Y * M[1][3]) + (Vector.Z * M[2][3]) + (Vector.W * M[3][3]);
     #else
         FFloat128 Vector_128 = FVectorMath::VectorLoad(reinterpret_cast<const float*>(&Vector));
         FFloat128 Result_128 = FVectorMath::VectorTransform(M[0], Vector_128);
@@ -119,9 +119,9 @@ public:
         FVector3 Result;
 
     #if !USE_VECTOR_MATH
-        Result.x = (Vector.x * M[0][0]) + (Vector.y * M[1][0]) + (Vector.z * M[2][0]) + (1.0f * M[3][0]);
-        Result.y = (Vector.x * M[0][1]) + (Vector.y * M[1][1]) + (Vector.z * M[2][1]) + (1.0f * M[3][1]);
-        Result.z = (Vector.x * M[0][2]) + (Vector.y * M[1][2]) + (Vector.z * M[2][2]) + (1.0f * M[3][2]);
+        Result.X = (Vector.X * M[0][0]) + (Vector.Y * M[1][0]) + (Vector.Z * M[2][0]) + (1.0f * M[3][0]);
+        Result.Y = (Vector.X * M[0][1]) + (Vector.Y * M[1][1]) + (Vector.Z * M[2][1]) + (1.0f * M[3][1]);
+        Result.Z = (Vector.X * M[0][2]) + (Vector.Y * M[1][2]) + (Vector.Z * M[2][2]) + (1.0f * M[3][2]);
     #else
         FFloat128 Vector_128 = FVectorMath::VectorSet(Vector.X, Vector.Y, Vector.Z, 1.0f);
         FFloat128 Result_128 = FVectorMath::VectorTransform(M[0], Vector_128);
@@ -141,12 +141,12 @@ public:
         FVector3 Result;
 
     #if !USE_VECTOR_MATH
-        float ComponentW = (Position.x * M[0][3]) + (Position.y * M[1][3]) + (Position.z * M[2][3]) + (1.0f * M[3][3]);
+        float ComponentW = (Position.X * M[0][3]) + (Position.Y * M[1][3]) + (Position.Z * M[2][3]) + (1.0f * M[3][3]);
         ComponentW = 1.0f / ComponentW;
 
-        Result.x = ((Position.x * M[0][0]) + (Position.y * M[1][0]) + (Position.z * M[2][0]) + (1.0f * M[3][0])) * ComponentW;
-        Result.y = ((Position.x * M[0][1]) + (Position.y * M[1][1]) + (Position.z * M[2][1]) + (1.0f * M[3][1])) * ComponentW;
-        Result.z = ((Position.x * M[0][2]) + (Position.y * M[1][2]) + (Position.z * M[2][2]) + (1.0f * M[3][2])) * ComponentW;
+        Result.X = ((Position.X * M[0][0]) + (Position.Y * M[1][0]) + (Position.Z * M[2][0]) + (1.0f * M[3][0])) * ComponentW;
+        Result.Y = ((Position.X * M[0][1]) + (Position.Y * M[1][1]) + (Position.Z * M[2][1]) + (1.0f * M[3][1])) * ComponentW;
+        Result.Z = ((Position.X * M[0][2]) + (Position.Y * M[1][2]) + (Position.Z * M[2][2]) + (1.0f * M[3][2])) * ComponentW;
     #else
         FFloat128 Position_128 = FVectorMath::VectorSet(Position.X, Position.Y, Position.Z, 1.0f);
         FFloat128 VectorA      = FVectorMath::VectorTransform(M[0], Position_128);
@@ -170,9 +170,9 @@ public:
         FVector3 Result;
 
     #if !USE_VECTOR_MATH
-        Result.x = (Direction.x * M[0][0]) + (Direction.y * M[1][0]) + (Direction.z * M[2][0]);
-        Result.y = (Direction.x * M[0][1]) + (Direction.y * M[1][1]) + (Direction.z * M[2][1]);
-        Result.z = (Direction.x * M[0][2]) + (Direction.y * M[1][2]) + (Direction.z * M[2][2]);
+        Result.X = (Direction.X * M[0][0]) + (Direction.Y * M[1][0]) + (Direction.Z * M[2][0]);
+        Result.Y = (Direction.X * M[0][1]) + (Direction.Y * M[1][1]) + (Direction.Z * M[2][1]);
+        Result.Z = (Direction.X * M[0][2]) + (Direction.Y * M[1][2]) + (Direction.Z * M[2][2]);
     #else
         FFloat128 Direction_128 = FVectorMath::VectorSet(Direction.X, Direction.Y, Direction.Z, 0.0f);
         FFloat128 Result_128    = FVectorMath::VectorTransform(M[0], Direction_128);
