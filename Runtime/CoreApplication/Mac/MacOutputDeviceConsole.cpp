@@ -66,7 +66,7 @@ void FMacOutputDeviceConsole::CreateConsole()
         }
         
         // Create the window
-        ExecuteOnMainThread(^
+        FMacThreadManager::ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -128,7 +128,7 @@ void FMacOutputDeviceConsole::CreateConsole()
             [WindowHandle setOpaque:YES];
             [WindowHandle makeKeyAndOrderFront:WindowHandle];
 
-            if(!MacApplication)
+            if(!GMacApplication)
             {
                 do
                 {
@@ -143,7 +143,7 @@ void FMacOutputDeviceConsole::DestroyConsole()
 {
     if (IsVisible())
     {
-        ExecuteOnMainThread(^
+        FMacThreadManager::ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
         
@@ -210,7 +210,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
         NSAttributedString* AttributedString = CreatePrintableString(Message);
         [AttributedString retain];
         
-        ExecuteOnMainThread(^
+        FMacThreadManager::ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
 
@@ -218,7 +218,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
             [AttributedString release];
         }, NSDefaultRunLoopMode, false);
 
-        if(!MacApplication)
+        if(!GMacApplication)
         {
             FPlatformApplicationMisc::PumpMessages(true);
         }
@@ -257,7 +257,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
         NSAttributedString* AttributedString = CreatePrintableString(Message);
         [AttributedString retain];
         
-        ExecuteOnMainThread(^
+        FMacThreadManager::ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
 
@@ -268,7 +268,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
         // Return the color the original
         InternalSetConsoleColor(EConsoleColor::White);
 
-        if(!MacApplication)
+        if(!GMacApplication)
         {
             FPlatformApplicationMisc::PumpMessages(true);
         }
@@ -281,13 +281,13 @@ void FMacOutputDeviceConsole::Flush()
     
     if (WindowHandle)
     {
-        ExecuteOnMainThread(^
+        FMacThreadManager::ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
             TextView.string = @"";
         }, NSDefaultRunLoopMode, false);
 
-        if(!MacApplication)
+        if(!GMacApplication)
         {
             FPlatformApplicationMisc::PumpMessages(true);
         }
@@ -305,7 +305,7 @@ void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
         NSString* NewTitle = InTitle.GetNSString();
         [NewTitle retain];
         
-        ExecuteOnMainThread(^
+        FMacThreadManager::ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -313,7 +313,7 @@ void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
             [NewTitle release];
         }, NSDefaultRunLoopMode, true);
 
-        if(!MacApplication)
+        if(!GMacApplication)
         {
             FPlatformApplicationMisc::PumpMessages(true);
         }

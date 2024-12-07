@@ -4,7 +4,6 @@
 #include "Core/Containers/Array.h"
 #include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/InputDevice.h"
-
 #include <GameController/GameController.h>
 
 #define NUM_MAX_GAMEPADS (4)
@@ -35,7 +34,10 @@ struct FGCGamepadState
 class FGCInputDevice : public FInputDevice
 {
 public:
+
     static TSharedPtr<FGCInputDevice> CreateGCInputDevice();
+
+public:
 
     FGCInputDevice();
     virtual ~FGCInputDevice();
@@ -49,7 +51,7 @@ public:
 
     void HandleControllerConnected(GCController* InController);
     void HandleControllerDisconnected(GCController* InController);
-    
+
 private:
     void ProcessInputState(GCExtendedGamepad* InGamepad, uint32 GamepadIndex);
 

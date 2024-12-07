@@ -51,19 +51,19 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
         [self setDelegate:nil];
     }
 
-    if (MacApplication)
+    if (GMacApplication)
     {
-        TSharedRef<FMacWindow> Window = MacApplication->FindWindowFromNSWindow(self);
-        MacApplication->CloseWindow(Window);
+        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
+        GMacApplication->CloseWindow(Window);
     }
 }
 
 - (NSSize)windowWillResize:(NSWindow*)Sender toSize:(NSSize)FrameSize
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        TSharedRef<FMacWindow> Window = MacApplication->FindWindowFromNSWindow(self);
-        MacApplication->OnWindowWillResize(Window);
+        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
+        GMacApplication->OnWindowWillResize(Window);
     }
     
     return FrameSize;
@@ -71,50 +71,50 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 
 - (void)windowDidResize:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        TSharedRef<FMacWindow> Window = MacApplication->FindWindowFromNSWindow(self);
-        MacApplication->DeferEvent(Notification);
+        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
 - (void)windowDidMove:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
 - (void)windowDidMiniaturize:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
 - (void)windowDidDeminiaturize:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
 - (void)windowDidExitFullScreen:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
@@ -140,9 +140,9 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
             [self orderFront:nil];
         }
 
-        if (MacApplication)
+        if (GMacApplication)
         {
-            MacApplication->DeferEvent(Notification);
+            GMacApplication->DeferEvent(Notification);
         }
     }
 }
@@ -236,82 +236,82 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 
 - (void)mouseDown:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)mouseDragged:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)mouseUp:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)rightMouseDown:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)rightMouseDragged:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)rightMouseUp:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 // Handle other mouse-button events (e.g., middle mouse button)
 - (void)otherMouseDown:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)otherMouseDragged:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)otherMouseUp:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
 - (void)scrollWheel:(NSEvent*)Event
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Event);
+        GMacApplication->DeferEvent(Event);
     }
 }
 
@@ -336,9 +336,9 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
         Characters = (NSString*)Text;
     }
 
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Characters);
+        GMacApplication->DeferEvent(Characters);
     }
 }
 

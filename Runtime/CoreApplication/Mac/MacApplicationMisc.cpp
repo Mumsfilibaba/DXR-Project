@@ -31,9 +31,9 @@ void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Messag
 
 void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
-    PumpMessagesAppThread(bUntilEmpty);
+    FMacThreadManager::PumpMessagesAppThread(bUntilEmpty);
 
-    ExecuteOnMainThread(^
+    FMacThreadManager::ExecuteOnMainThread(^
     {
         NSMenu* MainMenu = [NSApp mainMenu];
         [MainMenu update];

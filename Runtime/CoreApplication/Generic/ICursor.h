@@ -23,12 +23,14 @@ struct ICursor
 
      /**
       * @brief Sets the type of cursor that is being used 
+      * 
       * @param Cursor New cursor type to set
       */
     virtual void SetCursor(ECursor Cursor) = 0;
 
      /** 
       * @brief Sets the position of the cursor
+      * 
       * @param x New x-position of the cursor
       * @param y New y-position of the cursor
       */
@@ -36,12 +38,14 @@ struct ICursor
 
      /**
       * @brief Retrieve the cursor position of a window
+      * 
       * @return Returns the cursor position
       */
     virtual FIntVector2 GetPosition() const = 0;
 
      /**
       * @brief Set the cursor visibility
+      * 
       * @param bIsVisible The new visibility of the cursor, true to show it and false to hide it
       */
     virtual void SetVisibility(bool bIsVisible) = 0;

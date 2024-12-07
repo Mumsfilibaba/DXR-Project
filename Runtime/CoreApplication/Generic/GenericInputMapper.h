@@ -10,6 +10,7 @@ struct EGenericInputMapper
 
     /**
      * @brief Retrieve the key-code from the scan-code 
+     * 
      * @param Scan Code - Scan-Code to convert into a engine key-code
      * @return Returns a engine key-code
      */
@@ -17,6 +18,7 @@ struct EGenericInputMapper
 
     /**
      * @brief Retrieve the scan-code from the key-code
+     * 
      * @param Key Code - Engine key-code to convert into a scan-code
      * @return Returns a scan-code representing the engine key-code
      */

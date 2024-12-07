@@ -1,6 +1,5 @@
 #pragma once
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
-
 #include <AppKit/AppKit.h>
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING

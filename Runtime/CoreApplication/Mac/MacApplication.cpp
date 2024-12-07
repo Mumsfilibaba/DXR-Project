@@ -1,11 +1,11 @@
-#include "MacApplication.h"
-#include "MacWindow.h"
-#include "MacCursor.h"
-#include "CocoaWindow.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Mac/MacRunLoop.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Threading/ScopedLock.h"
+#include "CoreApplication/Mac/MacApplication.h"
+#include "CoreApplication/Mac/MacWindow.h"
+#include "CoreApplication/Mac/CocoaWindow.h"
+#include "CoreApplication/Mac/MacCursor.h"
 #include "CoreApplication/Platform/PlatformInputMapper.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
@@ -25,31 +25,31 @@
 
 - (void)onApplicationBecomeActive:(NSNotification*)InNotification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        GMacApplication->DeferEvent(InNotification);
     }
 }
 
 - (void)onApplicationBecomeInactive:(NSNotification*)InNotification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        GMacApplication->DeferEvent(InNotification);
     }
 }
 
 - (void)displaysDidChange:(NSNotification*)InNotification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(InNotification);
+        GMacApplication->DeferEvent(InNotification);
     }
 }
 
 @end
 
-FMacApplication* MacApplication = nullptr;
+FMacApplication* GMacApplication = nullptr;
 
 TSharedPtr<FGenericApplication> FMacApplication::Create()
 {
@@ -79,12 +79,12 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     , DeferredEvents()
     , DeferredEventsCS()
 {
-    if (!MacApplication)
+    if (!GMacApplication)
     {
-        MacApplication = this;
+        GMacApplication = this;
     }
     
-    ExecuteOnMainThread(^
+    FMacThreadManager::ExecuteOnMainThread(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -189,7 +189,7 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
 
 FMacApplication::~FMacApplication()
 {
-    ExecuteOnMainThread(^
+    FMacThreadManager::ExecuteOnMainThread(^
     {
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidBecomeActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidResignActiveNotification object:nil];
@@ -211,9 +211,9 @@ FMacApplication::~FMacApplication()
 
     Windows.Clear();
 
-    if (this == MacApplication)
+    if (this == GMacApplication)
     {
-        MacApplication = nullptr;
+        GMacApplication = nullptr;
     }
 }
 
@@ -268,7 +268,7 @@ void FMacApplication::Tick(float)
     
     if (!LocalClosedCocoaWindows.IsEmpty())
     {
-        ExecuteOnMainThread(^
+        FMacThreadManager::ExecuteOnMainThread(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -309,7 +309,7 @@ bool FMacApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGeneri
 void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 {
     __block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
-    ExecuteOnMainThread(^
+    FMacThreadManager::ExecuteOnMainThread(^
     {
         FCocoaWindow* CocoaWindow = MacWindow->GetCocoaWindow();
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
@@ -318,7 +318,7 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 
 TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
 {
-    NSWindow* KeyWindow = ExecuteOnMainThreadAndReturn(^
+    NSWindow* KeyWindow = FMacThreadManager::ExecuteOnMainThreadAndReturn(^
     {
         SCOPED_AUTORELEASE_POOL();
         return [NSApp keyWindow];

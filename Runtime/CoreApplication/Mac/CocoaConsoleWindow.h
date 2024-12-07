@@ -1,6 +1,5 @@
 #pragma once 
 #include "Core/Misc/OutputDeviceConsole.h"
-
 #include <stdarg.h>
 #include <AppKit/AppKit.h>
 

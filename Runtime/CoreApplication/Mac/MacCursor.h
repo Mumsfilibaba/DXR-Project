@@ -12,14 +12,23 @@ public:
     virtual void SetPosition(int32 x, int32 y) override final;
     virtual FIntVector2 GetPosition() const override final;
     virtual void SetVisibility(bool bVisible) override final;
-    
-    // The cursor is not read from the Platform directly since we are most likely operating in a
-    // seperate thread from the main-thread where the events are sent from. In order to get around
-    // this, the cursor is updated when we process mouse events, until then we are using the
-    // precious cursor position whenever we request the position within the application.
+
+    /**
+     * @brief Updates the cursor's position based on processed mouse events.
+     * 
+     * The cursor position is not read directly from the platform because operations are likely
+     * performed on a separate thread from the main UI thread where events are dispatched.
+     * 
+     * To handle this, the cursor position is updated when mouse events are processed. Until
+     * then, the last known cursor position is used whenever the application requests the current
+     * cursor position.
+     * 
+     * @param Position The new position to update the cursor with, represented as an FIntVector2.
+     */
     void UpdateCursorPosition(const FIntVector2& Position);
-    
+
 private:
     FIntVector2 CurrentPosition;
     bool        bIsPositionInitialized;
 };
+

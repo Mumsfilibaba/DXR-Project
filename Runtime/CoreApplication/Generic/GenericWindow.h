@@ -47,6 +47,7 @@ struct FWindowShape
 
     /**
      * @brief Constructs a window shape with specified width and height, position defaults to (0,0).
+     * 
      * @param InWidth Width of the window.
      * @param InHeight Height of the window.
      */
@@ -59,6 +60,7 @@ struct FWindowShape
 
     /**
      * @brief Constructs a window shape with specified width, height, and position.
+     * 
      * @param InWidth Width of the window.
      * @param InHeight Height of the window.
      * @param x X-coordinate of the window position.
@@ -73,6 +75,7 @@ struct FWindowShape
 
     /**
      * @brief Checks if this window shape is equal to another.
+     * 
      * @param Other The other window shape to compare.
      * @return True if equal, false otherwise.
      */
@@ -83,6 +86,7 @@ struct FWindowShape
 
     /**
      * @brief Checks if this window shape is not equal to another.
+     * 
      * @param Other The other window shape to compare.
      * @return True if not equal, false otherwise.
      */
@@ -154,6 +158,7 @@ public:
 
     /**
      * @brief Initializes the platform-specific window.
+     * 
      * @param InInitializer Initialization parameters for the window.
      * @return True if initialization was successful, false otherwise.
      */
@@ -161,6 +166,7 @@ public:
 
     /**
      * @brief Shows the window and optionally sets focus to it.
+     * 
      * @param bFocus If true, sets focus to this window after showing it.
      */
     virtual void Show(bool bFocus = true) { }
@@ -176,9 +182,7 @@ public:
     virtual void Maximize() { }
 
     /**
-     * @brief Destroys the platform-specific window.
-     * 
-     * The FGenericWindow instance remains valid, but the platform handle becomes invalid.
+     * @brief Destroys the platform-specific window. The FGenericWindow instance remains valid, but the platform handle becomes invalid.
      */
     virtual void Destroy() { }
 
@@ -194,12 +198,14 @@ public:
 
     /**
      * @brief Checks if this is the current active window.
+     * 
      * @return True if this window is active, false otherwise.
      */
     virtual bool IsActiveWindow() const { return false; }
 
     /**
      * @brief Sets the window position.
+     * 
      * @param x The x-coordinate of the new window position.
      * @param y The y-coordinate of the new window position.
      */
@@ -207,24 +213,28 @@ public:
 
     /**
      * @brief Checks if the window has a valid platform handle.
+     * 
      * @return True if the platform handle is valid, false otherwise.
      */
     virtual bool IsValid() const { return false; }
 
     /**
      * @brief Checks if the window is currently minimized.
+     * 
      * @return True if the window is minimized, false otherwise.
      */
     virtual bool IsMinimized() const { return false; }
 
     /**
      * @brief Checks if the window is currently maximized.
+     * 
      * @return True if the window is maximized, false otherwise.
      */
     virtual bool IsMaximized() const { return false; }
 
     /**
      * @brief Checks if this window is a child window of the specified parent window.
+     * 
      * @param ParentWindow A reference to the potential parent window.
      * @return True if this window is a child of the specified window, false otherwise.
      */
@@ -237,24 +247,28 @@ public:
 
     /**
      * @brief Sets the title of the window.
+     * 
      * @param Title The new title for the window.
      */
     virtual void SetTitle(const FString& Title) { }
 
     /**
      * @brief Retrieves the title of the window.
+     * 
      * @param OutTitle String to store the window's title.
      */
     virtual void GetTitle(FString& OutTitle) const { }
 
     /**
      * @brief Sets the window's opacity.
+     * 
      * @param Alpha Opacity value between 0.0 (fully transparent) and 1.0 (fully opaque).
      */
     virtual void SetWindowOpacity(float Alpha) { }
 
     /**
      * @brief Sets the shape of the window, optionally moving it.
+     * 
      * @param Shape The new shape parameters for the window.
      * @param bMove If true, moves the window to the position specified in Shape.
      */
@@ -262,12 +276,14 @@ public:
 
     /**
      * @brief Retrieves the shape of the window.
+     * 
      * @param OutWindowShape Struct to store the window's shape parameters.
      */
     virtual void GetWindowShape(FWindowShape& OutWindowShape) const { }
 
     /**
      * @brief Retrieves the size the window would have when set to fullscreen mode.
+     * 
      * @param OutWidth Variable to store the fullscreen width.
      * @param OutHeight Variable to store the fullscreen height.
      */
@@ -275,42 +291,49 @@ public:
 
     /**
      * @brief Gets the DPI scale of the monitor where the window is displayed.
+     * 
      * @return The DPI scale factor.
      */
     virtual float GetWindowDPIScale() const { return 0.0f; }
 
     /**
      * @brief Gets the current width of the window.
+     * 
      * @return The width of the window.
      */
     virtual uint32 GetWidth() const { return 0; }
 
     /**
      * @brief Gets the current height of the window.
+     * 
      * @return The height of the window.
      */
     virtual uint32 GetHeight() const { return 0; }
 
     /**
      * @brief Sets the platform-specific handle for the window.
+     * 
      * @param InPlatformHandle The platform handle to set.
      */
     virtual void SetPlatformHandle(void* InPlatformHandle) { }
 
     /**
      * @brief Returns the platform-specific handle of the window.
+     * 
      * @return The platform handle.
      */
     virtual void* GetPlatformHandle() const { return nullptr; }
 
     /**
      * @brief Sets the window style flags.
+     * 
      * @param Style The style flags to set.
      */
     virtual void SetStyle(EWindowStyleFlags Style) { }
 
     /**
      * @brief Gets the window's style flags.
+     * 
      * @return The current style flags of the window.
      */
     EWindowStyleFlags GetStyle() const
@@ -319,7 +342,7 @@ public:
     }
 
 protected:
-    EWindowStyleFlags StyleParams; /**< @brief The style parameters of the window. */
+    EWindowStyleFlags StyleParams;
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

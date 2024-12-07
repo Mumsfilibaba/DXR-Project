@@ -34,12 +34,14 @@ public:
     
     /**
      * @brief Checks if a compatible device is currently connected.
+     * 
      * @return True if a compatible device is connected; false otherwise.
      */
     virtual bool IsDeviceConnected() const = 0;
 
     /**
      * @brief Sets the message handler for this input device.
+     * 
      * @param InMessageHandler The message handler to set.
      */
     void SetMessageHandler(const TSharedPtr<FGenericApplicationMessageHandler>& InMessageHandler)
@@ -49,6 +51,7 @@ public:
 
     /**
      * @brief Gets the current message handler.
+     * 
      * @return A shared pointer to the current message handler.
      */
     TSharedPtr<FGenericApplicationMessageHandler> GetMessageHandler() const
