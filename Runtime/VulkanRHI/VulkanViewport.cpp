@@ -14,7 +14,7 @@ static TAutoConsoleVariable<bool> CVarEnableVSync(
     true,
     EConsoleVariableFlags::Default);
 
-// Recreate the SwapChain when it's reported to be suboptimal when aquiring next image
+// Recreate the SwapChain when it's reported to be suboptimal when acquiring next image
 static constexpr bool GVulkanRecreateSuboptimalSwapChainOnAquire = true;
 
 FVulkanViewport::FVulkanViewport(FVulkanDevice* InDevice, const FRHIViewportInfo& InViewportInfo)

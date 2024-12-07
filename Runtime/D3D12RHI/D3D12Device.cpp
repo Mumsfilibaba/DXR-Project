@@ -20,6 +20,16 @@ static TAutoConsoleVariable<bool> CVarEnableGPUValidation(
     "Enables GPU Based Validation if true",
     false);
 
+static TAutoConsoleVariable<bool> CVarBreakOnError(
+    "D3D12RHI.BreakOnError",
+    "When enabled, there will be a DebugBreak when the validation layer encounters an errors",
+    true);
+
+static TAutoConsoleVariable<bool> CVarBreakOnWarning(
+    "D3D12RHI.BreakOnWarning",
+    "When enabled, there will be a DebugBreak when the validation layer encounters an warnings",
+    false);
+
 static TAutoConsoleVariable<bool> CVarEnableDRED(
     "D3D12RHI.EnableDRED",
     "Enables Device Removed Extended Data (DRED) if the Device gets removed",
@@ -251,9 +261,12 @@ bool FD3D12Adapter::Initialize()
         TComPtr<IDXGIInfoQueue> InfoQueue;
         if (SUCCEEDED(FDynamicD3D12::DXGIGetDebugInterface1(0, IID_PPV_ARGS(&InfoQueue))))
         {
-            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, true);
-            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, true);
-            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, false);
+            const bool bBreakOnError = CVarBreakOnError.GetValue();
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, bBreakOnError);
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, bBreakOnError);
+
+            const bool bBreakOnWarning = CVarBreakOnWarning.GetValue();
+            InfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_WARNING, bBreakOnWarning);
         }
         else
         {
@@ -786,9 +799,12 @@ bool FD3D12Device::CreateDevice()
         TComPtr<ID3D12InfoQueue> InfoQueue;
         if (SUCCEEDED(Device.GetAs(&InfoQueue)))
         {
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+            const bool bBreakOnError = CVarBreakOnError.GetValue();
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, bBreakOnError);
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, bBreakOnError);
+
+            const bool bBreakOnWarning = CVarBreakOnWarning.GetValue();
+            InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, bBreakOnWarning);
 
             D3D12_MESSAGE_ID Hide[] =
             {
