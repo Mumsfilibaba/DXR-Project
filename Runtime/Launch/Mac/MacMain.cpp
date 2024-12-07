@@ -61,7 +61,7 @@ static int32 GEngineMainResult = 0; // Stores the result returned by EngineMain
     // If EngineMain indicates success or a specific condition, schedule application termination
     if (GEngineMainResult == 0)
     {
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             [NSApp terminate:nil];
         }, NSDefaultRunLoopMode, true);

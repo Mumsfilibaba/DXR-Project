@@ -22,7 +22,7 @@ FMacWindow::FMacWindow(FMacApplication* InApplication)
 
 FMacWindow::~FMacWindow()
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         [CocoaWindowView release];
@@ -55,7 +55,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
     }
     
     __block bool bResult = false;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -161,7 +161,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
 
 void FMacWindow::Show(bool bFocus)
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -185,7 +185,7 @@ void FMacWindow::Show(bool bFocus)
 
 void FMacWindow::Minimize()
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -200,7 +200,7 @@ void FMacWindow::Minimize()
 
 void FMacWindow::Maximize()
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -232,7 +232,7 @@ void FMacWindow::Destroy()
 
 void FMacWindow::Restore()
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -256,7 +256,7 @@ void FMacWindow::ToggleFullscreen()
 {
     if ((StyleParams & EWindowStyleFlags::Resizable) != EWindowStyleFlags::None)
     {
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -273,7 +273,7 @@ void FMacWindow::ToggleFullscreen()
 bool FMacWindow::IsActiveWindow() const
 {
     __block bool bIsKeyWindow = false;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -295,7 +295,7 @@ bool FMacWindow::IsValid() const
 bool FMacWindow::IsMinimized() const
 {
     __block bool bIsMinimized = false;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -312,7 +312,7 @@ bool FMacWindow::IsMinimized() const
 bool FMacWindow::IsMaximized() const
 {
     __block bool bIsMaximized = false;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -331,7 +331,7 @@ bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) co
     TSharedRef<FMacWindow> MacChildWindow = StaticCastSharedRef<FMacWindow>(ChildWindow);
 
     __block bool bIsChildWindow = false;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -354,7 +354,7 @@ bool FMacWindow::IsChildWindow(const TSharedRef<FGenericWindow>& ChildWindow) co
 
 void FMacWindow::SetWindowFocus()
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -372,7 +372,7 @@ void FMacWindow::SetTitle(const FString& InTitle)
     SCOPED_AUTORELEASE_POOL();
 
     __block NSString* Title = InTitle.GetNSString();
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         if (CocoaWindow)
         {
@@ -389,7 +389,7 @@ void FMacWindow::GetTitle(FString& OutTitle) const
     SCOPED_AUTORELEASE_POOL();
     
     __block NSString* Title;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         if (CocoaWindow)
         {
@@ -402,7 +402,7 @@ void FMacWindow::GetTitle(FString& OutTitle) const
 
 void FMacWindow::SetWindowPos(int32 x, int32 y)
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -425,7 +425,7 @@ void FMacWindow::SetWindowPos(int32 x, int32 y)
 
 void FMacWindow::SetWindowOpacity(float Alpha)
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -440,7 +440,7 @@ void FMacWindow::SetWindowOpacity(float Alpha)
 
 void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
        
@@ -473,7 +473,7 @@ void FMacWindow::SetWindowShape(const FWindowShape& Shape, bool bMove)
 void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 {
     __block NSRect ContentRect = NSMakeRect(0, 0, 0, 0);
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -493,7 +493,7 @@ void FMacWindow::GetWindowShape(FWindowShape& OutWindowShape) const
 uint32 FMacWindow::GetWidth() const
 {
     __block NSSize Size = NSMakeSize(0, 0);
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -511,7 +511,7 @@ uint32 FMacWindow::GetWidth() const
 uint32 FMacWindow::GetHeight() const
 {
     __block NSSize Size = NSMakeSize(0, 0);
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -529,7 +529,7 @@ uint32 FMacWindow::GetHeight() const
 void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 {
     __block NSRect Frame = NSMakeRect(0, 0, 0, 0);
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -547,7 +547,7 @@ void FMacWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
 float FMacWindow::GetWindowDPIScale() const
 {
     __block CGFloat Scale = 1.0f;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         if (CocoaWindow)
@@ -563,7 +563,7 @@ void FMacWindow::SetPlatformHandle(void* InPlatformHandle)
 {
     if (InPlatformHandle)
     {
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -613,7 +613,7 @@ void FMacWindow::SetStyle(EWindowStyleFlags InStyle)
         WindowStyle = NSWindowStyleMaskBorderless;
     }
     
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 

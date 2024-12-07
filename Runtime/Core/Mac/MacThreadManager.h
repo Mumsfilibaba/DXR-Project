@@ -28,6 +28,7 @@ class FRunLoopSourceContext;
 
 /**
  * @brief Returns the reference to the designated application thread.
+ *
  * @return The NSThread instance representing the appointed application thread.
  * 
  * Once set, this thread serves as the "AppThread" for your application, similar in concept 
@@ -37,12 +38,14 @@ class FRunLoopSourceContext;
 
 /**
  * @brief Checks if the current thread is the designated application thread.
+ *
  * @return YES if the current thread is the AppThread, NO otherwise.
  */
 + (BOOL) isAppThread;
 
 /**
  * @brief Checks if the receiver is the designated application thread.
+ *
  * @return YES if the receiver is the AppThread, NO otherwise.
  */
 - (BOOL) isAppThread;
@@ -74,6 +77,7 @@ class FRunLoopSourceContext;
 
 /**
  * @brief Initializes the AppThread with a given target, selector, and argument.
+ *
  * @param Target The object to which the specified selector message is sent.
  * @param Selector The selector to invoke on the target when the thread starts.
  * @param Argument The single argument passed to the selector when it is invoked.
@@ -151,6 +155,7 @@ class FRunLoopSourceContext;
 
 /**
  * @brief Initializes the object with a given run loop source context.
+ *
  * @param InContext The run loop source context that contains callbacks and user data defining the behavior of this run loop source.
  * @return An initialized instance of FRunLoopSource.
  */
@@ -166,6 +171,7 @@ class FRunLoopSourceContext;
 
 /**
  * @brief Schedules the run loop source on the specified run loop and mode.
+ *
  * @param InRunLoop A reference to the run loop where the source should be added.
  * @param InMode The run loop mode under which the source should operate.
  *
@@ -176,6 +182,7 @@ class FRunLoopSourceContext;
 
 /**
  * @brief Cancels and removes the run loop source from the specified run loop and mode.
+ *
  * @param InRunLoop A reference to the run loop from which the source should be removed.
  * @param InMode The run loop mode the source was previously scheduled in.
  *
@@ -205,6 +212,7 @@ struct FRunLoopTask
 {
     /**
      * @brief Constructs a new FRunLoopTask with specified run loop modes and a block to execute.
+     *
      * @param InRunLoopModes An NSArray containing the run loop modes in which this task should be executed. Each mode is represented as an NSString.
      * @param InBlock A dispatch_block_t representing the block of code to execute when the task is performed.
      * @note This constructor retains the provided run loop modes and copies the provided block to manage its memory.
@@ -258,33 +266,8 @@ class FRunLoopSourceContext : public FRefCounted
 public:
 
     /**
-     * @brief Get the context object associated with the main thread’s run loop.
-     * @return A reference to the main thread's run loop context.
-     * @note The main thread’s run loop must be registered beforehand.
-     */
-    static FRunLoopSourceContext& GetMainThreadContext();
-
-    /**
-     * @brief Get the context object associated with the application thread’s run loop.
-     * @return A reference to the application thread's run loop context.
-     * @note The application thread’s run loop must be registered beforehand.
-     */
-    static FRunLoopSourceContext& GetAppThreadContext();
-
-    /**
-     * @brief Register the current run loop (which must be the main thread’s) as the main thread’s run loop context.
-     * @return true if successful.
-     */
-    static bool RegisterMainThreadRunLoop();
-
-    /**
-     * @brief Register the current run loop (which must be the application thread’s) as the application thread’s run loop context.
-     * @return true if successful.
-     */
-    static bool RegisterAppThreadRunLoop();
-
-    /**
      * @brief Constructor, initializes the run loop context with a given CFRunLoop.
+     *
      * @param InRunLoop The CFRunLoop that this context manages.
      */
     FRunLoopSourceContext(CFRunLoopRef InRunLoop);
@@ -296,26 +279,30 @@ public:
 
     /**
      * @brief Registers a run loop mode. If a source is not already associated with this mode, one is created and attached to the run loop.
+     *
      * @param InRunLoopMode The run loop mode to register.
      */
     void RegisterForMode(CFStringRef InRunLoopMode);
 
     /**
      * @brief Schedules a block (task) to be executed in one or more run loop modes.
+     *
      * @param Block The block to execute.
      * @param InModes The run loop modes in which this task should be run.
      */
     void ScheduleBlock(dispatch_block_t Block, NSArray* InModes);
 
     /**
-     * @brief Executes all queued tasks that are eligible to run in the given run loop mode. This method extracts all queued tasks and repeatedly
-     * executes any tasks that apply to the current mode until no more applicable tasks remain.
+     * @brief Executes all queued tasks that are eligible to run in the given run loop mode.
+     *
+     * This method extracts all queued tasks and repeatedly executes any tasks that apply to the current mode until no more applicable tasks remain.
      * @param InRunLoopMode The current run loop mode in which tasks should be executed.
      */
     void Execute(CFStringRef InRunLoopMode);
 
     /**
      * @brief Runs the run loop in a specified mode until no input sources remain or a specific event occurs (may return immediately if none are pending).
+     *
      * @param RunMode The mode in which to run the run loop.
      */
     void RunInMode(CFStringRef RunMode);
@@ -365,10 +352,6 @@ private:
 
     /** @brief Synchronization primitive for Tasks. */
     FCriticalSection TasksCS;
-
-    // Global pointers to main and application thread contexts.
-    static FRunLoopSourceContext* MainThreadContext;
-    static FRunLoopSourceContext* AppThreadContext;
 };
 
 /**
@@ -385,47 +368,74 @@ class CORE_API FMacThreadManager
 public:
 
     /**
-     * @brief Sets up and starts the AppThread, initializing the main and AppThread's run loops.
+     * @brief Sets up and starts the AppThread, initializing the main and AppThread's run loops. Also creates an instance of the MacThreadManager
+     *
      * @param Delegate The target object for the AppThread.
      * @param AppThreadEntry The selector to invoke on the AppThread when it starts.
      * @return true if the setup is successful, false otherwise.
      * @note This method disables sudden termination, registers the main thread's run loop, and initializes the AppThread with the provided delegate and selector.
      */
     static bool SetupAppThread(id Delegate, SEL AppThreadEntry);
-    
+
     /**
      * @brief Releases and shuts down the AppThread.
+     *
      * @note This method releases the global reference to the AppThread, effectively shutting it down.
      */
     static void ShutdownAppThread();
-    
+
+    static FORCEINLINE FMacThreadManager& Get()
+    {
+        return GMacThreadManager;
+    }
+
     /**
      * @brief Runs the AppThread's run loop and ensures there are no pending events.
+     *
      * @param bUntilEmpty If true, the run loop will continue running until there are no more events to process.
      * @note This method processes events on the AppThread's run loop, optionally running until all events are handled.
      */
     static void PumpMessagesAppThread(bool bUntilEmpty);
-    
+
+public:
+
+    /**
+     * @brief Register the current run loop (which must be the main thread’s) as the main thread’s run loop context.
+     *
+     * @return true if successful.
+     */
+    void RegisterMainThreadRunLoop();
+
+    /**
+     * @brief Register the current run loop (which must be the application thread’s) as the application thread’s run loop context.
+     *
+     * @return true if successful.
+     */
+    void RegisterAppThreadRunLoop();
+
     /**
      * @brief Executes a block of code on the main thread.
+     *
      * @param Block The block of code to execute.
      * @param WaitMode The run loop mode to use while waiting.
      * @param WaitForCompletion If true, the calling thread will wait until the block has been executed.
      * @note This method schedules the provided block to be executed on the main thread's run loop.
      */
-    static void ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
-    
+    void MainThreadDispatch(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
+
     /**
      * @brief Executes a block of code on the application thread.
+     *
      * @param Block The block of code to execute.
      * @param WaitMode The run loop mode to use while waiting.
      * @param WaitForCompletion If true, the calling thread will wait until the block has been executed.
      * @note This method schedules the provided block to be executed on the AppThread's run loop.
      */
-    static void ExecuteOnAppThread(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
-    
+    void AppThreadDispatch(dispatch_block_t Block, NSString* WaitMode, bool WaitForCompletion);
+
     /**
      * @brief Executes a block of code on the main thread and waits for a return value.
+     *
      * @tparam ReturnType The type of the value returned by the block.
      * @param Block The block of code to execute, which returns a value of type ReturnType.
      * @param WaitMode The run loop mode to use while waiting.
@@ -433,19 +443,20 @@ public:
      * @note This method schedules the provided block to be executed on the main thread and waits for its completion, returning the result produced by the block.
      */
     template<typename ReturnType>
-    static inline ReturnType ExecuteOnMainThreadAndReturn(ReturnType (^Block)(void), NSString* WaitMode)
+    inline ReturnType MainThreadDispatchAndReturn(ReturnType (^Block)(void), NSString* WaitMode)
     {
         __block ReturnType ReturnValue;
-        ExecuteOnMainThread(^
+        MainThreadDispatch(^
         {
             ReturnValue = Block();
         }, WaitMode, true);
         
         return ReturnValue;
     }
-    
+
     /**
      * @brief Executes a block of code on the application thread and waits for a return value.
+     *
      * @tparam ReturnType The type of the value returned by the block.
      * @param Block The block of code to execute, which returns a value of type ReturnType.
      * @param WaitMode The run loop mode to use while waiting.
@@ -453,26 +464,28 @@ public:
      * @note This method schedules the provided block to be executed on the AppThread and waits for its completion, returning the result produced by the block.
      */
     template<typename ReturnType>
-    static inline ReturnType ExecuteOnAppThreadAndReturn(ReturnType (^Block)(void), NSString* WaitMode)
+    inline ReturnType AppThreadDispatchAndReturn(ReturnType (^Block)(void), NSString* WaitMode)
     {
         __block ReturnType ReturnValue;
-        ExecuteOnAppThread(^
+        AppThreadDispatch(^
         {
             ReturnValue = Block();
         }, WaitMode, true);
-        
+
         return ReturnValue;
     }
 
 private:
 
-    /**
-     * @brief Executes a block of code on the specified run loop context.
-     * @param SourceContext The run loop context (main or application thread).
-     * @param Block The block of code to execute.
-     * @param WaitMode The run loop mode to use while waiting.
-     * @param bWaitUntilFinished If true, the calling thread will wait until the block has been executed.
-     * @note This private method handles the execution logic for both main and application threads.
-     */
-    static void ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished);
+    FMacThreadManager();
+    ~FMacThreadManager();
+
+    void DispatchOnThread(FRunLoopSourceContext* SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished);
+
+    void DestroyContexts();
+
+    FRunLoopSourceContext* MainThreadContext;
+    FRunLoopSourceContext* AppThreadContext;
+
+    static FMacThreadManager GMacThreadManager;
 };

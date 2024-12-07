@@ -83,7 +83,7 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
         GMacApplication = this;
     }
     
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
         
@@ -188,7 +188,7 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
 
 FMacApplication::~FMacApplication()
 {
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidBecomeActiveNotification object:nil];
         [[NSNotificationCenter defaultCenter] removeObserver:Observer name:NSApplicationDidResignActiveNotification object:nil];
@@ -267,7 +267,7 @@ void FMacApplication::Tick(float)
     
     if (!LocalClosedCocoaWindows.IsEmpty())
     {
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -308,7 +308,7 @@ bool FMacApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGeneri
 void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 {
     __block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         FCocoaWindow* CocoaWindow = MacWindow->GetCocoaWindow();
         [CocoaWindow makeKeyAndOrderFront:CocoaWindow];
@@ -317,7 +317,7 @@ void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 
 TSharedRef<FGenericWindow> FMacApplication::GetActiveWindow() const
 {
-    NSWindow* KeyWindow = FMacThreadManager::ExecuteOnMainThreadAndReturn(^
+    NSWindow* KeyWindow = FMacThreadManager::Get().MainThreadDispatchAndReturn(^
     {
         SCOPED_AUTORELEASE_POOL();
         return [NSApp keyWindow];

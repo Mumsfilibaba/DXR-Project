@@ -66,7 +66,7 @@ void FMacOutputDeviceConsole::CreateConsole()
         }
         
         // Create the window
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
             
@@ -143,7 +143,7 @@ void FMacOutputDeviceConsole::DestroyConsole()
 {
     if (IsVisible())
     {
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
         
@@ -210,7 +210,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
         NSAttributedString* AttributedString = CreatePrintableString(Message);
         [AttributedString retain];
         
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
 
@@ -257,7 +257,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
         NSAttributedString* AttributedString = CreatePrintableString(Message);
         [AttributedString retain];
         
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
 
@@ -281,7 +281,7 @@ void FMacOutputDeviceConsole::Flush()
     
     if (WindowHandle)
     {
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
             TextView.string = @"";
@@ -305,7 +305,7 @@ void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
         NSString* NewTitle = InTitle.GetNSString();
         [NewTitle retain];
         
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             SCOPED_AUTORELEASE_POOL();
             

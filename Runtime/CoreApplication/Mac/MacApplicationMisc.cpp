@@ -32,7 +32,7 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
     FMacThreadManager::PumpMessagesAppThread(bUntilEmpty);
 
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         NSMenu* MainMenu = [NSApp mainMenu];
         [MainMenu update];

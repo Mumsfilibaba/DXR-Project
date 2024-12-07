@@ -37,7 +37,7 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
 FMetalViewport::~FMetalViewport()
 {
     // The view is a UI object and needs to be released on the main-thread
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         [MetalView release];
         [MetalLayer release];
@@ -54,7 +54,7 @@ bool FMetalViewport::Initialize()
 
     __block bool bResult = false;
     __block CAMetalLayer* NewMetalLayer = nullptr;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -116,7 +116,7 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
     
     if (Info.Width != InWidth || Info.Height != InHeight)
     {
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             CAMetalLayer* MetalLayer = GetMetalLayer();
             if (MetalLayer)

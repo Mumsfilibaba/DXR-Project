@@ -16,7 +16,7 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
     // Set the MetalView as the new ContentView
     __block bool bResult;
     __block CAMetalLayer* MetalLayer;
-    FMacThreadManager::ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         // Create a metal layer and set it as the layer on the view
         MetalLayer = [CAMetalLayer layer];

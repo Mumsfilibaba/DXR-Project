@@ -300,7 +300,7 @@ FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportInfo& ViewportInfo)
     {
         __block NSRect Frame;
         __block NSRect ContentRect;
-        FMacThreadManager::ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             Frame       = Window.frame;
             ContentRect = [Window contentRectForFrameRect:Window.frame];

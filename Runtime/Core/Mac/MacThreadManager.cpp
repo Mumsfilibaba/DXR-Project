@@ -89,7 +89,7 @@ static NSThread* GAppThread = nil;
     {
         GAppThread = self;
     }
-    
+
     return self;
 }
 
@@ -100,7 +100,7 @@ static NSThread* GAppThread = nil;
     {
         GAppThread = self;
     }
-    
+
     return self;
 }
 
@@ -108,33 +108,33 @@ static NSThread* GAppThread = nil;
 {
     struct sched_param SchedParams;
     FMemory::Memzero(&SchedParams, sizeof(SchedParams));
-    
+
     int32 Policy = SCHED_RR;
     pthread_getschedparam(pthread_self(), &Policy, &SchedParams);
 
     SchedParams.sched_priority = sched_get_priority_max(2);
     pthread_setschedparam(pthread_self(), Policy, &SchedParams);
-    
+
     // Register the runloop for this current thread
-    FRunLoopSourceContext::RegisterAppThreadRunLoop();
-    
+    FMacThreadManager::Get().RegisterAppThreadRunLoop();
+
     // Set our name
     [self setName:@"AppThread"];
-    
+
     // Run the thread
     [super main];
-    
+
     // Restore the sudden termination state
     if (IsEngineExitRequested())
     {
-        FMacThreadManager::ExecuteOnMainThread(^{
+        FMacThreadManager::Get().MainThreadDispatch(^{
             [NSApp replyToApplicationShouldTerminate:YES];
             [[NSProcessInfo processInfo] enableSuddenTermination];
         }, NSDefaultRunLoopMode, false);
     }
     else
     {
-        FMacThreadManager::ExecuteOnMainThread(^{
+        FMacThreadManager::Get().MainThreadDispatch(^{
             [[NSProcessInfo processInfo] enableSuddenTermination];
         }, NSDefaultRunLoopMode, false);
     }
@@ -225,36 +225,6 @@ static NSThread* GAppThread = nil;
 
 @end
 
-FRunLoopSourceContext* FRunLoopSourceContext::MainThreadContext        = nullptr;
-FRunLoopSourceContext* FRunLoopSourceContext::AppThreadContext = nullptr;
-
-FRunLoopSourceContext& FRunLoopSourceContext::GetMainThreadContext()
-{
-    CHECK(MainThreadContext != nullptr);
-    return *MainThreadContext;
-}
-
-FRunLoopSourceContext& FRunLoopSourceContext::GetAppThreadContext()
-{
-    CHECK(AppThreadContext != nullptr);
-    return *AppThreadContext;
-}
-
-bool FRunLoopSourceContext::RegisterMainThreadRunLoop()
-{
-    CHECK(FPlatformThreadMisc::IsMainThread());
-    CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
-    MainThreadContext = new FRunLoopSourceContext(RunLoop);
-    return true;
-}
-
-bool FRunLoopSourceContext::RegisterAppThreadRunLoop()
-{
-    CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
-    AppThreadContext = new FRunLoopSourceContext(RunLoop);
-    return true;
-}
-
 FRunLoopSourceContext::FRunLoopSourceContext(CFRunLoopRef InRunLoop)
     : RunLoop(InRunLoop)
     , SourceAndModeDictionary(CFDictionaryCreateMutable(nullptr, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks))
@@ -269,17 +239,6 @@ FRunLoopSourceContext::FRunLoopSourceContext(CFRunLoopRef InRunLoop)
 
 FRunLoopSourceContext::~FRunLoopSourceContext()
 {
-    // Clear global pointers if this instance is one of them
-    if (this == MainThreadContext)
-    {
-        MainThreadContext = nullptr;
-    }
-    
-    if (this == AppThreadContext)
-    {
-        AppThreadContext = nullptr;
-    }
-
     // Remove all sources associated with this run loop
     CFDictionaryApplyFunction(SourceAndModeDictionary, &FRunLoopSourceContext::Destroy, RunLoop);
 
@@ -430,14 +389,39 @@ void FRunLoopSourceContext::Perform(void* Info)
     }
 }
 
+FMacThreadManager FMacThreadManager::GMacThreadManager;
+
+FMacThreadManager::FMacThreadManager()
+    : MainThreadContext(nullptr)
+    , AppThreadContext(nullptr)
+{
+}
+
+FMacThreadManager::~FMacThreadManager()
+{
+}
+
+void FMacThreadManager::RegisterMainThreadRunLoop()
+{
+    CHECK(FPlatformThreadMisc::IsMainThread());
+    CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+    MainThreadContext = new FRunLoopSourceContext(RunLoop);
+}
+
+void FMacThreadManager::RegisterAppThreadRunLoop()
+{
+    CFRunLoopRef RunLoop = CFRunLoopGetCurrent();
+    AppThreadContext = new FRunLoopSourceContext(RunLoop);
+}
+
 bool FMacThreadManager::SetupAppThread(id Delegate, SEL AppThreadEntry)
 {
     // Disable sudden termination to prevent the app from quitting unexpectedly.
     [[NSProcessInfo processInfo] disableSuddenTermination];
-    
+
     // Register the main thread's run loop context.
-    FRunLoopSourceContext::RegisterMainThreadRunLoop();
-    
+    GMacThreadManager.RegisterMainThreadRunLoop();
+
 #if APP_THREAD_ENABLED
     // Initialize and start the AppThread with the provided delegate and selector.
     FAppThread* AppThread = [[FAppThread alloc] initWithTarget:Delegate selector:AppThreadEntry object:nil];
@@ -446,7 +430,7 @@ bool FMacThreadManager::SetupAppThread(id Delegate, SEL AppThreadEntry)
 #else
     // If AppThread is not enabled, perform the selector on the delegate directly.
     [Delegate performSelector:AppThreadEntry withObject:nil];
-    
+
     // If an engine exit has been requested, reply to the application termination request.
     if (IsEngineExitRequested())
     {
@@ -462,6 +446,18 @@ void FMacThreadManager::ShutdownAppThread()
     // Release the global AppThread reference.
     [GAppThread release];
     GAppThread = nullptr;
+
+    // Destroy the runloop contexts
+    GMacThreadManager.DestroyContexts();
+}
+
+void FMacThreadManager::DestroyContexts()
+{
+    delete MainThreadContext;
+    MainThreadContext = nullptr;
+
+    delete AppThreadContext;
+    AppThreadContext = nullptr;
 }
 
 void FMacThreadManager::PumpMessagesAppThread(bool bUntilEmpty)
@@ -493,7 +489,7 @@ void FMacThreadManager::PumpMessagesAppThread(bool bUntilEmpty)
 #endif
 }
 
-void FMacThreadManager::ExecuteOnThread(FRunLoopSourceContext& SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+void FMacThreadManager::DispatchOnThread(FRunLoopSourceContext* SourceContext, dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
     // Copy the block to manage its memory correctly.
     dispatch_block_t CopiedBlock = Block_copy(Block);
@@ -524,14 +520,14 @@ void FMacThreadManager::ExecuteOnThread(FRunLoopSourceContext& SourceContext, di
             });
 
             // Schedule the waitable block on the run loop context.
-            SourceContext.ScheduleBlock(WaitableBlock, ScheduleModes);
+            SourceContext->ScheduleBlock(WaitableBlock, ScheduleModes);
 
             // Continuously run the run loop until the semaphore is signaled.
             do
             {
                 CFStringRef CurrentMode = (CFStringRef)WaitMode;
-                SourceContext.WakeUp();
-                SourceContext.RunInMode(CurrentMode);
+                SourceContext->WakeUp();
+                SourceContext->RunInMode(CurrentMode);
             } while (dispatch_semaphore_wait(WaitSemaphore, dispatch_time(0, 100000ull)));
 
             // Release the waitable block and semaphore.
@@ -541,8 +537,8 @@ void FMacThreadManager::ExecuteOnThread(FRunLoopSourceContext& SourceContext, di
         else
         {
             // If not waiting for completion, simply schedule the block.
-            SourceContext.ScheduleBlock(CopiedBlock, ScheduleModes);
-            SourceContext.WakeUp();
+            SourceContext->ScheduleBlock(CopiedBlock, ScheduleModes);
+            SourceContext->WakeUp();
         }
     }
 
@@ -550,22 +546,16 @@ void FMacThreadManager::ExecuteOnThread(FRunLoopSourceContext& SourceContext, di
     Block_release(CopiedBlock);
 }
 
-void FMacThreadManager::ExecuteOnMainThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+void FMacThreadManager::MainThreadDispatch(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
-    // Retrieve the main thread's run loop context.
-    FRunLoopSourceContext& SourceContext = FRunLoopSourceContext::GetMainThreadContext();
-
     // Execute the block on the main thread.
-    ExecuteOnThread(SourceContext, Block, WaitMode, bWaitUntilFinished);
+    DispatchOnThread(MainThreadContext, Block, WaitMode, bWaitUntilFinished);
 }
 
-void FMacThreadManager::ExecuteOnAppThread(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
+void FMacThreadManager::AppThreadDispatch(dispatch_block_t Block, NSString* WaitMode, bool bWaitUntilFinished)
 {
-    // Retrieve the application thread's run loop context.
-    FRunLoopSourceContext& SourceContext = FRunLoopSourceContext::GetAppThreadContext();
-
     // Execute the block on the application thread.
-    ExecuteOnThread(SourceContext, Block, WaitMode, bWaitUntilFinished);
+    DispatchOnThread(AppThreadContext, Block, WaitMode, bWaitUntilFinished);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
