@@ -380,7 +380,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         FMatrix4 Matrix;
     } ShadowPerObjectBuffer;
 
-    const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
+    const bool bUseViewInstancing  = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
     const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
     if (bUseViewInstancing)
     {
@@ -856,7 +856,7 @@ void FCascadedShadowsRenderPass::InitializePipelineState(FMaterial* Material, co
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(1)");
         }
         else
-        {            
+        {
             ShaderDefines.Emplace("ENABLE_ALPHA_MASK", "(0)");
         }
 
@@ -1092,7 +1092,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
     if (Scene->DirectionalLight)
     {
-        const bool bUseViewInstancing = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarCSMEnableViewInstancing.GetValue();
+        const bool bUseViewInstancing  = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarCSMEnableViewInstancing.GetValue();
         const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarCSMEnableGeometryShaderInstancing.GetValue();
         if (bUseViewInstancing)
         {

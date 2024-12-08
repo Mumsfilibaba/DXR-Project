@@ -274,8 +274,8 @@ bool FSceneRenderer::Initialize()
         SamplerStateInfo.AddressW       = ESamplerMode::Clamp;
         SamplerStateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipPoint;
         SamplerStateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
-        SamplerStateInfo.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
         SamplerStateInfo.MinLOD         = 0.0f;
+        SamplerStateInfo.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         Resources.ShadowSamplerPointCmp = RHICreateSamplerState(SamplerStateInfo);
         if (!Resources.ShadowSamplerPointCmp)
@@ -302,6 +302,7 @@ bool FSceneRenderer::Initialize()
         SamplerStateInfo.Filter         = ESamplerFilter::Comparison_MinMagMipLinear;
         SamplerStateInfo.ComparisonFunc = EComparisonFunc::LessEqual;
         SamplerStateInfo.MinLOD         = 0.0f;
+        SamplerStateInfo.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         Resources.PointLightShadowSampler = RHICreateSamplerState(SamplerStateInfo);
         if (!Resources.PointLightShadowSampler)

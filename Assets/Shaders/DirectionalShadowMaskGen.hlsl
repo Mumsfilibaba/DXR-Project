@@ -228,19 +228,26 @@ float ShadowAmountGrid(uint CascadeIndex, float2 ShadowPosition, float BiasedDep
     return saturate(Result);
 }
 
+float ShadowAmountSimple(uint CascadeIndex, float2 ShadowPosition, float BiasedDepth)
+{
+    const float Sample = ShadowCascades.SampleCmpLevelZero(ShadowSamplerPoint, float3(ShadowPosition, CascadeIndex), BiasedDepth);
+    return saturate(Sample);
+}
+
 float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Normal, inout uint RandomSeed)
 {
     ShadowPosition += ShadowSplitsBuffer[CascadeIndex].Offsets.xyz;
     ShadowPosition *= ShadowSplitsBuffer[CascadeIndex].Scale.xyz;
 
+    // Biased Depth
 #if USE_RECEIVER_PLANE_DEPTH_BIAS
     const float  PlaneRecieverBias = ComputeReceiverPlaneDepthBias();
     const float2 TexelSize         = 1.0 / ShadowMapSize;
     const float  BiasedDepth       = ShadowPosition.z - Bias;
 #else
-    // Biased Depth
-    const float NDotL       = saturate(dot(Normal, -LightBuffer.Direction)); 
-    const float ShadowBias  = max(LightBuffer.MaxShadowBias * (1.0 - NDotL), LightBuffer.ShadowBias) + 0.0001;
+    const float NDotL       = dot(Normal, LightBuffer.Direction); 
+    const float BiasScale   = (1.0 - NDotL);
+    const float ShadowBias  = max(max(0.0001, LightBuffer.ShadowBias), BiasScale * max(0.0005, LightBuffer.MaxShadowBias));
     const float BiasedDepth = ShadowPosition.z - ShadowBias;
 #endif
 
@@ -249,7 +256,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Norma
 #elif FILTER_MODE_PCF_POISSION_DISC
     return ShadowAmountPoissonDisc(CascadeIndex, ShadowPosition.xy, BiasedDepth, RandomSeed);
 #else
-    return 1.0;
+    return ShadowAmountSimple(CascadeIndex, ShadowPosition.xy, BiasedDepth);
 #endif
 }
 
