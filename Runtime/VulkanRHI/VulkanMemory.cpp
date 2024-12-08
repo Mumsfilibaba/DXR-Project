@@ -380,18 +380,20 @@ bool FVulkanMemoryHeap::ValidateChain() const
     return true;
 }
 
-
 FVulkanMemoryManager::FVulkanMemoryManager(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , MemoryHeaps()
-    , DeviceProperties()
     , HeapSize(0)
     , NumAllocations(0)
+    , MaxMemoryAllocationCount(0)
+    , BufferImageGranularity(0)
     , ManagerCS()
 {
     // Cache the DeviceProperties
-    DeviceProperties = GetDevice()->GetPhysicalDevice()->GetProperties();
- 
+    const VkPhysicalDeviceProperties& DeviceProperties = GetDevice()->GetPhysicalDevice()->GetProperties();
+    BufferImageGranularity   = DeviceProperties.limits.bufferImageGranularity;
+    MaxMemoryAllocationCount = DeviceProperties.limits.maxMemoryAllocationCount;
+
     // Calculate the HeapSize in bytes
     HeapSize = CVarMemoryHeapSize.GetValue() * 1024 * 1024;
 
@@ -510,13 +512,11 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
         OutAllocation.bIsDedicated = false;
     }
 
-
     if (!bResult)
     {
         VULKAN_ERROR("Failed to allocte BufferMemory");
         return false;
     }
-
 
     // Bind the buffer to the allocated memory
     VkResult Result = vkBindBufferMemory(GetDevice()->GetVkDevice(), Buffer, OutAllocation.Memory, OutAllocation.Offset);
@@ -525,7 +525,6 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
         VULKAN_ERROR("Failed to bind BufferMemory");
         return false;
     }
-
 
     // We retrieve the device address for all buffers that supports it (TODO: Check if this has any performance impact and make this optional)
     if (AllocateFlags & VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT)
@@ -547,7 +546,7 @@ bool FVulkanMemoryManager::AllocateBufferMemory(VkBuffer Buffer, VkMemoryPropert
             }
         }
     }
-    
+
     return true;
 }
 
@@ -602,7 +601,6 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
         return false;
     }
 
-
     // Allocate memory, either pooled or dedicated
     bool bResult = false;
     if (bUseDedicatedAllocation)
@@ -654,7 +652,6 @@ bool FVulkanMemoryManager::AllocateImageMemory(VkImage Image, VkMemoryPropertyFl
         return false;
     }
 
-
     // Lastly bind the memory to this resource
     VkResult Result = vkBindImageMemory(GetDevice()->GetVkDevice(), Image, OutAllocation.Memory, OutAllocation.Offset);
     if (VULKAN_FAILED(Result))
@@ -679,8 +676,9 @@ bool FVulkanMemoryManager::AllocateMemoryDedicated(VkDeviceMemory& OutDeviceMemo
         NumAllocations++;
     }
 
-    VULKAN_INFO("[AllocateMemory] Allocated=%d Bytes, NumAllocations = %d/%d", AllocateInfo.allocationSize, NumAllocations.Load(), DeviceProperties.limits.maxMemoryAllocationCount);
-    if (static_cast<uint32>(NumAllocations.Load()) > DeviceProperties.limits.maxMemoryAllocationCount)
+    VULKAN_INFO("[AllocateMemory] Allocated=%d Bytes, NumAllocations = %d/%u", AllocateInfo.allocationSize, NumAllocations.Load(), MaxMemoryAllocationCount);
+
+    if (static_cast<uint32>(NumAllocations.Load()) > MaxMemoryAllocationCount)
     {
         VULKAN_WARNING("Too many allocations");
     }
@@ -729,7 +727,7 @@ bool FVulkanMemoryManager::AllocateMemoryFromHeap(FVulkanMemoryAllocation& OutAl
             if (MemoryPage->GetMemoryIndex() == InMemoryIndex && MemoryPage->GetAllocationFlags() == AllocateFlags)
             {
                 // Try and allocate otherwise we continue the search
-                if (MemoryPage->Allocate(OutAllocation, SizeInBytes, Alignment, DeviceProperties.limits.bufferImageGranularity))
+                if (MemoryPage->Allocate(OutAllocation, SizeInBytes, Alignment, BufferImageGranularity))
                 {
                     return true;
                 }
@@ -753,7 +751,7 @@ bool FVulkanMemoryManager::AllocateMemoryFromHeap(FVulkanMemoryAllocation& OutAl
         MemoryHeaps.Emplace(NewMemoryPage);
     }
 
-    return NewMemoryPage->Allocate(OutAllocation, SizeInBytes, Alignment, DeviceProperties.limits.bufferImageGranularity);
+    return NewMemoryPage->Allocate(OutAllocation, SizeInBytes, Alignment, BufferImageGranularity);
 }
 
 bool FVulkanMemoryManager::Free(FVulkanMemoryAllocation& OutAllocation)
@@ -795,8 +793,8 @@ void FVulkanMemoryManager::FreeMemory(VkDeviceMemory& OutDeviceMemory)
     vkFreeMemory(GetDevice()->GetVkDevice(), OutDeviceMemory, nullptr);
     OutDeviceMemory = VK_NULL_HANDLE;
     NumAllocations--;
-    
-    VULKAN_INFO("[FreeMemory] NumAllocations = %d/%d", NumAllocations.Load(), DeviceProperties.limits.maxMemoryAllocationCount);
+
+    VULKAN_INFO("[FreeMemory] NumAllocations = %d/%u", NumAllocations.Load(), MaxMemoryAllocationCount);
 }
 
 void* FVulkanMemoryManager::Map(const FVulkanMemoryAllocation& Allocation)
