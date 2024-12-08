@@ -543,9 +543,9 @@ void FD3D12CommandContext::RHISetScissorRect(const FScissorRegion& ScissorRegion
 {
     D3D12_RECT ScissorRect;
     ScissorRect.left   = LONG(ScissorRegion.PositionX);
-    ScissorRect.right  = LONG(ScissorRegion.Width);
+    ScissorRect.right  = LONG(ScissorRegion.PositionX) + LONG(ScissorRegion.Width);
     ScissorRect.top    = LONG(ScissorRegion.PositionY);
-    ScissorRect.bottom = LONG(ScissorRegion.Height);
+    ScissorRect.bottom = LONG(ScissorRegion.PositionY) + LONG(ScissorRegion.Height);
 
     ContextState.SetScissorRects(&ScissorRect, 1);
 }

@@ -544,8 +544,8 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
                 }
 
                 // Project scissor/clipping rectangles into framebuffer space
-                ImVec2 ClipMin((DrawCommand->ClipRect.x - ClipOffset.x) * ClipScale.x, (DrawCommand->ClipRect.y - ClipOffset.y) * ClipScale.y);
-                ImVec2 ClipMax((DrawCommand->ClipRect.z - ClipOffset.x) * ClipScale.x, (DrawCommand->ClipRect.w - ClipOffset.y) * ClipScale.y);
+                ImVec2 ClipMin((DrawCommand->ClipRect.x - ClipOffset.x), (DrawCommand->ClipRect.y - ClipOffset.y));
+                ImVec2 ClipMax((DrawCommand->ClipRect.z - ClipOffset.x), (DrawCommand->ClipRect.w - ClipOffset.y));
 
                 if (ClipMin.x < 0.0f)
                 {
@@ -597,16 +597,16 @@ void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* 
 
     float Matrix[4][4] =
     {
-        { 2.0f / (R - L)   , 0.0f             , 0.0f, 0.0f },
-        { 0.0f             , 2.0f / (T - B)   , 0.0f, 0.0f },
-        { 0.0f             , 0.0f             , 0.5f, 0.0f },
+        { 2.0f / (R - L),    0.0f,              0.0f, 0.0f },
+        { 0.0f,              2.0f / (T - B),    0.0f, 0.0f },
+        { 0.0f,              0.0f,              0.5f, 0.0f },
         { (R + L) / (L - R), (T + B) / (B - T), 0.5f, 1.0f },
     };
 
     FVertexConstantBuffer VertexConstantBuffer;
     FMemory::Memcpy(&VertexConstantBuffer.ViewProjectionMatrix, Matrix, sizeof(Matrix));
 
-    FViewportRegion ViewportRegion(FramebufferWidth, FramebufferHeight, 0.0f, 0.0f, 0.0f, 1.0f);
+    FViewportRegion ViewportRegion(static_cast<float>(FramebufferWidth), static_cast<float>(FramebufferHeight), 0.0f, 0.0f, 0.0f, 1.0f);
     CommandList.SetViewport(ViewportRegion);
 
     const EIndexFormat IndexFormat = sizeof(ImDrawIdx) == 2 ? EIndexFormat::uint16 : EIndexFormat::uint32;
@@ -637,7 +637,6 @@ void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
     {
         ViewportData->Width  = ViewportInfo.Width;
         ViewportData->Height = ViewportInfo.Height;
-        
         Viewport->RendererUserData = Viewport->PlatformUserData;
     }
 }
