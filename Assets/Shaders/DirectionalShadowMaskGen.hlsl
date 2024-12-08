@@ -69,8 +69,8 @@ struct FDirectionalShadowSettings
 {
     float FilterSize;
     float MaxFilterSize;
+    uint  ShadowMapSize;
     uint  Padding0;
-    uint  Padding1;
 };
 
 ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
@@ -116,11 +116,7 @@ float2 GetPoissonSample(uint Index)
 
 float GetShadowMapSize()
 {
-    uint Width;
-    uint Height;
-    uint Elements;
-    ShadowCascades.GetDimensions(Width, Height, Elements);
-    return (float)Width;
+    return (float)SettingsBuffer.ShadowMapSize;
 }
 
 float ShadowAmountPoissonDisc(uint CascadeIndex, float2 ShadowPosition, float BiasedDepth, inout uint RandomSeed)
@@ -142,14 +138,16 @@ float ShadowAmountPoissonDisc(uint CascadeIndex, float2 ShadowPosition, float Bi
     #endif
 
         const float  ShadowMapSize = GetShadowMapSize();
-        const float2 Radius = (FilterSize * 0.5) / ShadowMapSize;
+        const float2 FilterRadius  = (FilterSize * 0.5) / ShadowMapSize;
 
         for (int Sample = 0; Sample < NUM_PCF_SAMPLES; ++Sample)
         {
-            float2 RandomDirection = GetPoissonSample(Sample) * Radius;
+            float2 RandomDirection = GetPoissonSample(Sample) * FilterRadius;
+        
         #if ROTATE_SAMPLES
             RandomDirection = mul(RandomDirection, RandomRotationMatrix);
         #endif
+
             Result += ShadowCascades.SampleCmpLevelZero(ShadowSamplerPoint, float3(ShadowPosition + RandomDirection, CascadeIndex), BiasedDepth);
         }
 
@@ -200,7 +198,7 @@ float ShadowAmountGrid(uint CascadeIndex, float2 ShadowPosition, float BiasedDep
             [loop]
             for (int SampleX = MinOffset.x; SampleX <= MaxOffset.x; ++SampleX)
             {
-                const float2 Offset = float2(SampleX, SampleY) * TexelSize;
+                const float2 Offset           = float2(SampleX, SampleY) * TexelSize;
                 const float2 CurrentTexCoords = ShadowPosition + Offset;
 
                 float WeightX = 1.0;
@@ -258,7 +256,7 @@ float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Norma
 float ComputeShadow(float3 WorldPosition, float3 Normal, float Depth, inout uint CascadeIndex, inout uint RandomSeed)
 {
     // Calculate z-position in view-space
-    const float  ViewPosZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
+    const float  ViewPosZ           = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
     const float3 ProjectionPosition = mul(float4(WorldPosition, 1.0), LightBuffer.ShadowMatrix).xyz;
     
     // Find current cascade
@@ -288,7 +286,7 @@ float ComputeShadow(float3 WorldPosition, float3 Normal, float Depth, inout uint
     
     // Calculate shadow factor
     float3 ShadowPosition = ProjectionPosition;
-    float  ShadowAmount = CascadeShadowAmount(CascadeIndex, ShadowPosition, Normal, RandomSeed);
+    float  ShadowAmount   = CascadeShadowAmount(CascadeIndex, ShadowPosition, Normal, RandomSeed);
 
     // Blend between this and next cascade
 #if BLEND_CASCADES
@@ -339,7 +337,7 @@ void Main(FComputeShaderInput Input)
     const float3 Normal        = UnpackNormal(GBufferNormal);
 
     // Random Seed when doing soft shadows 
-    uint RandomSeed = InitRandom(Pixel, CameraBuffer.ViewportWidth, 0);
+    uint RandomSeed   = InitRandom(Pixel, CameraBuffer.ViewportWidth, 0);
     uint CascadeIndex = 0;
 
     // Calculate the Shadow

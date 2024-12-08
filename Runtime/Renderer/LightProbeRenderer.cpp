@@ -137,7 +137,7 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFra
         } Constants;
 
         Constants.Roughness             = Roughness;
-        Constants.SourceFaceResolution  = IrradianceMapSize;
+        Constants.SourceFaceResolution  = SkyboxWidth;
         Constants.CurrentFaceResolution = CurrentWidth;
 
         constexpr uint32 NumConstants = sizeof(FSpecularIrradianceGenConstants) / sizeof(uint32);

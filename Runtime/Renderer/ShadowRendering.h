@@ -137,8 +137,8 @@ struct FDirectionalShadowSettingsHLSL
 {
     float  FilterSize;
     float  MaxFilterSize;
+    uint32 ShadowMapSize;
     uint32 Padding0;
-    uint32 Padding1;
 };
 
 MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);
