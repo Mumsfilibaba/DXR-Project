@@ -425,15 +425,15 @@ void FFrameResources::Release()
     TransformBuffer.Reset();
 
     PointLightShadowSampler.Reset();
-    IrradianceSampler.Reset();
     ShadowSamplerPointCmp.Reset();
+    ShadowSamplerLinearCmp.Reset();
+    IrradianceSampler.Reset();
+    GBufferSampler.Reset();
 
     IntegrationLUT.Reset();
     IntegrationLUTSampler.Reset();
 
     Skybox.Reset();
-
-    FXAASampler.Reset();
 
     SSAOBuffer.Reset();
     FinalTarget.Reset();
@@ -445,8 +445,6 @@ void FFrameResources::Release()
 
     ReducedDepthBuffer[0].Reset();
     ReducedDepthBuffer[1].Reset();
-
-    GBufferSampler.Reset();
 
     MeshInputLayout.Reset();
 

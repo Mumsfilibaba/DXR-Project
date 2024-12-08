@@ -56,7 +56,6 @@
     #define CASCADE_FADE_FACTOR 0.1
 #endif
 
-
 // Camera and Light
 #if SHADER_LANG == SHADER_LANG_MSL
 ConstantBuffer<FCamera> CameraBuffer : register(b2);

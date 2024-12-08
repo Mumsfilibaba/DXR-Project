@@ -12,6 +12,18 @@
 #include "Renderer/Scene.h"
 #include "Renderer/Debug/GPUProfiler.h"
 
+static TAutoConsoleVariable<bool> CVarPointLightsEnableGeometryShaderInstancing(
+    "Renderer.PointLights.EnableGeometryShaderInstancing",
+    "Enables instancing in a geometry shader, enabling single-pass cube-map drawing, which creates less overhead on the CPU",
+    true,
+    EConsoleVariableFlags::Default);
+
+static TAutoConsoleVariable<bool> CVarPointLightsEnableViewInstancing(
+    "Renderer.PointLights.EnableViewInstancing",
+    "Enables view-instancing for cube-map rendering, enabling two-pass cube-map drawing, which creates less overhead on the CPU",
+    true,
+    EConsoleVariableFlags::Default);
+
 static TAutoConsoleVariable<bool> CVarCSMDebugCascades(
     "Renderer.Debug.DrawCascades",
     "Draws an overlay that shows which pixel uses what shadow cascade",
@@ -27,18 +39,6 @@ static TAutoConsoleVariable<bool> CVarCSMEnableGeometryShaderInstancing(
 static TAutoConsoleVariable<bool> CVarCSMEnableViewInstancing(
     "Renderer.CSM.EnableViewInstancing",
     "Enables view-instancing for Cascade rendering, enabling single-pass cascade drawing, which creates less overhead on the CPU",
-    true,
-    EConsoleVariableFlags::Default);
-
-static TAutoConsoleVariable<bool> CVarPointLightsEnableGeometryShaderInstancing(
-    "Renderer.PointLights.EnableGeometryShaderInstancing",
-    "Enables instancing in a geometry shader, enabling single-pass cube-map drawing, which creates less overhead on the CPU",
-    true,
-    EConsoleVariableFlags::Default);
-
-static TAutoConsoleVariable<bool> CVarPointLightsEnableViewInstancing(
-    "Renderer.PointLights.EnableViewInstancing",
-    "Enables view-instancing for cube-map rendering, enabling two-pass cube-map drawing, which creates less overhead on the CPU",
     true,
     EConsoleVariableFlags::Default);
 
@@ -60,7 +60,7 @@ static TAutoConsoleVariable<int32> CVarCSMMaxFilterSize(
     512,
     EConsoleVariableFlags::Default);
 
-static TAutoConsoleVariable<int32> CVarNumPoissonDiscSamples(
+static TAutoConsoleVariable<int32> CVarCSMNumPoissonDiscSamples(
     "Renderer.CSM.NumPoissonDiscSamples",
     "Number Poisson Samples to use when sampling the Cascaded Shadow Maps using a Poisson Disc",
     128,
@@ -1342,7 +1342,6 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render DirectionalLight ShadowMaps");
 }
 
-
 FShadowMaskRenderPass::FShadowMaskRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , PipelineStates()
@@ -1473,6 +1472,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.SetShaderResourceView(PipelineStateInstance.Shader.Get(), Resources.ShadowMapCascades->GetShaderResourceView(), 4);
 
     CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.DirectionalShadowMask->GetUnorderedAccessView(), 0);
+
     if (CVarCSMDebugCascades.GetValue())
     {
         CommandList.SetUnorderedAccessView(PipelineStateInstance.Shader.Get(), Resources.CascadeIndexBuffer->GetUnorderedAccessView(), 1);
@@ -1627,5 +1627,5 @@ void FShadowMaskRenderPass::RetrieveCurrentCombinationBasedOnCVar(FShadowMaskSha
     OutCombination.bBlendCascades               = CVarCSMBlendCascades.GetValue();
     OutCombination.bSelectCascadeFromProjection = CVarCSMSelectCascadeFromProjection.GetValue();
     OutCombination.bRotateSamples               = CVarCSMRotateSamples.GetValue();
-    OutCombination.NumPoissonSamples            = CVarNumPoissonDiscSamples.GetValue();
+    OutCombination.NumPoissonSamples            = CVarCSMNumPoissonDiscSamples.GetValue();
 }

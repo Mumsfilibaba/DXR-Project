@@ -120,26 +120,40 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFra
     CommandList.SetShaderResourceView(SpecularIrradianceGenShader.Get(), SkyboxSRV, 0);
     CommandList.SetSamplerState(SpecularIrradianceGenShader.Get(), FrameResources.IrradianceSampler.Get(), 0);
 
-    uint32 Width = Skylight.SpecularIrradianceMap->GetWidth();
-    const uint32 NumMiplevels = Skylight.SpecularIrradianceMap->GetNumMipLevels();
+    const uint32 IrradianceMapSize = Skylight.SpecularIrradianceMap->GetWidth();
+    const uint32 NumMiplevels      = Skylight.SpecularIrradianceMap->GetNumMipLevels();
+    const uint32 SkyboxWidth       = FrameResources.Skybox->GetWidth();
+    const float  RoughnessDelta    = 1.0f / (NumMiplevels - 1);
 
-    float Roughness = 0.0f;
-    const float RoughnessDelta = 1.0f / (NumMiplevels - 1);
+    float  Roughness    = 0.0f;
+    uint32 CurrentWidth = IrradianceMapSize;
     for (uint32 Mip = 0; Mip < NumMiplevels; Mip++)
     {
-        CommandList.Set32BitShaderConstants(SpecularIrradianceGenShader.Get(), &Roughness, 1);
+        struct FSpecularIrradianceGenConstants
+        {
+            float  Roughness;
+            uint32 SourceFaceResolution;
+            uint32 CurrentFaceResolution;
+        } Constants;
+
+        Constants.Roughness             = Roughness;
+        Constants.SourceFaceResolution  = IrradianceMapSize;
+        Constants.CurrentFaceResolution = CurrentWidth;
+
+        constexpr uint32 NumConstants = sizeof(FSpecularIrradianceGenConstants) / sizeof(uint32);
+        CommandList.Set32BitShaderConstants(SpecularIrradianceGenShader.Get(), &Constants, NumConstants);
 
         FRHIUnorderedAccessView* UnorderedAccessView = Skylight.SpecularIrradianceMapUAVs[Mip].Get();
         CommandList.SetUnorderedAccessView(SpecularIrradianceGenShader.Get(), UnorderedAccessView, 0);
 
         constexpr uint32 NumThreads = 16;
-        const uint32 ThreadWidth  = FMath::DivideByMultiple(Width, NumThreads);
-        const uint32 ThreadHeight = FMath::DivideByMultiple(Width, NumThreads);
+        const uint32 ThreadWidth  = FMath::DivideByMultiple(CurrentWidth, NumThreads);
+        const uint32 ThreadHeight = FMath::DivideByMultiple(CurrentWidth, NumThreads);
         CommandList.Dispatch(ThreadWidth, ThreadHeight, 6);
 
         CommandList.UnorderedAccessTextureBarrier(Skylight.SpecularIrradianceMap.Get());
 
-        Width = FMath::Max<uint32>(Width / 2, 1U);
+        CurrentWidth = FMath::Max<uint32>(CurrentWidth / 2, 1U);
         Roughness += RoughnessDelta;
     }
 

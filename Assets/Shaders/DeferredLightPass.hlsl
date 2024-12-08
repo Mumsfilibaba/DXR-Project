@@ -325,9 +325,10 @@ void Main(FComputeShaderInput Input)
         float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, ObjectNormal, 0.0f).rgb;
         float3 Diffuse    = Irradiance * GBufferAlbedo * Kd;
 
-        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, GBufferRoughness * (Constants.NumSkyLightMips - 1.0f)).rgb;
-        float2 BRDFIntegration = GetIntegrationConstants(NDotV, GBufferRoughness);
-        float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
+        float  SpecularMipLevel = GBufferRoughness * ((float)(Constants.NumSkyLightMips) - 1.0f);
+        float3 PrefilteredMap   = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, SpecularMipLevel).rgb;
+        float2 BRDFIntegration  = GetIntegrationConstants(NDotV, GBufferRoughness);
+        float3 Specular         = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
 
         float3 Ambient = (Diffuse + Specular) * GBufferAO;
         FinalColor     = Ambient + L0;

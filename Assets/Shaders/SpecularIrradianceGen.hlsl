@@ -4,7 +4,9 @@
 #define NUM_THREADS (16)
 
 SHADER_CONSTANT_BLOCK_BEGIN
-    float Roughness;
+    float CurrentRoughness;
+    uint  SourceFaceResolution;
+    uint  CurrentFaceResolution;
 SHADER_CONSTANT_BLOCK_END
 
 TextureCube<float4> EnvironmentMap     : register(t0);
@@ -45,24 +47,15 @@ static const float3x3 RotateUV[6] =
 void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {
     uint3 TexCoord = DispatchThreadID;
-    
-    uint Width;
-    uint Height;
-    uint Elements;
-    SpecularIrradianceMap.GetDimensions(Width, Height, Elements);
-    
-    uint SourceWidth;
-    uint SourceHeight;
-    EnvironmentMap.GetDimensions(SourceWidth, SourceHeight);
-    
-    float3 Normal = float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
+           
+    float3 Normal = float3((TexCoord.xy / float(Constants.CurrentFaceResolution)) - 0.5f, 0.5f);
     Normal = normalize(mul(RotateUV[TexCoord.z], Normal));
     
     // Make the assumption that V equals R equals the normal (A.k.a viewangle is zero)
     float3 R = Normal;
     float3 V = R;
 
-    float  FinalRoughness   = min(max(Constants.Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    float  FinalRoughness   = min(max(Constants.CurrentRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
     float  TotalWeight      = 0.0f;
     float3 PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
     
@@ -83,7 +76,7 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
             float HdotV = max(dot(H, V), 0.0f);
             float PDF   = D * NdotH / (4.0f * HdotV) + 0.0001f;
 
-            float Resolution = float(SourceWidth); // Resolution of source cubemap (per face)
+            float Resolution = float(Constants.SourceFaceResolution); // Resolution of source cubemap (per face)
             float SaTexel    = 4.0f * PI / (6.0f * Resolution * Resolution);
             float SaSample   = 1.0f / (float(SAMPLE_COUNT) * PDF + 0.0001f);
 

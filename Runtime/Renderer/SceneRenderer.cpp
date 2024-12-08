@@ -802,7 +802,8 @@ void FSceneRenderer::Tick(FScene* Scene)
         EResourceAccess::NonPixelShaderResource);
 
     // Render Shadows
-    if (CVarShadowsEnabled.GetValue())
+    const bool bEnableShadows = CVarShadowsEnabled.GetValue();
+    if (bEnableShadows)
     {
         // Point Lights
         if (CVarPointLightShadowsEnabled.GetValue())
@@ -829,7 +830,9 @@ void FSceneRenderer::Tick(FScene* Scene)
     CommandList.TransitionTexture(Resources.Skylight.SpecularIrradianceMap.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
     CommandList.TransitionTexture(Resources.IntegrationLUT.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
 
-    if (CVarShadowMaskEnabled.GetValue())
+    // In order to render the shadow-mask, we want all these features to be enabled
+    const bool bEnableShadowMask = CVarShadowMaskEnabled.GetValue();
+    if (bEnableShadows && bEnableShadowMask)
     {
         ShadowMaskRenderPass->Execute(CommandList, Resources);
     }
