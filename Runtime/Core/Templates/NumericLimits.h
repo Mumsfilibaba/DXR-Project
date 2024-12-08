@@ -61,17 +61,10 @@
 #define LIMITS_EPS_DBL ((double)(2.2204460492503131e-16))
 
 // long double constants
-#if 0 // Note: Disabled currently disabled since it seems to be incompatible with MSVC
-    #define LIMITS_DIGITS_LDBL (64) // Number of mantissa bits for long double
-    #define LIMITS_MIN_LDBL ((long double)(3.362103143112093506262677817e-4932L))
-    #define LIMITS_MAX_LDBL ((long double)(1.18973149535723176502e+4932L))
-    #define LIMITS_EPS_LDBL ((long double)(1.08420217248550443401e-19L))
-#else
-    #define LIMITS_DIGITS_LDBL LIMITS_DIGITS_DBL
-    #define LIMITS_MIN_LDBL LIMITS_MIN_DBL
-    #define LIMITS_MAX_LDBL LIMITS_MAX_DBL
-    #define LIMITS_EPS_LDBL LIMITS_EPS_DBL
-#endif
+#define LIMITS_DIGITS_LDBL LIMITS_DIGITS_DBL
+#define LIMITS_MIN_LDBL LIMITS_MIN_DBL
+#define LIMITS_MAX_LDBL LIMITS_MAX_DBL
+#define LIMITS_EPS_LDBL LIMITS_EPS_DBL
 
 template<typename T>
 struct TNumericLimits;
