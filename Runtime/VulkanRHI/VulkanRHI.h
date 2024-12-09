@@ -17,15 +17,21 @@ struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 class VULKANRHI_API FVulkanRHI : public FRHI
 {
 public:
+
     static FVulkanRHI* GetRHI()
     {
         CHECK(GVulkanRHI != nullptr);
         return GVulkanRHI;
     }
 
+public:
+
     FVulkanRHI();
     ~FVulkanRHI();
 
+public:
+
+    // RHI Interface
     virtual bool Initialize() override final;
 
     virtual void RHIBeginFrame() override final;
@@ -73,6 +79,8 @@ public:
     virtual void* RHIGetDirectCommandQueue() override final;
     virtual void* RHIGetComputeCommandQueue() override final;
     virtual void* RHIGetCopyCommandQueue() override final;
+
+public:
 
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)

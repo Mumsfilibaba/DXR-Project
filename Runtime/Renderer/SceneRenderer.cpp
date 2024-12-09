@@ -382,7 +382,7 @@ bool FSceneRenderer::Initialize()
         GRHICommandExecutor.ExecuteCommandList(CommandList);
     }
 
-    // Register Windows
+    // Register ImGui Windows
     if (IImguiPlugin::IsEnabled())
     {
         TextureDebugger   = MakeSharedPtr<FRenderTargetDebugWindow>();
@@ -505,76 +505,23 @@ void FSceneRenderer::Tick(FScene* Scene)
     TSharedPtr<FWindow> EngineWindow = GEngine->GetEngineWindow();
     Resources.BackBuffer = Resources.MainViewport->GetBackBuffer();
 
+    GRHICommandExecutor.Tick();
+
     // Clear the images that were debug-able last frame 
-    // TODO: Make this persistent, we do not need to do this every frame, right know it is because the resource-state system needs overhaul
     TextureDebugger->ClearImages();
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "--BEGIN FRAME--");
+
     CommandList.BeginFrame();
 
-    GRHICommandExecutor.Tick();
-    
+    // Check if we need to resize
     const FIntVector2 CurrentSize = EngineWindow->GetSize();
     Resources.DesiredWidth  = CurrentSize.X;
     Resources.DesiredHeight = CurrentSize.Y;
 
     if (Resources.DesiredWidth != Resources.CurrentWidth || Resources.DesiredHeight != Resources.CurrentHeight)
     {
-        // Check if we resized and update the Viewport-size on the RHIThread
-        FRHIViewport* Viewport = Resources.MainViewport.Get();
-
-        uint32 NewWidth  = Resources.DesiredWidth;
-        uint32 NewHeight = Resources.DesiredHeight;
-        if ((Resources.CurrentWidth != NewWidth || Resources.CurrentHeight != NewHeight) && NewWidth > 0 && NewHeight > 0)
-        {
-            CommandList.ResizeViewport(Viewport, NewWidth, NewHeight);
-            LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, NewWidth, NewHeight);
-
-            if (!DepthPrePass->CreateResources(Resources, NewWidth, NewHeight))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            if (!BasePass->CreateResources(Resources, NewWidth, NewHeight))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            if (!TiledLightPass->CreateResources(Resources, NewWidth, NewHeight))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            if (!DepthReducePass->CreateResources(Resources, NewWidth, NewHeight))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            if (!ScreenSpaceOcclusionPass->CreateResources(Resources, NewWidth, NewHeight))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            if (!ShadowMaskRenderPass->CreateResources(Resources, NewWidth, NewHeight))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-
-            if (!TemporalAA->CreateResources(Resources, NewWidth, NewHeight))
-            {
-                DEBUG_BREAK();
-                return;
-            }
-        }
-
-        Resources.CurrentWidth  = NewWidth;
-        Resources.CurrentHeight = NewHeight;
+        ResizeResources(Resources.DesiredWidth, Resources.DesiredHeight);
     }
 
     CommandList.BeginExternalCapture();
@@ -1008,8 +955,58 @@ void FSceneRenderer::Tick(FScene* Scene)
 
 void FSceneRenderer::ResizeResources(uint32 InWidth, uint32 InHeight)
 {
-    Resources.DesiredWidth  = InWidth;
-    Resources.DesiredHeight = InHeight;
+    // Check if we resized and update the Viewport-size on the RHIThread
+    FRHIViewport* Viewport = Resources.MainViewport.Get();
+    if ((Resources.CurrentWidth != InWidth || Resources.CurrentHeight != InHeight) && InWidth > 0 && InHeight > 0)
+    {
+        CommandList.ResizeViewport(Viewport, InWidth, InHeight);
+        LOG_INFO("Resized between this and the previous frame. From: w=%d h=%d, To: w=%d h=%d", Resources.CurrentWidth, Resources.CurrentHeight, InWidth, InHeight);
+
+        if (!DepthPrePass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!BasePass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!TiledLightPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!DepthReducePass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!ScreenSpaceOcclusionPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!ShadowMaskRenderPass->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+
+        if (!TemporalAA->CreateResources(Resources, InWidth, InHeight))
+        {
+            DEBUG_BREAK();
+            return;
+        }
+    }
+
+    Resources.CurrentWidth  = InWidth;
+    Resources.CurrentHeight = InHeight;
 }
 
 bool FSceneRenderer::InitShadingImage()
