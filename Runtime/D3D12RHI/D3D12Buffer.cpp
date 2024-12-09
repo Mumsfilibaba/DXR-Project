@@ -13,7 +13,7 @@ FD3D12Buffer::~FD3D12Buffer()
     // NOTE: Left empty for debugging purposes
 }
 
-bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InInitialData)
+bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData)
 {
     const uint64 Alignment   = GetBufferAlignment(Info.UsageFlags);
     const uint64 AlignedSize = FMath::AlignUp(Info.Size, Alignment);
@@ -85,29 +85,27 @@ bool FD3D12Buffer::Initialize(EResourceAccess InInitialAccess, const void* InIni
         }
         else
         {
-            FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
-            Context->RHIStartContext();
+            InCommandContext->RHIStartContext();
 
-            Context->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
-            Context->RHIUpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
+            InCommandContext->RHITransitionBuffer(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+            InCommandContext->RHIUpdateBuffer(this, FBufferRegion(0, Info.Size), InInitialData);
 
             // NOTE: Transfer to the initial state
             if (InInitialAccess != EResourceAccess::CopyDest)
             {
-                Context->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
+                InCommandContext->RHITransitionBuffer(this, EResourceAccess::CopyDest, InInitialAccess);
             }
 
-            Context->RHIFinishContext();
+            InCommandContext->RHIFinishContext();
         }
     }
     else
     {
         if (InInitialAccess != EResourceAccess::Common && Info.IsDynamic())
         {
-            FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
-            Context->RHIStartContext();
-            Context->RHITransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
-            Context->RHIFinishContext();
+            InCommandContext->RHIStartContext();
+            InCommandContext->RHITransitionBuffer(this, EResourceAccess::Common, InInitialAccess);
+            InCommandContext->RHIFinishContext();
         }
     }
 

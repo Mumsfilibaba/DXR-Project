@@ -15,12 +15,11 @@ FD3D12Texture::FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTe
 
 FD3D12Texture::~FD3D12Texture()
 {
-    // NOTE: Left empty for debugging purposes
     DestroyDepthStencilViews();
     DestroyRenderTargetViews();
 }
 
-bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
+bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
 {
     D3D12_RESOURCE_DESC ResourceDesc;
     FMemory::Memzero(&ResourceDesc);
@@ -190,10 +189,8 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     if (InitialData && bIsTexture2D)
     {
         // TODO: Support other types than texture 2D
-
-        FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
-        Context->RHIStartContext();
-        Context->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+        InCommandContext->RHIStartContext();
+        InCommandContext->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
 
         // Transfer all the miplevels
         uint32 Width  = Info.Extent.X;
@@ -214,22 +211,21 @@ bool FD3D12Texture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
             }
 
             FTextureRegion2D TextureRegion(Width, Height);
-            Context->RHIUpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
+            InCommandContext->RHIUpdateTexture2D(this, TextureRegion, Index, Data, static_cast<uint32>(InitialData->GetMipRowPitch(Index)));
 
             Width  = Width / 2;
             Height = Height / 2;
         }
 
         // NOTE: Transition into InitialAccess
-        Context->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
-        Context->RHIFinishContext();
+        InCommandContext->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
+        InCommandContext->RHIFinishContext();
     }
     else if (InInitialAccess != EResourceAccess::Common)
     {
-        FD3D12CommandContext* Context = FD3D12RHI::GetRHI()->ObtainCommandContext();
-        Context->RHIStartContext();
-        Context->RHITransitionTexture(this, EResourceAccess::Common, InInitialAccess);
-        Context->RHIFinishContext();
+        InCommandContext->RHIStartContext();
+        InCommandContext->RHITransitionTexture(this, EResourceAccess::Common, InInitialAccess);
+        InCommandContext->RHIFinishContext();
     }
 
     return true;

@@ -4,21 +4,28 @@
 #include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
 
+class FD3D12CommandContext;
+
 class FD3D12Buffer : public FRHIBuffer, public FD3D12DeviceChild
 {
 public:
     FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo);
     ~FD3D12Buffer();
 
-    bool Initialize(EResourceAccess InInitialAccess, const void* InInitialData);
+    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const void* InInitialData);
 
+public:
+
+    // FRHIBuffer Interface
     virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
     virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
+public:
     void SetResource(FD3D12Resource* InResource);
     
     FD3D12ConstantBufferView* GetConstantBufferView() const

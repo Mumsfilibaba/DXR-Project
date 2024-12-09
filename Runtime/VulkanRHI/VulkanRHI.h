@@ -31,7 +31,7 @@ public:
 
 public:
 
-    // RHI Interface
+    // FRHI Interface
     virtual bool Initialize() override final;
 
     virtual void RHIBeginFrame() override final;

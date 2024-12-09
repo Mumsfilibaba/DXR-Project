@@ -2,11 +2,11 @@
 #include "D3D12Viewport.h"
 #include "Core/Misc/FrameProfiler.h"
 
-FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo)
+FD3D12Viewport::FD3D12Viewport(FD3D12Device* InDevice, FD3D12CommandContext* InCommandContext, const FRHIViewportInfo& InViewportInfo)
     : FD3D12DeviceChild(InDevice)
     , FRHIViewport(InViewportInfo)
     , SwapChain(nullptr)
-    , CommandContext(InCmdContext)
+    , CommandContext(InCommandContext)
     , BackBufferProxy(nullptr)
     , BackBuffers()
     , Hwnd(reinterpret_cast<HWND>(InViewportInfo.WindowHandle))
@@ -38,8 +38,13 @@ FD3D12Viewport::~FD3D12Viewport()
     BackBufferProxy->SetViewport(nullptr);
 }
 
-bool FD3D12Viewport::Initialize()
+bool FD3D12Viewport::Initialize(FD3D12CommandContext* InCommandContext)
 {
+    // Ensure that the CommandContext used is the same that we created the viewport with.
+    // The limitation is really just that we use the same ID3D12CommandQueue that we used for 
+    // creation since the presention is queued up on the commandqueue.
+    CHECK(CommandContext == InCommandContext);
+
     // Save the flags
     Flags = GetDevice()->GetAdapter()->IsTearingSupported() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     Flags = Flags | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
@@ -99,11 +104,14 @@ bool FD3D12Viewport::Initialize()
     IDXGIFactory2* Factory = GetDevice()->GetAdapter()->GetDXGIFactory();
     CHECK(Factory != nullptr);
 
-    TComPtr<IDXGISwapChain1> TempSwapChain;
-    HRESULT Result = Factory->CreateSwapChainForHwnd(GetDevice()->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct), Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &TempSwapChain);
+    ID3D12CommandQueue* CommandQueue = GetDevice()->GetD3D12CommandQueue(InCommandContext->GetQueueType());
+    CHECK(CommandQueue != nullptr);
+
+    TComPtr<IDXGISwapChain1> DXGISwapChain1;
+    HRESULT Result = Factory->CreateSwapChainForHwnd(CommandQueue, Hwnd, &SwapChainDesc, &FullscreenDesc, nullptr, &DXGISwapChain1);
     if (SUCCEEDED(Result))
     {
-        Result = TempSwapChain.GetAs<IDXGISwapChain3>(&SwapChain);
+        Result = DXGISwapChain1.GetAs<IDXGISwapChain3>(&SwapChain);
         if (FAILED(Result))
         {
             D3D12_ERROR("[FD3D12Viewport]: FAILED to retrieve IDXGISwapChain3");
@@ -136,17 +144,17 @@ bool FD3D12Viewport::Initialize()
     return true;
 }
 
-bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
+bool FD3D12Viewport::Resize(FD3D12CommandContext* InCommandContext, uint32 InWidth, uint32 InHeight)
 {
     if ((InWidth != Info.Width || InHeight != Info.Height) && InWidth > 0 && InHeight > 0)
     {
-        if (CommandContext->IsRecording())
+        if (InCommandContext->IsRecording())
         {
-            CommandContext->SplitCommandListAndResetState(false, true);
+            InCommandContext->SplitCommandListAndResetState(false, true);
         }
         else
         {
-            CommandContext->RHIClearState();
+            InCommandContext->RHIClearState();
         }
 
         for (FD3D12TextureRef& Texture : BackBuffers)
@@ -178,11 +186,11 @@ bool FD3D12Viewport::Resize(uint32 InWidth, uint32 InHeight)
     return true;
 }
 
-bool FD3D12Viewport::Present(bool VerticalSync)
+bool FD3D12Viewport::Present(bool bVerticalSync)
 {
     TRACE_FUNCTION_SCOPE();
 
-    const uint32 SyncInterval = !!VerticalSync;
+    const uint32 SyncInterval = bVerticalSync ? 1 : 0;
 
     uint32 PresentFlags = 0;
     if (SyncInterval == 0 && Flags & DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING)
