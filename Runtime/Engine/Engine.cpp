@@ -71,7 +71,6 @@ static TAutoConsoleVariable<int32> CVarViewportHeight(
     1080,
     EConsoleVariableFlags::Default);
 
-
 FEngine::FEngine()
     : EngineWindow(nullptr)
     , EngineViewportWidget(nullptr)

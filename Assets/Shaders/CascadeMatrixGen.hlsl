@@ -20,14 +20,14 @@ void Main(FComputeShaderInput Input)
     const int CascadeIndex    = min(int(Input.DispatchThreadID.x), MaxCascadeIndex);
     
     // Get the min and max depth of the scene
-    float2 MinMaxDepth = float2(0.0f, 1.0f);
+    float2 MinMaxDepth = float2(0.0, 1.0);
     if (GenerationInfo.bDepthReductionEnabled)
     {
         const uint2 FirstCoord = uint2(0, 0);
         MinMaxDepth = MinMaxDepthTex[FirstCoord];
     }
 
-    float4x4 InvCamera = CameraBuffer.ViewProjectionInvUnjittered;
+    float4x4 ViewProjectionInv = CameraBuffer.ViewProjectionInvUnjittered;
     float NearPlane = CameraBuffer.NearPlane;
     float FarPlane  = CameraBuffer.FarPlane;
     float ClipRange = FarPlane - NearPlane;
@@ -39,12 +39,12 @@ void Main(FComputeShaderInput Input)
     MinDepth = min(MinDepth, MaxDepth);
     MaxDepth = max(Temp, MaxDepth);
 
-    const float MaxDist = 60.0f;
+    const float MaxDist = 60.0;
     MinDepth = floor(MinDepth * MaxDist) / MaxDist;
     MaxDepth = ceil(MaxDepth * MaxDist) / MaxDist;
 
     float Range = MaxDepth - MinDepth;
-    float Ratio = MaxDepth / MinDepth;
+    float Ratio = MaxDepth / max(MinDepth, 0.01);
 
     float CascadeSplits[NUM_SHADOW_CASCADES];
     
@@ -66,19 +66,19 @@ void Main(FComputeShaderInput Input)
 
     // Use min between MinMaxDepth to protect against cases where the lowest is 1.0 and highest 0.0 
     // (Cases where nothing is rendered in the prepass)
-    float PrevSplitDist = (CascadeIndex == 0) ? min(MinMaxDepth.x, MinMaxDepth.y) : CascadeSplits[CascadeIndex - 1];
     float SplitDist     = CascadeSplits[CascadeIndex];
+    float PrevSplitDist = (CascadeIndex == 0) ? min(MinMaxDepth.x, MinMaxDepth.y) : CascadeSplits[CascadeIndex - 1];
 
     float3 FrustumCorners[8] =
     {
-        float3(-1.0f,  1.0f, 0.0f),
-        float3( 1.0f,  1.0f, 0.0f),
-        float3( 1.0f, -1.0f, 0.0f),
-        float3(-1.0f, -1.0f, 0.0f),
-        float3(-1.0f,  1.0f, 1.0f),
-        float3( 1.0f,  1.0f, 1.0f),
-        float3( 1.0f, -1.0f, 1.0f),
-        float3(-1.0f, -1.0f, 1.0f),
+        float3(-1.0,  1.0, 0.0),
+        float3( 1.0,  1.0, 0.0),
+        float3( 1.0, -1.0, 0.0),
+        float3(-1.0, -1.0, 0.0),
+        float3(-1.0,  1.0, 1.0),
+        float3( 1.0,  1.0, 1.0),
+        float3( 1.0, -1.0, 1.0),
+        float3(-1.0, -1.0, 1.0),
     };
 
     // Calculate position of light frustum
@@ -86,7 +86,7 @@ void Main(FComputeShaderInput Input)
         [unroll]
         for (int Index = 0; Index < 8; ++Index)
         {
-            float4 Corner = mul(float4(FrustumCorners[Index], 1.0f), InvCamera);
+            float4 Corner = mul(float4(FrustumCorners[Index], 1.0), ViewProjectionInv);
             FrustumCorners[Index] = Corner.xyz / Corner.w;
         }
     }
@@ -102,7 +102,7 @@ void Main(FComputeShaderInput Input)
     }
 
     // Calc frustum center
-    float3 FrustumCenter = Float3(0.0f);
+    float3 FrustumCenter = Float3(0.0);
     {
         [unroll]
         for (int Index = 0; Index < 8; ++Index)
@@ -110,9 +110,9 @@ void Main(FComputeShaderInput Input)
             FrustumCenter += FrustumCorners[Index];
         }
     }
-    FrustumCenter /= 8.0f;
+    FrustumCenter /= 8.0;
 
-    float Radius = 0.0f;
+    float Radius = 0.0;
     {
         [unroll]
         for (int Index = 0; Index < 8; ++Index)
@@ -133,7 +133,7 @@ void Main(FComputeShaderInput Input)
     float3 ShadowEyePos   = FrustumCenter - (LightDirection * MaxExtents.z);
     
     // Constant upvector in order to keep the cascades stable
-    float3 LightUp = float3(0.0f, 1.0f, 0.0f);
+    float3 LightUp = float3(0.0, 1.0, 0.0);
     
     float3x3 LightRotationMatrix;
     LightRotationMatrix[2] = LightDirection;
@@ -143,7 +143,7 @@ void Main(FComputeShaderInput Input)
     float4x4 ShadowView = InverseRotationTranslation(LightRotationMatrix, ShadowEyePos);
 
     // Add extra to capture more objects in the frustum
-    const float ExtentZ      = CascadeExtents.z + 50.0f;
+    const float ExtentZ      = CascadeExtents.z + 50.0;
     const float NewNearPlane = -ExtentZ;
     const float NewFarPlane  =  ExtentZ;
     
@@ -153,14 +153,14 @@ void Main(FComputeShaderInput Input)
     // Stabilize cascades
     {
         float4x4 ShadowMatrix = mul(ShadowView, ShadowProjection);
-        float3   ShadowOrigin = Float3(0.0f);
-        ShadowOrigin = mul(float4(ShadowOrigin, 1.0f), ShadowMatrix).xyz;
-        ShadowOrigin *= (CascadeResolution / 2.0f);
+        float3   ShadowOrigin = Float3(0.0);
+        ShadowOrigin = mul(float4(ShadowOrigin, 1.0), ShadowMatrix).xyz;
+        ShadowOrigin *= (CascadeResolution / 2.0);
         
         float3 RoundedOrigin = round(ShadowOrigin);
         float3 RoundedOffset = RoundedOrigin - ShadowOrigin;
-        RoundedOffset   = RoundedOffset * (2.0f / CascadeResolution);
-        RoundedOffset.z = 0.0f;
+        RoundedOffset   = RoundedOffset * (2.0 / CascadeResolution);
+        RoundedOffset.z = 0.0;
 
         ShadowProjection[3][0] += RoundedOffset.x;
         ShadowProjection[3][1] += RoundedOffset.y;
@@ -179,31 +179,31 @@ void Main(FComputeShaderInput Input)
     
     // Create Frustom Planes
     float4x4 InverseShadowView = float4x4(
-        float4(LightRotationMatrix[0], 0.0f),
-        float4(LightRotationMatrix[1], 0.0f),
-        float4(LightRotationMatrix[2], 0.0f),
-        float4(ShadowEyePos, 1.0f));
+        float4(LightRotationMatrix[0], 0.0),
+        float4(LightRotationMatrix[1], 0.0),
+        float4(LightRotationMatrix[2], 0.0),
+        float4(ShadowEyePos, 1.0));
 
     float4x4 InverseShadowProjection = InverseScaleTranslation(ShadowProjection);
     float4x4 InverseShadowMatrix     = mul(InverseShadowView, InverseShadowProjection);
     
     float3 Corners[8] =
     {
-        float3( 1.0f, -1.0f, 0.0f),
-        float3(-1.0f, -1.0f, 0.0f),
-        float3( 1.0f,  1.0f, 0.0f),
-        float3(-1.0f,  1.0f, 0.0f),
-        float3( 1.0f, -1.0f, 1.0f),
-        float3(-1.0f, -1.0f, 1.0f),
-        float3( 1.0f,  1.0f, 1.0f),
-        float3(-1.0f,  1.0f, 1.0f),
+        float3( 1.0, -1.0, 0.0),
+        float3(-1.0, -1.0, 0.0),
+        float3( 1.0,  1.0, 0.0),
+        float3(-1.0,  1.0, 0.0),
+        float3( 1.0, -1.0, 1.0),
+        float3(-1.0, -1.0, 1.0),
+        float3( 1.0,  1.0, 1.0),
+        float3(-1.0,  1.0, 1.0),
     };
 
     {
         [unroll]
         for(int Index = 0; Index < 8; ++Index)
         {
-            float4 Corner = mul(float4(Corners[Index], 1.0f), InverseShadowMatrix);
+            float4 Corner = mul(float4(Corners[Index], 1.0), InverseShadowMatrix);
             Corners[Index] = Corner.xyz / Corner.w;
         }
     }
@@ -218,10 +218,10 @@ void Main(FComputeShaderInput Input)
 
     // Create a matrix that converts from [-1, 1] -> [0, 1]
     const float4x4 TextureScaleBias = float4x4(
-        float4(0.5f,  0.0f, 0.0f, 0.0f),
-        float4(0.0f, -0.5f, 0.0f, 0.0f),
-        float4(0.0f,  0.0f, 1.0f, 0.0f),
-        float4(0.5f,  0.5f, 0.0f, 1.0f));
+        float4(0.5f,  0.0, 0.0, 0.0),
+        float4(0.0, -0.5f, 0.0, 0.0),
+        float4(0.0,  0.0, 1.0, 0.0),
+        float4(0.5f,  0.5f, 0.0, 1.0));
         
     const float4x4 InverseTextureScaleBias = InverseScaleTranslation(TextureScaleBias);
 
@@ -229,11 +229,11 @@ void Main(FComputeShaderInput Input)
     // of the first cascade partition
     const float4x4 InverseCascadeMatrix = mul(mul(InverseTextureScaleBias, InverseShadowProjection), InverseShadowView);
     
-    float3 CascadeCorner = mul(float4(0.0f, 0.0f, 0.0f, 1.0f), InverseCascadeMatrix).xyz;
-    CascadeCorner        = mul(float4(CascadeCorner, 1.0f), GenerationInfo.ShadowMatrix).xyz;
+    float3 CascadeCorner = mul(float4(0.0, 0.0, 0.0, 1.0), InverseCascadeMatrix).xyz;
+    CascadeCorner        = mul(float4(CascadeCorner, 1.0), GenerationInfo.ShadowMatrix).xyz;
 
-    float3 OtherCorner = mul(float4(1.0f, 1.0f, 1.0f, 1.0f), InverseCascadeMatrix).xyz;
-    OtherCorner        = mul(float4(OtherCorner, 1.0f), GenerationInfo.ShadowMatrix).xyz;
+    float3 OtherCorner = mul(float4(1.0, 1.0, 1.0, 1.0), InverseCascadeMatrix).xyz;
+    OtherCorner        = mul(float4(OtherCorner, 1.0), GenerationInfo.ShadowMatrix).xyz;
       
     // Store Split-Data
     {
@@ -253,9 +253,9 @@ void Main(FComputeShaderInput Input)
             Split.FrustumPlanes[Index] = FrustumPlanes[Index];
         }
 
-        float3 CascadeScale = 1.0f / (OtherCorner - CascadeCorner);
-        Split.Offsets = float4(-CascadeCorner, 0.0f);
-        Split.Scale   = float4( CascadeScale, 1.0f);
+        float3 CascadeScale = 1.0 / (OtherCorner - CascadeCorner);
+        Split.Offsets = float4(-CascadeCorner, 0.0);
+        Split.Scale   = float4( CascadeScale, 1.0);
 
         SplitBuffer[CascadeIndex] = Split;
     }

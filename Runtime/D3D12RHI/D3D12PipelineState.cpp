@@ -1214,7 +1214,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
     HRESULT hResult = Device1->CreatePipelineLibrary(PipelineData, PipelineDataSize, IID_PPV_ARGS(&PipelineLibrary));
     if (FAILED(hResult))
     {
-        D3D12_ERROR("Failed to create PipelineLibrary");
+        D3D12_WARNING("Failed to create PipelineLibrary");
         return false;
     }
 
