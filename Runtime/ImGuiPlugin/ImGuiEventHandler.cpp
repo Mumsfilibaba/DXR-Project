@@ -245,14 +245,19 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
         UIState.AddKeyEvent(ImGuiMod_Super, KeyEvent.GetModifierKeys().IsSuperDown());
 
         const ImGuiKey TranslatedKey = GetImGuiKeyboardKey(KeyName);
-        if (TranslatedKey != ImGuiKey_None)
-        {
-            UIState.AddKeyEvent(TranslatedKey, KeyEvent.IsDown());
-        }
 
-        if (UIState.WantCaptureKeyboard)
+        // NOTE: ImGuiKey_GraveAccent is the key that activates the console so we need to skip it so that we can disable the console.
+        if (TranslatedKey != ImGuiKey_GraveAccent)
         {
-            return true;
+            if (TranslatedKey != ImGuiKey_None)
+            {
+                UIState.AddKeyEvent(TranslatedKey, KeyEvent.IsDown());
+            }
+
+            if (UIState.WantCaptureKeyboard)
+            {
+                return true;
+            }
         }
     }
 

@@ -393,11 +393,11 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
     {
     case ImGuiInputTextFlags_CallbackEdit:
     {
-        const CHAR* WordEnd   = Data->Buf + Data->CursorPos;
-        const CHAR* WordStart = WordEnd;
+        const char* WordEnd   = Data->Buf + Data->CursorPos;
+        const char* WordStart = WordEnd;
         while (WordStart > Data->Buf)
         {
-            const CHAR c = WordStart[-1];
+            const char c = WordStart[-1];
             if (c == ' ' || c == '\t' || c == ',' || c == ';')
             {
                 break;
@@ -422,13 +422,13 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
     }
     case ImGuiInputTextFlags_CallbackCompletion:
     {
-        const CHAR* WordEnd = Data->Buf + Data->CursorPos;
-        const CHAR* WordStart = WordEnd;
+        const char* WordEnd   = Data->Buf + Data->CursorPos;
+        const char* WordStart = WordEnd;
         if (Data->BufTextLen > 0)
         {
             while (WordStart > Data->Buf)
             {
-                const CHAR c = WordStart[-1];
+                const char c = WordStart[-1];
                 if (c == ' ' || c == '\t' || c == ',' || c == ';')
                 {
                     break;
@@ -548,7 +548,6 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
 void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
 {
     CHECK(InputHandler.IsValid());
-    InputHandler->bConsoleToggled = false;
 
     if (Event.IsDown())
     {
@@ -556,7 +555,7 @@ void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
         if (!Event.IsRepeat() && bIsEnableKey)
         {
             bIsActive = !bIsActive;
-            InputHandler->bConsoleToggled = true;
+            InputHandler->bConsoleToggled = bIsActive;
         }
     }
 }

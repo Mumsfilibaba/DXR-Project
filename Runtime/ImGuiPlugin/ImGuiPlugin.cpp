@@ -651,7 +651,9 @@ void FImGuiPlugin::Tick(float Delta)
 
     // Draw all ImGui widgets
     ImGui::NewFrame();
+
     DrawDelegates.Broadcast();
+
     ImGui::EndFrame();
 }
 
