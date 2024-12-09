@@ -57,7 +57,7 @@ end
 local valid_language_versions =
 {
     ["c++98"] = true, ["c++11"] = true, ["c++14"] = true,
-    ["c++17"] = true, ["c++20"] = true, ["latest"] = true
+    ["c++17"] = true, ["c++20"] = true, ["c++latest"] = true
 }
 
 function verify_language_version(language_version)

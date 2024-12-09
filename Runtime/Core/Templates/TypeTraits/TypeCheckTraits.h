@@ -154,3 +154,9 @@ struct TIsCompleteType : TFalseType { };
 
 template<typename T>
 struct TIsCompleteType<T, decltype(void(sizeof(T)))> : TTrueType { };
+
+template<typename T>
+struct TIsScopedEnum
+{
+    static constexpr bool Value = TAnd<TIsEnum<T>, TNot<TIsConvertible<T, TUnderlyingType<T>::Type>>>::Value;
+};

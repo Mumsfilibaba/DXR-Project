@@ -52,12 +52,6 @@ struct TIsEnum
 };
 
 template<typename T>
-struct TIsScopedEnum
-{
-    static constexpr bool Value = __is_scoped_enum(T);
-};
-
-template<typename T>
 struct TIsUnion
 {
     static constexpr bool Value = __is_union(T);

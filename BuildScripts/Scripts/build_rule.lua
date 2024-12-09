@@ -269,6 +269,11 @@ function build_rules(name)
 
             cppdialect(self.cpp_version)
 
+            -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+            filter "action:vs*"
+                buildoptions { "/Zc:__cplusplus" }
+            filter {}
+
             -- Setup system version
             systemversion(self.system_version)
 

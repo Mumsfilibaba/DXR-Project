@@ -243,6 +243,11 @@ function workspace_rules(workspace_name)
                 vectorextensions("Default")
                 characterset("Ascii")
                 flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                
+                -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                filter "action:vs*"
+                    buildoptions { "/Zc:__cplusplus" }
+                filter {}
 
                 location(join_path(solution_location, "Dependencies/ImGui"))
 
@@ -297,6 +302,11 @@ function workspace_rules(workspace_name)
                 characterset("Ascii")
                 flags { "MultiProcessorCompile", "NoIncrementalLink" }
 
+                -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                filter "action:vs*"
+                    buildoptions { "/Zc:__cplusplus" }
+                filter {}
+
                 location(join_path(solution_location, "Dependencies/tinyobjloader"))
 
                 -- Locations
@@ -341,6 +351,11 @@ function workspace_rules(workspace_name)
                 characterset("Ascii")
                 flags { "MultiProcessorCompile", "NoIncrementalLink" }
                 
+                -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                filter "action:vs*"
+                    buildoptions { "/Zc:__cplusplus" }
+                filter {}
+
                 location(join_path(solution_location, "Dependencies/OpenFBX"))
             
                 -- Locations
@@ -387,6 +402,11 @@ function workspace_rules(workspace_name)
                 characterset("Ascii")
                 flags { "MultiProcessorCompile", "NoIncrementalLink" }
                 
+                -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                filter "action:vs*"
+                    buildoptions { "/Zc:__cplusplus" }
+                filter {}
+
                 location(join_path(solution_location, "Dependencies/SPIRV-Cross"))
             
                 -- Locations
@@ -473,6 +493,11 @@ function workspace_rules(workspace_name)
                     characterset("Ascii")
                     flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
+                    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                    filter "action:vs*"
+                        buildoptions { "/Zc:__cplusplus" }
+                    filter {}
+
                     location(join_path(solution_location, "Dependencies/glslang/GenericCodeGen/"))
                 
                     -- Locations
@@ -519,6 +544,11 @@ function workspace_rules(workspace_name)
                     characterset("Ascii")
                     flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
+                    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                    filter "action:vs*"
+                        buildoptions { "/Zc:__cplusplus" }
+                    filter {}
+
                     location(join_path(solution_location, "Dependencies/glslang/OSDependent/"))
                 
                     -- Locations
@@ -574,6 +604,11 @@ function workspace_rules(workspace_name)
                     characterset("Ascii")
                     flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
+                    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                    filter "action:vs*"
+                        buildoptions { "/Zc:__cplusplus" }
+                    filter {}
+
                     location(join_path(solution_location, "Dependencies/glslang/MachineIndependent/"))
                 
                     -- Locations
@@ -685,6 +720,11 @@ function workspace_rules(workspace_name)
                     characterset("Ascii")
                     flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
+                    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                    filter "action:vs*"
+                        buildoptions { "/Zc:__cplusplus" }
+                    filter {}
+
                     location(join_path(solution_location, "Dependencies/glslang/glslang/"))
                 
                     -- Locations
@@ -759,6 +799,11 @@ function workspace_rules(workspace_name)
                     characterset("Ascii")
                     flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
+                    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                    filter "action:vs*"
+                        buildoptions { "/Zc:__cplusplus" }
+                    filter {}
+
                     location(join_path(solution_location, "Dependencies/glslang/glslang-default-resource-limits/"))
                 
                     -- Locations
@@ -815,6 +860,11 @@ function workspace_rules(workspace_name)
                     characterset("Ascii")
                     flags { "MultiProcessorCompile", "NoIncrementalLink" }
                     
+                    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                    filter "action:vs*"
+                        buildoptions { "/Zc:__cplusplus" }
+                    filter {}
+
                     location(join_path(solution_location, "Dependencies/glslang/SPIRV/"))
                 
                     -- Locations
@@ -899,6 +949,11 @@ function workspace_rules(workspace_name)
                     vectorextensions("Default")
                     characterset("Ascii")
                     flags { "MultiProcessorCompile", "NoIncrementalLink" }
+                    
+                    -- Add the /Zc:__cplusplus switch, otherwise __cplusplus is not defined properly
+                    filter "action:vs*"
+                        buildoptions { "/Zc:__cplusplus" }
+                    filter {}
                     
                     location(join_path(solution_location, "Dependencies/glslang/SPVRemapper/"))
                 
