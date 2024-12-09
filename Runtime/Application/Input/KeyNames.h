@@ -162,7 +162,18 @@ namespace EKeyName
         GamepadStart         = 138,
         GamepadBack          = 139,
 
+        First = Space,
         Last  = GamepadBack,
+
+        KeyBoardFirst = Space,
+        KeyBoardLast = Menu,
+
+        MouseButtonFirst = MouseButtonLeft,
+        MouseButtonLast = MouseButtonThumb2,
+
+        GamepadFirst = GamepadDPadUp,
+        GamepadLast = GamepadBack,
+
         Count = Last + 1
     };
 }

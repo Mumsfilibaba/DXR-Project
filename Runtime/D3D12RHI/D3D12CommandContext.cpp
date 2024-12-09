@@ -531,10 +531,10 @@ void FD3D12CommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)
     D3D12_VIEWPORT Viewport;
     Viewport.Width    = ViewportRegion.Width;
     Viewport.Height   = ViewportRegion.Height;
-    Viewport.MaxDepth = ViewportRegion.MaxDepth;
-    Viewport.MinDepth = ViewportRegion.MinDepth;
     Viewport.TopLeftX = ViewportRegion.PositionX;
     Viewport.TopLeftY = ViewportRegion.PositionY;
+    Viewport.MaxDepth = ViewportRegion.MaxDepth;
+    Viewport.MinDepth = ViewportRegion.MinDepth;
 
     ContextState.SetViewports(&Viewport, 1);
 }
