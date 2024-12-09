@@ -46,6 +46,9 @@ public:
     FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType);
     ~FD3D12CommandContext();
 
+public:
+
+    // IRHICommandContext Interface
     virtual void RHIBeginFrame() override final { }
     virtual void RHIEndFrame() override final { }
 
@@ -112,6 +115,8 @@ public:
         return reinterpret_cast<void*>(&CommandList);
     }
 
+public:
+
     bool Initialize();
     void ObtainCommandList();
     void FinishCommandList(bool bFlushAllocator);
@@ -134,6 +139,11 @@ public:
     FResourceBarrierBatcher& GetBarrierBatcher()
     {
         return BarrierBatcher;
+    }
+
+    ED3D12CommandQueueType GetQueueType() const
+    {
+        return QueueType;
     }
 
     void UnorderedAccessBarrier(FD3D12Resource* Resource)

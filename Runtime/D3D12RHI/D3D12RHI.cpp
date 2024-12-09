@@ -280,7 +280,7 @@ bool FD3D12RHI::Initialize()
 FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InTextureInfo);
-    if (!NewTexture->Initialize(InInitialState, InInitialData))
+    if (!NewTexture->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -293,7 +293,7 @@ FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
 FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
     TSharedRef<FD3D12Buffer>  NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
-    if (!NewBuffer->Initialize(InInitialState, InInitialData))
+    if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -885,7 +885,7 @@ FRHIQuery* FD3D12RHI::RHICreateQuery(EQueryType InQueryType)
 FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
     FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectCommandContext, InViewportInfo);
-    if (!Viewport->Initialize())
+    if (!Viewport->Initialize(DirectCommandContext))
     {
         return nullptr;
     }

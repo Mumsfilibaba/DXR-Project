@@ -5,6 +5,7 @@
 #include "Core/Containers/SharedRef.h"
 
 class FVulkanViewport;
+class FVulkanCommandContext;
 
 typedef TSharedRef<FVulkanViewport>                FVulkanViewportRef;
 typedef TSharedRef<class FVulkanTexture>           FVulkanTextureRef;
@@ -23,11 +24,16 @@ public:
     static FVulkanTexture* ResourceCast(FRHITexture* Texture);
     static FVulkanTexture* ResourceCast(FVulkanCommandContext* InCommandContext, FRHITexture* Texture);
 
+public:
+
     FVulkanTexture(FVulkanDevice* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FVulkanTexture();
 
     bool Initialize(FVulkanCommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
+public:
+
+    // FRHITexture Interface
     virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FVulkanTexture*>(this)); }
     virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetVkImage()); }
 
@@ -38,6 +44,8 @@ public:
     
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
+
+public:
 
     FVulkanResourceView* GetOrCreateImageView(const FVulkanHashableImageView& RenderTargetView);
     void DestroyImageViews();

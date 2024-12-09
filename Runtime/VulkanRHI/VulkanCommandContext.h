@@ -60,6 +60,9 @@ public:
     FVulkanCommandContext(FVulkanDevice* InDevice, FVulkanQueue& InQueue);
     ~FVulkanCommandContext();
 
+public:
+
+    // IRHICommandContext Interface
     virtual void RHIBeginFrame() override final;
     virtual void RHIEndFrame() override final;
 
@@ -125,6 +128,8 @@ public:
     { 
         return reinterpret_cast<void*>(&CommandBuffer);
     }
+
+public:
 
     bool Initialize();
     void ObtainCommandBuffer();

@@ -17,6 +17,9 @@ struct FGenericVulkanPlatform
         #if VK_EXT_surface_maintenance1
             VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME,
         #endif
+        #if VK_KHR_get_surface_capabilities2
+            VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME,
+        #endif
         };
     }
     

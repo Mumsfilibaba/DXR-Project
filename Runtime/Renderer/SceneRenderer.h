@@ -32,30 +32,39 @@ struct FCameraHLSL
 {
     // 0-64
     FMatrix4 PrevViewProjection;
+
     // 64-192
     FMatrix4 ViewProjection;
     FMatrix4 ViewProjectionInv;
+
     // 192-320
     FMatrix4 ViewProjectionUnjittered;
     FMatrix4 ViewProjectionInvUnjittered;
+
     // 320-448
     FMatrix4 View;
     FMatrix4 ViewInv;
+
     // 448-576
     FMatrix4 Projection;
     FMatrix4 ProjectionInv;
+
     // 576-592
     FVector3 Position;
     float    NearPlane = 0.0f;
+
     // 592-608
     FVector3 Forward;
     float    FarPlane = 0.0f;
+
     // 608-624
     FVector3 Right;
     float    AspectRatio = 0.0f;
+
     // 624-640
     FVector2 Jitter;
     FVector2 PrevJitter;
+
     // 640-656
     float    ViewportWidth  = 0.0f;
     float    ViewportHeight = 0.0f;
@@ -71,7 +80,9 @@ public:
 
     bool Initialize();
     bool InitializeRenderPasses();
+    
     void Tick(FScene* Scene);
+
     void ResizeResources(uint32 InWidth, uint32 InHeight);
 
     void AddDebugTexture(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)

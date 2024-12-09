@@ -3,6 +3,7 @@ include "../../BuildScripts/Scripts/build_module.lua"
 -- Renderer Module
 
 local renderer_module = module_build_rules("Renderer")
+renderer_module.use_precompiled_headers = true
 
 renderer_module.add_system_includes
 {

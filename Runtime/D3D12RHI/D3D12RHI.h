@@ -21,15 +21,21 @@ struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
 class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
+
     static FD3D12RHI* GetRHI() 
     {
         CHECK(GD3D12RHI != nullptr);
         return GD3D12RHI; 
     }
 
+public:
+
     FD3D12RHI();
     ~FD3D12RHI();
 
+public:
+
+    // FRHI Interface
     virtual bool Initialize() override final;
 
     virtual void RHIBeginFrame() override final { }
@@ -77,6 +83,8 @@ public:
     virtual void* RHIGetDirectCommandQueue() override final;
     virtual void* RHIGetComputeCommandQueue() override final;
     virtual void* RHIGetCopyCommandQueue() override final;
+
+public:
 
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)

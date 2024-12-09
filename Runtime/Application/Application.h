@@ -17,6 +17,7 @@ public:
 
     /**
      * @brief Creates the ApplicationInterface instance and the PlatformApplication instance.
+     * 
      * @return True if the instances were successfully created; false otherwise.
      */
     static bool Create();
@@ -28,6 +29,7 @@ public:
 
     /**
      * @brief Checks if the ApplicationInterface instance has been created.
+     * 
      * @return True if the ApplicationInterface instance is created; false otherwise.
      */
     static bool FORCEINLINE IsInitialized()
@@ -59,10 +61,13 @@ public:
      */
     virtual ~FApplicationInterface();
 
+public:
+
     // FGenericApplicationMessageHandler Interface
 
     /**
      * @brief Handles gamepad button up events.
+     * 
      * @param Button The gamepad button that was released.
      * @param GamepadIndex The index of the gamepad.
      * @return True if the event was handled; false otherwise.
@@ -71,6 +76,7 @@ public:
 
     /**
      * @brief Handles gamepad button down events.
+     * 
      * @param Button The gamepad button that was pressed.
      * @param GamepadIndex The index of the gamepad.
      * @param bIsRepeat True if the event is a repeat; false otherwise.
@@ -80,6 +86,7 @@ public:
 
     /**
      * @brief Handles analog gamepad input changes.
+     * 
      * @param AnalogSource The analog input source that changed.
      * @param GamepadIndex The index of the gamepad.
      * @param AnalogValue The new value of the analog input.
@@ -89,6 +96,7 @@ public:
 
     /**
      * @brief Handles key up events.
+     * 
      * @param KeyCode The key code of the key that was released.
      * @param ModifierKeyState The state of modifier keys (Shift, Ctrl, Alt).
      * @return True if the event was handled; false otherwise.
@@ -97,6 +105,7 @@ public:
 
     /**
      * @brief Handles key down events.
+     * 
      * @param KeyCode The key code of the key that was pressed.
      * @param bIsRepeat True if the event is a repeat; false otherwise.
      * @param ModifierKeyState The state of modifier keys (Shift, Ctrl, Alt).
@@ -106,6 +115,7 @@ public:
 
     /**
      * @brief Handles character input events.
+     * 
      * @param Character The Unicode character code.
      * @return True if the event was handled; false otherwise.
      */
@@ -113,6 +123,7 @@ public:
 
     /**
      * @brief Handles mouse movement events.
+     * 
      * @param MouseX The new X position of the mouse.
      * @param MouseY The new Y position of the mouse.
      * @return True if the event was handled; false otherwise.
@@ -121,6 +132,7 @@ public:
 
     /**
      * @brief Handles mouse button down events.
+     * 
      * @param PlatformWindow The window where the event occurred.
      * @param Button The mouse button that was pressed.
      * @param ModifierKeyState The state of modifier keys (Shift, Ctrl, Alt).
@@ -130,6 +142,7 @@ public:
 
     /**
      * @brief Handles mouse button up events.
+     * 
      * @param Button The mouse button that was released.
      * @param ModifierKeyState The state of modifier keys (Shift, Ctrl, Alt).
      * @return True if the event was handled; false otherwise.
@@ -138,6 +151,7 @@ public:
 
     /**
      * @brief Handles mouse button double-click events.
+     * 
      * @param Button The mouse button that was double-clicked.
      * @param ModifierKeyState The state of modifier keys (Shift, Ctrl, Alt).
      * @return True if the event was handled; false otherwise.
@@ -146,6 +160,7 @@ public:
 
     /**
      * @brief Handles mouse scroll events.
+     * 
      * @param WheelDelta The amount of wheel rotation.
      * @param bVertical True if the scroll is vertical; false if horizontal.
      * @return True if the event was handled; false otherwise.
@@ -154,18 +169,21 @@ public:
 
     /**
      * @brief Handles mouse entered events.
+     * 
      * @return True if the event was handled; false otherwise.
      */
     virtual bool OnMouseEntered() override final;
 
     /**
      * @brief Handles mouse left events.
+     * 
      * @return True if the event was handled; false otherwise.
      */
     virtual bool OnMouseLeft() override final;
 
     /**
      * @brief Handles high-precision mouse input events.
+     * 
      * @param MouseX The high-precision X movement.
      * @param MouseY The high-precision Y movement.
      * @return True if the event was handled; false otherwise.
@@ -174,6 +192,7 @@ public:
 
     /**
      * @brief Handles window resized events.
+     * 
      * @param Window The window that was resized.
      * @param Width The new width of the window.
      * @param Height The new height of the window.
@@ -183,6 +202,7 @@ public:
 
     /**
      * @brief Handles window resizing events.
+     * 
      * @param Window The window that is being resized.
      * @return True if the event was handled; false otherwise.
      */
@@ -190,6 +210,7 @@ public:
 
     /**
      * @brief Handles window moved events.
+     * 
      * @param Window The window that was moved.
      * @param MouseX The new X position of the window.
      * @param MouseY The new Y position of the window.
@@ -199,6 +220,7 @@ public:
 
     /**
      * @brief Handles window focus lost events.
+     * 
      * @param Window The window that lost focus.
      * @return True if the event was handled; false otherwise.
      */
@@ -206,6 +228,7 @@ public:
 
     /**
      * @brief Handles window focus gained events.
+     * 
      * @param Window The window that gained focus.
      * @return True if the event was handled; false otherwise.
      */
@@ -213,6 +236,7 @@ public:
 
     /**
      * @brief Handles window closed events.
+     * 
      * @param Window The window that was closed.
      * @return True if the event was handled; false otherwise.
      */
@@ -220,6 +244,7 @@ public:
 
     /**
      * @brief Handles monitor configuration change events.
+     * 
      * @return True if the event was handled; false otherwise.
      */
     virtual bool OnMonitorConfigurationChange() override final;
@@ -268,12 +293,14 @@ public:
 
     /**
      * @brief Registers a new input handler.
+     * 
      * @param InputHandler The input handler to register.
      */
     void RegisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
 
     /**
      * @brief Unregisters an input handler.
+     * 
      * @param InputHandler The input handler to unregister.
      */
     void UnregisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
@@ -298,30 +325,35 @@ public:
 
     /**
      * @brief Sets the global cursor position.
+     * 
      * @param Position The new cursor position.
      */
     void SetCursorPosition(const FIntVector2& Position);
 
     /**
      * @brief Retrieves the global cursor position.
+     * 
      * @return The current cursor position.
      */
     FIntVector2 GetCursorPosition() const;
 
     /**
      * @brief Sets the cursor type (appearance).
+     * 
      * @param Cursor The cursor type to set.
      */
     void SetCursor(ECursor Cursor);
 
     /**
      * @brief Shows or hides the cursor.
+     * 
      * @param bIsVisible True to show the cursor; false to hide it.
      */
     void ShowCursor(bool bIsVisible);
 
     /**
      * @brief Checks if the cursor is currently visible.
+     * 
      * @return True if the cursor is visible; false otherwise.
      */
     bool IsCursorVisible() const;
@@ -344,30 +376,35 @@ public:
     
     /**
      * @brief Overrides the current platform application with a new FGenericApplication instance.
+     * 
      * @param InPlatformApplication The new platform application to set.
      */
     void OverridePlatformApplication(const TSharedPtr<FGenericApplication>& InPlatformApplication);
     
     /**
      * @brief Returns the current platform application (FGenericApplication instance).
+     * 
      * @return A shared pointer to the current platform application.
      */
     TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
 
     /**
      * @brief Returns the current FInputDevice interface.
+     * 
      * @return A pointer to the input device interface.
      */
     FInputDevice* GetInputDevice() const { return PlatformApplication->GetInputDevice(); }
 
     /**
      * @brief Returns the cursor interface.
+     * 
      * @return A shared pointer to the cursor interface.
      */
     TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->Cursor; }
 
     /**
      * @brief Gets the current window that has focus.
+     * 
      * @return A shared pointer to the focus window.
      */
     TSharedPtr<FWindow> GetFocusWindow() const;
@@ -401,6 +438,7 @@ public:
     
     /**
      * @brief Returns the window that corresponds to the specified platform window.
+     * 
      * @param PlatformWindow The platform window to find.
      * @return A shared pointer to the corresponding window.
      */
@@ -408,12 +446,14 @@ public:
     
     /**
      * @brief Returns the window that is currently under the cursor.
+     * 
      * @return A shared pointer to the window under the cursor.
      */
     TSharedPtr<FWindow> FindWindowUnderCursor() const;
 
     /**
      * @brief Finds the widgets that are currently under the cursor.
+     * 
      * @param OutCursorPath The widget path to populate with widgets under the cursor.
      */
     void FindWidgetsUnderCursor(FWidgetPath& OutCursorPath);
@@ -429,12 +469,14 @@ public:
 
     /**
      * @brief Retrieves cached display information.
+     * 
      * @param OutMonitorInfo An array to populate with monitor information.
      */
     void GetDisplayInfo(TArray<FMonitorInfo>& OutMonitorInfo);
 
     /**
      * @brief Retrieves the monitor configuration changed event.
+     * 
      * @return A reference to the monitor configuration changed event.
      */
     FOnMonitorConfigChangedEvent& GetOnMonitorConfigChangedEvent() { return OnMonitorConfigChangedEvent; }
@@ -471,8 +513,6 @@ private:
     /** @brief Event triggered when monitor configuration changes. */
     FOnMonitorConfigChangedEvent OnMonitorConfigChangedEvent;
 
-    /** @brief Static instance of the application interface. */
     static TSharedPtr<FApplicationInterface> ApplicationInstance;
-    /** @brief Static instance of the platform application. */
-    static TSharedPtr<FGenericApplication> PlatformApplication;
+    static TSharedPtr<FGenericApplication>   PlatformApplication;
 };

@@ -18,17 +18,17 @@ public:
 
     bool IsKeyboardKey() const
     {
-        return Key >= EKeyName::Zero && Key <= EKeyName::Pause;
+        return Key >= EKeyName::KeyBoardFirst && Key <= EKeyName::KeyBoardLast;
     }
 
     bool IsMouseButton() const
     {
-        return Key >= EKeyName::MouseButtonLeft && Key <= EKeyName::MouseButtonThumb2;
+        return Key >= EKeyName::MouseButtonFirst && Key <= EKeyName::MouseButtonLast;
     }
 
     bool IsGamepadButton() const
     {
-        return Key >= EKeyName::GamepadDPadUp && Key <= EKeyName::Last;
+        return Key >= EKeyName::GamepadFirst && Key <= EKeyName::GamepadLast;
     }
 
     const CHAR* ToString() const
