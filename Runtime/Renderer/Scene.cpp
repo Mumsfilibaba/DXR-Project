@@ -85,6 +85,9 @@ void FScene::Tick()
     // Performs frustum culling and updates visible primitives
     UpdateVisibility();
 
+    // Prepares primitives for the GPU (Matrices being in correct format etc)
+    UpdatePrimitives();
+
     // Batches all the visible primitives based on material
     UpdateBatches();
 }
@@ -156,7 +159,10 @@ void FScene::UpdateLights()
             ScenePointLight->Frustums[FaceIndex] = FFrustum(ScenePointLight->Light->GetShadowFarPlane(), ScenePointLight->Light->GetViewMatrix(FaceIndex), ScenePointLight->Light->GetProjectionMatrix(FaceIndex));
             
             // Update ShadowData
-            ScenePointLight->ShadowData[FaceIndex].Matrix    = ScenePointLight->Light->GetMatrix(FaceIndex);
+            FMatrix4 LightMatrix = ScenePointLight->Light->GetMatrix(FaceIndex);
+            LightMatrix = LightMatrix.GetTranspose();
+
+            ScenePointLight->ShadowData[FaceIndex].Matrix    = LightMatrix;
             ScenePointLight->ShadowData[FaceIndex].Position  = ScenePointLight->Light->GetPosition();
             ScenePointLight->ShadowData[FaceIndex].NearPlane = ScenePointLight->Light->GetShadowNearPlane();
             ScenePointLight->ShadowData[FaceIndex].FarPlane  = ScenePointLight->Light->GetShadowFarPlane();
@@ -210,8 +216,7 @@ void FScene::UpdateVisibility()
     const FFrustum CameraFrustum = FFrustum(Camera->GetFarPlane(), Camera->GetViewMatrix(), Camera->GetProjectionMatrix());
     for (FProxySceneComponent* Component : Primitives)
     {
-        FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformMatrix = TransformMatrix.GetTranspose();
+        FMatrix4 TransformMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
 
         const FAABB& BoundingBox = Component->Mesh->GetAABB();
         const FVector3 Max = TransformMatrix.Transform(BoundingBox.Max);
@@ -293,6 +298,21 @@ void FScene::UpdateVisibility()
                 }
             }
         }
+    }
+}
+
+void FScene::UpdatePrimitives()
+{
+    TRACE_SCOPE("UpdatePrimitives");
+
+    for (FProxySceneComponent* Component : Primitives)
+    {
+        FActor* CurrentActor = Component->CurrentActor;
+
+        // Retrieve the transforms for each object so that they are ready for the GPU
+        Component->TransformBuffer.Transform    = CurrentActor->GetTransform().GetTransformMatrix();
+        Component->TransformBuffer.Transform    = Component->TransformBuffer.Transform.GetTranspose();
+        Component->TransformBuffer.TransformInv = CurrentActor->GetTransform().GetTransformMatrixInverse();
     }
 }
 

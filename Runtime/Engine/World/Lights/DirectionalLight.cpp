@@ -89,17 +89,14 @@ void FDirectionalLight::Tick(FCamera& Camera)
     UpVector = FVector3(0.0f, 1.0f, 0.0f);
 
     {
-        FVector3 ShadowLookAt   = FrustumCenter - Direction;
-        FVector3 ShadowPosition = FrustumCenter + (Direction * -0.5f);
-
+        FVector3 ShadowLookAt           = FrustumCenter - Direction;
+        FVector3 ShadowPosition         = FrustumCenter + (Direction * -0.5f);
         FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
         FMatrix4 ShadowProjectionMatrix = FMatrix4::OrthographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
-
         ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
-        ShadowMatrix = ShadowMatrix.GetTranspose();
     }
 
-    // Generate a bounds matrix
+    // Generate a bounds-matrix
     {
         float Radius = 0.0f;
         for (int32 Index = 0; Index < 8; ++Index)
@@ -121,11 +118,8 @@ void FDirectionalLight::Tick(FCamera& Camera)
         ShadowNearPlane = -Extents.Z;
         ShadowFarPlane  =  Extents.Z;
 
-        ViewMatrix = FMatrix4::LookAt(Position, LightDirection, UpVector);
-        ViewMatrix = ViewMatrix.GetTranspose();
-
+        ViewMatrix       = FMatrix4::LookAt(Position, LightDirection, UpVector);
         ProjectionMatrix = FMatrix4::OrthographicProjection(MinExtents.X, MaxExtents.X, MinExtents.Y, MaxExtents.Y, ShadowNearPlane, ShadowFarPlane);
-        // ProjectionMatrix = ProjectionMatrix.GetTranspose();
     }
 }
 

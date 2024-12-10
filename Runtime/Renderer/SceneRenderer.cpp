@@ -533,8 +533,9 @@ void FSceneRenderer::Tick(FScene* Scene)
     Resources.BuildLightBuffers(CommandList, Scene);
 
     // Update camera-buffer
-    // TODO: All matrices needs to be in Transposed the same
     FCamera* Camera = Scene->Camera;
+
+    // TODO: All matrices needs to be in Transposed the same
     CameraBuffer.PrevViewProjection          = CameraBuffer.ViewProjection;
     CameraBuffer.ViewProjection              = Camera->GetViewProjectionMatrix();
     CameraBuffer.ViewProjectionInv           = Camera->GetViewProjectionInverseMatrix();
@@ -545,8 +546,8 @@ void FSceneRenderer::Tick(FScene* Scene)
     CameraBuffer.Projection                  = Camera->GetProjectionMatrix();
     CameraBuffer.ProjectionInv               = Camera->GetProjectionInverseMatrix();
     CameraBuffer.Position                    = Camera->GetPosition();
-    CameraBuffer.Forward                     = Camera->GetForward();
-    CameraBuffer.Right                       = Camera->GetRight();
+    CameraBuffer.Forward                     = Camera->GetForwardVector();
+    CameraBuffer.Right                       = Camera->GetRightVector();
     CameraBuffer.NearPlane                   = Camera->GetNearPlane();
     CameraBuffer.FarPlane                    = Camera->GetFarPlane();
     CameraBuffer.AspectRatio                 = Camera->GetAspectRatio();
@@ -562,16 +563,12 @@ void FSceneRenderer::Tick(FScene* Scene)
         FMatrix4 JitterOffset = FMatrix4::Translation(FVector3(ClipSpaceJitter.X, ClipSpaceJitter.Y, 0.0f));
         CameraBuffer.Projection    = CameraBuffer.Projection * JitterOffset;
         CameraBuffer.ProjectionInv = CameraBuffer.Projection.GetInverse();
-        CameraBuffer.ProjectionInv = CameraBuffer.ProjectionInv.GetTranspose();
 
         // Calculate new ViewProjection
-        CameraBuffer.ViewProjection    = CameraBuffer.View.GetTranspose() * CameraBuffer.Projection;
+        CameraBuffer.ViewProjection    = CameraBuffer.View * CameraBuffer.Projection;
         CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjection.GetInverse();
-        CameraBuffer.ViewProjection    = CameraBuffer.ViewProjection.GetTranspose();
-        CameraBuffer.ViewProjectionInv = CameraBuffer.ViewProjectionInv.GetTranspose();
-
-        CameraBuffer.PrevJitter = CameraBuffer.Jitter;
-        CameraBuffer.Jitter     = ClipSpaceJitter;
+        CameraBuffer.PrevJitter        = CameraBuffer.Jitter;
+        CameraBuffer.Jitter            = ClipSpaceJitter;
     }
     else
     {
@@ -579,10 +576,22 @@ void FSceneRenderer::Tick(FScene* Scene)
         CameraBuffer.Jitter     = FVector2(0.0f);
     }
 
+    // Prepare matrices for the GPU
+    CameraBuffer.ViewProjection              = CameraBuffer.ViewProjection.GetTranspose();
+    CameraBuffer.ViewProjectionInv           = CameraBuffer.ViewProjectionInv.GetTranspose();
+    CameraBuffer.ViewProjectionUnjittered    = CameraBuffer.ViewProjectionUnjittered.GetTranspose();
+    CameraBuffer.ViewProjectionInvUnjittered = CameraBuffer.ViewProjectionInvUnjittered.GetTranspose();
+    CameraBuffer.View                        = CameraBuffer.View.GetTranspose();
+    CameraBuffer.ViewInv                     = CameraBuffer.ViewInv.GetTranspose();
+    CameraBuffer.Projection                  = CameraBuffer.Projection.GetTranspose();
+    CameraBuffer.ProjectionInv               = CameraBuffer.ProjectionInv.GetTranspose();
+
+    // Update GPU Camera Buffer
     CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(Resources.CameraBuffer.Get(), FBufferRegion(0, sizeof(FCameraHLSL)), &CameraBuffer);
     CommandList.TransitionBuffer(Resources.CameraBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
+    // Compile material PSOs
     for (FMaterial* Material : Scene->Materials)
     {
         // TODO: Only do this once?
@@ -738,7 +747,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     }
     else
     {
-        CommandList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+        CommandList.ClearUnorderedAccessView(Resources.SSAOBuffer->GetUnorderedAccessView(), FVector4(1.0f, 1.0f, 1.0f, 1.0f));
     }
 
     CommandList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
@@ -888,7 +897,7 @@ void FSceneRenderer::Tick(FScene* Scene)
         FXAAPass->Execute(CommandList, Resources, Scene);
     }
 
-    // Perform ToneMapping and Blit to BackBuffer
+    // Perform ToneMapping and blit to BackBuffer
     TonemapPass->Execute(CommandList, Resources, Scene);
 
     AddDebugTexture(

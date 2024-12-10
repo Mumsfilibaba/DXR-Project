@@ -456,9 +456,9 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
         FVector3 Position = Box.GetCenter();
 
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z).GetTranspose();
-        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformMatrix = TransformMatrix.GetTranspose();
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
+        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetTransformMatrix();
+
         TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
         TransformMatrix = TransformMatrix.GetTranspose();
 
@@ -506,10 +506,9 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
 
         FVector3 Position          = BoundingBox.GetCenter();
         FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z).GetTranspose();
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
 
-        ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
-        ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
+        ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
         ShaderData.TransformMatrix = (ScaleMatrix * TranslationMatrix) * ShaderData.TransformMatrix;
         ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
         ShaderData.Color           = FVector4(0.8f, 0.8f, 0.8f, 0.5f);

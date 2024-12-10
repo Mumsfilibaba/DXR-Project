@@ -163,12 +163,6 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     CommandList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
     //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
-    struct FTransformBuffer
-    {
-        FMatrix4 Transform;
-        FMatrix4 TransformInv;
-    } TransformPerObject;
-
     for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
     {
         FMaterial* Material = Batch.Material;
@@ -205,10 +199,8 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-            TransformPerObject.Transform    = Component->CurrentActor->GetTransform().GetMatrix();
-            TransformPerObject.TransformInv = Component->CurrentActor->GetTransform().GetMatrixInverse();
-
-            CommandList.Set32BitShaderConstants(VShader.Get(), &TransformPerObject, 32);
+            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
+            CommandList.Set32BitShaderConstants(VShader.Get(), &Component->TransformBuffer, NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }

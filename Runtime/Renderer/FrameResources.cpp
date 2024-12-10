@@ -275,12 +275,13 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
         DirectionalLightData.Color         = Color;
         DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
-        DirectionalLightData.Direction     = DirectionalLight->GetDirection();
-        DirectionalLightData.UpVector      = DirectionalLight->GetUp();
+        DirectionalLightData.Direction     = DirectionalLight->GetDirectionVector();
+        DirectionalLightData.UpVector      = DirectionalLight->GetUpVector();
         DirectionalLightData.MaxShadowBias = DirectionalLight->GetMaxShadowBias();
         DirectionalLightData.LightSize     = DirectionalLight->GetSize();
         DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
-        DirectionalLightDataDirty = true;
+        DirectionalLightData.ShadowMatrix  = DirectionalLightData.ShadowMatrix.GetTranspose();
+        DirectionalLightDataDirty          = true;
 
         CascadeGenerationData.CascadeSplitLambda = DirectionalLight->GetCascadeSplitLambda();
         CascadeGenerationData.LightUp            = DirectionalLightData.UpVector;

@@ -19,12 +19,12 @@ public:
     void SetCascadeSplitLambda(float InCascadeSplitLambda);
     void SetSize(float InSize);
 
-    FORCEINLINE const FVector3& GetDirection() const
+    FORCEINLINE const FVector3& GetDirectionVector() const
     {
         return Direction;
     }
 
-    FORCEINLINE const FVector3& GetUp() const
+    FORCEINLINE const FVector3& GetUpVector() const
     {
         return UpVector;
     }

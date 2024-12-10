@@ -238,7 +238,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::Text("Direction");
                     ImGui::NextColumn();
 
-                    FVector3 Direction = CurrentDirectionalLight->GetDirection();
+                    FVector3 Direction = CurrentDirectionalLight->GetDirectionVector();
                     ImGui::InputFloat3("##Direction", Direction.XYZ, "%.3f", ImGuiInputTextFlags_ReadOnly);
 
                     ImGui::Columns(1);

@@ -115,6 +115,9 @@ public:
     // Performs frustum culling
     void UpdateVisibility();
 
+    // Updates primitives transform matrices to be ready for the GPU
+    void UpdatePrimitives();
+
     // Updates MeshBatches
     void UpdateBatches();
 

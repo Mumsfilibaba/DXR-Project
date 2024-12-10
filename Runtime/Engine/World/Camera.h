@@ -7,95 +7,100 @@ class ENGINE_API FCamera
 {
 public:
     FCamera();
-    ~FCamera() = default;
+    ~FCamera();
 
     void Move(float x, float y, float z);
     void Rotate(float Pitch, float Yaw, float Roll);
+
+    // Note: FieldOfView in degrees 
+    void UpdateProjectionMatrix(float InFieldOfView, float InViewportWidth, float InViewportHeight);
+    void UpdateViewMatrix();
+
     void UpdateMatrices();
 
-    const FMatrix4& GetViewMatrix() const
+    FORCEINLINE const FMatrix4& GetViewMatrix() const
     {
         return View;
     }
 
-    const FMatrix4& GetViewInverseMatrix() const
+    FORCEINLINE const FMatrix4& GetViewInverseMatrix() const
     {
         return ViewInverse;
     }
 
-    const FMatrix4& GetProjectionMatrix() const
+    FORCEINLINE const FMatrix4& GetProjectionMatrix() const
     {
         return Projection;
     }
 
-    const FMatrix4& GetProjectionInverseMatrix() const
+    FORCEINLINE const FMatrix4& GetProjectionInverseMatrix() const
     {
         return ProjectionInverse;
     }
 
-    const FMatrix4& GetViewProjectionMatrix() const
+    FORCEINLINE const FMatrix4& GetViewProjectionMatrix() const
     {
         return ViewProjection;
     }
 
-    const FMatrix4& GetViewProjectionInverseMatrix() const
+    FORCEINLINE const FMatrix4& GetViewProjectionInverseMatrix() const
     {
         return ViewProjectionInverse;
     }
 
-    const FMatrix4& GetViewProjectionWitoutTranslateMatrix() const
+    FORCEINLINE const FMatrix4& GetViewProjectionWitoutTranslateMatrix() const
     {
         return ViewProjectionNoTranslation;
     }
 
-    FVector3 GetPosition() const
+    FORCEINLINE const FVector3& GetPosition() const
     {
         return Position;
     }
 
-    FVector3 GetForward() const
+    FORCEINLINE const FVector3& GetForwardVector() const
     {
-        return Forward;
+        return ForwardVector;
     }
 
-    FVector3 GetUp() const
+    FORCEINLINE const FVector3& GetUpVector() const
     {
-        return Up;
+        return UpVector;
     }
 
-    FVector3 GetRight() const
+    FORCEINLINE const FVector3& GetRightVector() const
     {
-        return Right;
+        return RightVector;
     }
 
-    float GetNearPlane() const
+    FORCEINLINE float GetNearPlane() const
     {
         return NearPlane;
     }
 
-    float GetFarPlane() const
+    FORCEINLINE float GetFarPlane() const
     {
         return FarPlane;
     }
 
-    float GetAspectRatio() const
+    FORCEINLINE float GetAspectRatio() const
     {
         return AspectRatio;
     }
 
-    float GetWidth() const
+    FORCEINLINE float GetWidth() const
     {
-        return Width;
+        return ViewportWidth;
     }
 
-    float GetHeight() const
+    FORCEINLINE float GetHeight() const
     {
-        return Height;
+        return ViewportHeight;
     }
 
-    float GetFOV() const
+    FORCEINLINE float GetFieldOfView() const
     {
-        return FOV;
+        return FieldOfView;
     }
 
 private:
@@ -110,13 +115,13 @@ private:
     float    NearPlane;
     float    FarPlane;
     float    AspectRatio;
-    float    Width;
-    float    Height;
-    float    FOV;
+    float    ViewportWidth;
+    float    ViewportHeight;
+    float    FieldOfView;
 
     FVector3 Position;
     FVector3 Rotation;
-    FVector3 Forward;
-    FVector3 Right;
-    FVector3 Up;
+    FVector3 ForwardVector;
+    FVector3 RightVector;
+    FVector3 UpVector;
 };

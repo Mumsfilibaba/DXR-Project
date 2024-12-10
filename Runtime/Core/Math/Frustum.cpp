@@ -10,8 +10,7 @@ FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Project
 void FFrustum::Initialize(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
 {
     // Combine the view and projection matrices
-    FMatrix4 View = InView.GetTranspose();
-    FMatrix4 CombinedMatrix = View * InProjection;
+    FMatrix4 CombinedMatrix = InView * InProjection;
 
     // Extract frustum planes from the combined matrix
     ExtractPlanes(CombinedMatrix);

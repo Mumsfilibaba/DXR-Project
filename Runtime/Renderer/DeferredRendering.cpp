@@ -247,13 +247,6 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    struct FTransformBuffer
-    {
-        FMatrix4 Transform;
-        FMatrix4 TransformInv;
-    } TransformPerObject;
-    TransformPerObject.TransformInv = FMatrix4::Identity();
-
     for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
     {
         FMaterial* Material = Batch.Material;
@@ -338,8 +331,8 @@ void FDepthPrePass::Execute(FRHICommandList& CommandList, FFrameResources& Frame
 
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-            TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &TransformPerObject, 32);
+            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
+            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &Component->TransformBuffer, NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -620,12 +613,6 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    struct FTransformBuffer
-    {
-        FMatrix4 Transform;
-        FMatrix4 TransformInv;
-    } TransformPerObject;
-
     for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
     {
         FMaterial* Material = Batch.Material;
@@ -711,9 +698,8 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
             CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
             CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-            TransformPerObject.Transform    = Component->CurrentActor->GetTransform().GetMatrix();
-            TransformPerObject.TransformInv = Component->CurrentActor->GetTransform().GetMatrixInverse();
-            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &TransformPerObject, 32);
+            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
+            CommandList.Set32BitShaderConstants(PipelineInstance->VertexShader.Get(), &Component->TransformBuffer, NumConstants);
 
             CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
         }
@@ -1358,11 +1344,7 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
     FScissorRegion ScissorRegion(RenderWidth, RenderHeight, 0, 0);
     CommandList.SetScissorRect(ScissorRegion);
 
-    struct FTransformBuffer
-    {
-        FMatrix4 Transform;
-        FMatrix4 TransformInv;
-    } TransformPerObject;
+    FTransformBufferHLSL TransformPerObject;
     TransformPerObject.TransformInv = FMatrix4::Identity();
 
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
@@ -1395,15 +1377,16 @@ void FOcclusionPass::Execute(FRHICommandList& CommandList, FFrameResources& Fram
         Scale.Y = FMath::Max<float>(Scale.Y, 0.005f);
         Scale.Z = FMath::Max<float>(Scale.Z, 0.005f);
 
-        FVector3 Position            = BoundingBox.GetCenter();
-        FMatrix4 TranslationMatrix   = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
-        FMatrix4 ScaleMatrix         = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z).GetTranspose();
-        TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
+        FVector3 Position          = BoundingBox.GetCenter();
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
+
+        TransformPerObject.Transform = Component->CurrentActor->GetTransform().GetTransformMatrix();
         TransformPerObject.Transform = (ScaleMatrix * TranslationMatrix) * TransformPerObject.Transform;
         TransformPerObject.Transform = TransformPerObject.Transform.GetTranspose();
 
-        CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, 32);
+        constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
+        CommandList.Set32BitShaderConstants(VertexShader.Get(), &TransformPerObject, NumConstants);
 
         CommandList.BeginQuery(Component->CurrentOcclusionQuery);
         CommandList.DrawIndexedInstanced(FrameResources.OcclusionVolume.IndexCount, 1, 0, 0, 0);

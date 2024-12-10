@@ -84,6 +84,11 @@ static TAutoConsoleVariable<bool> CVarCSMSelectCascadeFromProjection(
     true,
     EConsoleVariableFlags::Default);
 
+struct FShadowPerObjectHLSL
+{
+    FMatrix4 Matrix;
+};
+
 FPointLightRenderPass::FPointLightRenderPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
     , MaterialPSOs()
@@ -375,10 +380,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.TransitionTexture(Resources.PointLightShadowMaps.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
 
     // PerObject Structs
-    struct FShadowPerObject
-    {
-        FMatrix4 Matrix;
-    } ShadowPerObjectBuffer;
+    FShadowPerObjectHLSL ShadowPerObjectBuffer;
 
     const bool bUseViewInstancing  = GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= 4 && CVarPointLightsEnableViewInstancing.GetValue();
     const bool bUseGeometryShaders = !bUseViewInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
@@ -476,8 +478,11 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
-                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                        ShadowPerObjectBuffer.Matrix = ShadowPerObjectBuffer.Matrix.GetTranspose();
+
+                        constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
+                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                         CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
@@ -572,8 +577,11 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
-                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                    ShadowPerObjectBuffer.Matrix = ShadowPerObjectBuffer.Matrix.GetTranspose();
+
+                    constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
+                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                     CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
@@ -665,8 +673,11 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
-                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                        ShadowPerObjectBuffer.Matrix = ShadowPerObjectBuffer.Matrix.GetTranspose();
+
+                        constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
+                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                         CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }
@@ -1085,10 +1096,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     CommandList.TransitionTexture(Resources.ShadowMapCascades.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
 
     // PerObject Structs
-    struct FShadowPerObject
-    {
-        FMatrix4 Matrix;
-    } ShadowPerObjectBuffer;
+    FShadowPerObjectHLSL ShadowPerObjectBuffer;
 
     if (Scene->DirectionalLight)
     {
@@ -1163,8 +1171,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
-                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                    ShadowPerObjectBuffer.Matrix = ShadowPerObjectBuffer.Matrix.GetTranspose();
+
+                    constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
+                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                     CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
@@ -1239,8 +1250,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                     CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
-                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+                    ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                    ShadowPerObjectBuffer.Matrix = ShadowPerObjectBuffer.Matrix.GetTranspose();
+
+                    constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
+                    CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                     CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                 }
@@ -1325,8 +1339,11 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
 
                         CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetMatrix();
-                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, 16);
+                        ShadowPerObjectBuffer.Matrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
+                        ShadowPerObjectBuffer.Matrix = ShadowPerObjectBuffer.Matrix.GetTranspose();
+
+                        constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
+                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
 
                         CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
                     }

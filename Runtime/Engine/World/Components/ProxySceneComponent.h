@@ -24,6 +24,14 @@ struct FFrustumVisibility
     bool bWasVisible : 1;
 };
 
+struct FTransformBufferHLSL
+{
+    FMatrix4 Transform;
+    FMatrix4 TransformInv;
+};
+
+MARK_AS_REALLOCATABLE(FTransformBufferHLSL);
+
 class ENGINE_API FProxySceneComponent
 {
 public:
@@ -53,9 +61,16 @@ public:
         return Materials.Size();
     }
     
-    // Scene Objects
-    class FActor*                 CurrentActor;
-    TSharedPtr<class FMesh>       Mesh;
+    // Reference to the Actor
+    class FActor* CurrentActor;
+
+    // TransformMatrix for this object
+    FTransformBufferHLSL TransformBuffer;
+
+    // Reference to the Mesh
+    TSharedPtr<class FMesh> Mesh;
+
+    // Reference to the material array
     TArray<TSharedPtr<FMaterial>> Materials;
     
     // Occlusion

@@ -274,13 +274,16 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get(), SkyboxIndexFormat);
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
-    struct FSimpleCameraBuffer
+    struct FSimpleCameraBufferHLSL
     {
         FMatrix4 Matrix;
     } SimpleCamera;
 
     SimpleCamera.Matrix = Scene->Camera->GetViewProjectionWitoutTranslateMatrix();
-    CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
+    SimpleCamera.Matrix = SimpleCamera.Matrix.GetTranspose();
+
+    constexpr uint32 NumConstants = sizeof(FSimpleCameraBufferHLSL) / sizeof(uint32);
+    CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, NumConstants);
 
     FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
     CommandList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);
