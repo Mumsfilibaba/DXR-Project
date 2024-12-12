@@ -1,10 +1,7 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Mac/MacThreadManager.h"
-#include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Mac/MacApplicationMisc.h"
-#include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/MacOutputDeviceConsole.h"
-#include "CoreApplication/Generic/InputCodes.h"
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
 
@@ -37,35 +34,4 @@ void FMacApplicationMisc::PumpMessages(bool bUntilEmpty)
         NSMenu* MainMenu = [NSApp mainMenu];
         [MainMenu update];
     }, NSDefaultRunLoopMode, false);
-}
-
-FModifierKeyState FMacApplicationMisc::GetModifierKeyState()
-{
-    SCOPED_AUTORELEASE_POOL();
-    
-    NSUInteger CurrentModifiers = ([NSEvent modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask);
-
-    EModifierFlag ModifierFlags = EModifierFlag::None;
-    if (CurrentModifiers & NSEventModifierFlagControl)
-    {
-        ModifierFlags |= EModifierFlag::Ctrl;
-    }
-    if (CurrentModifiers & NSEventModifierFlagShift)
-    {
-        ModifierFlags |= EModifierFlag::Shift;
-    }
-    if (CurrentModifiers & NSEventModifierFlagOption)
-    {
-        ModifierFlags |= EModifierFlag::Alt;
-    }
-    if (CurrentModifiers & NSEventModifierFlagCommand)
-    {
-        ModifierFlags |= EModifierFlag::Super;
-    }
-    if (CurrentModifiers & NSEventModifierFlagCapsLock)
-    {
-        ModifierFlags |= EModifierFlag::CapsLock;
-    }
-    
-    return FModifierKeyState(ModifierFlags);
 }

@@ -18,5 +18,4 @@ struct COREAPPLICATION_API FWindowsApplicationMisc final : public FGenericApplic
     }
 
     static void PumpMessages(bool bUntilEmpty);
-    static FModifierKeyState GetModifierKeyState();
 };

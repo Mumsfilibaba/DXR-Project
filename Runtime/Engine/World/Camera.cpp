@@ -37,6 +37,25 @@ void FCamera::Rotate(float Pitch, float Yaw, float Roll)
     Rotation.Y += Yaw;
     Rotation.Z += Roll;
 
+    UpdateDirectionVectors();
+}
+
+void FCamera::SetPosition(float x, float y, float z)
+{
+    Position = FVector3(x, y, z);
+}
+
+void FCamera::SetRotation(float Pitch, float Yaw, float Roll)
+{
+    Rotation.X = FMath::Clamp(Pitch, FMath::ToRadians(-89.0f), FMath::ToRadians(89.0f));
+    Rotation.Y = Yaw;
+    Rotation.Z = Roll;
+    
+    UpdateDirectionVectors();
+}
+
+void FCamera::UpdateDirectionVectors()
+{
     FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation);
 
     FVector3 TempForward(0.0f, 0.0f, 1.0f);

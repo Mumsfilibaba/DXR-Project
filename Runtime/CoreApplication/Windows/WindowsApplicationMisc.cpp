@@ -33,34 +33,3 @@ void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
     } while (bUntilEmpty);
 }
-
-FModifierKeyState FWindowsApplicationMisc::GetModifierKeyState()
-{
-    EModifierFlag ModifierFlags = EModifierFlag::None;
-    if (GetKeyState(VK_CONTROL) & 0x8000)
-    {
-        ModifierFlags |= EModifierFlag::Ctrl;
-    }
-    if (GetKeyState(VK_MENU) & 0x8000)
-    {
-        ModifierFlags |= EModifierFlag::Alt;
-    }
-    if (GetKeyState(VK_SHIFT) & 0x8000)
-    {
-        ModifierFlags |= EModifierFlag::Shift;
-    }
-    if (GetKeyState(VK_CAPITAL) & 0x1)
-    {
-        ModifierFlags |= EModifierFlag::CapsLock;
-    }
-    if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000)
-    {
-        ModifierFlags |= EModifierFlag::Super;
-    }
-    if (GetKeyState(VK_NUMLOCK) & 0x1)
-    {
-        ModifierFlags |= EModifierFlag::NumLock;
-    }
-
-    return FModifierKeyState(ModifierFlags);
-}

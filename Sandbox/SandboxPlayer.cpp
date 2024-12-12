@@ -62,6 +62,12 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     const FAxisState RightThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbX);
     const FAxisState RightThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbY);
     
+    if (GetPlayerInput()->IsKeyDown(EKeys::R))
+    {
+        Camera->SetPosition(0.0f, 10.0f, -2.0f);
+        Camera->SetRotation(0.0f,  0.0f,  0.0f);
+    }
+    
     if (FMath::Abs(RightThumbX.Value) > Deadzone)
     {
         Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);

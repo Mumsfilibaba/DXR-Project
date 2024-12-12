@@ -651,7 +651,7 @@ void FImGuiPlugin::Tick(float Delta)
 
     // Draw all ImGui widgets
     ImGui::NewFrame();
-
+    
     DrawDelegates.Broadcast();
 
     ImGui::EndFrame();
@@ -899,9 +899,6 @@ void FImGuiPlugin::OnSetPlatformWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
-    
-    // Wait for the GPU to finish with the current frame before resizing
-    GRHICommandExecutor.WaitForCommands();
     
     ViewportData->Window->Resize(FIntVector2(static_cast<int32>(Size.x), static_cast<int32>(Size.y)));
     Viewport->PlatformRequestResize = false;
