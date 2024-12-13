@@ -149,6 +149,7 @@ struct FDeferredMacEvent
 class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
 public:
+
     /**
      * @brief Creates a new MacApplication instance and returns it as a FGenericApplication interface.
      * 
@@ -211,7 +212,7 @@ public:
      * @return The processed NSEvent (can be returned as-is).
      */
     NSEvent* OnNSEvent(NSEvent* Event);
-        
+
     /**
      * @brief Handles the destruction of a window.
      * 
@@ -225,77 +226,6 @@ public:
      * @param Window The window that will be resized.
      */
     void OnWindowWillResize(const TSharedRef<FMacWindow>& Window);
-
-    /**
-     * @brief Processes a deferred event that was previously queued by DeferEvent.
-     * 
-     * @param DeferredEvent The deferred event to process.
-     */
-    void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a deferred mouse move event.
-     * 
-     * @param DeferredEvent The deferred mouse move event to process.
-     */
-    void ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a deferred mouse button event (click, release).
-     * 
-     * @param DeferredEvent The deferred mouse button event to process.
-     */
-    void ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a deferred mouse scroll event.
-     * 
-     * @param DeferredEvent The deferred mouse scroll event to process.
-     */
-    void ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a deferred mouse hover event.
-     * 
-     * @param DeferredEvent The deferred mouse hover event to process.
-     */
-    void ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a deferred keyboard event (key down/up).
-     * 
-     * @param DeferredEvent The deferred key event to process.
-     */
-    void ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent);
-    
-    /**
-     * @brief Processes updates to all modifier keys (Ctrl, Alt, Shift, Command).
-     *
-     * @param DeferredEvent The deferred event that may contain new modifier states.
-     */
-    void ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent);
-    
-    /**
-     * @brief Processes the state change of a specific modifier key, dispatching appropriate events if needed.
-     *
-     * @param MacModifierKey The specific Mac modifier key to process.
-     * @param ModifierKeyFlags The new modifier key state flags.
-     */
-    void ProcessModfierKey(EMacModifierKey MacModifierKey, uint64 ModifierKeyFlags);
-
-    /**
-     * @brief Processes a window resized event.
-     * 
-     * @param DeferredEvent The deferred window resized event.
-     */
-    void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a window moved event.
-     * 
-     * @param DeferredEvent The deferred window moved event.
-     */
-    void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
 
     /**
      * @brief Finds the Cocoa (NSWindow) currently under the mouse cursor, if any.
@@ -409,8 +339,19 @@ public:
      * @return The NSRect converted to Engine coordinates.
      */
     static NSRect ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
-        
+
 private:
+
+    void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent);
+    void ProcessModfierKey(EMacModifierKey MacModifierKey, uint64 ModifierKeyFlags);
+    void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
+    void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
 
     id LocalEventMonitor;
     id GlobalMouseMovedEventMonitor;
@@ -437,7 +378,4 @@ private:
     FCriticalSection DeferredEventsCS;
 };
 
-/** 
- * @brief A global pointer to the FMacApplication instance, accessible throughout the application.
- */
 extern FMacApplication* GMacApplication;
