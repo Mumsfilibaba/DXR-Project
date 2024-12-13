@@ -534,8 +534,6 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     // Update camera-buffer
     FCamera* Camera = Scene->Camera;
-
-    // TODO: All matrices needs to be in Transposed the same
     CameraBuffer.PrevViewProjection          = CameraBuffer.ViewProjection;
     CameraBuffer.ViewProjection              = Camera->GetViewProjectionMatrix();
     CameraBuffer.ViewProjectionInv           = Camera->GetViewProjectionInverseMatrix();

@@ -83,6 +83,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
         FrustumCorners[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
         FrustumCenter += FrustumCorners[Corner];
     }
+
     FrustumCenter /= 8.0f;
 
     // Calculate a Shadow-matrix
