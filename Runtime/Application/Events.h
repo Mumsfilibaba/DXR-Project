@@ -3,8 +3,7 @@
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
 #include "CoreApplication/Generic/InputCodes.h"
-#include "CoreApplication/Generic/GenericWindow.h"
-#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Generic/GenericApplication.h"
 
 class FEventResponse
 {

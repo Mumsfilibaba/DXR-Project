@@ -67,7 +67,7 @@ FMacApplication::FMacApplication(const TSharedPtr<FMacCursor>& InCursor)
     , GlobalMouseMovedEventMonitor(nullptr)
     , Observer(nullptr)
     , WindowUnderCursor(nullptr)
-    , PreviousModifierFlags(0)
+    , CurrentModifierFlags(0)
     , LastPressedButton(EMouseButtonName::Unknown)
     , InputDevice(FGCInputDevice::CreateGCInputDevice())
     , MacCursor(InCursor)
@@ -305,6 +305,33 @@ bool FMacApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGeneri
     return false;
 }
 
+FModifierKeyState FMacApplication::GetModifierKeyState() const
+{
+    EModifierFlag ModifierFlags = EModifierFlag::None;
+    if (CurrentModifierFlags & NSEventModifierFlagControl)
+    {
+        ModifierFlags |= EModifierFlag::Ctrl;
+    }
+    if (CurrentModifierFlags & NSEventModifierFlagShift)
+    {
+        ModifierFlags |= EModifierFlag::Shift;
+    }
+    if (CurrentModifierFlags & NSEventModifierFlagOption)
+    {
+        ModifierFlags |= EModifierFlag::Alt;
+    }
+    if (CurrentModifierFlags & NSEventModifierFlagCommand)
+    {
+        ModifierFlags |= EModifierFlag::Super;
+    }
+    if (CurrentModifierFlags & NSEventModifierFlagCapsLock)
+    {
+        ModifierFlags |= EModifierFlag::CapsLock;
+    }
+
+    return FModifierKeyState(ModifierFlags);
+}
+
 void FMacApplication::SetActiveWindow(const TSharedRef<FGenericWindow>& Window)
 {
     __block TSharedRef<FMacWindow> MacWindow = StaticCastSharedRef<FMacWindow>(Window);
@@ -436,19 +463,7 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
     if (EventObject)
     {
         FDeferredMacEvent NewDeferredEvent;
-        if ([EventObject isKindOfClass:[NSEvent class]])
-        {
-            NSEvent* Event = reinterpret_cast<NSEvent*>(EventObject);
-            NewDeferredEvent.Event = [Event retain];
-            
-            NSWindow* Window = Event.window;
-            if ([Window isKindOfClass: [FCocoaWindow class]])
-            {
-                FCocoaWindow* EventWindow = reinterpret_cast<FCocoaWindow*>(Window);
-                NewDeferredEvent.Window   = [EventWindow retain];
-            }
-        }
-        else if ([EventObject isKindOfClass:[NSNotification class]])
+        if ([EventObject isKindOfClass:[NSNotification class]])
         {
             NSNotification* Notification = reinterpret_cast<NSNotification*>(EventObject);
             NewDeferredEvent.NotificationName = [Notification.name retain];
@@ -457,20 +472,72 @@ void FMacApplication::DeferEvent(NSObject* EventObject)
             if ([NotificationObject isKindOfClass: [FCocoaWindow class]])
             {
                 FCocoaWindow* EventWindow = reinterpret_cast<FCocoaWindow*>(NotificationObject);
-                NewDeferredEvent.Window   = [EventWindow retain];
+                NewDeferredEvent.CocoaWindow = [EventWindow retain];
+                NewDeferredEvent.Window      = FindWindowFromNSWindow(NewDeferredEvent.CocoaWindow);
             }
         }
-        else if ([EventObject isKindOfClass:[NSString class]])
+        else if ([EventObject isKindOfClass:[NSEvent class]])
         {
-            NSString* Characters = reinterpret_cast<NSString*>(EventObject);
+            NSEvent* CurrentEvent = reinterpret_cast<NSEvent*>(EventObject);
+            NewDeferredEvent.Event         = [CurrentEvent retain];
+            NewDeferredEvent.EventType     = [CurrentEvent type];
+            NewDeferredEvent.ModifierFlags = [CurrentEvent modifierFlags];
             
-            NSUInteger Count = Characters.length;
-            for (NSUInteger Index = 0; Index < Count; Index++)
+            NSWindow* Window = CurrentEvent.window;
+            if ([Window isKindOfClass: [FCocoaWindow class]])
             {
-                const unichar Codepoint = [Characters characterAtIndex:Index];
-                if ((Codepoint & 0xff00) != 0xf700)
+                FCocoaWindow* EventWindow = reinterpret_cast<FCocoaWindow*>(Window);
+                NewDeferredEvent.CocoaWindow = [EventWindow retain];
+                NewDeferredEvent.Window      = FindWindowFromNSWindow(NewDeferredEvent.CocoaWindow);
+            }
+            
+            // We have to be careful what events call certain functions, since invalid calls raises an exception
+            // causing the deferred events to not be put into the deferred-events array, which means that the event
+            // will not be processed properly and the events "disappear".
+            switch(NewDeferredEvent.EventType)
+            {
+                case NSEventTypeKeyUp:
+                case NSEventTypeKeyDown:
                 {
-                    NewDeferredEvent.Character = uint32(Codepoint);
+                    NewDeferredEvent.KeyCode   = [CurrentEvent keyCode];
+                    NewDeferredEvent.bIsRepeat = [CurrentEvent isARepeat];
+
+                    const NSUInteger NumCharacters = [[CurrentEvent characters] length];
+                    if (NumCharacters > 0)
+                    {
+                        const unichar FirstCharacter = [[CurrentEvent characters] characterAtIndex:0];
+                        if (FirstCharacter != NSDeleteCharacter)
+                        {
+                            NewDeferredEvent.Character = static_cast<uint32>(FirstCharacter);
+                        }
+                    }
+                
+                    break;
+                }
+
+                case NSEventTypeLeftMouseUp:
+                case NSEventTypeRightMouseUp:
+                case NSEventTypeOtherMouseUp:
+                case NSEventTypeLeftMouseDown:
+                case NSEventTypeRightMouseDown:
+                case NSEventTypeOtherMouseDown:
+                {
+                    NewDeferredEvent.ClickCount        = [CurrentEvent clickCount];
+                    NewDeferredEvent.MouseButtonNumber = static_cast<int32>([CurrentEvent buttonNumber]);
+                    break;
+                }
+                
+                case NSEventTypeScrollWheel:
+                {
+                    NewDeferredEvent.ScrollPhase                = [CurrentEvent phase];
+                    NewDeferredEvent.ScrollDelta                = FVector2([CurrentEvent scrollingDeltaX], [CurrentEvent scrollingDeltaY]);
+                    NewDeferredEvent.bHasPreciseScrollingDeltas = [CurrentEvent hasPreciseScrollingDeltas];
+                    break;
+                }
+
+                default:
+                {
+                    break;
                 }
             }
         }
@@ -484,7 +551,6 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
 {
     SCOPED_AUTORELEASE_POOL();
     
-    TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
     if (DeferredEvent.NotificationName)
     {
         NSNotificationName NotificationName = DeferredEvent.NotificationName;
@@ -514,11 +580,11 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
         }
         else if (NotificationName == NSWindowDidBecomeMainNotification)
         {
-            MessageHandler->OnWindowFocusGained(Window);
+            MessageHandler->OnWindowFocusGained(DeferredEvent.Window);
         }
         else if (NotificationName == NSWindowDidResignMainNotification)
         {
-            MessageHandler->OnWindowFocusLost(Window);
+            MessageHandler->OnWindowFocusLost(DeferredEvent.Window);
         }
         else if (NotificationName == NSApplicationDidChangeScreenParametersNotification)
         {
@@ -527,16 +593,22 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
     }
     else if (DeferredEvent.Event)
     {
-        switch(DeferredEvent.Event.type)
+        switch(DeferredEvent.EventType)
         {
             case NSEventTypeFlagsChanged:
-            case NSEventTypeKeyUp:
-            case NSEventTypeKeyDown:
             {
-                ProcessKeyEvent(DeferredEvent);
+                ProcessUpdatedModfierFlags(DeferredEvent);
                 break;
             }
                 
+            case NSEventTypeKeyUp:
+            case NSEventTypeKeyDown:
+            {
+                ProcessUpdatedModfierFlags(DeferredEvent);
+                ProcessKeyEvent(DeferredEvent);
+                break;
+            }
+
             case NSEventTypeLeftMouseUp:
             case NSEventTypeRightMouseUp:
             case NSEventTypeOtherMouseUp:
@@ -544,6 +616,7 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
             case NSEventTypeRightMouseDown:
             case NSEventTypeOtherMouseDown:
             {
+                ProcessUpdatedModfierFlags(DeferredEvent);
                 ProcessMouseButtonEvent(DeferredEvent);
                 break;
             }
@@ -553,12 +626,14 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
             case NSEventTypeOtherMouseDragged:
             case NSEventTypeRightMouseDragged:
             {
+                ProcessUpdatedModfierFlags(DeferredEvent);
                 ProcessMouseMoveEvent(DeferredEvent);
                 break;
             }
                
             case NSEventTypeScrollWheel:
             {
+                ProcessUpdatedModfierFlags(DeferredEvent);
                 ProcessMouseScrollEvent(DeferredEvent);
                 break;
             }
@@ -576,10 +651,6 @@ void FMacApplication::ProcessDeferredEvent(const FDeferredMacEvent& DeferredEven
             }
         }
     }
-    else if (DeferredEvent.Character != uint32(-1))
-    {
-        MessageHandler->OnKeyChar(DeferredEvent.Character);
-    }
 }
 
 NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
@@ -591,13 +662,15 @@ NSEvent* FMacApplication::OnNSEvent(NSEvent* Event)
     {
         case NSEventTypeKeyDown:
         case NSEventTypeKeyUp:
-            ReturnEvent = nil;
+            ReturnEvent = nullptr;
             break;
             
         default:
             break;
     }
     
+    // If the event is returned it is continued to be sent down the responder change, and for events
+    // that we want to stop sending we are returning nullptr.
     return ReturnEvent;
 }
 
@@ -612,37 +685,38 @@ void FMacApplication::ProcessMouseMoveEvent(const FDeferredMacEvent&)
 
 void FMacApplication::ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(static_cast<int32>(DeferredEvent.Event.buttonNumber));
-    if (DeferredEvent.Event.type == NSEventTypeLeftMouseDown ||
-        DeferredEvent.Event.type == NSEventTypeRightMouseDown ||
-        DeferredEvent.Event.type == NSEventTypeOtherMouseDown)
+    // Convert the MouseButton into engine enum
+    const EMouseButtonName::Type CurrentMouseButton = FPlatformInputMapper::GetButtonFromIndex(DeferredEvent.MouseButtonNumber);
+
+    // MouseDown otherwise it is a MouseUp event
+    if (DeferredEvent.EventType == NSEventTypeLeftMouseDown || DeferredEvent.EventType == NSEventTypeRightMouseDown || DeferredEvent.EventType == NSEventTypeOtherMouseDown)
     {
-        if (LastPressedButton == CurrentMouseButton && DeferredEvent.Event.clickCount % 2 == 0)
+        constexpr uint32 DoubleClickEvenCount = 2;
+        if (LastPressedButton == CurrentMouseButton && (DeferredEvent.ClickCount % DoubleClickEvenCount) == 0)
         {
-            MessageHandler->OnMouseButtonDoubleClick(CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnMouseButtonDoubleClick(CurrentMouseButton, GetModifierKeyState());
         }
         else
         {
-            TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
-            MessageHandler->OnMouseButtonDown(Window, CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnMouseButtonDown(DeferredEvent.Window, CurrentMouseButton, GetModifierKeyState());
         }
-        
+
         // Save the mousebutton to handle double-click events
         LastPressedButton = CurrentMouseButton;
     }
     else
     {
-        MessageHandler->OnMouseButtonUp(CurrentMouseButton, FPlatformApplicationMisc::GetModifierKeyState());
+        MessageHandler->OnMouseButtonUp(CurrentMouseButton, GetModifierKeyState());
     }
 }
 
 void FMacApplication::ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    if (DeferredEvent.Event.phase != NSEventPhaseCancelled)
+    if (DeferredEvent.ScrollPhase != NSEventPhaseCancelled)
     {
-        CGFloat ScrollDeltaX = DeferredEvent.Event.scrollingDeltaX;
-        CGFloat ScrollDeltaY = DeferredEvent.Event.scrollingDeltaY;
-        if (DeferredEvent.Event.hasPreciseScrollingDeltas)
+        CGFloat ScrollDeltaX = DeferredEvent.ScrollDelta.X;
+        CGFloat ScrollDeltaY = DeferredEvent.ScrollDelta.Y;
+        if (DeferredEvent.bHasPreciseScrollingDeltas)
         {
             ScrollDeltaX *= 0.1;
             ScrollDeltaY *= 0.1;
@@ -661,13 +735,13 @@ void FMacApplication::ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredE
 
 void FMacApplication::ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    if (TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Event.window))
+    if (DeferredEvent.Window)
     {
-        if (DeferredEvent.Event.type == NSEventTypeMouseEntered)
+        if (DeferredEvent.EventType == NSEventTypeMouseEntered)
         {
             MessageHandler->OnMouseEntered();
         }
-        else if (DeferredEvent.Event.type == NSEventTypeMouseExited)
+        else if (DeferredEvent.EventType == NSEventTypeMouseExited)
         {
             MessageHandler->OnMouseLeft();
         }
@@ -676,67 +750,135 @@ void FMacApplication::ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEv
 
 void FMacApplication::ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent)
 {
-    const EKeyboardKeyName::Type KeyName = FPlatformInputMapper::GetKeyCodeFromScanCode(DeferredEvent.Event.keyCode);
-    
-    bool bIsRepeat  = false;
-    bool bIsKeyDown = false;
-    
-    if (DeferredEvent.Event.type == NSEventTypeKeyDown)
+    const EKeyboardKeyName::Type KeyName = FPlatformInputMapper::GetKeyCodeFromScanCode(DeferredEvent.KeyCode);
+    if (DeferredEvent.EventType == NSEventTypeKeyDown)
     {
-        bIsRepeat  = DeferredEvent.Event.ARepeat;
-        bIsKeyDown = true;
+        // First notify about a key being down...
+        MessageHandler->OnKeyDown(KeyName, DeferredEvent.bIsRepeat, GetModifierKeyState());
+    
+        // ... then send the character
+        if (DeferredEvent.Character != uint32(-1))
+        {
+            MessageHandler->OnKeyChar(DeferredEvent.Character);
+        }
     }
-    else if (DeferredEvent.Event.type == NSEventTypeFlagsChanged)
+    else if (DeferredEvent.EventType == NSEventTypeKeyUp)
     {
-        const NSUInteger KeyFlag       = FMacInputMapper::TranslateKeyToModifierFlag(KeyName);
-        const NSUInteger ModifierFlags = [DeferredEvent.Event modifierFlags] & NSEventModifierFlagDeviceIndependentFlagsMask;
-        
-        if (KeyFlag & ModifierFlags)
-        {
-            if (KeyFlag & PreviousModifierFlags)
-            {
-                bIsKeyDown = false;
-            }
-            else
-            {
-                bIsKeyDown = true;
-            }
-        }
-        else
-        {
-            bIsKeyDown = false;
-        }
+        MessageHandler->OnKeyUp(KeyName, GetModifierKeyState());
+    }
+}
+
+void FMacApplication::ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent)
+{
+    // NSUinteger seems to be defined as a unsigned long, which would be equal to a uint64 on macOS
+    const uint64 ModifierFlags = DeferredEvent.ModifierFlags;
+    if (ModifierFlags != CurrentModifierFlags)
+    {
+        ProcessModfierKey(MacModifierKey_LeftControl, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_RightControl, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_LeftShift, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_RightShift, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_LeftCommand, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_RightCommand, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_LeftAlt, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_RightAlt, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_CapsLock, ModifierFlags);
+        ProcessModfierKey(MacModifierKey_NumLock, ModifierFlags);
         
         // Save the modifier flag so that we can change what is changed
-        PreviousModifierFlags = ModifierFlags;
+        CurrentModifierFlags = ModifierFlags;
     }
+}
 
-    if (bIsKeyDown)
+#include <IOKit/hidsystem/ev_keymap.h>
+
+void FMacApplication::ProcessModfierKey(EMacModifierKey MacModifierKey, uint64 ModifierKeyFlags)
+{
+    // Quick access to the modifer key masks. The values for these can be found inside the IOKit/hidsystem/ev_keymap.h
+    // header but we have redefined them here to avoid including IOKit.
+    static constexpr uint64 ModifierKeyMask[] =
     {
-        MessageHandler->OnKeyDown(KeyName, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
+        0x00000001, // LeftCtrl
+        0x00002000, // RightCtrl
+
+        0x00000002, // LeftShift
+        0x00000004, // RightShift
+
+        0x00000008, // LeftCmd
+        0x00000010, // RightCmd
+
+        0x00000020, // LeftAlt
+        0x00000040, // RightAlt
+        
+        0x00010000, // CapsLock
+        // TODO: NumLock
+    };
+
+    // Quick access to the keyboard names for the modifier keys
+    static constexpr EKeyboardKeyName::Type KeyBoardNames[] =
+    {
+        EKeyboardKeyName::LeftControl,
+        EKeyboardKeyName::RightControl,
+
+        EKeyboardKeyName::LeftShift,
+        EKeyboardKeyName::RightShift,
+
+        EKeyboardKeyName::LeftSuper,
+        EKeyboardKeyName::RightSuper,
+
+        EKeyboardKeyName::LeftAlt,
+        EKeyboardKeyName::RightAlt,
+        
+        EKeyboardKeyName::CapsLock,
+        // TODO: NumLock
+    };
+
+    // Ensure that the modifier key is within the allowed range
+    CHECK(MacModifierKey >= MacModifierKey_LeftControl && MacModifierKey <= MacModifierKey_NumLock);
+    
+    // Retrieve the key-name
+    const EKeyboardKeyName::Type KeyName = KeyBoardNames[MacModifierKey];
+
+    // Retrieve the key-mask
+    const uint64 KeyFlag = ModifierKeyMask[MacModifierKey];
+
+    const bool bIsPressed     = (KeyFlag & ModifierKeyFlags)     != 0;
+    const bool bIsPrevPressed = (KeyFlag & CurrentModifierFlags) != 0;
+
+    if (bIsPressed)
+    {
+        bool bIsRepeat = false;
+        if (bIsPrevPressed)
+        {
+            bIsRepeat = true;
+        }
+        
+        MessageHandler->OnKeyDown(KeyName, bIsRepeat, GetModifierKeyState());
     }
     else
     {
-        MessageHandler->OnKeyUp(KeyName, FPlatformApplicationMisc::GetModifierKeyState());
+        if (bIsPrevPressed)
+        {
+            // Modifier is currently NOT down, if the key was down previously, we send a key up event
+            MessageHandler->OnKeyUp(KeyName, GetModifierKeyState());
+        }
     }
 }
 
 void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEvent)
 {
-    TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
-    
     // Start by giving other systems a chance to prepare for a window-resize
-    MessageHandler->OnWindowResizing(Window);
+    MessageHandler->OnWindowResizing(DeferredEvent.Window);
  
     // When entering fullscreen the window size is the full frame
     NSRect ContentFrame;
     if (DeferredEvent.NotificationName == NSWindowDidEnterFullScreenNotification)
     {
-        ContentFrame = [DeferredEvent.Window frame];
+        ContentFrame = [DeferredEvent.CocoaWindow frame];
     }
     else
     {
-        ContentFrame = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
+        ContentFrame = [DeferredEvent.CocoaWindow contentRectForFrameRect:DeferredEvent.CocoaWindow.frame];
     }
 
     // Convert the coordinates to the generic ones that are expected
@@ -746,32 +888,30 @@ void FMacApplication::ProcessWindowResized(const FDeferredMacEvent& DeferredEven
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
-    const FIntVector2 CachedPosition = Window->GetCachedPosition();
+    const FIntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
     if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
-        MessageHandler->OnWindowMoved(Window, PositionX, PositionY);
-        Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
+        MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
+        DeferredEvent.Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
     }
     
-    MessageHandler->OnWindowResized(Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
+    MessageHandler->OnWindowResized(DeferredEvent.Window, uint32(ContentFrame.size.width), uint32(ContentFrame.size.height));
 }
 
 void FMacApplication::ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent)
 {
-    TSharedRef<FMacWindow> Window = FindWindowFromNSWindow(DeferredEvent.Window);
-    
     // We always retrieve the contentRect in order to find out where the position are
-    NSRect ContentFrame = [DeferredEvent.Window contentRectForFrameRect:DeferredEvent.Window.frame];
+    NSRect ContentFrame = [DeferredEvent.CocoaWindow contentRectForFrameRect:DeferredEvent.CocoaWindow.frame];
     ContentFrame = FMacApplication::ConvertEngineRectToCocoa(ContentFrame.size.width, ContentFrame.size.height, ContentFrame.origin.x, ContentFrame.origin.y);
     
     const int32 PositionX = static_cast<int32>(ContentFrame.origin.x);
     const int32 PositionY = static_cast<int32>(ContentFrame.origin.y);
     
-    const FIntVector2 CachedPosition = Window->GetCachedPosition();
+    const FIntVector2 CachedPosition = DeferredEvent.Window->GetCachedPosition();
     if (CachedPosition.X != PositionX || CachedPosition.Y != PositionY)
     {
-        MessageHandler->OnWindowMoved(Window, PositionX, PositionY);
-        Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
+        MessageHandler->OnWindowMoved(DeferredEvent.Window, PositionX, PositionY);
+        DeferredEvent.Window->SetCachedPosition(FIntVector2(PositionX, PositionY));
     }
 }
 

@@ -16,7 +16,6 @@ struct COREAPPLICATION_API FMacApplicationMisc final : public FGenericApplicatio
     }
 
     static void PumpMessages(bool bUntilEmpty);
-    static FModifierKeyState GetModifierKeyState();
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

@@ -34,7 +34,7 @@ public:
      */
     static bool FORCEINLINE IsInitialized()
     {
-        return ApplicationInstance.IsValid();
+        return GApplicationInstance.IsValid();
     }
 
     /**
@@ -45,8 +45,8 @@ public:
      */
     static FORCEINLINE FApplicationInterface& Get()
     {
-        CHECK(ApplicationInstance.IsValid());
-        return *ApplicationInstance;
+        CHECK(GApplicationInstance.IsValid());
+        return *GApplicationInstance;
     }
     
 public:
@@ -316,6 +316,13 @@ public:
     bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window);
 
     /**
+     * @brief Retrieves the current state of the modifier keys (Shift, Ctrl, Alt, etc.)
+     * 
+     * @return Returns a struct that contains the current state of the modifier-keys
+     */
+    FModifierKeyState GetModifierKeyState() const;
+
+    /**
      * @brief Checks if the application supports high-precision mouse input.
      * 
      * On Windows, this corresponds to raw input.
@@ -386,21 +393,21 @@ public:
      * 
      * @return A shared pointer to the current platform application.
      */
-    TSharedPtr<FGenericApplication> GetPlatformApplication() const { return PlatformApplication; }
+    TSharedPtr<FGenericApplication> GetPlatformApplication() const { return GPlatformApplication; }
 
     /**
      * @brief Returns the current FInputDevice interface.
      * 
      * @return A pointer to the input device interface.
      */
-    FInputDevice* GetInputDevice() const { return PlatformApplication->GetInputDevice(); }
+    FInputDevice* GetInputDevice() const { return GPlatformApplication->GetInputDevice(); }
 
     /**
      * @brief Returns the cursor interface.
      * 
      * @return A shared pointer to the cursor interface.
      */
-    TSharedPtr<ICursor> GetCursor() const { return PlatformApplication->Cursor; }
+    TSharedPtr<ICursor> GetCursor() const { return GPlatformApplication->Cursor; }
 
     /**
      * @brief Gets the current window that has focus.
@@ -513,6 +520,6 @@ private:
     /** @brief Event triggered when monitor configuration changes. */
     FOnMonitorConfigChangedEvent OnMonitorConfigChangedEvent;
 
-    static TSharedPtr<FApplicationInterface> ApplicationInstance;
-    static TSharedPtr<FGenericApplication>   PlatformApplication;
+    static TSharedPtr<FGenericApplication>   GPlatformApplication;
+    static TSharedPtr<FApplicationInterface> GApplicationInstance;
 };

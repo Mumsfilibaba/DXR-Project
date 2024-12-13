@@ -10,6 +10,4 @@ application_module.add_module_dependencies
     "Core",
     "CoreApplication",
     "RHI",
-    "RendererCore",
-    "Project",
 }

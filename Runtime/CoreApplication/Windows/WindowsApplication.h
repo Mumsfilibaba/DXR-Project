@@ -75,6 +75,8 @@ public:
 
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
+    virtual FModifierKeyState GetModifierKeyState() const override final;
+
     virtual void SetCapture(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;

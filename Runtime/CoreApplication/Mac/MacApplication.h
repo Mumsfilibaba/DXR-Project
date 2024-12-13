@@ -1,8 +1,11 @@
 #pragma once
 #include "Core/Mac/Mac.h"
+#include "Core/Math/Vector2.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
 #include "CoreApplication/Mac/MacCursor.h"
+#include "CoreApplication/Mac/MacWindow.h"
 #include "CoreApplication/Mac/GCInputDevice.h"
 #include "CoreApplication/Generic/InputCodes.h"
 #include "CoreApplication/Generic/GenericApplication.h"
@@ -10,52 +13,147 @@
 
 @class FCocoaWindow;
 @class FMacApplicationObserver;
-class FMacWindow;
-class FGenericWindow;
+
+/**
+ * @enum EMacModifierKey
+ * @brief Represents different Mac-specific modifier keys.
+ *
+ * Each enumerator corresponds to a particular modifier key on macOS systems, allowing for detection
+ * of left/right variations of keys like Control, Shift, Command (Super), and Alt, as well as Caps Lock.
+ */
+
+enum EMacModifierKey
+{
+    MacModifierKey_LeftControl = 0,
+    MacModifierKey_RightControl,
+    MacModifierKey_LeftShift,
+    MacModifierKey_RightShift,
+    MacModifierKey_LeftCommand,
+    MacModifierKey_RightCommand,
+    MacModifierKey_LeftAlt,
+    MacModifierKey_RightAlt,
+    MacModifierKey_CapsLock,
+    MacModifierKey_NumLock,
+};
+
+/**
+ * @struct FDeferredMacEvent
+ * @brief Contains data related to a macOS event that has been deferred for later processing.
+ *
+ * FDeferredMacEvent stores detailed information about an event such as the original NSEvent,
+ * associated window, event type, modifiers, mouse state, and more. It allows events received
+ * by the application at various times to be processed in a controlled manner (e.g., in the Tick function).
+ */
 
 struct FDeferredMacEvent
 {
     FORCEINLINE FDeferredMacEvent()
-        : NotificationName(nil)
-        , Event(nil)
-        , Window(nil)
-        , Character(uint32(-1))
+        : NotificationName(nullptr)
+        , Event(nullptr)
+        , CocoaWindow(nullptr)
+        , Window(nullptr)
+        , EventType((NSEventType)0)
+        , ModifierFlags(0)
+        , ClickCount(0)
+        , ScrollPhase(NSEventPhaseNone)
+        , ScrollDelta()
+        , Character((uint32)~0)
+        , MouseButtonNumber(0)
+        , KeyCode(0)
+        , bHasPreciseScrollingDeltas(false)
+        , bIsRepeat(false)
     {
     }
 
     FORCEINLINE FDeferredMacEvent(const FDeferredMacEvent& Other)
-        : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nil)
-        , Event(Other.Event ? [Other.Event retain] : nil)
-        , Window(Other.Window ? [Other.Window retain] : nil)
+        : NotificationName(Other.NotificationName ? [Other.NotificationName retain] : nullptr)
+        , Event(Other.Event ? [Other.Event retain] : nullptr)
+        , CocoaWindow(Other.CocoaWindow ? [Other.CocoaWindow retain] : nullptr)
+        , Window(Other.Window)
+        , EventType(Other.EventType)
+        , ModifierFlags(Other.ModifierFlags)
+        , ClickCount(Other.ClickCount)
+        , ScrollPhase(Other.ScrollPhase)
+        , ScrollDelta(Other.ScrollDelta)
         , Character(Other.Character)
+        , MouseButtonNumber(Other.MouseButtonNumber)
+        , KeyCode(Other.KeyCode)
+        , bHasPreciseScrollingDeltas(Other.bHasPreciseScrollingDeltas)
+        , bIsRepeat(Other.bIsRepeat)
     {
     }
-
+    
     FORCEINLINE ~FDeferredMacEvent()
     {
         @autoreleasepool
         {
             [NotificationName release];
             [Event release];
-            [Window release];
+            [CocoaWindow release];
         }
     }
 
+    /** @brief The name of the notification associated with this event, if any. */
     NSNotificationName NotificationName;
-    NSEvent*           Event;
-    FCocoaWindow*      Window;
-    uint32             Character;
+
+    /** @brief The original NSEvent object, retained for reference. */
+    NSEvent* Event;
+
+    /** @brief The Cocoa window (FCocoaWindow) that the event pertains to, if any. */
+    FCocoaWindow* CocoaWindow;
+
+    /** @brief The engine window (FMacWindow) associated with this event. */
+    TSharedRef<FMacWindow> Window;
+    
+    /** @brief The type of the event (mouse, keyboard, etc.). */
+    NSEventType EventType;
+
+    /** @brief Flags representing which modifier keys were active during the event. */
+    NSEventModifierFlags ModifierFlags;
+
+    /** @brief Number of mouse clicks (e.g., single, double click). */
+    NSInteger ClickCount;
+
+    /** @brief Phase of a scroll event (e.g., begun, changed, ended). */
+    NSEventPhase ScrollPhase;
+
+    /** @brief Scroll deltas for mouse wheel events. */
+    FVector2 ScrollDelta;
+
+    /** @brief Character code for keyboard events, if applicable. */
+    uint32 Character;
+
+    /** @brief The mouse button number (e.g., left, right, middle) for mouse events. */
+    int32  MouseButtonNumber;
+
+    /** @brief The key code for keyboard events. */
+    uint16 KeyCode;
+
+    /** @brief Indicates if the scroll deltas are precise (e.g., from a trackpad). */
+    bool bHasPreciseScrollingDeltas;
+
+    /** @brief Indicates if this is a repeated key event (key held down). */
+    bool bIsRepeat;
 };
+
+/**
+ * @class FMacApplication
+ * @brief The Mac-specific implementation of the FGenericApplication interface.
+ *
+ * FMacApplication integrates with the macOS application lifecycle, handling event processing,
+ * window management, input devices, and platform-specific operations. It translates native macOS
+ * events (NSEvents) into engine-level events, manages Mac windows (FMacWindow and FCocoaWindow),
+ * and defers certain events for processing during the application's Tick function.
+ */
 
 class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
 public:
-    
+
     /**
-     * @brief Creates a new MacApplication instance and returns a GenericApplication interface.
+     * @brief Creates a new MacApplication instance and returns it as a FGenericApplication interface.
      * 
-     * This function also initializes the global 'GMacApplication' pointer since the constructor and destructor
-     * control the value of the global pointer.
+     * This also initializes the global GMacApplication pointer, which references the application instance.
      * 
      * @return A shared pointer to the newly created FGenericApplication instance.
      */
@@ -81,6 +179,8 @@ public:
 
     virtual bool EnableHighPrecisionMouseForWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
+    virtual FModifierKeyState GetModifierKeyState() const override final;
+
     virtual void SetActiveWindow(const TSharedRef<FGenericWindow>& Window) override final;
 
     virtual TSharedRef<FGenericWindow> GetWindowUnderCursor() const override final;
@@ -94,126 +194,68 @@ public:
 public:
     
     /**
-     * @brief Defers an event to be processed later in the tick function.
+     * @brief Defers an event (NSEvent, NSNotificationName, etc.) to be processed later.
      * 
-     * @param EventObject The event object to defer, which can be an NSEvent, NSNotificationName, or NSString based on the event type.
+     * Events are not processed immediately but stored for processing in the Tick function,
+     * ensuring that event processing aligns with the application's update loop.
+     * 
+     * @param EventObject The event object to defer.
      */
     void DeferEvent(NSObject* EventObject);
 
     /**
-     * @brief Handles an NSEvent by deferring it for later processing.
+     * @brief Handler for NSEvents received by the local event monitor.
      * 
-     * Called from the local event monitor when an event occurs; this function defers the event to be processed
-     * during the next processing of deferred events.
+     * Called by macOS when an event occurs. This function defers the event for later processing.
      * 
      * @param Event The NSEvent to handle.
-     * @return The processed NSEvent.
+     * @return The processed NSEvent (can be returned as-is).
      */
     NSEvent* OnNSEvent(NSEvent* Event);
-        
+
     /**
      * @brief Handles the destruction of a window.
      * 
-     * @param Window A shared reference to the FMacWindow that is being destroyed.
+     * @param Window The window that is being destroyed.
      */
     void OnWindowDestroyed(const TSharedRef<FMacWindow>& Window);
 
     /**
-     * @brief Handles the window resize event before the window is resized.
+     * @brief Called before a window is resized, allowing for any necessary pre-resize logic.
      * 
-     * @param Window A shared reference to the FMacWindow that will be resized.
+     * @param Window The window that will be resized.
      */
     void OnWindowWillResize(const TSharedRef<FMacWindow>& Window);
 
     /**
-     * @brief Processes a deferred event.
+     * @brief Finds the Cocoa (NSWindow) currently under the mouse cursor, if any.
      * 
-     * @param DeferredEvent The deferred event to process.
-     */
-    void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a mouse move event.
-     * 
-     * @param DeferredEvent The deferred mouse move event to process.
-     */
-    void ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a mouse button event.
-     * 
-     * @param DeferredEvent The deferred mouse button event to process.
-     */
-    void ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a mouse scroll event.
-     * 
-     * @param DeferredEvent The deferred mouse scroll event to process.
-     */
-    void ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a mouse hover event.
-     * 
-     * @param DeferredEvent The deferred mouse hover event to process.
-     */
-    void ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a key event.
-     * 
-     * @param DeferredEvent The deferred key event to process.
-     */
-    void ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a window resized event.
-     * 
-     * @param DeferredEvent The deferred window resized event to process.
-     */
-    void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Processes a window moved event.
-     * 
-     * @param DeferredEvent The deferred window moved event to process.
-     */
-    void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
-
-    /**
-     * @brief Finds the NSWindow currently under the cursor.
-     * 
-     * This function uses the current window under the cursor, checks if that window is FCocoaWindow,
-     * and returns a valid pointer if these conditions are met. Otherwise, nullptr is returned.
-     * This means that the function can return nullptr even if the cursor is hovering over a window,
-     * just that this window is not a FCocoaWindow.
-     * 
-     * @return A pointer to the FCocoaWindow under the cursor, or nullptr if none is found.
+     * @return A pointer to the FCocoaWindow under the cursor, or nullptr if none found.
      */
     FCocoaWindow* FindNSWindowUnderCursor() const;
 
     /**
-     * @brief Finds a FMacWindow instance from a given NSWindow. If the NSWindow is not a FCocoaWindow, the function simply returns nullptr.
-     * @param Window The NSWindow to find the corresponding FMacWindow for.
-     * @return A shared reference to the FMacWindow associated with the NSWindow.
+     * @brief Finds the FMacWindow associated with a given NSWindow.
+     * 
+     * If the NSWindow is not an FCocoaWindow, returns nullptr.
+     * 
+     * @param Window The NSWindow to find a corresponding FMacWindow for.
+     * @return A shared reference to the associated FMacWindow, or nullptr if not found.
      */
     TSharedRef<FMacWindow> FindWindowFromNSWindow(NSWindow* Window) const;
 
     /**
      * @brief Closes the specified window.
      * 
-     * By closing a window, this function enqueues an invocation of the MessageHandler's OnWindowClosed event.
-     * This will in turn later call FMacWindow's destroy in the upper engine layers, which then finally enqueues
-     * the removal of the FMacWindow and destruction of the FCocoaWindow. This is done to ensure that all engine
-     * systems can respond to the window's destruction properly.
+     * Initiates a process where OnWindowClosed will eventually be called, leading to final destruction
+     * of the window objects. Ensures proper cleanup and notification across engine systems.
      * 
-     * @param Window A shared reference to the FMacWindow to be closed.
+     * @param Window The window to close.
      */
     void CloseWindow(const TSharedRef<FMacWindow>& Window);
 
     /**
-     * @brief Retrieves the application observer instance.
+     * @brief Retrieves the application observer instance used for macOS application notifications.
      * 
      * @return A pointer to the FMacApplicationObserver instance.
      */
@@ -225,91 +267,103 @@ public:
 public:
 
     /**
-     * @brief Retrieves the name of the monitor represented by the given NSScreen object.
-     * @param Screen The NSScreen object representing the monitor.
-     * @return An FString containing the name of the monitor.
+     * @brief Retrieves a human-readable name for the given monitor (NSScreen).
+     * 
+     * @param Screen The NSScreen representing the monitor.
+     * @return The monitor name as an FString.
      */
     static FString FindMonitorName(NSScreen* Screen);
 
     /**
-     * @brief Calculates the DPI (Dots Per Inch) for the specified NSScreen.
+     * @brief Calculates the DPI for a given NSScreen.
      * 
-     * @param Screen The NSScreen object for which to calculate the DPI.
-     * @return The DPI value as an unsigned 32-bit integer.
+     * @param Screen The NSScreen for which to calculate DPI.
+     * @return The DPI as an unsigned 32-bit integer.
      */
     static uint32 MonitorDPIFromScreen(NSScreen* Screen);
 
     /**
-     * @brief Finds an NSScreen based on a position in the Cocoa coordinate system.
+     * @brief Finds an NSScreen based on a given position in Cocoa (macOS) coordinate space.
      * 
-     * @param PositionX The X-coordinate in the Cocoa coordinate system.
-     * @param PositionY The Y-coordinate in the Cocoa coordinate system.
-     * @return A pointer to the NSScreen that contains the specified point.
+     * @param PositionX The X-coordinate in Cocoa coordinates.
+     * @param PositionY The Y-coordinate in Cocoa coordinates.
+     * @return A pointer to the NSScreen that contains the specified point, or nullptr if none.
      */
     static NSScreen* FindScreenFromCocoaPoint(CGFloat PositionX, CGFloat PositionY);
 
     /**
-     * @brief Finds an NSScreen based on a position in the Engine coordinate system.
+     * @brief Finds an NSScreen based on a given position in the Engine coordinate system.
      * 
-     * @param PositionX The X-coordinate in the Engine coordinate system.
-     * @param PositionY The Y-coordinate in the Engine coordinate system.
-     * @return A pointer to the NSScreen that contains the specified point.
+     * @param PositionX The X-coordinate in Engine coordinates.
+     * @param PositionY The Y-coordinate in Engine coordinates.
+     * @return A pointer to the NSScreen that contains the specified point, or nullptr if none.
      */
     static NSScreen* FindScreenFromEnginePoint(CGFloat PositionX, CGFloat PositionY);
 
     /**
-     * @brief Converts a point from the Cocoa coordinate system to the Engine coordinate system.
+     * @brief Converts a point from Cocoa coordinates to Engine coordinates.
      * 
-     * @param PositionX The X-coordinate in the Cocoa coordinate system.
-     * @param PositionY The Y-coordinate in the Cocoa coordinate system.
-     * @return The converted NSPoint in the Engine coordinate system.
+     * @param PositionX The X-coordinate in Cocoa coordinates.
+     * @param PositionY The Y-coordinate in Cocoa coordinates.
+     * @return The point converted to Engine coordinates as an NSPoint.
      */
     static NSPoint ConvertCocoaPointToEngine(CGFloat PositionX, CGFloat PositionY);
 
     /**
-     * @brief Converts a point from the Engine coordinate system to the Cocoa coordinate system.
+     * @brief Converts a point from Engine coordinates to Cocoa coordinates.
      * 
-     * @param PositionX The X-coordinate in the Engine coordinate system.
-     * @param PositionY The Y-coordinate in the Engine coordinate system.
-     * @return The converted NSPoint in the Cocoa coordinate system.
+     * @param PositionX The X-coordinate in Engine coordinates.
+     * @param PositionY The Y-coordinate in Engine coordinates.
+     * @return The point converted to Cocoa coordinates as an NSPoint.
      */
     static NSPoint ConvertEnginePointToCocoa(CGFloat PositionX, CGFloat PositionY);
 
     /**
-     * @brief Converts a rectangle from the Engine coordinate system to the Cocoa coordinate system.
+     * @brief Converts a rectangle from Engine coordinates to Cocoa coordinates.
      * 
-     * @param Width The width of the rectangle in the Engine coordinate system.
-     * @param Height The height of the rectangle in the Engine coordinate system.
-     * @param PositionX The X-coordinate of the rectangle in the Engine coordinate system.
-     * @param PositionY The Y-coordinate of the rectangle in the Engine coordinate system.
-     * @return The converted NSRect in the Cocoa coordinate system.
+     * @param Width The width of the rectangle in Engine coordinates.
+     * @param Height The height of the rectangle in Engine coordinates.
+     * @param PositionX The X-position of the rectangle in Engine coordinates.
+     * @param PositionY The Y-position of the rectangle in Engine coordinates.
+     * @return The NSRect converted to Cocoa coordinates.
      */
     static NSRect ConvertEngineRectToCocoa(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
 
     /**
-     * @brief Converts a rectangle from the Cocoa coordinate system to the Engine coordinate system.
+     * @brief Converts a rectangle from Cocoa coordinates to Engine coordinates.
      * 
-     * @param Width The width of the rectangle in the Cocoa coordinate system.
-     * @param Height The height of the rectangle in the Cocoa coordinate system.
-     * @param PositionX The X-coordinate of the rectangle in the Cocoa coordinate system.
-     * @param PositionY The Y-coordinate of the rectangle in the Cocoa coordinate system.
-     * @return The converted NSRect in the Engine coordinate system.
+     * @param Width The width of the rectangle in Cocoa coordinates.
+     * @param Height The height of the rectangle in Cocoa coordinates.
+     * @param PositionX The X-position of the rectangle in Cocoa coordinates.
+     * @param PositionY The Y-position of the rectangle in Cocoa coordinates.
+     * @return The NSRect converted to Engine coordinates.
      */
     static NSRect ConvertCocoaRectToEngine(CGFloat Width, CGFloat Height, CGFloat PositionX, CGFloat PositionY);
-        
+
 private:
+
+    void ProcessDeferredEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseMoveEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseButtonEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseScrollEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessMouseHoverEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessKeyEvent(const FDeferredMacEvent& DeferredEvent);
+    void ProcessUpdatedModfierFlags(const FDeferredMacEvent& DeferredEvent);
+    void ProcessModfierKey(EMacModifierKey MacModifierKey, uint64 ModifierKeyFlags);
+    void ProcessWindowResized(const FDeferredMacEvent& DeferredEvent);
+    void ProcessWindowMoved(const FDeferredMacEvent& DeferredEvent);
 
     id LocalEventMonitor;
     id GlobalMouseMovedEventMonitor;
 
     FMacApplicationObserver* Observer;
-    FCocoaWindow*            WindowUnderCursor;
+    FCocoaWindow* WindowUnderCursor;
 
-    NSUInteger             PreviousModifierFlags;
+    NSUInteger CurrentModifierFlags;
     EMouseButtonName::Type LastPressedButton;
 
+    TSharedPtr<FMacCursor> MacCursor;
     TSharedPtr<FGCInputDevice> InputDevice;
-    TSharedPtr<FMacCursor>     MacCursor;
 
     TArray<TSharedRef<FMacWindow>> Windows;
     mutable FCriticalSection WindowsCS;
@@ -324,8 +378,4 @@ private:
     FCriticalSection DeferredEventsCS;
 };
 
-/** 
- * @brief Global pointer to the FMacApplication instance.
- * This pointer is used throughout the application to access the Mac-specific application functionalities.
- */
 extern FMacApplication* GMacApplication;

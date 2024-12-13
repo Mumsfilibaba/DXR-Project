@@ -167,6 +167,11 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
         // not the main window helps prevent accidental window movements. It ensures that interactions within
         // the window's content (such as clicking buttons or selecting text) do not inadvertently move the window.
         [self setMovableByWindowBackground:NO];
+        
+        if (GMacApplication)
+        {
+            GMacApplication->DeferEvent(Notification);
+        }
     }
 }
 
@@ -189,7 +194,8 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
     return nil;
 }
 
-- (BOOL)preservesContentDuringLiveResize {
+- (BOOL)preservesContentDuringLiveResize
+{
     // Return NO to improve performance during live resizing
     return YES;
 }
@@ -236,83 +242,43 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 
 - (void)mouseDown:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)mouseDragged:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)mouseUp:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)rightMouseDown:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)rightMouseDragged:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)rightMouseUp:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 // Handle other mouse-button events (e.g., middle mouse button)
 - (void)otherMouseDown:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)otherMouseDragged:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)otherMouseUp:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 - (void)scrollWheel:(NSEvent*)Event
 {
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Event);
-    }
 }
 
 // Implement required methods for NSTextInputClient protocol
@@ -323,23 +289,6 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 // It is part of the NSTextInputClient protocol and is essential for proper text handling.
 - (void)insertText:(id)Text replacementRange:(NSRange)ReplacementRange
 {
-    SCOPED_AUTORELEASE_POOL();
-
-    // Extract the string content from the input, which may be an attributed string
-    NSString* Characters = nil;
-    if ([Text isKindOfClass:[NSAttributedString class]])
-    {
-        Characters = [(NSAttributedString*)Text string];
-    }
-    else
-    {
-        Characters = (NSString*)Text;
-    }
-
-    if (GMacApplication)
-    {
-        GMacApplication->DeferEvent(Characters);
-    }
 }
 
 // This method is called by the input system when it wants the client to execute a command.

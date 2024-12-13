@@ -8,10 +8,6 @@
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 
-#define WINDOWS_SCAN_CODE_MASK (0x01ff)
-#define WINDOWS_KEY_REPEAT_MASK (0x40000000)
-#define WINDOWS_BACK_BUTTON_MASK (0x0001)
-
 static TAutoConsoleVariable<bool> CVarIsProcessDPIAware(
     "Windows.IsProcessDPIAware", 
     "If set to true the process is set to be DPI aware, otherwise not", 
@@ -218,6 +214,37 @@ bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGe
     }
 }
 
+FModifierKeyState FWindowsApplication::GetModifierKeyState() const
+{
+    EModifierFlag ModifierFlags = EModifierFlag::None;
+    if (GetKeyState(VK_CONTROL) & 0x8000)
+    {
+        ModifierFlags |= EModifierFlag::Ctrl;
+    }
+    if (GetKeyState(VK_MENU) & 0x8000)
+    {
+        ModifierFlags |= EModifierFlag::Alt;
+    }
+    if (GetKeyState(VK_SHIFT) & 0x8000)
+    {
+        ModifierFlags |= EModifierFlag::Shift;
+    }
+    if (GetKeyState(VK_CAPITAL) & 0x1)
+    {
+        ModifierFlags |= EModifierFlag::CapsLock;
+    }
+    if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000)
+    {
+        ModifierFlags |= EModifierFlag::Super;
+    }
+    if (GetKeyState(VK_NUMLOCK) & 0x1)
+    {
+        ModifierFlags |= EModifierFlag::NumLock;
+    }
+
+    return FModifierKeyState(ModifierFlags);
+}
+
 void FWindowsApplication::SetCapture(const TSharedRef<FGenericWindow>& Window)
 {
     TSharedRef<FWindowsWindow> WindowsWindow = StaticCastSharedRef<FWindowsWindow>(Window);
@@ -377,6 +404,10 @@ BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC, LPRECT, L
 
 void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam, int32 MouseDeltaX, int32 MouseDeltaY)
 {
+    static constexpr uint32 WindowsScanCodeMask   = 0x01ff;
+    static constexpr uint32 WindowsKeyRepeatMask  = 0x40000000;
+    static constexpr uint32 WindowsBackButtonMask = 0x0001;
+
     TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window);
     switch (Message)
     {
@@ -438,19 +469,19 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
         case WM_SYSKEYUP:
         case WM_KEYUP:
         {
-            const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
+            const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WindowsScanCodeMask);
             const EKeyboardKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
-            MessageHandler->OnKeyUp(Key, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnKeyUp(Key, GetModifierKeyState());
             break;
         }
 
         case WM_SYSKEYDOWN:
         case WM_KEYDOWN:
         {
-            const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WINDOWS_SCAN_CODE_MASK);
+            const uint32 ScanCode = static_cast<uint32>(HIWORD(lParam) & WindowsScanCodeMask);
             const EKeyboardKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
-            const bool bIsRepeat = (lParam & WINDOWS_KEY_REPEAT_MASK) != 0;
-            MessageHandler->OnKeyDown(Key, bIsRepeat, FPlatformApplicationMisc::GetModifierKeyState());
+            const bool bIsRepeat = (lParam & WindowsKeyRepeatMask) != 0;
+            MessageHandler->OnKeyDown(Key, bIsRepeat, GetModifierKeyState());
             break;
         }
 
@@ -515,7 +546,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
             }
             else if (Message == WM_XBUTTONDOWN)
             {
-                if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+                if (GET_XBUTTON_WPARAM(wParam) == WindowsBackButtonMask)
                 {
                     Button = EMouseButtonName::Thumb1;
                 }
@@ -525,7 +556,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 }
             }
 
-            MessageHandler->OnMouseButtonDown(MessageWindow, Button, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnMouseButtonDown(MessageWindow, Button, GetModifierKeyState());
             break;
         }
 
@@ -549,7 +580,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
             }
             else if (Message == WM_XBUTTONDBLCLK)
             {
-                if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+                if (GET_XBUTTON_WPARAM(wParam) == WindowsBackButtonMask)
                 {
                     Button = EMouseButtonName::Thumb1;
                 }
@@ -559,7 +590,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 }
             }
 
-            MessageHandler->OnMouseButtonDoubleClick(Button, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnMouseButtonDoubleClick(Button, GetModifierKeyState());
             break;
         }
 
@@ -583,7 +614,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
             }
             else if (Message == WM_XBUTTONUP)
             {
-                if (GET_XBUTTON_WPARAM(wParam) == WINDOWS_BACK_BUTTON_MASK)
+                if (GET_XBUTTON_WPARAM(wParam) == WindowsBackButtonMask)
                 {
                     Button = EMouseButtonName::Thumb1;
                 }
@@ -593,7 +624,7 @@ void FWindowsApplication::HandleStoredMessage(HWND Window, UINT Message, WPARAM 
                 }
             }
 
-            MessageHandler->OnMouseButtonUp(Button, FPlatformApplicationMisc::GetModifierKeyState());
+            MessageHandler->OnMouseButtonUp(Button, GetModifierKeyState());
             break;
         }
 
