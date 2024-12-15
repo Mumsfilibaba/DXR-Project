@@ -95,7 +95,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     }
 
     float Acceleration = 15.0f;
-    if (GetPlayerInput()->IsKeyDown(EKeys::LeftShift) || GetPlayerInput()->IsKeyDown(EKeys::GamepadLeftTrigger))
+    if (GetPlayerInput()->IsKeyDown(EKeys::LeftShift) || GetPlayerInput()->IsKeyDown(EKeys::GamepadLeftThumb))
     {
         Acceleration = Acceleration * 3;
     }

@@ -233,25 +233,21 @@ private:
     void ProcessMouseMoveMessage(const FWindowsDeferredMessage& Message);
     void ProcessMouseButtonMessage(const FWindowsDeferredMessage& Message);
 
-    TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
-    mutable FCriticalSection WindowsMessageListenersCS;
-
-    HICON     Icon;
-    HINSTANCE InstanceHandle;
+    HICON         Icon;
+    HINSTANCE     InstanceHandle;
+    FXInputDevice XInputDevice;
 
     bool bIsTrackingMouse;
     bool bDeferredMessagesEnabled;
 
-    FXInputDevice XInputDevice;
-
-    TArray<FWindowsDeferredMessage> Messages;
-    FCriticalSection MessagesCS;
-
-    TArray<TSharedRef<FWindowsWindow>> Windows;
-    mutable FCriticalSection WindowsCS;
-
-    TArray<TSharedRef<FWindowsWindow>> ClosedWindows;
-    FCriticalSection ClosedWindowsCS;
+    TArray<FWindowsDeferredMessage>             Messages;
+    FCriticalSection                            MessagesCS;
+    TArray<TSharedPtr<IWindowsMessageListener>> WindowsMessageListeners;
+    mutable FCriticalSection                    WindowsMessageListenersCS;
+    TArray<TSharedRef<FWindowsWindow>>          Windows;
+    mutable FCriticalSection                    WindowsCS;
+    TArray<TSharedRef<FWindowsWindow>>          ClosedWindows;
+    FCriticalSection                            ClosedWindowsCS;
 };
 
 extern COREAPPLICATION_API FWindowsApplication* GWindowsApplication;

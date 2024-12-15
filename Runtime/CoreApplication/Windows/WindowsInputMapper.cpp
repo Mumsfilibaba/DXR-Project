@@ -1,7 +1,7 @@
 #include "CoreApplication/Windows/WindowsInputMapper.h"
 
-TStaticArray<uint16, FWindowsInputMapper::NumKeys> FWindowsInputMapper::ScanCodeFromKeyCodeTable;
-TStaticArray<EKeyboardKeyName::Type  , FWindowsInputMapper::NumKeys> FWindowsInputMapper::KeyCodeFromScanCodeTable;
+TStaticArray<uint16, FWindowsInputMapper::NumKeys>                 FWindowsInputMapper::ScanCodeFromKeyCodeTable;
+TStaticArray<EKeyboardKeyName::Type, FWindowsInputMapper::NumKeys> FWindowsInputMapper::KeyCodeFromScanCodeTable;
 
 void FWindowsInputMapper::Initialize()
 {

@@ -24,28 +24,34 @@ COREAPPLICATION_API FWindowsApplication* GWindowsApplication = nullptr;
 
 TSharedPtr<FGenericApplication> FWindowsApplication::Create()
 {
-    // Get the application instance
-    HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(GetModuleHandleA(0));
-
-    // TODO: Load icon resource here
-    HICON Icon = ::LoadIcon(NULL, IDI_APPLICATION);
+    // Get the application instance (HINSTANCE)
+    HINSTANCE AppInstanceHandle = static_cast<HINSTANCE>(::GetModuleHandleA(0));
+    
+    // TODO: Replace with actual icon resource
+    HICON Icon = ::LoadIcon(0, IDI_APPLICATION);
 
     TSharedPtr<FWindowsApplication> NewWindowsApplication = MakeSharedPtr<FWindowsApplication>(AppInstanceHandle, Icon);
-    GWindowsApplication = NewWindowsApplication.Get();
+    GWindowsApplication = NewWindowsApplication .Get();
     return NewWindowsApplication;
 }
 
 FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIcon)
     : FGenericApplication(TSharedPtr<ICursor>(new FWindowsCursor()))
-    , Windows()
+    , Icon(InIcon)
+    , InstanceHandle(InInstanceHandle)
+    , XInputDevice()
+    , bIsTrackingMouse(false)
+    , bDeferredMessagesEnabled(false)
     , Messages()
     , MessagesCS()
     , WindowsMessageListeners()
-    , bIsTrackingMouse(false)
-    , bDeferredMessagesEnabled(false)
-    , InstanceHandle(InInstanceHandle)
-    , Icon(InIcon)
+    , WindowsMessageListenersCS()
+    , Windows()
+    , WindowsCS()
+    , ClosedWindows()
+    , ClosedWindowsCS()
 {
+    // If DPI awareness is enabled via console variable, set process DPI awareness
     if (CVarIsProcessDPIAware.GetValue())
     {
     #if PLATFORM_WINDOWS_10
@@ -58,20 +64,25 @@ FWindowsApplication::FWindowsApplication(HINSTANCE InInstanceHandle, HICON InIco
     const bool bResult = RegisterWindowClass();
     CHECK(bResult == true);
 
-    // Init the key mapping Win32 KeyCodes -> EKeyboardKeyName
+    // Initialize the Win32 -> EKeyboardKeyName mapping
     FWindowsInputMapper::Initialize();
 
-    // Run a check for connected devices
+    // Update XInput device connection state once at startup
     XInputDevice.UpdateConnectionState();
 
-    // Cache the value of the deferred messages enabled here at startup, we do not want to mix the messaging models
+    // Cache the cvar value for deferred messages
     bDeferredMessagesEnabled = CVarEnableDeferredMessages.GetValue();
- }
+}
 
 FWindowsApplication::~FWindowsApplication()
 {
-    Windows.Clear();
+    // Clean up tracked windows
+    {
+        TScopedLock Lock(WindowsCS);
+        Windows.Clear();
+    }
 
+    // Unset global pointer if this instance is the global app
     if (GWindowsApplication == this)
     {
         GWindowsApplication = nullptr;
@@ -80,7 +91,7 @@ FWindowsApplication::~FWindowsApplication()
 
 bool FWindowsApplication::RegisterWindowClass()
 {
-    WNDCLASS WindowClass;
+    WNDCLASSA WindowClass;
     FMemory::Memzero(&WindowClass);
 
     WindowClass.style         = CS_DBLCLKS | CS_HREDRAW | CS_OWNDC;
@@ -89,9 +100,9 @@ bool FWindowsApplication::RegisterWindowClass()
     WindowClass.lpszClassName = FWindowsWindow::GetClassName();
     WindowClass.hbrBackground = static_cast<HBRUSH>(::GetStockObject(BLACK_BRUSH));
     WindowClass.hCursor       = ::LoadCursor(nullptr, IDC_ARROW);
-    WindowClass.lpfnWndProc   = FWindowsApplication::WindowProc;
+    WindowClass.lpfnWndProc   = &FWindowsApplication::WindowProc;
 
-    ATOM ClassAtom = ::RegisterClass(&WindowClass);
+    ATOM ClassAtom = ::RegisterClassA(&WindowClass);
     if (ClassAtom == 0)
     {
         LOG_ERROR("[FWindowsApplication]: FAILED to register WindowClass\n");
@@ -104,15 +115,14 @@ bool FWindowsApplication::RegisterWindowClass()
 bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
 {
     constexpr uint32 DeviceCount = 1;
-
     RAWINPUTDEVICE Devices[DeviceCount];
-    FMemory::Memzero(Devices, DeviceCount);
+    FMemory::Memzero(Devices, sizeof(Devices));
 
-    // Mouse
+    // Register Mouse as a raw input device
     Devices[0].dwFlags     = 0;
     Devices[0].hwndTarget  = Window;
-    Devices[0].usUsage     = 0x02;
-    Devices[0].usUsagePage = 0x01;
+    Devices[0].usUsage     = 0x02; // Mouse usage
+    Devices[0].usUsagePage = 0x01; // Generic desktop controls
 
     const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
@@ -120,25 +130,22 @@ bool FWindowsApplication::RegisterRawInputDevices(HWND Window)
         LOG_ERROR("[FWindowsApplication] Failed to register Raw Input devices");
         return false;
     }
-    else
-    {
-        LOG_INFO("[FWindowsApplication] Registered Raw Input devices");
-        return true;
-    }
+
+    LOG_INFO("[FWindowsApplication] Registered Raw Input devices");
+    return true;
 }
 
 bool FWindowsApplication::UnregisterRawInputDevices()
 {
-    static constexpr uint32 DeviceCount = 1;
-
+    constexpr uint32 DeviceCount = 1;
     RAWINPUTDEVICE Devices[DeviceCount];
-    FMemory::Memzero(Devices, DeviceCount);
+    FMemory::Memzero(Devices, sizeof(Devices));
 
-    // Mouse
+    // Unregister Mouse
     Devices[0].dwFlags     = RIDEV_REMOVE;
-    Devices[0].hwndTarget  = 0;
-    Devices[0].usUsage     = 0x02;
-    Devices[0].usUsagePage = 0x01;
+    Devices[0].hwndTarget  = nullptr;
+    Devices[0].usUsage     = 0x02; // Mouse usage
+    Devices[0].usUsagePage = 0x01; // Generic desktop controls
 
     const BOOL bResult = ::RegisterRawInputDevices(Devices, DeviceCount, sizeof(RAWINPUTDEVICE));
     if (!bResult)
@@ -146,27 +153,24 @@ bool FWindowsApplication::UnregisterRawInputDevices()
         LOG_ERROR("[FWindowsApplication] Failed to unregister Raw Input devices");
         return false;
     }
-    else
-    {
-        LOG_INFO("[FWindowsApplication] Unregistered Raw Input devices");
-        return true;
-    }
+
+    LOG_INFO("[FWindowsApplication] Unregistered Raw Input devices");
+    return true;
 }
 
 TSharedRef<FGenericWindow> FWindowsApplication::CreateWindow()
 {
     TSharedRef<FWindowsWindow> NewWindow = FWindowsWindow::Create(this);
- 
     {
         TScopedLock Lock(WindowsCS);
         Windows.Emplace(NewWindow);
     }
-
     return NewWindow;
 }
 
 void FWindowsApplication::Tick(float)
 {
+    // Clear closed windows each tick, if any
     if (!ClosedWindows.IsEmpty())
     {
         TScopedLock Lock(ClosedWindowsCS);
@@ -178,25 +182,26 @@ void FWindowsApplication::ProcessEvents()
 {
     MSG Message;
 
-    BOOL Result = PeekMessage(&Message, 0, 0, 0, PM_REMOVE);
-    if (Result)
+    while (::PeekMessage(&Message, nullptr, 0, 0, PM_REMOVE))
     {
-        TranslateMessage(&Message);
-        DispatchMessage(&Message);
+        ::TranslateMessage(&Message);
+        ::DispatchMessage(&Message);
     }
 }
 
 void FWindowsApplication::ProcessDeferredEvents()
 {
     TArray<FWindowsDeferredMessage> LocalMessages;
-    if (!Messages.IsEmpty())
     {
         TScopedLock<FCriticalSection> Lock(MessagesCS);
-        LocalMessages = Move(Messages);
-        Messages.Clear();
+        if (!Messages.IsEmpty())
+        {
+            LocalMessages = Move(Messages);
+            Messages.Clear();
+        }
     }
 
-    // Handle all the messages 
+    // Process deferred messages
     for (const FWindowsDeferredMessage& Message : LocalMessages)
     {
         ProcessDeferredMessage(Message);
@@ -205,6 +210,7 @@ void FWindowsApplication::ProcessDeferredEvents()
 
 void FWindowsApplication::UpdateInputDevices()
 {
+    // Poll XInput device state
     XInputDevice.UpdateDeviceState();
 }
 
@@ -215,6 +221,7 @@ FInputDevice* FWindowsApplication::GetInputDevice()
 
 bool FWindowsApplication::SupportsHighPrecisionMouse() const
 {
+    // By default, no high precision mouse is supported
     return false;
 }
 
@@ -225,36 +232,35 @@ bool FWindowsApplication::EnableHighPrecisionMouseForWindow(const TSharedRef<FGe
     {
         return RegisterRawInputDevices(WindowsWindow->GetWindowHandle());
     }
-    else
-    {
-        return false;
-    }
+
+    return false;
 }
 
 FModifierKeyState FWindowsApplication::GetModifierKeyState() const
 {
     EModifierFlag ModifierFlags = EModifierFlag::None;
-    if (GetKeyState(VK_CONTROL) & 0x8000)
+
+    if (::GetKeyState(VK_CONTROL) & 0x8000)
     {
         ModifierFlags |= EModifierFlag::Ctrl;
     }
-    if (GetKeyState(VK_MENU) & 0x8000)
+    if (::GetKeyState(VK_MENU) & 0x8000)
     {
         ModifierFlags |= EModifierFlag::Alt;
     }
-    if (GetKeyState(VK_SHIFT) & 0x8000)
+    if (::GetKeyState(VK_SHIFT) & 0x8000)
     {
         ModifierFlags |= EModifierFlag::Shift;
     }
-    if (GetKeyState(VK_CAPITAL) & 0x1)
+    if (::GetKeyState(VK_CAPITAL) & 0x1)
     {
         ModifierFlags |= EModifierFlag::CapsLock;
     }
-    if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000)
+    if ((::GetKeyState(VK_LWIN) | ::GetKeyState(VK_RWIN)) & 0x8000)
     {
         ModifierFlags |= EModifierFlag::Super;
     }
-    if (GetKeyState(VK_NUMLOCK) & 0x1)
+    if (::GetKeyState(VK_NUMLOCK) & 0x1)
     {
         ModifierFlags |= EModifierFlag::NumLock;
     }
@@ -294,14 +300,13 @@ TSharedRef<FGenericWindow> FWindowsApplication::GetCapture() const
 
 TSharedRef<FGenericWindow> FWindowsApplication::GetActiveWindow() const
 {
-    // Use the for
-    HWND ForegroundWindow = ::GetForegroundWindow();
-    return GetWindowsWindowFromHWND(ForegroundWindow);
+    HWND Foreground = ::GetForegroundWindow();
+    return GetWindowsWindowFromHWND(Foreground);
 }
 
 void FWindowsApplication::QueryMonitorInfo(TArray<FMonitorInfo>& OutMonitorInfo) const
 {
-    ::EnumDisplayMonitors(nullptr, nullptr, FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(&OutMonitorInfo));
+    ::EnumDisplayMonitors(nullptr, nullptr, &FWindowsApplication::EnumerateMonitorsProc, reinterpret_cast<LPARAM>(&OutMonitorInfo));
     OutMonitorInfo.Shrink();
 }
 
@@ -325,7 +330,6 @@ TSharedRef<FWindowsWindow> FWindowsApplication::GetWindowsWindowFromHWND(HWND In
     if (::IsWindow(InWindow))
     {
         TScopedLock Lock(WindowsCS);
-
         for (const TSharedRef<FWindowsWindow>& Window : Windows)
         {
             if (Window->GetWindowHandle() == InWindow)
@@ -335,17 +339,17 @@ TSharedRef<FWindowsWindow> FWindowsApplication::GetWindowsWindowFromHWND(HWND In
         }
     }
 
+    // Return a null shared ref if not found
     return nullptr;
 }
 
-void FWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewWindowsMessageListener)
+void FWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& NewListener)
 {
     TScopedLock Lock(WindowsMessageListenersCS);
 
-    // We do not want to add a listener if it already exists
-    if (!WindowsMessageListeners.Contains(NewWindowsMessageListener))
+    if (!WindowsMessageListeners.Contains(NewListener))
     {
-        WindowsMessageListeners.Emplace(NewWindowsMessageListener);
+        WindowsMessageListeners.Emplace(NewListener);
     }
     else
     {
@@ -353,16 +357,16 @@ void FWindowsApplication::AddWindowsMessageListener(const TSharedPtr<IWindowsMes
     }
 }
 
-void FWindowsApplication::RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener)
+void FWindowsApplication::RemoveWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& Listener)
 {
     TScopedLock Lock(WindowsMessageListenersCS);
-    WindowsMessageListeners.Remove(InWindowsMessageListener);
+    WindowsMessageListeners.Remove(Listener);
 }
 
-bool FWindowsApplication::IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& InWindowsMessageListener) const
+bool FWindowsApplication::IsWindowsMessageListener(const TSharedPtr<IWindowsMessageListener>& Listener) const
 {
     TScopedLock Lock(WindowsMessageListenersCS);
-    return WindowsMessageListeners.Contains(InWindowsMessageListener);
+    return WindowsMessageListeners.Contains(Listener);
 }
 
 void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
@@ -373,17 +377,16 @@ void FWindowsApplication::CloseWindow(const TSharedRef<FWindowsWindow>& Window)
         TScopedLock Lock(ClosedWindowsCS);
         ClosedWindows.Emplace(Window);
     }
-
     {
         TScopedLock Lock(WindowsCS);
         Windows.Remove(Window);
     }
 }
 
-LRESULT FWindowsApplication::WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT FWindowsApplication::WindowProc(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     CHECK(GWindowsApplication != nullptr);
-    return GWindowsApplication->ProcessMessage(Window, Message, wParam, lParam);
+    return GWindowsApplication->ProcessMessage(WindowHandle, Message, wParam, lParam);
 }
 
 BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC DeviceContext, LPRECT ClipRect, LPARAM lParam)
@@ -392,19 +395,18 @@ BOOL FWindowsApplication::EnumerateMonitorsProc(HMONITOR Monitor, HDC DeviceCont
     return GWindowsApplication->EnumerateMonitors(Monitor, DeviceContext, ClipRect, lParam);
 }
 
-BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC DeviceContext, LPRECT ClipRect, LPARAM lParam)
+BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC /*DeviceContext*/, LPRECT /*ClipRect*/, LPARAM lParam)
 {
     TArray<FMonitorInfo>* MonitorInfos = reinterpret_cast<TArray<FMonitorInfo>*>(lParam);
     CHECK(MonitorInfos != nullptr);
 
-    MONITORINFOEX MonitorInfo;
+    MONITORINFOEXA MonitorInfo;
     FMemory::Memzero(&MonitorInfo);
-    MonitorInfo.cbSize = sizeof(MONITORINFOEX);
+    MonitorInfo.cbSize = sizeof(MONITORINFOEXA);
 
-    BOOL Result = ::GetMonitorInfoA(Monitor, &MonitorInfo);
-    if (!Result)
+    if (!::GetMonitorInfoA(Monitor, &MonitorInfo))
     {
-        return TRUE;
+        return TRUE; // Continue enumeration
     }
 
     UINT DpiX = 96;
@@ -415,7 +417,7 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC DeviceContext,
     FMonitorInfo NewMonitorInfo;
     NewMonitorInfo.DeviceName     = FString(MonitorInfo.szDevice);
     NewMonitorInfo.MainPosition   = FIntVector2(MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top);
-    NewMonitorInfo.MainSize       = FIntVector2(MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
+    NewMonitorInfo.MainSize       = FIntVector2(MonitorInfo.rcMonitor.right  - MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top);
     NewMonitorInfo.WorkPosition   = FIntVector2(MonitorInfo.rcWork.left, MonitorInfo.rcWork.top);
     NewMonitorInfo.WorkSize       = FIntVector2(MonitorInfo.rcWork.right - MonitorInfo.rcWork.left, MonitorInfo.rcWork.bottom - MonitorInfo.rcWork.top);
     NewMonitorInfo.bIsPrimary     = (MonitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0;
@@ -423,7 +425,178 @@ BOOL FWindowsApplication::EnumerateMonitors(HMONITOR Monitor, HDC DeviceContext,
     NewMonitorInfo.DisplayScaling = static_cast<float>(DpiX) / 96.0f;
 
     MonitorInfos->Add(NewMonitorInfo);
-    return TRUE;
+    return TRUE; // Continue enumeration
+}
+
+LRESULT FWindowsApplication::ProcessMessage(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    LRESULT ResultFromListeners = 0;
+    bool bIsMessageHandledExternally = false;
+
+    // Let external listeners process the native messages first
+    {
+        TScopedLock Lock(WindowsMessageListenersCS);
+        for (const TSharedPtr<IWindowsMessageListener>& NativeListener : WindowsMessageListeners)
+        {
+            CHECK(NativeListener != nullptr);
+            LRESULT MessageResult = NativeListener->MessageProc(WindowHandle, Message, wParam, lParam);
+            if (MessageResult != 0)
+            {
+                // If at least one listener handles this message, store the result
+                if (!bIsMessageHandledExternally)
+                {
+                    ResultFromListeners = MessageResult;
+                    bIsMessageHandledExternally = true;
+                }
+            }
+        }
+    }
+
+    switch (Message)
+    {
+        case WM_INPUT:
+        {
+            // Raw input messages are processed immediately
+            return ProcessRawInput(WindowHandle, Message, wParam, lParam);
+        }
+
+        case WM_SIZING:
+        {
+            if (TSharedRef<FWindowsWindow> MsgWindow = GetWindowsWindowFromHWND(WindowHandle))
+            {
+                MessageHandler->OnWindowResizing(MsgWindow);
+            }
+
+            break;
+        }
+
+        // Deferred messages
+        case WM_DESTROY:
+        case WM_CLOSE:
+        case WM_MOVE:
+        case WM_MOUSELEAVE:
+        case WM_SETFOCUS:
+        case WM_KILLFOCUS:
+        case WM_SIZE:
+        case WM_SYSKEYUP:
+        case WM_KEYUP:
+        case WM_SYSKEYDOWN:
+        case WM_KEYDOWN:
+        case WM_SYSCHAR:
+        case WM_CHAR:
+        case WM_MOUSEMOVE:
+        case WM_NCMOUSEMOVE:
+        case WM_LBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_XBUTTONDOWN:
+        case WM_LBUTTONDBLCLK:
+        case WM_MBUTTONDBLCLK:
+        case WM_RBUTTONDBLCLK:
+        case WM_XBUTTONDBLCLK:
+        case WM_LBUTTONUP:
+        case WM_MBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_XBUTTONUP:
+        case WM_MOUSEWHEEL:
+        case WM_MOUSEHWHEEL:
+        case WM_DEVICECHANGE:
+        case WM_DISPLAYCHANGE:
+        {
+            FWindowsDeferredMessage DeferredMsg;
+            DeferredMsg.Window       = GetWindowsWindowFromHWND(WindowHandle);
+            DeferredMsg.WindowHandle = WindowHandle;
+            DeferredMsg.MessageType  = Message;
+            DeferredMsg.wParam       = wParam;
+            DeferredMsg.lParam       = lParam;
+
+            DeferMessage(DeferredMsg);
+            return 0; // We handled it by deferring
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    // If not handled by us but handled externally, return external result
+    if (bIsMessageHandledExternally)
+    {
+        return ResultFromListeners;
+    }
+
+    // Fallback to default message handling
+    return ::DefWindowProc(WindowHandle, Message, wParam, lParam);
+}
+
+void FWindowsApplication::DeferMessage(const FWindowsDeferredMessage& InDeferredMessage)
+{
+    if (bDeferredMessagesEnabled)
+    {
+        TScopedLock<FCriticalSection> Lock(MessagesCS);
+        Messages.Emplace(InDeferredMessage);
+    }
+    else
+    {
+        ProcessDeferredMessage(InDeferredMessage);
+    }
+}
+
+LRESULT FWindowsApplication::ProcessRawInput(HWND WindowHandle, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    HRAWINPUT RawInputHandle = reinterpret_cast<HRAWINPUT>(lParam);
+
+    // Query size of raw input
+    UINT Size = 0;
+    ::GetRawInputData(RawInputHandle, RID_INPUT, nullptr, &Size, sizeof(RAWINPUTHEADER));
+
+    TUniquePtr<uint8[]> Buffer = MakeUniquePtr<uint8[]>(Size);
+
+    // Retrieve the raw input data
+    UINT ResultSize = ::GetRawInputData(RawInputHandle, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER));
+    if (ResultSize != Size)
+    {
+        LOG_ERROR("[FWindowsApplication] GetRawInputData returned incorrect size");
+        return 0;
+    }
+
+    RAWINPUT* RawInputData = reinterpret_cast<RAWINPUT*>(Buffer.Get());
+    if (!RawInputData)
+    {
+        return 0;
+    }
+
+    switch (RawInputData->header.dwType)
+    {
+        case RIM_TYPEMOUSE:
+        {
+            int32 DeltaX = RawInputData->data.mouse.lLastX;
+            int32 DeltaY = RawInputData->data.mouse.lLastY;
+
+            if (DeltaX != 0 || DeltaY != 0)
+            {
+                FWindowsDeferredMessage DeferredMsg;
+                DeferredMsg.Window       = GetWindowsWindowFromHWND(WindowHandle);
+                DeferredMsg.WindowHandle = WindowHandle;
+                DeferredMsg.MessageType  = Message;
+                DeferredMsg.wParam       = wParam;
+                DeferredMsg.lParam       = lParam;
+                DeferredMsg.MouseDelta   = FIntVector2(DeltaX, DeltaY);
+
+                DeferMessage(DeferredMsg);
+            }
+
+            return 0;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    return ::DefRawInputProc(&RawInputData, 1, sizeof(RAWINPUTHEADER));
 }
 
 void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& Message)
@@ -538,9 +711,8 @@ void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& 
         case WM_MOUSEWHEEL:
         case WM_MOUSEHWHEEL:
         {
-            const bool bIsVertical = Message.MessageType == WM_MOUSEWHEEL;
-
-            const float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(Message.wParam)) / static_cast<float>(WHEEL_DELTA);
+            bool bIsVertical = (Message.MessageType == WM_MOUSEWHEEL);
+            float WheelDelta = static_cast<float>(GET_WHEEL_DELTA_WPARAM(Message.wParam)) / static_cast<float>(WHEEL_DELTA);
             MessageHandler->OnMouseScrolled(WheelDelta, bIsVertical);
             break;
         }
@@ -551,7 +723,6 @@ void FWindowsApplication::ProcessDeferredMessage(const FWindowsDeferredMessage& 
             {
                 XInputDevice.UpdateConnectionState();
             }
-
             break;
         }
 
@@ -576,10 +747,9 @@ void FWindowsApplication::ProcessWindowHoverMessage(const FWindowsDeferredMessag
         {
             MessageHandler->OnMouseLeft();
         }
-
         bIsTrackingMouse = false;
     }
-    else if (Message.MessageType == WM_MOUSEMOVE)
+    else if (Message.MessageType == WM_MOUSEMOVE || Message.MessageType == WM_NCMOUSEMOVE)
     {
         if (!bIsTrackingMouse)
         {
@@ -592,7 +762,6 @@ void FWindowsApplication::ProcessWindowHoverMessage(const FWindowsDeferredMessag
             ::TrackMouseEvent(&TrackEvent);
 
             bIsTrackingMouse = true;
-
             if (Message.Window)
             {
                 MessageHandler->OnMouseEntered();
@@ -605,9 +774,9 @@ void FWindowsApplication::ProcessWindowResizeMessage(const FWindowsDeferredMessa
 {
     if (Message.Window)
     {
-        const uint32 Width  = static_cast<uint32>(LOWORD(Message.lParam));
-        const uint32 Height = static_cast<uint32>(HIWORD(Message.lParam));
-        
+        uint32 Width  = static_cast<uint32>(LOWORD(Message.lParam));
+        uint32 Height = static_cast<uint32>(HIWORD(Message.lParam));
+
         MessageHandler->OnWindowResized(Message.Window, Width, Height);
     }
 }
@@ -616,10 +785,10 @@ void FWindowsApplication::ProcessWindowMoveMessage(const FWindowsDeferredMessage
 {
     if (Message.Window)
     {
-        const uint32 x = static_cast<uint32>(LOWORD(Message.lParam));
-        const uint32 y = static_cast<uint32>(HIWORD(Message.lParam));
+        uint32 X = static_cast<uint32>(LOWORD(Message.lParam));
+        uint32 Y = static_cast<uint32>(HIWORD(Message.lParam));
 
-        MessageHandler->OnWindowMoved(Message.Window, x, y);
+        MessageHandler->OnWindowMoved(Message.Window, X, Y);
     }
 }
 
@@ -628,19 +797,16 @@ void FWindowsApplication::ProcessKeyMessage(const FWindowsDeferredMessage& Messa
     static constexpr uint32 WindowsScanCodeMask  = 0x01ff;
     static constexpr uint32 WindowsKeyRepeatMask = 0x40000000;
 
-    // Retrieve the ScanCode...
-    const uint32 ScanCode = static_cast<uint32>(HIWORD(Message.lParam) & WindowsScanCodeMask);
-    
-    // ... then use the ScanCode to retrieve a KeyboardKeyName
+    const uint32 ScanCode = static_cast<uint32>((Message.lParam >> 16) & WindowsScanCodeMask);
     const EKeyboardKeyName::Type Key = FWindowsInputMapper::GetKeyCodeFromScanCode(ScanCode);
 
     if (Message.MessageType == WM_KEYUP || Message.MessageType == WM_SYSKEYUP)
     {
         MessageHandler->OnKeyUp(Key, GetModifierKeyState());
     }
-    else if (Message.MessageType == WM_KEYDOWN || Message.MessageType == WM_SYSKEYDOWN)
+    else
     {
-        const bool bIsRepeat = (Message.lParam & WindowsKeyRepeatMask) != 0;
+        const bool bIsRepeat = ((Message.lParam & WindowsKeyRepeatMask) != 0);
         MessageHandler->OnKeyDown(Key, bIsRepeat, GetModifierKeyState());
     }
 }
@@ -651,11 +817,10 @@ void FWindowsApplication::ProcessKeyCharMessage(const FWindowsDeferredMessage& M
     MessageHandler->OnKeyChar(Character);
 }
 
-void FWindowsApplication::ProcessMouseMoveMessage(const FWindowsDeferredMessage& Message)
+void FWindowsApplication::ProcessMouseMoveMessage(const FWindowsDeferredMessage& /*Message*/)
 {
     POINT CursorPos;
     ::GetCursorPos(&CursorPos);
-
     MessageHandler->OnMouseMove(CursorPos.x, CursorPos.y);
 }
 
@@ -663,38 +828,56 @@ void FWindowsApplication::ProcessMouseButtonMessage(const FWindowsDeferredMessag
 {
     static constexpr uint32 WindowsBackButtonMask = 0x0001;
 
-    switch(Message.MessageType)
+    EMouseButtonName::Type Button = EMouseButtonName::Unknown;
+    switch (Message.MessageType)
+    {
+        case WM_LBUTTONDOWN: 
+        case WM_LBUTTONDBLCLK: 
+        case WM_LBUTTONUP:
+        {
+            Button = EMouseButtonName::Left;
+            break;
+        }
+        
+        case WM_MBUTTONDOWN: 
+        case WM_MBUTTONDBLCLK: 
+        case WM_MBUTTONUP:
+        {
+
+            Button = EMouseButtonName::Middle;
+            break;
+        }
+        
+        case WM_RBUTTONDOWN: 
+        case WM_RBUTTONDBLCLK:
+        case WM_RBUTTONUP:
+        {
+            Button = EMouseButtonName::Right;
+            break;
+        }
+        
+        case WM_XBUTTONDOWN: 
+        case WM_XBUTTONDBLCLK: 
+        case WM_XBUTTONUP:
+        {
+            WORD XButton = GET_XBUTTON_WPARAM(Message.wParam);
+            Button = (XButton == WindowsBackButtonMask) ? EMouseButtonName::Thumb1 : EMouseButtonName::Thumb2;
+            break;
+        }
+
+        default:
+        {
+            break;
+        }
+    }
+
+    switch (Message.MessageType)
     {
         case WM_LBUTTONDOWN:
         case WM_MBUTTONDOWN:
         case WM_RBUTTONDOWN:
         case WM_XBUTTONDOWN:
         {
-            EMouseButtonName::Type Button = EMouseButtonName::Unknown;
-            if (Message.MessageType == WM_LBUTTONDOWN)
-            {
-                Button = EMouseButtonName::Left;
-            }
-            else if (Message.MessageType == WM_MBUTTONDOWN)
-            {
-                Button = EMouseButtonName::Middle;
-            }
-            else if (Message.MessageType == WM_RBUTTONDOWN)
-            {
-                Button = EMouseButtonName::Right;
-            }
-            else if (Message.MessageType == WM_XBUTTONDOWN)
-            {
-                if (GET_XBUTTON_WPARAM(Message.wParam) == WindowsBackButtonMask)
-                {
-                    Button = EMouseButtonName::Thumb1;
-                }
-                else
-                {
-                    Button = EMouseButtonName::Thumb2;
-                }
-            }
-
             if (Message.Window)
             {
                 MessageHandler->OnMouseButtonDown(Message.Window, Button, GetModifierKeyState());
@@ -708,31 +891,6 @@ void FWindowsApplication::ProcessMouseButtonMessage(const FWindowsDeferredMessag
         case WM_RBUTTONDBLCLK:
         case WM_XBUTTONDBLCLK:
         {
-            EMouseButtonName::Type Button = EMouseButtonName::Unknown;
-            if (Message.MessageType == WM_LBUTTONDBLCLK)
-            {
-                Button = EMouseButtonName::Left;
-            }
-            else if (Message.MessageType == WM_MBUTTONDBLCLK)
-            {
-                Button = EMouseButtonName::Middle;
-            }
-            else if (Message.MessageType == WM_RBUTTONDBLCLK)
-            {
-                Button = EMouseButtonName::Right;
-            }
-            else if (Message.MessageType == WM_XBUTTONDBLCLK)
-            {
-                if (GET_XBUTTON_WPARAM(Message.wParam) == WindowsBackButtonMask)
-                {
-                    Button = EMouseButtonName::Thumb1;
-                }
-                else
-                {
-                    Button = EMouseButtonName::Thumb2;
-                }
-            }
-
             MessageHandler->OnMouseButtonDoubleClick(Button, GetModifierKeyState());
             break;
         }
@@ -742,199 +900,13 @@ void FWindowsApplication::ProcessMouseButtonMessage(const FWindowsDeferredMessag
         case WM_RBUTTONUP:
         case WM_XBUTTONUP:
         {
-            EMouseButtonName::Type Button = EMouseButtonName::Unknown;
-            if (Message.MessageType == WM_LBUTTONUP)
-            {
-                Button = EMouseButtonName::Left;
-            }
-            else if (Message.MessageType == WM_MBUTTONUP)
-            {
-                Button = EMouseButtonName::Middle;
-            }
-            else if (Message.MessageType == WM_RBUTTONUP)
-            {
-                Button = EMouseButtonName::Right;
-            }
-            else if (Message.MessageType == WM_XBUTTONUP)
-            {
-                if (GET_XBUTTON_WPARAM(Message.wParam) == WindowsBackButtonMask)
-                {
-                    Button = EMouseButtonName::Thumb1;
-                }
-                else
-                {
-                    Button = EMouseButtonName::Thumb2;
-                }
-            }
-
             MessageHandler->OnMouseButtonUp(Button, GetModifierKeyState());
             break;
         }
-    }
-}
-
-LRESULT FWindowsApplication::ProcessMessage(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    LRESULT ResultFromListeners = 0;
-
-    // Let the message listeners (a.k.a other modules) listen to native messages
-    bool bIsMessageHandledExternally = false;
-    for (TSharedPtr<IWindowsMessageListener> NativeMessageListener : WindowsMessageListeners)
-    {
-        CHECK(NativeMessageListener != nullptr);
-
-        LRESULT MessageResult = NativeMessageListener->MessageProc(Window, Message, wParam, lParam);
-        if (MessageResult)
-        {
-            if (!bIsMessageHandledExternally)
-            {
-                ResultFromListeners         = MessageResult;
-                bIsMessageHandledExternally = true;
-            }
-        }
-    }
-
-    switch (Message)
-    {
-        // We need to process the "raw" input here and store the result later 
-        case WM_INPUT:
-        {
-            return ProcessRawInput(Window, Message, wParam, lParam);
-        }
-
-        // If the window is currently resizing we need to handle it directly
-        case WM_SIZING:
-        {
-            if (TSharedRef<FWindowsWindow> MessageWindow = GetWindowsWindowFromHWND(Window))
-            {
-                MessageHandler->OnWindowResizing(MessageWindow);
-            }
-
-            break;
-        }
-
-        // Defer these messages to be handled later when the event loop is explicitly run
-        case WM_DESTROY:
-        case WM_CLOSE:
-        case WM_MOVE:
-        case WM_MOUSELEAVE:
-        case WM_SETFOCUS:
-        case WM_KILLFOCUS:
-        case WM_SIZE:
-        case WM_SYSKEYUP:
-        case WM_KEYUP:
-        case WM_SYSKEYDOWN:
-        case WM_KEYDOWN:
-        case WM_SYSCHAR:
-        case WM_CHAR:
-        case WM_MOUSEMOVE:
-        case WM_NCMOUSEMOVE:
-        case WM_LBUTTONDOWN:
-        case WM_MBUTTONDOWN:
-        case WM_RBUTTONDOWN:
-        case WM_XBUTTONDOWN:
-        case WM_LBUTTONDBLCLK:
-        case WM_MBUTTONDBLCLK:
-        case WM_RBUTTONDBLCLK:
-        case WM_XBUTTONDBLCLK:
-        case WM_LBUTTONUP:
-        case WM_MBUTTONUP:
-        case WM_RBUTTONUP:
-        case WM_XBUTTONUP:
-        case WM_MOUSEWHEEL:
-        case WM_MOUSEHWHEEL:
-        case WM_DEVICECHANGE:
-        case WM_DISPLAYCHANGE:
-        {
-            FWindowsDeferredMessage DeferredMessage;
-            DeferredMessage.Window       = GetWindowsWindowFromHWND(Window);
-            DeferredMessage.WindowHandle = Window;
-            DeferredMessage.MessageType  = Message;
-            DeferredMessage.wParam       = wParam;
-            DeferredMessage.lParam       = lParam;
-
-            DeferMessage(DeferredMessage);
-            return 0;
-        }
 
         default:
-        {
+        {   
             break;
         }
     }
-
-    // If we do not handle the message, but an external message handler has handled the message, 
-    // we return that result here. 
-    if (bIsMessageHandledExternally)
-    {
-        return ResultFromListeners;
-    }
-
-    // We did not handle the message and there were no external message handler that dealt with this message,
-    // so now we return the default value for this message.
-    return ::DefWindowProc(Window, Message, wParam, lParam);
-}
-
-void FWindowsApplication::DeferMessage(const FWindowsDeferredMessage& InDeferredMessage)
-{
-    // If the we want to defer messages we put them into a message queue here...
-    if (bDeferredMessagesEnabled = CVarEnableDeferredMessages.GetValue())
-    {
-        TScopedLock<FCriticalSection> Lock(MessagesCS);
-        Messages.Emplace(InDeferredMessage);
-    }
-    else
-    {
-        // ... otherwise we process it directly here.
-        ProcessDeferredMessage(InDeferredMessage);
-    }
-}
-
-LRESULT FWindowsApplication::ProcessRawInput(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    HRAWINPUT ParamInput = reinterpret_cast<HRAWINPUT>(lParam);
-
-    // Retrieve the size of the input data
-    UINT Size = 0;
-    ::GetRawInputData(ParamInput, RID_INPUT, nullptr, &Size, sizeof(RAWINPUTHEADER));
-
-    TUniquePtr<uint8[]> Buffer = MakeUniquePtr<uint8[]>(Size);
-
-    // Retrieve the input data
-    UINT ResultSize = ::GetRawInputData(ParamInput, RID_INPUT, Buffer.Get(), &Size, sizeof(RAWINPUTHEADER));
-    if (ResultSize != Size)
-    {
-        LOG_ERROR("[FWindowsApplication] GetRawInputData did not return correct size");
-        return 0;
-    }
-
-    RAWINPUT* RawInputData = reinterpret_cast<RAWINPUT*>(Buffer.Get());
-    if (RawInputData)
-    {
-        switch(RawInputData->header.dwType)
-        {
-            case RIM_TYPEMOUSE:
-            {
-                int32 DeltaX = RawInputData->data.mouse.lLastX;
-                int32 DeltaY = RawInputData->data.mouse.lLastY;
-
-                if (DeltaX != 0 || DeltaY != 0)
-                {
-                    FWindowsDeferredMessage DeferredMessage;
-                    DeferredMessage.Window       = GetWindowsWindowFromHWND(Window);
-                    DeferredMessage.WindowHandle = Window;
-                    DeferredMessage.MessageType  = Message;
-                    DeferredMessage.wParam       = wParam;
-                    DeferredMessage.lParam       = lParam;
-                    DeferredMessage.MouseDelta   = FIntVector2(DeltaX, DeltaY);
-
-                    DeferMessage(DeferredMessage);
-                }
-
-                return 0;
-            }
-        }
-    }
-
-    return ::DefRawInputProc(&RawInputData, 1, sizeof(RAWINPUTHEADER));
 }

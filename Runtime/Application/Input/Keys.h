@@ -478,11 +478,11 @@ struct EKeys
     /** @brief Gamepad Face Right button */
     static APPLICATION_API const FKey GamepadFaceRight;
     
-    /** @brief Gamepad Right Trigger button */
-    static APPLICATION_API const FKey GamepadRightTrigger;
+    /** @brief Gamepad Right Thumb button */
+    static APPLICATION_API const FKey GamepadRightThumb;
     
-    /** @brief Gamepad Left Trigger button */
-    static APPLICATION_API const FKey GamepadLeftTrigger;
+    /** @brief Gamepad Left Thumb button */
+    static APPLICATION_API const FKey GamepadLeftThumb;
     
     /** @brief Gamepad Right Shoulder button */
     static APPLICATION_API const FKey GamepadRightShoulder;

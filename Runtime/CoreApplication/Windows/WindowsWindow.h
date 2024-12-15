@@ -5,33 +5,74 @@
 
 class FWindowsApplication;
 
+/**
+ * @struct FWindowsWindowStyle
+ * @brief Encapsulates Windows-specific style flags for a window.
+ *
+ * This structure holds both the standard and extended style flags (Style and StyleEx)
+ * used by the Windows API to define the appearance and behavior of a window. Common
+ * values include WS_OVERLAPPEDWINDOW (standard) and WS_EX_APPWINDOW (extended).
+ */
 struct FWindowsWindowStyle
 {
-    FWindowsWindowStyle() = default;
+    /**
+     * @brief Default constructor, initializes style flags to zero.
+     */
+    FWindowsWindowStyle()
+        : Style(0)
+        , StyleEx(0)
+    {
+    }
 
+    /**
+     * @brief Constructs a FWindowsWindowStyle with given standard and extended style flags.
+     * 
+     * @param InStyle The standard Windows style flags.
+     * @param InStyleEx The Windows extended style flags.
+     */
     FWindowsWindowStyle(DWORD InStyle, DWORD InStyleEx)
         : Style(InStyle)
         , StyleEx(InStyleEx)
     {
     }
 
+    /**
+     * @brief Equality operator to compare two window styles.
+     * 
+     * @param Other The other FWindowsWindowStyle to compare against.
+     * @return True if both the Style and StyleEx fields match.
+     */
     bool operator==(FWindowsWindowStyle Other) const
     {
         return Style == Other.Style && StyleEx == Other.StyleEx;
     }
 
+    /**
+     * @brief Inequality operator to compare two window styles.
+     * 
+     * @param Other The other FWindowsWindowStyle to compare against.
+     * @return True if either the Style or StyleEx fields differ.
+     */
     bool operator!=(FWindowsWindowStyle Other) const
     {
         return !(*this == Other);
     }
 
     /** @brief The standard Windows style flags (e.g., WS_OVERLAPPEDWINDOW). */
-    DWORD Style{0};
+    DWORD Style;
 
     /** @brief The Windows extended style flags (e.g., WS_EX_APPWINDOW). */
-    DWORD StyleEx{0};
+    DWORD StyleEx;
 };
 
+/**
+ * @class FWindowsWindow
+ * @brief A Windows-specific implementation of a generic engine window.
+ *
+ * FWindowsWindow provides methods to create, show, hide, resize, and otherwise manage a
+ * window on the Windows platform. It wraps the native HWND handle while conforming to the
+ * FGenericWindow interface used by the engine.
+ */
 class COREAPPLICATION_API FWindowsWindow final : public FGenericWindow
 {
 public:
@@ -68,11 +109,11 @@ public:
     virtual bool Initialize(const FGenericWindowInitializer& InInitializer) override final;
 
     virtual void Show(bool bFocus) override final;
-    
+
     virtual void Minimize() override final;
 
     virtual void Maximize() override final;
-    
+
     virtual void Destroy() override final;
 
     virtual void Restore() override final;
@@ -123,9 +164,9 @@ public:
 public:
     
     /**
-     * @brief Gets the underlying HWND for this window.
+     * @brief Gets the underlying native HWND handle for this window.
      * 
-     * @return The native HWND handle.
+     * @return The HWND for this window.
      */
     FORCEINLINE HWND GetWindowHandle() const 
     { 
@@ -133,7 +174,7 @@ public:
     }
 
     /**
-     * @brief Retrieves the application that is managing this window.
+     * @brief Retrieves the application that manages this window.
      * 
      * @return A pointer to the FWindowsApplication instance.
      */

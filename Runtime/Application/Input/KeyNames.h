@@ -155,8 +155,8 @@ namespace EKeyName
         GamepadFaceDown      = 131,
         GamepadFaceLeft      = 132,
         GamepadFaceRight     = 133,
-        GamepadRightTrigger  = 134,
-        GamepadLeftTrigger   = 135,
+        GamepadRightThumb    = 134,
+        GamepadLeftThumb     = 135,
         GamepadRightShoulder = 136,
         GamepadLeftShoulder  = 137,
         GamepadStart         = 138,
@@ -330,8 +330,8 @@ constexpr const CHAR* ToString(EKeyName::Type KeyName)
         case EKeyName::GamepadFaceDown:      return "GamepadFaceDown";
         case EKeyName::GamepadFaceLeft:      return "GamepadFaceLeft";
         case EKeyName::GamepadFaceRight:     return "GamepadFaceRight";
-        case EKeyName::GamepadRightTrigger:  return "GamepadRightTrigger";
-        case EKeyName::GamepadLeftTrigger:   return "GamepadLeftTrigger";
+        case EKeyName::GamepadRightThumb:    return "GamepadRightThumb";
+        case EKeyName::GamepadLeftThumb:     return "GamepadLeftTrigger";
         case EKeyName::GamepadRightShoulder: return "GamepadRightShoulder";
         case EKeyName::GamepadLeftShoulder:  return "GamepadLeftShoulder";
         case EKeyName::GamepadStart:         return "GamepadStart";

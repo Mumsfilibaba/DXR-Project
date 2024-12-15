@@ -316,8 +316,8 @@ namespace EGamepadButtonName
         FaceDown,
         FaceLeft,
         FaceRight,
-        RightTrigger,
-        LeftTrigger,
+        RightThumb,
+        LeftThumb,
         RightShoulder,
         LeftShoulder,
         Start,
@@ -341,8 +341,8 @@ constexpr const CHAR* ToString(EGamepadButtonName::Type Button)
     case EGamepadButtonName::FaceDown:      return "FaceDown";
     case EGamepadButtonName::FaceLeft:      return "FaceLeft";
     case EGamepadButtonName::FaceRight:     return "FaceRight";
-    case EGamepadButtonName::RightTrigger:  return "RightTrigger";
-    case EGamepadButtonName::LeftTrigger:   return "LeftTrigger";
+    case EGamepadButtonName::RightThumb:    return "RightThumb";
+    case EGamepadButtonName::LeftThumb:     return "LeftThumb";
     case EGamepadButtonName::RightShoulder: return "RightShoulder";
     case EGamepadButtonName::LeftShoulder:  return "LeftShoulder";
     case EGamepadButtonName::Start:         return "Start";

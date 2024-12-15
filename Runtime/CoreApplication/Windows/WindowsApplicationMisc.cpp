@@ -1,6 +1,5 @@
 #include "CoreApplication/Windows/WindowsApplication.h"
 #include "CoreApplication/Windows/WindowsApplicationMisc.h"
-#include "CoreApplication/Generic/GenericApplicationMisc.h"
 
 void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
