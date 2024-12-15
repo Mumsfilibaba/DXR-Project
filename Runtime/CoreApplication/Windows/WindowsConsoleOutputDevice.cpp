@@ -1,17 +1,22 @@
 #include "Core/Threading/ScopedLock.h"
-#include "CoreApplication/Windows/WindowsOutputDeviceConsole.h"
+#include "CoreApplication/Windows/WindowsConsoleOutputDevice.h"
 
-FWindowsOutputDeviceConsole::FWindowsOutputDeviceConsole()
+FGenericConsoleOutputDevice* FWindowsConsoleOutputDevice::Create()
+{
+    return new FWindowsConsoleOutputDevice();
+}
+
+FWindowsConsoleOutputDevice::FWindowsConsoleOutputDevice()
     : ConsoleHandle(0)
 {
 }
 
-FWindowsOutputDeviceConsole::~FWindowsOutputDeviceConsole()
+FWindowsConsoleOutputDevice::~FWindowsConsoleOutputDevice()
 {
     Show(false);
 }
 
-void FWindowsOutputDeviceConsole::Show(bool bShow)
+void FWindowsConsoleOutputDevice::Show(bool bShow)
 {
     if (bShow)
     {
@@ -33,7 +38,7 @@ void FWindowsOutputDeviceConsole::Show(bool bShow)
     }
 }
 
-void FWindowsOutputDeviceConsole::Log(const FString& Message)
+void FWindowsConsoleOutputDevice::Log(const FString& Message)
 {
     if (ConsoleHandle)
     {
@@ -43,7 +48,7 @@ void FWindowsOutputDeviceConsole::Log(const FString& Message)
     }
 }
 
-void FWindowsOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
+void FWindowsConsoleOutputDevice::Log(ELogSeverity Severity, const FString& Message)
 {
     if (ConsoleHandle)
     {
@@ -76,7 +81,7 @@ void FWindowsOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Mess
     }
 }
 
-void FWindowsOutputDeviceConsole::Flush()
+void FWindowsConsoleOutputDevice::Flush()
 {
     if (ConsoleHandle)
     {
@@ -97,7 +102,7 @@ void FWindowsOutputDeviceConsole::Flush()
     }
 }
 
-void FWindowsOutputDeviceConsole::SetTitle(const FString& InTitle)
+void FWindowsConsoleOutputDevice::SetTitle(const FString& InTitle)
 {
     if (ConsoleHandle)
     {
@@ -108,7 +113,7 @@ void FWindowsOutputDeviceConsole::SetTitle(const FString& InTitle)
     }
 }
 
-void FWindowsOutputDeviceConsole::SetTextColor(EConsoleColor Color)
+void FWindowsConsoleOutputDevice::SetTextColor(EConsoleColor Color)
 {
     if (ConsoleHandle)
     {

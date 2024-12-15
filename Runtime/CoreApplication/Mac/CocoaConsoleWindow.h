@@ -3,14 +3,14 @@
 #include <stdarg.h>
 #include <AppKit/AppKit.h>
 
-class FMacOutputDeviceConsole;
+class FMacConsoleOutputDevice;
 
 @interface FCocoaConsoleWindow : NSWindow<NSWindowDelegate>
 {
-    FMacOutputDeviceConsole* ConsoleWindow;
+    FMacConsoleOutputDevice* ConsoleWindow;
 }
 
-- (instancetype)init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
+- (instancetype)init:(FMacConsoleOutputDevice*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag;
 
 + (NSString*)convertStringWithArgs:(const CHAR*)Format Args : (va_list)Args;
 

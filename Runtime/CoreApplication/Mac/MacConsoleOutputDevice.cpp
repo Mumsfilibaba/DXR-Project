@@ -3,12 +3,17 @@
 #include "Core/Mac/MacThreadManager.h"
 #include "Core/Templates/NumericLimits.h"
 #include "Core/Platform/PlatformThreadMisc.h"
-#include "CoreApplication/Mac/MacOutputDeviceConsole.h"
+#include "CoreApplication/Mac/MacConsoleOutputDevice.h"
 #include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/CocoaConsoleWindow.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 
-FMacOutputDeviceConsole::FMacOutputDeviceConsole()
+FGenericConsoleOutputDevice* FMacConsoleOutputDevice::Create()
+{
+    return new FMacConsoleOutputDevice();
+}
+
+FMacConsoleOutputDevice::FMacConsoleOutputDevice()
     : WindowHandle(nullptr)
     , TextView(nullptr)
     , ScrollView(nullptr)
@@ -21,12 +26,12 @@ FMacOutputDeviceConsole::FMacOutputDeviceConsole()
 {
 }
 
-FMacOutputDeviceConsole::~FMacOutputDeviceConsole()
+FMacConsoleOutputDevice::~FMacConsoleOutputDevice()
 {
     DestroyConsole();
 }
 
-void FMacOutputDeviceConsole::CreateConsole()
+void FMacConsoleOutputDevice::CreateConsole()
 {
     if (!WindowHandle)
     {
@@ -139,7 +144,7 @@ void FMacOutputDeviceConsole::CreateConsole()
     }
 }
 
-void FMacOutputDeviceConsole::DestroyConsole()
+void FMacConsoleOutputDevice::DestroyConsole()
 {
     if (IsVisible())
     {
@@ -155,7 +160,7 @@ void FMacOutputDeviceConsole::DestroyConsole()
     }
 }
 
-void FMacOutputDeviceConsole::DestroyResources()
+void FMacConsoleOutputDevice::DestroyResources()
 {
     SCOPED_AUTORELEASE_POOL();
     
@@ -182,7 +187,7 @@ void FMacOutputDeviceConsole::DestroyResources()
     }
 }
 
-void FMacOutputDeviceConsole::Show(bool bShow)
+void FMacConsoleOutputDevice::Show(bool bShow)
 {
     SCOPED_LOCK(WindowCS);
     
@@ -199,7 +204,7 @@ void FMacOutputDeviceConsole::Show(bool bShow)
     }
 }
 
-void FMacOutputDeviceConsole::Log(const FString& Message)
+void FMacConsoleOutputDevice::Log(const FString& Message)
 {
     SCOPED_LOCK(WindowCS);
     
@@ -225,7 +230,7 @@ void FMacOutputDeviceConsole::Log(const FString& Message)
     }
 }
 
-void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
+void FMacConsoleOutputDevice::Log(ELogSeverity Severity, const FString& Message)
 {
     SCOPED_LOCK(WindowCS);
     
@@ -275,7 +280,7 @@ void FMacOutputDeviceConsole::Log(ELogSeverity Severity, const FString& Message)
     }
 }
 
-void FMacOutputDeviceConsole::Flush()
+void FMacConsoleOutputDevice::Flush()
 {
     SCOPED_LOCK(WindowCS);
     
@@ -294,7 +299,7 @@ void FMacOutputDeviceConsole::Flush()
     }
 }
 
-void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
+void FMacConsoleOutputDevice::SetTitle(const FString& InTitle)
 {
     SCOPED_LOCK(WindowCS);
     
@@ -320,13 +325,13 @@ void FMacOutputDeviceConsole::SetTitle(const FString& InTitle)
     }
 }
 
-void FMacOutputDeviceConsole::SetTextColor(EConsoleColor Color)
+void FMacConsoleOutputDevice::SetTextColor(EConsoleColor Color)
 {
     SCOPED_LOCK(WindowCS);
     InternalSetConsoleColor(Color);
 }
 
-void FMacOutputDeviceConsole::InternalSetConsoleColor(EConsoleColor Color)
+void FMacConsoleOutputDevice::InternalSetConsoleColor(EConsoleColor Color)
 {
     SCOPED_AUTORELEASE_POOL();
             
@@ -356,7 +361,7 @@ void FMacOutputDeviceConsole::InternalSetConsoleColor(EConsoleColor Color)
     [TextColor retain];
 }
 
-NSAttributedString* FMacOutputDeviceConsole::CreatePrintableString(const FString& String)
+NSAttributedString* FMacConsoleOutputDevice::CreatePrintableString(const FString& String)
 {
     SCOPED_AUTORELEASE_POOL();
 
@@ -379,7 +384,7 @@ NSAttributedString* FMacOutputDeviceConsole::CreatePrintableString(const FString
     return AttributedString;
 }
 
-int32 FMacOutputDeviceConsole::MainThreadGetLineCount() const
+int32 FMacConsoleOutputDevice::MainThreadGetLineCount() const
 {
     CHECK(WindowHandle != nil);
     
@@ -394,13 +399,13 @@ int32 FMacOutputDeviceConsole::MainThreadGetLineCount() const
     return static_cast<int32>(NumberOfLines);
 }
 
-void FMacOutputDeviceConsole::OnWindowDidClose()
+void FMacConsoleOutputDevice::OnWindowDidClose()
 {
     SCOPED_LOCK(WindowCS);
     DestroyResources();
 }
 
-void FMacOutputDeviceConsole::MainThreadAppendStringAndScroll(NSAttributedString* AttributedString)
+void FMacConsoleOutputDevice::MainThreadAppendStringAndScroll(NSAttributedString* AttributedString)
 {
     CHECK(WindowHandle != nil);
     

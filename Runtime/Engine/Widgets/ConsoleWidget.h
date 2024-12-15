@@ -6,7 +6,7 @@
 #include "Core/Containers/Pair.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Misc/OutputDevice.h"
+#include "Core/Misc/IOutputDevice.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Application/InputHandler.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"

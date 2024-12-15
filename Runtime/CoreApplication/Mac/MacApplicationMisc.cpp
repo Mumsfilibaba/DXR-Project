@@ -1,14 +1,8 @@
 #include "Core/Mac/Mac.h"
 #include "Core/Mac/MacThreadManager.h"
 #include "CoreApplication/Mac/MacApplicationMisc.h"
-#include "CoreApplication/Mac/MacOutputDeviceConsole.h"
 #include <Appkit/Appkit.h>
 #include <Foundation/Foundation.h>
-
-FOutputDeviceConsole* FMacApplicationMisc::CreateOutputDeviceConsole()
-{
-    return new FMacOutputDeviceConsole();
-}
 
 void FMacApplicationMisc::MessageBox(const FString& Title, const FString& Message)
 {

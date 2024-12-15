@@ -13,7 +13,6 @@
 #include "CoreApplication/Windows/WindowsApplicationMisc.h"
 #include "CoreApplication/Windows/WindowsCursor.h"
 #include "CoreApplication/Windows/WindowsInputMapper.h"
-#include "CoreApplication/Windows/WindowsOutputDeviceConsole.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Windows/XInputDevice.h"
 #elif PLATFORM_MACOS
@@ -24,10 +23,9 @@
 #include "CoreApplication/Mac/MacApplicationMisc.h"
 #include "CoreApplication/Mac/MacCursor.h"
 #include "CoreApplication/Mac/MacInputMapper.h"
-#include "CoreApplication/Mac/MacOutputDeviceConsole.h"
 #include "CoreApplication/Mac/MacWindow.h"
 #endif
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "CoreApplication/Platform/PlatformConsoleWindow.h"
+#include "CoreApplication/Platform/PlatformConsoleOutputDevice.h"
 #include "CoreApplication/Platform/PlatformInputMapper.h"

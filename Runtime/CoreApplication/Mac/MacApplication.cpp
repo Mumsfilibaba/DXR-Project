@@ -228,21 +228,6 @@ TSharedRef<FGenericWindow> FMacApplication::CreateWindow()
 void FMacApplication::Tick(float)
 {
     SCOPED_AUTORELEASE_POOL();
-
-    FPlatformApplicationMisc::PumpMessages(true);
-
-    TArray<FDeferredMacEvent> LocalDeferredEvents;
-    if (!DeferredEvents.IsEmpty())
-    {
-        TScopedLock Lock(DeferredEventsCS);
-        LocalDeferredEvents = Move(DeferredEvents);
-        DeferredEvents.Clear();
-    }
-    
-    for (const FDeferredMacEvent& CurrentEvent : LocalDeferredEvents)
-    {
-        ProcessDeferredEvent(CurrentEvent);
-    }
     
     TArray<TSharedRef<FMacWindow>> LocalClosedWindows;
     if (!ClosedWindows.IsEmpty())
@@ -277,6 +262,27 @@ void FMacApplication::Tick(float)
                 [CocoaWindow release];
             }
         }, NSDefaultRunLoopMode, true);
+    }
+}
+
+void FMacApplication::ProcessEvents()
+{
+    FPlatformApplicationMisc::PumpMessages(true);
+}
+
+void FMacApplication::ProcessDeferredEvents()
+{
+    TArray<FDeferredMacEvent> LocalDeferredEvents;
+    if (!DeferredEvents.IsEmpty())
+    {
+        TScopedLock Lock(DeferredEventsCS);
+        LocalDeferredEvents = Move(DeferredEvents);
+        DeferredEvents.Clear();
+    }
+
+    for (const FDeferredMacEvent& CurrentEvent : LocalDeferredEvents)
+    {
+        ProcessDeferredEvent(CurrentEvent);
     }
 }
 

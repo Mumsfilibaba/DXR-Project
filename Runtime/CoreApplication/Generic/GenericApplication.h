@@ -291,6 +291,10 @@ public:
      */
     virtual void Tick(float Delta) { }
 
+    virtual void ProcessEvents() { };
+
+    virtual void ProcessDeferredEvents() { }
+
     /**
      * @brief Updates the input devices currently available to the application.
      * 

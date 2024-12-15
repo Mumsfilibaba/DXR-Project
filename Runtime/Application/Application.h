@@ -277,6 +277,10 @@ public:
      */
     void Tick(float Delta);
 
+    void ProcessEvents();
+
+    void ProcessDeferredEvents();
+
     /**
      * @brief Updates any game controllers or devices that do not go through the standard platform message pump.
      * 

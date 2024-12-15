@@ -55,6 +55,12 @@ static FWindowsWindowStyle GetWindowsWindowStyle(EWindowStyleFlags Style)
     return FWindowsWindowStyle(NewStyle, NewStyleEx);
 }
 
+TSharedRef<FWindowsWindow> FWindowsWindow::Create(FWindowsApplication* InApplication)
+{
+    TSharedRef<FWindowsWindow> NewWindow = new FWindowsWindow(InApplication);
+    return NewWindow;
+}
+
 FWindowsWindow::FWindowsWindow(FWindowsApplication* InApplication)
     : FGenericWindow()
     , Application(InApplication)

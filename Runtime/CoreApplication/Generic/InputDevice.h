@@ -60,5 +60,5 @@ public:
     }
 
 private:
-    TSharedPtr<FGenericApplicationMessageHandler> MessageHandler; /**< @brief The message handler used by the input device. */
+    TSharedPtr<FGenericApplicationMessageHandler> MessageHandler;
 };

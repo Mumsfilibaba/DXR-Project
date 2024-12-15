@@ -93,7 +93,7 @@ public:
      * 
      * @return A pointer to the FCocoaWindow instance.
      */
-    FCocoaWindow* GetCocoaWindow() const
+    FORCEINLINE FCocoaWindow* GetCocoaWindow() const
     {
         return CocoaWindow;
     }
@@ -103,7 +103,7 @@ public:
      * 
      * @return A pointer to the FMacApplication instance.
      */
-    FMacApplication* GetApplication() const
+    FORCEINLINE FMacApplication* GetApplication() const
     {
         return Application;
     }
@@ -115,7 +115,7 @@ public:
      * 
      * @param InPosition The new cached position as an FIntVector2.
      */
-    void SetCachedPosition(const FIntVector2& InPosition)
+    FORCEINLINE void SetCachedPosition(const FIntVector2& InPosition)
     {
         Position = InPosition;
     }
@@ -125,7 +125,7 @@ public:
      * 
      * @return A constant reference to the window's cached position as an FIntVector2.
      */
-    const FIntVector2& GetCachedPosition() const
+    FORCEINLINE const FIntVector2& GetCachedPosition() const
     {
         return Position;
     }

@@ -14,14 +14,6 @@
 @class FCocoaWindow;
 @class FMacApplicationObserver;
 
-/**
- * @enum EMacModifierKey
- * @brief Represents different Mac-specific modifier keys.
- *
- * Each enumerator corresponds to a particular modifier key on macOS systems, allowing for detection
- * of left/right variations of keys like Control, Shift, Command (Super), and Alt, as well as Caps Lock.
- */
-
 enum EMacModifierKey
 {
     MacModifierKey_LeftControl = 0,
@@ -35,15 +27,6 @@ enum EMacModifierKey
     MacModifierKey_CapsLock,
     MacModifierKey_NumLock,
 };
-
-/**
- * @struct FDeferredMacEvent
- * @brief Contains data related to a macOS event that has been deferred for later processing.
- *
- * FDeferredMacEvent stores detailed information about an event such as the original NSEvent,
- * associated window, event type, modifiers, mouse state, and more. It allows events received
- * by the application at various times to be processed in a controlled manner (e.g., in the Tick function).
- */
 
 struct FDeferredMacEvent
 {
@@ -136,16 +119,6 @@ struct FDeferredMacEvent
     bool bIsRepeat;
 };
 
-/**
- * @class FMacApplication
- * @brief The Mac-specific implementation of the FGenericApplication interface.
- *
- * FMacApplication integrates with the macOS application lifecycle, handling event processing,
- * window management, input devices, and platform-specific operations. It translates native macOS
- * events (NSEvents) into engine-level events, manages Mac windows (FMacWindow and FCocoaWindow),
- * and defers certain events for processing during the application's Tick function.
- */
-
 class COREAPPLICATION_API FMacApplication final : public FGenericApplication
 {
 public:
@@ -170,6 +143,10 @@ public:
     virtual TSharedRef<FGenericWindow> CreateWindow() override final;
 
     virtual void Tick(float Delta) override final;
+
+    virtual void ProcessEvents() override final;
+
+    virtual void ProcessDeferredEvents() override final;
 
     virtual void UpdateInputDevices() override final;
 

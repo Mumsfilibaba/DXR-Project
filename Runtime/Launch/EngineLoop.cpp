@@ -1,9 +1,8 @@
-#include "EngineLoop.h"
+#include "Launch/EngineLoop.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -13,7 +12,7 @@
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "CoreApplication/Platform/PlatformConsoleWindow.h"
+#include "CoreApplication/Platform/PlatformConsoleOutputDevice.h"
 #include "Renderer/Debug/GPUProfiler.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
@@ -39,13 +38,13 @@ struct FDebuggerOutputDevice : public IOutputDevice
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-static TUniquePtr<FOutputDeviceConsole>  GConsoleWindow;
-static TUniquePtr<FDebuggerOutputDevice> GDebuggerOutputDevice;
+static TUniquePtr<FDebuggerOutputDevice>       GDebuggerOutputDevice;
+static TUniquePtr<FGenericConsoleOutputDevice> GConsoleWindow;
 
 static bool InitializeOutputDevices()
 {
     // Create the console window
-    GConsoleWindow = TUniquePtr<FOutputDeviceConsole>(FPlatformApplicationMisc::CreateOutputDeviceConsole());
+    GConsoleWindow = TUniquePtr<FGenericConsoleOutputDevice>(FPlatformConsoleOutputDevice::Create());
     if (GConsoleWindow)
     {
         GConsoleWindow->Show(true);
@@ -66,7 +65,6 @@ static bool InitializeOutputDevices()
 
     return true;
 }
-
 
 FEngineLoop::FEngineLoop()
     : FrameTimer()

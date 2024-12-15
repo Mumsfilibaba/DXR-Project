@@ -137,8 +137,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Core/Misc/OutputDevice.h"
-#include "Core/Misc/OutputDeviceConsole.h"
+#include "Core/Misc/IOutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 #include "Core/Modules/ModuleManager.h"

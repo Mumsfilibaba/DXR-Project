@@ -1,6 +1,6 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Misc/OutputDevice.h"
+#include "Core/Misc/IOutputDevice.h"
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Map.h"

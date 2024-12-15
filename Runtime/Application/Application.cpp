@@ -339,6 +339,10 @@ void FApplicationInterface::DestroyWindow(const TSharedPtr<FWindow>& DestroyedWi
 
 void FApplicationInterface::Tick(float Delta)
 {
+    ProcessEvents();
+
+    ProcessDeferredEvents();
+
     GPlatformApplication->Tick(Delta);
 
     UpdateInputDevices();
@@ -348,6 +352,16 @@ void FApplicationInterface::Tick(float Delta)
     {
         CurrentWindow->Tick();
     }
+}
+
+void FApplicationInterface::ProcessEvents()
+{
+    GPlatformApplication->ProcessEvents();
+}
+
+void FApplicationInterface::ProcessDeferredEvents()
+{
+    GPlatformApplication->ProcessDeferredEvents();
 }
 
 void FApplicationInterface::UpdateInputDevices()

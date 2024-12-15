@@ -1,12 +1,6 @@
 #include "CoreApplication/Windows/WindowsApplication.h"
 #include "CoreApplication/Windows/WindowsApplicationMisc.h"
-#include "CoreApplication/Windows/WindowsOutputDeviceConsole.h"
 #include "CoreApplication/Generic/GenericApplicationMisc.h"
-
-FOutputDeviceConsole* FWindowsApplicationMisc::CreateOutputDeviceConsole()
-{
-    return new FWindowsOutputDeviceConsole();
-}
 
 void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
@@ -22,14 +16,5 @@ void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
         TranslateMessage(&Message);
         DispatchMessage(&Message);
-
-        if (Message.message == WM_QUIT)
-        {
-            if (GWindowsApplication)
-            {
-                GWindowsApplication->StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
-            }
-        }
-
     } while (bUntilEmpty);
 }
