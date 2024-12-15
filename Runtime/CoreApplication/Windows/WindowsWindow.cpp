@@ -429,15 +429,13 @@ void FWindowsWindow::GetWindowShape(FWindowShape& OutWindowShape) const
     // Convert client coordinates to screen coordinates
     POINT Position = { 0, 0 };
     ::ClientToScreen(Window, &Position);
-    const int32 PositionX = static_cast<int32>(Position.x);
-    const int32 PositionY = static_cast<int32>(Position.y);
+    OutWindowShape.Position.X = static_cast<int32>(Position.x);
+    OutWindowShape.Position.Y = static_cast<int32>(Position.y);
 
     RECT Rect = { 0, 0, 0, 0 };
     ::GetClientRect(Window, &Rect);
-    const uint32 Width  = static_cast<uint32>(Rect.right - Rect.left);
-    const uint32 Height = static_cast<uint32>(Rect.bottom - Rect.top);
-
-    OutWindowShape = FWindowShape(Width, Height, PositionX, PositionY);
+    OutWindowShape.Width  = static_cast<uint32>(Rect.right - Rect.left);
+    OutWindowShape.Height = static_cast<uint32>(Rect.bottom - Rect.top);
 }
 
 void FWindowsWindow::GetFullscreenInfo(uint32& OutWidth, uint32& OutHeight) const
@@ -539,13 +537,32 @@ void FWindowsWindow::SetStyle(EWindowStyleFlags InStyle)
         return;
     }
 
+    // Grab the current shape (position & size) before we change style.
+    FWindowShape CurrentShape;
+    GetWindowShape(CurrentShape);
+
+    // Convert EWindowStyleFlags into WinAPI style/exstyle flags
     const FWindowsWindowStyle NewStyle = GetWindowsWindowStyle(InStyle);
     if (NewStyle != Style)
     {
         ::SetWindowLong(Window, GWL_STYLE, NewStyle.Style);
         ::SetWindowLong(Window, GWL_EXSTYLE, NewStyle.StyleEx);
-        ::ShowWindow(Window, SW_SHOWNA); // Necessary when altering the window style
 
+        // Necessary when modifying window style
+        ::ShowWindow(Window, SW_SHOWNA);
+
+        // Cache the new style
         Style = NewStyle;
     }
+
+    // If the new style includes TopMost, bring the window to the foreground
+    if ((InStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
+    {
+        SetWindowFocus();
+    }
+
+    // Re-apply the shape so the window keeps its old position/size under the new style. 
+    // (This is since we want the window to maintain the *exact* client-area dimensions, 
+    // this is important, since style changes can affect the window's border size.)
+    SetWindowShape(CurrentShape, true);
 }

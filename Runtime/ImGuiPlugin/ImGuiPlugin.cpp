@@ -852,17 +852,6 @@ void FImGuiPlugin::OnUpdatePlatformWindow(ImGuiViewport* Viewport)
     {
         ViewportData->Window->SetStyle(WindowStyle);
 
-        // TODO: This should be moved into FWindowsWindow::SetStyle
-    #if 0 && PLATFORM_WINDOWS
-        if ((WindowStyle & EWindowStyleFlags::TopMost) != EWindowStyleFlags::None)
-        {
-            PlatformWindow->SetWindowFocus();
-        }
-    
-        const FWindowShape WindowShape(static_cast<uint32>(Viewport->Size.x), static_cast<uint32>(Viewport->Size.y), static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
-        PlatformWindow->SetWindowShape(WindowShape, true);
-    #endif
-        
         Viewport->PlatformRequestMove   = true;
         Viewport->PlatformRequestResize = true;
     }
