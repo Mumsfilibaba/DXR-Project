@@ -8,10 +8,18 @@ public:
     FMacCursor();
     ~FMacCursor();
 
+public:
+
+    // ICursor Interface
     virtual void SetCursor(ECursor Cursor) override final;
+
     virtual void SetPosition(int32 x, int32 y) override final;
+
     virtual FIntVector2 GetPosition() const override final;
+
     virtual void SetVisibility(bool bVisible) override final;
+
+public:
 
     /**
      * @brief Updates the cursor's position based on processed mouse events.

@@ -8,17 +8,26 @@
 
 class FMacApplication;
 
+/**
+ * @class FMacWindow
+ * @brief A macOS-specific implementation of the FGenericWindow interface.
+ *
+ * FMacWindow manages the lifecycle of a window on macOS platforms. It integrates
+ * with native Objective-C classes (FCocoaWindow, FCocoaWindowView) to control
+ * a window's creation, destruction, attributes, and interactions.
+ */
+
 class COREAPPLICATION_API FMacWindow final : public FGenericWindow
 {
 public:
     
     /**
-     * @brief Creates a new FMacWindow instance.
+     * @brief Creates a new FMacWindow instance and returns it as a shared reference.
      * 
-     * This static method initializes a new FMacWindow and returns a smart pointer that manages
-     * the window's lifetime, avoiding the need for manual memory management with raw pointers.
+     * This static factory function simplifies creation and ensures that each FMacWindow
+     * is managed by a shared pointer, thereby avoiding manual memory management.
      * 
-     * @param InApplication A pointer to the FMacApplication instance managing the window.
+     * @param InApplication Pointer to the FMacApplication instance that manages this window.
      * @return A shared reference to the newly created FMacWindow instance.
      */
     static TSharedRef<FMacWindow> Create(FMacApplication* InApplication);
@@ -30,7 +39,7 @@ public:
 
 public:
 
-    // FGenericWindow Interface
+    // FGenericWindow Interface Overrides
     virtual bool Initialize(const FGenericWindowInitializer& InInitializer) override final;
 
     virtual void Show(bool bFocus) override final;
@@ -91,7 +100,7 @@ public:
     /**
      * @brief Retrieves the underlying FCocoaWindow instance.
      * 
-     * @return A pointer to the FCocoaWindow instance.
+     * @return A pointer to the native Objective-C window (FCocoaWindow).
      */
     FORCEINLINE FCocoaWindow* GetCocoaWindow() const
     {
@@ -99,9 +108,9 @@ public:
     }
 
     /**
-     * @brief Retrieves the application instance managing the window.
+     * @brief Retrieves the FMacApplication instance managing this window.
      * 
-     * @return A pointer to the FMacApplication instance.
+     * @return A pointer to the FMacApplication.
      */
     FORCEINLINE FMacApplication* GetApplication() const
     {
@@ -109,11 +118,9 @@ public:
     }
 
     /**
-     * @brief Sets the cached position of the window.
+     * @brief Caches the window's position locally to avoid redundant reposition events.
      * 
-     * This method is used to avoid sending multiple events that report the same position.
-     * 
-     * @param InPosition The new cached position as an FIntVector2.
+     * @param InPosition The new position as an FIntVector2.
      */
     FORCEINLINE void SetCachedPosition(const FIntVector2& InPosition)
     {
@@ -121,9 +128,9 @@ public:
     }
 
     /**
-     * @brief Retrieves the cached position of the window.
+     * @brief Retrieves the cached window position.
      * 
-     * @return A constant reference to the window's cached position as an FIntVector2.
+     * @return A const reference to the cached window position as an FIntVector2.
      */
     FORCEINLINE const FIntVector2& GetCachedPosition() const
     {

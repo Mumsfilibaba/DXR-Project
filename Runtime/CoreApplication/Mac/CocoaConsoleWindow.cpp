@@ -4,7 +4,7 @@
 
 @implementation FCocoaConsoleWindow
 
-- (instancetype) init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
+- (instancetype) init:(FMacConsoleOutputDevice*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
 {
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:NSBackingStoreBuffered defer:NO];
     if (self)

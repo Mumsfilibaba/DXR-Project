@@ -1,5 +1,4 @@
-#pragma once 
-#include "Core/Misc/OutputDeviceConsole.h"
+#pragma once
 #include <stdarg.h>
 #include <AppKit/AppKit.h>
 

@@ -138,24 +138,24 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
         bool bCurrentStates[EGamepadButtonName::Count];
         FMemory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
-        bCurrentStates[EGamepadButtonName::DPadUp]        = InGamepad.dpad.up.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadDown]      = InGamepad.dpad.down.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadLeft]      = InGamepad.dpad.right.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadRight]     = InGamepad.dpad.left.isPressed;
+        bCurrentStates[EGamepadButtonName::DPadUp]    = InGamepad.dpad.up.isPressed;
+        bCurrentStates[EGamepadButtonName::DPadDown]  = InGamepad.dpad.down.isPressed;
+        bCurrentStates[EGamepadButtonName::DPadLeft]  = InGamepad.dpad.right.isPressed;
+        bCurrentStates[EGamepadButtonName::DPadRight] = InGamepad.dpad.left.isPressed;
 
-        bCurrentStates[EGamepadButtonName::FaceUp]        = InGamepad.buttonY.isPressed;
-        bCurrentStates[EGamepadButtonName::FaceDown]      = InGamepad.buttonA.isPressed;
-        bCurrentStates[EGamepadButtonName::FaceLeft]      = InGamepad.buttonX.isPressed;
-        bCurrentStates[EGamepadButtonName::FaceRight]     = InGamepad.buttonB.isPressed;
+        bCurrentStates[EGamepadButtonName::FaceUp]    = InGamepad.buttonY.isPressed;
+        bCurrentStates[EGamepadButtonName::FaceDown]  = InGamepad.buttonA.isPressed;
+        bCurrentStates[EGamepadButtonName::FaceLeft]  = InGamepad.buttonX.isPressed;
+        bCurrentStates[EGamepadButtonName::FaceRight] = InGamepad.buttonB.isPressed;
 
-        bCurrentStates[EGamepadButtonName::RightTrigger]  = InGamepad.rightThumbstickButton.isPressed;
-        bCurrentStates[EGamepadButtonName::LeftTrigger]   = InGamepad.leftThumbstickButton.isPressed;
+        bCurrentStates[EGamepadButtonName::RightThumb] = InGamepad.rightThumbstickButton.isPressed;
+        bCurrentStates[EGamepadButtonName::LeftThumb]  = InGamepad.leftThumbstickButton.isPressed;
 
         bCurrentStates[EGamepadButtonName::RightShoulder] = InGamepad.rightShoulder.isPressed;
         bCurrentStates[EGamepadButtonName::LeftShoulder]  = InGamepad.leftShoulder.isPressed;
 
-        bCurrentStates[EGamepadButtonName::Start]         = InGamepad.buttonMenu.isPressed;
-        bCurrentStates[EGamepadButtonName::Back]          = InGamepad.buttonOptions.isPressed;
+        bCurrentStates[EGamepadButtonName::Start] = InGamepad.buttonMenu.isPressed;
+        bCurrentStates[EGamepadButtonName::Back]  = InGamepad.buttonOptions.isPressed;
 
         for (int32 ButtonIndex = 1; ButtonIndex < EGamepadButtonName::Count; ButtonIndex++)
         {

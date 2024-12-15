@@ -8,7 +8,7 @@
 }
 @end
 
-@interface FCocoaWindowView : NSView<NSTextInputClient>
+@interface FCocoaWindowView : NSView
 {
     CGFloat ScaleX;
     CGFloat ScaleY;

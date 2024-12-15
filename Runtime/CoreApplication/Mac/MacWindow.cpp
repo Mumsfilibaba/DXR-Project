@@ -62,7 +62,7 @@ bool FMacWindow::Initialize(const FGenericWindowInitializer& InInitializer)
         CGFloat Width     = static_cast<CGFloat>(InInitializer.Width);
         CGFloat Height    = static_cast<CGFloat>(InInitializer.Height);
         CGFloat PositionX = static_cast<CGFloat>(InInitializer.Position.X);
-        CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.X);
+        CGFloat PositionY = static_cast<CGFloat>(InInitializer.Position.Y);
 
         const NSRect WindowRect = FMacApplication::ConvertEngineRectToCocoa(Width, Height, PositionX, PositionY);
         CocoaWindow = [[FCocoaWindow alloc] initWithContentRect:WindowRect styleMask:WindowStyle backing:NSBackingStoreBuffered defer:NO];

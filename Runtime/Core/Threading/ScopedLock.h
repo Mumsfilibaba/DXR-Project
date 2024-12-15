@@ -1,12 +1,10 @@
 #pragma once
-#include "Core/Core.h"
-#include "Core/Templates/TypeTraits.h"
+#include "Core/Templates/Utility.h"
 
-#define SCOPED_LOCK(Lock) TScopedLock<decltype(Lock)> STRING_CONCAT(ScopedLock_, __LINE__)(Lock) 
+#define SCOPED_LOCK(Lock) TScopedLock<decltype(Lock)> STRING_CONCAT(ScopedLock_, __LINE__)(Lock)
 
 template<typename LockType>
-class TScopedLock 
-    : private FNonCopyAndNonMovable
+class TScopedLock : private FNonCopyAndNonMovable
 {
 public:
     

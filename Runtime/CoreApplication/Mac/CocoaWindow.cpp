@@ -234,123 +234,62 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 
 - (void)keyDown:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)keyUp:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)mouseDown:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)mouseDragged:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)mouseUp:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)rightMouseDown:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)rightMouseDragged:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)rightMouseUp:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
-// Handle other mouse-button events (e.g., middle mouse button)
 - (void)otherMouseDown:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)otherMouseDragged:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)otherMouseUp:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)scrollWheel:(NSEvent*)Event
 {
-}
-
-// Implement required methods for NSTextInputClient protocol
-
-// This method is called by the Cocoa text input system when text input occurs.
-// It handles the insertion of text into the view, such as when the user types characters,
-// uses an input method editor (IME), or inputs complex characters.
-// It is part of the NSTextInputClient protocol and is essential for proper text handling.
-- (void)insertText:(id)Text replacementRange:(NSRange)ReplacementRange
-{
-}
-
-// This method is called by the input system when it wants the client to execute a command.
-// The selector parameter specifies the command to perform (e.g., deleteBackward:, moveLeft:).
-// Since we handle keyboard input differently or do not support these text commands, we leave
-// this method empty to indicate that no action is taken.
-- (void)doCommandBySelector:(SEL)selector
-{
-}
-
-// This method returns an attributed substring specified by the given range. The input system
-// uses this to retrieve the text content for various purposes, such as spell-checking or
-// candidate window positioning. Since our view does not manage text content (we have no text
-// storage), we return nil to indicate that no text is available.
-- (nullable NSAttributedString*)attributedSubstringForProposedRange:(NSRange)Range actualRange:(nullable NSRangePointer)ActualRange
-{
-    return nil;
-}
-
-// This method maps a point in the view's coordinate system to a character index in the text content.
-// The input system might use this to determine the insertion point based on mouse clicks.
-// Since our view does not contain text, we return NSNotFound to indicate no valid character index.
-- (NSUInteger)characterIndexForPoint:(NSPoint)Point
-{
-    return NSNotFound;
-}
-
-// This method provides the screen coordinates for a given character range. It's used by the input
-// system to position auxiliary windows (like the candidate list in an input method editor). Since
-// we have no text, we return NSZeroRect to indicate that no valid rectangle is available.
-- (NSRect)firstRectForCharacterRange:(NSRange)Range actualRange:(nullable NSRangePointer)ActualRange
-{
-    return NSZeroRect;
-}
-
-// This method returns the range of currently marked text (text that is being composed but not yet confirmed).
-// Marked text is used in complex text input (like composing characters in East Asian languages).
-// Since we do not support marked text, we return NSNotFound to indicate its absence.
-- (NSRange)markedRange
-{
-    return NSMakeRange(NSNotFound, 0);
-}
-
-// This method returns the range of the current selection within the text content.
-// The input system uses this to understand where the selection is for editing purposes.
-// Since we have no selectable text, we return NSNotFound to indicate that there is no selection.
-- (NSRange)selectedRange
-{
-    return NSMakeRange(NSNotFound, 0);
-}
-
-// This method is called by the input system to set marked text during composition.
-// Marked text represents partially composed input, such as characters not yet confirmed by the user.
-// Since we do not support text input in this manner, we do not implement any functionality here.
-- (void)setMarkedText:(nonnull id)FString selectedRange:(NSRange)SelectedRange replacementRange:(NSRange)ReplacementRange
-{
-}
-
-// This method is called to unmark the currently marked text, finalizing the composition.
-// Since we do not handle marked text, we leave this method empty.
-- (void)unmarkText
-{
+    // Intentionally left empty for now
 }
 
 @end
