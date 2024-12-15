@@ -18,9 +18,6 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
-        CachedWidth  = ContentRect.size.width;
-        CachedHeight = ContentRect.size.height;
-
         // Disable window snapshot restoration to prevent macOS from automatically restoring the
         // window's state upon relaunch. This ensures that our custom window initialization is not
         // overridden by restored state, avoids displaying outdated or invalid content.
@@ -184,10 +181,6 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
     self = [super initWithFrame:Frame];
     if (self)
     {
-        ScaleX            = 0.0f;
-        ScaleY            = 0.0f;
-        FrameBufferWidth  = 0.0f;
-        FrameBufferHeight = 0.0f;
         return self;
     }
     
@@ -200,12 +193,6 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
     return YES;
 }
 
-// Indicate that the view does not have any marked text (used for input methods)
-- (BOOL)hasMarkedText
-{
-    return NO;
-}
-
 // Accept the first mouse event even if the view is not the key view. This method is called by
 // the system to determine whether the view should receive a mouse-down event (or other mouse
 // events) even if the window is not the key window or the view is not the first responder.
@@ -216,20 +203,6 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 - (BOOL)acceptsFirstMouse:(NSEvent*)Event
 {
     return YES;
-}
-
-// Provide an empty array of valid attributes for marked text (input methods). This method is
-// part of the NSTextInputClient protocol, which is used for handling complex text input, such
-// as input from languages like Chinese, Japanese, and Korean. The method returns an array of
-// attribute names (as NSStrings) that the view supports for marked text. Marked text is text
-// that is being composed but not yet finalized (committed) by the user. By returning an empty
-// array, we indicate that we do not support any special text attributes for marked text. This
-// means that the input system will not apply any attributes like underlines, colors, or fonts
-// to the marked text. This simplifies the handling of input methods and ensures compatibility
-// without extra complexity.
-- (NSArray*)validAttributesForMarkedText
-{
-    return @[];
 }
 
 - (void)keyDown:(NSEvent*)Event
