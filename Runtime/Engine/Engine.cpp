@@ -1,4 +1,3 @@
-#include "Engine.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/CoreDelegates.h"
@@ -9,6 +8,7 @@
 #include "Application/Widgets/Window.h"
 #include "Application/Widgets/Viewport.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "Engine/Engine.h"
 #include "Engine/Assets/AssetManager.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Widgets/ConsoleWidget.h"
@@ -18,6 +18,10 @@
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+
+#if ENGINE_DEBUG_INPUT
+    #include "Engine/Debug/InputDebugInputHandler.h"
+#endif
 
 ENGINE_API FEngine* GEngine = nullptr;
 
@@ -146,7 +150,6 @@ bool FEngine::CreateSceneViewport()
 
     // Make sure we have focus on the new viewport
     FApplicationInterface::Get().SetFocusWidget(EngineViewportWidget);
-
     return true;
 }
 
@@ -155,12 +158,12 @@ void FEngine::OnEngineWindowClosed()
     RequestEngineExit("Window Closed");
 }
 
-void FEngine::OnEngineWindowMoved(const FIntVector2& NewScreenPosition)
+void FEngine::OnEngineWindowMoved(const FIntVector2& /* NewScreenPosition */)
 {
     // LOG_INFO("Window Moved x=%d y=%d", NewScreenPosition.x, NewScreenPosition.y);
 }
 
-void FEngine::OnEngineWindowResized(const FIntVector2& NewScreenSize)
+void FEngine::OnEngineWindowResized(const FIntVector2& /* NewScreenSize */)
 {
     // LOG_INFO("Window Resized x=%d y=%d", NewScreenSize.x, NewScreenSize.y);
 }
@@ -181,6 +184,14 @@ bool FEngine::Init()
     {
         return false;
     }
+
+#if ENGINE_DEBUG_INPUT
+    InputDebugInputHandler = MakeSharedPtr<FInputDebugInputHandler>();
+    if (FApplicationInterface::IsInitialized() && InputDebugInputHandler)
+    {
+        FApplicationInterface::Get().RegisterInputHandler(InputDebugInputHandler);
+    }
+#endif
 
     // Create standard textures
     uint8 Pixels[4] = { 255, 255, 255, 255 };
@@ -250,7 +261,7 @@ bool FEngine::Init()
     }
 
     // Load Game-Module
-    const CHAR* GameModuleName = *FProjectManager::Get().GetProjectModuleName();
+    const char* GameModuleName = *FProjectManager::Get().GetProjectModuleName();
     GameModule = FModuleManager::Get().LoadModule<FGameModule>(GameModuleName);
     if (!GameModule)
     {
@@ -327,6 +338,14 @@ void FEngine::Release()
 
         IImguiPlugin::Get().SetMainViewport(nullptr);
     }
+
+#if ENGINE_DEBUG_INPUT
+    if (FApplicationInterface::IsInitialized() && InputDebugInputHandler)
+    {
+        FApplicationInterface::Get().UnregisterInputHandler(InputDebugInputHandler);
+        InputDebugInputHandler.Reset();
+    }
+#endif
 
     // Destroy the World
     if (World)

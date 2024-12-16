@@ -331,7 +331,7 @@ constexpr const CHAR* ToString(EKeyName::Type KeyName)
         case EKeyName::GamepadFaceLeft:      return "GamepadFaceLeft";
         case EKeyName::GamepadFaceRight:     return "GamepadFaceRight";
         case EKeyName::GamepadRightThumb:    return "GamepadRightThumb";
-        case EKeyName::GamepadLeftThumb:     return "GamepadLeftTrigger";
+        case EKeyName::GamepadLeftThumb:     return "GamepadLeftThumb";
         case EKeyName::GamepadRightShoulder: return "GamepadRightShoulder";
         case EKeyName::GamepadLeftShoulder:  return "GamepadLeftShoulder";
         case EKeyName::GamepadStart:         return "GamepadStart";

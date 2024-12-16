@@ -103,7 +103,7 @@ public:
         , bIsDown(false)
     {
     }
-    
+
     FCursorEvent(EInputEventType InEventType, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
         : FInputEvent(InEventType, InModifierKeys)
         , Key(EKeys::Unknown)
@@ -156,11 +156,6 @@ public:
         return CursorPosition;
     }
 
-    float GetScrollDelta() const
-    {
-        return ScrollDelta;
-    }
-
     bool IsScrollVertical() const
     {
         return bIsScrollVertical;
@@ -171,13 +166,18 @@ public:
         return bIsDown;
     }
 
+    float GetScrollDelta() const
+    {
+        return ScrollDelta;
+    }
+
 private:
     FKey        Key;
     FIntVector2 CursorPosition;
     float       ScrollDelta;
     
     bool bIsScrollVertical : 1;
-    bool bIsDown : 1;
+    bool bIsDown           : 1;
 };
 
 class FKeyEvent : public FInputEvent

@@ -140,8 +140,8 @@ void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 Game
 
         bCurrentStates[EGamepadButtonName::DPadUp]    = InGamepad.dpad.up.isPressed;
         bCurrentStates[EGamepadButtonName::DPadDown]  = InGamepad.dpad.down.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadLeft]  = InGamepad.dpad.right.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadRight] = InGamepad.dpad.left.isPressed;
+        bCurrentStates[EGamepadButtonName::DPadLeft]  = InGamepad.dpad.left.isPressed;
+        bCurrentStates[EGamepadButtonName::DPadRight] = InGamepad.dpad.right.isPressed;
 
         bCurrentStates[EGamepadButtonName::FaceUp]    = InGamepad.buttonY.isPressed;
         bCurrentStates[EGamepadButtonName::FaceDown]  = InGamepad.buttonA.isPressed;

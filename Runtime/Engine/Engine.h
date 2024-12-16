@@ -7,6 +7,12 @@
 #include "Application/Application.h"
 #include "RHI/RHIResources.h"
 
+#define ENGINE_DEBUG_INPUT 1
+
+#if ENGINE_DEBUG_INPUT
+    struct FInputDebugInputHandler;
+#endif
+
 class ENGINE_API FEngine
 {
 public:
@@ -67,6 +73,10 @@ private:
 
     /** @brief SceneViewport */
     TSharedPtr<FSceneViewport> SceneViewport;
+
+#if ENGINE_DEBUG_INPUT
+    TSharedPtr<FInputDebugInputHandler> InputDebugInputHandler;
+#endif
 
     /** @brief In-game Console Widget */
     TSharedPtr<class FConsoleWidget> ConsoleWidget;
