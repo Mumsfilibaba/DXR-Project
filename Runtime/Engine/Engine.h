@@ -7,7 +7,7 @@
 #include "Application/Application.h"
 #include "RHI/RHIResources.h"
 
-#define ENGINE_DEBUG_INPUT 1
+#define ENGINE_DEBUG_INPUT 0
 
 #if ENGINE_DEBUG_INPUT
     struct FInputDebugInputHandler;
