@@ -1,5 +1,5 @@
 #pragma once
-#include "ImGuiRenderer.h"
+#include "ImGuiPlugin/ImGuiRenderer.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Application/Application.h"

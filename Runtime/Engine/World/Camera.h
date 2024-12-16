@@ -12,6 +12,7 @@ public:
     void Move(float x, float y, float z);
     void Rotate(float Pitch, float Yaw, float Roll);
     
+    void SetFieldOfView(float InFieldOfView);
     void SetPosition(float x, float y, float z);
     void SetRotation(float Pitch, float Yaw, float Roll);
 
@@ -59,6 +60,11 @@ public:
     FORCEINLINE const FVector3& GetPosition() const
     {
         return Position;
+    }
+
+    FORCEINLINE const FVector3& GetRotation() const
+    {
+        return Rotation;
     }
 
     FORCEINLINE const FVector3& GetForwardVector() const
@@ -122,7 +128,11 @@ private:
     float    AspectRatio;
     float    ViewportWidth;
     float    ViewportHeight;
-    float    FieldOfView;
+
+    // This is the current Field Of View used in the current projection matrix
+    float FieldOfView; 
+    // This is the current desired field of view, i.e the one we have set using SetFieldOfView
+    float DesiredFieldOfView;
 
     FVector3 Position;
     FVector3 Rotation;

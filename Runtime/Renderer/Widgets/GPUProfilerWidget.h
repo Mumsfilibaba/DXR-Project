@@ -1,12 +1,12 @@
 #pragma once
-#include "GPUProfiler.h"
+#include "Renderer/Performance/GPUProfiler.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FGPUProfilerWindow
+class FGPUProfilerWidget
 {
 public:
-    FGPUProfilerWindow();
-    ~FGPUProfilerWindow();
+    FGPUProfilerWidget();
+    ~FGPUProfilerWidget();
 
     void Draw();
     void DrawWindow();

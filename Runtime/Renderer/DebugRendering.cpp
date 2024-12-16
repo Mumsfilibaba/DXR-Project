@@ -1,5 +1,3 @@
-#include "DebugRendering.h"
-#include "Scene.h"
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -9,6 +7,8 @@
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
+#include "Renderer/Scene.h"
+#include "Renderer/DebugRendering.h"
 
 FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)

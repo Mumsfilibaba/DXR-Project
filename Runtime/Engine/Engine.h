@@ -85,7 +85,7 @@ private:
     TSharedPtr<class FFrameProfilerWidget> ProfilerWidget;
 
     /** @brief Scene Inspector Widget */
-    TSharedPtr<class FInspectorWidget> InspectorWidget;
+    TSharedPtr<class FSceneInspectorWidget> InspectorWidget;
 
     /** @brief The current world */
     FWorld* World;

@@ -1,4 +1,3 @@
-#include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Math/Frustum.h"
 #include "Engine/World/World.h"
@@ -6,6 +5,7 @@
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
+#include "Renderer/Scene.h"
 
 bool GFreezeRendering = false;
 

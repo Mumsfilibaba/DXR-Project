@@ -13,7 +13,7 @@
 #include "Engine/Resources/Material.h"
 #include "Engine/Widgets/ConsoleWidget.h"
 #include "Engine/Widgets/FrameProfilerWidget.h"
-#include "Engine/Widgets/InspectorWidget.h"
+#include "Engine/Widgets/SceneInspectorWidget.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
@@ -291,7 +291,7 @@ bool FEngine::Init()
 
         ProfilerWidget  = MakeSharedPtr<FFrameProfilerWidget>();
         ConsoleWidget   = MakeSharedPtr<FConsoleWidget>();
-        InspectorWidget = MakeSharedPtr<FInspectorWidget>();
+        InspectorWidget = MakeSharedPtr<FSceneInspectorWidget>();
     }
 
     return true;

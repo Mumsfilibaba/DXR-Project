@@ -1,8 +1,8 @@
-#include "TemporalAA.h"
-#include "SceneRenderer.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "Renderer/TemporalAA.h"
+#include "Renderer/SceneRenderer.h"
 
 FTemporalAA::FTemporalAA(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)

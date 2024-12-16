@@ -1,7 +1,7 @@
-#include "GPUProfiler.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Time/Timespan.h"
 #include "RHI/RHI.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 FGPUProfiler FGPUProfiler::Instance;
 

@@ -10,7 +10,7 @@
 #include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/ShadowRendering.h"
 #include "Renderer/Scene.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarPointLightsEnableGeometryShaderInstancing(
     "Renderer.PointLights.EnableGeometryShaderInstancing",

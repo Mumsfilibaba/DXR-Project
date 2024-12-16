@@ -1,8 +1,8 @@
-#include "RendererInfoWindow.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "Application/Application.h"
 #include "Renderer/SceneRenderer.h"
+#include "Renderer/Widgets/RendererInfoWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
@@ -11,18 +11,18 @@ static TAutoConsoleVariable<bool> CVarDrawRendererInfo(
     "Enables the drawing of the Renderer Info Window", 
     true);
 
-FRendererInfoWindow::FRendererInfoWindow(FSceneRenderer* InRenderer)
+FRendererInfoWidget::FRendererInfoWidget(FSceneRenderer* InRenderer)
     : Renderer(InRenderer)
     , ImGuiDelegateHandle()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRendererInfoWindow::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRendererInfoWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
 
-FRendererInfoWindow::~FRendererInfoWindow()
+FRendererInfoWidget::~FRendererInfoWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -30,9 +30,10 @@ FRendererInfoWindow::~FRendererInfoWindow()
     }
 }
 
-void FRendererInfoWindow::Draw()
+void FRendererInfoWidget::Draw()
 {
-    if (CVarDrawRendererInfo.GetValue())
+    bool bDrawRendererInfo = CVarDrawRendererInfo.GetValue();
+    if (bDrawRendererInfo)
     {
         const FString AdapterName = RHIGetAdapterName();
 
@@ -53,43 +54,46 @@ void FRendererInfoWindow::Draw()
         ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
 
         const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
-        ImGui::Begin("Renderer Info", nullptr, Flags);
+        if (ImGui::Begin("Renderer Info", &bDrawRendererInfo, Flags))
+        {
+            ImGui::Columns(2, nullptr, false);
+            ImGui::SetColumnWidth(0, ColumnWidth);
 
-        ImGui::Columns(2, nullptr, false);
-        ImGui::SetColumnWidth(0, ColumnWidth);
+            ImGui::Text("Adapter: ");
+            ImGui::NextColumn();
 
-        ImGui::Text("Adapter: ");
-        ImGui::NextColumn();
+            ImGui::Text("%s", *AdapterName);
+            ImGui::NextColumn();
 
-        ImGui::Text("%s", *AdapterName);
-        ImGui::NextColumn();
-        
-        ImGui::Text("Render Resolution:");
-        ImGui::NextColumn();
+            ImGui::Text("Render Resolution:");
+            ImGui::NextColumn();
 
-        ImGui::Text("%u x %d", Renderer->GetRenderWidth(), Renderer->GetRenderHeight());
-        ImGui::NextColumn();
+            ImGui::Text("%u x %d", Renderer->GetRenderWidth(), Renderer->GetRenderHeight());
+            ImGui::NextColumn();
 
-        const FRHICommandStatistics& Statistics = Renderer->GetStatistics();
-        ImGui::Text("DrawCalls: ");
-        ImGui::NextColumn();
+            const FRHICommandStatistics& Statistics = Renderer->GetStatistics();
+            ImGui::Text("DrawCalls: ");
+            ImGui::NextColumn();
 
-        ImGui::Text("%d", Statistics.NumDrawCalls);
-        ImGui::NextColumn();
+            ImGui::Text("%d", Statistics.NumDrawCalls);
+            ImGui::NextColumn();
 
-        ImGui::Text("DispatchCalls: ");
-        ImGui::NextColumn();
+            ImGui::Text("DispatchCalls: ");
+            ImGui::NextColumn();
 
-        ImGui::Text("%d", Statistics.NumDispatchCalls);
-        ImGui::NextColumn();
+            ImGui::Text("%d", Statistics.NumDispatchCalls);
+            ImGui::NextColumn();
 
-        ImGui::Text("Command Count: ");
-        ImGui::NextColumn();
+            ImGui::Text("Command Count: ");
+            ImGui::NextColumn();
 
-        ImGui::Text("%d", Statistics.NumCommands);
+            ImGui::Text("%d", Statistics.NumCommands);
 
-        ImGui::Columns(1);
+            ImGui::Columns(1);
 
-        ImGui::End();
+            ImGui::End();
+
+            CVarDrawRendererInfo->SetAsBool(bDrawRendererInfo, EConsoleVariableFlags::SetByCode);
+        }
     }
 }

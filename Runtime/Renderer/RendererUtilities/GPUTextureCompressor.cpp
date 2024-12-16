@@ -1,7 +1,7 @@
-#include "GPUTextureCompressor.h"
 #include "Core/Templates/NumericLimits.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "Renderer/RendererUtilities/GPUTextureCompressor.h"
 
 #define BC_BLOCK_SIZE int32(4)
 #define CS_NUM_THREADS (8)
@@ -11,7 +11,6 @@ struct FCompressionBuffer
     uint32   TextureSizeInBlocks[2];
     FVector2 TextureSizeRcp;
 };
-
 
 FGPUTextureCompressor::FGPUTextureCompressor()
     : BC6HCompressionShader(nullptr)

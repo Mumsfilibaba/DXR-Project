@@ -1,5 +1,3 @@
-#include "ScreenSpaceOcclusionRendering.h"
-#include "SceneRenderer.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/IntVector2.h"
@@ -7,6 +5,8 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "Renderer/SceneRenderer.h"
+#include "Renderer/ScreenSpaceOcclusionRendering.h"
 
 // TODO: Remove and replace. There are better and easier implementations to do yourself
 #include <random>

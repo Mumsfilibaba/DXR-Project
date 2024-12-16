@@ -1,26 +1,26 @@
-#include "GPUProfilerWindow.h"
 #include "Core/Time/Stopwatch.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
+#include "Renderer/Widgets/GPUProfilerWidget.h"
 
 static TAutoConsoleVariable<bool> CVarDrawGPUProfiler(
     "Renderer.DrawGPUProfiler",
     "Enables the profiling on the GPU and displays the GPU Profiler window", 
     false);
 
-FGPUProfilerWindow::FGPUProfilerWindow()
+FGPUProfilerWidget::FGPUProfilerWidget()
     : Samples()
     , ImGuiDelegateHandle()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FGPUProfilerWindow::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FGPUProfilerWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
 
-FGPUProfilerWindow::~FGPUProfilerWindow()
+FGPUProfilerWidget::~FGPUProfilerWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -28,7 +28,7 @@ FGPUProfilerWindow::~FGPUProfilerWindow()
     }
 }
 
-void FGPUProfilerWindow::Draw()
+void FGPUProfilerWidget::Draw()
 {
     if (CVarDrawGPUProfiler.GetValue())
     {
@@ -36,7 +36,7 @@ void FGPUProfilerWindow::Draw()
     }
 }
 
-void FGPUProfilerWindow::DrawGPUData(float Width)
+void FGPUProfilerWidget::DrawGPUData(float Width)
 {
     const ImGuiTableFlags TableFlags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
 
@@ -193,7 +193,7 @@ void FGPUProfilerWindow::DrawGPUData(float Width)
     }
 }
 
-void FGPUProfilerWindow::DrawWindow()
+void FGPUProfilerWidget::DrawWindow()
 {
     // Draw DebugWindow with DebugStrings
     const ImVec2 DisplaySize = ImGuiExtensions::GetDisplaySize();

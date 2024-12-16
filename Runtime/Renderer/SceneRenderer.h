@@ -21,9 +21,9 @@
 #include "Renderer/TemporalAA.h"
 #include "Renderer/Scene.h"
 #include "Renderer/PostProcessing.h"
-#include "Renderer/Debug/TextureDebugger.h"
-#include "Renderer/Debug/RendererInfoWindow.h"
-#include "Renderer/Debug/GPUProfilerWindow.h"
+#include "Renderer/Widgets/TextureDebugWidget.h"
+#include "Renderer/Widgets/RendererInfoWidget.h"
+#include "Renderer/Widgets/GPUProfilerWidget.h"
 
 class FViewport;
 class FSceneRenderer;
@@ -90,7 +90,7 @@ public:
         TextureDebugger->AddTextureForDebugging(ImageView, Image, BeforeState, AfterState);
     }
 
-    TSharedPtr<FRenderTargetDebugWindow> GetTextureDebugger() const
+    TSharedPtr<FTextureDebugWidget> GetTextureDebugger() const
     {
         return TextureDebugger;
     }
@@ -150,7 +150,7 @@ private:
     FRHIComputeShaderRef        ShadingRateShader;
 
     // Widgets
-    TSharedPtr<FRenderTargetDebugWindow> TextureDebugger;
-    TSharedPtr<FRendererInfoWindow>      InfoWindow;
-    TSharedPtr<FGPUProfilerWindow>       GPUProfilerWindow;
+    TSharedPtr<FTextureDebugWidget> TextureDebugger;
+    TSharedPtr<FRendererInfoWidget>      InfoWindow;
+    TSharedPtr<FGPUProfilerWidget>       GPUProfilerWindow;
 };

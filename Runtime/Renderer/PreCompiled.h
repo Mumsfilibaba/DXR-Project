@@ -1,10 +1,11 @@
 #pragma once
-#include "Renderer/Debug/GPUProfiler.h"
-#include "Renderer/Debug/GPUProfilerWindow.h"
-#include "Renderer/Debug/RendererInfoWindow.h"
-#include "Renderer/Debug/TextureDebugger.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 #include "Renderer/RendererUtilities/GPUTextureCompressor.h"
+
+#include "Renderer/Widgets/GPUProfilerWidget.h"
+#include "Renderer/Widgets/RendererInfoWidget.h"
+#include "Renderer/Widgets/TextureDebugWidget.h"
 
 #include "Renderer/DebugRendering.h"
 #include "Renderer/DeferredRendering.h"

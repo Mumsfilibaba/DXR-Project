@@ -1,26 +1,26 @@
-#include "TextureDebugger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
+#include "Renderer/Widgets/TextureDebugWidget.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTextureDebugger(
     "Renderer.Debug.ViewRenderTargets",
     "Enables the Debug RenderTarget-viewer",
     false);
 
-FRenderTargetDebugWindow::FRenderTargetDebugWindow()
+FTextureDebugWidget::FTextureDebugWidget()
     : DebugTextures()
     , SelectedTextureIndex(0)
     , ImGuiDelegateHandle()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FRenderTargetDebugWindow::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FTextureDebugWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
 
-FRenderTargetDebugWindow::~FRenderTargetDebugWindow()
+FTextureDebugWidget::~FTextureDebugWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -28,7 +28,7 @@ FRenderTargetDebugWindow::~FRenderTargetDebugWindow()
     }
 }
 
-void FRenderTargetDebugWindow::Draw()
+void FTextureDebugWidget::Draw()
 {
     if (CVarDrawTextureDebugger.GetValue())
     {
@@ -161,7 +161,7 @@ void FRenderTargetDebugWindow::Draw()
     }
 }
 
-void FRenderTargetDebugWindow::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FTextureDebugWidget::AddTextureForDebugging(const FRHIShaderResourceViewRef& ImageView, const FRHITextureRef& Image, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
     DebugTextures.Emplace(ImageView, Image, BeforeState, AfterState);
 }

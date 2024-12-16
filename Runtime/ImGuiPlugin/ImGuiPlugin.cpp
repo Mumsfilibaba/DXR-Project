@@ -1,12 +1,13 @@
-#include "ImGuiPlugin.h"
-#include "ImGuiRenderer.h"
-#include "ImGuiExtensions.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Application/Application.h"
 #include "Application/Widgets/Viewport.h"
 #include "RHI/RHICommandList.h"
+#include "ImGuiPlugin/ImGuiPlugin.h"
+#include "ImGuiPlugin/ImGuiRenderer.h"
+#include "ImGuiPlugin/ImGuiExtensions.h"
 
 #include <imgui_internal.h>
 
@@ -650,11 +651,15 @@ void FImGuiPlugin::Tick(float Delta)
     }
 
     // Draw all ImGui widgets
-    ImGui::NewFrame();
-    
-    DrawDelegates.Broadcast();
+    {
+        TRACE_SCOPE("ImGui Callbacks");
 
-    ImGui::EndFrame();
+        ImGui::NewFrame();
+    
+        DrawDelegates.Broadcast();
+
+        ImGui::EndFrame();
+    }
 }
 
 void FImGuiPlugin::Draw(FRHICommandList& CommandList)

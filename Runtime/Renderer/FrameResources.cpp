@@ -1,10 +1,10 @@
-#include "FrameResources.h"
-#include "Scene.h"
-#include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Renderer/Scene.h"
+#include "Renderer/FrameResources.h"
 
 static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Renderer.CSM.CascadeSize",

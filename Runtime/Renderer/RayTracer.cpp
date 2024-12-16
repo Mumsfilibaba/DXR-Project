@@ -1,10 +1,10 @@
-#include "RayTracer.h"
-#include "SceneRenderer.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Resources/Model.h"
+#include "Renderer/RayTracer.h"
+#include "Renderer/SceneRenderer.h"
 
 bool FRayTracer::Initialize(FFrameResources& Resources)
 {

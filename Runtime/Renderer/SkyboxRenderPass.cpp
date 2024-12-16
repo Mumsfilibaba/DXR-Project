@@ -3,7 +3,7 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "Renderer/Performance/GPUProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"

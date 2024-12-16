@@ -1,9 +1,9 @@
 #pragma once
 #include "Core/Containers/Map.h"
 #include "Core/Threading/Spinlock.h"
-#include "Renderer/RendererModule.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
+#include "Renderer/RendererModule.h"
 
 #define ENABLE_GPU_PROFILER      (1)
 #define NUM_GPU_PROFILER_SAMPLES (200)
@@ -125,7 +125,6 @@ private:
 
     static FGPUProfiler Instance;
 };
-
 
 struct FGPUScopedTrace
 {

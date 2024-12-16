@@ -1,5 +1,4 @@
 #pragma once
-#include "RendererModule.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Math/Vector4.h"
@@ -9,6 +8,7 @@
 #include "Engine/World/World.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
 #include "Engine/World/Lights/DirectionalLight.h"
+#include "Renderer/RendererModule.h"
 
 #define MAX_LIGHTS_PER_TILE (1024)
 #define NUM_DEFAULT_SHADOW_CASTING_POINT_LIGHTS (8)

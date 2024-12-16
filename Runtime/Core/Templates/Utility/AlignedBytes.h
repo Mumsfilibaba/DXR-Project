@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Core.h"
 #include "Core/Templates/TypeTraits.h"
 
 template<int32 InSize, int32 InAlignment>

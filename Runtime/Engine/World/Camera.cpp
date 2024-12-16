@@ -7,6 +7,7 @@ FCamera::FCamera()
     , ViewProjectionInverse()
     , NearPlane(0.01f)
     , FarPlane(200.0f)
+    , DesiredFieldOfView(90.0f)
     , AspectRatio()
     , Position(0.0f, 0.0f, -2.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
@@ -38,6 +39,11 @@ void FCamera::Rotate(float Pitch, float Yaw, float Roll)
     Rotation.Z += Roll;
 
     UpdateDirectionVectors();
+}
+
+void FCamera::SetFieldOfView(float InFieldOfView)
+{
+    DesiredFieldOfView = InFieldOfView;
 }
 
 void FCamera::SetPosition(float x, float y, float z)
@@ -94,7 +100,7 @@ void FCamera::UpdateViewMatrix()
 void FCamera::UpdateMatrices()
 {
     // Create Projection Matrix
-    UpdateProjectionMatrix(90.0f, 1920.0f, 1080.0f);
+    UpdateProjectionMatrix(DesiredFieldOfView, 1920.0f, 1080.0f);
 
     // Create the view matrix
     UpdateViewMatrix();

@@ -3,11 +3,11 @@
 #include "RHI/RHIResources.h"
 #include "ImGuiPlugin/ImGuiPlugin.h"
 
-class FRenderTargetDebugWindow
+class FTextureDebugWidget
 {
 public:
-    FRenderTargetDebugWindow();
-    ~FRenderTargetDebugWindow();
+    FTextureDebugWidget();
+    ~FTextureDebugWidget();
 
     /** @brief Called from ImGuiPlugin. This is where the ImGui-Commands should be called */
     void Draw();

@@ -2,11 +2,11 @@
 #include "Core/Misc/FrameProfiler.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 
-class FInspectorWidget
+class FSceneInspectorWidget
 {
 public:
-    FInspectorWidget();
-    ~FInspectorWidget();
+    FSceneInspectorWidget();
+    ~FSceneInspectorWidget();
 
     void Draw();
     void DrawSceneInfo();

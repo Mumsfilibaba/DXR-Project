@@ -7,7 +7,7 @@
 #include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/ForwardPass.h"
 #include "Renderer/Scene.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)

@@ -1,9 +1,9 @@
-#include "InspectorWidget.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Engine/Engine.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "Engine/World/Components/MeshComponent.h"
-#include "Core/Misc/ConsoleManager.h"
+#include "Engine/Widgets/SceneInspectorWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 
@@ -13,17 +13,17 @@ static TAutoConsoleVariable<bool> CVarDrawSceneInspector(
     false,
     EConsoleVariableFlags::Default);
 
-FInspectorWidget::FInspectorWidget()
+FSceneInspectorWidget::FSceneInspectorWidget()
     : ImGuiDelegateHandle()
 {
     if (IImguiPlugin::IsEnabled())
     {
-        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FInspectorWidget::Draw));
+        ImGuiDelegateHandle = IImguiPlugin::Get().AddDelegate(FImGuiDelegate::CreateRaw(this, &FSceneInspectorWidget::Draw));
         CHECK(ImGuiDelegateHandle.IsValid());
     }
 }
 
-FInspectorWidget::~FInspectorWidget()
+FSceneInspectorWidget::~FSceneInspectorWidget()
 {
     if (IImguiPlugin::IsEnabled())
     {
@@ -31,47 +31,113 @@ FInspectorWidget::~FInspectorWidget()
     }
 }
 
-void FInspectorWidget::Draw()
+void FSceneInspectorWidget::Draw()
 {
-    const uint32 WindowWidth  = GEngine->GetEngineWindow()->GetWidth();
-    const uint32 WindowHeight = GEngine->GetEngineWindow()->GetHeight();
-    const float Width  = FMath::Max(WindowWidth * 0.3f, 400.0f);
-    const float Height = WindowHeight * 0.7f;
-
-    ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
-
-    const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoSavedSettings;
-
-    bool DrawInspector = CVarDrawSceneInspector.GetValue();
-    if (ImGui::Begin("SceneInspector", &DrawInspector, Flags))
+    bool bDrawInspector = CVarDrawSceneInspector.GetValue();
+    if (bDrawInspector)
     {
-        DrawSceneInfo();
+        const uint32 WindowWidth  = GEngine->GetEngineWindow()->GetWidth();
+        const uint32 WindowHeight = GEngine->GetEngineWindow()->GetHeight();
+
+        const float Width  = FMath::Max(WindowWidth * 0.3f, 400.0f);
+        const float Height = WindowHeight * 0.7f;
+
+        ImGui::SetNextWindowPos(ImVec2(float(WindowWidth) * 0.5f, float(WindowHeight) * 0.175f), ImGuiCond_Appearing, ImVec2(0.5f, 0.0f));
+        ImGui::SetNextWindowSize(ImVec2(Width, Height), ImGuiCond_Appearing);
+
+        const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoSavedSettings;
+        if (ImGui::Begin("SceneInspector", &bDrawInspector, Flags))
+        {
+            DrawSceneInfo();
+        }
+
+        ImGui::End();
+
+        CVarDrawSceneInspector->SetAsBool(bDrawInspector, EConsoleVariableFlags::SetByCode);
     }
-
-    ImGui::End();
-
-    CVarDrawSceneInspector->SetAsBool(DrawInspector, EConsoleVariableFlags::SetByCode);
 }
 
-void FInspectorWidget::DrawSceneInfo()
+void FSceneInspectorWidget::DrawSceneInfo()
 {
-    // constexpr float Width = 450.0f;
+    // Same column size for all different types
+    const float ColumnWidth = 200.0f;
+
+    // Cache the current world
+    FWorld* CurrentWorld = GEngine->GetWorld();
+
+    // Camera
+    if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_None))
+    {
+        if (FCamera* Camera = CurrentWorld->GetCamera())
+        {
+            ImGui::PushID(Camera);
+
+            ImGui::SeparatorText("Projection");
+
+            // Setup the columns
+            ImGui::Columns(2, nullptr, false);
+            ImGui::SetColumnWidth(0, ColumnWidth);
+
+            // Add some extra spacing for the text elements...
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(10.0f, 10.0f));
+
+            // Display the size of the viewport
+            ImGui::Text("Viewport size");
+            ImGui::NextColumn();
+            ImGui::Text("%.1f x %.1f", Camera->GetWidth(), Camera->GetHeight());
+
+            // ... pop the extra spacing
+            ImGui::PopStyleVar();
+
+            ImGui::NextColumn();
+
+            // Field Of View
+            ImGui::Text("Field Of View");
+            ImGui::NextColumn();
+
+            float FieldOfView = Camera->GetFieldOfView();
+            if (ImGui::SliderFloat("##FieldOfView", &FieldOfView, 40.0f, 120.0f, "%.1f Degrees"))
+            {
+                Camera->SetFieldOfView(FieldOfView);
+            }
+
+            // Reset the columns
+            ImGui::Columns(1);
+
+            // Transform
+            ImGui::SeparatorText("Transform");
+
+            FVector3 Position = Camera->GetPosition();
+            ImGuiExtensions::DrawFloat3Control("Position", Position);
+            Camera->SetPosition(Position.X, Position.Y, Position.Z);
+
+            // Rotation
+            FVector3 Rotation = Camera->GetRotation();
+            Rotation = FMath::ToDegrees(Rotation);
+
+            ImGuiExtensions::DrawFloat3Control("Rotation", Rotation, 0.0f, 100.0f, 1.0f);
+
+            Rotation = FMath::ToRadians(Rotation);
+
+            Camera->SetRotation(Rotation.X, Rotation.Y, Rotation.Z);
+
+            ImGui::PopID();
+        }
+
+        ImGui::NewLine();
+    }
 
     // Lights
-    if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_DefaultOpen))
+    if (ImGui::CollapsingHeader("Lights", ImGuiTreeNodeFlags_None))
     {
-        for (FLight* CurrentLight : GEngine->GetWorld()->GetLights())
+        for (FLight* CurrentLight : CurrentWorld->GetLights())
         {
             ImGui::PushID(CurrentLight);
 
-            if (IsSubClassOf<FPointLight>(CurrentLight))
+            if (FPointLight* CurrentPointLight = Cast<FPointLight>(CurrentLight))
             {
-                FPointLight* CurrentPointLight = Cast<FPointLight>(CurrentLight);
                 if (ImGui::TreeNode("PointLight"))
                 {
-                    const float ColumnWidth = 150.0f;
-
                     // Color
                     ImGui::SeparatorText("Settings");
 
@@ -165,13 +231,10 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::TreePop();
                 }
             }
-            else if (IsSubClassOf<FDirectionalLight>(CurrentLight))
+            else if (FDirectionalLight* CurrentDirectionalLight = Cast<FDirectionalLight>(CurrentLight))
             {
-                FDirectionalLight* CurrentDirectionalLight = Cast<FDirectionalLight>(CurrentLight);
                 if (ImGui::TreeNode("DirectionalLight"))
                 {
-                    const float ColumnWidth = 200.0f;
-
                     // Color and Intensity
                     ImGui::SeparatorText("Settings");
 
@@ -307,7 +370,7 @@ void FInspectorWidget::DrawSceneInfo()
                     ImGui::Text("Light Size");
                     ImGui::NextColumn();
 
-                    float LightSize = 1.0f; //CurrentDirectionalLight->Size();
+                    float LightSize = CurrentDirectionalLight->GetSize();
                     if (ImGui::SliderFloat("##LightSize", &LightSize, 0.0f, 1.0f, "%.2f"))
                     {
                         CurrentDirectionalLight->SetSize(LightSize);
@@ -326,18 +389,40 @@ void FInspectorWidget::DrawSceneInfo()
 
             ImGui::PopID();
         }
+
+        ImGui::NewLine();
     }
 
     // Actors
     if (ImGui::CollapsingHeader("Actors", ImGuiTreeNodeFlags_None))
     {
-        ImGui::Text("Number of Actors: %d", GEngine->GetWorld()->GetActors().Size());
+        // Add some spacing above the text...
+        ImGui::Dummy(ImVec2(ColumnWidth, 5.0f));
 
-        for (FActor* Actor : GEngine->GetWorld()->GetActors())
+        // Actor count info
+        ImGui::Columns(2, nullptr, false);
+        ImGui::SetColumnWidth(0, ColumnWidth);
+
+        // ... add some spacing before the text ...
+        ImGui::Dummy(ImVec2(5.0f, 5.0f));
+        ImGui::SameLine();
+
+        ImGui::Text("Number of Actors");
+        ImGui::NextColumn();
+        ImGui::Text("%d", CurrentWorld->GetActors().Size());
+
+        ImGui::Columns(1);
+
+        // ... add some space after the text
+        ImGui::Dummy(ImVec2(ColumnWidth, 5.0f));
+
+        // Display all Actor Info
+        for (FActor* Actor : CurrentWorld->GetActors())
         {
             ImGui::PushID(Actor);
 
-            if (ImGui::TreeNode(*Actor->GetName()))
+            const FString ActorName = Actor->GetName();
+            if (ImGui::TreeNode(*ActorName))
             {
                 // Transform
                 ImGui::SeparatorText("Transform");
@@ -397,7 +482,7 @@ void FInspectorWidget::DrawSceneInfo()
                     if (ImGui::CollapsingHeader("MeshComponent", ImGuiTreeNodeFlags_None))
                     {
                         ImGui::Columns(2, nullptr, false);
-                        ImGui::SetColumnWidth(0, 100.0f);
+                        ImGui::SetColumnWidth(0, ColumnWidth);
 
                         // Albedo
                         ImGui::Text("Albedo");
@@ -448,5 +533,7 @@ void FInspectorWidget::DrawSceneInfo()
 
             ImGui::PopID();
         }
+
+        ImGui::NewLine();
     }
 }

@@ -7,7 +7,7 @@
 #include "Engine/World/Components/ProxySceneComponent.h"
 #include "Renderer/DeferredRendering.h"
 #include "Renderer/Scene.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarDrawTileDebug(
     "Renderer.Debug.DrawTiledLightning", 

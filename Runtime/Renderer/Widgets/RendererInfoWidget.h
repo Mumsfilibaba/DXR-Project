@@ -3,11 +3,11 @@
 
 class FSceneRenderer;
 
-class FRendererInfoWindow
+class FRendererInfoWidget
 {
 public:
-    FRendererInfoWindow(FSceneRenderer* InRenderer);
-    ~FRendererInfoWindow();
+    FRendererInfoWidget(FSceneRenderer* InRenderer);
+    ~FRendererInfoWidget();
      
     void Draw();
 

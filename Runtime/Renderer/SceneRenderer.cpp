@@ -12,7 +12,7 @@
 #include "Engine/World/Lights/DirectionalLight.h"
 #include "RendererCore/TextureFactory.h"
 #include "Renderer/SceneRenderer.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 #define SUPPORT_VARIABLE_RATE_SHADING (0)
 
@@ -385,9 +385,9 @@ bool FSceneRenderer::Initialize()
     // Register ImGui Windows
     if (IImguiPlugin::IsEnabled())
     {
-        TextureDebugger   = MakeSharedPtr<FRenderTargetDebugWindow>();
-        InfoWindow        = MakeSharedPtr<FRendererInfoWindow>(this);
-        GPUProfilerWindow = MakeSharedPtr<FGPUProfilerWindow>();
+        TextureDebugger   = MakeSharedPtr<FTextureDebugWidget>();
+        InfoWindow        = MakeSharedPtr<FRendererInfoWidget>(this);
+        GPUProfilerWindow = MakeSharedPtr<FGPUProfilerWidget>();
     }
 
     return true;
