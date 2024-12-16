@@ -12,19 +12,6 @@ static TAutoConsoleVariable<int32> CVarXInputButtonRepeatDelay(
     60,
     EConsoleVariableFlags::Default);
 
-static FORCEINLINE float NormalizeThumbStick(int16 ThumbValue)
-{
-    // Max value is different for negative vs. positive input in two's complement
-    const float ThumbMaxValue = (ThumbValue < 0) ? 32768.0f : 32767.0f;
-    return static_cast<float>(ThumbValue) / ThumbMaxValue;
-}
-
-static FORCEINLINE float NormalizeTrigger(uint8 TriggerValue)
-{
-    constexpr float TriggerMaxValue = 255.0f;
-    return static_cast<float>(TriggerValue) / TriggerMaxValue;
-}
-
 FXInputDevice::FXInputDevice()
     : FInputDevice()
     , bIsDeviceConnected(false)
@@ -91,20 +78,20 @@ void FXInputDevice::UpdateConnectionState()
 
 void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadIndex)
 {
-    FXInputGamepadState& CurrentState = GamepadStates[GamepadIndex];
-    const XINPUT_GAMEPAD& Gamepad = State.Gamepad;
-
     TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
     if (!CurrentMessageHandler)
     {
         return; // If there's no valid message handler, no need to process further
     }
 
-    constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1; // 127
-    int32 RepeatDelay = FMath::Clamp(CVarXInputButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
+    FXInputGamepadState& CurrentState = GamepadStates[GamepadIndex];
+    const XINPUT_GAMEPAD& Gamepad = State.Gamepad;
 
-    const WORD GamepadButtons = Gamepad.wButtons;
-    auto IsButtonDown = [GamepadButtons](WORD ButtonMask) -> bool
+    constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1; // 127
+    const int32 RepeatDelay    = FMath::Clamp(CVarXInputButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
+    const int32 GamepadButtons = static_cast<int32>(Gamepad.wButtons);
+
+    auto IsButtonDown = [GamepadButtons](int32 ButtonMask) -> bool
     {
         return (GamepadButtons & ButtonMask) != 0;
     };
@@ -141,8 +128,8 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
     for (int32 ButtonIndex = 1; ButtonIndex < NUM_BUTTONS; ButtonIndex++)
     {
         FXInputButtonState& ButtonState = CurrentState.Buttons[ButtonIndex];
-        const bool bIsPressed = bCurrentStates[ButtonIndex];
 
+        const bool bIsPressed = bCurrentStates[ButtonIndex];
         if (bIsPressed)
         {
             // Button is down
@@ -181,32 +168,46 @@ void FXInputDevice::ProcessInputState(const XINPUT_STATE& State, uint32 GamepadI
     }
 
     // Dispatch analog changes only if needed
-    auto DispatchAnalogMessage = [&](EAnalogSourceName::Type AnalogSource, int16 OldValue, int16 NewValue, float NormalizedValue, int16 DeadZone)
+    auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, int16 OldValue, int16 NewValue, float NormalizedValue, int16 DeadZone)
     {
         // Always send an update if the value changed; some code chooses to skip if within deadzone
-        bool bValueChanged = (OldValue != NewValue);
-        if (bValueChanged)
+        bool bValueChanged    = (OldValue != NewValue);
+        bool bOutsideDeadZone = (FMath::Abs(NewValue) > DeadZone);
+
+        if (bValueChanged || bOutsideDeadZone)
         {
-            // Optionally clamp to 0 if inside dead zone
-            bool bOutsideDeadZone = (FMath::Abs(NewValue) > DeadZone);
-            float FinalValue = bOutsideDeadZone ? NormalizedValue : 0.0f;
-            CurrentMessageHandler->OnAnalogGamepadChange(AnalogSource, GamepadIndex, FinalValue);
+            CurrentMessageHandler->OnAnalogGamepadChange(AnalogSource, GamepadIndex, NormalizedValue);
         }
     };
 
+    // Helper for Normalizing a ThumbStick value
+    auto NormalizeThumbStick = [](int16 ThumbValue) -> float
+    {
+        // Max value is different for negative vs. positive input
+        const float ThumbMaxValue = (ThumbValue < 0) ? 32768.0f : 32767.0f;
+        return static_cast<float>(ThumbValue) / ThumbMaxValue;
+    };
+
+    // Helper for Normalizing a Trigger value
+    auto NormalizeTrigger = [](uint8 TriggerValue) -> float
+    {
+        constexpr float TriggerMaxValue = 255.0f;
+        return static_cast<float>(TriggerValue) / TriggerMaxValue;
+    };
+
     // Right Trigger (analog)
-    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, CurrentState.RightTrigger, Gamepad.bRightTrigger, NormalizeTrigger(Gamepad.bRightTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD );
+    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, Gamepad.bRightTrigger, NormalizeTrigger(Gamepad.bRightTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 
     // Left Trigger (analog)
-    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, CurrentState.LeftTrigger, Gamepad.bLeftTrigger, NormalizeTrigger(Gamepad.bLeftTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
+    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, Gamepad.bLeftTrigger, NormalizeTrigger(Gamepad.bLeftTrigger), XINPUT_GAMEPAD_TRIGGER_THRESHOLD);
 
     // Right Thumb X/Y
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, CurrentState.RightThumbX, Gamepad.sThumbRX, NormalizeThumbStick(Gamepad.sThumbRX), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
-    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, CurrentState.RightThumbY, Gamepad.sThumbRY, NormalizeThumbStick(Gamepad.sThumbRY), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, Gamepad.sThumbRX, NormalizeThumbStick(Gamepad.sThumbRX), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, Gamepad.sThumbRY, NormalizeThumbStick(Gamepad.sThumbRY), XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
 
     // Left Thumb X/Y
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
-    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, Gamepad.sThumbLX, NormalizeThumbStick(Gamepad.sThumbLX), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, Gamepad.sThumbLY, NormalizeThumbStick(Gamepad.sThumbLY), XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
 
     // Update stored state
     CurrentState.RightThumbX  = Gamepad.sThumbRX;

@@ -125,93 +125,97 @@ void FGCInputDevice::HandleControllerDisconnected(GCController* InController)
 
 void FGCInputDevice::ProcessInputState(GCExtendedGamepad* InGamepad, uint32 GamepadIndex)
 {
-    FGCGamepadState& CurrentState = GamepadStates[GamepadIndex];
-    if (TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler())
+    TSharedPtr<FGenericApplicationMessageHandler> CurrentMessageHandler = GetMessageHandler();
+    if (!CurrentMessageHandler)
     {
-        // MaxButtonRepeatDelay is based on the number of bits available to the RepeatCount
-        constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1;
+        return; // If there's no valid message handler, no need to process further
+    }
+
+    FGCGamepadState& CurrentState = GamepadStates[GamepadIndex];
+
+    // MaxButtonRepeatDelay is based on the number of bits available to the RepeatCount
+    constexpr int32 MaxButtonRepeatDelay = (1 << 7) - 1;
         
-        // Clamp the repeat delay (TODO: Add support for clamping inside of CVars)
-        const int32 RepeatDelay = FMath::Clamp(CVarGameControllerButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
+    // Clamp the repeat delay (TODO: Add support for clamping inside of CVars)
+    const int32 RepeatDelay = FMath::Clamp(CVarGameControllerButtonRepeatDelay.GetValue(), 0, MaxButtonRepeatDelay);
         
-        // Store the current states
-        bool bCurrentStates[EGamepadButtonName::Count];
-        FMemory::Memzero(bCurrentStates, sizeof(bCurrentStates));
+    // Store the current states
+    bool bCurrentStates[EGamepadButtonName::Count];
+    FMemory::Memzero(bCurrentStates, sizeof(bCurrentStates));
 
-        bCurrentStates[EGamepadButtonName::DPadUp]    = InGamepad.dpad.up.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadDown]  = InGamepad.dpad.down.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadLeft]  = InGamepad.dpad.left.isPressed;
-        bCurrentStates[EGamepadButtonName::DPadRight] = InGamepad.dpad.right.isPressed;
+    bCurrentStates[EGamepadButtonName::DPadUp]    = InGamepad.dpad.up.isPressed;
+    bCurrentStates[EGamepadButtonName::DPadDown]  = InGamepad.dpad.down.isPressed;
+    bCurrentStates[EGamepadButtonName::DPadLeft]  = InGamepad.dpad.left.isPressed;
+    bCurrentStates[EGamepadButtonName::DPadRight] = InGamepad.dpad.right.isPressed;
 
-        bCurrentStates[EGamepadButtonName::FaceUp]    = InGamepad.buttonY.isPressed;
-        bCurrentStates[EGamepadButtonName::FaceDown]  = InGamepad.buttonA.isPressed;
-        bCurrentStates[EGamepadButtonName::FaceLeft]  = InGamepad.buttonX.isPressed;
-        bCurrentStates[EGamepadButtonName::FaceRight] = InGamepad.buttonB.isPressed;
+    bCurrentStates[EGamepadButtonName::FaceUp]    = InGamepad.buttonY.isPressed;
+    bCurrentStates[EGamepadButtonName::FaceDown]  = InGamepad.buttonA.isPressed;
+    bCurrentStates[EGamepadButtonName::FaceLeft]  = InGamepad.buttonX.isPressed;
+    bCurrentStates[EGamepadButtonName::FaceRight] = InGamepad.buttonB.isPressed;
 
-        bCurrentStates[EGamepadButtonName::RightThumb] = InGamepad.rightThumbstickButton.isPressed;
-        bCurrentStates[EGamepadButtonName::LeftThumb]  = InGamepad.leftThumbstickButton.isPressed;
+    bCurrentStates[EGamepadButtonName::RightThumb] = InGamepad.rightThumbstickButton.isPressed;
+    bCurrentStates[EGamepadButtonName::LeftThumb]  = InGamepad.leftThumbstickButton.isPressed;
 
-        bCurrentStates[EGamepadButtonName::RightShoulder] = InGamepad.rightShoulder.isPressed;
-        bCurrentStates[EGamepadButtonName::LeftShoulder]  = InGamepad.leftShoulder.isPressed;
+    bCurrentStates[EGamepadButtonName::RightShoulder] = InGamepad.rightShoulder.isPressed;
+    bCurrentStates[EGamepadButtonName::LeftShoulder]  = InGamepad.leftShoulder.isPressed;
 
-        bCurrentStates[EGamepadButtonName::Start] = InGamepad.buttonMenu.isPressed;
-        bCurrentStates[EGamepadButtonName::Back]  = InGamepad.buttonOptions.isPressed;
+    bCurrentStates[EGamepadButtonName::Start] = InGamepad.buttonMenu.isPressed;
+    bCurrentStates[EGamepadButtonName::Back]  = InGamepad.buttonOptions.isPressed;
 
-        for (int32 ButtonIndex = 1; ButtonIndex < EGamepadButtonName::Count; ButtonIndex++)
+    for (int32 ButtonIndex = 1; ButtonIndex < EGamepadButtonName::Count; ButtonIndex++)
+    {
+        FGCButtonState& ButtonState = CurrentState.Buttons[ButtonIndex];
+        if (bCurrentStates[ButtonIndex])
         {
-            FGCButtonState& ButtonState = CurrentState.Buttons[ButtonIndex];
-            if (bCurrentStates[ButtonIndex])
+            // If the button already is down, this is a repeat event
+            if (ButtonState.bState)
             {
-                // If the button already is down, this is a repeat event
-                if (ButtonState.bState)
-                {
-                    ButtonState.RepeatCount++;
+                ButtonState.RepeatCount++;
 
-                    // Only send repeat events after some time
-                    if (ButtonState.RepeatCount >= RepeatDelay)
-                    {
-                        CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, true);
-                        ButtonState.RepeatCount = RepeatDelay;
-                    }
-                }
-                else
+                // Only send repeat events after some time
+                if (ButtonState.RepeatCount >= RepeatDelay)
                 {
-                    CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, false);
-                    ButtonState.RepeatCount = 1;
+                    CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, true);
+                    ButtonState.RepeatCount = RepeatDelay;
                 }
             }
-            else if (ButtonState.bState)
+            else
             {
-                CurrentMessageHandler->OnGamepadButtonUp(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex);
-                ButtonState.RepeatCount = 0;
+                CurrentMessageHandler->OnGamepadButtonDown(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex, false);
+                ButtonState.RepeatCount = 1;
             }
-
-            ButtonState.bState = bCurrentStates[ButtonIndex] ? 1 : 0;
+        }
+        else if (ButtonState.bState)
+        {
+            CurrentMessageHandler->OnGamepadButtonUp(static_cast<EGamepadButtonName::Type>(ButtonIndex), GamepadIndex);
+            ButtonState.RepeatCount = 0;
         }
 
-        // Handle Analog States
-        const auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float CurrentValue, float NewValue)
-        {
-            if (CurrentValue != NewValue)
-            {
-                CurrentMessageHandler->OnAnalogGamepadChange(AnalogSource, GamepadIndex, NewValue);
-            }
-        };
-
-        // Right Trigger
-        DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, InGamepad.rightTrigger.value);
-
-        // Left Trigger
-        DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, InGamepad.leftTrigger.value);
-
-        // Right Thumb
-        DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, InGamepad.rightThumbstick.xAxis.value);
-        DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, InGamepad.rightThumbstick.yAxis.value);
-
-        // Left Thumb
-        DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, InGamepad.leftThumbstick.xAxis.value);
-        DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, InGamepad.leftThumbstick.yAxis.value);
+        ButtonState.bState = bCurrentStates[ButtonIndex] ? 1 : 0;
     }
+
+    // Handle Analog States
+    const auto DispatchAnalogMessage = [CurrentMessageHandler](EAnalogSourceName::Type AnalogSource, uint32 GamepadIndex, float CurrentValue, float NewValue)
+    {
+        if (CurrentValue != NewValue)
+        {
+            CurrentMessageHandler->OnAnalogGamepadChange(AnalogSource, GamepadIndex, NewValue);
+        }
+    };
+
+    // Right Trigger
+    DispatchAnalogMessage(EAnalogSourceName::RightTrigger, GamepadIndex, CurrentState.RightTrigger, InGamepad.rightTrigger.value);
+
+    // Left Trigger
+    DispatchAnalogMessage(EAnalogSourceName::LeftTrigger, GamepadIndex, CurrentState.LeftTrigger, InGamepad.leftTrigger.value);
+
+    // Right Thumb
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbX, GamepadIndex, CurrentState.RightThumbX, InGamepad.rightThumbstick.xAxis.value);
+    DispatchAnalogMessage(EAnalogSourceName::RightThumbY, GamepadIndex, CurrentState.RightThumbY, InGamepad.rightThumbstick.yAxis.value);
+
+    // Left Thumb
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbX, GamepadIndex, CurrentState.LeftThumbX, InGamepad.leftThumbstick.xAxis.value);
+    DispatchAnalogMessage(EAnalogSourceName::LeftThumbY, GamepadIndex, CurrentState.LeftThumbY, InGamepad.leftThumbstick.yAxis.value);
 
     CurrentState.RightThumbX  = InGamepad.rightThumbstick.xAxis.value;
     CurrentState.RightThumbY  = InGamepad.rightThumbstick.yAxis.value;
