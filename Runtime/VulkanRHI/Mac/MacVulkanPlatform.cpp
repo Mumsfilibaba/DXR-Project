@@ -30,19 +30,7 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
         // Set BackgroundColor to black
         CGColorRef BackgroundColor = CGColorGetConstantColor(kCGColorBlack);
         [MetalLayer setBackgroundColor:BackgroundColor];
-        
-        // Check if we are creating a fullsize (Retina) backbuffer
-        IConsoleVariable* CVarIsRetinaAware = FConsoleManager::Get().FindConsoleVariable("MacOS.IsRetinaAware");
-        if (CVarIsRetinaAware && CVarIsRetinaAware->GetBool())
-        {
-            const CGFloat BackingScaleFactor = CocoaWindow.backingScaleFactor;
-            VULKAN_INFO("Application is Retina aware. BackingScaleFactor=%.4f", BackingScaleFactor);
-            [MetalLayer setContentsScale:BackingScaleFactor];
-        }
-        else
-        {
-            [MetalLayer setContentsScale:1.0f];
-        }
+        [MetalLayer setContentsScale:1.0f];
 
         // Create a new MetalWindowView instead of the standard CocoaView (Use the same frame)
         FCocoaWindowView* CocoaWindowView = CocoaWindow.contentView;

@@ -5,12 +5,6 @@
 #include "CoreApplication/Mac/MacApplication.h"
 #include "CoreApplication/Mac/MacWindow.h"
 
-static TAutoConsoleVariable<bool> CVarIsRetinaAware(
-    "MacOS.IsRetinaAware",
-    "If set to true, the process uses the full Retina framebuffer for window surfaces; otherwise, it does not.",
-    false,
-    EConsoleVariableFlags::Default);
-
 @implementation FCocoaWindow
 
 - (instancetype)initWithContentRect:(NSRect)ContentRect styleMask:(NSWindowStyleMask)StyleMask backing:(NSBackingStoreType)BackingStoreType defer:(BOOL)Flag
@@ -38,6 +32,16 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 - (BOOL)canBecomeMainWindow
 {
     return YES;
+}
+
+- (void)keyDown:(NSEvent*)Event
+{
+    // Intentionally left empty for now
+}
+
+- (void)keyUp:(NSEvent*)Event
+{
+    // Intentionally left empty for now
 }
 
 - (void)windowWillClose:(NSNotification*)Notification
@@ -189,7 +193,6 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 
 - (BOOL)preservesContentDuringLiveResize
 {
-    // Return NO to improve performance during live resizing
     return YES;
 }
 
@@ -200,69 +203,112 @@ static TAutoConsoleVariable<bool> CVarIsRetinaAware(
 // become active first. This enhances the user experience by making the application more responsive,
 // eliminating the need for the user to click twice (once to activate the window, and once to
 // perform the action).
+
 - (BOOL)acceptsFirstMouse:(NSEvent*)Event
 {
     return YES;
 }
 
-- (void)keyDown:(NSEvent*)Event
-{
-    // Intentionally left empty for now
-}
-
-- (void)keyUp:(NSEvent*)Event
-{
-    // Intentionally left empty for now
-}
-
 - (void)mouseDown:(NSEvent*)Event
 {
-    // Intentionally left empty for now
-}
-
-- (void)mouseDragged:(NSEvent*)Event
-{
-    // Intentionally left empty for now
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow mouseDown:Event];
+        }
+        else
+        {
+            [super mouseDown:Event];
+        }
+    }
 }
 
 - (void)mouseUp:(NSEvent*)Event
 {
-    // Intentionally left empty for now
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow mouseUp:Event];
+        }
+        else
+        {
+            [super mouseUp:Event];
+        }
+    }
 }
 
 - (void)rightMouseDown:(NSEvent*)Event
 {
-    // Intentionally left empty for now
-}
-
-- (void)rightMouseDragged:(NSEvent*)Event
-{
-    // Intentionally left empty for now
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow rightMouseDown:Event];
+        }
+        else
+        {
+            [super rightMouseDown:Event];
+        }
+    }
 }
 
 - (void)rightMouseUp:(NSEvent*)Event
 {
-    // Intentionally left empty for now
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow rightMouseUp:Event];
+        }
+        else
+        {
+            [super rightMouseUp:Event];
+        }
+    }
 }
 
 - (void)otherMouseDown:(NSEvent*)Event
 {
-    // Intentionally left empty for now
-}
-
-- (void)otherMouseDragged:(NSEvent*)Event
-{
-    // Intentionally left empty for now
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow otherMouseDown:Event];
+        }
+        else
+        {
+            [super otherMouseDown:Event];
+        }
+    }
 }
 
 - (void)otherMouseUp:(NSEvent*)Event
 {
-    // Intentionally left empty for now
-}
-
-- (void)scrollWheel:(NSEvent*)Event
-{
-    // Intentionally left empty for now
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow otherMouseUp:Event];
+        }
+        else
+        {
+            [super otherMouseUp:Event];
+        }
+    }
 }
 
 @end
