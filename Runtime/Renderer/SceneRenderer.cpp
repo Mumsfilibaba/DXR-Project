@@ -517,6 +517,9 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     CommandList.BeginFrame();
 
+    // Update FrameCounter
+    FrameCounter.NextFrame();
+
     // Check if we need to resize
     const FIntVector2 CurrentSize = EngineWindow->GetSize();
     Resources.DesiredWidth  = CurrentSize.X;

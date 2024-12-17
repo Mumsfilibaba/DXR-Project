@@ -148,12 +148,18 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
 
     struct FSSAOSettingsHLSL
     {
-        FVector2    ScreenSize;
-        FVector2    NoiseSize;
+        // 0-16
+        FVector2 ScreenSize;
+        FVector2 NoiseSize;
+
+        // 16-32
         FIntVector2 GBufferSize;
         float       Radius;
         float       Bias;
-        int32       KernelSize;
+
+        // 32-40
+        uint32 KernelSize;
+        uint32 FrameIndex;
     } SSAOSettings;
 
     const uint32 Width         = FrameResources.SSAOBuffer->GetWidth();
@@ -167,6 +173,7 @@ void FScreenSpaceOcclusionPass::Execute(FRHICommandList& CommandList, FFrameReso
     SSAOSettings.Radius      = CVarSSAORadius.GetValue();
     SSAOSettings.KernelSize  = CVarSSAOKernelSize.GetValue();
     SSAOSettings.Bias        = CVarSSAOBias.GetValue();
+    SSAOSettings.FrameIndex  = GetRenderer()->GetFrameCounter().GetFrameIndex();
 
     CommandList.SetComputePipelineState(PipelineState.Get());
     CommandList.SetConstantBuffer(SSAOShader.Get(), FrameResources.CameraBuffer.Get(), 0);

@@ -73,6 +73,30 @@ struct FCameraHLSL
     float    Padding1       = 0.0f;
 };
 
+class FFrameCounterState
+{
+public:
+    FFrameCounterState(const uint32 InMaxFrames = TNumericLimits<uint32>::Max())
+        : MaxFrames(InMaxFrames)
+        , FrameIndex(0)
+    {
+    }
+
+    void NextFrame()
+    {
+        FrameIndex = (FrameIndex + 1) % MaxFrames;
+    }
+
+    uint32 GetFrameIndex() const
+    {
+        return FrameIndex;
+    }
+
+private:
+    const uint32 MaxFrames;
+    uint32       FrameIndex;
+};
+
 class FSceneRenderer
 {
 public:
@@ -111,11 +135,17 @@ public:
         return Resources.CurrentHeight;
     }
     
+    const FFrameCounterState& GetFrameCounter() const
+    {
+        return FrameCounter;
+    }
+
 private:
     bool InitShadingImage();
 
     // RenderPasses and Resources
     FFrameResources             Resources;
+    FFrameCounterState          FrameCounter;
 
     FCameraHLSL                 CameraBuffer;
     FHaltonState                HaltonState;
