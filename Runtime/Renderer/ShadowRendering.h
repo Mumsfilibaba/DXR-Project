@@ -20,15 +20,19 @@ struct FCascadeSplitHLSL
 {
     // 0-96
     FVector4 FrustumPlanes[NUM_FRUSTUM_PLANES];
+
     // 96-112
     FVector4 Offsets;
     FVector4 Scale;
+    
     // 112-128
     FVector3 MinExtent;
     float    Split;
+    
     // 128-144
     FVector3 MaxExtent;
     float    NearPlane;
+    
     // 144-160
     float FarPlane;
     float MinDepth;
@@ -42,6 +46,7 @@ struct FPerShadowMapHLSL
 {
     // 0-64
     FMatrix4 Matrix;
+
     // 64-80
     FVector3 Position;
     float    FarPlane;
@@ -53,6 +58,7 @@ struct FSinglePassPointLightBufferHLSL
 {
     // 0-384
     FMatrix4 LightProjections[RHI_NUM_CUBE_FACES];
+
     // 384-400
     FVector3 LightPosition;
     float    LightFarPlane;
@@ -63,8 +69,10 @@ MARK_AS_REALLOCATABLE(FSinglePassPointLightBufferHLSL);
 struct FTwoPassPointLightBufferHLSL
 {
     static constexpr uint32 NumProjections = RHI_NUM_CUBE_FACES / 2;
+
     // 0-192
     FMatrix4 LightProjections[NumProjections];
+
     // 192-400
     FVector3 LightPosition;
     float    LightFarPlane;
@@ -135,10 +143,11 @@ private:
 
 struct FDirectionalShadowSettingsHLSL
 {
+    // 0-16
     float  FilterSize;
     float  MaxFilterSize;
     uint32 ShadowMapSize;
-    uint32 Padding0;
+    uint32 FrameIndex;
 };
 
 MARK_AS_REALLOCATABLE(FDirectionalShadowSettingsHLSL);

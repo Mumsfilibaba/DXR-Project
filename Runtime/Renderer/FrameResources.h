@@ -64,7 +64,6 @@ private:
     TMap<TResource*, int32> ResourceIndices;
 };
 
-
 struct FPointLightDataHLSL
 {
     FVector3 Color = FVector3(1.0f, 1.0f, 1.0f);

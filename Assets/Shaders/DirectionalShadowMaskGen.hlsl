@@ -70,7 +70,7 @@ struct FDirectionalShadowSettings
     float FilterSize;
     float MaxFilterSize;
     uint  ShadowMapSize;
-    uint  Padding0;
+    uint  FrameIndex;
 };
 
 ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
@@ -344,7 +344,7 @@ void Main(FComputeShaderInput Input)
     const float3 Normal        = UnpackNormal(GBufferNormal);
 
     // Random Seed when doing soft shadows 
-    uint RandomSeed   = InitRandom(Pixel, CameraBuffer.ViewportWidth, 0);
+    uint RandomSeed   = InitRandom(Pixel, CameraBuffer.ViewportWidth, SettingsBuffer.FrameIndex);
     uint CascadeIndex = 0;
 
     // Calculate the Shadow

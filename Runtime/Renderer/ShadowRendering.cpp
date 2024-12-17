@@ -1455,6 +1455,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     ShadowSettings.FilterSize    = FMath::Max<float>(static_cast<float>(CVarCSMFilterSize.GetValue()), 1.0f);
     ShadowSettings.MaxFilterSize = FMath::Max<float>(static_cast<float>(CVarCSMMaxFilterSize.GetValue()), 1.0f);
     ShadowSettings.ShadowMapSize = Resources.ShadowMapCascades->GetWidth();
+    ShadowSettings.FrameIndex    = GetRenderer()->GetFrameCounter().GetFrameIndex();
 
     CommandList.TransitionBuffer(ShadowSettingsBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
     CommandList.UpdateBuffer(ShadowSettingsBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalShadowSettingsHLSL)), &ShadowSettings);
