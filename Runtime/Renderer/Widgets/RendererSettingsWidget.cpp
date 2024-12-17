@@ -75,7 +75,7 @@ void FRendererSettingsWidget::Draw()
                     ImGui::Text("Bias");
                     ImGui::NextColumn();
 
-                    float Bias = CVarBias->GetInt();
+                    float Bias = CVarBias->GetFloat();
                     if (ImGui::SliderFloat("##Bias", &Bias, 0.01f, 1.0f, "%.2f"))
                     {
                         CVarBias->SetAsFloat(Bias, EConsoleVariableFlags::SetByCode);
