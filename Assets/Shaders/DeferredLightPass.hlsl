@@ -133,12 +133,11 @@ void Main(FComputeShaderInput Input)
     
     GroupMemoryBarrierWithGroupSync();
 
-    uint2 Pixel = Input.DispatchThreadID.xy;
-    float Depth     = DepthStencilTex.Load(int3(Pixel, 0));
-    float ViewPosZ  = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
+    uint2 Pixel    = Input.DispatchThreadID.xy;
+    float Depth    = DepthStencilTex.Load(int3(Pixel, 0));
+    float ViewPosZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
     
     // TODO: If we change to reversed Z then we need to change from 1.0 to 0.0
-    
     uint z = asuint(ViewPosZ);
     if (Depth < 1.0f)
     {
