@@ -30,7 +30,8 @@ FTextureDebugWidget::~FTextureDebugWidget()
 
 void FTextureDebugWidget::Draw()
 {
-    if (CVarDrawTextureDebugger.GetValue())
+    bool bDrawTextureDebugger = CVarDrawTextureDebugger.GetValue();
+    if (bDrawTextureDebugger)
     {
         const ImVec2 MainViewportPos = ImGuiExtensions::GetMainViewportPos();
         const ImVec2 DisplaySize     = ImGuiExtensions::GetMainViewportSize();
@@ -50,10 +51,9 @@ void FTextureDebugWidget::Draw()
 
         constexpr float MinImageSize = 96.0f;
         const float Width  = DisplaySize.x;
-		const float Height = DisplaySize.y;
+        const float Height = DisplaySize.y;
 
-        bool bTempDrawTextureDebugger = CVarDrawTextureDebugger.GetValue();
-        if (ImGui::Begin("RenderTarget Debugger", &bTempDrawTextureDebugger, Flags))
+        if (ImGui::Begin("RenderTarget Debugger", &bDrawTextureDebugger, Flags))
         {
             const int32 ImageIndex = (SelectedTextureIndex < 0) ? 0 : SelectedTextureIndex;
 

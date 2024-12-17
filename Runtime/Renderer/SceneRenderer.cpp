@@ -142,6 +142,7 @@ FSceneRenderer::FSceneRenderer()
     : TextureDebugger(nullptr)
     , InfoWindow(nullptr)
     , GPUProfilerWindow(nullptr)
+    , SettingsWindow(nullptr)
     , CommandList()
     , Resources()
     , CameraBuffer()
@@ -214,6 +215,7 @@ FSceneRenderer::~FSceneRenderer()
         TextureDebugger.Reset();
         InfoWindow.Reset();
         GPUProfilerWindow.Reset();
+        SettingsWindow.Reset();
     }
 }
 
@@ -388,6 +390,7 @@ bool FSceneRenderer::Initialize()
         TextureDebugger   = MakeSharedPtr<FTextureDebugWidget>();
         InfoWindow        = MakeSharedPtr<FRendererInfoWidget>(this);
         GPUProfilerWindow = MakeSharedPtr<FGPUProfilerWidget>();
+        SettingsWindow    = MakeSharedPtr<FRendererSettingsWidget>();
     }
 
     return true;

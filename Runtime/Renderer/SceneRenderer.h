@@ -24,6 +24,7 @@
 #include "Renderer/Widgets/TextureDebugWidget.h"
 #include "Renderer/Widgets/RendererInfoWidget.h"
 #include "Renderer/Widgets/GPUProfilerWidget.h"
+#include "Renderer/Widgets/RendererSettingsWidget.h"
 
 class FViewport;
 class FSceneRenderer;
@@ -150,7 +151,8 @@ private:
     FRHIComputeShaderRef        ShadingRateShader;
 
     // Widgets
-    TSharedPtr<FTextureDebugWidget> TextureDebugger;
-    TSharedPtr<FRendererInfoWidget>      InfoWindow;
-    TSharedPtr<FGPUProfilerWidget>       GPUProfilerWindow;
+    TSharedPtr<FTextureDebugWidget>     TextureDebugger;
+    TSharedPtr<FRendererInfoWidget>     InfoWindow;
+    TSharedPtr<FGPUProfilerWidget>      GPUProfilerWindow;
+    TSharedPtr<FRendererSettingsWidget> SettingsWindow;
 };
