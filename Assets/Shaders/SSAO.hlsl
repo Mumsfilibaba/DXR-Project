@@ -27,14 +27,10 @@ ConstantBuffer<FCamera> CameraBuffer : register(b0);
 [numthreads(THREAD_COUNT, THREAD_COUNT, 1)]
 void Main(FComputeShaderInput Input)
 {
-    const uint  FinalKernelSize = min(max(Constants.KernelSize, 4), MAX_SAMPLES);
-    const float FinalRadius     = max(Constants.Radius, 0.01);
-    const float FinalBias       = max(Constants.Bias, 0.0);
-
     // Texture coordinate
     const float2 TexSize   = Constants.ScreenSize;
-    const uint2  Pixel     = min(Input.DispatchThreadID.xy, uint2(TexSize));   
-    const float2 TexCoords = (float2(Pixel) + 0.5) / TexSize;
+    const uint2  Pixel     = Input.DispatchThreadID.xy;   
+    const float2 TexCoords = ((float2)Pixel) / TexSize;
 
     // Unpack Normal
     float3 ViewNormal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
@@ -46,12 +42,16 @@ void Main(FComputeShaderInput Input)
     
     ViewNormal = UnpackNormal(ViewNormal);
 
+    const uint  FinalKernelSize = min(max(Constants.KernelSize, 4), MAX_SAMPLES);
+    const float FinalRadius     = max(Constants.Radius, 0.01);
+    const float FinalBias       = max(Constants.Bias, 0.0);
+
     const float4x4 Projection    = CameraBuffer.Projection;
     const float4x4 ProjectionInv = CameraBuffer.ProjectionInv;
 
     // Get the depth and calculate view-space position
     const float  Depth        = GBufferDepth.SampleLevel(GBufferSampler, TexCoords, 0);
-    const float3 ViewPosition = PositionFromDepth(Depth, TexCoords, ProjectionInv); 
+    const float3 ViewPosition = PositionFromDepth(Depth, TexCoords, ProjectionInv);
     
     // Random Seed
     uint RandomSeed = InitRandom(Pixel, uint2(TexSize).x, 0);
@@ -71,7 +71,7 @@ void Main(FComputeShaderInput Input)
         float3 SamplePos = normalize(mul(Sample, TBN));
         SamplePos = ViewPosition + (SamplePos * RayLength);
 
-        float4 SampleProjected = mul(Projection, float4(SamplePos, 1.0));
+        float4 SampleProjected = mul(float4(SamplePos, 1.0), Projection);
         SampleProjected.xyz = (SampleProjected.xyz / SampleProjected.w);
         SampleProjected.xy  = (SampleProjected.xy * float2(0.5, -0.5)) + 0.5;
         
