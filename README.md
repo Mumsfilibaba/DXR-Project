@@ -6,6 +6,7 @@ Feel free to make a pull request but please ensure that code follow the code-sta
 
 # Features
 **Current:**
+* Vulkan and D3D12 backends
 * Tiled Deferred Rendering
 * Normal mapping
 * Parallax Occlusion Mapping
@@ -23,7 +24,6 @@ Feel free to make a pull request but please ensure that code follow the code-sta
     * TBitArray
 
 **Planed:**
-* Vulkan backend
 * Screen Space Reflections
 * Ray-Traced reflections
 * Spotlights
