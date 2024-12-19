@@ -1,33 +1,40 @@
-# DXR Project
-This engine is a small hobby rendering/game engine created for testing different rendering techniques. The name may suggest that this is only for DXR, and that is how it started. However, it has evolved into more than that. Now it has more focus on abstracting D3D12 and testing game-engine architecture techniques. Maybe I change the name in the future, perhaps not.
+### DXR Project
 
-# Contributing
-Feel free to make a pull request but please ensure that code follow the code-standard which you can find [here](CodeStandard.md).
+A hobby rendering and game engine created for testing and experimenting with various rendering techniques. While the project began as a DirectX Raytracing (DXR) experimentation engine, it has evolved into a versatile platform with both **D3D12** and **Vulkan** backends. The focus has shifted toward abstracting graphics APIs, exploring game engine architecture, and experimenting with advanced rendering techniques.
 
-# Features
-**Current:**
-* Vulkan and D3D12 backends
-* Tiled Deferred Rendering
-* Normal mapping
-* Parallax Occlusion Mapping
-* Physically Based Rendering with Image-Based Lightning
-* Shadow Mapping
-    * Cascaded Shadow-Maps for Directional-Lights
-    * Omni-Directional shadows for Point-Lights 
-* Dynamic lights (Point-Lights, Directional-Lights)
-* SSAO
-* TAA
-* FXAA
-* Custom containers
-    * TArray
-    * TString
-    * TBitArray
+---
 
-**Planed:**
-* Screen Space Reflections
-* Ray-Traced reflections
-* Spotlights
-* Local Environment Probes
+### Features
+
+#### **Current:**
+- **Graphics Backends:**
+  - Vulkan
+  - D3D12
+- **Rendering Techniques:**
+  - Tiled Deferred Rendering
+  - Normal Mapping
+  - Parallax Occlusion Mapping
+  - Physically Based Rendering (PBR) with Image-Based Lighting (IBL)
+  - Shadow Mapping:
+    - Cascaded Shadow Maps for Directional Lights
+    - Omni-Directional Shadows for Point Lights
+- **Post-Processing Effects:**
+  - Screen Space Ambient Occlusion (SSAO)
+  - Temporal Anti-Aliasing (TAA)
+  - Fast Approximate Anti-Aliasing (FXAA)
+- **Dynamic Lighting:**
+  - Point Lights
+  - Directional Lights
+- **Custom Data Structures:**
+  - `TArray`: Custom array container
+  - `TString`: Custom string container
+  - `TBitArray`: Custom bit array container
+
+#### **Planned:**
+- Screen Space Reflections (SSR)
+- Ray-Traced Reflections
+- Spotlights
+- Local Environment Probes
 
 # Screenshots
 **(Master - Branch)** **RT Off**
