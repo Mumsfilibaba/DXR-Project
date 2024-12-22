@@ -741,7 +741,7 @@ void FSceneRenderer::Tick(FScene* Scene)
         EResourceAccess::NonPixelShaderResource);
 
     CommandList.TransitionTexture(Resources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
-    
+
     // SSAO
     CommandList.TransitionTexture(Resources.SSAOBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
 
@@ -763,7 +763,8 @@ void FSceneRenderer::Tick(FScene* Scene)
         EResourceAccess::NonPixelShaderResource);
 
     // Render Shadows
-    const bool bEnableShadows = CVarShadowsEnabled.GetValue();
+    const bool bEnableShadows    = CVarShadowsEnabled.GetValue();
+    const bool bEnableSunShadows = CVarSunShadowsEnabled.GetValue();
     if (bEnableShadows)
     {
         // Point Lights
@@ -773,7 +774,7 @@ void FSceneRenderer::Tick(FScene* Scene)
         }
 
         // Directional Light
-        if (CVarSunShadowsEnabled.GetValue())
+        if (bEnableSunShadows)
         {
             if (!GFreezeRendering)
             {
@@ -793,7 +794,7 @@ void FSceneRenderer::Tick(FScene* Scene)
 
     // In order to render the shadow-mask, we want all these features to be enabled
     const bool bEnableShadowMask = CVarShadowMaskEnabled.GetValue();
-    if (bEnableShadows && bEnableShadowMask)
+    if (bEnableShadows && bEnableShadowMask && bEnableSunShadows)
     {
         ShadowMaskRenderPass->Execute(CommandList, Resources);
     }
@@ -804,10 +805,10 @@ void FSceneRenderer::Tick(FScene* Scene)
 
         const FVector4 MaskClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         CommandList.ClearUnorderedAccessView(Resources.DirectionalShadowMask->GetUnorderedAccessView(), MaskClearColor);
-            
+
         const FVector4 DebugClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         CommandList.ClearUnorderedAccessView(Resources.CascadeIndexBuffer->GetUnorderedAccessView(), DebugClearColor);
-            
+
         CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
         CommandList.TransitionTexture(Resources.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
     }

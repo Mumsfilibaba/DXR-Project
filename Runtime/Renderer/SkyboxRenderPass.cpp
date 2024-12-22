@@ -9,7 +9,7 @@
 #include "Engine/Assets/AssetManager.h"
 #include "RendererCore/TextureFactory.h"
 
-static TAutoConsoleVariable<bool> GClearBeforeSkyboxEnabled(
+static TAutoConsoleVariable<bool> CVarClearBeforeSkyboxEnabled(
     "Renderer.Skybox.ClearBeforeSkybox",
     "Clear the final target before rendering the Skybox (Used for debugging)",
     false);
@@ -38,7 +38,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    // Sphere-Data
+    // Sphere-data
     TArray<FVector3> SkyboxVertices;
     TArray<uint16>   SkyboxIndicies16;
     TArray<uint32>   SkyboxIndicies32;
@@ -84,7 +84,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     SkyboxIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
         reinterpret_cast<void*>(SkyboxIndicies16.Data()) :
         reinterpret_cast<void*>(SkyboxIndicies32.Data()));
-    
+
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -255,7 +255,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const float RenderHeight = float(FrameResources.CurrentHeight);
 
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);

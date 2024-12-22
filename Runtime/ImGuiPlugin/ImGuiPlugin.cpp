@@ -25,6 +25,12 @@ static TAutoConsoleVariable<bool> CVarImGuiUseWindowDPIScale(
     false,
     EConsoleVariableFlags::Default);
 
+static TAutoConsoleVariable<bool> CVarImGuiShowDemoWindow(
+    "ImGui.ShowDemoWindow",
+    "Show the ImGui Demo Window",
+    false,
+    EConsoleVariableFlags::Default);
+
 static EWindowStyleFlags GetWindowStyleFromImGuiViewportFlags(ImGuiViewportFlags Flags)
 {
     EWindowStyleFlags WindowStyleFlags = EWindowStyleFlags::None;
@@ -655,7 +661,14 @@ void FImGuiPlugin::Tick(float Delta)
         TRACE_SCOPE("ImGui Callbacks");
 
         ImGui::NewFrame();
-    
+
+        bool bShowDemoWindow = CVarImGuiShowDemoWindow.GetValue();
+        if (bShowDemoWindow)
+        {
+            ImGui::ShowDemoWindow(&bShowDemoWindow);
+            CVarImGuiShowDemoWindow->SetAsBool(bShowDemoWindow, EConsoleVariableFlags::SetByCode);
+        }
+
         DrawDelegates.Broadcast();
 
         ImGui::EndFrame();

@@ -10,5 +10,16 @@ public:
     void Draw();
 
 private:
+    void DrawDeferredRenderingSettings();
+    void DrawShadowSettings();
+    void DrawCascadedShadowSettings();
+    void DrawPointLightShadowSettings();
+    void DrawSkyboxSettings();
+    void DrawSSAOSettings();
+    void DrawTAASettings();
+    void DrawFXAASettings();
+    void DrawOtherSettings();
+    void DrawDebugSettings();
+
     FDelegateHandle ImGuiDelegateHandle;
 };

@@ -1023,28 +1023,44 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     FRHIUnorderedAccessView* FinalTargetUAV = FrameResources.FinalTarget->GetUnorderedAccessView();
     CommandList.SetUnorderedAccessView(LightPassShader, FinalTargetUAV, 0);
 
-    struct FLightPassSettings
+    struct FLightPassSettingsHLSL
     {
+        // 0-16
         int32 NumPointLights;
         int32 NumShadowCastingPointLights;
         int32 NumSkyLightMips;
         int32 ScreenWidth;
+        
+        // 16-24
         int32 ScreenHeight;
-    } Settings;
+        int32 bEnablePointLightShadows;
+    } LightPassSettings;
 
     const int32 RenderWidth  = FrameResources.CurrentWidth;
     const int32 RenderHeight = FrameResources.CurrentHeight;
 
-    Settings.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
-    Settings.NumPointLights              = FrameResources.PointLightsData.Size();
-    Settings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
-    Settings.ScreenWidth                 = static_cast<int32>(RenderWidth);
-    Settings.ScreenHeight                = static_cast<int32>(RenderHeight);
-    CommandList.Set32BitShaderConstants(LightPassShader, &Settings, 5);
+    LightPassSettings.NumShadowCastingPointLights = FrameResources.ShadowCastingPointLightsData.Size();
+    LightPassSettings.NumPointLights              = FrameResources.PointLightsData.Size();
+    LightPassSettings.NumSkyLightMips             = Skylight.SpecularIrradianceMap->GetNumMipLevels();
+    LightPassSettings.ScreenWidth                 = static_cast<int32>(RenderWidth);
+    LightPassSettings.ScreenHeight                = static_cast<int32>(RenderHeight);
+
+    // Enable point-light shadows
+    if (IConsoleVariable* CVarEnablePointLightShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
+    {
+        LightPassSettings.bEnablePointLightShadows = CVarEnablePointLightShadows->GetInt();
+    }
+    else
+    {
+        LightPassSettings.bEnablePointLightShadows = 1;
+    }
+
+    constexpr uint32 NumConstants = sizeof(FLightPassSettingsHLSL) / sizeof(uint32);
+    CommandList.Set32BitShaderConstants(LightPassShader, &LightPassSettings, NumConstants);
 
     constexpr uint32 NumThreads = 16;
-    const uint32 WorkGroupWidth  = FMath::DivideByMultiple<uint32>(Settings.ScreenWidth, NumThreads);
-    const uint32 WorkGroupHeight = FMath::DivideByMultiple<uint32>(Settings.ScreenHeight, NumThreads);
+    const uint32 WorkGroupWidth  = FMath::DivideByMultiple<uint32>(LightPassSettings.ScreenWidth, NumThreads);
+    const uint32 WorkGroupHeight = FMath::DivideByMultiple<uint32>(LightPassSettings.ScreenHeight, NumThreads);
     CommandList.Dispatch(WorkGroupWidth, WorkGroupHeight, 1);
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End LightPass");
