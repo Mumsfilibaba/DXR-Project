@@ -1,5 +1,5 @@
 #pragma once
-#include "WindowsCriticalSection.h"
+#include "Core/Windows/WindowsCriticalSection.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Generic/GenericConditionVariable.h"
@@ -43,7 +43,7 @@ public:
             FString ErrorString;
             FPlatformMisc::GetLastErrorString(ErrorString);
 
-            LOG_ERROR("%s", ErrorString.GetCString());
+            LOG_ERROR("%s", *ErrorString);
 
             return false;
         }

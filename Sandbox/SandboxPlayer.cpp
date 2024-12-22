@@ -62,6 +62,12 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     const FAxisState RightThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbX);
     const FAxisState RightThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbY);
     
+    if (GetPlayerInput()->IsKeyDown(EKeys::R))
+    {
+        Camera->SetPosition(0.0f, 10.0f, -2.0f);
+        Camera->SetRotation(0.0f,  0.0f,  0.0f);
+    }
+    
     if (FMath::Abs(RightThumbX.Value) > Deadzone)
     {
         Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
@@ -89,7 +95,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     }
 
     float Acceleration = 15.0f;
-    if (GetPlayerInput()->IsKeyDown(EKeys::LeftShift) || GetPlayerInput()->IsKeyDown(EKeys::GamepadLeftTrigger))
+    if (GetPlayerInput()->IsKeyDown(EKeys::LeftShift) || GetPlayerInput()->IsKeyDown(EKeys::GamepadLeftThumb))
     {
         Acceleration = Acceleration * 3;
     }
@@ -100,37 +106,37 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     FVector3 CameraAcceleration;
     if (FMath::Abs(LeftThumbY.Value) > Deadzone)
     {
-        CameraAcceleration.z = Acceleration * LeftThumbY.Value;
+        CameraAcceleration.Z = Acceleration * LeftThumbY.Value;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::W))
     {
-        CameraAcceleration.z = Acceleration;
+        CameraAcceleration.Z = Acceleration;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::S))
     {
-        CameraAcceleration.z = -Acceleration;
+        CameraAcceleration.Z = -Acceleration;
     }
 
     if (FMath::Abs(LeftThumbX.Value) > Deadzone)
     {
-        CameraAcceleration.x = Acceleration * -LeftThumbX.Value;
+        CameraAcceleration.X = Acceleration * -LeftThumbX.Value;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::A))
     {
-        CameraAcceleration.x = Acceleration;
+        CameraAcceleration.X = Acceleration;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::D))
     {
-        CameraAcceleration.x = -Acceleration;
+        CameraAcceleration.X = -Acceleration;
     }
 
     if (GetPlayerInput()->IsKeyDown(EKeys::Q))
     {
-        CameraAcceleration.y = Acceleration;
+        CameraAcceleration.Y = Acceleration;
     }
     else if (GetPlayerInput()->IsKeyDown(EKeys::E))
     {
-        CameraAcceleration.y = -Acceleration;
+        CameraAcceleration.Y = -Acceleration;
     }
 
     const float Deacceleration = -5.0f;
@@ -138,7 +144,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     CameraSpeed = CameraSpeed + (CameraAcceleration * DeltaTime);
 
     const FVector3 Speed = CameraSpeed * DeltaTime;
-    Camera->Move(Speed.x, Speed.y, Speed.z);
+    Camera->Move(Speed.X, Speed.Y, Speed.Z);
     Camera->UpdateMatrices();
 }
 
@@ -161,7 +167,7 @@ void FSandboxPlayerController::SetupInputComponent()
     InputComponent->BindAxis("MoveForwardAxis", this, &FSandboxPlayerController::MoveForwardAxis);
 }
 
-void FSandboxPlayerController::MoveForwardAxis(float Value)
+void FSandboxPlayerController::MoveForwardAxis(float)
 {
     // LOG_INFO("MoveForwardAxis %.4f", Value);
 }

@@ -1,24 +1,23 @@
-include "../../BuildScripts/Scripts/Build_Module.lua"
+include "../../BuildScripts/Scripts/build_module.lua"
 
----------------------------------------------------------------------------------------------------
 -- RHI Module
 
-local RHIModule = FModuleBuildRules("RHI")
+local rhi_module = module_build_rules("RHI")
 
-RHIModule.AddSystemIncludes(
+rhi_module.add_system_includes
 {
-    CreateExternalDependencyPath("DXC/include"),
-    CreateExternalDependencyPath("SPIRV-Cross"),
-    CreateExternalDependencyPath("glslang"),
-})
+    create_external_dependency_path("DXC/include"),
+    create_external_dependency_path("SPIRV-Cross"),
+    create_external_dependency_path("glslang"),
+}
 
-RHIModule.AddModuleDependencies( 
+rhi_module.add_module_dependencies
 {
     "Core",
-    "CoreApplication"
-})
+    "CoreApplication",
+}
 
-RHIModule.AddLinkLibraries(
+rhi_module.add_link_libraries
 {
     "SPIRV",
     "MachineIndependent",
@@ -26,4 +25,4 @@ RHIModule.AddLinkLibraries(
     "glslang-default-resource-limits",
     "glslang",
     "SPIRV-Cross",
-})
+}

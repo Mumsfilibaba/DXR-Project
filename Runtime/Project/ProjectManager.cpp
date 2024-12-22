@@ -2,6 +2,8 @@
 #include "Core/Templates/CString.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Platform/PlatformMisc.h"
+#include "Core/Misc/OutputDeviceLogger.h"
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Project);
 
@@ -18,14 +20,14 @@ bool FProjectManager::Initialize()
 {
     const FString ProjectName = PROJECT_NAME;
     const FString ProjectPath = FString(ENGINE_LOCATION) + "/" + ProjectName;
-    if (!FPlatformFile::IsDirectory(ProjectPath.GetCString()))
+    if (!FPlatformFile::IsDirectory(*ProjectPath))
     {
         DEBUG_BREAK();
         return false;
     }
 
     const FString AssetFolderPath = FString(ENGINE_LOCATION) + FString("/Assets");
-    if (!FPlatformFile::IsDirectory(AssetFolderPath.GetCString()))
+    if (!FPlatformFile::IsDirectory(*AssetFolderPath))
     {
         DEBUG_BREAK();
         return false;
@@ -35,6 +37,12 @@ bool FProjectManager::Initialize()
     {
         GInstance = new FProjectManager(ProjectName, ProjectPath, AssetFolderPath);
     }
+
+#if !PRODUCTION_BUILD
+    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
+    LOG_INFO("ProjectName=%s", *FProjectManager::Get().GetProjectName());
+    LOG_INFO("ProjectPath=%s", *FProjectManager::Get().GetProjectPath());
+#endif
 
     return true;
 }

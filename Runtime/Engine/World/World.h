@@ -17,76 +17,76 @@ class ENGINE_API FWorld
 public:
 
     /**
-     * @brief - Default constructor
+     * @brief Default constructor
      */
     FWorld();
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     ~FWorld();
 
     /**
-     * @brief  - Create a new actor and add it to the world 
-     * @return - Returns the newly created actor
+     * @brief Create a new actor and add it to the world 
+     * @return Returns the newly created actor
      */
     FActor* CreateActor();
 
     /**
-     * @brief - Start game 
+     * @brief Start game 
      */
     void Start();
 
      /**
-      * @brief           - Ticks all actors in the world, should be called once per frame
-      * @param DeltaTime - The time between this and the last tick in seconds
+      * @brief Ticks all actors in the world, should be called once per frame
+      * @param DeltaTime The time between this and the last tick in seconds
       */
     void Tick(float DeltaTime);
 
     /**
-     * @brief          - Adds a camera into the world 
-     * @param InCamera - Camera to add to the world
+     * @brief Adds a camera into the world 
+     * @param InCamera Camera to add to the world
      */
     void AddCamera(FCamera* InCamera);
 
     /**
-     * @brief         - Adds an actor into the world 
-     * @param InActor - Actor to add to the world
+     * @brief Adds an actor into the world 
+     * @param InActor Actor to add to the world
      */
     void AddActor(FActor* InActor);
 
     /**
-     * @brief                    - Adds a player-controller into the world
-     * @param InPlayerController - PlayerController to add to the world
+     * @brief Adds a player-controller into the world
+     * @param InPlayerController PlayerController to add to the world
      */
     void AddPlayerController(FPlayerController* InPlayerController);
 
     /**
-     * @brief         - Adds an light into the world
-     * @param InLight - Light to add to the world
+     * @brief Adds an light into the world
+     * @param InLight Light to add to the world
      */
     void AddLight(FLight* InLight);
 
     /**
-     * @brief              - Adds a light-probe into the world
-     * @param InLightProbe - LightProbe to add to the world
+     * @brief Adds a light-probe into the world
+     * @param InLightProbe LightProbe to add to the world
      */
     void AddLightProbe(FLightProbe* InLightProbe);
 
     /**
-     * @brief                   - Function called when adding a new RendererComponent
-     * @param RendererComponent - New RendererComponent just added to the world
+     * @brief Function called when adding a new RendererComponent
+     * @param RendererComponent New RendererComponent just added to the world
      */
     void AddRendererComponent(FSceneComponent* RendererComponent);
 
     /**
-      * @brief         - Sets the scene representation in the renderer
-      * @param InScene - Interface to the renderer scene representation
+      * @brief Sets the scene representation in the renderer
+      * @param InScene Interface to the renderer scene representation
       */
     void SetSceneInterface(IScene* InScene);
 
     /**
-     * @return - Returns the Renderer representation of this scene 
+     * @return Returns the Renderer representation of this scene 
      */
     IScene* GetSceneInterface() const
     {
@@ -94,8 +94,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve all components of a certain type
-     * @return - Returns an array of all components of the specified type
+     * @brief Retrieve all components of a certain type
+     * @return Returns an array of all components of the specified type
      */
     template<typename ComponentType>
     TArray<ComponentType> GetAllComponentsOfType() const
@@ -115,7 +115,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all actors in the world
+     * @return Returns a reference to an array of all actors in the world
      */
     const TArray<FActor*>& GetActors() const
     {
@@ -123,7 +123,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all actors in the world
+     * @return Returns a reference to an array of all actors in the world
      */
     const TArray<FPlayerController*>& GetPlayerControllers() const
     {
@@ -131,7 +131,7 @@ public:
     }
 
     /**
-     * @return - Returns a pointer to the first PlayerController in the world
+     * @return Returns a pointer to the first PlayerController in the world
      */
     FPlayerController* GetFirstPlayerController() const
     {
@@ -144,7 +144,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all lights in the world
+     * @return Returns a reference to an array of all lights in the world
      */
     const TArray<FLight*>& GetLights() const
     {
@@ -152,7 +152,7 @@ public:
     }
 
     /**
-     * @return - Returns a reference to an array of all light-probes in the world
+     * @return Returns a reference to an array of all light-probes in the world
      */
     const TArray<FLightProbe*>& GetLightProbes() const
     {
@@ -160,7 +160,7 @@ public:
     }
 
     /**
-     * @return - Returns a pointer to the camera of the world
+     * @return Returns a pointer to the camera of the world
      */
     FCamera* GetCamera() const
     {

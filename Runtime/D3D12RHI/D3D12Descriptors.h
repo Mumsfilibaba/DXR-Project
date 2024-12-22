@@ -3,7 +3,6 @@
 #include "D3D12RefCounted.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
 

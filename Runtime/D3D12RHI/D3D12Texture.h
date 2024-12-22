@@ -4,6 +4,7 @@
 #include "RHI/RHIResources.h"
 
 class FD3D12Viewport;
+class FD3D12CommandContext;
 
 typedef TSharedRef<class FD3D12Texture>           FD3D12TextureRef;
 typedef TSharedRef<class FD3D12BackBufferTexture> FD3D12BackBufferTextureRef;
@@ -14,8 +15,11 @@ public:
     FD3D12Texture(FD3D12Device* InDevice, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12Texture();
 
-    bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
+    bool Initialize(FD3D12CommandContext* InCommandContext, EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
+public:
+
+    // FRHITexture Interface
     virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
     virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
@@ -23,8 +27,11 @@ public:
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
+
+public:
 
     FD3D12RenderTargetView* GetOrCreateRenderTargetView(const FRHIRenderTargetView& RenderTargetView);
     FD3D12DepthStencilView* GetOrCreateDepthStencilView(const FRHIDepthStencilView& DepthStencilView);

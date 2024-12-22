@@ -1,7 +1,6 @@
 #pragma once
 #include "Core/Generic/GenericPlatformTime.h"
 #include "Core/Time/Time.h"
-
 #include <mach/mach_time.h>
 
 struct FMacPlatformTime : public FGenericPlatformTime

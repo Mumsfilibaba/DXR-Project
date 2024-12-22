@@ -5,7 +5,7 @@
 FOBJECT_IMPLEMENT_CLASS(FActor);
 
 FActorTransform::FActorTransform()
-    : Matrix()
+    : TransformMatrix()
     , Translation(0.0f, 0.0f, 0.0f)
     , Scale(1.0f, 1.0f, 1.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
@@ -51,9 +51,8 @@ void FActorTransform::CalculateMatrix()
     FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale);
     FMatrix4 RotationMatrix    = FMatrix4::RotationRollPitchYaw(Rotation);
     FMatrix4 TranslationMatrix = FMatrix4::Translation(Translation);
-    
-    Matrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
-    Matrix = Matrix.Transpose();
+
+    TransformMatrix = (ScaleMatrix * RotationMatrix) * TranslationMatrix;
 }
 
 FActor::FActor(const FObjectInitializer& ObjectInitializer)

@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Generic/GenericCriticalSection.h"
-
 #include <pthread.h>
 
 class FMacCriticalSection final : public FGenericCriticalSection

@@ -106,8 +106,12 @@ void Main(FComputeShaderInput Input)
     const float2 HistoryTexCoord = TexCoordUV - MotionVector;
     if(any(HistoryTexCoord != saturate(HistoryTexCoord)))
     {
-        Output[TexCoord]      = float4(CurrentSample, 1.0f);
-        FinalTarget[TexCoord] = float4(CurrentSample, 1.0f);
+    #if HDR_CORRECTION
+        CurrentSample = InvTonemap(CurrentSample);
+    #endif
+
+        Output[TexCoord]      = float4(CurrentSample, 1.0);
+        FinalTarget[TexCoord] = float4(CurrentSample, 1.0);
         return;
     }
 

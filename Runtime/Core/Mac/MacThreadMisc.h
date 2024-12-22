@@ -1,7 +1,6 @@
 #pragma once
-#include "MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Generic/GenericThreadMisc.h"
-
 #include <unistd.h>
 #include <pthread.h>
 #include <sched.h>

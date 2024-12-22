@@ -33,7 +33,7 @@ public:
         if (CopyEncoder)
         {
             [CopyEncoder endEncoding];
-            NSRelease(CopyEncoder);
+            [CopyEncoder release];
         }
     }
     
@@ -41,7 +41,7 @@ public:
     {
         CHECK(CopyEncoder != nil);
         [CopyEncoder endEncoding];
-        NSRelease(CopyEncoder);
+        [CopyEncoder release];
     }
     
     id<MTLBlitCommandEncoder> GetMTLCopyEncoder() const 

@@ -269,7 +269,7 @@ constexpr bool ShaderStageIsGraphics(EShaderStage ShaderStage)
     return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
 }
 
-/** @brief - Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures) */
+/** @brief Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures) */
 constexpr bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::Compute) ? true : false;

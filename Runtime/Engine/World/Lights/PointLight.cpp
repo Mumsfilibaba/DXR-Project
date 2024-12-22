@@ -72,8 +72,8 @@ void FPointLight::CalculateMatrices()
         const FMatrix4 LightProjection = FMatrix4::PerspectiveProjection(FMath::kPI_f / 2.0f, 1.0f, ShadowNearPlane, ShadowFarPlane);
         const FMatrix4 LightView       = FMatrix4::LookTo(Position, Directions[Face], UpVectors[Face]);
 
-        ViewMatrices[Face] = LightView.Transpose();
+        ViewMatrices[Face] = LightView;
         ProjMatrices[Face] = LightProjection;
-        Matrices[Face]     = (LightView * LightProjection).Transpose();
+        Matrices[Face]     = LightView * LightProjection;
     }
 }

@@ -1,4 +1,24 @@
-#include "GenericPlatformFile.h"
+#include "Core/Generic/GenericPlatformFile.h"
+
+bool FFileHelpers::ReadFile(IFileHandle* File, FByteInputStream& OutData)
+{
+    CHECK(File != nullptr);
+
+    const int64 FileSize = File->Size();
+    CHECK(FileSize < TNumericLimits<int32>::Max());
+
+    uint8* Stream = reinterpret_cast<uint8*>(FMemory::Malloc(static_cast<uint64>(FileSize)));
+    const int32 ReadBytes = File->Read(Stream, static_cast<uint32>(FileSize));
+    if (ReadBytes <= 0)
+    {
+        return false;
+    }
+    else
+    {
+        OutData = FByteInputStream(Stream, static_cast<int32>(FileSize));
+        return true;
+    }
+}
 
 bool FFileHelpers::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
 {
@@ -14,8 +34,10 @@ bool FFileHelpers::ReadFile(IFileHandle* File, TArray<uint8>& OutData)
         OutData.Clear(true);
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }
 
 bool FFileHelpers::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
@@ -34,9 +56,11 @@ bool FFileHelpers::ReadTextFile(IFileHandle* File, TArray<CHAR>& OutText)
         OutText.Clear(true);
         return false;
     }
-
-    OutText[ReadBytes] = 0;
-    return true;
+    else
+    {
+        OutText[ReadBytes] = 0;
+        return true;
+    }
 }
 
 bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Size)
@@ -48,25 +72,27 @@ bool FFileHelpers::WriteTextFile(IFileHandle* File, const CHAR* Text, uint32 Siz
     {
         return false;
     }
-
-    return true;
+    else
+    {
+        return true;
+    }
 }
 
 FString FFileHelpers::ExtractFilepath(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::INVALID_INDEX)
+    if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = Filepath.Length();
     }
     
-    return FString(Filepath.GetCString(), LastSlash);
+    return FString(*Filepath, LastSlash);
 }
 
 FString FFileHelpers::ExtractFilename(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::INVALID_INDEX)
+    if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = 0;
     }
@@ -76,13 +102,13 @@ FString FFileHelpers::ExtractFilename(const FString& Filepath)
     }
     
     int32 NewLength = Filepath.Length() - LastSlash;
-    return FString(Filepath.GetCString() + LastSlash, NewLength);
+    return FString(*Filepath + LastSlash, NewLength);
 }
     
 FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
 {
     int32 LastSlash = Filepath.FindLastChar('/');
-    if (LastSlash == FString::INVALID_INDEX)
+    if (LastSlash == FString::InvalidIndex)
     {
         LastSlash = 0;
     }
@@ -92,11 +118,11 @@ FString FFileHelpers::ExtractFilenameWithoutExtension(const FString& Filepath)
     }
     
     int32 ExtensionPos = Filepath.FindLastChar('.');
-    if (ExtensionPos == FString::INVALID_INDEX)
+    if (ExtensionPos == FString::InvalidIndex)
     {
-        ExtensionPos = FCString::Strlen(Filepath.GetCString() + LastSlash);
+        ExtensionPos = FCString::Strlen(*Filepath + LastSlash);
     }
     
     int32 NewLength = ExtensionPos - LastSlash;
-    return FString(Filepath.GetCString() + LastSlash, NewLength);
+    return FString(*Filepath + LastSlash, NewLength);
 }

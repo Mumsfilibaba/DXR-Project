@@ -1,151 +1,313 @@
-#include "CocoaWindow.h"
-#include "MacApplication.h"
-#include "MacWindow.h"
 #include "Core/Mac/Mac.h"
+#include "Core/Misc/ConsoleManager.h"
+#include "Core/Misc/OutputDeviceLogger.h"
+#include "CoreApplication/Mac/CocoaWindow.h"
+#include "CoreApplication/Mac/MacApplication.h"
+#include "CoreApplication/Mac/MacWindow.h"
 
 @implementation FCocoaWindow
 
-- (instancetype) initWithContentRect:(NSRect)ContentRect StyleMask:(NSWindowStyleMask)StyleMask Backing:(NSBackingStoreType)BackingStoreType Defer:(BOOL)Flag
+- (instancetype)initWithContentRect:(NSRect)ContentRect styleMask:(NSWindowStyleMask)StyleMask backing:(NSBackingStoreType)BackingStoreType defer:(BOOL)Flag
 {
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:BackingStoreType defer:Flag];
     if (self)
     {
-        // NOTE: Setting self.delegate = self does not work in here
-        [super setOpaque:YES];
-        [super setRestorable:NO];
+        // Disable window snapshot restoration to prevent macOS from automatically restoring the
+        // window's state upon relaunch. This ensures that our custom window initialization is not
+        // overridden by restored state, avoids displaying outdated or invalid content.
         [super disableSnapshotRestoration];
     }
     
     return self;
 }
 
-- (BOOL) canBecomeKeyWindow
+// Allow the window to become the key window (i.e., receive keyboard input)
+- (BOOL)canBecomeKeyWindow
 {
     return YES;
 }
 
-- (BOOL) canBecomeMainWindow
+// Allow the window to become the main window. The main window is the principal
+// window of an application that is the focus for user actions.
+- (BOOL)canBecomeMainWindow
 {
     return YES;
-}
-
-- (BOOL) acceptsMouseMovedEvents
-{
-    return YES;
-}
-
-- (BOOL) acceptsFirstResponder
-{
-    return YES;
-}
-
-- (void)performZoom:(id)Sender
-{
-}
-
-- (void)zoom:(id)Sender
-{
-    SCOPED_AUTORELEASE_POOL();
-    [super zoom:Sender];
 }
 
 - (void)keyDown:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
 - (void)keyUp:(NSEvent*)Event
 {
+    // Intentionally left empty for now
 }
 
-- (void) performClose:(id)sender
-{
-}
-
-- (void) windowWillClose:(NSNotification*) Notification
+- (void)windowWillClose:(NSNotification*)Notification
 {
     @autoreleasepool
     {
+        // Remove the window's delegate to prevent further messages
         [self setDelegate:nil];
-        
-        if (MacApplication)
-        {
-            TSharedRef<FMacWindow> Window = MacApplication->GetWindowFromNSWindow(self);
-            MacApplication->CloseWindow(Window);
-        }
     }
-}
 
-- (void) windowDidResize:(NSNotification*) Notification
-{
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
+        GMacApplication->CloseWindow(Window);
     }
 }
 
-- (void) windowDidMove:(NSNotification*) Notification
+- (NSSize)windowWillResize:(NSWindow*)Sender toSize:(NSSize)FrameSize
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
+        GMacApplication->OnWindowWillResize(Window);
     }
+    
+    return FrameSize;
 }
 
-- (void) windowDidMiniaturize:(NSNotification*) Notification
+- (void)windowDidResize:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        TSharedRef<FMacWindow> Window = GMacApplication->FindWindowFromNSWindow(self);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidDeminiaturize:(NSNotification*) Notification
+- (void)windowDidMove:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidEnterFullScreen:(NSNotification*) Notification
+- (void)windowDidMiniaturize:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
-- (void) windowDidExitFullScreen:(NSNotification*) Notification
+- (void)windowDidDeminiaturize:(NSNotification*)Notification
 {
-    if (MacApplication)
+    if (GMacApplication)
     {
-        MacApplication->DeferEvent(Notification);
+        GMacApplication->DeferEvent(Notification);
     }
 }
 
-- (void)windowDidBecomeMain:(NSNotification*) Notification
+- (void)windowDidEnterFullScreen:(NSNotification*)Notification
+{
+    if (GMacApplication)
+    {
+        GMacApplication->DeferEvent(Notification);
+    }
+}
+
+- (void)windowDidExitFullScreen:(NSNotification*)Notification
+{
+    if (GMacApplication)
+    {
+        GMacApplication->DeferEvent(Notification);
+    }
+}
+
+// This method is called when the window becomes the main window of the application.
+// A window becomes the main window in response to specific user actions:
+//  - Clicking on the Window: When the user clicks on the window's title bar or content
+//    area, bringing it to the foreground.
+//  - Application Activation: When the user switches back to the application from another
+//    app (e.g., using Command+Tab or clicking the app icon in the Dock), the frontmost
+//    window becomes the main window.
+//  - Programmatic Activation: When the application programmatically makes the window
+//    the main window using `[NSWindow makeMainWindow]`.
+// The main window is the principal focus for user actions, such as menu commands and non-keyboard events.
+// In this method, we check if the application is visible and, if so, bring the window to the front.
+
+- (void)windowDidBecomeMain:(NSNotification*)Notification
 {
     @autoreleasepool
     {
         if ([NSApp isHidden] == NO)
         {
+            // Order the window to the front of its level to ensure it is visible to the user
             [self orderFront:nil];
         }
-     
-        // TODO: Do we want to handle key as well?
-        if (MacApplication)
+
+        if (GMacApplication)
         {
-            MacApplication->DeferEvent(Notification);
+            GMacApplication->DeferEvent(Notification);
         }
     }
 }
 
+// This method is called when the window loses its status as the main window of the application.
+// A window resigns main window status in response to specific user actions:
+//  - Activating Another Window: When the user clicks on a different window within the same application, making it the new main window.
+//  - Switching to Another Application: When the user switches focus to a different application, the current window resigns main status.
+//  - Programmatic Changes: When the application programmatically changes the main window or resigns it.
 - (void)windowDidResignMain:(NSNotification*)Notification
 {
     @autoreleasepool
     {
-        [self setMovable: YES];
-        [self setMovableByWindowBackground: NO];
+        // Ensure the window remains movable by its title bar. When 'movable' is set to YES, the
+        // user can move the window by clicking and dragging its title bar. This is standard behavior
+        // for windows, allowing users to reposition them on the screen as needed.
+        [self setMovable:YES];
+        
+        // Prevent the window from being moved by clicking and dragging its background (the content area).
+        // When 'movableByWindowBackground' is set to NO, the user cannot move the window by clicking and
+        // dragging anywhere within the window's content area. Disabling this behavior when the window is
+        // not the main window helps prevent accidental window movements. It ensures that interactions within
+        // the window's content (such as clicking buttons or selecting text) do not inadvertently move the window.
+        [self setMovableByWindowBackground:NO];
+        
+        if (GMacApplication)
+        {
+            GMacApplication->DeferEvent(Notification);
+        }
+    }
+}
+
+@end
+
+@implementation FCocoaWindowView
+
+- (instancetype)initWithFrame:(NSRect)Frame
+{
+    self = [super initWithFrame:Frame];
+    if (self)
+    {
+        return self;
+    }
+    
+    return nil;
+}
+
+- (BOOL)preservesContentDuringLiveResize
+{
+    return YES;
+}
+
+// Accept the first mouse event even if the view is not the key view. This method is called by
+// the system to determine whether the view should receive a mouse-down event (or other mouse
+// events) even if the window is not the key window or the view is not the first responder.
+// This allows the view to handle the mouse event immediately without requiring the window to
+// become active first. This enhances the user experience by making the application more responsive,
+// eliminating the need for the user to click twice (once to activate the window, and once to
+// perform the action).
+
+- (BOOL)acceptsFirstMouse:(NSEvent*)Event
+{
+    return YES;
+}
+
+- (void)mouseDown:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow mouseDown:Event];
+        }
+        else
+        {
+            [super mouseDown:Event];
+        }
+    }
+}
+
+- (void)mouseUp:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow mouseUp:Event];
+        }
+        else
+        {
+            [super mouseUp:Event];
+        }
+    }
+}
+
+- (void)rightMouseDown:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow rightMouseDown:Event];
+        }
+        else
+        {
+            [super rightMouseDown:Event];
+        }
+    }
+}
+
+- (void)rightMouseUp:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow rightMouseUp:Event];
+        }
+        else
+        {
+            [super rightMouseUp:Event];
+        }
+    }
+}
+
+- (void)otherMouseDown:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow otherMouseDown:Event];
+        }
+        else
+        {
+            [super otherMouseDown:Event];
+        }
+    }
+}
+
+- (void)otherMouseUp:(NSEvent*)Event
+{
+    @autoreleasepool
+    {
+        // Forward the event to the window if this is a CocoaWindow, otherwise we default to the super class (NSView) to handle it
+        FCocoaWindow* CocoaWindow = [[self window] isKindOfClass:[FCocoaWindow class]] ? (FCocoaWindow*)[self window] : nil;
+        if (CocoaWindow)
+        {
+            [CocoaWindow otherMouseUp:Event];
+        }
+        else
+        {
+            [super otherMouseUp:Event];
+        }
     }
 }
 

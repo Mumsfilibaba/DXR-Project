@@ -236,7 +236,7 @@ bool FD3D12RayTracingShader::GetRayTracingShaderReflection(FD3D12RayTracingShade
         return (Char == '\x1') || (Char == '?');
     });
 
-    if (NameStart != FString::INVALID_INDEX)
+    if (NameStart != FString::InvalidIndex)
     {
         NameStart++;
     }

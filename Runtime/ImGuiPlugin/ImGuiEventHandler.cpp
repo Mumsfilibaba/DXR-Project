@@ -83,10 +83,10 @@ static ImGuiKey GImGuiKeyboardKeys[EKeyboardKeyName::Count] =
     /* EKeyboardKeyName::Backspace */      ImGuiKey_Backspace,
     /* EKeyboardKeyName::Insert */         ImGuiKey_Insert,
     /* EKeyboardKeyName::Delete */         ImGuiKey_Delete,
-    /* EKeyboardKeyName::Left */           ImGuiKey_LeftArrow,
     /* EKeyboardKeyName::Right */          ImGuiKey_RightArrow,
-    /* EKeyboardKeyName::Up */             ImGuiKey_UpArrow,
+    /* EKeyboardKeyName::Left */           ImGuiKey_LeftArrow,
     /* EKeyboardKeyName::Down */           ImGuiKey_DownArrow,
+    /* EKeyboardKeyName::Up */             ImGuiKey_UpArrow,
     /* EKeyboardKeyName::PageUp */         ImGuiKey_PageUp,
     /* EKeyboardKeyName::PageDown */       ImGuiKey_PageDown,
     /* EKeyboardKeyName::Home */           ImGuiKey_Home,
@@ -175,7 +175,7 @@ static ImGuiKey GImGuiGamepadKeys[EGamepadButtonName::Count] =
 
 static FORCEINLINE ImGuiKey GetImGuiGamepadButton(EGamepadButtonName::Type Button)
 {
-    CHECK(Button >= EKeyboardKeyName::First && Button <= EKeyboardKeyName::Last);
+    CHECK(Button >= EGamepadButtonName::First && Button <= EGamepadButtonName::Last);
     return GImGuiGamepadKeys[Button];
 }
 
@@ -239,20 +239,21 @@ bool FImGuiEventHandler::ProcessKeyEvent(const FKeyEvent& KeyEvent)
         CHECK(KeyName != EKeyboardKeyName::Unknown);
 
         ImGuiIO& UIState = ImGui::GetIO();
-        UIState.AddKeyEvent(ImGuiMod_Ctrl, KeyEvent.GetModifierKeys().bIsCtrlDown == 1);
-        UIState.AddKeyEvent(ImGuiMod_Shift, KeyEvent.GetModifierKeys().bIsShiftDown == 1);
-        UIState.AddKeyEvent(ImGuiMod_Alt, KeyEvent.GetModifierKeys().bIsAltDown == 1);
-        UIState.AddKeyEvent(ImGuiMod_Super, KeyEvent.GetModifierKeys().bIsSuperDown == 1);
+        UIState.AddKeyEvent(ImGuiMod_Ctrl, KeyEvent.GetModifierKeys().IsCtrlDown());
+        UIState.AddKeyEvent(ImGuiMod_Shift, KeyEvent.GetModifierKeys().IsShiftDown());
+        UIState.AddKeyEvent(ImGuiMod_Alt, KeyEvent.GetModifierKeys().IsAltDown());
+        UIState.AddKeyEvent(ImGuiMod_Super, KeyEvent.GetModifierKeys().IsSuperDown());
 
+        // NOTE: ImGuiKey_GraveAccent is the key that activates the console so we need to skip it so that we can disable the console.
         const ImGuiKey TranslatedKey = GetImGuiKeyboardKey(KeyName);
-        if (TranslatedKey != ImGuiKey_None)
+        if (TranslatedKey != ImGuiKey_GraveAccent && TranslatedKey != ImGuiKey_None)
         {
             UIState.AddKeyEvent(TranslatedKey, KeyEvent.IsDown());
-        }
 
-        if (UIState.WantCaptureKeyboard)
-        {
-            return true;
+            if (UIState.WantCaptureKeyboard)
+            {
+                return true;
+            }
         }
     }
 
@@ -290,6 +291,7 @@ bool FImGuiEventHandler::OnKeyChar(const FKeyEvent& KeyTypedEvent)
 bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
 {
     FIntVector2 CursorPos = CursorEvent.GetCursorPos();
+    
     if (!ImGuiExtensions::IsMultiViewportEnabled())
     {
         if (TSharedRef<FGenericWindow> Window = FApplicationInterface::Get().GetPlatformApplication()->GetWindowUnderCursor())
@@ -297,18 +299,18 @@ bool FImGuiEventHandler::OnMouseMove(const FCursorEvent& CursorEvent)
             FWindowShape WindowShape;
             Window->GetWindowShape(WindowShape);
 
-            CursorPos.x = CursorPos.x - WindowShape.Position.x;
-            CursorPos.y = CursorPos.y - WindowShape.Position.y;
+            CursorPos.X = CursorPos.X - WindowShape.Position.X;
+            CursorPos.Y = CursorPos.Y - WindowShape.Position.Y;
         }
         else
         {
-            CursorPos.x = -TNumericLimits<int32>::Max();
-            CursorPos.y = -TNumericLimits<int32>::Max();
+            CursorPos.X = -TNumericLimits<int32>::Max();
+            CursorPos.Y = -TNumericLimits<int32>::Max();
         }
     }
 
     ImGuiIO& UIState = ImGui::GetIO();
-    UIState.AddMousePosEvent(static_cast<float>(CursorPos.x), static_cast<float>(CursorPos.y));
+    UIState.AddMousePosEvent(static_cast<float>(CursorPos.X), static_cast<float>(CursorPos.Y));
     return false;
 }
 

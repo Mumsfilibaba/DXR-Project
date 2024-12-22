@@ -3,20 +3,19 @@
 #include "Core/Math/IntVector2.h"
 #include "Core/Containers/SharedPtr.h"
 #include "CoreApplication/Generic/InputCodes.h"
-#include "CoreApplication/Generic/GenericWindow.h"
-#include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "CoreApplication/Generic/GenericApplication.h"
 
-class FResponse
+class FEventResponse
 {
 public:
-    static FResponse Handled()
+    static FEventResponse Handled()
     {
-        return FResponse(true);
+        return FEventResponse(true);
     }
 
-    static FResponse Unhandled()
+    static FEventResponse Unhandled()
     {
-        return FResponse(false);
+        return FEventResponse(false);
     }
 
     bool IsEventHandled() const
@@ -25,7 +24,7 @@ public:
     }
 
 private:
-    FResponse(bool bInIsHandled)
+    FEventResponse(bool bInIsHandled)
         : bIsHandled(bInIsHandled)
     {
     }
@@ -33,34 +32,53 @@ private:
     uint8 bIsHandled : 1;
 };
 
+enum class EInputEventType : uint8
+{
+    Unknown = 0,
+    KeyDown,
+    KeyUp,
+    KeyChar,
+    MouseMoved,
+    MouseButtonDown,
+    MouseButtonUp,
+    MouseButtonDoubleClick,
+    MouseScrolled,
+    MouseEntered,
+    MouseLeft,
+    HighPrecisionMouse,
+    GamepadButtonDown,
+    GamepadButtonUp,
+    GamepadAnalogSourceChanged,
+};
+
 class FInputEvent
 {
 public:
     FInputEvent() 
-        : ModifierKeys()
+        : EventType(EInputEventType::Unknown)
+        , ModifierKeys()
     {
     }
 
-    FInputEvent(const FModifierKeyState& InModifierKeys)
-        : ModifierKeys(InModifierKeys)
+    FInputEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys)
+        : EventType(InEventType)
+        , ModifierKeys(InModifierKeys)
     {
+    }
+
+    EInputEventType GetEventType() const
+    {
+        return EventType;
     }
 
     const FModifierKeyState& GetModifierKeys() const
     {
         return ModifierKeys;
     }
-
+    
 private:
+    EInputEventType   EventType;
     FModifierKeyState ModifierKeys;
-};
-
-enum class EButtomEventType
-{
-    Unknown = 0,
-    Pressed,
-    Released,
-    DoubleClick
 };
 
 class FCursorEvent : public FInputEvent
@@ -76,8 +94,18 @@ public:
     {
     }
 
-    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
-        : FInputEvent(InModifierKeys)
+    FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys)
+        : FInputEvent(InEventType, InModifierKeys)
+        , Key(EKeys::Unknown)
+        , CursorPosition()
+        , ScrollDelta(0.0f)
+        , bIsScrollVertical(false)
+        , bIsDown(false)
+    {
+    }
+
+    FCursorEvent(EInputEventType InEventType, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
+        : FInputEvent(InEventType, InModifierKeys)
         , Key(EKeys::Unknown)
         , CursorPosition(InCursorPosition)
         , ScrollDelta(0.0f)
@@ -86,10 +114,21 @@ public:
     {
     }
 
-    FCursorEvent(FKey InKey, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, bool bInIsDown)
-        : FInputEvent(InModifierKeys)
+    FCursorEvent(EInputEventType InEventType, FKey InKey, const FModifierKeyState& InModifierKeys)
+        : FInputEvent(InEventType, InModifierKeys)
         , Key(InKey)
-        , CursorPosition(InCursorPosition)
+        , CursorPosition()
+        , ScrollDelta(0.0f)
+        , bIsScrollVertical(false)
+        , bIsDown(false)
+    {
+        CHECK(InKey.IsMouseButton());
+    }
+
+    FCursorEvent(EInputEventType InEventType, FKey InKey, const FModifierKeyState& InModifierKeys, bool bInIsDown)
+        : FInputEvent(InEventType, InModifierKeys)
+        , Key(InKey)
+        , CursorPosition()
         , ScrollDelta(0.0f)
         , bIsScrollVertical(false)
         , bIsDown(bInIsDown)
@@ -97,21 +136,10 @@ public:
         CHECK(InKey.IsMouseButton());
     }
 
-    FCursorEvent(FKey InKey, const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys)
-        : FInputEvent(InModifierKeys)
-        , Key(InKey)
-        , CursorPosition(InCursorPosition)
-        , ScrollDelta(0.0f)
-        , bIsScrollVertical(false)
-        , bIsDown(false)
-    {
-        CHECK(InKey.IsMouseButton());
-    }
-
-    FCursorEvent(const FIntVector2& InCursorPosition, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
-        : FInputEvent(InModifierKeys)
+    FCursorEvent(EInputEventType InEventType, const FModifierKeyState& InModifierKeys, float InScrollDelta, bool bInIsScrollVertical)
+        : FInputEvent(InEventType, InModifierKeys)
         , Key(EKeys::Unknown)
-        , CursorPosition(InCursorPosition)
+        , CursorPosition()
         , ScrollDelta(InScrollDelta)
         , bIsScrollVertical(bInIsScrollVertical)
         , bIsDown(false)
@@ -128,11 +156,6 @@ public:
         return CursorPosition;
     }
 
-    float GetScrollDelta() const
-    {
-        return ScrollDelta;
-    }
-
     bool IsScrollVertical() const
     {
         return bIsScrollVertical;
@@ -143,12 +166,18 @@ public:
         return bIsDown;
     }
 
+    float GetScrollDelta() const
+    {
+        return ScrollDelta;
+    }
+
 private:
     FKey        Key;
     FIntVector2 CursorPosition;
     float       ScrollDelta;
-    bool        bIsScrollVertical : 1;
-    bool        bIsDown           : 1;
+    
+    bool bIsScrollVertical : 1;
+    bool bIsDown           : 1;
 };
 
 class FKeyEvent : public FInputEvent
@@ -164,8 +193,8 @@ public:
     {
     }
 
-    FKeyEvent(FKey InKey, const FModifierKeyState& InModifierKeys, bool bInIsRepeat, bool bInIsDown)
-        : FInputEvent(InModifierKeys)
+    FKeyEvent(EInputEventType InEventType, FKey InKey, const FModifierKeyState& InModifierKeys, bool bInIsRepeat, bool bInIsDown)
+        : FInputEvent(InEventType, InModifierKeys)
         , Key(InKey)
         , Character(0)
         , GamepadIndex(static_cast<uint32>(-1))
@@ -174,8 +203,8 @@ public:
     {
     }
 
-    FKeyEvent(FKey InKey, const FModifierKeyState& InModifierKeys, uint32 InCharacter, bool bInIsRepeat, bool bInIsDown)
-        : FInputEvent(InModifierKeys)
+    FKeyEvent(EInputEventType InEventType, FKey InKey, const FModifierKeyState& InModifierKeys, uint32 InCharacter, bool bInIsRepeat, bool bInIsDown)
+        : FInputEvent(InEventType, InModifierKeys)
         , Key(InKey)
         , Character(InCharacter)
         , GamepadIndex(static_cast<uint32>(-1))
@@ -184,8 +213,8 @@ public:
     {
     }
 
-    FKeyEvent(FKey InKey, const FModifierKeyState& InModifierKeys, uint32 InCharacter, uint32 InGamepadIndex, bool bInIsRepeat, bool bInIsDown)
-        : FInputEvent(InModifierKeys)
+    FKeyEvent(EInputEventType InEventType, FKey InKey, const FModifierKeyState& InModifierKeys, uint32 InCharacter, uint32 InGamepadIndex, bool bInIsRepeat, bool bInIsDown)
+        : FInputEvent(InEventType, InModifierKeys)
         , Key(InKey)
         , Character(InCharacter)
         , GamepadIndex(InGamepadIndex)
@@ -222,6 +251,7 @@ public:
 private:
     FKey   Key;
     uint32 Character;
+    
     uint32 GamepadIndex : 30;
     uint32 bIsRepeat    : 1;
     uint32 bIsDown      : 1;
@@ -238,8 +268,8 @@ public:
     {
     }
 
-    FAnalogGamepadEvent(EAnalogSourceName::Type InAnalogSource, uint32 InGamepadIndex, const FModifierKeyState& InModifierKeys, float InAnalogValue)
-        : FInputEvent(InModifierKeys)
+    FAnalogGamepadEvent(EInputEventType InEventType, EAnalogSourceName::Type InAnalogSource, uint32 InGamepadIndex, const FModifierKeyState& InModifierKeys, float InAnalogValue)
+        : FInputEvent(InEventType, InModifierKeys)
         , AnalogSource(InAnalogSource)
         , AnalogValue(InAnalogValue)
         , GamepadIndex(InGamepadIndex)

@@ -71,21 +71,38 @@ protected:
     {
     }
 
-    virtual ~FRHIBuffer() = default;
-
 public:
-    virtual void* GetRHIBaseBuffer() { return nullptr; }
+
+    virtual void* GetRHIBaseBuffer()         { return nullptr; }
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
     // Returns a BindlessHandle if this buffer was created with a ConstantBuffer flag
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
+
     virtual void SetDebugName(const FString& InName) { }
     virtual FString GetDebugName() const { return ""; }
-    
-    uint64 GetSize() const { return Info.Size; }
-    uint32 GetStride() const { return Info.Stride; }
-    EBufferUsageFlags GetFlags() const { return Info.UsageFlags; }
-    const FRHIBufferInfo& GetInfo() const { return Info; }
+
+public:
+
+    uint64 GetSize() const
+    {
+        return Info.Size;
+    }
+
+    uint32 GetStride() const
+    {
+        return Info.Stride;
+    }
+
+    EBufferUsageFlags GetFlags() const
+    {
+        return Info.UsageFlags;
+    }
+
+    const FRHIBufferInfo& GetInfo() const
+    {
+        return Info;
+    }
 
 protected:
     FRHIBufferInfo Info;

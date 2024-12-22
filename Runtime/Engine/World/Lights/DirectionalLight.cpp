@@ -29,7 +29,7 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     {
         if (SunLight && SunLight->IsVariableFloat())
         {
-            const float NewSize = FMath::Clamp(0.0f, 1.0f, SunLight->GetFloat());
+            const float NewSize = FMath::Clamp(SunLight->GetFloat(), 0.0f, 1.0f);
             this->Size = NewSize;
         }
     }));
@@ -38,7 +38,7 @@ FDirectionalLight::FDirectionalLight(const FObjectInitializer& ObjectInitializer
     {
         if (CascadeSplitLambda && CascadeSplitLambda->IsVariableFloat())
         {
-            const float NewLambda = FMath::Clamp(0.0f, 1.0f, CascadeSplitLambda->GetFloat());
+            const float NewLambda = FMath::Clamp(CascadeSplitLambda->GetFloat(), 0.0f, 1.0f);
             this->CascadeSplitLambda = NewLambda;
         }
     }));
@@ -52,7 +52,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
 {
     // Update direction based on rotation
     {
-        FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.x, Rotation.y, Rotation.z);
+        FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation.X, Rotation.Y, Rotation.Z);
 
         FVector3 StartDirection(0.0f, -1.0f, 0.0f);
         StartDirection = RotationMatrix.TransformNormal(StartDirection);
@@ -74,7 +74,7 @@ void FDirectionalLight::Tick(FCamera& Camera)
 
     // NOTE: Need to transpose since this matrix is assumed to be used on the GPU
     FMatrix4 InverseViewProjection = Camera.GetViewProjectionInverseMatrix();
-    InverseViewProjection = InverseViewProjection.Transpose();
+    InverseViewProjection = InverseViewProjection.GetTranspose();
 
     // Calculate the center of frustum
     FVector3 FrustumCenter = FVector3(0.0f);
@@ -83,28 +83,26 @@ void FDirectionalLight::Tick(FCamera& Camera)
         FrustumCorners[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
         FrustumCenter += FrustumCorners[Corner];
     }
+
     FrustumCenter /= 8.0f;
 
     // Calculate a Shadow-matrix
     UpVector = FVector3(0.0f, 1.0f, 0.0f);
 
     {
-        FVector3 ShadowLookAt   = FrustumCenter - Direction;
-        FVector3 ShadowPosition = FrustumCenter + (Direction * -0.5f);
-
+        FVector3 ShadowLookAt           = FrustumCenter - Direction;
+        FVector3 ShadowPosition         = FrustumCenter + (Direction * -0.5f);
         FMatrix4 ShadowViewMatrix       = FMatrix4::LookAt(ShadowPosition, ShadowLookAt, UpVector);
-        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrtographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
-
+        FMatrix4 ShadowProjectionMatrix = FMatrix4::OrthographicProjection(-0.5f, 0.5f, -0.5f, 0.5f, 0.0f, 1.0f);
         ShadowMatrix = ShadowViewMatrix * ShadowProjectionMatrix;
-        ShadowMatrix = ShadowMatrix.Transpose();
     }
 
-    // Generate a bounds matrix
+    // Generate a bounds-matrix
     {
         float Radius = 0.0f;
         for (int32 Index = 0; Index < 8; ++Index)
         {
-            const float Distance = (FrustumCorners[Index] - FrustumCenter).Length();
+            const float Distance = (FrustumCorners[Index] - FrustumCenter).GetLength();
             Radius = FMath::Max(Radius, Distance);
         }
 
@@ -116,16 +114,13 @@ void FDirectionalLight::Tick(FCamera& Camera)
         // Setup ShadowView
         FVector3 Extents        = MaxExtents - MinExtents;
         FVector3 LightDirection = Direction.GetNormalized();
-        Position = FrustumCenter - LightDirection * MaxExtents.z;
+        Position = FrustumCenter - LightDirection * MaxExtents.Z;
 
-        ShadowNearPlane = -Extents.z;
-        ShadowFarPlane  =  Extents.z;
+        ShadowNearPlane = -Extents.Z;
+        ShadowFarPlane  =  Extents.Z;
 
-        ViewMatrix = FMatrix4::LookAt(Position, LightDirection, UpVector);
-        ViewMatrix = ViewMatrix.Transpose();
-
-        ProjectionMatrix = FMatrix4::OrtographicProjection(MinExtents.x, MaxExtents.x, MinExtents.y, MaxExtents.y, ShadowNearPlane, ShadowFarPlane);
-        // ProjectionMatrix = ProjectionMatrix.Transpose();
+        ViewMatrix       = FMatrix4::LookAt(Position, LightDirection, UpVector);
+        ProjectionMatrix = FMatrix4::OrthographicProjection(MinExtents.X, MaxExtents.X, MinExtents.Y, MaxExtents.Y, ShadowNearPlane, ShadowFarPlane);
     }
 }
 

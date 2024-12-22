@@ -8,7 +8,6 @@ static TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
     "The maximum size for a resource that uses a shared staging-buffer (MB)",
     8);
 
-
 FVulkanUploadBuffer::FVulkanUploadBuffer(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , Buffer(VK_NULL_HANDLE)

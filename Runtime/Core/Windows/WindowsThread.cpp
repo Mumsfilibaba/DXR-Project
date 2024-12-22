@@ -1,6 +1,5 @@
-#include "WindowsThread.h"
+#include "Core/Windows/WindowsThread.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Platform/PlatformTLS.h"
 
 FGenericThread* FWindowsThread::Create(FRunnable* Runnable, const CHAR* InThreadName, bool bSuspended)
@@ -102,7 +101,7 @@ DWORD WINAPI FWindowsThread::ThreadRoutine(LPVOID ThreadParameter)
         if (!CurrentThread->ThreadName.IsEmpty())
         {
             FStringWide WideName = CharToWide(CurrentThread->ThreadName);
-            ::SetThreadDescription(CurrentThread->Thread, WideName.GetCString());
+            ::SetThreadDescription(CurrentThread->Thread, *WideName);
         }
 
         if (FRunnable* Runnable = CurrentThread->Runnable)

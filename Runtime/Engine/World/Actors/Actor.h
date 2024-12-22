@@ -7,6 +7,9 @@
 #include "Core/Time/Timespan.h"
 #include "Engine/Core/Object.h"
 
+class FWorld;
+class FComponent;
+
 class ENGINE_API FActorTransform
 {
 public:
@@ -41,37 +44,30 @@ public:
         return Rotation;
     }
 
-    const FMatrix4& GetMatrix() const
+    const FMatrix4& GetTransformMatrix() const
     {
-        return Matrix;
+        return TransformMatrix;
     }
 
-    FMatrix4 GetMatrixInverse() const
+    FMatrix4 GetTransformMatrixInverse() const
     {
-        FMatrix4 MatrixInverse = Matrix.Invert();
-        return MatrixInverse.Transpose();
+        FMatrix4 MatrixInverse = TransformMatrix.GetInverse();
+        return MatrixInverse;
     }
 
     FMatrix3x4 GetTinyMatrix() const
     {
-        return FMatrix3x4(
-            Matrix.m00, Matrix.m01, Matrix.m02, Matrix.m03,
-            Matrix.m10, Matrix.m11, Matrix.m12, Matrix.m13,
-            Matrix.m20, Matrix.m21, Matrix.m22, Matrix.m23);
+        return FMatrix3x4(TransformMatrix);
     }
 
 private:
     void CalculateMatrix();
 
-    FMatrix4 Matrix;
     FVector3 Translation;
     FVector3 Scale;
     FVector3 Rotation;
+    FMatrix4 TransformMatrix;
 };
-
-
-class FWorld;
-class FComponent;
 
 class ENGINE_API FActor : public FObject
 {
@@ -82,38 +78,43 @@ public:
     ~FActor();
     
     /**
-     * @brief - Start actor, called in the beginning of the run, perform initialization here
+     * @brief Start actor, called in the beginning of the run, perform initialization here
      */
     virtual void Start();
 
     /**
-     * @brief           - Tick component, should be called once every frame
-     * @param DeltaTime - Time since the last call to tick in seconds
+     * @brief Tick component, should be called once every frame
+     * 
+     * @param DeltaTime Time since the last call to tick in seconds
      */
     virtual void Tick(float DeltaTime);
 
     /**
-     * @brief             - Add a new component to the actor 
-     * @param InComponent - Component to add to the Actor
+     * @brief Add a new component to the actor 
+     * 
+     * @param InComponent Component to add to the Actor
      */
     void AddComponent(FComponent* InComponent);
 
     /**
-     * @brief        - Set name of the actor 
-     * @param InName - Name of the actor
+     * @brief Set name of the actor 
+     * 
+     * @param InName Name of the actor
      */
     void SetName(const FString& InName);
 
     /**
-     * @brief                - Check if the actor has a component of the component-class 
-     * @param ComponentClass - ClassObject to of the component to retrieve 
-     * @return               - Returns true if the actor contains a component of a certain type
+     * @brief Check if the actor has a component of the component-class 
+     * 
+     * @param ComponentClass ClassObject to of the component to retrieve 
+     * @return Returns true if the actor contains a component of a certain type
      */
     bool HasComponentOfClass(class FObjectClass* ComponentClass) const;
 
     /**
-     * @brief  - Check if the actor has a component of the component-class
-     * @return - Returns true if the actor contains a component of a certain type
+     * @brief Check if the actor has a component of the component-class
+     * 
+     * @return Returns true if the actor contains a component of a certain type
      */
     template<typename ComponentType>
     inline bool HasComponentOfType() const
@@ -122,15 +123,17 @@ public:
     }
 
     /**
-     * @brief                - Retrieve a component from the actor of the component-class 
-     * @param ComponentClass - ClassObject to of the component to retrieve
-     * @return               - Returns a pointer to the requested component, or nullptr if no component of the type exist
+     * @brief Retrieve a component from the actor of the component-class 
+     * 
+     * @param ComponentClass ClassObject to of the component to retrieve
+     * @return Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
     FComponent* GetComponentOfClass(class FObjectClass* ComponentClass) const;
 
     /**
-     * @brief  - Retrieve a component from the actor of the component-class
-     * @return - Returns a pointer to the requested component, or nullptr if no component of the type exist
+     * @brief Retrieve a component from the actor of the component-class
+     * 
+     * @return Returns a pointer to the requested component, or nullptr if no component of the type exist
      */
     template <typename ComponentType>
     inline ComponentType* GetComponentOfType() const
@@ -139,7 +142,8 @@ public:
     }
 
     /**
-     * @brief             - Set the transform of the actor
+     * @brief Set the transform of the actor
+     * 
      * @param InTransform - New transform of the actor
      */
     void SetTransform(const FActorTransform& InTransform)
@@ -148,8 +152,9 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the name of the actor
-     * @return - Returns the name of the actor
+     * @brief Retrieve the name of the actor
+     * 
+     * @return Returns the name of the actor
      */
     const FString& GetName() const
     {
@@ -157,8 +162,9 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the World that owns the actor
-     * @return - Returns the World that owns the actor
+     * @brief Retrieve the World that owns the actor
+     * 
+     * @return Returns the World that owns the actor
      */
     FWorld* GetWorld() const
     {
@@ -171,8 +177,9 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the transform of the actor
-     * @return - Returns the transform of the actor
+     * @brief Retrieve the transform of the actor
+     * 
+     * @return Returns the transform of the actor
      */
     FActorTransform& GetTransform()
     {
@@ -180,8 +187,9 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the transform of the actor
-     * @return - Returns the transform of the actor
+     * @brief Retrieve the transform of the actor
+     * 
+     * @return Returns the transform of the actor
      */
     const FActorTransform& GetTransform() const
     {
@@ -189,8 +197,9 @@ public:
     }
 
     /**
-     * @brief  - Check if Start should be called on the component
-     * @return - Returns true if the component's Start-method should be called
+     * @brief Check if Start should be called on the component
+     * 
+     * @return Returns true if the component's Start-method should be called
      */
     bool IsStartable() const
     {
@@ -198,8 +207,9 @@ public:
     }
 
     /**
-     * @brief  - Check if Tick should be called on the component
-     * @return - Returns true if the component's Tick-method should be called
+     * @brief Check if Tick should be called on the component
+     * 
+     * @return Returns true if the component's Tick-method should be called
      */
     bool IsTickable() const
     {
@@ -217,12 +227,11 @@ public:
     }
 
 private:
-    FString Name;
-    FWorld* World;
+    FString             Name;
+    FWorld*             World;
+    FActorTransform     Transform;
+    TArray<FComponent*> Components;
 
     bool bIsStartable : 1;
     bool bIsTickable  : 1;
-
-    FActorTransform     Transform;
-    TArray<FComponent*> Components;
 };

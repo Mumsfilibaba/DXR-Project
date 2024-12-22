@@ -1,10 +1,10 @@
 #if PLATFORM_MACOS
-#include "MacInputMapper.h"
+#include "CoreApplication/Mac/MacInputMapper.h"
 
-TStaticArray<EKeyboardKeyName::Type, FMacInputMapper::NumKeys>         FMacInputMapper::KeyCodeFromScanCodeTable;
+TStaticArray<EKeyboardKeyName::Type, FMacInputMapper::NumKeys> FMacInputMapper::KeyCodeFromScanCodeTable;
 TStaticArray<uint16, FMacInputMapper::NumKeys>                 FMacInputMapper::ScanCodeFromKeyCodeTable;
-TStaticArray<EMouseButtonName::Type, EMouseButtonName::Count> FMacInputMapper::ButtonFromButtonIndex;
-TStaticArray<uint8, EMouseButtonName::Count>                  FMacInputMapper::ButtonIndexFromButton;
+TStaticArray<EMouseButtonName::Type, EMouseButtonName::Count>  FMacInputMapper::ButtonFromButtonIndex;
+TStaticArray<uint8, EMouseButtonName::Count>                   FMacInputMapper::ButtonIndexFromButton;
 
 void FMacInputMapper::Initialize()
 {
@@ -137,6 +137,8 @@ void FMacInputMapper::Initialize()
     ButtonFromButtonIndex[0] = EMouseButtonName::Left;
     ButtonFromButtonIndex[1] = EMouseButtonName::Right;
     ButtonFromButtonIndex[2] = EMouseButtonName::Middle;
+    ButtonFromButtonIndex[3] = EMouseButtonName::Thumb1;
+    ButtonFromButtonIndex[4] = EMouseButtonName::Thumb2;
 
     for (uint8 Index = 0; Index < EMouseButtonName::Count; ++Index)
     {

@@ -22,7 +22,7 @@ public:
     void SetDebugName(const FString& Name)
     {
         CHECK(Fence != nullptr);
-        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), Name.GetCString());
+        Fence->SetPrivateData(WKPDID_D3DDebugObjectName, Name.Length(), *Name);
     }
 
     ID3D12Fence* GetD3D12Fence() const

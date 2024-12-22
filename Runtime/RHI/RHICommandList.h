@@ -87,10 +87,10 @@ public:
         return NewCommand;
     }
 
-    FORCEINLINE TCHAR* AllocateString(const TCHAR* String) noexcept
+    FORCEINLINE CHAR_T* AllocateString(const CHAR_T* String) noexcept
     {
         int32  Length    = FCString::Strlen(String);
-        TCHAR* NewString = reinterpret_cast<TCHAR*>(Allocate(sizeof(TCHAR) * Length, alignof(TCHAR)));
+        CHAR_T* NewString = reinterpret_cast<CHAR_T*>(Allocate(sizeof(CHAR_T) * Length, alignof(CHAR_T)));
         return FCString::Strcpy(NewString, String);
     }
 
@@ -371,7 +371,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Texture->GetDebugName().GetCString(),  ToString(BeforeState));
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", *Texture->GetDebugName(),  ToString(BeforeState));
         }
     }
 
@@ -383,7 +383,7 @@ public:
         }
         else
         {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", Buffer->GetDebugName().GetCString(),  ToString(BeforeState));
+            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", *Buffer->GetDebugName(),  ToString(BeforeState));
         }
     }
 
@@ -444,7 +444,7 @@ public:
 
     FORCEINLINE void InsertMarker(const FStringView& Marker) noexcept
     {
-        FStringView NewMarker = AllocateString(Marker.GetCString());
+        FStringView NewMarker = AllocateString(*Marker);
         EmplaceCommand<FRHICommandInsertMarker>(NewMarker);
     }
     
@@ -481,6 +481,8 @@ void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
 
 class RHI_API FRHIThread : public FRunnable, FNonCopyable
 {
+    typedef TQueue<FRHICommandList*, EQueueType::MPSC> FRHIThreadTaskQueue;
+    
 public:
     FRHIThread();
     ~FRHIThread();
@@ -494,23 +496,23 @@ public:
     void WaitForOutstandingTasks();
 
 private:
-    FGenericThread* Thread;
-    FAtomicInt64    NumSubmittedTasks;
-    FAtomicInt64    NumCompletedTasks;
-    bool            bIsRunning;
-    TQueue<FRHICommandList*, EQueueType::MPSC> Tasks;
+    FGenericThread*     Thread;
+    FRHIThreadTaskQueue Tasks;
+    FAtomicInt64        NumSubmittedTasks;
+    FAtomicInt64        NumCompletedTasks;
+    bool                bIsRunning;
 };
 
 class RHI_API FRHICommandExecutor : FNonCopyable
 {
 public:
     FRHICommandExecutor();
-    ~FRHICommandExecutor() = default;
+    ~FRHICommandExecutor();
 
     bool Initialize();
     void Release();
     void Tick();
-    void WaitForOutstandingTasks();
+    void WaitForCommands();
     void WaitForGPU();
     void ExecuteCommandList(class FRHICommandList& CmdList);
 

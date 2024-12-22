@@ -1,4 +1,3 @@
-#include "Engine.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/CoreDelegates.h"
@@ -9,16 +8,20 @@
 #include "Application/Widgets/Window.h"
 #include "Application/Widgets/Viewport.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "Engine/Engine.h"
 #include "Engine/Assets/AssetManager.h"
-#include "Engine/Assets/AssetLoaders/MeshImporter.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/Widgets/ConsoleWidget.h"
 #include "Engine/Widgets/FrameProfilerWidget.h"
-#include "Engine/Widgets/InspectorWidget.h"
+#include "Engine/Widgets/SceneInspectorWidget.h"
 #include "RHI/RHI.h"
 #include "RendererCore/TextureFactory.h"
 #include "RendererCore/Interfaces/IRendererModule.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
+
+#if ENGINE_DEBUG_INPUT
+    #include "Engine/Debug/InputDebugInputHandler.h"
+#endif
 
 ENGINE_API FEngine* GEngine = nullptr;
 
@@ -72,7 +75,6 @@ static TAutoConsoleVariable<int32> CVarViewportHeight(
     1080,
     EConsoleVariableFlags::Default);
 
-
 FEngine::FEngine()
     : EngineWindow(nullptr)
     , EngineViewportWidget(nullptr)
@@ -93,14 +95,16 @@ FEngine::~FEngine()
 bool FEngine::CreateEngineWindow()
 {
     FWindow::FInitializer WindowInitializer;
-    WindowInitializer.Title  = "Sandbox";
-    WindowInitializer.Size.x = CVarViewportWidth.GetValue();
-    WindowInitializer.Size.y = CVarViewportHeight.GetValue();
-
+    WindowInitializer.Title      = "Sandbox";
+    WindowInitializer.Size.X     = CVarViewportWidth.GetValue();
+    WindowInitializer.Size.Y     = CVarViewportHeight.GetValue();
+    WindowInitializer.StyleFlags = EWindowStyleFlags::Default;
+    
     EngineWindow = CreateWidget<FWindow>(WindowInitializer);
 
     // Initialize and show the game-window
     FApplicationInterface::Get().CreateWindow(EngineWindow);
+    return true;
 }
 
 bool FEngine::CreateEngineViewport()
@@ -132,7 +136,7 @@ bool FEngine::CreateSceneViewport()
     }
 
     // Create a SceneViewport
-    SceneViewport = MakeShared<FSceneViewport>(EngineViewportWidget);
+    SceneViewport = MakeSharedPtr<FSceneViewport>(EngineViewportWidget);
     if (!SceneViewport->InitializeRHI())
     {
         return false;
@@ -146,7 +150,6 @@ bool FEngine::CreateSceneViewport()
 
     // Make sure we have focus on the new viewport
     FApplicationInterface::Get().SetFocusWidget(EngineViewportWidget);
-
     return true;
 }
 
@@ -155,12 +158,12 @@ void FEngine::OnEngineWindowClosed()
     RequestEngineExit("Window Closed");
 }
 
-void FEngine::OnEngineWindowMoved(const FIntVector2& NewScreenPosition)
+void FEngine::OnEngineWindowMoved(const FIntVector2& /* NewScreenPosition */)
 {
     // LOG_INFO("Window Moved x=%d y=%d", NewScreenPosition.x, NewScreenPosition.y);
 }
 
-void FEngine::OnEngineWindowResized(const FIntVector2& NewScreenSize)
+void FEngine::OnEngineWindowResized(const FIntVector2& /* NewScreenSize */)
 {
     // LOG_INFO("Window Resized x=%d y=%d", NewScreenSize.x, NewScreenSize.y);
 }
@@ -182,10 +185,13 @@ bool FEngine::Init()
         return false;
     }
 
-    if (!FMeshImporter::Initialize())
+#if ENGINE_DEBUG_INPUT
+    InputDebugInputHandler = MakeSharedPtr<FInputDebugInputHandler>();
+    if (FApplicationInterface::IsInitialized() && InputDebugInputHandler)
     {
-        return false;
+        FApplicationInterface::Get().RegisterInputHandler(InputDebugInputHandler);
     }
+#endif
 
     // Create standard textures
     uint8 Pixels[4] = { 255, 255, 255, 255 };
@@ -219,23 +225,23 @@ bool FEngine::Init()
     SamplerInfo.AddressU       = ESamplerMode::Wrap;
     SamplerInfo.AddressV       = ESamplerMode::Wrap;
     SamplerInfo.AddressW       = ESamplerMode::Wrap;
-    SamplerInfo.ComparisonFunc = EComparisonFunc::Never;
+    SamplerInfo.ComparisonFunc = EComparisonFunc::Always;
     SamplerInfo.Filter         = ESamplerFilter::Anistrotopic;
     SamplerInfo.MaxAnisotropy  = 16;
     SamplerInfo.MaxLOD         = TNumericLimits<float>::Max();
-    SamplerInfo.MinLOD         = TNumericLimits<float>::Lowest();
+    SamplerInfo.MinLOD         = 0.0f;
     SamplerInfo.MipLODBias     = 0.0f;
 
     BaseMaterialSampler = RHICreateSamplerState(SamplerInfo);
 
     // Base material
     FMaterialInfo MaterialDesc;
-    MaterialDesc.AmbientOcclusion = 1.0f;
+    MaterialDesc.Albedo           = FFloatColor::White;
     MaterialDesc.Metallic         = 0.0f;
+    MaterialDesc.AmbientOcclusion = 1.0f;
     MaterialDesc.Roughness        = 1.0f;
-    MaterialDesc.Albedo           = FVector3(1.0f);
 
-    BaseMaterial = MakeShared<FMaterial>(MaterialDesc);
+    BaseMaterial = MakeSharedPtr<FMaterial>(MaterialDesc);
     BaseMaterial->AlbedoMap    = GEngine->BaseTexture;
     BaseMaterial->NormalMap    = GEngine->BaseNormal;
     BaseMaterial->RoughnessMap = GEngine->BaseTexture;
@@ -255,7 +261,7 @@ bool FEngine::Init()
     }
 
     // Load Game-Module
-    const CHAR* GameModuleName = FProjectManager::Get().GetProjectModuleName().GetCString();
+    const char* GameModuleName = *FProjectManager::Get().GetProjectModuleName();
     GameModule = FModuleManager::Get().LoadModule<FGameModule>(GameModuleName);
     if (!GameModule)
     {
@@ -283,9 +289,9 @@ bool FEngine::Init()
     {
         IImguiPlugin::Get().SetMainViewport(EngineViewportWidget);
 
-        ProfilerWidget  = MakeShared<FFrameProfilerWidget>();
-        ConsoleWidget   = MakeShared<FConsoleWidget>();
-        InspectorWidget = MakeShared<FInspectorWidget>();
+        ProfilerWidget  = MakeSharedPtr<FFrameProfilerWidget>();
+        ConsoleWidget   = MakeSharedPtr<FConsoleWidget>();
+        InspectorWidget = MakeSharedPtr<FSceneInspectorWidget>();
     }
 
     return true;
@@ -333,6 +339,14 @@ void FEngine::Release()
         IImguiPlugin::Get().SetMainViewport(nullptr);
     }
 
+#if ENGINE_DEBUG_INPUT
+    if (FApplicationInterface::IsInitialized() && InputDebugInputHandler)
+    {
+        FApplicationInterface::Get().UnregisterInputHandler(InputDebugInputHandler);
+        InputDebugInputHandler.Reset();
+    }
+#endif
+
     // Destroy the World
     if (World)
     {
@@ -352,14 +366,13 @@ void FEngine::Release()
     {
         GameModule->Release();
 
-        const CHAR* GameModuleName = FProjectManager::Get().GetProjectModuleName().GetCString();
+        const CHAR* GameModuleName = *FProjectManager::Get().GetProjectModuleName();
         FModuleManager::Get().UnloadModule(GameModuleName);
         GameModule = nullptr;
     }
 
+    // Release all assets
     FAssetManager::Release();
-
-    FMeshImporter::Release();
 
     // Release RHI resources
     SceneViewport->ReleaseRHI();

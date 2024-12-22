@@ -1,6 +1,5 @@
 #pragma once
-#include "Windows.h"
-#include "Core/Core.h"
+#include "Core/Windows/Windows.h"
 #include "Core/Containers/String.h"
 #include "Core/Generic/GenericPlatformMisc.h"
 

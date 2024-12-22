@@ -17,15 +17,21 @@ struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 class VULKANRHI_API FVulkanRHI : public FRHI
 {
 public:
+
+    static FVulkanRHI* GetRHI()
+    {
+        CHECK(GVulkanRHI != nullptr);
+        return GVulkanRHI;
+    }
+
+public:
+
     FVulkanRHI();
     ~FVulkanRHI();
 
-    static FVulkanRHI* GetRHI() 
-    {
-        CHECK(GVulkanRHI != nullptr);
-        return GVulkanRHI; 
-    }
+public:
 
+    // FRHI Interface
     virtual bool Initialize() override final;
 
     virtual void RHIBeginFrame() override final;
@@ -57,7 +63,7 @@ public:
     virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final;
     virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final;
     virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final;
-    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer) override final;
+    virtual FRHIVertexLayout* RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final;
     virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final;
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
@@ -67,40 +73,14 @@ public:
     virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) override final;
     virtual FString RHIGetAdapterName() const override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final
-    {
-        return GraphicsCommandContext;
-    }
+    virtual IRHICommandContext* RHIObtainCommandContext() override final;
+    virtual void* RHIGetAdapter() override final;
+    virtual void* RHIGetDevice() override final;
+    virtual void* RHIGetDirectCommandQueue() override final;
+    virtual void* RHIGetComputeCommandQueue() override final;
+    virtual void* RHIGetCopyCommandQueue() override final;
 
-    virtual void* RHIGetAdapter() override final 
-    {
-        CHECK(PhysicalDevice != nullptr);
-        return reinterpret_cast<void*>(PhysicalDevice->GetVkPhysicalDevice());
-    }
-
-    virtual void* RHIGetDevice() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetVkDevice());
-    }
-
-    virtual void* RHIGetDirectCommandQueue() override final
-    {
-        CHECK(GraphicsQueue != nullptr);
-        return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
-    }
-
-    virtual void* RHIGetComputeCommandQueue() override final
-    {
-        // TODO: Finish
-        return nullptr;
-    }
-
-    virtual void* RHIGetCopyCommandQueue() override final
-    {
-        // TODO: Finish
-        return nullptr;
-    }
+public:
 
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)
@@ -133,19 +113,19 @@ public:
     }
 
 private:
-    FVulkanInstance        Instance;
-    FVulkanPhysicalDevice* PhysicalDevice;
-    FVulkanDevice*         Device;
-    FVulkanQueue*          GraphicsQueue;
-    FVulkanCommandContext* GraphicsCommandContext;
+    typedef TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> FSamplerStateMap;
+    typedef TQueue<FVulkanCommandPayload*, EQueueType::MPSC>            FCommandPayloadQueue;
 
+    FVulkanInstance               Instance;
+    FVulkanPhysicalDevice*        PhysicalDevice;
+    FVulkanDevice*                Device;
+    FVulkanQueue*                 GraphicsQueue;
+    FVulkanCommandContext*        GraphicsCommandContext;
     TArray<FVulkanDeferredObject> DeletionQueue;
     FCriticalSection              DeletionQueueCS;
-
-    TMap<FRHISamplerStateInfo, TSharedRef<FVulkanSamplerState>> SamplerStateMap;
-    FCriticalSection SamplerStateMapCS;
-
-    TQueue<FVulkanCommandPayload*, EQueueType::MPSC> PendingSubmissions;
+    FSamplerStateMap              SamplerStateMap;
+    FCriticalSection              SamplerStateMapCS;
+    FCommandPayloadQueue          PendingSubmissions;
 
     static FVulkanRHI* GVulkanRHI;
 };

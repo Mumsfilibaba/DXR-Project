@@ -1,20 +1,19 @@
-#include "MacPlatformStackTrace.h"
+#include "Core/Mac/MacPlatformStackTrace.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-
 #include <execinfo.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <mach/mach.h>
 
-#define LOAD_FUNCTION(Function, LibraryHandle)                                                        \
-    do                                                                                                \
-    {                                                                                                 \
+#define LOAD_FUNCTION(Function, LibraryHandle) \
+    do \
+    { \
         Function = FPlatformLibrary::LoadSymbol<decltype(Function)>(#Function, LibraryHandle); \
-        if (!Function)                                                                                \
-        {                                                                                             \
-            LOG_ERROR("Failed to load '%s'", #Function);                                              \
-            return false;                                                                             \
-        }                                                                                             \
+        if (!Function) \
+        { \
+            LOG_ERROR("Failed to load '%s'", #Function); \
+            return false;  \
+        } \
     } while(false)
 
 // Based on https://github.com/mountainstorm/CoreSymbolication
@@ -48,13 +47,13 @@ extern "C"
     
     /* Utility functions */
 
-    typedef Boolean (*PFN_CSIsNull)(CSTypeRef CS);
-    typedef void    (*PFN_CSRelease)(CSTypeRef CS);
+    typedef Boolean(*PFN_CSIsNull)(CSTypeRef CS);
+    typedef void(*PFN_CSRelease)(CSTypeRef CS);
 
     /* Symbolicator functions */
 
-    typedef CSSymbolicatorRef (*PFN_CSSymbolicatorCreateWithPid)(pid_t pid);
-    typedef CSSourceInfoRef   (*PFN_CSSymbolicatorGetSourceInfoWithAddressAtTime)(CSSymbolicatorRef Symbolicator, vm_address_t Address, uint64_t Time);
+    typedef CSSymbolicatorRef(*PFN_CSSymbolicatorCreateWithPid)(pid_t pid);
+    typedef CSSourceInfoRef(*PFN_CSSymbolicatorGetSourceInfoWithAddressAtTime)(CSSymbolicatorRef Symbolicator, vm_address_t Address, uint64_t Time);
     
     /* Symbol functions */
 
@@ -63,10 +62,10 @@ extern "C"
 
     /* Source functions */
 
-    typedef const char*      (*PFN_CSSourceInfoGetPath)(CSSourceInfoRef Info);
-    typedef int              (*PFN_CSSourceInfoGetLineNumber)(CSSourceInfoRef Info);
-    typedef CSSymbolRef      (*PFN_CSSourceInfoGetSymbol)(CSSourceInfoRef Info);
-    typedef CSSymbolOwnerRef (*PFN_CSSourceInfoGetSymbolOwner)(CSSourceInfoRef Info);
+    typedef const char*(*PFN_CSSourceInfoGetPath)(CSSourceInfoRef Info);
+    typedef int(*PFN_CSSourceInfoGetLineNumber)(CSSourceInfoRef Info);
+    typedef CSSymbolRef(*PFN_CSSourceInfoGetSymbol)(CSSourceInfoRef Info);
+    typedef CSSymbolOwnerRef(*PFN_CSSourceInfoGetSymbolOwner)(CSSourceInfoRef Info);
 }
 
 // Keeps track if the symbolification helpers has been initialized
@@ -75,19 +74,19 @@ static bool GIsInitialized = false;
 // Handle to the dynamic library
 static void* GCoreSymbolicationLibrary = nullptr;
 
-static PFN_CSIsNull                                     CSIsNull                                     = nullptr;
-static PFN_CSRelease                                    CSRelease                                    = nullptr;
+static PFN_CSIsNull  CSIsNull  = nullptr;
+static PFN_CSRelease CSRelease = nullptr;
 
 static PFN_CSSymbolicatorCreateWithPid                  CSSymbolicatorCreateWithPid                  = nullptr;
 static PFN_CSSymbolicatorGetSourceInfoWithAddressAtTime CSSymbolicatorGetSourceInfoWithAddressAtTime = nullptr;
 
-static PFN_CSSymbolGetName                              CSSymbolGetName                              = nullptr;
-static PFN_CSSymbolOwnerGetName                         CSSymbolOwnerGetName                         = nullptr;
+static PFN_CSSymbolGetName      CSSymbolGetName      = nullptr;
+static PFN_CSSymbolOwnerGetName CSSymbolOwnerGetName = nullptr;
 
-static PFN_CSSourceInfoGetPath                          CSSourceInfoGetPath                          = nullptr;
-static PFN_CSSourceInfoGetLineNumber                    CSSourceInfoGetLineNumber                    = nullptr;
-static PFN_CSSourceInfoGetSymbol                        CSSourceInfoGetSymbol                        = nullptr;
-static PFN_CSSourceInfoGetSymbolOwner                   CSSourceInfoGetSymbolOwner                   = nullptr;
+static PFN_CSSourceInfoGetPath        CSSourceInfoGetPath        = nullptr;
+static PFN_CSSourceInfoGetLineNumber  CSSourceInfoGetLineNumber  = nullptr;
+static PFN_CSSourceInfoGetSymbol      CSSourceInfoGetSymbol      = nullptr;
+static PFN_CSSourceInfoGetSymbolOwner CSSourceInfoGetSymbolOwner = nullptr;
 
 bool FMacPlatformStackTrace::InitializeSymbols()
 {
@@ -119,19 +118,19 @@ void FMacPlatformStackTrace::ReleaseSymbols()
 {
     if (GIsInitialized)
     {
-        CSIsNull                                     = nullptr;
-        CSRelease                                    = nullptr;
+        CSIsNull  = nullptr;
+        CSRelease = nullptr;
 
         CSSymbolicatorCreateWithPid                  = nullptr;
         CSSymbolicatorGetSourceInfoWithAddressAtTime = nullptr;
 
-        CSSymbolGetName                              = nullptr;
-        CSSymbolOwnerGetName                         = nullptr;
+        CSSymbolGetName      = nullptr;
+        CSSymbolOwnerGetName = nullptr;
 
-        CSSourceInfoGetPath                          = nullptr;
-        CSSourceInfoGetLineNumber                    = nullptr;
-        CSSourceInfoGetSymbol                        = nullptr;
-        CSSourceInfoGetSymbolOwner                   = nullptr;
+        CSSourceInfoGetPath        = nullptr;
+        CSSourceInfoGetLineNumber  = nullptr;
+        CSSourceInfoGetSymbol      = nullptr;
+        CSSourceInfoGetSymbolOwner = nullptr;
 
         FPlatformLibrary::FreeDynamicLib(GCoreSymbolicationLibrary);
         GCoreSymbolicationLibrary = nullptr;

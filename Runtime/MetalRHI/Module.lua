@@ -1,22 +1,21 @@
-include "../../BuildScripts/Scripts/Build_Module.lua"
+include "../../BuildScripts/Scripts/build_module.lua"
 
----------------------------------------------------------------------------------------------------
 -- MetalRHI Module
 
-if IsPlatformMac() then
-    local MetalRHI = FModuleBuildRules("MetalRHI")
-    MetalRHI.bRuntimeLinking = true
+if is_platform_mac() then
+    local metal_rhi = module_build_rules("MetalRHI")
+    metal_rhi.runtime_linking = true
     
-    MetalRHI.AddModuleDependencies( 
+    metal_rhi.add_module_dependencies
     {
         "Core",
         "CoreApplication",
         "RHI",
-    })
+    }
 
-    MetalRHI.AddFrameWorks(
+    metal_rhi.add_frameworks
     {
         "Metal",
-        "QuartzCore"
-    })
+        "QuartzCore",
+    }
 end

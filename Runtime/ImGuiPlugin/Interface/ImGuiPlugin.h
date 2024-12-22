@@ -57,8 +57,8 @@ struct IImguiPlugin : public FModuleInterface
 
     virtual ~IImguiPlugin() = default;
 
-    virtual bool InitRenderer() = 0;
-    virtual void ReleaseRenderer() = 0;
+    virtual bool InitializeRHI() = 0;
+    virtual void ReleaseRHI() = 0;
 
     virtual void Tick(float Delta) = 0;
     virtual void Draw(FRHICommandList& CommandList) = 0;

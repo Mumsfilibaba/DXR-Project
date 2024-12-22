@@ -1,5 +1,5 @@
-#include "MacLibrary.h"
-#include "MacPlatformMisc.h"
+#include "Core/Mac/MacLibrary.h"
+#include "Core/Mac/MacPlatformMisc.h"
 
 // Lazy mode resolves symbols when they are called for the first time, disable to load everything at loadtime
 #define ENABLE_LIBRARY_LAZY_MODE (1)

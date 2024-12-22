@@ -1,5 +1,6 @@
 #pragma once
 #include "Core/Math/Vector3.h"
+#include "Core/Math/Color.h"
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -45,12 +46,12 @@ namespace ImGuiExtensions
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.1f, 0.15f, 1.0f));
         if (ImGui::Button("X", ButtonSize))
         {
-            OutValue.x = ResetValue;
+            OutValue.X = ResetValue;
         }
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
-        ImGui::DragFloat("##X", &OutValue.x, Speed);
+        ImGui::DragFloat("##X", &OutValue.X, Speed);
         ImGui::PopItemWidth();
         ImGui::SameLine();
 
@@ -60,12 +61,12 @@ namespace ImGuiExtensions
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.2f, 0.7f, 0.2f, 1.0f));
         if (ImGui::Button("Y", ButtonSize))
         {
-            OutValue.y = ResetValue;
+            OutValue.Y = ResetValue;
         }
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
-        ImGui::DragFloat("##Y", &OutValue.y, Speed);
+        ImGui::DragFloat("##Y", &OutValue.Y, Speed);
         ImGui::PopItemWidth();
         ImGui::SameLine();
 
@@ -75,12 +76,12 @@ namespace ImGuiExtensions
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.25f, 0.8f, 1.0f));
         if (ImGui::Button("Z", ButtonSize))
         {
-            OutValue.z = ResetValue;
+            OutValue.Z = ResetValue;
         }
         ImGui::PopStyleColor(3);
 
         ImGui::SameLine();
-        ImGui::DragFloat("##Z", &OutValue.z, Speed);
+        ImGui::DragFloat("##Z", &OutValue.Z, Speed);
         ImGui::PopItemWidth();
 
         // Reset
@@ -92,7 +93,12 @@ namespace ImGuiExtensions
 
     FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FVector3& OutColor, ImGuiColorEditFlags Flags = 0)
     {
-        return ImGui::ColorEdit3(Label, OutColor.Data(), Flags);
+        return ImGui::ColorEdit3(Label, OutColor.XYZ, Flags);
+    }
+    
+    FORCEINLINE bool DrawColorEdit3(const CHAR* Label, FFloatColor& OutColor, ImGuiColorEditFlags Flags = 0)
+    {
+        return ImGui::ColorEdit3(Label, OutColor.RGBA, Flags);
     }
 
     FORCEINLINE bool IsMultiViewportEnabled()

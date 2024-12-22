@@ -18,6 +18,8 @@ struct FVertexConstantBuffer
     float ViewProjectionMatrix[4][4];
 };
 
+FImGuiRenderer* GImGuiRenderer = nullptr;
+
 FImGuiRenderer::FImGuiRenderer()
     : RenderedImages()
     , FontTexture(nullptr)
@@ -29,24 +31,50 @@ FImGuiRenderer::FImGuiRenderer()
     , LinearSampler(nullptr)
     , PointSampler(nullptr)
 {
+    CHECK(GImGuiRenderer == nullptr);
+    GImGuiRenderer = this;
 }
 
 FImGuiRenderer::~FImGuiRenderer()
 {
-    ImGuiIO& UIState = ImGui::GetIO();
-    UIState.BackendRendererUserData = nullptr;
+    CHECK(GImGuiRenderer == this);
+    GImGuiRenderer = nullptr;
 }
 
-bool FImGuiRenderer::Initialize()
+bool FImGuiRenderer::InitializeRHI()
 {
     ImGuiPlatformIO& PlatformState = ImGui::GetPlatformIO();
     if (ImGuiExtensions::IsMultiViewportEnabled())
     {
-        PlatformState.Renderer_CreateWindow  = &FImGuiRenderer::StaticCreateWindow;
-        PlatformState.Renderer_DestroyWindow = &FImGuiRenderer::StaticDestroyWindow;
-        PlatformState.Renderer_SetWindowSize = &FImGuiRenderer::StaticSetWindowSize;
-        PlatformState.Renderer_RenderWindow  = &FImGuiRenderer::StaticRenderWindow;
-        PlatformState.Renderer_SwapBuffers   = &FImGuiRenderer::StaticSwapBuffers;
+        PlatformState.Renderer_CreateWindow = [](ImGuiViewport* Viewport)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnCreateWindow(Viewport);
+        };
+
+        PlatformState.Renderer_DestroyWindow = [](ImGuiViewport* Viewport)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnDestroyWindow(Viewport);
+        };
+
+        PlatformState.Renderer_SetWindowSize = [](ImGuiViewport* Viewport, ImVec2 Size)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnSetWindowSize(Viewport, Size);
+        };
+
+        PlatformState.Renderer_RenderWindow = [](ImGuiViewport* Viewport, void* CommandList)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnRenderWindow(Viewport, CommandList);
+        };
+
+        PlatformState.Renderer_SwapBuffers = [](ImGuiViewport* Viewport, void* CommandList)
+        {
+            CHECK(GImGuiRenderer != nullptr);
+            GImGuiRenderer->OnSwapBuffers(Viewport, CommandList);
+        };
     }
     else
     {
@@ -115,13 +143,11 @@ bool FImGuiRenderer::Initialize()
 
     TArray<uint8> ShaderCode;
 
+    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
+    if (!FShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Vertex);
-        if (!FShaderCompiler::Get().CompileFromSource(VSSource, CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     FRHIVertexShaderRef VShader = RHICreateVertexShader(ShaderCode);
@@ -130,7 +156,7 @@ bool FImGuiRenderer::Initialize()
         DEBUG_BREAK();
         return false;
     }
-
+    
     const CHAR* PSSource =
         R"*(
         struct PS_INPUT
@@ -149,13 +175,11 @@ bool FImGuiRenderer::Initialize()
             return OutColor;
         })*";
 
+    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
+    if (!FShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
     {
-        FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Pixel);
-        if (!FShaderCompiler::Get().CompileFromSource(PSSource, CompileInfo, ShaderCode))
-        {
-            DEBUG_BREAK();
-            return false;
-        }
+        DEBUG_BREAK();
+        return false;
     }
 
     PShader = RHICreatePixelShader(ShaderCode);
@@ -165,14 +189,14 @@ bool FImGuiRenderer::Initialize()
         return false;
     }
 
-    FRHIVertexInputLayoutInitializer InputLayoutInfo =
+    FRHIVertexLayoutInitializerList VertexElementList =
     {
-        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), EVertexInputClass::Vertex, 0 },
-        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), EVertexInputClass::Vertex, 0 },
-        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  EVertexInputClass::Vertex, 0 },
+        { "POSITION", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, pos)), 0, EVertexInputClass::Vertex, 0 },
+        { "TEXCOORD", 0, EFormat::R32G32_Float,   sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, uv)),  1, EVertexInputClass::Vertex, 0 },
+        { "COLOR",    0, EFormat::R8G8B8A8_Unorm, sizeof(ImDrawVert), 0, static_cast<uint32>(IM_OFFSETOF(ImDrawVert, col)), 2, EVertexInputClass::Vertex, 0 },
     };
 
-    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInfo);
+    FRHIVertexLayoutRef InputLayout = RHICreateVertexLayout(VertexElementList);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -278,41 +302,54 @@ bool FImGuiRenderer::Initialize()
     return true;
 }
 
-void FImGuiRenderer::Render(FRHICommandList& CmdList)
+void FImGuiRenderer::ReleaseRHI()
+{
+    // Release all RHI textures
+    FontTexture.Reset();
+    PipelineState.Reset();
+    PipelineStateNoBlending.Reset();
+    PShader.Reset();
+    VertexBuffer.Reset();
+    IndexBuffer.Reset();
+    LinearSampler.Reset();
+    PointSampler.Reset();
+}
+
+void FImGuiRenderer::Render(FRHICommandList& CommandList)
 {
     if (ImGuiViewport* MainViewport = ImGui::GetMainViewport())
     {
         FImGuiViewport* MainViewportData = reinterpret_cast<FImGuiViewport*>(MainViewport->RendererUserData);
         CHECK(MainViewportData != nullptr);
 
-        ImGui::Render();
-
         FRHIViewportRef RHIViewport = MainViewportData->Viewport;
         CHECK(RHIViewport != nullptr);
 
+        // Render
+        ImGui::Render();
+        
         ImDrawData* DrawData = ImGui::GetDrawData();
-        PrepareDrawData(CmdList, DrawData);
+        PrepareDrawData(CommandList, DrawData);
 
         // Render to the main Viewport
         FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(RHIViewport->GetBackBuffer(), EAttachmentLoadAction::Load) }, 1);
-        CmdList.BeginRenderPass(RenderPassDesc);
-        RenderDrawData(CmdList, DrawData);
-        CmdList.EndRenderPass();
+        CommandList.BeginRenderPass(RenderPassDesc);
+        RenderDrawData(CommandList, DrawData);
+        CommandList.EndRenderPass();
 
         ImGuiIO& IOState = ImGui::GetIO();
         if (IOState.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CmdList));
+            ImGui::RenderPlatformWindowsDefault(nullptr, reinterpret_cast<void*>(&CommandList));
         }
 
         for (FImGuiTexture* Image : RenderedImages)
         {
             CHECK(Image != nullptr);
-
             if (Image->AfterState != EResourceAccess::PixelShaderResource)
             {
-                CmdList.TransitionTexture(Image->Texture.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
+                CommandList.TransitionTexture(Image->Texture.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
             }
         }
 
@@ -320,22 +357,24 @@ void FImGuiRenderer::Render(FRHICommandList& CmdList)
     }
 }
 
-void FImGuiRenderer::RenderViewport(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
+void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
 {
     FRHITexture* BackBuffer = ViewportData.Viewport->GetBackBuffer();
-    CmdList.TransitionTexture(BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
 
-    PrepareDrawData(CmdList, DrawData);
+    PrepareDrawData(CommandList, DrawData);
 
     FRHIBeginRenderPassInfo RenderPassDesc({ FRHIRenderTargetView(BackBuffer, bClear ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load) }, 1);
-    CmdList.BeginRenderPass(RenderPassDesc);
-    RenderDrawData(CmdList, DrawData);
-    CmdList.EndRenderPass();
+    CommandList.BeginRenderPass(RenderPassDesc);
+    
+    RenderDrawData(CommandList, DrawData);
+    
+    CommandList.EndRenderPass();
 
-    CmdList.TransitionTexture(BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
+    CommandList.TransitionTexture(BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
 }
 
-void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
+void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData)
 {
     if (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f)
     {
@@ -381,28 +420,31 @@ void FImGuiRenderer::PrepareDrawData(FRHICommandList& CmdList, ImDrawData* DrawD
         }
     }
 
-    CmdList.TransitionBuffer(ViewportData->VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
-    CmdList.TransitionBuffer(ViewportData->IndexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+    CommandList.TransitionBuffer(ViewportData->VertexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
+    CommandList.TransitionBuffer(ViewportData->IndexBuffer.Get(), EResourceAccess::GenericRead, EResourceAccess::CopyDest);
 
     uint64 VertexOffset = 0;
     uint64 IndexOffset  = 0;
     for (int32 Index = 0; Index < DrawData->CmdListsCount; ++Index)
     {
         const ImDrawList* DrawCmdList = DrawData->CmdLists[Index];
-        CmdList.UpdateBuffer(ViewportData->VertexBuffer.Get(), FBufferRegion(VertexOffset * sizeof(ImDrawVert), DrawCmdList->VtxBuffer.Size * sizeof(ImDrawVert)), DrawCmdList->VtxBuffer.Data);
-        CmdList.UpdateBuffer(ViewportData->IndexBuffer.Get(), FBufferRegion(IndexOffset * sizeof(ImDrawIdx), DrawCmdList->IdxBuffer.Size * sizeof(ImDrawIdx)), DrawCmdList->IdxBuffer.Data);
+        CommandList.UpdateBuffer(ViewportData->VertexBuffer.Get(), FBufferRegion(VertexOffset * sizeof(ImDrawVert), DrawCmdList->VtxBuffer.Size * sizeof(ImDrawVert)), DrawCmdList->VtxBuffer.Data);
+        CommandList.UpdateBuffer(ViewportData->IndexBuffer.Get(), FBufferRegion(IndexOffset * sizeof(ImDrawIdx), DrawCmdList->IdxBuffer.Size * sizeof(ImDrawIdx)), DrawCmdList->IdxBuffer.Data);
         
         VertexOffset += DrawCmdList->VtxBuffer.Size;
         IndexOffset  += DrawCmdList->IdxBuffer.Size;
     }
 
-    CmdList.TransitionBuffer(ViewportData->VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
-    CmdList.TransitionBuffer(ViewportData->IndexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+    CommandList.TransitionBuffer(ViewportData->VertexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
+    CommandList.TransitionBuffer(ViewportData->IndexBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::GenericRead);
 }
 
-void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawData)
+void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* DrawData)
 {
-    if (DrawData->DisplaySize.x <= 0.0f || DrawData->DisplaySize.y <= 0.0f)
+    int32 FramebufferWidth  = static_cast<int32>(DrawData->DisplaySize.x * DrawData->FramebufferScale.x);
+    int32 FramebufferHeight = static_cast<int32>(DrawData->DisplaySize.y * DrawData->FramebufferScale.y);
+    
+    if (FramebufferWidth <= 0 || FramebufferHeight <= 0)
     {
         return;
     }
@@ -410,13 +452,15 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(DrawData->OwnerViewport->RendererUserData);
     CHECK(ViewportData != nullptr);
 
-    SetupRenderState(CmdList, DrawData, *ViewportData);
+    SetupRenderState(CommandList, DrawData, *ViewportData);
 
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
     int32 GlobalVertexOffset = 0;
     int32 GlobalIndexOffset  = 0;
 
     ImVec2 ClipOffset = DrawData->DisplayPos;
+    ImVec2 ClipScale  = DrawData->FramebufferScale;
+    
     for (int32 Index = 0; Index < DrawData->CmdListsCount; ++Index)
     {
         // TODO: This should probably be handled differently
@@ -428,11 +472,11 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
             const ImDrawCmd* DrawCommand = &DrawCmdList->CmdBuffer[CmdIndex];
             if (DrawCommand->UserCallback != nullptr)
             {
+                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state)
                 // User callback, registered via ImDrawList::AddCallback()
-                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
                 if (bResetRenderState || DrawCommand->UserCallback == ImDrawCallback_ResetRenderState)
                 {
-                    SetupRenderState(CmdList, DrawData, *ViewportData);
+                    SetupRenderState(CommandList, DrawData, *ViewportData);
                 }
                 else
                 {
@@ -450,70 +494,86 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
 
                     if (DrawableTexture->BeforeState != EResourceAccess::PixelShaderResource)
                     {
-                        CmdList.TransitionTexture(DrawableTexture->Texture.Get(), DrawableTexture->BeforeState, EResourceAccess::PixelShaderResource);
-                        // TODO: Another way to do this? May break somewhere?
+                        CommandList.TransitionTexture(DrawableTexture->Texture.Get(), DrawableTexture->BeforeState, EResourceAccess::PixelShaderResource);
+                        
+                        // TODO: Another way to do this? Maybe breaks somewhere?
                         DrawableTexture->BeforeState = EResourceAccess::PixelShaderResource;
                     }
 
                     if (!DrawableTexture->bAllowBlending)
                     {
-                        CmdList.SetGraphicsPipelineState(PipelineStateNoBlending.Get());
+                        CommandList.SetGraphicsPipelineState(PipelineStateNoBlending.Get());
                     }
                     else
                     {
-                        CmdList.SetGraphicsPipelineState(PipelineState.Get());
+                        CommandList.SetGraphicsPipelineState(PipelineState.Get());
                     }
 
                     if (DrawableTexture->bSamplerLinear)
                     {
-                        CmdList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
+                        CommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
                     }
                     else
                     {
-                        CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
+                        CommandList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                     }
 
-                    CmdList.SetShaderResourceView(PShader.Get(), DrawableTexture->View.Get(), 0);
+                    CommandList.SetShaderResourceView(PShader.Get(), DrawableTexture->View.Get(), 0);
                 }
                 else
                 {
                     if (bResetRenderState)
                     {
-                        SetupRenderState(CmdList, DrawData, *ViewportData);
+                        SetupRenderState(CommandList, DrawData, *ViewportData);
                         bResetRenderState = false;
                     }
 
-                    CmdList.SetGraphicsPipelineState(PipelineState.Get());
+                    CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
                     if (DrawCmdList->Flags & ImDrawListFlags_AntiAliasedLinesUseTex)
                     {
-                        CmdList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
+                        CommandList.SetSamplerState(PShader.Get(), LinearSampler.Get(), 0);
                     }
                     else
                     {
-                        CmdList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
+                        CommandList.SetSamplerState(PShader.Get(), PointSampler.Get(), 0);
                     }
 
                     FRHIShaderResourceView* View = FontTexture->GetShaderResourceView();
-                    CmdList.SetShaderResourceView(PShader.Get(), View, 0);
+                    CommandList.SetShaderResourceView(PShader.Get(), View, 0);
                 }
 
-                // Project Scissor/Clipping rectangles into Framebuffer space
-                ImVec2 ClipMin(DrawCommand->ClipRect.x - ClipOffset.x, DrawCommand->ClipRect.y - ClipOffset.y);
-                ImVec2 ClipMax(DrawCommand->ClipRect.z - ClipOffset.x, DrawCommand->ClipRect.w - ClipOffset.y);
+                // Project scissor/clipping rectangles into framebuffer space
+                ImVec2 ClipMin((DrawCommand->ClipRect.x - ClipOffset.x), (DrawCommand->ClipRect.y - ClipOffset.y));
+                ImVec2 ClipMax((DrawCommand->ClipRect.z - ClipOffset.x), (DrawCommand->ClipRect.w - ClipOffset.y));
+
+                if (ClipMin.x < 0.0f)
+                {
+                    ClipMin.x = 0.0f;
+                }
+                if (ClipMin.y < 0.0f)
+                {
+                    ClipMin.y = 0.0f;
+                }
+                
+                if (ClipMax.x > FramebufferWidth)
+                {
+                    ClipMax.x = static_cast<float>(FramebufferWidth);
+                }
+                if (ClipMax.y > FramebufferHeight)
+                {
+                    ClipMax.y = static_cast<float>(FramebufferHeight);
+                }
+                
                 if (ClipMax.x <= ClipMin.x || ClipMax.y <= ClipMin.y)
                 {
                     continue;
                 }
+                
+                const FScissorRegion ScissorRegion(ClipMax.x - ClipMin.x, ClipMax.y - ClipMin.y, ClipMin.x, ClipMin.y);
+                CommandList.SetScissorRect(ScissorRegion);
 
-                const FScissorRegion ScissorRegion(
-                    DrawCommand->ClipRect.z - ClipOffset.x,
-                    DrawCommand->ClipRect.w - ClipOffset.y,
-                    DrawCommand->ClipRect.x - ClipOffset.x,
-                    DrawCommand->ClipRect.y - ClipOffset.y);
-                CmdList.SetScissorRect(ScissorRegion);
-
-                CmdList.DrawIndexedInstanced(DrawCommand->ElemCount, 1, DrawCommand->IdxOffset + GlobalIndexOffset, DrawCommand->VtxOffset + GlobalVertexOffset, 0);
+                CommandList.DrawIndexedInstanced(DrawCommand->ElemCount, 1, DrawCommand->IdxOffset + GlobalIndexOffset, DrawCommand->VtxOffset + GlobalVertexOffset, 0);
             }
         }
 
@@ -522,46 +582,50 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CmdList, ImDrawData* DrawDa
     }
 }
 
-void FImGuiRenderer::SetupRenderState(FRHICommandList& CmdList, ImDrawData* DrawData, FImGuiViewport& Buffers)
+void FImGuiRenderer::SetupRenderState(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& Buffers)
 {
+    int32 FramebufferWidth  = static_cast<int32>(DrawData->DisplaySize.x * DrawData->FramebufferScale.x);
+    int32 FramebufferHeight = static_cast<int32>(DrawData->DisplaySize.y * DrawData->FramebufferScale.y);
+    
     // Setup Orthographic Projection matrix into our Constant-Buffer
-    // The visible ImGui space lies from DrawData->DisplayPos (top left) to DrawData->DisplayPos+DrawData->DisplaySize (bottom right).
+    // The visible ImGui space lies from DrawData->DisplayPos (top left)
+    // to DrawData->DisplayPos+DrawData->DisplaySize (bottom right).
     float L = DrawData->DisplayPos.x;
-    float R = DrawData->DisplayPos.x + DrawData->DisplaySize.x;
+    float R = DrawData->DisplayPos.x + FramebufferWidth;
     float T = DrawData->DisplayPos.y;
-    float B = DrawData->DisplayPos.y + DrawData->DisplaySize.y;
+    float B = DrawData->DisplayPos.y + FramebufferHeight;
 
     float Matrix[4][4] =
     {
-        { 2.0f / (R - L)   , 0.0f             , 0.0f, 0.0f },
-        { 0.0f             , 2.0f / (T - B)   , 0.0f, 0.0f },
-        { 0.0f             , 0.0f             , 0.5f, 0.0f },
+        { 2.0f / (R - L),    0.0f,              0.0f, 0.0f },
+        { 0.0f,              2.0f / (T - B),    0.0f, 0.0f },
+        { 0.0f,              0.0f,              0.5f, 0.0f },
         { (R + L) / (L - R), (T + B) / (B - T), 0.5f, 1.0f },
     };
 
     FVertexConstantBuffer VertexConstantBuffer;
     FMemory::Memcpy(&VertexConstantBuffer.ViewProjectionMatrix, Matrix, sizeof(Matrix));
 
-    FViewportRegion ViewportRegion(DrawData->DisplaySize.x, DrawData->DisplaySize.y, 0.0f, 0.0f, 0.0f, 1.0f);
-    CmdList.SetViewport(ViewportRegion);
+    FViewportRegion ViewportRegion(static_cast<float>(FramebufferWidth), static_cast<float>(FramebufferHeight), 0.0f, 0.0f, 0.0f, 1.0f);
+    CommandList.SetViewport(ViewportRegion);
 
     const EIndexFormat IndexFormat = sizeof(ImDrawIdx) == 2 ? EIndexFormat::uint16 : EIndexFormat::uint32;
-    CmdList.SetIndexBuffer(Buffers.IndexBuffer.Get(), IndexFormat);
-    CmdList.SetVertexBuffers(MakeArrayView(&Buffers.VertexBuffer, 1), 0);
+    CommandList.SetIndexBuffer(Buffers.IndexBuffer.Get(), IndexFormat);
+    CommandList.SetVertexBuffers(MakeArrayView(&Buffers.VertexBuffer, 1), 0);
     
-    CmdList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+    CommandList.SetBlendFactor(FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
-    CmdList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
+    CommandList.Set32BitShaderConstants(PShader.Get(), &VertexConstantBuffer, 16);
 }
 
-void FImGuiRenderer::StaticCreateWindow(ImGuiViewport* Viewport)
+void FImGuiRenderer::OnCreateWindow(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
     TSharedRef<FGenericWindow> PlatformWindow = ViewportData->Window->GetPlatformWindow();
     CHECK(PlatformWindow != nullptr);
-    
+
     FRHIViewportInfo ViewportInfo;
     ViewportInfo.WindowHandle = PlatformWindow->GetPlatformHandle();
     ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
@@ -571,31 +635,24 @@ void FImGuiRenderer::StaticCreateWindow(ImGuiViewport* Viewport)
     ViewportData->Viewport = RHICreateViewport(ViewportInfo);
     if (ViewportData->Viewport)
     {
+        ViewportData->Width  = ViewportInfo.Width;
+        ViewportData->Height = ViewportInfo.Height;
         Viewport->RendererUserData = Viewport->PlatformUserData;
     }
 }
 
-void FImGuiRenderer::StaticDestroyWindow(ImGuiViewport* Viewport)
+void FImGuiRenderer::OnDestroyWindow(ImGuiViewport* Viewport)
 {
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
     Viewport->RendererUserData = nullptr;
 }
 
-void FImGuiRenderer::StaticSetWindowSize(ImGuiViewport* Viewport, ImVec2 Size)
+void FImGuiRenderer::OnSetWindowSize(ImGuiViewport*, ImVec2)
 {
-    FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
-    CHECK(ViewportData != nullptr);
-
-    if (ViewportData->Viewport->GetWidth() != Size.x || ViewportData->Viewport->GetHeight() != Size.y)
-    {
-        ViewportData->bDidResize = true;
-        ViewportData->Width      = static_cast<uint16>(Size.x);
-        ViewportData->Height     = static_cast<uint16>(Size.y);
-    }
 }
 
-void FImGuiRenderer::StaticRenderWindow(ImGuiViewport* Viewport, void* CommandList)
+void FImGuiRenderer::OnRenderWindow(ImGuiViewport* Viewport, void* CommandList)
 {
     FRHICommandList* RHICommandList = reinterpret_cast<FRHICommandList*>(CommandList);
     CHECK(RHICommandList != nullptr);
@@ -603,20 +660,21 @@ void FImGuiRenderer::StaticRenderWindow(ImGuiViewport* Viewport, void* CommandLi
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->RendererUserData);
     CHECK(ViewportData != nullptr);
 
-    if (ViewportData->bDidResize)
+    const ImVec2 ViewportSize = Viewport->Size;
+    if (static_cast<uint16>(ViewportSize.x) != ViewportData->Width || static_cast<uint16>(ViewportSize.y) != ViewportData->Height)
     {
-        RHICommandList->ResizeViewport(ViewportData->Viewport.Get(), ViewportData->Width, ViewportData->Height);
+        ViewportData->Width  = static_cast<uint16>(ViewportSize.x);
+        ViewportData->Height = static_cast<uint16>(ViewportSize.y);
 
-        ViewportData->bDidResize = false;
-        ViewportData->Width      = 0;
-        ViewportData->Height     = 0;
+        FRHIViewport* RHIViewport = ViewportData->Viewport.Get();
+        RHICommandList->ResizeViewport(RHIViewport, ViewportData->Width, ViewportData->Height);
     }
-
+    
     const bool bClear = (Viewport->Flags & ImGuiViewportFlags_NoRendererClear) == 0;
-    GImGuiPlugin->Renderer->RenderViewport(*RHICommandList, Viewport->DrawData, *ViewportData, bClear);
+    RenderViewport(*RHICommandList, Viewport->DrawData, *ViewportData, bClear);
 }
 
-void FImGuiRenderer::StaticSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
+void FImGuiRenderer::OnSwapBuffers(ImGuiViewport* Viewport, void* CommandList)
 {
     FRHICommandList* RHICommandList = reinterpret_cast<FRHICommandList*>(CommandList);
     CHECK(RHICommandList != nullptr);

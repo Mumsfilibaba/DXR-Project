@@ -1,7 +1,7 @@
 #pragma once
-#include "Array.h"
+#include "Core/Containers/Array.h"
 #include "Core/Templates/Utility.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 #include "Core/Platform/PlatformMisc.h"
 #include "Core/Platform/PlatformInterlocked.h"
 
@@ -25,21 +25,21 @@ class TQueue
     };
 
 public:
-    TQueue(const TQueue&)            = delete;
+    TQueue(const TQueue&) = delete;
     TQueue& operator=(const TQueue&) = delete;
 
     /**
-     * @brief - Constructor
+     * @brief Constructor
      */
     TQueue()
     {
-        // Create a Node here to more easily handle edge-cases
+        // Create a Node here to more easily handle edge cases
         Head = new FNode();
         Tail = Head;
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     ~TQueue()
     {
@@ -52,14 +52,14 @@ public:
     }
 
     /**
-     * @brief            - Pop the next element
-     * @param OutElement - Storage for the popped element
-     * @return           - Returns true if an element was popped
+     * @brief Pop the next element
+     * @param OutElement Storage for the popped element
+     * @return Returns true if an element was popped
      */
     bool Dequeue(ElementType& OutElement)
     {
         FNode* NextNode;
-        if constexpr(QueueType == EQueueType::SPMC)
+        if constexpr (QueueType == EQueueType::SPMC)
         {
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -75,7 +75,7 @@ public:
         }
 
         // Move the item and "reset" it
-        OutElement = ::Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
+        OutElement = Move(*reinterpret_cast<ElementType*>(NextNode->Item.Data));
         
         // Set the next node
         FNode* PreviousTail;
@@ -95,13 +95,13 @@ public:
     }
 
     /**
-     * @brief  - Pop the next element
-     * @return - Returns true if an element was popped
+     * @brief Pop the next element
+     * @return Returns true if an element was popped
      */
     bool Dequeue()
     {
         FNode* NextNode;
-        if constexpr(QueueType == EQueueType::SPMC)
+        if constexpr (QueueType == EQueueType::SPMC)
         {
             NextNode = reinterpret_cast<FNode*>(FPlatformInterlocked::InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&Tail->NextNode), nullptr));
         }
@@ -133,8 +133,8 @@ public:
     }
 
     /**
-     * @brief          - Pops all the elements in the queue and puts them into the array
-     * @param OutArray - Array to store all the elements in
+     * @brief Pops all the elements in the queue and puts them into the array
+     * @param OutArray Array to store all the elements in
      */
     void DequeueAll(TArray<ElementType>& OutArray)
     {
@@ -156,12 +156,12 @@ public:
         NumElements = 0;
         OutArray.Reserve(LocalNumElements);
         
-        // Insert all the elements in the array
+        // Add all the elements to the array
         FNode* CurrentTail  = TailToDequeue;
         FNode* PreviousTail = nullptr;
         while (CurrentTail)
         {
-            OutArray.Add(::Move(*reinterpret_cast<ElementType*>(CurrentTail->Item.Data)));
+            OutArray.Add(Move(*reinterpret_cast<ElementType*>(CurrentTail->Item.Data)));
             PreviousTail = CurrentTail;
             CurrentTail  = CurrentTail->NextNode;
             DeleteNode(PreviousTail);
@@ -169,7 +169,7 @@ public:
     }
     
     /**
-     * @brief - Clears the queue
+     * @brief Clears the queue
      */
     void Clear()
     {
@@ -178,9 +178,9 @@ public:
     }
 
     /**
-     * @brief      - Add an element to the back of the queue
-     * @param Item - The new element to push
-     * @return     - Returns true if the element was successfully pushed
+     * @brief Add an element to the back of the queue
+     * @param Item The new element to push
+     * @return Returns true if the element was successfully pushed
      */
     bool Enqueue(const ElementType& Item)
     {
@@ -188,24 +188,24 @@ public:
     }
 
     /**
-     * @brief      - Add an element to the back of the queue
-     * @param Item - The new element to push
-     * @return     - Returns true if the element was successfully pushed
+     * @brief Add an element to the back of the queue
+     * @param Item The new element to push
+     * @return Returns true if the element was successfully pushed
      */
     bool Enqueue(ElementType&& Item)
     {
-        return Emplace(::Forward<ElementType>(Item));
+        return Emplace(Forward<ElementType>(Item));
     }
 
     /**
-     * @brief      - Add an element to the back of the queue
-     * @param Args - Arguments used to construct the new element in-place
-     * @return     - Returns true if the element was successfully pushed
+     * @brief Add an element to the back of the queue
+     * @param Args Arguments used to construct the new element in-place
+     * @return Returns true if the element was successfully pushed
      */
     template<typename... ArgTypes>
-    bool Emplace(ArgTypes&&... Args) noexcept
+    bool Emplace(ArgTypes&&... Args)
     {
-        FNode* NewNode = CreateNode(::Forward<ArgTypes>(Args)...);
+        FNode* NewNode = CreateNode(Forward<ArgTypes>(Args)...);
         if (NewNode == nullptr)
         {
             return false;
@@ -229,15 +229,15 @@ public:
     }
 
     /**
-     * @return - Returns true if the queue is empty
+     * @return Returns true if the queue is empty
      */
     bool IsEmpty() const
     {
-        return NumElements.Load() == 0;;
+        return NumElements.Load() == 0;
     }
     
     /**
-     * @return - Returns the number of elements in the queue
+     * @return Returns the number of elements in the queue
      */
     int32 Size() const
     {
@@ -245,9 +245,9 @@ public:
     }
 
     /**
-     * @brief         - Peek at the first element of the queue without popping from the queue
-     * @param OutItem - Storage for the item to peek
-     * @return        - Returns true if the element was successfully stored
+     * @brief Peek at the first element of the queue without popping from the queue
+     * @param OutItem Storage for the item to peek
+     * @return Returns true if the element was successfully stored
      */
     bool Peek(ElementType& OutItem) const
     {
@@ -261,7 +261,7 @@ public:
     }
 
     /**
-     * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
+     * @return Returns a pointer to the first element in the queue, nullptr if the queue is empty
      */
     ElementType* Peek()
     {
@@ -274,8 +274,8 @@ public:
     }
 
     /**
-    * @return - Returns a pointer to the first element in the queue, nullptr if the queue is empty
-    */
+     * @return Returns a pointer to the first element in the queue, nullptr if the queue is empty
+     */
     const ElementType* Peek() const
     {
         if (Tail->NextNode == nullptr)
@@ -292,7 +292,7 @@ private:
     {
         // Construct the new Item
         FNode* Result = new FNode();
-        new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(::Forward<ArgTypes>(Args)...);
+        new(reinterpret_cast<void*>(Result->Item.Data)) ElementType(Forward<ArgTypes>(Args)...);
         return Result;
     }
 
@@ -306,5 +306,5 @@ private:
 
     FNode* volatile Head{nullptr};
     FNode* volatile Tail{nullptr};
-    FAtomicInt32    NumElements{0};
+    FAtomicInt32    NumElements;
 };

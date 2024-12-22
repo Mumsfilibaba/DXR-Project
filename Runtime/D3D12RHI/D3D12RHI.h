@@ -21,15 +21,21 @@ struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
 class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
-    FD3D12RHI();
-    ~FD3D12RHI();
-    
+
     static FD3D12RHI* GetRHI() 
     {
         CHECK(GD3D12RHI != nullptr);
         return GD3D12RHI; 
     }
 
+public:
+
+    FD3D12RHI();
+    ~FD3D12RHI();
+
+public:
+
+    // FRHI Interface
     virtual bool Initialize() override final;
 
     virtual void RHIBeginFrame() override final { }
@@ -61,7 +67,7 @@ public:
     virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) override final;
     virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) override final;
     virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer) override final;
-    virtual FRHIVertexInputLayout* RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer) override final;
+    virtual FRHIVertexLayout* RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) override final;
     virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) override final;
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
@@ -69,47 +75,16 @@ public:
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
     virtual bool RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult) override final;
     virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) override final;
+    virtual FString RHIGetAdapterName() const override final;
 
-    virtual IRHICommandContext* RHIObtainCommandContext() override final
-    {
-        return DirectCommandContext;
-    }
-    
-    virtual FString RHIGetAdapterName() const override final 
-    { 
-        CHECK(Adapter != nullptr);
-        return Adapter->GetDescription(); 
-    }
+    virtual IRHICommandContext* RHIObtainCommandContext() override final;
+    virtual void* RHIGetAdapter() override final;
+    virtual void* RHIGetDevice() override final;
+    virtual void* RHIGetDirectCommandQueue() override final;
+    virtual void* RHIGetComputeCommandQueue() override final;
+    virtual void* RHIGetCopyCommandQueue() override final;
 
-    virtual void* RHIGetAdapter() override final 
-    {
-        CHECK(Adapter != nullptr);
-        return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
-    }
-
-    virtual void* RHIGetDevice() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12Device());
-    }
-
-    virtual void* RHIGetDirectCommandQueue() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
-    }
-
-    virtual void* RHIGetComputeCommandQueue() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Compute));
-    }
-
-    virtual void* RHIGetCopyCommandQueue() override final
-    {
-        CHECK(Device != nullptr);
-        return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
-    }
+public:
 
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)
@@ -121,7 +96,7 @@ public:
     void ProcessPendingCommands();
     void SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue);
 
-    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D() const { return GenerateMipsTex2D_PSO; }
+    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D()   const { return GenerateMipsTex2D_PSO; }
     FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
     
     FD3D12Adapter* GetAdapter() const
@@ -140,20 +115,19 @@ public:
     }
 
 private:
+    typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> FSamplerStateMap;
+    typedef TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   FCommandPayloadQueue;
+
     FD3D12Adapter*                Adapter;
     FD3D12Device*                 Device;
     FD3D12CommandContext*         DirectCommandContext;
-
     TArray<FD3D12DeferredObject>  DeletionQueue;
     FCriticalSection              DeletionQueueCS;
-
     FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;
     FD3D12ComputePipelineStateRef GenerateMipsTexCube_PSO;
-
-    TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   PendingSubmissions;
-
-    TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> SamplerStateMap;
-    FCriticalSection                                  SamplerStateMapCS;
+    FCommandPayloadQueue          PendingSubmissions;
+    FSamplerStateMap              SamplerStateMap;
+    FCriticalSection              SamplerStateMapCS;
 
     static FD3D12RHI* GD3D12RHI;
 };

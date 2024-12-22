@@ -7,9 +7,14 @@
 FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQueueType)
     : FVulkanDeviceChild(InDevice)
     , Queue(VK_NULL_HANDLE)
+    , QueueFamilyIndex()
     , QueueType(InQueueType)
-    , CommandPools()
+    , WaitSemaphores()
+    , WaitStages()
+    , SignalSemaphores()
     , AvailableCommandPools()
+    , CommandPools()
+    , CommandPoolsCS()
 {
 }
 
@@ -210,11 +215,12 @@ bool FVulkanQueue::FlushWaitSemaphoresAndWait()
 
 FVulkanCommandPayload::FVulkanCommandPayload(FVulkanDevice* InDevice, FVulkanQueue& InQueue)
     : Queue(InQueue)
-    , Device(InDevice)
     , Fence(nullptr)
-    , DeletionQueue()
+    , Device(InDevice)
     , CommandPools()
     , CommandBuffers()
+    , QueryPools()
+    , DeletionQueue()
 {
 }
 

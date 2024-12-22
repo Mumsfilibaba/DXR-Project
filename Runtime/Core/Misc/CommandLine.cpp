@@ -40,7 +40,7 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
                 FParse::ParseAlnum(&Iterator);
 
                 {
-                    const uintptr Length = static_cast<uintptr>(Iterator - Option);
+                    const UPTR_INT Length = static_cast<UPTR_INT>(Iterator - Option);
                     FCString::Strncpy(CommandLineIt, Option, Length);
                     CommandLineIt += Length;
                 }
@@ -74,7 +74,7 @@ bool FCommandLine::Initialize(const CHAR** Args, int32 NumArgs)
                     }
 
                     {
-                        const uintptr Length = static_cast<uintptr>(ValueEnd - Iterator);
+                        const UPTR_INT Length = static_cast<UPTR_INT>(ValueEnd - Iterator);
                         FCString::Strncpy(CommandLineIt, Iterator, Length);
                         CommandLineIt += Length;
                     }

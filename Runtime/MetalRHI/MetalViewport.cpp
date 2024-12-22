@@ -1,5 +1,5 @@
 #include "MetalViewport.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformEvent.h"
 
 @implementation FMetalWindowView
@@ -37,10 +37,10 @@ FMetalViewport::FMetalViewport(FMetalDeviceContext* InDeviceContext, const FRHIV
 FMetalViewport::~FMetalViewport()
 {
     // The view is a UI object and needs to be released on the main-thread
-    ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
-        NSSafeRelease(MetalView);
-        NSSafeRelease(MetalLayer);
+        [MetalView release];
+        [MetalLayer release];
     }, NSDefaultRunLoopMode, true);
 }
 
@@ -54,7 +54,7 @@ bool FMetalViewport::Initialize()
 
     __block bool bResult = false;
     __block CAMetalLayer* NewMetalLayer = nullptr;
-    ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         SCOPED_AUTORELEASE_POOL();
 
@@ -116,7 +116,7 @@ bool FMetalViewport::Resize(uint32 InWidth, uint32 InHeight)
     
     if (Info.Width != InWidth || Info.Height != InHeight)
     {
-        ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             CAMetalLayer* MetalLayer = GetMetalLayer();
             if (MetalLayer)

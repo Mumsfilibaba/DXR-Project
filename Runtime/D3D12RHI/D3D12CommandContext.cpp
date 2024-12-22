@@ -412,7 +412,7 @@ void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& 
 
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRenderTargetView(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
-    GetCommandList()->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.Data(), 0, nullptr);
+    GetCommandList()->ClearRenderTargetView(D3D12RenderTargetView->GetOfflineHandle(), ClearColor.XYZW, 0, nullptr);
 }
 
 void FD3D12CommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
@@ -463,7 +463,7 @@ void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
         OnlineHandleGPU, 
         D3D12UnorderedAccessView->GetOfflineHandle(), 
         D3D12UnorderedAccessView->GetD3D12Resource()->GetD3D12Resource(), 
-        ClearColor.Data(),
+        ClearColor.XYZW,
         0, nullptr);
 }
 
@@ -486,7 +486,7 @@ void FD3D12CommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Beg
             // it is not certain that there will be a call to draw inside of the RenderPass
             if (CurrentRTV.LoadAction == EAttachmentLoadAction::Clear)
             {
-                GetCommandList()->ClearRenderTargetView(CurrentRenderTargetView->GetOfflineHandle(), &CurrentRTV.ClearValue.r, 0, nullptr);
+                GetCommandList()->ClearRenderTargetView(CurrentRenderTargetView->GetOfflineHandle(), &CurrentRTV.ClearValue.R, 0, nullptr);
             }
             
             RenderTargetViews[Index] = CurrentRenderTargetView;
@@ -531,10 +531,10 @@ void FD3D12CommandContext::RHISetViewport(const FViewportRegion& ViewportRegion)
     D3D12_VIEWPORT Viewport;
     Viewport.Width    = ViewportRegion.Width;
     Viewport.Height   = ViewportRegion.Height;
-    Viewport.MaxDepth = ViewportRegion.MaxDepth;
-    Viewport.MinDepth = ViewportRegion.MinDepth;
     Viewport.TopLeftX = ViewportRegion.PositionX;
     Viewport.TopLeftY = ViewportRegion.PositionY;
+    Viewport.MaxDepth = ViewportRegion.MaxDepth;
+    Viewport.MinDepth = ViewportRegion.MinDepth;
 
     ContextState.SetViewports(&Viewport, 1);
 }
@@ -543,16 +543,16 @@ void FD3D12CommandContext::RHISetScissorRect(const FScissorRegion& ScissorRegion
 {
     D3D12_RECT ScissorRect;
     ScissorRect.left   = LONG(ScissorRegion.PositionX);
-    ScissorRect.right  = LONG(ScissorRegion.Width);
+    ScissorRect.right  = LONG(ScissorRegion.PositionX) + LONG(ScissorRegion.Width);
     ScissorRect.top    = LONG(ScissorRegion.PositionY);
-    ScissorRect.bottom = LONG(ScissorRegion.Height);
+    ScissorRect.bottom = LONG(ScissorRegion.PositionY) + LONG(ScissorRegion.Height);
 
     ContextState.SetScissorRects(&ScissorRect, 1);
 }
 
 void FD3D12CommandContext::RHISetBlendFactor(const FVector4& Color)
 {
-    ContextState.SetBlendFactor(Color.Data());
+    ContextState.SetBlendFactor(Color.XYZW);
 }
 
 void FD3D12CommandContext::RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot)
@@ -914,12 +914,12 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
             SourceLocation.SubresourceIndex = D3D12CalculateSubresource(InCopyDesc.SrcMipSlice + MipLevel, SrcArraySlice + ArraySlice, 0, Src->GetNumMipLevels(), NumSrcArraySlices);
 
             D3D12_BOX SourceBox;
-            SourceBox.left   = InCopyDesc.SrcPosition.x >> MipLevel;
-            SourceBox.right  = FMath::Max((InCopyDesc.SrcPosition.x + InCopyDesc.Size.x) >> MipLevel, 1);
-            SourceBox.top    = InCopyDesc.SrcPosition.y >> MipLevel;
-            SourceBox.bottom = FMath::Max((InCopyDesc.SrcPosition.y + InCopyDesc.Size.y) >> MipLevel, 1);
-            SourceBox.front  = InCopyDesc.SrcPosition.z >> MipLevel;
-            SourceBox.back   = FMath::Max((InCopyDesc.SrcPosition.z + InCopyDesc.Size.z) >> MipLevel, 1);
+            SourceBox.left   = InCopyDesc.SrcPosition.X >> MipLevel;
+            SourceBox.right  = FMath::Max((InCopyDesc.SrcPosition.X + InCopyDesc.Size.X) >> MipLevel, 1);
+            SourceBox.top    = InCopyDesc.SrcPosition.Y >> MipLevel;
+            SourceBox.bottom = FMath::Max((InCopyDesc.SrcPosition.Y + InCopyDesc.Size.Y) >> MipLevel, 1);
+            SourceBox.front  = InCopyDesc.SrcPosition.Z >> MipLevel;
+            SourceBox.back   = FMath::Max((InCopyDesc.SrcPosition.Z + InCopyDesc.Size.Z) >> MipLevel, 1);
 
             // Destination
             D3D12_TEXTURE_COPY_LOCATION DestLocation;
@@ -929,9 +929,9 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
             DestLocation.Type             = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
             DestLocation.SubresourceIndex = D3D12CalculateSubresource(InCopyDesc.DstMipSlice + MipLevel, DstArraySlice + ArraySlice, 0, Dst->GetNumMipLevels(), NumDstArraySlices);
 
-            const uint32 DestPositionX = InCopyDesc.DstPosition.x >> MipLevel;
-            const uint32 DestPositionY = InCopyDesc.DstPosition.y >> MipLevel;
-            const uint32 DestPositionZ = InCopyDesc.DstPosition.z >> MipLevel;
+            const uint32 DestPositionX = InCopyDesc.DstPosition.X >> MipLevel;
+            const uint32 DestPositionY = InCopyDesc.DstPosition.Y >> MipLevel;
+            const uint32 DestPositionZ = InCopyDesc.DstPosition.Z >> MipLevel;
 
             GetCommandList()->CopyTextureRegion(&DestLocation, DestPositionX, DestPositionY, DestPositionZ, &SourceLocation, &SourceBox);
         }
@@ -1394,7 +1394,7 @@ void FD3D12CommandContext::RHIPresentViewport(FRHIViewport* Viewport, bool bVert
 void FD3D12CommandContext::RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height)
 {
     FD3D12Viewport* D3D12Viewport = static_cast<FD3D12Viewport*>(Viewport);
-    D3D12Viewport->Resize(Width, Height);
+    D3D12Viewport->Resize(this, Width, Height);
 }
 
 void FD3D12CommandContext::RHIClearState()
@@ -1438,7 +1438,7 @@ void FD3D12CommandContext::RHIInsertMarker(const FStringView& Message)
     if (FDynamicD3D12::SetMarkerOnCommandList)
     {
         ID3D12GraphicsCommandList* GraphicsCommandList = static_cast<ID3D12GraphicsCommandList*>(CommandList->GetCommandList());
-        FDynamicD3D12::SetMarkerOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), Message.GetCString());
+        FDynamicD3D12::SetMarkerOnCommandList(GraphicsCommandList, PIX_COLOR(255, 255, 255), *Message);
     }
 }
 

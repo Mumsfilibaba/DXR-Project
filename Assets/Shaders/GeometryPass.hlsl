@@ -153,7 +153,7 @@ struct FPSOutput
 };
 
 #if ENABLE_PARALLAX_MAPPING
-// TODO: We probably do not want any constants like this, it should be a constantbuffer or something similar
+// TODO: We do not want any constants like this, it should be a constantbuffer or something similar
 static const float HEIGHT_SCALE = 0.03f;
 
 float SampleHeightMap(float2 TexCoords)

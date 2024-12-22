@@ -30,7 +30,6 @@ void FMallocANSI::Free(void* Block)
     }
 }
 
-
 FMallocLeakTracker::FMallocLeakTracker(FMalloc* InBaseMalloc)
     : Allocations()
     , AllocationsCS()

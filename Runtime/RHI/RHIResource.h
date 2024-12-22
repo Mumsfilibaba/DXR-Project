@@ -2,7 +2,7 @@
 #include "RHICore.h"
 #include "RHITypes.h"
 #include "Core/IRefCounted.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 
 class RHI_API FRHIResource : public IRefCounted
 {

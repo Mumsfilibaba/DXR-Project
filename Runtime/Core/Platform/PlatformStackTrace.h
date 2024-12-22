@@ -1,4 +1,5 @@
 #pragma once
+
 #if PLATFORM_WINDOWS
     #include "Core/Windows/WindowsPlatformStackTrace.h"
     typedef FWindowsPlatformStackTrace FPlatformStackTrace;

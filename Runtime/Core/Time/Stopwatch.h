@@ -7,10 +7,10 @@ public:
     FStopwatch();
     ~FStopwatch() = default;
 
-    /** @brief - Measure time between this and last call to tick */
+    /** @brief Measure time between this and last call to tick */
     void Tick();
 
-    /** @brief - Resets the time to zero */
+    /** @brief Resets the time to zero */
     void Reset()
     {
         DeltaTime = FTimespan(0);

@@ -4,8 +4,9 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 
 FThreadManager::FThreadManager()
-    : Threads(0)
-    , MainThreadHandle(nullptr)
+    : MainThreadHandle(nullptr)
+    , Threads(0)
+    , ThreadsCS()
 {
 }
 

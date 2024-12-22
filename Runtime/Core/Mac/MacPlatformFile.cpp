@@ -1,4 +1,4 @@
-#include "MacPlatformFile.h"
+#include "Core/Mac/MacPlatformFile.h"
 #include "Core/Platform/PlatformString.h"
 #include <fcntl.h>
 #include <sys/file.h>
@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
-
 
 FMacFileHandle::FMacFileHandle(int32 InFileHandle, bool bInReadOnly)
     : IFileHandle()
@@ -157,7 +156,7 @@ void FMacFileHandle::Close()
 
 IFileHandle* FMacPlatformFile::OpenForRead(const FString& Filename)
 {
-    int32 FileHandle = ::open(Filename.GetCString(), O_RDONLY);
+    int32 FileHandle = ::open(*Filename, O_RDONLY);
     if (FileHandle < 0)
     {
         return nullptr;
@@ -198,7 +197,7 @@ IFileHandle* FMacPlatformFile::OpenForWrite(const FString& Filename, bool bTrunc
         S_IROTH | // Read permission for Other
         S_IWOTH;  // Write permission for Other
 
-    int32 FileHandle = ::open(Filename.GetCString(), Flags, PermissonFlags);
+    int32 FileHandle = ::open(*Filename, Flags, PermissonFlags);
     if (FileHandle < 0)
     {
         return nullptr;

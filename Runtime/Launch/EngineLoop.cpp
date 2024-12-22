@@ -1,9 +1,8 @@
-#include "EngineLoop.h"
+#include "Launch/EngineLoop.h"
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Threading/ThreadManager.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Misc/CoreDelegates.h"
-#include "Core/Misc/OutputDeviceConsole.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/FrameProfiler.h"
@@ -13,8 +12,8 @@
 #include "Application/Application.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "CoreApplication/Platform/PlatformConsoleWindow.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "CoreApplication/Platform/PlatformConsoleOutputDevice.h"
+#include "Renderer/Performance/GPUProfiler.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
 #include "RendererCore/TextureFactory.h"
@@ -28,24 +27,24 @@ struct FDebuggerOutputDevice : public IOutputDevice
 {
     virtual void Log(const FString& Message)
     {
-        FPlatformMisc::OutputDebugString(Message.GetCString());
+        FPlatformMisc::OutputDebugString(*Message);
     }
 
     virtual void Log(ELogSeverity Severity, const FString& Message)
     {
-        FPlatformMisc::OutputDebugString(Message.GetCString());
+        FPlatformMisc::OutputDebugString(*Message);
     }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
 
-static TUniquePtr<FOutputDeviceConsole>  GConsoleWindow;
-static TUniquePtr<FDebuggerOutputDevice> GDebuggerOutputDevice;
+static TUniquePtr<FDebuggerOutputDevice>       GDebuggerOutputDevice;
+static TUniquePtr<FGenericConsoleOutputDevice> GConsoleWindow;
 
 static bool InitializeOutputDevices()
 {
     // Create the console window
-    GConsoleWindow = TUniquePtr<FOutputDeviceConsole>(FPlatformApplicationMisc::CreateOutputDeviceConsole());
+    GConsoleWindow = TUniquePtr<FGenericConsoleOutputDevice>(FPlatformConsoleOutputDevice::Create());
     if (GConsoleWindow)
     {
         GConsoleWindow->Show(true);
@@ -60,13 +59,12 @@ static bool InitializeOutputDevices()
 
     if (FPlatformMisc::IsDebuggerPresent())
     {
-        GDebuggerOutputDevice = MakeUnique<FDebuggerOutputDevice>();
+        GDebuggerOutputDevice = MakeUniquePtr<FDebuggerOutputDevice>();
         FOutputDeviceLogger::Get()->RegisterOutputDevice(GDebuggerOutputDevice.Get());
     }
 
     return true;
 }
-
 
 FEngineLoop::FEngineLoop()
     : FrameTimer()
@@ -172,12 +170,6 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
         return -1;
     }
 
-#if !PRODUCTION_BUILD
-    LOG_INFO("IsDebuggerAttached=%s", FPlatformMisc::IsDebuggerPresent() ? "true" : "false");
-    LOG_INFO("ProjectName=%s", FProjectManager::Get().GetProjectName().GetCString());
-    LOG_INFO("ProjectPath=%s", FProjectManager::Get().GetProjectPath().GetCString());
-#endif
-
     if (!FThreadManager::Initialize())
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "Failed to init ThreadManager");
@@ -253,7 +245,7 @@ int32 FEngineLoop::Init()
     // Prepare ImGui for Rendering
     if (IImguiPlugin::IsEnabled())
     {
-        if (!IImguiPlugin::Get().InitRenderer())
+        if (!IImguiPlugin::Get().InitializeRHI())
         {
             FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to initialize RHI resources for ImGui");
             return -1;
@@ -292,12 +284,6 @@ void FEngineLoop::Release()
 
     // Wait for the last RHI commands to finish
     GRHICommandExecutor.WaitForGPU();
-
-    // Release ImGui
-    if (IImguiPlugin::IsEnabled())
-    {
-        IImguiPlugin::Get().ReleaseRenderer();
-    }
 
     // Release the renderer
     IRendererModule* RendererModule = IRendererModule::Get();

@@ -1,8 +1,8 @@
-#include "PostProcessing.h"
-#include "Debug/GPUProfiler.h"
 #include "RHI/ShaderCompiler.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Renderer/PostProcessing.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 static TAutoConsoleVariable<bool> CVarFXAADebug(
     "Renderer.Debug.FXAADebug",

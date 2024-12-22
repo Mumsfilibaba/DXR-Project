@@ -5,227 +5,225 @@
 #include "Core/Platform/PlatformString.h"
 
 template<typename InCharType>
-struct TChar 
+struct TCharTraits 
 {
-    using CHARTYPE = InCharType;
+    using CharType = InCharType;
 
-    using PointerType      = typename TAddPointer<CHARTYPE>::Type;
+    using PointerType      = typename TAddPointer<CharType>::Type;
     using ConstPointerType = const PointerType;
 
-    NODISCARD static FORCEINLINE CHARTYPE ToUpper(CHARTYPE Char)
+    NODISCARD static FORCEINLINE CharType ToUpper(CharType Char)
     {
         return FPlatformString::ToUpper(Char);
     }
 
-    NODISCARD static FORCEINLINE CHARTYPE ToLower(CHARTYPE Char)
+    NODISCARD static FORCEINLINE CharType ToLower(CharType Char)
     {
         return FPlatformString::ToLower(Char);
     }
 
-    NODISCARD static FORCEINLINE bool IsWhitespace(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsWhitespace(CharType Char)
     {
         return FPlatformString::IsWhitespace(Char);
     }
     
-    NODISCARD static FORCEINLINE bool IsUpper(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsUpper(CharType Char)
     {
         return FPlatformString::IsUpper(Char);
     }
     
-    NODISCARD static FORCEINLINE bool IsLower(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsLower(CharType Char)
     {
         return FPlatformString::IsLower(Char);
     }
     
-    NODISCARD static FORCEINLINE bool IsAlnum(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsAlnum(CharType Char)
     {
         return FPlatformString::IsAlnum(Char);
     }
     
-    NODISCARD static FORCEINLINE bool IsDigit(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsDigit(CharType Char)
     {
         return FPlatformString::IsDigit(Char);
     }
     
-    NODISCARD static FORCEINLINE bool IsAlpha(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsAlpha(CharType Char)
     {
         return FPlatformString::IsAlpha(Char);
     }
     
-    NODISCARD static FORCEINLINE bool IsPunct(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsPunct(CharType Char)
     {
         return FPlatformString::IsPunct(Char);
     }
     
-    NODISCARD static FORCEINLINE bool IsHexDigit(CHARTYPE Char)
+    NODISCARD static FORCEINLINE bool IsHexDigit(CharType Char)
     {
         return FPlatformString::IsHexDigit(Char);
     }
 };
 
-typedef TChar<CHAR>     FChar;
-typedef TChar<WIDECHAR> FCharWide;
+typedef TCharTraits<CHAR>     FCharTraits;
+typedef TCharTraits<WIDECHAR> FCharTraitsWide;
 
 template<typename InCharType>
 struct TCString
 {
-    typedef InCharType CHARTYPE;
+    typedef InCharType CharType;
+
+public:
 
     template<typename... ArgTypes>
-    static FORCEINLINE int32 Sprintf(CHARTYPE* Buffer, const CHARTYPE* Format, ArgTypes&&... Args) noexcept
-    {
-        return FPlatformString::Sprintf(Buffer, Format, Forward<ArgTypes>(Args)...);
-    }
-
-    template<typename... ArgTypes>
-    static FORCEINLINE int32 Snprintf(CHARTYPE* Buffer, TSIZE BufferSize, const CHARTYPE* Format, ArgTypes&&... Args) noexcept
+    static FORCEINLINE int32 Snprintf(CharType* Buffer, SIZE_T BufferSize, const CharType* Format, ArgTypes&&... Args) noexcept
     {
         return FPlatformString::Snprintf(Buffer, BufferSize, Format, Forward<ArgTypes>(Args)...);
     }
 
-    static FORCEINLINE CHARTYPE* Strstr(const CHARTYPE* String, const CHARTYPE* Substring) noexcept
+    static FORCEINLINE CharType* Strstr(const CharType* String, const CharType* Substring) noexcept
     {
         return FPlatformString::Strstr(String, Substring);
     }
 
-    static FORCEINLINE CHARTYPE* Strpbrk(const CHARTYPE* String, const CHARTYPE* Set) noexcept
+    static FORCEINLINE CharType* Strpbrk(const CharType* String, const CharType* Set) noexcept
     {
         return FPlatformString::Strpbrk(String, Set);
     }
 
-    static FORCEINLINE CHARTYPE* Strchr(const CHARTYPE* String, CHARTYPE Char) noexcept
+    static FORCEINLINE CharType* Strchr(const CharType* String, CharType Char) noexcept
     {
         return FPlatformString::Strchr(String, Char);
     }
 
-    static FORCEINLINE CHARTYPE* Strrchr(const CHARTYPE* String, CHARTYPE Char) noexcept
+    static FORCEINLINE CharType* Strrchr(const CharType* String, CharType Char) noexcept
     {
         return FPlatformString::Strrchr(String, Char);
     }
 
-    static FORCEINLINE int32 Strlen(const CHARTYPE* String) noexcept
+    static FORCEINLINE int32 Strlen(const CharType* String) noexcept
     {
         return (String != nullptr) ? FPlatformString::Strlen(String) : 0;
     }
 
-    static FORCEINLINE int32 Strspn(const CHARTYPE* String, const CHARTYPE* Set) noexcept
+    static FORCEINLINE int32 Strspn(const CharType* String, const CharType* Set) noexcept
     {
         return FPlatformString::Strspn(String, Set);
     }
 
-    static FORCEINLINE CHARTYPE* Strcpy(CHARTYPE* Dst, const CHARTYPE* Src) noexcept
+    static FORCEINLINE CharType* Strcpy(CharType* Dst, const CharType* Src) noexcept
     {
         return FPlatformString::Strcpy(Dst, Src);
     }
 
-    static FORCEINLINE CHARTYPE* Strncpy(CHARTYPE* Dst, const CHARTYPE* Src, TSIZE InLength) noexcept
+    static FORCEINLINE CharType* Strncpy(CharType* Dst, const CharType* Src, SIZE_T InLength) noexcept
     {
         return FPlatformString::Strncpy(Dst, Src, InLength);
     }
 
-    static FORCEINLINE CHARTYPE* Strcat(CHARTYPE* Dst, const CHARTYPE* Src) noexcept
+    static FORCEINLINE CharType* Strcat(CharType* Dst, const CharType* Src) noexcept
     {
         return FPlatformString::Strcat(Dst, Src);
     }
 
-    static FORCEINLINE CHARTYPE* Strncat(CHARTYPE* Dst, const CHARTYPE* Src, TSIZE InLength) noexcept
+    static FORCEINLINE CharType* Strncat(CharType* Dst, const CharType* Src, SIZE_T InLength) noexcept
     {
         return FPlatformString::Strncat(Dst, Src, InLength);
     }
 
 public:
-    static FORCEINLINE CHARTYPE* Strmove(CHARTYPE* Dst, const CHARTYPE* Src) noexcept
+
+    static FORCEINLINE CharType* Strmove(CharType* Dst, const CharType* Src) noexcept
     {
         return Strnmove(Dst, Src, Strlen(Src));
     }
 
-    static FORCEINLINE CHARTYPE* Strnmove(CHARTYPE* Dst, const CHARTYPE* Src, TSIZE InLength) noexcept
+    static FORCEINLINE CharType* Strnmove(CharType* Dst, const CharType* Src, SIZE_T InLength) noexcept
     {
-        return reinterpret_cast<CHARTYPE*>(FMemory::Memmove(Dst, Src, InLength * sizeof(CHARTYPE)));
+        return reinterpret_cast<CharType*>(FMemory::Memmove(Dst, Src, InLength * sizeof(CharType)));
     }
 
-    static FORCEINLINE CHARTYPE* Strset(CHARTYPE* Dst, CHARTYPE Char) noexcept
+    static FORCEINLINE CharType* Strset(CharType* Dst, CharType Char) noexcept
     {
         return Strnset(Dst, Char, Strlen(Dst));
     }
 
-    static FORCEINLINE CHARTYPE* Strnset(CHARTYPE* Dst, CHARTYPE Char, TSIZE InLength) noexcept
+    static FORCEINLINE CharType* Strnset(CharType* Dst, CharType Char, SIZE_T InLength) noexcept
     {
-        return reinterpret_cast<CHARTYPE*>(::AssignObjectsAndReturn(Dst, Char, InLength));
+        return reinterpret_cast<CharType*>(::AssignObjectsAndReturn(Dst, Char, InLength));
     }
 
 public:
-    static FORCEINLINE int32 Strcmp(const CHARTYPE* LHS, const CHARTYPE* RHS) noexcept
+
+    static FORCEINLINE int32 Strcmp(const CharType* LHS, const CharType* RHS) noexcept
     {
         return FPlatformString::Strcmp(LHS, RHS);
     }
 
-    static FORCEINLINE int32 Strncmp(const CHARTYPE* LHS, const CHARTYPE* RHS, TSIZE InLength) noexcept
+    static FORCEINLINE int32 Strncmp(const CharType* LHS, const CharType* RHS, SIZE_T InLength) noexcept
     {
         return FPlatformString::Strncmp(LHS, RHS, InLength);
     }
 
-    static FORCEINLINE int32 Stricmp(const CHARTYPE* LHS, const CHARTYPE* RHS) noexcept
+    static FORCEINLINE int32 Stricmp(const CharType* LHS, const CharType* RHS) noexcept
     {
         return FPlatformString::Stricmp(LHS, RHS);
     }
 
-    static FORCEINLINE int32 Strnicmp(const CHARTYPE* LHS, const CHARTYPE* RHS, TSIZE InLength) noexcept
+    static FORCEINLINE int32 Strnicmp(const CharType* LHS, const CharType* RHS, SIZE_T InLength) noexcept
     {
         return FPlatformString::Strnicmp(LHS, RHS, InLength);
     }
 
-    static FORCEINLINE int32 Strtoi(const CHARTYPE* String, CHARTYPE** End, int32 Base) noexcept
+    static FORCEINLINE int32 Strtoi(const CharType* String, CharType** End, int32 Base) noexcept
     {
         return FPlatformString::Strtoi(String, End, Base);
     }
     
-    static FORCEINLINE int64 Strtoi64(const CHARTYPE* String, CHARTYPE** End, int32 Base) noexcept
+    static FORCEINLINE int64 Strtoi64(const CharType* String, CharType** End, int32 Base) noexcept
     {
         return FPlatformString::Strtoi64(String, End, Base);
     }
     
-    static FORCEINLINE uint32 Strtoui(const CHARTYPE* String, CHARTYPE** End, int32 Base) noexcept
+    static FORCEINLINE uint32 Strtoui(const CharType* String, CharType** End, int32 Base) noexcept
     {
         return FPlatformString::Strtoui(String, End, Base);
     }
     
-    static FORCEINLINE uint64 Strtoui64(const CHARTYPE* String, CHARTYPE** End, int32 Base) noexcept
+    static FORCEINLINE uint64 Strtoui64(const CharType* String, CharType** End, int32 Base) noexcept
     {
         return FPlatformString::Strtoui64(String, End, Base);
     }
     
-    static FORCEINLINE float Strtof(const CHARTYPE* String, CHARTYPE** End) noexcept
+    static FORCEINLINE float Strtof(const CharType* String, CharType** End) noexcept
     {
         return FPlatformString::Strtof(String, End);
     }
 
-    static FORCEINLINE double Strtod(const CHARTYPE* String, CHARTYPE** End) noexcept
+    static FORCEINLINE double Strtod(const CharType* String, CharType** End) noexcept
     {
         return FPlatformString::Strtod(String, End);
     }
     
-    static FORCEINLINE int32 Atoi(const CHARTYPE* String) noexcept
+    static FORCEINLINE int32 Atoi(const CharType* String) noexcept
     {
         return FPlatformString::Atoi(String);
     }
     
-    static FORCEINLINE int64 Atoi64(const CHARTYPE* String) noexcept
+    static FORCEINLINE int64 Atoi64(const CharType* String) noexcept
     {
         return FPlatformString::Atoi64(String);
     }
     
-    static FORCEINLINE float Atof(const CHARTYPE* String) noexcept
+    static FORCEINLINE float Atof(const CharType* String) noexcept
     {
         return FPlatformString::Atof(String);
     }
 
-    static FORCEINLINE double Atod(const CHARTYPE* String) noexcept
+    static FORCEINLINE double Atod(const CharType* String) noexcept
     {
         return FPlatformString::Atod(String);
     }
 
-    NODISCARD static FORCEINLINE const CHARTYPE* Empty() noexcept;
+    NODISCARD static FORCEINLINE const CharType* Empty() noexcept;
 };
 
 template<>
@@ -260,7 +258,7 @@ struct TFormatSpecifier
 {
     NODISCARD static FORCEINLINE decltype(auto) GetStringSpecifier() 
     { 
-        return  ""; 
+        return ""; 
     }
 };
 

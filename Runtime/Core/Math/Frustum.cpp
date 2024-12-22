@@ -1,169 +1,138 @@
-#include "Frustum.h"
-
+#include "Core/Math/Frustum.h"
 
 FFrustum::FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Projection)
     : Planes()
+    , Points()
 {
-    Create(FarPlane, View, Projection);
+    Initialize(FarPlane, View, Projection);
 }
 
-DISABLE_UNREFERENCED_VARIABLE_WARNING
-
-void FFrustum::Create(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
+void FFrustum::Initialize(float FarPlane, const FMatrix4& InView, const FMatrix4& InProjection)
 {
-    // Create the frustum Matrix from the view Matrix and updated projection Matrix.
-    FMatrix4 View   = InView.Transpose();
-    FMatrix4 Matrix = View * InProjection;
+    // Combine the view and projection matrices
+    FMatrix4 CombinedMatrix = InView * InProjection;
 
-    // Calculate near plane of frustum.
-    Planes[0].x = Matrix.m03 + Matrix.m02;
-    Planes[0].y = Matrix.m13 + Matrix.m12;
-    Planes[0].z = Matrix.m23 + Matrix.m22;
-    Planes[0].w = Matrix.m33 + Matrix.m32;
+    // Extract frustum planes from the combined matrix
+    ExtractPlanes(CombinedMatrix);
+
+    // Generate frustum corner points in world space
+    GenerateFrustumCorners(CombinedMatrix);
+}
+
+void FFrustum::ExtractPlanes(const FMatrix4& CombinedMatrix)
+{
+    // Extract the six planes of the frustum from the combined matrix
+    // The order is: near, far, left, right, top, bottom
+
+    // Near Plane
+    Planes[0].X = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][2];
+    Planes[0].Y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][2];
+    Planes[0].Z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][2];
+    Planes[0].W = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][2];
     Planes[0].Normalize();
 
-    // Calculate far plane of frustum.
-    Planes[1].x = Matrix.m03 - Matrix.m02;
-    Planes[1].y = Matrix.m13 - Matrix.m12;
-    Planes[1].z = Matrix.m23 - Matrix.m22;
-    Planes[1].w = Matrix.m33 - Matrix.m32;
+    // Far Plane
+    Planes[1].X = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][2];
+    Planes[1].Y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][2];
+    Planes[1].Z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][2];
+    Planes[1].W = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][2];
     Planes[1].Normalize();
 
-    // Calculate left plane of frustum.
-    Planes[2].x = Matrix.m03 + Matrix.m00;
-    Planes[2].y = Matrix.m13 + Matrix.m10;
-    Planes[2].z = Matrix.m23 + Matrix.m20;
-    Planes[2].w = Matrix.m33 + Matrix.m30;
+    // Left Plane
+    Planes[2].X = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][0];
+    Planes[2].Y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][0];
+    Planes[2].Z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][0];
+    Planes[2].W = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][0];
     Planes[2].Normalize();
 
-    // Calculate right plane of frustum.
-    Planes[3].x = Matrix.m03 - Matrix.m00;
-    Planes[3].y = Matrix.m13 - Matrix.m10;
-    Planes[3].z = Matrix.m23 - Matrix.m20;
-    Planes[3].w = Matrix.m33 - Matrix.m30;
+    // Right Plane
+    Planes[3].X = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][0];
+    Planes[3].Y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][0];
+    Planes[3].Z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][0];
+    Planes[3].W = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][0];
     Planes[3].Normalize();
 
-    // Calculate top plane of frustum.
-    Planes[4].x = Matrix.m03 - Matrix.m01;
-    Planes[4].y = Matrix.m13 - Matrix.m11;
-    Planes[4].z = Matrix.m23 - Matrix.m21;
-    Planes[4].w = Matrix.m33 - Matrix.m31;
+    // Top Plane
+    Planes[4].X = CombinedMatrix.M[0][3] - CombinedMatrix.M[0][1];
+    Planes[4].Y = CombinedMatrix.M[1][3] - CombinedMatrix.M[1][1];
+    Planes[4].Z = CombinedMatrix.M[2][3] - CombinedMatrix.M[2][1];
+    Planes[4].W = CombinedMatrix.M[3][3] - CombinedMatrix.M[3][1];
     Planes[4].Normalize();
 
-    // Calculate bottom plane of frustum.
-    Planes[5].x = Matrix.m03 + Matrix.m01;
-    Planes[5].y = Matrix.m13 + Matrix.m11;
-    Planes[5].z = Matrix.m23 + Matrix.m21;
-    Planes[5].w = Matrix.m33 + Matrix.m31;
+    // Bottom Plane
+    Planes[5].X = CombinedMatrix.M[0][3] + CombinedMatrix.M[0][1];
+    Planes[5].Y = CombinedMatrix.M[1][3] + CombinedMatrix.M[1][1];
+    Planes[5].Z = CombinedMatrix.M[2][3] + CombinedMatrix.M[2][1];
+    Planes[5].W = CombinedMatrix.M[3][3] + CombinedMatrix.M[3][1];
     Planes[5].Normalize();
+}
 
-    // Generate the points
-    const FVector3 FrustumCorners[8] =
+void FFrustum::GenerateFrustumCorners(const FMatrix4& CombinedMatrix)
+{
+    // Define the eight corners of the frustum in normalized device coordinates (NDC)
+    const FVector3 FrustumCornersNDC[8] =
     {
-        FVector3(-1.0f,  1.0f, 0.0f),
-        FVector3( 1.0f,  1.0f, 0.0f),
-        FVector3( 1.0f, -1.0f, 0.0f),
-        FVector3(-1.0f, -1.0f, 0.0f),
-        FVector3(-1.0f,  1.0f, 1.0f),
-        FVector3( 1.0f,  1.0f, 1.0f),
-        FVector3( 1.0f, -1.0f, 1.0f),
-        FVector3(-1.0f, -1.0f, 1.0f),
+        FVector3(-1.0f,  1.0f, 0.0f), // Near Top Left
+        FVector3( 1.0f,  1.0f, 0.0f), // Near Top Right
+        FVector3( 1.0f, -1.0f, 0.0f), // Near Bottom Right
+        FVector3(-1.0f, -1.0f, 0.0f), // Near Bottom Left
+        FVector3(-1.0f,  1.0f, 1.0f), // Far Top Left
+        FVector3( 1.0f,  1.0f, 1.0f), // Far Top Right
+        FVector3( 1.0f, -1.0f, 1.0f), // Far Bottom Right
+        FVector3(-1.0f, -1.0f, 1.0f), // Far Bottom Left
     };
 
-    const FMatrix4 InverseViewProjection = Matrix.Invert();
+    // Invert the combined view-projection matrix to transform NDC to world space
+    FMatrix4 InverseViewProjection = CombinedMatrix.GetInverse();
+
+    // Transform each corner from NDC to world space
     for (int32 Corner = 0; Corner < 8; ++Corner)
     {
-        Points[Corner] = InverseViewProjection.TransformCoord(FrustumCorners[Corner]);
+        Points[Corner] = InverseViewProjection.TransformCoord(FrustumCornersNDC[Corner]);
     }
 }
 
-ENABLE_UNREFERENCED_VARIABLE_WARNING
-
-bool FFrustum::CheckAABB(const FAABB& Box) const
+bool FFrustum::IntersectsAABB(const FAABB& Box) const
 {
-    const FVector3 Center = Box.GetCenter();
-    const float Width  = Box.GetWidth()  / 2.0f;
-    const float Height = Box.GetHeight() / 2.0f;
-    const float Depth  = Box.GetDepth()  / 2.0f;
+    // Get the center and half-extents of the bounding box
+    const FVector3 Center  = Box.GetCenter();
+    const float HalfWidth  = Box.GetWidth()  / 2.0f;
+    const float HalfHeight = Box.GetHeight() / 2.0f;
+    const float HalfDepth  = Box.GetDepth()  / 2.0f;
 
-    FVector3 Coords[8];
-    Coords[0] = FVector3(Center.x - Width, Center.y - Height, Center.z - Depth);
-    Coords[1] = FVector3(Center.x + Width, Center.y - Height, Center.z - Depth);
-    Coords[2] = FVector3(Center.x - Width, Center.y + Height, Center.z - Depth);
-    Coords[3] = FVector3(Center.x + Width, Center.y + Height, Center.z - Depth);
-    Coords[4] = FVector3(Center.x - Width, Center.y - Height, Center.z + Depth);
-    Coords[5] = FVector3(Center.x + Width, Center.y - Height, Center.z + Depth);
-    Coords[6] = FVector3(Center.x - Width, Center.y + Height, Center.z + Depth);
-    Coords[7] = FVector3(Center.x + Width, Center.y + Height, Center.z + Depth);
+    // Calculate the eight corners of the bounding box
+    FVector3 BoxCorners[8];
+    BoxCorners[0] = FVector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[1] = FVector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[2] = FVector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[3] = FVector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z - HalfDepth);
+    BoxCorners[4] = FVector3(Center.X - HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[5] = FVector3(Center.X + HalfWidth, Center.Y - HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[6] = FVector3(Center.X - HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
+    BoxCorners[7] = FVector3(Center.X + HalfWidth, Center.Y + HalfHeight, Center.Z + HalfDepth);
 
+    // Check each frustum plane
     for (int32 PlaneIndex = 0; PlaneIndex < 6; ++PlaneIndex)
     {
         int32 NumOutside = 0;
+
+        // Check each corner against the plane
         for (int32 CornerIndex = 0; CornerIndex < 8; ++CornerIndex)
         {
-            if (Planes[PlaneIndex].DotProductCoord(Coords[CornerIndex]) < 0.0f)
+            // If the corner is behind the plane, increment the counter
+            if (Planes[PlaneIndex].DotProductCoord(BoxCorners[CornerIndex]) < 0.0f)
+            {
                 ++NumOutside;
+            }
         }
 
-        // We know that the primitive is completely outside of the frustum
+        // If all corners are outside this plane, the box does not intersect the frustum
         if (NumOutside == 8)
+        {
             return false;
+        }
     }
 
-    // Filter out false positive (Where one plane intersects large geometry)
-    {
-        int32 NumOutside = 0;
-        for (int32 Index = 0; Index < 8; ++Index)
-            NumOutside += (Points[Index].x > Box.Top.x) ? 1 : 0;
-
-        if (NumOutside == 8)
-            return false;
-    }
-
-    {
-        int32 NumOutside = 0;
-        for (int32 Index = 0; Index < 8; ++Index)
-            NumOutside += (Points[Index].x < Box.Bottom.x) ? 1 : 0;
-
-        if (NumOutside == 8)
-            return false;
-    }
-
-    {
-        int32 NumOutside = 0;
-        for (int32 Index = 0; Index < 8; ++Index)
-            NumOutside += (Points[Index].y > Box.Top.y) ? 1 : 0;
-
-        if (NumOutside == 8)
-            return false;
-    }
-
-    {
-        int32 NumOutside = 0;
-        for (int32 Index = 0; Index < 8; ++Index)
-            NumOutside += (Points[Index].y < Box.Bottom.y) ? 1 : 0;
-
-        if (NumOutside == 8)
-            return false;
-    }
-
-    {
-        int32 NumOutside = 0;
-        for (int32 Index = 0; Index < 8; ++Index)
-            NumOutside += (Points[Index].z > Box.Top.z) ? 1 : 0;
-
-        if (NumOutside == 8)
-            return false;
-    }
-
-    {
-        int32 NumOutside = 0;
-        for (int32 Index = 0; Index < 8; ++Index)
-            NumOutside += (Points[Index].z < Box.Bottom.z) ? 1 : 0;
-
-        if (NumOutside == 8)
-            return false;
-    }
-
+    // The box intersects the frustum
     return true;
 }

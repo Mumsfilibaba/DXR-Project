@@ -128,8 +128,22 @@ struct FNullRHIQuery : public FRHIQuery
     }
 };
 
-struct FNullRHIInputLayoutState : public FRHIVertexInputLayout
+class FNullRHIVertexLayout : public FRHIVertexLayout
 {
+public:
+    FNullRHIVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+        : FRHIVertexLayout()
+        , InitializerList(InInitializerList)
+    {
+    }
+
+    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    {
+        return InitializerList;
+    }
+
+private:
+    FRHIVertexLayoutInitializerList InitializerList;
 };
 
 class FNullRHIDepthStencilState : public FRHIDepthStencilState

@@ -262,9 +262,9 @@ FRHIBlendState* FMetalRHI::RHICreateBlendState(const FRHIBlendStateInitializer& 
     return new FMetalBlendState(InInitializer);
 }
 
-FRHIVertexInputLayout* FMetalRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
+FRHIVertexLayout* FMetalRHI::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
-    return new FMetalVertexInputLayout(InInitializer);
+    return new FMetalVertexLayout(InInitializerList);
 }
 
 FRHIGraphicsPipelineState* FMetalRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
@@ -300,7 +300,7 @@ FRHIViewport* FMetalRHI::RHICreateViewport(const FRHIViewportInfo& ViewportInfo)
     {
         __block NSRect Frame;
         __block NSRect ContentRect;
-        ExecuteOnMainThread(^
+        FMacThreadManager::Get().MainThreadDispatch(^
         {
             Frame       = Window.frame;
             ContentRect = [Window contentRectForFrameRect:Window.frame];

@@ -1,8 +1,7 @@
 #pragma once
-#include "OutputDevice.h"
-#include "Core/Core.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
+#include "Core/Misc/IOutputDevice.h"
 
 #define LOG_ERROR(...) \
     do \
@@ -22,21 +21,20 @@
         FOutputDeviceLogger::Get()->Log(ELogSeverity::Info, FString::CreateFormatted(__VA_ARGS__)); \
     } while (false)
 
-
 class CORE_API FOutputDeviceLogger : public IOutputDevice
 {
 public:
 
-    /** @return - Returns the Logger singleton */
+    /** @return Returns the Logger singleton */
     static FOutputDeviceLogger* Get();
 
-    /** @brief - Log a simple message to all output devices */
+    /** @brief Log a simple message to all output devices */
     virtual void Log(const FString& Message) override final;
 
-    /** @brief - Log a message with severity to all output devices */
+    /** @brief Log a message with severity to all output devices */
     virtual void Log(ELogSeverity Severity, const FString& Message) override final;
 
-    /** @brief - Flush all output devices */
+    /** @brief Flush all output devices */
     virtual void Flush() override final;
 
     void RegisterOutputDevice(IOutputDevice* InOutputDevice)

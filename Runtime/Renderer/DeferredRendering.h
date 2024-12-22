@@ -1,10 +1,10 @@
 #pragma once
-#include "RenderPass.h"
-#include "FrameResources.h"
 #include "Core/Containers/Map.h"
 #include "Engine/World/World.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/RHIShader.h"
+#include "Renderer/FrameResources.h"
+#include "Renderer/RenderPass.h"
 
 class FDepthPrePass : public FRenderPass
 {

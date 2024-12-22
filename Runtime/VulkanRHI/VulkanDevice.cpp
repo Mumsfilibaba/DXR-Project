@@ -209,7 +209,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
             VkPhysicalDeviceProperties AdapterProperties;
             vkGetPhysicalDeviceProperties(CurrentAdapter, &AdapterProperties);
             
-            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, GetVersionAsString(AdapterProperties.apiVersion).GetCString());
+            LOG_INFO("    '%s' Supports Vulkan '%s'", AdapterProperties.deviceName, *GetVersionAsString(AdapterProperties.apiVersion));
         }
     }
 
@@ -400,7 +400,7 @@ bool FVulkanPhysicalDevice::Initialize(const FVulkanPhysicalDeviceCreateInfo& Ad
     DeviceMemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
     vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice, &DeviceMemoryProperties2);
     
-    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, GetVersionAsString(DeviceProperties.apiVersion).GetCString());
+    VULKAN_INFO("Using adapter '%s' Which supports Vulkan '%s'", DeviceProperties.deviceName, *GetVersionAsString(DeviceProperties.apiVersion));
     return true;
 }
 
@@ -471,7 +471,7 @@ TOptional<FVulkanQueueFamilyIndices> FVulkanPhysicalDevice::GetQueueFamilyIndice
         for (const VkQueueFamilyProperties& Properties : QueueFamilies)
         {
             const FString PropertyString = GetQueuePropertiesAsString(Properties);
-            VULKAN_INFO("Queue[%d]: %s", Index, PropertyString.GetCString());
+            VULKAN_INFO("Queue[%d]: %s", Index, *PropertyString);
             Index++;
         }
     }
@@ -953,10 +953,6 @@ bool FVulkanDevice::PostLoaderInitalize()
 
         GRHIRayTracingMaxRecursionDepth = RayTracingPipelineProperties.maxRayRecursionDepth;
     }
-    else
-    {
-        GRHIRayTracingTier = ERayTracingTier::NotSupported;
-    }
 
     GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
 
@@ -977,18 +973,14 @@ bool FVulkanDevice::PostLoaderInitalize()
 
         // TODO: Finish this part
         GRHIShadingRateImageTileSize = 0;
-        GRHIShadingRateTier = EShadingRateTier::NotSupported;
-    }
-    else
-    {
-        GRHIShadingRateTier = EShadingRateTier::NotSupported;
+        GRHIShadingRateTier          = EShadingRateTier::NotSupported;
     }
 
     GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
 
     // GeometryShader Support 
-    const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
-    if (GVulkanAllowGeometryShaders && DeviceFeatures.geometryShader)
+    const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
+    if (GVulkanAllowGeometryShaders && PhysicalDeviceFeatures.geometryShader)
     {
         GRHISupportsGeometryShaders = true;
     }
@@ -1008,15 +1000,19 @@ bool FVulkanDevice::PostLoaderInitalize()
         DevicePropertiesHelper.AddNext(MultiviewProperties);
         vkGetPhysicalDeviceProperties2(PhysicalDeviceHandle, &DeviceProperties2);
 
-        GRHIMaxViewInstanceCount = MultiviewProperties.maxMultiviewViewCount;
+        GRHIMaxViewInstanceCount   = MultiviewProperties.maxMultiviewViewCount;
         GRHISupportsViewInstancing = true;
     }
-    else
-    {
-        GRHIMaxViewInstanceCount = 0;
-        GRHISupportsViewInstancing = false;
-    }
 
+    // Draw-Indirect Support
+    const VkPhysicalDeviceProperties& PhysicalDeviceProperties = PhysicalDevice->GetProperties();
+    if (PhysicalDeviceFeatures.multiDrawIndirect)
+    {
+        GRHISupportMultiDrawIndirect = true;
+        GRHIMaxDrawIndirectCount     = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
+    }
+    
+    GRHISupportDrawIndirect = true;
     return true;
 }
 
@@ -1047,8 +1043,8 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     FMemory::Memzero(&ImageBarrier);
 
     ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-    ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
-    ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImageBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+    ImageBarrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
     ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
     ImageBarrier.image                           = DefaultImage;
@@ -1078,8 +1074,8 @@ bool FVulkanDevice::InitializeDefaultResources(FVulkanCommandContext& CommandCon
     CommandContext.GetBarrierBatcher().FlushBarriers();
     CommandContext.GetCommandBuffer()->CopyBufferToImage(DefaultBuffer, DefaultImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &BufferImageCopy);
 
-    ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
     ImageBarrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    ImageBarrier.newLayout     = VK_IMAGE_LAYOUT_GENERAL;
     ImageBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
     ImageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
     ImageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;

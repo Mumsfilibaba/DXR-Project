@@ -1,10 +1,10 @@
-#include "FrameResources.h"
-#include "Scene.h"
-#include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Lights/DirectionalLight.h"
+#include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "Renderer/Scene.h"
+#include "Renderer/FrameResources.h"
 
 static TAutoConsoleVariable<int32> CVarCSMCascadeSize(
     "Renderer.CSM.CascadeSize",
@@ -66,7 +66,7 @@ static int32 ClosestPowerOf2(int32 Value)
 
 static int32 ClampTextureSize(int32 MinSize, int32 MaxSize, int32 NewSize)
 {
-    const int32 Result = FMath::Clamp(MinSize, MaxSize, NewSize);
+    const int32 Result = FMath::Clamp(NewSize, MinSize, MaxSize);
     return ClosestPowerOf2(Result);
 }
 
@@ -275,12 +275,13 @@ void FFrameResources::BuildLightBuffers(FRHICommandList& CommandList, FScene* Sc
 
         DirectionalLightData.Color         = Color;
         DirectionalLightData.ShadowBias    = DirectionalLight->GetShadowBias();
-        DirectionalLightData.Direction     = DirectionalLight->GetDirection();
-        DirectionalLightData.UpVector      = DirectionalLight->GetUp();
+        DirectionalLightData.Direction     = DirectionalLight->GetDirectionVector();
+        DirectionalLightData.UpVector      = DirectionalLight->GetUpVector();
         DirectionalLightData.MaxShadowBias = DirectionalLight->GetMaxShadowBias();
         DirectionalLightData.LightSize     = DirectionalLight->GetSize();
         DirectionalLightData.ShadowMatrix  = DirectionalLight->GetShadowMatrix();
-        DirectionalLightDataDirty = true;
+        DirectionalLightData.ShadowMatrix  = DirectionalLightData.ShadowMatrix.GetTranspose();
+        DirectionalLightDataDirty          = true;
 
         CascadeGenerationData.CascadeSplitLambda = DirectionalLight->GetCascadeSplitLambda();
         CascadeGenerationData.LightUp            = DirectionalLightData.UpVector;
@@ -425,15 +426,15 @@ void FFrameResources::Release()
     TransformBuffer.Reset();
 
     PointLightShadowSampler.Reset();
-    IrradianceSampler.Reset();
     ShadowSamplerPointCmp.Reset();
+    ShadowSamplerLinearCmp.Reset();
+    IrradianceSampler.Reset();
+    GBufferSampler.Reset();
 
     IntegrationLUT.Reset();
     IntegrationLUTSampler.Reset();
 
     Skybox.Reset();
-
-    FXAASampler.Reset();
 
     SSAOBuffer.Reset();
     FinalTarget.Reset();
@@ -445,8 +446,6 @@ void FFrameResources::Release()
 
     ReducedDepthBuffer[0].Reset();
     ReducedDepthBuffer[1].Reset();
-
-    GBufferSampler.Reset();
 
     MeshInputLayout.Reset();
 

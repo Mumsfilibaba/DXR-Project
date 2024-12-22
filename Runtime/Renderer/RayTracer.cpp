@@ -1,10 +1,10 @@
-#include "RayTracer.h"
-#include "SceneRenderer.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Model.h"
+#include "Renderer/RayTracer.h"
+#include "Renderer/SceneRenderer.h"
 
 bool FRayTracer::Initialize(FFrameResources& Resources)
 {
@@ -111,8 +111,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     for (const FProxySceneComponent* Component : Scene->Primitives)
     {
-        FMaterial* Material = Component->Material;
-        if (Component->Material->HasAlphaMask())
+        FMaterial* Material = Component->GetMaterial();
+        if (Material->HasAlphaMask())
         {
             continue;
         }
@@ -128,25 +128,25 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
         const FMatrix3x4 TinyTransform = Component->CurrentActor->GetTransform().GetTinyMatrix();
 
         uint32 HitGroupIndex = 0;
-        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Component->Mesh))
+        if (uint32* ExistingIndex = Resources.RTMeshToHitGroupIndex.Find(Component->Mesh.Get()))
         {
             HitGroupIndex = *ExistingIndex;
         }
         else
         {
             HitGroupIndex = Resources.RTHitGroupResources.Size();
-            Resources.RTMeshToHitGroupIndex[Component->Mesh] = HitGroupIndex;
+            Resources.RTMeshToHitGroupIndex[Component->Mesh.Get()] = HitGroupIndex;
             
             FRayTracingShaderResources HitGroupResources;
             HitGroupResources.Identifier = "HitGroup";
 
-            if (Component->Mesh->VertexBufferSRV)
+            if (FRHIShaderResourceView* VertexBufferSRV = Component->Mesh->GetVertexBufferSRV(EVertexStream::Packed))
             {
-                HitGroupResources.AddShaderResourceView(Component->Mesh->VertexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(VertexBufferSRV);
             }
-            if (Component->Mesh->IndexBufferSRV)
+            if (FRHIShaderResourceView* IndexBufferSRV = Component->Mesh->GetIndexBufferSRV())
             {
-                HitGroupResources.AddShaderResourceView(Component->Mesh->IndexBufferSRV.Get());
+                HitGroupResources.AddShaderResourceView(IndexBufferSRV);
             }
             
             Resources.RTHitGroupResources.Emplace(HitGroupResources);

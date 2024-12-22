@@ -2,16 +2,13 @@
 #include "Core/Core.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Containers/Tuple.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 
 typedef int64 DelegateHandle;
 
 class FDelegateHandle
 {
-    enum : DelegateHandle
-    {
-        InvalidHandle = DelegateHandle(-1)
-    };
+    inline static constexpr DelegateHandle InvalidHandle = DelegateHandle(~0);
 
 public:
 
@@ -21,7 +18,7 @@ public:
     };
 
     /**
-     * @brief - Default constructor
+     * @brief Default constructor
      */
     FORCEINLINE FDelegateHandle()
         : Handle(InvalidHandle)
@@ -29,7 +26,7 @@ public:
     }
 
     /**
-     * @brief - Construct a new delegate handle which generates a new ID
+     * @brief Construct a new delegate handle which generates a new ID
      */
     FORCEINLINE explicit FDelegateHandle(EGenerateID)
         : Handle(GenerateID())
@@ -37,23 +34,23 @@ public:
     }
 
     /**
-     * @brief  - Checks if the handle is equal to nullptr
-     * @return - Returns true if the handle is not equal to InvalidHandle
+     * @brief Checks if the handle is equal to nullptr
+     * @return Returns true if the handle is not equal to InvalidHandle
      */
     FORCEINLINE bool IsValid() const
     {
         return Handle != InvalidHandle;
     }
 
-    /** @brief - Sets the internal handle to an invalid one */
+    /** @brief Sets the internal handle to an invalid one */
     FORCEINLINE void Reset()
     {
         Handle = InvalidHandle;
     }
 
     /**
-     * @brief  - Retrieve the ID 
-     * @return - Returns the delegate-handle
+     * @brief Retrieve the ID 
+     * @return Returns the delegate-handle
      */
     FORCEINLINE DelegateHandle GetNative() const
     {
@@ -61,8 +58,8 @@ public:
     }
 
     /**
-     * @brief  - Checks if the handle is equal to nullptr
-     * @return - Returns true if the handle is not equal to InvalidHandle
+     * @brief Checks if the handle is equal to nullptr
+     * @return Returns true if the handle is not equal to InvalidHandle
      */
     FORCEINLINE operator bool() const
     {
@@ -70,9 +67,9 @@ public:
     }
 
     /**
-     * @brief       - Checks equality between two handles 
-     * @param Other - Other delegate-handle to compare with
-     * @return      - Returns true if the delegate-handles are equal to each other
+     * @brief Checks equality between two handles 
+     * @param Other Other delegate-handle to compare with
+     * @return Returns true if the delegate-handles are equal to each other
      */
     FORCEINLINE bool operator==(FDelegateHandle Other) const
     {
@@ -80,9 +77,9 @@ public:
     }
 
     /**
-     * @brief       - Checks equality between two handles
-     * @param Other - Other delegate-handle to compare with
-     * @return      - Returns false if the delegate-handles are equal to each other
+     * @brief Checks equality between two handles
+     * @param Other Other delegate-handle to compare with
+     * @return Returns false if the delegate-handles are equal to each other
      */
     FORCEINLINE bool operator!=(FDelegateHandle Other) const
     {
@@ -105,28 +102,28 @@ struct IDelegateInstance
     virtual ~IDelegateInstance() noexcept = default;
 
     /**
-     * @brief  - Retrieve the object of the function, returns nullptr for non-member delegates 
-     * @return - Returns the bound object of the delegate
+     * @brief Retrieve the object of the function, returns nullptr for non-member delegates 
+     * @return Returns the bound object of the delegate
      */
     virtual const void* GetBoundObject() const = 0;
 
     /**
-     * @brief        - Check if the object is the one that is bound to the delegate instance 
-     * @param Object - Object to check
-     * @return       - Returns true if the object is bound to the delegate
+     * @brief Check if the object is the one that is bound to the delegate instance 
+     * @param Object Object to check
+     * @return Returns true if the object is bound to the delegate
      */
     virtual bool IsObjectBound(const void* Object) const = 0;
 
     /**
-     * @brief  - Retrieve the handle to the delegate 
-     * @return - Returns the delegate-handle of this delegate-instance
+     * @brief Retrieve the handle to the delegate 
+     * @return Returns the delegate-handle of this delegate-instance
      */
     virtual FDelegateHandle GetHandle() const = 0;
 
     /**
-     * @brief        - Clones the delegate and stores it in the specified memory 
-     * @param Memory - Memory to store the cloned instance into
-     * @return       - Returns a clone of the instance 
+     * @brief Clones the delegate and stores it in the specified memory 
+     * @param Memory Memory to store the cloned instance into
+     * @return Returns a clone of the instance 
      */
     virtual IDelegateInstance* Clone(void* Memory) const = 0;
 };
@@ -144,9 +141,9 @@ protected:
 public:
 
     /**
-     * @brief      - Executes the stored function or functor 
-     * @param Args - Arguments to the function-call
-     * @return     - The result of the function-call
+     * @brief Executes the stored function or functor 
+     * @param Args Arguments to the function-call
+     * @return The result of the function-call
      */
     virtual ReturnType Execute(ArgTypes... Args) const = 0;
 

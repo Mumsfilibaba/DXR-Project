@@ -226,7 +226,7 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
             }
         }
 
-        if (ImGui::CollapsingHeader(ThreadName.GetCString(), ImGuiTreeNodeFlags_DefaultOpen))
+        if (ImGui::CollapsingHeader(*ThreadName, ImGuiTreeNodeFlags_DefaultOpen))
         {
             if (ImGui::BeginTable("Functions", 5, TableFlags | ImGuiTableFlags_Resizable))
             {
@@ -248,7 +248,7 @@ void FFrameProfilerWidget::DrawCPUData(float Width)
                     int32 Calls = Sample.Second.TotalCalls;
 
                     ImGui::TableSetColumnIndex(0);
-                    ImGui::Text("%s", Sample.First.GetCString());
+                    ImGui::Text("%s", *Sample.First);
                     ImGui::TableSetColumnIndex(1);
                     ImGui::Text("%d", Calls);
                     ImGui::TableSetColumnIndex(2);

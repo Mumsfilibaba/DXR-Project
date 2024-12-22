@@ -1,5 +1,4 @@
 #include "D3D12RHIShaderCompiler.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"
@@ -184,14 +183,14 @@ bool FD3D12ShaderCompiler::CompileFromFile(const FString& FilePath, const FStrin
     FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    HRESULT Result = DxLibrary->CreateBlobFromFile(WideFilePath.GetCString(), nullptr, &SourceBlob);
+    HRESULT Result = DxLibrary->CreateBlobFromFile(*WideFilePath, nullptr, &SourceBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
         return false;
     }
 
-    return InternalCompileFromSource(SourceBlob.Get(), WideFilePath.GetCString(), WideEntrypoint.GetCString(), ShaderStage, ShaderModel, Defines, Code);
+    return InternalCompileFromSource(SourceBlob.Get(), *WideFilePath, *WideEntrypoint, ShaderStage, ShaderModel, Defines, Code);
 }
 
 bool FD3D12ShaderCompiler::CompileShader(const FString& ShaderSource, const FString& EntryPoint, const TArray<FShaderDefine>* Defines, EShaderStage ShaderStage, EShaderModel ShaderModel, TArray<uint8>& Code)
@@ -199,14 +198,14 @@ bool FD3D12ShaderCompiler::CompileShader(const FString& ShaderSource, const FStr
     FStringWide WideEntrypoint = CharToWide(EntryPoint);
 
     TComPtr<IDxcBlobEncoding> SourceBlob;
-    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(ShaderSource.GetCString(), sizeof(CHAR) * static_cast<uint32>(ShaderSource.Size()), CP_UTF8, &SourceBlob);
+    HRESULT Result = DxLibrary->CreateBlobWithEncodingOnHeapCopy(*ShaderSource, sizeof(CHAR) * static_cast<uint32>(ShaderSource.Size()), CP_UTF8, &SourceBlob);
     if (FAILED(Result))
     {
         D3D12_ERROR("[FD3D12ShaderCompiler]: FAILED to create Source Data");
         return false;
     }
 
-    return InternalCompileFromSource(SourceBlob.Get(), nullptr, WideEntrypoint.GetCString(), ShaderStage, ShaderModel, Defines, Code);
+    return InternalCompileFromSource(SourceBlob.Get(), nullptr, *WideEntrypoint, ShaderStage, ShaderModel, Defines, Code);
 }
 
 bool FD3D12ShaderCompiler::GetReflection(FD3D12Shader* Shader, ID3D12ShaderReflection** Reflection)
@@ -328,7 +327,7 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWS
         {
             const FStringWide& WideDefine = StrBuff.Emplace(CharToWide(Define.Define));
             const FStringWide& WideValue = StrBuff.Emplace(CharToWide(Define.Value));
-            DxDefines.Add({ WideDefine.GetCString(), WideValue.GetCString() });
+            DxDefines.Add({ *WideDefine, *WideValue });
         }
     }
 
@@ -379,11 +378,11 @@ bool FD3D12ShaderCompiler::InternalCompileFromSource(IDxcBlob* SourceBlob, LPCWS
     if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
     {
         FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", AsciiFilePath.GetCString(), Output.GetCString());
+        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s' with the following output: %s", *AsciiFilePath, *Output);
     }
     else
     {
-        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s'.", AsciiFilePath.GetCString());
+        D3D12_INFO("[FD3D12ShaderCompiler]: Successfully compiled shader '%s'.", *AsciiFilePath);
     }
 
     TComPtr<IDxcBlob> CompiledBlob;
@@ -478,9 +477,9 @@ bool FD3D12ShaderCompiler::ValidateRayTracingShader(const TComPtr<IDxcBlob>& Sha
 
     FString FuncName(FuncDesc.Name);
     auto result = FuncName.Find(Buffer);
-    if (result == FString::INVALID_INDEX)
+    if (result == FString::InvalidIndex)
     {
-        D3D12_ERROR("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, FuncName.GetCString());
+        D3D12_ERROR("[FD3D12ShaderCompiler]: First exported function does not have correct entrypoint '%s'. Name=%s", Buffer, *FuncName);
         return false;
     }
 

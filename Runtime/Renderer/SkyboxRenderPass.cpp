@@ -3,13 +3,13 @@
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "Renderer/Performance/GPUProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Assets/AssetManager.h"
 #include "RendererCore/TextureFactory.h"
 
-static TAutoConsoleVariable<bool> GClearBeforeSkyboxEnabled(
+static TAutoConsoleVariable<bool> CVarClearBeforeSkyboxEnabled(
     "Renderer.Skybox.ClearBeforeSkybox",
     "Clear the final target before rendering the Skybox (Used for debugging)",
     false);
@@ -38,33 +38,25 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         return false;
     }
 
-    // Sphere-Data
+    // Sphere-data
     TArray<FVector3> SkyboxVertices;
     TArray<uint16>   SkyboxIndicies16;
     TArray<uint32>   SkyboxIndicies32;
 
     // Create a sphere used for the Skybox
-    void* SkyboxInitalIndicies = nullptr;
     {
-        FMeshData SkyboxMesh = FMeshFactory::CreateSphere(0);
+        FMeshCreateInfo SkyboxMesh = FMeshFactory::CreateSphere(0);
         SkyboxIndexCount = SkyboxMesh.Indices.Size();
 
         // Indices
         SkyboxIndexFormat = SkyboxIndexCount < TNumericLimits<uint16>::Max() ? EIndexFormat::uint16 : EIndexFormat::uint32;
         if (SkyboxIndexFormat == EIndexFormat::uint16)
         {
-            SkyboxIndicies16.Reserve(SkyboxMesh.Indices.Size());
-            for (uint32 Index : SkyboxMesh.Indices)
-            {
-                SkyboxIndicies16.Emplace(uint16(Index));
-            }
-
-            SkyboxInitalIndicies = SkyboxIndicies16.Data();
+            SkyboxIndicies16 = SkyboxMesh.GetSmallIndices();
         }
         else
         {
             SkyboxIndicies32 = Move(SkyboxMesh.Indices);
-            SkyboxInitalIndicies = SkyboxIndicies32.Data();
         }
 
         // Vertices
@@ -89,7 +81,10 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 
     // IndexBuffers
     FRHIBufferInfo IBInfo(SkyboxIndexCount * GetStrideFromIndexFormat(SkyboxIndexFormat), GetStrideFromIndexFormat(SkyboxIndexFormat), EBufferUsageFlags::Default | EBufferUsageFlags::IndexBuffer);
-    SkyboxIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, SkyboxInitalIndicies);
+    SkyboxIndexBuffer = RHICreateBuffer(IBInfo, EResourceAccess::IndexBuffer, (SkyboxIndexFormat == EIndexFormat::uint16) ?
+        reinterpret_cast<void*>(SkyboxIndicies16.Data()) :
+        reinterpret_cast<void*>(SkyboxIndicies32.Data()));
+
     if (!SkyboxIndexBuffer)
     {
         return false;
@@ -101,7 +96,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 
     // Create Texture Cube
     const FString PanoramaSourceFilename = ENGINE_LOCATION"/Assets/Textures/arches.hdr";
-    FTextureResource2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
+    FTexture2DRef Panorama = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture(PanoramaSourceFilename, false));
     if (!Panorama)
     {
         DEBUG_BREAK();
@@ -112,7 +107,7 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
         Panorama->SetDebugName(PanoramaSourceFilename);
     }
 
-    // Compress the Panorama
+    // Convert the Panorama into a cube-map
     FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
     FRHITextureRef Skybox = FTextureFactory::CreateTextureCubeFromPanorma(PanoramaRHI.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
     if (!Skybox)
@@ -123,6 +118,9 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     {
         Skybox->SetDebugName("Skybox Uncompressed");
     }
+    
+    // Unload the panorama
+    FAssetManager::Get().UnloadTexture(Panorama);
 
     // Compress the CubeMap
     TextureCompressor.CompressCubeMapBC6(Skybox, FrameResources.Skybox);
@@ -176,12 +174,12 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
     }
     
     // Initialize standard input layout
-    FRHIVertexInputLayoutInitializer InputLayoutInitializer =
+    FRHIVertexLayoutInitializerList VertexElementList =
     {
-        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 }
+        { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 }
     };
 
-    FRHIVertexInputLayoutRef InputLayout = RHICreateVertexInputLayout(InputLayoutInitializer);
+    FRHIVertexLayoutRef InputLayout = RHICreateVertexLayout(VertexElementList);
     if (!InputLayout)
     {
         DEBUG_BREAK();
@@ -257,7 +255,7 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     const float RenderHeight = float(FrameResources.CurrentHeight);
 
     const FFloatColor ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    const EAttachmentLoadAction LoadAction = GClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
+    const EAttachmentLoadAction LoadAction = CVarClearBeforeSkyboxEnabled.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
     
     FRHIBeginRenderPassInfo RenderPass;
     RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.FinalTarget.Get(), LoadAction, EAttachmentStoreAction::Store, ClearColor);
@@ -276,13 +274,16 @@ void FSkyboxRenderPass::Execute(FRHICommandList& CommandList, const FFrameResour
     CommandList.SetIndexBuffer(SkyboxIndexBuffer.Get(), SkyboxIndexFormat);
     CommandList.SetGraphicsPipelineState(PipelineState.Get());
 
-    struct FSimpleCameraBuffer
+    struct FSimpleCameraBufferHLSL
     {
         FMatrix4 Matrix;
     } SimpleCamera;
 
     SimpleCamera.Matrix = Scene->Camera->GetViewProjectionWitoutTranslateMatrix();
-    CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, 16);
+    SimpleCamera.Matrix = SimpleCamera.Matrix.GetTranspose();
+
+    constexpr uint32 NumConstants = sizeof(FSimpleCameraBufferHLSL) / sizeof(uint32);
+    CommandList.Set32BitShaderConstants(SkyboxVertexShader.Get(), &SimpleCamera, NumConstants);
 
     FRHIShaderResourceView* SkyboxSRV = FrameResources.Skybox->GetShaderResourceView();
     CommandList.SetShaderResourceView(SkyboxPixelShader.Get(), SkyboxSRV, 0);

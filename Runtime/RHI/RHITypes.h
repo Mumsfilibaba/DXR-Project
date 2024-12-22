@@ -36,7 +36,7 @@ typedef TSharedRef<class FRHIQuery>                   FRHIQueryRef;
 typedef TSharedRef<class FRHIRasterizerState>         FRHIRasterizerStateRef;
 typedef TSharedRef<class FRHIBlendState>              FRHIBlendStateRef;
 typedef TSharedRef<class FRHIDepthStencilState>       FRHIDepthStencilStateRef;
-typedef TSharedRef<class FRHIVertexInputLayout>       FRHIVertexInputLayoutRef;
+typedef TSharedRef<class FRHIVertexLayout>            FRHIVertexLayoutRef;
 typedef TSharedRef<class FRHIGraphicsPipelineState>   FRHIGraphicsPipelineStateRef;
 typedef TSharedRef<class FRHIComputePipelineState>    FRHIComputePipelineStateRef;
 typedef TSharedRef<class FRHIRayTracingPipelineState> FRHIRayTracingPipelineStateRef;
@@ -356,7 +356,7 @@ constexpr uint32 GetByteStrideFromFormat(EFormat Format)
 
 constexpr bool IsBlockCompressed(EFormat Format)
 {
-    return ToUnderlying(Format) >= ToUnderlying(EFormat::BC1_Typeless);
+    return UnderlyingTypeValue(Format) >= UnderlyingTypeValue(EFormat::BC1_Typeless);
 }
 
 // BlockCompressed images must be aligned to 4 pixels in all dimensions
@@ -445,12 +445,12 @@ enum class ECubeFace : uint8
 
 constexpr uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
-    return ToUnderlying(CubeFace);
+    return UnderlyingTypeValue(CubeFace);
 }
 
 constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
-    return Index > ToUnderlying(ECubeFace::NegZ) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
+    return Index > UnderlyingTypeValue(ECubeFace::NegZ) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
 
 

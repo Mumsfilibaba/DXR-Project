@@ -1,12 +1,5 @@
-#include "WindowsApplication.h"
-#include "WindowsApplicationMisc.h"
-#include "WindowsOutputDeviceConsole.h"
-#include "CoreApplication/Generic/GenericApplicationMisc.h"
-
-FOutputDeviceConsole* FWindowsApplicationMisc::CreateOutputDeviceConsole()
-{
-    return new FWindowsOutputDeviceConsole();
-}
+#include "CoreApplication/Windows/WindowsApplication.h"
+#include "CoreApplication/Windows/WindowsApplicationMisc.h"
 
 void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 {
@@ -22,50 +15,5 @@ void FWindowsApplicationMisc::PumpMessages(bool bUntilEmpty)
 
         TranslateMessage(&Message);
         DispatchMessage(&Message);
-
-        if (Message.message == WM_QUIT)
-        {
-            if (WindowsApplication)
-            {
-                WindowsApplication->StoreMessage(Message.hwnd, Message.message, Message.wParam, Message.lParam, 0, 0);
-            }
-        }
-
     } while (bUntilEmpty);
-}
-
-FModifierKeyState FWindowsApplicationMisc::GetModifierKeyState()
-{
-    uint8 ModifierMask = 0;
-    if (GetKeyState(VK_CONTROL) & 0x8000)
-    {
-        ModifierMask |= EModifierFlag::ModifierFlag_Ctrl;
-    }
-
-    if (GetKeyState(VK_MENU) & 0x8000)
-    {
-        ModifierMask |= EModifierFlag::ModifierFlag_Alt;
-    }
-
-    if (GetKeyState(VK_SHIFT) & 0x8000)
-    {
-        ModifierMask |= EModifierFlag::ModifierFlag_Shift;
-    }
-
-    if (GetKeyState(VK_CAPITAL) & 1)
-    {
-        ModifierMask |= EModifierFlag::ModifierFlag_CapsLock;
-    }
-
-    if ((GetKeyState(VK_LWIN) | GetKeyState(VK_RWIN)) & 0x8000)
-    {
-        ModifierMask |= EModifierFlag::ModifierFlag_Super;
-    }
-
-    if (GetKeyState(VK_NUMLOCK) & 1)
-    {
-        ModifierMask |= EModifierFlag::ModifierFlag_NumLock;
-    }
-
-    return FModifierKeyState(ModifierMask);
 }

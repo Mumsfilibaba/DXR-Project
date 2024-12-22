@@ -1,21 +1,30 @@
-#include "MacCursor.h"
-#include "MacWindow.h"
-#include "CocoaWindow.h"
 #include "Core/Memory/Memory.h"
-
+#include "CoreApplication/Mac/MacCursor.h"
+#include "CoreApplication/Mac/MacWindow.h"
+#include "CoreApplication/Mac/CocoaWindow.h"
 #include <AppKit/AppKit.h>
 
-/**
- * These cursors are available but not documented
- * See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
- */
+// These cursors are available but not documented
+// See: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_osx.mm
 @interface NSCursor()
+
 + (id)_windowResizeNorthWestSouthEastCursor;
 + (id)_windowResizeNorthEastSouthWestCursor;
 + (id)_windowResizeNorthSouthCursor;
 + (id)_windowResizeEastWestCursor;
+
 @end
 
+FMacCursor::FMacCursor()
+    : FGenericCursor()
+    , CurrentPosition()
+    , bIsPositionInitialized(false)
+{
+}
+
+FMacCursor::~FMacCursor()
+{
+}
 
 void FMacCursor::SetCursor(ECursor Cursor)
 {
@@ -60,7 +69,7 @@ void FMacCursor::SetCursor(ECursor Cursor)
         break;
     }
     
-    if (SelectedCursor)
+    if (!SelectedCursor)
     {
         SelectedCursor = [NSCursor arrowCursor];
     }
@@ -68,30 +77,37 @@ void FMacCursor::SetCursor(ECursor Cursor)
     [SelectedCursor set];
 }
 
-void FMacCursor::SetPosition(int32 x, int32 y) const
+void FMacCursor::SetPosition(int32 x, int32 y)
 {
-    CGPoint NewPosition   = CGPointMake(x, y);
-    CGRect  DisplayBounds = CGDisplayBounds(CGMainDisplayID());
-    CGWarpMouseCursorPosition(CGPointMake(NewPosition.x, DisplayBounds.size.height - NewPosition.y));
+    CGAssociateMouseAndMouseCursorPosition(false);
     
-    if (bIsVisible)
-    {
-        CGAssociateMouseAndMouseCursorPosition(true);
-    }
+    const CGRect DisplayBounds = CGDisplayBounds(CGMainDisplayID());
+    CGPoint NewPosition = CGPointMake(x, y);
+    NewPosition = CGPointMake(NewPosition.x, DisplayBounds.size.height - NewPosition.y);
+    CGWarpMouseCursorPosition(NewPosition);
+    
+    CGAssociateMouseAndMouseCursorPosition(true);
+
+    UpdateCursorPosition(FIntVector2(NewPosition.x, NewPosition.y));
 }
 
 FIntVector2 FMacCursor::GetPosition() const
 {
-    NSPoint CursorPosition = [NSEvent mouseLocation];
-    CGRect  DisplayBounds  = CGDisplayBounds(CGMainDisplayID());
-    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(DisplayBounds.size.height - CursorPosition.y));
+    if (bIsPositionInitialized)
+    {
+        return CurrentPosition;
+    }
+    
+    const NSPoint MouseLocation  = [NSEvent mouseLocation];
+    const NSPoint CursorPosition = FMacApplication::ConvertCocoaPointToEngine(MouseLocation.x, MouseLocation.y);
+    return FIntVector2(static_cast<int32>(CursorPosition.x), static_cast<int32>(CursorPosition.y));
 }
 
 void FMacCursor::SetVisibility(bool bVisible)
 {
     if (bVisible)
     {
-        if (! bIsVisible)
+        if (!bIsVisible)
         {
             [NSCursor unhide];
             bIsVisible = true;
@@ -105,4 +121,10 @@ void FMacCursor::SetVisibility(bool bVisible)
             bIsVisible = false;
         }
     }
+}
+
+void FMacCursor::UpdateCursorPosition(const FIntVector2& InPosition)
+{
+    CurrentPosition = InPosition;
+    bIsPositionInitialized = true;
 }

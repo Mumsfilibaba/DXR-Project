@@ -33,9 +33,11 @@ struct IRHITextureData
 {
     virtual ~IRHITextureData() = default;
 
-    virtual int64 GetMipRowPitch(uint32 MipLevel = 0)   const = 0;
+    virtual int64 GetMipRowPitch(uint32 MipLevel = 0) const = 0;
+
     virtual int64 GetMipSlicePitch(uint32 MipLevel = 0) const = 0;
-    virtual void* GetMipData(uint32 MipLevel = 0)       const = 0;
+
+    virtual void* GetMipData(uint32 MipLevel = 0) const = 0;
 };
 
 struct FRHITextureInfo
@@ -49,15 +51,7 @@ struct FRHITextureInfo
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(
-            ETextureDimension::Texture2D,
-            InFormat,
-            FIntVector3(InWidth, InHeight, 0),
-            1,
-            InNumMipLevels,
-            InNumSamples,
-            InUsageFlags,
-            InClearValue);
+        return FRHITextureInfo(ETextureDimension::Texture2D, InFormat, FIntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     static FRHITextureInfo CreateTexture2DArray(
@@ -70,15 +64,7 @@ struct FRHITextureInfo
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(
-            ETextureDimension::Texture2DArray,
-            InFormat,
-            FIntVector3(InWidth, InHeight, 0),
-            InArraySlices,
-            InNumMipLevels,
-            InNumSamples,
-            InUsageFlags,
-            InClearValue);
+        return FRHITextureInfo(ETextureDimension::Texture2DArray, InFormat, FIntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     static FRHITextureInfo CreateTextureCube(
@@ -89,15 +75,7 @@ struct FRHITextureInfo
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(
-            ETextureDimension::TextureCube,
-            InFormat,
-            FIntVector3(InExtent, InExtent, 0),
-            1,
-            InNumMipLevels,
-            InNumSamples,
-            InUsageFlags,
-            InClearValue);
+        return FRHITextureInfo(ETextureDimension::TextureCube, InFormat, FIntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     static FRHITextureInfo CreateTextureCubeArray(
@@ -109,15 +87,7 @@ struct FRHITextureInfo
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(
-            ETextureDimension::TextureCubeArray,
-            InFormat,
-            FIntVector3(InExtent, InExtent, 0),
-            InArraySlices,
-            InNumMipLevels,
-            InNumSamples,
-            InUsageFlags,
-            InClearValue);
+        return FRHITextureInfo(ETextureDimension::TextureCubeArray, InFormat, FIntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     static FRHITextureInfo CreateTexture3D(
@@ -130,15 +100,7 @@ struct FRHITextureInfo
         ETextureUsageFlags InUsageFlags,
         const FClearValue& InClearValue = FClearValue())
     {
-        return FRHITextureInfo(
-            ETextureDimension::Texture3D,
-            InFormat,
-            FIntVector3(InWidth, InHeight, InDepth),
-            1,
-            InNumMipLevels,
-            InNumSamples,
-            InUsageFlags,
-            InClearValue);
+        return FRHITextureInfo(ETextureDimension::Texture3D, InFormat, FIntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
     FRHITextureInfo()
@@ -161,7 +123,7 @@ struct FRHITextureInfo
         uint32             InNumMipLevels,
         uint32             InNumSamples,
         ETextureUsageFlags InUsageFlags,
-        const FClearValue& InClearValue  = FClearValue())
+        const FClearValue& InClearValue = FClearValue())
         : Dimension(InDimension)
         , Format(InFormat)
         , UsageFlags(InUsageFlags)
@@ -222,32 +184,76 @@ protected:
     {
     }
 
-    virtual ~FRHITexture() = default;
-
 public:
-    virtual void* GetRHIBaseTexture() { return nullptr; }
+    
+    virtual void* GetRHIBaseTexture()        { return nullptr; }
     virtual void* GetRHIBaseResource() const { return nullptr; }
 
-    virtual FRHIShaderResourceView* GetShaderResourceView()  const { return nullptr; }
+    virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
+    
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
-    virtual void SetDebugName(const FString& InName) { }
+
+    virtual void SetDebugName(const FString&) { }
     virtual FString GetDebugName() const { return ""; }
 
-    ETextureDimension GetDimension() const { return Info.Dimension; }
-    EFormat GetFormat() const { return Info.Format; }
-    ETextureUsageFlags GetFlags() const { return Info.UsageFlags; }
-    const FIntVector3& GetExtent() const { return Info.Extent; }
-
-    uint32 GetWidth() const { return Info.Extent.x; }
-    uint32 GetHeight() const { return Info.Extent.y; }
-    uint32 GetDepth() const { return Info.Extent.z; }
-    uint32 GetNumArraySlices() const { return Info.NumArraySlices; }
-    uint32 GetNumMipLevels() const { return Info.NumMipLevels; }
-    uint32 GetNumSamples() const { return Info.NumSamples; }
+public:
     
-    const FRHITextureInfo& GetInfo() const { return Info; }
+    ETextureDimension GetDimension() const
+    {
+        return Info.Dimension;
+    }
+    
+    EFormat GetFormat() const
+    {
+        return Info.Format;
+    }
+    
+    ETextureUsageFlags GetFlags() const
+    {
+        return Info.UsageFlags;
+    }
+    
+    const FIntVector3& GetExtent() const
+    {
+        return Info.Extent;
+    }
+
+    uint32 GetWidth() const
+    {
+        return Info.Extent.X;
+    }
+    
+    uint32 GetHeight() const
+    {
+        return Info.Extent.Y;
+    }
+    
+    uint32 GetDepth() const
+    {
+        return Info.Extent.Z;
+    }
+    
+    uint32 GetNumArraySlices() const
+    {
+        return Info.NumArraySlices;
+    }
+    
+    uint32 GetNumMipLevels() const
+    {
+        return Info.NumMipLevels;
+    }
+    
+    uint32 GetNumSamples() const
+    {
+        return Info.NumSamples;
+    }
+    
+    const FRHITextureInfo& GetInfo() const
+    {
+        return Info;
+    }
 
 protected:
     FRHITextureInfo Info;

@@ -63,7 +63,7 @@ bool FD3D12Queue::Initialize()
     }
 
     const FStringWide WideName = CharToWide(FString::CreateFormatted("CommandQueue %s", ToString(QueueType)));
-    NewCommandQueue->SetName(WideName.GetCString());
+    NewCommandQueue->SetName(*WideName);
 
     D3D12_INFO("[FD3D12Device]: Created CommandQueue '%s'", ToString(QueueType));
     CommandQueue = NewCommandQueue;

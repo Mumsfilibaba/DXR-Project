@@ -14,7 +14,7 @@ FMetalTexture::FMetalTexture(FMetalDeviceContext* InDeviceContext, const FRHITex
 
 FMetalTexture::~FMetalTexture()
 {
-    NSSafeRelease(Texture);
+    [Texture release];
 }
 
 bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData)
@@ -33,21 +33,21 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
     TextureDescriptor.cpuCacheMode              = MTLCPUCacheModeWriteCombined;
     TextureDescriptor.storageMode               = MTLStorageModePrivate;
     TextureDescriptor.hazardTrackingMode        = MTLHazardTrackingModeDefault;
-    TextureDescriptor.width                     = Info.Extent.x;
-    TextureDescriptor.height                    = Info.Extent.y;
+    TextureDescriptor.width                     = Info.Extent.X;
+    TextureDescriptor.height                    = Info.Extent.Y;
     
     if (Info.IsTexture3D())
     {
-        TextureDescriptor.depth       = Info.Extent.z;
+        TextureDescriptor.depth       = Info.Extent.Z;
         TextureDescriptor.arrayLength = 1;
     }
     else
     {
         TextureDescriptor.depth       = 1;
-        TextureDescriptor.arrayLength = FMath::Max(Info.Extent.z, 1);
+        TextureDescriptor.arrayLength = FMath::Max(Info.Extent.Z, 1);
     }
     
-    id<MTLDevice> Device = GetDeviceContext()->GetMTLDevice();
+    id<MTLDevice>  Device = GetDeviceContext()->GetMTLDevice();
     id<MTLTexture> NewTexture = [Device newTextureWithDescriptor:TextureDescriptor];
     if (!NewTexture)
     {
@@ -81,8 +81,8 @@ bool FMetalTexture::Initialize(EResourceAccess InInitialAccess, const IRHITextur
                 uint8* StagingBufferContents = reinterpret_cast<uint8*>(StagingBuffer.contents);
                 
                 // Transfer all the mip-levels
-                uint32 Width        = Info.Extent.x;
-                uint32 Height       = Info.Extent.y;
+                uint32 Width        = Info.Extent.X;
+                uint32 Height       = Info.Extent.Y;
                 uint64 SourceOffset = 0;
                 for (uint32 Index = 0; Index < Info.NumMipLevels; ++Index)
                 {

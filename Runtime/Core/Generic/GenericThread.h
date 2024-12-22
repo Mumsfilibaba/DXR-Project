@@ -17,34 +17,36 @@ public:
     // Returns the thread-object for the current thread
     static FGenericThread* GetThread();
 
-    /** @brief - Destructor */
+public:
+
+    /** @brief Destructor */
     virtual ~FGenericThread();
 
-    /** @brief - Start the thread and start executing the entrypoint */
+    /** @brief Start the thread and start executing the entrypoint */
     virtual bool Start() { return true; }
 
-    /** @brief - Kills the thread if the platform support the feature */
+    /** @brief Kills the thread if the platform support the feature */
     virtual void Kill(bool bWaitUntilCompletion) { }
 
-    /** @brief - Suspends the thread if the platform support the feature */
+    /** @brief Suspends the thread if the platform support the feature */
     virtual void Suspend() { }
 
-    /** @brief - Resumes the thread after being suspended if the platform support the feature */
+    /** @brief Resumes the thread after being suspended if the platform support the feature */
     virtual void Resume() { }
 
-    /** @brief - Waits for the thread to finish */
+    /** @brief Waits for the thread to finish */
     virtual void WaitForCompletion() { }
     
-    /** @return - Returns the native platform handle */
+    /** @return Returns the native platform handle */
     virtual void* GetPlatformHandle() { return nullptr; }
 
-    /** @return - Returns the name of the thread */
+    /** @return Returns the name of the thread */
     const FString& GetName() const
     {
         return ThreadName;
     }
 
-    /** @return - Returns a pointer to the interface currently running on the thread */
+    /** @return Returns a pointer to the interface currently running on the thread */
     FRunnable* GetRunnable() const 
     { 
         return Runnable; 

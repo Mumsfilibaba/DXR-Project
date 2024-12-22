@@ -3,10 +3,9 @@
 #include "MetalTexture.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Mac/MacEvent.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
-#include "CoreApplication/Mac/CocoaWindowView.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
@@ -27,7 +26,7 @@ public:
     bool Resize(uint32 InWidth, uint32 InHeight);
     bool Present(bool bVerticalSync);
 
-    /** @return - Returns the current drawable, will release it during next call to present */
+    /** @return Returns the current drawable, will release it during next call to present */
     id<CAMetalDrawable> GetDrawable();
     id<MTLTexture> GetDrawableTexture();
     

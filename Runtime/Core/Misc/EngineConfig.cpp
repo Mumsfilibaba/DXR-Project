@@ -29,7 +29,7 @@ void FConfigSection::DumpToString(FString& OutString)
 {
     for (auto ValuePair : Values)
     {
-        OutString.AppendFormat("%s=%s\n", ValuePair.First.GetCString(), ValuePair.Second.CurrentValue.GetCString());
+        OutString.AppendFormat("%s=%s\n", *ValuePair.First, *ValuePair.Second.CurrentValue);
     }
 }
 
@@ -169,7 +169,7 @@ void FConfigFile::DumpToString(FString& OutString)
     {
         if (!CurrentSection.First.IsEmpty())
         {
-            OutString.AppendFormat("[%s]\n", CurrentSection.First.GetCString());
+            OutString.AppendFormat("[%s]\n", *CurrentSection.First);
         }
         
         CurrentSection.Second.DumpToString(OutString);
@@ -353,9 +353,9 @@ void FConfig::LoadConsoleVariables()
         {
             for (auto Value : Section.Second.Values)
             {
-                if (IConsoleVariable* Variable = ConsoleManager.FindConsoleVariable(Value.First.GetCString()))
+                if (IConsoleVariable* Variable = ConsoleManager.FindConsoleVariable(*Value.First))
                 {
-                    Variable->SetString(Value.Second.CurrentValue.GetCString(), EConsoleVariableFlags::SetByConfigFile);
+                    Variable->SetString(*Value.Second.CurrentValue, EConsoleVariableFlags::SetByConfigFile);
                 }
             }
         }

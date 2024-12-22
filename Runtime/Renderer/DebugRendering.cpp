@@ -1,14 +1,14 @@
-#include "DebugRendering.h"
-#include "Scene.h"
 #include "Core/Math/AABB.h"
 #include "Core/Math/Matrix4.h"
 #include "Core/Misc/FrameProfiler.h"
-#include "Engine/Resources/Mesh.h"
+#include "RHI/RHI.h"
+#include "RHI/ShaderCompiler.h"
+#include "Engine/Resources/Model.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Lights/PointLight.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
-#include "RHI/RHI.h"
-#include "RHI/ShaderCompiler.h"
+#include "Renderer/Scene.h"
+#include "Renderer/DebugRendering.h"
 
 FDebugRenderer::FDebugRenderer(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -70,12 +70,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexInputLayoutInitializer InputLayout =
+        FRHIVertexLayoutInitializerList VertexElementList =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        FRHIVertexInputLayoutRef InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+        FRHIVertexLayoutRef InputLayoutState = RHICreateVertexLayout(VertexElementList);
         if (!InputLayoutState)
         {
             DEBUG_BREAK();
@@ -281,7 +281,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             LightDebugPSO->SetDebugName("Light Debug PipelineState");
         }
 
-        FMeshData SphereMesh = FMeshFactory::CreateSphere(1, 0.25f);
+        FMeshCreateInfo SphereMesh = FMeshFactory::CreateSphere(1, 0.25f);
 
         // VertexBuffer
         FRHIBufferInfo VBInfo(SphereMesh.Vertices.SizeInBytes(), sizeof(FVertex), EBufferUsageFlags::VertexBuffer | EBufferUsageFlags::Default);
@@ -297,7 +297,7 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
         }
 
         // Create IndexBuffer
-        TArray<uint16> SmallIndicies = FMeshFactory::ConvertSmallIndices(SphereMesh.Indices);
+        TArray<uint16> SmallIndicies = SphereMesh.GetSmallIndices();
         DbgSphereIndexCount = SmallIndicies.Size();
 
         FRHIBufferInfo IBInfo(SmallIndicies.SizeInBytes(), sizeof(uint16), EBufferUsageFlags::IndexBuffer | EBufferUsageFlags::Default);
@@ -347,12 +347,12 @@ bool FDebugRenderer::Initialize(FFrameResources& Resources)
             return false;
         }
 
-        FRHIVertexInputLayoutInitializer InputLayout =
+        FRHIVertexLayoutInitializerList VertexElementList =
         {
-            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, EVertexInputClass::Vertex, 0 },
+            { "POSITION", 0, EFormat::R32G32B32_Float, sizeof(FVector3), 0, 0, 0, EVertexInputClass::Vertex, 0 },
         };
 
-        FRHIVertexInputLayoutRef InputLayoutState = RHICreateVertexInputLayout(InputLayout);
+        FRHIVertexLayoutRef InputLayoutState = RHICreateVertexLayout(VertexElementList);
         if (!InputLayoutState)
         {
             DEBUG_BREAK();
@@ -451,19 +451,18 @@ void FDebugRenderer::RenderObjectAABBs(FRHICommandList& CommandList, FFrameResou
             continue;
         }
 
-        FAABB& Box = Component->Mesh->BoundingBox;
-
+        const FAABB& Box = Component->Mesh->GetAABB();
         FVector3 Scale    = FVector3(Box.GetWidth(), Box.GetHeight(), Box.GetDepth());
         FVector3 Position = Box.GetCenter();
 
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
-        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformMatrix = TransformMatrix.Transpose();
-        TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
-        TransformMatrix = TransformMatrix.Transpose();
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
+        FMatrix4 TransformMatrix   = Component->CurrentActor->GetTransform().GetTransformMatrix();
 
-        CommandList.Set32BitShaderConstants(AABBVertexShader.Get(), TransformMatrix.Data(), 16);
+        TransformMatrix = (ScaleMatrix * TranslationMatrix) * TransformMatrix;
+        TransformMatrix = TransformMatrix.GetTranspose();
+
+        CommandList.Set32BitShaderConstants(AABBVertexShader.Get(), TransformMatrix.M, 16);
 
         CommandList.DrawIndexedInstanced(AABBIndexCount, 1, 0, 0, 0);
     }
@@ -498,21 +497,20 @@ void FDebugRenderer::RenderOcclusionVolumes(FRHICommandList& CommandList, FFrame
             FVector4 Color;
         } ShaderData;
 
-        const FAABB& BoundingBox = Component->Mesh->BoundingBox;
+        const FAABB& BoundingBox = Component->Mesh->GetAABB();
 
         FVector3 Scale = FVector3(BoundingBox.GetWidth(), BoundingBox.GetHeight(), BoundingBox.GetDepth());
-        Scale.x = FMath::Max<float>(Scale.x, 0.005f);
-        Scale.y = FMath::Max<float>(Scale.y, 0.005f);
-        Scale.z = FMath::Max<float>(Scale.z, 0.005f);
+        Scale.X = FMath::Max<float>(Scale.X, 0.005f);
+        Scale.Y = FMath::Max<float>(Scale.Y, 0.005f);
+        Scale.Z = FMath::Max<float>(Scale.Z, 0.005f);
 
         FVector3 Position          = BoundingBox.GetCenter();
-        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.x, Position.y, Position.z);
-        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.x, Scale.y, Scale.z).Transpose();
+        FMatrix4 TranslationMatrix = FMatrix4::Translation(Position.X, Position.Y, Position.Z);
+        FMatrix4 ScaleMatrix       = FMatrix4::Scale(Scale.X, Scale.Y, Scale.Z);
 
-        ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetMatrix();
-        ShaderData.TransformMatrix = ShaderData.TransformMatrix.Transpose();
+        ShaderData.TransformMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
         ShaderData.TransformMatrix = (ScaleMatrix * TranslationMatrix) * ShaderData.TransformMatrix;
-        ShaderData.TransformMatrix = ShaderData.TransformMatrix.Transpose();
+        ShaderData.TransformMatrix = ShaderData.TransformMatrix.GetTranspose();
         ShaderData.Color           = FVector4(0.8f, 0.8f, 0.8f, 0.5f);
 
         CommandList.SetConstantBuffer(OcclusionVolumeVS.Get(), Resources.CameraBuffer.Get(), 0);
@@ -556,7 +554,7 @@ void FDebugRenderer::RenderPointLights(FRHICommandList& CommandList, FFrameResou
         if (FPointLight* CurrentPointLight = Cast<FPointLight>(Light))
         {
             FVector3 Color = CurrentPointLight->GetColor();
-            PointLightData.Color         = FVector4(Color.x, Color.y, Color.z, 1.0f);
+            PointLightData.Color         = FVector4(Color.X, Color.Y, Color.Z, 1.0f);
             PointLightData.WorldPosition = CurrentPointLight->GetPosition();
 
             CommandList.Set32BitShaderConstants(LightDebugVS.Get(), &PointLightData, 8);

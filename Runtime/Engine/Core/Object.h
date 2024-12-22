@@ -4,9 +4,6 @@
 
 class FObjectInitializer;
 
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FObject Macro
-
 #define FOBJECT_DECLARE_DEFAULT_CONSTRUCTOR(FObjectType) \
     static void StaticDefaultConstructor(const FObjectInitializer& ObjectInitializer)
 
@@ -60,10 +57,6 @@ class FObjectInitializer;
         return GlobalClassInfo.ClassSingleton; \
     } \
 
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// FObjects
-
 class ENGINE_API FObjectInitializer
 {
 public:
@@ -89,7 +82,6 @@ private:
     FObjectClass* Class;
 };
 
-
 class ENGINE_API FObject
 {
 public:
@@ -106,10 +98,6 @@ public:
 private:
     FObjectClass* Class = nullptr;
 };
-
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Casting of Objects
 
 inline bool IsSubClassOf(FObject* Object, FObjectClass* Class)
 {
@@ -129,10 +117,6 @@ inline T* Cast(FObject* Object)
 {
     return IsSubClassOf<T>(Object) ? static_cast<T*>(Object) : nullptr;
 }
-
-
-/*///////////////////////////////////////////////////////////////////////////////////////////////*/
-// Creation of Objects
 
 ENGINE_API FObject* NewObject(FObjectClass* Class);
 

@@ -15,14 +15,14 @@ struct IConsoleObject
     virtual ~IConsoleObject() = default;
 
     /**
-     * @brief  - Cast to a console-variable if the console-variable interface is implemented
-     * @return - Returns either a console-variable or nullptr
+     * @brief Cast to a console-variable if the console-variable interface is implemented
+     * @return Returns either a console-variable or nullptr
      */
     virtual struct IConsoleVariable* AsVariable() { return nullptr; }
 
     /**
-     * @brief  - Cast to a console-command if the console-command interface is implemented
-     * @return - Returns either a console-command or nullptr
+     * @brief Cast to a console-command if the console-command interface is implemented
+     * @return Returns either a console-command or nullptr
      */
     virtual struct IConsoleCommand* AsCommand() { return nullptr; }
 
@@ -39,7 +39,7 @@ struct IConsoleCommand : public IConsoleObject
     // TODO: Add parameters to console commands
 
     /**
-     * @brief - Execute the ConsoleCommand
+     * @brief Execute the ConsoleCommand
      */
     virtual void Execute() = 0;
 };
@@ -92,74 +92,74 @@ class TConsoleVariableData;
 struct IConsoleVariable : public IConsoleObject
 {
     /**
-     * @brief         - Set the variable with an int
-     * @param InValue - Value to store
+     * @brief Set the variable with an int
+     * @param InValue Value to store
      */
     virtual void SetAsInt(int32 InValue, EConsoleVariableFlags Flags) = 0;
 
     /**
-     * @brief         - Set the variable with an float
-     * @param InValue - Value to store
+     * @brief Set the variable with an float
+     * @param InValue Value to store
      */
     virtual void SetAsFloat(float InValue, EConsoleVariableFlags Flags) = 0;
 
     /**
-     * @brief        - Set the variable with an bool
+     * @brief Set the variable with an bool
      * @param bValue - Value to store
      */
     virtual void SetAsBool(bool bValue, EConsoleVariableFlags Flags) = 0;
 
     /**
-     * @brief         - Set the variable with an string
-     * @param InValue - Value to store
+     * @brief Set the variable with an string
+     * @param InValue Value to store
      */
     virtual void SetString(const FString& InValue, EConsoleVariableFlags Flags) = 0;
 
     /**
-     * @brief  - Retrieve the variable as an int
-     * @return - Returns an int with the value of the variable
+     * @brief Retrieve the variable as an int
+     * @return Returns an int with the value of the variable
      */
     virtual int32 GetInt() const = 0;
 
     /**
-     * @brief  - Retrieve the variable as an float
-     * @return - Returns an float with the value of the variable
+     * @brief Retrieve the variable as an float
+     * @return Returns an float with the value of the variable
      */
     virtual float GetFloat() const = 0;
 
     /**
-     * @brief  - Retrieve the variable as an bool
-     * @return - Returns an bool with the value of the variable
+     * @brief Retrieve the variable as an bool
+     * @return Returns an bool with the value of the variable
      */
     virtual bool GetBool() const = 0;
 
     /**
-     * @brief  - Retrieve the variable as an string
-     * @return - Returns an string with the value of the variable
+     * @brief Retrieve the variable as an string
+     * @return Returns an string with the value of the variable
      */
     virtual FString GetString() const = 0;
 
     /**
-     * @brief  - Retrieve the variable's data as a pointer
-     * @return - Returns an pointer to int-data if this is a int variable otherwise nullptr
+     * @brief Retrieve the variable's data as a pointer
+     * @return Returns an pointer to int-data if this is a int variable otherwise nullptr
      */
     virtual TConsoleVariableData<int32>* GetIntData() = 0;
 
     /**
-     * @brief  - Retrieve the variable's datacontainer as a pointer
-     * @return - Returns an pointer to float-datacontainer if this is a float variable otherwise nullptr
+     * @brief Retrieve the variable's datacontainer as a pointer
+     * @return Returns an pointer to float-datacontainer if this is a float variable otherwise nullptr
      */
     virtual TConsoleVariableData<float>* GetFloatData() = 0;
 
     /**
-     * @brief  - Retrieve the variable's datacontainer as a pointer
-     * @return - Returns an pointer to bool-datacontainer if this is a bool variable otherwise nullptr
+     * @brief Retrieve the variable's datacontainer as a pointer
+     * @return Returns an pointer to bool-datacontainer if this is a bool variable otherwise nullptr
      */
     virtual TConsoleVariableData<bool>* GetBoolData() = 0;
 
     /**
-     * @brief  - Retrieve the variable's datacontainer as a pointer
-     * @return - Returns an pointer to string-datacontainer if this is a string variable otherwise nullptr
+     * @brief Retrieve the variable's datacontainer as a pointer
+     * @return Returns an pointer to string-datacontainer if this is a string variable otherwise nullptr
      */
     virtual TConsoleVariableData<FString>* GetStringData() = 0;
 
@@ -170,38 +170,38 @@ struct IConsoleVariable : public IConsoleObject
     virtual EConsoleVariableFlags GetFlags() const = 0;
 
     /**
-     * @brief  - Check weather the variable is an int
-     * @return - Returns true if the variable is an int
+     * @brief Check weather the variable is an int
+     * @return Returns true if the variable is an int
      */
     virtual bool IsVariableInt() const = 0;
 
     /**
-     * @brief  - Check weather the variable is a float
-     * @return - Returns true if the variable is a float
+     * @brief Check weather the variable is a float
+     * @return Returns true if the variable is a float
      */
     virtual bool IsVariableFloat() const = 0;
 
     /**
-     * @brief  - Check weather the variable is a bool
-     * @return - Returns true if the variable is a bool
+     * @brief Check weather the variable is a bool
+     * @return Returns true if the variable is a bool
      */
     virtual bool IsVariableBool() const = 0;
 
     /**
-     * @brief  - Check weather the variable is a string
-     * @return - Returns true if the variable is a string
+     * @brief Check weather the variable is a string
+     * @return Returns true if the variable is a string
      */
     virtual bool IsVariableString() const = 0;
 
     /**
-     * @brief                    - Set the callback for when the variable changes
+     * @brief Set the callback for when the variable changes
      * @param NewChangedDelegate - Delegate for when the variable changes 
      */
     virtual void SetOnChangedDelegate(const FConsoleVariableDelegate& NewChangedDelegate) = 0;
 
     /**
-     * @brief  - Retrieve the delegate that gets called when the variable changes
-     * @return - Returns the on changed delegate
+     * @brief Retrieve the delegate that gets called when the variable changes
+     * @return Returns the on changed delegate
      */
     virtual FConsoleVariableDelegate& GetOnChangedDelegate() = 0;
 };
@@ -212,8 +212,8 @@ class CORE_API FConsoleManager
 public:
 
     /**
-     * @brief  - Retrieve the ConsoleManager instance
-     * @return - Returns a reference to the ConsoleManager
+     * @brief Retrieve the ConsoleManager instance
+     * @return Returns a reference to the ConsoleManager
      */
     static FORCEINLINE FConsoleManager& Get()
     {
@@ -227,103 +227,103 @@ public:
     }
 
     /**
-     * @brief                 - Register a new console-command
-     * @param Name            - Name of the console-command
-     * @param CommandDelegate - CommandDelegate to call when executing the command
+     * @brief Register a new console-command
+     * @param Name Name of the console-command
+     * @param CommandDelegate CommandDelegate to call when executing the command
      */
     IConsoleCommand* RegisterCommand(const CHAR* InName, const CHAR* HelpString, const FConsoleCommandDelegate& CommandDelegate);
 
     /**
-     * @brief              - Register a new String ConsoleVariable
-     * @param Name         - Name of the ConsoleVariable
-     * @param DefaultValue - Default value for the ConsoleVariable
+     * @brief Register a new String ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param DefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, const CHAR* DefaultValue, EConsoleVariableFlags Flags);
 
     /**
-     * @brief              - Register a new int32 ConsoleVariable
-     * @param Name         - Name of the ConsoleVariable
-     * @param DefaultValue - Default value for the ConsoleVariable
+     * @brief Register a new int32 ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param DefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, int32 DefaultValue, EConsoleVariableFlags Flags);
 
     /**
-     * @brief              - Register a new float ConsoleVariable
-     * @param Name         - Name of the ConsoleVariable
-     * @param DefaultValue - Default value for the ConsoleVariable
+     * @brief Register a new float ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param DefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, float DefaultValue, EConsoleVariableFlags Flags);
 
     /**
-     * @brief               - Register a new bool ConsoleVariable
-     * @param Name          - Name of the ConsoleVariable
-     * @param bDefaultValue - Default value for the ConsoleVariable
+     * @brief Register a new bool ConsoleVariable
+     * @param Name Name of the ConsoleVariable
+     * @param bDefaultValue Default value for the ConsoleVariable
      */
     IConsoleVariable* RegisterVariable(const CHAR* InName, const CHAR* HelpString, bool bDefaultValue, EConsoleVariableFlags Flags);
 
     /**
-     * @brief               - Unregister a ConsoleObject
-     * @param ConsoleObject - ConsoleObject to unregister from the console manager
+     * @brief Unregister a ConsoleObject
+     * @param ConsoleObject ConsoleObject to unregister from the console manager
      */
     void UnregisterObject(IConsoleObject* ConsoleObject);
 
     /**
-     * @brief      - Check weather or not a console-object exists with a specific name
-     * @param Name - Name of the console-object
-     * @return     - Returns true if there exists a console-object with the specified name
+     * @brief Check weather or not a console-object exists with a specific name
+     * @param Name Name of the console-object
+     * @return Returns true if there exists a console-object with the specified name
      */
     bool IsConsoleObject(const CHAR* Name) const;
 
     /**
-     * @brief               - Finds the name of a ConsoleObject
-     * @param ConsoleObject - Name of the ConsoleCommand
-     * @return              - The ConsoleCommand matching the name
+     * @brief Finds the name of a ConsoleObject
+     * @param ConsoleObject Name of the ConsoleCommand
+     * @return The ConsoleCommand matching the name
      */
     FString FindConsoleObjectName(IConsoleObject* ConsoleObject);
 
     /**
-     * @brief      - Finds the ConsoleCommand with the matching name, returns nullptr if not found
-     * @param Name - Name of the ConsoleCommand
-     * @return     - The ConsoleCommand matching the name
+     * @brief Finds the ConsoleCommand with the matching name, returns nullptr if not found
+     * @param Name Name of the ConsoleCommand
+     * @return The ConsoleCommand matching the name
      */
     IConsoleCommand* FindConsoleCommand(const CHAR* Name) const;
 
     /**
-     * @brief      - Find the ConsoleVariable with the matching name, returns nullptr if not found
-     * @param Name - Name of the ConsoleVariable
-     * @return     - The ConsoleVariable matching the name
+     * @brief Find the ConsoleVariable with the matching name, returns nullptr if not found
+     * @param Name Name of the ConsoleVariable
+     * @return The ConsoleVariable matching the name
      */
     IConsoleVariable* FindConsoleVariable(const CHAR* Name) const;
 
     /**
-     * @brief      - Finds a any ConsoleObject with the matching name, returns nullptr if not found
-     * @param Name - Name of the ConsoleObject
-     * @return     - The ConsoleObject matching the name
+     * @brief Finds a any ConsoleObject with the matching name, returns nullptr if not found
+     * @param Name Name of the ConsoleObject
+     * @return The ConsoleObject matching the name
      */
     IConsoleObject* FindConsoleObject(const CHAR* Name) const;
 
     /**
-     * @brief               - Retrieve all ConsoleObjects that fits the name of the specified string
-     * @param CandidateName - Names to match
-     * @param OutCandidates - Array to store the console-objects that matches the candidate-name
+     * @brief Retrieve all ConsoleObjects that fits the name of the specified string
+     * @param CandidateName Names to match
+     * @param OutCandidates Array to store the console-objects that matches the candidate-name
      */
     void FindCandidates(const FStringView& CandidateName, TArray<TPair<IConsoleObject*, FString>>& OutCandidates);
 
     /**
-     * @brief - Clears the console history
+     * @brief Clears the console history
      */
     void ClearHistory();
 
     /**
-     * @brief              - Execute a string from the console
-     * @param OutputDevice - OutputDevice to print any messages to
-     * @param Command      - Command to execute by the console
+     * @brief Execute a string from the console
+     * @param OutputDevice OutputDevice to print any messages to
+     * @param Command Command to execute by the console
      */
     void ExecuteCommand(IOutputDevice& OutputDevice, const FString& Command);
 
     /**
-     * @brief  - Retrieve all the history that has been written to the console
-     * @return - An array containing string of all history written to the console
+     * @brief Retrieve all the history that has been written to the console
+     * @return An array containing string of all history written to the console
      */
     const TArray<FString>& GetHistory() const
     {
@@ -449,18 +449,9 @@ class TAutoConsoleVariable : public FAutoConsoleObject
     typedef TConsoleVariableData<T> FConsoleVariableData;
 
 public:
-    TAutoConsoleVariable(
-        const CHAR*           InName, 
-        const CHAR*           InHelpString,
-        const T&              DefaultValue, 
-        EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default);
+    TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const T& DefaultValue, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default);
 
-    TAutoConsoleVariable(
-        const CHAR*                     InName, 
-        const CHAR*                     InHelpString,
-        const T&                        DefaultValue, 
-        const FConsoleVariableDelegate& VariableChangedDelegate, 
-        EConsoleVariableFlags           InFlags = EConsoleVariableFlags::Default)
+    TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const T& DefaultValue, const FConsoleVariableDelegate& VariableChangedDelegate, EConsoleVariableFlags InFlags = EConsoleVariableFlags::Default)
         : TAutoConsoleVariable(InName, InHelpString, DefaultValue, InFlags)
     {
         AsVariable()->SetOnChangedDelegate(VariableChangedDelegate);
@@ -498,7 +489,7 @@ private:
 
 template<>
 FORCEINLINE TAutoConsoleVariable<FString>::TAutoConsoleVariable(const CHAR* InName, const CHAR* InHelpString, const FString& DefaultValue, EConsoleVariableFlags InFlags)
-    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, DefaultValue.GetCString(), InFlags))
+    : FAutoConsoleObject(FConsoleManager::Get().RegisterVariable(InName, InHelpString, *DefaultValue, InFlags))
 { 
     Data = static_cast<FConsoleVariableData*>(AsVariable()->GetStringData());
     CHECK(Data != nullptr);

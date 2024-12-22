@@ -51,7 +51,7 @@ TextureCubeArray<float> PointLightShadowMaps : register(t9);
 // SSAOBuffer
 Texture2D<float> SSAOBuffer : register(t10);
 
-// Shadow Cascade Data - FOR DEBUG
+// Shadow Cascade Data - (Debug data)
 #if DRAW_SHADOW_CASCADE
 Texture2D<uint> CascadeIndexBuffer : register(t11);
 #endif
@@ -65,11 +65,15 @@ SamplerState GBufferSampler    : register(s2);
 SamplerComparisonState ShadowMapSampler0 : register(s3);
 
 SHADER_CONSTANT_BLOCK_BEGIN
+    // 0-16
     int NumPointLights;
     int NumShadowCastingPointLights;
     int NumSkyLightMips;
     int ScreenWidth;
+
+    // 16-24
     int ScreenHeight;
+    int bEnablePointLightShadows;
 SHADER_CONSTANT_BLOCK_END
 
 ConstantBuffer<FCamera> CameraBuffer : register(b0);
@@ -118,7 +122,7 @@ float GetNumTilesY()
 
 float2 GetIntegrationConstants(float NDotV, float Roughness)
 {
-    return IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0f).rg;
+    return IntegrationLUT.SampleLevel(LUTSampler, float2(NDotV, Roughness), 0.0).rg;
 }
 
 [numthreads(NUM_THREADS, NUM_THREADS, 1)]
@@ -130,27 +134,26 @@ void Main(FComputeShaderInput Input)
         GroupMinZ = 0x7f7fffff;
         GroupMaxZ = 0;
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
 
-    uint2 Pixel = Input.DispatchThreadID.xy;
-    float Depth     = DepthStencilTex.Load(int3(Pixel, 0));
-    float ViewPosZ  = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
-    
+    uint2 Pixel    = Input.DispatchThreadID.xy;
+    float Depth    = DepthStencilTex.Load(int3(Pixel, 0));
+    float ViewPosZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
+
     // TODO: If we change to reversed Z then we need to change from 1.0 to 0.0
-    
     uint z = asuint(ViewPosZ);
-    if (Depth < 1.0f)
+    if (Depth < 1.0)
     {
         InterlockedMin(GroupMinZ, z);
         InterlockedMax(GroupMaxZ, z);
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
-    
+
     float MinZ = asfloat(GroupMinZ);
     float MaxZ = asfloat(GroupMaxZ);
-    
+
     float4 Frustum[4];
     {
         float pxm    = float(NUM_THREADS * Input.GroupID.x);
@@ -159,20 +162,20 @@ void Main(FComputeShaderInput Input)
         float pyp    = float(NUM_THREADS * (Input.GroupID.y + 1));
         float Width  = NUM_THREADS * GetNumTilesX();
         float Height = NUM_THREADS * GetNumTilesY();
-        
+
         float3 CornerPoints[4];
         CornerPoints[0] = Float3_ProjToView(
             float3((pxm / Width) * 2.0 - 1.0, ((Height - pym) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
-        
+
         CornerPoints[1] = Float3_ProjToView(
             float3((pxp / Width) * 2.0 - 1.0, ((Height - pym) / Height) * 2.0- 1.0, 1.0),
             CameraBuffer.ProjectionInv);
-        
+
         CornerPoints[2] = Float3_ProjToView(
             float3((pxp / Width) * 2.0 - 1.0, ((Height - pyp) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
-        
+
         CornerPoints[3] = Float3_ProjToView(
             float3((pxm / Width) * 2.0 - 1.0, ((Height - pyp) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
@@ -182,15 +185,15 @@ void Main(FComputeShaderInput Input)
             Frustum[i] = CreatePlane(CornerPoints[i], CornerPoints[(i + 1) & 3]);
         }
     }
-    
+
     if (ThreadIndex == 0)
     {
         GroupPointLightCounter       = 0;
         GroupShadowPointLightCounter = 0;
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
-    
+
     for (uint i = ThreadIndex; i < Constants.NumPointLights; i += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = PointLightsPosRad[i].Position;
@@ -208,7 +211,8 @@ void Main(FComputeShaderInput Input)
             GroupPointLightIndices[Index] = i;
         }
     }
-    
+
+    // Cull point-light shadows
     for (uint j = ThreadIndex; j < Constants.NumShadowCastingPointLights; j += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = ShadowCastingPointLightsPosRad[j].Position;
@@ -226,18 +230,18 @@ void Main(FComputeShaderInput Input)
             GroupShadowPointLightIndices[Index] = j;
         }
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
-    
+
     // Discard pixels not rendered to the GBuffer
     const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0)).rgb;
     if (length(GBufferNormal) == 0)
     {
-        Output[Pixel] = Float4(0.0f);
+        Output[Pixel] = Float4(0.0);
         return;
     }
 
-    const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5f)) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
+    const float2 PixelFloat    = saturate((float2(Pixel) + Float2(0.5)) / float2(Constants.ScreenWidth, Constants.ScreenHeight));
     const float3 ViewPosition  = PositionFromDepth(Depth, PixelFloat, CameraBuffer.ProjectionInv);
     const float3 WorldPosition = mul(float4(ViewPosition, 1.0), CameraBuffer.ViewInv).xyz;
 
@@ -254,11 +258,11 @@ void Main(FComputeShaderInput Input)
     const float GBufferMetallic  = saturate(GBufferMaterial.g);
     const float GBufferAO        = saturate(BASE_OCCLUSION + (GBufferMaterial.b * ScreenSpaceAO));
     
-    float3 F0 = Float3(0.04f);
+    float3 F0 = Float3(0.04);
     F0 = lerp(F0, GBufferAlbedo, GBufferMetallic);
-    
-    float3 L0 = Float3(0.0f);
-    
+
+    float3 L0 = Float3(0.0);
+
     // Pointlights
     for (uint i = 0; i < GroupPointLightCounter; ++i)
     {
@@ -277,35 +281,45 @@ void Main(FComputeShaderInput Input)
             
         L0 += IncidentRadiance;
     }
-    
+
+    // Point-light shadows
     for (uint i = 0; i < GroupShadowPointLightCounter; i++)
     {
         int Index = GroupShadowPointLightIndices[i];
         const FShadowPointLight Light       = ShadowCastingPointLights[Index];
         const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[Index];
-     
-        float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, WorldPosition, ObjectNormal, Light, LightPosRad);
-        if (ShadowFactor > 0.001f)
+
+        float ShadowFactor;
+        if (Constants.bEnablePointLightShadows)
+        {
+            ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, WorldPosition, ObjectNormal, Light, LightPosRad);
+        }
+        else
+        {
+            ShadowFactor = 1.0f;
+        }
+
+        if (ShadowFactor > 0.001)
         {
             float3 L = LightPosRad.Position - WorldPosition;
             float DistanceSqrd = dot(L, L);
             float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
             L = normalize(L);
-            
+
             float3 IncidentRadiance = Light.Color * Attenuation;
             IncidentRadiance = DirectRadiance(F0, ObjectNormal, View, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
-            
+
             L0 += IncidentRadiance * ShadowFactor;
         }
     }
-    
+
     // DirectionalLights
-    {    
+    {
         const FDirectionalLight Light = DirectionalLightBuffer;
         float3 L = normalize(-Light.Direction);
         
         float ShadowFactor = DirectionalShadowMask.Load(int3(Pixel, 0));
-        if (ShadowFactor > 0.0f)
+        if (ShadowFactor > 0.0)
         {
             float3 IncidentRadiance = Light.Color;
             IncidentRadiance = DirectRadiance(F0, ObjectNormal, View, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);      
@@ -316,18 +330,19 @@ void Main(FComputeShaderInput Input)
     // Image Based Lightning
     float3 FinalColor = L0;
     {
-        const float  NDotV      = max(dot(ObjectNormal, View), 0.0f);
+        const float  NDotV      = max(dot(ObjectNormal, View), 0.0);
         const float3 Reflection = reflect(-View, ObjectNormal);
         
         float3 F  = FresnelSchlick_Roughness(F0, View, ObjectNormal, GBufferRoughness);
         float3 Ks = F;
-        float3 Kd = Float3(1.0f) - Ks;
-        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, ObjectNormal, 0.0f).rgb;
+        float3 Kd = Float3(1.0) - Ks;
+        float3 Irradiance = IrradianceMap.SampleLevel(IrradianceSampler, ObjectNormal, 0.0).rgb;
         float3 Diffuse    = Irradiance * GBufferAlbedo * Kd;
 
-        float3 PrefilteredMap  = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, GBufferRoughness * (Constants.NumSkyLightMips - 1.0f)).rgb;
-        float2 BRDFIntegration = GetIntegrationConstants(NDotV, GBufferRoughness);
-        float3 Specular        = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
+        float  SpecularMipLevel = GBufferRoughness * ((float)(Constants.NumSkyLightMips) - 1.0);
+        float3 PrefilteredMap   = SpecularIrradianceMap.SampleLevel(IrradianceSampler, Reflection, SpecularMipLevel).rgb;
+        float2 BRDFIntegration  = GetIntegrationConstants(NDotV, GBufferRoughness);
+        float3 Specular         = PrefilteredMap * (F * BRDFIntegration.x + BRDFIntegration.y);
 
         float3 Ambient = (Diffuse + Specular) * GBufferAO;
         FinalColor     = Ambient + L0;
@@ -336,35 +351,35 @@ void Main(FComputeShaderInput Input)
 #if DRAW_TILE_OCCUPANCY
     const uint TotalLightCount = GroupPointLightCounter + GroupShadowPointLightCounter;
     
-    float4 Tint = Float4(1.0f);
+    float4 Tint = Float4(1.0);
     
     [[branch]]
     if (TotalLightCount > 0)
     {
         if (TotalLightCount < 8)
         {
-            float Color = float(TotalLightCount) / 8.0f;
-            Tint = float4(0.0f, Color, 0.0f, 1.0f);
+            float Color = float(TotalLightCount) / 8.0;
+            Tint = float4(0.0, Color, 0.0, 1.0);
         }
         else if (TotalLightCount < 16)
         {
-            float Color = float(TotalLightCount) / 16.0f;
-            Tint = float4(0.0f, Color, Color, 1.0f);
+            float Color = float(TotalLightCount) / 16.0;
+            Tint = float4(0.0, Color, Color, 1.0);
         }
         else if (TotalLightCount < 32)
         {
-            float Color = float(TotalLightCount) / 32.0f;
-            Tint = float4(0.0f, 0.0f, Color, 1.0f);
+            float Color = float(TotalLightCount) / 32.0;
+            Tint = float4(0.0, 0.0, Color, 1.0);
         }
         else if (TotalLightCount < 64)
         {
-            float Color = float(TotalLightCount) / 64.0f;
-            Tint = float4(Color, Color, 0.0f, 1.0f);
+            float Color = float(TotalLightCount) / 64.0;
+            Tint = float4(Color, Color, 0.0, 1.0);
         }
         else
         {
             float Color = float(TotalLightCount) / float(Constants.NumPointLights + Constants.NumShadowCastingPointLights);
-            Tint = float4(Color, 0.0f, 0.0f, 1.0f);
+            Tint = float4(Color, 0.0, 0.0, 1.0);
         }
     }
     
@@ -373,22 +388,22 @@ void Main(FComputeShaderInput Input)
 #elif DRAW_SHADOW_CASCADE
     const uint CascadeIndex = CascadeIndexBuffer[Pixel];
 
-    float4 Tint = Float4(1.0f);
+    float4 Tint = Float4(1.0);
     if (CascadeIndex == 0)
     {
-        Tint = float4(1.0f, 0.0f, 0.0f, 1.0f);
+        Tint = float4(1.0, 0.0, 0.0, 1.0);
     }
     else if (CascadeIndex == 1)
     {
-        Tint = float4(0.0f, 1.0f, 0.0f, 1.0f);
+        Tint = float4(0.0, 1.0, 0.0, 1.0);
     }
     else if (CascadeIndex == 2)
     {
-        Tint = float4(0.0f, 0.0f, 1.0f, 1.0f);
+        Tint = float4(0.0, 0.0, 1.0, 1.0);
     }
     else if (CascadeIndex == 3)
     {
-        Tint = float4(1.0f, 1.0f, 0.0f, 1.0f);
+        Tint = float4(1.0, 1.0, 0.0, 1.0);
     }
 
     FinalColor = FinalColor * Tint.rgb;

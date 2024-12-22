@@ -1,71 +1,65 @@
 #pragma once
-#include "MathCommon.h"
+#include "Core/Math/MathCommon.h"
 
 class FVector3
 {
 public:
 
-    /** 
-     * @brief - Default constructor (Initialize components to zero) 
+    /**
+     * @brief Default constructor (initializes components to zero).
      */
     FORCEINLINE FVector3() noexcept
-        : x(0.0f)
-        , y(0.0f)
-        , z(0.0f)
+        : X(0.0f)
+        , Y(0.0f)
+        , Z(0.0f)
     {
     }
 
     /**
-     * @brief     - Constructor initializing all components with a corresponding value.
-     * @param InX - The x-coordinate
-     * @param InY - The y-coordinate
-     * @param InZ - The z-coordinate
+     * @brief Constructor initializing all components with specific values.
+     * @param InX The X-coordinate.
+     * @param InY The Y-coordinate.
+     * @param InZ The Z-coordinate.
      */
     FORCEINLINE explicit FVector3(float InX, float InY, float InZ) noexcept
-        : x(InX)
-        , y(InY)
-        , z(InZ)
+        : X(InX)
+        , Y(InY)
+        , Z(InZ)
     {
     }
 
     /**
-     * @brief     - Constructor initializing all components with an array.
-     * @param Arr - Array with 3 elements
-     */
-    FORCEINLINE explicit FVector3(const float* Arr) noexcept
-        : x(Arr[0])
-        , y(Arr[1])
-        , z(Arr[2])
-    {
-    }
-
-    /**
-     * @brief        - Constructor initializing all components with a single value.
-     * @param Scalar - Value to set all components to
+     * @brief Constructor initializing all components with a single value.
+     * @param Scalar Value to set all components to.
      */
     FORCEINLINE explicit FVector3(float Scalar) noexcept
-        : x(Scalar)
-        , y(Scalar)
-        , z(Scalar)
+        : X(Scalar)
+        , Y(Scalar)
+        , Z(Scalar)
     {
-    }
-
-     /** @brief - Normalized this vector */
-    inline void Normalize() noexcept
-    {
-        const float fLengthSquared = LengthSquared();
-        if (fLengthSquared != 0.0f)
-        {
-            const float fRecipLength = 1.0f / FMath::Sqrt(fLengthSquared);
-            x *= fRecipLength;
-            y *= fRecipLength;
-            z *= fRecipLength;
-        }
     }
 
     /**
-     * @brief  - Returns a normalized version of this vector
-     * @return - A copy of this vector normalized
+     * @brief Normalizes this vector.
+     * @return Reference to this vector after normalization.
+     */
+    inline FVector3& Normalize() noexcept
+    {
+        const float LengthSqrd = GetLengthSquared();
+        if (LengthSqrd != 0.0f)
+        {
+            const float RcpLength = 1.0f / FMath::Sqrt(LengthSqrd);
+            X *= RcpLength;
+            Y *= RcpLength;
+            Z *= RcpLength;
+        }
+
+        return *this;
+    }
+
+    /**
+     * @brief Returns a normalized version of this vector.
+     * @return A normalized copy of this vector.
      */
     FORCEINLINE FVector3 GetNormalized() const noexcept
     {
@@ -75,17 +69,18 @@ public:
     }
 
     /**
-     * @brief       - Compares, within a threshold Epsilon, this vector with another vector
-     * @param Other - vector to compare against
-     * @return      - True if equal, false if not
+     * @brief Compares this vector with another vector within a specified threshold.
+     * @param Other Vector to compare against.
+     * @param Epsilon The threshold for comparison.
+     * @return True if vectors are approximately equal, false otherwise.
      */
     inline bool IsEqual(const FVector3& Other, float Epsilon = FMath::kIsEqualEpsilon) const noexcept
     {
         Epsilon = FMath::Abs(Epsilon);
 
-        for (int32 i = 0; i < 3; i++)
+        for (int32 Index = 0; Index < 3; ++Index)
         {
-            float Diff = reinterpret_cast<const float*>(this)[i] - reinterpret_cast<const float*>(&Other)[i];
+            float Diff = XYZ[Index] - Other.XYZ[Index];
             if (FMath::Abs(Diff) > Epsilon)
             {
                 return false;
@@ -96,24 +91,24 @@ public:
     }
 
     /**
-     * @brief  - Checks weather this vector is a unit vector not
-     * @return - True if the length equals one, false if not
+     * @brief Checks whether this vector is a unit vector.
+     * @return True if the length equals one, false otherwise.
      */
     FORCEINLINE bool IsUnitVector() const noexcept
     {
-        const float fLengthSquared = FMath::Abs(1.0f - LengthSquared());
-        return (fLengthSquared < FMath::kIsEqualEpsilon);
+        const float LengthDiff = FMath::Abs(1.0f - GetLengthSquared());
+        return (LengthDiff < FMath::kIsEqualEpsilon);
     }
 
     /**
-     * @brief  - Checks weather this vector has any component that equals NaN
-     * @return - True if the any component equals NaN, false if not
+     * @brief Checks whether this vector contains any NaN components.
+     * @return True if any component equals NaN, false otherwise.
      */
-    FORCEINLINE bool HasNaN() const noexcept
+    FORCEINLINE bool ContainsNaN() const noexcept
     {
         for (int32 Index = 0; Index < 3; ++Index)
         {
-            if (FMath::IsNaN(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsNaN(XYZ[Index]))
             {
                 return true;
             }
@@ -123,14 +118,14 @@ public:
     }
 
     /**
-     * @brief  - Checks weather this vector has any component that equals infinity
-     * @return - True if the any component equals infinity, false if not
+     * @brief Checks whether this vector contains any infinite components.
+     * @return True if any component equals infinity, false otherwise.
      */
-    FORCEINLINE bool HasInfinity() const noexcept
+    FORCEINLINE bool ContainsInfinity() const noexcept
     {
         for (int32 Index = 0; Index < 3; ++Index)
         {
-            if (FMath::IsInfinity(reinterpret_cast<const float*>(this)[Index]))
+            if (FMath::IsInfinity(XYZ[Index]))
             {
                 return true;
             }
@@ -140,351 +135,416 @@ public:
     }
 
     /**
-     * @brief  - Checks weather this vector has any value that equals infinity or NaN
-     * @return - False if the any value equals infinity or NaN, true if not
+     * @brief Returns the length of this vector.
+     * @return The length of the vector.
      */
-    FORCEINLINE bool IsValid() const noexcept
+    FORCEINLINE float GetLength() const noexcept
     {
-        return !HasNaN() && !HasInfinity();
+        const float LengthSqrd = GetLengthSquared();
+        return FMath::Sqrt(LengthSqrd);
     }
 
     /**
-     * @brief  - Returns the length of this vector
-     * @return - The length of the vector
+     * @brief Returns the squared length of this vector.
+     * @return The squared length of the vector.
      */
-    FORCEINLINE float Length() const noexcept
-    {
-        const float fLengthSquared = LengthSquared();
-        return FMath::Sqrt(fLengthSquared);
-    }
-
-    /**
-     * @brief  - Returns the length of this vector squared
-     * @return - The length of the vector squared
-     */
-    FORCEINLINE float LengthSquared() const noexcept
+    FORCEINLINE float GetLengthSquared() const noexcept
     {
         return DotProduct(*this);
     }
 
     /**
-     * @brief       - Returns the dot product between this and another vector
-     * @param Other - The vector to perform dot product with
-     * @return      - The dot product
+     * @brief Calculates the dot product between this vector and another vector.
+     * @param Other The vector to perform the dot product with.
+     * @return The dot product.
      */
     FORCEINLINE float DotProduct(const FVector3& Other) const noexcept
     {
-        return (x * Other.x) + (y * Other.y) + (z * Other.z);
+        return (X * Other.X) + (Y * Other.Y) + (Z * Other.Z);
     }
 
     /**
-     * @brief       - Returns the cross product of this vector and another vector.
-     * @param Other - The vector to perform cross product with
-     * @return      - The cross product
+     * @brief Calculates the cross product between this vector and another vector.
+     * @param Other The vector to perform the cross product with.
+     * @return The cross product vector.
      */
     inline FVector3 CrossProduct(const FVector3& Other) const noexcept
     {
-        return FVector3(
-            (y * Other.z) - (z * Other.y),
-            (z * Other.x) - (x * Other.z),
-            (x * Other.y) - (y * Other.x));
+        return FVector3((Y * Other.Z) - (Z * Other.Y), (Z * Other.X) - (X * Other.Z), (X * Other.Y) - (Y * Other.X));
     }
 
     /**
-     * @brief       - Returns the resulting vector after projecting this vector onto another.
-     * @param Other - The vector to project onto
-     * @return      - The projected vector
+     * @brief Projects this vector onto another vector.
+     * @param Other The vector to project onto.
+     * @return The projected vector.
      */
     inline FVector3 ProjectOn(const FVector3& Other) const noexcept
     {
         float AdotB = DotProduct(Other);
-        float BdotB = Other.LengthSquared();
+        float BdotB = Other.GetLengthSquared();
+
+        // Prevent division by zero
+        if (BdotB == 0.0f)
+        {
+            return FVector3(0.0f, 0.0f, 0.0f);
+        }
+
         return (AdotB / BdotB) * Other;
     }
 
     /**
-     * @brief        - Returns the reflected vector after reflecting this vector around a normal.
-     * @param Normal - Vector to reflect around
-     * @return       - The reflected vector
+     * @brief Reflects this vector around a normal vector.
+     * @param Normal The normal vector to reflect around (should be normalized).
+     * @return The reflected vector.
      */
-    inline FVector3 Reflect(const FVector3& Normal) const noexcept
+    inline FVector3 GetReflected(const FVector3& Normal) const noexcept
     {
-        float VdotN = DotProduct(Normal);
-        float NdotN = Normal.LengthSquared();
-        return *this - ((2.0f * (VdotN / NdotN)) * Normal);
+        return *this - 2.0f * DotProduct(Normal) * Normal;
     }
 
     /**
-     * @brief  - Returns the data of this matrix as a pointer
-     * @return - A pointer to the data
+     * @brief Calculates the distance to another vector.
+     * @param Other The other vector.
+     * @return The distance between this vector and the other vector.
      */
-    FORCEINLINE float* Data() noexcept
+    FORCEINLINE float GetDistanceTo(const FVector3& Other) const noexcept
     {
-        return reinterpret_cast<float*>(this);
+        return (*this - Other).GetLength();
     }
 
     /**
-     * @brief  - Returns the data of this matrix as a pointer
-     * @return - A pointer to the data
+     * @brief Calculates the squared distance to another vector.
+     * @param Other The other vector.
+     * @return The squared distance between this vector and the other vector.
      */
-    FORCEINLINE const float* Data() const noexcept
+    FORCEINLINE float GetDistanceSquaredTo(const FVector3& Other) const noexcept
     {
-        return reinterpret_cast<const float*>(this);
-    }
-
-public:
-
-    /**
-     * @brief        - Returns a vector with the smallest of each component of two vectors
-     * @param First  - First vector to compare with
-     * @param Second - Second vector to compare with
-     * @return       - A vector with the smallest components of First and Second
-     */
-    friend FORCEINLINE FVector3 Min(const FVector3& First, const FVector3& Second) noexcept
-    {
-        return FVector3(FMath::Min(First.x, Second.x), FMath::Min(First.y, Second.y), FMath::Min(First.z, Second.z));
+        return (*this - Other).GetLengthSquared();
     }
 
     /**
-     * @brief        - Returns a vector with the largest of each component of two vectors
-     * @param First  - First vector to compare with
-     * @param Second - Second vector to compare with
-     * @return       - A vector with the largest components of First and Second
+     * @brief Calculates the angle between this vector and another vector.
+     * @param Other The other vector.
+     * @return The angle in radians between the two vectors.
      */
-    friend FORCEINLINE FVector3 Max(const FVector3& First, const FVector3& Second) noexcept
+    FORCEINLINE float GetAngleBetween(const FVector3& Other) const noexcept
     {
-        return FVector3(FMath::Max(First.x, Second.x), FMath::Max(First.y, Second.y), FMath::Max(First.z, Second.z));
+        float AdotB   = DotProduct(Other);
+        float Lengths = GetLength() * Other.GetLength();
+
+        // Prevent division by zero
+        if (Lengths == 0.0f)
+        {
+            return 0.0f;
+        }
+
+        float CosTheta = FMath::Clamp(AdotB / Lengths, -1.0f, 1.0f);
+        return FMath::Acos(CosTheta);
     }
 
     /**
-     * @brief        - Returns the linear interpolation between two vectors
-     * @param First  - First vector to interpolate
-     * @param Second - Second vector to interpolate
-     * @param Factor - Factor to interpolate with. Zero returns First, One returns seconds
-     * @return       - A vector with the result of interpolation
+     * @brief Returns a rotated version of this vector around an axis by a specified angle.
+     * @param Axis The axis to rotate around (should be normalized).
+     * @param AngleRadians The angle to rotate by, in radians.
+     * @return The rotated vector.
      */
-    friend FORCEINLINE FVector3 Lerp(const FVector3& First, const FVector3& Second, float Factor) noexcept
+    inline FVector3 GetRotated(const FVector3& Axis, float AngleRadians) const noexcept
     {
-        return FVector3(
-            (1.0f - Factor) * First.x + Factor * Second.x,
-            (1.0f - Factor) * First.y + Factor * Second.y,
-            (1.0f - Factor) * First.z + Factor * Second.z);
-    }
-
-    /**
-     * @brief       - Returns a vector with all the components within the range of a min and max value
-     * @param Min   - Vector with minimum values
-     * @param Max   - Vector with maximum values
-     * @param Value - Vector to clamp
-     * @return      - A vector with the result of clamping
-     */
-    friend FORCEINLINE FVector3 Clamp(const FVector3& Min, const FVector3& Max, const FVector3& Value) noexcept
-    {
-        return FVector3(
-            FMath::Min(FMath::Max(Value.x, Min.x), Max.x),
-            FMath::Min(FMath::Max(Value.y, Min.y), Max.y),
-            FMath::Min(FMath::Max(Value.z, Min.z), Max.z));
-    }
-
-    /**
-     * @brief       - Returns a vector with all the components within the range zero and one
-     * @param Value - Value to saturate
-     * @return      - A vector with the result of saturation
-     */
-    friend FORCEINLINE FVector3 Saturate(const FVector3& Value) noexcept
-    {
-        return FVector3(
-            FMath::Min(FMath::Max(Value.x, 0.0f), 1.0f),
-            FMath::Min(FMath::Max(Value.y, 0.0f), 1.0f),
-            FMath::Min(FMath::Max(Value.z, 0.0f), 1.0f));
+        // Using Rodrigues' rotation formula
+        FVector3 NormalizedAxis = Axis.GetNormalized();
+        return (*this) * FMath::Cos(AngleRadians) 
+            + NormalizedAxis.CrossProduct(*this) * FMath::Sin(AngleRadians)
+            + NormalizedAxis * NormalizedAxis.DotProduct(*this) * (1 - FMath::Cos(AngleRadians));
     }
 
 public:
 
     /**
-     * @brief  - Return a vector with component-wise negation of this vector
-     * @return - A negated vector
+     * @brief Returns a vector with the smallest components of two vectors.
+     * @param First First vector to compare.
+     * @param Second Second vector to compare.
+     * @return A vector with the smallest components.
+     */
+    static FORCEINLINE FVector3 Min(const FVector3& First, const FVector3& Second) noexcept
+    {
+        return FVector3(FMath::Min(First.X, Second.X), FMath::Min(First.Y, Second.Y), FMath::Min(First.Z, Second.Z));
+    }
+
+    /**
+     * @brief Returns a vector with the largest components of two vectors.
+     * @param First First vector to compare.
+     * @param Second Second vector to compare.
+     * @return A vector with the largest components.
+     */
+    static FORCEINLINE FVector3 Max(const FVector3& First, const FVector3& Second) noexcept
+    {
+        return FVector3(FMath::Max(First.X, Second.X), FMath::Max(First.Y, Second.Y), FMath::Max(First.Z, Second.Z));
+    }
+
+    /**
+     * @brief Performs linear interpolation between two vectors.
+     * @param First First vector.
+     * @param Second Second vector.
+     * @param Factor Interpolation factor (0 returns First, 1 returns Second).
+     * @return The interpolated vector.
+     */
+    static FORCEINLINE FVector3 Lerp(const FVector3& First, const FVector3& Second, float Factor) noexcept
+    {
+        return FVector3((1.0f - Factor) * First.X + Factor * Second.X, (1.0f - Factor) * First.Y + Factor * Second.Y, (1.0f - Factor) * First.Z + Factor * Second.Z);
+    }
+
+    /**
+     * @brief Clamps the components of a vector within specified ranges.
+     * @param Value The vector to clamp.
+     * @param Min Vector containing the minimum values.
+     * @param Max Vector containing the maximum values.
+     * @return The clamped vector.
+     */
+    static FORCEINLINE FVector3 Clamp(const FVector3& Value, const FVector3& Min, const FVector3& Max) noexcept
+    {
+        return FVector3(FMath::Clamp(Value.X, Min.X, Max.X), FMath::Clamp(Value.Y, Min.Y, Max.Y), FMath::Clamp(Value.Z, Min.Z, Max.Z));
+    }
+
+    /**
+     * @brief Saturates the components of a vector to the range [0, 1].
+     * @param Value The vector to saturate.
+     * @return The saturated vector.
+     */
+    static FORCEINLINE FVector3 Saturate(const FVector3& Value) noexcept
+    {
+        return FVector3(FMath::Saturate(Value.X), FMath::Saturate(Value.Y), FMath::Saturate(Value.Z));
+    }
+
+    /**
+     * @brief Converts vector components from radians to degrees.
+     * @param Radians Vector in radians.
+     * @return Vector with components in degrees.
+     */
+    static FORCEINLINE FVector3 ToDegrees(const FVector3& Radians) noexcept
+    {
+        return FVector3(FMath::ToDegrees(Radians.X), FMath::ToDegrees(Radians.Y), FMath::ToDegrees(Radians.Z));
+    }
+
+    /**
+     * @brief Converts vector components from degrees to radians.
+     * @param Degrees Vector in degrees.
+     * @return Vector with components in radians.
+     */
+    static FORCEINLINE FVector3 ToRadians(const FVector3& Degrees) noexcept
+    {
+        return FVector3(FMath::ToRadians(Degrees.X), FMath::ToRadians(Degrees.Y), FMath::ToRadians(Degrees.Z));
+    }
+
+public:
+
+    /**
+     * @brief Returns a vector with negated components.
+     * @return The negated vector.
      */
     FORCEINLINE FVector3 operator-() const noexcept
     {
-        return FVector3(-x, -y, -z);
+        return FVector3(-X, -Y, -Z);
     }
 
     /**
-     * @brief     - Returns the result of component-wise adding this and another vector
-     * @param RHS - The vector to add
-     * @return    - A vector with the result of addition
+     * @brief Adds two vectors component-wise.
+     * @param RHS The vector to add.
+     * @return The result of the addition.
      */
     FORCEINLINE FVector3 operator+(const FVector3& RHS) const noexcept
     {
-        return FVector3(x + RHS.x, y + RHS.y, z + RHS.z);
+        return FVector3(X + RHS.X, Y + RHS.Y, Z + RHS.Z);
     }
 
     /**
-     * @brief     - Returns this vector after component-wise adding this with another vector
-     * @param RHS - The vector to add
-     * @return    - A reference to this vector
+     * @brief Adds another vector to this vector component-wise.
+     * @param RHS The vector to add.
+     * @return Reference to this vector after addition.
      */
     FORCEINLINE FVector3& operator+=(const FVector3& RHS) noexcept
     {
-        return *this = *this + RHS;
+        X += RHS.X;
+        Y += RHS.Y;
+        Z += RHS.Z;
+        return *this;
     }
 
     /**
-     * @brief     - Returns the result of adding a scalar to each component of this vector
-     * @param RHS - The scalar to add
-     * @return    - A vector with the result of addition
+     * @brief Adds a scalar to each component of this vector.
+     * @param RHS The scalar to add.
+     * @return The result of the addition.
      */
     FORCEINLINE FVector3 operator+(float RHS) const noexcept
     {
-        return FVector3(x + RHS, y + RHS, z + RHS);
+        return FVector3(X + RHS, Y + RHS, Z + RHS);
     }
 
     /**
-     * @brief     - Returns this vector after adding a scalar to each component of this vector
-     * @param RHS - The scalar to add
-     * @return    - A reference to this vector
+     * @brief Adds a scalar to each component of this vector.
+     * @param RHS The scalar to add.
+     * @return Reference to this vector after addition.
      */
     FORCEINLINE FVector3& operator+=(float RHS) noexcept
     {
-        return *this = *this + RHS;
+        X += RHS;
+        Y += RHS;
+        Z += RHS;
+        return *this;
     }
 
     /**
-     * @brief     - Returns the result of component-wise subtraction between this and another vector
-     * @param RHS - The vector to subtract
-     * @return    - A vector with the result of subtraction
+     * @brief Subtracts another vector from this vector component-wise.
+     * @param RHS The vector to subtract.
+     * @return The result of the subtraction.
      */
     FORCEINLINE FVector3 operator-(const FVector3& RHS) const noexcept
     {
-        return FVector3(x - RHS.x, y - RHS.y, z - RHS.z);
+        return FVector3(X - RHS.X, Y - RHS.Y, Z - RHS.Z);
     }
 
     /**
-     * @brief     - Returns this vector after component-wise subtraction between this and another vector
-     * @param RHS - The vector to subtract
-     * @return    - A reference to this vector
+     * @brief Subtracts another vector from this vector component-wise.
+     * @param RHS The vector to subtract.
+     * @return Reference to this vector after subtraction.
      */
     FORCEINLINE FVector3& operator-=(const FVector3& RHS) noexcept
     {
-        return *this = *this - RHS;
+        X -= RHS.X;
+        Y -= RHS.Y;
+        Z -= RHS.Z;
+        return *this;
     }
 
     /**
-     * @brief     - Returns the result of subtracting each component of this vector with a scalar
-     * @param RHS - The scalar to subtract
-     * @return    - A vector with the result of the subtraction
+     * @brief Subtracts a scalar from each component of this vector.
+     * @param RHS The scalar to subtract.
+     * @return The result of the subtraction.
      */
     FORCEINLINE FVector3 operator-(float RHS) const noexcept
     {
-        return FVector3(x - RHS, y - RHS, z - RHS);
+        return FVector3(X - RHS, Y - RHS, Z - RHS);
     }
 
     /**
-     * @brief     - Returns this vector after subtracting each component of this vector with a scalar
-     * @param RHS - The scalar to subtract
-     * @return    - A reference to this vector
+     * @brief Subtracts a scalar from each component of this vector.
+     * @param RHS The scalar to subtract.
+     * @return Reference to this vector after subtraction.
      */
     FORCEINLINE FVector3& operator-=(float RHS) noexcept
     {
-        return *this = *this - RHS;
+        X -= RHS;
+        Y -= RHS;
+        Z -= RHS;
+        return *this;
     }
 
     /**
-     * @brief     - Returns the result of component-wise multiplication with this and another vector
-     * @param RHS - The vector to multiply with
-     * @return    - A vector with the result of the multiplication
+     * @brief Multiplies this vector with another vector component-wise.
+     * @param RHS The vector to multiply with.
+     * @return The result of the multiplication.
      */
     FORCEINLINE FVector3 operator*(const FVector3& RHS) const noexcept
     {
-        return FVector3(x * RHS.x, y * RHS.y, z * RHS.z);
+        return FVector3(X * RHS.X, Y * RHS.Y, Z * RHS.Z);
     }
 
     /**
-     * @brief     - Returns this vector after component-wise multiplication with this and another vector
-     * @param RHS - The vector to multiply with
-     * @return    - A reference to this vector
+     * @brief Multiplies this vector with another vector component-wise.
+     * @param RHS The vector to multiply with.
+     * @return Reference to this vector after multiplication.
      */
     FORCEINLINE FVector3& operator*=(const FVector3& RHS) noexcept
     {
-        return *this = *this * RHS;
+        X *= RHS.X;
+        Y *= RHS.Y;
+        Z *= RHS.Z;
+        return *this;
     }
 
     /**
-     * @brief     - Returns the result of multiplying each component of this vector with a scalar
-     * @param RHS - The scalar to multiply with
-     * @return    - A vector with the result of the multiplication
+     * @brief Multiplies each component of this vector by a scalar.
+     * @param RHS The scalar to multiply with.
+     * @return The result of the multiplication.
      */
     FORCEINLINE FVector3 operator*(float RHS) const noexcept
     {
-        return FVector3(x * RHS, y * RHS, z * RHS);
+        return FVector3(X * RHS, Y * RHS, Z * RHS);
     }
 
     /**
-     * @brief     - Returns the result of multiplying each component of a vector with a scalar
-     * @param LHS - The scalar to multiply with
-     * @param RHS - The vector to multiply with
-     * @return    - A vector with the result of the multiplication
+     * @brief Multiplies each component of this vector by a scalar.
+     * @param RHS The scalar to multiply with.
+     * @return Reference to this vector after multiplication.
+     */
+    FORCEINLINE FVector3& operator*=(float RHS) noexcept
+    {
+        X *= RHS;
+        Y *= RHS;
+        Z *= RHS;
+        return *this;
+    }
+
+    /**
+     * @brief Multiplies a scalar with a vector (friend function).
+     * @param LHS The scalar to multiply.
+     * @param RHS The vector to multiply with.
+     * @return The result of the multiplication.
      */
     friend FORCEINLINE FVector3 operator*(float LHS, const FVector3& RHS) noexcept
     {
-        return FVector3(LHS * RHS.x, LHS * RHS.y, LHS * RHS.z);
+        return FVector3(LHS * RHS.X, LHS * RHS.Y, LHS * RHS.Z);
     }
 
     /**
-     * @brief     - Returns this vector after multiplying each component of this vector with a scalar
-     * @param RHS - The scalar to multiply with
-     * @return    - A reference to this vector
-     */
-    FORCEINLINE FVector3 operator*=(float RHS) noexcept
-    {
-        return *this = *this * RHS;
-    }
-
-    /**
-     * @brief     - Returns the result of component-wise division with this and another vector
-     * @param RHS - The vector to divide with
-     * @return    - A vector with the result of the division
+     * @brief Divides this vector by another vector component-wise.
+     * @param RHS The vector to divide by.
+     * @return The result of the division.
      */
     FORCEINLINE FVector3 operator/(const FVector3& RHS) const noexcept
     {
-        return FVector3(x / RHS.x, y / RHS.y, z / RHS.z);
+        return FVector3(X / RHS.X, Y / RHS.Y, Z / RHS.Z);
     }
 
     /**
-     * @brief     - Returns this vector after component-wise division with this and another vector
-     * @param RHS - The vector to divide with
-     * @return    - A reference to this vector
+     * @brief Divides this vector by another vector component-wise.
+     * @param RHS The vector to divide by.
+     * @return Reference to this vector after division.
      */
     FORCEINLINE FVector3& operator/=(const FVector3& RHS) noexcept
     {
-        return *this = *this / RHS;
+        X /= RHS.X;
+        Y /= RHS.Y;
+        Z /= RHS.Z;
+        return *this;
     }
 
     /**
-     * @brief     - Returns the result of dividing each component of this vector and a scalar
-     * @param RHS - The scalar to divide with
-     * @return    - A vector with the result of the division
+     * @brief Divides each component of this vector by a scalar.
+     * @param RHS The scalar to divide by.
+     * @return The result of the division.
      */
     FORCEINLINE FVector3 operator/(float RHS) const noexcept
     {
-        return FVector3(x / RHS, y / RHS, z / RHS);
+        return FVector3(X / RHS, Y / RHS, Z / RHS);
     }
 
     /**
-     * @brief     - Returns this vector after dividing each component of this vector and a scalar
-     * @param RHS - The scalar to divide with
-     * @return    - A reference to this vector
+     * @brief Divides each component of this vector by a scalar.
+     * @param RHS The scalar to divide by.
+     * @return Reference to this vector after division.
      */
     FORCEINLINE FVector3& operator/=(float RHS) noexcept
     {
-        return *this = *this / RHS;
+        X /= RHS;
+        Y /= RHS;
+        Z /= RHS;
+        return *this;
     }
 
     /**
-     * @brief       - Returns the result after comparing this and another vector
-     * @param Other - The vector to compare with
-     * @return      - True if equal, false if not
+     * @brief Checks if this vector is equal to another vector.
+     * @param Other The vector to compare with.
+     * @return True if equal, false otherwise.
      */
     FORCEINLINE bool operator==(const FVector3& Other) const noexcept
     {
@@ -492,59 +552,58 @@ public:
     }
 
     /**
-     * @brief       - Returns the negated result after comparing this and another vector
-     * @param Other - The vector to compare with
-     * @return      - False if equal, true if not
+     * @brief Checks if this vector is not equal to another vector.
+     * @param Other The vector to compare with.
+     * @return True if not equal, false otherwise.
      */
     FORCEINLINE bool operator!=(const FVector3& Other) const noexcept
     {
         return !IsEqual(Other);
     }
 
+public:
+
     /**
-     * @brief       - Returns the component specified
-     * @param Index - The component index
-     * @return      - The component
+     * @brief Accesses a component of the vector by index.
+     * @param Index The component index (0 for X, 1 for Y, 2 for Z).
+     * @return Reference to the component.
      */
     FORCEINLINE float& operator[](int32 Index) noexcept
     {
-        CHECK(Index < 3);
-        return reinterpret_cast<float*>(this)[Index];
+        CHECK(Index >= 0 && Index < 3);
+        return XYZ[Index];
     }
 
     /**
-     * @brief       - Returns the component specified
-     * @param Index - The component index
-     * @return      - The component
+     * @brief Accesses a component of the vector by index.
+     * @param Index The component index (0 for X, 1 for Y, 2 for Z).
+     * @return The component value.
      */
     FORCEINLINE float operator[](int32 Index) const noexcept
     {
-        CHECK(Index < 3);
-        return reinterpret_cast<const float*>(this)[Index];
+        CHECK(Index >= 0 && Index < 3);
+        return XYZ[Index];
     }
 
 public:
 
-     /** @brief - The x-coordinate */
-    float x;
+    union
+    {
+        struct 
+        {
+            /** @brief The X-coordinate. */
+            float X;
 
-     /** @brief - The y-coordinate */
-    float y;
-    
-    /** @brief - The z-coordinate */
-    float z;
+            /** @brief The Y-coordinate. */
+            float Y;
+
+            /** @brief The Z-coordinate. */
+            float Z;
+        };
+
+        /** @brief An array containing the X, Y, and Z components. */
+        float XYZ[3];
+    };
 };
 
 MARK_AS_REALLOCATABLE(FVector3);
-
-template<>
-FORCEINLINE FVector3 FMath::ToDegrees<FVector3>(FVector3 Radians)
-{
-    return FVector3(ToDegrees(Radians.x), ToDegrees(Radians.y), ToDegrees(Radians.z));
-}
-
-template<>
-FORCEINLINE FVector3 FMath::ToRadians<FVector3>(FVector3 Degrees)
-{
-    return FVector3(ToRadians(Degrees.x), ToRadians(Degrees.y), ToRadians(Degrees.z));
-}

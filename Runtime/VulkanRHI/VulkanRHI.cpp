@@ -20,7 +20,6 @@ FRHI* FVulkanRHIModule::CreateRHI()
     return new FVulkanRHI();
 }
 
-
 FVulkanRHI* FVulkanRHI::GVulkanRHI = nullptr;
 
 FVulkanRHI::FVulkanRHI()
@@ -156,10 +155,14 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures12     = AdapterCreateInfo.RequiredFeatures12;
 
     // Enable GeometryShaders if the device supports them
-    const VkPhysicalDeviceFeatures& DeviceFeatures = PhysicalDevice->GetFeatures();
-    if (DeviceFeatures.geometryShader)
+    const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
+    if (PhysicalDeviceFeatures.geometryShader)
     {
         DeviceCreateInfo.RequiredFeatures.geometryShader = VK_TRUE;
+    }
+    if (PhysicalDeviceFeatures.multiDrawIndirect)
+    {
+        DeviceCreateInfo.RequiredFeatures.multiDrawIndirect = VK_TRUE;
     }
 
     Device = new FVulkanDevice(GetInstance(), GetAdapter());
@@ -229,7 +232,7 @@ void FVulkanRHI::RHIEndFrame()
 FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     FVulkanTextureRef NewTexture = new FVulkanTexture(GetDevice(), InTextureInfo);
-    if (!NewTexture->Initialize(InInitialState, InInitialData))
+    if (!NewTexture->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -242,7 +245,7 @@ FRHITexture* FVulkanRHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, 
 FRHIBuffer* FVulkanRHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
     FVulkanBufferRef NewBuffer = new FVulkanBuffer(GetDevice(), InBufferInfo);
-    if (!NewBuffer->Initialize(InInitialState, InInitialData))
+    if (!NewBuffer->Initialize(GraphicsCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -281,8 +284,8 @@ FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateInfo& 
 
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
-    FVulkanViewportRef NewViewport = new FVulkanViewport(Device, GraphicsCommandContext, InViewportInfo);
-    if (!NewViewport->Initialize())
+    FVulkanViewportRef NewViewport = new FVulkanViewport(Device, InViewportInfo);
+    if (!NewViewport->Initialize(GraphicsCommandContext))
     {
         return nullptr;
     }
@@ -329,7 +332,7 @@ FRHIRayTracingGeometry* FVulkanRHI::RHICreateRayTracingGeometry(const FRHIRayTra
 
 FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc)
 {
-    FVulkanTexture* VulkanTexture = GetVulkanTexture(InDesc.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InDesc.Texture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR("Texture cannot be nullptr");
@@ -349,7 +352,7 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextur
 
 FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc)
 {
-    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(InDesc.Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InDesc.Buffer);
     if (!VulkanBuffer)
     {
         VULKAN_ERROR("Buffer cannot be nullptr");
@@ -369,7 +372,7 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHIBuffer
 
 FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc)
 {
-    FVulkanTexture* VulkanTexture = GetVulkanTexture(InDesc.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InDesc.Texture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR("Texture cannot be nullptr");
@@ -389,7 +392,7 @@ FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIText
 
 FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc)
 {
-    FVulkanBuffer* VulkanBuffer = GetVulkanBuffer(InDesc.Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InDesc.Buffer);
     if (!VulkanBuffer)
     {
         VULKAN_ERROR("Buffer cannot be nullptr");
@@ -566,9 +569,9 @@ FRHIBlendState* FVulkanRHI::RHICreateBlendState(const FRHIBlendStateInitializer&
     return new FVulkanBlendState(InInitializer);
 }
 
-FRHIVertexInputLayout* FVulkanRHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
+FRHIVertexLayout* FVulkanRHI::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
-    return new FVulkanVertexInputLayout(InInitializer);
+    return new FVulkanVertexLayout(InInitializerList);
 }
 
 FRHIGraphicsPipelineState* FVulkanRHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
@@ -643,6 +646,44 @@ FString FVulkanRHI::RHIGetAdapterName() const
 
     VkPhysicalDeviceProperties DeviceProperties = PhysicalDevice->GetProperties();
     return FString(DeviceProperties.deviceName);
+}
+
+IRHICommandContext* FVulkanRHI::RHIObtainCommandContext()
+{
+    CHECK(GraphicsCommandContext != nullptr);
+    return GraphicsCommandContext;
+}
+
+void* FVulkanRHI::RHIGetAdapter()
+{
+    CHECK(PhysicalDevice != nullptr);
+    return reinterpret_cast<void*>(PhysicalDevice->GetVkPhysicalDevice());
+}
+
+void* FVulkanRHI::RHIGetDevice()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetVkDevice());
+}
+
+void* FVulkanRHI::RHIGetDirectCommandQueue()
+{
+    CHECK(GraphicsQueue != nullptr);
+    return reinterpret_cast<void*>(GraphicsQueue->GetVkQueue());
+}
+
+void* FVulkanRHI::RHIGetComputeCommandQueue()
+{
+    // TODO: Finish
+    CHECK(false);
+    return nullptr;
+}
+
+void* FVulkanRHI::RHIGetCopyCommandQueue()
+{
+    // TODO: Finish
+    CHECK(false);
+    return nullptr;
 }
 
 void FVulkanRHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)

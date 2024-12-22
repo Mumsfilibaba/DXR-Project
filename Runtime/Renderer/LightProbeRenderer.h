@@ -1,9 +1,9 @@
 #pragma once
-#include "RenderPass.h"
-#include "FrameResources.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHICommandList.h"
-#include "RendererUtilities/GPUTextureCompressor.h"
+#include "Renderer/RenderPass.h"
+#include "Renderer/FrameResources.h"
+#include "Renderer/RendererUtilities/GPUTextureCompressor.h"
 
 class FLightProbeRenderer : public FRenderPass
 {

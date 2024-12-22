@@ -8,6 +8,8 @@
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/SharedRef.h"
 
+#define VULKAN_INVALID_BACK_BUFFER_INDEX (-1)
+
 typedef TSharedRef<class FVulkanViewport> FVulkanViewportRef;
 
 class FVulkanCommandContext;
@@ -15,16 +17,17 @@ class FVulkanCommandContext;
 class FVulkanViewport final : public FRHIViewport, public FVulkanDeviceChild
 {
 public:
-    FVulkanViewport(FVulkanDevice* InDevice, FVulkanCommandContext* InCmdContext, const FRHIViewportInfo& InViewportInfo);
+    FVulkanViewport(FVulkanDevice* InDevice, const FRHIViewportInfo& InViewportInfo);
     virtual ~FVulkanViewport();
 
     virtual FRHITexture* GetBackBuffer() const override final;
 
-    bool Initialize();
-    bool Resize(uint32 InWidth, uint32 InHeight);
-    bool Present(bool bVerticalSync);
-    void SetDebugName(const FString& InName);    
-    FVulkanTexture* GetCurrentBackBuffer();
+    bool Initialize(FVulkanCommandContext* InCommandContext);
+    bool Resize(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
+    bool Present(FVulkanCommandContext* InCommandContext, bool bVerticalSync);
+    FVulkanTexture* GetCurrentBackBuffer(FVulkanCommandContext* InCommandContext);
+    
+    void SetDebugName(const FString& InName);
     
     FVulkanTexture* GetBackBufferFromIndex(uint32 Index) const
     {
@@ -48,9 +51,9 @@ public:
     }
 
 private:
-    bool CreateSwapChain();
-    void DestroySwapChain();
-    bool AquireNextImage();
+    bool CreateSwapChain(FVulkanCommandContext* InCommandContext, uint32 InWidth, uint32 InHeight);
+    void DestroySwapChain(FVulkanCommandContext* InCommandContext);
+    VkResult AquireNextImage(FVulkanCommandContext* InCommandContext);
 
     void AdvanceSemaphoreIndex()
     {
@@ -61,15 +64,13 @@ private:
 
     FVulkanSurfaceRef           Surface;
     FVulkanSwapChainRef         SwapChain;
-    FVulkanCommandContext*      CommandContext;
     FVulkanBackBufferTextureRef BackBuffer;
     TArray<FVulkanTextureRef>   BackBuffers;
 
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> ImageSemaphores;
     TArray<FVulkanSemaphoreRef, TInlineArrayAllocator<FVulkanSemaphoreRef, NUM_BACK_BUFFERS>> RenderSemaphores;
 
-    uint32 SemaphoreIndex;
-    uint32 BackBufferIndex;
-    bool   bAquireNextImage;
+    int32 SemaphoreIndex;
+    int32 BackBufferIndex;
 };
 

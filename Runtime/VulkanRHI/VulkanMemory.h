@@ -142,8 +142,9 @@ public:
     
 private:
     TArray<FVulkanMemoryHeap*> MemoryHeaps;
-    VkPhysicalDeviceProperties DeviceProperties;
     VkDeviceSize               HeapSize;
     FAtomicInt32               NumAllocations;
+    uint32                     MaxMemoryAllocationCount;
+    uint32                     BufferImageGranularity;
     FCriticalSection           ManagerCS;
 };

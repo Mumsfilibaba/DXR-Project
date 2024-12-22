@@ -4,7 +4,9 @@
 #define NUM_THREADS (16)
 
 SHADER_CONSTANT_BLOCK_BEGIN
-    float Roughness;
+    float CurrentRoughness;
+    uint  SourceFaceResolution;
+    uint  CurrentFaceResolution;
 SHADER_CONSTANT_BLOCK_END
 
 TextureCube<float4> EnvironmentMap     : register(t0);
@@ -45,26 +47,17 @@ static const float3x3 RotateUV[6] =
 void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, uint3 DispatchThreadID : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {
     uint3 TexCoord = DispatchThreadID;
-    
-    uint Width;
-    uint Height;
-    uint Elements;
-    SpecularIrradianceMap.GetDimensions(Width, Height, Elements);
-    
-    uint SourceWidth;
-    uint SourceHeight;
-    EnvironmentMap.GetDimensions(SourceWidth, SourceHeight);
-    
-    float3 Normal = float3((TexCoord.xy / float(Width)) - 0.5f, 0.5f);
+           
+    float3 Normal = float3((TexCoord.xy / float(Constants.CurrentFaceResolution)) - 0.5, 0.5);
     Normal = normalize(mul(RotateUV[TexCoord.z], Normal));
     
     // Make the assumption that V equals R equals the normal (A.k.a viewangle is zero)
     float3 R = Normal;
     float3 V = R;
 
-    float  FinalRoughness   = min(max(Constants.Roughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-    float  TotalWeight      = 0.0f;
-    float3 PrefilteredColor = float3(0.0f, 0.0f, 0.0f);
+    float  FinalRoughness   = min(max(Constants.CurrentRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
+    float  TotalWeight      = 0.0;
+    float3 PrefilteredColor = float3(0.0, 0.0, 0.0);
     
     const uint SAMPLE_COUNT = 512U;
     for (uint i = 0U; i < SAMPLE_COUNT; i++)
@@ -74,25 +67,25 @@ void Main(uint3 GroupID : SV_GroupID, uint3 GroupThreadID : SV_GroupThreadID, ui
         float3 H  = ImportanceSampleGGX(Xi, FinalRoughness, Normal);
         float3 L  = normalize(2.0 * dot(V, H) * H - V);
 
-        float NdotL = max(dot(Normal, L), 0.0f);
-        if (NdotL > 0.0f)
+        float NdotL = max(dot(Normal, L), 0.0);
+        if (NdotL > 0.0)
         {
             // Sample from the environment's mip level based on roughness/pdf
             float D     = DistributionGGX(Normal, H, FinalRoughness);
-            float NdotH = max(dot(Normal, H), 0.0f);
-            float HdotV = max(dot(H, V), 0.0f);
-            float PDF   = D * NdotH / (4.0f * HdotV) + 0.0001f;
+            float NdotH = max(dot(Normal, H), 0.0);
+            float HdotV = max(dot(H, V), 0.0);
+            float PDF   = D * NdotH / (4.0 * HdotV) + 0.0001;
 
-            float Resolution = float(SourceWidth); // Resolution of source cubemap (per face)
-            float SaTexel    = 4.0f * PI / (6.0f * Resolution * Resolution);
-            float SaSample   = 1.0f / (float(SAMPLE_COUNT) * PDF + 0.0001f);
+            float Resolution = float(Constants.SourceFaceResolution); // Resolution of source cubemap (per face)
+            float SaTexel    = 4.0 * PI / (6.0 * Resolution * Resolution);
+            float SaSample   = 1.0 / (float(SAMPLE_COUNT) * PDF + 0.0001);
 
-            const float Miplevel = FinalRoughness == 0.0f ? 0.0f : 0.5f * log2(SaSample / SaTexel);         
+            const float Miplevel = FinalRoughness == 0.0 ? 0.0 : 0.5 * log2(SaSample / SaTexel);         
             PrefilteredColor += EnvironmentMap.SampleLevel(EnvironmentSampler, L, Miplevel).rgb * NdotL;
             TotalWeight += NdotL;
         }
     }
 
     PrefilteredColor = PrefilteredColor / TotalWeight;
-    SpecularIrradianceMap[TexCoord] = float4(PrefilteredColor, 1.0f);
+    SpecularIrradianceMap[TexCoord] = float4(PrefilteredColor, 1.0);
 }

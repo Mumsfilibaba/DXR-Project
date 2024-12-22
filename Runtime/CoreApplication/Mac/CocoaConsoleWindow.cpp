@@ -1,10 +1,10 @@
-#include "CocoaConsoleWindow.h"
-#include "MacOutputDeviceConsole.h"
 #include "Core/Mac/Mac.h"
+#include "CoreApplication/Mac/CocoaConsoleWindow.h"
+#include "CoreApplication/Mac/MacConsoleOutputDevice.h"
 
 @implementation FCocoaConsoleWindow
 
-- (instancetype) init:(FMacOutputDeviceConsole*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
+- (instancetype) init:(FMacConsoleOutputDevice*)InConsoleWindow ContentRect:(NSRect)ContentRect StyleMask: (NSWindowStyleMask)StyleMask Backing: (NSBackingStoreType)BackingStoreType Defer: (BOOL)Flag
 {
     self = [super initWithContentRect:ContentRect styleMask:StyleMask backing:NSBackingStoreBuffered defer:NO];
     if (self)

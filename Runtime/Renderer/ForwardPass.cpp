@@ -1,13 +1,13 @@
-#include "ForwardPass.h"
-#include "Scene.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Actors/Actor.h"
 #include "Engine/World/Components/ProxySceneComponent.h"
-#include "Renderer/Debug/GPUProfiler.h"
+#include "Renderer/ForwardPass.h"
+#include "Renderer/Scene.h"
+#include "Renderer/Performance/GPUProfiler.h"
 
 FForwardPass::FForwardPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
@@ -163,42 +163,47 @@ void FForwardPass::Execute(FRHICommandList& CommandList, const FFrameResources& 
     CommandList.SetSamplerState(PShader.Get(), FrameResources.PointLightShadowSampler.Get(), 3);
     //CmdList.SetSamplerState(PShader.Get(), FrameResources.DirectionalLightShadowSampler.Get(), 4);
 
-    struct STransformBuffer
+    for (const FMeshBatch& Batch : Scene->VisibleMeshBatches)
     {
-        FMatrix4 Transform;
-        FMatrix4 TransformInv;
-    } TransformPerObject;
-
-    for (const FProxySceneComponent* Component : Scene->VisiblePrimitives)
-    {
-        if (!Component->Material->ShouldRenderInForwardPass())
+        FMaterial* Material = Batch.Material;
+        if (!Material->ShouldRenderInForwardPass())
         {
             continue;
         }
-
-        CommandList.SetVertexBuffers(MakeArrayView(&Component->VertexBuffer, 1), 0);
-        CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
-
-        FRHIBuffer* ConstantBuffer = Component->Material->GetMaterialBuffer();
+        
+        FRHIBuffer* ConstantBuffer = Material->GetMaterialBuffer();
         CommandList.SetConstantBuffer(PShader.Get(), ConstantBuffer, 6);
-
-        CommandList.SetShaderResourceView(PShader.Get(), Component->Material->AlbedoMap->GetShaderResourceView(), 5);
-        CommandList.SetShaderResourceView(PShader.Get(), Component->Material->NormalMap->GetShaderResourceView(), 6);
-        CommandList.SetShaderResourceView(PShader.Get(), Component->Material->RoughnessMap->GetShaderResourceView(), 7);
-        CommandList.SetShaderResourceView(PShader.Get(), Component->Material->MetallicMap->GetShaderResourceView(), 8);
-        CommandList.SetShaderResourceView(PShader.Get(), Component->Material->AOMap->GetShaderResourceView(), 9);
-        CommandList.SetShaderResourceView(PShader.Get(), Component->Material->AlphaMask->GetShaderResourceView(), 10);
-        CommandList.SetShaderResourceView(PShader.Get(), Component->Material->HeightMap->GetShaderResourceView(), 11);
-
-        FRHISamplerState* SamplerState = Component->Material->GetMaterialSampler();
+        
+        CommandList.SetShaderResourceView(PShader.Get(), Material->AlbedoMap->GetShaderResourceView(), 5);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->NormalMap->GetShaderResourceView(), 6);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->RoughnessMap->GetShaderResourceView(), 7);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->MetallicMap->GetShaderResourceView(), 8);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->AOMap->GetShaderResourceView(), 9);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->AlphaMask->GetShaderResourceView(), 10);
+        CommandList.SetShaderResourceView(PShader.Get(), Material->HeightMap->GetShaderResourceView(), 11);
+        
+        FRHISamplerState* SamplerState = Material->GetMaterialSampler();
         CommandList.SetSamplerState(PShader.Get(), SamplerState, 0);
 
-        TransformPerObject.Transform    = Component->CurrentActor->GetTransform().GetMatrix();
-        TransformPerObject.TransformInv = Component->CurrentActor->GetTransform().GetMatrixInverse();
+        for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
+        {
+            FProxySceneComponent* Component = MeshReference.Primitive;
 
-        CommandList.Set32BitShaderConstants(VShader.Get(), &TransformPerObject, 32);
+            FRHIBuffer* VertexBuffers[] =
+            {
+                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
+                Component->Mesh->GetVertexBuffer(EVertexStream::Normals),
+                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
+            };
+            
+            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 3), 0);
+            CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
 
-        CommandList.DrawIndexedInstanced(Component->NumIndices, 1, 0, 0, 0);
+            constexpr uint32 NumConstants = sizeof(FTransformBufferHLSL) / sizeof(uint32);
+            CommandList.Set32BitShaderConstants(VShader.Get(), &Component->TransformBuffer, NumConstants);
+
+            CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
+        }
     }
 
     CommandList.EndRenderPass();

@@ -194,8 +194,23 @@ bool FD3D12RHI::Initialize()
     {
         return false;
     }
+    
+    // View-Instancing Support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
+        FMemory::Memzero(&Features);
 
-    // Initialize Hardware Support globals
+        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+        if (SUCCEEDED(Result))
+        {
+            if (Features.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation)
+            {
+                LOG_INFO("VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation supported");
+            }
+        }
+    }
+
+    // RayTracing Support
     if (GD3D12RayTracingTier >= D3D12_RAYTRACING_TIER_1_0)
     {
         if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
@@ -216,6 +231,28 @@ bool FD3D12RHI::Initialize()
     
     GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
 
+    // View-Instancing Support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3;
+        FMemory::Memzero(&Features3);
+
+        HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
+        if (SUCCEEDED(Result))
+        {
+            if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
+            {
+                GRHISupportsViewInstancing = true;
+                GRHIMaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
+            }
+        }
+        else
+        {
+            GRHISupportsViewInstancing = false;
+            GRHIMaxViewInstanceCount = 0;
+        }
+    }
+
+    // Variable-Rate-Shading Support
     switch (GD3D12VariableRateShadingTier)
     {
         case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
@@ -252,35 +289,15 @@ bool FD3D12RHI::Initialize()
         GRHIShadingRateImageTileSize = 0;
     }
 
-    // GeometryShaders support
+    // GeometryShaders Support
     GRHISupportsGeometryShaders = true;
-
-    // View-Instancing
-    D3D12_FEATURE_DATA_D3D12_OPTIONS3 Features3;
-    FMemory::Memzero(&Features3);
-
-    HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS3, &Features3, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS3));
-    if (SUCCEEDED(Result))
-    {
-        if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
-        {
-            GRHISupportsViewInstancing = true;
-            GRHIMaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
-        }
-    }
-    else
-    {
-        GRHISupportsViewInstancing = false;
-        GRHIMaxViewInstanceCount = 0;
-    }
-
     return true;
 }
 
 FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData)
 {
     FD3D12TextureRef NewTexture = new FD3D12Texture(GetDevice(), InTextureInfo);
-    if (!NewTexture->Initialize(InInitialState, InInitialData))
+    if (!NewTexture->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -293,7 +310,7 @@ FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
 FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
     TSharedRef<FD3D12Buffer>  NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
-    if (!NewBuffer->Initialize(InInitialState, InInitialData))
+    if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
     }
@@ -329,7 +346,7 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateInfo& I
         Desc.MinLOD         = InSamplerInfo.MinLOD;
         Desc.MipLODBias     = InSamplerInfo.MipLODBias;
         
-        FMemory::Memcpy(Desc.BorderColor, &InSamplerInfo.BorderColor.r, sizeof(Desc.BorderColor));
+        FMemory::Memcpy(Desc.BorderColor, InSamplerInfo.BorderColor.RGBA, sizeof(Desc.BorderColor));
 
         Result = new FD3D12SamplerState(GetDevice(), GetDevice()->GetSamplerOfflineDescriptorHeap(), InSamplerInfo);
         if (!Result->CreateSampler(Desc))
@@ -833,9 +850,9 @@ FRHIBlendState* FD3D12RHI::RHICreateBlendState(const FRHIBlendStateInitializer& 
     return new FD3D12BlendState(InInitializer);
 }
 
-FRHIVertexInputLayout* FD3D12RHI::RHICreateVertexInputLayout(const FRHIVertexInputLayoutInitializer& InInitializer)
+FRHIVertexLayout* FD3D12RHI::RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
 {
-    return new FD3D12VertexInputLayout(InInitializer);
+    return new FD3D12VertexLayout(InInitializerList);
 }
 
 FRHIGraphicsPipelineState* FD3D12RHI::RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer)
@@ -885,7 +902,7 @@ FRHIQuery* FD3D12RHI::RHICreateQuery(EQueryType InQueryType)
 FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
     FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectCommandContext, InViewportInfo);
-    if (!Viewport->Initialize())
+    if (!Viewport->Initialize(DirectCommandContext))
     {
         return nullptr;
     }
@@ -942,7 +959,48 @@ void FD3D12RHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
         DeferDeletion(Resource);
     }
 }
-    
+
+FString FD3D12RHI::RHIGetAdapterName() const 
+{ 
+    CHECK(Adapter != nullptr);
+    return Adapter->GetDescription(); 
+}
+
+IRHICommandContext* FD3D12RHI::RHIObtainCommandContext()
+{
+    return DirectCommandContext;
+}
+
+void* FD3D12RHI::RHIGetAdapter() 
+{
+    CHECK(Adapter != nullptr);
+    return reinterpret_cast<void*>(Adapter->GetDXGIAdapter());
+}
+
+void* FD3D12RHI::RHIGetDevice()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12Device());
+}
+
+void* FD3D12RHI::RHIGetDirectCommandQueue()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Direct));
+}
+
+void* FD3D12RHI::RHIGetComputeCommandQueue()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Compute));
+}
+
+void* FD3D12RHI::RHIGetCopyCommandQueue()
+{
+    CHECK(Device != nullptr);
+    return reinterpret_cast<void*>(Device->GetD3D12CommandQueue(ED3D12CommandQueueType::Copy));
+}
+
 void FD3D12RHI::ProcessPendingCommands()
 {
     bool bProcess = true;

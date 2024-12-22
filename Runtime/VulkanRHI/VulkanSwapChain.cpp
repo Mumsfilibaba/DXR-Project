@@ -1,5 +1,7 @@
 #include "VulkanSwapChain.h"
 
+static constexpr bool GVulkanReportSwapChainAquireImageNonSuccessResult = true;
+
 FVulkanSwapChain::FVulkanSwapChain(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)
     , PresentResult(VK_SUCCESS)
@@ -36,10 +38,22 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     {
         return false;
     }
+    
+    if (SupportedFormats.IsEmpty())
+    {
+        VULKAN_ERROR("No supported surface-formats");
+        return false;
+    }
 
     TArray<VkPresentModeKHR> SupportedPresentModes;
-    if (!Surface->GetPresentModes(SupportedPresentModes))
+    if (!Surface->GetSupportedPresentModes(SupportedPresentModes))
     {
+        return false;
+    }
+    
+    if (SupportedPresentModes.IsEmpty())
+    {
+        VULKAN_ERROR("No supported present-modes");
         return false;
     }
 
@@ -81,28 +95,50 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     }
 
     // TODO: Investigate Vulkan V-sync
-    VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-    if (!CreateInfo.bVerticalSync)
+    const auto MatchPresentMode = [&](const VkPresentModeKHR& InPresentMode)
     {
         for (const VkPresentModeKHR& PresentMode : SupportedPresentModes)
         {
-            if (PresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+            if (PresentMode == InPresentMode)
             {
-                SelectedPresentMode = PresentMode;
-                break;
+                return true;
             }
         }
-
-        if (SelectedPresentMode == VK_PRESENT_MODE_FIFO_KHR)
+        
+        return false;
+    };
+    
+    VkPresentModeKHR SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+    if (CreateInfo.bVerticalSync)
+    {
+        if (MatchPresentMode(VK_PRESENT_MODE_MAILBOX_KHR))
         {
-            for (const VkPresentModeKHR& PresentMode : SupportedPresentModes)
-            {
-                if (PresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
-                {
-                    SelectedPresentMode = PresentMode;
-                    break;
-                }
-            }
+            SelectedPresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
+        }
+        else if (MatchPresentMode(VK_PRESENT_MODE_FIFO_KHR))
+        {
+            SelectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
+        }
+        else if (MatchPresentMode(VK_PRESENT_MODE_FIFO_RELAXED_KHR))
+        {
+            SelectedPresentMode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+        }
+        else
+        {
+            VULKAN_WARNING("No VSync PresentMode is supported");
+            SelectedPresentMode = SupportedPresentModes[0];
+        }
+    }
+    else
+    {
+        if (MatchPresentMode(VK_PRESENT_MODE_IMMEDIATE_KHR))
+        {
+            SelectedPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
+        }
+        else
+        {
+            VULKAN_WARNING("No Immediate PresentMode is supported");
+            SelectedPresentMode = SupportedPresentModes[0];
         }
     }
 
@@ -116,8 +152,8 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     }
     else
     {
-        CurrentExtent.width  = FMath::Clamp(Capabilities.minImageExtent.width , Capabilities.maxImageExtent.width , CreateInfo.Extent.width);
-        CurrentExtent.height = FMath::Clamp(Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height, CreateInfo.Extent.height);
+        CurrentExtent.width  = FMath::Clamp(CreateInfo.Extent.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+        CurrentExtent.height = FMath::Clamp(CreateInfo.Extent.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
     }
 
     CurrentExtent.width  = FMath::Max(CurrentExtent.width , 1u);
@@ -125,7 +161,7 @@ bool FVulkanSwapChain::Initialize(const FVulkanSwapChainCreateInfo& CreateInfo)
     VULKAN_INFO("SwapChain - CurrentExtent: w=%d h=%d, MinExtent: w=%d h=%d, MaxExtent: w=%d h=%d", Capabilities.currentExtent.width, Capabilities.currentExtent.height, Capabilities.minImageExtent.width, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.width, Capabilities.maxImageExtent.height);
 
     // Get the number of swapchain image that we can have based on the BackBuffer CVar
-    const uint32 SupportedBufferCount = Capabilities.maxImageCount == 0 ? CreateInfo.BufferCount : FMath::Clamp<uint32>(Capabilities.minImageCount, Capabilities.maxImageCount, CreateInfo.BufferCount);
+    const uint32 SupportedBufferCount = Capabilities.maxImageCount == 0 ? CreateInfo.BufferCount : FMath::Clamp<uint32>(CreateInfo.BufferCount, Capabilities.minImageCount, Capabilities.maxImageCount);
     if (SupportedBufferCount != CreateInfo.BufferCount)
     {
         VULKAN_INFO("Number of buffers(=%d) is not supported. MinBuffers=%d MaxBuffers=%d", CreateInfo.BufferCount, Capabilities.minImageCount, Capabilities.maxImageCount);
@@ -218,5 +254,15 @@ VkResult FVulkanSwapChain::Present(FVulkanQueue& Queue, FVulkanSemaphore* WaitSe
 VkResult FVulkanSwapChain::AquireNextImage(FVulkanSemaphore* AquireSemaphore)
 {
     VkSemaphore CurrentImageSemaphore = AquireSemaphore ? AquireSemaphore->GetVkSemaphore() : VK_NULL_HANDLE;
-    return vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, CurrentImageSemaphore, VK_NULL_HANDLE, &BufferIndex);
+    
+    VkResult Result = vkAcquireNextImageKHR(GetDevice()->GetVkDevice(), SwapChain, UINT64_MAX, CurrentImageSemaphore, VK_NULL_HANDLE, &BufferIndex);
+    if (GVulkanReportSwapChainAquireImageNonSuccessResult)
+    {
+        if (Result != VK_SUCCESS)
+        {
+            LOG_WARNING("vkAcquireNextImageKHR did not return VK_SUCCESS. Result = '%s'", ToString(Result));
+        }
+    }
+    
+    return Result;
 }

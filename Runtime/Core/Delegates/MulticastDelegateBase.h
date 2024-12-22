@@ -7,8 +7,8 @@ class FMulticastDelegateBase
 public:
 
     /**
-     * @brief       - Copy-constructor 
-     * @param Other - Other delegate to copy
+     * @brief Copy-constructor 
+     * @param Other Other delegate to copy
      */
     FORCEINLINE FMulticastDelegateBase(const FMulticastDelegateBase& Other) noexcept
         : Delegates(Other.Delegates)
@@ -17,8 +17,8 @@ public:
     }
 
     /**
-     * @brief       - Move-constructor
-     * @param Other - Other delegate to move
+     * @brief Move-constructor
+     * @param Other Other delegate to move
      */
     FORCEINLINE FMulticastDelegateBase(FMulticastDelegateBase&& Other) noexcept
         : Delegates(::Move(Other.Delegates))
@@ -27,7 +27,7 @@ public:
     }
 
     /**
-     * @brief - Destructor 
+     * @brief Destructor 
      */
     FORCEINLINE ~FMulticastDelegateBase() noexcept
     {
@@ -35,7 +35,7 @@ public:
     }
 
     /**
-     * @brief -  Unbind all bound delegates 
+     * @brief Unbind all bound delegates 
      */
     FORCEINLINE void UnbindAll() noexcept
     {
@@ -53,8 +53,8 @@ public:
     }
 
     /**
-     * @brief       - Swap this instance with another delegate
-     * @param Other - Delegate to swap with
+     * @brief Swap this instance with another delegate
+     * @param Other Delegate to swap with
      */
     FORCEINLINE void Swap(FMulticastDelegateBase& Other) noexcept
     {
@@ -62,9 +62,9 @@ public:
     }
 
     /**
-     * @brief        - Unbind a handle 
-     * @param Handle - Handle to remove
-     * @return       - Returns true if the handle was found and unbound
+     * @brief Unbind a handle 
+     * @param Handle Handle to remove
+     * @return Returns true if the handle was found and unbound
      */
     FORCEINLINE bool Unbind(FDelegateHandle Handle) noexcept
     {
@@ -92,9 +92,9 @@ public:
     }
 
     /**
-     * @brief        - Remove a delegate if an object is bound to it
-     * @param Object - Object to check for
-     * @return       - Returns true if the object was unbound from any delegate
+     * @brief Remove a delegate if an object is bound to it
+     * @param Object Object to check for
+     * @return Returns true if the object was unbound from any delegate
      */
     FORCEINLINE bool UnbindIfBound(const void* Object) noexcept
     {
@@ -129,8 +129,8 @@ public:
     }
 
     /**
-     * @brief  - Checks if a valid delegate is bound 
-     * @return - Returns true if there is any delegate bound
+     * @brief Checks if a valid delegate is bound 
+     * @return Returns true if there is any delegate bound
      */
     FORCEINLINE bool IsBound() const noexcept
     {
@@ -147,9 +147,9 @@ public:
     }
 
     /**
-     * @brief        - Checks if an object is bound to any delegate
-     * @param Object - Object to check for
-     * @return       - Returns true if any of the delegates has the object bound
+     * @brief Checks if an object is bound to any delegate
+     * @param Object Object to check for
+     * @return Returns true if any of the delegates has the object bound
      */
     FORCEINLINE bool IsObjectBound(const void* Object) const noexcept
     {
@@ -169,8 +169,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the number of delegates 
-     * @return - Returns the number of delegates bound
+     * @brief Retrieve the number of delegates 
+     * @return Returns the number of delegates bound
      */
     FORCEINLINE uint32 GetCount() const noexcept
     {
@@ -178,9 +178,9 @@ public:
     }
 
     /**
-     * @brief       - Copy-assignment operator
-     * @param Other - Delegate to copy from
-     * @return      - Returns a reference to this instance
+     * @brief Copy-assignment operator
+     * @param Other Delegate to copy from
+     * @return Returns a reference to this instance
      */
     FORCEINLINE FMulticastDelegateBase& operator=(const FMulticastDelegateBase& Other) noexcept
     {
@@ -189,9 +189,9 @@ public:
     }
 
     /**
-     * @brief       - Move-assignment operator
-     * @param Other - Delegate to move from
-     * @return      - Returns a reference to this instance
+     * @brief Move-assignment operator
+     * @param Other Delegate to move from
+     * @return Returns a reference to this instance
      */
     FORCEINLINE FMulticastDelegateBase& operator=(FMulticastDelegateBase&& Other) noexcept
     {
@@ -296,6 +296,6 @@ protected:
 
     TArray<FDelegateBase> Delegates;
 
-     /** @brief - Lock protecting the delegate when removing during broadcasting */
+     /** @brief Lock protecting the delegate when removing during broadcasting */
     mutable uint64 LockVariable = 0;
 };

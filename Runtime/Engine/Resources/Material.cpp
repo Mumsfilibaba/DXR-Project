@@ -10,11 +10,15 @@ FMaterial::FMaterial(const FMaterialInfo& InMaterialInfo)
     , HeightMap()
     , AOMap()
     , MetallicMap()
+    , Name()
     , MaterialData()
     , MaterialInfo(InMaterialInfo)
-    , MaterialBuffer()
     , bMaterialBufferIsDirty(true)
-    , DebugName()
+    , MaterialBuffer()
+{
+}
+
+FMaterial::~FMaterial()
 {
 }
 
@@ -32,7 +36,7 @@ void FMaterial::Initialize()
 
 void FMaterial::BuildBuffer(FRHICommandList& CommandList)
 {
-    MaterialData.Albedo           = MaterialInfo.Albedo;
+    MaterialData.Albedo           = FVector3(MaterialInfo.Albedo.R, MaterialInfo.Albedo.G, MaterialInfo.Albedo.B);
     MaterialData.Metallic         = MaterialInfo.Metallic;
     MaterialData.Roughness        = MaterialInfo.Roughness;
     MaterialData.AmbientOcclusion = MaterialInfo.AmbientOcclusion;
@@ -43,61 +47,75 @@ void FMaterial::BuildBuffer(FRHICommandList& CommandList)
     bMaterialBufferIsDirty = false;
 }
 
-void FMaterial::SetAlbedo(const FVector3& Albedo)
+void FMaterial::SetAlbedo(const FFloatColor& Albedo)
 {
-    MaterialInfo.Albedo      = Albedo;
-    bMaterialBufferIsDirty = true;
-}
-
-void FMaterial::SetAlbedo(float r, float g, float b)
-{
-    MaterialInfo.Albedo      = FVector3(r, g, b);
+    MaterialInfo.Albedo    = Albedo;
     bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetMetallic(float Metallic)
 {
-    MaterialInfo.Metallic    = Metallic;
+    MaterialInfo.Metallic  = Metallic;
     bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetRoughness(float Roughness)
 {
-    MaterialInfo.Roughness   = Roughness;
+    MaterialInfo.Roughness = Roughness;
     bMaterialBufferIsDirty = true;
 }
 
 void FMaterial::SetAmbientOcclusion(float AmbientOcclusion)
 {
     MaterialInfo.AmbientOcclusion = AmbientOcclusion;
-    bMaterialBufferIsDirty      = true;
+    bMaterialBufferIsDirty        = true;
+}
+
+void FMaterial::SetMaterialFlags(EMaterialFlags InFlags, bool bUpdateOnly)
+{
+    if (bUpdateOnly)
+    {
+        MaterialInfo.MaterialFlags |= InFlags;
+    }
+    else
+    {
+        MaterialInfo.MaterialFlags = InFlags;
+    }
 }
 
 void FMaterial::ForceForwardPass(bool bForceForwardRender)
 {
     if (bForceForwardRender)
-        MaterialInfo.MaterialFlags |= MaterialFlag_ForceForwardPass;
+    {
+        MaterialInfo.MaterialFlags |= EMaterialFlags::ForceForwardPass;
+    }
 }
 
 void FMaterial::EnableHeightMap(bool bEnableHeightMap)
 {
     if (bEnableHeightMap)
-        MaterialInfo.MaterialFlags |= MaterialFlag_EnableHeight;
+    {
+        MaterialInfo.MaterialFlags |= EMaterialFlags::EnableHeight;
+    }
 }
 
 void FMaterial::EnableAlphaMask(bool bEnableAlphaMask)
 {
     if (bEnableAlphaMask)
-        MaterialInfo.MaterialFlags |= MaterialFlag_EnableAlpha;
+    {
+        MaterialInfo.MaterialFlags |= EMaterialFlags::EnableAlpha;
+    }
 }
 
 void FMaterial::EnableDoubleSided(bool bIsDoubleSided)
 {
     if (bIsDoubleSided)
-        MaterialInfo.MaterialFlags |= MaterialFlag_DoubleSided;
+    {
+        MaterialInfo.MaterialFlags |= EMaterialFlags::DoubleSided;
+    }
 }
 
-void FMaterial::SetDebugName(const FString& InDebugName)
+void FMaterial::SetName(const FString& InName)
 {
-    DebugName = InDebugName;
+    Name = InName;
 }

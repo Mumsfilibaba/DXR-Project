@@ -142,7 +142,7 @@ void FVulkanQueryPool::SetDebugName(const FString& InName)
 {
     if (VULKAN_CHECK_HANDLE(QueryPool))
     {
-        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), InName.GetCString(), QueryPool, VK_OBJECT_TYPE_QUERY_POOL);
+        FVulkanDebugUtilsEXT::SetObjectName(GetDevice()->GetVkDevice(), *InName, QueryPool, VK_OBJECT_TYPE_QUERY_POOL);
         DebugName = InName;
     }
 }

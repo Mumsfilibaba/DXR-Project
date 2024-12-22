@@ -18,17 +18,17 @@ public:
 
     bool IsKeyboardKey() const
     {
-        return Key >= EKeyName::Zero && Key <= EKeyName::Pause;
+        return Key >= EKeyName::KeyBoardFirst && Key <= EKeyName::KeyBoardLast;
     }
 
     bool IsMouseButton() const
     {
-        return Key >= EKeyName::MouseButtonLeft && Key <= EKeyName::MouseButtonThumb2;
+        return Key >= EKeyName::MouseButtonFirst && Key <= EKeyName::MouseButtonLast;
     }
 
     bool IsGamepadButton() const
     {
-        return Key >= EKeyName::GamepadDPadUp && Key <= EKeyName::Last;
+        return Key >= EKeyName::GamepadFirst && Key <= EKeyName::GamepadLast;
     }
 
     const CHAR* ToString() const
@@ -60,439 +60,439 @@ struct EKeys
 {
     // Keyboard keys
     
-    /** @brief - Unknown key */
+    /** @brief Unknown key */
     static APPLICATION_API const FKey Unknown;
 
     // Numbers
     
-    /** @brief - Zero key */
+    /** @brief Zero key */
     static APPLICATION_API const FKey Zero;
     
-    /** @brief - One key */
+    /** @brief One key */
     static APPLICATION_API const FKey One;
     
-    /** @brief - Two key */
+    /** @brief Two key */
     static APPLICATION_API const FKey Two;
     
-    /** @brief - Three key */
+    /** @brief Three key */
     static APPLICATION_API const FKey Three;
     
-    /** @brief - Four key */
+    /** @brief Four key */
     static APPLICATION_API const FKey Four;
     
-    /** @brief - Five key */
+    /** @brief Five key */
     static APPLICATION_API const FKey Five;
     
-    /** @brief - Six key */
+    /** @brief Six key */
     static APPLICATION_API const FKey Six;
     
-    /** @brief - Seven key */
+    /** @brief Seven key */
     static APPLICATION_API const FKey Seven;
     
-    /** @brief - Eight key */
+    /** @brief Eight key */
     static APPLICATION_API const FKey Eight;
     
-    /** @brief - Nine key */
+    /** @brief Nine key */
     static APPLICATION_API const FKey Nine;
 
     // Letters
 
-    /** @brief - A key */
+    /** @brief A key */
     static APPLICATION_API const FKey A;
     
-    /** @brief - B key */
+    /** @brief B key */
     static APPLICATION_API const FKey B;
     
-    /** @brief - C key */
+    /** @brief C key */
     static APPLICATION_API const FKey C;
     
-    /** @brief - D key */
+    /** @brief D key */
     static APPLICATION_API const FKey D;
     
-    /** @brief - E key */
+    /** @brief E key */
     static APPLICATION_API const FKey E;
     
-    /** @brief - F key */
+    /** @brief F key */
     static APPLICATION_API const FKey F;
     
-    /** @brief - G key */
+    /** @brief G key */
     static APPLICATION_API const FKey G;
     
-    /** @brief - H key */
+    /** @brief H key */
     static APPLICATION_API const FKey H;
     
-    /** @brief - I key */
+    /** @brief I key */
     static APPLICATION_API const FKey I;
     
-    /** @brief - J key */
+    /** @brief J key */
     static APPLICATION_API const FKey J;
     
-    /** @brief - K key */
+    /** @brief K key */
     static APPLICATION_API const FKey K;
     
-    /** @brief - L key */
+    /** @brief L key */
     static APPLICATION_API const FKey L;
     
-    /** @brief - M key */
+    /** @brief M key */
     static APPLICATION_API const FKey M;
     
-    /** @brief - N key */
+    /** @brief N key */
     static APPLICATION_API const FKey N;
     
-    /** @brief - O key */
+    /** @brief O key */
     static APPLICATION_API const FKey O;
     
-    /** @brief - P key */
+    /** @brief P key */
     static APPLICATION_API const FKey P;
     
-    /** @brief - Q key */
+    /** @brief Q key */
     static APPLICATION_API const FKey Q;
     
-    /** @brief - R key */
+    /** @brief R key */
     static APPLICATION_API const FKey R;
     
-    /** @brief - S key */
+    /** @brief S key */
     static APPLICATION_API const FKey S;
     
-    /** @brief - T key */
+    /** @brief T key */
     static APPLICATION_API const FKey T;
     
-    /** @brief - U key */
+    /** @brief U key */
     static APPLICATION_API const FKey U;
     
-    /** @brief - V key */
+    /** @brief V key */
     static APPLICATION_API const FKey V;
     
-    /** @brief - W key */
+    /** @brief W key */
     static APPLICATION_API const FKey W;
     
-    /** @brief - X key */
+    /** @brief X key */
     static APPLICATION_API const FKey X;
     
-    /** @brief - Y key */
+    /** @brief Y key */
     static APPLICATION_API const FKey Y;
     
-    /** @brief - Z key */
+    /** @brief Z key */
     static APPLICATION_API const FKey Z;
 
     // Function keys
     
-    /** @brief - F1 key */
+    /** @brief F1 key */
     static APPLICATION_API const FKey F1;
     
-    /** @brief - F2 key */
+    /** @brief F2 key */
     static APPLICATION_API const FKey F2;
     
-    /** @brief - F3 key */
+    /** @brief F3 key */
     static APPLICATION_API const FKey F3;
     
-    /** @brief - F4 key */
+    /** @brief F4 key */
     static APPLICATION_API const FKey F4;
     
-    /** @brief - F5 key */
+    /** @brief F5 key */
     static APPLICATION_API const FKey F5;
     
-    /** @brief - F6 key */
+    /** @brief F6 key */
     static APPLICATION_API const FKey F6;
     
-    /** @brief - F7 key */
+    /** @brief F7 key */
     static APPLICATION_API const FKey F7;
     
-    /** @brief - F8 key */
+    /** @brief F8 key */
     static APPLICATION_API const FKey F8;
     
-    /** @brief - F9 key */
+    /** @brief F9 key */
     static APPLICATION_API const FKey F9;
     
-    /** @brief - F10 key */
+    /** @brief F10 key */
     static APPLICATION_API const FKey F10;
     
-    /** @brief - F11 key */
+    /** @brief F11 key */
     static APPLICATION_API const FKey F11;
     
-    /** @brief - F12 key */
+    /** @brief F12 key */
     static APPLICATION_API const FKey F12;
     
-    /** @brief - F13 key */
+    /** @brief F13 key */
     static APPLICATION_API const FKey F13;
     
-    /** @brief - F14 key */
+    /** @brief F14 key */
     static APPLICATION_API const FKey F14;
     
-    /** @brief - F15 key */
+    /** @brief F15 key */
     static APPLICATION_API const FKey F15;
     
-    /** @brief - F16 key */
+    /** @brief F16 key */
     static APPLICATION_API const FKey F16;
     
-    /** @brief - F17 key */
+    /** @brief F17 key */
     static APPLICATION_API const FKey F17;
     
-    /** @brief - F18 key */
+    /** @brief F18 key */
     static APPLICATION_API const FKey F18;
     
-    /** @brief - F19 key */
+    /** @brief F19 key */
     static APPLICATION_API const FKey F19;
     
-    /** @brief - F20 key */
+    /** @brief F20 key */
     static APPLICATION_API const FKey F20;
     
-    /** @brief - F21 key */
+    /** @brief F21 key */
     static APPLICATION_API const FKey F21;
     
-    /** @brief - F22 key */
+    /** @brief F22 key */
     static APPLICATION_API const FKey F22;
     
-    /** @brief - F23 key */
+    /** @brief F23 key */
     static APPLICATION_API const FKey F23;
     
-    /** @brief - F24 key */
+    /** @brief F24 key */
     static APPLICATION_API const FKey F24;
     
-    /** @brief - F25 key */
+    /** @brief F25 key */
     static APPLICATION_API const FKey F25;
 
     // Keypad
     
-    /** @brief - Keypad Zero key */
+    /** @brief Keypad Zero key */
     static APPLICATION_API const FKey KeypadZero;
     
-    /** @brief - Keypad One key */
+    /** @brief Keypad One key */
     static APPLICATION_API const FKey KeypadOne;
     
-    /** @brief - Keypad Two key */
+    /** @brief Keypad Two key */
     static APPLICATION_API const FKey KeypadTwo;
     
-    /** @brief - Keypad Three key */
+    /** @brief Keypad Three key */
     static APPLICATION_API const FKey KeypadThree;
     
-    /** @brief - Keypad Four key */
+    /** @brief Keypad Four key */
     static APPLICATION_API const FKey KeypadFour;
     
-    /** @brief - Keypad Five key */
+    /** @brief Keypad Five key */
     static APPLICATION_API const FKey KeypadFive;
     
-    /** @brief - Keypad Six key */
+    /** @brief Keypad Six key */
     static APPLICATION_API const FKey KeypadSix;
     
-    /** @brief - Keypad Seven key */
+    /** @brief Keypad Seven key */
     static APPLICATION_API const FKey KeypadSeven;
     
-    /** @brief - Keypad Eight key */
+    /** @brief Keypad Eight key */
     static APPLICATION_API const FKey KeypadEight;
     
-    /** @brief - Keypad Nine key */
+    /** @brief Keypad Nine key */
     static APPLICATION_API const FKey KeypadNine;
     
-    /** @brief - Keypad Decimal key */
+    /** @brief Keypad Decimal key */
     static APPLICATION_API const FKey KeypadDecimal;
     
-    /** @brief - Keypad Divide key */
+    /** @brief Keypad Divide key */
     static APPLICATION_API const FKey KeypadDivide;
     
-    /** @brief - Keypad Multiply key */
+    /** @brief Keypad Multiply key */
     static APPLICATION_API const FKey KeypadMultiply;
     
-    /** @brief - Keypad Subtract key */
+    /** @brief Keypad Subtract key */
     static APPLICATION_API const FKey KeypadSubtract;
     
-    /** @brief - Keypad Add key */
+    /** @brief Keypad Add key */
     static APPLICATION_API const FKey KeypadAdd;
     
-    /** @brief - Keypad Enter key */
+    /** @brief Keypad Enter key */
     static APPLICATION_API const FKey KeypadEnter;
     
-    /** @brief - Keypad Equal key */
+    /** @brief Keypad Equal key */
     static APPLICATION_API const FKey KeypadEqual;
 
     // Ctrl, Shift, Alt, Etc.
     
-    /** @brief - Left Shift key */
+    /** @brief Left Shift key */
     static APPLICATION_API const FKey LeftShift;
     
-    /** @brief - Left Control key */
+    /** @brief Left Control key */
     static APPLICATION_API const FKey LeftControl;
     
-    /** @brief - Left Alt key */
+    /** @brief Left Alt key */
     static APPLICATION_API const FKey LeftAlt;
     
-    /** @brief - Left Super key */
+    /** @brief Left Super key */
     static APPLICATION_API const FKey LeftSuper;
     
-    /** @brief - Right Shift key */
+    /** @brief Right Shift key */
     static APPLICATION_API const FKey RightShift;
     
-    /** @brief - Right Control key */
+    /** @brief Right Control key */
     static APPLICATION_API const FKey RightControl;
     
-    /** @brief - Right Alt key */
+    /** @brief Right Alt key */
     static APPLICATION_API const FKey RightAlt;
     
-    /** @brief - Right Super key */
+    /** @brief Right Super key */
     static APPLICATION_API const FKey RightSuper;
     
-    /** @brief - Menu key */
+    /** @brief Menu key */
     static APPLICATION_API const FKey Menu;
 
     // Other
     
-    /** @brief - Space key */
+    /** @brief Space key */
     static APPLICATION_API const FKey Space;
     
-    /** @brief - Apostrophe key */
+    /** @brief Apostrophe key */
     static APPLICATION_API const FKey Apostrophe;
     
-    /** @brief - Comma key */
+    /** @brief Comma key */
     static APPLICATION_API const FKey Comma;
     
-    /** @brief - Minus key */
+    /** @brief Minus key */
     static APPLICATION_API const FKey Minus;
     
-    /** @brief - Period key */
+    /** @brief Period key */
     static APPLICATION_API const FKey Period;
     
-    /** @brief - Slash key */
+    /** @brief Slash key */
     static APPLICATION_API const FKey Slash;
     
-    /** @brief - Semicolon key */
+    /** @brief Semicolon key */
     static APPLICATION_API const FKey Semicolon;
     
-    /** @brief - Equal key */
+    /** @brief Equal key */
     static APPLICATION_API const FKey Equal;
     
-    /** @brief - Left Bracket key */
+    /** @brief Left Bracket key */
     static APPLICATION_API const FKey LeftBracket;
     
-    /** @brief - Backslash key */
+    /** @brief Backslash key */
     static APPLICATION_API const FKey Backslash;
     
-    /** @brief - Right Bracket key */
+    /** @brief Right Bracket key */
     static APPLICATION_API const FKey RightBracket;
     
-    /** @brief - Grave Accent key */
+    /** @brief Grave Accent key */
     static APPLICATION_API const FKey GraveAccent;
     
-    /** @brief - World1 key */
+    /** @brief World1 key */
     static APPLICATION_API const FKey World1;
     
-    /** @brief - World2 key */
+    /** @brief World2 key */
     static APPLICATION_API const FKey World2;
     
-    /** @brief - Escape key */
+    /** @brief Escape key */
     static APPLICATION_API const FKey Escape;
     
-    /** @brief - Enter key */
+    /** @brief Enter key */
     static APPLICATION_API const FKey Enter;
     
-    /** @brief - Tab key */
+    /** @brief Tab key */
     static APPLICATION_API const FKey Tab;
     
-    /** @brief - Backspace key */
+    /** @brief Backspace key */
     static APPLICATION_API const FKey Backspace;
     
-    /** @brief - Insert key */
+    /** @brief Insert key */
     static APPLICATION_API const FKey Insert;
     
-    /** @brief - Delete key */
+    /** @brief Delete key */
     static APPLICATION_API const FKey Delete;
     
-    /** @brief - Right key */
+    /** @brief Right key */
     static APPLICATION_API const FKey Right;
     
-    /** @brief - Left key */
+    /** @brief Left key */
     static APPLICATION_API const FKey Left;
     
-    /** @brief - Down key */
+    /** @brief Down key */
     static APPLICATION_API const FKey Down;
     
-    /** @brief - Up key */
+    /** @brief Up key */
     static APPLICATION_API const FKey Up;
     
-    /** @brief - Page Up key */
+    /** @brief Page Up key */
     static APPLICATION_API const FKey PageUp;
     
-    /** @brief - Page Down key */
+    /** @brief Page Down key */
     static APPLICATION_API const FKey PageDown;
     
-    /** @brief - Home key */
+    /** @brief Home key */
     static APPLICATION_API const FKey Home;
     
-    /** @brief - End key */
+    /** @brief End key */
     static APPLICATION_API const FKey End;
     
-    /** @brief - Caps Lock key */
+    /** @brief Caps Lock key */
     static APPLICATION_API const FKey CapsLock;
     
-    /** @brief - Scroll Lock key */
+    /** @brief Scroll Lock key */
     static APPLICATION_API const FKey ScrollLock;
     
-    /** @brief - Num Lock key */
+    /** @brief Num Lock key */
     static APPLICATION_API const FKey NumLock;
     
-    /** @brief - Print Screen key */
+    /** @brief Print Screen key */
     static APPLICATION_API const FKey PrintScreen;
     
-    /** @brief - Pause key */
+    /** @brief Pause key */
     static APPLICATION_API const FKey Pause;
 
     // Mouse buttons
 
-    /** @brief - Mouse left button */
+    /** @brief Mouse left button */
     static APPLICATION_API const FKey MouseButtonLeft;
     
-    /** @brief - Mouse right button */
+    /** @brief Mouse right button */
     static APPLICATION_API const FKey MouseButtonRight;
     
-    /** @brief - Mouse middle button */
+    /** @brief Mouse middle button */
     static APPLICATION_API const FKey MouseButtonMiddle;
     
-    /** @brief - Mouse thumb1 button */
+    /** @brief Mouse thumb1 button */
     static APPLICATION_API const FKey MouseButtonThumb1;
     
-    /** @brief - Mouse thumb2 button */
+    /** @brief Mouse thumb2 button */
     static APPLICATION_API const FKey MouseButtonThumb2;
 
     // Gamepad buttons
     
-    /** @brief - Gamepad DPad Up button */
+    /** @brief Gamepad DPad Up button */
     static APPLICATION_API const FKey GamepadDPadUp;
     
-    /** @brief - Gamepad DPad Down button */
+    /** @brief Gamepad DPad Down button */
     static APPLICATION_API const FKey GamepadDPadDown;
     
-    /** @brief - Gamepad DPad Left button */
+    /** @brief Gamepad DPad Left button */
     static APPLICATION_API const FKey GamepadDPadLeft;
     
-    /** @brief - Gamepad DPad Right button */
+    /** @brief Gamepad DPad Right button */
     static APPLICATION_API const FKey GamepadDPadRight;
     
-    /** @brief - Gamepad Face Up button */
+    /** @brief Gamepad Face Up button */
     static APPLICATION_API const FKey GamepadFaceUp;
     
-    /** @brief - Gamepad Face Down button */
+    /** @brief Gamepad Face Down button */
     static APPLICATION_API const FKey GamepadFaceDown;
     
-    /** @brief - Gamepad Face Left button */
+    /** @brief Gamepad Face Left button */
     static APPLICATION_API const FKey GamepadFaceLeft;
     
-    /** @brief - Gamepad Face Right button */
+    /** @brief Gamepad Face Right button */
     static APPLICATION_API const FKey GamepadFaceRight;
     
-    /** @brief - Gamepad Right Trigger button */
-    static APPLICATION_API const FKey GamepadRightTrigger;
+    /** @brief Gamepad Right Thumb button */
+    static APPLICATION_API const FKey GamepadRightThumb;
     
-    /** @brief - Gamepad Left Trigger button */
-    static APPLICATION_API const FKey GamepadLeftTrigger;
+    /** @brief Gamepad Left Thumb button */
+    static APPLICATION_API const FKey GamepadLeftThumb;
     
-    /** @brief - Gamepad Right Shoulder button */
+    /** @brief Gamepad Right Shoulder button */
     static APPLICATION_API const FKey GamepadRightShoulder;
     
-    /** @brief - Gamepad Left Shoulder button */
+    /** @brief Gamepad Left Shoulder button */
     static APPLICATION_API const FKey GamepadLeftShoulder;
     
-    /** @brief - Gamepad Start button */
+    /** @brief Gamepad Start button */
     static APPLICATION_API const FKey GamepadStart;
     
-    /** @brief - Gamepad Back button */
+    /** @brief Gamepad Back button */
     static APPLICATION_API const FKey GamepadBack;
 };

@@ -1,31 +1,10 @@
 #include "MacVulkanPlatform.h"
 #include "VulkanLoader.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Mac/MacRunLoop.h"
+#include "Core/Mac/MacThreadManager.h"
 #include "CoreApplication/Mac/CocoaWindow.h"
 
 #include <QuartzCore/QuartzCore.h>
-
-@implementation FMetalWindowView
-
-- (instancetype)initWithFrame:(NSRect)frameRect
-{
-    self = [super initWithFrame:frameRect];
-    CHECK(self != nil);
-    return self;
-}
-
-- (BOOL)isOpaque
-{
-    return YES;
-}
-
-- (BOOL)mouseDownCanMoveWindow
-{
-    return YES;
-}
-
-@end
 
 #if VK_KHR_surface
 VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHandle, VkSurfaceKHR* OutSurface)
@@ -37,7 +16,7 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
     // Set the MetalView as the new ContentView
     __block bool bResult;
     __block CAMetalLayer* MetalLayer;
-    ExecuteOnMainThread(^
+    FMacThreadManager::Get().MainThreadDispatch(^
     {
         // Create a metal layer and set it as the layer on the view
         MetalLayer = [CAMetalLayer layer];
@@ -51,27 +30,13 @@ VkResult FMacVulkanPlatform::CreateSurface(VkInstance Instance, void* WindowHand
         // Set BackgroundColor to black
         CGColorRef BackgroundColor = CGColorGetConstantColor(kCGColorBlack);
         [MetalLayer setBackgroundColor:BackgroundColor];
-        
-        // Check if we are creating a fullsize (Retina) backbuffer
-        IConsoleVariable* CVarIsRetinaAware = FConsoleManager::Get().FindConsoleVariable("MacOS.IsRetinaAware");
-        if (CVarIsRetinaAware && CVarIsRetinaAware->GetBool())
-        {
-            const CGFloat BackingScaleFactor = CocoaWindow.backingScaleFactor;
-            VULKAN_INFO("Application is Retina aware. BackingScaleFactor=%.4f", BackingScaleFactor);
-            [MetalLayer setContentsScale:BackingScaleFactor];
-        }
-        else
-        {
-            [MetalLayer setContentsScale:1.0f];
-        }
+        [MetalLayer setContentsScale:1.0f];
 
         // Create a new MetalWindowView instead of the standard CocoaView (Use the same frame)
-        FMetalWindowView* MetalView = [[FMetalWindowView alloc] initWithFrame:CocoaWindow.contentView.frame];
-        [MetalView setLayer:MetalLayer];
-        [MetalView setWantsLayer:YES];
-
-        [CocoaWindow setContentView:MetalView];
-        [CocoaWindow makeFirstResponder:MetalView];
+        FCocoaWindowView* CocoaWindowView = CocoaWindow.contentView;
+        [CocoaWindowView setLayer:MetalLayer];
+        [CocoaWindowView setWantsLayer:YES];
+        
         bResult = true;
     }, NSDefaultRunLoopMode, true);
     

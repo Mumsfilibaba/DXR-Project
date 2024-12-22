@@ -5,7 +5,6 @@
 #include <Core/Misc/OutputDeviceLogger.h>
 #include <Engine/Engine.h>
 #include <Engine/Assets/AssetManager.h>
-#include <Engine/Assets/AssetLoaders/MeshImporter.h>
 #include <Engine/World/World.h>
 #include <Engine/World/Lights/PointLight.h>
 #include <Engine/World/Lights/DirectionalLight.h>
@@ -46,72 +45,99 @@ bool FSandbox::Init()
 
     // Load Scene
     {
-        FSceneData SceneData;
-
     #if LOAD_SPONZA
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"), SceneData);
-        SceneData.Scale = 0.015f;
+        TSharedRef<FModel> Sponza = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Sponza/Sponza.obj"));
+        Sponza->SetUniformScale(0.015f);
 
-        for (auto& Material : SceneData.Materials)
+        const int32 NumMaterials = Sponza->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            if (Material.AlphaMaskTexture)
+            const TSharedPtr<FMaterial>& Material = Sponza->GetMaterial(Index);
+            if (Material->AlphaMask)
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided;
+                const EMaterialFlags Flags = EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided;
+                Material->SetMaterialFlags(Flags, true);
             }
         }
 
+        Sponza->AddToWorld(CurrentWorld);
     #elif LOAD_BISTRO
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
+        TSharedRef<FModel> BistroInterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroInterior.fbx"));
+        int32 NumMaterials = BistroInterior->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
+            const TSharedPtr<FMaterial>& Material = BistroInterior->GetMaterial(Index);
+
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
             }
+            
+            Material->SetMaterialFlags(Flags, true);
         }
         
-        SceneData.AddToWorld(CurrentWorld);
+        BistroInterior->AddToWorld(CurrentWorld);
 
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
+        TSharedRef<FModel> BistroExterior = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/Bistro/BistroExterior.fbx"));
+        NumMaterials = BistroExterior->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
+            const TSharedPtr<FMaterial>& Material = BistroExterior->GetMaterial(Index);
+            
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
             {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
             }
+            
+            Material->SetMaterialFlags(Flags, true);
         }
+        
+        BistroExterior->AddToWorld(CurrentWorld);
      #elif LOAD_SUN_TEMPLE
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
+        TSharedRef<FModel> SunTemple = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/SunTemple/SunTemple.fbx"));
+        int32 NumMaterials = SunTemple->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
         {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
-            {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
-            }
-        }
-     #elif LOAD_EMERALD_SQUARE
-        FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"), SceneData);
-        for (auto& Material : SceneData.Materials)
-        {
-            Material.MaterialFlags |= MaterialFlag_PackedParams;
-            if (Material.Name.Contains("DoubleSided"))
-            {
-                Material.MaterialFlags |= MaterialFlag_EnableAlpha | MaterialFlag_DoubleSided | MaterialFlag_PackedDiffuseAlpha;
-            }
-        }
-    #endif
+            const TSharedPtr<FMaterial>& Material = SunTemple->GetMaterial(Index);
 
-        SceneData.AddToWorld(CurrentWorld);
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
+            {
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+            }
+            
+            Material->SetMaterialFlags(Flags, true);
+        }
+        
+        SunTemple->AddToWorld(CurrentWorld);
+     #elif LOAD_EMERALD_SQUARE
+        TSharedRef<FModel> EmeraldSquare_Day = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Scenes/EmeraldSquare/EmeraldSquare_Day.fbx"));
+        int32 NumMaterials = EmeraldSquare_Day->GetNumMaterials();
+        for (int32 Index = 0; Index < NumMaterials; Index++)
+        {
+            const TSharedPtr<FMaterial>& Material = EmeraldSquare_Day->GetMaterial(Index);
+
+            EMaterialFlags Flags = EMaterialFlags::PackedParams;
+            if (Material->GetName().Contains("DoubleSided"))
+            {
+                Flags |= EMaterialFlags::EnableAlpha | EMaterialFlags::DoubleSided | EMaterialFlags::PackedDiffuseAlpha;
+            }
+            
+            Material->SetMaterialFlags(Flags, true);
+        }
+        
+        EmeraldSquare_Day->AddToWorld(CurrentWorld);
+    #endif
     }
 
 #if LOAD_SPONZA
     // Create Spheres
-    FMeshData SphereMeshData = FMeshFactory::CreateSphere(3);
-
-    TSharedPtr<FMesh> SphereMesh = FMesh::Create(SphereMeshData);
+    FMeshCreateInfo SphereMeshInfo = FMeshFactory::CreateSphere(3);
+    
+    TSharedPtr<FMesh> SphereMesh = MakeSharedPtr<FMesh>();
+    SphereMesh->Init(SphereMeshInfo);
 
     constexpr float  SphereOffset   = 1.25f;
     constexpr uint32 SphereCountX   = 8;
@@ -122,9 +148,9 @@ bool FSandbox::Init()
     constexpr float  RoughnessDelta = 1.0f / SphereCountX;
 
     FMaterialInfo MaterialInfo;
-    MaterialInfo.Albedo           = FVector3(1.0f);
+    MaterialInfo.Albedo           = FFloatColor::White;
     MaterialInfo.AmbientOcclusion = 1.0f;
-    MaterialInfo.MaterialFlags    = MaterialFlag_None;
+    MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
     uint32 SphereIndex = 0;
     for (uint32 y = 0; y < SphereCountY; y++)
@@ -135,19 +161,20 @@ bool FSandbox::Init()
             if (NewActor)
             {
                 NewActor->GetTransform().SetTranslation(StartPositionX + (x * SphereOffset), 0.6f, 40.0f + StartPositionY + (y * SphereOffset));
-                NewActor->SetName("Sphere[" + TTypeToString<uint32>::ToString(SphereIndex) + "]");
+                NewActor->SetName(FString::CreateFormatted("Sphere[%d]", SphereIndex));
                 SphereIndex++;
 
                 NewComponent = NewObject<FMeshComponent>();
                 if (NewComponent)
                 {
-                    TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialInfo);
+                    TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
                     NewMaterial->AlbedoMap    = GEngine->BaseTexture;
                     NewMaterial->RoughnessMap = GEngine->BaseTexture;
                     NewMaterial->AOMap        = GEngine->BaseTexture;
                     NewMaterial->MetallicMap  = GEngine->BaseTexture;
+                    
                     NewMaterial->Initialize();
-                    NewMaterial->SetDebugName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
+                    NewMaterial->SetName(FString::CreateFormatted("Sphere Material %d", SphereIndex));
 
                     NewComponent->SetMesh(SphereMesh);
                     NewComponent->SetMaterial(NewMaterial);
@@ -232,41 +259,44 @@ bool FSandbox::Init()
 #endif
 
     // Create Other Meshes
-    FMeshData CubeMeshData = FMeshFactory::CreateCube();
-
     NewActor = CurrentWorld->CreateActor();
     if (NewActor)
     {
         NewActor->SetName("Cube");
         NewActor->GetTransform().SetTranslation(0.0f, 2.0f, 50.0f);
 
-        MaterialInfo.Albedo           = FVector3(1.0f);
+        MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 1.0f;
-        MaterialInfo.MaterialFlags   |= MaterialFlag_EnableHeight | MaterialFlag_EnableNormalMapping;
+        MaterialInfo.MaterialFlags   |= EMaterialFlags::EnableHeight | EMaterialFlags::EnableNormalMapping;
 
         NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
-            FTextureResource2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
-            FTextureResource2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
-            FTextureResource2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
-            FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
-            FTextureResource2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
-            FTextureResource2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
+            FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Albedo.png")));
+            FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Normal.png")));
+            FTexture2DRef AOMap        = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_AO.png")));
+            FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Roughness.png")));
+            FTexture2DRef HeightMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Height.png")));
+            FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/Gate_Metallic.png")));
             
-            TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialInfo);
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
             NewMaterial->NormalMap    = NormalMap->GetRHITexture();
             NewMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
             NewMaterial->HeightMap    = HeightMap->GetRHITexture();
             NewMaterial->AOMap        = AOMap->GetRHITexture();
             NewMaterial->MetallicMap  = MetallicMap->GetRHITexture();
+            
             NewMaterial->Initialize();
-            NewMaterial->SetDebugName("GateMaterial");
+            NewMaterial->SetName("GateMaterial");
 
-            NewComponent->SetMesh(FMesh::Create(CubeMeshData));
+            FMeshCreateInfo CubeMeshData = FMeshFactory::CreateCube();
+            TSharedPtr<FMesh> CubeMesh = MakeSharedPtr<FMesh>();
+            CubeMesh->Init(CubeMeshData);
+            
+            NewComponent->SetMesh(CubeMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
@@ -281,115 +311,271 @@ bool FSandbox::Init()
         NewActor->GetTransform().SetUniformScale(50.0f);
         NewActor->GetTransform().SetTranslation(0.0f, 0.0f, 42.0f);
 
-        MaterialInfo.Albedo           = FVector3(1.0f);
+        MaterialInfo.Albedo           = FFloatColor::White;
         MaterialInfo.AmbientOcclusion = 1.0f;
         MaterialInfo.Metallic         = 1.0f;
         MaterialInfo.Roughness        = 0.5f;
-        MaterialInfo.MaterialFlags    = MaterialFlag_None;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
         NewComponent = NewObject<FMeshComponent>();
         if (NewComponent)
         {
-            TSharedPtr<FMaterial> NewMaterial = MakeShared<FMaterial>(MaterialInfo);
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
             NewMaterial->AlbedoMap    = GEngine->BaseTexture;
             NewMaterial->RoughnessMap = GEngine->BaseTexture;
             NewMaterial->AOMap        = GEngine->BaseTexture;
             NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
             NewMaterial->Initialize();
-            NewMaterial->SetDebugName("PlaneMaterial");
+            NewMaterial->SetName("PlaneMaterial");
 
-            NewComponent->SetMesh(FMesh::Create(FMeshFactory::CreatePlane(10, 10)));
+            FMeshCreateInfo PlaneMeshData = FMeshFactory::CreatePlane(10, 10);
+            TSharedPtr<FMesh> PlaneMesh = MakeSharedPtr<FMesh>();
+            PlaneMesh->Init(PlaneMeshData);
+            
+            NewComponent->SetMesh(PlaneMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+    
+    NewActor = CurrentWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Cone");
+        NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(3.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 0.5f, 50.0f);
+
+        MaterialInfo.Albedo           = FFloatColor::Green;
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 0.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
+            NewMaterial->Initialize();
+            NewMaterial->SetName("ConeMaterial");
+
+            FMeshCreateInfo ConeMeshData = FMeshFactory::CreateCone(32, 0.5f);
+            
+            TSharedPtr<FMesh> ConeMesh = MakeSharedPtr<FMesh>();
+            ConeMesh->Init(ConeMeshData);
+            
+            NewComponent->SetMesh(ConeMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+    
+    NewActor = CurrentWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Torus");
+        NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(1.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 45.0f);
+
+        MaterialInfo.Albedo           = FFloatColor::Red;
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 0.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
+            NewMaterial->Initialize();
+            NewMaterial->SetName("TorusMaterial");
+
+            FMeshCreateInfo TorusMeshData = FMeshFactory::CreateTorus(1.0f, 0.4f, 48, 32);
+            
+            TSharedPtr<FMesh> TorusMesh = MakeSharedPtr<FMesh>();
+            TorusMesh->Init(TorusMeshData);
+            
+            NewComponent->SetMesh(TorusMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+    
+    NewActor = CurrentWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Teapot");
+        NewActor->GetTransform().SetRotation(-FMath::kHalfPI_f, FMath::kHalfPI_f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(1.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 37.5f);
+
+        // Gold: 0.944, 0.776, 0.373
+        MaterialInfo.Albedo           = FFloatColor(0.944f, 0.776f, 0.373f, 1.0f);
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 1.0f;
+        MaterialInfo.Roughness        = 0.2f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::DoubleSided;
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
+            NewMaterial->Initialize();
+            NewMaterial->SetName("TeapotMaterial");
+
+            FMeshCreateInfo TeapotMeshData = FMeshFactory::CreateTeapot(12);
+            
+            TSharedPtr<FMesh> TeapotMesh = MakeSharedPtr<FMesh>();
+            TeapotMesh->Init(TeapotMeshData);
+            
+            NewComponent->SetMesh(TeapotMesh);
+            NewComponent->SetMaterial(NewMaterial);
+
+            NewActor->AddComponent(NewComponent);
+        }
+    }
+    
+    NewActor = CurrentWorld->CreateActor();
+    if (NewActor)
+    {
+        NewActor->SetName("Pyramid");
+        NewActor->GetTransform().SetRotation(0.0f, 0.0f, 0.0f);
+        NewActor->GetTransform().SetUniformScale(1.0f);
+        NewActor->GetTransform().SetTranslation(-15.0f, 1.0f, 30.0f);
+
+        MaterialInfo.Albedo           = FFloatColor::Blue;
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 0.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::None;
+
+        NewComponent = NewObject<FMeshComponent>();
+        if (NewComponent)
+        {
+            TSharedPtr<FMaterial> NewMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+            NewMaterial->AlbedoMap    = GEngine->BaseTexture;
+            NewMaterial->RoughnessMap = GEngine->BaseTexture;
+            NewMaterial->AOMap        = GEngine->BaseTexture;
+            NewMaterial->MetallicMap  = GEngine->BaseTexture;
+            
+            NewMaterial->Initialize();
+            NewMaterial->SetName("PyramidMaterial");
+
+            FMeshCreateInfo PyramidMeshData = FMeshFactory::CreatePyramid(2.0f, 2.0f, 2.0f);
+            
+            TSharedPtr<FMesh> PyramidMesh = MakeSharedPtr<FMesh>();
+            PyramidMesh->Init(PyramidMeshData);
+            
+            NewComponent->SetMesh(PyramidMesh);
             NewComponent->SetMaterial(NewMaterial);
 
             NewActor->AddComponent(NewComponent);
         }
     }
 
-    FTextureResource2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
-    FTextureResource2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
-    FTextureResource2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
-    FTextureResource2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
-
-    MaterialInfo.Albedo           = FVector3(1.0f);
-    MaterialInfo.AmbientOcclusion = 1.0f;
-    MaterialInfo.Metallic         = 1.0f;
-    MaterialInfo.Roughness        = 1.0f;
-    MaterialInfo.MaterialFlags    = MaterialFlag_EnableNormalMapping;
-
-    FSceneData StreetLightData;
-    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"), StreetLightData);
-
-    TSharedPtr<FMaterial> StreetLightMat = MakeShared<FMaterial>(MaterialInfo);
-    StreetLightMat->AlbedoMap    = AlbedoMap->GetRHITexture();
-    StreetLightMat->NormalMap    = NormalMap->GetRHITexture();
-    StreetLightMat->RoughnessMap = RoughnessMap->GetRHITexture();
-    StreetLightMat->AOMap        = GEngine->BaseTexture;
-    StreetLightMat->MetallicMap  = MetallicMap->GetRHITexture();
-    StreetLightMat->Initialize();
-    StreetLightMat->SetDebugName("StreetLightMaterial");
-
-    TArray<TSharedPtr<FMesh>> StreetLightMeshes;
-    StreetLightMeshes.Reserve(StreetLightData.Models.Size());
-
-    for (int32 i = 0; i < StreetLightData.Models.Size(); i++)
+    TSharedRef<FModel> StreetLightModel = FAssetManager::Get().LoadModel((ENGINE_LOCATION"/Assets/Models/Street_Light.obj"));
+    if (StreetLightModel)
     {
-        StreetLightMeshes.Add(FMesh::Create(StreetLightData.Models[i].Mesh));
-    }
+        FTexture2DRef AlbedoMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/BaseColor.jpg")));
+        FTexture2DRef NormalMap    = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Normal.jpg")));
+        FTexture2DRef RoughnessMap = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Roughness.jpg")));
+        FTexture2DRef MetallicMap  = StaticCastSharedRef<FTexture2D>(FAssetManager::Get().LoadTexture((ENGINE_LOCATION"/Assets/Textures/StreetLight/Metallic.jpg")));
+        
+        MaterialInfo.Albedo           = FFloatColor::White;
+        MaterialInfo.AmbientOcclusion = 1.0f;
+        MaterialInfo.Metallic         = 1.0f;
+        MaterialInfo.Roughness        = 1.0f;
+        MaterialInfo.MaterialFlags    = EMaterialFlags::EnableNormalMapping;
 
-    for (uint32 i = 0; i < 4; i++)
-    {
-        for (int32 MeshIndex = 0; MeshIndex < StreetLightMeshes.Size(); MeshIndex++)
+        TSharedPtr<FMaterial> StreetLightMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+        StreetLightMaterial->AlbedoMap    = AlbedoMap->GetRHITexture();
+        StreetLightMaterial->NormalMap    = NormalMap->GetRHITexture();
+        StreetLightMaterial->RoughnessMap = RoughnessMap->GetRHITexture();
+        StreetLightMaterial->AOMap        = GEngine->BaseTexture;
+        StreetLightMaterial->MetallicMap  = MetallicMap->GetRHITexture();
+
+        StreetLightMaterial->Initialize();
+        StreetLightMaterial->SetName("StreetLightMaterial");
+
+        const int32 NumMeshes = StreetLightModel->GetNumMeshes();
+        for (uint32 i = 0; i < 4; i++)
         {
-            NewActor = CurrentWorld->CreateActor();
-            if (NewActor)
+            for (int32 MeshIndex = 0; MeshIndex < NumMeshes; MeshIndex++)
             {
-                NewActor->SetName("Street Light (" + StreetLightData.Models[MeshIndex].Name + ")" + TTypeToString<uint32>::ToString(i));
-                NewActor->GetTransform().SetUniformScale(0.25f);
-                NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
-
-                NewComponent = NewObject<FMeshComponent>();
-                if (NewComponent)
+                NewActor = CurrentWorld->CreateActor();
+                if (NewActor)
                 {
-                    NewComponent->SetMesh(StreetLightMeshes[MeshIndex]);
-                    NewComponent->SetMaterial(StreetLightMat);
-                    NewActor->AddComponent(NewComponent);
+                    const TSharedPtr<FMesh>& Mesh = StreetLightModel->GetMesh(MeshIndex);
+                    NewActor->SetName(FString::CreateFormatted("Street Light (%s) %d", *Mesh->GetName(), i));
+                    NewActor->GetTransform().SetUniformScale(0.25f);
+                    NewActor->GetTransform().SetTranslation(15.0f, 0.0f, 55.0f - float(i) * 3.0f);
+
+                    NewComponent = NewObject<FMeshComponent>();
+                    if (NewComponent)
+                    {
+                        NewComponent->SetMesh(Mesh);
+                        NewComponent->SetMaterial(StreetLightMaterial);
+                        NewActor->AddComponent(NewComponent);
+                    }
                 }
             }
         }
     }
 
-    MaterialInfo.Albedo           = FVector3(0.4f);
+    MaterialInfo.Albedo           = FFloatColor(0.4f, 0.4f, 0.4f, 1.0f);
     MaterialInfo.AmbientOcclusion = 1.0f;
     MaterialInfo.Metallic         = 0.0f;
     MaterialInfo.Roughness        = 1.0f;
-    MaterialInfo.MaterialFlags    = MaterialFlag_None;
+    MaterialInfo.MaterialFlags    = EMaterialFlags::None;
 
-    FSceneData PillarData;
-    FMeshImporter::Get().LoadMesh((ENGINE_LOCATION"/Assets/Models/Pillar.obj"), PillarData);
+    TSharedPtr<FMaterial> CylinderMaterial = MakeSharedPtr<FMaterial>(MaterialInfo);
+    CylinderMaterial->AlbedoMap    = GEngine->BaseTexture;
+    CylinderMaterial->RoughnessMap = GEngine->BaseTexture;
+    CylinderMaterial->AOMap        = GEngine->BaseTexture;
+    CylinderMaterial->MetallicMap  = GEngine->BaseTexture;
+    
+    CylinderMaterial->Initialize();
+    CylinderMaterial->SetName("CylinderMaterial");
 
-    TSharedPtr<FMaterial> PillarMaterial = MakeShared<FMaterial>(MaterialInfo);
-    PillarMaterial->AlbedoMap    = GEngine->BaseTexture;
-    PillarMaterial->RoughnessMap = GEngine->BaseTexture;
-    PillarMaterial->AOMap        = GEngine->BaseTexture;
-    PillarMaterial->MetallicMap  = GEngine->BaseTexture;
-    PillarMaterial->Initialize();
-    PillarMaterial->SetDebugName("PillarMaterial");
-
-    TSharedPtr<FMesh> Pillar = PillarData.HasModelData() ? FMesh::Create(PillarData.Models.FirstElement().Mesh) : nullptr;
+    FMeshCreateInfo CylinderMeshData = FMeshFactory::CreateCylinder(32, 0.4f, 5.0f);
+    
+    TSharedPtr<FMesh> CylinderMesh = MakeSharedPtr<FMesh>();
+    CylinderMesh->Init(CylinderMeshData);
+    
     for (uint32 i = 0; i < 8; i++)
     {
         NewActor = CurrentWorld->CreateActor();
         if (NewActor)
         {
-            NewActor->SetName("Pillar " + TTypeToString<uint32>::ToString(i));
-            NewActor->GetTransform().SetUniformScale(0.25f);
-            NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 0.0f, 60.0f);
+            NewActor->SetName(FString::CreateFormatted("Cylinder %d", i));
+            NewActor->GetTransform().SetUniformScale(1.0f);
+            NewActor->GetTransform().SetTranslation(-15.0f + float(i) * 1.75f, 2.5f, 60.0f);
 
             NewComponent = NewObject<FMeshComponent>();
             if (NewComponent)
             {
-                NewComponent->SetMesh(Pillar);
-                NewComponent->SetMaterial(PillarMaterial);
+                NewComponent->SetMesh(CylinderMesh);
+                NewComponent->SetMaterial(CylinderMaterial);
                 NewActor->AddComponent(NewComponent);
             }
         }
@@ -405,7 +591,7 @@ bool FSandbox::Init()
 
     // Add PointLights
 #if LOAD_SPONZA
-    const float Intensity = 100.0f;
+    const float Intensity      = 100.0f;
     const float ShadowFarPlane = 40.0f;
     if (FPointLight* Light0 = NewObject<FPointLight>())
     {
@@ -516,16 +702,16 @@ bool FSandbox::Init()
         CurrentWorld->AddLight(Light4);
     }
 
-    if (FLightProbe* LightProbe = NewObject<FLightProbe>())
-    {
-        LightProbe->SetPosition(FVector3(0.0f));
-        CurrentWorld->AddLightProbe(LightProbe);
-    }
+    // if (FLightProbe* LightProbe = NewObject<FLightProbe>())
+    // {
+    //     LightProbe->SetPosition(FVector3(0.0f));
+    //     CurrentWorld->AddLightProbe(LightProbe);
+    // }
 
     LOG_INFO("Finished loading game");
     return true;
 }
 
-void FSandbox::Tick(float DeltaTime)
+void FSandbox::Tick(float)
 {
 }

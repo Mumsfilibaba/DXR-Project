@@ -1,7 +1,6 @@
 #pragma once
-#include "Iterator.h"
-#include "Allocators.h"
-#include "Core/Core.h"
+#include "Core/Containers/Iterator.h"
+#include "Core/Containers/Allocators.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Math/Math.h"
 #include "Core/Templates/TypeTraits.h"
@@ -26,14 +25,14 @@ public:
 
 public:
 
-    /** @brief - Default constructor */
+    /** @brief Default constructor */
     TBitArray() = default;
 
     /**
-     * @brief         - Constructor that sets the elements based on an integer
-     * @param InValue - Integer containing bits to set to the BitArray
+     * @brief Constructor that sets the elements based on an integer
+     * @param InValue Integer containing bits to set to the BitArray
      */
-    FORCEINLINE explicit TBitArray(InIntegerType InValue) noexcept
+    FORCEINLINE explicit TBitArray(InIntegerType InValue)
         : Allocator()
         , NumBits(NumBitsPerInteger())
         , NumElements(0)
@@ -44,11 +43,11 @@ public:
     }
 
     /**
-     * @brief           - Constructor that sets the elements based on an integer
-     * @param InValues  - Integers containing bits to set to the BitArray
-     * @param NumValues - Number of values in the input array
+     * @brief Constructor that sets the elements based on an integer
+     * @param InValues Integers containing bits to set to the BitArray
+     * @param NumValues Number of values in the input array
      */
-    NOINLINE explicit TBitArray(const InIntegerType* InValues, SizeType NumValues) noexcept
+    NOINLINE explicit TBitArray(const InIntegerType* InValues, SizeType NumValues)
         : Allocator()
         , NumBits(NumValues * NumBitsPerInteger())
         , NumElements(0)
@@ -63,11 +62,11 @@ public:
     }
 
     /**
-     * @brief         - Constructor that sets a certain number of bits to specified value
-     * @param bValue  - Value to set bits to
-     * @param NumBits - Number of bits to set
+     * @brief Constructor that sets a certain number of bits to specified value
+     * @param bValue Value to set bits to
+     * @param NumBits Number of bits to set
      */
-    FORCEINLINE explicit TBitArray(SizeType InNumBits, bool bValue) noexcept
+    FORCEINLINE explicit TBitArray(SizeType InNumBits, bool bValue)
         : Allocator()
         , NumBits(InNumBits)
         , NumElements(0)
@@ -80,10 +79,10 @@ public:
     }
 
     /**
-     * @brief          - Constructor that creates a BitArray from a list of booleans indicating the sign of the bit
-     * @param InitList - Contains bools to indicate the sign of each bit
+     * @brief Constructor that creates a BitArray from a list of booleans indicating the sign of the bit
+     * @param InitList Contains bools to indicate the sign of each bit
      */
-    FORCEINLINE TBitArray(std::initializer_list<bool> InitList) noexcept
+    FORCEINLINE TBitArray(std::initializer_list<bool> InitList)
         : Allocator()
         , NumBits(FArrayContainerHelper::Size(InitList))
         , NumElements(0)
@@ -98,10 +97,10 @@ public:
     }
 
     /**
-     * @brief       - Copy constructor
-     * @param Other - BitArray to copy from
+     * @brief Copy constructor
+     * @param Other BitArray to copy from
      */
-    FORCEINLINE TBitArray(const TBitArray& Other) noexcept
+    FORCEINLINE TBitArray(const TBitArray& Other)
         : Allocator()
         , NumBits(Other.NumBits)
         , NumElements(0)
@@ -111,10 +110,10 @@ public:
     }
 
     /**
-     * @brief       - Move constructor
-     * @param Other - BitArray to move from
+     * @brief Move constructor
+     * @param Other BitArray to move from
      */ 
-    FORCEINLINE TBitArray(TBitArray&& Other) noexcept
+    FORCEINLINE TBitArray(TBitArray&& Other)
         : Allocator()
         , NumBits(Other.NumBits)
         , NumElements(Other.NumElements)
@@ -123,7 +122,7 @@ public:
     }
 
     /**
-     * @brief - Destructor
+     * @brief Destructor
      */
     FORCEINLINE ~TBitArray()
     {
@@ -133,7 +132,7 @@ public:
     }
 
     /**
-     * @brief - Resets the all the bits to zero
+     * @brief Resets the all the bits to zero
      */
     FORCEINLINE void Reset()
     {
@@ -141,28 +140,28 @@ public:
     }
 
     /**
-     * @brief  - Checks if an index is a valid index
-     * @return - Returns true if the index is valid
+     * @brief Checks if an index is a valid index
+     * @return Returns true if the index is valid
      */
-    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE bool IsValidIndex(SizeType Index) const
     {
         return Index >= 0 && Index < NumBits;
     }
 
     /**
-     * @brief  - Check if the array is empty
-     * @return - Returns true if the array is empty
+     * @brief Check if the array is empty
+     * @return Returns true if the array is empty
      */
-    NODISCARD FORCEINLINE bool IsEmpty() const noexcept
+    NODISCARD FORCEINLINE bool IsEmpty() const
     {
         return NumBits == 0;
     }
 
     /**
-     * @brief        - Add a new bit with the specified value
-     * @param bValue - Value of the new bit
+     * @brief Add a new bit with the specified value
+     * @param bValue Value of the new bit
      */
-    void Add(const bool bValue) noexcept
+    void Add(const bool bValue)
     {
         Reserve(NumBits + 1);
         AssignBitUnchecked(NumBits, bValue);
@@ -170,21 +169,21 @@ public:
     }
 
     /**
-     * @brief             - Assign a value to a bit
-     * @param BitPosition - Position of the bit to set
-     * @param bValue      - Value to assign to the bit
+     * @brief Assign a value to a bit
+     * @param BitPosition Position of the bit to set
+     * @param bValue Value to assign to the bit
      */
-    void AssignBit(SizeType BitPosition, const bool bValue) noexcept
+    void AssignBit(SizeType BitPosition, const bool bValue)
     {
         CHECK(BitPosition < NumBits);
         AssignBitUnchecked(BitPosition, bValue);
     }
 
     /**
-     * @brief             - Flips the bit at the position
-     * @param BitPosition - Position of the bit to set
+     * @brief Flips the bit at the position
+     * @param BitPosition Position of the bit to set
      */
-    FORCEINLINE void FlipBit(SizeType BitPosition) noexcept
+    FORCEINLINE void FlipBit(SizeType BitPosition)
     {
         CHECK(BitPosition < NumBits);
         const SizeType ElementIndex   = GetArrayIndexOfBit(BitPosition);
@@ -196,10 +195,10 @@ public:
     }
 
     /**
-     * @brief  - Count the number of bits that are assigned
-     * @return - Returns the number of bits that are true
+     * @brief Count the number of bits that are assigned
+     * @return Returns the number of bits that are true
      */
-    NODISCARD FORCEINLINE SizeType CountAssignedBits() const noexcept
+    NODISCARD FORCEINLINE SizeType CountAssignedBits() const
     {
         SizeType BitCount = 0;
         for (SizeType Index = 0; Index < NumElements; ++Index)
@@ -212,26 +211,26 @@ public:
     }
 
     /**
-     * @brief  - Check if any bit is set
-     * @return - Returns true if any bit is set
+     * @brief Check if any bit is set
+     * @return Returns true if any bit is set
      */
-    NODISCARD FORCEINLINE bool HasAnyBitSet() const noexcept
+    NODISCARD FORCEINLINE bool HasAnyBitSet() const
     {
         return CountAssignedBits() != 0;
     }
 
     /**
-     * @brief  - Check if no bit is set
-     * @return - Returns true if no bit is set
+     * @brief Check if no bit is set
+     * @return Returns true if no bit is set
      */
-    NODISCARD FORCEINLINE bool HasNoBitSet() const noexcept
+    NODISCARD FORCEINLINE bool HasNoBitSet() const
     {
         return CountAssignedBits() == 0;
     }
 
     /**
-     * @brief  - Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
-     * @return - Returns the index of the most significant bit
+     * @brief Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
+     * @return Returns the index of the most significant bit
      */
     NODISCARD FORCEINLINE SizeType MostSignificant() const
     {
@@ -251,8 +250,8 @@ public:
     }
 
     /**
-     * @brief  - Retrieve the most significant bit. Will return zero if no bits are set, check HasAnyBitSet.
-     * @return - Returns the index of the least significant bit
+     * @brief Retrieve the least significant bit. Will return zero if no bits are set, check HasAnyBitSet.
+     * @return Returns the index of the least significant bit
      */
     NODISCARD FORCEINLINE SizeType LeastSignificant() const
     {
@@ -272,11 +271,11 @@ public:
     }
 
     /**
-     * @brief             - Insert a new bit with a certain value
-     * @param BitPosition - Position of the bit to set
-     * @param bValue      - Value to assign to the bit
+     * @brief Insert a new bit with a certain value
+     * @param BitPosition Position of the bit to set
+     * @param bValue Value to assign to the bit
      */
-    void Insert(SizeType BitPosition, const bool bValue) noexcept
+    void Insert(SizeType BitPosition, const bool bValue)
     {
         CHECK(BitPosition <= NumBits);
         Reserve(NumBits + 1);
@@ -289,10 +288,10 @@ public:
     }
 
     /**
-     * @brief             - Remove a bit from the array
-     * @param BitPosition - Position of the bit to set
+     * @brief Remove a bit from the array
+     * @param BitPosition Position of the bit to set
      */
-    inline void Remove(SizeType BitPosition) noexcept
+    inline void Remove(SizeType BitPosition)
     {
         CHECK(BitPosition <= NumBits);
         BitshiftRight_SimpleWithBitOffset(1, BitPosition);
@@ -300,10 +299,10 @@ public:
     }
 
     /**
-     * @brief         - Reserve a certain number of bits to be stored
-     * @param NumBits - Number of bits to be able to store
+     * @brief Reserve a certain number of bits to be stored
+     * @param NumBits Number of bits to be able to store
      */
-    FORCEINLINE void Reserve(SizeType InNumBits) noexcept
+    FORCEINLINE void Reserve(SizeType InNumBits)
     {
         const SizeType MaxBits = Capacity();
         if (InNumBits >= MaxBits)
@@ -322,19 +321,19 @@ public:
     }
 
     /**
-     * @brief           - Resize the array to a certain number of bits
-     * @param InNumBits - New number of bits in the array
+     * @brief Resize the array to a certain number of bits
+     * @param InNumBits New number of bits in the array
      */
-    inline void Resize(SizeType InNumBits) noexcept
+    inline void Resize(SizeType InNumBits)
     {
         Reserve(InNumBits);
         NumBits = InNumBits;
     }
 
     /**
-     * @brief - Shrink the allocated array to fit the number of bits and remove unnecessary space
+     * @brief Shrink the allocated array to fit the number of bits and remove unnecessary space
      */
-    FORCEINLINE void Shrink() noexcept
+    FORCEINLINE void Shrink()
     {
         const SizeType RequiredElements = GetNumIntegersRequiredForBits(NumBits);
         if (RequiredElements >= NumElements)
@@ -345,10 +344,10 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise AND between this and another BitArray
-     * @param Other - BitArray to perform bitwise AND with
+     * @brief Perform a bitwise AND between this and another BitArray
+     * @param Other BitArray to perform bitwise AND with
      */
-    FORCEINLINE void BitwiseAnd(const TBitArray& Other) noexcept
+    FORCEINLINE void BitwiseAnd(const TBitArray& Other)
     {
         const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
@@ -359,10 +358,10 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise OR between this and another BitArray
-     * @param Other - BitArray to perform bitwise OR with
+     * @brief Perform a bitwise OR between this and another BitArray
+     * @param Other BitArray to perform bitwise OR with
      */
-    FORCEINLINE void BitwiseOr(const TBitArray& Other) noexcept
+    FORCEINLINE void BitwiseOr(const TBitArray& Other)
     {
         const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
@@ -373,10 +372,10 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise XOR between this and another BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief Perform a bitwise XOR between this and another BitArray
+     * @param Other BitArray to perform bitwise XOR with
      */
-    FORCEINLINE void BitwiseXor(const TBitArray& Other) noexcept
+    FORCEINLINE void BitwiseXor(const TBitArray& Other)
     {
         const SizeType Count = FMath::Min<SizeType>(NumElements, Other.NumElements);
         for (SizeType Index = 0; Index < Count; Index++)
@@ -387,10 +386,10 @@ public:
     }
 
     /**
-     * @brief       - Perform a bitwise NOT on each bit in this BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief Perform a bitwise NOT on each bit in this BitArray
+     * @param Other BitArray to perform bitwise XOR with
      */
-    FORCEINLINE void BitwiseNot() noexcept
+    FORCEINLINE void BitwiseNot()
     {
         for (SizeType Index = 0; Index < NumElements; Index++)
         {
@@ -400,93 +399,93 @@ public:
     }
 
     /**
-     * @brief       - Perform a right BitShift
-     * @param Steps - Number of steps to shift
+     * @brief Perform a right BitShift
+     * @param Steps Number of steps to shift
      */
-    FORCEINLINE void BitshiftRight(SizeType Steps) noexcept
+    FORCEINLINE void BitshiftRight(SizeType Steps)
     {
         if (Steps && NumBits)
             BitshiftRightUnchecked(Steps, 0);
     }
 
     /**
-     * @brief       - Perform a left BitShift
-     * @param Steps - Number of steps to shift
+     * @brief Perform a left BitShift
+     * @param Steps Number of steps to shift
      */
-    FORCEINLINE void BitshiftLeft(SizeType Steps) noexcept
+    FORCEINLINE void BitshiftLeft(SizeType Steps)
     {
         if (Steps && NumBits)
             BitshiftLeftUnchecked(Steps, 0);
     }
 
     /**
-     * @brief  - Retrieve the number of bits
-     * @return - Returns the number of bits in the array
+     * @brief Retrieve the number of bits
+     * @return Returns the number of bits in the array
      */
-    NODISCARD FORCEINLINE SizeType Size() const noexcept
+    NODISCARD FORCEINLINE SizeType Size() const
     {
         return NumBits;
     }
 
     /**
-     * @brief  - Retrieve the number of integers used to store the bits
-     * @return - Returns the number of integers used to store the bits
+     * @brief Retrieve the number of integers used to store the bits
+     * @return Returns the number of integers used to store the bits
      */
-    NODISCARD FORCEINLINE SizeType IntegerSize() const noexcept
+    NODISCARD FORCEINLINE SizeType IntegerSize() const
     {
         return NumElements;
     }
 
     /**
-     * @brief  - Retrieve the maximum number of bits
-     * @return - Returns the maximum number of bits in the array
+     * @brief Retrieve the maximum number of bits
+     * @return Returns the maximum number of bits in the array
      */
-    NODISCARD FORCEINLINE SizeType Capacity() const noexcept
+    NODISCARD FORCEINLINE SizeType Capacity() const
     {
         return NumElements * NumBitsPerInteger();
     }
 
     /**
-     * @brief  - Retrieve the capacity of the array in bytes
-     * @return - Returns the capacity of the array in bytes
+     * @brief Retrieve the capacity of the array in bytes
+     * @return Returns the capacity of the array in bytes
      */
-    NODISCARD FORCEINLINE SizeType CapacityInBytes() const noexcept
+    NODISCARD FORCEINLINE SizeType CapacityInBytes() const
     {
         return NumElements * sizeof(InIntegerType);
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the data of the Array
+     * @return Returns a pointer to the stored data
      */
-    NODISCARD FORCEINLINE InIntegerType* Data() noexcept
+    NODISCARD FORCEINLINE InIntegerType* Data()
     {
         return Allocator.GetAllocation();
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the data of the Array
+     * @return Returns a pointer to the stored data
      */
-    NODISCARD FORCEINLINE const InIntegerType* Data() const noexcept
+    NODISCARD FORCEINLINE const InIntegerType* Data() const
     {
         return Allocator.GetAllocation();
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the allocator of the Array
+     * @return Returns a reference to the allocator
      */
-    NODISCARD FORCEINLINE InAllocatorType& GetAllocator() noexcept
+    NODISCARD FORCEINLINE InAllocatorType& GetAllocator()
     {
         return Allocator;
     }
 
     /**
-     * @brief  - Retrieve the data of the Array
-     * @return - Returns a pointer to the stored data
+     * @brief Retrieve the allocator of the Array
+     * @return Returns a const reference to the allocator
      */
-    NODISCARD FORCEINLINE const InAllocatorType& GetAllocator() const noexcept
+    NODISCARD FORCEINLINE const InAllocatorType& GetAllocator() const
     {
         return Allocator;
     }
@@ -494,43 +493,43 @@ public:
 public:
 
     /**
-     * @brief     - Bitwise AND operator, perform a bitwise AND between this and another BitArray
-     * @param RHS - BitArray to perform bitwise AND with
-     * @return    - Returns a reference to this BitArray
+     * @brief Bitwise AND operator, perform a bitwise AND between this and another BitArray
+     * @param RHS BitArray to perform bitwise AND with
+     * @return Returns a reference to this BitArray
      */
-    FORCEINLINE TBitArray& operator&=(const TBitArray& RHS) noexcept
+    FORCEINLINE TBitArray& operator&=(const TBitArray& RHS)
     {
         BitwiseAnd(RHS);
         return *this;
     }
 
     /**
-     * @brief     - Bitwise OR operator, perform a bitwise OR between this and another BitArray
-     * @param RHS - BitArray to perform bitwise OR with
-     * @return    - Returns a reference to this BitArray
+     * @brief Bitwise OR operator, perform a bitwise OR between this and another BitArray
+     * @param RHS BitArray to perform bitwise OR with
+     * @return Returns a reference to this BitArray
      */
-    FORCEINLINE TBitArray& operator|=(const TBitArray& RHS) noexcept
+    FORCEINLINE TBitArray& operator|=(const TBitArray& RHS)
     {
         BitwiseOr(RHS);
         return *this;
     }
 
     /**
-     * @brief     - Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
-     * @param RHS - BitArray to perform bitwise XOR with
-     * @return    - Returns a reference to this BitArray
+     * @brief Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
+     * @param RHS BitArray to perform bitwise XOR with
+     * @return Returns a reference to this BitArray
      */
-    FORCEINLINE TBitArray& operator^=(const TBitArray& RHS) noexcept
+    FORCEINLINE TBitArray& operator^=(const TBitArray& RHS)
     {
         BitwiseXor(RHS);
         return *this;
     }
 
     /**
-     * @brief       - Perform a bitwise NOT on each bit in this BitArray
-     * @param Other - BitArray to perform bitwise XOR with
+     * @brief Perform a bitwise NOT on each bit in this BitArray
+     * @param Other BitArray to perform bitwise XOR with
      */
-    FORCEINLINE TBitArray operator~() const noexcept
+    FORCEINLINE TBitArray operator~() const
     {
         TBitArray NewArray(*this);
         NewArray.BitwiseNot();
@@ -538,11 +537,11 @@ public:
     }
 
     /**
-     * @brief     - Perform a bitshift right
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a copy that is bitshifted to the right
+     * @brief Perform a bitshift right
+     * @param RHS Number of steps to bitshift
+     * @return Returns a copy that is bitshifted to the right
      */
-    FORCEINLINE TBitArray operator>>(SizeType RHS) const noexcept
+    FORCEINLINE TBitArray operator>>(SizeType RHS) const
     {
         TBitArray NewArray(*this);
         NewArray.BitshiftRight(RHS);
@@ -550,22 +549,22 @@ public:
     }
 
     /**
-     * @brief     - Perform a bitshift right
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a reference to this object
+     * @brief Perform a bitshift right
+     * @param RHS Number of steps to bitshift
+     * @return Returns a reference to this object
      */
-    FORCEINLINE TBitArray& operator>>=(SizeType RHS) const noexcept
+    FORCEINLINE TBitArray& operator>>=(SizeType RHS) const
     {
         BitshiftRight(RHS);
         return *this;
     }
 
     /**
-     * @brief     - Perform a bitshift left
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a copy that is bitshifted to the left
+     * @brief Perform a bitshift left
+     * @param RHS Number of steps to bitshift
+     * @return Returns a copy that is bitshifted to the left
      */
-    FORCEINLINE TBitArray operator<<(SizeType RHS) const noexcept
+    FORCEINLINE TBitArray operator<<(SizeType RHS) const
     {
         TBitArray NewArray(*this);
         NewArray.BitshiftLeft(RHS);
@@ -573,22 +572,22 @@ public:
     }
 
     /**
-     * @brief     - Perform a bitshift left
-     * @param RHS - Number of steps to bitshift
-     * @return    - Returns a reference to this object
+     * @brief Perform a bitshift left
+     * @param RHS Number of steps to bitshift
+     * @return Returns a reference to this object
      */
-    FORCEINLINE TBitArray& operator<<=(SizeType RHS) const noexcept
+    FORCEINLINE TBitArray& operator<<=(SizeType RHS) const
     {
         BitshiftLeft(RHS);
         return *this;
     }
 
     /**
-     * @brief       - Retrieve a bit with a certain index
-     * @param Index - Index to the bit
-     * @return      - Returns a BitReference to the specified bit
+     * @brief Retrieve a bit with a certain index
+     * @param Index Index to the bit
+     * @return Returns a BitReference to the specified bit
      */
-    NODISCARD FORCEINLINE BitReferenceType operator[](SizeType BitIndex) noexcept
+    NODISCARD FORCEINLINE BitReferenceType operator[](SizeType BitIndex)
     {
         CHECK(BitIndex < NumBits);
         const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
@@ -599,11 +598,11 @@ public:
     }
 
     /**
-     * @brief       - Retrieve a bit with a certain index
-     * @param Index - Index to the bit
-     * @return      - Returns a BitReference to the specified bit
+     * @brief Retrieve a bit with a certain index
+     * @param Index Index to the bit
+     * @return Returns a BitReference to the specified bit
      */
-    NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SizeType BitIndex) const noexcept
+    NODISCARD FORCEINLINE const ConstBitReferenceType operator[](SizeType BitIndex) const
     {
         CHECK(BitIndex < NumBits);
         const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
@@ -614,45 +613,45 @@ public:
     }
 
     /**
-     * @brief     - Copy assignment operator
-     * @param RHS - BitArray to copy from
-     * @return    - Returns a reference to this BitArray
+     * @brief Copy assignment operator
+     * @param RHS BitArray to copy from
+     * @return Returns a reference to this BitArray
      */
-    FORCEINLINE TBitArray& operator=(const TBitArray& RHS) noexcept
+    FORCEINLINE TBitArray& operator=(const TBitArray& RHS)
     {
         CopyFrom(RHS);
         return *this;
     }
 
     /**
-     * @brief     - Move assignment operator
-     * @param RHS - BitArray to move from
-     * @return    - Returns a reference to this BitArray
+     * @brief Move assignment operator
+     * @param RHS BitArray to move from
+     * @return Returns a reference to this BitArray
      */
-    FORCEINLINE TBitArray& operator=(TBitArray&& RHS) noexcept
+    FORCEINLINE TBitArray& operator=(TBitArray&& RHS)
     {
         MoveFrom(::Move(RHS));
         return *this;
     }
 
     /**
-     * @brief     - Compare operator
-     * @param RHS - Right-hand side to compare
-     * @return    - Returns true if the BitArrays are equal
+     * @brief Compare operator
+     * @param RHS Right-hand side to compare
+     * @return Returns true if the BitArrays are equal
      */
     template<typename OtherIntegerType, typename OtherAllocatorType>
-    NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator==(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const
     {
         return CapacityInBytes() == RHS.CapacityInBytes() ? FMemory::Memcmp(Allocator.GetAllocation(), RHS.Allocator.GetAllocation(), CapacityInBytes()) : false;
     }
 
     /**
-     * @brief     - Compare operator
-     * @param RHS - Right-hand side to compare
-     * @return    - Returns false if the BitArrays are equal
+     * @brief Compare operator
+     * @param RHS Right-hand side to compare
+     * @return Returns false if the BitArrays are equal
      */
     template<typename OtherIntegerType, typename OtherAllocatorType>
-    NODISCARD FORCEINLINE bool operator!=(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const noexcept
+    NODISCARD FORCEINLINE bool operator!=(const TBitArray<OtherIntegerType, OtherAllocatorType>& RHS) const
     {
         return !(*this == RHS);
     }
@@ -660,12 +659,12 @@ public:
 public:
 
     /**
-     * @brief     - Bitwise AND operator, perform a bitwise AND between this and another BitArray
-     * @param LHS - Left-hand side to bitwise AND with
-     * @param RHS - Right-hand side to bitwise AND with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise AND operator, perform a bitwise AND between this and another BitArray
+     * @param LHS Left-hand side to bitwise AND with
+     * @param RHS Right-hand side to bitwise AND with
+     * @return Returns a BitArray with the result
      */
-    NODISCARD friend FORCEINLINE TBitArray operator&(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    NODISCARD friend FORCEINLINE TBitArray operator&(const TBitArray& LHS, const TBitArray& RHS)
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseAnd(RHS);
@@ -673,12 +672,12 @@ public:
     }
 
     /**
-     * @brief     - Bitwise OR operator, perform a bitwise OR between this and another BitArray
-     * @param LHS - Left-hand side to bitwise OR with
-     * @param RHS - Right-hand side to bitwise OR with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise OR operator, perform a bitwise OR between this and another BitArray
+     * @param LHS Left-hand side to bitwise OR with
+     * @param RHS Right-hand side to bitwise OR with
+     * @return Returns a BitArray with the result
      */
-    NODISCARD friend FORCEINLINE TBitArray operator|(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    NODISCARD friend FORCEINLINE TBitArray operator|(const TBitArray& LHS, const TBitArray& RHS)
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseOr(RHS);
@@ -686,12 +685,12 @@ public:
     }
 
     /**
-     * @brief     - Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
-     * @param LHS - Left-hand side to bitwise XOR with
-     * @param RHS - Right-hand side to bitwise XOR with
-     * @return    - Returns a BitArray with the result
+     * @brief Bitwise XOR operator, perform a bitwise XOR between this and another BitArray
+     * @param LHS Left-hand side to bitwise XOR with
+     * @param RHS Right-hand side to bitwise XOR with
+     * @return Returns a BitArray with the result
      */
-    NODISCARD friend FORCEINLINE TBitArray operator^(const TBitArray& LHS, const TBitArray& RHS) noexcept
+    NODISCARD friend FORCEINLINE TBitArray operator^(const TBitArray& LHS, const TBitArray& RHS)
     {
         TBitArray NewArray(LHS);
         NewArray.BitwiseXor(RHS);
@@ -701,82 +700,84 @@ public:
 public:
 
     /**
-     * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
+     * @brief Retrieve an iterator to the beginning of the array
+     * @return A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE IteratorType Iterator() noexcept
+    NODISCARD FORCEINLINE IteratorType Iterator()
     {
         return IteratorType(*this, 0);
     }
 
     /**
-     * @brief  - Retrieve an iterator to the beginning of the array
-     * @return - A iterator that points to the first element
+     * @brief Retrieve an iterator to the beginning of the array
+     * @return A iterator that points to the first element
      */
-    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const noexcept
+    NODISCARD FORCEINLINE ConstIteratorType ConstIterator() const
     {
         return ConstIteratorType(*this, 0);
     }
 
     /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
+     * @brief Retrieve a reverse-iterator to the end of the array
+     * @return A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator() noexcept
+    NODISCARD FORCEINLINE ReverseIteratorType ReverseIterator()
     {
         return ReverseIteratorType(*this, NumBits);
     }
 
     /**
-     * @brief  - Retrieve an reverse-iterator to the end of the array
-     * @return - A reverse-iterator that points to the last element
+     * @brief Retrieve a reverse-iterator to the end of the array
+     * @return A reverse-iterator that points to the last element
      */
-    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const noexcept
+    NODISCARD FORCEINLINE ReverseConstIteratorType ConstReverseIterator() const
     {
         return ReverseConstIteratorType(*this, NumBits);
     }
 
-public: // STL Iterators
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return Iterator(); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return ConstIterator(); }
+public:
 
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return IteratorType(*this, NumBits); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return ConstIteratorType(*this, NumBits); }
+    // STL Iterators
+    NODISCARD FORCEINLINE IteratorType      begin()       { return Iterator(); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const { return ConstIterator(); }
+
+    NODISCARD FORCEINLINE IteratorType      end()       { return IteratorType(*this, NumBits); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const { return ConstIteratorType(*this, NumBits); }
 
 public: 
-    NODISCARD static constexpr SizeType NumBitsPerInteger() noexcept
+    NODISCARD static constexpr SizeType NumBitsPerInteger()
     {
         return sizeof(InIntegerType) * 8;
     }
 
 private:
-    NODISCARD static constexpr SizeType GetArrayIndexOfBit(SizeType BitIndex) noexcept
+    NODISCARD static constexpr SizeType GetArrayIndexOfBit(SizeType BitIndex)
     {
         return BitIndex / NumBitsPerInteger();
     }
 
-    NODISCARD static constexpr SizeType GetIndexOfBitInArray(SizeType BitIndex) noexcept
+    NODISCARD static constexpr SizeType GetIndexOfBitInArray(SizeType BitIndex)
     {
         return BitIndex % NumBitsPerInteger();
     }
 
-    NODISCARD static constexpr InIntegerType CreateMaskForBit(SizeType BitIndex) noexcept
+    NODISCARD static constexpr InIntegerType CreateMaskForBit(SizeType BitIndex)
     {
         return InIntegerType(1) << GetIndexOfBitInArray(BitIndex);
     }
 
-    NODISCARD static constexpr InIntegerType CreateMaskUpToBit(SizeType BitIndex) noexcept
+    NODISCARD static constexpr InIntegerType CreateMaskUpToBit(SizeType BitIndex)
     {
         return CreateMaskForBit(BitIndex) - 1;
     }
 
-    NODISCARD static constexpr SizeType GetNumIntegersRequiredForBits(SizeType InNumBits) noexcept
+    NODISCARD static constexpr SizeType GetNumIntegersRequiredForBits(SizeType InNumBits)
     {
         return (InNumBits + (NumBitsPerInteger() - 1)) / NumBitsPerInteger();
     }
 
 private:
-    FORCEINLINE void InitializeZeroed(SizeType InNumBits) noexcept
+    FORCEINLINE void InitializeZeroed(SizeType InNumBits)
     {
         const SizeType NewNumElements = GetNumIntegersRequiredForBits(InNumBits);
         Allocator.Realloc(NumElements, NewNumElements);
@@ -784,19 +785,19 @@ private:
         FMemory::Memzero(Allocator.GetAllocation(), CapacityInBytes());
     }
 
-    FORCEINLINE void CopyFrom(const TBitArray& Other) noexcept
+    FORCEINLINE void CopyFrom(const TBitArray& Other)
     {
         FMemory::Memcpy(Allocator.GetAllocation(), Other.Allocator.GetAllocation(), Other.NumElements * sizeof(InIntegerType));
     }
 
-    FORCEINLINE void MoveFrom(TBitArray&& Other) noexcept
+    FORCEINLINE void MoveFrom(TBitArray&& Other)
     {
         Allocator.MoveFrom(::Move(Other.Allocator));
         Other.NumBits     = 0;
         Other.NumElements = 0;
     }
 
-    FORCEINLINE void AssignBitUnchecked(SizeType BitPosition, const bool bValue) noexcept
+    FORCEINLINE void AssignBitUnchecked(SizeType BitPosition, const bool bValue)
     {
         const SizeType ElementIndex   = GetArrayIndexOfBit(BitPosition);
         const SizeType IndexInElement = GetIndexOfBitInArray(BitPosition);
@@ -808,7 +809,7 @@ private:
         Element |= Value;
     }
 
-    FORCEINLINE void BitshiftRightUnchecked(SizeType Steps, SizeType StartBit = 0) noexcept
+    FORCEINLINE void BitshiftRightUnchecked(SizeType Steps, SizeType StartBit = 0)
     {
         const SizeType StartElementIndex = GetArrayIndexOfBit(StartBit);
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
@@ -874,7 +875,7 @@ private:
         *Array = (CurrentValue & InverseMask) | (StartValue & Mask);
     }
 
-    FORCEINLINE void BitshiftLeftUnchecked(SizeType Steps, SizeType StartBit = 0) noexcept
+    FORCEINLINE void BitshiftLeftUnchecked(SizeType Steps, SizeType StartBit = 0)
     {
         const SizeType StartElementIndex = GetArrayIndexOfBit(StartBit);
         InIntegerType* Array = Allocator.GetAllocation() + StartElementIndex;
@@ -951,25 +952,25 @@ private:
         Element &= Mask;
     }
 
-    NODISCARD FORCEINLINE InIntegerType& GetIntegerForBit(SizeType BitIndex) noexcept
+    NODISCARD FORCEINLINE InIntegerType& GetIntegerForBit(SizeType BitIndex)
     {
         const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         return GetInteger(ElementIndex);
     }
 
-    NODISCARD FORCEINLINE const InIntegerType& GetIntegerForBit(SizeType BitIndex) const noexcept
+    NODISCARD FORCEINLINE const InIntegerType& GetIntegerForBit(SizeType BitIndex) const
     {
         const SizeType ElementIndex = GetArrayIndexOfBit(BitIndex);
         return GetInteger(ElementIndex);
     }
 
-    NODISCARD FORCEINLINE InIntegerType& GetInteger(SizeType Index) noexcept
+    NODISCARD FORCEINLINE InIntegerType& GetInteger(SizeType Index)
     {
         InIntegerType* Array = Allocator.GetAllocation();
         return Array[Index];
     }
 
-    NODISCARD FORCEINLINE const InIntegerType& GetInteger(SizeType Index) const noexcept
+    NODISCARD FORCEINLINE const InIntegerType& GetInteger(SizeType Index) const
     {
         const InIntegerType* Array = Allocator.GetAllocation();
         return Array[Index];

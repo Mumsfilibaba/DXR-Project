@@ -5,10 +5,7 @@
 class CORE_API FCommandLine
 {
 public:
-    enum 
-    { 
-        MaxCommandLineLength = 1024 
-    };
+    static constexpr uint64 MaxCommandLineLength = 1024;
 
     static bool Initialize(const CHAR** Args, int32 NumArgs);
 

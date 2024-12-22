@@ -2,30 +2,35 @@
 #include "MetalDeviceContext.h"
 #include "MetalShader.h"
 #include "MetalRefCounted.h"
-#include "Core/Utilities/StringUtilities.h"
 #include "RHI/RHIResources.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-typedef TSharedRef<class FMetalVertexInputLayout>       FMetalVertexInputLayoutRef;
+typedef TSharedRef<class FMetalVertexLayout>            FMetalVertexInputLayoutRef;
 typedef TSharedRef<class FMetalDepthStencilState>       FMetalDepthStencilStateRef;
 typedef TSharedRef<class FMetalGraphicsPipelineState>   FMetalGraphicsPipelineStateRef;
 typedef TSharedRef<class FMetalComputePipelineState>    FMetalComputePipelineStateRef;
 typedef TSharedRef<class FMetalRayTracingPipelineState> FMetalRayTracingPipelineStateRef;
 
-class FMetalVertexInputLayout : public FRHIVertexInputLayout
+class FMetalVertexLayout : public FRHIVertexLayout
 {
 public:
-    FMetalVertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer);
-    virtual ~FMetalVertexInputLayout() = default;
+    FMetalVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList);
+    virtual ~FMetalVertexLayout();
+
+    virtual FRHIVertexLayoutInitializerList GetInitializerList() const override final
+    {
+        return InitializerList;
+    }
 
     MTLVertexDescriptor* GetMTLVertexDescriptor() const 
     { 
         return VertexDescriptor;
     }
-    
+
 private:
-    MTLVertexDescriptor* VertexDescriptor;
+    FRHIVertexLayoutInitializerList InitializerList;
+    MTLVertexDescriptor*            VertexDescriptor;
 };
 
 class FMetalDepthStencilState : public FRHIDepthStencilState, public FMetalDeviceChild
@@ -55,7 +60,7 @@ class FMetalRasterizerState : public FRHIRasterizerState
 {
 public:
     FMetalRasterizerState(const FRHIRasterizerStateInitializer& InInitializer);
-    virtual ~FMetalRasterizerState() = default;
+    virtual ~FMetalRasterizerState();
 
     virtual FRHIRasterizerStateInitializer GetInitializer() const override final
     {
@@ -72,7 +77,7 @@ class FMetalBlendState : public FRHIBlendState
 {
 public:
     FMetalBlendState(const FRHIBlendStateInitializer& InInitializer);
-    virtual ~FMetalBlendState() = default;
+    virtual ~FMetalBlendState();
 
     virtual FRHIBlendStateInitializer GetInitializer() const
     {
@@ -153,7 +158,7 @@ public:
         
         Descriptor.depthAttachmentPixelFormat = ConvertFormat(Initializer.PipelineFormats.DepthStencilFormat);
         
-        FMetalVertexInputLayout* InputLayout = static_cast<FMetalVertexInputLayout*>(Initializer.VertexInputLayout);
+        FMetalVertexLayout* InputLayout = static_cast<FMetalVertexLayout*>(Initializer.VertexInputLayout);
         Descriptor.vertexDescriptor = InputLayout ? InputLayout->GetMTLVertexDescriptor() : nil;
 
         NSError* Error = nil;
@@ -164,7 +169,7 @@ public:
                                                                                       error:&Error];
         
         const FString ErrorString([Error localizedDescription]);
-        METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", ErrorString.GetCString());
+        METAL_ERROR_COND(PipelineState != nil, "[MetalRHI] Failed to created pipeline state, error %s", *ErrorString);
         
         // Vertex- Function Resources
         for (MTLArgument* Argument in PipelineReflection.vertexArguments)
@@ -235,12 +240,12 @@ public:
         TextureBindings[ShaderVisibility_Pixel].Shrink();
         SamplerBindings[ShaderVisibility_Pixel].Shrink();
         
-        NSSafeRelease(Descriptor);
+        [Descriptor release];
     }
     
     ~FMetalGraphicsPipelineState()
     {
-        NSSafeRelease(PipelineState);
+        [PipelineState release];
     }
 
     virtual void SetDebugName(const FString& InName) override final {}
@@ -272,7 +277,6 @@ private:
     TArray<FMetalResourceBinding>       SamplerBindings[ShaderVisibility_Count];
 };
 
-
 class FMetalComputePipelineState : public FRHIComputePipelineState
 {
 public:
@@ -282,7 +286,6 @@ public:
     virtual void SetDebugName(const FString& InName) override final {}
     virtual FString GetDebugName() const override final { return ""; }
 };
-
 
 class FMetalRayTracingPipelineState : public FRHIRayTracingPipelineState
 {

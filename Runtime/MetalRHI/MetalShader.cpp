@@ -11,9 +11,9 @@ FMetalShader::FMetalShader(FMetalDeviceContext* InDevice, EShaderVisibility InVi
 
 FMetalShader::~FMetalShader()
 {
-    NSSafeRelease(Library);
-    NSSafeRelease(FunctionName);
-    NSSafeRelease(Function);
+    [Library release];
+    [FunctionName release];
+    [Function release];
 }
 
 bool FMetalShader::Initialize(const TArray<uint8>& InCode)
@@ -38,7 +38,7 @@ bool FMetalShader::Initialize(const TArray<uint8>& InCode)
         if (!Library)
         {
             const FString ErrorString([Error localizedDescription]);
-            LOG_ERROR("Failed to compile shader. Error: %s", ErrorString.GetCString());
+            LOG_ERROR("Failed to compile shader. Error: %s", *ErrorString);
             return false;
         }
         

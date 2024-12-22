@@ -609,8 +609,8 @@ void FConsoleManager::FindCandidates(const FStringView& CandidateName, TArray<TP
         int32 Length = CandidateName.Length();
         if (Length <= Object.First.Length())
         {
-            const CHAR* Command = Object.First.GetCString();
-            const CHAR* WordIt  = CandidateName.GetCString();
+            const CHAR* Command = *Object.First;
+            const CHAR* WordIt  = *CandidateName;
 
             int32 CharDiff = -1;
             while (Length > 0 && (CharDiff = (toupper(*WordIt) - toupper(*Command))) == 0)
@@ -640,9 +640,9 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     }
 
     int32 Pos = Command.FindChar(' ');
-    if (Pos == FString::INVALID_INDEX)
+    if (Pos == FString::InvalidIndex)
     {
-        IConsoleCommand* CommandObject = FindConsoleCommand(Command.GetCString());
+        IConsoleCommand* CommandObject = FindConsoleCommand(*Command);
         if (!CommandObject)
         {
             OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered command");
@@ -654,9 +654,9 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
     }
     else
     {
-        const FString VariableName(Command.GetCString(), Pos);
+        const FString VariableName(*Command, Pos);
 
-        IConsoleVariable* VariableObject = FindConsoleVariable(VariableName.GetCString());
+        IConsoleVariable* VariableObject = FindConsoleVariable(*VariableName);
         if (!VariableObject)
         {
             OutputDevice.Log(ELogSeverity::Error, "'" + Command + "' is not a registered variable");
@@ -665,7 +665,7 @@ void FConsoleManager::ExecuteCommand(IOutputDevice& OutputDevice, const FString&
 
         Pos++;
 
-        const FString Value(Command.GetCString() + Pos, Command.Length() - Pos);
+        const FString Value(*Command + Pos, Command.Length() - Pos);
         if (TTryParseType<int64>::TryParse(Value))
         {
             VariableObject->SetString(Value, EConsoleVariableFlags::SetByConsole);
@@ -722,6 +722,6 @@ IConsoleObject* FConsoleManager::RegisterObject(const CHAR* InName, IConsoleObje
         }
     }
 
-    LOG_INFO("Registered ConsoleObject '%s'", Name.GetCString());
+    LOG_INFO("Registered ConsoleObject '%s'", *Name);
     return Result;
 }

@@ -1,7 +1,10 @@
 #pragma once
 #include "Core/Core.h"
+#include "Core/Containers/Array.h"
+#include "Core/Containers/SharedPtr.h"
 #include "RHI/RHITypes.h"
 
+class FMaterial;
 class FRHIBuffer;
 class FRHIQuery;
 class FRHIRayTracingGeometry;
@@ -21,6 +24,14 @@ struct FFrustumVisibility
     bool bWasVisible : 1;
 };
 
+struct FTransformBufferHLSL
+{
+    FMatrix4 Transform;
+    FMatrix4 TransformInv;
+};
+
+MARK_AS_REALLOCATABLE(FTransformBufferHLSL);
+
 class ENGINE_API FProxySceneComponent
 {
 public:
@@ -37,13 +48,30 @@ public:
     void UpdateFrustumVisbility(bool bIsVisible)
     {
         FrustumVisibility.bWasVisible = FrustumVisibility.bIsVisible;
-        FrustumVisibility.bIsVisible = bIsVisible;
+        FrustumVisibility.bIsVisible  = bIsVisible;
     }
 
-    // Scene Objects
-    class FMaterial*        Material;
-    class FMesh*            Mesh;
-    class FActor*           CurrentActor;
+    FMaterial* GetMaterial(int32 Index = 0) const
+    {
+        return (Materials.Size() > Index) ? Materials[Index].Get() : nullptr;
+    }
+    
+    int32 GetNumMaterials() const
+    {
+        return Materials.Size();
+    }
+    
+    // Reference to the Actor
+    class FActor* CurrentActor;
+
+    // TransformMatrix for this object
+    FTransformBufferHLSL TransformBuffer;
+
+    // Reference to the Mesh
+    TSharedPtr<class FMesh> Mesh;
+
+    // Reference to the material array
+    TArray<TSharedPtr<FMaterial>> Materials;
     
     // Occlusion
     FRHIQuery*              CurrentOcclusionQuery;

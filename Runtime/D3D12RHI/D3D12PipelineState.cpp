@@ -3,6 +3,7 @@
 #include "D3D12Device.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Containers/UniquePtr.h"
 #include "Project/ProjectManager.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
@@ -10,25 +11,25 @@ static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "FileName for the file storing the PipelineCache",
     "PipelineCache.d3d12psocache");
 
-FD3D12VertexInputLayout::FD3D12VertexInputLayout(const FRHIVertexInputLayoutInitializer& Initializer)
-    : FRHIVertexInputLayout()
+FD3D12VertexLayout::FD3D12VertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList)
+    : FRHIVertexLayout()
     , SemanticNames()
     , ElementDesc()
     , Desc()
     , Hash(0)
 {
-    const int32 NumElements = Initializer.Elements.Size();
+    const int32 NumElements = InInitializerList.Size();
     ElementDesc.Reserve(NumElements);
     SemanticNames.Reserve(NumElements);
 
     uint64 CalculatedHash = 0;
-    for (const FVertexInputElement& Element : Initializer.Elements)
+    for (const FVertexElement& Element : InInitializerList)
     {
         D3D12_INPUT_ELEMENT_DESC InputElementDesc;
         FMemory::Memzero(&InputElementDesc, sizeof(D3D12_INPUT_ELEMENT_DESC));
 
         const FString& Semantic = SemanticNames.Emplace(Element.Semantic);
-        InputElementDesc.SemanticName = Semantic.GetCString();
+        InputElementDesc.SemanticName = *Semantic;
         HashCombine(CalculatedHash, GetHashForType(Semantic));
 
         InputElementDesc.SemanticIndex = Element.SemanticIndex;
@@ -57,6 +58,10 @@ FD3D12VertexInputLayout::FD3D12VertexInputLayout(const FRHIVertexInputLayoutInit
     Hash                    = CalculatedHash;
 }
 
+FD3D12VertexLayout::~FD3D12VertexLayout()
+{
+}
+
 FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer)
     : FRHIDepthStencilState()
     , Initializer(InInitializer)
@@ -74,6 +79,10 @@ FD3D12DepthStencilState::FD3D12DepthStencilState(const FRHIDepthStencilStateInit
     Desc.BackFace         = ConvertStencilState(InInitializer.BackFace);
 
     Hash = FCRC32::Generate(&Desc, sizeof(D3D12_DEPTH_STENCIL_DESC));
+}
+
+FD3D12DepthStencilState::~FD3D12DepthStencilState()
+{
 }
 
 FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitializer& InInitializer)
@@ -96,6 +105,10 @@ FD3D12RasterizerState::FD3D12RasterizerState(const FRHIRasterizerStateInitialize
     Desc.ConservativeRaster    = InInitializer.bEnableConservativeRaster ? D3D12_CONSERVATIVE_RASTERIZATION_MODE_ON : D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
 
     Hash = FCRC32::Generate(&Desc, sizeof(D3D12_RASTERIZER_DESC));
+}
+
+FD3D12RasterizerState::~FD3D12RasterizerState()
+{
 }
 
 FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInitializer& InInitializer)
@@ -126,15 +139,23 @@ FD3D12BlendState::FD3D12BlendState(const FRHIBlendStateInitializer& InInitialize
     Hash = FCRC32::Generate(&Desc, sizeof(D3D12_BLEND_DESC));
 }
 
+FD3D12BlendState::~FD3D12BlendState()
+{
+}
+
 FD3D12PipelineStateCommon::FD3D12PipelineStateCommon(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
+{
+}
+
+FD3D12PipelineStateCommon::~FD3D12PipelineStateCommon()
 {
 }
 
 void FD3D12PipelineStateCommon::SetDebugName(const FString& InName)
 {
     const FStringWide WideName = CharToWide(InName);
-    PipelineState->SetName(WideName.GetCString());
+    PipelineState->SetName(*WideName);
     DebugName = InName;
 }
 
@@ -144,12 +165,16 @@ FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
 {
 }
 
+FD3D12GraphicsPipelineState::~FD3D12GraphicsPipelineState()
+{
+}
+
 bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer)
 {
     FD3D12GraphicsPipelineStream PipelineStream;
 
     // InputLayout
-    FD3D12VertexInputLayout* D3D12InputLayoutState = static_cast<FD3D12VertexInputLayout*>(Initializer.VertexInputLayout);
+    FD3D12VertexLayout* D3D12InputLayoutState = static_cast<FD3D12VertexLayout*>(Initializer.VertexInputLayout);
     if (D3D12InputLayoutState)
     {
         PipelineStream.InputLayout = D3D12InputLayoutState->GetDesc();
@@ -470,6 +495,10 @@ FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, c
 {
 }
 
+FD3D12ComputePipelineState::~FD3D12ComputePipelineState()
+{
+}
+
 bool FD3D12ComputePipelineState::Initialize()
 {
     FD3D12ComputePipelineStream PipelineStream;
@@ -552,7 +581,7 @@ struct FD3D12RootSignatureAssociation
     {
         for (int32 i = 0; i < ShaderExportNames.Size(); i++)
         {
-            ShaderExportNamesRef[i] = ShaderExportNames[i].GetCString();
+            ShaderExportNamesRef[i] = *ShaderExportNames[i];
         }
     }
 
@@ -576,17 +605,17 @@ struct FD3D12HitGroup
         FMemory::Memzero(&Desc);
 
         Desc.Type                   = D3D12_HIT_GROUP_TYPE_TRIANGLES;
-        Desc.HitGroupExport         = HitGroupName.GetCString();
-        Desc.ClosestHitShaderImport = ClosestHit.GetCString();
+        Desc.HitGroupExport         = *HitGroupName;
+        Desc.ClosestHitShaderImport = *ClosestHit;
 
         if (AnyHit != L"")
         {
-            Desc.AnyHitShaderImport = AnyHit.GetCString();
+            Desc.AnyHitShaderImport = *AnyHit;
         }
 
         if (Desc.Type != D3D12_HIT_GROUP_TYPE_TRIANGLES)
         {
-            Desc.IntersectionShaderImport = Intersection.GetCString();
+            Desc.IntersectionShaderImport = *Intersection;
         }
     }
 
@@ -609,7 +638,7 @@ struct FD3D12Library
         {
             D3D12_EXPORT_DESC& TempDesc = ExportDescs[i];
             TempDesc.Flags          = D3D12_EXPORT_FLAG_NONE;
-            TempDesc.Name           = ExportNames[i].GetCString();
+            TempDesc.Name           = *ExportNames[i];
             TempDesc.ExportToRename = nullptr;
         }
 
@@ -690,7 +719,7 @@ struct FD3D12RayTracingPipelineStateStream
         PayLoadExportNamesRef.Resize(PayLoadExportNames.Size());
         for (int32 i = 0; i < PayLoadExportNames.Size(); i++)
         {
-            PayLoadExportNamesRef[i] = PayLoadExportNames[i].GetCString();
+            PayLoadExportNamesRef[i] = *PayLoadExportNames[i];
         }
 
         ShaderConfigAssociation.pExports              = PayLoadExportNamesRef.Data();
@@ -719,6 +748,10 @@ struct FD3D12RayTracingPipelineStateStream
 FD3D12RayTracingPipelineState::FD3D12RayTracingPipelineState(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
     , StateObject(nullptr)
+{
+}
+
+FD3D12RayTracingPipelineState::~FD3D12RayTracingPipelineState()
 {
 }
 
@@ -931,7 +964,7 @@ void* FD3D12RayTracingPipelineState::GetShaderIdentifer(const FString& ExportNam
     {
         FStringWide WideExportName = CharToWide(ExportName);
 
-        void* Result = StateObjectProperties->GetShaderIdentifier(WideExportName.GetCString());
+        void* Result = StateObjectProperties->GetShaderIdentifier(*WideExportName);
         if (!Result)
         {
             return nullptr;
@@ -1082,7 +1115,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         TScopedLock Lock(PipelineLibraryCS);
 
         SIZE_T PipelineCacheSize = PipelineLibrary->GetSerializedSize();
-        TUniquePtr<uint8[]> PipelineCacheData = MakeUnique<uint8[]>(PipelineCacheSize);
+        TUniquePtr<uint8[]> PipelineCacheData = MakeUniquePtr<uint8[]>(PipelineCacheSize);
         HRESULT hResult = PipelineLibrary->Serialize(PipelineCacheData.Get(), PipelineCacheSize);
         if (FAILED(hResult))
         {
@@ -1111,7 +1144,7 @@ bool FD3D12PipelineStateManager::SaveCacheData()
         }
         else
         {
-            D3D12_INFO("Saved PipelineCache to file '%s'", PipelineCacheFilepath.GetCString());
+            D3D12_INFO("Saved PipelineCache to file '%s'", *PipelineCacheFilepath);
         }
     }
 
@@ -1181,7 +1214,7 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
     HRESULT hResult = Device1->CreatePipelineLibrary(PipelineData, PipelineDataSize, IID_PPV_ARGS(&PipelineLibrary));
     if (FAILED(hResult))
     {
-        D3D12_ERROR("Failed to create PipelineLibrary");
+        D3D12_WARNING("Failed to create PipelineLibrary");
         return false;
     }
 

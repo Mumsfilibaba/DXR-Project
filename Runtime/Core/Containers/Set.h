@@ -1,6 +1,6 @@
 #pragma once
-#include "Core/Utilities/HashUtilities.h"
 #include "Core/Containers/Array.h"
+#include "Core/Templates/TypeHash.h"
 
 // TODO: Custom set implementation
 #include <unordered_set>
@@ -13,7 +13,6 @@ class TSet
 
 public:
     typedef InElementType ElementType;
-    typedef int32         SizeType;
 
 private:
     struct FHasher
@@ -23,22 +22,26 @@ private:
             return static_cast<size_t>(GetHashForType(Value));
         }
     };
-    
+
 public:
     typedef std::unordered_set<ElementType, FHasher>    BaseSetType;
     typedef TSetIterator<TSet, ElementType>             IteratorType;
     typedef TSetIterator<const TSet, const ElementType> ConstIteratorType;
 
-    /** @brief - Default constructor */
+    typedef int32 SizeType;
+
+public:
+
+    /** @brief Default constructor */
     TSet() = default;
 
-    /** @brief - Copy Constructor */
+    /** @brief Copy constructor */
     TSet(const TSet& Other)
         : BaseSet(Other.BaseSet)
     {
     }
     
-    /** @brief - Move Constructor */
+    /** @brief Move constructor */
     TSet(TSet&& Other)
         : BaseSet(Move(Other.BaseSet))
     {
@@ -63,7 +66,7 @@ public:
         }
         else
         {
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.insert(InElement);
+            auto InsertedElement = BaseSet.insert(InElement);
             return *InsertedElement.first;
         }
     }
@@ -77,7 +80,7 @@ public:
         }
         else
         {
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.emplace(::Forward<ElementType>(InElement));
+            auto InsertedElement = BaseSet.emplace(Forward<ElementType>(InElement));
             return *InsertedElement.first;
         }
     }
@@ -101,7 +104,7 @@ public:
                 *OutAlreadyInSet = false;
             }
 
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.insert(InElement);
+            auto InsertedElement = BaseSet.insert(InElement);
             return *InsertedElement.first;
         }
     }
@@ -125,7 +128,7 @@ public:
                 *OutAlreadyInSet = false;
             }
 
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.emplace(::Forward<ElementType>(InElement));
+            auto InsertedElement = BaseSet.emplace(Forward<ElementType>(InElement));
             return *InsertedElement.first;
         }
     }
@@ -133,7 +136,7 @@ public:
     template<typename... ArgTypes>
     const ElementType& Emplace(ArgTypes&&... Args)
     {
-        ElementType NewElement(::Forward<ElementType>(Args)...);
+        ElementType NewElement(Forward<ArgTypes>(Args)...);
         
         typename BaseSetType::iterator Element = BaseSet.find(NewElement);
         if (Element != BaseSet.end())
@@ -142,7 +145,7 @@ public:
         }
         else
         {
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.emplace(::Move(NewElement));
+            auto InsertedElement = BaseSet.emplace(Move(NewElement));
             return *InsertedElement.first;
         }
     }
@@ -150,7 +153,7 @@ public:
     template<typename... ArgTypes>
     const ElementType& Emplace(bool* OutAlreadyInSet, ArgTypes&&... Args)
     {
-        ElementType NewElement(::Forward<ElementType>(Args)...);
+        ElementType NewElement(Forward<ArgTypes>(Args)...);
         
         typename BaseSetType::iterator Element = BaseSet.find(NewElement);
         if (Element != BaseSet.end())
@@ -169,7 +172,7 @@ public:
                 *OutAlreadyInSet = false;
             }
 
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.emplace(::Forward<ElementType>(NewElement));
+            auto InsertedElement = BaseSet.emplace(Move(NewElement));
             return *InsertedElement.first;
         }
     }
@@ -179,8 +182,7 @@ public:
         typename BaseSetType::const_iterator Element = BaseSet.find(InElement);
         if (Element != BaseSet.end())
         {
-            const ElementType& ElementRef = *Element;
-            return &ElementRef;
+            return &(*Element);
         }
         else
         {
@@ -197,11 +199,11 @@ public:
         }
         else
         {
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.insert(InElement);
+            auto InsertedElement = BaseSet.insert(InElement);
             return *InsertedElement.first;
         }
     }
-    
+
     NODISCARD const ElementType& FindOrAdd(ElementType&& InElement)
     {
         typename BaseSetType::iterator Element = BaseSet.find(InElement);
@@ -211,11 +213,11 @@ public:
         }
         else
         {
-            std::pair<typename BaseSetType::iterator, bool> InsertedElement = BaseSet.emplace(InElement);
-            return *InsertedElement;
+            auto InsertedElement = BaseSet.emplace(Move(InElement));
+            return *InsertedElement.first;
         }
     }
-    
+
     void Remove(const ElementType& InElement)
     {
         BaseSet.erase(InElement);
@@ -265,7 +267,9 @@ public:
         return Values;
     }
 
-public: // Iterators
+public:
+
+    // Iterators
     NODISCARD IteratorType CreateIterator()
     {
         return TSetIterator<TSet, ElementType>(*this, BaseSet.begin());
@@ -273,20 +277,22 @@ public: // Iterators
 
     NODISCARD ConstIteratorType CreateIterator() const
     {
-        return TSetIterator<TSet, const ElementType>(*this, BaseSet.begin());
+        return TSetIterator<const TSet, const ElementType>(*this, BaseSet.begin());
     }
 
-    NODISCARD ConstIteratorType CreateConstIterator()
+    NODISCARD ConstIteratorType CreateConstIterator() const
     {
-        return TSetIterator<TSet, const ElementType>(*this, BaseSet.begin());
+        return TSetIterator<const TSet, const ElementType>(*this, BaseSet.begin());
     }
 
-public: // STL Iterators
-    NODISCARD FORCEINLINE IteratorType      begin()       noexcept { return TSetIterator<TSet, ElementType>(*this, BaseSet.begin()); }
-    NODISCARD FORCEINLINE ConstIteratorType begin() const noexcept { return TSetIterator<const TSet, const ElementType>(*this, BaseSet.begin()); }
+public:
+
+    // STL Iterators
+    NODISCARD FORCEINLINE IteratorType      begin()       { return TSetIterator<TSet, ElementType>(*this, BaseSet.begin()); }
+    NODISCARD FORCEINLINE ConstIteratorType begin() const { return TSetIterator<const TSet, const ElementType>(*this, BaseSet.begin()); }
     
-    NODISCARD FORCEINLINE IteratorType      end()       noexcept { return TSetIterator<TSet, ElementType>(*this, BaseSet.end()); }
-    NODISCARD FORCEINLINE ConstIteratorType end() const noexcept { return TSetIterator<const TSet, const ElementType>(*this, BaseSet.end()); }
+    NODISCARD FORCEINLINE IteratorType      end()       { return TSetIterator<TSet, ElementType>(*this, BaseSet.end()); }
+    NODISCARD FORCEINLINE ConstIteratorType end() const { return TSetIterator<const TSet, const ElementType>(*this, BaseSet.end()); }
     
 public:
     TSet& operator=(const TSet& Other)

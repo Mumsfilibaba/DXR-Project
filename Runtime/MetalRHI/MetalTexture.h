@@ -31,8 +31,8 @@ public:
     id<MTLTexture> GetMTLTexture() const;
 
     void SetDrawableTexture(id<MTLTexture> InTexture) 
-    { 
-        NSSafeRelease(Texture);
+    {
+        [Texture release];
         Texture = [InTexture retain];
     }
 

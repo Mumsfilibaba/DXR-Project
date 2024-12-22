@@ -7,69 +7,110 @@ FCamera::FCamera()
     , ViewProjectionInverse()
     , NearPlane(0.01f)
     , FarPlane(200.0f)
+    , DesiredFieldOfView(90.0f)
     , AspectRatio()
     , Position(0.0f, 0.0f, -2.0f)
     , Rotation(0.0f, 0.0f, 0.0f)
-    , Forward(0.0f, 0.0f, 1.0f)
-    , Right(-1.0f, 0.0f, 0.0f)
-    , Up(0.0f, 1.0f, 0.0f)
+    , ForwardVector(0.0f, 0.0f, 1.0f)
+    , RightVector(-1.0f, 0.0f, 0.0f)
+    , UpVector(0.0f, 1.0f, 0.0f)
 {
     UpdateMatrices();
 }
 
+FCamera::~FCamera()
+{
+}
+
 void FCamera::Move(float x, float y, float z)
 {
-    const FVector3 TempRight   = Right * x;
-    const FVector3 TempUp      = Up * y;
-    const FVector3 TempForward = Forward * z;
+    const FVector3 TempRight   = RightVector * x;
+    const FVector3 TempUp      = UpVector * y;
+    const FVector3 TempForward = ForwardVector * z;
     Position = Position + TempRight + TempUp + TempForward;
 }
 
 void FCamera::Rotate(float Pitch, float Yaw, float Roll)
 {
-    Rotation.x += Pitch;
-    Rotation.x  = FMath::Clamp<float>(FMath::ToRadians(-89.0f), FMath::ToRadians(89.0f), Rotation.x);
+    Rotation.X += Pitch;
+    Rotation.X  = FMath::Clamp(Rotation.X, FMath::ToRadians(-89.0f), FMath::ToRadians(89.0f));
 
-    Rotation.y += Yaw;
-    Rotation.z += Roll;
+    Rotation.Y += Yaw;
+    Rotation.Z += Roll;
 
+    UpdateDirectionVectors();
+}
+
+void FCamera::SetFieldOfView(float InFieldOfView)
+{
+    DesiredFieldOfView = InFieldOfView;
+}
+
+void FCamera::SetPosition(float x, float y, float z)
+{
+    Position = FVector3(x, y, z);
+}
+
+void FCamera::SetRotation(float Pitch, float Yaw, float Roll)
+{
+    Rotation.X = FMath::Clamp(Pitch, FMath::ToRadians(-89.0f), FMath::ToRadians(89.0f));
+    Rotation.Y = Yaw;
+    Rotation.Z = Roll;
+    
+    UpdateDirectionVectors();
+}
+
+void FCamera::UpdateDirectionVectors()
+{
     FMatrix4 RotationMatrix = FMatrix4::RotationRollPitchYaw(Rotation);
 
     FVector3 TempForward(0.0f, 0.0f, 1.0f);
-    Forward = RotationMatrix.TransformNormal(TempForward);
-    Forward.Normalize();
+    ForwardVector = RotationMatrix.TransformNormal(TempForward);
+    ForwardVector.Normalize();
 
     FVector3 TempUp(0.0f, 1.0f, 0.0f);
-    Right = Forward.CrossProduct(TempUp);
-    Right.Normalize();
+    RightVector = ForwardVector.CrossProduct(TempUp);
+    RightVector.Normalize();
     
-    Up = Right.CrossProduct(Forward);
-    Up.Normalize();
+    UpVector = RightVector.CrossProduct(ForwardVector);
+    UpVector.Normalize();
+}
+
+void FCamera::UpdateProjectionMatrix(float InFieldOfView, float InViewportWidth, float InViewportHeight)
+{
+    // Convert the field-of-view into radians instead of degrees
+    const float FieldOfViewRadians = FMath::ToRadians(InFieldOfView);
+
+    // Create the matrix
+    Projection        = FMatrix4::PerspectiveProjection(FieldOfViewRadians, InViewportWidth, InViewportHeight, NearPlane, FarPlane);
+    ProjectionInverse = Projection.GetInverse();
+
+    // Cache the size of the viewport
+    ViewportWidth  = InViewportWidth;
+    ViewportHeight = InViewportHeight;
+    FieldOfView    = InFieldOfView;
+}
+
+void FCamera::UpdateViewMatrix()
+{
+    View        = FMatrix4::LookTo(Position, ForwardVector, UpVector);
+    ViewInverse = View.GetInverse();
 }
 
 void FCamera::UpdateMatrices()
 {
-    FOV    = FMath::ToRadians(80.0f);
-    Width  = 1920.0f;
-    Height = 1080.0f;
+    // Create Projection Matrix
+    UpdateProjectionMatrix(DesiredFieldOfView, 1920.0f, 1080.0f);
 
-    Projection  = FMatrix4::PerspectiveProjection(FOV, Width, Height, NearPlane, FarPlane);
-    View        = FMatrix4::LookTo(Position, Forward, Up);
-    ViewInverse = View.Invert();
+    // Create the view matrix
+    UpdateViewMatrix();
+
+    // Create all other matrices that are dependent on these
+    ViewProjection        = View * Projection;
+    ViewProjectionInverse = ViewProjection.GetInverse();
 
     FMatrix3 View3x3 = View.GetRotationAndScale();
-    ProjectionInverse     = Projection.Invert();
-    ViewProjection        = View * Projection;
-    ViewProjectionInverse = ViewProjection.Invert();
-
     ViewProjectionNoTranslation.SetIdentity();
     ViewProjectionNoTranslation.SetRotationAndScale(View3x3);
     ViewProjectionNoTranslation = ViewProjectionNoTranslation * Projection;
-
-    View                        = View.Transpose();
-    ViewInverse                 = ViewInverse.Transpose();
-    ProjectionInverse           = ProjectionInverse.Transpose();
-    ViewProjection              = ViewProjection.Transpose();
-    ViewProjectionInverse       = ViewProjectionInverse.Transpose();
-    ViewProjectionNoTranslation = ViewProjectionNoTranslation.Transpose();
 }

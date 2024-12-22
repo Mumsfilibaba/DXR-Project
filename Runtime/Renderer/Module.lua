@@ -1,15 +1,16 @@
-include "../../BuildScripts/Scripts/Build_Module.lua"
+include "../../BuildScripts/Scripts/build_module.lua"
 
----------------------------------------------------------------------------------------------------
 -- Renderer Module
 
-local RendererModule = FModuleBuildRules("Renderer")
-RendererModule.AddSystemIncludes( 
-{
-    CreateExternalDependencyPath("imgui"),
-})
+local renderer_module = module_build_rules("Renderer")
+renderer_module.use_precompiled_headers = true
 
-RendererModule.AddModuleDependencies( 
+renderer_module.add_system_includes
+{
+    create_external_dependency_path("imgui"),
+}
+
+renderer_module.add_module_dependencies
 {
     "Core",
     "CoreApplication",
@@ -18,9 +19,9 @@ RendererModule.AddModuleDependencies(
     "Engine",
     "RendererCore",
     "ImGuiPlugin",
-})
+}
 
-RendererModule.AddLinkLibraries( 
+renderer_module.add_link_libraries
 {
     "ImGui",
-})
+}

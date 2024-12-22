@@ -311,6 +311,7 @@ constexpr VkFilter ConvertSamplerFilterToMinFilter(ESamplerFilter SamplerFilter)
         case ESamplerFilter::Comparison_MinLinear_MagPoint_MipLinear:
         case ESamplerFilter::Comparison_MinMagLinear_MipPoint:
         case ESamplerFilter::Comparison_MinMagMipLinear:
+        case ESamplerFilter::Anistrotopic:
             return VK_FILTER_LINEAR;
 
         default:
@@ -340,6 +341,7 @@ constexpr VkFilter ConvertSamplerFilterToMagFilter(ESamplerFilter SamplerFilter)
         case ESamplerFilter::Comparison_MinMagMipLinear:
         case ESamplerFilter::Comparison_MinPoint_MagLinear_MipPoint:
         case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Anistrotopic:
             return VK_FILTER_LINEAR;
 
         default:
@@ -369,6 +371,7 @@ constexpr VkSamplerMipmapMode ConvertSamplerFilterToMipmapMode(ESamplerFilter Sa
         case ESamplerFilter::MinMagMipLinear:
         case ESamplerFilter::Comparison_MinMagMipLinear:
         case ESamplerFilter::Comparison_MinPoint_MagMipLinear:
+        case ESamplerFilter::Anistrotopic:
             return VK_SAMPLER_MIPMAP_MODE_LINEAR;
             
         default:

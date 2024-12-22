@@ -1,42 +1,44 @@
 #pragma once
-#include "AABB.h"
-#include "Matrix4.h"
-#include "Plane.h"
-
-#include "Core/Core.h"
+#include "Core/Math/AABB.h"
+#include "Core/Math/Matrix4.h"
+#include "Core/Math/Plane.h"
 
 class CORE_API FFrustum
 {
 public:
 
     /**
-     * @brief - Default constructor
+     * @brief Default constructor initializes an empty frustum.
      */
     FFrustum() = default;
 
     /**
-     * @brief            - Create a new frustum based on a view and projection matrix
-     * @param FarPlane   - FarPlane of the camera
-     * @param View       - View-matrix of the camera
-     * @param Projection - Projection-matrix of the camera
+     * @brief Constructs a frustum based on view and projection matrices.
+     * @param FarPlane Far plane distance of the camera.
+     * @param View View matrix of the camera.
+     * @param Projection Projection matrix of the camera.
      */
     FFrustum(float FarPlane, const FMatrix4& View, const FMatrix4& Projection);
 
     /**
-     * @brief            - Create a new frustum based on a view and projection matrix
-     * @param FarPlane   - FarPlane of the camera
-     * @param View       - View-matrix of the camera
-     * @param Projection - Projection-matrix of the camera
+     * @brief Initializes or updates the frustum based on view and projection matrices.
+     * @param FarPlane Far plane distance of the camera.
+     * @param View View matrix of the camera.
+     * @param Projection Projection matrix of the camera.
      */
-    void Create(float FarPlane, const FMatrix4& View, const FMatrix4& Projection);
+    void Initialize(float FarPlane, const FMatrix4& View, const FMatrix4& Projection);
 
     /**
-     * @brief  - Checks if a bounding-box is intersecting with the frustum
-     * @return - Returns true if the bounding-box is intersecting with the frustum
+     * @brief Checks if a bounding box intersects with the frustum.
+     * @param BoundingBox The axis-aligned bounding box to check.
+     * @return True if the bounding box intersects with the frustum; otherwise, false.
      */
-    bool CheckAABB(const FAABB& BoundingBox) const;
+    bool IntersectsAABB(const FAABB& BoundingBox) const;
 
 private:
+    void ExtractPlanes(const FMatrix4& CombinedMatrix);
+    void GenerateFrustumCorners(const FMatrix4& CombinedMatrix);
+
     FPlane   Planes[6];
     FVector3 Points[8];
 };

@@ -1,7 +1,6 @@
 #pragma once
 #include "Utility.h"
 #include "TypeTraits.h"
-
 #include "Core/Core.h"
 #include "Core/Memory/Memory.h"
 
@@ -31,7 +30,6 @@ FORCEINLINE void DefaultConstructObjects(void* StartAddress, SizeType Count) noe
         }
     }
 }
-
 
 template<typename ObjectType>
 FORCEINLINE void DefaultConstructObject(void* Address) noexcept
@@ -88,7 +86,6 @@ FORCEINLINE void ConstructObjectsFrom(void* RESTRICT StartAddress, SizeType Coun
     }
 }
 
-
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void CopyConstructObjects(void* RESTRICT StartAddress, const ObjectType* RESTRICT Source, SizeType Count) noexcept
 {
@@ -109,7 +106,6 @@ FORCEINLINE void CopyConstructObjects(void* RESTRICT StartAddress, const ObjectT
     }
 }
 
-
 template<typename ObjectType>
 FORCEINLINE void CopyConstructObject(void* const RESTRICT Address, const ObjectType* RESTRICT Source) noexcept
 {
@@ -122,7 +118,6 @@ FORCEINLINE void CopyConstructObject(void* const RESTRICT Address, const ObjectT
         new(Address) ObjectType(*Source);
     }
 }
-
 
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void CopyAssignObjects(ObjectType* RESTRICT Destination, const ObjectType* RESTRICT Source, SizeType Count) noexcept
@@ -143,7 +138,6 @@ FORCEINLINE void CopyAssignObjects(ObjectType* RESTRICT Destination, const Objec
     }
 }
 
-
 template<typename ObjectType>
 FORCEINLINE void CopyAssignObject(ObjectType* RESTRICT Destination, const ObjectType* RESTRICT Source) noexcept
 {
@@ -156,7 +150,6 @@ FORCEINLINE void CopyAssignObject(ObjectType* RESTRICT Destination, const Object
         *Destination = *Source;
     }
 }
-
 
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void MoveConstructObjects(void* StartAddress, const ObjectType* Source, SizeType Count) noexcept
@@ -178,7 +171,6 @@ FORCEINLINE void MoveConstructObjects(void* StartAddress, const ObjectType* Sour
     }
 }
 
-
 template<typename ObjectType>
 FORCEINLINE void MoveConstructObject(void* Address, const ObjectType* Source) noexcept
 {
@@ -191,7 +183,6 @@ FORCEINLINE void MoveConstructObject(void* Address, const ObjectType* Source) no
         new(Address) ObjectType(::Move(*Source));
     }
 }
-
 
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void MoveAssignObjects(ObjectType* Destination, const ObjectType* Source, SizeType Count) noexcept
@@ -212,7 +203,6 @@ FORCEINLINE void MoveAssignObjects(ObjectType* Destination, const ObjectType* So
     }
 }
 
-
 template<typename ObjectType>
 FORCEINLINE void MoveAssignObject(ObjectType* Destination, const ObjectType* Source) noexcept
 {
@@ -225,7 +215,6 @@ FORCEINLINE void MoveAssignObject(ObjectType* Destination, const ObjectType* Sou
         *Destination = ::Move(*Source);
     }
 }
-
 
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void DestroyObjects(ObjectType* StartObject, SizeType Count) noexcept
@@ -242,7 +231,6 @@ FORCEINLINE void DestroyObjects(ObjectType* StartObject, SizeType Count) noexcep
     }
 }
 
-
 template<typename ObjectType>
 FORCEINLINE void DestroyObject(ObjectType* Object) noexcept
 {
@@ -253,11 +241,10 @@ FORCEINLINE void DestroyObject(ObjectType* Object) noexcept
     }
 }
 
-
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void RelocateObjects(void* StartAddress, ObjectType* Source, SizeType Count) noexcept
 {
-    static_assert(TIsReallocatable<ObjectType>::Value || TIsMoveConstructable<ObjectType>::Value || TIsCopyConstructable<ObjectType>::Value, "ObjectType cannot be relocated");
+    static_assert(TIsReallocatable<ObjectType>::Value || TIsMoveConstructible<ObjectType>::Value || TIsCopyConstructible<ObjectType>::Value, "ObjectType cannot be relocated");
 
     if constexpr (TIsReallocatable<ObjectType>::Value)
     {
@@ -266,7 +253,7 @@ FORCEINLINE void RelocateObjects(void* StartAddress, ObjectType* Source, SizeTyp
     else
     {
         typedef ObjectType ObjectDestructorType;
-        if constexpr (TIsMoveConstructable<ObjectType>::Value)
+        if constexpr (TIsMoveConstructible<ObjectType>::Value)
         {
             // Ensures that the function works for overlapping ranges
             ObjectType* CurrentObject = reinterpret_cast<ObjectType*>(StartAddress);
@@ -329,7 +316,6 @@ FORCEINLINE void RelocateObjects(void* StartAddress, ObjectType* Source, SizeTyp
     }
 }
 
-
 template<typename ObjectType, typename SizeType>
 FORCEINLINE bool CompareObjects(const ObjectType* LHS, const ObjectType* RHS, SizeType Count) noexcept
 {
@@ -353,7 +339,6 @@ FORCEINLINE bool CompareObjects(const ObjectType* LHS, const ObjectType* RHS, Si
     }
 }
 
-
 template<typename ObjectType, typename SizeType>
 FORCEINLINE void AssignObjects(ObjectType* RESTRICT Dst, const ObjectType& Element, SizeType Count) noexcept
 {
@@ -372,7 +357,6 @@ FORCEINLINE void AssignObjects(ObjectType* RESTRICT Dst, const ObjectType& Eleme
         }
     }
 }
-
 
 template<typename ObjectType, typename SizeType>
 FORCEINLINE ObjectType* AssignObjectsAndReturn(ObjectType* RESTRICT Dst, const ObjectType& Element, SizeType Count) noexcept

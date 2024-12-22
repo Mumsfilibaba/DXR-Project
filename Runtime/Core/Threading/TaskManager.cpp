@@ -256,7 +256,7 @@ bool FTaskManager::CreateWorkers(int32 NumWorkers)
     if (NumWorkers >= MinNumWorkers)
     {
         // Set the number of total workers, but limit to the number or logical processors on the system
-        NumWorkers = FMath::Clamp<int32>(MinNumWorkers, static_cast<int32>(FPlatformThreadMisc::GetNumProcessors()), NumWorkers);
+        NumWorkers = FMath::Clamp<int32>(NumWorkers, MinNumWorkers, static_cast<int32>(FPlatformThreadMisc::GetNumProcessors()));
 
         // Startup workers
         for (int32 Index = 0; Index < NumWorkers && bResult; ++Index)
@@ -264,7 +264,7 @@ bool FTaskManager::CreateWorkers(int32 NumWorkers)
             const FString Name = FString::CreateFormatted("Task Worker[%d]", Index);
 
             FTaskWorkerThread* NewWorker = new FTaskWorkerThread();
-            if (NewWorker->Create(Name.GetCString()))
+            if (NewWorker->Create(*Name))
             {
                 Workers.Emplace(NewWorker);
                 AvailableWorkers.Emplace(NewWorker);

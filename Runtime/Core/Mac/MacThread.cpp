@@ -1,5 +1,5 @@
-#include "MacThread.h"
-#include "MacThreadMisc.h"
+#include "Core/Mac/MacThread.h"
+#include "Core/Mac/MacThreadMisc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 
 FGenericThread* FMacThread::Create(FRunnable* InRunnable, const CHAR* ThreadName, bool bSuspended)
@@ -16,7 +16,6 @@ FGenericThread* FMacThread::Create(FRunnable* InRunnable, const CHAR* ThreadName
 FMacThread::FMacThread(FRunnable* InRunnable, const CHAR* ThreadName)
     : FGenericThread(InRunnable, ThreadName)
     , Thread()
-    , bIsRunning(false)
 { 
 }
 
@@ -70,7 +69,7 @@ void* FMacThread::ThreadRoutine(void* ThreadParameter)
         // ThreadName can only be set from the running thread
         if (!CurrentThread->ThreadName.IsEmpty())
         {
-            const CHAR* ThreadName = CurrentThread->ThreadName.GetCString();
+            const CHAR* ThreadName = *CurrentThread->ThreadName;
             ::pthread_setname_np(ThreadName);
         }
 

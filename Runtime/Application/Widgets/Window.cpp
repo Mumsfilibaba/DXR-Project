@@ -6,12 +6,16 @@
 FWindow::FWindow()
     : FWidget()
     , Title()
+    , OnWindowClosedDelegate()
+    , OnWindowMovedDelegate()
+    , OnWindowResizedDelegate()
+    , OnWindowActivationChangedDelegate()
+    , CachedPosition()
+    , CachedSize()
     , Overlay()
     , Content()
     , PlatformWindow(nullptr)
-    , ScreenPosition()
-    , ScreenSize()
-    , WindowMode(EWindowMode::Windowed)
+    , StyleFlags(EWindowStyleFlags::None)
 {
 }
 
@@ -22,18 +26,18 @@ FWindow::~FWindow()
 void FWindow::Initialize(const FInitializer& Initializer)
 {
     Title          = Initializer.Title;
-    ScreenPosition = Initializer.Position;
-    ScreenSize     = Initializer.Size;
-    WindowMode     = Initializer.WindowMode;
+    CachedPosition = Initializer.Position;
+    CachedSize     = Initializer.Size;
+    StyleFlags     = Initializer.StyleFlags;
 }
 
 void FWindow::Tick()
 {
-    FRectangle NewBounds;
-    NewBounds.Position = ScreenPosition;
-    NewBounds.Width    = ScreenSize.x;
-    NewBounds.Height   = ScreenSize.y;
-    SetScreenRectangle(NewBounds);
+    FRectangle NewContentRectangle;
+    NewContentRectangle.Position = CachedPosition;
+    NewContentRectangle.Width    = CachedSize.X;
+    NewContentRectangle.Height   = CachedSize.Y;
+    SetContentRectangle(NewContentRectangle);
 
     if (Content)
     {
@@ -51,10 +55,10 @@ bool FWindow::IsWindow() const
     return true;
 }
 
-void FWindow::FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, FWidgetPath& OutParentWidgets)
+void FWindow::FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets)
 {
-    FRectangle InScreenRectangle = GetScreenRectangle();
-    if (InScreenRectangle.EncapsualtesPoint(ScreenCursorPosition))
+    FRectangle WindowBounds = GetContentRectangle();
+    if (WindowBounds.EncapsulatesPoint(Point))
     {
         const EVisibility CurrentVisibility = GetVisibility();
         if (OutParentWidgets.AcceptVisbility(CurrentVisibility))
@@ -63,12 +67,12 @@ void FWindow::FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, F
 
             if (Content)
             {
-                Content->FindChildrenUnderCursor(ScreenCursorPosition, OutParentWidgets);
+                Content->FindChildrenContainingPoint(Point, OutParentWidgets);
             }
 
             if (Overlay)
             {
-                Overlay->FindChildrenUnderCursor(ScreenCursorPosition, OutParentWidgets);
+                Overlay->FindChildrenContainingPoint(Point, OutParentWidgets);
             }
         }
     }
@@ -76,66 +80,123 @@ void FWindow::FindChildrenUnderCursor(const FIntVector2& ScreenCursorPosition, F
 
 void FWindow::SetOnWindowClosed(const FOnWindowClosed& InOnWindowClosed)
 {
-    OnWindowClosed = InOnWindowClosed;
+    OnWindowClosedDelegate = InOnWindowClosed;
 }
 
 void FWindow::SetOnWindowMoved(const FOnWindowMoved& InOnWindowMoved)
 {
-    OnWindowMoved = InOnWindowMoved;
+    OnWindowMovedDelegate = InOnWindowMoved;
 }
 
 void FWindow::SetOnWindowResized(const FOnWindowResized& InOnWindowResized)
 {
-    OnWindowResized = InOnWindowResized;
+    OnWindowResizedDelegate = InOnWindowResized;
 }
 
-void FWindow::NotifyWindowDestroyed()
+void FWindow::OnWindowDestroyed()
 {
     if (PlatformWindow)
     {
         PlatformWindow->Destroy();
     }
 
-    OnWindowClosed.ExecuteIfBound();
+    OnWindowClosedDelegate.ExecuteIfBound();
 }
 
-void FWindow::NotifyWindowActivationChanged(bool bIsActive)
+void FWindow::OnWindowActivationChanged(bool)
 {
+    OnWindowActivationChangedDelegate.ExecuteIfBound();
 }
 
-void FWindow::SetScreenPosition(const FIntVector2& NewPosition)
+void FWindow::OnWindowMoved(const FIntVector2& InPosition)
 {
-    ScreenPosition = NewPosition;
-    OnWindowMoved.ExecuteIfBound(ScreenPosition);
-}
-
-void FWindow::SetScreenSize(const FIntVector2& NewSize)
-{
-    if (ScreenSize != NewSize)
+    if (CachedPosition != InPosition)
     {
-        ScreenSize = NewSize;
-        OnWindowResized.ExecuteIfBound(NewSize);
+        // Set the cached position
+        SetPosition(InPosition);
+
+        // Notify that this window was resized
+        OnWindowMovedDelegate.ExecuteIfBound(InPosition);
     }
 }
 
-FIntVector2 FWindow::GetScreenPosition() const
+void FWindow::OnWindowResize(const FIntVector2& InSize)
 {
-    return ScreenPosition;
+    if (CachedSize != InSize)
+    {
+        // Set the cached size
+        SetSize(InSize);
+
+        // Notify that this window got resized
+        OnWindowResizedDelegate.ExecuteIfBound(InSize);
+    }
 }
 
-FIntVector2 FWindow::GetScreenSize() const
+void FWindow::MoveTo(const FIntVector2& InPosition)
 {
-    return ScreenSize;
+    if (CachedPosition != InPosition)
+    {
+        // Set the cached position
+        SetPosition(InPosition);
+
+        // Notify that this window was resized
+        OnWindowMovedDelegate.ExecuteIfBound(InPosition);
+
+        // Set the actual size of the platform window
+        if (PlatformWindow)
+        {
+            PlatformWindow->SetWindowPos(InPosition.X, InPosition.Y);
+        }
+    }
+}
+
+void FWindow::Resize(const FIntVector2& InSize)
+{
+    if (CachedSize != InSize)
+    {
+        // Set the cached size
+        SetSize(InSize);
+
+        // Notify that this window got resized
+        OnWindowResizedDelegate.ExecuteIfBound(InSize);
+
+        // Set the actual size of the platform window
+        if (PlatformWindow)
+        {
+            FWindowShape WindowShape(InSize.X, InSize.Y);
+            PlatformWindow->SetWindowShape(WindowShape, false);
+        }
+    }
+}
+
+void FWindow::SetSize(const FIntVector2& InSize)
+{
+    CachedSize = InSize;
+}
+
+void FWindow::SetPosition(const FIntVector2& InPosition)
+{
+    CachedPosition = InPosition;
+}
+
+FIntVector2 FWindow::GetSize() const
+{
+    return CachedSize;
+}
+
+FIntVector2 FWindow::GetPosition() const
+{
+    return CachedPosition;
 }
 
 uint32 FWindow::GetWidth() const
 {
-    return static_cast<uint32>(ScreenSize.x);
+    return static_cast<uint32>(CachedSize.X);
 }
 
 uint32 FWindow::GetHeight() const
 {
-    return static_cast<uint32>(ScreenSize.y);
+    return static_cast<uint32>(CachedSize.Y);
 }
 
 TSharedPtr<FWidget> FWindow::GetOverlay() const
@@ -156,6 +217,14 @@ void FWindow::SetOverlay(const TSharedPtr<FWidget>& InOverlay)
 void FWindow::SetContent(const TSharedPtr<FWidget>& InContent)
 {
     Content = InContent;
+}
+
+void FWindow::Show(bool bFocus)
+{
+    if (PlatformWindow)
+    {
+        PlatformWindow->Show(bFocus);
+    }
 }
 
 void FWindow::Minimize()
@@ -207,11 +276,11 @@ bool FWindow::IsMaximized() const
     return false;
 }
 
-float FWindow::GetWindowDpiScale() const
+float FWindow::GetWindowDPIScale() const
 {
     if (PlatformWindow)
     {
-        return PlatformWindow->GetWindowDpiScale();
+        return PlatformWindow->GetWindowDPIScale();
     }
 
     return 1.0f;
@@ -227,32 +296,40 @@ void FWindow::SetTitle(const FString& InTitle)
     }
 }
 
-void FWindow::SetWindowMode(EWindowMode InWindowMode)
+void FWindow::SetStyle(EWindowStyleFlags InStyleFlags)
 {
     if (PlatformWindow)
     {
-        EWindowStyleFlags StyleFlags = EWindowStyleFlags::None;
-        if (InWindowMode == EWindowMode::Windowed)
+        if (StyleFlags != InStyleFlags)
         {
-            StyleFlags = EWindowStyleFlags::Default;
+            PlatformWindow->SetStyle(InStyleFlags);
+            StyleFlags = InStyleFlags;
         }
-        else
-        {
-            DEBUG_BREAK();
-        }
-
-        PlatformWindow->SetStyle(StyleFlags);
     }
-
-    WindowMode = InWindowMode;
 }
 
 void FWindow::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow)
 {
     PlatformWindow = InPlatformWindow;
+    
+    if (PlatformWindow)
+    {
+        // Cache the size and position
+        FWindowShape WindowShape;
+        PlatformWindow->GetWindowShape(WindowShape);
+
+        CachedSize     = FIntVector2(WindowShape.Width, WindowShape.Height);
+        CachedPosition = WindowShape.Position;
+        
+        // Cache the title
+        PlatformWindow->GetTitle(Title);
+        
+        // Cache the style
+        StyleFlags = PlatformWindow->GetStyle();
+    }
 }
 
-void FWindow::SetWindowFocus()
+void FWindow::SetFocus()
 {
     if (PlatformWindow)
     {
@@ -260,7 +337,7 @@ void FWindow::SetWindowFocus()
     }
 }
 
-void FWindow::SetWindowOpacity(float Alpha)
+void FWindow::SetOpacity(float Alpha)
 {
     if (PlatformWindow)
     {

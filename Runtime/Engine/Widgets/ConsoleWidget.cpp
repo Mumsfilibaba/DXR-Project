@@ -9,7 +9,7 @@
 
 FConsoleWidget::FConsoleWidget()
     : IOutputDevice()
-    , InputHandler(MakeShared<FConsoleInputHandler>())
+    , InputHandler(MakeSharedPtr<FConsoleInputHandler>())
     , ImGuiDelegateHandle()
     , PopupSelectedText()
     , Candidates()
@@ -125,12 +125,12 @@ void FConsoleWidget::Draw()
             // First find the maximum length of each column for the selectable
             Candidates.Foreach([&](const TPair<IConsoleObject*, FString>& Candidate)
             {
-                VariableNameWidth = FMath::Max(VariableNameWidth, ImGui::CalcTextSize(Candidate.Second.GetCString()).x);
+                VariableNameWidth = FMath::Max(VariableNameWidth, ImGui::CalcTextSize(*Candidate.Second).x);
 
                 if (IConsoleVariable* Variable = Candidate.First->AsVariable())
                 {
                     const FString Value = Variable->GetString();
-                    VariableValueWidth = FMath::Max(VariableValueWidth, ImGui::CalcTextSize(Value.GetCString()).x);
+                    VariableValueWidth = FMath::Max(VariableValueWidth, ImGui::CalcTextSize(*Value).x);
                 }
             });
 
@@ -145,9 +145,9 @@ void FConsoleWidget::Draw()
 
                 // VariableName
                 ImGui::PushID(i);
-                if (ImGui::Selectable(Candidate.Second.GetCString(), &bIsActiveIndex))
+                if (ImGui::Selectable(*Candidate.Second, &bIsActiveIndex))
                 {
-                    FCString::Strcpy(TextBuffer.Data(), Candidate.Second.GetCString());
+                    FCString::Strcpy(TextBuffer.Data(), *Candidate.Second);
                     PopupSelectedText = Candidate.Second;
 
                     Candidates.Clear();
@@ -184,7 +184,7 @@ void FConsoleWidget::Draw()
                 if (ConsoleVariable)
                 {
                     const FString Value = ConsoleVariable->GetString();
-                    ImGui::Text("%s", Value.GetCString());
+                    ImGui::Text("%s", *Value);
 
                     if (ConsoleVariable->IsVariableBool())
                     {
@@ -269,7 +269,7 @@ void FConsoleWidget::Draw()
                     Color = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
                 }
 
-                ImGui::TextColored(Color, "%s", Text.First.GetCString());
+                ImGui::TextColored(Color, "%s", *Text.First);
             }
 
             if (bScrollDown)
@@ -317,7 +317,7 @@ void FConsoleWidget::Draw()
         {
             if (CandidatesIndex != -1)
             {
-                FCString::Strcpy(TextBuffer.Data(), PopupSelectedText.GetCString());
+                FCString::Strcpy(TextBuffer.Data(), *PopupSelectedText);
 
                 Candidates.Clear();
                 CandidatesIndex = -1;
@@ -393,11 +393,11 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
     {
     case ImGuiInputTextFlags_CallbackEdit:
     {
-        const CHAR* WordEnd   = Data->Buf + Data->CursorPos;
-        const CHAR* WordStart = WordEnd;
+        const char* WordEnd   = Data->Buf + Data->CursorPos;
+        const char* WordStart = WordEnd;
         while (WordStart > Data->Buf)
         {
-            const CHAR c = WordStart[-1];
+            const char c = WordStart[-1];
             if (c == ' ' || c == '\t' || c == ',' || c == ';')
             {
                 break;
@@ -422,13 +422,13 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
     }
     case ImGuiInputTextFlags_CallbackCompletion:
     {
-        const CHAR* WordEnd = Data->Buf + Data->CursorPos;
-        const CHAR* WordStart = WordEnd;
+        const char* WordEnd   = Data->Buf + Data->CursorPos;
+        const char* WordStart = WordEnd;
         if (Data->BufTextLen > 0)
         {
             while (WordStart > Data->Buf)
             {
-                const CHAR c = WordStart[-1];
+                const char c = WordStart[-1];
                 if (c == ' ' || c == '\t' || c == ',' || c == ';')
                 {
                     break;
@@ -446,7 +446,7 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
                 const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
                 const int32 Count = WordLength;
                 Data->DeleteChars(Pos, Count);
-                Data->InsertChars(Data->CursorPos, Candidates[0].Second.GetCString());
+                Data->InsertChars(Data->CursorPos, *Candidates[0].Second);
 
                 CandidatesIndex = -1;
                 bCandidateSelectionChanged = true;
@@ -457,7 +457,7 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
                 const int32 Pos = static_cast<int32>(WordStart - Data->Buf);
                 const int32 Count = WordLength;
                 Data->DeleteChars(Pos, Count);
-                Data->InsertChars(Data->CursorPos, PopupSelectedText.GetCString());
+                Data->InsertChars(Data->CursorPos, *PopupSelectedText);
 
                 PopupSelectedText = "";
 
@@ -505,7 +505,7 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
 
             if (PrevHistoryIndex != HistoryIndex)
             {
-                const CHAR* HistoryStr = (HistoryIndex >= 0) ? History[HistoryIndex].GetCString() : "";
+                const CHAR* HistoryStr = (HistoryIndex >= 0) ? *History[HistoryIndex] : "";
                 Data->DeleteChars(0, Data->BufTextLen);
                 Data->InsertChars(0, HistoryStr);
             }
@@ -548,7 +548,6 @@ int32 FConsoleWidget::TextCallback(ImGuiInputTextCallbackData* Data)
 void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
 {
     CHECK(InputHandler.IsValid());
-    InputHandler->bConsoleToggled = false;
 
     if (Event.IsDown())
     {
@@ -556,7 +555,7 @@ void FConsoleWidget::HandleKeyPressedEvent(const FKeyEvent& Event)
         if (!Event.IsRepeat() && bIsEnableKey)
         {
             bIsActive = !bIsActive;
-            InputHandler->bConsoleToggled = true;
+            InputHandler->bConsoleToggled = bIsActive;
         }
     }
 }

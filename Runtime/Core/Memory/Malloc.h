@@ -1,16 +1,16 @@
 #pragma once
 #include "Core/Core.h"
-#include "Core/Misc/OutputDevice.h"
+#include "Core/Misc/IOutputDevice.h"
 #include "Core/Platform/PlatformStackTrace.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Map.h"
-#include "Core/Threading/AtomicInt.h"
+#include "Core/Threading/Atomic.h"
 
 struct FMalloc;
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-struct FUseUnmanagedMalloc
+struct FUseStandardMalloc
 {
     // Override the global new
     void* operator new(size_t InSize)
@@ -37,53 +37,45 @@ struct FUseUnmanagedMalloc
     }
 };
 
-
-struct CORE_API FMalloc : public FUseUnmanagedMalloc
+struct CORE_API FMalloc : public FUseStandardMalloc
 {
     // FMalloc instead of IMalloc since IMalloc is already defined in the WindowsHeaders
     virtual ~FMalloc() = default;
 
     /**
-     * @brief        - Allocates memory  
-     * @param InSize - Number of bytes to allocate
-     * @return       - Returns a pointer with allocated memory
+     * @brief Allocates memory  
+     * @param InSize Number of bytes to allocate
+     * @return Returns a pointer with allocated memory
      */
     virtual void* Malloc(uint64 InSize) = 0;
 
     /**
-     * @brief        - Allocates memory, from an existing block and copies over the old content to the new  
-     * @param Block  - The old block to reallocate
-     * @param InSize - Number of bytes to allocate
-     * @return       - Returns a pointer with allocated memory
+     * @brief Allocates memory, from an existing block and copies over the old content to the new  
+     * @param Block The old block to reallocate
+     * @param InSize Number of bytes to allocate
+     * @return Returns a pointer with allocated memory
      */
     virtual void* Realloc(void* Block, uint64 InSize) = 0;
 
     /**
-     * @brief       - Frees a block of memory  
-     * @param Block - Block to free
+     * @brief Frees a block of memory  
+     * @param Block Block to free
      */
     virtual void Free(void* Block) = 0;
 
     /**
-     * @brief              - Dumps information about the current allocations. For the standard implementation no info is available.
-     * @param OutputDevice - Device to output the information to
+     * @brief Dumps information about the current allocations. For the standard implementation no info is available.
+     * @param OutputDevice Device to output the information to
      */
     virtual void DumpAllocations(IOutputDevice* OutputDevice) { }
 };
 
-
 struct CORE_API FMallocANSI : public FMalloc
 {
-    FMallocANSI()  = default;
-    ~FMallocANSI() = default;
-
     virtual void* Malloc(uint64 InSize) override final;
-
     virtual void* Realloc(void* InBlock, uint64 InSize) override final;
-
     virtual void Free(void* InBlock) override final;
 };
-
 
 class CORE_API FMallocLeakTracker : public FMalloc
 {
@@ -97,11 +89,8 @@ public:
     ~FMallocLeakTracker();
 
     virtual void* Malloc(uint64 InSize) override final;
-
     virtual void* Realloc(void* InBlock, uint64 InSize) override final;
-
     virtual void Free(void* InBlock) override final;
-
     virtual void DumpAllocations(IOutputDevice* OutputDevice) override final;
 
     void TrackAllocationMalloc(void* Block, uint64 Size);
@@ -119,7 +108,7 @@ public:
 
 private:
     TMap<void*, FAllocationInfo> Allocations;
-    FCriticalSection             AllocationsCS;
+    FCriticalSection AllocationsCS;
 
     FMalloc* BaseMalloc;
     bool     bTrackingEnabled;
@@ -127,10 +116,7 @@ private:
 
 class CORE_API FMallocStackTraceTracker : public FMalloc
 {
-    enum
-    {
-        NumStackTraces = 8
-    };
+    static constexpr uint32 NumStackTraces = 8; 
 
     struct FAllocationStackTrace
     {
@@ -166,7 +152,7 @@ public:
 
 private:
     TMap<void*, FAllocationStackTrace> Allocations;
-    FCriticalSection                   AllocationsCS;
+    FCriticalSection AllocationsCS;
 
     FMalloc*    BaseMalloc;
     FAtomicInt8 bTrackingEnabled;

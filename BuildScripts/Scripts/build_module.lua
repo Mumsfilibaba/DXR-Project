@@ -1,72 +1,73 @@
 include "build_rule.lua"
 
 -- Module build rules
-function FModuleBuildRules(InName)
-    LogHighlight("Creating Module \'%s\'", InName)
+function module_build_rules(name)
+    log_highlight("Creating Module '%s'", name)
 
-    -- Init parent class
-    local self = FBuildRules(InName)
+    -- Initialize parent class
+    local self = build_rules(name)
     if self == nil then
-        LogError("Failed to create BuildRule")
+        log_error("Failed to create BuildRule")
         return nil
     end
 
     -- Ensure that module does not already exist
-    if IsModule(NewModuleName) then
-        LogWarning("Module is already created")
-        return GetModule(NewModuleName)
+    if is_module(name) then
+        log_warning("Module is already created")
+        return get_module(name)
     end
-    
-    -- @brief - Determines of the module should be dynamic otherwise static, this is overridden by monolithic build, which forces all modules to be linked statically
-    self.bIsDynamic = true
-	
-    -- @brief - Determines if linking should be performed at compile time (Ignored if bIsDynamic is false). Set to true to enable hot-reloading.
-    self.bRuntimeLinking = false
-    
+
+    -- Determines if the module should be dynamic; overridden by monolithic build
+    self.is_dynamic = true
+
+    -- Determines if linking should be performed at runtime (ignored if is_dynamic is false)
+    -- Set to true to enable hot-reloading
+    self.runtime_linking = false
+
     -- Generate the module
-    local BuildRulesGenerate = self.Generate 
-    function self.Generate()
-        if self.Workspace == nil then
-            LogError("Workspace cannot be nil when generating Module")
+    local base_generate = self.generate
+    function self.generate()
+        if self.workspace == nil then
+            log_error("Workspace cannot be nil when generating Module")
             return
         end
 
-        LogInfo("\n--- Generating Module \'%s\' ---", self.Name)
-  
-        -- Handle Monolithic build
-        self.bIsMonolithic = IsMonolithic()
-        if self.bIsMonolithic then
-            LogInfo("    Build is monolithic")
-            
-            self.bIsDynamic      = false
-            self.bRuntimeLinking = false
+        log_info("\n--- Generating Module '%s' ---", self.name)
+
+        -- Handle monolithic build
+        self.is_monolithic = global_is_monolithic()
+        if self.is_monolithic then
+            log_info("    Build is monolithic")
+
+            self.is_dynamic      = false
+            self.runtime_linking = false
         else
-            LogInfo("    Build is NOT monolithic")
+            log_info("    Build is NOT monolithic")
         end
 
         -- Dynamic or static
-        local ModuleApiName = self.Name:upper() .. "_API"
-        if self.bIsDynamic then           
-            self.Kind = "SharedLib"
-            
-            -- Add define to control the module implementation (For export/import)
-            ModuleApiName = ModuleApiName .. "=MODULE_EXPORT"
-        else
-            self.Kind = "StaticLib"
+        local module_api_name = self.name:upper() .. "_API"
+        if self.is_dynamic then
+            self.kind = "SharedLib"
 
-            -- When a module is not dynamic we treat is as monolithic
-            self.AddDefines({ "MONOLITHIC_BUILD=(1)" })
+            -- Add define to control the module implementation (for export/import)
+            module_api_name = module_api_name .. "=MODULE_EXPORT"
+        else
+            self.kind = "StaticLib"
+
+            -- When a module is not dynamic we treat it as monolithic
+            self.add_defines({ "MONOLITHIC_BUILD=(1)" })
         end
-        
+
         -- Always add module name as a define
-        self.AddDefines({ "MODULE_NAME=" .. "\"" .. self.Name .. "\"" })
-        self.AddDefines({ ModuleApiName })
+        self.add_defines({ 'MODULE_NAME="' .. self.name .. '"' })
+        self.add_defines({ module_api_name })
 
         -- Generate the project
-        BuildRulesGenerate()
+        base_generate()
     end
 
-    -- Add module among global list
-    AddModule(self.Name, self)
+    -- Add module to global list
+    add_module(self.name, self)
     return self
 end

@@ -10,10 +10,10 @@ struct IAsyncTask
 {
     virtual ~IAsyncTask() = default;
 
-    /** @brief - Perform work async on a work-thread */
+    /** @brief Perform work async on a work-thread */
     virtual void DoAsyncWork() = 0;
 
-    /** @brief - Abandon this task, called by the task-queue if enqueued during shutdown */
+    /** @brief Abandon this task, called by the task-queue if enqueued during shutdown */
     virtual void Abandon() = 0;
 };
 
@@ -24,16 +24,16 @@ public:
     virtual ~FAsyncTaskBase();
 
     /**
-     * @brief          - Launches the task on a new thread.
-     * @param Priority - The priority for this task
-     * @param bAsync   - True if the task should execute on the calling thread or async
-     * @return         - Returns true if the task was successfully queued up
+     * @brief Launches the task on a new thread.
+     * @param Priority The priority for this task
+     * @param bAsync True if the task should execute on the calling thread or async
+     * @return Returns true if the task was successfully queued up
      */
     bool Launch(EQueuePriority Priority = EQueuePriority::Normal, bool bAsync = true);
 
     /**
-     * @brief  - Cancels the task. Must be called before the task is scheduled on the worker-thread.
-     * @return - Returns true if the task was successfully canceled
+     * @brief Cancels the task. Must be called before the task is scheduled on the worker-thread.
+     * @return Returns true if the task was successfully canceled
      */
     bool Cancel();
 
@@ -41,7 +41,7 @@ public:
     virtual void Abandon() override final;
 
     /**
-     * @brief - Waits for the task to finish executing (Blocks the calling thread)
+     * @brief Waits for the task to finish executing (Blocks the calling thread)
      */
     void WaitForCompletion()
     {
@@ -55,7 +55,7 @@ public:
     }
 
     /**
-     * @return - Returns true if the task is complete or false otherwise 
+     * @return Returns true if the task is complete or false otherwise 
      */
     bool IsComplete() const
     {
@@ -64,10 +64,10 @@ public:
 
 protected:
 
-    /** @brief - Execute the actual work for this task */
+    /** @brief Execute the actual work for this task */
     virtual void Execute() = 0;
 
-    /** @return - Tries to abandon the task, returns true if successful, false otherwise */
+    /** @return Tries to abandon the task, returns true if successful, false otherwise */
     virtual bool TryAbandon() = 0;
 
 private:

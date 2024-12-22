@@ -1,41 +1,42 @@
 #pragma once
+#include "Core/Platform/PlatformTypes.h"
 
-typedef unsigned char uint8;
+typedef FPlatformTypes::uint8 uint8;
 static_assert(sizeof(uint8) == 1, "uint8 has to be equal to 1 byte in size");
 
-typedef unsigned short uint16;
+typedef FPlatformTypes::uint16 uint16;
 static_assert(sizeof(uint16) == 2, "uint8 has to be equal to 2 byte in size");
 
-typedef unsigned int uint32;
+typedef FPlatformTypes::uint32 uint32;
 static_assert(sizeof(uint32) == 4, "uint8 has to be equal to 4 byte in size");
 
-typedef unsigned long long uint64;
+typedef FPlatformTypes::uint64 uint64;
 static_assert(sizeof(uint64) == 8, "uint64 has to be equal to 8 byte in size");
 
-
-typedef char int8;
+typedef FPlatformTypes::int8 int8;
 static_assert(sizeof(int8) == 1, "int8 has to be equal to 1 byte in size");
 
-typedef short int16;
+typedef FPlatformTypes::int16 int16;
 static_assert(sizeof(int16) == 2, "int16 has to be equal to 2 byte in size");
 
-typedef int int32;
+typedef FPlatformTypes::int32 int32;
 static_assert(sizeof(int32) == 4, "int32 has to be equal to 4 byte in size");
 
-typedef long long int64;
+typedef FPlatformTypes::int64 int64;
 static_assert(sizeof(int64) == 8, "int64 has to be equal to 8 byte in size");
 
+typedef FPlatformTypes::PTR_INT PTR_INT;
+static_assert(sizeof(PTR_INT) == sizeof(void*), "The size of PTR_INT has to be equal to the size of int64");
 
-typedef int64 intptr;
-static_assert(sizeof(intptr) == sizeof(void*), "The size of intptr has to be equal to the size of int64");
+typedef FPlatformTypes::UPTR_INT UPTR_INT;
+static_assert(sizeof(UPTR_INT) == sizeof(void*), "The size of UPTR_INT has to be equal to the size of uint64");
 
-typedef uint64 uintptr;
-static_assert(sizeof(uintptr) == sizeof(void*), "The size of intptr has to be equal to the size of uint64");
+typedef FPlatformTypes::WIDECHAR WIDECHAR;
+typedef FPlatformTypes::CHAR CHAR;
+typedef FPlatformTypes::CHAR_T CHAR_T;
 
+typedef FPlatformTypes::SIZE_T SIZE_T;
+typedef FPlatformTypes::SSIZE_T SSIZE_T;
 
-typedef wchar_t WIDECHAR;
-typedef char    CHAR;
-typedef CHAR    TCHAR;
-
-
-typedef uint64 TSIZE;
+typedef FPlatformTypes::VOID_TYPE VOID_TYPE;
+typedef FPlatformTypes::NULLPTR_TYPE NULLPTR_TYPE;

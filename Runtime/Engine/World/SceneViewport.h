@@ -16,21 +16,22 @@ public:
 public:
 
     // IViewport Interface
-    virtual FResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override;
-    virtual FResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
-    virtual FResponse OnKeyUp(const FKeyEvent& KeyEvent) override;
-    virtual FResponse OnKeyChar(const FKeyEvent&) override;
-    virtual FResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
-    virtual FResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
-    virtual FResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
-    virtual FResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
-    virtual FResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override;
-    virtual FResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
-    virtual FResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
-    virtual FResponse OnFocusLost() override;
-    virtual FResponse OnFocusGained() override;
+    virtual FEventResponse OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent) override;
+    virtual FEventResponse OnKeyDown(const FKeyEvent& KeyEvent) override;
+    virtual FEventResponse OnKeyUp(const FKeyEvent& KeyEvent) override;
+    virtual FEventResponse OnKeyChar(const FKeyEvent&) override;
+    virtual FEventResponse OnMouseMove(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseButtonDown(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseButtonUp(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseScroll(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseDoubleClick(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseLeft(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnMouseEntered(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnHighPrecisionMouseInput(const FCursorEvent& CursorEvent) override;
+    virtual FEventResponse OnFocusLost() override;
+    virtual FEventResponse OnFocusGained() override;
 
-    virtual TSharedRef<FRHIViewport> GetViewportRHI() const
+    virtual TSharedRef<FRHIViewport> GetViewportRHI() const override
     {
         return RHIViewport;
     }
@@ -67,7 +68,6 @@ public:
     }
 
 private:
-    TSharedRef<FGenericWindow> Window;
     TWeakPtr<FViewport>        Viewport;
     TSharedRef<FRHIViewport>   RHIViewport;
     FWorld*                    World;

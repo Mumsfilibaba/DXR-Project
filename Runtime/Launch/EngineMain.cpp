@@ -1,7 +1,7 @@
 #include "Launch/EngineLoop.h"
 #include "Core/Core.h"
 #include "Core/CoreGlobals.h"
-#include "Core/Misc/OutputDevice.h"
+#include "Core/Misc/IOutputDevice.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Memory/Malloc.h"
 #include "Core/Platform/PlatformMisc.h"

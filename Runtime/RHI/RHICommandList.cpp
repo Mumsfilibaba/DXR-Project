@@ -202,6 +202,10 @@ FRHICommandExecutor::FRHICommandExecutor()
 {
 }
 
+FRHICommandExecutor::~FRHICommandExecutor()
+{
+}
+
 bool FRHICommandExecutor::Initialize()
 {
     if (!CVarEnableRHIThread.GetValue())
@@ -289,7 +293,7 @@ void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
     }
 }
 
-void FRHICommandExecutor::WaitForOutstandingTasks()
+void FRHICommandExecutor::WaitForCommands()
 {
     RHIThread->WaitForOutstandingTasks();
 }
@@ -298,7 +302,7 @@ void FRHICommandExecutor::WaitForGPU()
 {
     if (RHIThread)
     {
-        WaitForOutstandingTasks();
+        WaitForCommands();
     }
 
     if (CommandContext)

@@ -1,8 +1,7 @@
 #include "World.h"
 #include "Components/MeshComponent.h"
-#include "Engine/Assets/MeshFactory.h"
 #include "Engine/Resources/Material.h"
-#include "Engine/Resources/Mesh.h"
+#include "Engine/Resources/Model.h"
 #include "RHI/RHIResources.h"
 
 FWorld::FWorld()
