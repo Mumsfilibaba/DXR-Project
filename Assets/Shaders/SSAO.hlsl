@@ -77,7 +77,7 @@ void Main(FComputeShaderInput Input)
 	const float3 NoiseVec   = normalize(NextRandom3(RandomSeed) * 2.0 - 1.0);
     const float3 Tangent    = normalize(NoiseVec - Normal * dot(NoiseVec, Normal));
     const float3 Bitangent  = cross(Normal, Tangent);
-    float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
+    float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
 
     float Occlusion = 0.0f;
     for (uint Index = 0; Index < KernelSize; ++Index)
@@ -85,7 +85,7 @@ void Main(FComputeShaderInput Input)
         float3 Sample    = HaltonSamples[Index];
         float  RayLength = Radius * NextRandom(RandomSeed);
 
-        float3 SamplePos = normalize(mul(Sample, TBN));
+        float3 SamplePos = normalize(mul(Sample, TangentSpace));
         SamplePos = ViewPosition + (SamplePos * RayLength);
 
         float4 SampleProjected = mul(float4(SamplePos, 1.0), Projection);

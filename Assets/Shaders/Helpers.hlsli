@@ -122,14 +122,14 @@ float3 Lerp(float3 A, float3 B, float P)
 
 float3 ApplyNormalMapping(float3 MappedNormal, float3 Normal, float3 Tangent, float3 Bitangent)
 {
-    float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
-    return normalize(mul(MappedNormal, TBN));
+    float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
+    return normalize(mul(MappedNormal, TangentSpace));
 }
 
 min16float3 ApplyNormalMapping(min16float3 MappedNormal, min16float3 Normal, min16float3 Tangent, min16float3 Bitangent)
 {
-    min16float3x3 TBN = min16float3x3(Tangent, Bitangent, Normal);
-    return normalize(mul(MappedNormal, TBN));
+    min16float3x3 TangentSpace = min16float3x3(Tangent, Bitangent, Normal);
+    return normalize(mul(MappedNormal, TangentSpace));
 }
 
 float3 UnpackNormal(float3 TextureSample)

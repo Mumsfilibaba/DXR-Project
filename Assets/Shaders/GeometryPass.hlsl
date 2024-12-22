@@ -115,9 +115,9 @@ FVSOutput VSMain(FVSInput Input)
     Output.TexCoord = Input.TexCoord;
 
 #if ENABLE_PARALLAX_MAPPING
-    const float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
-    Output.TangentViewPos  = mul(TBN, CameraBuffer.Position);
-    Output.TangentPosition = mul(TBN, WorldPosition.xyz);
+    const float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
+    Output.TangentViewPos  = mul(TangentSpace, CameraBuffer.Position);
+    Output.TangentPosition = mul(TangentSpace, WorldPosition.xyz);
 #endif
 
     return Output;

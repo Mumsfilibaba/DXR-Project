@@ -108,11 +108,11 @@ FVSOutput VSMain(FVSInput Input)
     Output.Position      = mul(WorldPosition, CameraBuffer.ViewProjection);
     Output.WorldPosition = WorldPosition.xyz;
 
-    float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
-    TBN          = transpose(TBN);
+    float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
+    TangentSpace          = transpose(TangentSpace);
     
-    Output.TangentViewPos  = mul(CameraBuffer.Position, TBN);
-    Output.TangentPosition = mul(WorldPosition.xyz, TBN);
+    Output.TangentViewPos  = mul(CameraBuffer.Position, TangentSpace);
+    Output.TangentPosition = mul(WorldPosition.xyz, TangentSpace);
 
     return Output;
 }
