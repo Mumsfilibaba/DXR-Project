@@ -459,7 +459,7 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         }
 
         FRHIBlendStateInitializer BlendStateInitializer;
-        BlendStateInitializer.NumRenderTargets = 5;
+        BlendStateInitializer.NumRenderTargets = GBuffer_NumRenderTargets;
 
         NewPipelineInstance.BlendState = RHICreateBlendState(BlendStateInitializer);
         if (!NewPipelineInstance.BlendState)
@@ -481,9 +481,8 @@ void FDeferredBasePass::InitializePipelineState(FMaterial* Material, const FFram
         PSOInitializer.PipelineFormats.RenderTargetFormats[0] = FrameResources.AlbedoFormat;
         PSOInitializer.PipelineFormats.RenderTargetFormats[1] = FrameResources.NormalFormat;
         PSOInitializer.PipelineFormats.RenderTargetFormats[2] = FrameResources.MaterialFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[3] = FrameResources.ViewNormalFormat;
-        PSOInitializer.PipelineFormats.RenderTargetFormats[4] = FrameResources.VelocityFormat;
-        PSOInitializer.PipelineFormats.NumRenderTargets       = 5;
+        PSOInitializer.PipelineFormats.RenderTargetFormats[3] = FrameResources.VelocityFormat;
+        PSOInitializer.PipelineFormats.NumRenderTargets       = GBuffer_NumRenderTargets;
         PSOInitializer.PipelineFormats.DepthStencilFormat     = FrameResources.DepthBufferFormat;
 
         NewPipelineInstance.PipelineState = RHICreateGraphicsPipelineState(PSOInitializer);
@@ -554,19 +553,6 @@ bool FDeferredBasePass::CreateResources(FFrameResources& FrameResources, uint32 
         return false;
     }
 
-    // View Normal
-    TextureInfo.Format = FrameResources.ViewNormalFormat;
-
-    FrameResources.GBuffer[GBufferIndex_ViewNormal] = RHICreateTexture(TextureInfo, EResourceAccess::NonPixelShaderResource);
-    if (FrameResources.GBuffer[GBufferIndex_ViewNormal])
-    {
-        FrameResources.GBuffer[GBufferIndex_ViewNormal]->SetDebugName("GBuffer ViewNormal");
-    }
-    else
-    {
-        return false;
-    }
-
     // Velocity
     TextureInfo.Format = FrameResources.VelocityFormat;
 
@@ -597,13 +583,12 @@ void FDeferredBasePass::Execute(FRHICommandList& CommandList, FFrameResources& F
     const EAttachmentLoadAction LoadAction = CVarBasePassClearAllTargets.GetValue() ? EAttachmentLoadAction::Clear : EAttachmentLoadAction::Load;
 
     FRHIBeginRenderPassInfo RenderPass;
-    RenderPass.NumRenderTargets = 5;
-    RenderPass.RenderTargets[0] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
-    RenderPass.RenderTargets[1] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);
-    RenderPass.RenderTargets[2] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), LoadAction);
-    RenderPass.RenderTargets[3] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_ViewNormal].Get(), LoadAction);
-    RenderPass.RenderTargets[4] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), LoadAction);
-    RenderPass.DepthStencilView = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
+    RenderPass.NumRenderTargets                     = GBuffer_NumRenderTargets;
+    RenderPass.RenderTargets[GBufferIndex_Albedo]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Albedo].Get(), LoadAction);
+    RenderPass.RenderTargets[GBufferIndex_Normal]   = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Normal].Get(), EAttachmentLoadAction::Clear);
+    RenderPass.RenderTargets[GBufferIndex_Material] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Material].Get(), LoadAction);
+    RenderPass.RenderTargets[GBufferIndex_Velocity] = FRHIRenderTargetView(FrameResources.GBuffer[GBufferIndex_Velocity].Get(), LoadAction);
+    RenderPass.DepthStencilView                     = FRHIDepthStencilView(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EAttachmentLoadAction::Load);
 
     CommandList.BeginRenderPass(RenderPass);
 

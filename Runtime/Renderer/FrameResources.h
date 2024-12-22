@@ -15,14 +15,14 @@
 
 enum EGBufferIndex
 {
-    GBufferIndex_Albedo     = 0,
-    GBufferIndex_Normal     = 1,
-    GBufferIndex_Material   = 2,
-    GBufferIndex_Depth      = 3,
-    GBufferIndex_ViewNormal = 4,
-    GBufferIndex_Velocity   = 5,
+    GBufferIndex_Albedo   = 0,
+    GBufferIndex_Normal   = 1,
+    GBufferIndex_Material = 2,
+    GBufferIndex_Velocity = 3,
+    GBufferIndex_Depth    = 4,
 
-    GBuffer_NumBuffers
+    GBuffer_NumBuffers,
+    GBuffer_NumRenderTargets = GBufferIndex_Velocity + 1,
 };
 
 template<typename TResource>
@@ -182,7 +182,6 @@ struct FFrameResources
     const EFormat AlbedoFormat       = EFormat::R8G8B8A8_Unorm;
     const EFormat MaterialFormat     = EFormat::R8G8B8A8_Unorm;
     const EFormat NormalFormat       = EFormat::R10G10B10A2_Unorm;
-    const EFormat ViewNormalFormat   = EFormat::R10G10B10A2_Unorm;
     const EFormat VelocityFormat     = EFormat::R16G16_Float;
     const EFormat ShadowMaskFormat   = EFormat::R8_Unorm;
     const EFormat ShadowMapFormat    = EFormat::D32_Float;

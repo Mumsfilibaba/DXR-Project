@@ -68,15 +68,16 @@ struct FVSInput
 
 struct FVSOutput
 {
-    float3 Normal           : NORMAL0;
-    float3 ViewNormal       : NORMAL1;
-    float3 Tangent          : TANGENT0;
-    float3 Bitangent        : BITANGENT0;
-    float2 TexCoord	        : TEXCOORD0;
+    float3 Normal    : NORMAL0;
+    float3 Tangent   : TANGENT0;
+    float3 Bitangent : BITANGENT0;
+    float2 TexCoord	 : TEXCOORD0;
+
 #if ENABLE_PARALLAX_MAPPING 
     float3 TangentViewPos   : TANGENTVIEWPOS0;
     float3 TangentPosition  : TANGENTPOSITION0;
 #endif
+
     float4 ClipPosition     : POSITION0;
     float4 PrevClipPosition : POSITION1;
     float4 Position         : SV_Position;
@@ -96,32 +97,29 @@ FVSOutput VSMain(FVSInput Input)
     // float IsBackFacing = sign(dot(Normal, WorldPosition.xyz - Transform[3].xyz));
     // Normal = normalize(Normal * IsBackFacing);
 
-    // View-normal
-    float3 ViewNormal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
-    
     float3 Tangent = normalize(mul(float4(Input.Tangent, 0.0f), TransformInv).xyz);
     Tangent = normalize(Tangent - dot(Tangent, Normal) * Normal);
-    
+
     float3 Bitangent = normalize(cross(Tangent, Normal));
 
     FVSOutput Output;
-    Output.Normal     = Normal;
-    Output.ViewNormal = ViewNormal;
-    Output.Tangent    = Tangent;
-    Output.Bitangent  = Bitangent;
-    Output.Position   = mul(WorldPosition, CameraBuffer.ViewProjection);
+    Output.Normal    = Normal;
+    Output.Tangent   = Tangent;
+    Output.Bitangent = Bitangent;
+    Output.Position  = mul(WorldPosition, CameraBuffer.ViewProjection);
 
     // TODO: Handle moving objects (aka PrevTransform)
     Output.ClipPosition     = Output.Position;
     Output.PrevClipPosition = mul(WorldPosition, CameraBuffer.PrevViewProjection);
-    
+
     Output.TexCoord = Input.TexCoord;
-    
-#if ENABLE_PARALLAX_MAPPING  
+
+#if ENABLE_PARALLAX_MAPPING
     const float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
     Output.TangentViewPos  = mul(TBN, CameraBuffer.Position);
     Output.TangentPosition = mul(TBN, WorldPosition.xyz);
 #endif
+
     return Output;
 }
 
@@ -129,15 +127,16 @@ FVSOutput VSMain(FVSInput Input)
 
 struct FPSInput
 {
-    float3 Normal           : NORMAL0;
-    float3 ViewNormal       : NORMAL1;
-    float3 Tangent          : TANGENT0;
-    float3 Bitangent        : BITANGENT0;
-    float2 TexCoord         : TEXCOORD0;
+    float3 Normal    : NORMAL0;
+    float3 Tangent   : TANGENT0;
+    float3 Bitangent : BITANGENT0;
+    float2 TexCoord  : TEXCOORD0;
+
 #if ENABLE_PARALLAX_MAPPING
-    float3 TangentViewPos   : TANGENTVIEWPOS0;
-    float3 TangentPosition  : TANGENTPOSITION0;
+    float3 TangentViewPos  : TANGENTVIEWPOS0;
+    float3 TangentPosition : TANGENTPOSITION0;
 #endif
+
     float4 ClipPosition     : POSITION0;
     float4 PrevClipPosition : POSITION1;
     float4 Position         : SV_Position;
@@ -145,11 +144,10 @@ struct FPSInput
 
 struct FPSOutput
 {
-    float4 Albedo     : SV_Target0;
-    float4 Normal     : SV_Target1;
-    float4 Material   : SV_Target2;
-    float4 ViewNormal : SV_Target3;
-    float2 Velocity   : SV_Target4;
+    float4 Albedo   : SV_Target0;
+    float4 Normal   : SV_Target1;
+    float4 Material : SV_Target2;
+    float2 Velocity : SV_Target3;
 };
 
 #if ENABLE_PARALLAX_MAPPING
@@ -198,7 +196,7 @@ FPSOutput PSMain(FPSInput Input)
 {
     float2 TexCoords = Input.TexCoord;
     TexCoords.y = 1.0f - TexCoords.y;
-    
+
 #if ENABLE_PARALLAX_MAPPING
     float3 ViewDir = normalize(Input.TangentViewPos - Input.TangentPosition);
     TexCoords      = ParallaxMapping(TexCoords, ViewDir);
@@ -207,7 +205,7 @@ FPSOutput PSMain(FPSInput Input)
         discard;
     }
 #endif
-    
+
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     const float4 AlbedoAlphaMask = AlbedoAlphaMap.Sample(MaterialSampler, TexCoords);
 #endif
@@ -253,22 +251,21 @@ FPSOutput PSMain(FPSInput Input)
 
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     const float3 AO_Roughness_Metal = AO_Roughness_Metal_Tex.Sample(MaterialSampler, TexCoords);
-    const float  SampledAO        = AO_Roughness_Metal.r * MaterialBuffer.AO;
-    const float  SampledRoughness = AO_Roughness_Metal.g * MaterialBuffer.Roughness;
-    const float  SampledMetallic  = AO_Roughness_Metal.b * MaterialBuffer.Metallic;
+    const float  SampledAO          = AO_Roughness_Metal.r * MaterialBuffer.AO;
+    const float  SampledRoughness   = AO_Roughness_Metal.g * MaterialBuffer.Roughness;
+    const float  SampledMetallic    = AO_Roughness_Metal.b * MaterialBuffer.Metallic;
 #else
     const float SampledAO        = AOTex.Sample(MaterialSampler, TexCoords)        * MaterialBuffer.AO;
     const float SampledMetallic  = MetallicTex.Sample(MaterialSampler, TexCoords)  * MaterialBuffer.Metallic;
     const float SampledRoughness = RoughnessTex.Sample(MaterialSampler, TexCoords) * MaterialBuffer.Roughness;
 #endif
-    
+
     const float FinalRoughness = min(max(SampledRoughness, MIN_ROUGHNESS), MAX_ROUGHNESS);
-    
+
     FPSOutput Output;
-    Output.Albedo     = float4(SampledAlbedo, 1.0f);
-    Output.Normal     = float4(OutputNormal, 1.0f);
-    Output.Material   = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
-    Output.ViewNormal = float4(PackNormal(Input.ViewNormal), 1.0f);
+    Output.Albedo   = float4(SampledAlbedo, 1.0f);
+    Output.Normal   = float4(OutputNormal, 1.0f);
+    Output.Material = float4(FinalRoughness, SampledMetallic, SampledAO, 1.0f);
 
     const float3 PositionNDC     = (Input.ClipPosition.xyz / Input.ClipPosition.w);
     const float3 PrevPositionNDC = (Input.PrevClipPosition.xyz / Input.PrevClipPosition.w);

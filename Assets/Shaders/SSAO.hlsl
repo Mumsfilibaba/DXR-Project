@@ -58,8 +58,9 @@ void Main(FComputeShaderInput Input)
     }
     
     // Unpack Normal
-    float3 ViewNormal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
-    ViewNormal = UnpackNormal(ViewNormal);
+    float3 Normal = GBufferNormals.SampleLevel(GBufferSampler, TexCoords, 0).rgb;
+    Normal = UnpackNormal(Normal);
+    Normal = mul(float4(Normal, 0.0f), CameraBuffer.View).xyz;
 
     const float Radius = max(Constants.Radius, 0.01);
     const float Bias   = max(Constants.Bias, 0.0);
@@ -74,9 +75,9 @@ void Main(FComputeShaderInput Input)
     uint RandomSeed = InitRandom(Pixel, uint2(TexSize).x, Constants.FrameIndex);
 
 	const float3 NoiseVec   = normalize(NextRandom3(RandomSeed) * 2.0 - 1.0);
-    const float3 Tangent    = normalize(NoiseVec - ViewNormal * dot(NoiseVec, ViewNormal));
-    const float3 Bitangent  = cross(ViewNormal, Tangent);
-    float3x3 TBN = float3x3(Tangent, Bitangent, ViewNormal);
+    const float3 Tangent    = normalize(NoiseVec - Normal * dot(NoiseVec, Normal));
+    const float3 Bitangent  = cross(Normal, Tangent);
+    float3x3 TBN = float3x3(Tangent, Bitangent, Normal);
 
     float Occlusion = 0.0f;
     for (uint Index = 0; Index < KernelSize; ++Index)
