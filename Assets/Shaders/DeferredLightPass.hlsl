@@ -134,13 +134,13 @@ void Main(FComputeShaderInput Input)
         GroupMinZ = 0x7f7fffff;
         GroupMaxZ = 0;
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
 
     uint2 Pixel    = Input.DispatchThreadID.xy;
     float Depth    = DepthStencilTex.Load(int3(Pixel, 0));
     float ViewPosZ = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
-    
+
     // TODO: If we change to reversed Z then we need to change from 1.0 to 0.0
     uint z = asuint(ViewPosZ);
     if (Depth < 1.0)
@@ -148,12 +148,12 @@ void Main(FComputeShaderInput Input)
         InterlockedMin(GroupMinZ, z);
         InterlockedMax(GroupMaxZ, z);
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
-    
+
     float MinZ = asfloat(GroupMinZ);
     float MaxZ = asfloat(GroupMaxZ);
-    
+
     float4 Frustum[4];
     {
         float pxm    = float(NUM_THREADS * Input.GroupID.x);
@@ -162,20 +162,20 @@ void Main(FComputeShaderInput Input)
         float pyp    = float(NUM_THREADS * (Input.GroupID.y + 1));
         float Width  = NUM_THREADS * GetNumTilesX();
         float Height = NUM_THREADS * GetNumTilesY();
-        
+
         float3 CornerPoints[4];
         CornerPoints[0] = Float3_ProjToView(
             float3((pxm / Width) * 2.0 - 1.0, ((Height - pym) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
-        
+
         CornerPoints[1] = Float3_ProjToView(
             float3((pxp / Width) * 2.0 - 1.0, ((Height - pym) / Height) * 2.0- 1.0, 1.0),
             CameraBuffer.ProjectionInv);
-        
+
         CornerPoints[2] = Float3_ProjToView(
             float3((pxp / Width) * 2.0 - 1.0, ((Height - pyp) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
-        
+
         CornerPoints[3] = Float3_ProjToView(
             float3((pxm / Width) * 2.0 - 1.0, ((Height - pyp) / Height) * 2.0 - 1.0, 1.0),
             CameraBuffer.ProjectionInv);
@@ -185,15 +185,15 @@ void Main(FComputeShaderInput Input)
             Frustum[i] = CreatePlane(CornerPoints[i], CornerPoints[(i + 1) & 3]);
         }
     }
-    
+
     if (ThreadIndex == 0)
     {
         GroupPointLightCounter       = 0;
         GroupShadowPointLightCounter = 0;
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
-    
+
     for (uint i = ThreadIndex; i < Constants.NumPointLights; i += TOTAL_THREAD_COUNT)
     {
         float3 Pos     = PointLightsPosRad[i].Position;
@@ -211,31 +211,28 @@ void Main(FComputeShaderInput Input)
             GroupPointLightIndices[Index] = i;
         }
     }
-    
-    // Cull point-light shadows
-    if (Constants.bEnablePointLightShadows)
-    {
-        for (uint j = ThreadIndex; j < Constants.NumShadowCastingPointLights; j += TOTAL_THREAD_COUNT)
-        {
-            float3 Pos     = ShadowCastingPointLightsPosRad[j].Position;
-            float3 ViewPos = mul(float4(Pos, 1.0), CameraBuffer.View).xyz;
-            float  Radius  = ShadowCastingPointLightsPosRad[j].Radius;
 
-            if ((GetSignedDistanceFromPlane(ViewPos, Frustum[0]) < Radius) &&
-                (GetSignedDistanceFromPlane(ViewPos, Frustum[1]) < Radius) &&
-                (GetSignedDistanceFromPlane(ViewPos, Frustum[2]) < Radius) &&
-                (GetSignedDistanceFromPlane(ViewPos, Frustum[3]) < Radius) &&
-                (-ViewPos.z + MinZ < Radius) && (ViewPos.z - MaxZ < Radius))
-            {
-                uint Index = 0;
-                InterlockedAdd(GroupShadowPointLightCounter, 1, Index);
-                GroupShadowPointLightIndices[Index] = j;
-            }
+    // Cull point-light shadows
+    for (uint j = ThreadIndex; j < Constants.NumShadowCastingPointLights; j += TOTAL_THREAD_COUNT)
+    {
+        float3 Pos     = ShadowCastingPointLightsPosRad[j].Position;
+        float3 ViewPos = mul(float4(Pos, 1.0), CameraBuffer.View).xyz;
+        float  Radius  = ShadowCastingPointLightsPosRad[j].Radius;
+
+        if ((GetSignedDistanceFromPlane(ViewPos, Frustum[0]) < Radius) &&
+            (GetSignedDistanceFromPlane(ViewPos, Frustum[1]) < Radius) &&
+            (GetSignedDistanceFromPlane(ViewPos, Frustum[2]) < Radius) &&
+            (GetSignedDistanceFromPlane(ViewPos, Frustum[3]) < Radius) &&
+            (-ViewPos.z + MinZ < Radius) && (ViewPos.z - MaxZ < Radius))
+        {
+            uint Index = 0;
+            InterlockedAdd(GroupShadowPointLightCounter, 1, Index);
+            GroupShadowPointLightIndices[Index] = j;
         }
     }
-    
+
     GroupMemoryBarrierWithGroupSync();
-    
+
     // Discard pixels not rendered to the GBuffer
     const float3 GBufferNormal = NormalBuffer.Load(int3(Pixel, 0)).rgb;
     if (length(GBufferNormal) == 0)
@@ -263,9 +260,9 @@ void Main(FComputeShaderInput Input)
     
     float3 F0 = Float3(0.04);
     F0 = lerp(F0, GBufferAlbedo, GBufferMetallic);
-    
+
     float3 L0 = Float3(0.0);
-    
+
     // Pointlights
     for (uint i = 0; i < GroupPointLightCounter; ++i)
     {
@@ -284,34 +281,40 @@ void Main(FComputeShaderInput Input)
             
         L0 += IncidentRadiance;
     }
-    
+
     // Point-light shadows
-    if (Constants.bEnablePointLightShadows)
+    for (uint i = 0; i < GroupShadowPointLightCounter; i++)
     {
-        for (uint i = 0; i < GroupShadowPointLightCounter; i++)
+        int Index = GroupShadowPointLightIndices[i];
+        const FShadowPointLight Light       = ShadowCastingPointLights[Index];
+        const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[Index];
+
+        float ShadowFactor;
+        if (Constants.bEnablePointLightShadows)
         {
-            int Index = GroupShadowPointLightIndices[i];
-            const FShadowPointLight Light       = ShadowCastingPointLights[Index];
-            const FPositionRadius   LightPosRad = ShadowCastingPointLightsPosRad[Index];
-        
-            float ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, WorldPosition, ObjectNormal, Light, LightPosRad);
-            if (ShadowFactor > 0.001)
-            {
-                float3 L = LightPosRad.Position - WorldPosition;
-                float DistanceSqrd = dot(L, L);
-                float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
-                L = normalize(L);
-                
-                float3 IncidentRadiance = Light.Color * Attenuation;
-                IncidentRadiance = DirectRadiance(F0, ObjectNormal, View, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
-                
-                L0 += IncidentRadiance * ShadowFactor;
-            }
+            ShadowFactor = PointLightShadowFactor(PointLightShadowMaps, float(Index), ShadowMapSampler0, WorldPosition, ObjectNormal, Light, LightPosRad);
+        }
+        else
+        {
+            ShadowFactor = 1.0f;
+        }
+
+        if (ShadowFactor > 0.001)
+        {
+            float3 L = LightPosRad.Position - WorldPosition;
+            float DistanceSqrd = dot(L, L);
+            float Attenuation  = 1.0 / max(DistanceSqrd, 0.01 * 0.01);
+            L = normalize(L);
+
+            float3 IncidentRadiance = Light.Color * Attenuation;
+            IncidentRadiance = DirectRadiance(F0, ObjectNormal, View, L, IncidentRadiance, GBufferAlbedo, GBufferRoughness, GBufferMetallic);
+
+            L0 += IncidentRadiance * ShadowFactor;
         }
     }
-    
+
     // DirectionalLights
-    {    
+    {
         const FDirectionalLight Light = DirectionalLightBuffer;
         float3 L = normalize(-Light.Direction);
         

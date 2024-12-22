@@ -364,7 +364,8 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             "Poisson Disc PCF"
         };
 
-        if (ImGui::Combo("##FilterFunction", &FilterFunction, Items, TExtent<decltype(Items)>::Value))
+        constexpr uint32 ItemSize = ARRAY_COUNT(Items);
+        if (ImGui::Combo("##FilterFunction", &FilterFunction, Items, ItemSize))
         {
             CVarFilterFunction->SetAsInt(FilterFunction, EConsoleVariableFlags::SetByCode);
         }
@@ -440,7 +441,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             }
         }(NumPoissonDiscSamples);
 
-        constexpr int32 ItemCount = TExtent<decltype(Items)>::Value;
+        constexpr int32 ItemCount = ARRAY_COUNT(Items);
         if (ImGui::Combo("##NumPoissonDiscSamples", &ItemIndex, Items, ItemCount))
         {
             const int32 NewNumPoissonDiscSamples = Samples[ItemIndex];
@@ -488,7 +489,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
             }
         }(CascadeSize);
 
-        constexpr int32 ItemCount = TExtent<decltype(Items)>::Value;
+        constexpr int32 ItemCount = ARRAY_COUNT(Items);
         if (ImGui::Combo("##CascadeSize", &ItemIndex, Items, ItemCount))
         {
             const int32 NewCascadeSize = Sizes[ItemIndex];
@@ -591,7 +592,7 @@ void FRendererSettingsWidget::DrawPointLightShadowSettings()
             }
         }(PointLightShadowMapSize);
 
-        constexpr int32 ItemCount = TExtent<decltype(Items)>::Value;
+        constexpr int32 ItemCount = ARRAY_COUNT(Items);
         if (ImGui::Combo("##PointLightShadowMapSize", &ItemIndex, Items, ItemCount))
         {
             const int32 NewCascadeSize = Sizes[ItemIndex];
