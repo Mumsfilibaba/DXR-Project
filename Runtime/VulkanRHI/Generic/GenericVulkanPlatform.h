@@ -141,11 +141,20 @@ struct FGenericVulkanPlatform
         };
     }
 
-    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceLayers() { return TArray<const CHAR*>(); }
+    static FORCEINLINE TArray<const CHAR*> GetRequiredInstanceLayers()
+    {
+        return TArray<const CHAR*>();
+    }
 
-    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceExtensions() { return TArray<const CHAR*>(); }
+    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceExtensions()
+    {
+        return TArray<const CHAR*>();
+    }
     
-    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceLayers() { return TArray<const CHAR*>(); }
+    static FORCEINLINE TArray<const CHAR*> GetRequiredDeviceLayers()
+    {
+        return TArray<const CHAR*>();
+    }
 
     static FORCEINLINE void* LoadVulkanLibrary() { return nullptr; }
 

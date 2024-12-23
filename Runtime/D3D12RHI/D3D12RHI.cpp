@@ -194,8 +194,8 @@ bool FD3D12RHI::Initialize()
     {
         return false;
     }
-    
-    // View-Instancing Support
+
+    // RenderTargetArrayIndex from vertex-shader Support
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
         FMemory::Memzero(&Features);
@@ -205,7 +205,11 @@ bool FD3D12RHI::Initialize()
         {
             if (Features.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation)
             {
-                LOG_INFO("VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation supported");
+                GRHISupportRenderTargetArrayIndexFromVertexShader = true;
+            }
+            else
+            {
+                GRHISupportRenderTargetArrayIndexFromVertexShader = false;
             }
         }
     }

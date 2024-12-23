@@ -1012,6 +1012,18 @@ bool FVulkanDevice::PostLoaderInitalize()
         GRHIMaxDrawIndirectCount     = PhysicalDeviceProperties.limits.maxDrawIndirectCount;
     }
     
+    // ShaderOutputLayer support
+    const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
+    if (PhysicalDeviceFeatures12.shaderOutputLayer)
+    {
+        GRHISupportRenderTargetArrayIndexFromVertexShader = true;
+    }
+    else
+    {
+        GRHISupportRenderTargetArrayIndexFromVertexShader = false;
+    }
+    
+    //  Draw Indirect is always supported
     GRHISupportDrawIndirect = true;
     return true;
 }

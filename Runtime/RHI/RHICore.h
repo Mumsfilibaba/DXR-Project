@@ -49,6 +49,9 @@ inline const CHAR* ToString(EShadingRateTier Tier)
 // Geometry Shading Support
 extern RHI_API bool GRHISupportsGeometryShaders;
 
+// RenderTargetArrayIndex from vertex-shader Support
+extern RHI_API bool GRHISupportRenderTargetArrayIndexFromVertexShader;
+
 // View-Instancing
 extern RHI_API bool   GRHISupportsViewInstancing;
 extern RHI_API uint32 GRHIMaxViewInstanceCount;

@@ -131,8 +131,10 @@ bool FVulkanRHI::Initialize()
     }
 
     FVulkanPhysicalDeviceCreateInfo AdapterCreateInfo;
-    AdapterCreateInfo.RequiredExtensionNames                     = FPlatformVulkan::GetRequiredDeviceExtensions();
-    AdapterCreateInfo.OptionalExtensionNames                     = FPlatformVulkan::GetOptionalDeviceExtentions();
+    AdapterCreateInfo.RequiredExtensionNames = FPlatformVulkan::GetRequiredDeviceExtensions();
+    AdapterCreateInfo.OptionalExtensionNames = FPlatformVulkan::GetOptionalDeviceExtentions();
+    
+    // Enable required features (These are necessary to run)
     AdapterCreateInfo.RequiredFeatures.samplerAnisotropy         = VK_TRUE;
     AdapterCreateInfo.RequiredFeatures.shaderImageGatherExtended = VK_TRUE;
     AdapterCreateInfo.RequiredFeatures.imageCubeArray            = VK_TRUE;
@@ -154,15 +156,28 @@ bool FVulkanRHI::Initialize()
     DeviceCreateInfo.RequiredFeatures11     = AdapterCreateInfo.RequiredFeatures11;
     DeviceCreateInfo.RequiredFeatures12     = AdapterCreateInfo.RequiredFeatures12;
 
-    // Enable GeometryShaders if the device supports them
+    // Enable optional features for Vulkan 1.0
     const VkPhysicalDeviceFeatures& PhysicalDeviceFeatures = PhysicalDevice->GetFeatures();
+    
+    // Enable geometryShader if the device supports them
     if (PhysicalDeviceFeatures.geometryShader)
     {
         DeviceCreateInfo.RequiredFeatures.geometryShader = VK_TRUE;
     }
+    
+    // Enable multiDrawIndirect if the device supports them
     if (PhysicalDeviceFeatures.multiDrawIndirect)
     {
         DeviceCreateInfo.RequiredFeatures.multiDrawIndirect = VK_TRUE;
+    }
+    
+    // Enable optional features for Vulkan 1.2
+    const VkPhysicalDeviceVulkan12Features& PhysicalDeviceFeatures12 = PhysicalDevice->GetFeaturesVulkan12();
+
+    // Enable shaderOutputLayer if the device supports them
+    if (PhysicalDeviceFeatures12.shaderOutputLayer)
+    {
+        DeviceCreateInfo.RequiredFeatures12.shaderOutputLayer = VK_TRUE;
     }
 
     Device = new FVulkanDevice(GetInstance(), GetAdapter());

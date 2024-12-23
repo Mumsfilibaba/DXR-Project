@@ -3,6 +3,9 @@
 // Geometry Shading Support
 RHI_API bool GRHISupportsGeometryShaders = false;
 
+// RenderTargetArrayIndex from vertex-shader Support
+RHI_API bool GRHISupportRenderTargetArrayIndexFromVertexShader = false;
+
 // View-Instancing
 RHI_API bool   GRHISupportsViewInstancing = false;
 RHI_API uint32 GRHIMaxViewInstanceCount   = 0;
