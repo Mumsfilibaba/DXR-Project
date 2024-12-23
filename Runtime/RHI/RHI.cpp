@@ -28,11 +28,7 @@ static ERHIType GetRHITypeFromConfig()
     const FString RHITypeString = CVarType->GetString();
     if (RHITypeString.Equals("D3D12", EStringCaseType::NoCase))
     {
-#if PLATFORM_WINDOWS
         return ERHIType::D3D12;
-#else
-        LOG_ERROR("D3D12RHI Is not supported on this platform");
-#endif
     }
     else if (RHITypeString.Equals("Vulkan", EStringCaseType::NoCase))
     {
@@ -40,11 +36,7 @@ static ERHIType GetRHITypeFromConfig()
     }
     else if (RHITypeString.Equals("Metal", EStringCaseType::NoCase))
     {
-#if PLATFORM_MACOS
         return ERHIType::Metal;
-#else
-        LOG_ERROR("MetalRHI Is not supported on this platform");
-#endif
     }
     else if (RHITypeString.Equals("Null", EStringCaseType::NoCase))
     {
@@ -54,44 +46,120 @@ static ERHIType GetRHITypeFromConfig()
     return ERHIType::Unknown;
 }
 
-static ERHIType GetRHIType()
+static ERHIType GetPlatformDefaultRHI()
 {
-    ERHIType InstanceType = GetRHITypeFromConfig();
-    if (InstanceType == ERHIType::Unknown)
-    {
 #if PLATFORM_WINDOWS
-        return ERHIType::D3D12;
+    return ERHIType::D3D12;
 #elif PLATFORM_MACOS
-        return ERHIType::Metal;
+    return ERHIType::Vulkan;
 #else
-        return ERHIType::Null;
+    return ERHIType::Null;
 #endif
-    }
-
-    return InstanceType;
 }
 
+static bool IsRHISupportedByPlatform(ERHIType RHIType)
+{
+    switch(RHIType)
+    {
+        case ERHIType::D3D12:
+        {
+        #if PLATFORM_WINDOWS
+            return true;
+        #else 
+            return false;
+        #endif
+        }
+
+        case ERHIType::Metal:
+        {
+        #if PLATFORM_MACOS
+            return true;
+        #else 
+            return false;
+        #endif
+        }
+
+        case ERHIType::Vulkan:
+        case ERHIType::Null:
+        {
+            // Vulkan and NullRHI are valid on all platforms
+            return true;
+        }
+
+        default:
+        {
+            // Invalid RHI type
+            return false;
+        }
+    }
+}
+
+static ERHIType GetRHIType()
+{
+    ERHIType RHIType = GetRHITypeFromConfig();
+
+    const bool bIsRHISupported = IsRHISupportedByPlatform(RHIType);
+    if (RHIType == ERHIType::Unknown || !bIsRHISupported)
+    {
+        switch(RHIType)
+        {
+            case ERHIType::D3D12:
+            {
+                LOG_ERROR("D3D12RHI Is not supported on this platform, falling back to default RHI for the platform");
+                break;
+            }
+
+            case ERHIType::Metal:
+            {
+                LOG_ERROR("MetalRHI Is not supported on this platform, falling back to default RHI for the platform");
+                break;
+            }
+
+            case ERHIType::Vulkan:
+            {
+                LOG_ERROR("VulkanRHI Is not supported on this platform, falling back to default RHI for the platform");
+                break;
+            }
+
+            case ERHIType::Null:
+            {
+                LOG_ERROR("NullRHI Is not supported on this platform, falling back to default RHI for the platform");
+                break;
+            }
+
+            default:
+            {
+                LOG_ERROR("Trying to load unknown RHI-module, falling back to default RHI for the platform");
+                break;
+            }
+        }
+
+        return GetPlatformDefaultRHI();
+    }
+
+    return RHIType;
+}
 
 bool RHIInitialize()
 {
     // Select RHI
-    ERHIType InstanceType = GetRHIType();
+    ERHIType RHIType = GetRHIType();
 
     // Load Selected RHI
     FRHIModule* RHIModule = nullptr;
-    if (InstanceType == ERHIType::D3D12)
+    if (RHIType == ERHIType::D3D12)
     {
         RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("D3D12RHI");
     }
-    else if (InstanceType == ERHIType::Vulkan)
+    else if (RHIType == ERHIType::Vulkan)
     {
         RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("VulkanRHI");
     }
-    else if (InstanceType == ERHIType::Metal)
+    else if (RHIType == ERHIType::Metal)
     {
         RHIModule = FModuleManager::Get().LoadModule<FRHIModule>("MetalRHI");
     }
-    else if (InstanceType == ERHIType::Null)
+    else if (RHIType == ERHIType::Null)
     {
         RHIModule = LoadNullRHI();
     }
@@ -129,9 +197,10 @@ bool RHIInitialize()
         return false;
     }
 
-    // Set the context to the command queue
+    // Set the context to the command-executor
     IRHICommandContext* CommandContext = RHIGetDefaultCommandContext();
     GRHICommandExecutor.SetContext(CommandContext);
+
     return true;
 }
 
