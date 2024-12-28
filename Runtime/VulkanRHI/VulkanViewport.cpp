@@ -110,6 +110,8 @@ bool FVulkanViewport::CreateSwapChain(FVulkanCommandContext* InCommandContext, u
     if (InWidth != SwapChainExtent.width || InHeight != SwapChainExtent.height)
     {
         VULKAN_WARNING("Requested size [w=%d, h=%d] was not supported, the actual size is [w=%d, h=%d]", Info.Width, Info.Height, SwapChainExtent.width, SwapChainExtent.height);
+        
+        // Update the size of the viewport to the actual swapchain size
         Info.Width  = static_cast<uint16>(SwapChainExtent.width);
         Info.Height = static_cast<uint16>(SwapChainExtent.height);
 
@@ -127,10 +129,11 @@ bool FVulkanViewport::CreateSwapChain(FVulkanCommandContext* InCommandContext, u
         RenderSemaphores.Resize(BufferCount);
         BackBuffers.Resize(BufferCount);
 
-        const uint32 BackBufferWidth  = InWidth;
-        const uint32 BackBufferheight = InHeight;
-
-        FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), BackBufferWidth, BackBufferheight, 1, 1, ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable);
+        // Setup the info for each backbuffer, and ensure that we create the info with the actual image-size
+        const ETextureUsageFlags UsageFlags = ETextureUsageFlags::RenderTarget | ETextureUsageFlags::Presentable;
+        FRHITextureInfo BackBufferInfo = FRHITextureInfo::CreateTexture2D(GetColorFormat(), SwapChainExtent.width, SwapChainExtent.height, 1, 1, UsageFlags);
+        
+        // Create a FVulkanTexture for each backbuffer
         for (uint32 Index = 0; Index < BufferCount; ++Index)
         {
             FVulkanSemaphoreRef NewImageSemaphore = new FVulkanSemaphore(GetDevice());

@@ -4,9 +4,10 @@
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
+#include "Core/Memory/Malloc.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Core/Memory/Malloc.h"
+#include "Core/Misc/CRC.h"
 #include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
 
@@ -23,6 +24,11 @@ static TAutoConsoleVariable<bool> CVarVerboseLogging(
 static TAutoConsoleVariable<bool> CVarRecompileSPIRV(
     "RHI.ShaderCompiler.RecompileSPIRV",
     "When outputting SPIR-V force a recompile (This seems to solve some weird matrix issues)",
+    true);
+
+static TAutoConsoleVariable<bool> CVarRecompileDebugOutputGLSL(
+    "RHI.ShaderCompiler.DebugOutputGLSL",
+    "When recompiling the SPIR-V, we use GLSL as a intermediate language in order to workaround a matrix issue, if this CVar is true we output that GLSL to a file.",
     true);
 
 enum class EDXCPart
@@ -474,18 +480,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     
     // Actually compile the shader
     TComPtr<IDxcOperationResult> Result;
-    hResult = Compiler->Compile(
-        SourceBlob.Get(),
-        *WideFilePath,
-        *WideEntrypoint,
-        TargetProfile,
-        CompileArgs.Data(),
-        CompileArgs.Size(),
-        DxcDefines.Data(),
-        DxcDefines.Size(),
-        IncludeHandler.Get(),
-        &Result);
-
+    hResult = Compiler->Compile(SourceBlob.Get(), *WideFilePath, *WideEntrypoint, TargetProfile, CompileArgs.Data(), CompileArgs.Size(), DxcDefines.Data(), DxcDefines.Size(), IncludeHandler.Get(), &Result);
     if (FAILED(hResult))
     {
         LOG_ERROR("[FShaderCompiler]: FAILED to Compile");
@@ -695,11 +690,21 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     // Compile the code to GLSL -> SPIR-V
     spvc_compiler_options Options = nullptr;
     spvc_compiler_create_compiler_options(Compiler, &Options);
+    
     spvc_compiler_options_set_uint(Options, SPVC_COMPILER_OPTION_GLSL_VERSION, 460);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_ES, SPVC_FALSE);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_FORCE_TEMPORARY, SPVC_FALSE);
     spvc_compiler_options_set_bool(Options, SPVC_COMPILER_OPTION_GLSL_VULKAN_SEMANTICS, SPVC_TRUE);
     spvc_compiler_install_compiler_options(Compiler, Options);
+
+    // Convert the shader stage to glslang-enum
+    const glslang_stage_t GlslangStage = GetGlslangStage(CompileInfo.ShaderStage);
+    
+    // This is a work-around to enable gl_Layer from vertex-shaders
+    if (GlslangStage == GLSLANG_STAGE_VERTEX && GRHISupportRenderTargetArrayIndexFromVertexShader)
+    {
+        spvc_compiler_require_extension(Compiler, "GL_ARB_shader_viewport_layer_array");
+    }
 
     // Compile the GLSL code
     const CHAR* NewSource = nullptr;
@@ -716,9 +721,43 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     NewShader[SourceLength] = 0;
 
     // Dump the metal file to disk
-    if (!FilePath.IsEmpty())
+    if (!FilePath.IsEmpty() && CVarRecompileDebugOutputGLSL.GetValue())
     {
-        if (!DumpContentToFile(NewShader, FilePath + "_" + ToString(CompileInfo.ShaderStage) + ".glsl"))
+        FString Filename;
+        
+        // Remove the hlsl part
+        int32 Position = FilePath.FindLast(".hlsl");
+        if (Position != FString::InvalidIndex)
+        {
+            Filename = FilePath.SubString(0, Position);
+        }
+        else
+        {
+            Filename = FilePath;
+        }
+        
+        // Add the shader-stage and entrypoint to the name
+        Filename = Filename + "_" + ToString(CompileInfo.ShaderStage) + "_" + CompileInfo.EntryPoint;
+        
+        // If we have defines we create a seperate file for this set of defines, so that we can debug these files
+        if (!CompileInfo.Defines.IsEmpty())
+        {
+            FString Defines;
+            for (const FShaderDefine& Define : CompileInfo.Defines)
+            {
+                Defines += Define.Define;
+                Defines += Define.Value;
+            }
+            
+            const uint32 DefineCRC = FCRC32::Generate(Defines.Data(), Defines.SizeInBytes());
+            Filename = Filename + "_" + TTypeToString<uint32>::ToString(DefineCRC) + ".glsl";
+        }
+        else
+        {
+            Filename = Filename + ".glsl";
+        }
+
+        if (!DumpContentToFile(NewShader, Filename))
         {
             DEBUG_BREAK();
             return false;
@@ -727,9 +766,6 @@ bool FShaderCompiler::RecompileSpirv(const FString& FilePath, const FShaderCompi
     
     // Now we can destroy the context
     spvc_context_destroy(Context);
-
-    // Convert the shader stage to glslang-enum
-    const glslang_stage_t GlslangStage = GetGlslangStage(CompileInfo.ShaderStage);
 
     // Compile the GLSL to SPIRV
     glslang_input_t Input;

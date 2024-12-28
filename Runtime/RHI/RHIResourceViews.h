@@ -6,14 +6,14 @@
 enum class EBufferSRVFormat : uint32
 {
     None   = 0,
-    Uint32 = 1,
+    UInt32 = 1,
 };
 
 constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
-        case EBufferSRVFormat::Uint32: return "Uint32";
+        case EBufferSRVFormat::UInt32: return "UInt32";
         default:                       return "Unknown";
     }
 }
@@ -21,14 +21,14 @@ constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
 enum class EBufferUAVFormat : uint32
 {
     None   = 0,
-    Uint32 = 1,
+    UInt32 = 1,
 };
 
 constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
-        case EBufferUAVFormat::Uint32: return "Uint32";
+        case EBufferUAVFormat::UInt32: return "UInt32";
         default:                       return "Unknown";
     }
 }
@@ -407,9 +407,9 @@ struct FRHIDepthStencilView
     FRHIDepthStencilView()
         : Texture(nullptr)
         , ClearValue()
-        , Format(EFormat::Unknown)
         , ArrayIndex(0)
         , NumArraySlices(1)
+        , Format(EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(EAttachmentLoadAction::DontCare)
         , StoreAction(EAttachmentStoreAction::DontCare)
@@ -423,9 +423,9 @@ struct FRHIDepthStencilView
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , ClearValue(InClearValue)
-        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(0)
         , NumArraySlices(1)
+        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -441,9 +441,9 @@ struct FRHIDepthStencilView
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , ClearValue(InClearValue)
-        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , ArrayIndex(uint16(InArrayIndex))
         , NumArraySlices(1)
+        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -460,9 +460,9 @@ struct FRHIDepthStencilView
         const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
         : Texture(InTexture)
         , ClearValue(InClearValue)
-        , Format(InFormat)
         , ArrayIndex(uint16(InArrayIndex))
         , NumArraySlices(1)
+        , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -499,13 +499,13 @@ struct FRHIDepthStencilView
 struct FRHIBeginRenderPassInfo
 {
     typedef TStaticArray<FRHIRenderTargetView, RHI_MAX_RENDER_TARGETS> FRenderTargetViews;
-
+   
     FRHIBeginRenderPassInfo()
         : ShadingRateTexture(nullptr)
         , DepthStencilView()
-        , StaticShadingRate(EShadingRate::VRS_1x1)
-        , NumRenderTargets(0)
         , RenderTargets()
+        , NumRenderTargets(0)
+        , StaticShadingRate(EShadingRate::VRS_1x1)
         , ViewInstancingInfo()
     {
     }
@@ -520,12 +520,7 @@ struct FRHIBeginRenderPassInfo
     {
     }
 
-    FRHIBeginRenderPassInfo(
-        const FRenderTargetViews& InRenderTargets,
-        uint32                    InNumRenderTargets,
-        FRHIDepthStencilView      InDepthStencilView,
-        FRHITexture*              InShadingRateTexture = nullptr,
-        EShadingRate              InStaticShadingRate  = EShadingRate::VRS_1x1)
+    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilView InDepthStencilView, FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
         , RenderTargets(InRenderTargets)

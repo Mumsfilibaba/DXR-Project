@@ -180,7 +180,7 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
             return false;
         }
 
-        SRVInitializer = FRHIBufferSRVDesc(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::Uint32);
+        SRVInitializer = FRHIBufferSRVDesc(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::UInt32);
         IndexBufferSRV = RHICreateShaderResourceView(SRVInitializer);
         if (!IndexBufferSRV)
         {

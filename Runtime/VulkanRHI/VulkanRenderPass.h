@@ -39,15 +39,15 @@ struct FVulkanRenderPassKey
     {
         struct
         {
-            EFormat                  DepthStencilFormat;
+            EFormat DepthStencilFormat;
             FVulkanRenderPassActions DepthStencilActions;
 
-            uint8                    NumSamples       : 4;
-            uint8                    NumRenderTargets : 4;
+            uint8 NumSamples : 4;
+            uint8 NumRenderTargets : 4;
 
-            FViewInstancingInfo      ViewInstancingInfo;
-
-            EFormat                  RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
+            FViewInstancingInfo ViewInstancingInfo;
+            
+            EFormat RenderTargetFormats[RHI_MAX_RENDER_TARGETS];
             FVulkanRenderPassActions RenderTargetActions[RHI_MAX_RENDER_TARGETS];
         };
         
@@ -65,10 +65,11 @@ static_assert(sizeof(FVulkanRenderPassKey) == sizeof(uint64[3]), "Size of FVulka
 struct FVulkanFramebufferKey
 {
     FVulkanFramebufferKey()
-        : RenderPass(VK_NULL_HANDLE)
-        , Width(0)
+        : Width(0)
         , Height(0)
+        , NumArrayLayers(0)
         , NumAttachmentViews(0)
+        , RenderPass(VK_NULL_HANDLE)
     {
         FMemory::Memzero(AttachmentViews, sizeof(AttachmentViews));
     }
@@ -93,8 +94,11 @@ struct FVulkanFramebufferKey
 
     bool operator==(const FVulkanFramebufferKey& Other) const
     {
-        if (RenderPass != Other.RenderPass || NumAttachmentViews != Other.NumAttachmentViews || Width != Other.Width || Height != Other.Height)
+        if (RenderPass != Other.RenderPass || Width != Other.Width || Height != Other.Height ||
+            NumAttachmentViews != Other.NumAttachmentViews || NumArrayLayers != Other.NumArrayLayers)
+        {
             return false;
+        }
 
         for (uint32 Index = 0; Index < NumAttachmentViews; Index++)
         {
@@ -113,8 +117,11 @@ struct FVulkanFramebufferKey
     friend uint64 GetHashForType(const FVulkanFramebufferKey& Key)
     {
         uint64 Hash = reinterpret_cast<uint64>(Key.RenderPass);
+        
         HashCombine(Hash, Key.Width);
         HashCombine(Hash, Key.Height);
+        HashCombine(Hash, Key.NumArrayLayers);
+        HashCombine(Hash, Key.NumAttachmentViews);
 
         for (uint32 Index = 0; Index < Key.NumAttachmentViews; Index++)
         {
@@ -124,10 +131,11 @@ struct FVulkanFramebufferKey
         return Hash;
     }
 
-    VkRenderPass RenderPass;
     uint16       Width;
     uint16       Height;
-    uint32       NumAttachmentViews;
+    uint16       NumArrayLayers;
+    uint16       NumAttachmentViews;
+    VkRenderPass RenderPass;
     VkImageView  AttachmentViews[RHI_MAX_RENDER_TARGETS + 1];
 };
 

@@ -164,12 +164,12 @@ bool FVulkanTexture::Initialize(FVulkanCommandContext* InCommandContext, EResour
     if (Info.IsTextureCube() || Info.IsTextureCubeArray())
     {
         ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-        ImageCreateInfo.arrayLayers  = Info.NumArraySlices * RHI_NUM_CUBE_FACES;
+        ImageCreateInfo.arrayLayers = Info.NumArraySlices * RHI_NUM_CUBE_FACES;
     }
-    
+
     // TODO: Look into abstracting these flags
     ImageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    
+
     if (Info.IsRenderTarget())
     {
         ImageCreateInfo.usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
@@ -447,9 +447,12 @@ FVulkanResourceView* FVulkanTexture::GetOrCreateImageView(const FVulkanHashableI
         }
     }
 
+    // Number of mip-levels
+    constexpr uint32 NumMipLevels = 1;
+
     // Create a new view
     FVulkanResourceView* NewImageView = new FVulkanResourceView(GetDevice());
-    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, ImageViewType, ImageAspectFlags, ImageViewInfo.ArrayIndex, ImageViewInfo.NumArraySlices, ImageViewInfo.MipLevel, 1))
+    if (!NewImageView->InitializeAsImageView(Image, VulkanFormat, ImageViewType, ImageAspectFlags, ImageViewInfo.ArrayIndex, ImageViewInfo.NumArraySlices, ImageViewInfo.MipLevel, NumMipLevels))
     {
         return nullptr;
     }
@@ -532,6 +535,7 @@ void FVulkanBackBufferTexture::ResizeBackBuffer(int32 InWidth, int32 InHeight)
     {
         FVulkanTexture* BackBuffer = Viewport->GetBackBufferFromIndex(Index);
         BackBuffer->Resize(InWidth, InHeight);
+        BackBuffer->DestroyImageViews();
     }
 }
 

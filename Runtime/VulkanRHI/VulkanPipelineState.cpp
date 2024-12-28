@@ -475,7 +475,7 @@ bool FVulkanGraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateIni
         RenderPassKey.RenderTargetFormats[Index] = Initializer.PipelineFormats.RenderTargetFormats[Index];
     }
 
-    if (Initializer.ViewInstancingInfo.NumArraySlices > 0)
+    if (Initializer.ViewInstancingInfo.bEnableViewInstancing)
     {
         RenderPassKey.ViewInstancingInfo = Initializer.ViewInstancingInfo;
         ViewInstancingInfo = Initializer.ViewInstancingInfo;

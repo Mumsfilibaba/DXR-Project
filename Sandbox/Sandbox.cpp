@@ -21,7 +21,7 @@
 #define LOAD_EMERALD_SQUARE (0)
 
 #define ENABLE_LIGHT_TEST (0)
-#define ENABLE_MANY_SPHERES (0)
+#define ENABLE_SPHERES_TEST (0)
 
 IMPLEMENT_ENGINE_MODULE(FSandbox, Sandbox);
 
@@ -190,7 +190,7 @@ bool FSandbox::Init()
         MaterialInfo.Metallic += MetallicDelta;
     }
 
-#if ENABLE_MANY_SPHERES
+#if ENABLE_SPHERES_TEST
     {
         constexpr uint32 kNumSpheres = 4096 * 8;
         constexpr float  kMaxRadius  = 32.0f;

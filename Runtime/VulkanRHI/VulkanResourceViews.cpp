@@ -283,7 +283,7 @@ bool FVulkanShaderResourceView::InitializeBufferSRV(const FRHIBufferSRVDesc& InD
     {
         Stride = VulkanBuffer->GetStride();
     }
-    else if (InDesc.Format == EBufferSRVFormat::Uint32)
+    else if (InDesc.Format == EBufferSRVFormat::UInt32)
     {
         Stride = sizeof(uint32);
     }
@@ -396,7 +396,7 @@ bool FVulkanUnorderedAccessView::InitializeBufferUAV(const FRHIBufferUAVDesc& In
     {
         Stride = VulkanBuffer->GetStride();
     }
-    else if (InDesc.Format == EBufferUAVFormat::Uint32)
+    else if (InDesc.Format == EBufferUAVFormat::UInt32)
     {
         Stride = sizeof(uint32);
     }

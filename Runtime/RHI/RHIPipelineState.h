@@ -514,8 +514,8 @@ struct FRHIBlendStateInitializer
 
     bool operator==(const FRHIBlendStateInitializer& Other) const
     {
-        return NumRenderTargets == Other.NumRenderTargets
-            && FMemory::Memcmp(RenderTargets, Other.RenderTargets, sizeof(FRenderTargetBlendInfo) * NumRenderTargets) == 0
+        return FMemory::Memcmp(RenderTargets, Other.RenderTargets, sizeof(RenderTargets)) == 0
+            && NumRenderTargets        == Other.NumRenderTargets
             && LogicOp                 == Other.LogicOp
             && bLogicOpEnable          == Other.bLogicOpEnable
             && bAlphaToCoverageEnable  == Other.bAlphaToCoverageEnable
@@ -630,31 +630,31 @@ struct FVertexElement
         return !(*this == Other);
     }
 
-    /** Semantic in the shader to match */
+    // Semantic in the shader to match
     FString Semantic;
-    
-    /** Index of the semantic in the shader */
+
+    // Index of the semantic in the shader
     uint32 SemanticIndex;
-    
-    /** Format of this vertex-element */
+
+    // Format of this vertex-element
     EFormat Format;
-    
-    /** Stride for each vertex in the vertex-stream that this element is a part of */
+
+    // Stride for each vertex in the vertex-stream that this element is a part of
     uint16 VertexStride;
-    
-    /** Index of the vertex-stream that this element is a part of */
+
+    // Index of the vertex-stream that this element is a part of
     uint32 InputSlot;
-    
-    /** Offset within the vertex-structure that this element is a part of */
+
+    // Offset within the vertex-structure that this element is a part of
     uint32 ByteOffset;
-    
-    /** Index of the element in the shader that this element matching */
+
+    // Index of the element in the shader that this element matching
     uint32 ShaderElementIndex;
-    
-    /** How often this element should be updated */
+
+    // How often this element should be updated
     EVertexInputClass InputClass;
-    
-    /** How many elements to increment per instance */
+
+    // How many elements to increment per instance
     uint32 InstanceStepRate;
 };
 
@@ -757,14 +757,17 @@ struct FGraphicsPipelineShaders
 struct FViewInstancingInfo
 {
     FViewInstancingInfo()
-        : StartRenderTargetArrayIndex(0)
-        , NumArraySlices(0)
+        : NumArraySlices(0)
+        , StartRenderTargetArrayIndex(0)
+        , bEnableViewInstancing(false)
     {
     }
 
     bool operator==(const FViewInstancingInfo& Other) const 
     {
-        return StartRenderTargetArrayIndex == Other.StartRenderTargetArrayIndex && NumArraySlices == Other.NumArraySlices;
+        return NumArraySlices == Other.NumArraySlices
+            && StartRenderTargetArrayIndex == Other.StartRenderTargetArrayIndex
+            && bEnableViewInstancing == Other.bEnableViewInstancing;
     }
 
     bool operator!=(const FViewInstancingInfo& Other) const
@@ -772,13 +775,14 @@ struct FViewInstancingInfo
         return !(*this == Other);
     }
 
-    uint8 StartRenderTargetArrayIndex;
     uint8 NumArraySlices;
+    uint8 StartRenderTargetArrayIndex : 7;
+    uint8 bEnableViewInstancing : 1;
 };
 
 struct FRHIGraphicsPipelineStateInitializer
 {
-    inline static constexpr uint32 DefaultSampleMask = 0xffffffff;
+    static constexpr uint32 DefaultSampleMask = 0xffffffff;
 
     FRHIGraphicsPipelineStateInitializer()
         : VertexInputLayout(nullptr)
@@ -790,9 +794,9 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleMask(DefaultSampleMask)
         , PrimitiveTopology(EPrimitiveTopology::TriangleList)
         , bPrimitiveRestartEnable(false)
-        , ViewInstancingInfo()
         , ShaderState()
         , PipelineFormats()
+        , ViewInstancingInfo()
     {
     }
 
@@ -817,9 +821,9 @@ struct FRHIGraphicsPipelineStateInitializer
         , SampleMask(InSampleMask)
         , PrimitiveTopology(InPrimitiveTopology)
         , bPrimitiveRestartEnable(bInPrimitiveRestartEnable)
-        , ViewInstancingInfo()
         , ShaderState(InShaderState)
         , PipelineFormats(InPipelineFormats)
+        , ViewInstancingInfo()
     {
     }
 
@@ -834,9 +838,9 @@ struct FRHIGraphicsPipelineStateInitializer
             && SampleMask              == Other.SampleMask
             && bPrimitiveRestartEnable == Other.bPrimitiveRestartEnable
             && PrimitiveTopology       == Other.PrimitiveTopology
-            && ViewInstancingInfo      == Other.ViewInstancingInfo
             && ShaderState             == Other.ShaderState
-            && PipelineFormats         == Other.PipelineFormats;
+            && PipelineFormats         == Other.PipelineFormats
+            && ViewInstancingInfo      == Other.ViewInstancingInfo;
     }
 
     bool operator!=(const FRHIGraphicsPipelineStateInitializer& Other) const
@@ -845,29 +849,27 @@ struct FRHIGraphicsPipelineStateInitializer
     }
 
     // Weak reference to the VertexInputLayout being used
-    FRHIVertexLayout*   VertexInputLayout;
+    FRHIVertexLayout* VertexInputLayout;
 
     // Weak reference to the DepthStencilState being used
-    FRHIDepthStencilState*   DepthStencilState;
+    FRHIDepthStencilState* DepthStencilState;
 
     // Weak reference to the RasterizerState being used
-    FRHIRasterizerState*     RasterizerState;
+    FRHIRasterizerState* RasterizerState;
 
     // Weak reference to the BlendState being used
-    FRHIBlendState*          BlendState;
+    FRHIBlendState* BlendState;
 
-    uint32                   SampleCount;
-    uint32                   SampleQuality;
-    uint32                   SampleMask;
+    uint32 SampleCount;
+    uint32 SampleQuality;
+    uint32 SampleMask;
 
-    EPrimitiveTopology       PrimitiveTopology;
-    bool                     bPrimitiveRestartEnable;
+    EPrimitiveTopology PrimitiveTopology;
+    bool               bPrimitiveRestartEnable;
 
-    FViewInstancingInfo      ViewInstancingInfo;
     FGraphicsPipelineShaders ShaderState;
     FGraphicsPipelineFormats PipelineFormats;
-
-
+    FViewInstancingInfo      ViewInstancingInfo;
 };
 
 class FRHIGraphicsPipelineState : public FRHIPipelineState

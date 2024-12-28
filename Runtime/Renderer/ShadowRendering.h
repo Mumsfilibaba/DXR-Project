@@ -7,6 +7,18 @@
 
 #define NUM_FRUSTUM_PLANES (6)
 
+enum class ECubeMapRenderPassType : int32
+{
+    Unknown = 0,
+    MultiPass,
+    SinglePass,
+    SinglePassUsingGS,
+    TwoPass,
+    
+    First = MultiPass,
+    Last = TwoPass,
+};
+
 struct FCascadeMatricesHLSL
 {
     // 0-128
@@ -54,6 +66,14 @@ struct FPerShadowMapHLSL
 
 MARK_AS_REALLOCATABLE(FPerShadowMapHLSL);
 
+struct FShadowPerObjectHLSL
+{
+    // 0-64
+    FMatrix4 WorldMatrix;
+};
+
+MARK_AS_REALLOCATABLE(FShadowPerObjectHLSL);
+
 struct FSinglePassPointLightBufferHLSL
 {
     // 0-384
@@ -91,6 +111,43 @@ struct FPerCascadeHLSL
 
 MARK_AS_REALLOCATABLE(FPerCascadeHLSL);
 
+struct FPointLightShaderCombination
+{
+    FPointLightShaderCombination()
+        : Hash(0)
+    {
+    }
+
+    bool operator==(const FPointLightShaderCombination& Other) const
+    {
+        return Hash == Other.Hash;
+    }
+
+    bool operator!=(const FPointLightShaderCombination& Other) const
+    {
+        return Hash == Other.Hash;
+    }
+
+    friend uint64 GetHashForType(const FPointLightShaderCombination& Value)
+    {
+        return Value.Hash;
+    }
+
+    union
+    {
+        struct
+        {
+            //  Type of RenderPass
+            ECubeMapRenderPassType RenderPassType;
+            
+            // Material-flags
+            int32 MaterialFlags;
+        };
+
+        uint64 Hash;
+    };
+};
+
 class FPointLightRenderPass : public FRenderPass
 {
 public:
@@ -99,15 +156,24 @@ public:
 
     virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
 
+    // This function creates or retrieves a pipeline state instance based on parameters
+    FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources);
+
     bool Initialize(FFrameResources& Resources);
     bool CreateResources(FFrameResources& Resources);
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
-    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
-    FRHIBufferRef                               PerShadowMapBuffer;
-    FRHIBufferRef                               SinglePassShadowMapBuffer;
-    FRHIBufferRef                               TwoPassShadowMapBuffer;
+    template<ECubeMapRenderPassType RenderPassType>
+    void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
+    
+    // Cache PipelineState types
+    TMap<FPointLightShaderCombination, FGraphicsPipelineStateInstance> MaterialPSOs;
+    
+    // Buffers
+    FRHIBufferRef PerShadowMapBuffer;
+    FRHIBufferRef SinglePassShadowMapBuffer;
+    FRHIBufferRef TwoPassShadowMapBuffer;
 };
 
 class FCascadeGenerationPass : public FRenderPass
@@ -138,7 +204,7 @@ public:
 
 private:
     TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
-    FRHIBufferRef                               PerCascadeBuffer;
+    FRHIBufferRef PerCascadeBuffer;
 };
 
 struct FDirectionalShadowSettingsHLSL

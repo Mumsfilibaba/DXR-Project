@@ -4,41 +4,45 @@
 #ifndef ENABLE_PACKED_MATERIAL_TEXTURE
     #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
 #endif
-
 #ifndef ENABLE_ALPHA_MASK
     #define ENABLE_ALPHA_MASK (0)
 #endif
-
 #ifndef ENABLE_PARALLAX_MAPPING
     #define ENABLE_PARALLAX_MAPPING (0)
 #endif
 
+// Cascaded-Shadow-Maps defines
 #ifndef MAX_CASCADES
     #define MAX_CASCADES (4)
 #endif
-
 #ifndef ENABLE_CASCADE_GS_INSTANCING
     #define ENABLE_CASCADE_GS_INSTANCING (0)
 #endif
-
 #ifndef ENABLE_CASCADE_VIEW_INSTANCING
     #define ENABLE_CASCADE_VIEW_INSTANCING (0)
 #endif
 
+// PointLight defines
+#define NUM_CUBE_FACES (6)
+#define NUM_CUBE_FACES_HALF (3)
+
+#ifndef ENABLE_POINTLIGHT_VS_INSTANCING
+    #define ENABLE_POINTLIGHT_VS_INSTANCING (0)
+#endif
 #ifndef ENABLE_POINTLIGHT_GS_INSTANCING
     #define ENABLE_POINTLIGHT_GS_INSTANCING (0)
 #endif
-
 #ifndef ENABLE_POINTLIGHT_VIEW_INSTANCING
     #define ENABLE_POINTLIGHT_VIEW_INSTANCING (0)
 #endif
+#if !ENABLE_POINTLIGHT_VS_INSTANCING && !ENABLE_POINTLIGHT_GS_INSTANCING && !ENABLE_POINTLIGHT_VIEW_INSTANCING
+    #define ENABLE_POINTLIGHT_MULTI_PASS (1)
+#endif
 
+// Workaround on NVIDIA
 #if SHADER_LANG == SHADER_LANG_HLSL
     #define ENABLE_RENDER_TARGET_VIEW_INDEX (1)
 #endif
-
-#define NUM_CUBE_FACES (6)
-#define NUM_CUBE_FACES_HALF (3)
 
 struct FPerCascade
 {
@@ -50,7 +54,7 @@ struct FPerCascade
 
 // PerObject
 SHADER_CONSTANT_BLOCK_BEGIN
-    float4x4 ModelMatrix;
+    float4x4 WorldModelMatrix;
 SHADER_CONSTANT_BLOCK_END
 
 #if SHADER_LANG == SHADER_LANG_MSL
@@ -64,6 +68,7 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
     SamplerState MaterialSampler : register(s0);
+
 #if ENABLE_ALPHA_MASK
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     Texture2D<float4> AlphaMaskTex : register(t0);
@@ -71,6 +76,7 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
     Texture2D<float> AlphaMaskTex : register(t0);
 #endif
 #endif
+
 #if ENABLE_PARALLAX_MAPPING
     Texture2D<float> HeightMap : register(t1);
 #endif
@@ -84,8 +90,17 @@ StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 struct FVSInput
 {
     float3 Position : POSITION0;
+
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
+#endif
+
+#if ENABLE_CASCADE_VIEW_INSTANCING || ENABLE_POINTLIGHT_VIEW_INSTANCING
+    uint ViewID : SV_ViewID;
+#endif
+
+#if ENABLE_POINTLIGHT_VS_INSTANCING || ENABLE_POINTLIGHT_VIEW_INSTANCING
+    uint InstanceID : SV_InstanceID;
 #endif
 };
 
@@ -94,6 +109,7 @@ struct FVSCascadeOutput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
 #if ENABLE_CASCADE_GS_INSTANCING
     float4 Position : POSITION0;
 #else
@@ -107,12 +123,7 @@ struct FVSCascadeOutput
 #endif
 };
 
-FVSCascadeOutput Cascade_VSMain(
-    FVSInput Input 
-#if ENABLE_CASCADE_VIEW_INSTANCING
-    , uint ViewID : SV_ViewID
-#endif
-    )
+FVSCascadeOutput Cascade_VSMain(FVSInput Input)
 {
     FVSCascadeOutput Output;
 
@@ -120,22 +131,24 @@ FVSCascadeOutput Cascade_VSMain(
     Output.TexCoord = Input.TexCoord;
 #endif
 
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
+    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.WorldModelMatrix);
 
 #if ENABLE_CASCADE_GS_INSTANCING
     Output.Position = WorldPosition;
 #else
 #if ENABLE_CASCADE_VIEW_INSTANCING
-    const int CascadeIndex = min(ViewID, MAX_CASCADES - 1);
+    const int CascadeIndex = min(Input.ViewID, MAX_CASCADES - 1);
 #if ENABLE_RENDER_TARGET_VIEW_INDEX
     Output.RenderTargetArrayIndex = CascadeIndex;
 #endif
 #else
     const int CascadeIndex = min(PerCascadeBuffer.CascadeIndex, MAX_CASCADES - 1);
 #endif
+
     const float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
     Output.Position = mul(WorldPosition, LightViewProjection);
 #endif
+
     return Output;
 }
 
@@ -148,6 +161,7 @@ struct FGSCascadeOutput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
     float4 Position : SV_Position;
 
     // Index into what ArraySlice we want to write into
@@ -171,6 +185,7 @@ void Cascade_GSMain(triangle FVSCascadeOutput Input[3], inout TriangleStream<FGS
         #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
             Output.TexCoord = Input[Vertex].TexCoord;
         #endif
+
             Output.Position = mul(Input[Vertex].Position, LightViewProjection);
             OutStream.Append(Output);
         }
@@ -214,7 +229,7 @@ void Cascade_PSMain(FPSCascadeInput Input)
 
 // VertexShader
 
-#if ENABLE_POINTLIGHT_GS_INSTANCING
+#if ENABLE_POINTLIGHT_VS_INSTANCING || ENABLE_POINTLIGHT_GS_INSTANCING
 struct FSinglePassPointLightBuffer
 {
     float4x4 LightProjections[NUM_CUBE_FACES];
@@ -248,9 +263,15 @@ struct FVSPointOutput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
     float3 WorldPosition : POSITION0;
+
 #if !ENABLE_POINTLIGHT_GS_INSTANCING
     float4 Position : SV_Position;
+#endif
+
+#if ENABLE_POINTLIGHT_VS_INSTANCING
+    uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;
 #endif
 
 // NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
@@ -260,29 +281,39 @@ struct FVSPointOutput
 #endif
 };
 
-FVSPointOutput Point_VSMain(
-    FVSInput Input
-#if ENABLE_POINTLIGHT_VIEW_INSTANCING
-    , uint ViewID : SV_ViewID
-#endif
-    )
+FVSPointOutput Point_VSMain(FVSInput Input)
 {
     FVSPointOutput Output = (FVSPointOutput)0;
 
-    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
+    const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.WorldModelMatrix);
     Output.WorldPosition = WorldPosition.xyz;
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     Output.TexCoord = Input.TexCoord;
 #endif
+
+// View-instancing
 #if ENABLE_POINTLIGHT_VIEW_INSTANCING
-    Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[ViewID]);
+    Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[Input.ViewID]);
+
+    // Work-around using HLSL (Otherwise it does not work on NVIDIA hardware)
 #if ENABLE_RENDER_TARGET_VIEW_INDEX
-    Output.RenderTargetArrayIndex = ViewID;
+    Output.RenderTargetArrayIndex = Input.ViewID;
 #endif
-#elif !ENABLE_POINTLIGHT_GS_INSTANCING
+#endif
+
+// VS instancing
+#if ENABLE_POINTLIGHT_VS_INSTANCING
+    const uint FaceIndex = clamp(Input.InstanceID, 0, 5);
+    Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[FaceIndex]);
+    Output.RenderTargetArrayIndex = Input.InstanceID;
+#endif
+
+// Multi-pass (One pass per face)
+#if ENABLE_POINTLIGHT_MULTI_PASS
     Output.Position = mul(WorldPosition, PointLightBuffer.LightProjection);
 #endif
+
     return Output;
 }
 
@@ -295,6 +326,7 @@ struct FGSPointOutput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
     float3 WorldPosition : POSITION0;
     float4 Position : SV_Position;
 
@@ -321,7 +353,8 @@ void Point_GSMain(triangle FVSPointOutput Input[3], inout TriangleStream<FGSPoin
         #endif
 
             Output.WorldPosition = Input[Vertex].WorldPosition;
-            Output.Position      = mul(float4(Input[Vertex].WorldPosition, 1.0f), LightViewProjection);
+            Output.Position = mul(float4(Input[Vertex].WorldPosition, 1.0f), LightViewProjection);
+
             OutStream.Append(Output);
         }
 
@@ -337,6 +370,7 @@ struct FPSPointInput
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
+
     float3 WorldPosition : POSITION0;
 };
 
@@ -352,7 +386,7 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
 #if ENABLE_PACKED_MATERIAL_TEXTURE
     const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
 #else
-    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);        
+    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
 #endif
     [[branch]]
     if (AlphaMask < 0.5f)
@@ -365,20 +399,3 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
     const float LightDistance = length(Input.WorldPosition.xyz - PointLightBuffer.LightPosition) / PointLightBuffer.LightFarPlane;
     return LightDistance;
 }
-
-#if 0
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Variance Shadow Generation
-
-float4 VSM_VSMain(FVSInput Input) : SV_Position
-{
-    float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.ModelMatrix);
-    return mul(WorldPosition, LightProjection);
-}
-
-float4 VSM_PSMain(float4 Position : SV_Position) : SV_Target0
-{
-    float Depth = Position.z;
-    return float4(Depth, Depth * Depth, 0.0f, 1.0f);
-}
-#endif

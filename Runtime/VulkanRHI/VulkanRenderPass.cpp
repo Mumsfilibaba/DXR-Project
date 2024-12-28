@@ -140,17 +140,20 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
     RenderPassCreateInfo.subpassCount    = 1;
     RenderPassCreateInfo.pSubpasses      = &Subpass;
 
+    // Multi-view extension
     uint32 ViewMask;
     uint32 CorrelationMask;
 
     VkRenderPassMultiviewCreateInfo MultiviewCreateInfo;
-    if (GVulkanSupportsMultiviews && Key.ViewInstancingInfo.NumArraySlices > 0)
+    if (GVulkanSupportsMultiviews && Key.ViewInstancingInfo.bEnableViewInstancing)
     {
+        constexpr uint32 MaxArraySlices = 32;
+
         ViewMask        = 0;
         CorrelationMask = 0;
 
         // Limit to the number of bits in a uint32
-        const uint32 NumViews = FMath::Min<uint32>(Key.ViewInstancingInfo.NumArraySlices, 32);
+        const uint32 NumViews = FMath::Min<uint32>(Key.ViewInstancingInfo.NumArraySlices, MaxArraySlices);
         for (uint32 Index = 0; Index < NumViews; Index++)
         {
             const uint32 BitIndex = FMath::Min<uint32>(Key.ViewInstancingInfo.StartRenderTargetArrayIndex + Index, 32);
@@ -168,6 +171,7 @@ VkRenderPass FVulkanRenderPassCache::GetRenderPass(const FVulkanRenderPassKey& K
         RenderPassCreateHelper.AddNext(MultiviewCreateInfo);
     }
 
+    // Create the RenderPass
     VkRenderPass RenderPass = VK_NULL_HANDLE;
     VkResult Result = vkCreateRenderPass(GetDevice()->GetVkDevice(), &RenderPassCreateInfo, nullptr, &RenderPass);
     if (VULKAN_FAILED(Result))
@@ -193,7 +197,7 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
         return *ExistingFramebuffer;
     }
 
-    //Create new Framebuffer
+    // Create new Framebuffer
     VkFramebufferCreateInfo FramebufferCreateInfo;
     FMemory::Memzero(&FramebufferCreateInfo);
 
@@ -203,7 +207,7 @@ VkFramebuffer FVulkanRenderPassCache::GetFramebuffer(const FVulkanFramebufferKey
     FramebufferCreateInfo.pAttachments    = FrameBufferKey.AttachmentViews;
     FramebufferCreateInfo.width           = FrameBufferKey.Width;
     FramebufferCreateInfo.height          = FrameBufferKey.Height;
-    FramebufferCreateInfo.layers          = 1;
+    FramebufferCreateInfo.layers          = FrameBufferKey.NumArrayLayers;
 
     VkFramebuffer Framebuffer = VK_NULL_HANDLE;
     VkResult Result = vkCreateFramebuffer(GetDevice()->GetVkDevice(), &FramebufferCreateInfo, nullptr, &Framebuffer);

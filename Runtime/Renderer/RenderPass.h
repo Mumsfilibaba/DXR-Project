@@ -18,7 +18,7 @@ struct FGraphicsPipelineStateInstance
     FRHIGeometryShaderRef        GeometryShader;
     FRHIPixelShaderRef           PixelShader;
 
-    FRHIVertexLayoutRef     InputLayout;
+    FRHIVertexLayoutRef          InputLayout;
     FRHIDepthStencilStateRef     DepthStencilState;
     FRHIBlendStateRef            BlendState;
     FRHIRasterizerStateRef       RasterizerState;

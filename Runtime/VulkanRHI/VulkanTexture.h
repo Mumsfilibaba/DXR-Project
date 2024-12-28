@@ -82,9 +82,11 @@ protected:
     VkImageCreateInfo             CreateInfo;
     FVulkanShaderResourceViewRef  ShaderResourceView;
     FVulkanUnorderedAccessViewRef UnorderedAccessView;
+
     TArray<FVulkanResourceView*>  ImageViews;
-    FString                       DebugName;
     TMap<FVulkanHashableImageView, FVulkanResourceView*> ImageViewMap;
+
+    FString DebugName;
 };
 
 class FVulkanBackBufferTexture : public FVulkanTexture
