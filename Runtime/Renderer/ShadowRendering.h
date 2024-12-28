@@ -18,6 +18,18 @@ enum class ECubeMapRenderPassType : int32
     Last = GeometryShaderSinglePass,
 };
 
+enum class ECascadeRenderPassType : int32
+{
+    Unknown = 0,
+    MultiPass,
+    SinglePass,
+    GeometryShaderSinglePass,
+    ViewInstancingSinglePass,
+
+    First = MultiPass,
+    Last = ViewInstancingSinglePass,
+};
+
 struct FCascadeMatricesHLSL
 {
     // 0-128
@@ -122,7 +134,7 @@ struct FPointLightShaderCombination
     {
         struct
         {
-            //  Type of RenderPass
+            // Type of RenderPass
             ECubeMapRenderPassType RenderPassType;
             
             // Material-flags
@@ -139,7 +151,7 @@ public:
     FPointLightRenderPass(FSceneRenderer* InRenderer);
     virtual ~FPointLightRenderPass();
 
-    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final { }
 
     // This function creates or retrieves a pipeline state instance based on parameters
     FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECubeMapRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources);
@@ -151,10 +163,10 @@ public:
 private:
     template<ECubeMapRenderPassType RenderPassType>
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
-    
+
     // Cache PipelineState types
     TMap<FPointLightShaderCombination, FGraphicsPipelineStateInstance> MaterialPSOs;
-    
+
     // Buffers
     FRHIBufferRef PerShadowMapBuffer;
     FRHIBufferRef SinglePassShadowMapBuffer;
@@ -174,20 +186,63 @@ private:
     FRHIComputeShaderRef        CascadeGenShader;
 };
 
+struct FCascadedShadowsShaderCombination
+{
+    FCascadedShadowsShaderCombination()
+        : Hash(0)
+    {
+    }
+
+    bool operator==(const FCascadedShadowsShaderCombination& Other) const
+    {
+        return Hash == Other.Hash;
+    }
+
+    bool operator!=(const FCascadedShadowsShaderCombination& Other) const
+    {
+        return Hash == Other.Hash;
+    }
+
+    friend uint64 GetHashForType(const FCascadedShadowsShaderCombination& Value)
+    {
+        return Value.Hash;
+    }
+
+    union
+    {
+        struct
+        {
+            // Type of RenderPass
+            ECascadeRenderPassType RenderPassType;
+
+            // Material-flags
+            int32 MaterialFlags;
+        };
+
+        uint64 Hash;
+    };
+};
+
 class FCascadedShadowsRenderPass : public FRenderPass
 {
 public:
     FCascadedShadowsRenderPass(FSceneRenderer* InRenderer);
     virtual ~FCascadedShadowsRenderPass();
 
-    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final;
+    virtual void InitializePipelineState(FMaterial* Material, const FFrameResources& FrameResources) override final { }
+
+    // This function creates or retrieves a pipeline state instance based on parameters
+    FGraphicsPipelineStateInstance* CompilePipelineStateInstance(ECascadeRenderPassType RenderPassType, FMaterial* Material, const FFrameResources& FrameResources);
 
     bool Initialize(FFrameResources& Resources);
     bool CreateResources(FFrameResources& Resources);
     void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
 
 private:
-    TMap<int32, FGraphicsPipelineStateInstance> MaterialPSOs;
+    template<ECascadeRenderPassType RenderPassType>
+    void Execute(FRHICommandList& CommandList, const FFrameResources& Resources, FScene* Scene);
+
+    TMap<FCascadedShadowsShaderCombination, FGraphicsPipelineStateInstance> MaterialPSOs;
     FRHIBufferRef PerCascadeBuffer;
 };
 

@@ -15,11 +15,17 @@
 #ifndef MAX_CASCADES
     #define MAX_CASCADES (4)
 #endif
+#ifndef ENABLE_CASCADE_VS_INSTANCING
+    #define ENABLE_CASCADE_VS_INSTANCING (0)
+#endif
 #ifndef ENABLE_CASCADE_GS_INSTANCING
     #define ENABLE_CASCADE_GS_INSTANCING (0)
 #endif
 #ifndef ENABLE_CASCADE_VIEW_INSTANCING
     #define ENABLE_CASCADE_VIEW_INSTANCING (0)
+#endif
+#if !ENABLE_CASCADE_VS_INSTANCING && !ENABLE_CASCADE_GS_INSTANCING && !ENABLE_CASCADE_VIEW_INSTANCING
+    #define ENABLE_CASCADE_MULTI_PASS (1)
 #endif
 
 // PointLight defines
@@ -32,16 +38,14 @@
 #ifndef ENABLE_POINTLIGHT_GS_INSTANCING
     #define ENABLE_POINTLIGHT_GS_INSTANCING (0)
 #endif
-#ifndef ENABLE_POINTLIGHT_VIEW_INSTANCING
-    #define ENABLE_POINTLIGHT_VIEW_INSTANCING (0)
-#endif
-#if !ENABLE_POINTLIGHT_VS_INSTANCING && !ENABLE_POINTLIGHT_GS_INSTANCING && !ENABLE_POINTLIGHT_VIEW_INSTANCING
+#if !ENABLE_POINTLIGHT_VS_INSTANCING && !ENABLE_POINTLIGHT_GS_INSTANCING
     #define ENABLE_POINTLIGHT_MULTI_PASS (1)
 #endif
 
-// Workaround on NVIDIA
-#if SHADER_LANG == SHADER_LANG_HLSL
-    #define ENABLE_RENDER_TARGET_VIEW_INDEX (1)
+// NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
+// and have the RenderTargetArrayIndex inside the PSO to be set to BaseLayer which then gets offset by using SV_RenderTargetArrayIndex
+#if ENABLE_CASCADE_VIEW_INSTANCING && SHADER_LANG == SHADER_LANG_HLSL
+    #define ENABLE_VIEW_INSTANCING_WORK_AROUND (1)
 #endif
 
 struct FPerCascade
@@ -52,7 +56,7 @@ struct FPerCascade
     int Padding2;
 };
 
-// PerObject
+// Per-object
 SHADER_CONSTANT_BLOCK_BEGIN
     float4x4 WorldModelMatrix;
 SHADER_CONSTANT_BLOCK_END
@@ -66,26 +70,22 @@ SHADER_CONSTANT_BLOCK_END
 StructuredBuffer<FCascadeMatrices> CascadeMatrixBuffer : register(t0);
 
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
-    ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
     SamplerState MaterialSampler : register(s0);
 
-#if ENABLE_ALPHA_MASK
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    Texture2D<float4> AlphaMaskTex : register(t0);
-#else
-    Texture2D<float> AlphaMaskTex : register(t0);
-#endif
-#endif
+    ConstantBuffer<FMaterial> MaterialBuffer : register(b1);
 
-#if ENABLE_PARALLAX_MAPPING
-    Texture2D<float> HeightMap : register(t1);
-#endif
-#endif
+    #if ENABLE_ALPHA_MASK
+        #if ENABLE_PACKED_MATERIAL_TEXTURE
+            Texture2D<float4> AlphaMaskTex : register(t0);
+        #else
+            Texture2D<float> AlphaMaskTex : register(t0);
+        #endif
+    #endif
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Cascade Shadow Generation
-
-// VertexShader
+    #if ENABLE_PARALLAX_MAPPING
+        Texture2D<float> HeightMap : register(t1);
+    #endif
+#endif
 
 struct FVSInput
 {
@@ -95,14 +95,21 @@ struct FVSInput
     float2 TexCoord : TEXCOORD0;
 #endif
 
-#if ENABLE_CASCADE_VIEW_INSTANCING || ENABLE_POINTLIGHT_VIEW_INSTANCING
+// For view-instancing
+#if ENABLE_CASCADE_VIEW_INSTANCING
     uint ViewID : SV_ViewID;
 #endif
 
-#if ENABLE_POINTLIGHT_VS_INSTANCING || ENABLE_POINTLIGHT_VIEW_INSTANCING
+// For vertex-shader instancing
+#if ENABLE_CASCADE_VS_INSTANCING || ENABLE_POINTLIGHT_VS_INSTANCING
     uint InstanceID : SV_InstanceID;
 #endif
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Cascade Shadow Generation
+
+// VertexShader
 
 struct FVSCascadeOutput
 {
@@ -110,15 +117,15 @@ struct FVSCascadeOutput
     float2 TexCoord : TEXCOORD0;
 #endif
 
+// For geometry-shader instancing we output the worldposition to GS otherwise we want to output final position directly
 #if ENABLE_CASCADE_GS_INSTANCING
-    float4 Position : POSITION0;
+    float4 WorldPosition : POSITION0;
 #else
     float4 Position : SV_Position;
 #endif
 
-// NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
-// and have the RenderTargetArrayIndex inside the PSO to be set to BaseLayer which then gets offset by using SV_RenderTargetArrayIndex
-#if ENABLE_CASCADE_VIEW_INSTANCING && ENABLE_RENDER_TARGET_VIEW_INDEX
+// For vertex-shader instancing, we write directly what layer we want to write to
+#if ENABLE_CASCADE_VS_INSTANCING || ENABLE_VIEW_INSTANCING_WORK_AROUND
     uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;
 #endif
 };
@@ -133,21 +140,31 @@ FVSCascadeOutput Cascade_VSMain(FVSInput Input)
 
     const float4 WorldPosition = mul(float4(Input.Position, 1.0f), Constants.WorldModelMatrix);
 
+// Geometry shader instancing
 #if ENABLE_CASCADE_GS_INSTANCING
-    Output.Position = WorldPosition;
+    Output.WorldPosition = WorldPosition;
 #else
+
+// View-instancing
 #if ENABLE_CASCADE_VIEW_INSTANCING
     const int CascadeIndex = min(Input.ViewID, MAX_CASCADES - 1);
-#if ENABLE_RENDER_TARGET_VIEW_INDEX
-    Output.RenderTargetArrayIndex = CascadeIndex;
-#endif
-#else
+// Vertex-shader instancing
+#elif ENABLE_CASCADE_VS_INSTANCING
+    const int CascadeIndex = min(Input.InstanceID, MAX_CASCADES - 1);
+// Regular multi-pass
+#elif ENABLE_CASCADE_MULTI_PASS
     const int CascadeIndex = min(PerCascadeBuffer.CascadeIndex, MAX_CASCADES - 1);
 #endif
 
+// Work-around using HLSL (Otherwise it does not work on NVIDIA hardware)
+#if ENABLE_CASCADE_VS_INSTANCING || ENABLE_VIEW_INSTANCING_WORK_AROUND
+    Output.RenderTargetArrayIndex = CascadeIndex;
+#endif
+
+    // Unless we use a geometry-shader we transform the world-position here
     const float4x4 LightViewProjection = CascadeMatrixBuffer[CascadeIndex].ViewProj;
     Output.Position = mul(WorldPosition, LightViewProjection);
-#endif
+#endif // ENABLE_CASCADE_GS_INSTANCING
 
     return Output;
 }
@@ -193,7 +210,7 @@ void Cascade_GSMain(triangle FVSCascadeOutput Input[3], inout TriangleStream<FGS
         OutStream.RestartStrip();
     }
 }
-#endif
+#endif // ENABLE_CASCADE_GS_INSTANCING
 
 // PixelShader
 
@@ -209,19 +226,21 @@ void Cascade_PSMain(FPSCascadeInput Input)
     TexCoords.y = 1.0f - TexCoords.y;
 
     // TODO: Perform Parallax mapping
+
 #if ENABLE_ALPHA_MASK
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
-#else
-    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).r;        
-#endif
+    #if ENABLE_PACKED_MATERIAL_TEXTURE
+        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
+    #else
+        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).r;        
+    #endif
+
     [[branch]]
     if (AlphaMask < 0.5f)
     {
         discard;
     }
-#endif
-#endif
+#endif // ENABLE_ALPHA_MASK
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -238,15 +257,6 @@ struct FSinglePassPointLightBuffer
 };
 
 ConstantBuffer<FSinglePassPointLightBuffer> PointLightBuffer : register(b0);
-#elif ENABLE_POINTLIGHT_VIEW_INSTANCING
-struct FTwoPassPointLightBuffer
-{
-    float4x4 LightProjections[NUM_CUBE_FACES_HALF];
-    float3   LightPosition;
-    float    LightFarPlane;
-};
-
-ConstantBuffer<FTwoPassPointLightBuffer> PointLightBuffer : register(b0);
 #else
 struct FPointLightBuffer
 {
@@ -256,27 +266,21 @@ struct FPointLightBuffer
 };
 
 ConstantBuffer<FPointLightBuffer> PointLightBuffer : register(b0);
-#endif
+#endif // ENABLE_POINTLIGHT_VS_INSTANCING || ENABLE_POINTLIGHT_GS_INSTANCING
 
 struct FVSPointOutput
 {
+    float3 WorldPosition : POSITION0;
+
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
-
-    float3 WorldPosition : POSITION0;
 
 #if !ENABLE_POINTLIGHT_GS_INSTANCING
     float4 Position : SV_Position;
 #endif
 
-#if ENABLE_POINTLIGHT_VS_INSTANCING
-    uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;
-#endif
-
-// NOTE: This is a workaround for NVIDIA using D3D12, for some reason we have to write to SV_RenderTargetArrayIndex
-// and have the RenderTargetArrayIndex inside the PSO to be set to BaseLayer which then gets offset by using SV_RenderTargetArrayIndex
-#if ENABLE_POINTLIGHT_VIEW_INSTANCING && ENABLE_RENDER_TARGET_VIEW_INDEX
+#if ENABLE_POINTLIGHT_VS_INSTANCING || ENABLE_VIEW_INSTANCING_WORK_AROUND
     uint RenderTargetArrayIndex : SV_RenderTargetArrayIndex;
 #endif
 };
@@ -292,17 +296,7 @@ FVSPointOutput Point_VSMain(FVSInput Input)
     Output.TexCoord = Input.TexCoord;
 #endif
 
-// View-instancing
-#if ENABLE_POINTLIGHT_VIEW_INSTANCING
-    Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[Input.ViewID]);
-
-    // Work-around using HLSL (Otherwise it does not work on NVIDIA hardware)
-#if ENABLE_RENDER_TARGET_VIEW_INDEX
-    Output.RenderTargetArrayIndex = Input.ViewID;
-#endif
-#endif
-
-// VS instancing
+// Vertex-shader instancing
 #if ENABLE_POINTLIGHT_VS_INSTANCING
     const uint FaceIndex = clamp(Input.InstanceID, 0, 5);
     Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[FaceIndex]);
@@ -328,7 +322,7 @@ struct FGSPointOutput
 #endif
 
     float3 WorldPosition : POSITION0;
-    float4 Position : SV_Position;
+    float4 Position      : SV_Position;
 
     // Index into what ArraySlice we want to write into
     uint RenderTargetViewIndex : SV_RenderTargetArrayIndex;
@@ -361,17 +355,17 @@ void Point_GSMain(triangle FVSPointOutput Input[3], inout TriangleStream<FGSPoin
         OutStream.RestartStrip();
     }
 }
-#endif
+#endif // ENABLE_POINTLIGHT_GS_INSTANCING
 
 // PixelShader
 
 struct FPSPointInput
 {
+    float3 WorldPosition : POSITION0;
+
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
-
-    float3 WorldPosition : POSITION0;
 };
 
 float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
@@ -382,19 +376,20 @@ float Point_PSMain(FPSPointInput Input) : SV_DepthLessEqual
 
     // TODO: Do parallax-mapping
 
-#if ENABLE_ALPHA_MASK
-#if ENABLE_PACKED_MATERIAL_TEXTURE
-    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
-#else
-    const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
-#endif
+#if ENABLE_ALPHA_MASK 
+    #if ENABLE_PACKED_MATERIAL_TEXTURE
+        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords).a;
+    #else
+        const float AlphaMask = AlphaMaskTex.Sample(MaterialSampler, TexCoords);
+    #endif
+
     [[branch]]
     if (AlphaMask < 0.5f)
     {
         discard;
     }
-#endif
-#endif
+#endif // ENABLE_ALPHA_MASK
+#endif // ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
 
     const float LightDistance = length(Input.WorldPosition.xyz - PointLightBuffer.LightPosition) / PointLightBuffer.LightFarPlane;
     return LightDistance;
