@@ -360,7 +360,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
     FVulkanHashableImageView HashableImageView;
     HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
     HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
-    HashableImageView.Format         = static_cast<uint8>(RenderTargetView.Format);
+    HashableImageView.Format         = RenderTargetView.Format;
     HashableImageView.MipLevel       = RenderTargetView.MipLevel;
 
     if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
@@ -420,7 +420,7 @@ void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView&
     FVulkanHashableImageView HashableImageView;
     HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
     HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
-    HashableImageView.Format         = static_cast<uint8>(DepthStencilView.Format);
+    HashableImageView.Format         = DepthStencilView.Format;
     HashableImageView.MipLevel       = DepthStencilView.MipLevel;
 
     if (FVulkanResourceView* ImageView = VulkanTexture->GetOrCreateImageView(HashableImageView))
@@ -540,7 +540,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
                 FVulkanHashableImageView HashableImageView;
                 HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
                 HashableImageView.NumArraySlices = RenderTargetView.NumArraySlices;
-                HashableImageView.Format         = static_cast<uint8>(RenderTargetView.Format);
+                HashableImageView.Format         = RenderTargetView.Format;
                 HashableImageView.MipLevel       = RenderTargetView.MipLevel;
 
                 // Get the image view
@@ -576,7 +576,7 @@ void FVulkanCommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& Be
             FVulkanHashableImageView HashableImageView;
             HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
             HashableImageView.NumArraySlices = DepthStencilView.NumArraySlices;
-            HashableImageView.Format         = static_cast<uint8>(DepthStencilView.Format);
+            HashableImageView.Format         = DepthStencilView.Format;
             HashableImageView.MipLevel       = DepthStencilView.MipLevel;
 
             // Get the image view

@@ -255,7 +255,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
         FD3D12HashableTextureView HashableView;
         HashableView.ArrayIndex     = RenderTargetView.ArrayIndex;
         HashableView.NumArraySlices = RenderTargetView.NumArraySlices;
-        HashableView.Format         = static_cast<uint8>(RenderTargetView.Format);
+        HashableView.Format         = RenderTargetView.Format;
         HashableView.MipLevel       = RenderTargetView.MipLevel;
 
         if (FD3D12RenderTargetViewRef* ExistingViewRef = RenderTargetViewMap.Find(HashableView))
@@ -355,7 +355,7 @@ FD3D12RenderTargetView* FD3D12Texture::GetOrCreateRenderTargetView(const FRHIRen
         FD3D12HashableTextureView HashableView;
         HashableView.ArrayIndex     = RenderTargetView.ArrayIndex;
         HashableView.NumArraySlices = RenderTargetView.NumArraySlices;
-        HashableView.Format         = static_cast<uint8>(RenderTargetView.Format);
+        HashableView.Format         = RenderTargetView.Format;
         HashableView.MipLevel       = RenderTargetView.MipLevel;
 
         RenderTargetViewMap.Add(HashableView, D3D12View);
@@ -393,7 +393,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
         FD3D12HashableTextureView HashableView;
         HashableView.ArrayIndex     = DepthStencilView.ArrayIndex;
         HashableView.NumArraySlices = DepthStencilView.NumArraySlices;
-        HashableView.Format         = static_cast<uint8>(DepthStencilView.Format);
+        HashableView.Format         = DepthStencilView.Format;
         HashableView.MipLevel       = DepthStencilView.MipLevel;
 
         if (FD3D12DepthStencilViewRef* ExistingViewRef = DepthStencilViewMap.Find(HashableView))
@@ -488,7 +488,7 @@ FD3D12DepthStencilView* FD3D12Texture::GetOrCreateDepthStencilView(const FRHIDep
         FD3D12HashableTextureView HashableView;
         HashableView.ArrayIndex     = DepthStencilView.ArrayIndex;
         HashableView.NumArraySlices = DepthStencilView.NumArraySlices;
-        HashableView.Format         = static_cast<uint8>(DepthStencilView.Format);
+        HashableView.Format         = DepthStencilView.Format;
         HashableView.MipLevel       = DepthStencilView.MipLevel;
 
         DepthStencilViewMap.Add(HashableView, D3D12View);

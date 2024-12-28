@@ -111,39 +111,37 @@ private:
 struct FVulkanHashableImageView
 {
     FVulkanHashableImageView()
-        : ArrayIndex(0)
-        , NumArraySlices(1)
-        , Format(0)
-        , MipLevel(0)
-        , Padding(0)
+        : Hash(0)
     {
     }
 
     bool operator==(const FVulkanHashableImageView& Other) const
     {
-        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableImageView)) == 0;
+        return Hash == Other.Hash;
     }
 
     bool operator!=(const FVulkanHashableImageView& Other) const
     {
-        return FMemory::Memcmp(this, &Other, sizeof(FVulkanHashableImageView)) != 0;
+        return Hash != Other.Hash;
     }
 
     friend uint64 GetHashForType(const FVulkanHashableImageView& Value)
     {
-        uint64 Hash = Value.ArrayIndex;
-        HashCombine(Hash, Value.NumArraySlices);
-        HashCombine(Hash, Value.Format);
-        HashCombine(Hash, Value.MipLevel);
-        HashCombine(Hash, Value.Padding);
-        return Hash;
+        return Value.Hash;
     }
 
-    uint16 ArrayIndex;
-    uint16 NumArraySlices;
-    uint8  Format;
-    uint8  MipLevel;
-    uint16 Padding;
+    union
+    {
+        struct
+        {
+            uint16  ArrayIndex;
+            uint16  NumArraySlices;
+            EFormat Format;
+            uint8   MipLevel;
+        };
+        
+        uint64 Hash;
+    };
 };
 
 static_assert(sizeof(FVulkanHashableImageView) == sizeof(uint64), "FVulkanHashableImageView should be the same size as uint64");

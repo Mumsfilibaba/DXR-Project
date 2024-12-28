@@ -66,9 +66,10 @@ public:
     }
 
 protected:
-    FD3D12ResourceRef                 Resource;
-    FD3D12ShaderResourceViewRef       ShaderResourceView;
-    FD3D12UnorderedAccessViewRef      UnorderedAccessView;
+    FD3D12ResourceRef            Resource;
+    FD3D12ShaderResourceViewRef  ShaderResourceView;
+    FD3D12UnorderedAccessViewRef UnorderedAccessView;
+
     TArray<FD3D12RenderTargetViewRef> RenderTargetViews;
     TArray<FD3D12DepthStencilViewRef> DepthStencilViews;
     TMap<FD3D12HashableTextureView, FD3D12RenderTargetViewRef> RenderTargetViewMap;
