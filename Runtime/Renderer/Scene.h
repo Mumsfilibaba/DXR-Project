@@ -65,13 +65,13 @@ struct FScenePointLight
 
     FPointLight*                  Light;
     FFrustum                      Frustums[RHI_NUM_CUBE_FACES];
+    FShadowData                   ShadowData[RHI_NUM_CUBE_FACES];
+    // Store data for each face
     TArray<FMeshBatch>            MeshBatches[RHI_NUM_CUBE_FACES];
     TArray<FProxySceneComponent*> Primitives[RHI_NUM_CUBE_FACES];
-    FShadowData                   ShadowData[RHI_NUM_CUBE_FACES];
+    // Store data for a single pass cube-map
     TArray<FMeshBatch>            SinglePassMeshBatch;
     TArray<FProxySceneComponent*> SinglePassPrimitives;
-    TArray<FMeshBatch>            TwoPassMeshBatches[2];
-    TArray<FProxySceneComponent*> TwoPassPrimitives[2];
 };
 
 struct FSceneDirectionalLight

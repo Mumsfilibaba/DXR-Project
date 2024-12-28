@@ -539,21 +539,6 @@ void FRendererSettingsWidget::DrawPointLightShadowSettings()
         ImGui::NextColumn();
     }
 
-    // Enable view-instancing
-    if (IConsoleVariable* CVarEnableViewInstancing = FConsoleManager::Get().FindConsoleVariable("Renderer.PointLights.EnableViewInstancing"))
-    {
-        ImGui::Text("Enable view instancing");
-        ImGui::NextColumn();
-
-        bool bEnableViewInstancing = CVarEnableViewInstancing->GetBool();
-        if (ImGui::Checkbox("##EnableViewInstancing", &bEnableViewInstancing))
-        {
-            CVarEnableViewInstancing->SetAsBool(bEnableViewInstancing, EConsoleVariableFlags::SetByCode);
-        }
-
-        ImGui::NextColumn();
-    }
-
     // Point-light shadow-map size
     if (IConsoleVariable* CVarPointLightShadowMapSize = FConsoleManager::Get().FindConsoleVariable("Renderer.Shadows.PointLightShadowMapSize"))
     {

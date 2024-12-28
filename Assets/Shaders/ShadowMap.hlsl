@@ -306,7 +306,7 @@ FVSPointOutput Point_VSMain(FVSInput Input)
 #if ENABLE_POINTLIGHT_VS_INSTANCING
     const uint FaceIndex = clamp(Input.InstanceID, 0, 5);
     Output.Position = mul(WorldPosition, PointLightBuffer.LightProjections[FaceIndex]);
-    Output.RenderTargetArrayIndex = Input.InstanceID;
+    Output.RenderTargetArrayIndex = FaceIndex;
 #endif
 
 // Multi-pass (One pass per face)

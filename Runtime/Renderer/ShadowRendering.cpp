@@ -3,6 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
+#include "RHI/RHIPipelineState.h"
 #include "Engine/Resources/Model.h"
 #include "Engine/Resources/Material.h"
 #include "Engine/World/Lights/PointLight.h"
@@ -21,12 +22,6 @@ static TAutoConsoleVariable<bool> CVarPointLightsEnableSinglePassRendering(
 static TAutoConsoleVariable<bool> CVarPointLightsEnableGeometryShaderInstancing(
     "Renderer.PointLights.EnableGeometryShaderInstancing",
     "Enables instancing in a geometry shader, enabling single-pass cube-map drawing, which creates less overhead on the CPU",
-    true,
-    EConsoleVariableFlags::Default);
-
-static TAutoConsoleVariable<bool> CVarPointLightsEnableViewInstancing(
-    "Renderer.PointLights.EnableViewInstancing",
-    "Enables view-instancing for cube-map rendering, enabling two-pass cube-map drawing, which creates less overhead on the CPU",
     true,
     EConsoleVariableFlags::Default);
 
@@ -103,7 +98,6 @@ FPointLightRenderPass::~FPointLightRenderPass()
     MaterialPSOs.Clear();
     PerShadowMapBuffer.Reset();
     SinglePassShadowMapBuffer.Reset();
-    TwoPassShadowMapBuffer.Reset();
 }
 
 void FPointLightRenderPass::InitializePipelineState(FMaterial* /* Material */, const FFrameResources& /* FrameResources */)
@@ -153,25 +147,16 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         {
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_VS_INSTANCING", "(1)");
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VIEW_INSTANCING", "(0)");
         }
-        else if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::SinglePassUsingGS)
+        else if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_VS_INSTANCING", "(0)");
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(1)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VIEW_INSTANCING", "(0)");
-        }
-        else if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::TwoPass)
-        {
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VIEW_INSTANCING", "(1)");
         }
         else
         {
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_VS_INSTANCING", "(0)");
             ShaderDefines.Emplace("ENABLE_POINTLIGHT_GS_INSTANCING", "(0)");
-            ShaderDefines.Emplace("ENABLE_POINTLIGHT_VIEW_INSTANCING", "(0)");
         }
 
         FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
@@ -189,7 +174,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
             return nullptr;
         }
 
-        if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::SinglePassUsingGS)
+        if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
             CompileInfo = FShaderCompileInfo("Point_GSMain", EShaderModel::SM_6_2, EShaderStage::Geometry, ShaderDefines);
             if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
@@ -297,13 +282,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
         PSOInitializer.PipelineFormats.DepthStencilFormat = FrameResources.ShadowMapFormat;
 
-        if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::TwoPass)
-        {
-            PSOInitializer.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
-            PSOInitializer.ViewInstancingInfo.NumArraySlices              = RHI_NUM_CUBE_FACES / 2;
-            PSOInitializer.ViewInstancingInfo.bEnableViewInstancing       = true;
-        }
-        else if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::SinglePassUsingGS)
+        if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
             PSOInitializer.ShaderState.GeometryShader = NewPipelineStateInstance.GeometryShader.Get();
         }
@@ -357,18 +336,6 @@ bool FPointLightRenderPass::Initialize(FFrameResources& Resources)
         SinglePassShadowMapBuffer->SetDebugName("Single-Pass ShadowMap Buffer");
     }
 
-    FRHIBufferInfo TwoPassShadowMapBufferInfo(sizeof(FTwoPassPointLightBufferHLSL), sizeof(FTwoPassPointLightBufferHLSL), EBufferUsageFlags::Default | EBufferUsageFlags::ConstantBuffer);
-    TwoPassShadowMapBuffer = RHICreateBuffer(TwoPassShadowMapBufferInfo, EResourceAccess::ConstantBuffer, nullptr);
-    if (!TwoPassShadowMapBuffer)
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-    else
-    {
-        TwoPassShadowMapBuffer->SetDebugName("Two-Pass ShadowMap Buffer");
-    }
-
     return CreateResources(Resources);
 }
 
@@ -397,21 +364,15 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     {
         constexpr uint32 MinViewInstanceCount = 4;
         
-        const bool bUseVSInstancing   = GRHISupportRenderTargetArrayIndexFromVertexShader && CVarPointLightsEnableSinglePassRendering.GetValue();
-        const bool bUseGSInstancing   = !bUseVSInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
-        const bool bUseViewInstancing = !bUseGSInstancing && GRHISupportsViewInstancing && GRHIMaxViewInstanceCount >= MinViewInstanceCount && CVarPointLightsEnableViewInstancing.GetValue();
-        
+        const bool bUseVSInstancing = GRHISupportRenderTargetArrayIndexFromVertexShader && CVarPointLightsEnableSinglePassRendering.GetValue();
+        const bool bUseGSInstancing = !bUseVSInstancing && GRHISupportsGeometryShaders && CVarPointLightsEnableGeometryShaderInstancing.GetValue();
         if (bUseVSInstancing)
         {
             return ECubeMapRenderPassType::SinglePass;
         }
         else if (bUseGSInstancing)
         {
-            return ECubeMapRenderPassType::SinglePassUsingGS;
-        }
-        else if (bUseViewInstancing)
-        {
-            return ECubeMapRenderPassType::TwoPass;
+            return ECubeMapRenderPassType::GeometryShaderSinglePass;
         }
         else
         {
@@ -434,13 +395,9 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     {
         Execute<ECubeMapRenderPassType::SinglePass>(CommandList, Resources, Scene);
     }
-    else if (RenderPassType == ECubeMapRenderPassType::SinglePassUsingGS)
+    else if (RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
     {
-        Execute<ECubeMapRenderPassType::SinglePassUsingGS>(CommandList, Resources, Scene);
-    }
-    else if (RenderPassType == ECubeMapRenderPassType::TwoPass)
-    {
-        Execute<ECubeMapRenderPassType::TwoPass>(CommandList, Resources, Scene);
+        Execute<ECubeMapRenderPassType::GeometryShaderSinglePass>(CommandList, Resources, Scene);
     }
     else if (RenderPassType == ECubeMapRenderPassType::MultiPass)
     {
@@ -458,129 +415,13 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     // Shader-structs
     FShadowPerObjectHLSL            ShadowPerObjectBuffer;
     FPerShadowMapHLSL               PerShadowMapData;
-    FTwoPassPointLightBufferHLSL    TwoPassPointLightBuffer;
     FSinglePassPointLightBufferHLSL SinglePassPointLightBuffer;
 
     // Clamp the number of shadow-casting point-lights
     const int32 NumPointLights = FMath::Min<int32>(Scene->PointLights.Size(), Resources.MaxPointLightShadows);
     
-    constexpr bool bIsSinglePass = RenderPassType == ECubeMapRenderPassType::SinglePass || RenderPassType == ECubeMapRenderPassType::SinglePassUsingGS;
-    if constexpr (RenderPassType == ECubeMapRenderPassType::TwoPass)
-    {
-        for (int32 LightIndex = 0; LightIndex < NumPointLights; ++LightIndex)
-        {
-            FScenePointLight* ScenePointLight = Scene->PointLights[LightIndex];
-
-            constexpr uint32 FacesPerPass = RHI_NUM_CUBE_FACES / 2;
-            for (int32 PassIndex = 0, FaceIndex = 0; FaceIndex < RHI_NUM_CUBE_FACES; FaceIndex += FacesPerPass, PassIndex++)
-            {
-                FScenePointLight::FShadowData& Data0 = ScenePointLight->ShadowData[FaceIndex + 0];
-                TwoPassPointLightBuffer.LightProjections[0] = Data0.Matrix;
-
-                FScenePointLight::FShadowData& Data1 = ScenePointLight->ShadowData[FaceIndex + 1];
-                TwoPassPointLightBuffer.LightProjections[1] = Data1.Matrix;
-                
-                FScenePointLight::FShadowData& Data2 = ScenePointLight->ShadowData[FaceIndex + 2];
-                TwoPassPointLightBuffer.LightProjections[2] = Data2.Matrix;
-                TwoPassPointLightBuffer.LightPosition       = Data0.Position;
-                TwoPassPointLightBuffer.LightFarPlane       = Data0.FarPlane;
-
-                CommandList.TransitionBuffer(TwoPassShadowMapBuffer.Get(), EResourceAccess::ConstantBuffer, EResourceAccess::CopyDest);
-                CommandList.UpdateBuffer(TwoPassShadowMapBuffer.Get(), FBufferRegion(0, sizeof(FTwoPassPointLightBufferHLSL)), &TwoPassPointLightBuffer);
-                CommandList.TransitionBuffer(TwoPassShadowMapBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
-
-                FRHIBeginRenderPassInfo RenderPass;
-                RenderPass.DepthStencilView                = FRHIDepthStencilView(Resources.PointLightShadowMaps.Get());
-                RenderPass.DepthStencilView.ArrayIndex     = static_cast<uint16>(LightIndex * RHI_NUM_CUBE_FACES + FaceIndex);
-                RenderPass.DepthStencilView.NumArraySlices = FacesPerPass;
-                RenderPass.DepthStencilView.LoadAction     = EAttachmentLoadAction::Clear;
-                RenderPass.DepthStencilView.StoreAction    = EAttachmentStoreAction::Store;
-                RenderPass.DepthStencilView.ClearValue     = FDepthStencilValue(1.0f, 0);
-
-                RenderPass.ViewInstancingInfo.bEnableViewInstancing       = true;
-                RenderPass.ViewInstancingInfo.StartRenderTargetArrayIndex = 0;
-                RenderPass.ViewInstancingInfo.NumArraySlices              = FacesPerPass;
-
-                CommandList.BeginRenderPass(RenderPass);
-
-                const uint32 PointLightShadowSize = Resources.PointLightShadowSize;
-                FViewportRegion ViewportRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0.0f, 0.0f, 0.0f, 1.0f);
-                CommandList.SetViewport(ViewportRegion);
-
-                FScissorRegion ScissorRegion(static_cast<float>(PointLightShadowSize), static_cast<float>(PointLightShadowSize), 0, 0);
-                CommandList.SetScissorRect(ScissorRegion);
-
-                for (const FMeshBatch& Batch : ScenePointLight->TwoPassMeshBatches[PassIndex])
-                {
-                    FMaterial* Material = Batch.Material;
-                    FGraphicsPipelineStateInstance* Instance = CompilePipelineStateInstance(RenderPassType, Material, Resources);
-                    if (!Instance)
-                    {
-                        DEBUG_BREAK();
-                    }
-
-                    FRHIGraphicsPipelineState* PipelineState = Instance->PipelineState.Get();
-                    CHECK(PipelineState  != nullptr);
-
-                    CommandList.SetGraphicsPipelineState(PipelineState);
-                    CommandList.SetConstantBuffer(Instance->VertexShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
-                    
-                    // If we have a pixel-shader, bind all resources that shader needs
-                    if (Instance->PixelShader)
-                    {
-                        CommandList.SetConstantBuffer(Instance->PixelShader.Get(), TwoPassShadowMapBuffer.Get(), 0);
-                        CommandList.SetSamplerState(Instance->PixelShader.Get(), Material->GetMaterialSampler(), 0);
-
-                        if (Material->HasAlphaMask())
-                        {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->GetAlphaMaskSRV(), 0);
-                        }
-                        if (Material->HasHeightMap())
-                        {
-                            CommandList.SetShaderResourceView(Instance->PixelShader.Get(), Material->HeightMap->GetShaderResourceView(), 1);
-                        }
-                    }
-
-                    for (const FMeshBatch::FMeshReference& MeshReference : Batch.Primitives)
-                    {
-                        FProxySceneComponent* Component = MeshReference.Primitive;
-                        if (Material->HasHeightMap() || Material->HasAlphaMask())
-                        {
-                            FRHIBuffer* VertexBuffers[] =
-                            {
-                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                                Component->Mesh->GetVertexBuffer(EVertexStream::TexCoords),
-                            };
-                            
-                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 2), 0);
-                        }
-                        else
-                        {
-                            FRHIBuffer* VertexBuffers[] =
-                            {
-                                Component->Mesh->GetVertexBuffer(EVertexStream::Positions),
-                            };
-                            
-                            CommandList.SetVertexBuffers(MakeArrayView(VertexBuffers, 1), 0);
-                        }
-
-                        CommandList.SetIndexBuffer(Component->IndexBuffer, Component->IndexFormat);
-
-                        ShadowPerObjectBuffer.WorldMatrix = Component->CurrentActor->GetTransform().GetTransformMatrix();
-                        ShadowPerObjectBuffer.WorldMatrix = ShadowPerObjectBuffer.WorldMatrix.GetTranspose();
-
-                        constexpr uint32 NumConstants = sizeof(FShadowPerObjectHLSL) / sizeof(uint32);
-                        CommandList.Set32BitShaderConstants(Instance->VertexShader.Get(), &ShadowPerObjectBuffer, NumConstants);
-
-                        CommandList.DrawIndexedInstanced(MeshReference.IndexCount, 1, MeshReference.StartIndex, 0, 0);
-                    }
-                }
-
-                CommandList.EndRenderPass();
-            }
-        }
-    }
-    else if constexpr (bIsSinglePass)
+    constexpr bool bIsSinglePass = RenderPassType == ECubeMapRenderPassType::SinglePass || RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass;
+    if constexpr (bIsSinglePass)
     {
         for (int32 LightIndex = 0; LightIndex < NumPointLights; ++LightIndex)
         {
