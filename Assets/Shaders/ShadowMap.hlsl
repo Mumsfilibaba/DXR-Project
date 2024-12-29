@@ -203,7 +203,7 @@ void Cascade_GSMain(triangle FVSCascadeOutput Input[3], inout TriangleStream<FGS
             Output.TexCoord = Input[Vertex].TexCoord;
         #endif
 
-            Output.Position = mul(Input[Vertex].Position, LightViewProjection);
+            Output.Position = mul(Input[Vertex].WorldPosition, LightViewProjection);
             OutStream.Append(Output);
         }
 
@@ -317,12 +317,13 @@ FVSPointOutput Point_VSMain(FVSInput Input)
 #if ENABLE_POINTLIGHT_GS_INSTANCING
 struct FGSPointOutput
 {
+    float3 WorldPosition : POSITION0;
+
 #if ENABLE_ALPHA_MASK || ENABLE_PARALLAX_MAPPING
     float2 TexCoord : TEXCOORD0;
 #endif
 
-    float3 WorldPosition : POSITION0;
-    float4 Position      : SV_Position;
+    float4 Position : SV_Position;
 
     // Index into what ArraySlice we want to write into
     uint RenderTargetViewIndex : SV_RenderTargetArrayIndex;

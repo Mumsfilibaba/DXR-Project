@@ -10,7 +10,7 @@ static TAutoConsoleVariable<bool> CVarDrawSettingsWindow(
     false);
 
 // Same column size for all different types
-static constexpr float ColumnWidth = 260.0f;
+static constexpr float ColumnWidth = 400.0f;
 
 FRendererSettingsWidget::FRendererSettingsWidget()
     : ImGuiDelegateHandle()
@@ -84,7 +84,7 @@ void FRendererSettingsWidget::Draw()
             }
 
             // Temporal AA
-            if (ImGui::CollapsingHeader("Temporal AA", ImGuiTreeNodeFlags_None))
+            if (ImGui::CollapsingHeader("Temporal Anti-aliasing (TAA)", ImGuiTreeNodeFlags_None))
             {
                 DrawTAASettings();
             }
@@ -275,10 +275,25 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::NextColumn();
     }
 
+    // Enable single-pass shadow map rendering
+    if (IConsoleVariable* CVarEnableSinglePassRendering = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableSinglePassRendering"))
+    {
+        ImGui::Text("Enable single-pass cascade rendering");
+        ImGui::NextColumn();
+
+        bool bEnableSinglePassRendering = CVarEnableSinglePassRendering->GetBool();
+        if (ImGui::Checkbox("##EnableSinglePassRendering", &bEnableSinglePassRendering))
+        {
+            CVarEnableSinglePassRendering->SetAsBool(bEnableSinglePassRendering, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
     // Enable geometry-shader instancing
     if (IConsoleVariable* CVarEnableGeometryShaderInstancing = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableGeometryShaderInstancing"))
     {
-        ImGui::Text("Enable geometry-shader instancing");
+        ImGui::Text("Enable single-pass cascade rendering (Geometry-Shaders)");
         ImGui::NextColumn();
 
         bool bEnableGeometryShaderInstancing = CVarEnableGeometryShaderInstancing->GetBool();
@@ -293,7 +308,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
     // Enable view instancing
     if (IConsoleVariable* CVarEnableViewInstancing = FConsoleManager::Get().FindConsoleVariable("Renderer.CSM.EnableViewInstancing"))
     {
-        ImGui::Text("Enable view instancing");
+        ImGui::Text("Enable single-pass cascade rendering (View-instancing)");
         ImGui::NextColumn();
 
         bool bEnableViewInstancing = CVarEnableViewInstancing->GetBool();
@@ -524,10 +539,25 @@ void FRendererSettingsWidget::DrawPointLightShadowSettings()
         ImGui::NextColumn();
     }
 
+    // Enable single-pass shadow-map generation
+    if (IConsoleVariable* CVarEnableSinglePassRendering = FConsoleManager::Get().FindConsoleVariable("Renderer.PointLights.EnableSinglePassRendering"))
+    {
+        ImGui::Text("Enable single-pass cube-map generation");
+        ImGui::NextColumn();
+
+        bool bEnableSinglePassRendering = CVarEnableSinglePassRendering->GetBool();
+        if (ImGui::Checkbox("##EnableSinglePassRendering", &bEnableSinglePassRendering))
+        {
+            CVarEnableSinglePassRendering->SetAsBool(bEnableSinglePassRendering, EConsoleVariableFlags::SetByCode);
+        }
+
+        ImGui::NextColumn();
+    }
+
     // Enable geometry-shader instancing
     if (IConsoleVariable* CVarEnableGeometryShaderInstancing = FConsoleManager::Get().FindConsoleVariable("Renderer.PointLights.EnableGeometryShaderInstancing"))
     {
-        ImGui::Text("Enable geometry-shader instancing");
+        ImGui::Text("Enable single-pass cube-map generation (Geometry-Shaders)");
         ImGui::NextColumn();
 
         bool bEnableGeometryShaderInstancing = CVarEnableGeometryShaderInstancing->GetBool();

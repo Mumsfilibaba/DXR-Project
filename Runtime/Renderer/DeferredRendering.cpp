@@ -1030,7 +1030,7 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     LightPassSettings.ScreenWidth                 = static_cast<int32>(RenderWidth);
     LightPassSettings.ScreenHeight                = static_cast<int32>(RenderHeight);
 
-    // Enable point-light shadows
+    // Enable point-light shadows based on CVar
     if (IConsoleVariable* CVarEnablePointLightShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.PointLightShadows"))
     {
         LightPassSettings.bEnablePointLightShadows = CVarEnablePointLightShadows->GetInt();
@@ -1038,6 +1038,13 @@ void FTiledLightPass::Execute(FRHICommandList& CommandList, const FFrameResource
     else
     {
         LightPassSettings.bEnablePointLightShadows = 1;
+    }
+
+    // ... also check the shadows CVar if the shadows should be enabled or not
+    if (IConsoleVariable* CVarEnableShadows = FConsoleManager::Get().FindConsoleVariable("Renderer.Feature.Shadows"))
+    {
+        const int32 ShadowSetting = CVarEnableShadows->GetInt();
+        LightPassSettings.bEnablePointLightShadows = LightPassSettings.bEnablePointLightShadows & ShadowSetting;
     }
 
     constexpr uint32 NumConstants = sizeof(FLightPassSettingsHLSL) / sizeof(uint32);
