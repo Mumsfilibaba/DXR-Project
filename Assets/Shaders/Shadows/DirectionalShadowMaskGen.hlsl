@@ -1,8 +1,8 @@
-#include "Structs.hlsli"
-#include "Random.hlsli"
-#include "Helpers.hlsli"
-#include "Poisson.hlsli"
-#include "Halton.hlsli"
+#include "../Structs.hlsli"
+#include "../Random.hlsli"
+#include "../Helpers.hlsli"
+#include "../Poisson.hlsli"
+#include "../Halton.hlsli"
 
 #ifndef NUM_THREADS
     #define NUM_THREADS 16

@@ -1,10 +1,10 @@
 #ifndef SHADOW_HELPERS_HLSLI
 #define SHADOW_HELPERS_HLSLI
 
-#include "Structs.hlsli"
-#include "Helpers.hlsli"
-#include "Random.hlsli"
-#include "Poisson.hlsli"
+#include "../Structs.hlsli"
+#include "../Helpers.hlsli"
+#include "../Random.hlsli"
+#include "../Poisson.hlsli"
 
 /*
 * Calculate PointLight Shadow

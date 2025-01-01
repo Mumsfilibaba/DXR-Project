@@ -29,7 +29,7 @@ static TAutoConsoleVariable<bool> CVarRecompileSPIRV(
 static TAutoConsoleVariable<bool> CVarRecompileDebugOutputGLSL(
     "RHI.ShaderCompiler.DebugOutputGLSL",
     "When recompiling the SPIR-V, we use GLSL as a intermediate language in order to workaround a matrix issue, if this CVar is true we output that GLSL to a file.",
-    true);
+    false);
 
 enum class EDXCPart
 {
@@ -54,11 +54,11 @@ static LPCWSTR GetShaderStageString(EShaderStage Stage)
 {
     switch (Stage)
     {
-        // Compute
+        // Compute Pipeline
         case EShaderStage::Compute:
             return L"cs";
 
-        // Graphics
+        // Vertex Pipeline
         case EShaderStage::Vertex:
             return L"vs";
         case EShaderStage::Hull:
@@ -70,13 +70,13 @@ static LPCWSTR GetShaderStageString(EShaderStage Stage)
         case EShaderStage::Pixel:
             return L"ps";
 
-        // New Graphics Pipeline
+        // Mesh-shading Pipeline
         case EShaderStage::Mesh:
             return L"ms";
         case EShaderStage::Amplification:
             return L"as";
 
-        // Ray tracing
+        // Ray-tracing Pipeline
         case EShaderStage::RayGen:
         case EShaderStage::RayAnyHit:
         case EShaderStage::RayClosestHit:
@@ -84,7 +84,7 @@ static LPCWSTR GetShaderStageString(EShaderStage Stage)
         case EShaderStage::RayCallable:
         case EShaderStage::RayMiss:
             return L"lib";
-            
+
         default:
             return L"xxx";
     }
@@ -94,15 +94,24 @@ static LPCWSTR GetShaderModelString(EShaderModel Model)
 {
     switch (Model)
     {
-        case EShaderModel::SM_6_0: return L"6_0";
-        case EShaderModel::SM_6_1: return L"6_1";
-        case EShaderModel::SM_6_2: return L"6_2";
-        case EShaderModel::SM_6_3: return L"6_3";
-        case EShaderModel::SM_6_4: return L"6_4";
-        case EShaderModel::SM_6_5: return L"6_5";
-        case EShaderModel::SM_6_6: return L"6_6";
-        case EShaderModel::SM_6_7: return L"6_7";
-        default:                   return L"0_0";
+        case EShaderModel::SM_6_0:
+            return L"6_0";
+        case EShaderModel::SM_6_1:
+            return L"6_1";
+        case EShaderModel::SM_6_2:
+            return L"6_2";
+        case EShaderModel::SM_6_3:
+            return L"6_3";
+        case EShaderModel::SM_6_4:
+            return L"6_4";
+        case EShaderModel::SM_6_5:
+            return L"6_5";
+        case EShaderModel::SM_6_6:
+            return L"6_6";
+        case EShaderModel::SM_6_7:
+            return L"6_7";
+        default:
+            return L"0_0";
     }
 }
 
@@ -111,15 +120,24 @@ static glslang_stage_t GetGlslangStage(EShaderStage ShaderStage)
     switch (ShaderStage)
     {
         // Graphics
-        case EShaderStage::Vertex:   return GLSLANG_STAGE_VERTEX;
-        case EShaderStage::Hull:     return GLSLANG_STAGE_TESSCONTROL;
-        case EShaderStage::Domain:   return GLSLANG_STAGE_TESSEVALUATION;
-        case EShaderStage::Geometry: return GLSLANG_STAGE_GEOMETRY;
-        case EShaderStage::Pixel:    return GLSLANG_STAGE_FRAGMENT;
+        case EShaderStage::Vertex:
+            return GLSLANG_STAGE_VERTEX;
+        case EShaderStage::Hull:
+            return GLSLANG_STAGE_TESSCONTROL;
+        case EShaderStage::Domain:
+            return GLSLANG_STAGE_TESSEVALUATION;
+        case EShaderStage::Geometry:
+            return GLSLANG_STAGE_GEOMETRY;
+        case EShaderStage::Pixel:
+            return GLSLANG_STAGE_FRAGMENT;
+
         // Compute
-        case EShaderStage::Compute:  return GLSLANG_STAGE_COMPUTE;
+        case EShaderStage::Compute:
+            return GLSLANG_STAGE_COMPUTE;
+
         // Other
-        default: return glslang_stage_t(-1);
+        default:
+            return glslang_stage_t(-1);
     }
 }
 

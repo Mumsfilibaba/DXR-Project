@@ -1,8 +1,8 @@
 #include "PBRHelpers.hlsli"
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
-#include "ShadowHelpers.hlsli"
 #include "Tonemapping.hlsli"
+#include "Shadows/ShadowHelpers.hlsli"
 
 // Per Frame Buffers
 

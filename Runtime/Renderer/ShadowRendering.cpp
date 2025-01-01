@@ -162,7 +162,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
 
         FShaderCompileInfo CompileInfo("Point_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return nullptr;
@@ -179,7 +179,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         if (ShaderCombination.RenderPassType == ECubeMapRenderPassType::GeometryShaderSinglePass)
         {
             CompileInfo = FShaderCompileInfo("Point_GSMain", EShaderModel::SM_6_2, EShaderStage::Geometry, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return nullptr;
@@ -194,7 +194,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         }
 
         CompileInfo = FShaderCompileInfo("Point_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/PointLightShadows.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return nullptr;
@@ -858,7 +858,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         }
 
         FShaderCompileInfo CompileInfo("Cascade_VSMain", EShaderModel::SM_6_2, EShaderStage::Vertex, ShaderDefines);
-        if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+        if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
         {
             DEBUG_BREAK();
             return nullptr;
@@ -875,7 +875,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         if (RenderPassType == ECascadeRenderPassType::GeometryShaderSinglePass)
         {
             CompileInfo = FShaderCompileInfo("Cascade_GSMain", EShaderModel::SM_6_2, EShaderStage::Geometry, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return nullptr;
@@ -893,7 +893,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         if (bWantPixelShader)
         {
             CompileInfo = FShaderCompileInfo("Cascade_PSMain", EShaderModel::SM_6_2, EShaderStage::Pixel, ShaderDefines);
-            if (!FShaderCompiler::Get().CompileFromFile("Shaders/ShadowMap.hlsl", CompileInfo, ShaderCode))
+            if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/CascadedShadows.hlsl", CompileInfo, ShaderCode))
             {
                 DEBUG_BREAK();
                 return nullptr;
@@ -1593,7 +1593,7 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     DebugName += ")";
 
     FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, Defines);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
+    if (!FShaderCompiler::Get().CompileFromFile("Shaders/Shadows/DirectionalShadowMaskGen.hlsl", CompileInfo, ShaderCode))
     {
         DEBUG_BREAK();
         return false;

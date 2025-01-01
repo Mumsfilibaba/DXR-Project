@@ -1,9 +1,9 @@
 #include "PBRHelpers.hlsli"
-#include "ShadowHelpers.hlsli"
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 #include "Poisson.hlsli"
+#include "Shadows/ShadowHelpers.hlsli"
 
 #define NUM_THREADS        (16)
 #define TOTAL_THREAD_COUNT (NUM_THREADS * NUM_THREADS)
