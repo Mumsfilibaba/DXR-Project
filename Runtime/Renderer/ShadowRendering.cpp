@@ -58,7 +58,7 @@ static TAutoConsoleVariable<int32> CVarCSMFilterFunction(
 static TAutoConsoleVariable<int32> CVarCSMFilterSize(
     "Renderer.CSM.FilterSize",
     "Size of the filter for the Cascaded Shadow Maps",
-    196,
+    256,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMMaxFilterSize(
@@ -70,7 +70,7 @@ static TAutoConsoleVariable<int32> CVarCSMMaxFilterSize(
 static TAutoConsoleVariable<int32> CVarCSMNumPoissonDiscSamples(
     "Renderer.CSM.NumPoissonDiscSamples",
     "Number Poisson Samples to use when sampling the Cascaded Shadow Maps using a Poisson Disc",
-    128,
+    32,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<bool> CVarCSMRotateSamples(

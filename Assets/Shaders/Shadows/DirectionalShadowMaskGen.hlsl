@@ -21,15 +21,6 @@
     #define FILTER_MODE_PCF_POISSION_DISC 1
 #endif
 
-// PCF grid settings
-#ifndef FILTER_SIZE
-    #define FILTER_SIZE 256
-#endif
-
-#ifndef MAX_FILTER_SIZE
-    #define MAX_FILTER_SIZE 512
-#endif
-
 // Poisson Disc Settings
 #ifndef NUM_PCF_SAMPLES
     #define NUM_PCF_SAMPLES 128
@@ -58,11 +49,11 @@
 
 // Camera and Light
 #if SHADER_LANG == SHADER_LANG_MSL
-ConstantBuffer<FCamera> CameraBuffer : register(b2);
+ConstantBuffer<FCamera>           CameraBuffer : register(b2);
 ConstantBuffer<FDirectionalLight> LightBuffer  : register(b3);
 #else
-ConstantBuffer<FCamera> CameraBuffer : register(b0);
-ConstantBuffer<FDirectionalLight> LightBuffer : register(b1);
+ConstantBuffer<FCamera>           CameraBuffer : register(b0);
+ConstantBuffer<FDirectionalLight> LightBuffer  : register(b1);
 #endif
 
 struct FDirectionalShadowSettings
@@ -76,7 +67,7 @@ struct FDirectionalShadowSettings
 ConstantBuffer<FDirectionalShadowSettings> SettingsBuffer : register(b2);
 
 // Shadow information
-StructuredBuffer<FCascadeSplit> ShadowSplitsBuffer : register(t1);
+StructuredBuffer<FCascadeSplit>    ShadowSplitsBuffer   : register(t1);
 StructuredBuffer<FCascadeMatrices> ShadowMatricesBuffer : register(t0);
 
 // G-Buffer
@@ -236,8 +227,9 @@ float ShadowAmountSimple(uint CascadeIndex, float2 ShadowPosition, float BiasedD
 
 float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Normal, inout uint RandomSeed)
 {
-    ShadowPosition += ShadowSplitsBuffer[CascadeIndex].Offsets.xyz;
-    ShadowPosition *= ShadowSplitsBuffer[CascadeIndex].Scale.xyz;
+    FCascadeSplit CascadeSplit = ShadowSplitsBuffer[CascadeIndex];
+    ShadowPosition += CascadeSplit.Offsets.xyz;
+    ShadowPosition *= CascadeSplit.Scale.xyz;
 
     // Biased Depth
 #if USE_RECEIVER_PLANE_DEPTH_BIAS
@@ -245,9 +237,9 @@ float CascadeShadowAmount(uint CascadeIndex, float3 ShadowPosition, float3 Norma
     const float2 TexelSize         = 1.0 / ShadowMapSize;
     const float  BiasedDepth       = ShadowPosition.z - Bias;
 #else
-    const float NDotL       = dot(Normal, LightBuffer.Direction); 
+    const float NDotL       = saturate(dot(Normal, LightBuffer.Direction)); 
     const float BiasScale   = (1.0 - NDotL);
-    const float ShadowBias  = max(max(0.0001, LightBuffer.ShadowBias), BiasScale * max(0.0005, LightBuffer.MaxShadowBias));
+    const float ShadowBias  = min(max(0.0001, LightBuffer.ShadowBias), BiasScale * max(0.0005, LightBuffer.MaxShadowBias));
     const float BiasedDepth = ShadowPosition.z - ShadowBias;
 #endif
 
@@ -265,28 +257,32 @@ float ComputeShadow(float3 WorldPosition, float3 Normal, float Depth, inout uint
     // Calculate z-position in view-space
     const float  ViewPosZ           = Depth_ProjToView(Depth, CameraBuffer.ProjectionInv);
     const float3 ProjectionPosition = mul(float4(WorldPosition, 1.0), LightBuffer.ShadowMatrix).xyz;
-    
+
     // Find current cascade
-    CascadeIndex = NUM_SHADOW_CASCADES - 1;
-    for (int Index = CascadeIndex; Index >= 0; --Index)
+    CascadeIndex = 0;
+    for (int Index = 0; Index < NUM_SHADOW_CASCADES; ++Index)
     {
+        FCascadeSplit CascadeSplit = ShadowSplitsBuffer[Index];
+
     #if SELECT_CASCADE_FROM_PROJECTION
-        const float4 Offsets = ShadowSplitsBuffer[Index].Offsets;
-        const float4 Scale   = ShadowSplitsBuffer[Index].Scale;
+        const float4 Offsets = CascadeSplit.Offsets;
+        const float4 Scale   = CascadeSplit.Scale;
 
         float3 CascadePosition = ProjectionPosition + Offsets.xyz;
         CascadePosition *= Scale.xyz;
         CascadePosition  = abs(CascadePosition - 0.5);
-        
-        if(all(CascadePosition <= 0.5))
+
+        if (all(CascadePosition <= 0.5))
         {
             CascadeIndex = Index;
+            break; // Exit loop early when the cascade is found
         }
     #else
-        const float CurrentSplit = ShadowSplitsBuffer[Index].Split;
+        const float CurrentSplit = CascadeSplit.Split;
         if (ViewPosZ < CurrentSplit)
         {
             CascadeIndex = Index;
+            break; // Exit loop early when the cascade is found
         }
     #endif
     }
@@ -296,14 +292,16 @@ float ComputeShadow(float3 WorldPosition, float3 Normal, float Depth, inout uint
     float  ShadowAmount   = CascadeShadowAmount(CascadeIndex, ShadowPosition, Normal, RandomSeed);
 
     // Blend between this and next cascade
+    FCascadeSplit CascadeSplit = ShadowSplitsBuffer[CascadeIndex];
+
 #if BLEND_CASCADES
-    float NextSplit  = ShadowSplitsBuffer[CascadeIndex].Split;
+    float NextSplit  = CascadeSplit.Split;
     float SplitSize  = (CascadeIndex == 0) ? NextSplit : (NextSplit - ShadowSplitsBuffer[CascadeIndex - 1].Split);
     float FadeFactor = (NextSplit - ViewPosZ) / SplitSize;
   
 #if SELECT_CASCADE_FROM_PROJECTION
-    const float4 Offsets = ShadowSplitsBuffer[CascadeIndex].Offsets;
-    const float4 Scale   = ShadowSplitsBuffer[CascadeIndex].Scale;
+    const float4 Offsets = CascadeSplit.Offsets;
+    const float4 Scale   = CascadeSplit.Scale;
 
     float3 CascadePosition = ProjectionPosition + Offsets.xyz;
     CascadePosition *= Scale.xyz;

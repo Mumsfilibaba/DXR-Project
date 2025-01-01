@@ -2,8 +2,9 @@
 #include "Structs.hlsli"
 #include "Random.hlsli"
 
-#define THREAD_COUNT (16)
-#define MAX_SAMPLES  (128)
+#define THREAD_COUNT 16
+#define MAX_SAMPLES 128
+#define ENABLE_FRAME_INDEX 0
 
 Texture2D<float3> GBufferNormals : register(t0);
 Texture2D<float>  GBufferDepth   : register(t1);
@@ -72,22 +73,35 @@ void Main(FComputeShaderInput Input)
     const float3 ViewPosition = PositionFromDepth(Depth, TexCoords, ProjectionInv);
     
     // Random Seed
-    uint RandomSeed = InitRandom(Pixel, uint2(TexSize).x, Constants.FrameIndex);
+#if ENABLE_FRAME_INDEX
+    const uint FrameIndex = Constants.FrameIndex;
+#else
+    const uint FrameIndex = 0;
+#endif
 
-	const float3 NoiseVec   = normalize(NextRandom3(RandomSeed) * 2.0 - 1.0);
-    const float3 Tangent    = normalize(NoiseVec - Normal * dot(NoiseVec, Normal));
-    const float3 Bitangent  = cross(Normal, Tangent);
+    uint RandomSeed = InitRandom(Pixel, uint2(TexSize).x, FrameIndex);
+
+    // Construct a tangent-space matrix
+	const float3 Noise     = NextRandom3(RandomSeed) * 2.0 - 1.0;
+    const float3 Tangent   = normalize(Noise - Normal * dot(Noise, Normal));
+    const float3 Bitangent = cross(Normal, Tangent);
+    
     float3x3 TangentSpace = float3x3(Tangent, Bitangent, Normal);
 
+    // Trace screen-space AO
     float Occlusion = 0.0f;
     for (uint Index = 0; Index < KernelSize; ++Index)
     {
-        float3 Sample    = HaltonSamples[Index];
-        float  RayLength = Radius * NextRandom(RandomSeed);
+        const float3 Sample = HaltonSamples[Index];
+        
+        // Randomize the ray-length
+        float RayLength = Radius * lerp(0.2, 1.0, NextRandom(RandomSeed));
 
-        float3 SamplePos = normalize(mul(Sample, TangentSpace));
+        // Construct the final sample
+        float3 SamplePos = mul(Sample, TangentSpace);
         SamplePos = ViewPosition + (SamplePos * RayLength);
 
+        // Project sample
         float4 SampleProjected = mul(float4(SamplePos, 1.0), Projection);
         SampleProjected.xyz = (SampleProjected.xyz / SampleProjected.w);
         SampleProjected.xy  = (SampleProjected.xy * float2(0.5, -0.5)) + 0.5;

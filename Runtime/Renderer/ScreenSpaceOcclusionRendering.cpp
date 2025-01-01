@@ -16,12 +16,12 @@ static TAutoConsoleVariable<float> CVarSSAORadius(
 static TAutoConsoleVariable<float> CVarSSAOBias(
     "Renderer.SSAO.Bias", 
     "Specifies the bias when testing the Screen-Space Rays against the depth-buffer",
-    0.075f);
+    0.04f);
 
 static TAutoConsoleVariable<int32> CVarSSAOKernelSize(
     "Renderer.SSAO.KernelSize",
     "Specifies the number of samples for each pixel",
-    16);
+    8);
 
 FScreenSpaceOcclusionPass::FScreenSpaceOcclusionPass(FSceneRenderer* InRenderer)
     : FRenderPass(InRenderer)
