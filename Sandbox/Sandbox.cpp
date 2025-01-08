@@ -10,7 +10,7 @@
 #include <Engine/World/Lights/DirectionalLight.h>
 #include <Engine/World/Actors/PlayerController.h>
 #include <Engine/World/Components/MeshComponent.h>
-#include <Application/Application.h>
+#include <Application/ApplicationInterface.h>
 
 // TODO: Custom random
 #include <random>

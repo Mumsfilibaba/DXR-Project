@@ -168,8 +168,8 @@ public:
     }
 
 private:
-    FCamera* CurrentCamera;
     IScene*  Scene;
+    FCamera* CurrentCamera;
 
     // These actors are the "permanent" storage of actors
     TArray<FActor*>            Actors;

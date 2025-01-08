@@ -26,7 +26,7 @@
 #include "Renderer/Widgets/GPUProfilerWidget.h"
 #include "Renderer/Widgets/RendererSettingsWidget.h"
 
-class FViewport;
+class FViewportWidget;
 class FSceneRenderer;
 
 struct FCameraHLSL

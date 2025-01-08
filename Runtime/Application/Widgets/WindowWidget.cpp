@@ -1,9 +1,9 @@
-#include "Window.h"
+#include "WindowWidget.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "CoreApplication/Generic/GenericWindow.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
-FWindow::FWindow()
+FWindowWidget::FWindowWidget()
     : FWidget()
     , Title()
     , OnWindowClosedDelegate()
@@ -19,11 +19,11 @@ FWindow::FWindow()
 {
 }
 
-FWindow::~FWindow()
+FWindowWidget::~FWindowWidget()
 {
 }
 
-void FWindow::Initialize(const FInitializer& Initializer)
+void FWindowWidget::Initialize(const FInitializer& Initializer)
 {
     Title          = Initializer.Title;
     CachedPosition = Initializer.Position;
@@ -31,31 +31,28 @@ void FWindow::Initialize(const FInitializer& Initializer)
     StyleFlags     = Initializer.StyleFlags;
 }
 
-void FWindow::Tick()
+void FWindowWidget::Tick(const FRectangle& AssignedBounds)
 {
-    FRectangle NewContentRectangle;
-    NewContentRectangle.Position = CachedPosition;
-    NewContentRectangle.Width    = CachedSize.X;
-    NewContentRectangle.Height   = CachedSize.Y;
-    SetContentRectangle(NewContentRectangle);
+    // Update the current bounds
+    SetContentRectangle(AssignedBounds);
 
     if (Content)
     {
-        Content->Tick();
+        Content->Tick(AssignedBounds);
     }
 
     if (Overlay)
     {
-        Overlay->Tick();
+        Overlay->Tick(AssignedBounds);
     }
 }
 
-bool FWindow::IsWindow() const
+bool FWindowWidget::IsWindow() const
 {
     return true;
 }
 
-void FWindow::FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets)
+void FWindowWidget::FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets)
 {
     FRectangle WindowBounds = GetContentRectangle();
     if (WindowBounds.EncapsulatesPoint(Point))
@@ -78,22 +75,22 @@ void FWindow::FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath&
     }
 }
 
-void FWindow::SetOnWindowClosed(const FOnWindowClosed& InOnWindowClosed)
+void FWindowWidget::SetOnWindowClosed(const FOnWindowClosed& InOnWindowClosed)
 {
     OnWindowClosedDelegate = InOnWindowClosed;
 }
 
-void FWindow::SetOnWindowMoved(const FOnWindowMoved& InOnWindowMoved)
+void FWindowWidget::SetOnWindowMoved(const FOnWindowMoved& InOnWindowMoved)
 {
     OnWindowMovedDelegate = InOnWindowMoved;
 }
 
-void FWindow::SetOnWindowResized(const FOnWindowResized& InOnWindowResized)
+void FWindowWidget::SetOnWindowResized(const FOnWindowResized& InOnWindowResized)
 {
     OnWindowResizedDelegate = InOnWindowResized;
 }
 
-void FWindow::OnWindowDestroyed()
+void FWindowWidget::OnWindowDestroyed()
 {
     if (PlatformWindow)
     {
@@ -103,12 +100,12 @@ void FWindow::OnWindowDestroyed()
     OnWindowClosedDelegate.ExecuteIfBound();
 }
 
-void FWindow::OnWindowActivationChanged(bool)
+void FWindowWidget::OnWindowActivationChanged(bool)
 {
     OnWindowActivationChangedDelegate.ExecuteIfBound();
 }
 
-void FWindow::OnWindowMoved(const FIntVector2& InPosition)
+void FWindowWidget::OnWindowMoved(const FIntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
@@ -120,7 +117,7 @@ void FWindow::OnWindowMoved(const FIntVector2& InPosition)
     }
 }
 
-void FWindow::OnWindowResize(const FIntVector2& InSize)
+void FWindowWidget::OnWindowResize(const FIntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
@@ -132,7 +129,7 @@ void FWindow::OnWindowResize(const FIntVector2& InSize)
     }
 }
 
-void FWindow::MoveTo(const FIntVector2& InPosition)
+void FWindowWidget::MoveTo(const FIntVector2& InPosition)
 {
     if (CachedPosition != InPosition)
     {
@@ -150,7 +147,7 @@ void FWindow::MoveTo(const FIntVector2& InPosition)
     }
 }
 
-void FWindow::Resize(const FIntVector2& InSize)
+void FWindowWidget::Resize(const FIntVector2& InSize)
 {
     if (CachedSize != InSize)
     {
@@ -169,57 +166,57 @@ void FWindow::Resize(const FIntVector2& InSize)
     }
 }
 
-void FWindow::SetSize(const FIntVector2& InSize)
+void FWindowWidget::SetSize(const FIntVector2& InSize)
 {
     CachedSize = InSize;
 }
 
-void FWindow::SetPosition(const FIntVector2& InPosition)
+void FWindowWidget::SetPosition(const FIntVector2& InPosition)
 {
     CachedPosition = InPosition;
 }
 
-FIntVector2 FWindow::GetSize() const
+FIntVector2 FWindowWidget::GetSize() const
 {
     return CachedSize;
 }
 
-FIntVector2 FWindow::GetPosition() const
+FIntVector2 FWindowWidget::GetPosition() const
 {
     return CachedPosition;
 }
 
-uint32 FWindow::GetWidth() const
+uint32 FWindowWidget::GetWidth() const
 {
     return static_cast<uint32>(CachedSize.X);
 }
 
-uint32 FWindow::GetHeight() const
+uint32 FWindowWidget::GetHeight() const
 {
     return static_cast<uint32>(CachedSize.Y);
 }
 
-TSharedPtr<FWidget> FWindow::GetOverlay() const
+TSharedPtr<FWidget> FWindowWidget::GetOverlay() const
 {
     return Overlay;
 }
 
-TSharedPtr<FWidget> FWindow::GetContent() const
+TSharedPtr<FWidget> FWindowWidget::GetContent() const
 {
     return Content;
 }
 
-void FWindow::SetOverlay(const TSharedPtr<FWidget>& InOverlay)
+void FWindowWidget::SetOverlay(const TSharedPtr<FWidget>& InOverlay)
 {
     Overlay = InOverlay;
 }
 
-void FWindow::SetContent(const TSharedPtr<FWidget>& InContent)
+void FWindowWidget::SetContent(const TSharedPtr<FWidget>& InContent)
 {
     Content = InContent;
 }
 
-void FWindow::Show(bool bFocus)
+void FWindowWidget::Show(bool bFocus)
 {
     if (PlatformWindow)
     {
@@ -227,7 +224,7 @@ void FWindow::Show(bool bFocus)
     }
 }
 
-void FWindow::Minimize()
+void FWindowWidget::Minimize()
 {
     if (PlatformWindow)
     {
@@ -235,7 +232,7 @@ void FWindow::Minimize()
     }
 }
 
-void FWindow::Maximize()
+void FWindowWidget::Maximize()
 {
     if (PlatformWindow)
     {
@@ -243,7 +240,7 @@ void FWindow::Maximize()
     }
 }
 
-void FWindow::Restore()
+void FWindowWidget::Restore()
 {
     if (PlatformWindow)
     {
@@ -251,12 +248,12 @@ void FWindow::Restore()
     }
 }
 
-bool FWindow::IsActive() const
+bool FWindowWidget::IsActive() const
 {
     return FApplicationInterface::Get().GetFocusWindow().Get() == this;
 }
 
-bool FWindow::IsMinimized() const
+bool FWindowWidget::IsMinimized() const
 {
     if (PlatformWindow)
     {
@@ -266,7 +263,7 @@ bool FWindow::IsMinimized() const
     return false;
 }
 
-bool FWindow::IsMaximized() const
+bool FWindowWidget::IsMaximized() const
 {
     if (PlatformWindow)
     {
@@ -276,7 +273,7 @@ bool FWindow::IsMaximized() const
     return false;
 }
 
-float FWindow::GetWindowDPIScale() const
+float FWindowWidget::GetWindowDPIScale() const
 {
     if (PlatformWindow)
     {
@@ -286,7 +283,7 @@ float FWindow::GetWindowDPIScale() const
     return 1.0f;
 }
 
-void FWindow::SetTitle(const FString& InTitle)
+void FWindowWidget::SetTitle(const FString& InTitle)
 {
     Title = InTitle;
 
@@ -296,7 +293,7 @@ void FWindow::SetTitle(const FString& InTitle)
     }
 }
 
-void FWindow::SetStyle(EWindowStyleFlags InStyleFlags)
+void FWindowWidget::SetStyle(EWindowStyleFlags InStyleFlags)
 {
     if (PlatformWindow)
     {
@@ -308,7 +305,7 @@ void FWindow::SetStyle(EWindowStyleFlags InStyleFlags)
     }
 }
 
-void FWindow::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow)
+void FWindowWidget::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWindow)
 {
     PlatformWindow = InPlatformWindow;
     
@@ -329,7 +326,7 @@ void FWindow::SetPlatformWindow(const TSharedRef<FGenericWindow>& InPlatformWind
     }
 }
 
-void FWindow::SetFocus()
+void FWindowWidget::SetFocus()
 {
     if (PlatformWindow)
     {
@@ -337,7 +334,7 @@ void FWindow::SetFocus()
     }
 }
 
-void FWindow::SetOpacity(float Alpha)
+void FWindowWidget::SetOpacity(float Alpha)
 {
     if (PlatformWindow)
     {

@@ -2,7 +2,7 @@
 #include "ImGuiPlugin/ImGuiRenderer.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/UniquePtr.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 
 struct FImGuiEventHandler : public FInputHandler
 {
@@ -43,7 +43,7 @@ public:
     virtual FDelegateHandle AddDelegate(const FImGuiDelegate& Delegate) override final;
     virtual void RemoveDelegate(FDelegateHandle DelegateHandle) override final;
 
-    virtual void SetMainViewport(const TSharedPtr<FViewport>& InViewport) override final;
+    virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) override final;
 
     virtual ImGuiIO*      GetImGuiIO()      const override final { return PluginImGuiIO; }
     virtual ImGuiContext* GetImGuiContext() const override final { return PluginImGuiContext; }
@@ -72,8 +72,8 @@ private:
     ImGuiContext*                  PluginImGuiContext;
     TSharedPtr<FImGuiRenderer>     Renderer;
     TSharedPtr<FImGuiEventHandler> EventHandler;
-    TSharedPtr<FWindow>            MainWindow;
-    TSharedPtr<FViewport>          MainViewport;
+    TSharedPtr<FWindowWidget>      MainWindow;
+    TSharedPtr<FViewportWidget>          MainViewport;
     TArray<FMonitorInfo>           MonitorInfos;
     FImGuiDrawMulticastDelegate    DrawDelegates;
     FDelegateHandle                OnMonitorConfigChangedDelegateHandle;

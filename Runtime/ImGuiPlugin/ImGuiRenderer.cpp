@@ -6,7 +6,7 @@
 #include "Core/Containers/Array.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "Application/Widgets/Window.h"
+#include "Application/Widgets/WindowWidget.h"
 #include "RHI/RHI.h"
 #include "RHI/RHIResources.h"
 #include "RHI/ShaderCompiler.h"

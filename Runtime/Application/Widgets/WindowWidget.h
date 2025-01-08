@@ -1,33 +1,31 @@
 #pragma once
-#include "Widget.h"
 #include "Core/Containers/String.h"
 #include "Core/Delegates/Delegate.h"
 #include "CoreApplication/Generic/GenericWindow.h"
+#include "Application/Widgets/Widget.h"
 
-class FWindow;
-
-/** Delegate called when the window is moved. */
+/** @brief Delegate called when the window is moved. */
 DECLARE_DELEGATE(FOnWindowMoved, const FIntVector2&);
 
-/** Delegate called when the window is resized. */
+/** @brief Delegate called when the window is resized. */
 DECLARE_DELEGATE(FOnWindowResized, const FIntVector2&);
 
-/** Delegate called when the window is closed. */
+/** @brief Delegate called when the window is closed. */
 DECLARE_DELEGATE(FOnWindowClosed);
 
-/** Delegate called when the window activation state changes. */
+/** @brief Delegate called when the window activation state changes. */
 DECLARE_DELEGATE(FOnWindowActivationChanged);
 
 /**
  * @brief Represents a window in the application, managing its content, overlay, and platform-specific window.
  */
 
-class APPLICATION_API FWindow : public FWidget
+class APPLICATION_API FWindowWidget : public FWidget
 {
 public:
 
     /**
-     * @brief Initialization parameters for an FWindow.
+     * @brief Initialization parameters for an FWindowWidget.
      */
 
     struct FInitializer
@@ -44,60 +42,59 @@ public:
         {
         }
 
-        FString           Title;       /**< @brief The title of the window. */
-        FIntVector2       Size;        /**< @brief The size of the window (width, height). */
-        FIntVector2       Position;    /**< @brief The position of the window (x, y). */
-        EWindowStyleFlags StyleFlags;  /**< @brief Style flags for the window. */
+        /** @brief The title of the window. */
+        FString Title;     
+        
+        /** @brief The size of the window (width, height). */
+        FIntVector2 Size;      
+        
+        /** @brief The position of the window (x, y). */
+        FIntVector2 Position;  
+        
+        /** @brief Style flags for the window. */
+        EWindowStyleFlags StyleFlags;
     };
 
-    /**
-     * @brief Constructs an FWindow object.
-     */
-    FWindow();
+public:
+    
+    FWindowWidget();
+    virtual ~FWindowWidget();
 
-    /**
-     * @brief Destructor for FWindow.
-     */
-    virtual ~FWindow();
+public:
+    
+    // FWidget Interface
+    virtual void Tick(const FRectangle& AssignedBounds) override final;
+
+    virtual bool IsWindow() const override final;
+
+    virtual void FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets) override final;
+
+public:
 
     /**
      * @brief Initializes the window with the specified parameters.
+     * 
      * @param Initializer Initialization parameters.
      */
     void Initialize(const FInitializer& Initializer);
 
     /**
-     * @brief Updates the window each frame.
-     */
-    virtual void Tick() override final;
-
-    /**
-     * @brief Checks if this widget is a window.
-     * @return True if it is a window; false otherwise.
-     */
-    virtual bool IsWindow() const override final;
-
-    /**
-     * @brief Finds child widgets that contain the specified point.
-     * @param Point The point to check.
-     * @param OutParentWidgets Output parameter to store the widget path.
-     */
-    virtual void FindChildrenContainingPoint(const FIntVector2& Point, FWidgetPath& OutParentWidgets) override final;
-
-    /**
      * @brief Sets a delegate to be called when the window is closed.
+     * 
      * @param InOnWindowClosed The delegate to set.
      */
     void SetOnWindowClosed(const FOnWindowClosed& InOnWindowClosed);
 
     /**
      * @brief Sets a delegate to be called when the window is moved.
+     * 
      * @param InOnWindowMoved The delegate to set.
      */
     void SetOnWindowMoved(const FOnWindowMoved& InOnWindowMoved);
 
     /**
      * @brief Sets a delegate to be called when the window is resized.
+     * 
      * @param InOnWindowResized The delegate to set.
      */
     void SetOnWindowResized(const FOnWindowResized& InOnWindowResized);
@@ -121,12 +118,14 @@ public:
 
     /**
      * @brief Called when the platform window is resized.
+     * 
      * @param InSize The new size of the window.
      */
     void OnWindowResize(const FIntVector2& InSize);
 
     /**
      * @brief Called when the platform window is moved.
+     * 
      * @param InPosition The new position of the window.
      */
     void OnWindowMoved(const FIntVector2& InPosition);
@@ -149,48 +148,56 @@ public:
         
     /**
      * @brief Sets the cached window size without modifying the platform window size.
+     * 
      * @param InSize The new cached size.
      */
     void SetSize(const FIntVector2& InSize);
     
     /**
      * @brief Sets the cached window position without modifying the platform window position.
+     * 
      * @param InPosition The new cached position.
      */
     void SetPosition(const FIntVector2& InPosition);
 
     /**
      * @brief Gets the current cached window size.
+     * 
      * @return The size of the window.
      */
     FIntVector2 GetSize() const;
     
     /**
      * @brief Gets the current cached window position.
+     * 
      * @return The position of the window.
      */
     FIntVector2 GetPosition() const;
 
     /**
      * @brief Gets the current cached window width.
+     * 
      * @return The width of the window.
      */
     uint32 GetWidth() const;
     
     /**
      * @brief Gets the current cached window height.
+     * 
      * @return The height of the window.
      */
     uint32 GetHeight() const;
 
     /**
      * @brief Gets the current overlay widget.
+     * 
      * @return A shared pointer to the overlay widget.
      */
     TSharedPtr<FWidget> GetOverlay() const;
     
     /**
      * @brief Gets the current content widget.
+     * 
      * @return A shared pointer to the content widget.
      */
     TSharedPtr<FWidget> GetContent() const;
@@ -205,6 +212,7 @@ public:
     
     /**
      * @brief Sets the content widget.
+     * 
      * @param InContent The content widget to set.
      */
     void SetContent(const TSharedPtr<FWidget>& InContent);
@@ -240,24 +248,28 @@ public:
 
     /**
      * @brief Checks if the window's platform window is the current active window.
+     * 
      * @return True if the window is active; false otherwise.
      */
     bool IsActive() const;
     
     /**
      * @brief Checks if the window's platform window is currently minimized.
+     * 
      * @return True if the window is minimized; false otherwise.
      */
     bool IsMinimized() const;
     
     /**
      * @brief Checks if the window's platform window is currently maximized.
+     * 
      * @return True if the window is maximized; false otherwise.
      */
     bool IsMaximized() const;
 
     /**
      * @brief Gets the DPI scale of the monitor where this window is currently displayed.
+     * 
      * @return The DPI scale factor.
      */
     float GetWindowDPIScale() const;
@@ -293,24 +305,28 @@ public:
     
     /**
      * @brief Sets the opacity of the platform window.
+     * 
      * @param Alpha The opacity value between 0.0 (fully transparent) and 1.0 (fully opaque).
      */
     void SetOpacity(float Alpha);
 
     /**
      * @brief Gets the platform window.
+     * 
      * @return A shared reference to the platform window.
      */
     TSharedRef<FGenericWindow> GetPlatformWindow() { return PlatformWindow; }
 
     /**
      * @brief Gets the platform window (const version).
+     * 
      * @return A shared reference to the platform window.
      */
     TSharedRef<const FGenericWindow> GetPlatformWindow() const { return PlatformWindow; }
 
     /**
      * @brief Gets the window title.
+     * 
      * @return The title of the window.
      */
     const FString& GetTitle() const
@@ -320,6 +336,7 @@ public:
 
     /**
      * @brief Gets the window style flags.
+     * 
      * @return The style flags of the window.
      */
     EWindowStyleFlags GetStyle() const
@@ -328,37 +345,20 @@ public:
     }
 
 private:
-
-    /** @brief The title of the window. */
     FString Title;
 
-    /** @brief Delegate called when the window is closed. */
-    FOnWindowClosed OnWindowClosedDelegate;
-
-    /** @brief Delegate called when the window is moved. */
-    FOnWindowMoved OnWindowMovedDelegate;
-
-    /** @brief Delegate called when the window is resized. */
-    FOnWindowResized OnWindowResizedDelegate;
-
-    /** @brief Delegate called when the window activation changes. */
+    FOnWindowClosed            OnWindowClosedDelegate;
+    FOnWindowMoved             OnWindowMovedDelegate;
+    FOnWindowResized           OnWindowResizedDelegate;
     FOnWindowActivationChanged OnWindowActivationChangedDelegate;
 
-    /** @brief Cached window position. */
-    FIntVector2 CachedPosition;
+    FIntVector2       CachedPosition;
+    FIntVector2       CachedSize;
+    EWindowStyleFlags StyleFlags;
 
-    /** @brief Cached window size. */
-    FIntVector2 CachedSize;
-
-    /** @brief The overlay widget. */
     TSharedPtr<FWidget> Overlay;
-
-    /** @brief The content widget. */
     TSharedPtr<FWidget> Content;
 
-    /** @brief The platform-specific window. */
     TSharedRef<FGenericWindow> PlatformWindow;
 
-    /** @brief Style flags of the window. */
-    EWindowStyleFlags StyleFlags;
 };

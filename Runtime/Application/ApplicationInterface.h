@@ -6,7 +6,7 @@
 #include "CoreApplication/Generic/GenericApplicationMessageHandler.h"
 #include "Application/InputHandler.h"
 #include "Application/WidgetPath.h"
-#include "Application/Widgets/Window.h"
+#include "Application/Widgets/WindowWidget.h"
 
 /** 
  * @brief Event triggered when the monitor configuration changes (e.g., adding or removing displays).
@@ -15,10 +15,10 @@ DECLARE_EVENT(FOnMonitorConfigChangedEvent, FApplicationInterface);
 
 /**
  * @class FApplicationInterface
+ * 
  * @brief Central application class that handles event routing, window management, input processing, and more.
- *
  * FApplicationInterface extends FGenericApplicationMessageHandler to receive and process various input and windowing events.
- * It also manages a platform-specific application (FGenericApplication) and interacts with a set of FWindow objects. 
+ * It also manages a platform-specific application (FGenericApplication) and interacts with a set of FWindowWidget objects. 
  * The class is intended to be a singleton-like interface that can be accessed throughout the engine via Get().
  */
 class APPLICATION_API FApplicationInterface : public FGenericApplicationMessageHandler , public TSharedFromThis<FApplicationInterface>
@@ -34,7 +34,6 @@ public:
 
     /**
      * @brief Destroys the singleton FApplicationInterface and PlatformApplication instances.
-     *
      * Cleans up resources, windows, and any other data allocated in Create().
      */
     static void Destroy();
@@ -50,9 +49,9 @@ public:
     }
 
     /**
-     * @brief Retrieves a reference to the FApplicationInterface singleton.
+     * @brief Retrieves a reference to the FApplicationInterface singleton. This function also checks that 
+     * the instance is valid before returning a reference.
      * 
-     * This function checks that the instance is valid before returning a reference.
      * @return A reference to the FApplicationInterface instance.
      */
     static FORCEINLINE FApplicationInterface& Get()
@@ -114,20 +113,20 @@ public:
 public:
 
     /**
-     * @brief Adds a new window to the application and creates its underlying platform window.
+     * @brief Adds a new window to the application and creates its underlying platform window. 
+     * After creation, the window will be managed and ticked each frame. The platform-specific 
+     * window representation will also be shown.
      * 
-     * After creation, the window will be managed and ticked each frame. The platform-specific window
-     * representation will also be shown.
-     * @param InWindow The FWindow object describing the new window.
+     * @param InWindow The FWindowWidget object describing the new window.
      */
-    void CreateWindow(const TSharedPtr<FWindow>& InWindow);
+    void CreateWindow(const TSharedPtr<FWindowWidget>& InWindow);
 
     /**
      * @brief Destroys a managed window and its underlying platform window.
      * 
-     * @param InWindow The FWindow to destroy.
+     * @param InWindow The FWindowWidget to destroy.
      */
-    void DestroyWindow(const TSharedPtr<FWindow>& InWindow);
+    void DestroyWindow(const TSharedPtr<FWindowWidget>& InWindow);
 
     /**
      * @brief Updates all windows, processes queued messages, and updates input devices.
@@ -138,36 +137,32 @@ public:
 
     /**
      * @brief Processes OS-level or platform-level events.
-     *
      * This method typically drives the platform message pump, distributing events to the rest of the system.
      */
     void ProcessEvents();
 
     /**
      * @brief Processes events that have been deferred for later handling.
-     *
      * Some events may be batched or scheduled to run after other operations (e.g., to avoid reentrancy issues).
      */
     void ProcessDeferredEvents();
 
     /**
      * @brief Updates input devices not handled via standard platform events.
-     *
      * This could include specialized controllers or future plugin-based devices. 
      */
     void UpdateInputDevices();
 
     /**
      * @brief Updates the cached monitor information if the platform reported a monitor setup change.
-     *
      * This includes gathering information such as resolution, DPI, and primary monitor status.
      */
     void UpdateMonitorInfo();
 
     /**
-     * @brief Registers a new input handler with the application.
-     *
-     * Input handlers can intercept and process input events before they reach the default logic.
+     * @brief Registers a new input handler with the application. Input handlers can intercept 
+     * and process input events before they reach the default logic.
+     * 
      * @param InputHandler The input handler to register.
      */
     void RegisterInputHandler(const TSharedPtr<FInputHandler>& InputHandler);
@@ -181,12 +176,12 @@ public:
 
     /**
      * @brief Enables high-precision mouse input (raw input) for a specified window, if the platform supports it.
-     * 
      * On Windows, this leverages raw input events. On other platforms, this may be unavailable.
+     * 
      * @param Window The window to enable raw input on.
      * @return True if successfully enabled, otherwise false.
      */
-    bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindow>& Window);
+    bool EnableHighPrecisionMouseForWindow(const TSharedPtr<FWindowWidget>& Window);
 
     /**
      * @brief Retrieves the current modifier key state (e.g., whether Ctrl, Alt, or Shift are pressed).
@@ -203,9 +198,8 @@ public:
     bool SupportsHighPrecisionMouse() const;
 
     /**
-     * @brief Sets the global cursor position.
+     * @brief Sets the global cursor position. Moves the system cursor to the specified position in screen coordinates.
      * 
-     * Moves the system cursor to the specified position in screen coordinates.
      * @param Position The new absolute screen coordinates for the cursor.
      */
     void SetCursorPosition(const FIntVector2& Position);
@@ -239,17 +233,17 @@ public:
     bool IsCursorVisible() const;
 
     /**
-     * @brief Checks if a gamepad is currently connected.
+     * @brief Checks if a gamepad is currently connected. Internally checks if an FInputDevice 
+     * is registered and if that device reports as connected.
      * 
-     * Internally checks if an FInputDevice is registered and if that device reports as connected.
      * @return True if a gamepad is connected, otherwise false.
      */
     bool IsGamePadConnected() const;
 
     /**
-     * @brief Checks if the application is currently tracking a mouse drag operation.
+     * @brief Checks if the application is currently tracking a mouse drag operation. This is set to true 
+     * when the left mouse button is pressed, and remains true until it is released.
      * 
-     * This is set to true when the left mouse button is pressed, and remains true until it is released.
      * @return True if a mouse drag operation is in progress, otherwise false.
      */
     bool IsTrackingCursor() const { return bIsTrackingCursor; }
@@ -287,7 +281,7 @@ public:
      * 
      * @return A shared pointer to the focused window, or nullptr if none.
      */
-    TSharedPtr<FWindow> GetFocusWindow() const;
+    TSharedPtr<FWindowWidget> GetFocusWindow() const;
 
     /**
      * @brief Sets focus to the specified widget and all of its parents up to the top-level window.
@@ -297,35 +291,35 @@ public:
     void SetFocusWidget(const TSharedPtr<FWidget>& FocusWidget);
 
     /**
-     * @brief Sets a new widget path as the focus hierarchy.
+     * @brief Sets a new widget path as the focus hierarchy. This path typically contains the target 
+     * widget and all parent widgets along the path to a window.
      * 
-     * This path typically contains the target widget and all parent widgets along the path to a window.
      * @param NewFocusPath The widget path to set focus to.
      */
     void SetFocusWidgets(const FWidgetPath& NewFocusPath);
 
     /**
-     * @brief Finds the lowest-level window (top-level FWindow) that contains the specified widget.
+     * @brief Finds the lowest-level window (top-level FWindowWidget) that contains the specified widget.
      * 
      * @param InWidget The widget to search for.
-     * @return A shared pointer to the top-level FWindow that contains the widget, or nullptr if not found.
+     * @return A shared pointer to the top-level FWindowWidget that contains the widget, or nullptr if not found.
      */
-    TSharedPtr<FWindow> FindWindowWidget(const TSharedPtr<FWidget>& InWidget);
+    TSharedPtr<FWindowWidget> FindWindowWidget(const TSharedPtr<FWidget>& InWidget);
     
     /**
-     * @brief Finds the FWindow that corresponds to a given platform window (FGenericWindow).
+     * @brief Finds the FWindowWidget that corresponds to a given platform window (FGenericWindow).
      * 
      * @param PlatformWindow The FGenericWindow to match against known windows.
-     * @return A shared pointer to the corresponding FWindow, or nullptr if not found.
+     * @return A shared pointer to the corresponding FWindowWidget, or nullptr if not found.
      */
-    TSharedPtr<FWindow> FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const;
+    TSharedPtr<FWindowWidget> FindWindowFromGenericWindow(const TSharedRef<FGenericWindow>& PlatformWindow) const;
     
     /**
      * @brief Returns the window currently under the mouse cursor.
      * 
-     * @return A shared pointer to the FWindow under the cursor, or nullptr if none.
+     * @return A shared pointer to the FWindowWidget under the cursor, or nullptr if none.
      */
-    TSharedPtr<FWindow> FindWindowUnderCursor() const;
+    TSharedPtr<FWindowWidget> FindWindowUnderCursor() const;
 
     /**
      * @brief Retrieves a path of widgets currently under the mouse cursor.
@@ -370,7 +364,7 @@ private:
     FWidgetPath FocusPath;
     FWidgetPath TrackedWidgets;
 
-    TArray<TSharedPtr<FWindow>>       Windows;
+    TArray<TSharedPtr<FWindowWidget>>       Windows;
     TArray<TSharedPtr<FInputHandler>> InputHandlers;
     FOnMonitorConfigChangedEvent      OnMonitorConfigChangedEvent;
 

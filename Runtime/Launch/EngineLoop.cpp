@@ -9,7 +9,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CommandLine.h"
 #include "Project/ProjectManager.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 #include "CoreApplication/Platform/PlatformApplication.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "CoreApplication/Platform/PlatformConsoleOutputDevice.h"

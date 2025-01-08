@@ -58,12 +58,19 @@ void FWorld::Start()
 
 void FWorld::Tick(float DeltaTime)
 {
+    // Update all the actors
     for (FActor* Actor : Actors)
     {
         if (Actor->IsTickable())
         {
             Actor->Tick(DeltaTime);
         }
+    }
+
+    // Update the view-proj matrices, at this point we should have a valid view and projection matrix
+    if (CurrentCamera)
+    {
+        CurrentCamera->UpdateWorldToClipSpaceMatrices();
     }
 }
 

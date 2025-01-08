@@ -12,15 +12,14 @@ public:
     void Move(float x, float y, float z);
     void Rotate(float Pitch, float Yaw, float Roll);
     
+    // Note: FieldOfView in degrees 
     void SetFieldOfView(float InFieldOfView);
     void SetPosition(float x, float y, float z);
     void SetRotation(float Pitch, float Yaw, float Roll);
 
-    // Note: FieldOfView in degrees 
-    void UpdateProjectionMatrix(float InFieldOfView, float InViewportWidth, float InViewportHeight);
+    void UpdateProjectionMatrix(float InViewportWidth, float InViewportHeight);
     void UpdateViewMatrix();
-
-    void UpdateMatrices();
+    void UpdateWorldToClipSpaceMatrices();
 
     FORCEINLINE const FMatrix4& GetViewMatrix() const
     {
@@ -114,7 +113,7 @@ public:
 
 private:
     void UpdateDirectionVectors();
-    
+
     FMatrix4 View;
     FMatrix4 ViewInverse;
     FMatrix4 Projection;
@@ -123,16 +122,12 @@ private:
     FMatrix4 ViewProjectionInverse;
     FMatrix4 ViewProjectionNoTranslation;
 
-    float    NearPlane;
-    float    FarPlane;
-    float    AspectRatio;
-    float    ViewportWidth;
-    float    ViewportHeight;
-
-    // This is the current Field Of View used in the current projection matrix
-    float FieldOfView; 
-    // This is the current desired field of view, i.e the one we have set using SetFieldOfView
-    float DesiredFieldOfView;
+    float NearPlane;
+    float FarPlane;
+    float AspectRatio;
+    float ViewportWidth;
+    float ViewportHeight;
+    float FieldOfView;
 
     FVector3 Position;
     FVector3 Rotation;

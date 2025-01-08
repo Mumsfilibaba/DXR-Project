@@ -1,7 +1,7 @@
 #include "ImGuiPlugin.h"
 #include "ImGuiExtensions.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 #include "Application/Input/InputMapper.h"
 
 #define IMGUI_BUTTON_UNKNOWN (-1)

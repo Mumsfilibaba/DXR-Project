@@ -13,7 +13,7 @@ FWidget::~FWidget()
 {
 }
 
-void FWidget::Tick()
+void FWidget::Tick(const FRectangle& /*AssignedBounds*/)
 {
 }
 
