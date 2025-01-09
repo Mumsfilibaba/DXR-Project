@@ -395,7 +395,7 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         ImGui::NextColumn();
 
         int32 FilterSize = CVarFilterSize->GetInt();
-        if (ImGui::SliderInt("##FilterSize", &FilterSize, 16, 256, "%d"))
+        if (ImGui::SliderInt("##FilterSize", &FilterSize, 16, 1024, "%d"))
         {
             CVarFilterSize->SetAsInt(FilterSize, EConsoleVariableFlags::SetByCode);
         }

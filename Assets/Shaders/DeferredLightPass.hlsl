@@ -3,6 +3,7 @@
 #include "Structs.hlsli"
 #include "Constants.hlsli"
 #include "Poisson.hlsli"
+#include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 
 #define NUM_THREADS        (16)

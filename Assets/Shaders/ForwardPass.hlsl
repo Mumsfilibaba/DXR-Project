@@ -2,6 +2,7 @@
 #include "Helpers.hlsli"
 #include "Structs.hlsli"
 #include "Tonemapping.hlsli"
+#include "Shadows/CascadeStructs.hlsli"
 #include "Shadows/ShadowHelpers.hlsli"
 
 // Per Frame Buffers

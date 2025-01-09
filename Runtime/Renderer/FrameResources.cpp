@@ -426,6 +426,7 @@ void FFrameResources::Release()
     TransformBuffer.Reset();
 
     PointLightShadowSampler.Reset();
+    ShadowSamplerPoint.Reset();
     ShadowSamplerPointCmp.Reset();
     ShadowSamplerLinearCmp.Reset();
     IrradianceSampler.Reset();

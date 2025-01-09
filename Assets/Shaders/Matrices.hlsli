@@ -4,35 +4,33 @@
 // Left handed
 float4x4 OrtographicMatrix(float Left, float Right, float Bottom, float Top, float Near, float Far)
 {
-    float Width  = 1.0f / (Right - Left);
-    float Height = 1.0f / (Top - Bottom);
-    float Range  = 1.0f / (Far - Near);
+    float Width  = 1.0 / (Right - Left);
+    float Height = 1.0 / (Top - Bottom);
+    float Range  = 1.0 / (Far - Near);
     
     return float4x4(
-        float4(Width + Width, 0.0f, 0.0f, 0.0f),
-        float4(0.0f, Height + Height, 0.0f, 0.0f),
-        float4(0.0f, 0.0f, Range, 0.0f),
-        float4(-(Left + Right) * Width, -(Top + Bottom) * Height, -Range * Near, 1.0f));
+        float4( Width + Width,           0.0,                      0.0,          0.0),
+        float4( 0.0,                     Height + Height,          0.0,          0.0),
+        float4( 0.0,                     0.0,                      Range,        0.0),
+        float4(-(Left + Right) * Width, -(Top + Bottom) * Height, -Range * Near, 1.0));
 }
-
-// TODO: Projection Matrix
 
 float4x4 TranslationMatrix(float x, float y, float z)
 {
     return float4x4(
-        float4(1.0f, 0.0f, 0.0f, 0.0f),
-        float4(0.0f, 1.0f, 0.0f, 0.0f),
-        float4(0.0f, 0.0f, 1.0f, 0.0f),
-        float4(x, y, z, 1.0f));
+        float4(1.0, 0.0, 0.0, 0.0),
+        float4(0.0, 1.0, 0.0, 0.0),
+        float4(0.0, 0.0, 1.0, 0.0),
+        float4(x,   y,   z,   1.0));
 }
 
-float4x4 ScaleMatrix(float x, float y, float z, float w = 1.0f)
+float4x4 ScaleMatrix(float x, float y, float z, float w = 1.0)
 {
     return float4x4(
-        float4(x,    0.0f, 0.0f, 0.0f),
-        float4(0.0f, y,    0.0f, 0.0f),
-        float4(0.0f, 0.0f, z,    0.0f),
-        float4(0.0f, 0.0f, 0.0f, w));
+        float4(x,   0.0, 0.0, 0.0),
+        float4(0.0, y,   0.0, 0.0),
+        float4(0.0, 0.0, z,   0.0),
+        float4(0.0, 0.0, 0.0, w));
 }
 
 float4x4 PitchYawRollMatrix(float Pitch, float Yaw, float Roll)
@@ -46,10 +44,10 @@ float4x4 PitchYawRollMatrix(float Pitch, float Yaw, float Roll)
     
     // TODO: Optimize
     return float4x4(
-        float4(CosR*CosY - SinR*SinP*SinY, -SinR*CosP, CosR*SinY - SinR*SinP*CosY, 0.0f),
-        float4(SinR*CosY + CosR*SinP*SinY,  CosR*CosP, SinR*SinY + CosR*SinP*CosY, 0.0f),
-        float4(-CosP*SinY,                  SinP,      CosP*SinY,                  0.0f),
-        float4(0.0f, 0.0f, 0.0f, 1.0f));
+        float4(CosR*CosY - SinR*SinP*SinY, -SinR*CosP, CosR*SinY - SinR*SinP*CosY, 0.0),
+        float4(SinR*CosY + CosR*SinP*SinY,  CosR*CosP, SinR*SinY + CosR*SinP*CosY, 0.0),
+        float4(-CosP*SinY,                  SinP,      CosP*SinY,                  0.0),
+        float4(0.0,                         0.0,       0.0,                        1.0));
 }
 
 // Left Handed
@@ -69,7 +67,7 @@ float4x4 LookToMatrix(float3 Eye, float3 Direction, float3 Up)
         float4(e0, m30),
         float4(e1, m31),
         float4(e2, m32),
-        float4(0.0f, 0.0f, 0.0f, 1.0f)));
+        float4(0.0, 0.0, 0.0, 1.0)));
 }
 
 // Left Handed
@@ -83,14 +81,14 @@ float4x4 LookAtMatrix(float3 Eye, float3 At, float3 Up)
 float4x4 InverseScaleTranslation(in float4x4 Matrix)
 {
     float4x4 Inverse = float4x4(
-        float4(1.0f, 0.0f, 0.0f, 0.0f),
-        float4(0.0f, 1.0f, 0.0f, 0.0f),
-        float4(0.0f, 0.0f, 1.0f, 0.0f),
-        float4(0.0f, 0.0f, 0.0f, 1.0f));
+        float4(1.0, 0.0, 0.0, 0.0),
+        float4(0.0, 1.0, 0.0, 0.0),
+        float4(0.0, 0.0, 1.0, 0.0),
+        float4(0.0, 0.0, 0.0, 1.0));
 
-    Inverse[0][0] = 1.0f / Matrix[0][0];
-    Inverse[1][1] = 1.0f / Matrix[1][1];
-    Inverse[2][2] = 1.0f / Matrix[2][2];
+    Inverse[0][0] =  1.0 / Matrix[0][0];
+    Inverse[1][1] =  1.0 / Matrix[1][1];
+    Inverse[2][2] =  1.0 / Matrix[2][2];
     Inverse[3][0] = -Matrix[3][0] * Inverse[0][0];
     Inverse[3][1] = -Matrix[3][1] * Inverse[1][1];
     Inverse[3][2] = -Matrix[3][2] * Inverse[2][2];
@@ -100,10 +98,10 @@ float4x4 InverseScaleTranslation(in float4x4 Matrix)
 float4x4 InverseRotationTranslation(in float3x3 Rotation, in float3 Translation)
 {
     float4x4 Inverse = float4x4(
-        float4(Rotation._11_21_31, 0.0f),
-        float4(Rotation._12_22_32, 0.0f),
-        float4(Rotation._13_23_33, 0.0f),
-        float4(0.0f, 0.0f, 0.0f, 1.0f));
+        float4(Rotation._11_21_31, 0.0),
+        float4(Rotation._12_22_32, 0.0),
+        float4(Rotation._13_23_33, 0.0),
+        float4(0.0, 0.0, 0.0, 1.0));
     
     Inverse[3][0] = -dot(Translation, Rotation[0]);
     Inverse[3][1] = -dot(Translation, Rotation[1]);

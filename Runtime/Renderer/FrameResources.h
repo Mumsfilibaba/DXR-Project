@@ -210,6 +210,7 @@ struct FFrameResources
 
     // Samplers
     FRHISamplerStateRef PointLightShadowSampler;
+    FRHISamplerStateRef ShadowSamplerPoint;
     FRHISamplerStateRef ShadowSamplerPointCmp;
     FRHISamplerStateRef ShadowSamplerLinearCmp;
     FRHISamplerStateRef IrradianceSampler;

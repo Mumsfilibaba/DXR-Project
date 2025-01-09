@@ -66,61 +66,6 @@ struct FShadowPointLight
     float  Padding1;
 };
 
-struct FCascadeMatrices
-{
-    float4x4 ViewProj;
-    float4x4 View;
-};
-
-struct FCascadeSplit
-{
-    float4 FrustumPlanes[NUM_FRUSTUM_PLANES];
-
-    float4 Offsets;
-    float4 Scale;
-
-    float3 MinExtent;
-    float  Split;
-
-    float3 MaxExtent;
-    float  NearPlane;
-    
-    float  FarPlane;
-    float  MinDepth;
-    float  MaxDepth;
-    float  PreviousSplit;
-};
-
-struct FCascadeGenerationInfo
-{
-    float4x4 ShadowMatrix;
-
-    float3 LightDirection;
-    float  CascadeSplitLambda;
-    
-    float3 LightUp;
-    float  CascadeResolution;
-
-    int    bDepthReductionEnabled;
-    int    MaxCascadeIndex;
-    int    Padding0;
-    int    Padding1;
-};
-
-struct FDirectionalLight
-{
-    float3   Color;
-    float    ShadowBias;
-    
-    float3   Direction;
-    float    MaxShadowBias;
-
-    float3   Up;
-    float    LightSize;
-
-    float4x4 ShadowMatrix;
-};
-
 struct FVertex
 {
     float3 Position;

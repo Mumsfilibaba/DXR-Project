@@ -1,5 +1,6 @@
 #include "../Structs.hlsli"
 #include "../Constants.hlsli"
+#include "CascadeStructs.hlsli"
 
 #ifndef ENABLE_PACKED_MATERIAL_TEXTURE
     #define ENABLE_PACKED_MATERIAL_TEXTURE (0)
