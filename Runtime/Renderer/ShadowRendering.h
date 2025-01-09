@@ -261,6 +261,7 @@ enum ECSMFilterFunction
 {
     CSMFilterFunction_GridPCF = 0,
     CSMFilterFunction_PoissonDiscPCF = 1,
+    CSMFilterFunction_PCSS = 2,
 };
 
 struct FShadowMaskShaderCombination
@@ -290,7 +291,7 @@ struct FShadowMaskShaderCombination
         struct
         {
             // Filter Function to use
-            uint64 FilterFunction : 2;
+            uint64 FilterFunction : 3;
 
             // Rotate the samples when using Poisson Disc
             uint64 bRotateSamples : 1;

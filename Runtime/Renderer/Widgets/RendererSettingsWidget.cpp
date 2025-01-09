@@ -376,7 +376,8 @@ void FRendererSettingsWidget::DrawCascadedShadowSettings()
         const char* Items[] = 
         {
             "Grid PCF",
-            "Poisson Disc PCF"
+            "Poisson Disc PCF",
+            "Percentage Closer Soft Shadows (PCSS)"
         };
 
         constexpr uint32 ItemSize = ARRAY_COUNT(Items);

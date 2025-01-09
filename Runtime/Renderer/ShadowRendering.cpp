@@ -51,8 +51,8 @@ static TAutoConsoleVariable<bool> CVarCSMEnableViewInstancing(
 
 static TAutoConsoleVariable<int32> CVarCSMFilterFunction(
     "Renderer.CSM.FilterFunction",
-    "Select function to use to filer Cascaded Shadow Maps. 0: Grid PCF 1: Poisson Disc PCF",
-    1,
+    "Select function to use to filer Cascaded Shadow Maps. 0: Grid PCF 1: Poisson Disc PCF 2: Percentage Closer Soft Shadows (PCSS)",
+    2,
     EConsoleVariableFlags::Default);
 
 static TAutoConsoleVariable<int32> CVarCSMFilterSize(
@@ -1514,20 +1514,30 @@ bool FShadowMaskRenderPass::RetrievePipelineState(const FShadowMaskShaderCombina
     FString DebugName = "ShadowMask PSO (";
     if (Combination.FilterFunction == CSMFilterFunction_GridPCF)
     {
-        Defines.Emplace("FILTER_MODE_PCF_GRID", "1");
-        Defines.Emplace("FILTER_MODE_PCF_POISSION_DISC", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "1");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "0");
         DebugName += " GridPCF ";
     }
     else if (Combination.FilterFunction == CSMFilterFunction_PoissonDiscPCF)
     {
-        Defines.Emplace("FILTER_MODE_PCF_GRID", "0");
-        Defines.Emplace("FILTER_MODE_PCF_POISSION_DISC", "1");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "1");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "0");
         DebugName += " PoissonDiscPCF ";
+    }
+    else if (Combination.FilterFunction == CSMFilterFunction_PCSS)
+    {
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "1");
+        DebugName += " PCSS ";
     }
     else
     {
-        Defines.Emplace("FILTER_MODE_PCF_GRID", "0");
-        Defines.Emplace("FILTER_MODE_PCF_POISSION_DISC", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_GRID", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCF_POISSION_DISC", "0");
+        Defines.Emplace("SHADOW_FILTER_MODE_PCSS", "0");
     }
 
     if (Combination.bDebugMode)
