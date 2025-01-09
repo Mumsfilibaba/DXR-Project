@@ -49,6 +49,11 @@ public:
 
     FString GetDescription() const { return WideToChar(FStringViewWide(AdapterDesc.Description)); }
 
+    FORCEINLINE uint32 GetAdapterIndex() const
+    { 
+        return AdapterIndex;
+    }
+
     FORCEINLINE IDXGraphicsAnalysis* GetGraphicsAnalysis() const
     {
         return DXGraphicsAnalysis.Get();
@@ -59,12 +64,13 @@ public:
         return Adapter.Get();
     }
 
-    FORCEINLINE uint32 GetAdapterIndex() const
-    { 
-        return AdapterIndex;
+    FORCEINLINE IDXGIAdapter3* GetDXGIAdapter3() const { return Adapter3.Get(); }
+
+    FORCEINLINE IDXGIFactory2* GetDXGIFactory() const
+    {
+        return Factory.Get();
     }
 
-    FORCEINLINE IDXGIFactory2* GetDXGIFactory() const { return Factory.Get(); }
     FORCEINLINE IDXGIFactory5* GetDXGIFactory5() const { return Factory5.Get(); }
 #if WIN10_BUILD_17134
     FORCEINLINE IDXGIFactory6* GetDXGIFactory6() const { return Factory6.Get(); }
@@ -77,7 +83,9 @@ private:
     bool bEnableDebugLayer;
 
     TComPtr<IDXGIAdapter1> Adapter;
-    DXGI_ADAPTER_DESC1     AdapterDesc;
+    TComPtr<IDXGIAdapter3> Adapter3;
+
+    TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
     
     TComPtr<IDXGIFactory2> Factory;
     TComPtr<IDXGIFactory5> Factory5;
@@ -85,7 +93,7 @@ private:
     TComPtr<IDXGIFactory6> Factory6;
 #endif
 
-    TComPtr<IDXGraphicsAnalysis> DXGraphicsAnalysis;
+    DXGI_ADAPTER_DESC1 AdapterDesc;
 };
 
 struct FD3D12DefaultDescriptors
@@ -104,22 +112,30 @@ public:
     ~FD3D12Device();
 
     bool Initialize();
+
+    ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
+
     FD3D12Queue* GetQueue(ED3D12CommandQueueType QueueType);
     FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
-    ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
-    int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
-
     FD3D12QueryHeapManager* GetQueryHeapManager(EQueryType QueryType);
+
     FD3D12UploadHeapAllocator& GetUploadAllocator() { return *UploadAllocator; }
+
     FD3D12RootSignatureManager& GetRootSignatureManager() { return *RootSignatureManager; }
+
     FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return *GlobalResourceHeap; }
     FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap() { return *GlobalSamplerHeap; }
+
     FD3D12OfflineDescriptorHeap& GetResourceOfflineDescriptorHeap() { return *ResourceOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap& GetRenderTargetOfflineDescriptorHeap() { return *RenderTargetOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap& GetDepthStencilOfflineDescriptorHeap() { return *DepthStencilOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap& GetSamplerOfflineDescriptorHeap() { return *SamplerOfflineDescriptorHeap; }
+
     FD3D12DefaultDescriptors& GetDefaultDescriptors() { return DefaultDescriptors; }
+
     FD3D12PipelineStateManager& GetPipelineStateManager() { return *PipelineStateManager; }
+
+    int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
     D3D_FEATURE_LEVEL GetFeatureLevel() const { return ActiveFeatureLevel; }
     uint32 GetNodeMask()  const { return NodeMask; }
@@ -129,38 +145,38 @@ public:
     {
         return Adapter;
     }
-    
+
     FORCEINLINE ID3D12Device* GetD3D12Device() const
     {
-        return Device.Get();
+        return D3D12Device.Get();
     }
 
 #if WIN10_BUILD_14393
-    FORCEINLINE ID3D12Device1* GetD3D12Device1() const { return Device1.Get(); }
+    FORCEINLINE ID3D12Device1* GetD3D12Device1() const { return D3D12Device1.Get(); }
 #endif
 #if WIN10_BUILD_15063
-    FORCEINLINE ID3D12Device2* GetD3D12Device2() const { return Device2.Get(); }
+    FORCEINLINE ID3D12Device2* GetD3D12Device2() const { return D3D12Device2.Get(); }
 #endif
 #if WIN10_BUILD_16299
-    FORCEINLINE ID3D12Device3* GetD3D12Device3() const { return Device3.Get(); }
+    FORCEINLINE ID3D12Device3* GetD3D12Device3() const { return D3D12Device3.Get(); }
 #endif
 #if WIN10_BUILD_17134
-    FORCEINLINE ID3D12Device4* GetD3D12Device4() const { return Device4.Get(); }
+    FORCEINLINE ID3D12Device4* GetD3D12Device4() const { return D3D12Device4.Get(); }
 #endif
 #if WIN10_BUILD_17763
-    FORCEINLINE ID3D12Device5* GetD3D12Device5() const { return Device5.Get(); }
+    FORCEINLINE ID3D12Device5* GetD3D12Device5() const { return D3D12Device5.Get(); }
 #endif
 #if WIN10_BUILD_18362
-    FORCEINLINE ID3D12Device6* GetD3D12Device6() const { return Device6.Get(); }
+    FORCEINLINE ID3D12Device6* GetD3D12Device6() const { return D3D12Device6.Get(); }
 #endif
 #if WIN10_BUILD_19041
-    FORCEINLINE ID3D12Device7* GetD3D12Device7() const { return Device7.Get(); }
+    FORCEINLINE ID3D12Device7* GetD3D12Device7() const { return D3D12Device7.Get(); }
 #endif
 #if WIN10_BUILD_20348
-    FORCEINLINE ID3D12Device8* GetD3D12Device8() const { return Device8.Get(); }
+    FORCEINLINE ID3D12Device8* GetD3D12Device8() const { return D3D12Device8.Get(); }
 #endif
 #if WIN11_BUILD_22000
-    FORCEINLINE ID3D12Device9* GetD3D12Device9() const { return Device9.Get(); }
+    FORCEINLINE ID3D12Device9* GetD3D12Device9() const { return D3D12Device9.Get(); }
 #endif
 
 private:
@@ -168,7 +184,7 @@ private:
     bool CreateCommandManagers();
     bool CreateDefaultResources();
 
-    FD3D12Adapter* const           Adapter;
+    FD3D12Adapter* const Adapter;
 
     FD3D12OnlineDescriptorHeap*    GlobalResourceHeap;
     FD3D12OnlineDescriptorHeap*    GlobalSamplerHeap;
@@ -199,33 +215,34 @@ private:
     D3D_FEATURE_LEVEL              MinFeatureLevel;
     D3D_FEATURE_LEVEL              ActiveFeatureLevel;
 
-    TComPtr<ID3D12Device>  Device;
+    TComPtr<ID3D12Device> D3D12Device;
+
 #if WIN10_BUILD_14393
-    TComPtr<ID3D12Device1> Device1;
+    TComPtr<ID3D12Device1> D3D12Device1;
 #endif
 #if WIN10_BUILD_15063
-    TComPtr<ID3D12Device2> Device2;
+    TComPtr<ID3D12Device2> D3D12Device2;
 #endif
 #if WIN10_BUILD_16299
-    TComPtr<ID3D12Device3> Device3;
+    TComPtr<ID3D12Device3> D3D12Device3;
 #endif
 #if WIN10_BUILD_17134
-    TComPtr<ID3D12Device4> Device4;
+    TComPtr<ID3D12Device4> D3D12Device4;
 #endif
 #if WIN10_BUILD_17763
-    TComPtr<ID3D12Device5> Device5;
+    TComPtr<ID3D12Device5> D3D12Device5;
 #endif
 #if WIN10_BUILD_18362
-    TComPtr<ID3D12Device6> Device6;
+    TComPtr<ID3D12Device6> D3D12Device6;
 #endif
 #if WIN10_BUILD_19041
-    TComPtr<ID3D12Device7> Device7;
+    TComPtr<ID3D12Device7> D3D12Device7;
 #endif
 #if WIN10_BUILD_20348
-    TComPtr<ID3D12Device8> Device8;
+    TComPtr<ID3D12Device8> D3D12Device8;
 #endif
 #if WIN11_BUILD_22000
-    TComPtr<ID3D12Device9> Device9;
+    TComPtr<ID3D12Device9> D3D12Device9;
 #endif
 
     uint32 NodeMask;

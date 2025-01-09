@@ -620,6 +620,53 @@ FRHIRayTracingPipelineState* FVulkanRHI::RHICreateRayTracingPipelineState(const 
     return new FVulkanRayTracingPipelineState();
 }
 
+bool FVulkanRHI::RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const 
+{
+    if (!Device->IsExtensionEnabled(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))
+    {
+        VULKAN_WARNING("[FVulkanRHI] VK_EXT_memory_budget is required to query video-memory information");
+        return false;
+    }
+
+    VkPhysicalDeviceMemoryProperties2 MemoryProperties2;
+    FMemory::Memzero(&MemoryProperties2);
+    MemoryProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+
+    VkPhysicalDeviceMemoryBudgetPropertiesEXT MemoryBudgetProperties;
+    FMemory::Memzero(&MemoryBudgetProperties);
+    MemoryBudgetProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+
+    MemoryProperties2.pNext = &MemoryBudgetProperties;
+
+    // Query memory properties
+    vkGetPhysicalDeviceMemoryProperties2(PhysicalDevice->GetVkPhysicalDevice(), &MemoryProperties2);
+
+    OutMemoryStats.MemoryType   = MemoryType;
+    OutMemoryStats.MemoryUsage  = 0;
+    OutMemoryStats.MemoryBudget = 0;
+
+    const VkPhysicalDeviceMemoryProperties& memoryProperties = MemoryProperties2.memoryProperties;
+    for (int32 Index = 0; Index < memoryProperties.memoryHeapCount; Index++)
+    {
+        if (MemoryType == EVideoMemoryType::Local)
+        {
+            const VkMemoryHeap& MemoryHeap = memoryProperties.memoryHeaps[Index];
+            if (MemoryHeap.flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+            {
+                OutMemoryStats.MemoryBudget += MemoryBudgetProperties.heapBudget[Index];
+                OutMemoryStats.MemoryUsage  += MemoryBudgetProperties.heapUsage[Index];
+            }
+        }
+        else
+        {
+            OutMemoryStats.MemoryBudget += MemoryBudgetProperties.heapBudget[Index];
+            OutMemoryStats.MemoryUsage  += MemoryBudgetProperties.heapUsage[Index];
+        }
+    }
+
+    return true;
+}
+
 bool FVulkanRHI::RHIQueryUAVFormatSupport(EFormat Format) const
 {
     VkFormat VulkanFormat = ConvertFormat(Format);

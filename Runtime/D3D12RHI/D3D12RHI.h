@@ -72,6 +72,7 @@ public:
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) override final;
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) override final;
 
+    virtual bool RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const override final;
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const override final;
     virtual bool RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult) override final;
     virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) override final;

@@ -439,14 +439,18 @@ bool FD3D12Adapter::Initialize()
         D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve adapter");
         return false;
     }
-    else
+
+    Adapter = FinalAdapter;
+    if (FAILED(Adapter->GetDesc1(&AdapterDesc)))
     {
-        Adapter = FinalAdapter;
-        if (FAILED(Adapter->GetDesc1(&AdapterDesc)))
-        {
-            D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve DXGI_ADAPTER_DESC1");
-            return false;
-        }
+        D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve DXGI_ADAPTER_DESC1");
+        return false;
+    }
+
+    if (FAILED(Adapter.GetAs<IDXGIAdapter3>(&Adapter3)))
+    {
+        D3D12_ERROR("[FD3D12Adapter]: FAILED to retrieve IDXGIAdapter3");
+        return false;
     }
 
     return true;
@@ -471,33 +475,33 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     , MinFeatureLevel(D3D_FEATURE_LEVEL_12_0)
     , ActiveFeatureLevel(D3D_FEATURE_LEVEL_11_0)
     , Adapter(InAdapter)
-    , Device(nullptr)
+    , D3D12Device(nullptr)
 #if WIN10_BUILD_14393
-    , Device1(nullptr)
+    , D3D12Device1(nullptr)
 #endif
 #if WIN10_BUILD_15063
-    , Device2(nullptr)
+    , D3D12Device2(nullptr)
 #endif
 #if WIN10_BUILD_16299
-    , Device3(nullptr)
+    , D3D12Device3(nullptr)
 #endif
 #if WIN10_BUILD_17134
-    , Device4(nullptr)
+    , D3D12Device4(nullptr)
 #endif
 #if WIN10_BUILD_17763
-    , Device5(nullptr)
+    , D3D12Device5(nullptr)
 #endif
 #if WIN10_BUILD_18362
-    , Device6(nullptr)
+    , D3D12Device6(nullptr)
 #endif
 #if WIN10_BUILD_19041
-    , Device7(nullptr)
+    , D3D12Device7(nullptr)
 #endif
 #if WIN10_BUILD_20348
-    , Device8(nullptr)
+    , D3D12Device8(nullptr)
 #endif
 #if WIN11_BUILD_22000
-    , Device9(nullptr)
+    , D3D12Device9(nullptr)
 #endif
     , NodeMask(0)
     , NodeCount(0)
@@ -506,12 +510,12 @@ FD3D12Device::FD3D12Device(FD3D12Adapter* InAdapter)
     UploadAllocator = new FD3D12UploadHeapAllocator(this);
 
     // Create CommandAllocatorManagers
-    DirectCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
-    CopyCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
+    DirectCommandAllocatorManager  = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Direct);
+    CopyCommandAllocatorManager    = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Copy);
     ComputeCommandAllocatorManager = new FD3D12CommandAllocatorManager(this, ED3D12CommandQueueType::Compute);
 
     // Create QueryHeapManagers
-    TimingQueryHeapManager = new FD3D12QueryHeapManager(this, EQueryType::Timestamp);
+    TimingQueryHeapManager    = new FD3D12QueryHeapManager(this, EQueryType::Timestamp);
     OcclusionQueryHeapManager = new FD3D12QueryHeapManager(this, EQueryType::Occlusion);
 }
 
@@ -564,45 +568,45 @@ FD3D12Device::~FD3D12Device()
     {
         // Disable filter for warnings since this triggers breakpoints when we check for alive object
         TComPtr<ID3D12InfoQueue> InfoQueue;
-        if (SUCCEEDED(Device.GetAs(&InfoQueue)))
+        if (SUCCEEDED(D3D12Device.GetAs<ID3D12InfoQueue>(&InfoQueue)))
         {
             InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
         }
 
         TComPtr<ID3D12DebugDevice> DebugDevice;
-        if (SUCCEEDED(Device.GetAs(&DebugDevice)))
+        if (SUCCEEDED(D3D12Device.GetAs<ID3D12DebugDevice>(&DebugDevice)))
         {
             DebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
         }
     }
 
-    Device.Reset();
+    D3D12Device.Reset();
 #if WIN10_BUILD_14393
-    Device1.Reset();
+    D3D12Device1.Reset();
 #endif
 #if WIN10_BUILD_15063
-    Device2.Reset();
+    D3D12Device2.Reset();
 #endif
 #if WIN10_BUILD_16299
-    Device3.Reset();
+    D3D12Device3.Reset();
 #endif
 #if WIN10_BUILD_17134
-    Device4.Reset();
+    D3D12Device4.Reset();
 #endif
 #if WIN10_BUILD_17763
-    Device5.Reset();
+    D3D12Device5.Reset();
 #endif
 #if WIN10_BUILD_18362
-    Device6.Reset();
+    D3D12Device6.Reset();
 #endif
 #if WIN10_BUILD_19041
-    Device7.Reset();
+    D3D12Device7.Reset();
 #endif
 #if WIN10_BUILD_20348
-    Device8.Reset();
+    D3D12Device8.Reset();
 #endif
 #if WIN11_BUILD_22000
-    Device9.Reset();
+    D3D12Device9.Reset();
 #endif
 }
 
@@ -618,7 +622,6 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
-    // TODO: Remove feature levels from unsupported SDKs
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
     {
     #if WIN10_BUILD_20348
@@ -636,7 +639,7 @@ bool FD3D12Device::Initialize()
     };
 
     {
-        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &FeatureLevels, sizeof(FeatureLevels));
         if (SUCCEEDED(Result))
         {
             ActiveFeatureLevel = FeatureLevels.MaxSupportedFeatureLevel;
@@ -659,7 +662,7 @@ bool FD3D12Device::Initialize()
         D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
         FMemory::Memzero(&Features);
 
-        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
         if (SUCCEEDED(Result))
         {
             GD3D12ResourceBindingTier = Features.ResourceBindingTier;
@@ -672,7 +675,7 @@ bool FD3D12Device::Initialize()
         D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
         FMemory::Memzero(&Features5);
 
-        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
         if (SUCCEEDED(Result))
         {
             GD3D12RayTracingTier = Features5.RaytracingTier;
@@ -684,7 +687,7 @@ bool FD3D12Device::Initialize()
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
         FMemory::Memzero(&Features6);
 
-        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
         {
             GD3D12VariableRateShadingTier = Features6.VariableShadingRateTier;
@@ -696,7 +699,7 @@ bool FD3D12Device::Initialize()
         D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
         FMemory::Memzero(&Features7);
 
-        HRESULT Result = Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
         if (SUCCEEDED(Result))
         {
             GD3D12MeshShaderTier      = Features7.MeshShaderTier;
@@ -771,7 +774,7 @@ bool FD3D12Device::Initialize()
 bool FD3D12Device::CreateDevice()
 {
     // Create Device
-    if (FAILED(FDynamicD3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&Device))))
+    if (FAILED(FDynamicD3D12::D3D12CreateDevice(Adapter->GetDXGIAdapter(), MinFeatureLevel, IID_PPV_ARGS(&D3D12Device))))
     {
         FPlatformApplicationMisc::MessageBox("ERROR", "FAILED to create device");
         return false;
@@ -783,7 +786,7 @@ bool FD3D12Device::CreateDevice()
     }
 
     // NodeMask
-    NodeCount = Device->GetNodeCount();
+    NodeCount = D3D12Device->GetNodeCount();
     if (NodeCount > 1)
     {
         NodeMask = 1;
@@ -797,7 +800,7 @@ bool FD3D12Device::CreateDevice()
     if (Adapter->IsDebugLayerEnabled())
     {
         TComPtr<ID3D12InfoQueue> InfoQueue;
-        if (SUCCEEDED(Device.GetAs(&InfoQueue)))
+        if (SUCCEEDED(D3D12Device.GetAs(&InfoQueue)))
         {
             const bool bBreakOnError = CVarBreakOnError.GetValue();
             InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, bBreakOnError);
@@ -823,63 +826,63 @@ bool FD3D12Device::CreateDevice()
     }
 
 #if WIN10_BUILD_14393
-    if (FAILED(Device.GetAs<ID3D12Device1>(&Device1)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device1>(&D3D12Device1)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device1");
     }
 #endif
 
 #if WIN10_BUILD_15063
-    if (FAILED(Device.GetAs<ID3D12Device2>(&Device2)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device2>(&D3D12Device2)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device2");
     }
 #endif
 
 #if WIN10_BUILD_16299
-    if (FAILED(Device.GetAs<ID3D12Device3>(&Device3)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device3>(&D3D12Device3)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device3");
     }
 #endif
 
 #if WIN10_BUILD_17134
-    if (FAILED(Device.GetAs<ID3D12Device4>(&Device4)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device4>(&D3D12Device4)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device4");
     }
 #endif
 
 #if WIN10_BUILD_17763
-    if (FAILED(Device.GetAs<ID3D12Device5>(&Device5)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device5>(&D3D12Device5)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device5");
     }
 #endif
 
 #if WIN10_BUILD_18362
-    if (FAILED(Device.GetAs<ID3D12Device6>(&Device6)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device6>(&D3D12Device6)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device6");
     }
 #endif
 
 #if WIN10_BUILD_19041
-    if (FAILED(Device.GetAs<ID3D12Device7>(&Device7)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device7>(&D3D12Device7)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device7");
     }
 #endif
 
 #if WIN10_BUILD_20348
-    if (FAILED(Device.GetAs<ID3D12Device8>(&Device8)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device8>(&D3D12Device8)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device8");
     }
 #endif
 
 #if WIN11_BUILD_22000
-    if (FAILED(Device.GetAs<ID3D12Device9>(&Device9)))
+    if (FAILED(D3D12Device.GetAs<ID3D12Device9>(&D3D12Device9)))
     {
         D3D12_WARNING("[FD3D12Device]: Failed to retrieve ID3D12Device9");
     }
@@ -1071,7 +1074,7 @@ int32 FD3D12Device::QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCou
     Data.Format      = Format;
     Data.SampleCount = SampleCount;
 
-    HRESULT hr = Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
+    HRESULT hr = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &Data, sizeof(D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS));
     if (FAILED(hr))
     {
         D3D12_ERROR("[FD3D12Device] CheckFeatureSupport failed");

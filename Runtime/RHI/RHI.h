@@ -56,6 +56,42 @@ struct RHI_API FRHIModule : public FModuleInterface
     virtual FRHI* CreateRHI() { return nullptr; }
 };
 
+enum class EVideoMemoryType
+{
+    Local = 1,
+    NonLocal,
+};
+
+struct FRHIVideoMemoryInfo
+{
+    FRHIVideoMemoryInfo()
+        : MemoryType(EVideoMemoryType::Local)
+        , MemoryUsage(0)
+        , MemoryBudget(0)
+    {
+    }
+
+    bool operator==(const FRHIVideoMemoryInfo& Other) const
+    {
+        return MemoryType == Other.MemoryType && MemoryUsage == Other.MemoryUsage && MemoryBudget == Other.MemoryBudget;
+    }
+
+    bool operator!=(const FRHIVideoMemoryInfo& Other) const 
+    {
+        return !(*this == Other);
+    }
+
+    /** @brief Type of memory that is queried */
+    EVideoMemoryType MemoryType;
+
+    /** @brief The current memory-usage that is in use by the application */
+    uint64 MemoryUsage;
+
+    /** @brief The current memory-budget. This is the amount of memory that the application can use */
+    uint64 MemoryBudget;
+};
+
+
 class RHI_API FRHI
 {
 protected:
@@ -347,6 +383,12 @@ public:
      * @return Returns true if the current RHI supports unordered access views with the specified format
      */
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const { return false; }
+
+   /** 
+    * @brief Retrieve memory statistics from the RHI 
+    * @return Returns true if the statistics struct was written to successfully
+    */
+    virtual bool RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const { return false; }
 
     /**
      * @brief Gets the adapter name

@@ -1,3 +1,4 @@
+#include "Core/Containers/StaticString.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
 #include "Application/ApplicationInterface.h"
@@ -45,7 +46,7 @@ void FRendererInfoWidget::Draw()
         const float WindowWidth  = DisplaySize.x;
         const float WindowHeight = DisplaySize.y;
         const float Scale        = FrameBufferScale.x;
-        const float ColumnWidth  = 105.0f * Scale;
+        const float ColumnWidth  = 160.0f * Scale;
 	    const float Width        = FMath::Max(TextSize.x + ColumnWidth + 15.0f * Scale, 300.0f * Scale);
 	    const float Height       = WindowHeight * 0.25f;
 
@@ -56,6 +57,22 @@ void FRendererInfoWidget::Draw()
         const ImGuiWindowFlags Flags = ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
         if (ImGui::Begin("Renderer Info", &bDrawRendererInfo, Flags))
         {
+            // Viewport Info
+            ImGui::SeparatorText("Viewport Info");
+
+            ImGui::Columns(2, nullptr, false);
+            ImGui::SetColumnWidth(0, ColumnWidth);
+
+            ImGui::Text("Render Resolution:");
+            ImGui::NextColumn();
+
+            ImGui::Text("%u x %d", Renderer->GetRenderWidth(), Renderer->GetRenderHeight());
+
+            ImGui::Columns(1);
+
+            // Adapter Info
+            ImGui::SeparatorText("Adapter Info");
+
             ImGui::Columns(2, nullptr, false);
             ImGui::SetColumnWidth(0, ColumnWidth);
 
@@ -63,13 +80,47 @@ void FRendererInfoWidget::Draw()
             ImGui::NextColumn();
 
             ImGui::Text("%s", *AdapterName);
-            ImGui::NextColumn();
 
-            ImGui::Text("Render Resolution:");
-            ImGui::NextColumn();
+            FRHIVideoMemoryInfo LocalMemoryInfo;
+            if (GRHI->RHIQueryVideoMemoryInfo(EVideoMemoryType::Local, LocalMemoryInfo))
+            {
+                ImGui::NextColumn();
 
-            ImGui::Text("%u x %d", Renderer->GetRenderWidth(), Renderer->GetRenderHeight());
-            ImGui::NextColumn();
+                ImGui::Text("Local Memory:");
+                ImGui::NextColumn();
+
+                const FStaticString<64> MemoryUsageText = FStaticString<64>::CreateFormatted("%.2f MB / %.2f MB",
+                    LocalMemoryInfo.MemoryUsage / (1024.0f * 1024.0f),
+                    LocalMemoryInfo.MemoryBudget / (1024.0f * 1024.0f));
+
+                const float MemoryUsageRatio = (LocalMemoryInfo.MemoryBudget > 0.0f) ? static_cast<float>(LocalMemoryInfo.MemoryUsage) / static_cast<float>(LocalMemoryInfo.MemoryBudget) : 0.0f;
+                ImGui::ProgressBar(MemoryUsageRatio, ImVec2(-1.0f, 0.0f), *MemoryUsageText);
+
+            }
+
+            FRHIVideoMemoryInfo NonLocalMemoryInfo;
+            if (GRHI->RHIQueryVideoMemoryInfo(EVideoMemoryType::NonLocal, NonLocalMemoryInfo))
+            {
+                ImGui::NextColumn();
+
+                ImGui::Text("Non-Local Memory:");
+                ImGui::NextColumn();
+
+                const FStaticString<64> MemoryUsageText = FStaticString<64>::CreateFormatted("%.2f MB / %.2f MB",
+                    NonLocalMemoryInfo.MemoryUsage / (1024.0f * 1024.0f),
+                    NonLocalMemoryInfo.MemoryBudget / (1024.0f * 1024.0f));
+
+                const float MemoryUsageRatio = (NonLocalMemoryInfo.MemoryBudget > 0.0f) ? static_cast<float>(NonLocalMemoryInfo.MemoryUsage) / static_cast<float>(NonLocalMemoryInfo.MemoryBudget) : 0.0f;
+                ImGui::ProgressBar(MemoryUsageRatio, ImVec2(-1.0f, 0.0f), *MemoryUsageText);
+            }
+
+            ImGui::Columns(1);
+
+            // RHI Stats
+            ImGui::SeparatorText("RHI Stats");
+
+            ImGui::Columns(2, nullptr, false);
+            ImGui::SetColumnWidth(0, ColumnWidth);
 
             const FRHICommandStatistics& Statistics = Renderer->GetStatistics();
             ImGui::Text("DrawCalls: ");

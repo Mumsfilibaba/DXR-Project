@@ -916,6 +916,31 @@ FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInf
     }
 }
 
+bool FD3D12RHI::RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const
+{
+    if (!Adapter)
+    {
+        return false;
+    }
+
+    const DXGI_MEMORY_SEGMENT_GROUP MemoryGroup = MemoryType == EVideoMemoryType::Local ? 
+        DXGI_MEMORY_SEGMENT_GROUP_LOCAL : 
+        DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL;
+
+    DXGI_QUERY_VIDEO_MEMORY_INFO VideoMemoryInfo;
+    HRESULT hr = Adapter->GetDXGIAdapter3()->QueryVideoMemoryInfo(0, MemoryGroup, &VideoMemoryInfo);
+    if (FAILED(hr))
+    {
+        D3D12_ERROR("[FD3D12RHI] QueryVideoMemoryInfo failed");
+        return false;
+    }
+
+    OutMemoryStats.MemoryType   = MemoryType;
+    OutMemoryStats.MemoryUsage  = VideoMemoryInfo.CurrentUsage;
+    OutMemoryStats.MemoryBudget = VideoMemoryInfo.Budget;
+    return true;
+}
+
 bool FD3D12RHI::RHIQueryUAVFormatSupport(EFormat Format) const
 {
     D3D12_FEATURE_DATA_D3D12_OPTIONS FeatureData;
@@ -963,6 +988,7 @@ void FD3D12RHI::RHIEnqueueResourceDeletion(FRHIResource* Resource)
         DeferDeletion(Resource);
     }
 }
+
 
 FString FD3D12RHI::RHIGetAdapterName() const 
 { 

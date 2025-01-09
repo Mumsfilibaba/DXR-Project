@@ -128,6 +128,9 @@ struct FGenericVulkanPlatform
         #if VK_EXT_swapchain_maintenance1
             VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME,
         #endif
+        #if VK_EXT_memory_budget
+            VK_EXT_MEMORY_BUDGET_EXTENSION_NAME,
+        #endif
         };
     }
     
