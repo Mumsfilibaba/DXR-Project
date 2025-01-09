@@ -7,7 +7,7 @@
 struct ImGuiIO;
 struct ImGuiContext;
 class FRHICommandList;
-class FViewport;
+class FViewportWidget;
 
 DECLARE_MULTICAST_DELEGATE(FImGuiDrawMulticastDelegate);
 typedef FImGuiDrawMulticastDelegate::FDelegate FImGuiDelegate;
@@ -66,7 +66,7 @@ struct IImguiPlugin : public FModuleInterface
     virtual FDelegateHandle AddDelegate(const FImGuiDelegate& Delegate) = 0;
     virtual void RemoveDelegate(FDelegateHandle DelegateHandle) = 0;
 
-    virtual void SetMainViewport(const TSharedPtr<FViewport>& InViewport) = 0;
+    virtual void SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport) = 0;
 
     virtual ImGuiIO*      GetImGuiIO()      const = 0;
     virtual ImGuiContext* GetImGuiContext() const = 0;

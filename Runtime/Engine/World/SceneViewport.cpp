@@ -1,13 +1,13 @@
 #include "SceneViewport.h"
 #include "Core/Misc/OutputDeviceLogger.h"
-#include "Application/Application.h"
-#include "Application/Widgets/Viewport.h"
+#include "Application/ApplicationInterface.h"
+#include "Application/Widgets/ViewportWidget.h"
 #include "Engine/World/Actors/PlayerInput.h"
 #include "RHI/RHI.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 
-FSceneViewport::FSceneViewport(const TWeakPtr<FViewport>& InViewport)
+FSceneViewport::FSceneViewport(const TWeakPtr<FViewportWidget>& InViewport)
     : IViewport()
     , Viewport(InViewport)
     , RHIViewport(nullptr)
@@ -25,7 +25,7 @@ FSceneViewport::~FSceneViewport()
 
 bool FSceneViewport::InitializeRHI()
 {
-    TSharedPtr<FViewport> ViewportWidget;
+    TSharedPtr<FViewportWidget> ViewportWidget;
     if (Viewport.IsExpired())
     {
         LOG_INFO("No valid viewport");
@@ -36,7 +36,7 @@ bool FSceneViewport::InitializeRHI()
         ViewportWidget = Viewport.ToSharedPtr();
     }
 
-    TSharedPtr<FWindow> WindowWidget = FApplicationInterface::Get().FindWindowWidget(ViewportWidget);
+    TSharedPtr<FWindowWidget> WindowWidget = FApplicationInterface::Get().FindWindowWidget(ViewportWidget);
     if (!WindowWidget)
     {
         return false;
@@ -44,10 +44,12 @@ bool FSceneViewport::InitializeRHI()
 
     const FIntVector2 WindowSize = WindowWidget->GetSize();
     FRHIViewportInfo ViewportInfo;
-    ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
-    ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm; // TODO: We might want to use RGBA for all RHIs except Vulkan?
     ViewportInfo.Width        = static_cast<uint16>(WindowSize.X);
     ViewportInfo.Height       = static_cast<uint16>(WindowSize.Y);
+    ViewportInfo.WindowHandle = WindowWidget->GetPlatformWindow()->GetPlatformHandle();
+
+    // TODO: Change so that we use RGBA for all RHIs that support it?
+    ViewportInfo.ColorFormat  = EFormat::B8G8R8A8_Unorm;
 
     FRHIViewportRef NewViewport = RHICreateViewport(ViewportInfo);
     if (!NewViewport)
@@ -67,6 +69,19 @@ void FSceneViewport::ReleaseRHI()
 {
     CHECK(RHIViewport->GetRefCount() == 1);
     RHIViewport.Reset();
+}
+
+void FSceneViewport::Tick()
+{
+    if (World)
+    {
+        FCamera* Camera = World->GetCamera();
+        if (Camera && Viewport.IsValid())
+        {
+            const FRectangle& ViewportArea = Viewport->GetContentRectangle();
+            Camera->UpdateProjectionMatrix(static_cast<float>(ViewportArea.Width), static_cast<float>(ViewportArea.Height));
+        }
+    }
 }
 
 FEventResponse FSceneViewport::OnAnalogGamepadChange(const FAnalogGamepadEvent& AnalogGamepadEvent)

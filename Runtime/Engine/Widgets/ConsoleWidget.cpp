@@ -3,7 +3,7 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Templates/CString.h"
 #include "Core/Threading/ScopedLock.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiExtensions.h"
 

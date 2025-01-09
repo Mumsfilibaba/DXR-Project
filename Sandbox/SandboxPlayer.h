@@ -8,7 +8,7 @@ public:
     FOBJECT_DECLARE_CLASS(FSandboxPlayerController, FPlayerController);
 
     FSandboxPlayerController(const FObjectInitializer& Initializer);
-    ~FSandboxPlayerController() = default;
+    ~FSandboxPlayerController();
 
     virtual void SetupInputComponent() override;
     virtual void Tick(float DeltaTime) override;
@@ -30,7 +30,7 @@ public:
     {
         return Camera;
     }
-    
+
 private:
     FCamera* Camera;
     FVector3 CameraSpeed;

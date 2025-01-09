@@ -1,6 +1,6 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "RHI/RHI.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 #include "Renderer/SceneRenderer.h"
 #include "Renderer/Widgets/RendererInfoWidget.h"
 #include "ImGuiPlugin/Interface/ImGuiPlugin.h"

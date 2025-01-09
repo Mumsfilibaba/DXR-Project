@@ -2,8 +2,8 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
-#include "Application/Application.h"
-#include "Application/Widgets/Viewport.h"
+#include "Application/ApplicationInterface.h"
+#include "Application/Widgets/ViewportWidget.h"
 #include "RHI/RHICommandList.h"
 #include "ImGuiPlugin/ImGuiPlugin.h"
 #include "ImGuiPlugin/ImGuiRenderer.h"
@@ -575,7 +575,7 @@ void FImGuiPlugin::Tick(float Delta)
     UIState.FontGlobalScale         = CVarImGuiUseWindowDPIScale.GetValue() ? MainWindow->GetWindowDPIScale() : 1.0f;
     UIState.DisplayFramebufferScale = ImVec2(UIState.FontGlobalScale, UIState.FontGlobalScale);
 
-    TSharedPtr<FWindow>        ForegroundWindow         = FApplicationInterface::Get().GetFocusWindow();
+    TSharedPtr<FWindowWidget>  ForegroundWindow         = FApplicationInterface::Get().GetFocusWindow();
     TSharedRef<FGenericWindow> PlatformForegroundWindow = ForegroundWindow ? ForegroundWindow->GetPlatformWindow() : nullptr;
     
     ImGuiViewport* ForegroundViewport = ForegroundWindow ? ImGui::FindViewportByPlatformHandle(ForegroundWindow.Get()) : nullptr;
@@ -611,7 +611,7 @@ void FImGuiPlugin::Tick(float Delta)
     }
 
     ImGuiID MouseViewportID = 0;
-    if (TSharedPtr<FWindow> WindowUnderCursor = FApplicationInterface::Get().FindWindowUnderCursor())
+    if (TSharedPtr<FWindowWidget> WindowUnderCursor = FApplicationInterface::Get().FindWindowUnderCursor())
     {
         if (ImGuiViewport* Viewport = ImGui::FindViewportByPlatformHandle(WindowUnderCursor.Get()))
         {
@@ -693,7 +693,7 @@ void FImGuiPlugin::RemoveDelegate(FDelegateHandle DelegateHandle)
     DrawDelegates.Unbind(DelegateHandle);
 }
 
-void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewport>& InViewport)
+void FImGuiPlugin::SetMainViewport(const TSharedPtr<FViewportWidget>& InViewport)
 {
     if (MainViewport == InViewport)
     {
@@ -771,7 +771,7 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = new FImGuiViewport();
     Viewport->PlatformUserData = ViewportData;
 
-    TSharedPtr<FWindow> ParentWindow;
+    TSharedPtr<FWindowWidget> ParentWindow;
     if (Viewport->ParentViewportId != 0)
     {
         if (ImGuiViewport* ParentViewport = ImGui::FindViewportByID(Viewport->ParentViewportId))
@@ -783,13 +783,13 @@ void FImGuiPlugin::OnCreatePlatformWindow(ImGuiViewport* Viewport)
 
     const EWindowStyleFlags WindowStyle = GetWindowStyleFromImGuiViewportFlags(Viewport->Flags);
 
-    FWindow::FInitializer WindowInitializer;
+    FWindowWidget::FInitializer WindowInitializer;
     WindowInitializer.Title      = "ImGui Window";
     WindowInitializer.Size       = FIntVector2(static_cast<int32>(Viewport->Size.x), static_cast<int32>(Viewport->Size.y));
     WindowInitializer.Position   = FIntVector2(static_cast<int32>(Viewport->Pos.x), static_cast<int32>(Viewport->Pos.y));
     WindowInitializer.StyleFlags = WindowStyle;
 
-    ViewportData->Window = CreateWidget<FWindow>(WindowInitializer);
+    ViewportData->Window = CreateWidget<FWindowWidget>(WindowInitializer);
     CHECK(ViewportData->Window != nullptr);
 
     FApplicationInterface::Get().CreateWindow(ViewportData->Window);

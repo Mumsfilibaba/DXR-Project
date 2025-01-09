@@ -4,7 +4,7 @@
 #include "Resources/Material.h"
 #include "Core/Containers/SharedPtr.h"
 #include "Application/Events.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 #include "RHI/RHIResources.h"
 
 #define ENGINE_DEBUG_INPUT 0
@@ -50,7 +50,7 @@ public:
     FWorld* GetWorld() const { return World; }
 
     // Returns the engine window
-    TSharedPtr<FWindow> GetEngineWindow() const { return EngineWindow; }
+    TSharedPtr<FWindowWidget> GetEngineWindow() const { return EngineWindow; }
 
     // Returns the SceneViewport
     TSharedPtr<FSceneViewport> GetSceneViewport() const { return SceneViewport; }
@@ -66,10 +66,10 @@ private:
     void OnEngineWindowResized(const FIntVector2& NewScreenSize);
 
     /** @brief The main Window */
-    TSharedPtr<FWindow> EngineWindow;
+    TSharedPtr<FWindowWidget> EngineWindow;
 
     /** @brief The main viewport */
-    TSharedPtr<FViewport> EngineViewportWidget;
+    TSharedPtr<FViewportWidget> EngineViewportWidget;
 
     /** @brief SceneViewport */
     TSharedPtr<FSceneViewport> SceneViewport;

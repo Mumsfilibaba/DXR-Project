@@ -3,7 +3,7 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Time/Timespan.h"
 #include "Core/Platform/PlatformThreadMisc.h"
-#include "Application/Application.h"
+#include "Application/ApplicationInterface.h"
 #include "RHI/RHI.h"
 #include "RHI/ShaderCompiler.h"
 #include "Engine/Engine.h"
@@ -523,7 +523,6 @@ bool FSceneRenderer::InitializeRenderPasses()
 
 void FSceneRenderer::Tick(FScene* Scene)
 {
-    TSharedPtr<FWindow> EngineWindow = GEngine->GetEngineWindow();
     Resources.BackBuffer = Resources.MainViewport->GetBackBuffer();
 
     GRHICommandExecutor.Tick();
@@ -539,6 +538,8 @@ void FSceneRenderer::Tick(FScene* Scene)
     FrameCounter.NextFrame();
 
     // Check if we need to resize
+    TSharedPtr<FWindowWidget> EngineWindow = GEngine->GetEngineWindow();
+    
     const FIntVector2 CurrentSize = EngineWindow->GetSize();
     Resources.DesiredWidth  = CurrentSize.X;
     Resources.DesiredHeight = CurrentSize.Y;

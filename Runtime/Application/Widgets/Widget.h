@@ -94,28 +94,23 @@ class APPLICATION_API FWidget : public TSharedFromThis<FWidget>
 {
 public:
 
-    /**
-     * @brief Constructs a widget.
-     */
     FWidget();
-
-    /**
-     * @brief Virtual destructor for FWidget.
-     */
     virtual ~FWidget();
+
+public:
 
     /**
      * @brief Updates the widget.
      * 
      * This method updates the current bounds based on the parent widget and other factors.
      */
-    virtual void Tick();
-    
+    virtual void Tick(const FRectangle& AssignedBounds);
+
     /**
      * @brief Checks if the widget is a window.
      * 
-     * This method returns true only if the widget is an FWindow, and false for all other widget types.
-     * @return True if the widget is an FWindow; false otherwise.
+     * This method returns true only if the widget is an FWindowWidget, and false for all other widget types.
+     * @return True if the widget is an FWindowWidget; false otherwise.
      */
     virtual bool IsWindow() const;
 
@@ -232,7 +227,7 @@ public:
     /**
      * @brief Adds all parent widgets to a widget path.
      * 
-     * This function adds the parent widgets starting from the first parent (should be an FWindow) up to the child widget.
+     * This function adds the parent widgets starting from the first parent (should be an FWindowWidget) up to the child widget.
      * The widget calling this function will be at the last position in the widget path.
      * 
      * @param OutParentWidgets The widget path to populate with parent widgets.
@@ -311,13 +306,7 @@ public:
     }
 
 private:
-
-    /** @brief The visibility state of the widget. */
-    EVisibility Visibility;
-
-    /** @brief The content rectangle of the widget. */
-    FRectangle ContentRectangle;
-
-    /** @brief Weak pointer to the parent widget. */
+    EVisibility       Visibility;
+    FRectangle        ContentRectangle;
     TWeakPtr<FWidget> ParentWidget;
 };

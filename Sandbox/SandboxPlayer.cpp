@@ -1,5 +1,6 @@
 #include "SandboxPlayer.h"
 #include <Core/Misc/OutputDeviceLogger.h>
+#include <Engine/Engine.h>
 #include <Engine/World/Camera.h>
 #include <Engine/World/World.h>
 #include <Engine/World/Actors/PlayerInput.h>
@@ -49,6 +50,10 @@ FSandboxPlayerController::FSandboxPlayerController(const FObjectInitializer& Ini
     }
 }
 
+FSandboxPlayerController::~FSandboxPlayerController()
+{
+}
+
 void FSandboxPlayerController::Tick(float DeltaTime)
 {
     GetPlayerInput()->EnableInput(InputComponent);
@@ -62,12 +67,14 @@ void FSandboxPlayerController::Tick(float DeltaTime)
     const FAxisState RightThumbX = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbX);
     const FAxisState RightThumbY = GetPlayerInput()->GetAnalogState(EAnalogSourceName::RightThumbY);
     
+    // Reset Camera
     if (GetPlayerInput()->IsKeyDown(EKeys::R))
     {
         Camera->SetPosition(0.0f, 10.0f, -2.0f);
         Camera->SetRotation(0.0f,  0.0f,  0.0f);
     }
     
+    // Camera Rotation
     if (FMath::Abs(RightThumbX.Value) > Deadzone)
     {
         Camera->Rotate(0.0f, FMath::ToRadians(RightThumbX.Value * RotationSpeed * DeltaTime), 0.0f);
@@ -94,6 +101,7 @@ void FSandboxPlayerController::Tick(float DeltaTime)
         Camera->Rotate(FMath::ToRadians(RotationSpeed * DeltaTime), 0.0f, 0.0f);
     }
 
+    // Camera Movement
     float Acceleration = 15.0f;
     if (GetPlayerInput()->IsKeyDown(EKeys::LeftShift) || GetPlayerInput()->IsKeyDown(EKeys::GamepadLeftThumb))
     {
@@ -145,7 +153,9 @@ void FSandboxPlayerController::Tick(float DeltaTime)
 
     const FVector3 Speed = CameraSpeed * DeltaTime;
     Camera->Move(Speed.X, Speed.Y, Speed.Z);
-    Camera->UpdateMatrices();
+
+    // When the camera has rotated and moved we can update the view matrix
+    Camera->UpdateViewMatrix();
 }
 
 void FSandboxPlayerController::SetupInputComponent()

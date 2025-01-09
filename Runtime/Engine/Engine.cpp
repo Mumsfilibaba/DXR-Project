@@ -4,9 +4,9 @@
 #include "Core/Modules/ModuleManager.h"
 #include "Core/Math/Math.h"
 #include "Project/ProjectManager.h"
-#include "Application/Application.h"
-#include "Application/Widgets/Window.h"
-#include "Application/Widgets/Viewport.h"
+#include "Application/ApplicationInterface.h"
+#include "Application/Widgets/WindowWidget.h"
+#include "Application/Widgets/ViewportWidget.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
 #include "Engine/Engine.h"
 #include "Engine/Assets/AssetManager.h"
@@ -94,13 +94,13 @@ FEngine::~FEngine()
 
 bool FEngine::CreateEngineWindow()
 {
-    FWindow::FInitializer WindowInitializer;
+    FWindowWidget::FInitializer WindowInitializer;
     WindowInitializer.Title      = "Sandbox";
     WindowInitializer.Size.X     = CVarViewportWidth.GetValue();
     WindowInitializer.Size.Y     = CVarViewportHeight.GetValue();
     WindowInitializer.StyleFlags = EWindowStyleFlags::Default;
     
-    EngineWindow = CreateWidget<FWindow>(WindowInitializer);
+    EngineWindow = CreateWidget<FWindowWidget>(WindowInitializer);
 
     // Initialize and show the game-window
     FApplicationInterface::Get().CreateWindow(EngineWindow);
@@ -115,10 +115,10 @@ bool FEngine::CreateEngineViewport()
         return false;
     }
 
-    FViewport::FInitializer ViewportInitializer;
+    FViewportWidget::FInitializer ViewportInitializer;
     ViewportInitializer.ViewportInterface = nullptr;
 
-    EngineViewportWidget = CreateWidget<FViewport>(ViewportInitializer);
+    EngineViewportWidget = CreateWidget<FViewportWidget>(ViewportInitializer);
     EngineViewportWidget->SetParentWidget(EngineWindow->AsWeakPtr());
 
     EngineWindow->SetOnWindowMoved(FOnWindowMoved::CreateRaw(this, &FEngine::OnEngineWindowMoved));
@@ -315,13 +315,22 @@ void FEngine::Tick(float DeltaTime)
 {
     TRACE_FUNCTION_SCOPE();
 
+    // At this point in the frame, we can update the scene-viewport so that the camera is prepared for this frame
+    if (SceneViewport)
+    {
+        SceneViewport->Tick();
+    }
+
+    // Update the game-module
     GameModule->Tick(DeltaTime);
 
+    // Update the world, update all the actors and components
     if (World)
     {
         World->Tick(DeltaTime);
     }
 
+    // Update the ImGui-plugin
     if (IImguiPlugin::IsEnabled())
     {
         IImguiPlugin::Get().Tick(DeltaTime);
