@@ -84,8 +84,11 @@ function build_rules(name)
         -- @brief - The kind of project to generate (SharedLib, StaticLib, WindowedApp, ConsoleApp, etc.)
         kind = "SharedLib",
 
-        -- @brief - System includes, e.g., #include <vector>
-        system_includes = {},
+        -- @brief - Include directories, e.g., #include <ThirdParty.h> or #include "ThirdParty.h"
+        include_dirs = {},
+
+        -- @brief - External includes, e.g., #include <ThirdParty.h>
+        external_include_dirs = {},
 
         -- @brief - Force include these files
         force_includes = {},
@@ -148,12 +151,12 @@ function build_rules(name)
         add_unique_elements(in_flags, self.flags)
     end
 
-    function self.add_system_includes(in_system_includes)
-        add_unique_elements(in_system_includes, self.system_includes)
+    function self.add_include_dirs(in_include_dirs)
+        add_unique_elements(in_include_dirs, self.include_dirs)
     end
 
-    function self.add_includes(in_includes)
-        add_unique_elements(in_includes, self.includes)
+    function self.add_external_include_dirs(in_external_include_dirs)
+        add_unique_elements(in_external_include_dirs, self.external_include_dirs)
     end
 
     function self.add_files(in_files)
@@ -333,9 +336,14 @@ function build_rules(name)
                 print_table("    Using define '%s'", self.defines)
             end
 
-            log_info("\n--- SystemIncludes for module '%s' (Num SystemIncludes=%d) ---", self.name, #self.system_includes)
-            if #self.system_includes > 0 then
-                print_table("    Using SystemInclude '%s'", self.system_includes)
+            log_info("\n--- Includes for module '%s' (Num Includes=%d) ---", self.name, #self.include_dirs)
+            if #self.include_dirs > 0 then
+                print_table("    Using Includes '%s'", self.include_dirs)
+            end
+
+            log_info("\n--- ExternalIncludes for module '%s' (Num ExternalIncludes=%d) ---", self.name, #self.external_include_dirs)
+            if #self.external_include_dirs > 0 then
+                print_table("    Using ExternalInclude '%s'", self.external_include_dirs)
             end
 
             log_info("\n--- LibraryPaths for module '%s' (Num LibraryPaths=%d) ---", self.name, #self.library_paths)
@@ -388,7 +396,8 @@ function build_rules(name)
 
             defines(self.defines)
 
-            externalincludedirs(self.system_includes)
+            includedirs(self.include_dirs)
+            externalincludedirs(self.external_include_dirs)
 
             libdirs(self.library_paths)
 
@@ -448,6 +457,7 @@ function build_rules(name)
                 links(self.link_libraries)
                 links(self.link_modules)
                 linkoptions(self.link_options)
+
                 -- Setup dependencies
                 dependson(self.module_dependencies)
             end
@@ -480,14 +490,52 @@ function build_rules(name)
             if is_platform_windows() then
                 local dxil_dll_cmd = "copy " .. create_external_dependency_path("DXC/bin/dxil.dll") .. " " .. full_object_folder_path
                 log_highlight("dxil.dll Cmd %s", dxil_dll_cmd)
-
+                
                 local dxcompiler_dll_cmd = "copy " .. create_external_dependency_path("DXC/bin/dxcompiler.dll") .. " " .. full_object_folder_path
                 log_highlight("dxcompiler.dll Cmd %s", dxcompiler_dll_cmd)
-
+                
+                local agility_sdk_folder = join_path(full_object_folder_path, "D3D12")
+                
+                -- Ensure the folder exists before copying files
+                local create_agility_folder_cmd = "if not exist \"" .. agility_sdk_folder .. "\" mkdir \"" .. agility_sdk_folder .. "\""
+                
+                local d3d12core_dll_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.dll") .. " " .. agility_sdk_folder
+                log_highlight("d3d12core.dll Cmd %s", d3d12core_dll_cmd)
+                
+                local d3d12core_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/D3D12Core.pdb") .. " " .. agility_sdk_folder
+                log_highlight("d3d12core.pdb Cmd %s", d3d12core_pdb_cmd)
+                
+                local d3d12SDKLayers_dll_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.dll") .. " " .. agility_sdk_folder
+                log_highlight("d3d12SDKLayers.dll Cmd %s", d3d12SDKLayers_dll_cmd)
+                
+                local d3d12SDKLayers_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3d12SDKLayers.pdb") .. " " .. agility_sdk_folder
+                log_highlight("d3d12SDKLayers.pdb Cmd %s", d3d12SDKLayers_pdb_cmd)
+                
+                local d3dconfig_exe_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.exe") .. " " .. agility_sdk_folder
+                log_highlight("d3dconfig.exe Cmd %s", d3dconfig_exe_cmd)
+                
+                local d3dconfig_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/d3dconfig.pdb") .. " " .. agility_sdk_folder
+                log_highlight("d3dconfig.pdb Cmd %s", d3dconfig_pdb_cmd)
+                
+                local directsr_exe_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.dll") .. " " .. agility_sdk_folder
+                log_highlight("DirectSR.dll Cmd %s", directsr_exe_cmd)
+                
+                local directsr_pdb_cmd = "copy " .. create_external_dependency_path("D3D12AgilitySDK/microsoft.direct3d.d3d12.1.716.0-preview/build/native/bin/x64/DirectSR.pdb") .. " " .. agility_sdk_folder
+                log_highlight("DirectSR.pdb Cmd %s", directsr_pdb_cmd)
+                
                 postbuildcommands
                 {
+                    create_agility_folder_cmd, -- Ensure folder exists before copying
                     dxil_dll_cmd,
-                    dxcompiler_dll_cmd
+                    dxcompiler_dll_cmd,
+                    d3d12core_dll_cmd,
+                    d3d12core_pdb_cmd,
+                    d3d12SDKLayers_dll_cmd,
+                    d3d12SDKLayers_pdb_cmd,
+                    d3dconfig_exe_cmd,
+                    d3dconfig_pdb_cmd,
+                    directsr_exe_cmd,
+                    directsr_pdb_cmd,
                 }
             elseif is_platform_mac() then
                 local libdxcompiler_dll_cmd = "cp " .. create_external_dependency_path("DXC/bin/libdxcompiler.dylib") .. " " .. full_object_folder_path
@@ -539,7 +587,7 @@ function build_rules(name)
         self.project_file_path = self.workspace.get_solutions_folder_path()
 
         -- Ensure that the runtime folder is added to the include folders
-        self.add_system_includes { runtime_folder_path }
+        self.add_external_include_dirs { runtime_folder_path }
 
         -- Add framework extension
         self.add_framework_extension()
@@ -554,6 +602,7 @@ function build_rules(name)
                     table.insert(self.link_modules, current_module_name)
                 end
 
+                -- Add define for importing a dynamic module's exported functions and classes
                 if current_module.is_dynamic then
                     local module_api_name = current_module.name:upper() .. "_API"
 
@@ -572,7 +621,8 @@ function build_rules(name)
                 self.add_module_dependencies(current_module.module_dependencies)
 
                 -- System includes can be included in a dependency header and therefore necessary in this module as well
-                self.add_system_includes(current_module.system_includes)
+                self.add_include_dirs(current_module.include_dirs)
+                self.add_external_include_dirs(current_module.external_include_dirs)
                 self.add_library_paths(current_module.library_paths)
             else
                 log_error("Module '%s' has not been included", current_module_name)

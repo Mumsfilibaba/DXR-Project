@@ -225,7 +225,7 @@ bool FEngine::Init()
     SamplerInfo.AddressU       = ESamplerMode::Wrap;
     SamplerInfo.AddressV       = ESamplerMode::Wrap;
     SamplerInfo.AddressW       = ESamplerMode::Wrap;
-    SamplerInfo.ComparisonFunc = EComparisonFunc::Always;
+    SamplerInfo.ComparisonFunc = EComparisonFunc::Unknown;
     SamplerInfo.Filter         = ESamplerFilter::Anistrotopic;
     SamplerInfo.MaxAnisotropy  = 16;
     SamplerInfo.MaxLOD         = TNumericLimits<float>::Max();

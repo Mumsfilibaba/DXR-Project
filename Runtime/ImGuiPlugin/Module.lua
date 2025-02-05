@@ -4,7 +4,7 @@ include "../../BuildScripts/Scripts/build_module.lua"
 
 local imgui_plugin_module = module_build_rules("ImGuiPlugin")
 
-imgui_plugin_module.add_system_includes
+imgui_plugin_module.add_external_include_dirs
 {
     create_external_dependency_path("imgui"),
 }

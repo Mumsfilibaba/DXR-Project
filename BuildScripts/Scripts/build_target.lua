@@ -65,6 +65,7 @@ function target_build_rules(name, workspace)
 
                     rule.add_files(launch_module.files)
                     rule.add_exclude_files(launch_module.exclude_files)
+                    rule.add_defines(launch_module.defines)
                 else
                     log_error("Found the Launch Module among dependencies, but it has not been initialized")
                 end
@@ -155,8 +156,9 @@ function target_build_rules(name, workspace)
                 -- Overwrite all exclude files
                 executable.exclude_files = {}
         
-                -- System includes can be included in a dependency header and therefore necessary in this module as well
-                executable.add_system_includes(self.system_includes)
+                -- Includes can be included in a dependency header and therefore necessary in this module as well
+                executable.add_include_dirs(self.include_dirs)
+                executable.add_external_include_dirs(self.external_include_dirs)
 
                 -- Generate Standalone executable
                 executable.generate()

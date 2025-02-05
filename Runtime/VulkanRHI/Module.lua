@@ -66,7 +66,7 @@ if is_platform_mac() then
     }
 end
 
-vulkan_rhi.add_system_includes
+vulkan_rhi.add_external_include_dirs
 {
     vulkan_include,
     create_external_dependency_path("SPIRV-Cross"),

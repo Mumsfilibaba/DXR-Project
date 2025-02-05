@@ -5,7 +5,7 @@ include "../../BuildScripts/Scripts/build_module.lua"
 local engine_module = module_build_rules("Engine")
 engine_module.use_precompiled_headers = true
 
-engine_module.add_system_includes
+engine_module.add_external_include_dirs
 {
     create_external_dependency_path("imgui"),
     create_external_dependency_path("stb_image"),

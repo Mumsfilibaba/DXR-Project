@@ -14,12 +14,24 @@ static void InitCRunTime()
 #endif
 }
 
+// D3D12 Agility SDK exports
+#if D3D12_AGILITY_SDK_EXPORTS
+    extern "C"
+    {
+        // Version of the D3D12 Agility SDK
+        __declspec(dllexport) extern const UINT D3D12SDKVersion = D3D12_AGILITY_SDK_VERSION;
+
+        // Path to the D3D12Core.dll
+        __declspec(dllexport) extern const char* D3D12SDKPath = D3D12_AGILITY_SDK_PATH;
+    }
+#endif
+
 int WINAPI WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CommandLine, int CmdShow)
 {
     InitCRunTime();
 
-    const CHAR* TempCommandLine = CommandLine;
-    return EngineMain(&TempCommandLine, 1);
+    const CHAR* LocalCommandLine = CommandLine;
+    return EngineMain(&LocalCommandLine, 1);
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

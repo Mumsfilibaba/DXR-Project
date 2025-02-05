@@ -4,7 +4,7 @@ include "../../BuildScripts/Scripts/build_module.lua"
 
 local rhi_module = module_build_rules("RHI")
 
-rhi_module.add_system_includes
+rhi_module.add_external_include_dirs
 {
     create_external_dependency_path("DXC/include"),
     create_external_dependency_path("SPIRV-Cross"),

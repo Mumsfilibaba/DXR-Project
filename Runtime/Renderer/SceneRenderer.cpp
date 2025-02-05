@@ -275,7 +275,7 @@ bool FSceneRenderer::Initialize()
         SamplerStateInfo.AddressV       = ESamplerMode::Clamp;
         SamplerStateInfo.AddressW       = ESamplerMode::Clamp;
         SamplerStateInfo.Filter         = ESamplerFilter::MinMagMipPoint;
-        SamplerStateInfo.ComparisonFunc = EComparisonFunc::Always;
+        SamplerStateInfo.ComparisonFunc = EComparisonFunc::Unknown;
         SamplerStateInfo.MinLOD         = 0.0f;
         SamplerStateInfo.BorderColor    = FFloatColor(0.0f, 0.0f, 0.0f, 0.0f);
 

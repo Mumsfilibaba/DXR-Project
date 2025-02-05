@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.Direct3D.D3D12</id>
+    <version>1.716.0-preview</version>
+    <title>Microsoft.Direct3D.D3D12</title>
+    <authors>Microsoft</authors>
+    <owners>Direct3D,Microsoft</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="file">LICENSE.txt</license>
+    <icon>icon.png</icon>
+    <projectUrl>https://aka.ms/directx12agility</projectUrl>
+    <description>DirectX 12 Agility SDK</description>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+    <tags>DirectX Direct3D D3D12 Direct3D12 DirectX12 Agility</tags>
+  </metadata>
+  <files>
+    <file src="build\native\bin\arm64\D3D12Core.dll" target="build\native\bin\arm64\D3D12Core.dll" />
+    <file src="build\native\bin\arm64\D3D12Core.pdb" target="build\native\bin\arm64\D3D12Core.pdb" />
+    <file src="build\native\bin\arm64\d3d12SDKLayers.dll" target="build\native\bin\arm64\d3d12SDKLayers.dll" />
+    <file src="build\native\bin\arm64\d3d12SDKLayers.pdb" target="build\native\bin\arm64\d3d12SDKLayers.pdb" />
+    <file src="build\native\bin\arm64\d3dconfig.exe" target="build\native\bin\arm64\d3dconfig.exe" />
+    <file src="build\native\bin\arm64\d3dconfig.pdb" target="build\native\bin\arm64\d3dconfig.pdb" />
+    <file src="build\native\bin\arm64\DirectSR.dll" target="build\native\bin\arm64\DirectSR.dll" />
+    <file src="build\native\bin\arm64\DirectSR.pdb" target="build\native\bin\arm64\DirectSR.pdb" />
+    <file src="build\native\bin\win32\D3D12Core.dll" target="build\native\bin\win32\D3D12Core.dll" />
+    <file src="build\native\bin\win32\D3D12Core.pdb" target="build\native\bin\win32\D3D12Core.pdb" />
+    <file src="build\native\bin\win32\d3d12SDKLayers.dll" target="build\native\bin\win32\d3d12SDKLayers.dll" />
+    <file src="build\native\bin\win32\d3d12SDKLayers.pdb" target="build\native\bin\win32\d3d12SDKLayers.pdb" />
+    <file src="build\native\bin\win32\d3dconfig.exe" target="build\native\bin\win32\d3dconfig.exe" />
+    <file src="build\native\bin\win32\d3dconfig.pdb" target="build\native\bin\win32\d3dconfig.pdb" />
+    <file src="build\native\bin\win32\DirectSR.dll" target="build\native\bin\win32\DirectSR.dll" />
+    <file src="build\native\bin\win32\DirectSR.pdb" target="build\native\bin\win32\DirectSR.pdb" />
+    <file src="build\native\bin\x64\D3D12Core.dll" target="build\native\bin\x64\D3D12Core.dll" />
+    <file src="build\native\bin\x64\D3D12Core.pdb" target="build\native\bin\x64\D3D12Core.pdb" />
+    <file src="build\native\bin\x64\d3d12SDKLayers.dll" target="build\native\bin\x64\d3d12SDKLayers.dll" />
+    <file src="build\native\bin\x64\d3d12SDKLayers.pdb" target="build\native\bin\x64\d3d12SDKLayers.pdb" />
+    <file src="build\native\bin\x64\d3dconfig.exe" target="build\native\bin\x64\d3dconfig.exe" />
+    <file src="build\native\bin\x64\d3dconfig.pdb" target="build\native\bin\x64\d3dconfig.pdb" />
+    <file src="build\native\bin\x64\DirectSR.dll" target="build\native\bin\x64\DirectSR.dll" />
+    <file src="build\native\bin\x64\DirectSR.pdb" target="build\native\bin\x64\DirectSR.pdb" />
+    <file src="build\native\include\d3dx12\d3dx12.h" target="build\native\include\d3dx12\d3dx12.h" />
+    <file src="build\native\include\d3dx12\d3dx12_barriers.h" target="build\native\include\d3dx12\d3dx12_barriers.h" />
+    <file src="build\native\include\d3dx12\d3dx12_check_feature_support.h" target="build\native\include\d3dx12\d3dx12_check_feature_support.h" />
+    <file src="build\native\include\d3dx12\d3dx12_core.h" target="build\native\include\d3dx12\d3dx12_core.h" />
+    <file src="build\native\include\d3dx12\d3dx12_default.h" target="build\native\include\d3dx12\d3dx12_default.h" />
+    <file src="build\native\include\d3dx12\d3dx12_pipeline_state_stream.h" target="build\native\include\d3dx12\d3dx12_pipeline_state_stream.h" />
+    <file src="build\native\include\d3dx12\d3dx12_property_format_table.h" target="build\native\include\d3dx12\d3dx12_property_format_table.h" />
+    <file src="build\native\include\d3dx12\d3dx12_render_pass.h" target="build\native\include\d3dx12\d3dx12_render_pass.h" />
+    <file src="build\native\include\d3dx12\d3dx12_resource_helpers.h" target="build\native\include\d3dx12\d3dx12_resource_helpers.h" />
+    <file src="build\native\include\d3dx12\d3dx12_root_signature.h" target="build\native\include\d3dx12\d3dx12_root_signature.h" />
+    <file src="build\native\include\d3dx12\d3dx12_state_object.h" target="build\native\include\d3dx12\d3dx12_state_object.h" />
+    <file src="build\native\include\d3d12.h" target="build\native\include\d3d12.h" />
+    <file src="build\native\include\d3d12.idl" target="build\native\include\d3d12.idl" />
+    <file src="build\native\include\d3d12compatibility.h" target="build\native\include\d3d12compatibility.h" />
+    <file src="build\native\include\d3d12compatibility.idl" target="build\native\include\d3d12compatibility.idl" />
+    <file src="build\native\include\d3d12sdklayers.h" target="build\native\include\d3d12sdklayers.h" />
+    <file src="build\native\include\d3d12sdklayers.idl" target="build\native\include\d3d12sdklayers.idl" />
+    <file src="build\native\include\d3d12shader.h" target="build\native\include\d3d12shader.h" />
+    <file src="build\native\include\D3D12TokenizedProgramFormat.hpp" target="build\native\include\D3D12TokenizedProgramFormat.hpp" />
+    <file src="build\native\include\d3d12video.h" target="build\native\include\d3d12video.h" />
+    <file src="build\native\include\d3d12video.idl" target="build\native\include\d3d12video.idl" />
+    <file src="build\native\include\d3dcommon.h" target="build\native\include\d3dcommon.h" />
+    <file src="build\native\include\d3dcommon.idl" target="build\native\include\d3dcommon.idl" />
+    <file src="build\native\include\directsr.h" target="build\native\include\directsr.h" />
+    <file src="build\native\include\directsr.idl" target="build\native\include\directsr.idl" />
+    <file src="build\native\include\dxgiformat.h" target="build\native\include\dxgiformat.h" />
+    <file src="build\native\include\dxgiformat.idl" target="build\native\include\dxgiformat.idl" />
+    <file src="build\native\src\d3dx12\d3dx12_property_format_table.cpp" target="build\native\src\d3dx12\d3dx12_property_format_table.cpp" />
+    <file src="build\native\Microsoft.Direct3D.D3D12.props" target="build\native\Microsoft.Direct3D.D3D12.props" />
+    <file src="build\native\Microsoft.Direct3D.D3D12.Rules.Project.xml" target="build\native\Microsoft.Direct3D.D3D12.Rules.Project.xml" />
+    <file src="build\native\Microsoft.Direct3D.D3D12.targets" target="build\native\Microsoft.Direct3D.D3D12.targets" />
+    <file src="icon.png" target="icon.png" />
+    <file src="LICENSE-CODE.txt" target="LICENSE-CODE.txt" />
+    <file src="LICENSE.txt" target="LICENSE.txt" />
+    <file src="README.md" target="README.md" />
+  </files>
+</package>

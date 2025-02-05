@@ -391,7 +391,7 @@ constexpr D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc Comparison
         case EComparisonFunc::Always:       return D3D12_COMPARISON_FUNC_ALWAYS;
     }
 
-    return D3D12_COMPARISON_FUNC(-1);
+    return D3D12_COMPARISON_FUNC_NONE;
 }
 
 constexpr D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)

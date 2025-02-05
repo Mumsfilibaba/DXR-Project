@@ -770,7 +770,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
 
         FD3D12RootSignatureLayout RayGenLocalResourceCounts;
         RayGenLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
-        RayGenLocalResourceCounts.bAllowInputAssembler                  = false;
+        RayGenLocalResourceCounts.bAllowInputAssembler                 = false;
         RayGenLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12RayGen->GetRTLocalResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(RayGenLocalResourceCounts));
@@ -839,7 +839,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
 
         FD3D12RootSignatureLayout AnyHitLocalResourceCounts;
         AnyHitLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
-        AnyHitLocalResourceCounts.bAllowInputAssembler                  = false;
+        AnyHitLocalResourceCounts.bAllowInputAssembler                 = false;
         AnyHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12AnyHit->GetRTLocalResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(AnyHitLocalResourceCounts));
@@ -862,7 +862,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
 
         FD3D12RootSignatureLayout ClosestHitLocalResourceCounts;
         ClosestHitLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
-        ClosestHitLocalResourceCounts.bAllowInputAssembler                  = false;
+        ClosestHitLocalResourceCounts.bAllowInputAssembler                 = false;
         ClosestHitLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12ClosestHit->GetRTLocalResourceCount();
 
         HitLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(ClosestHitLocalResourceCounts));
@@ -885,7 +885,7 @@ bool FD3D12RayTracingPipelineState::Initialize(const FRHIRayTracingPipelineState
 
         FD3D12RootSignatureLayout MissLocalResourceCounts;
         MissLocalResourceCounts.Type                                 = ERootSignatureType::RayTracingLocal;
-        MissLocalResourceCounts.bAllowInputAssembler                  = false;
+        MissLocalResourceCounts.bAllowInputAssembler                 = false;
         MissLocalResourceCounts.ResourceCounts[ShaderVisibility_All] = D3D12MissShader->GetRTLocalResourceCount();
 
         MissLocalRootSignature = MakeSharedRef<FD3D12RootSignature>(RootSignatureManager.GetOrCreateRootSignature(MissLocalResourceCounts));
@@ -1045,8 +1045,7 @@ bool FD3D12PipelineStateManager::CreateGraphicsPipeline(const WIDECHAR* Pipeline
         hResult = PipelineLibrary->StorePipeline(PipelineHash, OutPipelineState.Get());
         if (FAILED(hResult))
         {
-            D3D12_ERROR("Failed to store GraphicsPipelineState");
-            return false;
+            D3D12_WARNING("Failed to store GraphicsPipelineState");
         }
 
         bPipelineLibraryDirty = true;
@@ -1077,8 +1076,7 @@ bool FD3D12PipelineStateManager::CreateComputePipeline(const WIDECHAR* PipelineH
         hResult = PipelineLibrary->StorePipeline(PipelineHash, OutPipelineState.Get());
         if (FAILED(hResult))
         {
-            D3D12_ERROR("Failed to store ComputePipelineState");
-            return false;
+            D3D12_WARNING("Failed to store ComputePipelineState");
         }
 
         bPipelineLibraryDirty = true;
@@ -1114,8 +1112,9 @@ bool FD3D12PipelineStateManager::SaveCacheData()
     {
         TScopedLock Lock(PipelineLibraryCS);
 
-        SIZE_T PipelineCacheSize = PipelineLibrary->GetSerializedSize();
+        const SIZE_T PipelineCacheSize = PipelineLibrary->GetSerializedSize();
         TUniquePtr<uint8[]> PipelineCacheData = MakeUniquePtr<uint8[]>(PipelineCacheSize);
+
         HRESULT hResult = PipelineLibrary->Serialize(PipelineCacheData.Get(), PipelineCacheSize);
         if (FAILED(hResult))
         {
@@ -1211,7 +1210,17 @@ bool FD3D12PipelineStateManager::LoadCacheFromFile()
         return false;
     }
 
-    HRESULT hResult = Device1->CreatePipelineLibrary(PipelineData, PipelineDataSize, IID_PPV_ARGS(&PipelineLibrary));
+    // First verify the data
+    HRESULT hResult = Device1->CreatePipelineLibrary(PipelineData, PipelineDataSize, __uuidof(ID3D12PipelineLibrary1), nullptr);
+
+    // When verifying the data the function should return S_FALSE if the data is valid, including a driver version check
+    if (hResult != S_FALSE)
+    {
+        D3D12_WARNING("Verification of PipelineState data is invalid");
+        return false;
+    }
+
+    hResult = Device1->CreatePipelineLibrary(PipelineData, PipelineDataSize, IID_PPV_ARGS(&PipelineLibrary));
     if (FAILED(hResult))
     {
         D3D12_WARNING("Failed to create PipelineLibrary");
