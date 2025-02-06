@@ -41,6 +41,12 @@ bool FD3D12Buffer::Initialize(FD3D12CommandContext* InCommandContext, EResourceA
         D3D12InitialState = D3D12_RESOURCE_STATE_GENERIC_READ;
     }
 
+    // Support tight alignment if the device supports it
+    if (GD3D12SupportTightAlignment)
+    {
+        ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
+    }
+
     // Limit the scope of the new resource
     {
         FD3D12ResourceRef NewResource = new FD3D12Resource(GetDevice(), ResourceDesc, D3D12HeapType);

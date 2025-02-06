@@ -58,6 +58,12 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         ResourceDesc.SampleDesc.Quality = 0;
     }
 
+    // Support tight alignment if the device supports it
+    if (GD3D12SupportTightAlignment)
+    {
+        ResourceDesc.Flags |= D3D12_RESOURCE_FLAG_USE_TIGHT_ALIGNMENT;
+    }
+
     D3D12_CLEAR_VALUE ClearValue;
 
     const bool bSupportClearValue = Info.IsRenderTarget() || Info.IsDepthStencil();

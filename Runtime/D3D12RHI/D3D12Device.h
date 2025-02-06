@@ -24,18 +24,21 @@ class FD3D12QueryHeapManager;
 typedef TSharedRef<FD3D12Device>  FD3D12DeviceRef;
 typedef TSharedRef<FD3D12Adapter> FD3D12AdapterRef;
 
-////////////////////////////////////////////////////
-// Global variables that describe different features
+/* D3D12 Feature Support */
 
 extern D3D12RHI_API bool GD3D12ForceBinding;
 extern D3D12RHI_API bool GD3D12SupportPipelineCache;
+extern D3D12RHI_API bool GD3D12SupportTightAlignment;
+extern D3D12RHI_API bool GD3D12SupportGPUUploadHeaps;
+extern D3D12RHI_API bool GD3D12SupportBindless;
 
-extern D3D12RHI_API D3D12_RESOURCE_BINDING_TIER GD3D12ResourceBindingTier;
-extern D3D12RHI_API D3D12_RAYTRACING_TIER GD3D12RayTracingTier;
+extern D3D12RHI_API D3D12_RESOURCE_BINDING_TIER      GD3D12ResourceBindingTier;
+extern D3D12RHI_API D3D12_RAYTRACING_TIER            GD3D12RayTracingTier;
 extern D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER GD3D12VariableRateShadingTier;
-extern D3D12RHI_API D3D12_MESH_SHADER_TIER GD3D12MeshShaderTier;
-extern D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER GD3D12SamplerFeedbackTier;
-extern D3D12RHI_API D3D12_VIEW_INSTANCING_TIER GD3D12ViewInstancingTier;
+extern D3D12RHI_API D3D12_MESH_SHADER_TIER           GD3D12MeshShaderTier;
+extern D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER      GD3D12SamplerFeedbackTier;
+extern D3D12RHI_API D3D12_VIEW_INSTANCING_TIER       GD3D12ViewInstancingTier;
+extern D3D12RHI_API D3D_SHADER_MODEL                 GD3D12HighestShaderModel;
 
 class FD3D12Adapter
 {
@@ -183,6 +186,7 @@ private:
     bool CreateDevice();
     bool CreateCommandManagers();
     bool CreateDefaultResources();
+    void QueryFeatureSupport();
 
     FD3D12Adapter* const Adapter;
 

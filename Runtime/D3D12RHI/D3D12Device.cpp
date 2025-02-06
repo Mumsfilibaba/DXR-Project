@@ -50,18 +50,23 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
     "Number of descriptors in each Sampler OnlineDescriptorHeap", 
     1024);
 
-////////////////////////////////////////////////////
-// Global variables that describe different features
+/* D3D12 Feature Support */
 
-D3D12RHI_API bool GD3D12ForceBinding = false;
-D3D12RHI_API bool GD3D12SupportPipelineCache = false;
+D3D12RHI_API bool GD3D12ForceBinding          = false;
+D3D12RHI_API bool GD3D12SupportPipelineCache  = false;
+D3D12RHI_API bool GD3D12SupportTightAlignment = false;
+D3D12RHI_API bool GD3D12SupportGPUUploadHeaps = false;
+D3D12RHI_API bool GD3D12SupportBindless       = false;
 
-D3D12RHI_API D3D12_RESOURCE_BINDING_TIER GD3D12ResourceBindingTier = D3D12_RESOURCE_BINDING_TIER_1;
-D3D12RHI_API D3D12_RAYTRACING_TIER GD3D12RayTracingTier = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_RESOURCE_BINDING_TIER      GD3D12ResourceBindingTier     = D3D12_RESOURCE_BINDING_TIER_1;
+D3D12RHI_API D3D12_RAYTRACING_TIER            GD3D12RayTracingTier          = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
 D3D12RHI_API D3D12_VARIABLE_SHADING_RATE_TIER GD3D12VariableRateShadingTier = D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D12_MESH_SHADER_TIER GD3D12MeshShaderTier = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER GD3D12SamplerFeedbackTier = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
-D3D12RHI_API D3D12_VIEW_INSTANCING_TIER GD3D12ViewInstancingTier = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_MESH_SHADER_TIER           GD3D12MeshShaderTier          = D3D12_MESH_SHADER_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_SAMPLER_FEEDBACK_TIER      GD3D12SamplerFeedbackTier     = D3D12_SAMPLER_FEEDBACK_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D12_VIEW_INSTANCING_TIER       GD3D12ViewInstancingTier      = D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED;
+D3D12RHI_API D3D_SHADER_MODEL                 GD3D12HighestShaderModel      = D3D_SHADER_MODEL_NONE;
+
+/* Device Removed Handling */
 
 static const CHAR* ToString(D3D12_AUTO_BREADCRUMB_OP BreadCrumbOp)
 {
@@ -622,6 +627,7 @@ bool FD3D12Device::Initialize()
         return false;
     }
 
+    // Check current feature-level
     const D3D_FEATURE_LEVEL SupportedFeatureLevels[] =
     {
     #if WIN10_BUILD_20348
@@ -650,62 +656,15 @@ bool FD3D12Device::Initialize()
         }
     }
 
+    // Check for feature support
+    QueryFeatureSupport();
+
     // Create RootSignatureManager
     RootSignatureManager = new FD3D12RootSignatureManager(this);
     if (!RootSignatureManager->Initialize())
     {
         return false;
     } 
-
-    // Check for Resource-Binding Tier
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
-        FMemory::Memzero(&Features);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
-        if (SUCCEEDED(Result))
-        {
-            GD3D12ResourceBindingTier = Features.ResourceBindingTier;
-            D3D12_INFO("[FD3D12Device] Using ResourceBinding Tier %d", GD3D12ResourceBindingTier);
-        }
-    }
-
-    // Check for Ray-Tracing support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
-        FMemory::Memzero(&Features5);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
-        if (SUCCEEDED(Result))
-        {
-            GD3D12RayTracingTier = Features5.RaytracingTier;
-        }
-    }
-
-    // Checking for Variable Shading Rate support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
-        FMemory::Memzero(&Features6);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
-        if (SUCCEEDED(Result))
-        {
-            GD3D12VariableRateShadingTier = Features6.VariableShadingRateTier;
-        }
-    }
-
-    // Check for Mesh-Shaders, and SamplerFeedback support
-    {
-        D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
-        FMemory::Memzero(&Features7);
-
-        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
-        if (SUCCEEDED(Result))
-        {
-            GD3D12MeshShaderTier      = Features7.MeshShaderTier;
-            GD3D12SamplerFeedbackTier = Features7.SamplerFeedbackTier;
-        }
-    }
 
     // Create DescriptorHeaps
     const uint32 ResourceDescriptorBlockSize = CVarResourceOnlineDescriptorBlockSize.GetValue();
@@ -1011,6 +970,103 @@ bool FD3D12Device::CreateDefaultResources()
     }
 
     return true;
+}
+
+void FD3D12Device::QueryFeatureSupport()
+{
+    // Check for Resource-Binding Tier
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS Features;
+        FMemory::Memzero(&Features);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &Features, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12ResourceBindingTier = Features.ResourceBindingTier;
+            D3D12_INFO("[FD3D12Device] Using ResourceBinding Tier %d", GD3D12ResourceBindingTier);
+        }
+    }
+
+    // Check for Ray-Tracing support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS5 Features5;
+        FMemory::Memzero(&Features5);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &Features5, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS5));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12RayTracingTier = Features5.RaytracingTier;
+        }
+    }
+
+    // Checking for Variable Shading Rate support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
+        FMemory::Memzero(&Features6);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12VariableRateShadingTier = Features6.VariableShadingRateTier;
+        }
+    }
+
+    // Check for Mesh-Shaders, and SamplerFeedback support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS7 Features7;
+        FMemory::Memzero(&Features7);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12MeshShaderTier      = Features7.MeshShaderTier;
+            GD3D12SamplerFeedbackTier = Features7.SamplerFeedbackTier;
+        }
+    }
+
+    // Check for GPU Upload-Heap Support
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS16 Features17;
+        FMemory::Memzero(&Features17);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS16, &Features17, sizeof(Features17));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12SupportGPUUploadHeaps = Features17.GPUUploadHeapSupported;
+        }
+    }
+
+    // Check for Tight Alignment Support
+    {
+        D3D12_FEATURE_DATA_TIGHT_ALIGNMENT TightAlignmentFeature;
+        FMemory::Memzero(&TightAlignmentFeature);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_TIGHT_ALIGNMENT, &TightAlignmentFeature, sizeof(D3D12_FEATURE_DATA_TIGHT_ALIGNMENT));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12SupportTightAlignment = TightAlignmentFeature.SupportTier >= D3D12_TIGHT_ALIGNMENT_TIER_1;
+        }
+    }
+
+    // Check for the highest Shader-Model supported by the device
+    {
+        D3D12_FEATURE_DATA_SHADER_MODEL ShaderModelData;
+        FMemory::Memzero(&ShaderModelData);
+
+        ShaderModelData.HighestShaderModel = D3D_HIGHEST_SHADER_MODEL;
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &ShaderModelData, sizeof(D3D12_FEATURE_DATA_SHADER_MODEL));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12HighestShaderModel = ShaderModelData.HighestShaderModel;
+        }
+
+        // Shader-Model 6.6 and Resource-Binding Tier 3 is required for bindless on D3D12
+        if (GD3D12HighestShaderModel >= D3D_SHADER_MODEL_6_6 && GD3D12ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3)
+        {
+            GD3D12SupportBindless = true;
+        }
+    }
 }
 
 FD3D12Queue* FD3D12Device::GetQueue(ED3D12CommandQueueType QueueType)
