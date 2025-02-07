@@ -1,5 +1,5 @@
-#include "RHIResource.h"
-#include "RHICommandList.h"
+#include "RHI/RHIResource.h"
+#include "RHI/RHICommandList.h"
 
 FRHIResource::FRHIResource()
     : StrongReferences(1)

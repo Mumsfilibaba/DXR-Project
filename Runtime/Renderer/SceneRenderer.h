@@ -120,11 +120,6 @@ public:
         return TextureDebugger;
     }
 
-    const FRHICommandStatistics& GetStatistics() const
-    {
-        return FrameStatistics;
-    }
-
     uint32 GetRenderWidth() const
     {
         return Resources.CurrentWidth;
@@ -174,7 +169,6 @@ private:
     FGenericEvent*              LastFrameFinishedEvent;
     FRHIQueryRef                TimestampQueries;
     FRHICommandList             CommandList;
-    FRHICommandStatistics       FrameStatistics;
 
     FRHITextureRef              ShadingImage;
     FRHIComputePipelineStateRef ShadingRatePipeline;

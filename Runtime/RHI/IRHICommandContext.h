@@ -1,6 +1,6 @@
 #pragma once
-#include "RHITypes.h"
-#include "RHIResources.h"
+#include "RHI/RHITypes.h"
+#include "RHI/RHIResources.h"
 
 class FRHIViewport;
 class FRHIRayTracingGeometry;

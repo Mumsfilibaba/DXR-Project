@@ -1,5 +1,3 @@
-#include "RHI.h"
-#include "ShaderCompiler.h"
 #include "Core/Containers/ComPtr.h"
 #include "Core/Platform/PlatformInterlocked.h"
 #include "Core/Platform/PlatformLibrary.h"
@@ -8,6 +6,9 @@
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Misc/CRC.h"
+#include "RHI/RHI.h"
+#include "RHI/ShaderCompiler.h"
+
 #include <glslang/Public/resource_limits_c.h> // Required for use of glslang_default_resource
 #include <spirv_cross_c.h>
 

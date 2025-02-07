@@ -1,4 +1,4 @@
-#include "RHICore.h"
+#include "RHI/RHICore.h"
 
 // Geometry Shading Support
 RHI_API bool GRHISupportsGeometryShaders = false;

@@ -1,8 +1,8 @@
-#include "RHI.h"
-#include "RHICommandList.h"
-#include "ShaderCompiler.h"
 #include "Core/Misc/EngineConfig.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "RHI/RHI.h"
+#include "RHI/RHICommandList.h"
+#include "RHI/ShaderCompiler.h"
 
 IMPLEMENT_ENGINE_MODULE(FRHIModule, RHI);
 

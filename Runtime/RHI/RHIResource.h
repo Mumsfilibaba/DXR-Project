@@ -1,8 +1,8 @@
 #pragma once
-#include "RHICore.h"
-#include "RHITypes.h"
 #include "Core/IRefCounted.h"
 #include "Core/Threading/Atomic.h"
+#include "RHI/RHICore.h"
+#include "RHI/RHITypes.h"
 
 class RHI_API FRHIResource : public IRefCounted
 {

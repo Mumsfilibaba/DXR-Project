@@ -169,7 +169,6 @@ FSceneRenderer::FSceneRenderer()
     , ShadingRatePipeline(nullptr)
     , ShadingRateShader(nullptr)
     , TimestampQueries(nullptr)
-    , FrameStatistics()
     , LastFrameFinishedEvent(nullptr)
 {
 }
@@ -207,8 +206,6 @@ FSceneRenderer::~FSceneRenderer()
     ShadingRateShader.Reset();
 
     TimestampQueries.Reset();
-
-    FrameStatistics.Reset();
 
     if (IImguiPlugin::IsEnabled())
     {
@@ -953,7 +950,7 @@ void FSceneRenderer::Tick(FScene* Scene)
     CommandList.PresentViewport(Resources.MainViewport.Get(), CVarVSyncEnabled.GetValue());
     CommandList.EndFrame();
 
-    CommandList.FlushGarbageCollection();
+    CommandList.FlushDeletedResources();
 
     {
         TRACE_SCOPE("ExecuteCommandList");
@@ -973,7 +970,6 @@ void FSceneRenderer::Tick(FScene* Scene)
         }
 
         GRHICommandExecutor.ExecuteCommandList(CommandList);
-        FrameStatistics = GRHICommandExecutor.GetStatistics();
     }
 }
 

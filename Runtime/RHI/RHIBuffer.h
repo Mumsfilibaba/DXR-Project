@@ -1,6 +1,6 @@
 #pragma once
-#include "RHIResource.h"
 #include "Core/Containers/String.h"
+#include "RHI/RHIResource.h"
 
 enum class EBufferUsageFlags : uint16
 {

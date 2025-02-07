@@ -1,7 +1,7 @@
 #pragma once
-#include "RHIResource.h"
-#include "RHIPipelineState.h"
 #include "Core/Containers/StaticArray.h"
+#include "RHI/RHIResource.h"
+#include "RHI/RHIPipelineState.h"
 
 enum class EBufferSRVFormat : uint32
 {

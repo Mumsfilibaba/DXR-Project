@@ -1,17 +1,16 @@
-#include "RHICommandList.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformThreadMisc.h"
 #include "Core/Platform/PlatformThread.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "RHI/RHICommandList.h"
 
-RHI_API FRHICommandExecutor GRHICommandExecutor;
+RHI_API FRHICommandListExecutor GRHICommandExecutor;
 
 static TAutoConsoleVariable<bool> CVarEnableRHIThread(
     "RHI.EnableRHIThread",
     "Enables the use of a separate Thread for executing RHI Commands",
     true);
-
 
 FRHICommandList::FRHICommandList() noexcept
     : Memory()
@@ -19,7 +18,6 @@ FRHICommandList::FRHICommandList() noexcept
     , FirstCommand(nullptr)
     , CommandContext(nullptr)
     , FinishedEvent(nullptr)
-    , Statistics()
     , NumCommands(0)
 {
     CommandPointer = &FirstCommand;
@@ -32,9 +30,15 @@ FRHICommandList::~FRHICommandList() noexcept
 
 void FRHICommandList::Execute() noexcept
 {
+    // Increment the number of commands this frame
+    GRHINumCommands += NumCommands;
+
+    // Then execute all commands on the assigned context
     IRHICommandContext& CommandContextRef = GetCommandContext();
     CommandContextRef.RHIStartContext();
+
     ExecuteWithContext(CommandContextRef);
+
     CommandContextRef.RHIFinishContext();
 }
 
@@ -80,27 +84,29 @@ void FRHICommandList::Reset() noexcept
     CommandContext = nullptr;
     NumCommands    = 0;
 
-    Statistics.Reset();
     Memory.Reset();
 }
 
 void FRHICommandList::ExchangeState(FRHICommandList& Other) noexcept
 {
-    // This works fine in this case
     FMemory::Memswap(this, &Other, sizeof(FRHICommandList));
 
     if (CommandPointer == &Other.FirstCommand)
+    {
         CommandPointer = &FirstCommand;
+    }
 
     if (Other.CommandPointer == &FirstCommand)
+    {
         Other.CommandPointer = &Other.FirstCommand;
+    }
 }
 
-void FRHICommandList::FlushGarbageCollection() noexcept
+void FRHICommandList::FlushDeletedResources() noexcept
 {
     ExecuteLambda([]()
     {
-        GRHICommandExecutor.FlushGarbageCollection();
+        GRHICommandExecutor.FlushDeletedResources();
     });
 }
 
@@ -195,18 +201,19 @@ void FRHIThread::WaitForOutstandingTasks()
     }
 }
 
-
-FRHICommandExecutor::FRHICommandExecutor()
-    : Statistics()
+FRHICommandListExecutor::FRHICommandListExecutor()
+    : DeletedResources()
+    , DeletedResourcesCS()
     , CommandContext(nullptr)
+    , RHIThread(nullptr)
 {
 }
 
-FRHICommandExecutor::~FRHICommandExecutor()
+FRHICommandListExecutor::~FRHICommandListExecutor()
 {
 }
 
-bool FRHICommandExecutor::Initialize()
+bool FRHICommandListExecutor::Initialize()
 {
     if (!CVarEnableRHIThread.GetValue())
     {
@@ -223,9 +230,9 @@ bool FRHICommandExecutor::Initialize()
     return true;
 }
 
-void FRHICommandExecutor::Release()
+void FRHICommandListExecutor::Release()
 {
-    FlushGarbageCollection();
+    FlushDeletedResources();
 
     if (CVarEnableRHIThread.GetValue())
     {
@@ -238,14 +245,15 @@ void FRHICommandExecutor::Release()
     }
 }
 
-void FRHICommandExecutor::Tick()
+void FRHICommandListExecutor::Tick()
 {
-    Statistics.NumDrawCalls     = 0;
-    Statistics.NumDispatchCalls = 0;
-    Statistics.NumCommands      = 0;
+    // Reset statistics
+    GRHINumCommands      = 0;
+    GRHINumDispatchCalls = 0;
+    GRHINumDrawCalls     = 0;
 }
 
-void FRHICommandExecutor::EnqueueResourceDeletion(FRHIResource* InResource)
+void FRHICommandListExecutor::EnqueueResourceDeletion(FRHIResource* InResource)
 {
     TScopedLock Lock(DeletedResourcesCS);
 
@@ -255,7 +263,7 @@ void FRHICommandExecutor::EnqueueResourceDeletion(FRHIResource* InResource)
     }
 }
 
-void FRHICommandExecutor::FlushGarbageCollection()
+void FRHICommandListExecutor::FlushDeletedResources()
 {
     TScopedLock Lock(DeletedResourcesCS);
 
@@ -270,14 +278,10 @@ void FRHICommandExecutor::FlushGarbageCollection()
     }
 }
 
-void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
+void FRHICommandListExecutor::ExecuteCommandList(FRHICommandList& CommandList)
 {
     if (CommandList.HasCommands())
     {
-        Statistics.NumDrawCalls     += CommandList.GetNumDrawCalls();
-        Statistics.NumDispatchCalls += CommandList.GetNumDispatchCalls();
-        Statistics.NumCommands      += CommandList.GetNumCommands();
-
         if (CVarEnableRHIThread.GetValue())
         {
             FRHICommandList* NewCommandList = new FRHICommandList();
@@ -293,12 +297,12 @@ void FRHICommandExecutor::ExecuteCommandList(FRHICommandList& CommandList)
     }
 }
 
-void FRHICommandExecutor::WaitForCommands()
+void FRHICommandListExecutor::WaitForCommands()
 {
     RHIThread->WaitForOutstandingTasks();
 }
 
-void FRHICommandExecutor::WaitForGPU()
+void FRHICommandListExecutor::WaitForGPU()
 {
     if (RHIThread)
     {

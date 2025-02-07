@@ -1,10 +1,10 @@
 #pragma once
-#include "RHITypes.h"
-#include "RHIResources.h"
-#include "RHICommandList.h"
-#include "IRHICommandContext.h"
 #include "Core/Modules/ModuleManager.h"
 #include "CoreApplication/Generic/GenericWindow.h"
+#include "RHI/RHITypes.h"
+#include "RHI/RHIResources.h"
+#include "RHI/RHICommandList.h"
+#include "RHI/IRHICommandContext.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

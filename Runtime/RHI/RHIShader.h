@@ -1,7 +1,7 @@
 #pragma once
-#include "RHIResources.h"
 #include "Core/Math/IntVector3.h"
 #include "Core/Containers/String.h"
+#include "RHI/RHIResources.h"
 
 typedef TSharedRef<class FRHIShader>                FRHIShaderRef;
 typedef TSharedRef<class FRHIVertexShader>          FRHIVertexShaderRef;

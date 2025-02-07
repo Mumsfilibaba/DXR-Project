@@ -1,5 +1,9 @@
 #pragma once
+#if PLATFORM_WINDOWS
+#include "Core/Core.h"
 #include "Core/Templates/TypeTraits.h"
+
+#include <Unknwn.h>
 
 template<typename InComInterfaceType>
 class TComPtr
@@ -446,3 +450,5 @@ NODISCARD FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
 
     return nullptr;
 }
+
+#endif

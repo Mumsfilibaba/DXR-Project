@@ -1,8 +1,8 @@
 #pragma once
-#include "RHIResources.h"
 #include "Core/Math/Vector3.h"
 #include "Core/Math/Matrix3x4.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHIResources.h"
 
 #define RHI_DEFAULT_GEOMETRY_INSTANCE_MASK (0xff)
 

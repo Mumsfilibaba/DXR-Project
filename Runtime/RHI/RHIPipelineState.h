@@ -1,5 +1,5 @@
 #pragma once
-#include "RHIResource.h"
+#include "RHI/RHIResource.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

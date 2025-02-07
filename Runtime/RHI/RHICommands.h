@@ -1,12 +1,12 @@
 #pragma once
-#include "RHITypes.h"
-#include "RHIResources.h"
-#include "RHIRayTracing.h"
-#include "IRHICommandContext.h"
 #include "Core/Memory/Memory.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Containers/ArrayView.h"
+#include "RHI/RHITypes.h"
+#include "RHI/RHIResources.h"
+#include "RHI/RHIRayTracing.h"
+#include "RHI/IRHICommandContext.h"
 
 #define DECLARE_RHICOMMAND(RHICommandName) struct RHICommandName final : public TRHICommand<RHICommandName>
 

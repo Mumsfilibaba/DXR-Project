@@ -1,6 +1,6 @@
 #pragma once
-#include "RHIShader.h"
 #include "Core/Containers/Optional.h"
+#include "RHI/RHIShader.h"
 
 // TODO: Check if this could be avoided
 #if PLATFORM_WINDOWS

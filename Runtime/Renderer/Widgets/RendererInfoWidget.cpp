@@ -122,23 +122,22 @@ void FRendererInfoWidget::Draw()
             ImGui::Columns(2, nullptr, false);
             ImGui::SetColumnWidth(0, ColumnWidth);
 
-            const FRHICommandStatistics& Statistics = Renderer->GetStatistics();
             ImGui::Text("DrawCalls: ");
             ImGui::NextColumn();
 
-            ImGui::Text("%d", Statistics.NumDrawCalls);
+            ImGui::Text("%d", GRHINumDrawCalls.Load());
             ImGui::NextColumn();
 
             ImGui::Text("DispatchCalls: ");
             ImGui::NextColumn();
 
-            ImGui::Text("%d", Statistics.NumDispatchCalls);
+            ImGui::Text("%d", GRHINumDispatchCalls.Load());
             ImGui::NextColumn();
 
             ImGui::Text("Command Count: ");
             ImGui::NextColumn();
 
-            ImGui::Text("%d", Statistics.NumCommands);
+            ImGui::Text("%d", GRHINumCommands.Load());
 
             ImGui::Columns(1);
 

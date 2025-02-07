@@ -1,8 +1,4 @@
 #pragma once
-#include "RHI.h"
-#include "RHIResources.h"
-#include "RHICommands.h"
-#include "RHIRayTracing.h"
 #include "Core/Memory/MemoryStack.h"
 #include "Core/Threading/Runnable.h"
 #include "Core/Platform/PlatformThread.h"
@@ -10,6 +6,11 @@
 #include "Core/Platform/ConditionVariable.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/Queue.h"
+#include "RHI/RHI.h"
+#include "RHI/RHIResources.h"
+#include "RHI/RHICommands.h"
+#include "RHI/RHIRayTracing.h"
+#include "RHI/RHIStats.h"
 
 struct FRHIRenderTargetView;
 struct FRHIDepthStencilView;
@@ -26,27 +27,6 @@ class FRHIViewport;
     #define INSERT_DEBUG_CMDLIST_MARKER(CommandList, MarkerString)
 #endif
 
-struct FRHICommandStatistics
-{
-    FORCEINLINE FRHICommandStatistics()
-        : NumDrawCalls(0)
-        , NumDispatchCalls(0)
-        , NumCommands(0)
-    {
-    }
-
-    FORCEINLINE void Reset()
-    {
-        NumDrawCalls     = 0;
-        NumDispatchCalls = 0;
-        NumCommands      = 0;
-    }
-
-    uint32 NumDrawCalls;
-    uint32 NumDispatchCalls;
-    uint32 NumCommands;
-};
-
 class RHI_API FRHICommandList : FNonCopyable
 {
 public:
@@ -57,7 +37,8 @@ public:
     void ExecuteWithContext(IRHICommandContext& InCommandContext) noexcept;
     void Reset() noexcept;
     void ExchangeState(FRHICommandList& Other) noexcept;
-    void FlushGarbageCollection() noexcept;
+
+    void FlushDeletedResources() noexcept;
 
     FORCEINLINE void* Allocate(uint64 Size, uint32 Alignment) noexcept
     {
@@ -131,21 +112,6 @@ public:
     FORCEINLINE bool HasCommands() const noexcept
     {
         return NumCommands > 0;
-    }
-
-    FORCEINLINE uint32 GetNumDrawCalls() const noexcept
-    {
-        return Statistics.NumDrawCalls;
-    }
-
-    FORCEINLINE uint32 GetNumDispatchCalls() const noexcept
-    {
-        return Statistics.NumDispatchCalls;
-    }
-
-    FORCEINLINE uint32 GetNumCommands() const noexcept
-    {
-        return NumCommands;
     }
 
 public:
@@ -400,31 +366,31 @@ public:
     FORCEINLINE void Draw(uint32 VertexCount, uint32 StartVertexLocation) noexcept
     {
         EmplaceCommand<FRHICommandDraw>(VertexCount, StartVertexLocation);
-        Statistics.NumDrawCalls++;
+        GRHINumDrawCalls++;
     }
 
     FORCEINLINE void DrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawIndexed>(IndexCount, StartIndexLocation, BaseVertexLocation);
-        Statistics.NumDrawCalls++;
+        GRHINumDrawCalls++;
     }
 
     FORCEINLINE void DrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawInstanced>(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
-        Statistics.NumDrawCalls++;
+        GRHINumDrawCalls++;
     }
      
     FORCEINLINE void DrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) noexcept
     {
         EmplaceCommand<FRHICommandDrawIndexedInstanced>(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
-        Statistics.NumDrawCalls++;
+        GRHINumDrawCalls++;
     }
 
     FORCEINLINE void Dispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ) noexcept
     {
         EmplaceCommand<FRHICommandDispatch>(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
-        Statistics.NumDispatchCalls++;
+        GRHINumDrawCalls++;
     }
 
     FORCEINLINE void DispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) noexcept
@@ -464,13 +430,12 @@ public:
     }
 
 private:
-    FMemoryStack          Memory;
-    FRHICommand**         CommandPointer; // NOTE: Pointer to FirstCommand to avoid branching
-    FRHICommand*          FirstCommand;
-    IRHICommandContext*   CommandContext;
-    FGenericEvent*        FinishedEvent;
-    FRHICommandStatistics Statistics;
-    uint32                NumCommands;
+    FMemoryStack        Memory;
+    FRHICommand**       CommandPointer; // NOTE: Pointer to FirstCommand to avoid branching
+    FRHICommand*        FirstCommand;
+    IRHICommandContext* CommandContext;
+    FGenericEvent*      FinishedEvent;
+    uint32              NumCommands;
 };
 
 void FRHICommandExecuteCommandList::Execute(IRHICommandContext& CommandContext)
@@ -503,21 +468,23 @@ private:
     bool                bIsRunning;
 };
 
-class RHI_API FRHICommandExecutor : FNonCopyable
+class RHI_API FRHICommandListExecutor : FNonCopyable
 {
 public:
-    FRHICommandExecutor();
-    ~FRHICommandExecutor();
+    FRHICommandListExecutor();
+    ~FRHICommandListExecutor();
 
     bool Initialize();
     void Release();
+
     void Tick();
+
     void WaitForCommands();
     void WaitForGPU();
-    void ExecuteCommandList(class FRHICommandList& CmdList);
+    void ExecuteCommandList(class FRHICommandList& CommandList);
 
     void EnqueueResourceDeletion(FRHIResource* InResource);
-    void FlushGarbageCollection();
+    void FlushDeletedResources();
 
     void SetContext(IRHICommandContext* InCmdContext) 
     { 
@@ -530,17 +497,11 @@ public:
         return *CommandContext;
     }
 
-    const FRHICommandStatistics& GetStatistics() const 
-    { 
-        return Statistics; 
-    }
-
 private:
     TArray<FRHIResource*> DeletedResources;
     FCriticalSection      DeletedResourcesCS;
-    FRHICommandStatistics Statistics;
     IRHICommandContext*   CommandContext;
     FRHIThread*           RHIThread;
 };
 
-extern RHI_API FRHICommandExecutor GRHICommandExecutor;
+extern RHI_API FRHICommandListExecutor GRHICommandExecutor;

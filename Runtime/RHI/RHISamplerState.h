@@ -1,5 +1,5 @@
 #pragma once
-#include "RHIResource.h"
+#include "RHI/RHIResource.h"
 
 enum class ESamplerMode : uint8
 {
