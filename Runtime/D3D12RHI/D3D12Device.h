@@ -116,27 +116,26 @@ public:
 
     bool Initialize();
 
-    ID3D12CommandQueue* GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
-
-    FD3D12Queue* GetQueue(ED3D12CommandQueueType QueueType);
+    ID3D12CommandQueue*            GetD3D12CommandQueue(ED3D12CommandQueueType QueueType);
+    FD3D12Queue*                   GetQueue(ED3D12CommandQueueType QueueType);
     FD3D12CommandAllocatorManager* GetCommandAllocatorManager(ED3D12CommandQueueType QueueType);
-    FD3D12QueryHeapManager* GetQueryHeapManager(EQueryType QueryType);
 
     FD3D12UploadHeapAllocator& GetUploadAllocator() { return *UploadAllocator; }
 
     FD3D12RootSignatureManager& GetRootSignatureManager() { return *RootSignatureManager; }
+    FD3D12PipelineStateManager& GetPipelineStateManager() { return *PipelineStateManager; }
 
     FD3D12OnlineDescriptorHeap& GetGlobalResourceHeap() { return *GlobalResourceHeap; }
-    FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap() { return *GlobalSamplerHeap; }
+    FD3D12OnlineDescriptorHeap& GetGlobalSamplerHeap()  { return *GlobalSamplerHeap; }
+    
+    FD3D12QueryHeapManager* GetQueryHeapManager(EQueryType QueryType);
 
-    FD3D12OfflineDescriptorHeap& GetResourceOfflineDescriptorHeap() { return *ResourceOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap& GetResourceOfflineDescriptorHeap()     { return *ResourceOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap& GetRenderTargetOfflineDescriptorHeap() { return *RenderTargetOfflineDescriptorHeap; }
     FD3D12OfflineDescriptorHeap& GetDepthStencilOfflineDescriptorHeap() { return *DepthStencilOfflineDescriptorHeap; }
-    FD3D12OfflineDescriptorHeap& GetSamplerOfflineDescriptorHeap() { return *SamplerOfflineDescriptorHeap; }
+    FD3D12OfflineDescriptorHeap& GetSamplerOfflineDescriptorHeap()      { return *SamplerOfflineDescriptorHeap; }
 
     FD3D12DefaultDescriptors& GetDefaultDescriptors() { return DefaultDescriptors; }
-
-    FD3D12PipelineStateManager& GetPipelineStateManager() { return *PipelineStateManager; }
 
     int32 QueryMultisampleQuality(DXGI_FORMAT Format, uint32 SampleCount);
 
@@ -199,7 +198,9 @@ private:
     FD3D12OfflineDescriptorHeap*   SamplerOfflineDescriptorHeap;
 
     FD3D12UploadHeapAllocator*     UploadAllocator;
+    
     FD3D12RootSignatureManager*    RootSignatureManager;
+    FD3D12PipelineStateManager*    PipelineStateManager;
 
     FD3D12Queue*                   DirectQueue;
     FD3D12Queue*                   CopyQueue;
@@ -214,7 +215,6 @@ private:
 
     FD3D12DefaultDescriptors       DefaultDescriptors;
 
-    FD3D12PipelineStateManager*    PipelineStateManager;
 
     D3D_FEATURE_LEVEL              MinFeatureLevel;
     D3D_FEATURE_LEVEL              ActiveFeatureLevel;
