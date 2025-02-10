@@ -14,6 +14,8 @@ public:
     static bool Release();
     static bool IsMainThread();
 
+public:
+
     // Register a thread this is called from the constructor of the FGenericThread
     void RegisterThread(FGenericThread* InThread);
 

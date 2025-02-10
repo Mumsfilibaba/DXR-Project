@@ -33,6 +33,7 @@ class CORE_API FTaskManager
 public:
     static bool Initialize();
     static void Release();
+
     static bool IsMultithreaded();
 
     static FTaskManager& Get()
@@ -41,13 +42,15 @@ public:
         return *GInstance;
     }
 
+public:
+
     // Submits a new tasks, which gets picked up by a worker thread
     bool SubmitTask(IAsyncTask* NewTask, EQueuePriority Priority = EQueuePriority::Normal);
 
-    // Abondon the specified task
+    // Abandon the specified task
     bool AbandonTask(IAsyncTask* NewTask);
 
-    // Returns a worker thread to the workthread pool, or returns a new task to process if there are any queued up
+    // Returns a worker thread to the work-thread pool, or returns a new task to process if there are any queued up
     IAsyncTask* ReturnThreadOrRetrieveNextTask(FTaskWorkerThread* InThread);
 
     int32 GetNumTasks() const { return TaskQueue.Size(); }
