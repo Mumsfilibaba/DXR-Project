@@ -283,7 +283,7 @@ void FEngineLoop::Release()
     TRACE_FUNCTION_SCOPE();
 
     // Wait for the last RHI commands to finish
-    GRHICommandExecutor.WaitForGPU();
+    FRHICommandListExecutor::Get().WaitForGPU();
 
     // Release the renderer
     IRendererModule* RendererModule = IRendererModule::Get();

@@ -185,32 +185,31 @@ bool RHIInitialize()
 
     if (!RHIInterface->Initialize())
     {
-        LOG_ERROR("[RHIInitialize] Failed to �nitialize RHIInterface, the application has to terminate");
+        LOG_ERROR("[RHIInitialize] Failed to initialize RHIInterface, the application has to terminate");
         return false;
     }
 
     GRHI = RHIInterface;
 
     // Initialize the CommandListExecutor
-    if (!GRHICommandExecutor.Initialize())
+    if (!FRHICommandListExecutor::Initialize())
     {
         return false;
     }
-
-    // Set the context to the command-executor
-    IRHICommandContext* CommandContext = RHIGetDefaultCommandContext();
-    GRHICommandExecutor.SetContext(CommandContext);
 
     return true;
 }
 
 void RHIRelease()
 {
-    GRHICommandExecutor.Release();
+    // The RHI-implementation might need the executor in the destructor so we flush before we delete it
+    FRHICommandListExecutor::Get().FlushDeletedResources();
 
     if (GRHI)
     {
         delete GRHI;
         GRHI = nullptr;
     }
+
+    FRHICommandListExecutor::Release();
 }

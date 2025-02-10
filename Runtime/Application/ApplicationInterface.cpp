@@ -845,7 +845,7 @@ bool FApplicationInterface::OnWindowResized(const TSharedRef<FGenericWindow>& Pl
 bool FApplicationInterface::OnWindowResizing(const TSharedRef<FGenericWindow>&)
 {
     // We wait for the GPU here to avoid weird resizing behavior
-    GRHICommandExecutor.WaitForGPU();
+    FRHICommandListExecutor::Get().WaitForGPU();
     return true;
 }
 

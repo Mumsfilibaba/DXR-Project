@@ -830,7 +830,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     CommandList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
 
     CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-    GRHICommandExecutor.ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
 
     // Tiled lightning
     CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute);

@@ -175,7 +175,7 @@ FSceneRenderer::FSceneRenderer()
 
 FSceneRenderer::~FSceneRenderer()
 {
-    GRHICommandExecutor.WaitForGPU();
+    FRHICommandListExecutor::Get().WaitForGPU();
 
     CommandList.Reset();
 
@@ -396,7 +396,7 @@ bool FSceneRenderer::Initialize()
         Resources.Skylight.IrradianceMap         = IrradianceMap;
         Resources.Skylight.SpecularIrradianceMap = SpecularIrradianceMap;
 
-        GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 
     // Register ImGui Windows
@@ -522,7 +522,7 @@ void FSceneRenderer::Tick(FScene* Scene)
 {
     Resources.BackBuffer = Resources.MainViewport->GetBackBuffer();
 
-    GRHICommandExecutor.Tick();
+    FRHICommandListExecutor::Get().Tick();
 
     // Clear the images that were debug-able last frame 
     TextureDebugger->ClearImages();
@@ -969,7 +969,7 @@ void FSceneRenderer::Tick(FScene* Scene)
             CommandList.SetEvent(LastFrameFinishedEvent);
         }
 
-        GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 }
 

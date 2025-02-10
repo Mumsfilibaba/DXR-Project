@@ -60,7 +60,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
         CommandList.TransitionTexture(TextureRHI.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
         CommandList.GenerateMips(TextureRHI.Get());
         CommandList.TransitionTexture(TextureRHI.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-        GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 
     return true;

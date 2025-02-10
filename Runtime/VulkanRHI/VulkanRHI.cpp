@@ -37,7 +37,7 @@ FVulkanRHI::~FVulkanRHI()
     const auto FlushDeletionQueue = [this]()
     {
         // NOTE: Objects could contain other objects, that now need to be flushed
-        GRHICommandExecutor.FlushDeletedResources();
+        FRHICommandListExecutor::Get().FlushDeletedResources();
 
         // Delete all remaining resources
         while (!DeletionQueue.IsEmpty())
@@ -51,7 +51,7 @@ FVulkanRHI::~FVulkanRHI()
             FVulkanDeferredObject::ProcessItems(Items);
 
             // NOTE: Objects could contain other objects, that now need to be flushed
-            GRHICommandExecutor.FlushDeletedResources();
+            FRHICommandListExecutor::Get().FlushDeletedResources();
         }
     };
 

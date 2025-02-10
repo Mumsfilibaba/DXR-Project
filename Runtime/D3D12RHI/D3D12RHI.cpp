@@ -47,7 +47,7 @@ FD3D12RHI::~FD3D12RHI()
     const auto FlushDeletionQueues = [this]()
     {
         // NOTE: Objects could contain other objects, that now need to be flushed
-        GRHICommandExecutor.FlushDeletedResources();
+        FRHICommandListExecutor::Get().FlushDeletedResources();
 
         while (!DeletionQueue.IsEmpty())
         {
@@ -60,7 +60,7 @@ FD3D12RHI::~FD3D12RHI()
             FD3D12DeferredObject::ProcessItems(Items);
 
             // NOTE: Objects could contain other objects, that now need to be flushed
-            GRHICommandExecutor.FlushDeletedResources();
+            FRHICommandListExecutor::Get().FlushDeletedResources();
         }
     };
 

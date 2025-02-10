@@ -96,7 +96,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
         CommandList.GenerateMips(Texture.Get());
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 
     return Texture.ReleaseOwnership();
@@ -175,7 +175,7 @@ FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* Panorama
 
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-        GRHICommandExecutor.ExecuteCommandList(CommandList);
+        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 
     return Texture.ReleaseOwnership();

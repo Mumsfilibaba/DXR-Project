@@ -182,7 +182,7 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     CommandList.CopyTextureRegion(Output.Get(), CompressedTex.Get(), CopyDesc);
     CommandList.TransitionTexture(Output.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
-    GRHICommandExecutor.ExecuteCommandList(CommandList);
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     return true;
 }
 
@@ -317,7 +317,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
 
     CommandList.TransitionTexture(Output.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
     CommandList.TransitionTexture(Source.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-    
-    GRHICommandExecutor.ExecuteCommandList(CommandList);
+
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     return true;
 }

@@ -831,9 +831,10 @@ void FImGuiPlugin::OnDestroyPlatformWindow(ImGuiViewport* Viewport)
     FImGuiViewport* ViewportData = reinterpret_cast<FImGuiViewport*>(Viewport->PlatformUserData);
     CHECK(ViewportData != nullptr);
 
-    // Wait for the GPU to finish with the current frame before resizing
-    GRHICommandExecutor.WaitForCommands();
-    
+    // Wait for the GPU to finish with the current frame before destroying the window
+    FRHICommandListExecutor::Get().WaitForCommands();
+
+    // Destroy the platform window
     FApplicationInterface::Get().DestroyWindow(ViewportData->Window);
 
     Viewport->PlatformUserData      = nullptr;

@@ -471,37 +471,49 @@ private:
 class RHI_API FRHICommandListExecutor : FNonCopyable
 {
 public:
-    FRHICommandListExecutor();
-    ~FRHICommandListExecutor();
 
-    bool Initialize();
-    void Release();
+    static FORCEINLINE FRHICommandListExecutor& Get()
+    {
+        return *Instance;
+    }
 
+    static bool Initialize();
+    static void Release();
+
+public:
+
+    // Update RHI layer
     void Tick();
 
+    // Wait for all commands that have been scheduled on the RHI-thread to finish
     void WaitForCommands();
+
+    // Wait for all commands to be finished executing on the CPU and the GPU
     void WaitForGPU();
+
+    // Schedule a new  command-list to be executed
     void ExecuteCommandList(class FRHICommandList& CommandList);
 
     void EnqueueResourceDeletion(FRHIResource* InResource);
     void FlushDeletedResources();
 
-    void SetContext(IRHICommandContext* InCmdContext) 
-    { 
-        CommandContext = InCmdContext; 
-    }
-
     IRHICommandContext& GetContext()
     {
-        CHECK(CommandContext != nullptr);
-        return *CommandContext;
+        CHECK(DefaultCommandContext != nullptr);
+        return *DefaultCommandContext;
     }
 
 private:
+    FRHICommandListExecutor(IRHICommandContext* InDefaultCommandContext);
+    ~FRHICommandListExecutor();
+
+    bool InitializeRHIThread();
+    void ReleaseRHIThread();
+
     TArray<FRHIResource*> DeletedResources;
     FCriticalSection      DeletedResourcesCS;
-    IRHICommandContext*   CommandContext;
+    IRHICommandContext*   DefaultCommandContext;
     FRHIThread*           RHIThread;
-};
 
-extern RHI_API FRHICommandListExecutor GRHICommandExecutor;
+    static FRHICommandListExecutor* Instance;
+};

@@ -570,11 +570,6 @@ FORCEINLINE bool RHIQueryUAVFormatSupport(EFormat Format)
     return GetRHI()->RHIQueryUAVFormatSupport(Format);
 }
 
-FORCEINLINE IRHICommandContext* RHIGetDefaultCommandContext()
-{
-    return GetRHI()->RHIObtainCommandContext();
-}
-
 FORCEINLINE FString RHIGetAdapterName()
 {
     return GetRHI()->RHIGetAdapterName();

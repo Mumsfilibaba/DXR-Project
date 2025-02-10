@@ -30,7 +30,7 @@ int32 FRHIResource::Release() const
     if (RefCount < 1)
     {
         State = static_cast<int32>(EState::Deleted);
-        GRHICommandExecutor.EnqueueResourceDeletion(const_cast<FRHIResource*>(this));
+        FRHICommandListExecutor::Get().EnqueueResourceDeletion(const_cast<FRHIResource*>(this));
     }
 
     return RefCount;
