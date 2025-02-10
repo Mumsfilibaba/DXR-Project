@@ -996,6 +996,7 @@ void FD3D12Device::QueryFeatureSupport()
         if (SUCCEEDED(Result))
         {
             GD3D12RayTracingTier = Features5.RaytracingTier;
+            D3D12_INFO("[FD3D12Device] Support RayTracing Tier %d", GD3D12RayTracingTier);
         }
     }
 
@@ -1008,6 +1009,7 @@ void FD3D12Device::QueryFeatureSupport()
         if (SUCCEEDED(Result))
         {
             GD3D12VariableRateShadingTier = Features6.VariableShadingRateTier;
+            D3D12_INFO("[FD3D12Device] Support VariableRateShading Tier %d", GD3D12VariableRateShadingTier);
         }
     }
 
@@ -1019,8 +1021,11 @@ void FD3D12Device::QueryFeatureSupport()
         HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &Features7, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS7));
         if (SUCCEEDED(Result))
         {
-            GD3D12MeshShaderTier      = Features7.MeshShaderTier;
+            GD3D12MeshShaderTier = Features7.MeshShaderTier;
+            D3D12_INFO("[FD3D12Device] Support MeshShader Tier %d", GD3D12MeshShaderTier);
+
             GD3D12SamplerFeedbackTier = Features7.SamplerFeedbackTier;
+            D3D12_INFO("[FD3D12Device] Support SamplerFeedback Tier %d", GD3D12SamplerFeedbackTier);
         }
     }
 
@@ -1033,6 +1038,7 @@ void FD3D12Device::QueryFeatureSupport()
         if (SUCCEEDED(Result))
         {
             GD3D12SupportGPUUploadHeaps = Features17.GPUUploadHeapSupported;
+            D3D12_INFO("[FD3D12Device] Supports GPUUploadHeaps: %s", GD3D12SupportGPUUploadHeaps ? "true" : "false");
         }
     }
 
@@ -1045,6 +1051,7 @@ void FD3D12Device::QueryFeatureSupport()
         if (SUCCEEDED(Result))
         {
             GD3D12SupportTightAlignment = TightAlignmentFeature.SupportTier >= D3D12_TIGHT_ALIGNMENT_TIER_1;
+            D3D12_INFO("[FD3D12Device] Supports Tight Alignment: %s", GD3D12SupportTightAlignment ? "true" : "false");
         }
     }
 
@@ -1065,6 +1072,7 @@ void FD3D12Device::QueryFeatureSupport()
         if (GD3D12HighestShaderModel >= D3D_SHADER_MODEL_6_6 && GD3D12ResourceBindingTier >= D3D12_RESOURCE_BINDING_TIER_3)
         {
             GD3D12SupportBindless = true;
+            D3D12_INFO("[FD3D12Device] Supports Bindless: %s", GD3D12SupportBindless ? "true" : "false");
         }
     }
 }
