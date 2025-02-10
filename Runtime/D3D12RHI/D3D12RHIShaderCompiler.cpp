@@ -1,14 +1,13 @@
-#include "D3D12RHIShaderCompiler.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "D3D12RHI/D3D12RHIShaderCompiler.h"
 
 DxcCreateInstanceProc DxcCreateInstanceFunc = nullptr;
 
-// NOTE: Does not compile when using CHAR, why? 
 #ifndef MAKEFOURCC
-#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned CHAR)(a) | ((unsigned CHAR)(b) << 8) | ((unsigned CHAR)(c) << 16) | ((unsigned CHAR)(d) << 24))
+#define MAKEFOURCC(a, b, c, d) (unsigned int)((unsigned char)(a) | ((unsigned char)(b) << 8) | ((unsigned char)(c) << 16) | ((unsigned char)(d) << 24))
 #endif
 
 enum DxilFourCC

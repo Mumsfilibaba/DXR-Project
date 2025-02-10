@@ -1,6 +1,6 @@
-#include "D3D12Device.h"
-#include "D3D12Descriptors.h"
-#include "D3D12ResourceViews.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
 
 FD3D12View::FD3D12View(FD3D12Device* InDevice, FD3D12OfflineDescriptorHeap& InOfflineHeap)
     : FD3D12DeviceChild(InDevice)

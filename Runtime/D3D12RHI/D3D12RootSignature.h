@@ -1,8 +1,8 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-#include "D3D12Shader.h"
-#include "D3D12RefCounted.h"
 #include "Core/Containers/Map.h"
+#include "D3D12RHI/D3D12DeviceChild.h"
+#include "D3D12RHI/D3D12Shader.h"
+#include "D3D12RHI/D3D12RefCounted.h"
 
 typedef TSharedRef<class FD3D12RootSignature> FD3D12RootSignatureRef;
 

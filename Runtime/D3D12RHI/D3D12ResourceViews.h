@@ -1,8 +1,8 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-#include "D3D12Resource.h"
-#include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
+#include "D3D12RHI/D3D12DeviceChild.h"
+#include "D3D12RHI/D3D12Resource.h"
+#include "D3D12RHI/D3D12RefCounted.h"
 
 class FD3D12OfflineDescriptorHeap;
 
@@ -11,7 +11,6 @@ typedef TSharedRef<class FD3D12ShaderResourceView>  FD3D12ShaderResourceViewRef;
 typedef TSharedRef<class FD3D12UnorderedAccessView> FD3D12UnorderedAccessViewRef;
 typedef TSharedRef<class FD3D12RenderTargetView>    FD3D12RenderTargetViewRef;
 typedef TSharedRef<class FD3D12DepthStencilView>    FD3D12DepthStencilViewRef;
-
 
 class FD3D12View : public FD3D12DeviceChild
 {

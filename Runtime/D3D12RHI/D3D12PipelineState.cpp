@@ -1,10 +1,10 @@
-#include "D3D12PipelineState.h"
-#include "D3D12RHIShaderCompiler.h"
-#include "D3D12Device.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Project/ProjectManager.h"
+#include "D3D12RHI/D3D12PipelineState.h"
+#include "D3D12RHI/D3D12RHIShaderCompiler.h"
+#include "D3D12RHI/D3D12Device.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "D3D12RHI.PipelineCacheFileName",

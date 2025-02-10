@@ -1,8 +1,8 @@
-#include "D3D12Descriptors.h"
-#include "D3D12Device.h"
-#include "D3D12ResourceViews.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
 
 static TAutoConsoleVariable<int32> CVarNumOfflineDescriptors(
     "D3D12RHI.NumOfflineDescriptors",

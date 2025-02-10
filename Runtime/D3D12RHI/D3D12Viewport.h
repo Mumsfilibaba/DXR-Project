@@ -1,11 +1,11 @@
 #pragma once
-#include "D3D12Core.h"
-#include "D3D12Texture.h"
-#include "D3D12ResourceViews.h"
-#include "D3D12CommandContext.h"
-#include "RHI/RHIResources.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Containers/ArrayView.h"
+#include "RHI/RHIResources.h"
+#include "D3D12RHI/D3D12Core.h"
+#include "D3D12RHI/D3D12Texture.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
+#include "D3D12RHI/D3D12CommandContext.h"
 
 class FD3D12CommandContext;
 

@@ -1,9 +1,3 @@
-#include "D3D12Device.h"
-#include "D3D12RHIShaderCompiler.h"
-#include "D3D12Descriptors.h"
-#include "D3D12RootSignature.h"
-#include "D3D12PipelineState.h"
-#include "DynamicD3D12.h"
 #include "Core/Windows/Windows.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Platform/PlatformFile.h"
@@ -11,6 +5,12 @@
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/String.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12RHIShaderCompiler.h"
+#include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12RootSignature.h"
+#include "D3D12RHI/D3D12PipelineState.h"
+#include "D3D12RHI/DynamicD3D12.h"
 
 #include <dxgidebug.h>
 #pragma comment(lib, "dxguid.lib")

@@ -1,5 +1,5 @@
-#include "D3D12DeletionQueue.h"
-#include "D3D12RHI.h"
+#include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12DeletionQueue.h"
 
 void FD3D12DeferredObject::ProcessItems(const TArray<FD3D12DeferredObject>& Items)
 {

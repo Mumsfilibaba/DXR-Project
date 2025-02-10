@@ -1,9 +1,9 @@
 #pragma once
-#include "D3D12CommandList.h"
-#include "D3D12Fence.h"
-#include "D3D12DeletionQueue.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Containers/Queue.h"
+#include "D3D12RHI/D3D12CommandList.h"
+#include "D3D12RHI/D3D12Fence.h"
+#include "D3D12RHI/D3D12DeletionQueue.h"
 
 class FD3D12Device;
 class FD3D12QueryHeap;

@@ -1,7 +1,7 @@
-#include "D3D12Queue.h"
-#include "D3D12Device.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Threading/ScopedLock.h"
+#include "D3D12RHI/D3D12Queue.h"
+#include "D3D12RHI/D3D12Device.h"
 
 static TAutoConsoleVariable<bool> CVarEnableGPUTimeout(
     "D3D12RHI.EnableGPUTimeout",

@@ -1,7 +1,7 @@
-#include "D3D12Shader.h"
-#include "D3D12RHIShaderCompiler.h"
-#include "D3D12RootSignature.h"
 #include "Core/Misc/CRC.h"
+#include "D3D12RHI/D3D12Shader.h"
+#include "D3D12RHI/D3D12RHIShaderCompiler.h"
+#include "D3D12RHI/D3D12RootSignature.h"
 
 static bool IsShaderResourceView(D3D_SHADER_INPUT_TYPE Type)
 {

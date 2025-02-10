@@ -1,10 +1,10 @@
 #pragma once
-#include "D3D12Shader.h"
-#include "D3D12RootSignature.h"
-#include "D3D12DeviceChild.h"
-#include "D3D12RefCounted.h"
-#include "RHI/RHIResources.h"
 #include "Core/Misc/CRC.h"
+#include "RHI/RHIResources.h"
+#include "D3D12RHI/D3D12Shader.h"
+#include "D3D12RHI/D3D12RootSignature.h"
+#include "D3D12RHI/D3D12DeviceChild.h"
+#include "D3D12RHI/D3D12RefCounted.h"
 
 typedef TSharedRef<class FD3D12VertexLayout>            FD3D12VertexLayoutRef;
 typedef TSharedRef<class FD3D12DepthStencilState>       FD3D12DepthStencilStateRef;

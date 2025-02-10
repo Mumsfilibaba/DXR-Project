@@ -1,10 +1,10 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-#include "D3D12RefCounted.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
 #include "Core/Threading/ScopedLock.h"
 #include "Core/Platform/CriticalSection.h"
+#include "D3D12RHI/D3D12DeviceChild.h"
+#include "D3D12RHI/D3D12RefCounted.h"
 
 class FD3D12DescriptorHeap;
 class FD3D12OnlineDescriptorHeap;

@@ -1,8 +1,8 @@
-#include "D3D12Device.h"
-#include "D3D12CommandContext.h"
-#include "D3D12Query.h"
-#include "D3D12Queue.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/D3D12Query.h"
+#include "D3D12RHI/D3D12Queue.h"
 
 static TAutoConsoleVariable<int32> CVarNumTimestampQueriesPerHeap(
     "D3D12RHI.NumTimestampQueriesPerHeap",

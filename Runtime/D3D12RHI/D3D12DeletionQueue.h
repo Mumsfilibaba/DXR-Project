@@ -1,10 +1,10 @@
 #pragma once
-#include "D3D12DeviceChild.h"
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
 #include "Core/Threading/AsyncTask.h"
 #include "Core/Threading/Runnable.h"
 #include "Core/Threading/Atomic.h"
+#include "D3D12RHI/D3D12DeviceChild.h"
 
 class FD3D12OnlineDescriptorHeap;
 struct FD3D12OnlineDescriptorBlock;

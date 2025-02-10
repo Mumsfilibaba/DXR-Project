@@ -1,9 +1,9 @@
 #pragma once
-#include "D3D12DeviceChild.h"
-#include "D3D12Buffer.h"
-#include "D3D12ResourceViews.h"
-#include "RHI/RHIRayTracing.h"
 #include "Core/Containers/Array.h"
+#include "RHI/RHIRayTracing.h"
+#include "D3D12RHI/D3D12DeviceChild.h"
+#include "D3D12RHI/D3D12Buffer.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
 
 class FD3D12CommandList;
 class FMaterial;

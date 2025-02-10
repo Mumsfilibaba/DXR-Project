@@ -1,10 +1,10 @@
 #pragma once
-#include "D3D12Constants.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/ComPtr.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHIRayTracing.h"
+#include "D3D12RHI/D3D12Constants.h"
 
 #define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
 

@@ -1,5 +1,5 @@
-#include "D3D12Allocators.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "D3D12RHI/D3D12Allocators.h"
 
 static TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
     "D3D12RHI.MaxStagingAllocationSize",

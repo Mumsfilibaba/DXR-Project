@@ -1,8 +1,8 @@
-#include "D3D12Device.h"
-#include "D3D12CommandList.h"
-#include "D3D12Descriptors.h"
-#include "D3D12RHI.h"
-#include "D3D12RayTracing.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12CommandList.h"
+#include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12RayTracing.h"
 
 FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)

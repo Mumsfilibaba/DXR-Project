@@ -1,4 +1,4 @@
-#include "D3D12SamplerState.h"
+#include "D3D12RHI/D3D12SamplerState.h"
 
 FAtomicInt32 FD3D12SamplerStateIdentifier::NextIdentifier = 0;
 

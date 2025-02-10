@@ -1,5 +1,5 @@
-#include "D3D12CommandContextState.h"
 #include "Core/Memory/Memory.h"
+#include "D3D12RHI/D3D12CommandContextState.h"
 
 FD3D12CommandContextState::FD3D12CommandContextState(FD3D12Device* InDevice, FD3D12CommandContext& InContext)
     : FD3D12DeviceChild(InDevice)

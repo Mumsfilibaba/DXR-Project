@@ -1,11 +1,11 @@
 #pragma once
-#include "D3D12Resource.h"
-#include "D3D12RootSignature.h"
-#include "D3D12Descriptors.h"
-#include "D3D12ResourceViews.h"
-#include "D3D12Fence.h"
 #include "Core/Containers/Queue.h"
 #include "Core/Platform/CriticalSection.h"
+#include "D3D12RHI/D3D12Resource.h"
+#include "D3D12RHI/D3D12RootSignature.h"
+#include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
+#include "D3D12RHI/D3D12Fence.h"
 
 class FD3D12ComputePipelineState;
 

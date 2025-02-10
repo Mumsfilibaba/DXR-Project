@@ -1,5 +1,5 @@
 #pragma once
-#include "D3D12Constants.h"
+#include "D3D12RHI/D3D12Constants.h"
 
 #if WIN10_BUILD_17134
     #include <dxgi1_6.h>

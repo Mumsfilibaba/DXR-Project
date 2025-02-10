@@ -1,12 +1,12 @@
 #pragma once
-#include "D3D12Fence.h"
-#include "D3D12RootSignature.h"
-#include "D3D12CommandList.h"
-#include "D3D12Query.h"
-#include "D3D12Texture.h"
-#include "D3D12CommandContextState.h"
-#include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/IRHICommandContext.h"
+#include "D3D12RHI/D3D12Fence.h"
+#include "D3D12RHI/D3D12RootSignature.h"
+#include "D3D12RHI/D3D12CommandList.h"
+#include "D3D12RHI/D3D12Query.h"
+#include "D3D12RHI/D3D12Texture.h"
+#include "D3D12RHI/D3D12CommandContextState.h"
 
 class FResourceBarrierBatcher
 {

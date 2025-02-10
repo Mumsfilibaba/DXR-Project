@@ -1,10 +1,10 @@
-#include "D3D12RootSignature.h"
-#include "D3D12Core.h"
-#include "D3D12Device.h"
-#include "D3D12Shader.h"
-#include "DynamicD3D12.h"
-#include "D3D12RHI.h"
 #include "Core/Misc/CRC.h"
+#include "D3D12RHI/D3D12RootSignature.h"
+#include "D3D12RHI/D3D12Core.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12Shader.h"
+#include "D3D12RHI/DynamicD3D12.h"
+#include "D3D12RHI/D3D12RHI.h"
 
 static D3D12_SHADER_VISIBILITY GD3D12ShaderVisibility[ShaderVisibility_Count] =
 {

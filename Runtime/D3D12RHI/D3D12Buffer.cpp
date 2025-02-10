@@ -1,5 +1,5 @@
-#include "D3D12Buffer.h"
-#include "D3D12RHI.h"
+#include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12Buffer.h"
 
 FD3D12Buffer::FD3D12Buffer(FD3D12Device* InDevice, const FRHIBufferInfo& InBufferInfo)
     : FRHIBuffer(InBufferInfo)

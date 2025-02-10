@@ -1,7 +1,7 @@
 #pragma once
-#include "D3D12Resource.h"
-#include "D3D12CommandList.h"
 #include "RHI/RHIResources.h"
+#include "D3D12RHI/D3D12Resource.h"
+#include "D3D12RHI/D3D12CommandList.h"
 
 #define D3D12_INVALID_QUERY_INDEX (-1)
 

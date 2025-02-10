@@ -1,5 +1,5 @@
-#include "D3D12Device.h"
-#include "D3D12CommandList.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12CommandList.h"
 
 FD3D12CommandAllocator::FD3D12CommandAllocator(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
     : FD3D12DeviceChild(InDevice)

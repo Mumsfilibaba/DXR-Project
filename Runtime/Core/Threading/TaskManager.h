@@ -16,7 +16,7 @@ public:
     virtual bool Start() override final;
     virtual int32 Run() override final;
     virtual void Stop() override final;
-    
+
     bool Create(const CHAR* InThreadName);
     void WakeUpAndStartTask(IAsyncTask* NewTask);
 

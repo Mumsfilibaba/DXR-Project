@@ -1,10 +1,10 @@
-#include "D3D12DescriptorCache.h"
-#include "D3D12Descriptors.h"
-#include "D3D12RHI.h"
-#include "D3D12CommandContext.h"
 #include "Core/Misc/FrameProfiler.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/TypeTraits.h"
+#include "D3D12RHI/D3D12DescriptorCache.h"
+#include "D3D12RHI/D3D12Descriptors.h"
+#include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12CommandContext.h"
 
 FD3D12LocalDescriptorHeap::FD3D12LocalDescriptorHeap(FD3D12Device* InDevice, FD3D12CommandContext& InContext, bool bInSamplers)
     : FD3D12DeviceChild(InDevice)

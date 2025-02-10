@@ -1,5 +1,5 @@
 #pragma once
-#include "D3D12DeviceChild.h"
+#include "D3D12RHI/D3D12DeviceChild.h"
 
 struct FD3D12UploadAllocation
 {

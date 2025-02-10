@@ -1,20 +1,27 @@
-#include "D3D12Device.h"
-#include "D3D12CommandList.h"
-#include "D3D12Core.h"
-#include "D3D12Shader.h"
-#include "D3D12RHI.h"
-#include "D3D12Buffer.h"
-#include "D3D12Texture.h"
-#include "D3D12PipelineState.h"
-#include "D3D12RayTracing.h"
-#include "D3D12RHIShaderCompiler.h"
-#include "D3D12Query.h"
-#include "D3D12CommandContext.h"
-#include "DynamicD3D12.h"
-#include "D3D12Viewport.h"
+#include "Core/Misc/ConsoleManager.h"
 #include "Core/Math/Vector2.h"
 #include "Core/Misc/FrameProfiler.h"
+#include "D3D12RHI/D3D12Device.h"
+#include "D3D12RHI/D3D12CommandList.h"
+#include "D3D12RHI/D3D12Core.h"
+#include "D3D12RHI/D3D12Shader.h"
+#include "D3D12RHI/D3D12RHI.h"
+#include "D3D12RHI/D3D12Buffer.h"
+#include "D3D12RHI/D3D12Texture.h"
+#include "D3D12RHI/D3D12PipelineState.h"
+#include "D3D12RHI/D3D12RayTracing.h"
+#include "D3D12RHI/D3D12RHIShaderCompiler.h"
+#include "D3D12RHI/D3D12Query.h"
+#include "D3D12RHI/D3D12CommandContext.h"
+#include "D3D12RHI/DynamicD3D12.h"
+#include "D3D12RHI/D3D12Viewport.h"
+
 #include <pix.h>
+
+static TAutoConsoleVariable<int32> CVarMaxDrawCallsPerCommandList(
+    "D3D12RHI.MaxDrawCallsPerCommandList",
+    "Number of draw-calls allowed before submitting the current commandlist to the GPU",
+    5000);
 
 FResourceBarrierBatcher::FResourceBarrierBatcher()
     : Barriers()

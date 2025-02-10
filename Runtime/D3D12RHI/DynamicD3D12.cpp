@@ -1,8 +1,8 @@
-#include "D3D12Core.h"
-#include "DynamicD3D12.h"
 #include "Core/Platform/PlatformLibrary.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "CoreApplication/Platform/PlatformApplicationMisc.h"
+#include "D3D12RHI/D3D12Core.h"
+#include "D3D12RHI/DynamicD3D12.h"
 
 void* FDynamicD3D12::DXGILib  = nullptr;
 void* FDynamicD3D12::D3D12Lib = nullptr;

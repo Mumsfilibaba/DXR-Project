@@ -1,8 +1,8 @@
 #pragma once
-#include "D3D12Resource.h"
-#include "D3D12ResourceViews.h"
-#include "D3D12RefCounted.h"
 #include "RHI/RHIResources.h"
+#include "D3D12RHI/D3D12Resource.h"
+#include "D3D12RHI/D3D12ResourceViews.h"
+#include "D3D12RHI/D3D12RefCounted.h"
 
 class FD3D12CommandContext;
 
