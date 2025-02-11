@@ -116,7 +116,6 @@ public:
     }
 
 public:
-
     bool Initialize();
     void ObtainCommandList();
     void FinishCommandList(bool bFlushAllocator);
@@ -174,6 +173,8 @@ public:
     }
 
 private:
+    void ConditionalSubmitCommandListOnDrawCall();
+
     FD3D12CommandList*        CommandList;
     FD3D12CommandAllocator*   CommandAllocator;
     FD3D12CommandPayload*     CommandPayload;
@@ -182,6 +183,8 @@ private:
     FD3D12QueryAllocator      OcclusionQueryAllocator;
     FResourceBarrierBatcher   BarrierBatcher;
     ED3D12CommandQueueType    QueueType;
+
+    uint32 NumDrawCalls;
 
     // Keeps track of any programmatic captures currently being done
     bool bIsCapturing : 1;

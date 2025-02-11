@@ -20,8 +20,8 @@
 
 static TAutoConsoleVariable<int32> CVarMaxDrawCallsPerCommandList(
     "D3D12RHI.MaxDrawCallsPerCommandList",
-    "Number of draw-calls allowed before submitting the current commandlist to the GPU",
-    5000);
+    "Number of draw-calls allowed before submitting the current CommandList to the GPU",
+    1000);
 
 FResourceBarrierBatcher::FResourceBarrierBatcher()
     : Barriers()
@@ -106,8 +106,11 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , ContextState(InDevice, *this)
     , TimingQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
-    , QueueType(InQueueType)
     , BarrierBatcher()
+    , QueueType(InQueueType)
+    , NumDrawCalls(0)
+    , bIsCapturing(false)
+    , bIsRecording(false)
     , CommandContextCS()
 {
 }
@@ -199,6 +202,9 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
 
         FD3D12RHI::GetRHI()->SubmitCommands(CommandPayload, true);
         CommandPayload = nullptr;
+
+        // Reset the number of draw-calls for the current command-list
+        NumDrawCalls = 0;
     }
 
     // Ensure that the state will rebind the necessary state when we obtain a new CommandList
@@ -1315,34 +1321,43 @@ void FD3D12CommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 
 void FD3D12CommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)
 {
-    FlushResourceBarriers();
-
-    ContextState.BindGraphicsStates();
+    ConditionalSubmitCommandListOnDrawCall();
     GetCommandList()->DrawInstanced(VertexCount, 1, StartVertexLocation, 0);
 }
 
 void FD3D12CommandContext::RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation)
 {
-    FlushResourceBarriers();
-
-    ContextState.BindGraphicsStates();
+    ConditionalSubmitCommandListOnDrawCall();
     GetCommandList()->DrawIndexedInstanced(IndexCount, 1, StartIndexLocation, BaseVertexLocation, 0);
 }
 
 void FD3D12CommandContext::RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation)
 {
-    FlushResourceBarriers();
-
-    ContextState.BindGraphicsStates();
+    ConditionalSubmitCommandListOnDrawCall();
     GetCommandList()->DrawInstanced(VertexCountPerInstance, InstanceCount, StartVertexLocation, StartInstanceLocation);
 }
 
 void FD3D12CommandContext::RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation)
 {
-    FlushResourceBarriers();
+    ConditionalSubmitCommandListOnDrawCall();
+    GetCommandList()->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+}
+
+void FD3D12CommandContext::ConditionalSubmitCommandListOnDrawCall()
+{
+    // Split the current command-list if we have reached the maximum amount of draw-calls
+    const uint32 MaxDrawCalls = static_cast<uint32>(CVarMaxDrawCallsPerCommandList.GetValue());
+    if (NumDrawCalls >= MaxDrawCalls)
+    {
+        SplitCommandList(true, false);
+    }
+    else
+    {
+        FlushResourceBarriers();
+    }
 
     ContextState.BindGraphicsStates();
-    GetCommandList()->DrawIndexedInstanced(IndexCountPerInstance, InstanceCount, StartIndexLocation, BaseVertexLocation, StartInstanceLocation);
+    NumDrawCalls++;
 }
 
 void FD3D12CommandContext::RHIDispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
