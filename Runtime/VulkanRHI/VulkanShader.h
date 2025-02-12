@@ -1,9 +1,9 @@
 #pragma once
-#include "VulkanDeviceChild.h"
-#include "VulkanRefCounted.h"
+#include "Core/Containers/Map.h"
 #include "RHI/RHIShader.h"
 #include "RHI/RHIResources.h"
-#include "Core/Containers/Map.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanRefCounted.h"
 
 typedef TSharedRef<class FVulkanShader>              FVulkanShaderRef;
 

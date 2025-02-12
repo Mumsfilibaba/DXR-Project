@@ -1,8 +1,8 @@
 #pragma once
-#include "VulkanCore.h"
-#include "VulkanRHI/Generic/GenericVulkanPlatform.h"
 #include "CoreApplication/Windows/WindowsWindow.h"
 #include "CoreApplication/Windows/WindowsApplication.h"
+#include "VulkanRHI/VulkanCore.h"
+#include "VulkanRHI/Generic/GenericVulkanPlatform.h"
 
 struct FWindowsVulkanPlatform : public FGenericVulkanPlatform
 {

@@ -1,8 +1,8 @@
 #pragma once
-#include "VulkanResourceViews.h"
-#include "VulkanMemory.h"
-#include "RHI/RHIResources.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanResourceViews.h"
+#include "VulkanRHI/VulkanMemory.h"
 
 class FVulkanViewport;
 class FVulkanCommandContext;

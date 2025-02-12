@@ -1,5 +1,5 @@
-#include "VulkanMemory.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "VulkanRHI/VulkanMemory.h"
 
 static TAutoConsoleVariable<int32> CVarMemoryHeapSize(
     "VulkanRHI.MemoryHeapSize",

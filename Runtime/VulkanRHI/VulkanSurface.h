@@ -1,7 +1,7 @@
 #pragma once
-#include "VulkanQueue.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
+#include "VulkanRHI/VulkanQueue.h"
 
 typedef TSharedRef<class FVulkanSurface> FVulkanSurfaceRef;
 

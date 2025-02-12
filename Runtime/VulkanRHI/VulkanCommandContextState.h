@@ -1,7 +1,7 @@
 #pragma once
-#include "VulkanQueue.h"
-#include "VulkanCommandBuffer.h"
-#include "VulkanPipelineState.h"
+#include "VulkanRHI/VulkanQueue.h"
+#include "VulkanRHI/VulkanCommandBuffer.h"
+#include "VulkanRHI/VulkanPipelineState.h"
 
 class FVulkanCommandContext;
 class FVulkanDescriptorState;

@@ -1,7 +1,7 @@
 #pragma once
-#include "VulkanCore.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "VulkanRHI/VulkanCore.h"
 
 DISABLE_UNREFERENCED_VARIABLE_WARNING
 

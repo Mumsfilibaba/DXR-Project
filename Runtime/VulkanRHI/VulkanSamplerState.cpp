@@ -1,5 +1,5 @@
-#include "VulkanSamplerState.h"
-#include "VulkanDevice.h"
+#include "VulkanRHI/VulkanSamplerState.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 FVulkanSamplerState::FVulkanSamplerState(FVulkanDevice* InDevice, const FRHISamplerStateInfo& InSamplerInfo)
     : FRHISamplerState(InSamplerInfo)

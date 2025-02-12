@@ -1,8 +1,9 @@
-#include "VulkanShader.h"
-#include "VulkanDevice.h"
-#include "VulkanLoader.h"
-#include "VulkanPipelineLayout.h"
+#include "VulkanRHI/VulkanShader.h"
+#include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanPipelineLayout.h"
 #include "Core/Misc/CRC.h"
+
 #include <spirv_cross_c.h>
 
 FVulkanDevice* FVulkanShaderModule::StaticDevice = nullptr;

@@ -1,11 +1,11 @@
-#include "VulkanDevice.h"
-#include "VulkanLoader.h"
-#include "VulkanCommandContext.h"
-#include "VulkanInstance.h"
 #include "Core/Containers/Array.h"
 #include "Core/Templates/CString.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
+#include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanCommandContext.h"
+#include "VulkanRHI/VulkanInstance.h"
 
 ////////////////////////////////////////////////////
 // Global variables that describe different features

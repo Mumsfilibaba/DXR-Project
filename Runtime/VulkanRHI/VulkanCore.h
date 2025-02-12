@@ -1,10 +1,10 @@
 #pragma once
-#include "VulkanConstants.h"
 #include "Core/Misc/Debug.h"
 #include "Core/Misc/OutputDeviceLogger.h"
 #include "Core/Containers/String.h"
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanConstants.h"
 
 #if PLATFORM_MACOS
     // #define VK_USE_PLATFORM_MACOS_MVK

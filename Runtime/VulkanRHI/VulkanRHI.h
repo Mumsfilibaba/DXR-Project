@@ -1,13 +1,13 @@
 #pragma once
-#include "VulkanInstance.h"
-#include "VulkanDevice.h"
-#include "VulkanCommandContext.h"
-#include "VulkanQueue.h"
-#include "VulkanDeletionQueue.h"
-#include "RHI/RHI.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Queue.h"
+#include "RHI/RHI.h"
+#include "VulkanRHI/VulkanInstance.h"
+#include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanCommandContext.h"
+#include "VulkanRHI/VulkanQueue.h"
+#include "VulkanRHI/VulkanDeletionQueue.h"
 
 struct VULKANRHI_API FVulkanRHIModule final : public FRHIModule
 {

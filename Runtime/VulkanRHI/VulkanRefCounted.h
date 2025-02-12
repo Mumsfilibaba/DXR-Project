@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanCore.h"
+#include "VulkanRHI/VulkanCore.h"
 #include "Core/Threading/Atomic.h"
 
 class VULKANRHI_API FVulkanRefCounted

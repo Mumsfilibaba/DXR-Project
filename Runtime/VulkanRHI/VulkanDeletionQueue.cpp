@@ -1,6 +1,6 @@
-#include "VulkanDeletionQueue.h"
-#include "VulkanDevice.h"
-#include "VulkanRHI.h"
+#include "VulkanRHI/VulkanRHI.h"
+#include "VulkanRHI/VulkanDeletionQueue.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 void FVulkanDeferredObject::ProcessItems(const TArray<FVulkanDeferredObject>& Items)
 {

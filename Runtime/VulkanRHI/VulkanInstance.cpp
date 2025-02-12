@@ -1,8 +1,8 @@
-#include "VulkanInstance.h"
-#include "VulkanLoader.h"
 #include "Core/Templates/CString.h"
 #include "Core/Misc/ConsoleManager.h"
-#include "Platform/PlatformVulkan.h"
+#include "VulkanRHI/VulkanInstance.h"
+#include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/Platform/PlatformVulkan.h"
 
 static TAutoConsoleVariable<bool> CVarVulkanVerboseLogging(
     "VulkanRHI.VerboseLogging",

@@ -1,8 +1,8 @@
 #pragma once
-#include "VulkanResourceViews.h"
-#include "VulkanMemory.h"
-#include "RHI/RHIRayTracing.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHIRayTracing.h"
+#include "VulkanRHI/VulkanResourceViews.h"
+#include "VulkanRHI/VulkanMemory.h"
 
 typedef TSharedRef<class FVulkanRayTracingGeometry> FVulkanRayTracingGeometryRef; 
 

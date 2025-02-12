@@ -1,10 +1,10 @@
 #pragma once
-#include "VulkanCommandContextState.h"
-#include "VulkanDescriptorSet.h"
-#include "VulkanQuery.h"
-#include "RHI/IRHICommandContext.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Platform/CriticalSection.h"
+#include "RHI/IRHICommandContext.h"
+#include "VulkanRHI/VulkanCommandContextState.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
+#include "VulkanRHI/VulkanQuery.h"
 
 class FVulkanDevice;
 class FVulkanBuffer;

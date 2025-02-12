@@ -1,9 +1,9 @@
 #pragma once
-#include "VulkanDeviceChild.h"
-#include "VulkanSurface.h"
-#include "VulkanQueue.h"
-#include "VulkanSemaphore.h"
 #include "Core/Misc/Debug.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanSurface.h"
+#include "VulkanRHI/VulkanQueue.h"
+#include "VulkanRHI/VulkanSemaphore.h"
 
 #define NUM_BACK_BUFFERS (3)
 

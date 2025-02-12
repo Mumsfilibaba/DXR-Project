@@ -1,9 +1,9 @@
 #pragma once
-#include "VulkanDeviceChild.h"
-#include "RHI/RHIResources.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/BitArray.h"
 #include "Core/Containers/Queue.h"
+#include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
 
 #define VULKAN_INVALID_QUERY_INDEX (-1)
 

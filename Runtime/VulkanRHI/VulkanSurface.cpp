@@ -1,7 +1,7 @@
-#include "VulkanSurface.h"
-#include "VulkanDevice.h"
-#include "VulkanInstance.h"
-#include "Platform/PlatformVulkan.h"
+#include "VulkanRHI/VulkanSurface.h"
+#include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanInstance.h"
+#include "VulkanRHI/Platform/PlatformVulkan.h"
 
 FVulkanSurface::FVulkanSurface(FVulkanDevice* InDevice, FVulkanQueue& InQueue, void* InWindowHandle)
     : FVulkanDeviceChild(InDevice)

@@ -1,11 +1,11 @@
-#include "VulkanDescriptorSet.h"
-#include "VulkanPipelineLayout.h"
-#include "VulkanCommandBuffer.h"
-#include "VulkanResourceViews.h"
-#include "VulkanBuffer.h"
-#include "VulkanSamplerState.h"
-#include "VulkanDevice.h"
 #include "Core/Misc/ConsoleManager.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
+#include "VulkanRHI/VulkanPipelineLayout.h"
+#include "VulkanRHI/VulkanCommandBuffer.h"
+#include "VulkanRHI/VulkanResourceViews.h"
+#include "VulkanRHI/VulkanBuffer.h"
+#include "VulkanRHI/VulkanSamplerState.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 #define VALIDATE_NO_NULL_DESCRIPTORS (0)
 

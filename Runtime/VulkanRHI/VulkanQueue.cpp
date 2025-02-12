@@ -1,8 +1,8 @@
-#include "VulkanQueue.h"
-#include "VulkanDevice.h"
-#include "VulkanLoader.h"
-#include "VulkanCommandBuffer.h"
-#include "VulkanFence.h"
+#include "VulkanRHI/VulkanQueue.h"
+#include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanCommandBuffer.h"
+#include "VulkanRHI/VulkanFence.h"
 
 FVulkanQueue::FVulkanQueue(FVulkanDevice* InDevice, EVulkanCommandQueueType InQueueType)
     : FVulkanDeviceChild(InDevice)

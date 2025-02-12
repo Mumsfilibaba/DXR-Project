@@ -1,7 +1,7 @@
 #pragma once
-#include "VulkanMemory.h"
-#include "VulkanRefCounted.h"
 #include "Core/Containers/SharedRef.h"
+#include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanRefCounted.h"
 
 typedef TSharedRef<class FVulkanUploadBuffer> FVulkanUploadBufferRef;
 

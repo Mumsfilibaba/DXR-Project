@@ -1,4 +1,4 @@
-#include "VulkanFence.h"
+#include "VulkanRHI/VulkanFence.h"
 
 FVulkanFence::FVulkanFence(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)

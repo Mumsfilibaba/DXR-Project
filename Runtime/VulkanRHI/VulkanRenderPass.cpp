@@ -1,5 +1,5 @@
-#include "VulkanRenderPass.h"
-#include "VulkanDevice.h"
+#include "VulkanRHI/VulkanRenderPass.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 static void DestroyFramebuffer(VkDevice Device, VkFramebuffer Framebuffer)
 {

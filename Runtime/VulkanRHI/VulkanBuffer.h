@@ -1,6 +1,6 @@
 #pragma once
-#include "VulkanMemory.h"
 #include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanMemory.h"
 
 typedef TSharedRef<class FVulkanBuffer> FVulkanBufferRef;
 

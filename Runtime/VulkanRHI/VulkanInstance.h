@@ -1,8 +1,8 @@
 #pragma once
-#include "VulkanRefCounted.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Set.h"
 #include "Core/Platform/PlatformLibrary.h"
+#include "VulkanRHI/VulkanRefCounted.h"
 
 struct FVulkanInstanceCreateInfo
 {

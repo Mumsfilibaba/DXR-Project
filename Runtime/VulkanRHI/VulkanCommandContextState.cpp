@@ -1,4 +1,4 @@
-#include "VulkanCommandContextState.h"
+#include "VulkanRHI/VulkanCommandContextState.h"
 
 FVulkanCommandContextState::FVulkanCommandContextState(FVulkanDevice* InDevice, FVulkanCommandContext& InContext)
     : FVulkanDeviceChild(InDevice)

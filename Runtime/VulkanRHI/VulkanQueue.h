@@ -1,11 +1,11 @@
 #pragma once
-#include "VulkanDevice.h"
-#include "VulkanDeviceChild.h"
-#include "VulkanDeletionQueue.h"
-#include "VulkanFence.h"
 #include "Core/Containers/SharedRef.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/Queue.h"
+#include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanDeletionQueue.h"
+#include "VulkanRHI/VulkanFence.h"
 
 typedef TSharedRef<class FVulkanQueue> FVulkanQueueRef;
 

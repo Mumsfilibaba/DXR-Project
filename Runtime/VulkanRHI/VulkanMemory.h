@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
 
 struct FVulkanMemoryBlock;
 class FVulkanMemoryHeap;

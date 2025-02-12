@@ -1,12 +1,12 @@
 #pragma once
-#include "VulkanTexture.h"
-#include "VulkanSemaphore.h"
-#include "VulkanSurface.h"
-#include "VulkanSwapChain.h"
-#include "RHI/RHIResources.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/ArrayView.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanTexture.h"
+#include "VulkanRHI/VulkanSemaphore.h"
+#include "VulkanRHI/VulkanSurface.h"
+#include "VulkanRHI/VulkanSwapChain.h"
 
 #define VULKAN_INVALID_BACK_BUFFER_INDEX (-1)
 

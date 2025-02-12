@@ -1,8 +1,8 @@
 #pragma once
-#include "VulkanDeviceChild.h"
-#include "VulkanLoader.h"
 #include "Core/Containers/Array.h"
 #include "Core/Platform/CriticalSection.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanLoader.h"
 
 class FVulkanFence : public FVulkanDeviceChild, FNonCopyable
 {

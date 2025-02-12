@@ -1,8 +1,8 @@
 #pragma once
-#include "VulkanCore.h"
-#include "VulkanRefCounted.h"
-#include "RHI/RHIResources.h"
 #include "Core/Platform/CriticalSection.h"
+#include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanCore.h"
+#include "VulkanRHI/VulkanRefCounted.h"
 
 class FRHIResource;
 class FVulkanDescriptorPool;

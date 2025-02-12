@@ -1,7 +1,7 @@
 #pragma once
-#include "VulkanLoader.h"
-#include "VulkanDeviceChild.h"
 #include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
 
 typedef TSharedRef<class FVulkanShaderResourceView>  FVulkanShaderResourceViewRef;
 typedef TSharedRef<class FVulkanUnorderedAccessView> FVulkanUnorderedAccessViewRef;

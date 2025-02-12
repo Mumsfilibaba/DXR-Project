@@ -1,14 +1,4 @@
 #pragma once
-#include "VulkanCore.h"
-#include "VulkanLoader.h"
-#include "VulkanAllocators.h"
-#include "VulkanRenderPass.h"
-#include "VulkanMemory.h"
-#include "VulkanFenceManager.h"
-#include "VulkanPipelineLayout.h"
-#include "VulkanDescriptorSet.h"
-#include "VulkanPipelineState.h"
-#include "VulkanQuery.h"
 #include "Core/Containers/Array.h"
 #include "Core/Containers/StringView.h"
 #include "Core/Containers/SharedRef.h"
@@ -16,6 +6,16 @@
 #include "Core/Containers/Optional.h"
 #include "Core/Threading/Atomic.h"
 #include "Core/Containers/String.h"
+#include "VulkanRHI/VulkanCore.h"
+#include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanAllocators.h"
+#include "VulkanRHI/VulkanRenderPass.h"
+#include "VulkanRHI/VulkanMemory.h"
+#include "VulkanRHI/VulkanFenceManager.h"
+#include "VulkanRHI/VulkanPipelineLayout.h"
+#include "VulkanRHI/VulkanDescriptorSet.h"
+#include "VulkanRHI/VulkanPipelineState.h"
+#include "VulkanRHI/VulkanQuery.h"
 
 class FVulkanInstance;
 class FVulkanPhysicalDevice;

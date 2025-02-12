@@ -1,5 +1,5 @@
-#include "VulkanResourceViews.h"
-#include "VulkanDevice.h"
+#include "VulkanRHI/VulkanResourceViews.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 FVulkanResourceView::FVulkanResourceView(FVulkanDevice* InDevice)
     : FVulkanDeviceChild(InDevice)

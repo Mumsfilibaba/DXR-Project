@@ -1,6 +1,6 @@
-#include "VulkanLoader.h"
-#include "VulkanInstance.h"
-#include "VulkanDevice.h"
+#include "VulkanRHI/VulkanLoader.h"
+#include "VulkanRHI/VulkanInstance.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 /*//////////////////////////////////////////////////////////////////////////////////////////////*/
 // Pre-Instance Created Functions

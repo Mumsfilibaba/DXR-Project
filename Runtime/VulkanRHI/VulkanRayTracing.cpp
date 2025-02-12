@@ -1,4 +1,4 @@
-#include "VulkanRayTracing.h"
+#include "VulkanRHI/VulkanRayTracing.h"
 
 FVulkanRayTracingGeometry::FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryDesc& InDesc)
     : FRHIRayTracingGeometry(InDesc)

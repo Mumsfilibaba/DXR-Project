@@ -1,9 +1,9 @@
 #pragma once
-#include "VulkanDeviceChild.h"
-#include "VulkanShader.h"
 #include "Core/Containers/Map.h"
 #include "Core/Containers/Array.h"
 #include "Core/Misc/CRC.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
+#include "VulkanRHI/VulkanShader.h"
 
 struct FVulkanDescriptorSetLayoutInfo
 {

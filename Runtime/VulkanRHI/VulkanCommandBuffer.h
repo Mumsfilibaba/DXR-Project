@@ -1,6 +1,6 @@
 #pragma once
-#include "VulkanFence.h"
 #include "Core/Containers/Queue.h"
+#include "VulkanRHI/VulkanFence.h"
 
 class FCommandBuffer : FNonCopyable
 {

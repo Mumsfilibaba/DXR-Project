@@ -1,6 +1,6 @@
-#include "VulkanPipelineLayout.h"
-#include "VulkanShader.h"
 #include "Core/Memory/Memory.h"
+#include "VulkanRHI/VulkanPipelineLayout.h"
+#include "VulkanRHI/VulkanShader.h"
 
 static inline EShaderVisibility GetShaderVisibilityFromShaderFlag(VkShaderStageFlags ShaderStage)
 {

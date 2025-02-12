@@ -1,6 +1,6 @@
 #pragma once
-#include "VulkanDeviceChild.h"
 #include "Core/Containers/Map.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
 
 struct FVulkanRenderPassActions
 {

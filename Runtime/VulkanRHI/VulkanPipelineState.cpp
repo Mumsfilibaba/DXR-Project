@@ -1,11 +1,11 @@
-#include "VulkanPipelineState.h"
-#include "VulkanDevice.h"
-#include "VulkanShader.h"
 #include "Core/Platform/PlatformFile.h"
 #include "Core/Threading/TaskManager.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Containers/UniquePtr.h"
 #include "Project/ProjectManager.h"
+#include "VulkanRHI/VulkanPipelineState.h"
+#include "VulkanRHI/VulkanDevice.h"
+#include "VulkanRHI/VulkanShader.h"
 
 static TAutoConsoleVariable<FString> CVarPipelineCacheFileName(
     "VulkanRHI.PipelineCacheFileName",

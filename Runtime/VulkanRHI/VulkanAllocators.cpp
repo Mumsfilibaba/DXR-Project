@@ -1,7 +1,7 @@
-#include "VulkanAllocators.h"
-#include "VulkanDevice.h"
 #include "Core/Misc/ConsoleManager.h"
 #include "Core/Templates/NumericLimits.h"
+#include "VulkanRHI/VulkanAllocators.h"
+#include "VulkanRHI/VulkanDevice.h"
 
 static TAutoConsoleVariable<int32> CVarMaxStagingAllocationSize(
     "VulkanRHI.MaxStagingAllocationSize",

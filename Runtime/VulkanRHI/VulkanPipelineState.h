@@ -1,8 +1,8 @@
 #pragma once
-#include "VulkanShader.h"
-#include "VulkanRefCounted.h"
-#include "VulkanDeviceChild.h"
 #include "RHI/RHIResources.h"
+#include "VulkanRHI/VulkanShader.h"
+#include "VulkanRHI/VulkanRefCounted.h"
+#include "VulkanRHI/VulkanDeviceChild.h"
 
 typedef TSharedRef<class FVulkanVertexLayout>            FVulkanVertexInputLayoutRef;
 typedef TSharedRef<class FVulkanDepthStencilState>       FVulkanDepthStencilStateRef;
