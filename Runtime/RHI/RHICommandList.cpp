@@ -29,7 +29,7 @@ FRHICommandList::~FRHICommandList() noexcept
 void FRHICommandList::Execute() noexcept
 {
     // Increment the number of commands this frame
-    GRHINumCommands += NumCommands;
+    FRHIStats::NumCommands += NumCommands;
 
     // Then execute all commands on the assigned context
     IRHICommandContext& CommandContextRef = GetCommandContext();
@@ -272,9 +272,9 @@ void FRHICommandListExecutor::Release()
 void FRHICommandListExecutor::Tick()
 {
     // Reset statistics
-    GRHINumCommands      = 0;
-    GRHINumDispatchCalls = 0;
-    GRHINumDrawCalls     = 0;
+    FRHIStats::NumCommands      = 0;
+    FRHIStats::NumDispatchCalls = 0;
+    FRHIStats::NumDrawCalls     = 0;
 }
 
 void FRHICommandListExecutor::EnqueueResourceDeletion(FRHIResource* InResource)

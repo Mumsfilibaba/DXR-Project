@@ -189,8 +189,9 @@ public:
     // Returns the native handle for this resource
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
-    virtual FRHIShaderResourceView*  GetShaderResourceView()  const { return nullptr; }
+    virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
+
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
 

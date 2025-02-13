@@ -205,11 +205,11 @@ bool FD3D12RHI::Initialize()
         {
             if (Features.VPAndRTArrayIndexFromAnyShaderFeedingRasterizerSupportedWithoutGSEmulation)
             {
-                GRHISupportRenderTargetArrayIndexFromVertexShader = true;
+                FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = true;
             }
             else
             {
-                GRHISupportRenderTargetArrayIndexFromVertexShader = false;
+                FRHIDeviceInfo::SupportRenderTargetArrayIndexFromVertexShader = false;
             }
         }
     }
@@ -219,21 +219,21 @@ bool FD3D12RHI::Initialize()
     {
         if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_1)
         {
-            GRHIRayTracingTier = ERayTracingTier::Tier1_1;
+            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1_1;
         }
         else if (GD3D12RayTracingTier == D3D12_RAYTRACING_TIER_1_0)
         {
-            GRHIRayTracingTier = ERayTracingTier::Tier1;
+            FRHIDeviceInfo::RayTracingTier = ERayTracingTier::Tier1;
         }
 
-        GRHIRayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
+        FRHIDeviceInfo::RayTracingMaxRecursionDepth = D3D12_RAYTRACING_MAX_DECLARABLE_TRACE_RECURSION_DEPTH;
     }
     else
     {
-        GRHIRayTracingTier = ERayTracingTier::NotSupported;
+        FRHIDeviceInfo::RayTracingTier = ERayTracingTier::NotSupported;
     }
     
-    GRHISupportsRayTracing = GRHIRayTracingTier != ERayTracingTier::NotSupported;
+    FRHIDeviceInfo::SupportsRayTracing = FRHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
 
     // View-Instancing Support
     {
@@ -245,14 +245,14 @@ bool FD3D12RHI::Initialize()
         {
             if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
             {
-                GRHISupportsViewInstancing = true;
-                GRHIMaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
+                FRHIDeviceInfo::SupportsViewInstancing = true;
+                FRHIDeviceInfo::MaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
             }
         }
         else
         {
-            GRHISupportsViewInstancing = false;
-            GRHIMaxViewInstanceCount = 0;
+            FRHIDeviceInfo::SupportsViewInstancing = false;
+            FRHIDeviceInfo::MaxViewInstanceCount = 0;
         }
     }
 
@@ -261,23 +261,23 @@ bool FD3D12RHI::Initialize()
     {
         case D3D12_VARIABLE_SHADING_RATE_TIER_NOT_SUPPORTED:
         {
-            GRHIShadingRateTier = EShadingRateTier::NotSupported;
+            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::NotSupported;
             break;
         }
         case D3D12_VARIABLE_SHADING_RATE_TIER_1:
         {
-            GRHIShadingRateTier = EShadingRateTier::Tier1;
+            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier1;
             break;
         }
         case D3D12_VARIABLE_SHADING_RATE_TIER_2:
         {
-            GRHIShadingRateTier = EShadingRateTier::Tier2;
+            FRHIDeviceInfo::ShadingRateTier = EShadingRateTier::Tier2;
             break;
         }
     }
 
-    GRHISupportsVRS = GRHIShadingRateTier != EShadingRateTier::NotSupported;
-    if (GRHISupportsVRS)
+    FRHIDeviceInfo::SupportsVRS = FRHIDeviceInfo::ShadingRateTier != EShadingRateTier::NotSupported;
+    if (FRHIDeviceInfo::SupportsVRS)
     {
         D3D12_FEATURE_DATA_D3D12_OPTIONS6 Features6;
         FMemory::Memzero(&Features6);
@@ -285,16 +285,16 @@ bool FD3D12RHI::Initialize()
         HRESULT Result = GetDevice()->GetD3D12Device()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS6, &Features6, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS6));
         if (SUCCEEDED(Result))
         {
-            GRHIShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
+            FRHIDeviceInfo::ShadingRateImageTileSize = Features6.ShadingRateImageTileSize;
         }
     }
     else
     {
-        GRHIShadingRateImageTileSize = 0;
+        FRHIDeviceInfo::ShadingRateImageTileSize = 0;
     }
 
     // GeometryShaders Support
-    GRHISupportsGeometryShaders = true;
+    FRHIDeviceInfo::SupportsGeometryShaders = true;
     return true;
 }
 

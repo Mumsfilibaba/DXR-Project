@@ -46,27 +46,30 @@ inline const CHAR* ToString(EShadingRateTier Tier)
     }
 }
 
-// Geometry Shading Support
-extern RHI_API bool GRHISupportsGeometryShaders;
+struct FRHIDeviceInfo
+{
+    // Geometry Shading Support
+    static RHI_API bool SupportsGeometryShaders;
 
-// RenderTargetArrayIndex from vertex-shader Support
-extern RHI_API bool GRHISupportRenderTargetArrayIndexFromVertexShader;
+    // RenderTargetArrayIndex from vertex-shader Support
+    static RHI_API bool SupportRenderTargetArrayIndexFromVertexShader;
 
-// View-Instancing
-extern RHI_API bool   GRHISupportsViewInstancing;
-extern RHI_API uint32 GRHIMaxViewInstanceCount;
+    // View-Instancing
+    static RHI_API bool   SupportsViewInstancing;
+    static RHI_API uint32 MaxViewInstanceCount;
 
-// Hardware RayTracing
-extern RHI_API bool            GRHISupportsRayTracing;
-extern RHI_API ERayTracingTier GRHIRayTracingTier;
-extern RHI_API uint32          GRHIRayTracingMaxRecursionDepth;
+    // Hardware RayTracing
+    static RHI_API bool            SupportsRayTracing;
+    static RHI_API ERayTracingTier RayTracingTier;
+    static RHI_API uint32          RayTracingMaxRecursionDepth;
 
-// Hardware Variable Rate Shading
-extern RHI_API bool             GRHISupportsVRS;
-extern RHI_API EShadingRateTier GRHIShadingRateTier;
-extern RHI_API uint32           GRHIShadingRateImageTileSize;
+    // Hardware Variable Rate Shading
+    static RHI_API bool             SupportsVRS;
+    static RHI_API EShadingRateTier ShadingRateTier;
+    static RHI_API uint32           ShadingRateImageTileSize;
 
-// Draw-Indirect
-extern RHI_API bool   GRHISupportDrawIndirect;
-extern RHI_API bool   GRHISupportMultiDrawIndirect;
-extern RHI_API uint32 GRHIMaxDrawIndirectCount;
+    // Draw-Indirect
+    static RHI_API bool   SupportDrawIndirect;
+    static RHI_API bool   SupportMultiDrawIndirect;
+    static RHI_API uint32 MaxDrawIndirectCount;
+};

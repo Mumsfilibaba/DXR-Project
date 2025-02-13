@@ -125,19 +125,19 @@ void FRendererInfoWidget::Draw()
             ImGui::Text("DrawCalls: ");
             ImGui::NextColumn();
 
-            ImGui::Text("%d", GRHINumDrawCalls.Load());
+            ImGui::Text("%d", FRHIStats::NumDrawCalls.Load());
             ImGui::NextColumn();
 
             ImGui::Text("DispatchCalls: ");
             ImGui::NextColumn();
 
-            ImGui::Text("%d", GRHINumDispatchCalls.Load());
+            ImGui::Text("%d", FRHIStats::NumDispatchCalls.Load());
             ImGui::NextColumn();
 
             ImGui::Text("Command Count: ");
             ImGui::NextColumn();
 
-            ImGui::Text("%d", GRHINumCommands.Load());
+            ImGui::Text("%d", FRHIStats::NumCommands.Load());
 
             ImGui::Columns(1);
 
