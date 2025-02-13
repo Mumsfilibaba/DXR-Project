@@ -12,8 +12,8 @@ class FRHI;
 class FRHIRayTracingGeometry;
 class FRHIRayTracingScene;
 struct IRHICommandContext;
-struct FRHIRayTracingSceneDesc;
-struct FRHIRayTracingGeometryDesc;
+struct FRHIRayTracingSceneInfo;
+struct FRHIRayTracingGeometryInfo;
 
 enum class ERHIType : uint32
 {
@@ -153,14 +153,14 @@ public:
      * @param InDesc Structure containing information about the ray tracing scene
      * @return Returns the newly created ray tracing scene
      */
-    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) = 0;
+    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) = 0;
     
     /**
      * @brief Creates a new ray tracing geometry
      * @param InDesc Structure containing information about the ray tracing geometry
      * @return Returns the newly created ray tracing geometry
      */
-    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) = 0;
+    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) = 0;
 
     /**
      * @brief Creates a new shader resource view for a texture
@@ -430,14 +430,14 @@ FORCEINLINE FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& 
     return GetRHI()->RHICreateSamplerState(InSamplerInfo);
 }
 
-FORCEINLINE FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
+FORCEINLINE FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
 {
-    return GetRHI()->RHICreateRayTracingScene(InDesc);
+    return GetRHI()->RHICreateRayTracingScene(InSceneInfo);
 }
 
-FORCEINLINE FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
+FORCEINLINE FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
 {
-    return GetRHI()->RHICreateRayTracingGeometry(InDesc);
+    return GetRHI()->RHICreateRayTracingGeometry(InGeometryInfo);
 }
 
 FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc)

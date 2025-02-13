@@ -11,8 +11,8 @@ FD3D12AccelerationStructure::FD3D12AccelerationStructure(FD3D12Device* InDevice)
 {
 }
 
-FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryDesc& Initializer)
-    : FRHIRayTracingGeometry(Initializer)
+FD3D12RayTracingGeometry::FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo)
+    : FRHIRayTracingGeometry(InGeometryInfo)
     , FD3D12AccelerationStructure(InDevice)
     , VertexBuffer(nullptr)
     , IndexBuffer(nullptr)
@@ -158,8 +158,8 @@ FString FD3D12RayTracingGeometry::GetDebugName() const
     return FString();
 }
 
-FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer)
-    : FRHIRayTracingScene(Initializer)
+FD3D12RayTracingScene::FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneInfo& InSceneInfo)
+    : FRHIRayTracingScene(InSceneInfo)
     , FD3D12AccelerationStructure(InDevice)
     , InstanceBuffer(nullptr)
     , BindingTable(nullptr)

@@ -20,8 +20,7 @@ public:
 public:
 
     // FRHITexture Interface
-    virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FD3D12Texture*>(this)); }
-    virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetD3D12Resource()); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }
@@ -82,11 +81,18 @@ public:
     FD3D12BackBufferTexture(FD3D12Device* InDevice, FD3D12Viewport* InViewport, const FRHITextureInfo& InTextureInfo);
     virtual ~FD3D12BackBufferTexture();
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(GetCurrentBackBufferTexture()); }
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+public:
 
+    // FRHITexture Interface
+    virtual void* GetRHINativeHandle() const override final
+    {
+        FD3D12Texture* CurrentBackBuffer = GetCurrentBackBufferTexture();
+        return CurrentBackBuffer ? reinterpret_cast<void*>(CurrentBackBuffer->GetD3D12Resource()) : nullptr;
+    }
+
+public:
     void Resize(uint32 InWidth, uint32 InHeight);
-    FD3D12Texture* GetCurrentBackBufferTexture();
+    FD3D12Texture* GetCurrentBackBufferTexture() const;
 
     FD3D12Viewport* GetViewport() const
     { 

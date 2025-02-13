@@ -315,26 +315,26 @@ FRHIQuery* FVulkanRHI::RHICreateQuery(EQueryType InQueryType)
     return new FVulkanQuery(Device, InQueryType);
 }
 
-FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
+FRHIRayTracingScene* FVulkanRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
 {
     // TODO: Finish this
-    UNREFERENCED_VARIABLE(InDesc);
+    UNREFERENCED_VARIABLE(InSceneInfo);
     return nullptr;
 }
 
-FRHIRayTracingGeometry* FVulkanRHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
+FRHIRayTracingGeometry* FVulkanRHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
 {
     FRayTracingGeometryBuildInfo BuildInfo;
-    BuildInfo.VertexBuffer = InDesc.VertexBuffer;
-    BuildInfo.NumVertices  = InDesc.NumVertices;
-    BuildInfo.IndexBuffer  = InDesc.IndexBuffer;
-    BuildInfo.NumIndices   = InDesc.NumIndices;
-    BuildInfo.IndexFormat  = InDesc.IndexFormat;
+    BuildInfo.VertexBuffer = InGeometryInfo.VertexBuffer;
+    BuildInfo.NumVertices  = InGeometryInfo.NumVertices;
+    BuildInfo.IndexBuffer  = InGeometryInfo.IndexBuffer;
+    BuildInfo.NumIndices   = InGeometryInfo.NumIndices;
+    BuildInfo.IndexFormat  = InGeometryInfo.IndexFormat;
     BuildInfo.bUpdate      = false;
 
     GraphicsCommandContext->RHIStartContext();
 
-    FVulkanRayTracingGeometryRef NewGeometry = new FVulkanRayTracingGeometry(GetDevice(), InDesc);
+    FVulkanRayTracingGeometryRef NewGeometry = new FVulkanRayTracingGeometry(GetDevice(), InGeometryInfo);
     if (!NewGeometry->Build(*GraphicsCommandContext, BuildInfo))
     {
         DEBUG_BREAK();

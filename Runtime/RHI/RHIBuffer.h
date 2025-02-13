@@ -73,8 +73,8 @@ protected:
 
 public:
 
-    virtual void* GetRHIBaseBuffer()         { return nullptr; }
-    virtual void* GetRHIBaseResource() const { return nullptr; }
+    // Returns the native handle for this resource
+    virtual void* GetRHINativeHandle() const { return nullptr; }
 
     // Returns a BindlessHandle if this buffer was created with a ConstantBuffer flag
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }

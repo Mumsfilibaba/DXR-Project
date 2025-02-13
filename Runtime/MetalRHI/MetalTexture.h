@@ -18,16 +18,20 @@ public:
 
     bool Initialize(EResourceAccess InInitialAccess, const IRHITextureData* InInitialData);
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(static_cast<FMetalTexture*>(this)); }
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
+public:
+
+    // FRHITexture Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
+
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
+public:
     id<MTLTexture> GetMTLTexture() const;
 
     void SetDrawableTexture(id<MTLTexture> InTexture) 

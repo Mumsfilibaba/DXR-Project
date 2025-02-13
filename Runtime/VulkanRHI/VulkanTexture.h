@@ -34,8 +34,7 @@ public:
 public:
 
     // FRHITexture Interface
-    virtual void* GetRHIBaseTexture() override { return reinterpret_cast<void*>(static_cast<FVulkanTexture*>(this)); }
-    virtual void* GetRHIBaseResource() const override { return reinterpret_cast<void*>(GetVkImage()); }
+    virtual void* GetRHINativeHandle() const override { return reinterpret_cast<void*>(GetVkImage()); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return UnorderedAccessView.Get(); }

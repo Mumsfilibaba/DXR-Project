@@ -11,8 +11,7 @@ struct FNullRHIBuffer : public FRHIBuffer
     {
     }
 
-    virtual void* GetRHIBaseBuffer() override final { return this; }
-    virtual void* GetRHIBaseResource() const override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }
 };
@@ -43,11 +42,11 @@ public:
     {
     }
 
-    virtual void* GetRHIBaseTexture() override final { return reinterpret_cast<void*>(this); }
-    virtual void* GetRHIBaseResource() const override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
 
     virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return nullptr; }
     virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
+    
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
@@ -58,29 +57,29 @@ private:
 
 struct FNullRHIRayTracingGeometry : public FRHIRayTracingGeometry
 {
-    FNullRHIRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
-        : FRHIRayTracingGeometry(InDesc)
+    FNullRHIRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
+        : FRHIRayTracingGeometry(InGeometryInfo)
     {
     }
 
-    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
-    virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
+    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 };
 
 class FNullRHIRayTracingScene : public FRHIRayTracingScene
 {
 public:
-    FNullRHIRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
-        : FRHIRayTracingScene(InDesc)
+    FNullRHIRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
+        : FRHIRayTracingScene(InSceneInfo)
         , View(new FNullRHIShaderResourceView(this))
     {
     }
 
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
+    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
+
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
-
-    virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
-    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(this); }
 
 private:
     TSharedRef<FNullRHIShaderResourceView> View;

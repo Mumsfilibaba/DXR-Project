@@ -17,8 +17,7 @@ public:
 public:
 
     // FRHIBuffer Interface
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FD3D12Buffer*>(this)); }
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHINativeHandle() const { return reinterpret_cast<void*>(GetD3D12Resource()); }
     
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 

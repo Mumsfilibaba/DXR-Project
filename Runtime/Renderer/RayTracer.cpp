@@ -164,8 +164,8 @@ void FRayTracer::PreRender(FRHICommandList& CommandList, FFrameResources& Resour
 
     if (!Resources.RTScene)
     {
-        FRHIRayTracingSceneDesc SceneInitializer(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
-        Resources.RTScene = RHICreateRayTracingScene(SceneInitializer);
+        FRHIRayTracingSceneInfo SceneInfo(MakeArrayView(Resources.RTGeometryInstances), EAccelerationStructureBuildFlags::None);
+        Resources.RTScene = RHICreateRayTracingScene(SceneInfo);
     }
     else
     {

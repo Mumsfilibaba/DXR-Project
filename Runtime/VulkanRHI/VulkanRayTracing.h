@@ -9,15 +9,19 @@ typedef TSharedRef<class FVulkanRayTracingGeometry> FVulkanRayTracingGeometryRef
 class FVulkanRayTracingGeometry : public FRHIRayTracingGeometry, public FVulkanDeviceChild
 {
 public:
-    FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryDesc& InDesc);
+    FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo);
     ~FVulkanRayTracingGeometry();
 
-    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GeometryBuffer); }
-    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(Geometry); }
+public:
+
+    // FRHIRayTracingGeometry Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(Geometry); }
+    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
+public:
     bool Build(FVulkanCommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo);
 
     VkAccelerationStructureKHR GetVkAccelerationStructure() const

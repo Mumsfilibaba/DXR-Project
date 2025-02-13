@@ -77,15 +77,19 @@ protected:
 class FD3D12RayTracingGeometry : public FRHIRayTracingGeometry, public FD3D12AccelerationStructure
 {
 public:
-    FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryDesc& Initializer);
+    FD3D12RayTracingGeometry(FD3D12Device* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo);
     virtual ~FD3D12RayTracingGeometry() = default;
 
-    virtual void* GetRHIBaseBVHBuffer()             override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
-    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
+public:
+
+    // FRHIRayTracingGeometry Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
 
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
+public:
     bool Build(FD3D12CommandContext& CmdContext, const FRayTracingGeometryBuildInfo& BuildInfo);
 
     FD3D12Buffer* GetVertexBuffer() const
@@ -106,17 +110,22 @@ private:
 class FD3D12RayTracingScene : public FRHIRayTracingScene , public FD3D12AccelerationStructure
 {
 public:
-    FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneDesc& Initializer);
+    FD3D12RayTracingScene(FD3D12Device* InDevice, const FRHIRayTracingSceneInfo& InSceneInfo);
     virtual ~FD3D12RayTracingScene() = default;
 
-    virtual void* GetRHIBaseBVHBuffer() override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
-    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
+public:
 
+    // FRHIRayTracingScene Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12Resource()); }
+    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(static_cast<FD3D12AccelerationStructure*>(this)); }
+    
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
+
     virtual void SetDebugName(const FString& InName) override final;
     virtual FString GetDebugName() const override final;
 
+public:
     bool Build(FD3D12CommandContext& CmdContext, const FRayTracingSceneBuildInfo& BuildInfo);
     bool BuildBindingTable(
         class FD3D12CommandContext&       CmdContext,

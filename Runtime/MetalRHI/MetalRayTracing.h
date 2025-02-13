@@ -8,30 +8,30 @@ DISABLE_UNREFERENCED_VARIABLE_WARNING
 class FMetalRayTracingGeometry : public FRHIRayTracingGeometry
 {
 public:
-    FMetalRayTracingGeometry(const FRHIRayTracingGeometryDesc& Initializer)
-        : FRHIRayTracingGeometry(Initializer)
+    FMetalRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
+        : FRHIRayTracingGeometry(InGeometryInfo)
     {
     }
 
     ~FMetalRayTracingGeometry() = default;
 
-    virtual void* GetRHIBaseBVHBuffer() { return nullptr; }
-    virtual void* GetRHIBaseAccelerationStructure() { return reinterpret_cast<void*>(this); }
+    virtual void* GetRHINativeHandle() override final { return nullptr; }
+    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 };
 
 class FMetalRayTracingScene : public FRHIRayTracingScene
 {
 public:
-    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneDesc& Initializer)
-        : FRHIRayTracingScene(Initializer)
+    FMetalRayTracingScene(FMetalDeviceContext* InDeviceContext, const FRHIRayTracingSceneInfo& InSceneInfo)
+        : FRHIRayTracingScene(InSceneInfo)
         , View(new FMetalShaderResourceView(InDeviceContext, this))
     {
     }
 
     ~FMetalRayTracingScene() = default;
 
-    virtual void* GetRHIBaseBVHBuffer() override final { return nullptr; }
-    virtual void* GetRHIBaseAccelerationStructure() override final { return reinterpret_cast<void*>(this); }
+    virtual void* GetRHINativeHandle() override final { return nullptr; }
+    virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final{ return FRHIDescriptorHandle(); }

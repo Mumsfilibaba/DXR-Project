@@ -75,9 +75,13 @@ protected:
     virtual ~FRHIShader() = default;
 
 public:
-    virtual void* GetRHIBaseResource() { return nullptr; }
-    virtual void* GetRHIBaseShader() { return nullptr; }
-    
+
+    // Retrieves the native handle for the RHI, can also be byte-code for some backends
+    virtual void* GetRHINativeHandle() { return nullptr; }
+
+    // Retrieve the base-interface for the backend
+    virtual void* GetRHIBaseInterface() { return this; }
+
     EShaderStage GetShaderStage() const
     { 
         return ShaderStage;
@@ -269,7 +273,6 @@ constexpr bool ShaderStageIsGraphics(EShaderStage ShaderStage)
     return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
 }
 
-/** @brief Determine if the Compute Pipeline is used (DXR uses the compute pipeline for RootSignatures) */
 constexpr bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::Compute) ? true : false;

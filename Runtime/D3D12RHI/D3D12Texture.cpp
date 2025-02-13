@@ -555,7 +555,7 @@ void FD3D12BackBufferTexture::Resize(uint32 InWidth, uint32 InHeight)
     Info.Extent.Y = InHeight;
 }
 
-FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture()
+FD3D12Texture* FD3D12BackBufferTexture::GetCurrentBackBufferTexture() const
 {
     return Viewport ? Viewport->GetCurrentBackBuffer() : nullptr;
 }

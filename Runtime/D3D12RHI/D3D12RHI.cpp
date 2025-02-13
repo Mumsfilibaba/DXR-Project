@@ -366,16 +366,16 @@ FRHISamplerState* FD3D12RHI::RHICreateSamplerState(const FRHISamplerStateInfo& I
     return Result.ReleaseOwnership();
 }
 
-FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc)
+FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo)
 {
     FRayTracingSceneBuildInfo BuildInfo;
-    BuildInfo.Instances    = InDesc.Instances.Data();
-    BuildInfo.NumInstances = InDesc.Instances.Size();
+    BuildInfo.Instances    = InSceneInfo.Instances.Data();
+    BuildInfo.NumInstances = InSceneInfo.Instances.Size();
     BuildInfo.bUpdate      = false;
 
     DirectCommandContext->RHIStartContext();
 
-    TSharedRef<FD3D12RayTracingScene> D3D12Scene = new FD3D12RayTracingScene(GetDevice(), InDesc);
+    TSharedRef<FD3D12RayTracingScene> D3D12Scene = new FD3D12RayTracingScene(GetDevice(), InSceneInfo);
     if (!D3D12Scene->Build(*DirectCommandContext, BuildInfo))
     {
         DEBUG_BREAK();
@@ -386,19 +386,19 @@ FRHIRayTracingScene* FD3D12RHI::RHICreateRayTracingScene(const FRHIRayTracingSce
     return D3D12Scene.ReleaseOwnership();
 }
 
-FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc)
+FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
 {
     FRayTracingGeometryBuildInfo BuildInfo;
-    BuildInfo.VertexBuffer = InDesc.VertexBuffer;
-    BuildInfo.NumVertices  = InDesc.NumVertices;
-    BuildInfo.IndexBuffer  = InDesc.IndexBuffer;
-    BuildInfo.NumIndices   = InDesc.NumIndices;
-    BuildInfo.IndexFormat  = InDesc.IndexFormat;
+    BuildInfo.VertexBuffer = InGeometryInfo.VertexBuffer;
+    BuildInfo.NumVertices  = InGeometryInfo.NumVertices;
+    BuildInfo.IndexBuffer  = InGeometryInfo.IndexBuffer;
+    BuildInfo.NumIndices   = InGeometryInfo.NumIndices;
+    BuildInfo.IndexFormat  = InGeometryInfo.IndexFormat;
     BuildInfo.bUpdate      = false;
 
     DirectCommandContext->RHIStartContext();
 
-    TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InDesc);
+    TSharedRef<FD3D12RayTracingGeometry> D3D12Geometry = new FD3D12RayTracingGeometry(GetDevice(), InGeometryInfo);
     if (!D3D12Geometry->Build(*DirectCommandContext, BuildInfo))
     {
         DEBUG_BREAK();

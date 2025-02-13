@@ -53,14 +53,14 @@ public:
         return new FNullRHIViewport(InViewportInfo);
     }
 
-    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& InDesc) override final
+    virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final
     {
-        return new FNullRHIRayTracingScene(InDesc);
+        return new FNullRHIRayTracingScene(InSceneInfo);
     }
 
-    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& InDesc) override final
+    virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final
     {
-        return new FNullRHIRayTracingGeometry(InDesc);
+        return new FNullRHIRayTracingGeometry(InGeometryInfo);
     }
 
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final

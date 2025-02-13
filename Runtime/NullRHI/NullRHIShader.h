@@ -32,7 +32,7 @@ struct TNullRHIShader final : public BaseShaderType
     {
     }
 
-    virtual void* GetRHIBaseShader() override final { return this; }
+    virtual void* GetRHIBaseInterface() override final { return this; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

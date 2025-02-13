@@ -93,14 +93,14 @@ FRHISamplerState* FMetalRHI::RHICreateSamplerState(const FRHISamplerStateInfo& I
     }
 }
 
-FRHIRayTracingScene* FMetalRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneDesc& Desc)
+FRHIRayTracingScene* FMetalRHI::RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& Desc)
 {
     return new FMetalRayTracingScene(GetDeviceContext(), Desc);
 }
 
-FRHIRayTracingGeometry* FMetalRHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryDesc& Desc)
+FRHIRayTracingGeometry* FMetalRHI::RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo)
 {
-    return new FMetalRayTracingGeometry(Desc);
+    return new FMetalRayTracingGeometry(InGeometryInfo);
 }
 
 FRHIShaderResourceView* FMetalRHI::RHICreateShaderResourceView(const FRHITextureSRVDesc& Desc)

@@ -141,8 +141,8 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
 
     if (bEnableRayTracing)
     {
-        FRHIRayTracingGeometryDesc GeometryInitializer(VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::None);
-        RTGeometry = RHICreateRayTracingGeometry(GeometryInitializer);
+        FRHIRayTracingGeometryInfo GeometryInfo(VertexBuffer.Get(), VertexCount, IndexBuffer.Get(), IndexCount, IndexFormat, EAccelerationStructureBuildFlags::None);
+        RTGeometry = RHICreateRayTracingGeometry(GeometryInfo);
         if (!RTGeometry)
         {
             return false;

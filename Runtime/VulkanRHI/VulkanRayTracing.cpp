@@ -1,7 +1,7 @@
 #include "VulkanRHI/VulkanRayTracing.h"
 
-FVulkanRayTracingGeometry::FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryDesc& InDesc)
-    : FRHIRayTracingGeometry(InDesc)
+FVulkanRayTracingGeometry::FVulkanRayTracingGeometry(FVulkanDevice* InDevice, const FRHIRayTracingGeometryInfo& InGeometryInfo)
+    : FRHIRayTracingGeometry(InGeometryInfo)
     , FVulkanDeviceChild(InDevice)
     , Geometry(VK_NULL_HANDLE)
     , GeometryBuffer(VK_NULL_HANDLE)

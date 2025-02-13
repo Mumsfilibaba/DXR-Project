@@ -18,9 +18,8 @@ public:
 public:
 
     // FRHIBuffer Interface
-    virtual void* GetRHIBaseBuffer() override final { return reinterpret_cast<void*>(static_cast<FVulkanBuffer*>(this)); }
-    virtual void* GetRHIBaseResource() const override final { return reinterpret_cast<void*>(GetVkBuffer()); }
-    
+    virtual void* GetRHINativeHandle() const { return reinterpret_cast<void*>(GetVkBuffer()); }
+
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
     
     virtual void SetDebugName(const FString& InName) override final;
