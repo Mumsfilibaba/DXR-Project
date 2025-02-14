@@ -249,8 +249,9 @@ protected:
 
 public:
     virtual FRHIRayTracingScene* GetRayTracingScene() override final { return this; }
-
+    
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
+
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 

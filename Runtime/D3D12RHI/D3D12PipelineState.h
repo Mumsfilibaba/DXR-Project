@@ -130,11 +130,11 @@ private:
     uint64                    Hash;
 };
 
-class FD3D12PipelineStateCommon : public FD3D12DeviceChild
+class FD3D12PipelineState : public FD3D12DeviceChild
 {
 public:
-    FD3D12PipelineStateCommon(FD3D12Device* InDevice);
-    virtual ~FD3D12PipelineStateCommon();
+    FD3D12PipelineState(FD3D12Device* InDevice);
+    virtual ~FD3D12PipelineState();
 
     void SetDebugName(const FString& InName);
 
@@ -295,7 +295,7 @@ struct FD3D12GraphicsPipelineKey
     DXGI_SAMPLE_DESC                   SampleDesc = { };
 };
 
-class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineStateCommon
+class FD3D12GraphicsPipelineState : public FRHIGraphicsPipelineState, public FD3D12PipelineState
 {
 public:
     FD3D12GraphicsPipelineState(FD3D12Device* InDevice);
@@ -303,11 +303,17 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
 
+public:
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
+
     virtual void SetDebugName(const FString& InName) override final
     {
-        FD3D12PipelineStateCommon::SetDebugName(InName);
+        FD3D12PipelineState::SetDebugName(InName);
     }
 
+public:
     D3D12_PRIMITIVE_TOPOLOGY GetD3D12PrimitiveTopology() const
     {
         return PrimitiveTopology;
@@ -349,7 +355,7 @@ struct FD3D12ComputePipelineKey
     FD3D12ShaderHash CSHash = { 0, 0 };
 };
 
-class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineStateCommon
+class FD3D12ComputePipelineState : public FRHIComputePipelineState, public FD3D12PipelineState
 {
 public:
     FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader);
@@ -357,11 +363,17 @@ public:
 
     bool Initialize();
 
+public:
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12PipelineState()); }
+
     virtual void SetDebugName(const FString& InName) override final
     {
-        FD3D12PipelineStateCommon::SetDebugName(InName);
+        FD3D12PipelineState::SetDebugName(InName);
     }
 
+public:
     FORCEINLINE FD3D12ComputeShader* GetComputeShader() const
     {
         return Shader.Get();
@@ -384,12 +396,18 @@ public:
 
     bool Initialize(const FRHIRayTracingPipelineStateInitializer& Initializer);
 
-    virtual void SetDebugName(const FString& InName) override
+public:
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetD3D12StateObject()); }
+
+    virtual void SetDebugName(const FString& InName) override final
     {
         FStringWide WideName = CharToWide(InName);
         StateObject->SetName(*WideName);
     }
 
+public:
     void* GetShaderIdentifer(const FString& ExportName);
 
     FORCEINLINE ID3D12StateObject* GetD3D12StateObject() const 

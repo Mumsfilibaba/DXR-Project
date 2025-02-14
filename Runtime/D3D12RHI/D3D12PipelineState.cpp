@@ -143,16 +143,16 @@ FD3D12BlendState::~FD3D12BlendState()
 {
 }
 
-FD3D12PipelineStateCommon::FD3D12PipelineStateCommon(FD3D12Device* InDevice)
+FD3D12PipelineState::FD3D12PipelineState(FD3D12Device* InDevice)
     : FD3D12DeviceChild(InDevice)
 {
 }
 
-FD3D12PipelineStateCommon::~FD3D12PipelineStateCommon()
+FD3D12PipelineState::~FD3D12PipelineState()
 {
 }
 
-void FD3D12PipelineStateCommon::SetDebugName(const FString& InName)
+void FD3D12PipelineState::SetDebugName(const FString& InName)
 {
     const FStringWide WideName = CharToWide(InName);
     PipelineState->SetName(*WideName);
@@ -161,7 +161,7 @@ void FD3D12PipelineStateCommon::SetDebugName(const FString& InName)
 
 FD3D12GraphicsPipelineState::FD3D12GraphicsPipelineState(FD3D12Device* InDevice)
     : FRHIGraphicsPipelineState()
-    , FD3D12PipelineStateCommon(InDevice)
+    , FD3D12PipelineState(InDevice)
 {
 }
 
@@ -490,7 +490,7 @@ bool FD3D12GraphicsPipelineState::Initialize(const FRHIGraphicsPipelineStateInit
 
 FD3D12ComputePipelineState::FD3D12ComputePipelineState(FD3D12Device* InDevice, const TSharedRef<FD3D12ComputeShader>& InShader)
     : FRHIComputePipelineState()
-    , FD3D12PipelineStateCommon(InDevice)
+    , FD3D12PipelineState(InDevice)
     , Shader(InShader)
 {
 }

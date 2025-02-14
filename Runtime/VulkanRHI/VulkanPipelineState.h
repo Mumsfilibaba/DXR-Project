@@ -137,11 +137,17 @@ public:
 
     bool Initialize(const FRHIGraphicsPipelineStateInitializer& Initializer);
     
+public:
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }
+
     virtual void SetDebugName(const FString& InName) override final
     {
         FVulkanPipeline::SetDebugName(InName);
     }
 
+public:
     FORCEINLINE const FViewInstancingInfo& GetViewInstancingInfo() const
     {
         return ViewInstancingInfo;
@@ -159,6 +165,11 @@ public:
     
     bool Initialize(const FRHIComputePipelineStateInitializer& Initializer);
 
+public:
+
+    // FRHIPipelineState Interface
+    virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetVkPipeline()); }
+    
     virtual void SetDebugName(const FString& InName) override final
     {
         FVulkanPipeline::SetDebugName(InName);

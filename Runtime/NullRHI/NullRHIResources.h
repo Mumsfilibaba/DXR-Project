@@ -201,14 +201,17 @@ private:
 
 struct FNullRHIGraphicsPipelineState : public FRHIGraphicsPipelineState
 {
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
 };
 
 struct FNullRHIComputePipelineState : public FRHIComputePipelineState
 {
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
 };
 
 struct FNullRHIRayTracingPipelineState : public FRHIRayTracingPipelineState
 {
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
 };
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

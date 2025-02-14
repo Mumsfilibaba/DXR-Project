@@ -677,6 +677,10 @@ protected:
     virtual ~FRHIPipelineState() = default;
 
 public:
+
+    // Returns the native handle for this resource
+    virtual void* GetRHINativeHandle() const { return nullptr; }
+
     virtual void SetDebugName(const FString& InName) { }
     virtual FString GetDebugName() const { return ""; }
 };
