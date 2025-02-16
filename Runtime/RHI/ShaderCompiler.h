@@ -1,13 +1,7 @@
 #pragma once
 #include "Core/Containers/Optional.h"
 #include "RHI/RHIShader.h"
-
-// TODO: Check if this could be avoided
-#if PLATFORM_WINDOWS
-    #include <Unknwn.h>
-#endif
-
-#include <dxc/dxcapi.h>
+#include "RHI/ShaderCompilerInclude.h"
 
 enum class EShaderModel : uint8
 {
@@ -55,9 +49,16 @@ class RHI_API FShaderCompiler
 public:
     static bool Create(FStringView AssetFolderPath);
     static void Destroy();
-    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
-    static FShaderCompiler& Get();
 
+    static FORCEINLINE FShaderCompiler& Get()
+    {
+        CHECK(Instance != nullptr);
+        return *Instance;
+    }
+
+    static EShaderOutputLanguage GetOutputLanguageBasedOnRHI();
+
+public:
     bool CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
     bool CompileFromSource(const FString& ShaderSource, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode);
 
@@ -77,7 +78,7 @@ private:
     DxcCreateInstanceProc DxcCreateInstanceFunc;
     FString               AssetPath;
 
-    static FShaderCompiler* GInstance;
+    static FShaderCompiler* Instance;
 };
 
 struct FShaderCompileInfo

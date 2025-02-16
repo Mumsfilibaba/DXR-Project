@@ -45,9 +45,9 @@ public:
     virtual void* GetRHINativeHandle() const override final { return nullptr; }
 
     virtual FRHIShaderResourceView* GetShaderResourceView()  const override final { return nullptr; }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
-    
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
 private:

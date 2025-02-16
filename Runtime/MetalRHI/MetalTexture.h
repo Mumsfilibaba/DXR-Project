@@ -24,8 +24,9 @@ public:
     virtual void* GetRHINativeHandle() const override final { return reinterpret_cast<void*>(GetMTLTexture()); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return ShaderResourceView.Get(); }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const override final { return FRHIDescriptorHandle(); }
+    
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const override final { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const override final { return FRHIDescriptorHandle(); }
 
     virtual void SetDebugName(const FString& InName) override final;
@@ -59,7 +60,7 @@ protected:
 
 FORCEINLINE FMetalTexture* GetMetalTexture(FRHITexture* Texture)
 {
-    return Texture ? reinterpret_cast<FMetalTexture*>(Texture->GetRHIBaseTexture()) : nullptr;
+    return Texture ? static_cast<FMetalTexture*>(Texture) : nullptr;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING

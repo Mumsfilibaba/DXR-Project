@@ -212,7 +212,7 @@ private:
     int32  References;
 };
 
-FShaderCompiler* FShaderCompiler::GInstance = nullptr;
+FShaderCompiler* FShaderCompiler::Instance = nullptr;
 
 FShaderCompiler::FShaderCompiler(FStringView InAssetPath)
     : DXCLib(nullptr)
@@ -238,13 +238,13 @@ FShaderCompiler::~FShaderCompiler()
 
 bool FShaderCompiler::Create(FStringView InAssetFolderPath)
 {
-    CHECK(GInstance == nullptr);
+    CHECK(Instance == nullptr);
 
-    GInstance = new FShaderCompiler(InAssetFolderPath);
-    if (!GInstance->Initialize())
+    Instance = new FShaderCompiler(InAssetFolderPath);
+    if (!Instance->Initialize())
     {
-        delete GInstance;
-        GInstance = nullptr;
+        delete Instance;
+        Instance = nullptr;
         return false;
     }
 
@@ -253,10 +253,10 @@ bool FShaderCompiler::Create(FStringView InAssetFolderPath)
 
 void FShaderCompiler::Destroy()
 {
-    if (GInstance)
+    if (Instance)
     {
-        delete GInstance;
-        GInstance = nullptr;
+        delete Instance;
+        Instance = nullptr;
     }
 }
 
@@ -299,12 +299,6 @@ bool FShaderCompiler::Initialize()
     // Init GLslang
     glslang_initialize_process();
     return true;
-}
-
-FShaderCompiler& FShaderCompiler::Get()
-{
-    CHECK(GInstance != nullptr);
-    return *GInstance;
 }
 
 bool FShaderCompiler::CompileFromFile(const FString& Filename, const FShaderCompileInfo& CompileInfo, TArray<uint8>& OutByteCode)

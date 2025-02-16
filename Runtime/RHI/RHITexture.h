@@ -190,9 +190,9 @@ public:
     virtual void* GetRHINativeHandle() const { return nullptr; }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const { return nullptr; }
-    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
-
     virtual FRHIDescriptorHandle GetBindlessSRVHandle() const { return FRHIDescriptorHandle(); }
+
+    virtual FRHIUnorderedAccessView* GetUnorderedAccessView() const { return nullptr; }
     virtual FRHIDescriptorHandle GetBindlessUAVHandle() const { return FRHIDescriptorHandle(); }
 
     virtual void SetDebugName(const FString&) { }
