@@ -15,7 +15,7 @@ public:
 
     ~FMetalRayTracingGeometry() = default;
 
-    virtual void* GetRHINativeHandle() override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
     virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 };
 
@@ -30,7 +30,7 @@ public:
 
     ~FMetalRayTracingScene() = default;
 
-    virtual void* GetRHINativeHandle() override final { return nullptr; }
+    virtual void* GetRHINativeHandle() const override final { return nullptr; }
     virtual void* GetRHIBaseInterface() override final { return reinterpret_cast<void*>(this); }
 
     virtual FRHIShaderResourceView* GetShaderResourceView() const override final { return View.Get(); }

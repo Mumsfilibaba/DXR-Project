@@ -1,9 +1,15 @@
 #pragma once
-#if PLATFORM_WINDOWS
 #include "Core/Core.h"
 #include "Core/Templates/TypeTraits.h"
 
+#if PLATFORM_WINDOWS
 #include <Unknwn.h>
+#endif
+
+// NOTE: This is defined inside WinAdapter.h which is a part of DXC
+#ifdef LLVM_SUPPORT_WIN_ADAPTER_H
+#define WINDOWS_PRIMITIVES_SUPPORTED 1
+#endif
 
 template<typename InComInterfaceType>
 class TComPtr
@@ -180,6 +186,8 @@ public:
         return &Ptr;
     }
 
+#if PLATFORM_WINDOWS || WINDOWS_PRIMITIVES_SUPPORTED
+
     /** 
      * @brief Retrieve the pointer as another type that is convertible by querying the interface type
      * @param NewPointer A pointer to store the result in
@@ -209,6 +217,8 @@ public:
 
         return Result;
     }
+
+#endif
 
     /**
      * @brief Get the address of the raw pointer 
@@ -450,5 +460,3 @@ NODISCARD FORCEINLINE TComPtr<T> MakeComPtr(U* InRefCountedObject)
 
     return nullptr;
 }
-
-#endif

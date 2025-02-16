@@ -72,7 +72,7 @@ public:
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
-    virtual void* GetRHIBaseInterface() { return static_cast<FMetalShader*>(this); }
+    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalShader*>(this); }
 };
 
 class FMetalPixelShader : public FRHIPixelShader, public FMetalShader
@@ -89,7 +89,7 @@ public:
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
-    virtual void* GetRHIBaseInterface() { return static_cast<FMetalShader*>(this); }
+    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalShader*>(this); }
 };
 
 class FMetalRayTracingShader : public FMetalShader
@@ -122,7 +122,7 @@ public:
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
-    virtual void* GetRHIBaseInterface() { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
 };
 
 class FMetalRayAnyHitShader : public FRHIRayAnyHitShader, public FMetalRayTracingShader
@@ -139,7 +139,7 @@ public:
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
-    virtual void* GetRHIBaseInterface() { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
 };
 
 class FMetalRayClosestHitShader : public FRHIRayClosestHitShader, public FMetalRayTracingShader
@@ -157,7 +157,7 @@ public:
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
-    virtual void* GetRHIBaseInterface() { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
 };
 
 class FMetalRayMissShader : public FRHIRayMissShader, public FMetalRayTracingShader
@@ -174,7 +174,7 @@ public:
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
-    virtual void* GetRHIBaseInterface() { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalRayTracingShader*>(this); }
 };
 
 class FMetalComputeShader : public FRHIComputeShader, public FMetalShader
@@ -191,17 +191,17 @@ public:
     // FRHIShader Interface
     virtual void* GetRHINativeHandle() override final { return reinterpret_cast<void*>(GetMTLFunction()); }
 
-    virtual void* GetRHIBaseInterface() { return static_cast<FMetalRayTracingShader*>(this); }
+    virtual void* GetRHIBaseInterface() override { return static_cast<FMetalShader*>(this); }
 };
 
 inline FMetalShader* GetMetalShader(FRHIShader* Shader)
 {
-    return Shader ? reinterpret_cast<FMetalShader*>(Shader->GetRHIBaseShader()) : nullptr;
+    return Shader ? reinterpret_cast<FMetalShader*>(Shader->GetRHIBaseInterface()) : nullptr;
 }
 
 inline FMetalRayTracingShader* GetMetalRayTracingShader(FRHIRayTracingShader* Shader)
 {
-    return Shader ? reinterpret_cast<FMetalRayTracingShader*>(Shader->GetRHIBaseShader()) : nullptr;
+    return Shader ? reinterpret_cast<FMetalRayTracingShader*>(Shader->GetRHIBaseInterface()) : nullptr;
 }
 
 ENABLE_UNREFERENCED_VARIABLE_WARNING
