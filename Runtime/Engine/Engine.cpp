@@ -196,7 +196,7 @@ bool FEngine::Init()
     // Create standard textures
     uint8 Pixels[4] = { 255, 255, 255, 255 };
 
-    BaseTexture = FTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseTexture = FTextureFactory::Get().LoadFromMemory(Pixels, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
     if (!BaseTexture)
     {
         LOG_WARNING("Failed to create BaseTexture");
@@ -210,7 +210,7 @@ bool FEngine::Init()
     Pixels[1] = 127;
     Pixels[2] = 255;
 
-    BaseNormal = FTextureFactory::LoadFromMemory(Pixels, 1, 1, 0, EFormat::R8G8B8A8_Unorm);
+    BaseNormal = FTextureFactory::Get().LoadFromMemory(Pixels, 1, 1, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
     if (!BaseNormal)
     {
         LOG_WARNING("Failed to create BaseNormal-Texture");

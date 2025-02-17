@@ -94,7 +94,7 @@ bool FImGuiRenderer::InitializeRHI()
     UIState.BackendRendererUserData = this;
     UIState.Fonts->GetTexDataAsRGBA32(&Pixels, &Width, &Height);
 
-    FontTexture = FTextureFactory::LoadFromMemory(Pixels, Width, Height, 0, EFormat::R8G8B8A8_Unorm);
+    FontTexture = FTextureFactory::Get().LoadFromMemory(Pixels, Width, Height, ETextureFactoryFlags::None, EFormat::R8G8B8A8_Unorm);
     if (!FontTexture)
     {
         return false;

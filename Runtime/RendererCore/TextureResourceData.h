@@ -31,8 +31,6 @@ public:
     }
 
 private:
-    void MemzeroData();
-
     void* TextureData[MAX_TEXTURE_MIPS];
     int64 TextureDataRowPitch[MAX_TEXTURE_MIPS];
     int64 TextureDataSlicePitch[MAX_TEXTURE_MIPS];

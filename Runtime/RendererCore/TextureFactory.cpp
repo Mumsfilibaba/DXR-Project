@@ -1,19 +1,42 @@
-#include "TextureFactory.h"
-#include "TextureResourceData.h"
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/ShaderCompiler.h"
+#include "RendererCore/TextureFactory.h"
+#include "RendererCore/TextureResourceData.h"
 
-struct TextureFactoryData
+FTextureFactory* FTextureFactory::Instance = nullptr;
+
+FTextureFactory::FTextureFactory()
+    : PanoramaGenSampler(nullptr)
+    , PanoramaPSO(nullptr)
+    , ComputeShader(nullptr)
 {
-    FRHISamplerStateRef         PanoramaGenSampler;
-    FRHIComputePipelineStateRef PanoramaPSO;
-    FRHIComputeShaderRef        ComputeShader;
-};
+}
 
-static TextureFactoryData GlobalFactoryData;
+FTextureFactory::~FTextureFactory()
+{
+    PanoramaGenSampler.Reset();
+    PanoramaPSO.Reset();
+    ComputeShader.Reset();
+}
 
-bool FTextureFactory::Init()
+bool FTextureFactory::Initialize()
+{
+    Instance = new FTextureFactory();
+    if (!Instance->CreateResources())
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void FTextureFactory::Release()
+{
+    SAFE_DELETE(Instance);
+}
+
+bool FTextureFactory::CreateResources()
 {
     // Compile and create shader
     TArray<uint8> Code;
@@ -24,17 +47,17 @@ bool FTextureFactory::Init()
         return false;
     }
 
-    GlobalFactoryData.ComputeShader = RHICreateComputeShader(Code);
-    if (!GlobalFactoryData.ComputeShader)
+    ComputeShader = RHICreateComputeShader(Code);
+    if (!ComputeShader)
     {
         return false;
     }
 
     // Create pipeline
-    GlobalFactoryData.PanoramaPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(GlobalFactoryData.ComputeShader.Get()));
-    if (GlobalFactoryData.PanoramaPSO)
+    PanoramaPSO = RHICreateComputePipelineState(FRHIComputePipelineStateInitializer(ComputeShader.Get()));
+    if (PanoramaPSO)
     {
-        GlobalFactoryData.PanoramaPSO->SetDebugName("Generate CubeMap RootSignature");
+        PanoramaPSO->SetDebugName("Generate CubeMap RootSignature");
     }
     else
     {
@@ -49,8 +72,8 @@ bool FTextureFactory::Init()
     SamplerInfo.MinLOD   = 0.0f;
     SamplerInfo.MaxLOD   = TNumericLimits<float>::Max();
 
-    GlobalFactoryData.PanoramaGenSampler = RHICreateSamplerState(SamplerInfo);
-    if (!GlobalFactoryData.PanoramaGenSampler)
+    PanoramaGenSampler = RHICreateSamplerState(SamplerInfo);
+    if (!PanoramaGenSampler)
     {
         return false;
     }
@@ -58,30 +81,23 @@ bool FTextureFactory::Init()
     return true;
 }
 
-void FTextureFactory::Release()
-{
-    GlobalFactoryData.PanoramaGenSampler.Reset();
-    GlobalFactoryData.PanoramaPSO.Reset();
-    GlobalFactoryData.ComputeShader.Reset();
-}
-
-FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, uint32 CreateFlags, EFormat Format)
+FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, ETextureFactoryFlags Flags, EFormat Format)
 {
     CHECK(Pixels != nullptr);
 
-    const bool bGenerateMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
-    
-    const uint32 NumMips = bGenerateMips ? FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(FMath::Max(Width, Height)))), 1u) : 1u;
-    CHECK(NumMips != 0);
+    const bool bGenerateMips = IsEnumFlagSet(Flags, ETextureFactoryFlags::GenerateMips);
+
+    const uint32 NumMiplevels = bGenerateMips ? FTextureFactoryHelpers::TextureSizeToMiplevels(FMath::Max<uint32>(Width, Height)) : 1u;
+    CHECK(NumMiplevels != 0);
 
     const uint32 Stride   = GetByteStrideFromFormat(Format);
     const uint32 RowPitch = Width * Stride;
     CHECK(RowPitch > 0);
 
     FTextureResourceData InitalData;
-    InitalData.InitMipData(Pixels, RowPitch, RowPitch*Height);
+    InitalData.InitMipData(Pixels, RowPitch, RowPitch * Height);
 
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMips, 1, ETextureUsageFlags::ShaderResource);
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMiplevels, 1, ETextureUsageFlags::ShaderResource);
     FRHITextureRef Texture = RHICreateTexture(TextureInfo, EResourceAccess::PixelShaderResource, &InitalData);
     if (!Texture)
     {
@@ -89,7 +105,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
         return nullptr;
     }
 
-    if (bGenerateMips && NumMips > 1)
+    if (bGenerateMips && NumMiplevels > 1)
     {
         FRHICommandList CommandList;
         CommandList.TransitionTexture(Texture.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
@@ -102,81 +118,96 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
     return Texture.ReleaseOwnership();
 }
 
-FRHITexture* FTextureFactory::CreateTextureCubeFromPanorma(FRHITexture* PanoramaSource, uint32 CubeMapSize, uint32 CreateFlags, EFormat Format)
+bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* Dest, ETextureFactoryFlags Flags)
 {
-    CHECK(IsEnumFlagSet(PanoramaSource->GetFlags(), ETextureUsageFlags::ShaderResource));
+    CHECK(IsTextureCube(Dest->GetDimension()));
+    CHECK(IsEnumFlagSet(Source->GetFlags(), ETextureUsageFlags::ShaderResource));
+    CHECK(IsEnumFlagSet(Dest->GetFlags(), ETextureUsageFlags::ShaderResource));
 
-    const bool bGenerateNumMips = CreateFlags & ETextureFactoryFlags::TextureFactoryFlag_GenerateMips;
+    const bool bGenerateMips   = IsEnumFlagSet(Flags, ETextureFactoryFlags::GenerateMips);
+    const bool bDestSupportUAV = IsEnumFlagSet(Dest->GetFlags(), ETextureUsageFlags::UnorderedAccess);
 
-    const uint32 NumMips = bGenerateNumMips ? FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(CubeMapSize))), 1u) : 1u;
-    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTextureCube(Format, CubeMapSize, NumMips, 1, ETextureUsageFlags::UnorderedAccess);
-
-    FRHITextureRef StagingTexture = RHICreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
-    if (!StagingTexture)
+    // If the destination does not support UAVs, create a staging texture that does
+    FRHITextureRef StagingTexture;
+    if (!bDestSupportUAV)
     {
-        return nullptr;
+        FRHITextureInfo TextureInfo = Dest->GetInfo();
+        TextureInfo.UsageFlags |= ETextureUsageFlags::UnorderedAccess;
+
+        StagingTexture = RHICreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
+        if (!StagingTexture)
+        {
+            return false;
+        }
+        else
+        {
+            StagingTexture->SetDebugName("TextureCube From Panorama StagingTexture");
+        }
     }
     else
     {
-        StagingTexture->SetDebugName("TextureCube From Panorama StagingTexture");
+        StagingTexture = MakeSharedRef<FRHITexture>(Dest);
     }
 
-    FRHITextureUAVDesc UAVInitializer(StagingTexture.Get(), Format, 0, 0, 1);
+    // Create UAV for the staging-texture
+    FRHITextureUAVDesc UAVInitializer(StagingTexture.Get(), StagingTexture->GetFormat(), 0, 0, 1);
+
     FRHIUnorderedAccessViewRef StagingTextureUAV = RHICreateUnorderedAccessView(UAVInitializer);
     if (!StagingTextureUAV)
     {
-        return nullptr;
-    }
-
-    TextureInfo.UsageFlags = ETextureUsageFlags::ShaderResource;
-
-    FRHITextureRef Texture = RHICreateTexture(TextureInfo, EResourceAccess::Common, nullptr);
-    if (!Texture)
-    {
-        return nullptr;
+        return false;
     }
 
     {
         FRHICommandList CommandList;
-        CommandList.TransitionTexture(PanoramaSource, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(Source, EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
         CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
 
-        CommandList.SetComputePipelineState(GlobalFactoryData.PanoramaPSO.Get());
+        CommandList.SetComputePipelineState(PanoramaPSO.Get());
 
-        struct ConstantBuffer
+        struct FCubeMapGenConstants
         {
             uint32 CubeMapSize;
         } CB0;
-        CB0.CubeMapSize = CubeMapSize;
 
-        CommandList.Set32BitShaderConstants(GlobalFactoryData.ComputeShader.Get(), &CB0, 1);
-        CommandList.SetUnorderedAccessView(GlobalFactoryData.ComputeShader.Get(), StagingTextureUAV.Get(), 0);
+        CB0.CubeMapSize = StagingTexture->GetExtent().X;
 
-        FRHIShaderResourceView* PanoramaSourceView = PanoramaSource->GetShaderResourceView();
-        CommandList.SetShaderResourceView(GlobalFactoryData.ComputeShader.Get(), PanoramaSourceView, 0);
+        CommandList.Set32BitShaderConstants(ComputeShader.Get(), &CB0, 1);
+        CommandList.SetUnorderedAccessView(ComputeShader.Get(), StagingTextureUAV.Get(), 0);
 
-        CommandList.SetSamplerState(GlobalFactoryData.ComputeShader.Get(), GlobalFactoryData.PanoramaGenSampler.Get(), 0);
+        FRHIShaderResourceView* PanoramaSourceView = Source->GetShaderResourceView();
+        CommandList.SetShaderResourceView(ComputeShader.Get(), PanoramaSourceView, 0);
+
+        CommandList.SetSamplerState(ComputeShader.Get(), PanoramaGenSampler.Get(), 0);
 
         constexpr uint32 LocalWorkGroupCount = 16;
-        const uint32 ThreadsX = FMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
-        const uint32 ThreadsY = FMath::DivideByMultiple(CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsX = FMath::DivideByMultiple(CB0.CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsY = FMath::DivideByMultiple(CB0.CubeMapSize, LocalWorkGroupCount);
         CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
-        CommandList.TransitionTexture(PanoramaSource, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-        CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
-        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+        CommandList.TransitionTexture(Source, EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
 
-        CommandList.CopyTexture(Texture.Get(), StagingTexture.Get());
-
-        if (bGenerateNumMips)
+        if (!bDestSupportUAV)
         {
-            CommandList.GenerateMips(Texture.Get());
+            CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+            CommandList.TransitionTexture(Dest, EResourceAccess::Common, EResourceAccess::CopyDest);
+
+            CommandList.CopyTexture(Dest, StagingTexture.Get());
+        }
+        else
+        {
+            CommandList.TransitionTexture(Dest, EResourceAccess::UnorderedAccess, EResourceAccess::CopyDest);
         }
 
-        CommandList.TransitionTexture(Texture.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+        if (bGenerateMips)
+        {
+            CommandList.GenerateMips(Dest);
+        }
+
+        CommandList.TransitionTexture(Dest, EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
 
         FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 
-    return Texture.ReleaseOwnership();
+    return true;
 }

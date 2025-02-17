@@ -203,7 +203,7 @@ int32 FEngineLoop::PreInit(const CHAR** Args, int32 NumArgs)
 
     CoreDelegates::PostInitRHIDelegate.Broadcast();
 
-    if (!FTextureFactory::Init())
+    if (!FTextureFactory::Initialize())
     {
         return -1;
     }

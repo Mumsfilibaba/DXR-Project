@@ -109,8 +109,20 @@ bool FSkyboxRenderPass::Initialize(FFrameResources& FrameResources)
 
     // Convert the Panorama into a cube-map
     FRHITextureRef PanoramaRHI = Panorama->GetRHITexture();
-    FRHITextureRef Skybox = FTextureFactory::CreateTextureCubeFromPanorma(PanoramaRHI.Get(), 1024, TextureFactoryFlag_GenerateMips, EFormat::R16G16B16A16_Float);
-    if (!Skybox)
+    if (!PanoramaRHI)
+    {
+        DEBUG_BREAK();
+        return false;
+    }
+
+    const uint32 SkyboxSize   = 1024;
+    const uint32 NumMiplevels = FTextureFactoryHelpers::TextureSizeToMiplevels(SkyboxSize);
+
+    FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTextureCube(EFormat::R16G16B16A16_Float, SkyboxSize, NumMiplevels, 1, ETextureUsageFlags::UnorderedAccess | ETextureUsageFlags::ShaderResource);
+    FRHITextureRef Skybox = RHICreateTexture(TextureInfo);
+
+    const bool bResult = FTextureFactory::Get().TextureCubeFromPanorma(PanoramaRHI.Get(), Skybox.Get(), ETextureFactoryFlags::GenerateMips);
+    if (!bResult)
     {
         return false;
     }

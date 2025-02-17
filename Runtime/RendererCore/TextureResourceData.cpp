@@ -5,7 +5,7 @@ FTextureResourceData::FTextureResourceData()
     , TextureDataRowPitch()
     , TextureDataSlicePitch()
 {
-    MemzeroData();
+    FMemory::Memzero(TextureData, sizeof(TextureData));
 }
 
 FTextureResourceData::~FTextureResourceData()
@@ -21,8 +21,6 @@ FTextureResourceData::~FTextureResourceData()
             break;
         }
     }
-
-    MemzeroData();
 }
 
 void FTextureResourceData::InitMipData(const void* InTextureData, int64 InTextureDataRowPitch, int64 InTextureDataSlicePitch, uint32 MipLevel)
@@ -34,11 +32,4 @@ void FTextureResourceData::InitMipData(const void* InTextureData, int64 InTextur
 
     TextureDataRowPitch[MipLevel]   = InTextureDataRowPitch;
     TextureDataSlicePitch[MipLevel] = InTextureDataSlicePitch;
-}
-
-void FTextureResourceData::MemzeroData()
-{
-    FMemory::Memzero(TextureData, sizeof(TextureData));
-    FMemory::Memzero(TextureDataRowPitch, sizeof(TextureDataRowPitch));
-    FMemory::Memzero(TextureDataSlicePitch, sizeof(TextureDataSlicePitch));
 }
