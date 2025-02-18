@@ -1289,10 +1289,10 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
     FD3D12RHI::GetRHI()->DeferDeletion(StagingTexture.Get());
 }
 
-void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
-    const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(BeforeState);
-    const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
+    const D3D12_RESOURCE_STATES D3D12BeforeState = ConvertResourceState(TextureTransition.BeforeState);
+    const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(TextureTransition.AfterState);
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
     TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);

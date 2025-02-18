@@ -3,6 +3,8 @@
 
 #define RHI_REMAINING_MIP_LEVELS uint32(~0)
 #define RHI_REMAINING_ARRAY_SLICES uint32(~0)
+#define RHI_ALL_MIP_LEVELS uint32(~0)
+#define RHI_ALL_ARRAY_SLICES uint32(~0)
 #define RHI_NUM_CUBE_FACES (6)
 
 #define RHI_MAX_RENDER_TARGETS (8)

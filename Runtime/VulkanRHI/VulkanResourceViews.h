@@ -85,8 +85,8 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    bool InitializeTextureSRV(const FRHITextureSRVDesc& InDesc);
-    bool InitializeBufferSRV(const FRHIBufferSRVDesc& InDesc);
+    bool InitializeTextureSRV(const FRHITextureSRVInfo& InInfo);
+    bool InitializeBufferSRV(const FRHIBufferSRVInfo& InInfo);
 };
 
 class FVulkanUnorderedAccessView : public FRHIUnorderedAccessView, public FVulkanResourceView
@@ -97,6 +97,6 @@ public:
 
     virtual FRHIDescriptorHandle GetBindlessHandle() const override final { return FRHIDescriptorHandle(); }
 
-    bool InitializeTextureUAV(const FRHITextureUAVDesc& InDesc);
-    bool InitializeBufferUAV(const FRHIBufferUAVDesc& InDesc);
+    bool InitializeTextureUAV(const FRHITextureUAVInfo& InInfo);
+    bool InitializeBufferUAV(const FRHIBufferUAVInfo& InInfo);
 };

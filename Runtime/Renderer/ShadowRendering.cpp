@@ -388,7 +388,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     TRACE_SCOPE("Render PointLight ShadowMaps");
 
-    CommandList.TransitionTexture(Resources.PointLightShadowMaps.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite);
+    CommandList.TransitionTexture(Resources.PointLightShadowMaps.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::DepthWrite));
 
     const ECubeMapRenderPassType RenderPassType = GetRenderMapRenderPassType();
     if (RenderPassType == ECubeMapRenderPassType::SinglePass)
@@ -404,7 +404,7 @@ void FPointLightRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
         Execute<ECubeMapRenderPassType::MultiPass>(CommandList, Resources, Scene);
     }
 
-    CommandList.TransitionTexture(Resources.PointLightShadowMaps.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(Resources.PointLightShadowMaps.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render PointLight ShadowMaps");
 }
@@ -710,16 +710,16 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeMatrixBuffer->SetDebugName("Cascade Matrices Buffer");
     }
 
-    FRHIBufferSRVDesc SRVInitializer(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+    FRHIBufferSRVInfo SRVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeMatrixBufferSRV = RHICreateShaderResourceView(SRVInfo);
     if (!Resources.CascadeMatrixBufferSRV)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    FRHIBufferUAVDesc UAVInitializer(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
+    FRHIBufferUAVInfo UAVInfo(Resources.CascadeMatrixBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeMatrixBufferUAV = RHICreateUnorderedAccessView(UAVInfo);
     if (!Resources.CascadeMatrixBufferUAV)
     {
         DEBUG_BREAK();
@@ -738,16 +738,16 @@ bool FCascadeGenerationPass::Initialize(FFrameResources& Resources)
         Resources.CascadeSplitsBuffer->SetDebugName("Cascade SplitBuffer");
     }
 
-    SRVInitializer = FRHIBufferSRVDesc(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+    SRVInfo = FRHIBufferSRVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeSplitsBufferSRV = RHICreateShaderResourceView(SRVInfo);
     if (!Resources.CascadeSplitsBufferSRV)
     {
         DEBUG_BREAK();
         return false;
     }
 
-    UAVInitializer = FRHIBufferUAVDesc(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
-    Resources.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInitializer);
+    UAVInfo = FRHIBufferUAVInfo(Resources.CascadeSplitsBuffer.Get(), 0, NUM_SHADOW_CASCADES);
+    Resources.CascadeSplitsBufferUAV = RHICreateUnorderedAccessView(UAVInfo);
     if (!Resources.CascadeSplitsBufferUAV)
     {
         DEBUG_BREAK();
@@ -1099,7 +1099,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
     const ECascadeRenderPassType RenderPassType = GetRenderMapRenderPassType();
     if (Scene->DirectionalLight)
     {
-        CommandList.TransitionTexture(Resources.ShadowMapCascades.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
+        CommandList.TransitionTexture(Resources.ShadowMapCascades.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
 
         if (RenderPassType == ECascadeRenderPassType::SinglePass)
         {
@@ -1118,7 +1118,7 @@ void FCascadedShadowsRenderPass::Execute(FRHICommandList& CommandList, const FFr
             Execute<ECascadeRenderPassType::MultiPass>(CommandList, Resources, Scene);
         }
 
-        CommandList.TransitionTexture(Resources.ShadowMapCascades.Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(Resources.ShadowMapCascades.Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render DirectionalLight ShadowMaps");
@@ -1446,7 +1446,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     CommandList.UpdateBuffer(ShadowSettingsBuffer.Get(), FBufferRegion(0, sizeof(FDirectionalShadowSettingsHLSL)), &ShadowSettings);
     CommandList.TransitionBuffer(ShadowSettingsBuffer.Get(), EResourceAccess::CopyDest, EResourceAccess::ConstantBuffer);
 
-    CommandList.TransitionTexture(Resources.DirectionalShadowMask.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     FShadowMaskShaderCombination Combination;
     RetrieveCurrentCombinationBasedOnCVar(Combination);
@@ -1460,7 +1460,7 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
 
     if (CVarCSMDebugCascades.GetValue())
     {
-        CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+        CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
     }
 
     CommandList.SetComputePipelineState(PipelineStateInstance.PipelineState.Get());
@@ -1491,10 +1491,10 @@ void FShadowMaskRenderPass::Execute(FRHICommandList& CommandList, const FFrameRe
     const uint32 ThreadsY = FMath::DivideByMultiple(Resources.DirectionalShadowMask->GetHeight(), NumThreads);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTexture(Resources.DirectionalShadowMask.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(Resources.DirectionalShadowMask.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
     if (CVarCSMDebugCascades.GetValue())
     {
-        CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+        CommandList.TransitionTexture(Resources.CascadeIndexBuffer.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
     }
 
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Render ShadowMasks");

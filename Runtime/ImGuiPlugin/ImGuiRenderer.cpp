@@ -349,7 +349,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
             CHECK(Image != nullptr);
             if (Image->AfterState != EResourceAccess::PixelShaderResource)
             {
-                CommandList.TransitionTexture(Image->Texture.Get(), EResourceAccess::PixelShaderResource, Image->AfterState);
+                CommandList.TransitionTexture(Image->Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, Image->AfterState));
             }
         }
 
@@ -360,7 +360,7 @@ void FImGuiRenderer::Render(FRHICommandList& CommandList)
 void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* DrawData, FImGuiViewport& ViewportData, bool bClear)
 {
     FRHITexture* BackBuffer = ViewportData.Viewport->GetBackBuffer();
-    CommandList.TransitionTexture(BackBuffer, EResourceAccess::Present, EResourceAccess::RenderTarget);
+    CommandList.TransitionTexture(BackBuffer, FRHITextureTransition::Make(EResourceAccess::Present, EResourceAccess::RenderTarget));
 
     PrepareDrawData(CommandList, DrawData);
 
@@ -371,7 +371,7 @@ void FImGuiRenderer::RenderViewport(FRHICommandList& CommandList, ImDrawData* Dr
     
     CommandList.EndRenderPass();
 
-    CommandList.TransitionTexture(BackBuffer, EResourceAccess::RenderTarget, EResourceAccess::Present);
+    CommandList.TransitionTexture(BackBuffer, FRHITextureTransition::Make(EResourceAccess::RenderTarget, EResourceAccess::Present));
 }
 
 void FImGuiRenderer::PrepareDrawData(FRHICommandList& CommandList, ImDrawData* DrawData)
@@ -494,7 +494,7 @@ void FImGuiRenderer::RenderDrawData(FRHICommandList& CommandList, ImDrawData* Dr
 
                     if (DrawableTexture->BeforeState != EResourceAccess::PixelShaderResource)
                     {
-                        CommandList.TransitionTexture(DrawableTexture->Texture.Get(), DrawableTexture->BeforeState, EResourceAccess::PixelShaderResource);
+                        CommandList.TransitionTexture(DrawableTexture->Texture.Get(), FRHITextureTransition::Make(DrawableTexture->BeforeState, EResourceAccess::PixelShaderResource));
                         
                         // TODO: Another way to do this? Maybe breaks somewhere?
                         DrawableTexture->BeforeState = EResourceAccess::PixelShaderResource;

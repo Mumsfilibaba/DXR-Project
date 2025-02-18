@@ -196,7 +196,7 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
     {
         // TODO: Support other types than texture 2D
         InCommandContext->RHIStartContext();
-        InCommandContext->RHITransitionTexture(this, EResourceAccess::Common, EResourceAccess::CopyDest);
+        InCommandContext->RHITransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
         // Transfer all the miplevels
         uint32 Width  = Info.Extent.X;
@@ -224,13 +224,13 @@ bool FD3D12Texture::Initialize(FD3D12CommandContext* InCommandContext, EResource
         }
 
         // NOTE: Transition into InitialAccess
-        InCommandContext->RHITransitionTexture(this, EResourceAccess::CopyDest, InInitialAccess);
+        InCommandContext->RHITransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::CopyDest, InInitialAccess));
         InCommandContext->RHIFinishContext();
     }
     else if (InInitialAccess != EResourceAccess::Common)
     {
         InCommandContext->RHIStartContext();
-        InCommandContext->RHITransitionTexture(this, EResourceAccess::Common, InInitialAccess);
+        InCommandContext->RHITransitionTexture(this, FRHITextureTransition::Make(EResourceAccess::Common, InInitialAccess));
         InCommandContext->RHIFinishContext();
     }
 

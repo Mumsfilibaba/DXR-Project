@@ -63,24 +63,24 @@ public:
         return new FNullRHIRayTracingGeometry(InGeometryInfo);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo) override final
     {
-        return new FNullRHIShaderResourceView(InDesc.Texture);
+        return new FNullRHIShaderResourceView(InInfo.Texture);
     }
 
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) override final
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) override final
     {
-        return new FNullRHIShaderResourceView(InDesc.Buffer);
+        return new FNullRHIShaderResourceView(InInfo.Buffer);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) override final
     {
-        return new FNullRHIUnorderedAccessView(InDesc.Texture);
+        return new FNullRHIUnorderedAccessView(InInfo.Texture);
     }
 
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) override final
     {
-        return new FNullRHIUnorderedAccessView(InDesc.Buffer);
+        return new FNullRHIUnorderedAccessView(InInfo.Buffer);
     }
 
     virtual class FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final

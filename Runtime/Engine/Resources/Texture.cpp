@@ -57,9 +57,9 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
         CHECK(!IsBlockCompressed(Format));
 
         FRHICommandList CommandList;
-        CommandList.TransitionTexture(TextureRHI.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest);
+        CommandList.TransitionTexture(TextureRHI.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest));
         CommandList.GenerateMips(TextureRHI.Get());
-        CommandList.TransitionTexture(TextureRHI.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+        CommandList.TransitionTexture(TextureRHI.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
         FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
 

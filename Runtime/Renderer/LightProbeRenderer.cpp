@@ -91,8 +91,8 @@ bool FLightProbeRenderer::Initialize(FFrameResources& FrameResources)
 void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFrameResources& FrameResources)
 {
     FProxyLightProbe& Skylight = FrameResources.Skylight;
-    CommandList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
-    CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(FrameResources.Skybox.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(IrradianceGenPSO.Get());
 
@@ -112,8 +112,8 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFra
 
     CommandList.UnorderedAccessTextureBarrier(Skylight.IrradianceMap.Get());
 
-    CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
-    CommandList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(Skylight.IrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(SpecularIrradianceGenPSO.Get());
     
@@ -157,8 +157,8 @@ void FLightProbeRenderer::RenderSkyLightProbe(FRHICommandList& CommandList, FFra
         Roughness += RoughnessDelta;
     }
 
-    CommandList.TransitionTexture(FrameResources.Skybox.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
-    CommandList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.Skybox.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTexture(Skylight.SpecularIrradianceMap.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
 
     Skylight.IrradianceMapUAV.Reset();
     Skylight.WeakSpecularIrradianceMapUAVs.Clear(true);
@@ -182,8 +182,8 @@ bool FLightProbeRenderer::CreateSkyLightResources(FFrameResources& FrameResource
         Skylight.IrradianceMap->SetDebugName("Temp Irradiance Map");
     }
 
-    FRHITextureUAVDesc UAVInitializer(Skylight.IrradianceMap.Get(), FrameResources.LightProbeFormat, 0, 0, 1);
-    Skylight.IrradianceMapUAV = RHICreateUnorderedAccessView(UAVInitializer);
+    FRHITextureUAVInfo UAVInfo(Skylight.IrradianceMap.Get(), FrameResources.LightProbeFormat, 0, 0, 1);
+    Skylight.IrradianceMapUAV = RHICreateUnorderedAccessView(UAVInfo);
     if (!Skylight.IrradianceMapUAV)
     {
         DEBUG_BREAK();
@@ -207,8 +207,8 @@ bool FLightProbeRenderer::CreateSkyLightResources(FFrameResources& FrameResource
 
     for (int32 MipLevel = 0; MipLevel < SpecularIrradianceMiplevels; MipLevel++)
     {
-        UAVInitializer = FRHITextureUAVDesc(Skylight.SpecularIrradianceMap.Get(), FrameResources.LightProbeFormat, MipLevel, 0, 1);
-        FRHIUnorderedAccessViewRef UAV = RHICreateUnorderedAccessView(UAVInitializer);
+        UAVInfo = FRHITextureUAVInfo(Skylight.SpecularIrradianceMap.Get(), FrameResources.LightProbeFormat, MipLevel, 0, 1);
+        FRHIUnorderedAccessViewRef UAV = RHICreateUnorderedAccessView(UAVInfo);
         if (UAV)
         {
             Skylight.SpecularIrradianceMapUAVs.Emplace(UAV);

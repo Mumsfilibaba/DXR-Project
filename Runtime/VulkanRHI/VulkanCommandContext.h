@@ -104,7 +104,7 @@ public:
     virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* InRayTracingGeometry, const FRayTracingGeometryBuildInfo& InBuildInfo) override final;
     virtual void RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) override final;
     virtual void RHIGenerateMips(FRHITexture* Texture) override final;
-    virtual void RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
+    virtual void RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) override final;
     virtual void RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) override final;
     virtual void RHIUnorderedAccessTextureBarrier(FRHITexture* Texture) override final;
     virtual void RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer) override final;

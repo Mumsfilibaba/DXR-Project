@@ -21,7 +21,6 @@ struct D3D12RHI_API FD3D12RHIModule final : public FRHIModule
 class D3D12RHI_API FD3D12RHI : public FRHI
 {
 public:
-
     static FD3D12RHI* GetRHI() 
     {
         CHECK(GD3D12RHI != nullptr);
@@ -29,7 +28,6 @@ public:
     }
 
 public:
-
     FD3D12RHI();
     ~FD3D12RHI();
 
@@ -48,10 +46,10 @@ public:
     virtual FRHIQuery* RHICreateQuery(EQueryType InQueryType) override final;
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final;
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final;
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final;
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc)  override final;
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final;
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo) override final;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)  override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) override final;
     virtual FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final;
@@ -86,7 +84,6 @@ public:
     virtual void* RHIGetCopyCommandQueue() override final;
 
 public:
-
     template<typename... ArgTypes>
     void DeferDeletion(ArgTypes&&... Args)
     {

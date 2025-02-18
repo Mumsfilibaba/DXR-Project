@@ -185,22 +185,22 @@ FVulkanShaderResourceView::FVulkanShaderResourceView(FVulkanDevice* InDevice, FR
 {
 }
 
-bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVDesc& InDesc)
+bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVInfo& InInfo)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InDesc.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR("Texture cannot be nullptr");
         return false;
     }
 
-    if (IsTypelessFormat(InDesc.Format))
+    if (IsTypelessFormat(InInfo.Format))
     {
         VULKAN_ERROR("Cannot create a view of a typeless format");
         return false;
     }
     
-    const VkFormat VulkanFormat = ConvertFormat(InDesc.Format);
+    const VkFormat VulkanFormat = ConvertFormat(InInfo.Format);
     VkImageViewType VulkanImageType;
     switch(VulkanTexture->GetDimension())
     {
@@ -240,18 +240,18 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVDesc& I
     uint32 LayerCount;
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
-        BaseArrayLayer = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
-        LayerCount = FMath::Max<uint16>(InDesc.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
+        BaseArrayLayer = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
+        LayerCount = FMath::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
     }
     else
     {
-        BaseArrayLayer = InDesc.FirstArraySlice;
-        LayerCount = FMath::Max<uint16>(InDesc.NumSlices, 1u);
+        BaseArrayLayer = InInfo.FirstArraySlice;
+        LayerCount = FMath::Max<uint16>(InInfo.NumSlices, 1u);
     }
 
     const VkImage Image = VulkanTexture->GetVkImage();
     const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
-    if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.FirstMipLevel, InDesc.NumMips))
+    if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InInfo.FirstMipLevel, InInfo.NumMips))
     {
         const FString TextureDebugName = VulkanTexture->GetDebugName();
         if (!TextureDebugName.IsEmpty())
@@ -267,9 +267,9 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVDesc& I
     }
 }
 
-bool FVulkanShaderResourceView::InitializeBufferSRV(const FRHIBufferSRVDesc& InDesc)
+bool FVulkanShaderResourceView::InitializeBufferSRV(const FRHIBufferSRVInfo& InInfo)
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InDesc.Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
     if (!VulkanBuffer)
     {
         VULKAN_ERROR("Buffer cannot be nullptr");
@@ -279,18 +279,18 @@ bool FVulkanShaderResourceView::InitializeBufferSRV(const FRHIBufferSRVDesc& InD
     // TODO: Use typed buffers
     
     VkDeviceSize Stride = 0;
-    if (InDesc.Format == EBufferSRVFormat::None)
+    if (InInfo.Format == EBufferSRVFormat::None)
     {
         Stride = VulkanBuffer->GetStride();
     }
-    else if (InDesc.Format == EBufferSRVFormat::UInt32)
+    else if (InInfo.Format == EBufferSRVFormat::UInt32)
     {
         Stride = sizeof(uint32);
     }
 
     VkBuffer     Buffer = VulkanBuffer->GetVkBuffer();
-    VkDeviceSize Offset = Stride * InDesc.FirstElement;
-    VkDeviceSize Range  = Stride * InDesc.NumElements;
+    VkDeviceSize Offset = Stride * InInfo.FirstElement;
+    VkDeviceSize Range  = Stride * InInfo.NumElements;
 
     if (!InitializeAsStructuredBufferView(Buffer, Offset, Range))
     {
@@ -306,22 +306,22 @@ FVulkanUnorderedAccessView::FVulkanUnorderedAccessView(FVulkanDevice* InDevice, 
 {
 }
 
-bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVDesc& InDesc)
+bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVInfo& InInfo)
 {
-    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InDesc.Texture);
+    FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
     if (!VulkanTexture)
     {
         VULKAN_ERROR("Texture cannot be nullptr");
         return false;
     }
 
-    if (IsTypelessFormat(InDesc.Format))
+    if (IsTypelessFormat(InInfo.Format))
     {
         VULKAN_ERROR("Cannot create a view of a typeless format");
         return false;
     }
     
-    const VkFormat VulkanFormat = ConvertFormat(InDesc.Format);
+    const VkFormat VulkanFormat = ConvertFormat(InInfo.Format);
     VkImageViewType VulkanImageType;
     switch(VulkanTexture->GetDimension())
     {
@@ -353,18 +353,18 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVDesc& 
     uint32 LayerCount;
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
-        BaseArrayLayer = InDesc.FirstArraySlice * RHI_NUM_CUBE_FACES;
+        BaseArrayLayer = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
         LayerCount = RHI_NUM_CUBE_FACES;
     }
     else
     {
-        BaseArrayLayer = InDesc.FirstArraySlice;
+        BaseArrayLayer = InInfo.FirstArraySlice;
         LayerCount = 1u;
     }
 
     const VkImage Image = VulkanTexture->GetVkImage();
     const VkImageAspectFlags ImageAspectFlags = GetImageAspectFlagsFromFormat(VulkanFormat);
-    if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InDesc.MipLevel, 1u))
+    if (InitializeAsImageView(Image, VulkanFormat, VulkanImageType, ImageAspectFlags, BaseArrayLayer, LayerCount, InInfo.MipLevel, 1u))
     {
         const FString TextureDebugName = VulkanTexture->GetDebugName();
         if (!TextureDebugName.IsEmpty())
@@ -380,9 +380,9 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVDesc& 
     }
 }
 
-bool FVulkanUnorderedAccessView::InitializeBufferUAV(const FRHIBufferUAVDesc& InDesc)
+bool FVulkanUnorderedAccessView::InitializeBufferUAV(const FRHIBufferUAVInfo& InInfo)
 {
-    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InDesc.Buffer);
+    FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
     if (!VulkanBuffer)
     {
         VULKAN_ERROR("Buffer cannot be nullptr");
@@ -392,18 +392,18 @@ bool FVulkanUnorderedAccessView::InitializeBufferUAV(const FRHIBufferUAVDesc& In
     // TODO: Use typed buffers
     
     VkDeviceSize Stride = 0;
-    if (InDesc.Format == EBufferUAVFormat::None)
+    if (InInfo.Format == EBufferUAVFormat::None)
     {
         Stride = VulkanBuffer->GetStride();
     }
-    else if (InDesc.Format == EBufferUAVFormat::UInt32)
+    else if (InInfo.Format == EBufferUAVFormat::UInt32)
     {
         Stride = sizeof(uint32);
     }
 
     VkBuffer     Buffer = VulkanBuffer->GetVkBuffer();
-    VkDeviceSize Offset = Stride * InDesc.FirstElement;
-    VkDeviceSize Range  = Stride * InDesc.NumElements;
+    VkDeviceSize Offset = Stride * InInfo.FirstElement;
+    VkDeviceSize Range  = Stride * InInfo.NumElements;
 
     if (!InitializeAsStructuredBufferView(Buffer, Offset, Range))
     {

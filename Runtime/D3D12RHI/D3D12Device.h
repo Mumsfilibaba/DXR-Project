@@ -215,7 +215,6 @@ private:
 
     FD3D12DefaultDescriptors       DefaultDescriptors;
 
-
     D3D_FEATURE_LEVEL              MinFeatureLevel;
     D3D_FEATURE_LEVEL              ActiveFeatureLevel;
 

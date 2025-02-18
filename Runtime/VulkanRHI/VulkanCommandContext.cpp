@@ -1254,7 +1254,7 @@ void FVulkanCommandContext::RHIGenerateMips(FRHITexture* Texture)
     BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
 }
 
-void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, Texture);
     if (!VulkanTexture)
@@ -1263,8 +1263,8 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         return;
     }
 
-    const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(AfterState);
-    const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(BeforeState);
+    const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
+    const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
     if (NewLayout != PreviousLayout)
     {
         VkImageMemoryBarrier2 ImageBarrier;
@@ -1276,10 +1276,10 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, EResource
         ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
         ImageBarrier.image                           = VulkanTexture->GetVkImage();
-        ImageBarrier.srcAccessMask                   = ConvertResourceStateToAccessFlags(BeforeState);
-        ImageBarrier.dstAccessMask                   = ConvertResourceStateToAccessFlags(AfterState);
-        ImageBarrier.srcStageMask                    = ConvertResourceStateToPipelineStageFlags(BeforeState);
-        ImageBarrier.dstStageMask                    = ConvertResourceStateToPipelineStageFlags(AfterState);
+        ImageBarrier.srcAccessMask                   = ConvertResourceStateToAccessFlags(TextureTransition.BeforeState);
+        ImageBarrier.dstAccessMask                   = ConvertResourceStateToAccessFlags(TextureTransition.AfterState);
+        ImageBarrier.srcStageMask                    = ConvertResourceStateToPipelineStageFlags(TextureTransition.BeforeState);
+        ImageBarrier.dstStageMask                    = ConvertResourceStateToPipelineStageFlags(TextureTransition.AfterState);
         ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
         ImageBarrier.subresourceRange.baseArrayLayer = 0;
         ImageBarrier.subresourceRange.baseMipLevel   = 0;

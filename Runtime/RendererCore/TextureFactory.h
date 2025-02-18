@@ -38,7 +38,11 @@ public:
     FRHITexture* LoadFromMemory(const uint8* Pixels, uint32 Width, uint32 Height, ETextureFactoryFlags Flags, EFormat Format);
 
     // Source is a panorama image and Dest is a cube texture
+    // This function assumes that the 'Dest' is in 'EResourceState::Common'
     bool TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* Dest, ETextureFactoryFlags Flags);
+
+    // Generates a chain of miplevels. This function assumes that the 'Texture' is in 'EResourceState::CopyDest'
+    bool GenerateMiplevels(FRHITexture* Texture);
 
 private:
     FTextureFactory();
@@ -46,9 +50,16 @@ private:
 
     bool CreateResources();
 
-    FRHISamplerStateRef         PanoramaGenSampler;
+    FRHISamplerStateRef         LinearSampler;
+
     FRHIComputePipelineStateRef PanoramaPSO;
-    FRHIComputeShaderRef        ComputeShader;
+    FRHIComputeShaderRef        PanoramCS;
+
+    FRHIComputePipelineStateRef GenerateMipsTex2D_PSO;
+    FRHIComputeShaderRef        GenerateMipsTex2D_CS;
+
+    FRHIComputePipelineStateRef GenerateMipsTexCube_PSO;
+    FRHIComputeShaderRef        GenerateMipsTexCube_CS;
 
     static FTextureFactory* Instance;
 };

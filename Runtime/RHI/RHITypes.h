@@ -4,6 +4,7 @@
 #include "Core/Templates/TypeTraits.h"
 #include "Core/Templates/Utility.h"
 #include "Core/Containers/SharedRef.h"
+#include "RHI/RHICore.h"
 
 class FRHIBuffer;
 struct FRHIRayTracingGeometryInstance;
@@ -947,4 +948,23 @@ struct FRayTracingGeometryBuildInfo
     uint32       NumIndices   = 0;
     EIndexFormat IndexFormat  = EIndexFormat::uint32;
     bool         bUpdate      = false;
+};
+
+struct FRHITextureTransition
+{
+    static FRHITextureTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState)
+    {
+        return FRHITextureTransition{ BeforeState, AfterState, RHI_ALL_MIP_LEVELS, RHI_ALL_ARRAY_SLICES };
+    }
+
+    static FRHITextureTransition MakePartial(EResourceAccess BeforeState, EResourceAccess AfterState, uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES)
+    {
+        return FRHITextureTransition{ BeforeState, AfterState, MipLevel, ArraySlice };
+    }
+
+    EResourceAccess BeforeState;
+    EResourceAccess AfterState;
+
+    uint32 MipLevel;
+    uint32 ArraySlice;
 };

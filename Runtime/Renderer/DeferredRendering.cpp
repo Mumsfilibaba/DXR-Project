@@ -810,7 +810,7 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
     }
 
     FRHICommandList CommandList;
-    CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::Common, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(BRDFPipelineState.Get());
 
@@ -824,12 +824,12 @@ bool FTiledLightPass::Initialize(FFrameResources& FrameResources)
 
     CommandList.UnorderedAccessTextureBarrier(StagingTexture.Get());
 
-    CommandList.TransitionTexture(StagingTexture.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
-    CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::Common, EResourceAccess::CopyDest);
+    CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
+    CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
     CommandList.CopyTexture(FrameResources.IntegrationLUT.Get(), StagingTexture.Get());
 
-    CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.IntegrationLUT.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
 
     // Tiled lightning
@@ -1191,9 +1191,9 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     ReductionConstants.FarPlane      = Camera->GetFarPlane();
 
     // Perform the first reduction
-    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource);
-    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
+    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::DepthWrite, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
 
     CommandList.SetComputePipelineState(ReduceDepthInitalPSO.Get());
 
@@ -1206,8 +1206,8 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     uint32 ThreadsY = FrameResources.ReducedDepthBuffer[0]->GetHeight();
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
-    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite);
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
+    CommandList.TransitionTexture(FrameResources.GBuffer[GBufferIndex_Depth].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::DepthWrite));
 
     // Perform the other reductions
     CommandList.SetComputePipelineState(ReduceDepthPSO.Get());
@@ -1219,8 +1219,8 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess);
-    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess));
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[1].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
 
     CommandList.SetShaderResourceView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[1]->GetShaderResourceView(), 0);
     CommandList.SetUnorderedAccessView(ReduceDepthShader.Get(), FrameResources.ReducedDepthBuffer[0]->GetUnorderedAccessView(), 0);
@@ -1229,7 +1229,7 @@ void FDepthReducePass::Execute(FRHICommandList& CommandList, FFrameResources& Fr
     ThreadsY = FMath::DivideByMultiple(ThreadsY, 16);
     CommandList.Dispatch(ThreadsX, ThreadsY, 1);
 
-    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(FrameResources.ReducedDepthBuffer[0].Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource));
     
     INSERT_DEBUG_CMDLIST_MARKER(CommandList, "End Depth Reduction");
 }

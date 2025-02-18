@@ -329,28 +329,14 @@ public:
         EmplaceCommand<FRHICommandGenerateMips>(Texture);
     }
 
-    FORCEINLINE void TransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    FORCEINLINE void TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) noexcept
     {
-        if (BeforeState != AfterState)
-        {
-            EmplaceCommand<FRHICommandTransitionTexture>(Texture, BeforeState, AfterState);
-        }
-        else
-        {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", *Texture->GetDebugName(),  ToString(BeforeState));
-        }
+        EmplaceCommand<FRHICommandTransitionTexture>(Texture, TextureTransition);
     }
 
     FORCEINLINE void TransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
     {
-        if (BeforeState != AfterState)
-        {
-            EmplaceCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
-        }
-        else
-        {
-            LOG_WARNING("Texture '%s' Was transitioned with the same Before- and AfterState (=%s)", *Buffer->GetDebugName(),  ToString(BeforeState));
-        }
+        EmplaceCommand<FRHICommandTransitionBuffer>(Buffer, BeforeState, AfterState);
     }
 
     FORCEINLINE void UnorderedAccessTextureBarrier(FRHITexture* Texture) noexcept

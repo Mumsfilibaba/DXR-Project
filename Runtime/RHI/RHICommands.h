@@ -734,22 +734,20 @@ DECLARE_RHICOMMAND(FRHICommandGenerateMips)
 
 DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
 {
-    FORCEINLINE FRHICommandTransitionTexture(FRHITexture* InTexture, EResourceAccess InBeforeState, EResourceAccess InAfterState)
+    FORCEINLINE FRHICommandTransitionTexture(FRHITexture* InTexture, const FRHITextureTransition& InTextureTransition)
         : Texture(InTexture)
-        , BeforeState(InBeforeState)
-        , AfterState(InAfterState)
+        , TextureTransition(InTextureTransition)
     {
         CHECK(Texture != nullptr);
     }
 
     FORCEINLINE void Execute(IRHICommandContext& CommandContext)
     {
-        CommandContext.RHITransitionTexture(Texture, BeforeState, AfterState);
+        CommandContext.RHITransitionTexture(Texture, TextureTransition);
     }
 
-    FRHITexture*    Texture;
-    EResourceAccess BeforeState;
-    EResourceAccess AfterState;
+    FRHITexture*          Texture;
+    FRHITextureTransition TextureTransition;
 };
 
 DECLARE_RHICOMMAND(FRHICommandTransitionBuffer)

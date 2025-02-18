@@ -22,15 +22,19 @@ struct FMetalRHIModule final : public FRHIModule
 class FMetalRHI final : public FRHI
 {
 public:
-    FMetalRHI();
-    ~FMetalRHI();
-
     static FMetalRHI* GetRHI() 
     {
         CHECK(GMetalRHI != nullptr);
         return GMetalRHI; 
     }
 
+public:
+    FMetalRHI();
+    ~FMetalRHI();
+
+public:
+
+    // FRHI Interface
     virtual bool Initialize() override final;
 
     virtual void RHIBeginFrame() override final { }
@@ -43,10 +47,10 @@ public:
     virtual FRHIQuery* RHICreateQuery(EQueryType InQueryType) override final;
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) override final;
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) override final;
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) override final;
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) override final;
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) override final;
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) override final;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo) override final;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) override final;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) override final;
     virtual FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) override final;
     virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) override final;
@@ -121,6 +125,7 @@ public:
         return nullptr;
     }
 
+public:
     FMetalDeviceContext* GetDeviceContext() const
     {
         return DeviceContext;

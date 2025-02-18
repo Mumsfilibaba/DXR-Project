@@ -156,7 +156,7 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
 
     CommandList.Set32BitShaderConstants(BC6HCompressionShader.Get(), &Buffer, FMath::BytesToNum32BitConstants(sizeof(FCompressionBuffer)));
     
-    CommandList.TransitionTexture(Source.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(Source.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
 
     const uint32 ThreadGroupsX = FMath::DivideByMultiple(CompressedTexInfo.Extent.X, CS_NUM_THREADS);
     const uint32 ThreadGroupsY = FMath::DivideByMultiple(CompressedTexInfo.Extent.Y, CS_NUM_THREADS);
@@ -178,9 +178,9 @@ bool FGPUTextureCompressor::CompressBC6(const FRHITextureRef& Source, FRHITextur
     CopyDesc.NumArraySlices = 1;
     CopyDesc.NumMipLevels   = 1;
 
-    CommandList.TransitionTexture(CompressedTex.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+    CommandList.TransitionTexture(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
     CommandList.CopyTextureRegion(Output.Get(), CompressedTex.Get(), CopyDesc);
-    CommandList.TransitionTexture(Output.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(Output.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
 
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     return true;
@@ -225,14 +225,14 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
 
     for (uint8 Index = 0; Index < CompressedTexInfo.NumMipLevels; Index++)
     {
-        FRHITextureUAVDesc CompressedTexUAVDesc;
-        CompressedTexUAVDesc.Texture         = CompressedTex.Get();
-        CompressedTexUAVDesc.Format          = EFormat::R32G32B32A32_Uint;
-        CompressedTexUAVDesc.FirstArraySlice = 0;
-        CompressedTexUAVDesc.MipLevel        = Index;
-        CompressedTexUAVDesc.NumSlices       = 1;
+        FRHITextureUAVInfo CompressedTexUAVInfo;
+        CompressedTexUAVInfo.Texture         = CompressedTex.Get();
+        CompressedTexUAVInfo.Format          = EFormat::R32G32B32A32_Uint;
+        CompressedTexUAVInfo.FirstArraySlice = 0;
+        CompressedTexUAVInfo.MipLevel        = Index;
+        CompressedTexUAVInfo.NumSlices       = 1;
 
-        FRHIUnorderedAccessViewRef CompressedTexUAV = RHICreateUnorderedAccessView(CompressedTexUAVDesc);
+        FRHIUnorderedAccessViewRef CompressedTexUAV = RHICreateUnorderedAccessView(CompressedTexUAVInfo);
         if (!CompressedTexUAV)
         {
             LOG_ERROR("[FGPUTextureCompressor] Failed to create compressed texture UAV");
@@ -269,7 +269,7 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     CommandList.SetShaderResourceView(BC6HCompressionCubeShader.Get(), Source->GetShaderResourceView(), 0);
     CommandList.SetSamplerState(BC6HCompressionCubeShader.Get(), PointSampler.Get(), 0);
 
-    CommandList.TransitionTexture(Source.Get(), EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource);
+    CommandList.TransitionTexture(Source.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
     
     int32 CurrentFaceSize         = SourceInfo.Extent.X;
     int32 CurrentFaceSizeInBlocks = CompressedTexInfo.Extent.X;
@@ -311,12 +311,12 @@ bool FGPUTextureCompressor::CompressCubeMapBC6(const FRHITextureRef& Source, FRH
     CopyDesc.NumMipLevels   = CompressedTexInfo.NumMipLevels;
     CopyDesc.NumArraySlices = 1;
 
-    CommandList.TransitionTexture(CompressedTex.Get(), EResourceAccess::UnorderedAccess, EResourceAccess::CopySource);
+    CommandList.TransitionTexture(CompressedTex.Get(), FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopySource));
     
     CommandList.CopyTextureRegion(Output.Get(), CompressedTex.Get(), CopyDesc);
 
-    CommandList.TransitionTexture(Output.Get(), EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource);
-    CommandList.TransitionTexture(Source.Get(), EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource);
+    CommandList.TransitionTexture(Output.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+    CommandList.TransitionTexture(Source.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
 
     FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     return true;

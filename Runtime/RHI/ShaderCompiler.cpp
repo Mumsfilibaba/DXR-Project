@@ -340,27 +340,27 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 {
     OutByteCode.Clear();
 
-    TComPtr<IDxcCompiler> Compiler;
-    HRESULT hResult = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
-    if (FAILED(hResult))
+    TComPtr<IDxcUtils> Utils;
+    HRESULT hr = DxcCreateInstanceFunc(CLSID_DxcUtils, IID_PPV_ARGS(&Utils));
+    if (FAILED(hr))
+    {
+        LOG_ERROR("[FShaderCompiler]: FAILED to create Utils");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    TComPtr<IDxcCompiler3> Compiler;
+    hr = DxcCreateInstanceFunc(CLSID_DxcCompiler, IID_PPV_ARGS(&Compiler));
+    if (FAILED(hr))
     {
         LOG_ERROR("[FShaderCompiler]: FAILED to create Compiler");
         DEBUG_BREAK();
         return false;
     }
 
-    TComPtr<IDxcLibrary> Library;
-    hResult = DxcCreateInstanceFunc(CLSID_DxcLibrary, IID_PPV_ARGS(&Library));
-    if (FAILED(hResult))
-    {
-        LOG_ERROR("[FShaderCompiler]: FAILED to create Library");
-        DEBUG_BREAK();
-        return false;
-    }
-
     TComPtr<IDxcIncludeHandler> IncludeHandler;
-    hResult = Library->CreateIncludeHandler(&IncludeHandler);
-    if (FAILED(hResult))
+    hr = Utils->CreateDefaultIncludeHandler(&IncludeHandler);
+    if (FAILED(hr))
     {
         LOG_ERROR("[FShaderCompiler]: FAILED to create IncludeHandler");
         DEBUG_BREAK();
@@ -370,11 +370,16 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     // Add compile arguments
     TArray<LPCWSTR> CompileArgs =
     {
-        L"-HV 2021" // Use HLSL 2021
+        L"-HV 2021",     // Use HLSL 2021
+        L"-Gfa",         // Avoid flow-control
+        L"-WX",          // Warnings as errors
+        L"-Qembed_debug" // We are forced to embed debug information in order to get all the information we need
     };
 
-    CompileArgs.Emplace(L"-Gfa"); // Avoid flow-control
-    CompileArgs.Emplace(L"-WX");  // Warnings as errors
+    if (CVarShaderDebug.GetValue())
+    {
+        CompileArgs.Emplace(L"-Zi");
+    }
 
     // Optimization level 3
     if (CompileInfo.bOptimize)
@@ -382,42 +387,6 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         CompileArgs.Emplace(L"-O3"); // Highest optimization level
         CompileArgs.Emplace(L"-all-resources-bound");
     }
-
-    // NOTE: Entrypoint needs to always be main when compiling SPIRV, this is due to the fact that the GLSL code cannot handle any
-    // other name at the moment (GLSL being used when we change bindings for Vulkan).
-    const FString EntryPoint = CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV ? "main" : CompileInfo.EntryPoint;
-    
-    // Handle language selection
-    FString Source(ShaderSource);
-    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
-    {
-        // When not using HLSL, we want to emit SPIR-V
-        CompileArgs.Emplace(L"-spirv");
-        CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
-
-        // NOTE: Change the entrypoint to be 'main', since this is always the entrypoint when we need to compile the
-        // SPIRV into GLSL, and back to SPIRV. This happens when we change any bindings for resources.
-        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
-        {
-            if (!PatchHLSLForSpirv(CompileInfo.EntryPoint, Source))
-            {
-                LOG_ERROR("[FShaderCompiler]: Failed to patch HLSL for the SPIR-V backend");
-                DEBUG_BREAK();
-                return false;
-            }
-        }
-    }
-    
-    // NOTE: We are forced to embed debug information in order to get all the information we need for Vulkan
-    CompileArgs.Emplace(L"-Qembed_debug");
-    
-    if (CVarShaderDebug.GetValue())
-    {
-        CompileArgs.Emplace(L"-Zi");
-    }
-
-    // Create a single string for printing all the shader arguments
-    const FString ArgumentsString = CreateArgString(MakeArrayView(CompileArgs));
 
     // Add defines that is based on language
     TArray<DxcDefine> DxcDefines =
@@ -449,7 +418,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
     if (!CompileInfo.Defines.IsEmpty())
     {
         DefineStrings.Reserve(CompileInfo.Defines.Size() * 2);
-        
+
         for (const FShaderDefine& Define : CompileInfo.Defines)
         {
             const FStringWide& WideDefine = DefineStrings.Emplace(CharToWide(Define.Define));
@@ -458,6 +427,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         }
     }
  
+    // Log all the defines that are used for this shader-compilation
     const bool bVerboseLogging = CVarVerboseLogging.GetValue();
     if (bVerboseLogging)
     {
@@ -469,57 +439,180 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
         {
             LOG_INFO("[FShaderCompiler]: Compiling shader, using the following defines:");
         }
-    
+
         for (const DxcDefine& Define : DxcDefines)
         {
             LOG_INFO("    %S = %S", Define.Name, Define.Value);
         }
     }
-    
-    // Retrieve the shader target
-    const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
-    const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
 
-    constexpr uint32 BufferLength = sizeof("xxx_x_x");
-    WCHAR TargetProfile[BufferLength];
-    FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
-    
-    // Use the asset-folder as base for the shader-files
-    const FStringWide WideFilePath   = CharToWide(FilePath);
-    const FStringWide WideEntrypoint = CharToWide(EntryPoint);
+    // Helper for building arguments for compilation and preprocessing
+    const auto BuildArguments = [&](const FString& FilePath, const FString& EntryPoint, const FShaderCompileInfo& CompileInfo)
+    {
+        // Retrieve the shader target
+        const LPCWSTR ShaderStageText = GetShaderStageString(CompileInfo.ShaderStage);
+        const LPCWSTR ShaderModelText = GetShaderModelString(CompileInfo.ShaderModel);
 
-    // Convert the source to a ShaderBlob
-    TComPtr<IDxcBlob> SourceBlob = new FShaderBlob(Source.Data(), Source.SizeInBytes());
-    
-    // Actually compile the shader
-    TComPtr<IDxcOperationResult> Result;
-    hResult = Compiler->Compile(SourceBlob.Get(), *WideFilePath, *WideEntrypoint, TargetProfile, CompileArgs.Data(), CompileArgs.Size(), DxcDefines.Data(), DxcDefines.Size(), IncludeHandler.Get(), &Result);
-    if (FAILED(hResult))
+        constexpr uint32 BufferLength = sizeof("xxx_x_x");
+        WCHAR TargetProfile[BufferLength];
+        FCStringWide::Snprintf(TargetProfile, BufferLength, L"%ls_%ls", ShaderStageText, ShaderModelText);
+
+        // Use the asset-folder as base for the shader-files
+        const FStringWide WideFilePath   = CharToWide(FilePath);
+        const FStringWide WideEntrypoint = CharToWide(EntryPoint);
+
+        // Build the arguments for the preprocessing step
+        TComPtr<IDxcCompilerArgs> CompileArguments;
+        HRESULT hr = Utils->BuildArguments(*WideFilePath, *WideEntrypoint, TargetProfile, CompileArgs.Data(), CompileArgs.Size(), DxcDefines.Data(), DxcDefines.Size(), &CompileArguments);
+        if (FAILED(hr))
+        {
+            return TComPtr<IDxcCompilerArgs>(nullptr);
+        }
+        else
+        {
+            return CompileArguments;
+        }
+    };
+
+    // Retrieve the pre-processing compiler arguments
+    TComPtr<IDxcCompilerArgs> PreProcessorArguments = BuildArguments(FilePath, CompileInfo.EntryPoint, CompileInfo);
+    if (!PreProcessorArguments)
+    {
+        LOG_ERROR("[FShaderCompiler]: FAILED to create pre-process compiler arguments");
+        DEBUG_BREAK();
+        return false;
+    }
+    else
+    {
+        LPCWSTR PreProcessArgs[] = 
+        { 
+            L"-P",
+            L"dummy.hlsl",
+        };
+
+        PreProcessorArguments->AddArguments(PreProcessArgs, 2);
+    }
+
+    // Preprocess shader source
+    DxcBuffer SourceBuffer;
+    SourceBuffer.Ptr      = ShaderSource.Data();
+    SourceBuffer.Size     = ShaderSource.Size();
+    SourceBuffer.Encoding = DXC_CP_ACP;
+
+    TComPtr<IDxcResult> PreprocessResult;
+    hr = Compiler->Compile(&SourceBuffer, PreProcessorArguments->GetArguments(), static_cast<uint32>(PreProcessorArguments->GetCount()), IncludeHandler.Get(), IID_PPV_ARGS(&PreprocessResult));
+    if (FAILED(hr))
+    {
+        LOG_ERROR("[FShaderCompiler]: FAILED to preprocess shader");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Check the compilation result
+    HRESULT PreProcessResult;
+    if (FAILED(PreprocessResult->GetStatus(&PreProcessResult)))
+    {
+        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve pre-process result. Unknown Error.");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // If the error encountered an error
+    if (FAILED(PreProcessResult))
+    {
+        // Retrieve errors
+        TComPtr<IDxcBlobUtf8> PrintBlob;
+        PreprocessResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
+
+        if (PrintBlob && PrintBlob->GetBufferSize() > 0)
+        {
+            LOG_ERROR("[FShaderCompiler]: FAILED to pre-process with error: %s", reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()));
+        }
+        else
+        {
+            LOG_ERROR("[FShaderCompiler]: FAILED to pre-process with. Unknown ERROR.");
+        }
+
+        DEBUG_BREAK();
+        return false;
+    }
+
+    TComPtr<IDxcBlob> PreprocessedBlob;
+    hr = PreprocessResult->GetOutput(DXC_OUT_HLSL, IID_PPV_ARGS(&PreprocessedBlob), nullptr);
+    if (FAILED(hr))
+    {
+        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve pre-processed shader");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // NOTE: Entrypoint needs to always be main when compiling SPIRV, this is due to the fact that the GLSL code cannot handle any
+    // other name at the moment (GLSL being used when we change bindings for Vulkan).
+    const FString EntryPoint = CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV ? "main" : CompileInfo.EntryPoint;
+
+    // Handle language selection
+    FString Source(reinterpret_cast<const char*>(PreprocessedBlob->GetBufferPointer()), PreprocessedBlob->GetBufferSize());
+    if (CompileInfo.OutputLanguage != EShaderOutputLanguage::HLSL)
+    {
+        // When not using HLSL, we want to emit SPIR-V
+        CompileArgs.Emplace(L"-spirv");
+        CompileArgs.Emplace(L"-fspv-target-env=vulkan1.2");
+
+        // NOTE: Change the entrypoint to be 'main', since this is always the entrypoint when we need to compile the
+        // SPIRV into GLSL, and back to SPIRV. This happens when we change any bindings for resources.
+        if (CompileInfo.OutputLanguage == EShaderOutputLanguage::SPIRV)
+        {
+            if (!PatchHLSLForSpirv(CompileInfo.EntryPoint, Source))
+            {
+                LOG_ERROR("[FShaderCompiler]: Failed to patch HLSL for the SPIR-V backend");
+                DEBUG_BREAK();
+                return false;
+            }
+        }
+    }
+
+    // Build the arguments for the compiler
+    TComPtr<IDxcCompilerArgs> CompileArguments = BuildArguments(FilePath, EntryPoint, CompileInfo);
+    if (!CompileArguments)
+    {
+        LOG_ERROR("[FShaderCompiler]: FAILED to create compiler arguments");
+        DEBUG_BREAK();
+        return false;
+    }
+
+    // Convert preprocessed source to DxcBuffer
+    SourceBuffer.Ptr  = Source.Data();
+    SourceBuffer.Size = Source.Size();
+
+    // Compile shader
+    TComPtr<IDxcResult> Result;
+    hr = Compiler->Compile(&SourceBuffer, CompileArguments->GetArguments(), CompileArguments->GetCount(), IncludeHandler.Get(), IID_PPV_ARGS(&Result));
+    if (FAILED(hr))
     {
         LOG_ERROR("[FShaderCompiler]: FAILED to Compile");
         DEBUG_BREAK();
         return false;
     }
 
-    if (FAILED(Result->GetStatus(&hResult)))
+    // Check the compilation result
+    HRESULT CompilationResult;
+    if (FAILED(Result->GetStatus(&CompilationResult)))
     {
         LOG_ERROR("[FShaderCompiler]: FAILED to Retrieve result. Unknown Error.");
         DEBUG_BREAK();
         return false;
     }
 
-    TComPtr<IDxcBlobEncoding> PrintBlob;
-    TComPtr<IDxcBlobEncoding> PrintBlob8;
-    if (SUCCEEDED(Result->GetErrorBuffer(&PrintBlob)))
+    // If the error encountered an error
+    if (FAILED(CompilationResult))
     {
-        Library->GetBlobAsUtf8(PrintBlob.Get(), &PrintBlob8);
-    }
+        // Retrieve errors
+        TComPtr<IDxcBlobUtf8> PrintBlob;
+        Result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
 
-    if (FAILED(hResult))
-    {
-        if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
+        if (PrintBlob && PrintBlob->GetBufferSize() > 0)
         {
-            LOG_ERROR("[FShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()));
+            LOG_ERROR("[FShaderCompiler]: FAILED to compile with error: %s", reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()));
         }
         else
         {
@@ -532,26 +625,32 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
 
     if (bVerboseLogging)
     {
-        if (PrintBlob8 && PrintBlob8->GetBufferSize() > 0)
+        // Retrieve errors
+        TComPtr<IDxcBlobUtf8> PrintBlob;
+        Result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&PrintBlob), nullptr);
+
+        if (PrintBlob && PrintBlob->GetBufferSize() > 0)
         {
-            const FString Output(reinterpret_cast<LPCSTR>(PrintBlob8->GetBufferPointer()), uint32(PrintBlob8->GetBufferSize()));
-            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s' and with the following output: %s", *ArgumentsString, *Output);
+            const FString Output(reinterpret_cast<LPCSTR>(PrintBlob->GetBufferPointer()), uint32(PrintBlob->GetBufferSize()));
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with the following output: %s", *Output);
         }
         else
         {
-            LOG_INFO("[FShaderCompiler]: Successfully compiled shader with arguments '%s'.", *ArgumentsString);
+            LOG_INFO("[FShaderCompiler]: Successfully compiled shader.");
         }
     }
 
+    // Retrieve the compiled blob
     TComPtr<IDxcBlob> CompiledBlob;
-    if (FAILED(Result->GetResult(&CompiledBlob)))
+    hr = Result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&CompiledBlob), nullptr);
+    if (FAILED(hr))
     {
-        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve result");
+        LOG_ERROR("[FShaderCompiler]: FAILED to retrieve compiled shader");
         DEBUG_BREAK();
         return false;
     }
 
-    const uint32 BlobSize = uint32(CompiledBlob->GetBufferSize());
+    const uint32 BlobSize = static_cast<uint32>(CompiledBlob->GetBufferSize());
     OutByteCode.Resize(BlobSize);
     FMemory::Memcpy(OutByteCode.Data(), CompiledBlob->GetBufferPointer(), BlobSize);
 
@@ -609,7 +708,7 @@ bool FShaderCompiler::Compile(const FString& ShaderSource, const FString& FilePa
             LOG_INFO("[FShaderCompiler]: Successfully compiled shader");
         }
     }
-    
+
     return true;
 }
 
@@ -626,13 +725,13 @@ bool FShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutS
         {
             return false;
         }
-        
+
         const int32 BracketPosition = OutSource.FindChar('(', Position);
         if (BracketPosition == FString::InvalidIndex)
         {
             return false;
         }
-        
+
         // Create a view of the entrypoint name to ensure that we found the whole thing
         // this is done in order to support entry-points with spaces etc. between bracket
         // and actual entrypoint name.
@@ -647,7 +746,7 @@ bool FShaderCompiler::PatchHLSLForSpirv(const FString& Entrypoint, FString& OutS
             OutSource.Insert("main", Position);
             break;
         }
-        
+
         // Search for the next name
         Position++;
     }

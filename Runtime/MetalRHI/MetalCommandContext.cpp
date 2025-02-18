@@ -389,7 +389,7 @@ void FMetalCommandContext::RHIGenerateMips(FRHITexture* Texture)
     [CopyEncoder generateMipmapsForTexture:MetalTexture->GetMTLTexture()];
 }
 
-void FMetalCommandContext::RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState)
+void FMetalCommandContext::RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
 }
 

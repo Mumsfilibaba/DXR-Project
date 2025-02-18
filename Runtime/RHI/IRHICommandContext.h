@@ -10,6 +10,7 @@ class FRHIShader;
 class FRHIRayTracingPipelineState;
 struct FRayTracingShaderResources;
 struct FRHIRayTracingGeometryInstance;
+struct FRHITextureTransition;
 
 struct IRHICommandContext
 {
@@ -281,10 +282,9 @@ struct IRHICommandContext
     /**
      * @brief Transition the ResourceState of a Texture resource.
      * @param Texture Texture to transition ResourceState for
-     * @param BeforeState State that the Texture had before the transition
-     * @param AfterState State that the Texture have after the transition
+     * @param TextureTransition Part of the texture to transition
      */
-    virtual void RHITransitionTexture(FRHITexture* Texture, EResourceAccess BeforeState, EResourceAccess AfterState) = 0;
+    virtual void RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) = 0;
     
     /**
      * @brief Transition the ResourceState of a Buffer resource

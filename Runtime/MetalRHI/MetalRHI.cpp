@@ -103,24 +103,24 @@ FRHIRayTracingGeometry* FMetalRHI::RHICreateRayTracingGeometry(const FRHIRayTrac
     return new FMetalRayTracingGeometry(InGeometryInfo);
 }
 
-FRHIShaderResourceView* FMetalRHI::RHICreateShaderResourceView(const FRHITextureSRVDesc& Desc)
+FRHIShaderResourceView* FMetalRHI::RHICreateShaderResourceView(const FRHITextureSRVInfo& Info)
 {
-    return new FMetalShaderResourceView(GetDeviceContext(), Desc.Texture);
+    return new FMetalShaderResourceView(GetDeviceContext(), Info.Texture);
 }
 
-FRHIShaderResourceView* FMetalRHI::RHICreateShaderResourceView(const FRHIBufferSRVDesc& Desc)
+FRHIShaderResourceView* FMetalRHI::RHICreateShaderResourceView(const FRHIBufferSRVInfo& Info)
 {
-    return new FMetalShaderResourceView(GetDeviceContext(), Desc.Buffer);
+    return new FMetalShaderResourceView(GetDeviceContext(), Info.Buffer);
 }
 
-FRHIUnorderedAccessView* FMetalRHI::RHICreateUnorderedAccessView(const FRHITextureUAVDesc& Desc)
+FRHIUnorderedAccessView* FMetalRHI::RHICreateUnorderedAccessView(const FRHITextureUAVInfo& Info)
 {
-    return new FMetalUnorderedAccessView(GetDeviceContext(), Desc.Texture);
+    return new FMetalUnorderedAccessView(GetDeviceContext(), Info.Texture);
 }
 
-FRHIUnorderedAccessView* FMetalRHI::RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& Desc)
+FRHIUnorderedAccessView* FMetalRHI::RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& Info)
 {
-    return new FMetalUnorderedAccessView(GetDeviceContext(), Desc.Buffer);
+    return new FMetalUnorderedAccessView(GetDeviceContext(), Info.Buffer);
 }
 
 FRHIComputeShader* FMetalRHI::RHICreateComputeShader(const TArray<uint8>& ShaderCode)

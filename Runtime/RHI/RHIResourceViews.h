@@ -67,9 +67,9 @@ constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
     }
 }
 
-struct FRHITextureSRVDesc
+struct FRHITextureSRVInfo
 {
-    FRHITextureSRVDesc()
+    FRHITextureSRVInfo()
         : Texture(nullptr)
         , MinLODClamp(0.0f)
         , Format(EFormat::Unknown)
@@ -80,7 +80,7 @@ struct FRHITextureSRVDesc
     {
     }
 
-    FRHITextureSRVDesc(
+    FRHITextureSRVInfo(
         FRHITexture* InTexture,
         float        InMinLODClamp,
         EFormat      InFormat,
@@ -98,7 +98,7 @@ struct FRHITextureSRVDesc
     {
     }
 
-    bool operator==(const FRHITextureSRVDesc& Other) const
+    bool operator==(const FRHITextureSRVInfo& Other) const
     {
         return Texture         == Other.Texture
             && MinLODClamp     == Other.MinLODClamp
@@ -109,12 +109,12 @@ struct FRHITextureSRVDesc
             && NumSlices       == Other.NumSlices;
     }
 
-    bool operator!=(const FRHITextureSRVDesc& Other) const
+    bool operator!=(const FRHITextureSRVInfo& Other) const
     {
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FRHITextureSRVDesc& Value)
+    friend uint64 GetHashForType(const FRHITextureSRVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
         HashCombine(Hash, Value.MinLODClamp);
@@ -135,9 +135,9 @@ struct FRHITextureSRVDesc
     uint16       NumSlices;
 };
 
-struct FRHIBufferSRVDesc
+struct FRHIBufferSRVInfo
 {
-    FRHIBufferSRVDesc()
+    FRHIBufferSRVInfo()
         : Buffer(nullptr)
         , Format(EBufferSRVFormat::None)
         , FirstElement(0)
@@ -145,7 +145,7 @@ struct FRHIBufferSRVDesc
     {
     }
 
-    FRHIBufferSRVDesc(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferSRVFormat InFormat = EBufferSRVFormat::None)
+    FRHIBufferSRVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferSRVFormat InFormat = EBufferSRVFormat::None)
         : Buffer(InBuffer)
         , Format(InFormat)
         , FirstElement(InFirstElement)
@@ -153,17 +153,17 @@ struct FRHIBufferSRVDesc
     {
     }
 
-    bool operator==(const FRHIBufferSRVDesc& Other) const
+    bool operator==(const FRHIBufferSRVInfo& Other) const
     {
         return Buffer == Other.Buffer && Format == Other.Format && FirstElement == Other.FirstElement && NumElements == Other.NumElements;
     }
 
-    bool operator!=(const FRHIBufferSRVDesc& Other) const
+    bool operator!=(const FRHIBufferSRVInfo& Other) const
     {
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FRHIBufferSRVDesc& Value)
+    friend uint64 GetHashForType(const FRHIBufferSRVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
@@ -178,9 +178,9 @@ struct FRHIBufferSRVDesc
     uint32           NumElements;
 };
 
-struct FRHITextureUAVDesc
+struct FRHITextureUAVInfo
 {
-    FRHITextureUAVDesc()
+    FRHITextureUAVInfo()
         : Texture(nullptr)
         , Format(EFormat::Unknown)
         , MipLevel(0)
@@ -189,7 +189,7 @@ struct FRHITextureUAVDesc
     {
     }
 
-    FRHITextureUAVDesc(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel, uint32 InFirstArraySlice, uint32 InNumSlices)
+    FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel, uint32 InFirstArraySlice, uint32 InNumSlices)
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -198,7 +198,7 @@ struct FRHITextureUAVDesc
     {
     }
 
-    FRHITextureUAVDesc(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
+    FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -207,17 +207,17 @@ struct FRHITextureUAVDesc
     {
     }
 
-    bool operator==(const FRHITextureUAVDesc& Other) const
+    bool operator==(const FRHITextureUAVInfo& Other) const
     {
         return Texture == Other.Texture && Format == Other.Format && MipLevel == Other.MipLevel && FirstArraySlice == Other.FirstArraySlice && NumSlices == Other.NumSlices;
     }
 
-    bool operator!=(const FRHITextureUAVDesc& Other) const
+    bool operator!=(const FRHITextureUAVInfo& Other) const
     {
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FRHITextureUAVDesc& Value)
+    friend uint64 GetHashForType(const FRHITextureUAVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
@@ -234,9 +234,9 @@ struct FRHITextureUAVDesc
     uint16       NumSlices;
 };
 
-struct FRHIBufferUAVDesc
+struct FRHIBufferUAVInfo
 {
-    FRHIBufferUAVDesc()
+    FRHIBufferUAVInfo()
         : Buffer(nullptr)
         , Format(EBufferUAVFormat::None)
         , FirstElement(0)
@@ -244,7 +244,7 @@ struct FRHIBufferUAVDesc
     {
     }
 
-    FRHIBufferUAVDesc(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferUAVFormat InFormat = EBufferUAVFormat::None)
+    FRHIBufferUAVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferUAVFormat InFormat = EBufferUAVFormat::None)
         : Buffer(InBuffer)
         , Format(InFormat)
         , FirstElement(InFirstElement)
@@ -252,17 +252,17 @@ struct FRHIBufferUAVDesc
     {
     }
 
-    bool operator==(const FRHIBufferUAVDesc& Other) const
+    bool operator==(const FRHIBufferUAVInfo& Other) const
     {
         return Buffer == Other.Buffer && Format == Other.Format && FirstElement == Other.FirstElement && NumElements  == Other.NumElements;
     }
 
-    bool operator!=(const FRHIBufferUAVDesc& Other) const
+    bool operator!=(const FRHIBufferUAVInfo& Other) const
     {
         return !(*this == Other);
     }
 
-    friend uint64 GetHashForType(const FRHIBufferUAVDesc& Value)
+    friend uint64 GetHashForType(const FRHIBufferUAVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));

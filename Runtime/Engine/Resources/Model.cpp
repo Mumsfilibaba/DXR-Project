@@ -152,36 +152,36 @@ bool FMesh::Init(const FMeshCreateInfo& CreateInfo)
             RTGeometry->SetDebugName("RayTracing Geometry");
         }
 
-        FRHIBufferSRVDesc SRVInitializer(VertexBuffer.Get(), 0, VertexCount);
-        VertexBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        FRHIBufferSRVInfo SRVInfo(VertexBuffer.Get(), 0, VertexCount);
+        VertexBufferSRV = RHICreateShaderResourceView(SRVInfo);
         if (!VertexBufferSRV)
         {
             return false;
         }
         
-        SRVInitializer = FRHIBufferSRVDesc(VertexPositionBuffer.Get(), 0, VertexCount);
-        VertexPositionBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        SRVInfo = FRHIBufferSRVInfo(VertexPositionBuffer.Get(), 0, VertexCount);
+        VertexPositionBufferSRV = RHICreateShaderResourceView(SRVInfo);
         if (!VertexPositionBufferSRV)
         {
             return false;
         }
         
-        SRVInitializer = FRHIBufferSRVDesc(VertexNormalBuffer.Get(), 0, VertexCount);
-        VertexNormalBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        SRVInfo = FRHIBufferSRVInfo(VertexNormalBuffer.Get(), 0, VertexCount);
+        VertexNormalBufferSRV = RHICreateShaderResourceView(SRVInfo);
         if (!VertexNormalBufferSRV)
         {
             return false;
         }
         
-        SRVInitializer = FRHIBufferSRVDesc(VertexTexCoordBuffer.Get(), 0, VertexCount);
-        VertexTexCoordBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        SRVInfo = FRHIBufferSRVInfo(VertexTexCoordBuffer.Get(), 0, VertexCount);
+        VertexTexCoordBufferSRV = RHICreateShaderResourceView(SRVInfo);
         if (!VertexTexCoordBufferSRV)
         {
             return false;
         }
 
-        SRVInitializer = FRHIBufferSRVDesc(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::UInt32);
-        IndexBufferSRV = RHICreateShaderResourceView(SRVInitializer);
+        SRVInfo = FRHIBufferSRVInfo(IndexBuffer.Get(), 0, IndexCount, EBufferSRVFormat::UInt32);
+        IndexBufferSRV = RHICreateShaderResourceView(SRVInfo);
         if (!IndexBufferSRV)
         {
             return false;

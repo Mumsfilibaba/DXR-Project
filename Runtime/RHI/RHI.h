@@ -167,28 +167,28 @@ public:
      * @param InDesc Structure containing information about the shader resource view
      * @return Returns the newly created shader resource view
      */
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc) = 0;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new shader resource view for a buffer
      * @param InDesc Structure containing information about the shader resource view
      * @return Returns the newly created shader resource view
      */
-    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc) = 0;
+    virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) = 0;
     
     /**
      * @brief Creates a new unordered access view for a texture
      * @param InDesc Structure containing information about the unordered access view
      * @return Returns the newly created unordered access view
      */
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc) = 0;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new unordered access view for a buffer
      * @param InDesc Structure containing information about the unordered access view
      * @return Returns the newly created unordered access view
      */
-    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc) = 0;
+    virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) = 0;
 
     /**
      * @brief Creates a new compute shader
@@ -440,24 +440,24 @@ FORCEINLINE FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTra
     return GetRHI()->RHICreateRayTracingGeometry(InGeometryInfo);
 }
 
-FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVDesc& InDesc)
+FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
 {
-    return GetRHI()->RHICreateShaderResourceView(InDesc);
+    return GetRHI()->RHICreateShaderResourceView(InInfo);
 }
 
-FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVDesc& InDesc)
+FORCEINLINE FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
 {
-    return GetRHI()->RHICreateShaderResourceView(InDesc);
+    return GetRHI()->RHICreateShaderResourceView(InInfo);
 }
 
-FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVDesc& InDesc)
+FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
 {
-    return GetRHI()->RHICreateUnorderedAccessView(InDesc);
+    return GetRHI()->RHICreateUnorderedAccessView(InInfo);
 }
 
-FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVDesc& InDesc)
+FORCEINLINE FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
 {
-    return GetRHI()->RHICreateUnorderedAccessView(InDesc);
+    return GetRHI()->RHICreateUnorderedAccessView(InInfo);
 }
 
 FORCEINLINE FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode)
