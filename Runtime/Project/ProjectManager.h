@@ -15,10 +15,10 @@ public:
     }
 
 public:
-    FStringView GetProjectName()       const { return FStringView(ProjectName); }
+    FStringView GetProjectName() const { return FStringView(ProjectName); }
     FStringView GetProjectModuleName() const { return FStringView(ProjectName); }
-    FStringView GetProjectPath()       const { return FStringView(ProjectPath); }
-    FStringView GetAssetPath()         const { return FStringView(AssetPath); }
+    FStringView GetProjectPath() const { return FStringView(ProjectPath); }
+    FStringView GetAssetPath() const { return FStringView(AssetPath); }
 
 private:
     FProjectManager(const FString& InProjectName, const FString& InProjectPath, const FString& InAssetPath);
