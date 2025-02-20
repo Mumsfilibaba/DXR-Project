@@ -52,11 +52,12 @@ static TAutoConsoleVariable<int32> CVarSamplerOnlineDescriptorBlockSize(
 
 /* D3D12 Feature Support */
 
-D3D12RHI_API bool GD3D12ForceBinding          = false;
-D3D12RHI_API bool GD3D12SupportPipelineCache  = false;
-D3D12RHI_API bool GD3D12SupportTightAlignment = false;
-D3D12RHI_API bool GD3D12SupportGPUUploadHeaps = false;
-D3D12RHI_API bool GD3D12SupportBindless       = false;
+D3D12RHI_API bool GD3D12ForceBinding           = false;
+D3D12RHI_API bool GD3D12SupportPipelineCache   = false;
+D3D12RHI_API bool GD3D12SupportTightAlignment  = false;
+D3D12RHI_API bool GD3D12SupportGPUUploadHeaps  = false;
+D3D12RHI_API bool GD3D12SupportBindless        = false;
+D3D12RHI_API bool GD3D12SupportEnhancedBarriers = false;
 
 D3D12RHI_API D3D12_RESOURCE_BINDING_TIER      GD3D12ResourceBindingTier     = D3D12_RESOURCE_BINDING_TIER_1;
 D3D12RHI_API D3D12_RAYTRACING_TIER            GD3D12RayTracingTier          = D3D12_RAYTRACING_TIER_NOT_SUPPORTED;
@@ -1026,6 +1027,19 @@ void FD3D12Device::QueryFeatureSupport()
 
             GD3D12SamplerFeedbackTier = Features7.SamplerFeedbackTier;
             D3D12_INFO("[FD3D12Device] Support SamplerFeedback Tier %d", GD3D12SamplerFeedbackTier);
+        }
+    }
+
+    // Check support for enhanced barriers
+    {
+        D3D12_FEATURE_DATA_D3D12_OPTIONS12 Features12;
+        FMemory::Memzero(&Features12);
+
+        HRESULT Result = D3D12Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS12, &Features12, sizeof(D3D12_FEATURE_DATA_D3D12_OPTIONS12));
+        if (SUCCEEDED(Result))
+        {
+            GD3D12SupportEnhancedBarriers = Features12.EnhancedBarriersSupported;
+            D3D12_INFO("[FD3D12Device] Supports Enhanced Barriers: %s", GD3D12SupportEnhancedBarriers ? "true" : "false");
         }
     }
 

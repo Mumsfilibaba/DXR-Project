@@ -9,6 +9,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const TComPtr<ID3D12Resou
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc(InNativeResource->GetDesc())
     , Address(0)
+    , NumSubresources(0)
 {
 }
 
@@ -20,6 +21,7 @@ FD3D12Resource::FD3D12Resource(FD3D12Device* InDevice, const D3D12_RESOURCE_DESC
     , ResourceState(D3D12_RESOURCE_STATE_COMMON)
     , Desc(InDesc)
     , Address(0)
+    , NumSubresources(0)
 {
 }
 
@@ -41,6 +43,10 @@ bool FD3D12Resource::Initialize(D3D12_RESOURCE_STATES InitialState, const D3D12_
         }
 
         ResourceState = InitialState;
+        
+        // TODO: Fix proper plane-count
+        const uint32 ArraySize = Desc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? Desc.DepthOrArraySize : 1u;
+        NumSubresources = D3D12CalculateSubresourceCount(Desc.MipLevels, ArraySize, 1);
         return true;
     }
     else if (Result == E_OUTOFMEMORY)

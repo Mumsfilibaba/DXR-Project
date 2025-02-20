@@ -8,35 +8,37 @@
 #include "D3D12RHI/D3D12Texture.h"
 #include "D3D12RHI/D3D12CommandContextState.h"
 
+class FD3D12CommandContext;
+
 class FResourceBarrierBatcher
 {
 public:
-    FResourceBarrierBatcher();
+    FResourceBarrierBatcher(FD3D12CommandContext& InContext);
     ~FResourceBarrierBatcher();
 
-    void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState);
+    void AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES);
     void AddUnorderedAccessBarrier(ID3D12Resource* Resource);
+    void FlushBarriers();
 
-    void FlushBarriers(FD3D12CommandList& CommandList)
+    FORCEINLINE void AddTransitionBarrier(FD3D12Resource* InResource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES)
     {
-        if (!Barriers.IsEmpty())
-        {
-            CommandList->ResourceBarrier(Barriers.Size(), Barriers.Data());
-            Barriers.Clear();
-        }
+        CHECK(InResource != nullptr);
+        AddTransitionBarrier(InResource->GetD3D12Resource(), BeforeState, AfterState, SubresourceIndex);
     }
 
-    const D3D12_RESOURCE_BARRIER* GetBarriers() const
+    FORCEINLINE void AddUnorderedAccessBarrier(FD3D12Resource* InResource)
     {
-        return Barriers.Data();
+        CHECK(InResource != nullptr);
+        AddUnorderedAccessBarrier(InResource->GetD3D12Resource());
     }
 
-    uint32 GetNumBarriers() const
+    bool HasPendingBarriers() const 
     {
-        return Barriers.Size();
+        return !Barriers.IsEmpty();
     }
 
 private:
+    FD3D12CommandContext&          Context;
     TArray<D3D12_RESOURCE_BARRIER> Barriers;
 };
 
@@ -135,31 +137,14 @@ public:
         return *CommandPayload;
     }
 
-    FResourceBarrierBatcher& GetBarrierBatcher()
+    FResourceBarrierBatcher& GetResourceBarrierBatcher()
     {
-        return BarrierBatcher;
+        return ResourceBarrierBatcher;
     }
 
     ED3D12CommandQueueType GetQueueType() const
     {
         return QueueType;
-    }
-
-    void UnorderedAccessBarrier(FD3D12Resource* Resource)
-    {
-        CHECK(Resource != nullptr);
-        BarrierBatcher.AddUnorderedAccessBarrier(Resource->GetD3D12Resource());
-    }
-
-    void TransitionResource(FD3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
-    {
-        CHECK(Resource != nullptr);
-        BarrierBatcher.AddTransitionBarrier(Resource->GetD3D12Resource(), BeforeState, AfterState);
-    }
-
-    void FlushResourceBarriers()
-    { 
-        BarrierBatcher.FlushBarriers(*CommandList);
     }
 
     bool IsRecording() const
@@ -181,7 +166,7 @@ private:
     FD3D12CommandContextState ContextState;
     FD3D12QueryAllocator      TimingQueryAllocator;
     FD3D12QueryAllocator      OcclusionQueryAllocator;
-    FResourceBarrierBatcher   BarrierBatcher;
+    FResourceBarrierBatcher   ResourceBarrierBatcher;
     ED3D12CommandQueueType    QueueType;
 
     uint32 NumDrawCalls;

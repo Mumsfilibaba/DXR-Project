@@ -31,6 +31,7 @@ extern D3D12RHI_API bool GD3D12SupportPipelineCache;
 extern D3D12RHI_API bool GD3D12SupportTightAlignment;
 extern D3D12RHI_API bool GD3D12SupportGPUUploadHeaps;
 extern D3D12RHI_API bool GD3D12SupportBindless;
+extern D3D12RHI_API bool GD3D12SupportEnhancedBarriers;
 
 extern D3D12RHI_API D3D12_RESOURCE_BINDING_TIER      GD3D12ResourceBindingTier;
 extern D3D12RHI_API D3D12_RAYTRACING_TIER            GD3D12RayTracingTier;

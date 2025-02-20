@@ -41,7 +41,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     uint32 NumMipsRHI = NumMips;
     if (bGenerateMips)
     {
-        NumMipsRHI = FMath::Max<uint32>(static_cast<uint32>(FMath::Log2(static_cast<float>(FMath::Max(Width, Height)))), 1u);
+        NumMipsRHI = FTextureFactoryHelpers::TextureSizeToMiplevels(FMath::Max(Width, Height));
     }
 
     FRHITextureInfo TextureInfo = FRHITextureInfo::CreateTexture2D(Format, Width, Height, NumMipsRHI, 1, ETextureUsageFlags::ShaderResource);
@@ -55,12 +55,7 @@ bool FTexture2D::CreateRHITexture(bool bGenerateMips)
     if (bGenerateMips)
     {
         CHECK(!IsBlockCompressed(Format));
-
-        FRHICommandList CommandList;
-        CommandList.TransitionTexture(TextureRHI.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest));
-        CommandList.GenerateMips(TextureRHI.Get());
-        CommandList.TransitionTexture(TextureRHI.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        FTextureFactory::Get().GenerateMiplevels(TextureRHI.Get());
     }
 
     return true;

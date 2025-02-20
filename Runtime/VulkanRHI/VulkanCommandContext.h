@@ -130,7 +130,6 @@ public:
     }
 
 public:
-
     bool Initialize();
     void ObtainCommandBuffer();
     void FinishCommandBuffer(bool bFlushPool);

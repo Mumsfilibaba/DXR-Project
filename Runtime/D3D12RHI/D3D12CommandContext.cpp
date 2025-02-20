@@ -23,8 +23,9 @@ static TAutoConsoleVariable<int32> CVarMaxDrawCallsPerCommandList(
     "Number of draw-calls allowed before submitting the current CommandList to the GPU",
     1000);
 
-FResourceBarrierBatcher::FResourceBarrierBatcher()
-    : Barriers()
+FResourceBarrierBatcher::FResourceBarrierBatcher(FD3D12CommandContext& InContext)
+    : Context(InContext)
+    , Barriers()
 {
 }
 
@@ -32,44 +33,50 @@ FResourceBarrierBatcher::~FResourceBarrierBatcher()
 {
 }
 
-void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState)
+void FResourceBarrierBatcher::AddTransitionBarrier(ID3D12Resource* Resource, D3D12_RESOURCE_STATES BeforeState, D3D12_RESOURCE_STATES AfterState, uint32 SubresourceIndex)
 {
     CHECK(Resource != nullptr);
 
-    if (BeforeState != AfterState)
+    if (BeforeState == AfterState)
     {
-        // Make sure we are not already have transition for this resource
-        for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType Iterator = Barriers.Iterator(); !Iterator.IsEnd(); Iterator++)
-        {
-            if (Iterator->Type == D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
-            {
-                if (Iterator->Transition.pResource == Resource)
-                {
-                    if (Iterator->Transition.StateBefore == AfterState)
-                    {
-                        Barriers.RemoveAt(Iterator.GetIndex());
-                    }
-                    else
-                    {
-                        Iterator->Transition.StateAfter = AfterState;
-                    }
+        return;
+    }
 
-                    return;
-                }
-            }
+    // Make sure we are not already have transition for this resource
+    for (TArray<D3D12_RESOURCE_BARRIER>::IteratorType Iterator = Barriers.Iterator(); !Iterator.IsEnd(); Iterator++)
+    {
+        if (Iterator->Type != D3D12_RESOURCE_BARRIER_TYPE_TRANSITION)
+        {
+            continue;
         }
 
-        // Add new resource barrier
-        D3D12_RESOURCE_BARRIER Barrier;
-        FMemory::Memzero(&Barrier);
+        if (Iterator->Transition.Subresource == SubresourceIndex)
+        {
+            if (Iterator->Transition.pResource == Resource)
+            {
+                if (Iterator->Transition.StateBefore == AfterState)
+                {
+                    Barriers.RemoveAt(Iterator.GetIndex());
+                }
+                else
+                {
+                    Iterator->Transition.StateAfter = AfterState;
+                }
 
-        Barrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        Barrier.Transition.pResource   = Resource;
-        Barrier.Transition.StateAfter  = AfterState;
-        Barrier.Transition.StateBefore = BeforeState;
-        Barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        Barriers.Emplace(Barrier);
+                return;
+            }
+        }
     }
+
+    // Add new resource barrier
+    D3D12_RESOURCE_BARRIER ResourceBarrier;
+    ResourceBarrier.Type                   = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+    ResourceBarrier.Flags                  = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    ResourceBarrier.Transition.pResource   = Resource;
+    ResourceBarrier.Transition.StateAfter  = AfterState;
+    ResourceBarrier.Transition.StateBefore = BeforeState;
+    ResourceBarrier.Transition.Subresource = SubresourceIndex;
+    Barriers.Emplace(ResourceBarrier);
 }
 
 void FResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource)
@@ -89,12 +96,20 @@ void FResourceBarrierBatcher::AddUnorderedAccessBarrier(ID3D12Resource* Resource
         }
     }
 
-    D3D12_RESOURCE_BARRIER Barrier;
-    FMemory::Memzero(&Barrier);
+    D3D12_RESOURCE_BARRIER ResourceBarrier;
+    ResourceBarrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+    ResourceBarrier.Flags         = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+    ResourceBarrier.UAV.pResource = Resource;
+    Barriers.Emplace(ResourceBarrier);
+}
 
-    Barrier.Type          = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-    Barrier.UAV.pResource = Resource;
-    Barriers.Emplace(Barrier);
+void FResourceBarrierBatcher::FlushBarriers()
+{
+    if (HasPendingBarriers())
+    {
+        Context.GetCommandList()->ResourceBarrier(Barriers.Size(), Barriers.Data());
+        Barriers.Clear();
+    }
 }
 
 FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12CommandQueueType InQueueType)
@@ -106,7 +121,7 @@ FD3D12CommandContext::FD3D12CommandContext(FD3D12Device* InDevice, ED3D12Command
     , ContextState(InDevice, *this)
     , TimingQueryAllocator(InDevice, *this, EQueryType::Timestamp)
     , OcclusionQueryAllocator(InDevice, *this, EQueryType::Occlusion)
-    , BarrierBatcher()
+    , ResourceBarrierBatcher(*this)
     , QueueType(InQueueType)
     , NumDrawCalls(0)
     , bIsCapturing(false)
@@ -168,7 +183,7 @@ void FD3D12CommandContext::FinishCommandList(bool bFlushAllocator)
 {
     TRACE_FUNCTION_SCOPE();
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     // Flush Commands
     const uint32 NumCommands = CommandList->GetNumCommands();
@@ -291,7 +306,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     D3D12_HEAP_TYPE HeapType = Resource->GetHeapType();
     if (HeapType == D3D12_HEAP_TYPE_UPLOAD)
@@ -414,7 +429,7 @@ void FD3D12CommandContext::RHIQueryTimestamp(FRHIQuery* Query)
 
 void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
 {
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(RenderTargetView.Texture);
     if (!D3D12Texture)
@@ -430,7 +445,7 @@ void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& 
 
 void FD3D12CommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
 {
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(DepthStencilView.Texture);
     if (!D3D12Texture)
@@ -453,7 +468,7 @@ void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     // Ensure there are enough allocators for a new descriptor
     FD3D12LocalDescriptorHeap& ResourceHeap = ContextState.GetDescriptorCache().GetResourceHeap();
@@ -482,7 +497,7 @@ void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
 
 void FD3D12CommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
 {
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12RenderTargetView* RenderTargetViews[D3D12_MAX_RENDER_TARGET_COUNT];
     FD3D12DepthStencilView* DepthStencilView = nullptr;
@@ -751,7 +766,7 @@ void FD3D12CommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
     FD3D12Texture* D3D12Source      = GetD3D12Texture(Src);
@@ -785,7 +800,7 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
     if (!D3D12Destination)
@@ -860,7 +875,7 @@ void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Dst);
     CHECK(D3D12Destination != nullptr);
@@ -879,7 +894,7 @@ void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
     CHECK(D3D12Destination != nullptr);
@@ -904,7 +919,7 @@ void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* S
     FD3D12Texture* D3D12Source = GetD3D12Texture(Src);
     CHECK(D3D12Source != nullptr);
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     const ETextureDimension TextureDimension = Src->GetDimension();
 
@@ -968,7 +983,7 @@ void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTraci
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12RayTracingScene* D3D12RayTracingScene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
     D3D12RayTracingScene->Build(*this, BuildInfo);
@@ -982,7 +997,7 @@ void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* Ra
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12RayTracingGeometry* D3D12RayTracingGeometry = static_cast<FD3D12RayTracingGeometry*>(RayTracingGeometry);
     D3D12RayTracingGeometry->Build(*this, BuildInfo);
@@ -1210,17 +1225,17 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
     }
 
     // We assume the destination is in D3D12_RESOURCE_STATE_COPY_DEST
-    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
-    TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-    
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.AddTransitionBarrier(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_COPY_SOURCE);
+    ResourceBarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+
+    ResourceBarrierBatcher.FlushBarriers();
 
     GetCommandList()->CopyResource(StagingTexture->GetD3D12Resource(), D3D12Texture->GetD3D12Resource()->GetD3D12Resource());
 
-    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-    TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-    
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.AddTransitionBarrier(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+    ResourceBarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12ComputePipelineStateRef PipelineState = bIsTextureCube ? FD3D12RHI::GetRHI()->GetGenerateMipsPipelineTexureCube() : FD3D12RHI::GetRHI()->GetGenerateMipsPipelineTexure2D();
 
@@ -1262,18 +1277,18 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
         const uint32 ThreadsY = FMath::DivideByMultiple(DstHeight, ThreadCount);
         GetCommandList()->Dispatch(ThreadsX, ThreadsY, ThreadsZ);
 
-        UnorderedAccessBarrier(StagingTexture.Get());
+        ResourceBarrierBatcher.AddUnorderedAccessBarrier(StagingTexture.Get());
 
-        TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
-        TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
-        FlushResourceBarriers();
+        ResourceBarrierBatcher.AddTransitionBarrier(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+        ResourceBarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        ResourceBarrierBatcher.FlushBarriers();
 
         // TODO: Copy only MipLevels (Maybe faster?)
         GetCommandList()->CopyResource(D3D12Texture->GetD3D12Resource()->GetD3D12Resource(), StagingTexture.Get()->GetD3D12Resource());
 
-        TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        TransitionResource(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-        FlushResourceBarriers();
+        ResourceBarrierBatcher.AddTransitionBarrier(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        ResourceBarrierBatcher.AddTransitionBarrier(StagingTexture.Get(), D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        ResourceBarrierBatcher.FlushBarriers();
 
         DstWidth  = DstWidth / 16;
         DstHeight = DstHeight / 16;
@@ -1282,12 +1297,14 @@ void FD3D12CommandContext::RHIGenerateMips(FRHITexture* Texture)
         RemainingMiplevels       -= MipLevelsPerDispatch;
     }
 
-    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
+    ResourceBarrierBatcher.AddTransitionBarrier(D3D12Texture->GetD3D12Resource(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_COPY_DEST);
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12RHI::GetRHI()->DeferDeletion(StagingTexture.Get());
 }
+
+#pragma optimize("", off)
 
 void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
@@ -1295,8 +1312,59 @@ void FD3D12CommandContext::RHITransitionTexture(FRHITexture* Texture, const FRHI
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(TextureTransition.AfterState);
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
-    TransitionResource(D3D12Texture->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
+    CHECK(D3D12Texture != nullptr);
+
+    FD3D12Resource* D3D12Resource = D3D12Texture->GetD3D12Resource();
+    if (TextureTransition.MipLevel != RHI_ALL_MIP_LEVELS || TextureTransition.ArraySlice != RHI_ALL_ARRAY_SLICES)
+    {
+        const D3D12_RESOURCE_DESC& ResourceDesc = D3D12Resource->GetDesc();
+
+        // Texture3D has a single array-slice
+        const uint32 NumArraySlices = ResourceDesc.Dimension != D3D12_RESOURCE_DIMENSION_TEXTURE3D ? ResourceDesc.DepthOrArraySize : 1u;
+        const uint32 NumMipLevels   = ResourceDesc.MipLevels;
+
+        // Handle subresources based on if we want to transition all miplevels or arrayslices
+        if (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES)
+        {
+            CHECK(TextureTransition.MipLevel < NumMipLevels);
+
+            // Make one transition for each ArraySlice
+            for (int32 ArraySlice = 0; ArraySlice < NumArraySlices; ArraySlice++)
+            {
+                const uint32 SubresourceIndex = D3D12CalculateSubresource(TextureTransition.MipLevel, ArraySlice, 0, NumMipLevels, NumArraySlices);
+                CHECK(SubresourceIndex < D3D12Resource->GetNumSubresources());
+                ResourceBarrierBatcher.AddTransitionBarrier(D3D12Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
+            }
+        }
+        else if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)
+        {
+            CHECK(TextureTransition.ArraySlice < NumArraySlices);
+
+            // Make one transition for each MipLevel
+            for (int32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel++)
+            {
+                const uint32 SubresourceIndex = D3D12CalculateSubresource(MipLevel, TextureTransition.ArraySlice, 0, NumMipLevels, NumArraySlices);
+                CHECK(SubresourceIndex < D3D12Resource->GetNumSubresources());
+                ResourceBarrierBatcher.AddTransitionBarrier(D3D12Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
+            }
+        }
+        else
+        {
+            CHECK(TextureTransition.MipLevel < NumMipLevels);
+            CHECK(TextureTransition.ArraySlice < NumArraySlices);
+
+            const uint32 SubresourceIndex = D3D12CalculateSubresource(TextureTransition.MipLevel, TextureTransition.ArraySlice, 0, NumMipLevels, NumArraySlices);
+            CHECK(SubresourceIndex < D3D12Resource->GetNumSubresources());
+            ResourceBarrierBatcher.AddTransitionBarrier(D3D12Resource, D3D12BeforeState, D3D12AfterState, SubresourceIndex);
+        }
+    }
+    else
+    {
+        ResourceBarrierBatcher.AddTransitionBarrier(D3D12Resource, D3D12BeforeState, D3D12AfterState);
+    }
 }
+
+#pragma optimize("", on)
 
 void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)
 {
@@ -1304,19 +1372,19 @@ void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcce
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
-    TransitionResource(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
+    ResourceBarrierBatcher.AddTransitionBarrier(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
-    UnorderedAccessBarrier(D3D12Texture->GetD3D12Resource());
+    ResourceBarrierBatcher.AddUnorderedAccessBarrier(D3D12Texture->GetD3D12Resource());
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
-    UnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
+    ResourceBarrierBatcher.AddUnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
 }
 
 void FD3D12CommandContext::RHIDraw(uint32 VertexCount, uint32 StartVertexLocation)
@@ -1353,7 +1421,7 @@ void FD3D12CommandContext::ConditionalSubmitCommandListOnDrawCall()
     }
     else
     {
-        FlushResourceBarriers();
+        ResourceBarrierBatcher.FlushBarriers();
     }
 
     ContextState.BindGraphicsStates();
@@ -1362,7 +1430,7 @@ void FD3D12CommandContext::ConditionalSubmitCommandListOnDrawCall()
 
 void FD3D12CommandContext::RHIDispatch(uint32 ThreadGroupCountX, uint32 ThreadGroupCountY, uint32 ThreadGroupCountZ)
 {
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     ContextState.BindComputeState();
     GetCommandList()->Dispatch(ThreadGroupCountX, ThreadGroupCountY, ThreadGroupCountZ);
@@ -1384,7 +1452,7 @@ void FD3D12CommandContext::RHIDispatchRays(FRHIRayTracingScene* RayTracingScene,
         return;
     }
 
-    FlushResourceBarriers();
+    ResourceBarrierBatcher.FlushBarriers();
 
     D3D12_DISPATCH_RAYS_DESC RayDispatchDesc;
     FMemory::Memzero(&RayDispatchDesc);

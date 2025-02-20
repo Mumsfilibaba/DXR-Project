@@ -1,26 +1,13 @@
- #include "Structs.hlsli"
+#include "Structs.hlsli"
 #include "Constants.hlsli"
 
-/*
-* Based on GenerateMipsCS.hlsli by Microsoft
-* https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
-*/
+// Based on GenerateMipsCS.hlsli by Microsoft
+// https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/MiniEngine/Core/Shaders/GenerateMipsCS.hlsli
 
 //#define CONFIG_CUBE_MAP			1
 #define BLOCK_SIZE (8)
 #define CHANNEL_COMPONENTS (BLOCK_SIZE * BLOCK_SIZE)
 #define CONFIG_POWER_OF_TWO (1)
-
-#define RootSig \
-    "RootFlags(0), " \
-    "RootConstants(b0, space = 1, num32BitConstants = 4), " \
-    "DescriptorTable(SRV(t0, numDescriptors = 1))," \
-    "DescriptorTable(UAV(u0, numDescriptors = 4))," \
-    "StaticSampler(s0," \
-        "addressU = TEXTURE_ADDRESS_WRAP," \
-        "addressV = TEXTURE_ADDRESS_WRAP," \
-        "addressW = TEXTURE_ADDRESS_WRAP," \
-        "filter = FILTER_MIN_MAG_MIP_LINEAR)"
 
 // Input
 #if CONFIG_CUBE_MAP
@@ -123,7 +110,6 @@ static const float3x3 RotateUV[6] =
 };
 #endif
 
-[RootSignature(RootSig)]
 [numthreads(BLOCK_SIZE, BLOCK_SIZE, 1)]
 void Main(FComputeShaderInput Input)
 {
@@ -139,7 +125,7 @@ void Main(FComputeShaderInput Input)
     float4 Src1 = SourceMip.SampleLevel(LinearSampler, TexCoord, Constants.SrcMipLevel);
 #elif CONFIG_POWER_OF_TWO
     float2 TexCoord = Constants.TexelSize * (Input.DispatchThreadID.xy + 0.5f);
-    float4 Src1		= SourceMip.SampleLevel(LinearSampler, TexCoord, Constants.SrcMipLevel);
+    float4 Src1     = SourceMip.SampleLevel(LinearSampler, TexCoord, Constants.SrcMipLevel);
 #else
     #error "Not supported yet"
 #endif

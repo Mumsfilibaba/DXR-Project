@@ -168,12 +168,7 @@ FRHITexture* FTextureFactory::LoadFromMemory(const uint8* Pixels, uint32 Width, 
 
     if (bGenerateMips && NumMiplevels > 1)
     {
-        FRHICommandList CommandList;
-        CommandList.TransitionTexture(Texture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopyDest));
-        CommandList.GenerateMips(Texture.Get());
-        CommandList.TransitionTexture(Texture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
-
-        FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+        GenerateMiplevels(Texture.Get());
     }
 
     return Texture.ReleaseOwnership();
@@ -230,11 +225,11 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         struct FCubeMapGenConstants
         {
             uint32 CubeMapSize;
-        } CB0;
+        } ShaderConstantData;
 
-        CB0.CubeMapSize = StagingTexture->GetExtent().X;
+        ShaderConstantData.CubeMapSize = StagingTexture->GetExtent().X;
 
-        CommandList.Set32BitShaderConstants(PanoramCS.Get(), &CB0, 1);
+        CommandList.Set32BitShaderConstants(PanoramCS.Get(), &ShaderConstantData, 1);
         CommandList.SetUnorderedAccessView(PanoramCS.Get(), StagingTextureUAV.Get(), 0);
 
         FRHIShaderResourceView* PanoramaSourceView = Source->GetShaderResourceView();
@@ -243,8 +238,8 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
         CommandList.SetSamplerState(PanoramCS.Get(), LinearSampler.Get(), 0);
 
         constexpr uint32 LocalWorkGroupCount = 16;
-        const uint32 ThreadsX = FMath::DivideByMultiple(CB0.CubeMapSize, LocalWorkGroupCount);
-        const uint32 ThreadsY = FMath::DivideByMultiple(CB0.CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsX = FMath::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
+        const uint32 ThreadsY = FMath::DivideByMultiple(ShaderConstantData.CubeMapSize, LocalWorkGroupCount);
         CommandList.Dispatch(ThreadsX, ThreadsY, 6);
 
         CommandList.TransitionTexture(Source, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
@@ -255,18 +250,18 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
             CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
             CommandList.CopyTexture(Dest, StagingTexture.Get());
+
+            CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::PixelShaderResource));
         }
         else
         {
-            CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::CopyDest));
+            CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::UnorderedAccess, EResourceAccess::PixelShaderResource));
         }
 
         if (bGenerateMips)
         {
-            CommandList.GenerateMips(Dest);
+            GenerateMiplevels(CommandList, Dest);
         }
-
-        CommandList.TransitionTexture(Dest, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
 
         FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
     }
@@ -275,6 +270,17 @@ bool FTextureFactory::TextureCubeFromPanorma(FRHITexture* Source, FRHITexture* D
 }
 
 bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture)
+{
+    // Schedule miplevel generation without an existing CommandList
+    FRHICommandList CommandList;
+    GenerateMiplevels(CommandList, Texture);
+
+    // Then execute immediately
+    FRHICommandListExecutor::Get().ExecuteCommandList(CommandList);
+    return true;
+}
+
+bool FTextureFactory::GenerateMiplevels(FRHICommandList& CommandList, FRHITexture* Texture)
 {
     CHECK(IsEnumFlagSet(Texture->GetFlags(), ETextureUsageFlags::ShaderResource));
 
@@ -315,6 +321,26 @@ bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture)
     const uint32 NumMipLevels  = StagingTexture->GetNumMipLevels();
     const uint32 NumDispatches = FMath::AlignUp<uint32>(NumMipLevels, MipLevelsPerDispatch) / MipLevelsPerDispatch;
 
+    // Create a SRV for source mips
+    FRHITextureSRVInfo SRVInfo;
+    SRVInfo.Texture         = StagingTexture.Get();
+    SRVInfo.Format          = StagingTexture->GetFormat();
+    SRVInfo.FirstArraySlice = 0;
+    SRVInfo.NumSlices       = 1;
+    SRVInfo.MinLODClamp     = 0;
+    SRVInfo.NumMips         = 1;
+
+    TArray<FRHIShaderResourceViewRef> ShaderResourceViews;
+    ShaderResourceViews.Reserve(NumDispatches);
+
+    for (int32 MipLevel = 0; MipLevel < NumMipLevels; MipLevel += MipLevelsPerDispatch)
+    {
+        SRVInfo.FirstMipLevel = MipLevel;
+
+        FRHIShaderResourceView* ShaderResourceView = RHICreateShaderResourceView(SRVInfo);
+        ShaderResourceViews.Emplace(ShaderResourceView);
+    }
+
     // Create UAV for each miplevel
     FRHITextureUAVInfo UAVInfo;
     UAVInfo.Texture         = StagingTexture.Get();
@@ -334,83 +360,113 @@ bool FTextureFactory::GenerateMiplevels(FRHITexture* Texture)
         UnorderedAccessViews.Emplace(UnorderedAccessView);
     }
 
-    FRHIShaderResourceView* ShaderResourceView = StagingTexture->GetShaderResourceView();
-
-    // Schedule work on the GPU
+    // Copy the texture over to the staging-resource
+    if (!bDestSupportUAV)
     {
-        FRHICommandList CommandList;
+        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::CopySource));
+        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
 
-        // Copy the texture over to the staging-resource
-        if (!bDestSupportUAV)
-        {
-            CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::CopySource));
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::Common, EResourceAccess::CopyDest));
+        CommandList.CopyTexture(StagingTexture.Get(), Texture);
 
-            CommandList.CopyTexture(StagingTexture.Get(), Texture);
+        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
+    }
+    else
+    {
+        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::PixelShaderResource, EResourceAccess::NonPixelShaderResource));
+    }
 
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::UnorderedAccess));
-            CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::NonPixelShaderResource));
-        }
-        else
-        {
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::UnorderedAccess));
-        }
+    // Determine which compute-shader and pipeline-state to use
+    FRHIComputeShaderRef        ComputeShader = bIsTextureCube ? GenerateMipsTexCube_CS  : GenerateMipsTex2D_CS;
+    FRHIComputePipelineStateRef PipelineState = bIsTextureCube ? GenerateMipsTexCube_PSO : GenerateMipsTex2D_PSO;
+    CommandList.SetComputePipelineState(PipelineState.Get());
 
-        // Determine which compute-shader and pipeline-state to use
-        FRHIComputeShaderRef        ComputeShader = bIsTextureCube ? GenerateMipsTexCube_CS  : GenerateMipsTex2D_CS;
-        FRHIComputePipelineStateRef PipelineState = bIsTextureCube ? GenerateMipsTexCube_PSO : GenerateMipsTex2D_PSO;
-        CommandList.SetComputePipelineState(PipelineState.Get());
+    struct FGenMipsConstants
+    {
+        uint32   SrcMipLevel;  // MipLevel to read from
+        uint32   NumMipLevels; // Number of MipLevels we want to create (Up to 4)
+        FVector2 TexelSize;    // Size of the first destination miplevel
+    } ShaderConstantData;
 
-        struct FGenMipsConstants
-        {
-            uint32   SrcMipLevel;  // MipLevel to read from
-            uint32   NumMipLevels; // Number of MipLevels we want to create (Up to 4)
-            FVector2 TexelSize;    // Size of 
-        } ConstantData;
+    // Start with size of the destination to be divided by 2 since we are starting with mip 1
+    const FIntVector3 TextureExtent = StagingTexture->GetExtent();
+    uint32 DstWidth  = static_cast<uint32>(TextureExtent.X) / 2;
+    uint32 DstHeight = static_cast<uint32>(TextureExtent.Y) / 2;
+    ShaderConstantData.SrcMipLevel = 0;
 
-        const FIntVector3 TextureExtent = StagingTexture->GetExtent();
-        uint32 DstWidth  = static_cast<uint32>(TextureExtent.X);
-        uint32 DstHeight = static_cast<uint32>(TextureExtent.Y);
-        ConstantData.SrcMipLevel = 0;
+    constexpr uint32 NumThreadsTexture2D   = 1;
+    constexpr uint32 NumThreadsTextureCube = 6;
+    const uint32 ThreadsZ = bIsTextureCube ? NumThreadsTextureCube : NumThreadsTexture2D;
 
-        constexpr uint32 NumThreadsTexture2D   = 1;
-        constexpr uint32 NumThreadsTextureCube = 6;
-        const uint32 ThreadsZ = bIsTextureCube ? NumThreadsTextureCube : NumThreadsTexture2D;
+    // First miplevel is already finished and will be used as source
+    uint32 RemainingMiplevels = NumMipLevels - 1;
+    for (uint32 DispatchIndex = 0; DispatchIndex < NumDispatches; DispatchIndex++)
+    {
+        ShaderConstantData.TexelSize = FVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
+
+        const uint32 NumMipLevelsThisBatch = FMath::Min<uint32>(MipLevelsPerDispatch, RemainingMiplevels);
+        ShaderConstantData.NumMipLevels = NumMipLevelsThisBatch;
+
+        constexpr uint32 NumConstants = sizeof(FGenMipsConstants) / sizeof(uint32);
+        CommandList.Set32BitShaderConstants(ComputeShader.Get(), &ShaderConstantData, NumConstants);
 
         // Bind the original texture
-        CommandList.SetShaderResourceView(ComputeShader.Get(), ShaderResourceView, 0);
+        CommandList.SetShaderResourceView(ComputeShader.Get(), ShaderResourceViews[DispatchIndex].Get(), 0);
 
-        uint32 RemainingMiplevels = NumMipLevels;
-        for (uint32 Index = 0; Index < NumDispatches; Index++)
+        // This is the first miplevel to process, the first miplevel is skipped since that is just used for reading
+        const uint32 FirstMipLevelThisBatch = DispatchIndex * MipLevelsPerDispatch;
+
+        // Bind all the UAVs that needs processing this batch
+        for (int32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
         {
-            ConstantData.TexelSize    = FVector2(1.0f / static_cast<float>(DstWidth), 1.0f / static_cast<float>(DstHeight));
-            ConstantData.NumMipLevels = FMath::Min<uint32>(MipLevelsPerDispatch, RemainingMiplevels);
-
-            constexpr uint32 NumConstants = sizeof(FGenMipsConstants) / sizeof(uint32);
-            CommandList.Set32BitShaderConstants(ComputeShader.Get(), &ConstantData, NumConstants);
-
-            const uint32 CurrentMipLevel = Index * MipLevelsPerDispatch;
-            CommandList.SetUnorderedAccessView(ComputeShader.Get(), UnorderedAccessViews[CurrentMipLevel + 0].Get(), 0);
-            CommandList.SetUnorderedAccessView(ComputeShader.Get(), UnorderedAccessViews[CurrentMipLevel + 1].Get(), 0);
-            CommandList.SetUnorderedAccessView(ComputeShader.Get(), UnorderedAccessViews[CurrentMipLevel + 2].Get(), 0);
-            CommandList.SetUnorderedAccessView(ComputeShader.Get(), UnorderedAccessViews[CurrentMipLevel + 3].Get(), 0);
-
-            constexpr uint32 ThreadCount = 8;
-            const uint32 ThreadsX = FMath::DivideByMultiple(DstWidth, ThreadCount);
-            const uint32 ThreadsY = FMath::DivideByMultiple(DstHeight, ThreadCount);
-            CommandList.Dispatch(ThreadsX, ThreadsY, ThreadsZ);
-
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 1));
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 2));
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 3));
-            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 4));
-
-            DstWidth  = DstWidth / 16;
-            DstHeight = DstHeight / 16;
-
-            ConstantData.SrcMipLevel += 3;
-            RemainingMiplevels -= MipLevelsPerDispatch;
+            const uint32 CurrentMipLevel = FirstMipLevelThisBatch + MipIndex;
+            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::NonPixelShaderResource, EResourceAccess::UnorderedAccess, CurrentMipLevel + 1));
+            CommandList.SetUnorderedAccessView(ComputeShader.Get(), UnorderedAccessViews[CurrentMipLevel].Get(), MipIndex);
         }
+
+        // Bind null UAVs for all other bindings
+        for (int32 MipIndex = NumMipLevelsThisBatch; MipIndex < MipLevelsPerDispatch; MipIndex++)
+        {
+            CommandList.SetUnorderedAccessView(ComputeShader.Get(), nullptr, MipIndex);
+        }
+
+        // Dispatch work
+        constexpr uint32 ThreadCount = 8;
+        const uint32 ThreadsX = FMath::DivideByMultiple(DstWidth, ThreadCount);
+        const uint32 ThreadsY = FMath::DivideByMultiple(DstHeight, ThreadCount);
+        CommandList.Dispatch(ThreadsX, ThreadsY, ThreadsZ);
+
+        // Transition all resources back
+        for (int32 MipIndex = 0; MipIndex < NumMipLevelsThisBatch; MipIndex++)
+        {
+            const uint32 CurrentMipLevel = FirstMipLevelThisBatch + MipIndex;
+            CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::MakePartial(EResourceAccess::UnorderedAccess, EResourceAccess::NonPixelShaderResource, CurrentMipLevel + 1));
+        }
+
+        // Bind null UAVs for all other bindings
+        for (int32 MipIndex = NumMipLevelsThisBatch; MipIndex < MipLevelsPerDispatch; MipIndex++)
+        {
+            CommandList.SetUnorderedAccessView(ComputeShader.Get(), nullptr, MipIndex);
+        }
+
+        DstWidth  = DstWidth / 16;
+        DstHeight = DstHeight / 16;
+
+        RemainingMiplevels -= MipLevelsPerDispatch;
+    }
+
+    // Copy the staging-resource to the texture
+    if (!bDestSupportUAV)
+    {
+        CommandList.TransitionTexture(StagingTexture.Get(), FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::CopySource));
+        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::CopySource, EResourceAccess::CopyDest));
+
+        CommandList.CopyTexture(Texture, StagingTexture.Get());
+
+        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::CopyDest, EResourceAccess::PixelShaderResource));
+    }
+    else
+    {
+        CommandList.TransitionTexture(Texture, FRHITextureTransition::Make(EResourceAccess::NonPixelShaderResource, EResourceAccess::PixelShaderResource));
     }
 
     return true;

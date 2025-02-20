@@ -1059,6 +1059,11 @@ constexpr uint32 D3D12CalculateSubresource(uint32 MipSlice, uint32 ArraySlice, u
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
 }
 
+constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint32 ArraySize, uint32 PlaneCount) noexcept
+{
+    return MipLevels * ArraySize * PlaneCount;
+}
+
 constexpr uint32 D3D12CalculateArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
 {
     if (IsTextureCube(Dimension))

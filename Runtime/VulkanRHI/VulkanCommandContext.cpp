@@ -1270,22 +1270,55 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, const FRH
         VkImageMemoryBarrier2 ImageBarrier;
         FMemory::Memzero(&ImageBarrier);
 
-        ImageBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-        ImageBarrier.newLayout                       = NewLayout;
-        ImageBarrier.oldLayout                       = PreviousLayout;
-        ImageBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
-        ImageBarrier.image                           = VulkanTexture->GetVkImage();
-        ImageBarrier.srcAccessMask                   = ConvertResourceStateToAccessFlags(TextureTransition.BeforeState);
-        ImageBarrier.dstAccessMask                   = ConvertResourceStateToAccessFlags(TextureTransition.AfterState);
-        ImageBarrier.srcStageMask                    = ConvertResourceStateToPipelineStageFlags(TextureTransition.BeforeState);
-        ImageBarrier.dstStageMask                    = ConvertResourceStateToPipelineStageFlags(TextureTransition.AfterState);
-        ImageBarrier.subresourceRange.aspectMask     = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
-        ImageBarrier.subresourceRange.baseArrayLayer = 0;
-        ImageBarrier.subresourceRange.baseMipLevel   = 0;
-        ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-        ImageBarrier.subresourceRange.levelCount     = VK_REMAINING_MIP_LEVELS;
-        
+        ImageBarrier.sType                       = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+        ImageBarrier.newLayout                   = NewLayout;
+        ImageBarrier.oldLayout                   = PreviousLayout;
+        ImageBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+        ImageBarrier.image                       = VulkanTexture->GetVkImage();
+        ImageBarrier.srcAccessMask               = ConvertResourceStateToAccessFlags(TextureTransition.BeforeState);
+        ImageBarrier.dstAccessMask               = ConvertResourceStateToAccessFlags(TextureTransition.AfterState);
+        ImageBarrier.srcStageMask                = ConvertResourceStateToPipelineStageFlags(TextureTransition.BeforeState);
+        ImageBarrier.dstStageMask                = ConvertResourceStateToPipelineStageFlags(TextureTransition.AfterState);
+        ImageBarrier.subresourceRange.aspectMask = GetImageAspectFlagsFromFormat(VulkanTexture->GetVkFormat());
+
+        // Handle miplevels
+        if (TextureTransition.MipLevel == RHI_ALL_MIP_LEVELS)
+        {
+            ImageBarrier.subresourceRange.baseMipLevel = 0;
+            ImageBarrier.subresourceRange.levelCount   = VK_REMAINING_MIP_LEVELS;
+        }
+        else
+        {
+            ImageBarrier.subresourceRange.baseMipLevel = TextureTransition.MipLevel;
+            ImageBarrier.subresourceRange.levelCount   = 1;
+        }
+
+        // Handle array-slices
+        if (TextureTransition.ArraySlice == RHI_ALL_ARRAY_SLICES)
+        {
+            ImageBarrier.subresourceRange.baseArrayLayer = 0;
+            ImageBarrier.subresourceRange.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+        }
+        else
+        {
+            uint32 LayerCount;
+            uint32 BaseArrayLayer;
+            if (IsTextureCube(VulkanTexture->GetDimension()))
+            {
+                BaseArrayLayer = TextureTransition.ArraySlice * RHI_NUM_CUBE_FACES;
+                LayerCount     = RHI_NUM_CUBE_FACES;
+            }
+            else
+            {
+                BaseArrayLayer = TextureTransition.ArraySlice;
+                LayerCount     = 1u;
+            }
+
+            ImageBarrier.subresourceRange.baseArrayLayer = TextureTransition.ArraySlice;
+            ImageBarrier.subresourceRange.layerCount     = 1;
+        }
+
         CHECK(!IsInsideRenderPass());
         BarrierBatcher.AddImageMemoryBarrier(0, ImageBarrier);
     }

@@ -1,5 +1,23 @@
 #pragma once
-#include <cassert>
+
+#ifndef ENABLE_ASSERTS
+    #if !defined(PRODUCTION_BUILD)
+        #define ENABLE_ASSERTS (1)
+    #else
+        #define ENABLE_ASSERTS (0)
+    #endif
+#endif
+
+#if ENABLE_ASSERTS
+    #ifdef NDEBUG
+        #undef NDEBUG
+        #include <cassert>
+        #define NDEBUG
+    #else
+        #include <cassert>
+    #endif
+#endif
+
 #include <cstdint>
 #include <cstddef> // For std::max_align_t and offsetof
 #include <new>     // For __STDCPP_DEFAULT_NEW_ALIGNMENT__
@@ -166,14 +184,6 @@
 #endif
 
 // Assertion Control
-#ifndef ENABLE_ASSERTS
-    #if !defined(PRODUCTION_BUILD)
-        #define ENABLE_ASSERTS (1)
-    #else
-        #define ENABLE_ASSERTS (0)
-    #endif
-#endif
-
 #if ENABLE_ASSERTS
     #define CHECK(Condition) assert(Condition)
 #else

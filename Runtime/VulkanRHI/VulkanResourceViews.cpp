@@ -236,17 +236,17 @@ bool FVulkanShaderResourceView::InitializeTextureSRV(const FRHITextureSRVInfo& I
         }
     }
 
-    uint32 BaseArrayLayer;
     uint32 LayerCount;
+    uint32 BaseArrayLayer;
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
         BaseArrayLayer = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
-        LayerCount = FMath::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
+        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
     }
     else
     {
         BaseArrayLayer = InInfo.FirstArraySlice;
-        LayerCount = FMath::Max<uint16>(InInfo.NumSlices, 1u);
+        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u);
     }
 
     const VkImage Image = VulkanTexture->GetVkImage();
@@ -349,17 +349,17 @@ bool FVulkanUnorderedAccessView::InitializeTextureUAV(const FRHITextureUAVInfo& 
         }
     }
 
-    uint32 BaseArrayLayer;
     uint32 LayerCount;
+    uint32 BaseArrayLayer;
     if (IsTextureCube(VulkanTexture->GetDimension()))
     {
         BaseArrayLayer = InInfo.FirstArraySlice * RHI_NUM_CUBE_FACES;
-        LayerCount = RHI_NUM_CUBE_FACES;
+        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u) * RHI_NUM_CUBE_FACES;
     }
     else
     {
         BaseArrayLayer = InInfo.FirstArraySlice;
-        LayerCount = 1u;
+        LayerCount     = FMath::Max<uint16>(InInfo.NumSlices, 1u);
     }
 
     const VkImage Image = VulkanTexture->GetVkImage();
