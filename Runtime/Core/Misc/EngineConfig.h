@@ -54,7 +54,6 @@ struct FConfigValue
     FString CurrentValue;
 };
 
-
 struct CORE_API FConfigSection
 {
     FConfigSection();
@@ -79,7 +78,6 @@ struct CORE_API FConfigSection
     FString                     Name;
     TMap<FString, FConfigValue> Values;
 };
-
 
 struct CORE_API FConfigFile
 {
@@ -139,7 +137,6 @@ struct CORE_API FConfigFile
     TMap<FString, FConfigSection> Sections;
 };
 
-
 extern CORE_API FConfigFile* GConfig;
 
 class CORE_API FConfig
@@ -149,12 +146,12 @@ public:
     static void Release();
 
     FConfigFile* LoadFile(const FString& Filename);
-    
+
     void LoadConsoleVariables();
 
 private:
     FConfig();
 
     TMap<FString, FConfigFile> ConfigFiles;
-    static FConfig* GInstance;
+    static FConfig* GlobalConfig;
 };

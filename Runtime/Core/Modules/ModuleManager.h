@@ -73,17 +73,6 @@ class CORE_API FModuleManager
     friend class TOptional<FModuleManager>;
 
 public:
-    
-    /**
-     * @brief Delegate for when a static module is loaded into the engine 
-     */
-    DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, FModuleInterface*);
-
-    /** 
-     * @brief Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments 
-     */
-    DECLARE_EVENT(FModuleLoadedDelegate, FModuleManager, const CHAR*, FModuleInterface*);
-    FModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
     /** 
      * @return Returns a reference to the ModuleManager 
@@ -99,6 +88,19 @@ public:
      * @brief ReleaseAllLoadedModules and Destroy the module manager, after this no more modules can be accessed 
      */
     static void Shutdown();
+
+public:
+
+    /**
+     * @brief Delegate for when a static module is loaded into the engine 
+     */
+    DECLARE_RETURN_DELEGATE(FInitializeStaticModuleDelegate, FModuleInterface*);
+
+    /** 
+     * @brief Delegate for when a new module is loaded into the engine, name and IModule pointer is the arguments 
+     */
+    DECLARE_EVENT(FModuleLoadedDelegate, FModuleManager, const CHAR*, FModuleInterface*);
+    FModuleLoadedDelegate GetModuleLoadedDelegate() { return ModuleLoadedDelegate; }
 
     /**
      * @brief Load a new module into the engine
@@ -234,11 +236,11 @@ protected:
         return static_cast<uint32>(Modules.Size());
     }
 
-    FModuleLoadedDelegate     ModuleLoadedDelegate;
-
     typedef TPair<FString, FInitializeStaticModuleDelegate> FStaticModulePair;
     TArray<FStaticModulePair> StaticModuleDelegates;
     FCriticalSection          StaticModuleDelegatesCS;
+
+    FModuleLoadedDelegate     ModuleLoadedDelegate;
 
     TArray<FModuleData>       Modules;
     FCriticalSection          ModulesCS;

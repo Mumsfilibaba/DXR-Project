@@ -10,8 +10,8 @@ static TAutoConsoleVariable<bool> CVarModuleManagerBreakOnError(
 // know when FModuleManager::Get() is called from the TStaticModuleInitializers
 static TOptional<FModuleManager>& GetModuleManagerInstance()
 {
-    static TOptional<FModuleManager> GInstance(InPlace);
-    return GInstance;
+    static TOptional<FModuleManager> StaticModuleManager(InPlace);
+    return StaticModuleManager;
 }
 
 FModuleManager& FModuleManager::Get()

@@ -7,7 +7,7 @@
 
 IMPLEMENT_ENGINE_MODULE(FModuleInterface, Project);
 
-FProjectManager* FProjectManager::GInstance = nullptr;
+FProjectManager* FProjectManager::Instance = nullptr;
 
 FProjectManager::FProjectManager(const FString& InProjectName, const FString& InProjectPath, const FString& InAssetPath)
     : ProjectName(InProjectName)
@@ -33,9 +33,9 @@ bool FProjectManager::Initialize()
         return false;
     }
 
-    if (!GInstance)
+    if (!Instance)
     {
-        GInstance = new FProjectManager(ProjectName, ProjectPath, AssetFolderPath);
+        Instance = new FProjectManager(ProjectName, ProjectPath, AssetFolderPath);
     }
 
 #if !PRODUCTION_BUILD
@@ -49,15 +49,9 @@ bool FProjectManager::Initialize()
 
 void FProjectManager::Release()
 {
-    if (GInstance)
+    if (Instance)
     {
-        delete GInstance;
-        GInstance = nullptr;
+        delete Instance;
+        Instance = nullptr;
     }
-}
-
-FProjectManager& FProjectManager::Get()
-{
-    CHECK(GInstance != nullptr);
-    return *GInstance;
 }

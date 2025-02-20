@@ -12,9 +12,11 @@ class CORE_API FTaskWorkerThread : public FRunnable
 public:
     FTaskWorkerThread();
     virtual ~FTaskWorkerThread();
-    
+
     virtual bool Start() override final;
+    
     virtual int32 Run() override final;
+
     virtual void Stop() override final;
 
     bool Create(const CHAR* InThreadName);
@@ -36,10 +38,10 @@ public:
 
     static bool IsMultithreaded();
 
-    static FTaskManager& Get()
+    static FORCEINLINE FTaskManager& Get()
     {
-        CHECK(GInstance != nullptr);
-        return *GInstance;
+        CHECK(Instance != nullptr);
+        return *Instance;
     }
 
 public:
@@ -68,5 +70,5 @@ private:
     FCriticalSection            TaskQueueCS;
     bool                        bIsRunning;
 
-    static FTaskManager* GInstance;
+    static FTaskManager* Instance;
 };

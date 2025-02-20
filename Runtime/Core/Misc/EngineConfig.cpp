@@ -180,7 +180,7 @@ void FConfigFile::DumpToString(FString& OutString)
 
 FConfigFile* GConfig = nullptr;
 
-FConfig* FConfig::GInstance = nullptr;
+FConfig* FConfig::GlobalConfig = nullptr;
 
 FConfig::FConfig()
     : ConfigFiles()
@@ -189,11 +189,11 @@ FConfig::FConfig()
 
 bool FConfig::Initialize()
 {
-    CHECK(GInstance == nullptr);
+    CHECK(GlobalConfig == nullptr);
     
     // TODO: Only have the name of the file
-    GInstance = new FConfig();
-    if (FConfigFile* NewFile = GInstance->LoadFile(ENGINE_LOCATION"/Engine.ini"))
+    GlobalConfig = new FConfig();
+    if (FConfigFile* NewFile = GlobalConfig->LoadFile(ENGINE_LOCATION"/Engine.ini"))
     {
         GConfig = NewFile;
     }
@@ -202,16 +202,16 @@ bool FConfig::Initialize()
         LOG_WARNING("Did not find 'Engine.ini'");
     }
 
-    GInstance->LoadConsoleVariables();
+    GlobalConfig->LoadConsoleVariables();
     return true;
 }
 
 void FConfig::Release()
 {
-    if (GInstance)
+    if (GlobalConfig)
     {
-        delete GInstance;
-        GInstance = nullptr;
+        delete GlobalConfig;
+        GlobalConfig = nullptr;
 
         // Invalidate pointer after the config is deleted
         GConfig = nullptr;
