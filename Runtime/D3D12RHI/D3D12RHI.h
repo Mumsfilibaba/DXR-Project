@@ -94,9 +94,6 @@ public:
     void ProcessPendingCommands();
     void SubmitCommands(FD3D12CommandPayload* CommandPayload, bool bFlushDeletionQueue);
 
-    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexure2D()   const { return GenerateMipsTex2D_PSO; }
-    FD3D12ComputePipelineStateRef GetGenerateMipsPipelineTexureCube() const { return GenerateMipsTexCube_PSO; }
-    
     FD3D12Adapter* GetAdapter() const
     {
         return Adapter;
@@ -121,8 +118,6 @@ private:
     FD3D12CommandContext*         DirectCommandContext;
     TArray<FD3D12DeferredObject>  DeletionQueue;
     FCriticalSection              DeletionQueueCS;
-    FD3D12ComputePipelineStateRef GenerateMipsTex2D_PSO;
-    FD3D12ComputePipelineStateRef GenerateMipsTexCube_PSO;
     FCommandPayloadQueue          PendingSubmissions;
     FSamplerStateMap              SamplerStateMap;
     FCriticalSection              SamplerStateMapCS;

@@ -716,22 +716,6 @@ DECLARE_RHICOMMAND(FRHICommandSetRayTracingBindings)
     uint32                            NumHitGroupResources;
 };
 
-DECLARE_RHICOMMAND(FRHICommandGenerateMips)
-{
-    FORCEINLINE FRHICommandGenerateMips(FRHITexture* InTexture)
-        : Texture(InTexture)
-    {
-        CHECK(Texture != nullptr);
-    }
-
-    FORCEINLINE void Execute(IRHICommandContext& CommandContext)
-    {
-        CommandContext.RHIGenerateMips(Texture);
-    }
-
-    FRHITexture* Texture;
-};
-
 DECLARE_RHICOMMAND(FRHICommandTransitionTexture)
 {
     FORCEINLINE FRHICommandTransitionTexture(FRHITexture* InTexture, const FRHITextureTransition& InTextureTransition)

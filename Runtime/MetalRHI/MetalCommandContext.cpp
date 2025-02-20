@@ -375,20 +375,6 @@ void FMetalCommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTrac
 {
 }
 
-void FMetalCommandContext::RHIGenerateMips(FRHITexture* Texture)
-{
-    FMetalTexture* MetalTexture = GetMetalTexture(Texture);
-    CHECK(MetalTexture != nullptr);
-    
-    // Cannot call generatemips inside of a RenderPass
-    CHECK(GraphicsEncoder == nil);
-    
-    CopyContext.StartEncoder(CommandBuffer);
-    
-    id<MTLBlitCommandEncoder> CopyEncoder = CopyContext.GetMTLCopyEncoder();
-    [CopyEncoder generateMipmapsForTexture:MetalTexture->GetMTLTexture()];
-}
-
 void FMetalCommandContext::RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
 }

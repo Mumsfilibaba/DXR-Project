@@ -324,11 +324,6 @@ public:
         EmplaceCommand<FRHICommandSetRayTracingBindings>(RayTracingScene, PipelineState, GlobalResource, RayGenLocalResources, MissLocalResources, HitGroupResources, NumHitGroupResources);
     }
 
-    FORCEINLINE void GenerateMips(FRHITexture* Texture) noexcept
-    {
-        EmplaceCommand<FRHICommandGenerateMips>(Texture);
-    }
-
     FORCEINLINE void TransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) noexcept
     {
         EmplaceCommand<FRHICommandTransitionTexture>(Texture, TextureTransition);

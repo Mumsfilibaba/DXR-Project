@@ -14,11 +14,11 @@ struct FRHITextureTransition;
 
 struct IRHICommandContext
 {
-    /** 
+    /**
      * @brief Begin Frame on the RHIThread
      */
     virtual void RHIBeginFrame() = 0;
-    
+
     /**
      * @brief End Frame on the RHIThread
      */
@@ -35,7 +35,7 @@ struct IRHICommandContext
     virtual void RHIFinishContext() = 0;
 
     /**
-     * @brief Begins a query 
+     * @brief Begins a query
      * @param Query Query object to store the query in
      */
     virtual void RHIBeginQuery(FRHIQuery* Query) = 0;
@@ -47,13 +47,13 @@ struct IRHICommandContext
     virtual void RHIEndQuery(FRHIQuery* Query) = 0;
 
     /**
-     * @brief Inserts a timestamp in the query 
+     * @brief Inserts a timestamp in the query
      * @param Query Query object to store the query in
-     */ 
+     */
     virtual void RHIQueryTimestamp(FRHIQuery* Query) = 0;
 
     /**
-     * @brief Clears a RenderTargetView with a specific color 
+     * @brief Clears a RenderTargetView with a specific color
      * @param RenderTargetView RenderTargetView to clear
      * @param ClearColor Color to set each pixel within the RenderTargetView to
      */
@@ -65,7 +65,7 @@ struct IRHICommandContext
      * @param ClearValue Value to set each pixel within the DepthStencilView to
      */
     virtual void RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, const uint8 Stencil) = 0;
-    
+
     /**
      * @brief Clears a UnorderedAccessView with a specific value
      * @param UnorderedAccessView UnorderedAccessView to clear
@@ -89,15 +89,15 @@ struct IRHICommandContext
      * @param ViewportRegion Region of the viewport
      */
     virtual void RHISetViewport(const FViewportRegion& ViewportRegion) = 0;
-    
+
     /**
-     * @brief Set the current scissor settings 
+     * @brief Set the current scissor settings
      * @param ScissorRegion Region of the scissor rectangle
      */
     virtual void RHISetScissorRect(const FScissorRegion& ScissorRegion) = 0;
 
     /**
-     * @brief Set the BlendFactor color 
+     * @brief Set the BlendFactor color
      * @param Color New blend-factor to use
      */
     virtual void RHISetBlendFactor(const FVector4& Color) = 0;
@@ -108,20 +108,20 @@ struct IRHICommandContext
      * @param BufferSlot Slot to start bind the array to
      */
     virtual void RHISetVertexBuffers(const TArrayView<FRHIBuffer* const> InVertexBuffers, uint32 BufferSlot) = 0;
-    
+
     /**
-     * @brief Set the current IndexBuffer 
+     * @brief Set the current IndexBuffer
      * @param IndexBuffer IndexBuffer to use
      * @param IndexFormat Format of the indices in the IndexBuffer
      */
     virtual void RHISetIndexBuffer(FRHIBuffer* IndexBuffer, EIndexFormat IndexFormat) = 0;
 
     /**
-     * @brief Sets the current graphics PipelineState 
+     * @brief Sets the current graphics PipelineState
      * @param PipelineState New PipelineState to use
      */
     virtual void RHISetGraphicsPipelineState(class FRHIGraphicsPipelineState* PipelineState) = 0;
-    
+
     /**
      * @brief Sets the current compute PipelineState
      * @param PipelineState New PipelineState to use
@@ -143,7 +143,7 @@ struct IRHICommandContext
      * @param ParameterIndex ShaderResourceView-index to bind to
      */
     virtual void RHISetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex) = 0;
-    
+
     /**
      * @brief Sets a multiple ShaderResourceViews to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader Shader to bind resource to
@@ -175,7 +175,7 @@ struct IRHICommandContext
      * @param ParameterIndex ConstantBuffer-index to bind to
      */
     virtual void RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex) = 0;
-    
+
     /**
      * @brief Sets a multiple ConstantBuffers to the ParameterIndex (For arrays in the shader), this must be a valid index in the specified shader, which can be queried from the shader-object.
      * @param Shader Shader to bind resource to
@@ -207,7 +207,7 @@ struct IRHICommandContext
      * @param SrcData SrcData to copy to the GPU
      */
     virtual void RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData) = 0;
-    
+
     /**
      * @brief Updates the contents of a Texture2D
      * @param Dst Destination Texture2D to update
@@ -224,20 +224,20 @@ struct IRHICommandContext
      * @param Src Source texture to resolve
      */
     virtual void RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src) = 0;
-    
+
     /**
-     * @brief Copies the contents from one buffer to another 
+     * @brief Copies the contents from one buffer to another
      * @param Dst Destination buffer to copy to
      * @param Src Source buffer to copy from
      * @param CopyDesc Information about the copy operation
      */
     virtual void RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyDesc) = 0;
-    
+
     /**
-     * @brief Copies the entire contents of one texture to another, which require the size and formats to be the same 
+     * @brief Copies the entire contents of one texture to another, which require the size and formats to be the same
      * @param Dst Destination texture
      * @param Src Source texture
-     */ 
+     */
     virtual void RHICopyTexture(FRHITexture* Dst, FRHITexture* Src) = 0;
 
     /**
@@ -262,22 +262,16 @@ struct IRHICommandContext
     virtual void RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo) = 0;
 
     /**
-     * @brief Builds the Bottom-Level Acceleration-Structure for ray tracing 
+     * @brief Builds the Bottom-Level Acceleration-Structure for ray tracing
      * @param RayTracingGeometry Bottom-level acceleration-structure to build or update
      * @param BuildInfo A structure containing information about the build
-     */ 
+     */
     virtual void RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo) = 0;
 
-     /** 
-      * @brief Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored
-      */
-    virtual void RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
-
     /**
-     * @brief Generate MipLevels for a texture. Works with Texture2D and TextureCubes.
-     * @param Texture Texture to generate MipLevels for
+     * @brief Sets the resources used by the ray tracing pipeline NOTE: temporary and will soon be refactored
      */
-    virtual void RHIGenerateMips(FRHITexture* Texture) = 0;
+    virtual void RHISetRayTracingBindings(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, const FRayTracingShaderResources* GlobalResource, const FRayTracingShaderResources* RayGenLocalResources, const FRayTracingShaderResources* MissLocalResources, const FRayTracingShaderResources* HitGroupResources, uint32 NumHitGroupResources) = 0;
 
     /**
      * @brief Transition the ResourceState of a Texture resource.
@@ -285,7 +279,7 @@ struct IRHICommandContext
      * @param TextureTransition Part of the texture to transition
      */
     virtual void RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition) = 0;
-    
+
     /**
      * @brief Transition the ResourceState of a Buffer resource
      * @param Buffer Buffer to transition ResourceState for
@@ -299,20 +293,78 @@ struct IRHICommandContext
      * @param Texture Texture to issue barrier for
      */
     virtual void RHIUnorderedAccessTextureBarrier(FRHITexture* Texture) = 0;
-    
+
     /**
      * @brief Add a UnorderedAccessBarrier for a Buffer resource, which should be issued before reading of a resource in UnorderedAccessState.
      * @param Buffer Buffer to issue barrier for
      */
     virtual void RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer) = 0;
 
+    /**
+     * @brief Draws primitives using a non-indexed geometry.
+     * @param VertexCount Number of vertices to draw.
+     * @param StartVertexLocation Starting vertex location.
+     */
     virtual void RHIDraw(uint32 VertexCount, uint32 StartVertexLocation) = 0;
+
+    /**
+     * @brief Draws primitives using indexed geometry.
+     * @param IndexCount Number of indices to draw.
+     * @param StartIndexLocation Starting index location.
+     * @param BaseVertexLocation Base vertex location.
+     */
     virtual void RHIDrawIndexed(uint32 IndexCount, uint32 StartIndexLocation, uint32 BaseVertexLocation) = 0;
+
+    /**
+     * @brief Draws instanced primitives using non-indexed geometry.
+     * @param VertexCountPerInstance Number of vertices per instance.
+     * @param InstanceCount Number of instances to draw.
+     * @param StartVertexLocation Starting vertex location.
+     * @param StartInstanceLocation Starting instance location.
+     */
     virtual void RHIDrawInstanced(uint32 VertexCountPerInstance, uint32 InstanceCount, uint32 StartVertexLocation, uint32 StartInstanceLocation) = 0;
+
+    /**
+     * @brief Draws instanced primitives using indexed geometry.
+     * @param IndexCountPerInstance Number of indices per instance.
+     * @param InstanceCount Number of instances to draw.
+     * @param StartIndexLocation Starting index location.
+     * @param BaseVertexLocation Base vertex location.
+     * @param StartInstanceLocation Starting instance location.
+     */
     virtual void RHIDrawIndexedInstanced(uint32 IndexCountPerInstance, uint32 InstanceCount, uint32 StartIndexLocation, uint32 BaseVertexLocation, uint32 StartInstanceLocation) = 0;
+
+    /**
+     * @brief Dispatches a compute shader with the specified work group dimensions.
+     * @param WorkGroupsX Number of work groups in the X dimension.
+     * @param WorkGroupsY Number of work groups in the Y dimension.
+     * @param WorkGroupsZ Number of work groups in the Z dimension.
+     */
     virtual void RHIDispatch(uint32 WorkGroupsX, uint32 WorkGroupsY, uint32 WorkGroupsZ) = 0;
+
+    /**
+     * @brief Dispatches a ray tracing operation.
+     * @param Scene Ray tracing scene to use.
+     * @param PipelineState Pipeline state for ray tracing.
+     * @param Width Dispatch width.
+     * @param Height Dispatch height.
+     * @param Depth Dispatch depth.
+     */
     virtual void RHIDispatchRays(FRHIRayTracingScene* Scene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth) = 0;
+
+    /**
+     * @brief Presents the viewport, swapping the back buffer to the screen.
+     * @param Viewport The viewport to present.
+     * @param bVerticalSync Whether to use vertical synchronization.
+     */
     virtual void RHIPresentViewport(FRHIViewport* Viewport, bool bVerticalSync) = 0;
+
+    /**
+     * @brief Resizes the specified viewport.
+     * @param Viewport The viewport to resize.
+     * @param Width New width of the viewport.
+     * @param Height New height of the viewport.
+     */
     virtual void RHIResizeViewport(FRHIViewport* Viewport, uint32 Width, uint32 Height) = 0;
 
     /**
@@ -320,13 +372,13 @@ struct IRHICommandContext
      */
     virtual void RHIClearState() = 0;
 
-    /** 
+    /**
      * @brief Waits for all current execution on the GPU to finish
      */
     virtual void RHIFlush() = 0;
 
     /**
-     * @brief Inserts a marker on the GPU timeline 
+     * @brief Inserts a marker on the GPU timeline
      */
     virtual void RHIInsertMarker(const FStringView& Message) = 0;
 
@@ -334,14 +386,15 @@ struct IRHICommandContext
      * @brief Begins a PIX capture event, currently only available on D3D12
      */
     virtual void RHIBeginExternalCapture() = 0;
-    
+
     /**
      * @brief Ends a PIX capture event, currently only available on D3D12
      */
     virtual void RHIEndExternalCapture() = 0;
 
     /**
-     * @return Returns the native CommandList
+     * @brief Returns the native CommandList
+     * @return Pointer to the native CommandList
      */
     virtual void* RHIGetNativeCommandList() = 0;
 };

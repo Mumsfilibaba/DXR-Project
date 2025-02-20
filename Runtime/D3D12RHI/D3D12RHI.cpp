@@ -87,10 +87,6 @@ FD3D12RHI::~FD3D12RHI()
         SamplerStateMap.Clear();
     }
 
-    // Remove GenerateMips PSOs, these will be added to the deferred resources so reset them here
-    GenerateMipsTex2D_PSO.Reset();
-    GenerateMipsTexCube_PSO.Reset();
-
     // ... Finally, delete all remaining resources
     FlushDeletionQueues();
 
@@ -133,59 +129,6 @@ bool FD3D12RHI::Initialize()
     if (!GD3D12ShaderCompiler->Initialize())
     {
         return false;
-    }
-
-    // Initialize GenerateMips Shaders and pipeline states 
-    TArray<uint8> Code;
-
-    FShaderCompileInfo CompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTex2D.hlsl", CompileInfo, Code))
-    {
-        D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTex2D Shader");
-        return false;
-    }
-
-    TSharedRef<FD3D12ComputeShader> Shader = new FD3D12ComputeShader(GetDevice(), Code);
-    if (!Shader->Initialize())
-    {
-        D3D12_ERROR("[D3D12CommandContext]: Failed to Create ComputeShader");
-        return false;
-    }
-
-    GenerateMipsTex2D_PSO = new FD3D12ComputePipelineState(GetDevice(), Shader);
-    if (!GenerateMipsTex2D_PSO->Initialize())
-    {
-        D3D12_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTex2D PipelineState");
-        return false;
-    }
-    else
-    {
-        GenerateMipsTex2D_PSO->SetDebugName("GenerateMipsTex2D Gen PSO");
-    }
-
-    CompileInfo = FShaderCompileInfo("Main", EShaderModel::SM_6_2, EShaderStage::Compute, TArrayView<FShaderDefine>(), EShaderOutputLanguage::HLSL);
-    if (!FShaderCompiler::Get().CompileFromFile("Shaders/GenerateMipsTexCube.hlsl", CompileInfo, Code))
-    {
-        D3D12_ERROR("[D3D12CommandContext]: Failed to compile GenerateMipsTexCube Shader");
-        return false;
-    }
-
-    Shader = new FD3D12ComputeShader(GetDevice(), Code);
-    if (!Shader->Initialize())
-    {
-        DEBUG_BREAK();
-        return false;
-    }
-
-    GenerateMipsTexCube_PSO = new FD3D12ComputePipelineState(GetDevice(), Shader);
-    if (!GenerateMipsTexCube_PSO->Initialize())
-    {
-        D3D12_ERROR("[D3D12CommandContext]: Failed to create GenerateMipsTexCube PipelineState");
-        return false;
-    }
-    else
-    {
-        GenerateMipsTexCube_PSO->SetDebugName("GenerateMipsTexCube Gen PSO");
     }
 
     // Initialize context
@@ -246,13 +189,13 @@ bool FD3D12RHI::Initialize()
             if (Features3.ViewInstancingTier != D3D12_VIEW_INSTANCING_TIER_NOT_SUPPORTED)
             {
                 FRHIDeviceInfo::SupportsViewInstancing = true;
-                FRHIDeviceInfo::MaxViewInstanceCount = D3D12_MAX_VIEW_INSTANCE_COUNT;
+                FRHIDeviceInfo::MaxViewInstanceCount   = D3D12_MAX_VIEW_INSTANCE_COUNT;
             }
         }
         else
         {
             FRHIDeviceInfo::SupportsViewInstancing = false;
-            FRHIDeviceInfo::MaxViewInstanceCount = 0;
+            FRHIDeviceInfo::MaxViewInstanceCount   = 0;
         }
     }
 
