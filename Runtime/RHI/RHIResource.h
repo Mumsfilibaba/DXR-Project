@@ -20,6 +20,9 @@ public:
     FRHIResource(const FRHIResource&) = delete;
     FRHIResource& operator=(const FRHIResource&) = delete;
 
+public:
+
+    // IRefCounted Interface
     virtual int32 AddRef() const override;
 
     virtual int32 Release() const override;

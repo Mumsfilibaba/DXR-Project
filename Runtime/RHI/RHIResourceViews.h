@@ -9,7 +9,7 @@ enum class EBufferSRVFormat : uint32
     UInt32 = 1,
 };
 
-constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
+NODISCARD constexpr const CHAR* ToString(EBufferSRVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -24,7 +24,7 @@ enum class EBufferUAVFormat : uint32
     UInt32 = 1,
 };
 
-constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
+NODISCARD constexpr const CHAR* ToString(EBufferUAVFormat BufferSRVFormat)
 {
     switch (BufferSRVFormat)
     {
@@ -40,7 +40,7 @@ enum class EAttachmentLoadAction : uint8
     Clear    = 2, // Clear data when RenderPass begin
 };
 
-constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
+NODISCARD constexpr const CHAR* ToString(EAttachmentLoadAction LoadAction)
 {
     switch (LoadAction)
     {
@@ -57,7 +57,7 @@ enum class EAttachmentStoreAction : uint8
     Store    = 1, // Store the data after the RenderPass is finished
 };
 
-constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
+NODISCARD constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
 {
     switch (StoreAction)
     {
@@ -69,25 +69,16 @@ constexpr const CHAR* ToString(EAttachmentStoreAction StoreAction)
 
 struct FRHITextureSRVInfo
 {
-    FRHITextureSRVInfo()
-        : Texture(nullptr)
-        , MinLODClamp(0.0f)
-        , Format(EFormat::Unknown)
-        , FirstMipLevel(0)
-        , NumMips(0)
-        , FirstArraySlice(0)
-        , NumSlices(0)
-    {
-    }
+    constexpr FRHITextureSRVInfo() noexcept = default;
 
-    FRHITextureSRVInfo(
+    constexpr FRHITextureSRVInfo(
         FRHITexture* InTexture,
         float        InMinLODClamp,
         EFormat      InFormat,
         uint8        InFirstMipLevel,
         uint8        InNumMips,
         uint16       InFirstArraySlice,
-        uint16       InNumSlices)
+        uint16       InNumSlices) noexcept
         : Texture(InTexture)
         , MinLODClamp(InMinLODClamp)
         , Format(InFormat)
@@ -98,23 +89,9 @@ struct FRHITextureSRVInfo
     {
     }
 
-    bool operator==(const FRHITextureSRVInfo& Other) const
-    {
-        return Texture         == Other.Texture
-            && MinLODClamp     == Other.MinLODClamp
-            && Format          == Other.Format
-            && FirstMipLevel   == Other.FirstMipLevel
-            && NumMips         == Other.NumMips
-            && FirstArraySlice == Other.FirstArraySlice
-            && NumSlices       == Other.NumSlices;
-    }
+    constexpr bool operator==(const FRHITextureSRVInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHITextureSRVInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    friend uint64 GetHashForType(const FRHITextureSRVInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHITextureSRVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
         HashCombine(Hash, Value.MinLODClamp);
@@ -126,26 +103,20 @@ struct FRHITextureSRVInfo
         return Hash;
     }
 
-    FRHITexture* Texture;
-    float        MinLODClamp;
-    EFormat      Format;
-    uint8        FirstMipLevel;
-    uint8        NumMips;
-    uint16       FirstArraySlice;
-    uint16       NumSlices;
+    FRHITexture* Texture         = nullptr;
+    float        MinLODClamp     = 0.0f;
+    EFormat      Format          = EFormat::Unknown;
+    uint8        FirstMipLevel   = 0;
+    uint8        NumMips         = 0;
+    uint16       FirstArraySlice = 0;
+    uint16       NumSlices       = 0;
 };
 
 struct FRHIBufferSRVInfo
 {
-    FRHIBufferSRVInfo()
-        : Buffer(nullptr)
-        , Format(EBufferSRVFormat::None)
-        , FirstElement(0)
-        , NumElements(0)
-    {
-    }
+    constexpr FRHIBufferSRVInfo() noexcept = default;
 
-    FRHIBufferSRVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferSRVFormat InFormat = EBufferSRVFormat::None)
+    constexpr FRHIBufferSRVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferSRVFormat InFormat = EBufferSRVFormat::None) noexcept
         : Buffer(InBuffer)
         , Format(InFormat)
         , FirstElement(InFirstElement)
@@ -153,17 +124,9 @@ struct FRHIBufferSRVInfo
     {
     }
 
-    bool operator==(const FRHIBufferSRVInfo& Other) const
-    {
-        return Buffer == Other.Buffer && Format == Other.Format && FirstElement == Other.FirstElement && NumElements == Other.NumElements;
-    }
+    constexpr bool operator==(const FRHIBufferSRVInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHIBufferSRVInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    friend uint64 GetHashForType(const FRHIBufferSRVInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIBufferSRVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
@@ -172,24 +135,17 @@ struct FRHIBufferSRVInfo
         return Hash;
     }
 
-    FRHIBuffer*      Buffer;
-    EBufferSRVFormat Format;
-    uint32           FirstElement;
-    uint32           NumElements;
+    FRHIBuffer*      Buffer       = nullptr;
+    EBufferSRVFormat Format       = EBufferSRVFormat::None;
+    uint32           FirstElement = 0;
+    uint32           NumElements  = 0;
 };
 
 struct FRHITextureUAVInfo
 {
-    FRHITextureUAVInfo()
-        : Texture(nullptr)
-        , Format(EFormat::Unknown)
-        , MipLevel(0)
-        , FirstArraySlice(0)
-        , NumSlices(0)
-    {
-    }
+    constexpr FRHITextureUAVInfo() noexcept = default;
 
-    FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel, uint32 InFirstArraySlice, uint32 InNumSlices)
+    constexpr FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel, uint32 InFirstArraySlice, uint32 InNumSlices) noexcept
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -198,7 +154,7 @@ struct FRHITextureUAVInfo
     {
     }
 
-    FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel)
+    constexpr FRHITextureUAVInfo(FRHITexture* InTexture, EFormat InFormat, uint32 InMipLevel) noexcept
         : Texture(InTexture)
         , Format(InFormat)
         , MipLevel(uint8(InMipLevel))
@@ -207,17 +163,9 @@ struct FRHITextureUAVInfo
     {
     }
 
-    bool operator==(const FRHITextureUAVInfo& Other) const
-    {
-        return Texture == Other.Texture && Format == Other.Format && MipLevel == Other.MipLevel && FirstArraySlice == Other.FirstArraySlice && NumSlices == Other.NumSlices;
-    }
+    constexpr bool operator==(const FRHITextureUAVInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHITextureUAVInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    friend uint64 GetHashForType(const FRHITextureUAVInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHITextureUAVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Texture);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
@@ -227,24 +175,18 @@ struct FRHITextureUAVInfo
         return Hash;
     }
 
-    FRHITexture* Texture;
-    EFormat      Format;
-    uint8        MipLevel;
-    uint16       FirstArraySlice;
-    uint16       NumSlices;
+    FRHITexture* Texture         = nullptr;
+    EFormat      Format          = EFormat::Unknown;
+    uint8        MipLevel        = 0;
+    uint16       FirstArraySlice = 0;
+    uint16       NumSlices       = 0;
 };
 
 struct FRHIBufferUAVInfo
 {
-    FRHIBufferUAVInfo()
-        : Buffer(nullptr)
-        , Format(EBufferUAVFormat::None)
-        , FirstElement(0)
-        , NumElements(0)
-    {
-    }
+    constexpr FRHIBufferUAVInfo() noexcept = default;
 
-    FRHIBufferUAVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferUAVFormat InFormat = EBufferUAVFormat::None)
+    constexpr FRHIBufferUAVInfo(FRHIBuffer* InBuffer, uint32 InFirstElement, uint32 InNumElements, EBufferUAVFormat InFormat = EBufferUAVFormat::None) noexcept
         : Buffer(InBuffer)
         , Format(InFormat)
         , FirstElement(InFirstElement)
@@ -252,17 +194,9 @@ struct FRHIBufferUAVInfo
     {
     }
 
-    bool operator==(const FRHIBufferUAVInfo& Other) const
-    {
-        return Buffer == Other.Buffer && Format == Other.Format && FirstElement == Other.FirstElement && NumElements  == Other.NumElements;
-    }
+    constexpr bool operator==(const FRHIBufferUAVInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHIBufferUAVInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    friend uint64 GetHashForType(const FRHIBufferUAVInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHIBufferUAVInfo& Value)
     {
         uint64 Hash = BitCast<UPTR_INT>(Value.Buffer);
         HashCombine(Hash, UnderlyingTypeValue(Value.Format));
@@ -271,10 +205,10 @@ struct FRHIBufferUAVInfo
         return Hash;
     }
 
-    FRHIBuffer*      Buffer;
-    EBufferUAVFormat Format;
-    uint32           FirstElement;
-    uint32           NumElements;
+    FRHIBuffer*      Buffer       = nullptr;
+    EBufferUAVFormat Format       = EBufferUAVFormat::None;
+    uint32           FirstElement = 0;
+    uint32           NumElements  = 0;
 };
 
 class FRHIResourceView : public FRHIResource
@@ -289,7 +223,7 @@ protected:
     virtual ~FRHIResourceView() = default;
 
 public:
-    FORCEINLINE FRHIResource* GetResource() const
+    FRHIResource* GetResource() const
     {
         return Resource;
     }
@@ -326,30 +260,25 @@ public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 };
 
+NODISCARD constexpr EFormat SafeGetFormat(FRHITexture* Texture)
+{
+    return Texture ? Texture->GetFormat() : EFormat::Unknown;
+}
+
 struct FRHIRenderTargetView
 {
-    FRHIRenderTargetView()
-        : Texture(nullptr)
-        , ClearValue()
-        , ArrayIndex(0)
-        , NumArraySlices(1)
-        , Format(EFormat::Unknown)
-        , MipLevel(0)
-        , LoadAction(EAttachmentLoadAction::DontCare)
-        , StoreAction(EAttachmentStoreAction::DontCare)
-    {
-    }
+    FRHIRenderTargetView() noexcept = default;
 
     FRHIRenderTargetView(
         FRHITexture*           InTexture,
         EAttachmentLoadAction  InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction InStoreAction = EAttachmentStoreAction::Store,
-        const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f))
+        const FFloatColor&     InClearValue  = FFloatColor(0.0f, 0.0f, 0.0f, 1.0f)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(0)
         , NumArraySlices(1)
-        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , Format(SafeGetFormat(InTexture))
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -363,7 +292,7 @@ struct FRHIRenderTargetView
         uint32                 InMipLevel,
         EAttachmentLoadAction  InLoadAction,
         EAttachmentStoreAction InStoreAction,
-        const FFloatColor&     InClearValue)
+        const FFloatColor&     InClearValue) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -375,57 +304,32 @@ struct FRHIRenderTargetView
     {
     }
 
-    bool operator==(const FRHIRenderTargetView& Other) const
-    {
-        return Texture        == Other.Texture
-            && Format         == Other.Format
-            && ArrayIndex     == Other.ArrayIndex
-            && NumArraySlices == Other.NumArraySlices
-            && MipLevel       == Other.MipLevel
-            && LoadAction     == Other.LoadAction
-            && StoreAction    == Other.StoreAction
-            && ClearValue     == Other.ClearValue;
-    }
+    bool operator==(const FRHIRenderTargetView& Other) const noexcept = default;
 
-    bool operator!=(const FRHIRenderTargetView& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    FRHITexture*           Texture;
-    FFloatColor            ClearValue;
-    uint16                 ArrayIndex;
-    uint16                 NumArraySlices;
-    EFormat                Format;
-    uint8                  MipLevel;
-    EAttachmentLoadAction  LoadAction;
-    EAttachmentStoreAction StoreAction;
+    FRHITexture*           Texture        = 0;
+    FFloatColor            ClearValue     = { };
+    uint16                 ArrayIndex     = 0;
+    uint16                 NumArraySlices = 0;
+    EFormat                Format         = EFormat::Unknown;
+    uint8                  MipLevel       = 0;
+    EAttachmentLoadAction  LoadAction     = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction StoreAction    = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIDepthStencilView
 {
-    FRHIDepthStencilView()
-        : Texture(nullptr)
-        , ClearValue()
-        , ArrayIndex(0)
-        , NumArraySlices(1)
-        , Format(EFormat::Unknown)
-        , MipLevel(0)
-        , LoadAction(EAttachmentLoadAction::DontCare)
-        , StoreAction(EAttachmentStoreAction::DontCare)
-    {
-    }
+    FRHIDepthStencilView() noexcept = default;
 
     explicit FRHIDepthStencilView(
         FRHITexture*              InTexture,
         EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
+        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(0)
         , NumArraySlices(1)
-        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , Format(SafeGetFormat(InTexture))
         , MipLevel(0)
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -438,12 +342,12 @@ struct FRHIDepthStencilView
         uint8                     InMipLevel,
         EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
+        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
         , NumArraySlices(1)
-        , Format(InTexture ? InTexture->GetFormat() : EFormat::Unknown)
+        , Format(SafeGetFormat(InTexture))
         , MipLevel(uint8(InMipLevel))
         , LoadAction(InLoadAction)
         , StoreAction(InStoreAction)
@@ -457,7 +361,7 @@ struct FRHIDepthStencilView
         EFormat                   InFormat,
         EAttachmentLoadAction     InLoadAction  = EAttachmentLoadAction::Clear,
         EAttachmentStoreAction    InStoreAction = EAttachmentStoreAction::Store,
-        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0))
+        const FDepthStencilValue& InClearValue  = FDepthStencilValue(1.0f, 0)) noexcept
         : Texture(InTexture)
         , ClearValue(InClearValue)
         , ArrayIndex(uint16(InArrayIndex))
@@ -469,48 +373,25 @@ struct FRHIDepthStencilView
     {
     }
 
-    bool operator==(const FRHIDepthStencilView& Other) const
-    {
-        return Texture        == Other.Texture
-            && Format         == Other.Format
-            && ArrayIndex     == Other.ArrayIndex
-            && NumArraySlices == Other.NumArraySlices
-            && MipLevel       == Other.MipLevel
-            && LoadAction     == Other.LoadAction
-            && StoreAction    == Other.StoreAction
-            && ClearValue     == Other.ClearValue;
-    }
+    bool operator==(const FRHIDepthStencilView& Other) const noexcept = default;
 
-    bool operator!=(const FRHIDepthStencilView& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    FRHITexture*           Texture;
-    FDepthStencilValue     ClearValue;
-    uint16                 ArrayIndex;
-    uint16                 NumArraySlices;
-    EFormat                Format;
-    uint8                  MipLevel;
-    EAttachmentLoadAction  LoadAction;
-    EAttachmentStoreAction StoreAction;
+    FRHITexture*           Texture        = nullptr;
+    FDepthStencilValue     ClearValue     = { };
+    uint16                 ArrayIndex     = 0;
+    uint16                 NumArraySlices = 0;
+    EFormat                Format         = EFormat::Unknown;
+    uint8                  MipLevel       = 0;
+    EAttachmentLoadAction  LoadAction     = EAttachmentLoadAction::DontCare;
+    EAttachmentStoreAction StoreAction    = EAttachmentStoreAction::DontCare;
 };
 
 struct FRHIBeginRenderPassInfo
 {
     typedef TStaticArray<FRHIRenderTargetView, RHI_MAX_RENDER_TARGETS> FRenderTargetViews;
-   
-    FRHIBeginRenderPassInfo()
-        : ShadingRateTexture(nullptr)
-        , DepthStencilView()
-        , RenderTargets()
-        , NumRenderTargets(0)
-        , StaticShadingRate(EShadingRate::VRS_1x1)
-        , ViewInstancingInfo()
-    {
-    }
 
-    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets)
+    FRHIBeginRenderPassInfo() noexcept = default;
+
+    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets) noexcept
         : ShadingRateTexture(nullptr)
         , DepthStencilView()
         , RenderTargets(InRenderTargets)
@@ -520,7 +401,7 @@ struct FRHIBeginRenderPassInfo
     {
     }
 
-    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilView InDepthStencilView, FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1)
+    FRHIBeginRenderPassInfo(const FRenderTargetViews& InRenderTargets, uint32 InNumRenderTargets, FRHIDepthStencilView InDepthStencilView, FRHITexture* InShadingRateTexture = nullptr, EShadingRate InStaticShadingRate = EShadingRate::VRS_1x1) noexcept
         : ShadingRateTexture(InShadingRateTexture)
         , DepthStencilView(InDepthStencilView)
         , RenderTargets(InRenderTargets)
@@ -530,25 +411,12 @@ struct FRHIBeginRenderPassInfo
     {
     }
 
-    bool operator==(const FRHIBeginRenderPassInfo& Other) const
-    {
-        return ShadingRateTexture == Other.ShadingRateTexture
-            && DepthStencilView   == Other.DepthStencilView
-            && RenderTargets      == Other.RenderTargets
-            && NumRenderTargets   == Other.NumRenderTargets
-            && StaticShadingRate  == Other.StaticShadingRate
-            && ViewInstancingInfo == Other.ViewInstancingInfo;
-    }
+    bool operator==(const FRHIBeginRenderPassInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHIBeginRenderPassInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    FRHITexture*         ShadingRateTexture;
-    FRHIDepthStencilView DepthStencilView;
-    FRenderTargetViews   RenderTargets;
-    uint32               NumRenderTargets;
-    EShadingRate         StaticShadingRate;
-    FViewInstancingInfo  ViewInstancingInfo;
+    FRHITexture*         ShadingRateTexture = nullptr;
+    FRHIDepthStencilView DepthStencilView   = { };
+    FRenderTargetViews   RenderTargets      = { };
+    uint32               NumRenderTargets   = 0;
+    EShadingRate         StaticShadingRate  = EShadingRate::VRS_1x1;
+    FViewInstancingInfo  ViewInstancingInfo = { };
 };

@@ -8,7 +8,7 @@ enum class EQueryType
     Occlusion,
 };
 
-constexpr const CHAR* ToString(EQueryType QueryType)
+NODISCARD constexpr const CHAR* ToString(EQueryType QueryType)
 {
     switch (QueryType)
     {

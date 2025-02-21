@@ -23,43 +23,30 @@ ENUM_CLASS_OPERATORS(EBufferUsageFlags);
 
 struct FRHIBufferInfo
 {
-    FRHIBufferInfo()
-        : Size(0)
-        , Stride(0)
-        , UsageFlags(EBufferUsageFlags::None)
-    {
-    }
+    constexpr FRHIBufferInfo() noexcept = default;
 
-    FRHIBufferInfo(uint64 InSize, uint32 InStride, EBufferUsageFlags InUsageFlags)
+    constexpr FRHIBufferInfo(uint64 InSize, uint32 InStride, EBufferUsageFlags InUsageFlags) noexcept
         : Size(InSize)
         , Stride(InStride)
         , UsageFlags(InUsageFlags)
     {
     }
 
-    bool IsDefault()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Default); }
-    bool IsDynamic()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
-    bool IsReadBack() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ReadBack); }
+    NODISCARD constexpr bool IsDefault()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Default); }
+    NODISCARD constexpr bool IsDynamic()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::Dynamic); }
+    NODISCARD constexpr bool IsReadBack() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ReadBack); }
     
-    bool IsConstantBuffer()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ConstantBuffer); }
-    bool IsShaderResource()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ShaderResource); }
-    bool IsVertexBuffer()    const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
-    bool IsIndexBuffer()     const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
-    bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
+    NODISCARD constexpr bool IsConstantBuffer()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ConstantBuffer); }
+    NODISCARD constexpr bool IsShaderResource()  const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::ShaderResource); }
+    NODISCARD constexpr bool IsVertexBuffer()    const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::VertexBuffer); }
+    NODISCARD constexpr bool IsIndexBuffer()     const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::IndexBuffer); }
+    NODISCARD constexpr bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, EBufferUsageFlags::UnorderedAccess); }
 
-    bool operator==(const FRHIBufferInfo& Other) const
-    {
-        return Size == Other.Size && Stride == Other.Stride && UsageFlags == Other.UsageFlags;
-    }
+    constexpr bool operator==(const FRHIBufferInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHIBufferInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    uint64            Size;
-    uint32            Stride;
-    EBufferUsageFlags UsageFlags;
+    uint64            Size       = 0;
+    uint32            Stride     = 0;
+    EBufferUsageFlags UsageFlags = EBufferUsageFlags::None;
 };
 
 class FRHIBuffer : public FRHIResource
@@ -83,7 +70,6 @@ public:
     virtual FString GetDebugName() const { return ""; }
 
 public:
-
     uint64 GetSize() const
     {
         return Info.Size;

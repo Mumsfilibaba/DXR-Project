@@ -1,6 +1,5 @@
 #pragma once
 #include "Core/Modules/ModuleManager.h"
-#include "CoreApplication/Generic/GenericWindow.h"
 #include "RHI/RHITypes.h"
 #include "RHI/RHIResources.h"
 #include "RHI/RHICommandList.h"
@@ -24,7 +23,7 @@ enum class ERHIType : uint32
     Metal   = 4,
 };
 
-inline const CHAR* ToString(ERHIType RenderLayerApi)
+NODISCARD constexpr const CHAR* ToString(ERHIType RenderLayerApi)
 {
     switch (RenderLayerApi)
     {
@@ -64,344 +63,333 @@ enum class EVideoMemoryType
 
 struct FRHIVideoMemoryInfo
 {
-    FRHIVideoMemoryInfo()
-        : MemoryType(EVideoMemoryType::Local)
-        , MemoryUsage(0)
-        , MemoryBudget(0)
-    {
-    }
+    constexpr FRHIVideoMemoryInfo() noexcept = default;
 
-    bool operator==(const FRHIVideoMemoryInfo& Other) const
-    {
-        return MemoryType == Other.MemoryType && MemoryUsage == Other.MemoryUsage && MemoryBudget == Other.MemoryBudget;
-    }
-
-    bool operator!=(const FRHIVideoMemoryInfo& Other) const 
-    {
-        return !(*this == Other);
-    }
+    constexpr bool operator==(const FRHIVideoMemoryInfo& Other) const noexcept = default;
 
     /** @brief Type of memory that is queried */
-    EVideoMemoryType MemoryType;
+    EVideoMemoryType MemoryType = EVideoMemoryType::Local;
 
     /** @brief The current memory-usage that is in use by the application */
-    uint64 MemoryUsage;
+    uint64 MemoryUsage = 0;
 
     /** @brief The current memory-budget. This is the amount of memory that the application can use */
-    uint64 MemoryBudget;
+    uint64 MemoryBudget = 0;
 };
 
 class RHI_API FRHI
 {
-protected:
-    FRHI(ERHIType InRHIType)
-        : RHIType(InRHIType)
-    {
-    }
-
 public:
 
     virtual ~FRHI() = default;
 
     /**
-     * @brief Initializes the RHI
-     * @return True if initialization is successful
+     * @brief Initializes the RHI.
+     * @return True if initialization is successful.
      */
     virtual bool Initialize() = 0;
 
-    /** @brief Called on the RHI thread to begin a new frame */
+    /** @brief Called on the RHI thread to begin a new frame. */
     virtual void RHIBeginFrame() = 0;
 
-    /** @brief Called on the RHI thread to end a new frame */
+    /** @brief Called on the RHI thread to end the current frame. */
     virtual void RHIEndFrame() = 0;
 
     /**
-     * @brief Creates a texture
-     * @param InTextureInfo Description of the RHI texture
-     * @param InInitialState Initial state of the texture
-     * @param InInitialData Initial data of the texture
-     * @return Returns the newly created texture
+     * @brief Creates a texture.
+     * @param InTextureInfo Description of the RHI texture.
+     * @param InInitialState Initial state of the texture.
+     * @param InInitialData Initial data of the texture.
+     * @return The newly created texture.
      */
     virtual FRHITexture* RHICreateTexture(const FRHITextureInfo& InTextureInfo, EResourceAccess InInitialState, const IRHITextureData* InInitialData) = 0;
 
     /**
-     * @brief Creates a buffer
-     * @param InBufferInfo Description of the RHI buffer
-     * @param InInitialState Initial state of the buffer
-     * @param InInitialData Initial data of the buffer
-     * @return Returns the newly created buffer
+     * @brief Creates a buffer.
+     * @param InBufferInfo Description of the RHI buffer.
+     * @param InInitialState Initial state of the buffer.
+     * @param InInitialData Initial data of the buffer.
+     * @return The newly created buffer.
      */
     virtual FRHIBuffer* RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData) = 0;
 
     /**
-     * @brief Creates a sampler state
-     * @param InSamplerInfo Structure with information about the sampler state
-     * @return Returns the newly created sampler state (could be the same as an already created sampler state and a reference is added)
+     * @brief Creates a sampler state.
+     * @param InSamplerInfo Structure with information about the sampler state.
+     * @return The newly created sampler state (may return an existing one with an increased reference count).
      */
     virtual FRHISamplerState* RHICreateSamplerState(const FRHISamplerStateInfo& InSamplerInfo) = 0;
 
     /**
-     * @brief Creates a new viewport
-     * @param InViewportInfo Structure containing the information for the viewport
-     * @return Returns the newly created viewport
+     * @brief Creates a new viewport.
+     * @param InViewportInfo Structure containing the information for the viewport.
+     * @return The newly created viewport.
      */
     virtual FRHIViewport* RHICreateViewport(const FRHIViewportInfo& InViewportInfo) = 0;
 
     /**
-     * @brief Creates a new ray tracing scene
-     * @param InDesc Structure containing information about the ray tracing scene
-     * @return Returns the newly created ray tracing scene
+     * @brief Creates a new ray tracing scene.
+     * @param InSceneInfo Structure containing information about the ray tracing scene.
+     * @return The newly created ray tracing scene.
      */
     virtual FRHIRayTracingScene* RHICreateRayTracingScene(const FRHIRayTracingSceneInfo& InSceneInfo) = 0;
-    
+
     /**
-     * @brief Creates a new ray tracing geometry
-     * @param InDesc Structure containing information about the ray tracing geometry
-     * @return Returns the newly created ray tracing geometry
+     * @brief Creates a new ray tracing geometry.
+     * @param InGeometryInfo Structure containing information about the ray tracing geometry.
+     * @return The newly created ray tracing geometry.
      */
     virtual FRHIRayTracingGeometry* RHICreateRayTracingGeometry(const FRHIRayTracingGeometryInfo& InGeometryInfo) = 0;
 
     /**
-     * @brief Creates a new shader resource view for a texture
-     * @param InDesc Structure containing information about the shader resource view
-     * @return Returns the newly created shader resource view
+     * @brief Creates a new shader resource view for a texture.
+     * @param InInfo Structure containing information about the shader resource view.
+     * @return The newly created shader resource view.
      */
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo) = 0;
 
     /**
-     * @brief Creates a new shader resource view for a buffer
-     * @param InDesc Structure containing information about the shader resource view
-     * @return Returns the newly created shader resource view
+     * @brief Creates a new shader resource view for a buffer.
+     * @param InInfo Structure containing information about the shader resource view.
+     * @return The newly created shader resource view.
      */
     virtual FRHIShaderResourceView* RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo) = 0;
-    
+
     /**
-     * @brief Creates a new unordered access view for a texture
-     * @param InDesc Structure containing information about the unordered access view
-     * @return Returns the newly created unordered access view
+     * @brief Creates a new unordered access view for a texture.
+     * @param InInfo Structure containing information about the unordered access view.
+     * @return The newly created unordered access view.
      */
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo) = 0;
 
     /**
-     * @brief Creates a new unordered access view for a buffer
-     * @param InDesc Structure containing information about the unordered access view
-     * @return Returns the newly created unordered access view
+     * @brief Creates a new unordered access view for a buffer.
+     * @param InInfo Structure containing information about the unordered access view.
+     * @return The newly created unordered access view.
      */
     virtual FRHIUnorderedAccessView* RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo) = 0;
 
     /**
-     * @brief Creates a new compute shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new compute shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIComputeShader* RHICreateComputeShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
-     * @brief Creates a new vertex shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new vertex shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIVertexShader* RHICreateVertexShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new hull shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new hull shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIHullShader* RHICreateHullShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new domain shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new domain shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIDomainShader* RHICreateDomainShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new geometry shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new geometry shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIGeometryShader* RHICreateGeometryShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new mesh shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new mesh shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIMeshShader* RHICreateMeshShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new amplification shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new amplification shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIAmplificationShader* RHICreateAmplificationShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new pixel shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new pixel shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIPixelShader* RHICreatePixelShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
-     * @brief Creates a new ray generation shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new ray generation shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIRayGenShader* RHICreateRayGenShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new ray any-hit shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new ray any-hit shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIRayAnyHitShader* RHICreateRayAnyHitShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new ray closest-hit shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new ray closest-hit shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIRayClosestHitShader* RHICreateRayClosestHitShader(const TArray<uint8>& ShaderCode) = 0;
-    
+
     /**
-     * @brief Creates a new ray miss shader
-     * @param ShaderCode Shader bytecode used to create the shader
-     * @return Returns the newly created shader
+     * @brief Creates a new ray miss shader.
+     * @param ShaderCode Shader bytecode used to create the shader.
+     * @return The newly created shader.
      */
     virtual FRHIRayMissShader* RHICreateRayMissShader(const TArray<uint8>& ShaderCode) = 0;
 
     /**
-     * @brief Creates a new depth-stencil state
-     * @param InDesc Information about the depth-stencil state
-     * @return Returns the newly created depth-stencil state
+     * @brief Creates a new depth-stencil state.
+     * @param InInitializer Information about the depth-stencil state.
+     * @return The newly created depth-stencil state.
      */
-    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InDesc) = 0;
+    virtual FRHIDepthStencilState* RHICreateDepthStencilState(const FRHIDepthStencilStateInitializer& InInitializer) = 0;
 
     /**
-     * @brief Creates a new rasterizer state
-     * @param InInitializer Information about the rasterizer state
-     * @return Returns the newly created rasterizer state
+     * @brief Creates a new rasterizer state.
+     * @param InInitializer Information about the rasterizer state.
+     * @return The newly created rasterizer state.
      */
     virtual FRHIRasterizerState* RHICreateRasterizerState(const FRHIRasterizerStateInitializer& InInitializer) = 0;
 
     /**
-     * @brief Creates a new blend state
-     * @param InInitializer Information about the blend state
-     * @return Returns the newly created blend state
+     * @brief Creates a new blend state.
+     * @param InInitializer Information about the blend state.
+     * @return The newly created blend state.
      */
     virtual FRHIBlendState* RHICreateBlendState(const FRHIBlendStateInitializer& InInitializer) = 0;
 
     /**
-     * @brief Creates a new vertex layout
-     * @param InInitializerList Information about the vertex layout
-     * @return Returns the newly created vertex layout
+     * @brief Creates a new vertex layout.
+     * @param InInitializerList Information about the vertex layout.
+     * @return The newly created vertex layout.
      */
     virtual FRHIVertexLayout* RHICreateVertexLayout(const FRHIVertexLayoutInitializerList& InInitializerList) = 0;
 
     /**
-     * @brief Creates a graphics pipeline state
-     * @param InInitializer Information about the graphics pipeline state
-     * @return Returns the newly created pipeline state
+     * @brief Creates a graphics pipeline state.
+     * @param InInitializer Information about the graphics pipeline state.
+     * @return The newly created pipeline state.
      */
     virtual FRHIGraphicsPipelineState* RHICreateGraphicsPipelineState(const FRHIGraphicsPipelineStateInitializer& InInitializer) = 0;
-    
+
     /**
-     * @brief Creates a compute pipeline state
-     * @param InInitializer Information about the compute pipeline state
-     * @return Returns the newly created pipeline state
+     * @brief Creates a compute pipeline state.
+     * @param InInitializer Information about the compute pipeline state.
+     * @return The newly created pipeline state.
      */
     virtual FRHIComputePipelineState* RHICreateComputePipelineState(const FRHIComputePipelineStateInitializer& InInitializer) = 0;
-    
+
     /**
-     * @brief Creates a ray-tracing pipeline state
-     * @param InInitializer Information about the ray-tracing pipeline state
-     * @return Returns the newly created pipeline state
+     * @brief Creates a ray-tracing pipeline state.
+     * @param InInitializer Information about the ray-tracing pipeline state.
+     * @return The newly created pipeline state.
      */
     virtual FRHIRayTracingPipelineState* RHICreateRayTracingPipelineState(const FRHIRayTracingPipelineStateInitializer& InInitializer) = 0;
 
     /**
-     * @brief Creates a new query object
-     * @param InQueryType Type of the query to create
-     * @return Returns the newly created query object
+     * @brief Creates a new query object.
+     * @param InQueryType Type of the query to create.
+     * @return The newly created query object.
      */
     virtual FRHIQuery* RHICreateQuery(EQueryType InQueryType) = 0;
 
     /**
-     * @brief Obtains a command context
-     * @return Returns a command context
+     * @brief Obtains a command context.
+     * @return A command context.
      */
     virtual IRHICommandContext* RHIObtainCommandContext() = 0;
 
     /**
-     * @brief Gets the result for a query
-     * @param Query Query to get the result from
-     * @param OutResult Variable to store the result in
-     * @return Returns true if result was retrieved successfully
+     * @brief Gets the result for a query.
+     * @param Query Query to get the result from.
+     * @param OutResult Variable to store the result.
+     * @return True if the result was retrieved successfully.
      */
     virtual bool RHIGetQueryResult(FRHIQuery* Query, uint64& OutResult) = 0;
 
-    /** @brief Defers destruction of an RHI resource to the deferred deletion code */
+    /** @brief Defers destruction of an RHI resource to the deferred deletion code. */
     virtual void RHIEnqueueResourceDeletion(FRHIResource* Resource) = 0;
 
     /**
-     * @brief Gets the native adapter
-     * @return Returns the native adapter
+     * @brief Gets the native adapter.
+     * @return The native adapter.
      */
     virtual void* RHIGetAdapter() { return nullptr; }
 
     /**
-     * @brief Gets the native device
-     * @return Returns the native device
+     * @brief Gets the native device.
+     * @return The native device.
      */
     virtual void* RHIGetDevice() { return nullptr; }
 
     /**
-     * @brief Gets the native direct (graphics) command queue
-     * @return Returns the native direct command queue
+     * @brief Gets the native direct (graphics) command queue.
+     * @return The native direct command queue.
      */
     virtual void* RHIGetDirectCommandQueue() { return nullptr; }
 
     /**
-     * @brief Gets the native compute command queue
-     * @return Returns the native compute command queue
+     * @brief Gets the native compute command queue.
+     * @return The native compute command queue.
      */
     virtual void* RHIGetComputeCommandQueue() { return nullptr; }
 
     /**
-     * @brief Gets the native copy command queue
-     * @return Returns the native copy command queue
+     * @brief Gets the native copy command queue.
+     * @return The native copy command queue.
      */
     virtual void* RHIGetCopyCommandQueue() { return nullptr; }
 
     /**
-     * @brief Checks if the current RHI supports unordered access views for the specified format
-     * @param Format Format to check
-     * @return Returns true if the current RHI supports unordered access views with the specified format
+     * @brief Checks if the current RHI supports unordered access views for the specified format.
+     * @param Format Format to check.
+     * @return True if unordered access views with the specified format are supported.
      */
     virtual bool RHIQueryUAVFormatSupport(EFormat Format) const { return false; }
 
-   /** 
-    * @brief Retrieve memory statistics from the RHI 
-    * @return Returns true if the statistics struct was written to successfully
-    */
+    /**
+     * @brief Retrieves memory statistics from the RHI.
+     * @param MemoryType The type of video memory to query.
+     * @param OutMemoryStats Variable to store the memory statistics.
+     * @return True if the statistics were retrieved successfully.
+     */
     virtual bool RHIQueryVideoMemoryInfo(EVideoMemoryType MemoryType, FRHIVideoMemoryInfo& OutMemoryStats) const { return false; }
 
     /**
-     * @brief Gets the adapter name
-     * @return Returns a string with the adapter name
+     * @brief Gets the adapter name.
+     * @return A string with the adapter name.
      */
     virtual FString RHIGetAdapterName() const { return ""; }
 
     /**
-     * @brief Gets the current RHI's API type
-     * @return Returns the current RHI's API type
+     * @brief Gets the current RHI's API type.
+     * @return The current RHI's API type.
      */
-    ERHIType GetType() const 
+    ERHIType GetType() const
     {
         return RHIType;
+    }
+
+protected:
+    FRHI(ERHIType InRHIType)
+        : RHIType(InRHIType)
+    {
     }
 
 private:

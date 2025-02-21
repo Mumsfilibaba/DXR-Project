@@ -54,9 +54,9 @@ ENUM_CLASS_OPERATORS(ERayTracingInstanceFlags);
 
 struct FRHIRayTracingGeometryInstance
 {
-    FRHIRayTracingGeometryInstance() = default;
+    FRHIRayTracingGeometryInstance() noexcept = default;
 
-    FRHIRayTracingGeometryInstance(FRHIRayTracingGeometry* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex, ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform)
+    FRHIRayTracingGeometryInstance(FRHIRayTracingGeometry* InGeometry, uint32 InInstanceIndex, uint32 InHitGroupIndex, ERayTracingInstanceFlags InFlags, uint32 InMask, const FMatrix3x4& InTransform) noexcept
         : Geometry(InGeometry)
         , InstanceIndex(InInstanceIndex)
         , HitGroupIndex(InHitGroupIndex)
@@ -66,75 +66,46 @@ struct FRHIRayTracingGeometryInstance
     {
     }
 
-    bool operator==(const FRHIRayTracingGeometryInstance& Other) const
-    {
-        return Geometry      == Other.Geometry 
-            && InstanceIndex == Other.InstanceIndex 
-            && HitGroupIndex == Other.HitGroupIndex 
-            && Flags         == Other.Flags 
-            && Mask          == Other.Mask 
-            && Transform     == Other.Transform;
-    }
-
-    bool operator!=(const FRHIRayTracingGeometryInstance& Other) const
-    {
-        return !(*this == Other);
-    }
+    bool operator==(const FRHIRayTracingGeometryInstance& Other) const noexcept = default;
 
     FRHIRayTracingGeometry*  Geometry      = nullptr;
     uint32                   InstanceIndex = 0;
     uint32                   HitGroupIndex = 0;
     ERayTracingInstanceFlags Flags         = ERayTracingInstanceFlags::None;
     uint32                   Mask          = RHI_DEFAULT_GEOMETRY_INSTANCE_MASK;
-    FMatrix3x4               Transform;
+    FMatrix3x4               Transform     = { };
 };
 
 struct FRHIAccelerationStructureInfo
 {
-    FRHIAccelerationStructureInfo() = default;
+    constexpr FRHIAccelerationStructureInfo() noexcept = default;
 
-    FRHIAccelerationStructureInfo(EAccelerationStructureBuildFlags InFlags)
+    constexpr FRHIAccelerationStructureInfo(EAccelerationStructureBuildFlags InFlags) noexcept
         : Flags(InFlags)
     {
     }
 
-    bool AllowUpdate() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
+    NODISCARD constexpr bool AllowUpdate() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::AllowUpdate); }
 
-    bool PreferFastTrace() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
-    bool PreferFastBuild() const { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
+    NODISCARD constexpr bool PreferFastTrace() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastTrace); }
+    NODISCARD constexpr bool PreferFastBuild() const noexcept { return IsEnumFlagSet(Flags, EAccelerationStructureBuildFlags::PreferFastBuild); }
 
-    bool operator==(const FRHIAccelerationStructureInfo& Other) const
-    {
-        return Flags == Other.Flags;
-    }
+    constexpr bool operator==(const FRHIAccelerationStructureInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHIAccelerationStructureInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    EAccelerationStructureBuildFlags Flags{ EAccelerationStructureBuildFlags::None };
+    EAccelerationStructureBuildFlags Flags = EAccelerationStructureBuildFlags::None;
 };
 
 struct FRHIRayTracingGeometryInfo : public FRHIAccelerationStructureInfo
 {
-    FRHIRayTracingGeometryInfo()
-        : FRHIAccelerationStructureInfo()
-        , VertexBuffer(nullptr)
-        , NumVertices(0)
-        , IndexBuffer(nullptr)
-        , NumIndices(0)
-        , IndexFormat(EIndexFormat::Unknown)
-    {
-    }
+    constexpr FRHIRayTracingGeometryInfo() noexcept = default;
 
-    FRHIRayTracingGeometryInfo(
+    constexpr FRHIRayTracingGeometryInfo(
         FRHIBuffer*                      InVertexBuffer,
         uint32                           InNumVerticies,
         FRHIBuffer*                      InIndexBuffer,
         uint32                           InNumIndices,
         EIndexFormat                     InIndexFormat,
-        EAccelerationStructureBuildFlags InFlags)
+        EAccelerationStructureBuildFlags InFlags) noexcept
         : FRHIAccelerationStructureInfo(InFlags)
         , VertexBuffer(InVertexBuffer)
         , NumVertices(InNumVerticies)
@@ -144,47 +115,26 @@ struct FRHIRayTracingGeometryInfo : public FRHIAccelerationStructureInfo
     {
     }
 
-    bool operator==(const FRHIRayTracingGeometryInfo& Other) const
-    {
-        return FRHIAccelerationStructureInfo::operator==(Other)
-            && VertexBuffer == Other.VertexBuffer
-            && NumVertices  == Other.NumVertices
-            && IndexBuffer  == Other.IndexBuffer
-            && NumIndices   == Other.NumIndices
-            && IndexFormat  == Other.IndexFormat;
-    }
+    constexpr bool operator==(const FRHIRayTracingGeometryInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHIRayTracingGeometryInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    FRHIBuffer*  VertexBuffer;
-    uint32       NumVertices;
-    FRHIBuffer*  IndexBuffer;
-    uint32       NumIndices;
-    EIndexFormat IndexFormat;
+    FRHIBuffer*  VertexBuffer = nullptr;
+    uint32       NumVertices  = 0;
+    FRHIBuffer*  IndexBuffer  = nullptr;
+    uint32       NumIndices   = 0;
+    EIndexFormat IndexFormat  = EIndexFormat::Unknown;
 };
 
 struct FRHIRayTracingSceneInfo : public FRHIAccelerationStructureInfo
 {
-    FRHIRayTracingSceneInfo() = default;
+    FRHIRayTracingSceneInfo() noexcept = default;
 
-    FRHIRayTracingSceneInfo(const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags)
+    FRHIRayTracingSceneInfo(const TArrayView<const FRHIRayTracingGeometryInstance>& InInstances, EAccelerationStructureBuildFlags InFlags) noexcept
         : FRHIAccelerationStructureInfo(InFlags)
         , Instances(InInstances)
     {
     }
 
-    bool operator==(const FRHIRayTracingSceneInfo& Other) const
-    {
-        return FRHIAccelerationStructureInfo::operator==(Other) && Instances == Other.Instances;
-    }
-
-    bool operator!=(const FRHIRayTracingSceneInfo& Other) const
-    {
-        return !(*this == Other);
-    }
+    bool operator==(const FRHIRayTracingSceneInfo& Other) const noexcept = default;
 
     TArray<FRHIRayTracingGeometryInstance> Instances;
 };
@@ -208,7 +158,7 @@ public:
     // Retrieve the base-interface for the backend
     virtual void* GetRHIBaseInterface() { return this; }
 
-    virtual class FRHIRayTracingScene* GetRayTracingScene() { return nullptr; }
+    virtual class FRHIRayTracingScene*    GetRayTracingScene()    { return nullptr; }
     virtual class FRHIRayTracingGeometry* GetRayTracingGeometry() { return nullptr; }
 
     virtual void SetDebugName(const FString& InName) { }

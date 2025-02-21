@@ -150,7 +150,7 @@ enum class EFormat : uint8
     BC7_UNorm_SRGB        = 91,
 };
 
-constexpr const CHAR* ToString(EFormat Format)
+NODISCARD constexpr const CHAR* ToString(EFormat Format)
 {
     switch (Format)
     {
@@ -252,7 +252,7 @@ constexpr const CHAR* ToString(EFormat Format)
     }
 }
 
-constexpr uint32 GetByteStrideFromFormat(EFormat Format)
+NODISCARD constexpr uint32 GetByteStrideFromFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -355,18 +355,18 @@ constexpr uint32 GetByteStrideFromFormat(EFormat Format)
     }
 }
 
-constexpr bool IsBlockCompressed(EFormat Format)
+NODISCARD constexpr bool IsBlockCompressed(EFormat Format)
 {
     return UnderlyingTypeValue(Format) >= UnderlyingTypeValue(EFormat::BC1_Typeless);
 }
 
 // BlockCompressed images must be aligned to 4 pixels in all dimensions
-constexpr bool IsBlockCompressedAligned(uint32 Extent)
+NODISCARD constexpr bool IsBlockCompressedAligned(uint32 Extent)
 {
     return Extent % 4 == 0;
 }
 
-constexpr bool IsTypelessFormat(EFormat Format)
+NODISCARD constexpr bool IsTypelessFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -395,7 +395,6 @@ constexpr bool IsTypelessFormat(EFormat Format)
     }
 }
 
-
 enum class EIndexFormat : uint8
 {
     Unknown = 0,
@@ -403,7 +402,7 @@ enum class EIndexFormat : uint8
     uint32  = 2,
 };
 
-constexpr const CHAR* ToString(EIndexFormat IndexFormat)
+NODISCARD constexpr const CHAR* ToString(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
@@ -413,7 +412,7 @@ constexpr const CHAR* ToString(EIndexFormat IndexFormat)
     }
 }
 
-constexpr EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
+NODISCARD constexpr EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
 {
     switch (StrideInBytes)
     {
@@ -423,7 +422,7 @@ constexpr EIndexFormat GetIndexFormatFromStride(uint32 StrideInBytes)
     }
 }
 
-constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
+NODISCARD constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
 {
     switch (IndexFormat)
     {
@@ -432,7 +431,6 @@ constexpr uint32 GetStrideFromIndexFormat(EIndexFormat IndexFormat)
         default:                   return 0;
     }
 }
-
 
 enum class ECubeFace : uint8
 {
@@ -444,16 +442,15 @@ enum class ECubeFace : uint8
     NegZ = 5,
 };
 
-constexpr uint32 GetCubeFaceIndex(ECubeFace CubeFace)
+NODISCARD constexpr uint32 GetCubeFaceIndex(ECubeFace CubeFace)
 {
     return UnderlyingTypeValue(CubeFace);
 }
 
-constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
+NODISCARD constexpr ECubeFace GetCubeFaceFromIndex(uint32 Index)
 {
     return Index > UnderlyingTypeValue(ECubeFace::NegZ) ? static_cast<ECubeFace>(-1) : static_cast<ECubeFace>(Index);
 }
-
 
 enum class EComparisonFunc
 {
@@ -468,7 +465,7 @@ enum class EComparisonFunc
     Always       = 8
 };
 
-constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
+NODISCARD constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -483,7 +480,6 @@ constexpr const CHAR* ToString(EComparisonFunc ComparisonFunc)
     default:                            return "Unknown";
     }
 }
-
 
 enum class EResourceAccess : uint32
 {
@@ -509,8 +505,7 @@ enum class EResourceAccess : uint32
 
 ENUM_CLASS_OPERATORS(EResourceAccess);
 
-
-constexpr const CHAR* ToString(EResourceAccess ResourceState)
+NODISCARD constexpr const CHAR* ToString(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -546,7 +541,7 @@ enum class EPrimitiveTopology
     TriangleStrip = 5,
 };
 
-constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
+NODISCARD constexpr const CHAR* ToString(EPrimitiveTopology ResourceState)
 {
     switch (ResourceState)
     {
@@ -571,7 +566,7 @@ enum class EShadingRate : uint8
     VRS_4x4 = 0xa,
 };
 
-constexpr const CHAR* ToString(EShadingRate ShadingRate)
+NODISCARD constexpr const CHAR* ToString(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -595,7 +590,7 @@ enum class EDescriptorType : uint32
     Sampler         = 4
 };
 
-constexpr const CHAR* ToString(EDescriptorType DescriptorType)
+NODISCARD constexpr const CHAR* ToString(EDescriptorType DescriptorType)
 {
     switch (DescriptorType)
     {
@@ -609,34 +604,34 @@ constexpr const CHAR* ToString(EDescriptorType DescriptorType)
 
 struct FRHIDescriptorHandle
 {
+    // NOTE: Be specific in terms of bits in order to cancel warnings about truncation
     enum : uint32
     {
-        // NOTE: Be specific in order to cancel warnings about truncation
         InvalidHandle = ((1 << 24) - 1)
     };
 
-    constexpr FRHIDescriptorHandle()
+    constexpr FRHIDescriptorHandle() noexcept
         : Data(0)
     {
     }
 
-    constexpr FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex)
+    constexpr FRHIDescriptorHandle(EDescriptorType InType, uint32 InIndex) noexcept
         : Index(InIndex)
         , Type(InType)
     {
     }
 
-    constexpr bool IsValid() const
+    NODISCARD constexpr bool IsValid() const noexcept
     { 
         return Type != EDescriptorType::Unknown && Index != InvalidHandle; 
     }
 
-    constexpr bool operator==(const FRHIDescriptorHandle& Other) const
+    constexpr bool operator==(const FRHIDescriptorHandle& Other) const noexcept
     {
         return Data == Other.Data;
     }
 
-    constexpr bool operator!=(const FRHIDescriptorHandle& Other) const
+    constexpr bool operator!=(const FRHIDescriptorHandle& Other) const noexcept
     {
         return Data != Other.Data;
     }
@@ -655,37 +650,25 @@ struct FRHIDescriptorHandle
 
 struct FDepthStencilValue
 {
-    constexpr FDepthStencilValue()
-        : Depth(1.0f)
-        , Stencil(0)
-    {
-    }
+    constexpr FDepthStencilValue() noexcept = default;
 
-    constexpr FDepthStencilValue(float InDepth, uint32 InStencil)
+    constexpr FDepthStencilValue(float InDepth, uint32 InStencil) noexcept
         : Depth(InDepth)
         , Stencil(InStencil)
     {
     }
 
-    constexpr bool operator==(const FDepthStencilValue& Other) const
-    {
-        return Depth == Other.Depth && Stencil && Other.Stencil;
-    }
+    constexpr bool operator==(const FDepthStencilValue& Other) const noexcept = default;
 
-    constexpr bool operator!=(const FDepthStencilValue& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    friend constexpr uint64 GetHashForType(const FDepthStencilValue& Value)
+    NODISCARD friend constexpr uint64 GetHashForType(const FDepthStencilValue& Value)
     {
         uint64 Hash = Value.Stencil;
         HashCombine(Hash, Value.Depth);
         return Hash;
     }
 
-    float  Depth;
-    uint32 Stencil;
+    float  Depth   = 1.0f;
+    uint32 Stencil = 0;
 };
 
 struct FClearValue
@@ -696,28 +679,28 @@ struct FClearValue
         DepthStencil = 2,
     };
 
-    FClearValue()
+    FClearValue() noexcept
         : Type(EType::Color)
         , Format(EFormat::Unknown)
         , ColorValue(0.0f, 0.0f, 0.0f, 1.0f)
     {
     }
 
-    FClearValue(EFormat InFormat, float InDepth, uint8 InStencil)
+    FClearValue(EFormat InFormat, float InDepth, uint8 InStencil) noexcept
         : Type(EType::DepthStencil)
         , Format(InFormat)
         , DepthStencilValue(InDepth, InStencil)
     {
     }
 
-    FClearValue(EFormat InFormat, float InR, float InG, float InB, float InA)
+    FClearValue(EFormat InFormat, float InR, float InG, float InB, float InA) noexcept
         : Type(EType::Color)
         , Format(InFormat)
         , ColorValue(InR, InG, InB, InA)
     {
     }
 
-    FClearValue(const FClearValue& Other)
+    FClearValue(const FClearValue& Other) noexcept
         : Type(Other.Type)
         , Format(Other.Format)
         , ColorValue()
@@ -733,34 +716,34 @@ struct FClearValue
         }
     }
 
-    bool IsColorValue()        const { return Type == EType::Color; }
-    bool IsDepthStencilValue() const { return Type == EType::DepthStencil; }
+    NODISCARD bool IsColorValue()        const noexcept { return Type == EType::Color; }
+    NODISCARD bool IsDepthStencilValue() const noexcept { return Type == EType::DepthStencil; }
 
-    FFloatColor& AsColor()
+    NODISCARD FFloatColor& AsColor() noexcept 
     {
         CHECK(IsColorValue());
         return ColorValue;
     }
 
-    const FFloatColor& AsColor() const
+    NODISCARD const FFloatColor& AsColor() const noexcept
     {
         CHECK(IsColorValue());
         return ColorValue;
     }
 
-    FDepthStencilValue& AsDepthStencil()
+    NODISCARD FDepthStencilValue& AsDepthStencil() noexcept
     {
         CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
-    const FDepthStencilValue& AsDepthStencil() const
+    NODISCARD const FDepthStencilValue& AsDepthStencil() const noexcept
     {
         CHECK(IsDepthStencilValue());
         return DepthStencilValue;
     }
 
-    FClearValue& operator=(const FClearValue& Other)
+    FClearValue& operator=(const FClearValue& Other) noexcept
     {
         Type   = Other.Type;
         Format = Other.Format;
@@ -778,7 +761,7 @@ struct FClearValue
         return *this;
     }
 
-    bool operator==(const FClearValue& Other) const
+    bool operator==(const FClearValue& Other) const noexcept
     {
         if (Type != Other.Type || Format != Other.Format)
         {
@@ -794,7 +777,7 @@ struct FClearValue
         return DepthStencilValue == Other.DepthStencilValue;
     }
 
-    bool operator!=(const FClearValue& Other) const
+    bool operator!=(const FClearValue& Other) const noexcept
     {
         return !(*this == Other);
     }
@@ -810,23 +793,22 @@ struct FClearValue
 
 struct FBufferRegion
 {
-    FBufferRegion() = default;
-
-    FBufferRegion(uint64 InOffset, uint64 InSize)
+    constexpr FBufferRegion() noexcept = default;
+    constexpr FBufferRegion(uint64 InOffset, uint64 InSize) noexcept
         : Offset(InOffset)
         , Size(InSize)
     {
     }
 
-    uint64 Offset;
-    uint64 Size;
+    uint64 Offset = 0;
+    uint64 Size   = 0;
 };
 
 struct FTextureRegion2D
 {
-    FTextureRegion2D() = default;
+    constexpr FTextureRegion2D() noexcept = default;
 
-    FTextureRegion2D(uint32 InWidth, uint32 InHeight, uint32 InPositionX = 0, uint32 InPositionY = 0)
+    constexpr FTextureRegion2D(uint32 InWidth, uint32 InHeight, uint32 InPositionX = 0, uint32 InPositionY = 0) noexcept
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
@@ -834,23 +816,26 @@ struct FTextureRegion2D
     {
     }
 
-    uint32 Width;
-    uint32 Height;
-    
-    uint32 PositionX;
-    uint32 PositionY;
+    constexpr bool operator==(const FTextureRegion2D& Other) const noexcept = default;
+
+    uint32 Width     = 0;
+    uint32 Height    = 0;
+    uint32 PositionX = 0;
+    uint32 PositionY = 0;
 };
 
 struct FBufferCopyInfo
 {
-    FBufferCopyInfo() = default;
+    constexpr FBufferCopyInfo() noexcept = default;
 
-    FBufferCopyInfo(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize)
+    constexpr FBufferCopyInfo(uint64 InSrcOffset, uint32 InDstOffset, uint32 InSize) noexcept
         : SrcOffset(InSrcOffset)
         , DstOffset(InDstOffset)
         , Size(InSize)
     {
     }
+
+    constexpr bool operator==(const FBufferCopyInfo& Other) const noexcept = default;
 
     uint64 SrcOffset = 0;
     uint64 DstOffset = 0;
@@ -859,24 +844,26 @@ struct FBufferCopyInfo
 
 struct FTextureCopyInfo
 {
-    FIntVector3 DstPosition;
-    uint32      DstArraySlice;
-    uint32      DstMipSlice;
+    bool operator==(const FTextureCopyInfo& Other) const noexcept = default;
 
-    FIntVector3 SrcPosition;
-    uint32      SrcArraySlice;
-    uint32      SrcMipSlice;
+    FIntVector3 DstPosition    = { };
+    uint32      DstArraySlice  = 0;
+    uint32      DstMipSlice    = 0;
 
-    FIntVector3 Size;
-    uint32      NumArraySlices;
-    uint32      NumMipLevels;
+    FIntVector3 SrcPosition    = { };
+    uint32      SrcArraySlice  = 0;
+    uint32      SrcMipSlice    = 0;
+
+    FIntVector3 Size           = { };
+    uint32      NumArraySlices = 0;
+    uint32      NumMipLevels   = 0;
 };
 
 struct FViewportRegion
 {
-    FViewportRegion() = default;
+    constexpr FViewportRegion() noexcept = default;
 
-    FViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth)
+    constexpr FViewportRegion(float InWidth, float InHeight, float InPositionX, float InPositionY, float InMinDepth, float InMaxDepth) noexcept
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
@@ -885,6 +872,8 @@ struct FViewportRegion
         , MaxDepth(InMaxDepth)
     {
     }
+
+    constexpr bool operator==(const FViewportRegion& Other) const noexcept = default;
 
     float Width     = 0.0f;
     float Height    = 0.0f;
@@ -896,15 +885,17 @@ struct FViewportRegion
 
 struct FScissorRegion
 {
-    FScissorRegion() = default;
+    constexpr FScissorRegion() noexcept = default;
 
-    FScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY)
+    constexpr FScissorRegion(float InWidth, float InHeight, float InPositionX, float InPositionY) noexcept
         : Width(InWidth)
         , Height(InHeight)
         , PositionX(InPositionX)
         , PositionY(InPositionY)
     {
     }
+
+    constexpr bool operator==(const FScissorRegion& Other) const noexcept = default;
 
     float Width     = 0.0f;
     float Height    = 0.0f;
@@ -914,14 +905,16 @@ struct FScissorRegion
 
 struct FRayTracingSceneBuildInfo
 {
-    FRayTracingSceneBuildInfo() = default;
+    constexpr FRayTracingSceneBuildInfo() noexcept = default;
 
-    FRayTracingSceneBuildInfo(const FRHIRayTracingGeometryInstance* InInstances, uint32 InNumInstances, bool bInUpdate)
-        : Instances(InInstances)
-        , NumInstances(InNumInstances)
-        , bUpdate(bInUpdate)
+    constexpr FRayTracingSceneBuildInfo(const FRHIRayTracingGeometryInstance* Instances, uint32 NumInstances, bool bUpdate) noexcept
+        : Instances(Instances)
+        , NumInstances(NumInstances)
+        , bUpdate(bUpdate)
     {
     }
+
+    constexpr bool operator==(const FRayTracingSceneBuildInfo& Other) const noexcept = default;
 
     const FRHIRayTracingGeometryInstance* Instances    = nullptr;
     uint32                                NumInstances = 0;
@@ -930,17 +923,19 @@ struct FRayTracingSceneBuildInfo
 
 struct FRayTracingGeometryBuildInfo
 {
-    FRayTracingGeometryBuildInfo() = default;
+    constexpr FRayTracingGeometryBuildInfo() noexcept = default;
 
-    FRayTracingGeometryBuildInfo(FRHIBuffer* InVertexBuffer, uint32 InNumVertices, FRHIBuffer* InIndexBuffer, uint32 InNumIndices, EIndexFormat InIndexFormat, bool bInUpdate)
-        : VertexBuffer(InVertexBuffer)
-        , NumVertices(InNumVertices)
-        , IndexBuffer(InIndexBuffer)
-        , NumIndices(InNumIndices)
-        , IndexFormat(InIndexFormat)
-        , bUpdate(bInUpdate)
+    constexpr FRayTracingGeometryBuildInfo(FRHIBuffer* VertexBuffer, uint32 NumVertices, FRHIBuffer* IndexBuffer, uint32 NumIndices, EIndexFormat IndexFormat, bool bUpdate) noexcept
+        : VertexBuffer(VertexBuffer)
+        , NumVertices(NumVertices)
+        , IndexBuffer(IndexBuffer)
+        , NumIndices(NumIndices)
+        , IndexFormat(IndexFormat)
+        , bUpdate(bUpdate)
     {
     }
+
+    constexpr bool operator==(const FRayTracingGeometryBuildInfo& Other) const noexcept = default;
 
     FRHIBuffer*  VertexBuffer = nullptr;
     uint32       NumVertices  = 0;
@@ -952,19 +947,36 @@ struct FRayTracingGeometryBuildInfo
 
 struct FRHITextureTransition
 {
-    static FRHITextureTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState)
+    NODISCARD
+    static constexpr FRHITextureTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
     {
         return FRHITextureTransition{ BeforeState, AfterState, RHI_ALL_MIP_LEVELS, RHI_ALL_ARRAY_SLICES };
     }
 
-    static FRHITextureTransition MakePartial(EResourceAccess BeforeState, EResourceAccess AfterState, uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES)
+    NODISCARD
+    static constexpr FRHITextureTransition MakePartial(EResourceAccess BeforeState, EResourceAccess AfterState, uint32 MipLevel, uint32 ArraySlice = RHI_ALL_ARRAY_SLICES) noexcept
     {
         return FRHITextureTransition{ BeforeState, AfterState, MipLevel, ArraySlice };
     }
 
-    EResourceAccess BeforeState;
-    EResourceAccess AfterState;
+    constexpr bool operator==(const FRHITextureTransition& Other) const noexcept = default;
 
-    uint32 MipLevel;
-    uint32 ArraySlice;
+    EResourceAccess BeforeState = EResourceAccess::Common;
+    EResourceAccess AfterState  = EResourceAccess::Common;
+    uint32 MipLevel   = RHI_ALL_MIP_LEVELS;
+    uint32 ArraySlice = RHI_ALL_ARRAY_SLICES;
+};
+
+struct FRHIBufferTransition
+{
+    NODISCARD
+    static constexpr FRHIBufferTransition Make(EResourceAccess BeforeState, EResourceAccess AfterState) noexcept
+    {
+        return FRHIBufferTransition{ BeforeState, AfterState };
+    }
+
+    constexpr bool operator==(const FRHIBufferTransition& Other) const noexcept = default;
+
+    EResourceAccess BeforeState = EResourceAccess::Common;
+    EResourceAccess AfterState  = EResourceAccess::Common;
 };

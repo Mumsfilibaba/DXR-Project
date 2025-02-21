@@ -278,7 +278,7 @@ FGraphicsPipelineStateInstance* FPointLightRenderPass::CompilePipelineStateInsta
         PSOInitializer.RasterizerState                    = NewPipelineStateInstance.RasterizerState.Get();
         PSOInitializer.SampleCount                        = 1;
         PSOInitializer.SampleQuality                      = 0;
-        PSOInitializer.SampleMask                         = FRHIGraphicsPipelineStateInitializer::DefaultSampleMask;
+        PSOInitializer.SampleMask                         = RHI_DEFAULT_SAMPLE_MASK;
         PSOInitializer.ShaderState.VertexShader           = NewPipelineStateInstance.VertexShader.Get();
         PSOInitializer.ShaderState.PixelShader            = NewPipelineStateInstance.PixelShader.Get();
         PSOInitializer.PipelineFormats.NumRenderTargets   = 0;
@@ -983,7 +983,7 @@ FGraphicsPipelineStateInstance* FCascadedShadowsRenderPass::CompilePipelineState
         PSOInitializer.RasterizerState          = NewPipelineStateInstance.RasterizerState.Get();
         PSOInitializer.SampleCount              = 1;
         PSOInitializer.SampleQuality            = 0;
-        PSOInitializer.SampleMask               = FRHIGraphicsPipelineStateInitializer::DefaultSampleMask;
+        PSOInitializer.SampleMask               = RHI_DEFAULT_SAMPLE_MASK;
         PSOInitializer.ShaderState.VertexShader = NewPipelineStateInstance.VertexShader.Get();
         PSOInitializer.ShaderState.PixelShader  = NewPipelineStateInstance.PixelShader.Get();
 

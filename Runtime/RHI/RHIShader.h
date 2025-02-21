@@ -42,7 +42,7 @@ enum class EShaderStage : uint8
     RayCallable     = 14,
 };
 
-constexpr const CHAR* ToString(EShaderStage ShaderStage)
+NODISCARD constexpr const CHAR* ToString(EShaderStage ShaderStage)
 {
     switch(ShaderStage)
     {
@@ -268,17 +268,17 @@ protected:
 };
 
 
-constexpr bool ShaderStageIsGraphics(EShaderStage ShaderStage)
+NODISCARD constexpr bool ShaderStageIsGraphics(EShaderStage ShaderStage)
 {
     return ((ShaderStage >= EShaderStage::Vertex) && (ShaderStage < EShaderStage::Compute)) ? true : false;
 }
 
-constexpr bool ShaderStageIsCompute(EShaderStage ShaderStage)
+NODISCARD constexpr bool ShaderStageIsCompute(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::Compute) ? true : false;
 }
 
-constexpr bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
+NODISCARD constexpr bool ShaderStageIsRayTracing(EShaderStage ShaderStage)
 {
     return (ShaderStage >= EShaderStage::RayGen) ? true : false;
 }

@@ -24,7 +24,7 @@ enum class ETextureDimension
     Texture3D        = 5,
 };
 
-constexpr bool IsTextureCube(ETextureDimension Dimension)
+NODISCARD constexpr bool IsTextureCube(ETextureDimension Dimension)
 {
     return Dimension == ETextureDimension::TextureCube || Dimension == ETextureDimension::TextureCubeArray;
 }
@@ -42,6 +42,7 @@ struct IRHITextureData
 
 struct FRHITextureInfo
 {
+    NODISCARD
     static FRHITextureInfo CreateTexture2D(
         EFormat            InFormat,
         uint32             InWidth,
@@ -54,6 +55,7 @@ struct FRHITextureInfo
         return FRHITextureInfo(ETextureDimension::Texture2D, InFormat, FIntVector3(InWidth, InHeight, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
+    NODISCARD
     static FRHITextureInfo CreateTexture2DArray(
         EFormat            InFormat,
         uint32             InWidth,
@@ -67,6 +69,7 @@ struct FRHITextureInfo
         return FRHITextureInfo(ETextureDimension::Texture2DArray, InFormat, FIntVector3(InWidth, InHeight, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
+    NODISCARD
     static FRHITextureInfo CreateTextureCube(
         EFormat            InFormat,
         uint32             InExtent,
@@ -78,6 +81,7 @@ struct FRHITextureInfo
         return FRHITextureInfo(ETextureDimension::TextureCube, InFormat, FIntVector3(InExtent, InExtent, 0), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
+    NODISCARD
     static FRHITextureInfo CreateTextureCubeArray(
         EFormat            InFormat,
         uint32             InExtent,
@@ -90,6 +94,7 @@ struct FRHITextureInfo
         return FRHITextureInfo(ETextureDimension::TextureCubeArray, InFormat, FIntVector3(InExtent, InExtent, 0), InArraySlices, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
+    NODISCARD
     static FRHITextureInfo CreateTexture3D(
         EFormat            InFormat,
         uint32             InWidth,
@@ -103,17 +108,7 @@ struct FRHITextureInfo
         return FRHITextureInfo(ETextureDimension::Texture3D, InFormat, FIntVector3(InWidth, InHeight, InDepth), 1, InNumMipLevels, InNumSamples, InUsageFlags, InClearValue);
     }
 
-    FRHITextureInfo()
-        : Dimension(ETextureDimension::None)
-        , Format(EFormat::Unknown)
-        , UsageFlags(ETextureUsageFlags::None)
-        , Extent()
-        , NumArraySlices(0)
-        , NumMipLevels(0)
-        , NumSamples(0)
-        , ClearValue()
-    {
-    }
+    FRHITextureInfo() noexcept = default;
 
     FRHITextureInfo(
         ETextureDimension  InDimension,
@@ -123,7 +118,7 @@ struct FRHITextureInfo
         uint32             InNumMipLevels,
         uint32             InNumSamples,
         ETextureUsageFlags InUsageFlags,
-        const FClearValue& InClearValue = FClearValue())
+        const FClearValue& InClearValue = FClearValue()) noexcept
         : Dimension(InDimension)
         , Format(InFormat)
         , UsageFlags(InUsageFlags)
@@ -135,44 +130,29 @@ struct FRHITextureInfo
     {
     }
 
-    bool IsTexture2D()        const { return (Dimension == ETextureDimension::Texture2D); }
-    bool IsTexture2DArray()   const { return (Dimension == ETextureDimension::Texture2DArray); }
-    bool IsTextureCube()      const { return (Dimension == ETextureDimension::TextureCube); }
-    bool IsTextureCubeArray() const { return (Dimension == ETextureDimension::TextureCubeArray); }
-    bool IsTexture3D()        const { return (Dimension == ETextureDimension::Texture3D); }
+    NODISCARD bool IsTexture2D()        const { return (Dimension == ETextureDimension::Texture2D); }
+    NODISCARD bool IsTexture2DArray()   const { return (Dimension == ETextureDimension::Texture2DArray); }
+    NODISCARD bool IsTextureCube()      const { return (Dimension == ETextureDimension::TextureCube); }
+    NODISCARD bool IsTextureCubeArray() const { return (Dimension == ETextureDimension::TextureCubeArray); }
+    NODISCARD bool IsTexture3D()        const { return (Dimension == ETextureDimension::Texture3D); }
 
-    bool IsShaderResource()  const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResource); }
-    bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::UnorderedAccess); }
-    bool IsRenderTarget()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
-    bool IsDepthStencil()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
-    bool IsPresentable()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
-    bool IsMultisampled()    const { return (NumSamples > 1); }
+    NODISCARD bool IsShaderResource()  const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::ShaderResource); }
+    NODISCARD bool IsUnorderedAccess() const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::UnorderedAccess); }
+    NODISCARD bool IsRenderTarget()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::RenderTarget); }
+    NODISCARD bool IsDepthStencil()    const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::DepthStencil); }
+    NODISCARD bool IsPresentable()     const { return IsEnumFlagSet(UsageFlags, ETextureUsageFlags::Presentable); }
+    NODISCARD bool IsMultisampled()    const { return (NumSamples > 1); }
 
-    bool operator==(const FRHITextureInfo& Other) const
-    {
-        return Dimension      == Other.Dimension
-            && Format         == Other.Format
-            && UsageFlags     == Other.UsageFlags
-            && Extent         == Other.Extent
-            && NumArraySlices == Other.NumArraySlices
-            && NumMipLevels   == Other.NumMipLevels
-            && NumSamples     == Other.NumSamples
-            && ClearValue     == Other.ClearValue;
-    }
+    bool operator==(const FRHITextureInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHITextureInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    ETextureDimension  Dimension;
-    EFormat            Format;
-    ETextureUsageFlags UsageFlags;
-    FIntVector3        Extent;
-    uint32             NumArraySlices;
-    uint32             NumMipLevels;
-    uint32             NumSamples;
-    FClearValue        ClearValue;
+    ETextureDimension  Dimension      = ETextureDimension::None;
+    EFormat            Format         = EFormat::Unknown;
+    ETextureUsageFlags UsageFlags     = ETextureUsageFlags::None;
+    uint32             NumArraySlices = 0;
+    uint32             NumMipLevels   = 0;
+    uint32             NumSamples     = 0;
+    FIntVector3        Extent         = { };
+    FClearValue        ClearValue     = { };
 };
 
 class FRHITexture : public FRHIResource

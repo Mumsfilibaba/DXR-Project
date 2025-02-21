@@ -48,7 +48,7 @@ local vulkan_include = join_path(vulkan_path, 'include')
 log_highlight('Vulkan include path=%s', vulkan_include)
 
 local vulkan_rhi = module_build_rules('VulkanRHI')
-vulkan_rhi.runtime_linking        = true
+vulkan_rhi.runtime_linking         = true
 vulkan_rhi.use_precompiled_headers = true
 
 vulkan_rhi.add_module_dependencies

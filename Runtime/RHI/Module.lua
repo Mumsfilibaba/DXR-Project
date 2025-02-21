@@ -3,6 +3,7 @@ include "../../BuildScripts/Scripts/build_module.lua"
 -- RHI Module
 
 local rhi_module = module_build_rules("RHI")
+rhi_module.use_precompiled_headers = true
 
 rhi_module.add_external_include_dirs
 {

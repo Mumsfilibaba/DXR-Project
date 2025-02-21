@@ -3,15 +3,9 @@
 
 struct FRHIViewportInfo
 {
-    FRHIViewportInfo()
-        : WindowHandle(nullptr)
-        , ColorFormat(EFormat::Unknown)
-        , Width(0)
-        , Height(0)
-    {
-    }
+    constexpr FRHIViewportInfo() noexcept = default;
 
-    FRHIViewportInfo(void* InWindowHandle, EFormat InColorFormat, uint16 InWidth, uint16 InHeight)
+    constexpr FRHIViewportInfo(void* InWindowHandle, EFormat InColorFormat, uint16 InWidth, uint16 InHeight) noexcept
         : WindowHandle(InWindowHandle)
         , ColorFormat(InColorFormat)
         , Width(InWidth)
@@ -19,20 +13,12 @@ struct FRHIViewportInfo
     {
     }
 
-    bool operator==(const FRHIViewportInfo& Other) const
-    {
-        return WindowHandle == Other.WindowHandle && ColorFormat == Other.ColorFormat && Width == Other.Width && Height == Other.Height;
-    }
+    constexpr bool operator==(const FRHIViewportInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHIViewportInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    void*   WindowHandle;
-    EFormat ColorFormat;
-    uint16  Width;
-    uint16  Height;
+    void*   WindowHandle = nullptr;
+    EFormat ColorFormat  = EFormat::Unknown;
+    uint16  Width        = 0;
+    uint16  Height       = 0;
 };
 
 class FRHIViewport : public FRHIResource

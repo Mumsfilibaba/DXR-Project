@@ -11,7 +11,7 @@ enum class ESamplerMode : uint8
     MirrorOnce = 5,
 };
 
-constexpr const CHAR* ToString(ESamplerMode SamplerMode)
+NODISCARD constexpr const CHAR* ToString(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -47,7 +47,7 @@ enum class ESamplerFilter : uint8
     Comparison_Anistrotopic                 = 18,
 };
 
-constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
+NODISCARD constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -75,21 +75,9 @@ constexpr const CHAR* ToString(ESamplerFilter SamplerFilter)
 
 struct FRHISamplerStateInfo
 {
-    FRHISamplerStateInfo()
-        : AddressU(ESamplerMode::Clamp)
-        , AddressV(ESamplerMode::Clamp)
-        , AddressW(ESamplerMode::Clamp)
-        , Filter(ESamplerFilter::MinMagMipLinear)
-        , ComparisonFunc(EComparisonFunc::Unknown)
-        , MaxAnisotropy(1)
-        , MipLODBias(0.0f)
-        , MinLOD(TNumericLimits<float>::Lowest())
-        , MaxLOD(TNumericLimits<float>::Max())
-        , BorderColor()
-    {
-    }
+    FRHISamplerStateInfo() noexcept = default;
 
-    FRHISamplerStateInfo(ESamplerMode InAddressMode, ESamplerFilter InFilter)
+    FRHISamplerStateInfo(ESamplerMode InAddressMode, ESamplerFilter InFilter) noexcept
         : AddressU(InAddressMode)
         , AddressV(InAddressMode)
         , AddressW(InAddressMode)
@@ -113,7 +101,7 @@ struct FRHISamplerStateInfo
         uint8              InMaxAnisotropy,
         float              InMinLOD,
         float              InMaxLOD,
-        const FFloatColor& InBorderColor)
+        const FFloatColor& InBorderColor) noexcept
         : AddressU(InAddressU)
         , AddressV(InAddressV)
         , AddressW(InAddressW)
@@ -127,26 +115,9 @@ struct FRHISamplerStateInfo
     {
     }
 
-    bool operator==(const FRHISamplerStateInfo& Other) const
-    {
-        return AddressU       == Other.AddressU
-            && AddressV       == Other.AddressV
-            && AddressW       == Other.AddressW
-            && Filter         == Other.Filter
-            && ComparisonFunc == Other.ComparisonFunc
-            && MipLODBias     == Other.MipLODBias
-            && MaxAnisotropy  == Other.MaxAnisotropy
-            && MinLOD         == Other.MinLOD
-            && MaxLOD         == Other.MaxLOD
-            && BorderColor    == Other.BorderColor;
-    }
+    bool operator==(const FRHISamplerStateInfo& Other) const noexcept = default;
 
-    bool operator!=(const FRHISamplerStateInfo& Other) const
-    {
-        return !(*this == Other);
-    }
-
-    friend uint64 GetHashForType(const FRHISamplerStateInfo& Value)
+    NODISCARD friend uint64 GetHashForType(const FRHISamplerStateInfo& Value)
     {
         uint64 Hash = UnderlyingTypeValue(Value.AddressU);
         HashCombine(Hash, UnderlyingTypeValue(Value.AddressV));
@@ -161,16 +132,16 @@ struct FRHISamplerStateInfo
         return Hash;
     }
 
-    ESamplerMode    AddressU;
-    ESamplerMode    AddressV;
-    ESamplerMode    AddressW;
-    ESamplerFilter  Filter;
-    EComparisonFunc ComparisonFunc;
-    uint8           MaxAnisotropy;
-    float           MipLODBias;
-    float           MinLOD;
-    float           MaxLOD;
-    FFloatColor     BorderColor;
+    ESamplerMode    AddressU       = ESamplerMode::Clamp;
+    ESamplerMode    AddressV       = ESamplerMode::Clamp;
+    ESamplerMode    AddressW       = ESamplerMode::Clamp;
+    ESamplerFilter  Filter         = ESamplerFilter::MinMagMipLinear;
+    EComparisonFunc ComparisonFunc = EComparisonFunc::Unknown;
+    uint8           MaxAnisotropy  = 1;
+    float           MipLODBias     = 0.0f;
+    float           MinLOD         = TNumericLimits<float>::Lowest();
+    float           MaxLOD         = TNumericLimits<float>::Max();
+    FFloatColor     BorderColor    = { };
 };
 
 class FRHISamplerState : public FRHIResource
@@ -186,7 +157,10 @@ protected:
 public:
     virtual FRHIDescriptorHandle GetBindlessHandle() const { return FRHIDescriptorHandle(); }
 
-    const FRHISamplerStateInfo& GetInfo() const { return Info; }
+    const FRHISamplerStateInfo& GetInfo() const
+    {
+        return Info;
+    }
 
 protected:
     FRHISamplerStateInfo Info;

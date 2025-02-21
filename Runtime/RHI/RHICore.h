@@ -19,7 +19,7 @@ enum class ERayTracingTier : uint8
     Tier1_1      = 2,
 };
 
-inline const CHAR* ToString(ERayTracingTier Tier)
+NODISCARD constexpr const CHAR* ToString(ERayTracingTier Tier)
 {
     switch (Tier)
     {
@@ -37,7 +37,7 @@ enum class EShadingRateTier : uint8
     Tier2        = 2,
 };
 
-inline const CHAR* ToString(EShadingRateTier Tier)
+NODISCARD constexpr const CHAR* ToString(EShadingRateTier Tier)
 {
     switch (Tier)
     {
