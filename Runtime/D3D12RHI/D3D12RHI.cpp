@@ -175,7 +175,7 @@ bool FD3D12RHI::Initialize()
     {
         FRHIDeviceInfo::RayTracingTier = ERayTracingTier::NotSupported;
     }
-    
+
     FRHIDeviceInfo::SupportsRayTracing = FRHIDeviceInfo::RayTracingTier != ERayTracingTier::NotSupported;
 
     // View-Instancing Support
@@ -256,7 +256,7 @@ FRHITexture* FD3D12RHI::RHICreateTexture(const FRHITextureInfo& InTextureInfo, E
 
 FRHIBuffer* FD3D12RHI::RHICreateBuffer(const FRHIBufferInfo& InBufferInfo, EResourceAccess InInitialState, const void* InInitialData)
 {
-    TSharedRef<FD3D12Buffer>  NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
+    TSharedRef<FD3D12Buffer> NewBuffer = new FD3D12Buffer(GetDevice(), InBufferInfo);
     if (!NewBuffer->Initialize(DirectCommandContext, InInitialState, InInitialData))
     {
         return nullptr;
@@ -355,23 +355,15 @@ FRHIRayTracingGeometry* FD3D12RHI::RHICreateRayTracingGeometry(const FRHIRayTrac
 FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(InInfo.Texture);
-    if (!D3D12Texture)
-    {
-        D3D12_ERROR("Texture cannot be nullptr");
-        return nullptr;
-    }
+    CHECK(D3D12Texture != nullptr);
 
-    const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
-    CHECK(TextureInfo.IsShaderResource());
-    CHECK(InInfo.Format != EFormat::Unknown);
-    CHECK(IsTypelessFormat(InInfo.Format) == false);
-    
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
     Desc.Format                  = ConvertFormat(InInfo.Format);
     Desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    
+
+    const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
     if (TextureInfo.IsTexture2D())
     {
         if (!TextureInfo.IsMultisampled())
@@ -452,14 +444,7 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHITexture
 FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InInfo.Buffer);
-    if (!D3D12Buffer)
-    {
-        D3D12_ERROR("Cannot create a ShaderResourceView from a nullptr Buffer");
-        return nullptr;
-    }
-
-    const FRHIBufferInfo& BufferInfo = D3D12Buffer->GetInfo();
-    CHECK(BufferInfo.IsShaderResource());
+    CHECK(D3D12Buffer != nullptr);
 
     D3D12_SHADER_RESOURCE_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -503,23 +488,15 @@ FRHIShaderResourceView* FD3D12RHI::RHICreateShaderResourceView(const FRHIBufferS
 
 FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
 {
-    FD3D12Texture* Texture = GetD3D12Texture(InInfo.Texture);
-    if (!Texture)
-    {
-        D3D12_ERROR("Texture cannot be nullptr");
-        return nullptr;
-    }
-
-    const FRHITextureInfo& TextureInfo = Texture->GetInfo();
-    CHECK(TextureInfo.IsUnorderedAccess());
-    CHECK(InInfo.Format != EFormat::Unknown);
-    CHECK(IsTypelessFormat(InInfo.Format) == false);
+    FD3D12Texture* D3D12Texture = GetD3D12Texture(InInfo.Texture);
+    CHECK(D3D12Texture != nullptr);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
 
     Desc.Format = ConvertFormat(InInfo.Format);
 
+    const FRHITextureInfo& TextureInfo = D3D12Texture->GetInfo();
     if (TextureInfo.IsTexture2D())
     {
         if (!TextureInfo.IsMultisampled())
@@ -586,14 +563,7 @@ FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHITextu
 FRHIUnorderedAccessView* FD3D12RHI::RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(InInfo.Buffer);
-    if (!D3D12Buffer)
-    {
-        D3D12_ERROR("Cannot create a UnorderedAccessView from a nullptr Buffer");
-        return nullptr;
-    }
-
-    const FRHIBufferInfo& BufferInfo = D3D12Buffer->GetInfo();
-    CHECK(BufferInfo.IsUnorderedAccess());
+    CHECK(D3D12Buffer != nullptr);
 
     D3D12_UNORDERED_ACCESS_VIEW_DESC Desc;
     FMemory::Memzero(&Desc);
@@ -848,6 +818,8 @@ FRHIQuery* FD3D12RHI::RHICreateQuery(EQueryType InQueryType)
 
 FRHIViewport* FD3D12RHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
+    CHECK(InViewportInfo.WindowHandle != nullptr);
+
     FD3D12ViewportRef Viewport = new FD3D12Viewport(GetDevice(), DirectCommandContext, InViewportInfo);
     if (!Viewport->Initialize(DirectCommandContext))
     {

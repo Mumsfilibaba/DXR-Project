@@ -299,6 +299,8 @@ FRHISamplerState* FVulkanRHI::RHICreateSamplerState(const FRHISamplerStateInfo& 
 
 FRHIViewport* FVulkanRHI::RHICreateViewport(const FRHIViewportInfo& InViewportInfo)
 {
+    CHECK(InViewportInfo.WindowHandle != nullptr);
+
     FVulkanViewportRef NewViewport = new FVulkanViewport(Device, InViewportInfo);
     if (!NewViewport->Initialize(GraphicsCommandContext))
     {
@@ -348,12 +350,8 @@ FRHIRayTracingGeometry* FVulkanRHI::RHICreateRayTracingGeometry(const FRHIRayTra
 FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextureSRVInfo& InInfo)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
-    if (!VulkanTexture)
-    {
-        VULKAN_ERROR("Texture cannot be nullptr");
-        return nullptr;
-    }
-    
+    CHECK(VulkanTexture != nullptr);
+
     FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanTexture);
     if (!NewShaderResourceView->InitializeTextureSRV(InInfo))
     {
@@ -368,12 +366,8 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHITextur
 FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHIBufferSRVInfo& InInfo)
 {
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
-    if (!VulkanBuffer)
-    {
-        VULKAN_ERROR("Buffer cannot be nullptr");
-        return nullptr;
-    }
-    
+    CHECK(VulkanBuffer != nullptr);
+
     FVulkanShaderResourceViewRef NewShaderResourceView = new FVulkanShaderResourceView(GetDevice(), VulkanBuffer);
     if (!NewShaderResourceView->InitializeBufferSRV(InInfo))
     {
@@ -388,12 +382,8 @@ FRHIShaderResourceView* FVulkanRHI::RHICreateShaderResourceView(const FRHIBuffer
 FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHITextureUAVInfo& InInfo)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(InInfo.Texture);
-    if (!VulkanTexture)
-    {
-        VULKAN_ERROR("Texture cannot be nullptr");
-        return nullptr;
-    }
-    
+    CHECK(VulkanTexture != nullptr);
+
     FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanTexture);
     if (!NewUnorderedAccessView->InitializeTextureUAV(InInfo))
     {
@@ -408,12 +398,8 @@ FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIText
 FRHIUnorderedAccessView* FVulkanRHI::RHICreateUnorderedAccessView(const FRHIBufferUAVInfo& InInfo)
 {
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(InInfo.Buffer);
-    if (!VulkanBuffer)
-    {
-        VULKAN_ERROR("Buffer cannot be nullptr");
-        return nullptr;
-    }
-    
+    CHECK(VulkanBuffer != nullptr);
+
     FVulkanUnorderedAccessViewRef NewUnorderedAccessView = new FVulkanUnorderedAccessView(GetDevice(), VulkanBuffer);
     if (!NewUnorderedAccessView->InitializeBufferUAV(InInfo))
     {

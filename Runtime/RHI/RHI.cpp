@@ -3,12 +3,18 @@
 #include "RHI/RHI.h"
 #include "RHI/RHICommandList.h"
 #include "RHI/ShaderCompiler.h"
+#include "RHI/RHIValidation.h"
 
 IMPLEMENT_ENGINE_MODULE(FRHIModule, RHI);
 
 static TAutoConsoleVariable<bool> CVarEnableDebugLayer(
     "RHI.EnableDebugLayer", 
     "Enables the DebugLayer for the RHI",
+    false);
+
+static TAutoConsoleVariable<bool> CVarEnableValidation(
+    "RHI.EnableValidation",
+    "Enables the custom RHI-validation",
     false);
 
 static TAutoConsoleVariable<FString> CVarType(
@@ -176,20 +182,27 @@ bool RHIInitialize()
         }
     }
 
-    FRHI* RHIInterface = RHIModule->CreateRHI();
-    if (!RHIInterface)
+    FRHI* LocalRHI = RHIModule->CreateRHI();
+    if (!LocalRHI)
     {
         LOG_ERROR("[RHIInitialize] Failed to create RHIInterface, the application has to terminate");
         return false;
     }
 
-    if (!RHIInterface->Initialize())
+    // Create the validation interface if chosen
+    if (CVarEnableValidation.GetValue())
+    {
+        FRHIValidation* ValidationRHI = new FRHIValidation(LocalRHI);
+        LocalRHI = ValidationRHI;
+    }
+
+    if (!LocalRHI->Initialize())
     {
         LOG_ERROR("[RHIInitialize] Failed to initialize RHIInterface, the application has to terminate");
         return false;
     }
 
-    GRHI = RHIInterface;
+    GRHI = LocalRHI;
 
     // Initialize the CommandListExecutor
     if (!FRHICommandListExecutor::Initialize())

@@ -288,17 +288,8 @@ void FD3D12CommandContext::RHIFinishContext()
 
 void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferRegion& BufferRegion, const void* SrcData)
 {
-    if (!Resource)
-    {
-        D3D12_ERROR("Resource cannot be nullptr");
-        return;
-    }
-
-    if (!SrcData)
-    {
-        D3D12_ERROR("SourceData cannot be nullptr");
-        return;
-    }
+    CHECK(Resource != nullptr);
+    CHECK(SrcData != nullptr);
 
     if (!BufferRegion.Size)
     {
@@ -347,18 +338,7 @@ void FD3D12CommandContext::UpdateBuffer(FD3D12Resource* Resource, const FBufferR
 void FD3D12CommandContext::RHIBeginQuery(FRHIQuery* Query) 
 {
     FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
-    if (!D3D12Query)
-    {
-        D3D12_ERROR("Query cannot be nullptr");
-        return;
-    }
-
-    const EQueryType QueryType = D3D12Query->GetType();
-    if (QueryType == EQueryType::Timestamp)
-    {
-        D3D12_ERROR("RHIBeginQuery does not support a Query of type Timestamp");
-        return;
-    }
+    CHECK(D3D12Query != nullptr);
 
     FD3D12QueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&D3D12Query->Result);
     if (!QueryAllocation.IsValid())
@@ -375,18 +355,7 @@ void FD3D12CommandContext::RHIBeginQuery(FRHIQuery* Query)
 void FD3D12CommandContext::RHIEndQuery(FRHIQuery* Query) 
 {
     FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
-    if (!D3D12Query)
-    {
-        D3D12_ERROR("Query cannot be nullptr");
-        return;
-    }
-
-    const EQueryType QueryType = D3D12Query->GetType();
-    if (QueryType == EQueryType::Timestamp)
-    {
-        D3D12_ERROR("RHIEndQuery does not support a Query of type Timestamp");
-        return;
-    }
+    CHECK(D3D12Query != nullptr);
 
     FD3D12QueryAllocation QueryAllocation = D3D12Query->QueryAllocation;
     if (!QueryAllocation.IsValid())
@@ -402,18 +371,7 @@ void FD3D12CommandContext::RHIEndQuery(FRHIQuery* Query)
 void FD3D12CommandContext::RHIQueryTimestamp(FRHIQuery* Query)
 {
     FD3D12Query* D3D12Query = static_cast<FD3D12Query*>(Query);
-    if (!D3D12Query)
-    {
-        D3D12_ERROR("Query cannot be nullptr");
-        return;
-    }
-
-    const EQueryType QueryType = D3D12Query->GetType();
-    if (QueryType != EQueryType::Timestamp)
-    {
-        D3D12_ERROR("RHIQueryTimestamp only support a Query of type Timestamp");
-        return;
-    }
+    CHECK(D3D12Query != nullptr);
 
     FD3D12QueryAllocation QueryAllocation = TimingQueryAllocator.Allocate(&D3D12Query->Result);
     if (!QueryAllocation.IsValid())
@@ -432,11 +390,7 @@ void FD3D12CommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& 
     ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(RenderTargetView.Texture);
-    if (!D3D12Texture)
-    {
-        D3D12_ERROR("Texture cannot be nullptr when clearing the surface");
-        return;
-    }
+    CHECK(D3D12Texture != nullptr);
 
     FD3D12RenderTargetView* D3D12RenderTargetView = D3D12Texture->GetOrCreateRenderTargetView(RenderTargetView);
     CHECK(D3D12RenderTargetView != nullptr);
@@ -448,11 +402,7 @@ void FD3D12CommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& 
     ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Texture = GetD3D12Texture(DepthStencilView.Texture);
-    if (!D3D12Texture)
-    {
-        D3D12_ERROR("Texture cannot be nullptr when clearing the surface");
-        return;
-    }
+    CHECK(D3D12Texture != nullptr);
 
     FD3D12DepthStencilView* D3D12DepthStencilView = D3D12Texture->GetOrCreateDepthStencilView(DepthStencilView);
     CHECK(D3D12DepthStencilView != nullptr);
@@ -462,11 +412,7 @@ void FD3D12CommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& 
 void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessView* UnorderedAccessView, const FVector4& ClearColor)
 {
     FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
-    if (!D3D12UnorderedAccessView)
-    {
-        D3D12_ERROR("UnorderedAccessView cannot be nullptr when clearing the surface");
-        return;
-    }
+    CHECK(D3D12UnorderedAccessView != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 
@@ -492,7 +438,8 @@ void FD3D12CommandContext::RHIClearUnorderedAccessViewFloat(FRHIUnorderedAccessV
         D3D12UnorderedAccessView->GetOfflineHandle(), 
         D3D12UnorderedAccessView->GetD3D12Resource()->GetD3D12Resource(), 
         ClearColor.XYZW,
-        0, nullptr);
+        0,
+        nullptr);
 }
 
 void FD3D12CommandContext::RHIBeginRenderPass(const FRHIBeginRenderPassInfo& BeginRenderPassInfo)
@@ -613,11 +560,7 @@ void FD3D12CommandContext::RHISetComputePipelineState(class FRHIComputePipelineS
 void FD3D12CommandContext::RHISet32BitShaderConstants(FRHIShader* Shader, const void* Shader32BitConstants, uint32 Num32BitConstants)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     ContextState.SetShaderConstants(reinterpret_cast<const uint32*>(Shader32BitConstants), Num32BitConstants);
 }
@@ -625,11 +568,7 @@ void FD3D12CommandContext::RHISet32BitShaderConstants(FRHIShader* Shader, const 
 void FD3D12CommandContext::RHISetShaderResourceView(FRHIShader* Shader, FRHIShaderResourceView* ShaderResourceView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex < D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     FD3D12ShaderResourceView* D3D12ShaderResourceView = static_cast<FD3D12ShaderResourceView*>(ShaderResourceView);
@@ -639,11 +578,7 @@ void FD3D12CommandContext::RHISetShaderResourceView(FRHIShader* Shader, FRHIShad
 void FD3D12CommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const TArrayView<FRHIShaderResourceView* const> InShaderResourceViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex + InShaderResourceViews.Size() <= D3D12_DEFAULT_SHADER_RESOURCE_VIEW_COUNT);
     for (int32 Index = 0; Index < InShaderResourceViews.Size(); ++Index)
@@ -656,11 +591,7 @@ void FD3D12CommandContext::RHISetShaderResourceViews(FRHIShader* Shader, const T
 void FD3D12CommandContext::RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUnorderedAccessView* UnorderedAccessView, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex < D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
     FD3D12UnorderedAccessView* D3D12UnorderedAccessView = static_cast<FD3D12UnorderedAccessView*>(UnorderedAccessView);
@@ -670,11 +601,7 @@ void FD3D12CommandContext::RHISetUnorderedAccessView(FRHIShader* Shader, FRHIUno
 void FD3D12CommandContext::RHISetUnorderedAccessViews(FRHIShader* Shader, const TArrayView<FRHIUnorderedAccessView* const> InUnorderedAccessViews, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex + InUnorderedAccessViews.Size() <= D3D12_DEFAULT_UNORDERED_ACCESS_VIEW_COUNT);
     for (int32 Index = 0; Index < InUnorderedAccessViews.Size(); ++Index)
@@ -687,11 +614,7 @@ void FD3D12CommandContext::RHISetUnorderedAccessViews(FRHIShader* Shader, const 
 void FD3D12CommandContext::RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* ConstantBuffer, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex < D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
     FD3D12ConstantBufferView* D3D12ConstantBufferView = nullptr;
@@ -707,11 +630,7 @@ void FD3D12CommandContext::RHISetConstantBuffer(FRHIShader* Shader, FRHIBuffer* 
 void FD3D12CommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArrayView<FRHIBuffer* const> InConstantBuffers, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex + InConstantBuffers.Size() <= D3D12_DEFAULT_CONSTANT_BUFFER_COUNT);
     for (int32 Index = 0; Index < InConstantBuffers.Size(); ++Index)
@@ -730,11 +649,7 @@ void FD3D12CommandContext::RHISetConstantBuffers(FRHIShader* Shader, const TArra
 void FD3D12CommandContext::RHISetSamplerState(FRHIShader* Shader, FRHISamplerState* SamplerState, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex < D3D12_DEFAULT_SAMPLER_STATE_COUNT);
     FD3D12SamplerState* D3D12SamplerState = static_cast<FD3D12SamplerState*>(SamplerState);
@@ -744,11 +659,7 @@ void FD3D12CommandContext::RHISetSamplerState(FRHIShader* Shader, FRHISamplerSta
 void FD3D12CommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArrayView<FRHISamplerState* const> InSamplerStates, uint32 ParameterIndex)
 {
     FD3D12Shader* D3D12Shader = GetD3D12Shader(Shader);
-    if (!D3D12Shader)
-    {
-        D3D12_ERROR("Shader cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Shader != nullptr);
 
     CHECK(ParameterIndex + InSamplerStates.Size() <= D3D12_DEFAULT_SAMPLER_STATE_COUNT);
     for (int32 Index = 0; Index < InSamplerStates.Size(); ++Index)
@@ -760,11 +671,8 @@ void FD3D12CommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArrayV
 
 void FD3D12CommandContext::RHIResolveTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    if (!Dst || !Src)
-    {
-        D3D12_ERROR("Dst or Src cannot be nullptr");
-        return;
-    }
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 
@@ -788,33 +696,23 @@ void FD3D12CommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion&
     if (BufferRegion.Size)
     {
         FD3D12Buffer* D3D12Destination = GetD3D12Buffer(Dst);
+        CHECK(D3D12Destination != nullptr);
+
         UpdateBuffer(D3D12Destination->GetD3D12Resource(), BufferRegion, SrcData);
     }
 }
 
 void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch)
 {
-    if (!SrcData)
-    {
-        D3D12_ERROR("SrcData cannot be nullptr");
-        return;
-    }
+    CHECK(SrcData != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
-    if (!D3D12Destination)
-    {
-        D3D12_ERROR("Dst cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Destination != nullptr);
 
     FD3D12Resource* D3D12Resource = D3D12Destination->GetD3D12Resource();
-    if (!D3D12Resource)
-    {
-        D3D12_ERROR("Resource cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Resource != nullptr);
 
     D3D12_RESOURCE_DESC Desc = D3D12Resource->GetDesc();
 
@@ -869,11 +767,8 @@ void FD3D12CommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRe
 
 void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const FBufferCopyInfo& CopyInfo)
 {
-    if (!Dst || !Src)
-    {
-        D3D12_ERROR("Dst or Src cannot be nullptr");
-        return;
-    }
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 
@@ -888,11 +783,8 @@ void FD3D12CommandContext::RHICopyBuffer(FRHIBuffer* Dst, FRHIBuffer* Src, const
 
 void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
 {
-    if (!Dst || !Src)
-    {
-        D3D12_ERROR("Dst or Src cannot be nullptr");
-        return;
-    }
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 
@@ -907,11 +799,8 @@ void FD3D12CommandContext::RHICopyTexture(FRHITexture* Dst, FRHITexture* Src)
 
 void FD3D12CommandContext::RHICopyTextureRegion(FRHITexture* Dst, FRHITexture* Src, const FTextureCopyInfo& InCopyDesc)
 {
-    if (!Dst || !Src)
-    {
-        D3D12_ERROR("Dst or Src cannot be nullptr");
-        return;
-    }
+    CHECK(Dst != nullptr);
+    CHECK(Src != nullptr);
 
     FD3D12Texture* D3D12Destination = GetD3D12Texture(Dst);
     CHECK(D3D12Destination != nullptr);
@@ -977,11 +866,7 @@ void FD3D12CommandContext::RHIDiscardContents(FRHITexture* Texture)
 
 void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTracingScene, const FRayTracingSceneBuildInfo& BuildInfo)
 {
-    if (!RayTracingScene)
-    {
-        D3D12_ERROR("RayTracingScene cannot be nullptr");
-        return;
-    }
+    CHECK(RayTracingScene != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 
@@ -991,11 +876,7 @@ void FD3D12CommandContext::RHIBuildRayTracingScene(FRHIRayTracingScene* RayTraci
 
 void FD3D12CommandContext::RHIBuildRayTracingGeometry(FRHIRayTracingGeometry* RayTracingGeometry, const FRayTracingGeometryBuildInfo& BuildInfo)
 {
-    if (!RayTracingGeometry)
-    {
-        D3D12_ERROR("RayTracingGeometry cannot be nullptr");
-        return;
-    }
+    CHECK(RayTracingGeometry != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 
@@ -1170,18 +1051,24 @@ void FD3D12CommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcce
     const D3D12_RESOURCE_STATES D3D12AfterState  = ConvertResourceState(AfterState);
 
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
+    CHECK(D3D12Buffer != nullptr);
+
     ResourceBarrierBatcher.AddTransitionBarrier(D3D12Buffer->GetD3D12Resource(), D3D12BeforeState, D3D12AfterState);
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     FD3D12Texture* D3D12Texture = GetD3D12Texture(Texture);
+    CHECK(D3D12Texture != nullptr);
+
     ResourceBarrierBatcher.AddUnorderedAccessBarrier(D3D12Texture->GetD3D12Resource());
 }
 
 void FD3D12CommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)
 {
     FD3D12Buffer* D3D12Buffer = GetD3D12Buffer(Buffer);
+    CHECK(D3D12Buffer != nullptr);
+
     ResourceBarrierBatcher.AddUnorderedAccessBarrier(D3D12Buffer->GetD3D12Resource());
 }
 
@@ -1237,18 +1124,10 @@ void FD3D12CommandContext::RHIDispatch(uint32 ThreadGroupCountX, uint32 ThreadGr
 void FD3D12CommandContext::RHIDispatchRays(FRHIRayTracingScene* RayTracingScene, FRHIRayTracingPipelineState* PipelineState, uint32 Width, uint32 Height, uint32 Depth)
 {
     FD3D12RayTracingScene* D3D12Scene = static_cast<FD3D12RayTracingScene*>(RayTracingScene);
-    if (!D3D12Scene)
-    {
-        D3D12_ERROR("RayTracingScene cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12Scene != nullptr);
 
     FD3D12RayTracingPipelineState* D3D12PipelineState = static_cast<FD3D12RayTracingPipelineState*>(PipelineState);
-    if (!D3D12PipelineState)
-    {
-        D3D12_ERROR("PipelineState cannot be nullptr");
-        return;
-    }
+    CHECK(D3D12PipelineState != nullptr);
 
     ResourceBarrierBatcher.FlushBarriers();
 

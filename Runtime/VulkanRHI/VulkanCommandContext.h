@@ -10,13 +10,6 @@ class FVulkanDevice;
 class FVulkanBuffer;
 class FVulkanCommandContext;
 
-enum class ECommandContextPhase
-{
-    Finished = 0,
-    Recording,
-    InsideRenderPass,
-};
-
 class FBarrierBatcher
 {
     struct FBatch

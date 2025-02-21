@@ -269,18 +269,7 @@ void FVulkanCommandContext::RHIFinishContext()
 void FVulkanCommandContext::RHIBeginQuery(FRHIQuery* Query)
 {
     FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
-    if (!VulkanQuery)
-    {
-        VULKAN_ERROR("Query cannot be nullptr");
-        return;
-    }
-
-    const EQueryType QueryType = VulkanQuery->GetType();
-    if (QueryType == EQueryType::Timestamp)
-    {
-        VULKAN_ERROR("RHIBeginQuery does not support a Query of type Timestamp");
-        return;
-    }
+    CHECK(VulkanQuery != nullptr);
 
     FVulkanQueryAllocation QueryAllocation = OcclusionQueryAllocator.Allocate(&VulkanQuery->Result);
     if (!QueryAllocation.IsValid())
@@ -297,18 +286,7 @@ void FVulkanCommandContext::RHIBeginQuery(FRHIQuery* Query)
 void FVulkanCommandContext::RHIEndQuery(FRHIQuery* Query)
 {
     FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
-    if (!VulkanQuery)
-    {
-        VULKAN_ERROR("Query cannot be nullptr");
-        return;
-    }
-
-    const EQueryType QueryType = VulkanQuery->GetType();
-    if (QueryType == EQueryType::Timestamp)
-    {
-        VULKAN_ERROR("RHIEndQuery does not support a Query of type Timestamp");
-        return;
-    }
+    CHECK(VulkanQuery != nullptr);
 
     if (!VulkanQuery->QueryAllocation.IsValid())
     {
@@ -323,18 +301,7 @@ void FVulkanCommandContext::RHIEndQuery(FRHIQuery* Query)
 void FVulkanCommandContext::RHIQueryTimestamp(FRHIQuery* Query)
 {
     FVulkanQuery* VulkanQuery = static_cast<FVulkanQuery*>(Query);
-    if (!VulkanQuery)
-    {
-        VULKAN_ERROR("Query cannot be nullptr");
-        return;
-    }
-
-    const EQueryType QueryType = VulkanQuery->GetType();
-    if (QueryType != EQueryType::Timestamp)
-    {
-        VULKAN_ERROR("RHIQueryTimestamp only support a Query of type Timestamp");
-        return;
-    }
+    CHECK(VulkanQuery != nullptr);
 
     FVulkanQueryAllocation QueryAllocation = TimestampQueryAllocator.Allocate(&VulkanQuery->Result);
     if (!QueryAllocation.IsValid())
@@ -351,11 +318,7 @@ void FVulkanCommandContext::RHIQueryTimestamp(FRHIQuery* Query)
 void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView& RenderTargetView, const FVector4& ClearColor)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, RenderTargetView.Texture);
-    if (!VulkanTexture)
-    {
-        VULKAN_ERROR("Trying to clear an RenderTargetView that is nullptr");
-        return;
-    }
+    CHECK(VulkanTexture != nullptr);
 
     FVulkanHashableImageView HashableImageView;
     HashableImageView.ArrayIndex     = RenderTargetView.ArrayIndex;
@@ -411,11 +374,7 @@ void FVulkanCommandContext::RHIClearRenderTargetView(const FRHIRenderTargetView&
 void FVulkanCommandContext::RHIClearDepthStencilView(const FRHIDepthStencilView& DepthStencilView, const float Depth, uint8 Stencil)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, DepthStencilView.Texture);
-    if (!VulkanTexture)
-    {
-        VULKAN_ERROR("Trying to clear an DepthStencilView that is nullptr");
-        return;
-    }
+    CHECK(VulkanTexture != nullptr);
 
     FVulkanHashableImageView HashableImageView;
     HashableImageView.ArrayIndex     = DepthStencilView.ArrayIndex;
@@ -828,11 +787,7 @@ void FVulkanCommandContext::RHISetSamplerStates(FRHIShader* Shader, const TArray
 void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion& BufferRegion, const void* SrcData)     
 {
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(Dst);
-    if (!VulkanBuffer)
-    {
-        VULKAN_WARNING("Buffer is nullptr");
-        return;
-    }
+    CHECK(VulkanBuffer != nullptr);
 
     if (IsEnumFlagSet(VulkanBuffer->GetFlags(), EBufferUsageFlags::Dynamic))
     {
@@ -895,12 +850,8 @@ void FVulkanCommandContext::RHIUpdateBuffer(FRHIBuffer* Dst, const FBufferRegion
 void FVulkanCommandContext::RHIUpdateTexture2D(FRHITexture* Dst, const FTextureRegion2D& TextureRegion, uint32 MipLevel, const void* SrcData, uint32 SrcRowPitch) 
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, Dst);
-    if (!VulkanTexture)
-    {
-        VULKAN_WARNING("Texture is nullptr");
-        return;
-    }
-    
+    CHECK(VulkanTexture != nullptr);
+
     const VkFormat Format = VulkanTexture->GetVkFormat();
     const uint64 RequiredSize = FVulkanTextureHelper::CalculateTextureUploadSize(Format, TextureRegion.Width, TextureRegion.Height);
     
@@ -1146,11 +1097,7 @@ void FVulkanCommandContext::RHISetRayTracingBindings(FRHIRayTracingScene* RayTra
 void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, const FRHITextureTransition& TextureTransition)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, Texture);
-    if (!VulkanTexture)
-    {
-        VULKAN_WARNING("Texture is nullptr");
-        return;
-    }
+    CHECK(VulkanTexture != nullptr);
 
     const VkImageLayout NewLayout      = ConvertResourceStateToImageLayout(TextureTransition.AfterState);
     const VkImageLayout PreviousLayout = ConvertResourceStateToImageLayout(TextureTransition.BeforeState);
@@ -1216,11 +1163,7 @@ void FVulkanCommandContext::RHITransitionTexture(FRHITexture* Texture, const FRH
 void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAccess BeforeState, EResourceAccess AfterState)   
 {
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(Buffer);
-    if (!VulkanBuffer)
-    {
-        VULKAN_WARNING("Buffer is nullptr");
-        return;
-    }
+    CHECK(VulkanBuffer != nullptr);
 
     VkBufferMemoryBarrier2 BufferBarrier;
     FMemory::Memzero(&BufferBarrier);
@@ -1243,11 +1186,7 @@ void FVulkanCommandContext::RHITransitionBuffer(FRHIBuffer* Buffer, EResourceAcc
 void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Texture)
 {
     FVulkanTexture* VulkanTexture = FVulkanTexture::ResourceCast(this, Texture);
-    if (!VulkanTexture)
-    {
-        VULKAN_WARNING("Texture is nullptr");
-        return;
-    }
+    CHECK(VulkanTexture != nullptr);
 
     VkImageMemoryBarrier2 ImageBarrier;
     FMemory::Memzero(&ImageBarrier);
@@ -1275,11 +1214,7 @@ void FVulkanCommandContext::RHIUnorderedAccessTextureBarrier(FRHITexture* Textur
 void FVulkanCommandContext::RHIUnorderedAccessBufferBarrier(FRHIBuffer* Buffer)   
 {
     FVulkanBuffer* VulkanBuffer = FVulkanBuffer::ResourceCast(Buffer);
-    if (!VulkanBuffer)
-    {
-        VULKAN_WARNING("Buffer is nullptr");
-        return;
-    }
+    CHECK(VulkanBuffer != nullptr);
 
     VkBufferMemoryBarrier2 BufferBarrier;
     FMemory::Memzero(&BufferBarrier);

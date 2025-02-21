@@ -91,7 +91,6 @@ struct FRHIVideoMemoryInfo
     uint64 MemoryBudget;
 };
 
-
 class RHI_API FRHI
 {
 protected:

@@ -12,6 +12,13 @@ struct FRayTracingShaderResources;
 struct FRHIRayTracingGeometryInstance;
 struct FRHITextureTransition;
 
+enum class ECommandContextPhase
+{
+    Finished = 0,
+    Recording,
+    InsideRenderPass,
+};
+
 struct IRHICommandContext
 {
     /**
