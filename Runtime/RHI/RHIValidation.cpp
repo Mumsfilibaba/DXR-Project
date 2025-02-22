@@ -4,7 +4,7 @@
 #define RHI_VALIDATION_ERROR(...) \
     do \
     { \
-        LOG_ERROR("[RHI VALIDATION ERROR] "__VA_ARGS__); \
+        LOG_ERROR("[RHI VALIDATION ERROR] " __VA_ARGS__); \
         if (CVarEnableValidationDebugBreak.GetValue()) \
         { \
             DEBUG_BREAK(); \
