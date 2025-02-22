@@ -113,14 +113,14 @@ private:
     typedef TMap<FRHISamplerStateInfo, FD3D12SamplerStateRef> FSamplerStateMap;
     typedef TQueue<FD3D12CommandPayload*, EQueueType::MPSC>   FCommandPayloadQueue;
 
-    FD3D12Adapter*                Adapter;
-    FD3D12Device*                 Device;
-    FD3D12CommandContext*         DirectCommandContext;
-    TArray<FD3D12DeferredObject>  DeletionQueue;
-    FCriticalSection              DeletionQueueCS;
-    FCommandPayloadQueue          PendingSubmissions;
-    FSamplerStateMap              SamplerStateMap;
-    FCriticalSection              SamplerStateMapCS;
+    FD3D12Adapter*               Adapter;
+    FD3D12Device*                Device;
+    FD3D12CommandContext*        DirectCommandContext;
+    TArray<FD3D12DeferredObject> DeletionQueue;
+    FCriticalSection             DeletionQueueCS;
+    FCommandPayloadQueue         PendingSubmissions;
+    FSamplerStateMap             SamplerStateMap;
+    FCriticalSection             SamplerStateMapCS;
 
     static FD3D12RHI* GD3D12RHI;
 };
