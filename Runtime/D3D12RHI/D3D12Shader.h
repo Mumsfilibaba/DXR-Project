@@ -92,7 +92,7 @@ public:
     EShaderVisibility GetShaderVisibility() const { return ShaderVisibility; }
     const FShaderResourceCount& GetResourceCount() const { return ResourceCount; }
     const FShaderResourceCount& GetRTLocalResourceCount() const { return RTLocalResourceCount; }
-    D3D12_SHADER_BYTECODE GetByteCode() const { return ByteCode; }
+    const D3D12_SHADER_BYTECODE& GetByteCode() const { return ByteCode; }
     bool HasRootSignature() const { return bContainsRootSignature; }
     
     FORCEINLINE const void* GetCode() const
@@ -317,12 +317,12 @@ protected:
     FIntVector3 ThreadGroupXYZ;
 };
 
-inline FD3D12Shader* GetD3D12Shader(FRHIShader* Shader)
+NODISCARD inline FD3D12Shader* GetD3D12Shader(FRHIShader* Shader)
 {
     return Shader ? reinterpret_cast<FD3D12Shader*>(Shader->GetRHIBaseInterface()) : nullptr;
 }
 
-inline FD3D12RayTracingShader* GetD3D12RayTracingShader(FRHIRayTracingShader* Shader)
+NODISCARD inline FD3D12RayTracingShader* GetD3D12RayTracingShader(FRHIRayTracingShader* Shader)
 {
     return Shader ? reinterpret_cast<FD3D12RayTracingShader*>(Shader->GetRHIBaseInterface()) : nullptr;
 }
