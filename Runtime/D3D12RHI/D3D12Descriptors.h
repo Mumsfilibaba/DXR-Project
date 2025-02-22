@@ -42,7 +42,6 @@ private:
     uint32                        HandleIncrementSize;
 };
 
-
 struct FD3D12DescriptorRange
 {
     FD3D12DescriptorRange() = default;
@@ -136,7 +135,6 @@ private:
     FCriticalSection     HeapsCS;
 };
 
-
 struct FD3D12OnlineDescriptorBlock
 {
     FD3D12OnlineDescriptorBlock()
@@ -182,7 +180,7 @@ public:
     }
 
 private:
-    D3D12_DESCRIPTOR_HEAP_TYPE const     Type;
+    const D3D12_DESCRIPTOR_HEAP_TYPE     Type;
     uint32                               DescriptorCount;
     uint32                               BlockSize;
     FD3D12DescriptorHeapRef              Heap;

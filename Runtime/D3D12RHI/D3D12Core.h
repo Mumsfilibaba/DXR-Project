@@ -106,7 +106,7 @@
 
 void D3D12DeviceRemovedHandlerRHI(class FD3D12Device* Device);
 
-inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
+NODISCARD inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
     FMemory::Memzero(&HeapProperties);
@@ -120,7 +120,7 @@ inline D3D12_HEAP_PROPERTIES GetUploadHeapProperties()
     return HeapProperties;
 }
 
-inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
+NODISCARD inline D3D12_HEAP_PROPERTIES GetDefaultHeapProperties()
 {
     D3D12_HEAP_PROPERTIES HeapProperties;
     FMemory::Memzero(&HeapProperties);
@@ -142,7 +142,7 @@ enum class ED3D12CommandQueueType
     Count
 };
 
-constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
+NODISCARD constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
 {
     switch (QueueType)
     {
@@ -154,7 +154,7 @@ constexpr const CHAR* ToString(ED3D12CommandQueueType QueueType)
     return "CommandQueueType::Unknown";
 }
 
-constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
+NODISCARD constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType QueueType)
 {
     switch (QueueType)
     {
@@ -166,7 +166,7 @@ constexpr D3D12_COMMAND_LIST_TYPE ToCommandListType(ED3D12CommandQueueType Queue
     return D3D12_COMMAND_LIST_TYPE(-1);
 }
 
-constexpr D3D12_QUERY_HEAP_TYPE ToQueryHeapType(EQueryType QueryType)
+NODISCARD constexpr D3D12_QUERY_HEAP_TYPE ToQueryHeapType(EQueryType QueryType)
 {
     switch (QueryType)
     {
@@ -177,7 +177,7 @@ constexpr D3D12_QUERY_HEAP_TYPE ToQueryHeapType(EQueryType QueryType)
     return D3D12_QUERY_HEAP_TYPE(-1);
 }
 
-constexpr uint32 GetBufferAlignment(EBufferUsageFlags BufferFlags)
+NODISCARD constexpr uint32 GetBufferAlignment(EBufferUsageFlags BufferFlags)
 {
     // Constant buffers require special alignment
     if (IsEnumFlagSet(BufferFlags, EBufferUsageFlags::ConstantBuffer))
@@ -191,7 +191,7 @@ constexpr uint32 GetBufferAlignment(EBufferUsageFlags BufferFlags)
     }
 }
 
-constexpr D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
+NODISCARD constexpr D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
     if (IsEnumFlagSet(Flags, EBufferUsageFlags::UnorderedAccess))
@@ -202,7 +202,7 @@ constexpr D3D12_RESOURCE_FLAGS ConvertBufferFlags(EBufferUsageFlags Flags)
     return Result;
 }
 
-constexpr D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
+NODISCARD constexpr D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
 {
     D3D12_RESOURCE_FLAGS Result = D3D12_RESOURCE_FLAG_NONE;
     if (IsEnumFlagSet(Flag, ETextureUsageFlags::UnorderedAccess))
@@ -229,7 +229,7 @@ constexpr D3D12_RESOURCE_FLAGS ConvertTextureFlags(ETextureUsageFlags Flag)
     return Result;
 }
 
-constexpr D3D12_RESOURCE_DIMENSION ConvertTextureDimension(ETextureDimension TextureDimension)
+NODISCARD constexpr D3D12_RESOURCE_DIMENSION ConvertTextureDimension(ETextureDimension TextureDimension)
 {
     switch (TextureDimension)
     {
@@ -242,7 +242,7 @@ constexpr D3D12_RESOURCE_DIMENSION ConvertTextureDimension(ETextureDimension Tex
     }
 }
 
-constexpr DXGI_FORMAT ConvertFormat(EFormat Format)
+NODISCARD constexpr DXGI_FORMAT ConvertFormat(EFormat Format)
 {
     switch (Format)
     {
@@ -350,7 +350,7 @@ constexpr DXGI_FORMAT ConvertFormat(EFormat Format)
     }
 }
 
-constexpr DXGI_FORMAT ConvertIndexFormat(EIndexFormat IndexFormat)
+NODISCARD constexpr DXGI_FORMAT ConvertIndexFormat(EIndexFormat IndexFormat)
 {
     if (IndexFormat == EIndexFormat::uint32)
     {
@@ -366,7 +366,7 @@ constexpr DXGI_FORMAT ConvertIndexFormat(EIndexFormat IndexFormat)
     }
 }
 
-constexpr D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass InputClassification)
+NODISCARD constexpr D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass InputClassification)
 {
     switch (InputClassification)
     {
@@ -377,7 +377,7 @@ constexpr D3D12_INPUT_CLASSIFICATION ConvertVertexInputClass(EVertexInputClass I
     return D3D12_INPUT_CLASSIFICATION(-1);
 }
 
-constexpr D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
+NODISCARD constexpr D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc ComparisonFunc)
 {
     switch (ComparisonFunc)
     {
@@ -394,7 +394,7 @@ constexpr D3D12_COMPARISON_FUNC ConvertComparisonFunc(EComparisonFunc Comparison
     return D3D12_COMPARISON_FUNC_NONE;
 }
 
-constexpr D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
+NODISCARD constexpr D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
 {
     switch (StencilOp)
     {
@@ -411,7 +411,7 @@ constexpr D3D12_STENCIL_OP ConvertStencilOp(EStencilOp StencilOp)
     return D3D12_STENCIL_OP(-1);
 }
 
-inline D3D12_DEPTH_STENCILOP_DESC ConvertStencilState(const FStencilState& StencilState)
+NODISCARD inline D3D12_DEPTH_STENCILOP_DESC ConvertStencilState(const FStencilState& StencilState)
 {
     return
     {
@@ -422,7 +422,7 @@ inline D3D12_DEPTH_STENCILOP_DESC ConvertStencilState(const FStencilState& Stenc
     };
 }
 
-constexpr D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
+NODISCARD constexpr D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
 {
     switch (CullMode)
     {
@@ -432,7 +432,7 @@ constexpr D3D12_CULL_MODE ConvertCullMode(ECullMode CullMode)
     }
 }
 
-constexpr D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
+NODISCARD constexpr D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
 {
     switch (FillMode)
     {
@@ -443,7 +443,7 @@ constexpr D3D12_FILL_MODE ConvertFillMode(EFillMode FillMode)
     return D3D12_FILL_MODE();
 }
 
-constexpr D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
+NODISCARD constexpr D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
 {
     switch (BlendOp)
     {
@@ -457,7 +457,7 @@ constexpr D3D12_BLEND_OP ConvertBlendOp(EBlendOp BlendOp)
     return D3D12_BLEND_OP();
 }
 
-constexpr D3D12_BLEND ConvertBlend(EBlendType  Blend)
+NODISCARD constexpr D3D12_BLEND ConvertBlend(EBlendType  Blend)
 {
     switch (Blend)
     {
@@ -483,7 +483,7 @@ constexpr D3D12_BLEND ConvertBlend(EBlendType  Blend)
     return D3D12_BLEND();
 }
 
-constexpr D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
+NODISCARD constexpr D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
 {
     switch (LogicOp)
     {
@@ -508,7 +508,7 @@ constexpr D3D12_LOGIC_OP ConvertLogicOp(ELogicOp LogicOp)
     return D3D12_LOGIC_OP();
 }
 
-constexpr uint8 ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
+NODISCARD constexpr uint8 ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
 {
     uint8 RenderTargetWriteMask = 0;
     if (ColorWriteFlags == EColorWriteFlags::All)
@@ -538,7 +538,7 @@ constexpr uint8 ConvertColorWriteFlags(EColorWriteFlags ColorWriteFlags)
     return RenderTargetWriteMask;
 }
 
-constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopology PrimitiveTopology)
+NODISCARD constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
     {
@@ -558,7 +558,7 @@ constexpr D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertPrimitiveTopologyType(EPrimitiveT
     }
 }
 
-constexpr D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
+NODISCARD constexpr D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology PrimitiveTopology)
 {
     switch (PrimitiveTopology)
     {
@@ -573,7 +573,7 @@ constexpr D3D12_PRIMITIVE_TOPOLOGY ConvertPrimitiveTopology(EPrimitiveTopology P
     return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 }
 
-constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
+NODISCARD constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceState)
 {
     switch (ResourceState)
     {
@@ -599,7 +599,7 @@ constexpr D3D12_RESOURCE_STATES ConvertResourceState(EResourceAccess ResourceSta
     return D3D12_RESOURCE_STATES();
 }
 
-constexpr D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
+NODISCARD constexpr D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode)
 {
     switch (SamplerMode)
     {
@@ -613,7 +613,7 @@ constexpr D3D12_TEXTURE_ADDRESS_MODE ConvertSamplerMode(ESamplerMode SamplerMode
     return D3D12_TEXTURE_ADDRESS_MODE();
 }
 
-constexpr D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
+NODISCARD constexpr D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
 {
     switch (SamplerFilter)
     {
@@ -640,7 +640,7 @@ constexpr D3D12_FILTER ConvertSamplerFilter(ESamplerFilter SamplerFilter)
     return D3D12_FILTER();
 }
 
-constexpr D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
+NODISCARD constexpr D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
 {
     switch (ShadingRate)
     {
@@ -656,7 +656,7 @@ constexpr D3D12_SHADING_RATE ConvertShadingRate(EShadingRate ShadingRate)
     return D3D12_SHADING_RATE();
 }
 
-constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
+NODISCARD constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAccelerationStructureBuildFlags(EAccelerationStructureBuildFlags InFlags)
 {
     D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
     if ((InFlags & EAccelerationStructureBuildFlags::AllowUpdate) != EAccelerationStructureBuildFlags::None)
@@ -675,7 +675,7 @@ constexpr D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAGS ConvertAcceleratio
     return Flags;
 }
 
-constexpr D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags InFlags)
+NODISCARD constexpr D3D12_RAYTRACING_INSTANCE_FLAGS ConvertRayTracingInstanceFlags(ERayTracingInstanceFlags InFlags)
 {
     D3D12_RAYTRACING_INSTANCE_FLAGS Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
     if ((InFlags & ERayTracingInstanceFlags::CullDisable) != ERayTracingInstanceFlags::None)
@@ -841,7 +841,7 @@ struct FD3D12HashableTextureView
         return Hash != Other.Hash;
     }
 
-    friend uint64 GetHashForType(const FD3D12HashableTextureView& Value)
+    NODISCARD friend uint64 GetHashForType(const FD3D12HashableTextureView& Value)
     {
         return Value.Hash;
     }
@@ -911,43 +911,35 @@ struct FD3D12_CPU_DESCRIPTOR_HANDLE : public D3D12_CPU_DESCRIPTOR_HANDLE
         return *this;
     }
 
-    bool operator==(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) const noexcept
-    {
-        return ptr == RHS.ptr;
-    }
+    bool operator==(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) const noexcept = default;
 
-    bool operator!=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) const noexcept
+    FD3D12_CPU_DESCRIPTOR_HANDLE& operator-=(int64 Other) noexcept
     {
-        return ptr != RHS.ptr;
-    }
-
-    FD3D12_CPU_DESCRIPTOR_HANDLE& operator-=(int64 RHS) noexcept
-    {
-        ptr -= RHS;
+        ptr -= Other;
         return *this;
     }
 
-    FD3D12_CPU_DESCRIPTOR_HANDLE& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FD3D12_CPU_DESCRIPTOR_HANDLE& operator-=(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
     {
-        ptr -= RHS.ptr;
+        ptr -= Other.ptr;
         return *this;
     }
 
-    FD3D12_CPU_DESCRIPTOR_HANDLE& operator+=(int64 RHS) noexcept
+    FD3D12_CPU_DESCRIPTOR_HANDLE& operator+=(int64 Other) noexcept
     {
-        ptr += RHS;
+        ptr += Other;
         return *this;
     }
 
-    FD3D12_CPU_DESCRIPTOR_HANDLE& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FD3D12_CPU_DESCRIPTOR_HANDLE& operator+=(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
     {
-        ptr += RHS.ptr;
+        ptr += Other.ptr;
         return *this;
     }
 
-    FD3D12_CPU_DESCRIPTOR_HANDLE& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FD3D12_CPU_DESCRIPTOR_HANDLE& operator=(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) noexcept
     {
-        ptr = RHS.ptr;
+        ptr = Other.ptr;
         return *this;
     }
 };
@@ -1001,48 +993,40 @@ struct FD3D12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
         return FD3D12_GPU_DESCRIPTOR_HANDLE(*this, OffsetInDescriptors, DescriptorIncrementSize);
     }
 
-    bool operator==(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) const noexcept
-    {
-        return (ptr == RHS.ptr);
-    }
+    bool operator==(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) const noexcept = default;
 
-    bool operator!=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) const noexcept
+    FD3D12_GPU_DESCRIPTOR_HANDLE& operator-=(int64 Other) noexcept
     {
-        return (ptr != RHS.ptr);
-    }
-
-    FD3D12_GPU_DESCRIPTOR_HANDLE& operator-=(int64 RHS) noexcept
-    {
-        ptr -= RHS;
+        ptr -= Other;
         return *this;
     }
 
-    FD3D12_GPU_DESCRIPTOR_HANDLE& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FD3D12_GPU_DESCRIPTOR_HANDLE& operator-=(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
     {
-        ptr -= RHS.ptr;
+        ptr -= Other.ptr;
         return *this;
     }
 
-    FD3D12_GPU_DESCRIPTOR_HANDLE& operator+=(int64 RHS) noexcept
+    FD3D12_GPU_DESCRIPTOR_HANDLE& operator+=(int64 Other) noexcept
     {
-        ptr += RHS;
+        ptr += Other;
         return *this;
     }
 
-    FD3D12_GPU_DESCRIPTOR_HANDLE& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FD3D12_GPU_DESCRIPTOR_HANDLE& operator+=(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
     {
-        ptr += RHS.ptr;
+        ptr += Other.ptr;
         return *this;
     }
 
-    FD3D12_GPU_DESCRIPTOR_HANDLE& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& RHS) noexcept
+    FD3D12_GPU_DESCRIPTOR_HANDLE& operator=(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) noexcept
     {
-        ptr = RHS.ptr;
+        ptr = Other.ptr;
         return *this;
     }
 };
 
-constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
+NODISCARD constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
 {
     switch(Dimension)
     {
@@ -1054,17 +1038,17 @@ constexpr const CHAR* ToString(D3D12_RESOURCE_DIMENSION Dimension)
     }
 }
 
-constexpr uint32 D3D12CalculateSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
+NODISCARD constexpr uint32 D3D12CalculateSubresource(uint32 MipSlice, uint32 ArraySlice, uint32 PlaneSlice, uint32 MipLevels, uint32 ArraySize) noexcept
 {
     return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
 }
 
-constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint32 ArraySize, uint32 PlaneCount) noexcept
+NODISCARD constexpr uint32 D3D12CalculateSubresourceCount(uint32 MipLevels, uint32 ArraySize, uint32 PlaneCount) noexcept
 {
     return MipLevels * ArraySize * PlaneCount;
 }
 
-constexpr uint32 D3D12CalculateArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
+NODISCARD constexpr uint32 D3D12CalculateArraySlices(ETextureDimension Dimension, uint32 NumArraySlices)
 {
     if (IsTextureCube(Dimension))
     {

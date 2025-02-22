@@ -80,15 +80,7 @@ struct FVulkanDescriptorRemappingInfo
 
 struct FPushConstantsInfo
 {
-    bool operator==(const FPushConstantsInfo& Other) const
-    {
-        return NumConstants == Other.NumConstants && StageFlags == Other.StageFlags;
-    }
-
-    bool operator!=(const FPushConstantsInfo& Other) const
-    {
-        return !(*this == Other);
-    }
+    bool operator==(const FPushConstantsInfo& Other) const = default;
     
     uint32             NumConstants = 0;
     VkShaderStageFlags StageFlags   = 0;
