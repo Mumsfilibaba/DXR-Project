@@ -6,8 +6,6 @@
 #include "RHI/RHIRayTracing.h"
 #include "D3D12RHI/D3D12Constants.h"
 
-#define D3D12_DESCRIPTOR_HANDLE_INCREMENT(DescriptorHandle, Value) { (DescriptorHandle.ptr + Value) }
-
 // Windows 10 1507 
 #if (NTDDI_WIN10 && (WDK_NTDDI_VERSION >= NTDDI_WIN10))
     #define WIN10_BUILD_10240 (1)
@@ -911,7 +909,15 @@ struct FD3D12_CPU_DESCRIPTOR_HANDLE : public D3D12_CPU_DESCRIPTOR_HANDLE
         return *this;
     }
 
-    bool operator==(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) const noexcept = default;
+    bool operator==(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) const noexcept
+    {
+        return ptr == Other.ptr;
+    }
+
+    bool operator!=(const D3D12_CPU_DESCRIPTOR_HANDLE& Other) const noexcept
+    {
+        return ptr != Other.ptr;
+    }
 
     FD3D12_CPU_DESCRIPTOR_HANDLE& operator-=(int64 Other) noexcept
     {
@@ -993,7 +999,15 @@ struct FD3D12_GPU_DESCRIPTOR_HANDLE : public D3D12_GPU_DESCRIPTOR_HANDLE
         return FD3D12_GPU_DESCRIPTOR_HANDLE(*this, OffsetInDescriptors, DescriptorIncrementSize);
     }
 
-    bool operator==(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) const noexcept = default;
+    bool operator==(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) const noexcept
+    {
+        return ptr == Other.ptr;
+    }
+
+    bool operator!=(const D3D12_GPU_DESCRIPTOR_HANDLE& Other) const noexcept
+    {
+        return ptr != Other.ptr;
+    }
 
     FD3D12_GPU_DESCRIPTOR_HANDLE& operator-=(int64 Other) noexcept
     {
